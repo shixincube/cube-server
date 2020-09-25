@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Cell Cloud 容器配置文件 -->
+<cell>
+	<!-- 容器监听器 -->
+	<listeners>
+		<class>cube.dispatcher.DispatcherListener</class>
+	</listeners>
+	
+	<!-- 内核参数配置 -->
+	<nucleus>
+
+		<!-- 对终端进行心跳保持请求的间隔，单位：毫秒 -->
+		<heartbeat>60000</heartbeat>
+
+		<!-- Talk 服务配置 -->
+		<talk>
+			<!-- 服务器参数配置 -->
+			<server>
+				<!-- 服务绑定的地址 -->
+				<host>0.0.0.0</host>
+				<!-- 服务绑定的端口号 -->
+				<port>7000</port>
+				<!-- 最大允许连接数 -->
+				<max-connection>1000</max-connection>
+			</server>
+
+			<!-- WS 服务器参数配置 -->
+			<ws-server>
+				<!-- 服务绑定的地址 -->
+				<host>0.0.0.0</host>
+				<!-- 服务绑定的端口号 -->
+				<port>7070</port>
+				<!-- 最大允许连接数 -->
+				<max-connection>1000</max-connection>
+			</ws-server>
+
+			<!-- WSS 服务器参数配置 -->
+			<wss-server></wss-server>
+
+			<!-- SSL 配置 -->
+			<ssl></ssl>
+		</talk>
+
+		<!-- 日志配置 -->
+		<log>
+			<!-- 日志等级 -->
+			<level>DEBUG</level>
+		</log>
+	</nucleus>
+
+	<!-- Cellet 配置 -->
+	<cellets>
+		<cellet port="7000,7070">
+			<class>cube.dispatcher.auth.AuthCellet</class>
+		</cellet>
+		<cellet port="7000,7070">
+			<class>cube.dispatcher.contact.ContactCellet</class>
+		</cellet>
+		<cellet port="7000,7070">
+			<class>cube.dispatcher.messaging.MessagingCellet</class>
+		</cellet>
+	</cellets>
+
+	<!-- 适配器配置 -->
+	<adapters></adapters>
+
+</cell>
