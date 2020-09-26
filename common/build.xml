@@ -6,7 +6,7 @@
 
 <project name="cube-common" default="build-release" basedir=".">
 
-	<property name="version.brand" value="1.0" />
+	<property name="version.brand" value="3.0" />
 
 	<property name="java.version" value="8" />
 
@@ -67,6 +67,7 @@
 	<!-- Builds project for debug                                            -->
 	<!-- =================================================================== -->
 	<target name="build-debug" depends="debug">
+		<delete file="../build/cube-common-${version.brand}.jar" failonerror="false" />
 		<copy file="${build.jar}/cube-common.jar" tofile="../build/cube-common-${version.brand}.jar"/>
 		<echo>Build project for debug.</echo>
 		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>
@@ -76,6 +77,7 @@
 	<!-- Builds project for release                                          -->
 	<!-- =================================================================== -->
 	<target name="build-release" depends="release">
+		<delete file="../build/cube-common-${version.brand}.jar" failonerror="false" />
 		<copy file="${build.jar}/cube-common.jar" tofile="../build/cube-common-${version.brand}.jar"/>
 		<echo>Build project for release.</echo>
 		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>

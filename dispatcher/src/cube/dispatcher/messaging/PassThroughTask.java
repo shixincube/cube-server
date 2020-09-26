@@ -60,9 +60,16 @@ public class PassThroughTask extends Task {
         this.waitResponse = sync;
     }
 
+    protected void reset(TalkContext talkContext, Primitive primitive, boolean sync) {
+        this.talkContext = talkContext;
+        this.primitive = primitive;
+        this.waitResponse = sync;
+    }
+
     @Override
     public void run() {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(this.primitive);
+
         if (this.waitResponse) {
             ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), dialect);
 
@@ -78,26 +85,17 @@ public class PassThroughTask extends Task {
         else {
             this.performer.transmit(this.talkContext, this.cellet, dialect);
         }
+
+        ((MessagingCellet)this.cellet).returnTask(this);
     }
 
     private JSONObject makeGatewayErrorPayload() {
         JSONObject payload = new JSONObject();
         try {
-            payload.put("state", this.makeState(StateCode.GatewayError, "Gateway error"));
+            payload.put("state", StateCode.makeState(StateCode.GatewayError, "Gateway error"));
         } catch (JSONException e) {
             e.printStackTrace();
         }
         return payload;
-    }
-
-    private JSONObject makeState(int stateCode, String stateDesc) {
-        JSONObject state = new JSONObject();
-        try {
-            state.put("code", stateCode);
-            state.put("desc", stateDesc);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return state;
     }
 }

@@ -36,8 +36,14 @@ import cube.core.Kernel;
  */
 public abstract class Task implements Runnable {
 
+    /**
+     * 框架的内核实例。
+     */
     protected Kernel kernel;
 
+    /**
+     * 对应的 Cellet 实例。
+     */
     protected Cellet cellet;
 
     protected TalkContext talkContext;

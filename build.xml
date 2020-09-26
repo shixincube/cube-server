@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+
+<!-- ======================================================================= -->
+<!-- Cube Server Build File                                                  -->
+<!-- ======================================================================= -->
+
+<project name="cube-server" default="build-all" basedir=".">
+
+	<property name="version.brand" value="3.0" />
+
+	<property name="java.version" value="8" />
+
+	<property name="project-common.dir" value="common" />
+
+	<property name="build.dir" value="build" />
+
+	<target name="init">
+		<mkdir dir="${build.dir}" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Build common                                                        -->
+	<!-- =================================================================== -->
+	<target name="build-common">
+		<ant antfile="build.xml"
+			 dir="${project-common.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-release" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Build all projects                                                  -->
+	<!-- =================================================================== -->
+	<target name="build-all" depends="init,build-common">
+		<echo>Build all projects.</echo>
+	</target>
+
+</project>

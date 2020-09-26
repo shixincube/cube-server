@@ -35,21 +35,37 @@ import cell.util.CachedQueueExecutor;
 import cube.common.action.MessagingActions;
 import cube.dispatcher.Performer;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
 /**
- * 消息网关的 Cellet 单元。
+ * 消息模块网关的 Cellet 服务单元。
  */
 public class MessagingCellet extends Cellet {
 
+    /**
+     * Cellet 名称。
+     */
     public final static String NAME = "Messaging";
 
+    /**
+     * 线程池。
+     */
     private ExecutorService executor;
 
+    /**
+     * 执行机。
+     */
     private Performer performer;
+
+    /**
+     * 任务缓存队列。
+     */
+    private ConcurrentLinkedQueue<PassThroughTask> taskQueue;
 
     public MessagingCellet() {
         super(NAME);
+        this.taskQueue = new ConcurrentLinkedQueue<>();
     }
 
     @Override
@@ -69,10 +85,24 @@ public class MessagingCellet extends Cellet {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
         if (MessagingActions.Pull.name.equals(action)) {
-            this.executor.execute(new PassThroughTask(this, talkContext, primitive, this.performer, false));
+            this.executor.execute(this.borrowTask(talkContext, primitive, false));
         }
         else {
-            this.executor.execute(new PassThroughTask(this, talkContext, primitive, this.performer));
+            this.executor.execute(this.borrowTask(talkContext, primitive, true));
         }
+    }
+
+    protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive, boolean sync) {
+        PassThroughTask task = this.taskQueue.poll();
+        if (null == task) {
+            return new PassThroughTask(this, talkContext, primitive, this.performer, sync);
+        }
+
+        task.reset(talkContext, primitive, sync);
+        return task;
+    }
+
+    protected void returnTask(PassThroughTask task) {
+        this.taskQueue.offer(task);
     }
 }

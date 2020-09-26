@@ -31,13 +31,16 @@ package cube.auth;
  */
 public class AuthTool {
 
+    /**
+     * 工作路劲。
+     */
     private String workingPath;
 
+    /**
+     * 构造函数。
+     * @param workingPath 指定工作路径。
+     */
     public AuthTool(String workingPath) {
         this.workingPath = workingPath;
-    }
-
-    public boolean createAuthTokenFile(String filename) {
-        return true;
     }
 }

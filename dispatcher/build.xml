@@ -6,7 +6,7 @@
 
 <project name="cube-dispatcher" default="build-release" basedir=".">
 
-	<property name="version.brand" value="1.0" />
+	<property name="version.brand" value="3.0" />
 
 	<property name="java.version" value="8" />
 
@@ -71,6 +71,7 @@
 	<!-- Builds project for debug                                            -->
 	<!-- =================================================================== -->
 	<target name="build-debug" depends="debug">
+		<delete file="../build/cube-dispatcher-${version.brand}.jar" failonerror="false" />
 		<copy file="${build.jar}/cube-dispatcher.jar" tofile="../build/cube-dispatcher-${version.brand}.jar"/>
 		<echo>Build project for debug.</echo>
 		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>
@@ -80,6 +81,7 @@
 	<!-- Builds project for release                                          -->
 	<!-- =================================================================== -->
 	<target name="build-release" depends="release">
+		<delete file="../build/cube-dispatcher-${version.brand}.jar" failonerror="false" />
 		<copy file="${build.jar}/cube-dispatcher.jar" tofile="../build/cube-dispatcher-${version.brand}.jar"/>
 		<echo>Build project for release.</echo>
 		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>
@@ -92,7 +94,7 @@
 		<delete failonerror="false" includeemptydirs="true">
 			<fileset dir="${doc.dir}"/>
 		</delete>
-		<javadoc destdir="${doc.dir}" windowtitle="Cube Common API Documents" encoding="UTF-8" docencoding="UTF-8">
+		<javadoc destdir="${doc.dir}" windowtitle="Cube Dispatcher API Documents" encoding="UTF-8" docencoding="UTF-8">
 			<packageset dir="${src.dir}">
 				<include name="**"/>
 				<exclude name="cube/test/**" />

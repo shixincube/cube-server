@@ -32,21 +32,37 @@ import cell.core.talk.TalkContext;
 import cell.util.CachedQueueExecutor;
 import cube.dispatcher.Performer;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
 /**
- * 授权 Cellet 服务单元。
+ * 授权模块网关的 Cellet 服务单元。
  */
 public class AuthCellet extends Cellet {
 
+    /**
+     * Cellet 名称。
+     */
     public final static String NAME = "Auth";
 
+    /**
+     * 线程池执行器。
+     */
     private ExecutorService executor = null;
 
+    /**
+     * 执行机。
+     */
     private Performer performer;
+
+    /**
+     * 任务对象的缓存队列。
+     */
+    private ConcurrentLinkedQueue<PassThroughTask> taskQueue;
 
     public AuthCellet() {
         super(AuthCellet.NAME);
+        this.taskQueue = new ConcurrentLinkedQueue<>();
     }
 
     @Override
@@ -63,6 +79,20 @@ public class AuthCellet extends Cellet {
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
-        this.executor.execute(new PassThroughTask(this, talkContext, primitive, this.performer));
+        this.executor.execute(this.borrowTask(talkContext, primitive));
+    }
+
+    protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive) {
+        PassThroughTask task = this.taskQueue.poll();
+        if (null == task) {
+            return new PassThroughTask(this, talkContext, primitive, this.performer);
+        }
+
+        task.reset(talkContext, primitive);
+        return task;
+    }
+
+    protected void returnTask(PassThroughTask task) {
+        this.taskQueue.offer(task);
     }
 }

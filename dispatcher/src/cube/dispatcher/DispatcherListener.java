@@ -31,6 +31,9 @@ import cell.carpet.CellListener;
 
 import java.util.Timer;
 
+/**
+ * 网关容器的监听器。
+ */
 public class DispatcherListener implements CellListener {
 
     private Timer timer;

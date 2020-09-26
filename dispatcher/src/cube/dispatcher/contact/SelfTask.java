@@ -30,7 +30,10 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
 import cube.common.Packet;
+import cube.common.StateCode;
 import cube.common.Task;
 import cube.common.entity.Contact;
 import cube.dispatcher.Performer;
@@ -47,6 +50,11 @@ public class SelfTask extends Task {
         this.performer = performer;
     }
 
+    protected void reset(TalkContext talkContext, Primitive primitive) {
+        this.talkContext = talkContext;
+        this.primitive = primitive;
+    }
+
     @Override
     public void run() {
         ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(this.primitive);
@@ -56,6 +64,24 @@ public class SelfTask extends Task {
         this.performer.addContact(self);
 
         ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), actionDialect);
+        if (null == response) {
+            // 发生错误
+            Packet requestPacket = new Packet(packet.sn, packet.name, this.makeGatewayErrorPayload());
+            response = requestPacket.toDialect();
+        }
+
         this.cellet.speak(this.talkContext, response);
+
+        ((ContactCellet)this.cellet).returnSelfTask(this);
+    }
+
+    private JSONObject makeGatewayErrorPayload() {
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("state", StateCode.makeState(StateCode.GatewayError, "Gateway error"));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return payload;
     }
 }

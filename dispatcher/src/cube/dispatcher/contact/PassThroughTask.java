@@ -39,7 +39,7 @@ import cube.dispatcher.Director;
 import cube.dispatcher.Performer;
 
 /**
- *
+ * 透传数据任务。
  */
 public class PassThroughTask extends Task {
 
@@ -48,6 +48,11 @@ public class PassThroughTask extends Task {
     public PassThroughTask(ContactCellet cellet, TalkContext talkContext, Primitive primitive, Performer performer) {
         super(cellet, talkContext, primitive);
         this.performer = performer;
+    }
+
+    protected void reset(TalkContext talkContext, Primitive primitive) {
+        this.talkContext = talkContext;
+        this.primitive = primitive;
     }
 
     @Override
@@ -63,26 +68,18 @@ public class PassThroughTask extends Task {
         }
 
         this.cellet.speak(this.talkContext, response);
+
+        ((ContactCellet)this.cellet).returnPassTask(this);
     }
 
     private JSONObject makeGatewayErrorPayload() {
         JSONObject payload = new JSONObject();
         try {
-            payload.put("state", this.makeState(StateCode.GatewayError, "Gateway error"));
+            payload.put("state", StateCode.makeState(StateCode.GatewayError, "Gateway error"));
         } catch (JSONException e) {
             e.printStackTrace();
         }
         return payload;
     }
 
-    private JSONObject makeState(int stateCode, String stateDesc) {
-        JSONObject state = new JSONObject();
-        try {
-            state.put("code", stateCode);
-            state.put("desc", stateDesc);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return state;
-    }
 }

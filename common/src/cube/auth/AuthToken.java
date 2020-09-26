@@ -75,13 +75,13 @@ public class AuthToken implements JSONable {
 
     /**
      * 构造函数。
-     * @param code
-     * @param domain
-     * @param appKey
-     * @param cid
-     * @param issues
-     * @param expiry
-     * @param description
+     * @param code 令牌的编码。
+     * @param domain 令牌有效域。
+     * @param appKey App 键。
+     * @param cid 关联的联系人 ID 。
+     * @param issues 令牌发布日期。
+     * @param expiry 令牌有效期。
+     * @param description 令牌携带的描述。
      */
     public AuthToken(String code, String domain, String appKey, Long cid, Date issues, Date expiry, PrimaryDescription description) {
         this.code = code;
@@ -95,7 +95,7 @@ public class AuthToken implements JSONable {
 
     /**
      * 构造函数。
-     * @param json
+     * @param json 描述令牌的 JSON 对象。
      */
     public AuthToken(JSONObject json) {
         try {
@@ -111,6 +111,9 @@ public class AuthToken implements JSONable {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -130,7 +133,7 @@ public class AuthToken implements JSONable {
 
     /**
      * 生成 Base64 字符串。
-     * @return
+     * @return 返回 Base64 数据的字符串。
      */
     public String toBase64() {
         JSONObject json = this.toJSON();

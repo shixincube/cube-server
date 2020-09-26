@@ -32,7 +32,7 @@ import cell.core.net.Endpoint;
 import java.util.HashMap;
 
 /**
- *
+ * 导演机。
  */
 public class Director {
 

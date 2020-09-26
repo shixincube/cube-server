@@ -35,21 +35,43 @@ import cell.util.CachedQueueExecutor;
 import cube.common.action.ContactActions;
 import cube.dispatcher.Performer;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
 /**
- * 联系人 Cellet 。
+ * 联系人模块网关的 Cellet 服务单元。
  */
 public class ContactCellet extends Cellet {
 
+    /**
+     * Cellet 名称。
+     */
     public final static String NAME = "Contact";
 
+    /**
+     * 线程池执行器。
+     */
     private ExecutorService executor;
 
+    /**
+     * 执行机。
+     */
     private Performer performer;
+
+    /**
+     * Self 任务对象的缓存队列。
+     */
+    private ConcurrentLinkedQueue<SelfTask> selfTaskQueue;
+
+    /**
+     * Pass through 任务对象的缓存队列。
+     */
+    private ConcurrentLinkedQueue<PassThroughTask> passTaskQueue;
 
     public ContactCellet() {
         super(NAME);
+        this.selfTaskQueue = new ConcurrentLinkedQueue<>();
+        this.passTaskQueue = new ConcurrentLinkedQueue<>();
     }
 
     @Override
@@ -70,10 +92,38 @@ public class ContactCellet extends Cellet {
         String action = actionDialect.getName();
 
         if (ContactActions.Self.name.equals(action)) {
-            this.executor.execute(new SelfTask(this, talkContext, primitive, this.performer));
+            this.executor.execute(this.borrowSelfTask(talkContext, primitive));
         }
         else {
-            this.executor.execute(new PassThroughTask(this, talkContext, primitive, this.performer));
+            this.executor.execute(this.borrowPassTask(talkContext, primitive));
         }
+    }
+
+    protected SelfTask borrowSelfTask(TalkContext talkContext, Primitive primitive) {
+        SelfTask task = this.selfTaskQueue.poll();
+        if (null == task) {
+            return new SelfTask(this, talkContext, primitive, this.performer);
+        }
+
+        task.reset(talkContext, primitive);
+        return task;
+    }
+
+    protected void returnSelfTask(SelfTask task) {
+        this.selfTaskQueue.offer(task);
+    }
+
+    protected PassThroughTask borrowPassTask(TalkContext talkContext, Primitive primitive) {
+        PassThroughTask task = this.passTaskQueue.poll();
+        if (null == task) {
+            return new PassThroughTask(this, talkContext, primitive, this.performer);
+        }
+
+        task.reset(talkContext, primitive);
+        return task;
+    }
+
+    protected void returnPassTask(PassThroughTask task) {
+        this.passTaskQueue.offer(task);
     }
 }

@@ -47,8 +47,8 @@ public class PrimaryDescription implements JSONable {
 
     /**
      * 构造函数。
-     * @param address
-     * @param primaryContent
+     * @param address 主地址。
+     * @param primaryContent 首要信息内容。
      */
     public PrimaryDescription(String address, JSONObject primaryContent) {
         this.address = address;
@@ -57,7 +57,7 @@ public class PrimaryDescription implements JSONable {
 
     /**
      * 构造函数。
-     * @param json
+     * @param json 首要信息的 JSON 对象。
      */
     public PrimaryDescription(JSONObject json) {
         try {
@@ -69,16 +69,16 @@ public class PrimaryDescription implements JSONable {
     }
 
     /**
-     *
-     * @return
+     * 获取地址。
+     * @return 返回地址信息。
      */
     public String getAddress() {
         return this.address;
     }
 
     /**
-     *
-     * @return
+     * 获取首要信息内容。
+     * @return 返回 JSON 格式的信息内容。
      */
     public JSONObject getPrimaryContent() {
         return this.primaryContent;
