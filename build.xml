@@ -11,6 +11,7 @@
 	<property name="java.version" value="8" />
 
 	<property name="project-common.dir" value="common" />
+	<property name="project-dispatcher.dir" value="dispatcher" />
 
 	<property name="build.dir" value="build" />
 
@@ -30,9 +31,20 @@
 	</target>
 
 	<!-- =================================================================== -->
+	<!-- Build dispatcher                                                    -->
+	<!-- =================================================================== -->
+	<target name="build-dispatcher" depends="build-common">
+		<ant antfile="build.xml"
+			 dir="${project-dispatcher.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-release" />
+	</target>
+
+	<!-- =================================================================== -->
 	<!-- Build all projects                                                  -->
 	<!-- =================================================================== -->
-	<target name="build-all" depends="init,build-common">
+	<target name="build-all" depends="init,build-common,build-dispatcher">
 		<echo>Build all projects.</echo>
 	</target>
 
