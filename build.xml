@@ -15,6 +15,8 @@
 
 	<property name="build.dir" value="build" />
 
+	<property name="deploy.dir" value="deploy" />
+
 	<target name="init">
 		<mkdir dir="${build.dir}" />
 	</target>
@@ -39,6 +41,34 @@
 			 inheritall="false"
 			 inheritrefs="false"
 			 target="build-release" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Deploy                                                              -->
+	<!-- =================================================================== -->
+	<target name="deploy" depends="build-all">
+		<copy todir="${deploy.dir}/libs/">
+			<fileset dir="${build.dir}">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Clean deploy files                                                  -->
+	<!-- =================================================================== -->
+	<target name="clean-deploy">
+		<delete failonerror="false" includeemptydirs="true">
+			<fileset dir="${deploy.dir}/libs/">
+				<include name="cube-common-*.jar" />
+				<include name="cube-dispatcher-*.jar" />
+			</fileset>
+		</delete>
+		<delete failonerror="false" includeemptydirs="true">
+			<fileset dir="${deploy.dir}/bin/">
+				<include name="*pid" />
+			</fileset>
+		</delete>
 	</target>
 
 	<!-- =================================================================== -->

@@ -52,11 +52,7 @@
 	<cellets>
 		<cellet port="7000,7070">
 			<class>cube.dispatcher.auth.AuthCellet</class>
-		</cellet>
-		<cellet port="7000,7070">
 			<class>cube.dispatcher.contact.ContactCellet</class>
-		</cellet>
-		<cellet port="7000,7070">
 			<class>cube.dispatcher.messaging.MessagingCellet</class>
 		</cellet>
 	</cellets>

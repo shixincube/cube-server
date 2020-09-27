@@ -49,6 +49,17 @@ done
 # Get standard environment variables
 PRGDIR=`dirname "$PRG"`
 
+# Parse tag
+ARGVIDX=1
+TAG=""
+for argv in "$@"
+do
+  if [ "$argv" = "-tag" ]; then
+    TAG="${@:$ARGVIDX+1:1}"
+  fi
+  let ARGVIDX+=1
+done
+
 # Only set CC_HOME if not already set
 [ -z "$CC_HOME" ] && CC_HOME=`cd "$PRGDIR/.." ; pwd`
 
@@ -107,8 +118,8 @@ do
 done
 
 # Option for server
-# JAVA_OPTS="-server -Xmx2048m -Xms2048m -Xmn768m -Xss256k -XX:SurvivorRatio=8 -XX:LargePageSizeInBytes=128m -XX:MaxTenuringThreshold=7 -XX:GCTimeRatio=19 -XX:+DisableExplicitGC -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:-CMSParallelRemarkEnabled -XX:+UseFastAccessorMethods -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=70 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:+PrintClassHistogram -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintHeapAtGC -Xloggc:logs/gc.log"
-JAVA_OPTS="-server -Xmx1024m -Xms1024m -Xmn384m -Xss256k -XX:SurvivorRatio=8 -XX:LargePageSizeInBytes=128m -XX:MaxTenuringThreshold=7 -XX:GCTimeRatio=19 -XX:+DisableExplicitGC -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:-CMSParallelRemarkEnabled -XX:+UseFastAccessorMethods -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=70 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:+PrintClassHistogram -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintHeapAtGC -Xloggc:logs/gc.log"
+# JAVA_OPTS="-server -Xmx2048m -Xms2048m -Xmn768m -Xss256k -XX:SurvivorRatio=8 -XX:LargePageSizeInBytes=128m -XX:MaxTenuringThreshold=7 -XX:GCTimeRatio=19 -XX:+DisableExplicitGC -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:-CMSParallelRemarkEnabled -XX:+UseFastAccessorMethods -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=70 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:+PrintClassHistogram -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintHeapAtGC -Xloggc:logs/gc_$TAG.log"
+JAVA_OPTS="-server -Xmx1024m -Xms1024m -Xmn384m -Xss256k -XX:SurvivorRatio=8 -XX:LargePageSizeInBytes=128m -XX:MaxTenuringThreshold=7 -XX:GCTimeRatio=19 -XX:+DisableExplicitGC -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:-CMSParallelRemarkEnabled -XX:+UseFastAccessorMethods -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=70 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:+PrintClassHistogram -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintHeapAtGC -Xloggc:logs/gc_$TAG.log"
 
 if [ -z "$CC_BASE" ] ; then
   CC_BASE="$CC_HOME"
@@ -172,12 +183,12 @@ elif [ "$1" = "run" ]; then
 elif [ "$1" = "start" ] ; then
 
   shift
-  touch "$CC_BASE"/logs/cell.out
+  touch "$CC_BASE"/logs/cell_"$TAG".out
 
   "$_RUNJAVA" $JAVA_OPTS \
     -classpath "$CLASSPATH" \
     cell.carpet.Cell start "$@" -console false \
-    > "$CC_BASE"/logs/cell.out 2>&1 &
+    > "$CC_BASE"/logs/cell_"$TAG".out 2>&1 &
 
     if [ ! -z "$CC_PID" ]; then
       echo $! > $CC_PID
