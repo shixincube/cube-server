@@ -50,12 +50,8 @@ public class DispatcherListener implements CellListener {
     public void cellPreinitialize(Nucleus nucleus) {
         Performer performer = new Performer(nucleus);
 
-        // 设定范围
-        Scope scope = new Scope();
-        scope.cellets.add("Auth");
-        scope.cellets.add("Contact");
-        scope.cellets.add("Messaging");
-        performer.addDirector("127.0.0.1", 6000, scope);
+        // 从配置文件加载配置数据
+        this.config(performer);
 
         nucleus.setParameter("performer", performer);
     }
@@ -97,6 +93,34 @@ public class DispatcherListener implements CellListener {
             e.printStackTrace();
         }
 
-        
+        String prefix = "director.";
+        for (int i = 1; i <= 10; ++i) {
+            String keyAddress = prefix + (i) + ".address";
+            if (!properties.containsKey(keyAddress)) {
+                continue;
+            }
+
+            String keyPort = prefix + (i) + ".port";
+            String keyCellets = prefix + (i) + ".cellets";
+            String keyWeight = prefix + (i) + ".weight";
+
+            String address = properties.getProperty(keyAddress);
+            int port = Integer.parseInt(properties.getProperty(keyPort, "6000"));
+
+            String celletString = properties.getProperty(keyCellets);
+            String[] cellets = celletString.split(",");
+            int weight = Integer.parseInt(properties.getProperty(keyWeight, "5"));
+
+            // 设定范围
+            Scope scope = new Scope();
+            for (String cellet : cellets) {
+                scope.cellets.add(cellet.trim());
+            }
+            scope.weight = weight;
+            // 添加导演机节点
+            performer.addDirector(address, port, scope);
+
+            Logger.i(this.getClass(), "Add director point " + address + ":" + port + " #" + weight);
+        }
     }
 }
