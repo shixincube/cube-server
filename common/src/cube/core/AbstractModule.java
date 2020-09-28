@@ -48,4 +48,9 @@ public abstract class AbstractModule implements Module {
     public Cache getCache(String name) {
         return this.kernel.getCache(name);
     }
+
+    @Override
+    public MessageQueue getMQ(String name) {
+        return null;
+    }
 }

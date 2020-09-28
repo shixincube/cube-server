@@ -31,8 +31,12 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
+import cube.cache.SMCacheKey;
+import cube.cache.SMCacheValue;
 import cube.core.AbstractModule;
 import cube.core.Cache;
+import cube.core.CacheValue;
+import cube.core.MessageQueue;
 
 import java.util.Date;
 
@@ -81,7 +85,7 @@ public class AuthService extends AbstractModule {
             token = new AuthToken(code, domain, appKey, cid, now, expiry, description);
 
             // 将 Code 写入令牌池
-            this.tokenCache.put(code, token.toJSON());
+            this.tokenCache.put(new SMCacheKey(code), new SMCacheValue(token.toJSON()));
         }
         else {
             // TODO 从数据库中查询
@@ -98,9 +102,10 @@ public class AuthService extends AbstractModule {
     public AuthToken getToken(String code) {
         AuthToken token = null;
 
-        JSONObject json = this.tokenCache.get(code);
-        if (null != json) {
-            token = new AuthToken(json);
+        CacheValue value = this.tokenCache.get(new SMCacheKey(code));
+        if (null != value) {
+            SMCacheValue smv = (SMCacheValue) value;
+            token = new AuthToken(smv.get());
         }
 
         return token;
