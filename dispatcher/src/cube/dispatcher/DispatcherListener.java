@@ -28,7 +28,12 @@ package cube.dispatcher;
 
 import cell.api.Nucleus;
 import cell.carpet.CellListener;
+import cell.util.log.Logger;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 import java.util.Timer;
 
 /**
@@ -73,5 +78,25 @@ public class DispatcherListener implements CellListener {
 
         Performer performer = (Performer) nucleus.getParameter("performer");
         performer.stop();
+    }
+
+    private void config(Performer performer) {
+        File file = new File("config/dispatcher.properties");
+        if (!file.exists()) {
+            file = new File("dispatcher.properties");
+            if (!file.exists()) {
+                Logger.w(this.getClass(), "Can NOT find config file");
+                return;
+            }
+        }
+
+        Properties properties = new Properties();
+        try {
+            properties.load(new FileInputStream(file));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        
     }
 }

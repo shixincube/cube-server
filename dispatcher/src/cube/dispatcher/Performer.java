@@ -100,7 +100,7 @@ public class Performer implements TalkListener {
     /**
      * 构造函数。
      *
-     * @param nucleus
+     * @param nucleus 当前 Cell 的内核实例。
      */
     public Performer(Nucleus nucleus) {
         this.talkService = nucleus.getTalkService();
@@ -116,10 +116,10 @@ public class Performer implements TalkListener {
 
     /**
      * 添加 Director 节点。
-     * @param address
-     * @param port
-     * @param scope
-     * @return
+     * @param address 导演机的地址。
+     * @param port 导演机的端口。
+     * @param scope 该导演机的配置范围。
+     * @return 返回导演机节点。
      */
     public Director addDirector(String address, int port, Scope scope) {
         Endpoint endpoint = new Endpoint(address, port);
@@ -145,9 +145,9 @@ public class Performer implements TalkListener {
 
     /**
      * 选择节点。
-     * @param talkContext
-     * @param celletName
-     * @return
+     * @param talkContext 会话上下文。
+     * @param celletName Cellet 名称。
+     * @return 返回被选中的导演机。
      */
     private synchronized Director selectDirector(TalkContext talkContext, String celletName) {
         Director director = this.talkDirectorMap.get(talkContext);
@@ -183,7 +183,7 @@ public class Performer implements TalkListener {
     }
 
     /**
-     *
+     * 添加联系人。
      * @param contact
      * @return
      */
@@ -226,6 +226,9 @@ public class Performer implements TalkListener {
         }
     }
 
+    /**
+     * 启动执行机，并对路由权重和范围进行初始化。
+     */
     public void start() {
         this.talkService.setListener(AuthCellet.NAME, this);
         this.talkService.setListener(ContactCellet.NAME, this);
@@ -242,6 +245,7 @@ public class Performer implements TalkListener {
             int cursor = 0;
 
             for (Director director : directors) {
+                // 累加权重
                 totalWeight += director.scope.weight;
 
                 Director.Section section = director.getSection(celletName);

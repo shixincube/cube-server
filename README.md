@@ -41,28 +41,28 @@ TODO
 <div>
   <div style="display:inline-block;padding:10px 8px 10px 8px;">
     <table cellpadding="0" cellspacing="0" style="border:0px;border-collapse:unset;box-shadow:none;text-align: center;padding:0px 8px 0px 8px;"><tr><td>
-      <a href="https://www.spap.com/" target="_blank" style="border-bottom:0px;"><img class="applogo" style="border-radius:16px;" src="https://code.workinggo.com/Cube3/cube-manual/raw/master/assets/images/logo/spap.png" alt="www.spap.com" /></a>
+      <a href="https://www.spap.com/" target="_blank" style="border-bottom:0px;"><img class="applogo" style="border-radius:16px;" src="https://static.shixincube.com/cube/assets/images/logo/spap.png" alt="www.spap.com" /></a>
       <p><a href="https://www.spap.com/" target="_blank">司派</a></p>
       <span>会工作的人都在司派</span>
     </td></tr></table>
   </div>
   <div style="display:inline-block;padding:10px 8px 10px 8px;">
     <table cellpadding="0" cellspacing="0" style="border:0px;border-collapse:unset;box-shadow:none;text-align: center;padding:0px 8px 0px 8px;"><tr><td>
-      <a href="https://www.seehey.com/" target="_blank" style="border-bottom:0px;"><img class="applogo" style="border-radius:16px;" src="https://code.workinggo.com/Cube3/cube-manual/raw/master/assets/images/logo/seehey.png" alt="www.seehey.com" /></a>
+      <a href="https://www.seehey.com/" target="_blank" style="border-bottom:0px;"><img class="applogo" style="border-radius:16px;" src="https://static.shixincube.com/cube/assets/images/logo/seehey.png" alt="www.seehey.com" /></a>
       <p><a href="https://www.seehey.com/" target="_blank">SeeHey</a></p>
       <span>高效企业协作平台</span>
     </td></tr></table>
   </div>
   <div style="display:inline-block;padding:10px 8px 10px 8px;">
     <table cellpadding="0" cellspacing="0" style="border:0px;border-collapse:unset;box-shadow:none;text-align: center;padding:0px 8px 0px 8px;"><tr><td>
-      <a href="https://card.spap.com/" target="_blank" style="border-bottom:0px;"><img class="applogo" style="border-radius:16px;" src="https://code.workinggo.com/Cube3/cube-manual/raw/master/assets/images/logo/cardcase.png" alt="名片派" /></a>
+      <a href="https://card.spap.com/" target="_blank" style="border-bottom:0px;"><img class="applogo" style="border-radius:16px;" src="https://static.shixincube.com/cube/assets/images/logo/cardcase.png" alt="名片派" /></a>
       <p><a href="https://card.spap.com/" target="_blank">名片派</a></p>
       <span>商务人士的数字化智能名片夹</span>
     </td></tr></table>
   </div>
   <div style="display:inline-block;padding:10px 8px 10px 8px;">
     <table cellpadding="0" cellspacing="0" style="border:0px;border-collapse:unset;box-shadow:none;text-align: center;padding:0px 8px 0px 8px;"><tr><td>
-      <a href="https://apps.apple.com/cn/app/%E8%81%94%E5%AE%A2%E5%AD%A6%E9%99%A2/id1477432872" target="_blank" style="border-bottom:0px;"><img class="applogo" style="border-radius:16px;" src="https://code.workinggo.com/Cube3/cube-manual/raw/master/assets/images/logo/lianke.png" alt="联客学院" /></a>
+      <a href="https://apps.apple.com/cn/app/%E8%81%94%E5%AE%A2%E5%AD%A6%E9%99%A2/id1477432872" target="_blank" style="border-bottom:0px;"><img class="applogo" style="border-radius:16px;" src="https://static.shixincube.com/cube/assets/images/logo/lianke.png" alt="联客学院" /></a>
       <p><a href="https://apps.apple.com/cn/app/%E8%81%94%E5%AE%A2%E5%AD%A6%E9%99%A2/id1477432872" target="_blank">联客学院</a></p>
       <span>全新的企业内部培训服务平台</span>
     </td></tr></table>

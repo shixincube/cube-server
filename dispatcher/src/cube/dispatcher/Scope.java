@@ -37,7 +37,7 @@ public class Scope {
     protected List<String> cellets;
 
     /**
-     * 权重，取值范围 1 - 10 到
+     * 权重，取值范围 1 - 10
      */
     protected int weight;
 
