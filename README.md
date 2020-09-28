@@ -20,6 +20,52 @@ Cube 提供的协作功能包括：
 * 安全与运维管理（Operation and Maintenance management）。所有数据通道支持加密，可支持国密算法等。
 * 风控管理（Risk Management）。对系统内所有文本、图片、视频、文件等内容进行包括 NLP、OCR、IR 等技术手段的风险控制和预警等。
 
+
+## 功能展示
+
+| 即时消息 |
+|:----:|
+|![IM](https://static.shixincube.com/cube/assets/showcase/im.gif)|
+
+| 视频聊天(1) | 视频聊天(2) |
+|:----:|:----:|
+|![VideoChat1](https://static.shixincube.com/cube/assets/showcase/videochat_1.gif)|![VideoChat2](https://static.shixincube.com/cube/assets/showcase/videochat_2.gif)|
+
+| 多人视频聊天(1) | 多人视频聊天(2) |
+|:----:|:----:|
+|![VideoChat3](https://static.shixincube.com/cube/assets/showcase/videochat_3.gif)|![VideoChat4](https://static.shixincube.com/cube/assets/showcase/videochat_4.gif)|
+
+| 会议 |
+|:----:|
+|![Conf100](https://static.shixincube.com/cube/assets/showcase/screen_conference.jpg)|
+|![ConfTile](https://static.shixincube.com/cube/assets/showcase/screen_conference_tile.jpg)|
+|![StartConf](https://static.shixincube.com/cube/assets/showcase/start_conference.gif)|
+
+| 共享桌面 |
+|:----:|
+|![ScreenSharing](https://static.shixincube.com/cube/assets/showcase/screen_sharing.gif)|
+
+| 云端文件存储 |
+|:----:|
+|![CFS](https://static.shixincube.com/cube/assets/showcase/cloud_file.gif)|
+
+| 白板 |
+|:----:|
+|![Whiteboard](https://static.shixincube.com/cube/assets/showcase/whiteboard.gif)|
+
+| 直播 |
+|:----:|
+|![Live](https://static.shixincube.com/cube/assets/showcase/live.gif)|
+
+| 在线课堂 |
+|:----:|
+|![OnlineClassroom](https://static.shixincube.com/cube/assets/showcase/online_classroom.gif)|
+
+| 文档协作 |
+|:----:|
+|![DocCollaboration](https://static.shixincube.com/cube/assets/showcase/doc_collaboration.gif)|
+
+
 ## 简介
 
 Cube Server 是 Cube 的服务器端项目。 Cube 服务器端由三个主要部分构成：
@@ -28,43 +74,13 @@ Cube Server 是 Cube 的服务器端项目。 Cube 服务器端由三个主要�
 2. 业务单元。
 3. 集群总线。
 
+
 ## 快速开始
 
 TODO
+
 
 ## 获得帮助
 
 您可以访问 [时信魔方官网](https://www.shixincube.com/) 获得更多信息。
 
-## 谁在使用 Cube
-
-<div>
-  <div style="display:inline-block;padding:10px 8px 10px 8px;">
-    <table cellpadding="0" cellspacing="0" style="border:0px;border-collapse:unset;box-shadow:none;text-align: center;padding:0px 8px 0px 8px;"><tr><td>
-      <a href="https://www.spap.com/" target="_blank" style="border-bottom:0px;"><img class="applogo" style="border-radius:16px;" src="https://static.shixincube.com/cube/assets/images/logo/spap.png" alt="www.spap.com" /></a>
-      <p><a href="https://www.spap.com/" target="_blank">司派</a></p>
-      <span>会工作的人都在司派</span>
-    </td></tr></table>
-  </div>
-  <div style="display:inline-block;padding:10px 8px 10px 8px;">
-    <table cellpadding="0" cellspacing="0" style="border:0px;border-collapse:unset;box-shadow:none;text-align: center;padding:0px 8px 0px 8px;"><tr><td>
-      <a href="https://www.seehey.com/" target="_blank" style="border-bottom:0px;"><img class="applogo" style="border-radius:16px;" src="https://static.shixincube.com/cube/assets/images/logo/seehey.png" alt="www.seehey.com" /></a>
-      <p><a href="https://www.seehey.com/" target="_blank">SeeHey</a></p>
-      <span>高效企业协作平台</span>
-    </td></tr></table>
-  </div>
-  <div style="display:inline-block;padding:10px 8px 10px 8px;">
-    <table cellpadding="0" cellspacing="0" style="border:0px;border-collapse:unset;box-shadow:none;text-align: center;padding:0px 8px 0px 8px;"><tr><td>
-      <a href="https://card.spap.com/" target="_blank" style="border-bottom:0px;"><img class="applogo" style="border-radius:16px;" src="https://static.shixincube.com/cube/assets/images/logo/cardcase.png" alt="名片派" /></a>
-      <p><a href="https://card.spap.com/" target="_blank">名片派</a></p>
-      <span>商务人士的数字化智能名片夹</span>
-    </td></tr></table>
-  </div>
-  <div style="display:inline-block;padding:10px 8px 10px 8px;">
-    <table cellpadding="0" cellspacing="0" style="border:0px;border-collapse:unset;box-shadow:none;text-align: center;padding:0px 8px 0px 8px;"><tr><td>
-      <a href="https://apps.apple.com/cn/app/%E8%81%94%E5%AE%A2%E5%AD%A6%E9%99%A2/id1477432872" target="_blank" style="border-bottom:0px;"><img class="applogo" style="border-radius:16px;" src="https://static.shixincube.com/cube/assets/images/logo/lianke.png" alt="联客学院" /></a>
-      <p><a href="https://apps.apple.com/cn/app/%E8%81%94%E5%AE%A2%E5%AD%A6%E9%99%A2/id1477432872" target="_blank">联客学院</a></p>
-      <span>全新的企业内部培训服务平台</span>
-    </td></tr></table>
-  </div>
-</div>
