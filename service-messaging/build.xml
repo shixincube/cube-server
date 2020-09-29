@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 
 <!-- ======================================================================= -->
-<!-- Cube Service Build File                                                 -->
+<!-- Cube Messaging Build File                                               -->
 <!-- ======================================================================= -->
 
-<project name="cube-service" default="build-release" basedir=".">
+<project name="cube-service-messaging" default="build-release" basedir=".">
 
 	<property name="version.brand" value="3.0" />
 
@@ -42,7 +42,7 @@
 		<delete failonerror="false" includeemptydirs="true">
 			<fileset dir="${build.dir}"/>
 		</delete>
-		<delete file="${build.jar}/cube-service.jar" failonerror="false" />
+		<delete file="${build.jar}/cube-service-messaging.jar" failonerror="false" />
 	</target>
 
 	<!-- =================================================================== -->
@@ -52,8 +52,8 @@
 		<javac srcdir="${src.dir}" destdir="${build.classes}" debug="on" encoding="UTF-8" deprecation="on" optimize="off">
 			<classpath refid="master-classpath" />
 		</javac>
-		<delete file="${build.jar}/cube-service.jar" failonerror="false" />
-		<jar destfile="${build.jar}/cube-service.jar" basedir="${build.classes}" excludes="cube/service/test/**" />
+		<delete file="${build.jar}/cube-service-messaging.jar" failonerror="false" />
+		<jar destfile="${build.jar}/cube-service-messaging.jar" basedir="${build.classes}" excludes="cube/service/test/**" />
 	</target>
 
 	<!-- =================================================================== -->
@@ -63,16 +63,16 @@
 		<javac srcdir="${src.dir}" destdir="${build.classes}" debug="off" encoding="UTF-8" deprecation="on" optimize="on">
 			<classpath refid="master-classpath" />
 		</javac>
-		<delete file="${build.jar}/cube-service.jar" failonerror="false" />
-		<jar destfile="${build.jar}/cube-service.jar" basedir="${build.classes}" excludes="cube/service/test/**" />
+		<delete file="${build.jar}/cube-service-messaging.jar" failonerror="false" />
+		<jar destfile="${build.jar}/cube-service-messaging.jar" basedir="${build.classes}" excludes="cube/service/test/**" />
 	</target>
 
 	<!-- =================================================================== -->
 	<!-- Builds project for debug                                            -->
 	<!-- =================================================================== -->
 	<target name="build-debug" depends="debug">
-		<delete file="../build/cube-service-${version.brand}.jar" failonerror="false" />
-		<copy file="${build.jar}/cube-service.jar" tofile="../build/cube-service-${version.brand}.jar"/>
+		<delete file="../build/cube-service-messaging-${version.brand}.jar" failonerror="false" />
+		<copy file="${build.jar}/cube-service-messaging.jar" tofile="../build/cube-service-messaging-${version.brand}.jar"/>
 		<echo>Build project for debug.</echo>
 		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>
 	</target>
@@ -81,8 +81,8 @@
 	<!-- Builds project for release                                          -->
 	<!-- =================================================================== -->
 	<target name="build-release" depends="release">
-		<delete file="../build/cube-service-${version.brand}.jar" failonerror="false" />
-		<copy file="${build.jar}/cube-service.jar" tofile="../build/cube-service-${version.brand}.jar"/>
+		<delete file="../build/cube-service-messaging-${version.brand}.jar" failonerror="false" />
+		<copy file="${build.jar}/cube-service-messaging.jar" tofile="../build/cube-service-messaging-${version.brand}.jar"/>
 		<echo>Build project for release.</echo>
 		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>
 	</target>
@@ -94,7 +94,7 @@
 		<delete failonerror="false" includeemptydirs="true">
 			<fileset dir="${doc.dir}"/>
 		</delete>
-		<javadoc destdir="${doc.dir}" windowtitle="Cube Service API Documents" encoding="UTF-8" docencoding="UTF-8">
+		<javadoc destdir="${doc.dir}" windowtitle="Cube Messaging API Documents" encoding="UTF-8" docencoding="UTF-8">
 			<packageset dir="${src.dir}">
 				<include name="**"/>
 				<exclude name="cube/service/test/**" />

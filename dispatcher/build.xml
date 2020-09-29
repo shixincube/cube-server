@@ -53,7 +53,7 @@
 			<classpath refid="master-classpath" />
 		</javac>
 		<delete file="${build.jar}/cube-dispatcher.jar" failonerror="false" />
-		<jar destfile="${build.jar}/cube-dispatcher.jar" basedir="${build.classes}" excludes="cube/test/**" />
+		<jar destfile="${build.jar}/cube-dispatcher.jar" basedir="${build.classes}" excludes="cube/dispatcher/test/**" />
 	</target>
 
 	<!-- =================================================================== -->
@@ -64,7 +64,7 @@
 			<classpath refid="master-classpath" />
 		</javac>
 		<delete file="${build.jar}/cube-dispatcher.jar" failonerror="false" />
-		<jar destfile="${build.jar}/cube-dispatcher.jar" basedir="${build.classes}" excludes="cube/test/**" />
+		<jar destfile="${build.jar}/cube-dispatcher.jar" basedir="${build.classes}" excludes="cube/dispatcher/test/**" />
 	</target>
 
 	<!-- =================================================================== -->
@@ -97,7 +97,7 @@
 		<javadoc destdir="${doc.dir}" windowtitle="Cube Dispatcher API Documents" encoding="UTF-8" docencoding="UTF-8">
 			<packageset dir="${src.dir}">
 				<include name="**"/>
-				<exclude name="cube/test/**" />
+				<exclude name="cube/dispatcher/test/**" />
 			</packageset>
 		</javadoc>
 	</target>
