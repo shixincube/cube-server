@@ -46,6 +46,7 @@ public class SharedMemoryCache extends AbstractCache {
 
     /**
      * 构造函数。
+     *
      * @param name 缓存器名称。
      */
     public SharedMemoryCache(String name) {

@@ -37,6 +37,11 @@ public enum ContactActions {
     Self("self"),
 
     /**
+     * 申请联系人所有终端下线。
+     */
+    Leave("leave"),
+
+    /**
      * 设备超时。
      */
     DeviceTimeout("deviceTimeout"),

@@ -71,6 +71,7 @@ public class PluginSystem<T extends Hook> {
             System.loadLibrary("luajava-1.1");
         } catch (UnsatisfiedLinkError e) {
             System.err.println("Native code library failed to load.\n" + e);
+            Logger.e("PluginSystem", "Native code library failed to load.", e);
         }
     }
 

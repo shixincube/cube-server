@@ -29,16 +29,24 @@ package cube.cache;
 import cube.core.CacheKey;
 
 /**
- *
+ * Shared Memory 缓存的主键实现。
  */
 public class SMCacheKey extends CacheKey {
 
+    /**
+     * 主键。
+     */
     protected String key;
 
     public SMCacheKey(String key) {
         this.key = key;
     }
 
+    /**
+     * 获取主键。
+     *
+     * @return 返回主键。
+     */
     public String get() {
         return this.key;
     }

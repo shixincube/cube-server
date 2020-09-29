@@ -27,7 +27,7 @@
 package cube.core;
 
 /**
- *
+ * 抽象层模块。
  */
 public abstract class AbstractModule implements Module {
 
@@ -51,6 +51,6 @@ public abstract class AbstractModule implements Module {
 
     @Override
     public MessageQueue getMQ(String name) {
-        return null;
+        return this.kernel.getMQ(name);
     }
 }

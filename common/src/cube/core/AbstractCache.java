@@ -39,6 +39,7 @@ public abstract class AbstractCache implements Cache {
 
     /**
      * 构造函数。
+     *
      * @param name 缓存名称。
      */
     public AbstractCache(String name) {
@@ -47,6 +48,7 @@ public abstract class AbstractCache implements Cache {
 
     /**
      * 返回缓存名称。
+     *
      * @return
      */
     @Override

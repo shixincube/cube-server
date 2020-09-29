@@ -28,6 +28,9 @@ package cube.core;
 
 import cell.util.json.JSONObject;
 
+/**
+ * 抽象层 MQ 。
+ */
 public abstract class AbstractMQ implements MessageQueue {
 
     private String name;
@@ -40,6 +43,7 @@ public abstract class AbstractMQ implements MessageQueue {
 
     /**
      * 返回缓存名称。
+     *
      * @return
      */
     @Override

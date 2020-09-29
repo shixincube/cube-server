@@ -50,10 +50,11 @@ public class ModuleEvent implements JSONable {
     private JSONObject data;
 
     /**
+     * 构造函数。
      *
-     * @param moduleName
-     * @param eventName
-     * @param data
+     * @param moduleName 模块名。
+     * @param eventName 事件名。
+     * @param data 对应的数据。
      */
     public ModuleEvent(String moduleName, String eventName, JSONObject data) {
         this.moduleName = moduleName;
@@ -62,6 +63,7 @@ public class ModuleEvent implements JSONable {
     }
 
     /**
+     * 构造函数。
      *
      * @param json
      */

@@ -45,8 +45,9 @@ public class Group extends Contact {
 
     /**
      * 构造函数。
-     * @param id
-     * @param name
+     *
+     * @param id 群组 ID 。
+     * @param name 群组显示名。
      */
     public Group(Long id, String name) {
         super(id, name);
@@ -55,7 +56,8 @@ public class Group extends Contact {
 
     /**
      * 构造函数。
-     * @param json
+     *
+     * @param json JSON 形式的群组数据。
      */
     public Group(JSONObject json) {
         super(json);
@@ -113,8 +115,9 @@ public class Group extends Contact {
 
     /**
      * 判断是否是群组结构的 JSON 数据格式。
-     * @param json
-     * @return
+     *
+     * @param json 待判断的 JSON 数据。
+     * @return 如果 JSON 符合群组数据结构返回 {@code true} 。
      */
     public static boolean isGroup(JSONObject json) {
         if (json.has("members")) {

@@ -38,6 +38,7 @@ public class AuthTool {
 
     /**
      * 构造函数。
+     *
      * @param workingPath 指定工作路径。
      */
     public AuthTool(String workingPath) {

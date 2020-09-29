@@ -75,6 +75,7 @@ public class AuthToken implements JSONable {
 
     /**
      * 构造函数。
+     *
      * @param code 令牌的编码。
      * @param domain 令牌有效域。
      * @param appKey App 键。
@@ -95,6 +96,7 @@ public class AuthToken implements JSONable {
 
     /**
      * 构造函数。
+     *
      * @param json 描述令牌的 JSON 对象。
      */
     public AuthToken(JSONObject json) {
@@ -133,6 +135,7 @@ public class AuthToken implements JSONable {
 
     /**
      * 生成 Base64 字符串。
+     *
      * @return 返回 Base64 数据的字符串。
      */
     public String toBase64() {

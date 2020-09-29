@@ -30,16 +30,24 @@ import cell.util.json.JSONObject;
 import cube.core.CacheValue;
 
 /**
- * 
+ * Shared Memory 缓存的值实现。
  */
 public class SMCacheValue extends CacheValue {
 
+    /**
+     * 数据值。
+     */
     protected JSONObject value;
 
     public SMCacheValue(JSONObject value) {
         this.value = value;
     }
 
+    /**
+     * 获取 JSON 形式的数据值。
+     *
+     * @return 返回 JSON 形式的数据值。
+     */
     public JSONObject get() {
         return this.value;
     }

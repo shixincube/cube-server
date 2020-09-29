@@ -33,7 +33,7 @@ import cube.core.MQMessage;
 import cube.core.MQTopic;
 
 /**
- *
+ * 基于适配器实现的 MQ 。
  */
 public class AdapterMQ extends AbstractMQ {
 

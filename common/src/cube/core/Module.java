@@ -43,14 +43,16 @@ public interface Module {
 
     /**
      * 获取指定名称的缓存器。
-     * @param name
+     *
+     * @param name 缓存器名称。
      * @return
      */
     public Cache getCache(String name);
 
     /**
      * 获取指定名称的消息队列。
-     * @param name
+     *
+     * @param name 消息队列名称。
      * @return
      */
     public MessageQueue getMQ(String name);

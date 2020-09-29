@@ -35,18 +35,21 @@ public interface Cache {
 
     /**
      * 返回缓存器名称。
+     *
      * @return 返回缓存器名称。
      */
     public String getName();
 
     /**
      * 返回缓存的配置信息。
+     *
      * @return 返回缓存的配置信息。
      */
     public JSONObject getConfig();
 
     /**
      * 配置缓存器。
+     *
      * @param config 指定配置信息和参数。
      */
     public void configure(JSONObject config);
@@ -63,6 +66,7 @@ public interface Cache {
 
     /**
      * 写入数据。
+     *
      * @param key 数据主键。
      * @param value 数据值。
      */
@@ -70,6 +74,7 @@ public interface Cache {
 
     /**
      * 读取数据。
+     *
      * @param key 数据主键。
      * @return 返回数据值。
      */
@@ -77,6 +82,7 @@ public interface Cache {
 
     /**
      * 以表达式描述的方式读取数据。
+     *
      * @param expression 缓存表达式。
      * @return 返回数据值。
      */
@@ -84,12 +90,14 @@ public interface Cache {
 
     /**
      * 移除主键对应的数据。
+     *
      * @param key 数据主键。
      */
     public void remove(CacheKey key);
 
     /**
      * 执行缓存事务。
+     *
      * @param key 主键。
      * @param transaction 待执行的事务。
      */
