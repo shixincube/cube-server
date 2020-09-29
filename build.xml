@@ -14,6 +14,8 @@
 	<property name="project-dispatcher.dir" value="dispatcher" />
 	<property name="project-service.dir" value="service" />
 
+	<property name="project-service-messaging.dir" value="service-messaging" />
+
 	<property name="build.dir" value="build" />
 
 	<property name="deploy.dir" value="deploy" />
@@ -23,7 +25,7 @@
 	</target>
 
 	<!-- =================================================================== -->
-	<!-- Builds common                                                       -->
+	<!-- Builds common project                                               -->
 	<!-- =================================================================== -->
 	<target name="build-common">
 		<ant antfile="build.xml"
@@ -34,7 +36,7 @@
 	</target>
 
 	<!-- =================================================================== -->
-	<!-- Builds dispatcher                                                   -->
+	<!-- Builds dispatcher project                                           -->
 	<!-- =================================================================== -->
 	<target name="build-dispatcher" depends="build-common">
 		<ant antfile="build.xml"
@@ -45,7 +47,7 @@
 	</target>
 
 	<!-- =================================================================== -->
-	<!-- Builds service                                                   -->
+	<!-- Builds all service projects                                         -->
 	<!-- =================================================================== -->
 	<target name="build-service" depends="build-common">
 		<ant antfile="build.xml"
@@ -53,10 +55,15 @@
 			 inheritall="false"
 			 inheritrefs="false"
 			 target="build-release" />
+		<ant antfile="build.xml"
+			 dir="${project-service-messaging.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-release" />
 	</target>
 
 	<!-- =================================================================== -->
-	<!-- Deploy                                                              -->
+	<!-- Deploy all projects                                                 -->
 	<!-- =================================================================== -->
 	<target name="deploy" depends="build-all">
 		<copy todir="${deploy.dir}/libs/">
@@ -74,6 +81,7 @@
 			<fileset dir="${deploy.dir}/libs/">
 				<include name="cube-common-*.jar" />
 				<include name="cube-dispatcher-*.jar" />
+				<include name="cube-service-*.jar" />
 			</fileset>
 		</delete>
 		<delete failonerror="false" includeemptydirs="true">
