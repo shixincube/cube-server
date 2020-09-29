@@ -53,7 +53,7 @@
 	</target>
 
 	<!-- =================================================================== -->
-	<!-- Builds project for release                                          -->
+	<!-- Dispenses project for release                                       -->
 	<!-- =================================================================== -->
 	<target name="release" depends="clean, init">
 		<javac srcdir="${src.dir}" destdir="${build.classes}" debug="off" encoding="UTF-8" deprecation="on" optimize="on">
