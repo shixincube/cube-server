@@ -35,6 +35,8 @@ import cube.core.Kernel;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
 
+import java.io.File;
+
 /**
  * Cell 容器监听器。
  */
@@ -68,8 +70,13 @@ public class ServiceCarpet implements CellListener {
     private void setupKernel() {
         JSONObject tokenCache = new JSONObject();
         try {
+            String filepath= "config/token-pool.properties";
+            File file = new File(filepath);
+            if (!file.exists()) {
+                filepath = "token-pool.properties";
+            }
             tokenCache.put("type", SharedMemoryCache.TYPE);
-            tokenCache.put("configFile", "token-pool.properties");
+            tokenCache.put("configFile", filepath);
         } catch (JSONException e) {
             e.printStackTrace();
         }

@@ -4,3 +4,6 @@
 *.class
 build
 dispatcher/logs
+service/bin
+*.rt
+*.ptc

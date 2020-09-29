@@ -102,6 +102,7 @@ public class ContactManager implements CelletAdapterListener {
         this.storage = new ContactStorage();
 
         SharedMemoryConfig config = new SharedMemoryConfig("contacts.properties");
+
         this.contactsCache = new SharedMemory(config);
         this.contactsCache.start();
 
