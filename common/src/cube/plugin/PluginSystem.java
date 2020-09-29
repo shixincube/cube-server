@@ -47,6 +47,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PluginSystem<T extends Hook> {
 
     /**
+     * 是否使用 Lua 支持。
+     */
+    public static boolean useLua = false;
+
+    /**
      * 钩子列表。
      */
     private ConcurrentHashMap<String, Hook> hooks;
@@ -67,11 +72,13 @@ public class PluginSystem<T extends Hook> {
     public static void load() {
         Logger.i("PluginSystem", "Start plugin system");
 
-        try {
-            System.loadLibrary("luajava-1.1");
-        } catch (UnsatisfiedLinkError e) {
-            System.err.println("Native code library failed to load.\n" + e);
-            Logger.e("PluginSystem", "Native code library failed to load.", e);
+        if (PluginSystem.useLua) {
+            try {
+                System.loadLibrary("luajava-1.1");
+            } catch (UnsatisfiedLinkError e) {
+                System.err.println("Native code library failed to load.\n" + e);
+                Logger.e("PluginSystem", "Native code library failed to load.", e);
+            }
         }
     }
 

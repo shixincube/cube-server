@@ -45,6 +45,7 @@ import cube.common.entity.*;
 import cube.service.Director;
 import cube.service.contact.ContactManager;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -79,7 +80,17 @@ public final class MessagingManager implements CelletAdapterListener {
     }
 
     private MessagingManager() {
-        SeriesMemoryConfig config = new SeriesMemoryConfig("messaging-series-memory.properties");
+        this.initMessageCache();
+    }
+
+    private void initMessageCache() {
+        String filepath = "config/messaging-series-memory.properties";
+        File file = new File(filepath);
+        if (!file.exists()) {
+            filepath = "messaging-series-memory.properties";
+        }
+
+        SeriesMemoryConfig config = new SeriesMemoryConfig(filepath);
         this.messageCache = new SeriesMemory(config);
     }
 

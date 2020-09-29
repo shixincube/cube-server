@@ -7,3 +7,4 @@ dispatcher/logs
 service/bin
 *.rt
 *.ptc
+service/logs

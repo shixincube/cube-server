@@ -40,6 +40,7 @@ public class Start {
     public static void main(String[] args) {
         // 使用 Boot 启动 Cell 线程
         CellBoot boot = new CellBoot();
+        boot.setTag("cube-service");
         boot.start();
 
         do {

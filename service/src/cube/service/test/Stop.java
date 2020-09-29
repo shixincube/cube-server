@@ -39,6 +39,7 @@ public class Stop {
      */
     public static void main(String[] args) {
         CellBoot boot = new CellBoot();
+        boot.setTag("cube-service");
         boot.stop();
     }
 }
