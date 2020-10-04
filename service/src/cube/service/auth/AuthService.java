@@ -71,7 +71,7 @@ public class AuthService extends AbstractModule {
     public AuthToken applyToken(String domain, String appKey, Long cid) {
         AuthToken token = null;
 
-        if (domain.equals("www.spap.com") && appKey.equals("SPAP-CUBE-DEMO")) {
+        if (domain.equalsIgnoreCase("shixincube.com") && appKey.equalsIgnoreCase("shixin-cubeteam-opensource-appkey")) {
             // 演示用数据
 
             String code = Utils.randomString(32);
