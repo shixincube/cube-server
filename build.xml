@@ -6,9 +6,7 @@
 
 <project name="cube-server" default="build-all" basedir=".">
 
-	<property name="version.brand" value="3.0" />
-
-	<property name="java.version" value="8" />
+	<!--property name="java.version" value="8" /-->
 
 	<property name="project-common.dir" value="common" />
 	<property name="project-dispatcher.dir" value="dispatcher" />
@@ -106,7 +104,15 @@
 	<target name="deploy" depends="clean-deploy">
 		<copy todir="${deploy.dir}/libs/">
 			<fileset dir="${build.dir}">
-				<include name="*.jar" />
+				<include name="cube-common-*.jar" />
+				<include name="cube-dispatcher-*.jar" />
+				<include name="cube-service-*.jar" />
+				<exclude name="*service-messaging*" />
+			</fileset>
+		</copy>
+		<copy todir="${deploy.dir}/cellets/">
+			<fileset dir="${build.dir}">
+				<include name="cube-service-messaging-*.jar" />
 			</fileset>
 		</copy>
 	</target>
@@ -120,6 +126,11 @@
 				<include name="cube-common-*.jar" />
 				<include name="cube-dispatcher-*.jar" />
 				<include name="cube-service-*.jar" />
+			</fileset>
+		</delete>
+		<delete failonerror="false" includeemptydirs="true">
+			<fileset dir="${deploy.dir}/cellets/">
+				<include name="cube-service-messaging-*.jar" />
 			</fileset>
 		</delete>
 		<delete failonerror="false" includeemptydirs="true">

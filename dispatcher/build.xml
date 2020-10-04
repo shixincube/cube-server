@@ -8,7 +8,8 @@
 
 	<property name="version.brand" value="3.0" />
 
-	<property name="java.version" value="8" />
+	<property name="version.tgt" value="1.8" />
+	<property name="version.src" value="1.8" />
 
 	<property name="src.dir" value="src" />
 	<property name="lib.dir" value="../../cube-server-dependencies" />
@@ -49,7 +50,7 @@
 	<!-- Dispenses project for debug                                         -->
 	<!-- =================================================================== -->
 	<target name="debug" depends="clean, init">
-		<javac srcdir="${src.dir}" destdir="${build.classes}" debug="on" encoding="UTF-8" deprecation="on" optimize="off">
+		<javac target="${version.tgt}" source="${version.src}" fork="yes" srcdir="${src.dir}" destdir="${build.classes}" debug="on" encoding="UTF-8" deprecation="on" optimize="off">
 			<classpath refid="master-classpath" />
 		</javac>
 		<delete file="${build.jar}/cube-dispatcher.jar" failonerror="false" />
@@ -60,7 +61,7 @@
 	<!-- Dispenses project for release                                       -->
 	<!-- =================================================================== -->
 	<target name="release" depends="clean, init">
-		<javac srcdir="${src.dir}" destdir="${build.classes}" debug="off" encoding="UTF-8" deprecation="on" optimize="on">
+		<javac target="${version.tgt}" source="${version.src}" fork="yes" srcdir="${src.dir}" destdir="${build.classes}" debug="off" encoding="UTF-8" deprecation="on" optimize="on">
 			<classpath refid="master-classpath" />
 		</javac>
 		<delete file="${build.jar}/cube-dispatcher.jar" failonerror="false" />

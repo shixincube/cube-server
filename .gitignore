@@ -8,3 +8,5 @@ service/bin
 *.rt
 *.ptc
 service/logs
+*.out
+*.log

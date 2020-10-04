@@ -156,4 +156,4 @@ cd deploy
 
 ## 获得帮助
 
-您可以访问 [时信魔方官网](https://www.shixincube.com/) 获得更多信息。
+您可以访问 [时信魔方官网](https://www.shixincube.com/) 获得更多信息。如果您在使用 Cube 的过程中需要帮助可以发送邮件到 [cube#spap.com](mailto:cube@spap.com) (将地址中的 *#* 换成 *@* ） 。

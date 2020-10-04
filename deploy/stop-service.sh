@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 # -----------------------------------------------------------------------------
-# Start Cube Server
+# Stop Cube Service
 # -----------------------------------------------------------------------------
 
 # Better OS/400 detection
@@ -26,7 +26,22 @@ while [ -h "$PRG" ] ; do
 done
 
 PRGDIR=`dirname "$PRG"`
+EXECUTABLE=shutdown.sh
 
-sh "$PRGDIR"/start-service.sh
+# Check that target executable exists
+if $os400; then
+  # -x will Only work on the os400 if the files are: 
+  # 1. owned by the user
+  # 2. owned by the PRIMARY group of the user
+  # this will not work if the user belongs in secondary groups
+  eval
+else
+  if [ ! -x "$PRGDIR"/"$EXECUTABLE" ]; then
+    echo "Cannot find $PRGDIR/bin/$EXECUTABLE"
+    echo "This file is needed to run this program"
+    exit 1
+  fi
+fi 
 
-sh "$PRGDIR"/start-dispatcher.sh
+echo "\nStop SERVICE: $PRGDIR/$EXECUTABLE service\n"
+exec "$PRGDIR"/"$EXECUTABLE" service
