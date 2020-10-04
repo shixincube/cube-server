@@ -25,9 +25,20 @@
 	</target>
 
 	<!-- =================================================================== -->
-	<!-- Builds common project                                               -->
+	<!-- Builds project common for debug                                     -->
 	<!-- =================================================================== -->
-	<target name="build-common">
+	<target name="build-common-debug">
+		<ant antfile="build.xml"
+			 dir="${project-common.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-debug" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Builds project common for release                                   -->
+	<!-- =================================================================== -->
+	<target name="build-common-release">
 		<ant antfile="build.xml"
 			 dir="${project-common.dir}"
 			 inheritall="false"
@@ -36,9 +47,20 @@
 	</target>
 
 	<!-- =================================================================== -->
-	<!-- Builds dispatcher project                                           -->
+	<!-- Builds project dispatcher for debug                                 -->
 	<!-- =================================================================== -->
-	<target name="build-dispatcher" depends="build-common">
+	<target name="build-dispatcher-debug" depends="build-common-debug">
+		<ant antfile="build.xml"
+			 dir="${project-dispatcher.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-debug" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Builds project dispatcher for release                               -->
+	<!-- =================================================================== -->
+	<target name="build-dispatcher-release" depends="build-common-release">
 		<ant antfile="build.xml"
 			 dir="${project-dispatcher.dir}"
 			 inheritall="false"
@@ -47,9 +69,25 @@
 	</target>
 
 	<!-- =================================================================== -->
-	<!-- Builds all service projects                                         -->
+	<!-- Builds all service projects for debug                               -->
 	<!-- =================================================================== -->
-	<target name="build-service" depends="build-common">
+	<target name="build-service-debug" depends="build-common-debug">
+		<ant antfile="build.xml"
+			 dir="${project-service.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-debug" />
+		<ant antfile="build.xml"
+			 dir="${project-service-messaging.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-debug" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Builds all service projects for release                             -->
+	<!-- =================================================================== -->
+	<target name="build-service-release" depends="build-common-release">
 		<ant antfile="build.xml"
 			 dir="${project-service.dir}"
 			 inheritall="false"
@@ -65,7 +103,7 @@
 	<!-- =================================================================== -->
 	<!-- Deploy all projects                                                 -->
 	<!-- =================================================================== -->
-	<target name="deploy" depends="build-all">
+	<target name="deploy" depends="clean-deploy">
 		<copy todir="${deploy.dir}/libs/">
 			<fileset dir="${build.dir}">
 				<include name="*.jar" />
@@ -92,9 +130,16 @@
 	</target>
 
 	<!-- =================================================================== -->
-	<!-- Builds all projects                                                 -->
+	<!-- Builds all projects for debug                                       -->
 	<!-- =================================================================== -->
-	<target name="build-all" depends="init,build-common,build-dispatcher,build-service">
+	<target name="build-all-debug" depends="init,build-common-debug,build-dispatcher-debug,build-service-debug">
+		<echo>Build all projects for debug.</echo>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Builds all projects for release                                     -->
+	<!-- =================================================================== -->
+	<target name="build-all" depends="init,build-common-release,build-dispatcher-release,build-service-release">
 		<echo>Build all projects.</echo>
 	</target>
 

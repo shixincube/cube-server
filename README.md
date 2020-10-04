@@ -68,19 +68,92 @@ Cube 提供的协作功能包括：
 
 ## 简介
 
-Cube Server 是 Cube 的服务器端项目。 Cube 服务器端由三个主要部分构成：
+Cube Server 是 Cube 的服务器端项目。 Cube 服务器端由三大构件组成：
 
-1. 网关层。
-2. 业务单元。
-3. 集群总线。
+1. 网关服务层。
+2. 功能业务单元与集群总线。
+3. 存储管理。
 
 
-## 快速开始
+## 如何从源代码构建项目
 
-TODO
+Cube Server 目前支持的操作系统包括：**Ubuntu** 、**CentOS** 、**Debian** 、**Fedora** 和 **openSUSE** 。
+
+如果您需要集群部署请参看 Cube 的技术白皮书和部署手册，该手册可以从 [Cube Manual](https://gitee.com/shixinhulian/cube-manual) 中获取。
+
+### 1. 工具与软件准备
+
+您需要在您的开发环境中正确安装以下工具：
+
+1. 安装 [Java SE](https://www.oracle.com/java/technologies/javase-downloads.html) 。建议从 Oracle 官网下载安装包后，按照安装程序引导进行安装。Cube Server 需要的最低版本为 Java SE 8 。
+
+2. 安装 [Apache Ant](http://ant.apache.org/) 。
+
+  适用 Ubuntu 的安装命令：`sudo apt-get install ant`
+
+  适用 CentOS 的安装命令：`yum -y install ant`
+
+3. 安装 [gcc](http://gcc.gnu.org/) 、[make](http://www.gnu.org/software/make/) 、[cmake](https://cmake.org/) 等。
+
+  适用 Ubuntu 的安装命令：`sudo apt-get install build-essential`
+
+  适用 CentOS 的安装命令：`yum groupinstall "Development Tools" "Development Libraries"`
+
+
+### 2. 下载工程源码和依赖库
+
+从 [cube-server](https://gitee.com/shixinhulian/cube-server) 获得 Cube Server 的源代码。克隆 [cube-server](https://gitee.com/shixinhulian/cube-server) 代码库：
+
+  `git clone https://gitee.com/shixinhulian/cube-server.git`
+
+从 [cube-server-dependencies](https://gitee.com/shixinhulian/cube-server-dependencies) 获得 Cube Server 需要的依赖库。克隆 [cube-server-dependencies](https://gitee.com/shixinhulian/cube-server-dependencies) 代码库：
+
+  `git clone https://gitee.com/shixinhulian/cube-server-dependencies.git`
+
+
+**需要注意以下事项：**
+
+ * *cube-server* 和 *cube-server-dependencies* 目录同级。
+ * 不能修改 *cube-server-dependencies* 的工程目录名。
+
+
+ 就绪的工程目录结构如下：
+
+```
+├── cube                            # 您创建的用于放置 Cube Server 的目录
+    ├── cube-server                 # cube-server 代码库目录
+    └── cube-server-dependencies    # cube-server-dependencies 代码库目录
+```
+
+
+### 3. 运行构建命令
+
+从代码库下载代码之后，进入 *cube-server* 项目目录依次执行以下步骤来进行项目构建。
+
+1. 执行构建命令： `ant build-all` 。如果需要构建 DEBUG 版本，使用命令：`ant build-all-debug` 。
+
+ 执行构建命令之后，会在项目目录的 `build` 子目录下生成 Cube Server 的工程输出文件。
+
+2. 执行部署命令：`ant deploy` ，将编译成功的工程文件安装到部署目录下。
+
+
+### 4. 启动与停止服务器
+
+1. 启动服务。进入 `deploy` 目录，执行 `start.sh` 脚本。
+
+```shell
+cd deploy
+./start.sh
+```
+
+2. 停止服务器。进入 `deploy` 目录，执行 `stop.sh` 脚本。
+
+```shell
+cd deploy
+./stop.sh
+```
 
 
 ## 获得帮助
 
 您可以访问 [时信魔方官网](https://www.shixincube.com/) 获得更多信息。
-
