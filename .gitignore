@@ -10,3 +10,5 @@ service/bin
 service/logs
 *.out
 *.log
+dispatcher/bin
+out

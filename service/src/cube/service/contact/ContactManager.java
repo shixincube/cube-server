@@ -130,13 +130,13 @@ public class ContactManager implements CelletAdapterListener {
     }
 
     /**
-     * 进行 Self 申请。
+     * 终端签入。
      * @param contact
      * @return
      */
-    public Contact setSelf(final Contact contact) {
+    public Contact signIn(final Contact contact) {
         // 在该方法里插入 Hook
-        ContactHook hook = this.pluginSystem.getSelfHook();
+        ContactHook hook = this.pluginSystem.getSignInHook();
         hook.apply(contact);
 
         final Object mutex = new Object();

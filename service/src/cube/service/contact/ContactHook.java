@@ -33,7 +33,7 @@ import cube.plugin.Hook;
  */
 public class ContactHook extends Hook {
 
-    public final static String Self = "Self";
+    public final static String SignIn = "SignIn";
 
     public final static String DeviceTimeout = "DeviceTimeout";
 

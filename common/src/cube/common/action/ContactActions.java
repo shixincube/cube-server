@@ -32,12 +32,17 @@ package cube.common.action;
 public enum ContactActions {
 
     /**
-     * 设置终端自身数据。
+     * 终端签入。
      */
-    Self("self"),
+    SignIn("signIn"),
 
     /**
-     * 申请联系人所有终端下线。
+     * 终端签出。
+     */
+    SignOut("signOut"),
+
+    /**
+     * 申请当前联系人的所有终端下线。
      */
     Leave("leave"),
 

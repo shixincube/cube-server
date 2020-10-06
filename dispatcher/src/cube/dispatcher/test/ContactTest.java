@@ -76,14 +76,14 @@ public class ContactTest implements TalkListener {
         this.nucleus.destroy();
     }
 
-    public void testSetSelf() {
+    public void testSignIn() {
         Contact self = new Contact(100200300L, "时信魔方");
         Device device = new Device("Mac", "MacBookPro Ambrose");
         self.addDevice(device);
 
         Logger.i(this.getClass(), "Start [testSetSelf] - " + self.getId());
 
-        Packet packet = new Packet(ContactActions.Self.name, self.toJSON());
+        Packet packet = new Packet(ContactActions.SignIn.name, self.toJSON());
         this.nucleus.getTalkService().speak("Contact", packet.toDialect());
 
         synchronized (this.mutex) {
@@ -120,7 +120,7 @@ public class ContactTest implements TalkListener {
     public void onListened(Speakable speakable, String cellet, Primitive primitive) {
         ActionDialect dialect = new ActionDialect(primitive);
         String action = dialect.getName();
-        if (action.equals(ContactActions.Self.name)) {
+        if (action.equals(ContactActions.SignIn.name)) {
             Packet packet = new Packet(dialect);
             Logger.i(action, "Data: " + packet.data.toString());
             synchronized (this.mutex) {
@@ -178,7 +178,7 @@ public class ContactTest implements TalkListener {
 
         try {
 
-            test.testSetSelf();
+            test.testSignIn();
 
             test.testGetContact();
 

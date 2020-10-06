@@ -24,41 +24,64 @@
  * SOFTWARE.
  */
 
-package cube.service.contact.task;
+package cube.dispatcher.contact;
 
-import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Packet;
+import cube.common.StateCode;
+import cube.common.Task;
 import cube.common.entity.Contact;
-import cube.service.ServiceTask;
-import cube.service.contact.ContactManager;
+import cube.dispatcher.Performer;
 
 /**
  * 设置自己联系人信息任务。
  */
-public class SelfTask extends ServiceTask {
+public class SignInTask extends Task {
 
-    public SelfTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
+    private Performer performer;
+
+    public SignInTask(ContactCellet cellet, TalkContext talkContext, Primitive primitive, Performer performer) {
         super(cellet, talkContext, primitive);
+        this.performer = performer;
+    }
+
+    protected void reset(TalkContext talkContext, Primitive primitive) {
+        this.talkContext = talkContext;
+        this.primitive = primitive;
     }
 
     @Override
     public void run() {
-        ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
-        Packet packet = new Packet(action);
-        JSONObject data = packet.data;
+        ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(this.primitive);
+        Packet packet = new Packet(actionDialect);
 
-        // 创建联系人对象
-        Contact self = new Contact(data, this.talkContext);
+        Contact self = new Contact(packet.data, this.talkContext);
+        this.performer.addContact(self);
 
-        // 设置终端的对应关系
-        Contact newSelf = ContactManager.getInstance().setSelf(self);
+        ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), actionDialect);
+        if (null == response) {
+            // 发生错误
+            Packet requestPacket = new Packet(packet.sn, packet.name, this.makeGatewayErrorPayload());
+            response = requestPacket.toDialect();
+        }
 
-        // 应答
-        this.cellet.speak(this.talkContext, this.makeResponse(action, packet.name, newSelf.toJSON()));
+        this.cellet.speak(this.talkContext, response);
+
+        ((ContactCellet)this.cellet).returnSignInTask(this);
+    }
+
+    private JSONObject makeGatewayErrorPayload() {
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("state", StateCode.makeState(StateCode.GatewayError, "Gateway error"));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return payload;
     }
 }

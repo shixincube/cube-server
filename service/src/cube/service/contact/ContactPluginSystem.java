@@ -26,7 +26,6 @@
 
 package cube.service.contact;
 
-import cube.common.entity.Contact;
 import cube.plugin.PluginSystem;
 
 /**
@@ -38,12 +37,12 @@ public class ContactPluginSystem extends PluginSystem<ContactHook> {
         this.build();
     }
 
-    public ContactHook getSelfHook() {
-        return this.getHook(ContactHook.Self);
+    public ContactHook getSignInHook() {
+        return this.getHook(ContactHook.SignIn);
     }
 
     private void build() {
-        ContactHook hook = new ContactHook(ContactHook.Self);
+        ContactHook hook = new ContactHook(ContactHook.SignIn);
         this.addHook(hook);
 
         hook = new ContactHook(ContactHook.DeviceTimeout);

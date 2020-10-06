@@ -61,7 +61,7 @@ public class ContactCellet extends Cellet {
     /**
      * Self 任务对象的缓存队列。
      */
-    private ConcurrentLinkedQueue<SelfTask> selfTaskQueue;
+    private ConcurrentLinkedQueue<SignInTask> signInTaskQueue;
 
     /**
      * Pass through 任务对象的缓存队列。
@@ -70,7 +70,7 @@ public class ContactCellet extends Cellet {
 
     public ContactCellet() {
         super(NAME);
-        this.selfTaskQueue = new ConcurrentLinkedQueue<>();
+        this.signInTaskQueue = new ConcurrentLinkedQueue<>();
         this.passTaskQueue = new ConcurrentLinkedQueue<>();
     }
 
@@ -91,26 +91,26 @@ public class ContactCellet extends Cellet {
         ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = actionDialect.getName();
 
-        if (ContactActions.Self.name.equals(action)) {
-            this.executor.execute(this.borrowSelfTask(talkContext, primitive));
+        if (ContactActions.SignIn.name.equals(action)) {
+            this.executor.execute(this.borrowSignInTask(talkContext, primitive));
         }
         else {
             this.executor.execute(this.borrowPassTask(talkContext, primitive));
         }
     }
 
-    protected SelfTask borrowSelfTask(TalkContext talkContext, Primitive primitive) {
-        SelfTask task = this.selfTaskQueue.poll();
+    protected SignInTask borrowSignInTask(TalkContext talkContext, Primitive primitive) {
+        SignInTask task = this.signInTaskQueue.poll();
         if (null == task) {
-            return new SelfTask(this, talkContext, primitive, this.performer);
+            return new SignInTask(this, talkContext, primitive, this.performer);
         }
 
         task.reset(talkContext, primitive);
         return task;
     }
 
-    protected void returnSelfTask(SelfTask task) {
-        this.selfTaskQueue.offer(task);
+    protected void returnSignInTask(SignInTask task) {
+        this.signInTaskQueue.offer(task);
     }
 
     protected PassThroughTask borrowPassTask(TalkContext talkContext, Primitive primitive) {
