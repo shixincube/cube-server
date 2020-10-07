@@ -46,6 +46,11 @@ public class Contact implements JSONable {
     private Long id;
 
     /**
+     * 联系人所在域。
+     */
+    private String domain;
+
+    /**
      * 联系人显示名。
      */
     private String name;
@@ -60,8 +65,9 @@ public class Contact implements JSONable {
      */
     private List<Device> deviceList;
 
-    public Contact(Long id, String name) {
+    public Contact(Long id, String domain, String name) {
         this.id = id;
+        this.domain = domain;
         this.name = name;
         this.deviceList = new ArrayList<>(2);
     }
@@ -71,6 +77,7 @@ public class Contact implements JSONable {
 
         try {
             this.id = json.getLong("id");
+            this.domain = json.getString("domain");
             this.name = json.getString("name");
 
             if (json.has("devices")) {
@@ -95,6 +102,7 @@ public class Contact implements JSONable {
 
         try {
             this.id = json.getLong("id");
+            this.domain = json.getString("domain");
             this.name = json.getString("name");
 
             if (json.has("devices")) {
@@ -123,10 +131,20 @@ public class Contact implements JSONable {
 
     /**
      * 获取联系人的 ID 。
+     *
      * @return 返回联系人的 ID 。
      */
     public Long getId() {
         return this.id;
+    }
+
+    /**
+     * 获取联系人所在域。
+     *
+     * @return 返回联系人所在域。
+     */
+    public String getDomain() {
+        return this.domain;
     }
 
     public String getName() {
@@ -215,7 +233,7 @@ public class Contact implements JSONable {
     public boolean equals(Object object) {
         if (null != object && object instanceof Contact) {
             Contact other = (Contact) object;
-            if (other.id.longValue() == this.id.longValue()) {
+            if (other.id.longValue() == this.id.longValue() && other.domain.equals(this.domain)) {
                 return true;
             }
         }
@@ -225,7 +243,7 @@ public class Contact implements JSONable {
 
     @Override
     public int hashCode() {
-        return this.id.hashCode();
+        return this.id.hashCode() * 3 + this.domain.hashCode() * 5;
     }
 
     @Override
@@ -233,6 +251,7 @@ public class Contact implements JSONable {
         JSONObject json = new JSONObject();
         try {
             json.put("id", this.id);
+            json.put("domain", this.domain);
             json.put("name", this.name);
 
             JSONArray array = new JSONArray();

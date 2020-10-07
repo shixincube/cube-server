@@ -60,7 +60,16 @@ public class SignInTask extends Task {
         ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(actionDialect);
 
-        Contact self = new Contact(packet.data, this.talkContext);
+        JSONObject selfJson = null;
+        JSONObject authTokenJson = null;
+        try {
+            selfJson = packet.data.getJSONObject("self");
+            authTokenJson = packet.data.getJSONObject("token");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        Contact self = new Contact(selfJson, this.talkContext);
         this.performer.addContact(self);
 
         ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), actionDialect);

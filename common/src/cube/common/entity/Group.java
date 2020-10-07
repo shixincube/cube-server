@@ -49,8 +49,8 @@ public class Group extends Contact {
      * @param id 群组 ID 。
      * @param name 群组显示名。
      */
-    public Group(Long id, String name) {
-        super(id, name);
+    public Group(Long id, String domain, String name) {
+        super(id, domain, name);
         this.members = new Vector<>();
     }
 
