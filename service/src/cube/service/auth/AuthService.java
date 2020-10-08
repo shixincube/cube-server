@@ -83,6 +83,7 @@ public class AuthService extends AbstractModule {
     public AuthToken applyToken(String domain, String appKey, Long cid) {
         AuthToken token = null;
 
+System.out.println("xjw - " + domain + " - " + appKey);
         List<String> codes = this.findTokenCode(domain, appKey);
         if (null != codes) {
             String code = codes.get(0);

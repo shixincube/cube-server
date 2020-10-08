@@ -56,7 +56,7 @@ public class AuthDomainFile {
             reader = new BufferedReader(new FileReader(file));
             String line = null;
             while ((line = reader.readLine()) != null) {
-                buf.append(buf);
+                buf.append(line);
             }
         } catch (IOException e) {
             Logger.e(this.getClass(), "Read auth domain file", e);
