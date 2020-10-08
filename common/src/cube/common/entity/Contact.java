@@ -30,8 +30,8 @@ import cell.core.talk.TalkContext;
 import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
-import cube.auth.Domain;
-import cube.common.JSONable;
+import cube.common.Domain;
+import cube.common.UniqueKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,11 +45,6 @@ public class Contact extends Entity {
      * 联系人 ID 。
      */
     private Long id;
-
-    /**
-     * 联系人所在域。
-     */
-    private Domain domain;
 
     /**
      * 联系人显示名。
@@ -72,20 +67,22 @@ public class Contact extends Entity {
     private String uniqueKey;
 
     public Contact(Long id, String domain, String name) {
+        super(domain);
         this.id = id;
-        this.domain = new Domain(domain);
-        this.uniqueKey = id.toString() + "_" + domain;
+        this.uniqueKey = UniqueKey.make(id, domain);
         this.name = name;
         this.deviceList = new ArrayList<>(2);
     }
 
     public Contact(JSONObject json) {
+        super();
+
         this.deviceList = new ArrayList<>(2);
 
         try {
             this.id = json.getLong("id");
             this.domain = new Domain(json.getString("domain"));
-            this.uniqueKey = this.id.toString() + "_" + this.domain.getName();
+            this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
             this.name = json.getString("name");
 
             if (json.has("devices")) {
@@ -106,12 +103,14 @@ public class Contact extends Entity {
     }
 
     public Contact(JSONObject json, TalkContext talkContext) {
+        super();
+
         this.deviceList = new ArrayList<>(2);
 
         try {
             this.id = json.getLong("id");
             this.domain = new Domain(json.getString("domain"));
-            this.uniqueKey = this.id.toString() + "_" + this.domain.getName();
+            this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
             this.name = json.getString("name");
 
             if (json.has("devices")) {
@@ -145,15 +144,6 @@ public class Contact extends Entity {
      */
     public Long getId() {
         return this.id;
-    }
-
-    /**
-     * 获取联系人所在域。
-     *
-     * @return 返回联系人所在域。
-     */
-    public Domain getDomain() {
-        return this.domain;
     }
 
     /**

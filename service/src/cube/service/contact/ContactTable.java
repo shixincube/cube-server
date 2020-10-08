@@ -26,7 +26,7 @@
 
 package cube.service.contact;
 
-import cube.auth.Domain;
+import cube.common.Domain;
 import cube.common.entity.Contact;
 
 import java.util.concurrent.ConcurrentHashMap;

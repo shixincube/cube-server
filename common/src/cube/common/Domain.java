@@ -26,49 +26,49 @@
 
 package cube.common;
 
-import cell.core.cellet.Cellet;
-import cell.core.talk.Primitive;
-import cell.core.talk.TalkContext;
-import cell.util.json.JSONException;
-import cell.util.json.JSONObject;
-import cube.core.Kernel;
-
 /**
- * Cellet 通信任务描述。
+ * 授权的被管理域。
  */
-public abstract class Task implements Runnable {
+public final class Domain {
+
+    private String name;
 
     /**
-     * 框架的内核实例。
+     * 构造函数。
+     *
+     * @param name 指定域名称。
      */
-    protected Kernel kernel;
-
-    /**
-     * 对应的 Cellet 实例。
-     */
-    protected Cellet cellet;
-
-    protected TalkContext talkContext;
-
-    protected Primitive primitive;
-
-    public Task(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        this.cellet = cellet;
-        this.talkContext = talkContext;
-        this.primitive = primitive;
-        this.kernel = (Kernel) cellet.getNucleus().getParameter("kernel");
+    public Domain(String name) {
+        this.name = name;
     }
 
-    protected JSONObject makeStatePayload(int stateCode, String stateDesc) {
-        JSONObject payload = new JSONObject();
-        try {
-            payload.put("state", StateCode.makeState(stateCode, stateDesc));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return payload;
+    /**
+     * 获取域的名称。
+     *
+     * @return 返回域的名称。
+     */
+    public String getName() {
+        return this.name;
     }
 
     @Override
-    abstract public void run();
+    public boolean equals(Object other) {
+        if (null != other && other instanceof Domain) {
+            if (((Domain)other).name.equals(this.name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return this.name;
+    }
 }

@@ -24,51 +24,35 @@
  * SOFTWARE.
  */
 
-package cube.auth;
+package cube.common;
 
 /**
- * 授权的被管理域。
+ * 唯一键。
  */
-public final class Domain {
+public final class UniqueKey {
 
-    private String name;
-
-    /**
-     * 构造函数。
-     *
-     * @param name 指定域名称。
-     */
-    public Domain(String name) {
-        this.name = name;
+    private UniqueKey() {
     }
 
     /**
-     * 获取域的名称。
+     * 生成唯一键。
      *
-     * @return 返回域的名称。
+     * @param id 对象 ID 。
+     * @param domainName 对象所在域。
+     * @return 字符串形式的唯一键。
      */
-    public String getName() {
-        return this.name;
+    public static String make(Long id, String domainName) {
+        return id.toString() + "_" + domainName;
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (null != other && other instanceof Domain) {
-            if (((Domain)other).name.equals(this.name)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return this.name;
+    /**
+     * 生成唯一键。
+     *
+     * @param id 对象 ID 。
+     * @param domain 对象所在域。
+     * @return 字符串形式的唯一键。
+     */
+    public static String make(Long id, Domain domain) {
+        return id.toString() + "_" + domain.getName();
     }
 }

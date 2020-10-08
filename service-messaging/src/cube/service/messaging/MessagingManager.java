@@ -40,6 +40,7 @@ import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.ModuleEvent;
 import cube.common.Packet;
+import cube.common.UniqueKey;
 import cube.common.action.MessagingActions;
 import cube.common.entity.*;
 import cube.service.Director;
@@ -146,14 +147,17 @@ public final class MessagingManager implements CelletAdapterListener {
 
         // 进行消息的群组管理
         if (message.getTo().longValue() > 0) {
+            // 唯一键是接收消息方的唯一键
+            String key = UniqueKey.make(message.getTo(), message.getDomain());
+
             // 将消息写入缓存
-            this.messageCache.add(message.getTo().toString(), message.toJSON(), message.getRemoteTimestamp());
+            this.messageCache.add(key, message.toJSON(), message.getRemoteTimestamp());
 
             ModuleEvent event = new ModuleEvent(MessagingManager.NAME, MessagingActions.Push.name, message.toJSON());
-            this.contactsAdapter.publish(message.getTo().toString(), event.toJSON());
+            this.contactsAdapter.publish(key, event.toJSON());
         }
         else if (message.getSource().longValue() > 0) {
-            Group group = ContactManager.getInstance().getGroup(message.getSource());
+            Group group = ContactManager.getInstance().getGroup(message.getSource(), message.getDomain());
             if (null != group) {
                 List<Contact> list = group.getMembers();
                 for (Contact contact : list) {
@@ -161,11 +165,15 @@ public final class MessagingManager implements CelletAdapterListener {
                     Message copy = new Message(message);
                     // 更新 To 数据
                     copy.setTo(contact.getId());
+
+                    // 生成唯一键
+                    String key = UniqueKey.make(contact.getId(), contact.getDomain());
+
                     // 将消息写入缓存
-                    this.messageCache.add(contact.getId().toString(), copy.toJSON(), message.getRemoteTimestamp());
+                    this.messageCache.add(key, copy.toJSON(), message.getRemoteTimestamp());
 
                     ModuleEvent event = new ModuleEvent(MessagingManager.NAME, MessagingActions.Push.name, copy.toJSON());
-                    this.contactsAdapter.publish(copy.getTo().toString(), event.toJSON());
+                    this.contactsAdapter.publish(key, event.toJSON());
                 }
             }
             else {
@@ -227,7 +235,7 @@ public final class MessagingManager implements CelletAdapterListener {
             ModuleEvent event = new ModuleEvent(jsonObject);
             if (event.getEventName().equals(MessagingActions.Push.name)) {
                 Message message = new Message(event.getData());
-                Contact contact = ContactManager.getInstance().getOnlineContact(message.getTo());
+                Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain(), message.getTo());
                 if (null != contact) {
                     for (Device device : contact.getDeviceList()) {
                         TalkContext talkContext = device.getTalkContext();

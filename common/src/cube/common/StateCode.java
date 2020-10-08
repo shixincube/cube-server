@@ -50,6 +50,11 @@ public final class StateCode {
     public final static int NotFound = 1404;
 
     /**
+     * 授权码错误。
+     */
+    public final static int NoAuthToken = 1501;
+
+    /**
      * 请求服务超时。
      */
     public final static int ServiceTimeout = 2001;

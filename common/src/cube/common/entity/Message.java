@@ -28,13 +28,15 @@ package cube.common.entity;
 
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.Domain;
 import cube.common.JSONable;
 import cube.common.Packet;
+import cube.common.UniqueKey;
 
 /**
  * 消息实体。
  */
-public class Message implements JSONable {
+public class Message extends Entity {
 
     /**
      * 消息 ID 。
@@ -77,11 +79,19 @@ public class Message implements JSONable {
     private MessageState state = MessageState.Unknown;
 
     /**
+     * 消息的唯一键。
+     */
+    private String uniqueKey;
+
+    /**
      * 构造函数。
      * @param packet
      */
     public Message(Packet packet) {
+        super();
+
         try {
+            this.domain = new Domain(packet.data.getString("domain"));
             this.id = packet.data.getLong("id");
             this.from = packet.data.getLong("from");
             this.to = packet.data.getLong("to");
@@ -92,6 +102,8 @@ public class Message implements JSONable {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
     }
 
     /**
@@ -99,7 +111,10 @@ public class Message implements JSONable {
      * @param json
      */
     public Message(JSONObject json) {
+        super();
+
         try {
+            this.domain = new Domain(json.getString("domain"));
             this.id = json.getLong("id");
             this.from = json.getLong("from");
             this.to = json.getLong("to");
@@ -110,6 +125,8 @@ public class Message implements JSONable {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
     }
 
     /**
@@ -117,6 +134,7 @@ public class Message implements JSONable {
      * @param src 指定复制源。
      */
     public Message(Message src) {
+        this.domain = src.domain;
         this.id = src.id;
         this.from = src.from;
         this.to = src.to;
@@ -125,6 +143,12 @@ public class Message implements JSONable {
         this.remoteTimestamp = src.remoteTimestamp;
         this.payload = src.payload;
         this.state = src.state;
+
+        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
+    }
+
+    public String getUniqueKey() {
+        return this.uniqueKey;
     }
 
     public Long getId() {
@@ -164,7 +188,11 @@ public class Message implements JSONable {
     }
 
     public void setState(MessageState state) {
+        this.state = state;
+    }
 
+    public MessageState getState() {
+        return this.state;
     }
 
     public JSONObject toJSON(boolean withPayload) {
@@ -179,6 +207,7 @@ public class Message implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         try {
+            json.put("domain", this.domain.getName());
             json.put("id", this.id.longValue());
             json.put("from", this.from.longValue());
             json.put("to", this.to.longValue());

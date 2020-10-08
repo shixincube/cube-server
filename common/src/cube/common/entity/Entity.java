@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cube.common.Domain;
 import cube.common.JSONable;
 
 /**
@@ -38,8 +39,18 @@ public abstract class Entity implements JSONable {
      */
     private long timestamp;
 
+    /**
+     * 实体所在域。
+     */
+    protected Domain domain;
+
     public Entity() {
         this.timestamp = System.currentTimeMillis();
+    }
+
+    public Entity(String domain) {
+        this.timestamp = System.currentTimeMillis();
+        this.domain = new Domain(domain);
     }
 
     /**
@@ -49,5 +60,14 @@ public abstract class Entity implements JSONable {
      */
     public long getTimestamp() {
         return this.timestamp;
+    }
+
+    /**
+     * 获取实体所在域。
+     *
+     * @return 返回实体所在域。
+     */
+    public Domain getDomain() {
+        return this.domain;
     }
 }

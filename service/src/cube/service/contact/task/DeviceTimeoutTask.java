@@ -34,15 +34,17 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.Task;
 import cube.common.entity.Device;
+import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
 
 /**
  * 设备超时任务。
  */
-public class DeviceTimeoutTask extends Task {
+public class DeviceTimeoutTask extends ServiceTask {
 
     public DeviceTimeoutTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
@@ -50,8 +52,11 @@ public class DeviceTimeoutTask extends Task {
 
     @Override
     public void run() {
-        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(this.primitive);
-        Packet packet = new Packet(dialect);
+        ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
+
+        AuthToken authToken = this.extractAuthToken(action);
+
+        Packet packet = new Packet(action);
 
         Long contactId = null;
         Device device = null;
@@ -70,6 +75,6 @@ public class DeviceTimeoutTask extends Task {
         }
 
         // 移除联系人的设备
-        ContactManager.getInstance().removeContactDevice(contactId, device);
+        ContactManager.getInstance().removeContactDevice(contactId, authToken.getDomain(), device);
     }
 }

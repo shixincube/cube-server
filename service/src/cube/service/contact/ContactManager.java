@@ -36,7 +36,8 @@ import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
 import cell.util.json.JSONObject;
 import cube.auth.AuthToken;
-import cube.auth.Domain;
+import cube.common.Domain;
+import cube.common.UniqueKey;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Group;
@@ -194,7 +195,7 @@ public class ContactManager implements CelletAdapterListener {
      * @return
      */
     public Contact getContact(Long id, String domain) {
-        String key = id.toString() + "_" + domain;
+        String key = UniqueKey.make(id, domain);
         JSONObject data = this.contactsCache.applyGet(key);
         if (null == data) {
             // 缓存里没有数据，从数据库读取
@@ -209,16 +210,28 @@ public class ContactManager implements CelletAdapterListener {
     }
 
     /**
+     * 获取群组。
      *
      * @param id
      * @param domain
      * @return
      */
-    public Group getGroup(Long id, String domain) {
-        String key = id.toString() + "_" + domain;
+    public Group getGroup(Long id, Domain domain) {
+        return this.getGroup(id, domain.getName());
+    }
+
+    /**
+     * 获取群组。
+     *
+     * @param id
+     * @param domainName
+     * @return
+     */
+    public Group getGroup(Long id, String domainName) {
+        String key = UniqueKey.make(id, domainName);
         JSONObject data = this.contactsCache.applyGet(key);
         if (null == data) {
-            data = this.storage.queryGroup(domain, id);
+            data = this.storage.queryGroup(domainName, id);
             if (null == data) {
                 return null;
             }
@@ -229,7 +242,7 @@ public class ContactManager implements CelletAdapterListener {
     }
 
     public JSONObject getContactData(Long id, String domain) {
-        String key = id.toString() + "_" + domain;
+        String key = UniqueKey.make(id, domain);
         JSONObject data = this.contactsCache.applyGet(key);
         if (null == data) {
             Contact contact = new Contact(id, domain, "Cube-" + id.toString());
@@ -251,11 +264,11 @@ public class ContactManager implements CelletAdapterListener {
      * 移除指定联系人的设备。
      *
      * @param contactId
-     * @param domain
+     * @param domainName
      * @param device
      */
-    public void removeContactDevice(final Long contactId, final Domain domain, final Device device) {
-        String key = contactId.toString() + "_" + domain.getName();
+    public void removeContactDevice(final Long contactId, final String domainName, final Device device) {
+        String key = UniqueKey.make(contactId, domainName);
         this.contactsCache.apply(key, new LockFuture() {
             @Override
             public void acquired(String key) {
@@ -271,7 +284,7 @@ public class ContactManager implements CelletAdapterListener {
             }
         });
 
-        ContactTable table = this.onlineTables.get(domain);
+        ContactTable table = this.onlineTables.get(new Domain(domainName));
         if (null != table) {
             Contact contact = table.get(contactId);
             if (null != contact) {

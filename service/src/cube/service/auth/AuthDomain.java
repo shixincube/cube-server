@@ -24,51 +24,37 @@
  * SOFTWARE.
  */
 
-package cube.common;
+package cube.service.auth;
 
-import cell.core.cellet.Cellet;
-import cell.core.talk.Primitive;
-import cell.core.talk.TalkContext;
+import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
-import cell.util.json.JSONObject;
-import cube.core.Kernel;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Cellet 通信任务描述。
+ * 存储域对应的授权信息的类。
  */
-public abstract class Task implements Runnable {
+public class AuthDomain {
 
-    /**
-     * 框架的内核实例。
-     */
-    protected Kernel kernel;
+    public String domainName;
 
-    /**
-     * 对应的 Cellet 实例。
-     */
-    protected Cellet cellet;
+    public String appKey;
 
-    protected TalkContext talkContext;
+    public List<String> codes;
 
-    protected Primitive primitive;
+    public AuthDomain(String domainName, String appKey, JSONArray array) {
+        this.domainName = domainName;
+        this.appKey = appKey;
+        this.codes = new ArrayList<>();
 
-    public Task(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        this.cellet = cellet;
-        this.talkContext = talkContext;
-        this.primitive = primitive;
-        this.kernel = (Kernel) cellet.getNucleus().getParameter("kernel");
-    }
-
-    protected JSONObject makeStatePayload(int stateCode, String stateDesc) {
-        JSONObject payload = new JSONObject();
         try {
-            payload.put("state", StateCode.makeState(stateCode, stateDesc));
+            for (int i = 0; i < array.length(); ++i) {
+                String code = array.getString(i);
+                this.codes.add(code);
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return payload;
     }
-
-    @Override
-    abstract public void run();
 }

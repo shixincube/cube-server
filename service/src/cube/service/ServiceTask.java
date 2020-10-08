@@ -32,9 +32,11 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.StateCode;
 import cube.common.Task;
+import cube.service.auth.AuthService;
 
 /**
  * 用于服务单元的异步任务。提供一些辅助方法。
@@ -43,6 +45,23 @@ public abstract class ServiceTask extends Task {
 
     public ServiceTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
+    }
+
+    /**
+     * 提取令牌。
+     *
+     * @param actionDialect
+     * @return
+     */
+    protected AuthToken extractAuthToken(ActionDialect actionDialect) {
+        if (actionDialect.containsParam("token")) {
+            String tokenCode = actionDialect.getParamAsString("token");
+            AuthService authService = (AuthService) this.kernel.getModule(AuthService.NAME);
+            AuthToken token = authService.getToken(tokenCode);
+            return token;
+        }
+
+        return null;
     }
 
     /**

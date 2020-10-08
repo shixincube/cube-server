@@ -61,15 +61,15 @@ public class Daemon extends TimerTask {
         long now = System.currentTimeMillis();
 
         // 检查 Talk context 失效
-        Iterator<Map.Entry<Long, Contact>> contactIter = this.performer.getOnlineContacts().entrySet().iterator();
+        Iterator<Map.Entry<String, Contact>> contactIter = this.performer.getOnlineContacts().entrySet().iterator();
         while (contactIter.hasNext()) {
-            Map.Entry<Long, Contact> e = contactIter.next();
+            Map.Entry<String, Contact> e = contactIter.next();
             Contact contact = e.getValue();
             List<Device> devices = contact.getDeviceList();
             for (Device device : devices) {
                 TalkContext context = device.getTalkContext();
                 if (null == context) {
-                    Logger.e(this.getClass(), "Error device, contact id: " + contact.getId().longValue() + " - " + device.getName());
+                    Logger.e(this.getClass(), "Error device, contact id: " + contact.getId() + " - " + device.getName());
                     continue;
                 }
                 if (!context.isValid()) {

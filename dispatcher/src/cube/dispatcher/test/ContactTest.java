@@ -77,7 +77,7 @@ public class ContactTest implements TalkListener {
     }
 
     public void testSignIn() {
-        Contact self = new Contact(100200300L, "时信魔方");
+        Contact self = new Contact(100200300L, "shixincube.com", "时信魔方");
         Device device = new Device("Mac", "MacBookPro Ambrose");
         self.addDevice(device);
 

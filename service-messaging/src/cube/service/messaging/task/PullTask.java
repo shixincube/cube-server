@@ -34,6 +34,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.Domain;
 import cube.common.Packet;
 import cube.common.StateCode;
 import cube.common.action.MessagingActions;
@@ -63,10 +64,12 @@ public class PullTask extends ServiceTask {
         Packet packet = new Packet(dialect);
 
         Long id = null;
+        String domainName = null;
         Device device = null;
         long timestamp = 0;
         try {
             id = packet.data.getLong("id");
+            domainName = packet.data.getString("domain");
             JSONObject dev = packet.data.getJSONObject("device");
             device = new Device(dev);
 
@@ -81,7 +84,7 @@ public class PullTask extends ServiceTask {
         }
 
         // 获取联系人
-        Contact contact = ContactManager.getInstance().getOnlineContact(id);
+        Contact contact = ContactManager.getInstance().getOnlineContact(new Domain(domainName), id);
         if (null == contact) {
             // 应答
             this.cellet.speak(this.talkContext,

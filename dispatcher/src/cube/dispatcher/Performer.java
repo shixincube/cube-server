@@ -38,6 +38,7 @@ import cell.util.Utils;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
+import cube.common.UniqueKey;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.dispatcher.auth.AuthCellet;
@@ -75,6 +76,9 @@ public class Performer implements TalkListener {
      */
     private HashMap<TalkContext, Director> talkDirectorMap;
 
+    /**
+     * 执行机监听器。
+     */
     private ConcurrentHashMap<String, PerformerListener> listenerMap;
 
     /**
@@ -202,7 +206,7 @@ public class Performer implements TalkListener {
     }
 
     public void removeContact(Long id, String domain) {
-        String key = id.toString() + "_" + domain;
+        String key = UniqueKey.make(id, domain);
         this.onlineContacts.remove(key);
     }
 
