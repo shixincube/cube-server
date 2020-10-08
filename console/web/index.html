@@ -114,7 +114,7 @@
       <!-- Sidebar user panel (optional) -->
       <div class="user-panel mt-3 pb-3 mb-3 d-flex">
         <div class="image">
-          <img src="assets/images/avatar.png" class="img-circle elevation-2" alt="Administrator">
+          <img src="assets/images/avatar.png" class="img-circle elevation-2" alt="Admin">
         </div>
         <div class="info">
           <a href="#" class="d-block">Ambrose Xu</a>
@@ -191,59 +191,139 @@
           <div class="col-lg-3 col-6">
             <!-- small box -->
             <div class="small-box bg-info">
-                <div class="inner">
-                <h3>1</h3>
+              <div class="inner">
+                <h3>0</h3>
                 <p>网关节点</p>
-                </div>
-                <div class="icon">
+              </div>
+              <div class="icon">
                 <i class="ion ion-android-globe"></i>
-                </div>
-                <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+              </div>
+              <a href="#" class="small-box-footer">更多信息 <i class="fas fa-arrow-circle-right"></i></a>
             </div>
-            </div>
-            <!-- ./col -->
-            <div class="col-lg-3 col-6">
+          </div>
+          <!-- ./col -->
+          <div class="col-lg-3 col-6">
             <!-- small box -->
             <div class="small-box bg-success">
-                <div class="inner">
-                <h3>1</h3>
+              <div class="inner">
+                <h3>0</h3>
                 <p>服务单元节点</p>
-                </div>
-                <div class="icon">
+              </div>
+              <div class="icon">
                 <i class="ion ion-cube"></i>
-                </div>
-                <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+              </div>
+              <a href="#" class="small-box-footer">更多信息 <i class="fas fa-arrow-circle-right"></i></a>
             </div>
-            </div>
-            <!-- ./col -->
-            <div class="col-lg-3 col-6">
+          </div>
+          <!-- ./col -->
+          <div class="col-lg-3 col-6">
             <!-- small box -->
             <div class="small-box bg-warning">
-                <div class="inner">
+              <div class="inner">
                 <h3>0</h3>
                 <p>媒体服务节点</p>
-                </div>
-                <div class="icon">
+              </div>
+              <div class="icon">
                 <i class="ion ion-videocamera"></i>
-                </div>
-                <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+              </div>
+              <a href="#" class="small-box-footer">更多信息 <i class="fas fa-arrow-circle-right"></i></a>
             </div>
-            </div>
-            <!-- ./col -->
-            <div class="col-lg-3 col-6">
+          </div>
+          <!-- ./col -->
+          <div class="col-lg-3 col-6">
             <!-- small box -->
             <div class="small-box bg-danger">
-                <div class="inner">
+              <div class="inner">
                 <h3>0</h3>
                 <p>存储节点</p>
-                </div>
-                <div class="icon">
+              </div>
+              <div class="icon">
                 <i class="ion ion-ios-albums"></i>
+              </div>
+              <a href="#" class="small-box-footer">更多信息 <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+          </div>
+          <!-- ./col -->
+          <div class="col-lg-6 col-6">
+            <div class="card">
+              <div class="card-header border-0">
+                <div class="d-flex justify-content-between">
+                  <h3 class="card-title">网关访问统计</h3>
+                    <a href="javascript:void(0);">查看报告</a>
                 </div>
-                <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+              </div>
+              <div class="card-body">
+                <div class="d-flex">
+                  <p class="d-flex flex-column">
+                    <span class="text-bold text-lg">0</span>
+                    <span>最大访问数</span>
+                  </p>
+                  <p class="ml-auto d-flex flex-column text-right">
+                    <span class="text-secondary">
+                      <i class="fas fa-arrow-right"></i> 0%
+                    </span>
+                    <span class="text-muted">同比上周</span>
+                  </p>
+                </div>
+                <!-- /.d-flex -->
+  
+                <div class="position-relative mb-4">
+                  <canvas id="gateway_chart" height="200"></canvas>
+                </div>
+  
+                <div class="d-flex flex-row justify-content-end">
+                  <span class="mr-2">
+                    <i class="fas fa-square text-primary"></i> 127.0.0.1:7000
+                  </span>
+                </div>
+              </div>
             </div>
+            <!-- /.card -->
+          </div>
+          <!-- ./col -->
+          <div class="col-lg-6 col-6">
+            <div class="card">
+              <div class="card-header border-0">
+                <div class="d-flex justify-content-between">
+                  <h3 class="card-title">服务单元统计</h3>
+                  <a href="javascript:void(0);">查看报告</a>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="d-flex">
+                  <p class="d-flex flex-column">
+                    <span class="text-bold text-lg">0</span>
+                    <span>累计执行次数</span>
+                  </p>
+                  <p class="ml-auto d-flex flex-column text-right">
+                    <span class="text-secondary">
+                      <i class="fas fa-arrow-right"></i> 0%
+                    </span>
+                    <span class="text-muted">同比上周</span>
+                  </p>
+                </div>
+                <!-- /.d-flex -->
+  
+                <div class="position-relative mb-4">
+                  <canvas id="service_chart" height="200"></canvas>
+                </div>
+  
+                <div class="d-flex flex-row justify-content-end">
+                  <span class="mr-2">
+                    <i class="fas fa-square text-lightblue"></i> 消息
+                  </span>
+                  <span class="mr-2">
+                    <i class="fas fa-square text-orange"></i> 音视频
+                  </span>
+                  <span class="mr-2">
+                    <i class="fas fa-square text-teal"></i> 文件
+                  </span>
+                </div>
+              </div>
             </div>
-            <!-- ./col -->
+            <!-- /.card -->
+          </div>
+          <!-- ./col -->
         </div>
         <!-- /.row -->
       </div><!-- /.container-fluid -->
@@ -282,5 +362,8 @@
 <script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
 <script src="dist/js/adminlte.min.js"></script>
+<!-- Chart -->
+<script src="plugins/chart.js/Chart.min.js"></script>
+<script src="dist/js/console.js"></script>
 </body>
 </html>
