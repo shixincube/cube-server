@@ -24,51 +24,40 @@
  * SOFTWARE.
  */
 
-package cube.auth;
+package cube.service.contact;
+
+import cube.auth.Domain;
+import cube.common.entity.Contact;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 授权的被管理域。
+ * 联系人表。
  */
-public final class Domain {
+public class ContactTable {
 
-    private String name;
+    private Domain domain;
 
-    /**
-     * 构造函数。
-     *
-     * @param name 指定域名称。
-     */
-    public Domain(String name) {
-        this.name = name;
+    protected ConcurrentHashMap<Long, Contact> onlineContacts;
+
+    public ContactTable(Domain domain) {
+        this.domain = domain;
+        this.onlineContacts = new ConcurrentHashMap<>();
     }
 
-    /**
-     * 获取域的名称。
-     *
-     * @return 返回域的名称。
-     */
-    public String getName() {
-        return this.name;
+    public Domain getDomain() {
+        return this.domain;
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (null != other && other instanceof Domain) {
-            if (((Domain)other).name.equals(this.name)) {
-                return true;
-            }
-        }
-
-        return false;
+    public Contact get(Long id) {
+        return this.onlineContacts.get(id);
     }
 
-    @Override
-    public int hashCode() {
-        return this.name.hashCode();
+    public void add(Contact contact) {
+        this.onlineContacts.put(contact.getId(), contact);
     }
 
-    @Override
-    public String toString() {
-        return this.name;
+    public void remove(Contact contact) {
+        this.onlineContacts.remove(contact.getId());
     }
 }

@@ -80,7 +80,7 @@ public class Performer implements TalkListener {
     /**
      * 在线的联系人。
      */
-    private ConcurrentHashMap<Long, Contact> onlineContacts;
+    private ConcurrentHashMap<String, Contact> onlineContacts;
 
     /**
      * 数据传输记录。
@@ -188,9 +188,9 @@ public class Performer implements TalkListener {
      * @return
      */
     public void addContact(Contact contact) {
-        Contact current = this.onlineContacts.get(contact.getId());
+        Contact current = this.onlineContacts.get(contact.getUniqueKey());
         if (null == current) {
-            this.onlineContacts.put(contact.getId(), contact);
+            this.onlineContacts.put(contact.getUniqueKey(), contact);
         }
         else {
             current.setName(contact.getName());
@@ -201,11 +201,12 @@ public class Performer implements TalkListener {
         }
     }
 
-    public void removeContact(Long id) {
-        this.onlineContacts.remove(id);
+    public void removeContact(Long id, String domain) {
+        String key = id.toString() + "_" + domain;
+        this.onlineContacts.remove(key);
     }
 
-    public Map<Long, Contact> getOnlineContacts() {
+    public Map<String, Contact> getOnlineContacts() {
         return this.onlineContacts;
     }
 

@@ -60,6 +60,11 @@ public final class StateCode {
     public final static int PayloadFormat = 2002;
 
     /**
+     * 参数错误。
+     */
+    public final static int InvalidParameter = 2003;
+
+    /**
      * 网关错误。
      */
     public final static int GatewayError = 2101;

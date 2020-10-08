@@ -114,6 +114,15 @@ public class AuthToken implements JSONable {
     }
 
     /**
+     * 获取域名称。
+     *
+     * @return 返回域名称。
+     */
+    public String getDomain() {
+        return this.domain;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override

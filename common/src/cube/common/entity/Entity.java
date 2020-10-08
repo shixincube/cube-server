@@ -33,6 +33,21 @@ import cube.common.JSONable;
  */
 public abstract class Entity implements JSONable {
 
+    /**
+     * 实体创建的时间戳。
+     */
+    private long timestamp;
+
     public Entity() {
+        this.timestamp = System.currentTimeMillis();
+    }
+
+    /**
+     * 获取实体创建的时间戳。
+     *
+     * @return 返回实体创建的时间戳。
+     */
+    public long getTimestamp() {
+        return this.timestamp;
     }
 }

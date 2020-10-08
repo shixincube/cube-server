@@ -30,6 +30,7 @@ import cell.core.talk.TalkContext;
 import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.auth.Domain;
 import cube.common.JSONable;
 
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * 联系人实体。
  */
-public class Contact implements JSONable {
+public class Contact extends Entity {
 
     /**
      * 联系人 ID 。
@@ -48,7 +49,7 @@ public class Contact implements JSONable {
     /**
      * 联系人所在域。
      */
-    private String domain;
+    private Domain domain;
 
     /**
      * 联系人显示名。
@@ -65,9 +66,15 @@ public class Contact implements JSONable {
      */
     private List<Device> deviceList;
 
+    /**
+     * 联系人的唯一索引键。
+     */
+    private String uniqueKey;
+
     public Contact(Long id, String domain, String name) {
         this.id = id;
-        this.domain = domain;
+        this.domain = new Domain(domain);
+        this.uniqueKey = id.toString() + "_" + domain;
         this.name = name;
         this.deviceList = new ArrayList<>(2);
     }
@@ -77,7 +84,8 @@ public class Contact implements JSONable {
 
         try {
             this.id = json.getLong("id");
-            this.domain = json.getString("domain");
+            this.domain = new Domain(json.getString("domain"));
+            this.uniqueKey = this.id.toString() + "_" + this.domain.getName();
             this.name = json.getString("name");
 
             if (json.has("devices")) {
@@ -102,7 +110,8 @@ public class Contact implements JSONable {
 
         try {
             this.id = json.getLong("id");
-            this.domain = json.getString("domain");
+            this.domain = new Domain(json.getString("domain"));
+            this.uniqueKey = this.id.toString() + "_" + this.domain.getName();
             this.name = json.getString("name");
 
             if (json.has("devices")) {
@@ -143,8 +152,17 @@ public class Contact implements JSONable {
      *
      * @return 返回联系人所在域。
      */
-    public String getDomain() {
+    public Domain getDomain() {
         return this.domain;
+    }
+
+    /**
+     * 获取唯一索引键。
+     *
+     * @return 返回唯一索引键。
+     */
+    public String getUniqueKey() {
+        return this.uniqueKey;
     }
 
     public String getName() {
@@ -251,7 +269,7 @@ public class Contact implements JSONable {
         JSONObject json = new JSONObject();
         try {
             json.put("id", this.id);
-            json.put("domain", this.domain);
+            json.put("domain", this.domain.getName());
             json.put("name", this.name);
 
             JSONArray array = new JSONArray();

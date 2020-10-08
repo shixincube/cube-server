@@ -56,18 +56,15 @@ public class ContactStorage implements Storage {
         String name = contact.getName();
     }
 
-    public void insertContact(Long id, String name) {
-    }
-
-    public JSONObject queryContact(Long id) {
+    public JSONObject queryContact(String domain, Long id) {
         return null;
     }
 
-    public JSONObject queryGroup(Long id) {
+    public JSONObject queryGroup(String domain, Long id) {
         return null;
     }
 
-    public List<JSONObject> queryGroupMember(Long groupId) {
+    public List<JSONObject> queryGroupMember(String domain, Long groupId) {
         return null;
     }
 }

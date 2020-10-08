@@ -29,6 +29,8 @@ package cube.common;
 import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
 import cube.core.Kernel;
 
 /**
@@ -59,4 +61,14 @@ public abstract class Task implements Runnable {
 
     @Override
     abstract public void run();
+
+    protected JSONObject makeStatePayload(int stateCode, String stateDesc) {
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("state", StateCode.makeState(stateCode, stateDesc));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return payload;
+    }
 }

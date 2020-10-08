@@ -64,19 +64,29 @@ public class SignInTask extends Task {
         JSONObject authTokenJson = null;
         try {
             selfJson = packet.data.getJSONObject("self");
-            authTokenJson = packet.data.getJSONObject("token");
+            if (packet.data.has("token")) {
+                authTokenJson = packet.data.getJSONObject("token");
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
+        if (null == authTokenJson) {
+            // 没有令牌信息
+            Packet responsePacket = new Packet(packet.sn, packet.name, this.makeStatePayload(StateCode.InvalidParameter, "No token info"));
+            this.cellet.speak(this.talkContext, responsePacket.toDialect());
+            return;
+        }
+
+        // 将当前联系人与会话上下问关联
         Contact self = new Contact(selfJson, this.talkContext);
         this.performer.addContact(self);
 
         ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), actionDialect);
         if (null == response) {
             // 发生错误
-            Packet requestPacket = new Packet(packet.sn, packet.name, this.makeGatewayErrorPayload());
-            response = requestPacket.toDialect();
+            Packet responsePacket = new Packet(packet.sn, packet.name, this.makeGatewayErrorPayload());
+            response = responsePacket.toDialect();
         }
 
         this.cellet.speak(this.talkContext, response);

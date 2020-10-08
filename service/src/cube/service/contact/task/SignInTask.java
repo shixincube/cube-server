@@ -31,7 +31,9 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.service.ServiceTask;
@@ -50,13 +52,24 @@ public class SignInTask extends ServiceTask {
     public void run() {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
-        JSONObject data = packet.data;
+
+        JSONObject selfJson = null;
+        JSONObject authTokenJson = null;
+        try {
+            selfJson = packet.data.getJSONObject("self");
+            authTokenJson = packet.data.getJSONObject("token");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        // TODO 校验 Token
+        AuthToken authToken = new AuthToken(authTokenJson);
 
         // 创建联系人对象
-        Contact self = new Contact(data, this.talkContext);
+        Contact self = new Contact(selfJson, this.talkContext);
 
         // 设置终端的对应关系
-        Contact newSelf = ContactManager.getInstance().signIn(self);
+        Contact newSelf = ContactManager.getInstance().signIn(self, authToken);
 
         // 应答
         this.cellet.speak(this.talkContext, this.makeResponse(action, packet.name, newSelf.toJSON()));

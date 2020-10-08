@@ -35,6 +35,8 @@ import cell.adapter.extra.memory.SharedMemoryConfig;
 import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
 import cell.util.json.JSONObject;
+import cube.auth.AuthToken;
+import cube.auth.Domain;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Group;
@@ -55,9 +57,9 @@ public class ContactManager implements CelletAdapterListener {
     private ManagementDaemon daemon;
 
     /**
-     * 在线的联系人列表。
+     * 在线的联系人表。
      */
-    protected ConcurrentHashMap<Long, Contact> onlineContacts;
+    protected ConcurrentHashMap<Domain, ContactTable> onlineTables;
 
     /**
      * 联系人数据缓存。
@@ -97,7 +99,7 @@ public class ContactManager implements CelletAdapterListener {
     public void startup() {
         this.daemon = new ManagementDaemon(this);
 
-        this.onlineContacts = new ConcurrentHashMap<>();
+        this.onlineTables = new ConcurrentHashMap<>();
 
         this.storage = new ContactStorage();
 
@@ -127,6 +129,8 @@ public class ContactManager implements CelletAdapterListener {
         this.daemon.terminate();
 
         this.storage.close();
+
+        this.onlineTables.clear();
     }
 
     /**
@@ -134,13 +138,18 @@ public class ContactManager implements CelletAdapterListener {
      * @param contact
      * @return
      */
-    public Contact signIn(final Contact contact) {
+    public Contact signIn(final Contact contact, final AuthToken authToken) {
+        // 判断 Domain 名称
+        if (!authToken.getDomain().equals(contact.getDomain().getName())) {
+            return contact;
+        }
+
         // 在该方法里插入 Hook
         ContactHook hook = this.pluginSystem.getSignInHook();
         hook.apply(contact);
 
         final Object mutex = new Object();
-        LockFuture future = this.contactsCache.apply(contact.getId().toString(), new LockFuture() {
+        LockFuture future = this.contactsCache.apply(contact.getUniqueKey(), new LockFuture() {
             @Override
             public void acquired(String key) {
             JSONObject data = get();
@@ -171,24 +180,25 @@ public class ContactManager implements CelletAdapterListener {
             }
         }
 
-        Contact self = contact;
-
         // 关注该用户数据
-        this.follow(self);
+        this.follow(contact);
 
-        return self;
+        return contact;
     }
 
     /**
      * 获取联系人。
+     *
      * @param id
+     * @param domain
      * @return
      */
-    public Contact getContact(Long id) {
-        JSONObject data = this.contactsCache.applyGet(id.toString());
+    public Contact getContact(Long id, String domain) {
+        String key = id.toString() + "_" + domain;
+        JSONObject data = this.contactsCache.applyGet(key);
         if (null == data) {
             // 缓存里没有数据，从数据库读取
-            data = this.storage.queryContact(id);
+            data = this.storage.queryContact(domain, id);
             if (null == data) {
                 return null;
             }
@@ -201,39 +211,52 @@ public class ContactManager implements CelletAdapterListener {
     /**
      *
      * @param id
+     * @param domain
      * @return
      */
-    public Group getGroup(Long id) {
-        JSONObject data = this.contactsCache.applyGet(id.toString());
+    public Group getGroup(Long id, String domain) {
+        String key = id.toString() + "_" + domain;
+        JSONObject data = this.contactsCache.applyGet(key);
         if (null == data) {
-            return null;
+            data = this.storage.queryGroup(domain, id);
+            if (null == data) {
+                return null;
+            }
         }
 
         Group group = new Group(data);
         return group;
     }
 
-    public JSONObject getContactData(Long id) {
-        JSONObject data = this.contactsCache.applyGet(id.toString());
+    public JSONObject getContactData(Long id, String domain) {
+        String key = id.toString() + "_" + domain;
+        JSONObject data = this.contactsCache.applyGet(key);
         if (null == data) {
-            Contact contact = new Contact(id, "Cube" + id.toString());
+            Contact contact = new Contact(id, domain, "Cube-" + id.toString());
             data = contact.toJSON();
         }
         return data;
     }
 
-    public Contact getOnlineContact(Long id) {
-        return this.onlineContacts.get(id);
+    public Contact getOnlineContact(Domain domain, Long id) {
+        ContactTable table = this.onlineTables.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        return table.get(id);
     }
 
     /**
      * 移除指定联系人的设备。
      *
      * @param contactId
+     * @param domain
      * @param device
      */
-    public void removeContactDevice(final Long contactId, final Device device) {
-        this.contactsCache.apply(contactId.toString(), new LockFuture() {
+    public void removeContactDevice(final Long contactId, final Domain domain, final Device device) {
+        String key = contactId.toString() + "_" + domain.getName();
+        this.contactsCache.apply(key, new LockFuture() {
             @Override
             public void acquired(String key) {
                 JSONObject data = get();
@@ -248,18 +271,26 @@ public class ContactManager implements CelletAdapterListener {
             }
         });
 
-        Contact contact = this.onlineContacts.get(contactId);
-        if (null != contact) {
-            contact.removeDevice(device);
+        ContactTable table = this.onlineTables.get(domain);
+        if (null != table) {
+            Contact contact = table.get(contactId);
+            if (null != contact) {
+                contact.removeDevice(device);
+            }
         }
     }
 
-    private void follow(Contact contact) {
+    private synchronized void follow(Contact contact) {
         // 订阅该用户事件
-        this.contactsAdapter.subscribe(Long.toString(contact.getId()));
+        this.contactsAdapter.subscribe(contact.getUniqueKey());
 
+        ContactTable table = this.onlineTables.get(contact.getDomain());
+        if (null == table) {
+            table = new ContactTable(new Domain(contact.getDomain().getName().toString()));
+            this.onlineTables.put(table.getDomain(), table);
+        }
         // 记录联系人的通信上下文
-        this.onlineContacts.put(contact.getId(), contact);
+        table.add(contact);
     }
 
     @Override
