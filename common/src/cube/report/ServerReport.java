@@ -33,8 +33,12 @@ import cell.util.json.JSONObject;
  */
 public class ServerReport extends Report {
 
-    public ServerReport(String bindingAddress, int bindingPort) {
+    public ServerReport() {
         super("ServerReport");
+    }
+
+    public void setBinding(String bindingAddress, int bindingPort) {
+
     }
 
     @Override

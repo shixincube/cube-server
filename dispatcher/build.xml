@@ -43,7 +43,7 @@
 		<delete failonerror="false" includeemptydirs="true">
 			<fileset dir="${build.dir}"/>
 		</delete>
-		<delete file="${build.jar}/cube-dispatcher.jar" failonerror="false" />
+		<delete file="../build/cube-dispatcher-${version.brand}.jar" failonerror="false" />
 	</target>
 
 	<!-- =================================================================== -->

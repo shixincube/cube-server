@@ -43,7 +43,7 @@
 		<delete failonerror="false" includeemptydirs="true">
 			<fileset dir="${build.dir}"/>
 		</delete>
-		<delete file="${build.jar}/cube-service.jar" failonerror="false" />
+		<delete file="../build/cube-service-${version.brand}.jar" failonerror="false" />
 	</target>
 
 	<!-- =================================================================== -->

@@ -32,6 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.common.Packet;
+import cube.common.StateCode;
 import cube.common.action.MessagingActions;
 import cube.common.entity.Message;
 import cube.service.ServiceTask;
@@ -53,6 +54,12 @@ public class PushTask extends ServiceTask {
 
         // 创建消息实例
         Message message = new Message(packet);
+
+        if (null == message.getDomain()) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, MessagingActions.Push.name, StateCode.BadRequest, "No domain"));
+            return;
+        }
 
         // 将消息推送到消息中心
         Message response = MessagingManager.getInstance().pushMessage(message);

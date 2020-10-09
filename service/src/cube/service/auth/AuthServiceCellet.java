@@ -33,6 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.AuthActions;
+import cube.report.ServerReport;
 import cube.service.auth.task.ApplyTokenTask;
 import cube.service.auth.task.GetTokenTask;
 
@@ -75,4 +76,5 @@ public class AuthServiceCellet extends Cellet {
             this.executor.execute(new GetTokenTask(this, talkContext, primitive));
         }
     }
+
 }
