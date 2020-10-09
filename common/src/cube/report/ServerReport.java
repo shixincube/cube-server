@@ -26,9 +26,21 @@
 
 package cube.report;
 
-public class StopReport extends Report {
+import cell.util.json.JSONObject;
 
-    public StopReport() {
-        super("StopReport");
+/**
+ * 服务器状态报告。
+ */
+public class ServerReport extends Report {
+
+    public ServerReport(String bindingAddress, int bindingPort) {
+        super("ServerReport");
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+
+        return json;
     }
 }

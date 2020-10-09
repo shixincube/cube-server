@@ -36,6 +36,7 @@ import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
 
 import java.io.File;
+import java.util.Timer;
 
 /**
  * Cell 容器监听器。
@@ -43,6 +44,8 @@ import java.io.File;
 public class ServiceCarpet implements CellListener {
 
     private Kernel kernel;
+
+    private Timer timer;
 
     public ServiceCarpet() {
     }
@@ -58,10 +61,18 @@ public class ServiceCarpet implements CellListener {
         this.setupKernel();
 
         PluginSystem.load();
+
+        this.timer = new Timer();
+        this.timer.schedule(new Daemon(this.kernel), 10L * 1000L, 30L * 1000L);
     }
 
     @Override
     public void cellDestroyed(Nucleus nucleus) {
+        if (null != this.timer) {
+            this.timer.cancel();
+            this.timer = null;
+        }
+
         PluginSystem.unlaod();
 
         this.teardownKernel();

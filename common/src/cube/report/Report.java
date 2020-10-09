@@ -30,12 +30,22 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.JSONable;
 
+/**
+ * 报告描述类。
+ */
 public class Report implements JSONable {
 
     private String name;
 
+    private long timestamp;
+
     public Report(String name) {
         this.name = name;
+        this.timestamp = System.currentTimeMillis();
+    }
+
+    public String getName() {
+        return this.name;
     }
 
     @Override
@@ -43,6 +53,7 @@ public class Report implements JSONable {
         JSONObject json = new JSONObject();
         try {
             json.put("name", this.name);
+            json.put("timestamp", this.timestamp);
         } catch (JSONException e) {
             e.printStackTrace();
         }

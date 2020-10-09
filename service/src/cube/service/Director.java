@@ -31,7 +31,7 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 
 /**
- *
+ * 导演机。
  */
 public class Director {
 
@@ -40,7 +40,6 @@ public class Director {
     private final static String sDirectorKey = "_director";
 
     protected Director() {
-
     }
 
     public static ActionDialect attachDirector(ActionDialect dialect, long contactId) {

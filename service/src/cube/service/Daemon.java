@@ -24,33 +24,33 @@
  * SOFTWARE.
  */
 
-package cube.console;
+package cube.service;
 
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
-import org.eclipse.jetty.server.handler.ContextHandler;
+import cube.core.Kernel;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.util.TimerTask;
 
 /**
- * 报告处理器。
+ * 服务器的守护任务。
  */
-public class ReportHandler extends ContextHandler {
+public class Daemon extends TimerTask {
 
-    public ReportHandler() {
+    private Kernel kernel;
+
+    /**
+     * 报告发送间隔。
+     */
+    private long reportInterval = 60L * 1000L;
+
+    public Daemon(Kernel kernel) {
+        super();
+        this.kernel = kernel;
+    }
+
+    @Override
+    public void run() {
 
     }
 
-    protected class Handler extends AbstractHandler {
 
-        @Override
-        public void handle(String target, Request request,
-                           HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
-                throws IOException, ServletException {
-
-        }
-    }
 }

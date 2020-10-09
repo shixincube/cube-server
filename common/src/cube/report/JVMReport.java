@@ -26,9 +26,12 @@
 
 package cube.report;
 
-public class StartReport extends Report {
+/**
+ *
+ */
+public class JVMReport extends Report {
 
-    public StartReport() {
-        super("StartReport");
+    public JVMReport() {
+        super("JVMReport");
     }
 }

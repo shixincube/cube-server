@@ -26,27 +26,66 @@
 
 package cube.report;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+/**
+ * 报告服务。
+ */
 public class ReportService {
 
     private final static ReportService instance = new ReportService();
 
-    private String host;
+    /**
+     * 接收报告的主机 URL 列表。
+     */
+    private List<String> hostUrls;
 
-    private int port;
+    /**
+     * 报告清单。
+     */
+    private ConcurrentLinkedQueue<Report> reports;
+
+    private int maxQueueLength = 20;
+
+    private AtomicBoolean running;
 
     private ReportService() {
+        this.hostUrls = new ArrayList<>();
+        this.reports = new ConcurrentLinkedQueue<>();
+        this.running = new AtomicBoolean(false);
     }
 
     public final static ReportService getInstance() {
         return ReportService.instance;
     }
 
-    public void setHost(String host, int port) {
-        this.host = host;
-        this.port = port;
+    public void addHost(String address, int port) {
+        this.hostUrls.add("http://" + address + ":" + port + "/report");
     }
 
-    public void sendReport(Report report) {
+    public void setMaxQueueLength(int maxQueueLength) {
+        this.maxQueueLength = maxQueueLength;
+    }
 
+    public void submitReport(Report report) {
+        this.reports.offer(report);
+
+        if (this.reports.size() > this.maxQueueLength) {
+            // 当队列超长时，删除队首报告
+            this.reports.poll();
+        }
+
+        if (!this.running.get()) {
+            this.running.set(true);
+            this.processQueue();
+        }
+    }
+
+    private void processQueue() {
+        SubmitThread thread = new SubmitThread(this.hostUrls, this.reports, this.running);
+        thread.start();
     }
 }
