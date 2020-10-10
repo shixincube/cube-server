@@ -26,14 +26,24 @@
 
 package cube.service;
 
+import cell.api.Nucleus;
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
+import cell.util.log.LogHandle;
+import cell.util.log.LogLevel;
 import cube.core.Kernel;
+import cube.report.LogReport;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TimerTask;
 
 /**
  * 服务器的守护任务。
  */
-public class Daemon extends TimerTask {
+public class Daemon extends TimerTask implements LogHandle {
+
+    private Nucleus nucleus;
 
     private Kernel kernel;
 
@@ -43,19 +53,76 @@ public class Daemon extends TimerTask {
     private long logReportInterval = 10L * 1000L;
 
     /**
+     * 上一次提交日志的时间戳。
+     */
+    private long lastLogReport = 0;
+
+    /**
      * 报告发送间隔。
      */
     private long reportInterval = 60L * 1000L;
 
-    public Daemon(Kernel kernel) {
+    /**
+     * 日志记录。
+     */
+    private List<JSONObject> logRecords;
+
+    public Daemon(Kernel kernel, Nucleus nucleus) {
         super();
         this.kernel = kernel;
+        this.nucleus = nucleus;
+        this.logRecords = new ArrayList<>();
     }
 
     @Override
     public void run() {
+        long now = System.currentTimeMillis();
 
+        if (now - this.lastLogReport >= this.logReportInterval) {
+            LogReport report = new LogReport("");
+
+            this.logRecords.clear();
+        }
     }
 
+    @Override
+    public String getName() {
+        return "Daemon";
+    }
 
+    @Override
+    public void logDebug(String tag, String text) {
+        this.recordLog(LogLevel.DEBUG, tag, text);
+    }
+
+    @Override
+    public void logInfo(String tag, String text) {
+        this.recordLog(LogLevel.INFO, tag, text);
+    }
+
+    @Override
+    public void logWarning(String tag, String text) {
+        this.recordLog(LogLevel.WARNING, tag, text);
+    }
+
+    @Override
+    public void logError(String tag, String text) {
+        this.recordLog(LogLevel.ERROR, tag, text);
+    }
+
+    private void recordLog(LogLevel level, String tag, String text) {
+        JSONObject log = new JSONObject();
+        try {
+            log.put("level", level.getCode());
+            log.put("tag", tag);
+            log.put("text", text);
+            log.put("time", System.currentTimeMillis());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        synchronized (this.logRecords) {
+            this.logRecords.add(log);
+        }
+    }
 }

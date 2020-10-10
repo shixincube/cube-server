@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class LogReport extends Report {
 
-    private List<String> logLines;
+    private List<JSONObject> logLines;
 
     public LogReport(String reporter) {
         super("Log");
@@ -46,7 +46,7 @@ public class LogReport extends Report {
         this.logLines = new ArrayList<>();
     }
 
-    public void addLog(List<String> logs) {
+    public void addLog(List<JSONObject> logs) {
         this.logLines.addAll(logs);
     }
 
@@ -60,7 +60,7 @@ public class LogReport extends Report {
         JSONObject json = super.toJSON();
 
         JSONArray lines = new JSONArray();
-        for (String line : this.logLines) {
+        for (JSONObject line : this.logLines) {
             lines.put(line);
         }
 

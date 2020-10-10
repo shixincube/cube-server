@@ -30,6 +30,7 @@ import cell.api.Nucleus;
 import cell.carpet.CellListener;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cell.util.log.LogManager;
 import cube.cache.SharedMemoryCache;
 import cube.core.Kernel;
 import cube.plugin.PluginSystem;
@@ -45,6 +46,8 @@ public class ServiceCarpet implements CellListener {
 
     private Kernel kernel;
 
+    private Daemon daemon;
+
     private Timer timer;
 
     public ServiceCarpet() {
@@ -54,6 +57,9 @@ public class ServiceCarpet implements CellListener {
     public void cellPreinitialize(Nucleus nucleus) {
         this.kernel = new Kernel();
         nucleus.setParameter("kernel", this.kernel);
+
+        this.daemon = new Daemon(this.kernel, nucleus);
+        LogManager.getInstance().addHandle(this.daemon);
     }
 
     @Override
@@ -63,7 +69,7 @@ public class ServiceCarpet implements CellListener {
         PluginSystem.load();
 
         this.timer = new Timer();
-        this.timer.schedule(new Daemon(this.kernel), 10L * 1000L, 30L * 1000L);
+        this.timer.schedule(daemon, 10L * 1000L, 10L * 1000L);
     }
 
     @Override
