@@ -26,61 +26,50 @@
 
 package cube.report;
 
+import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
-import cube.common.JSONable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * 报告描述类。
+ * 日志报告。
  */
-public class Report implements JSONable {
+public class LogReport extends Report {
 
-    /**
-     * 报告名称。
-     */
-    private String name;
+    private List<String> logLines;
 
-    /**
-     * 报告时间戳。
-     */
-    private long timestamp;
-
-    /**
-     * 报告人描述。
-     */
-    private String reporter;
-
-    public Report(String name) {
-        this.name = name;
-        this.timestamp = System.currentTimeMillis();
+    public LogReport(String reporter) {
+        super("Log");
+        this.setReporter(reporter);
+        this.logLines = new ArrayList<>();
     }
 
-    public String getName() {
-        return this.name;
+    public void addLog(List<String> logs) {
+        this.logLines.addAll(logs);
     }
 
-    public void setReporter(String reporter) {
-        this.reporter = reporter;
-    }
-
-    public String getReporter() {
-        return this.reporter;
-    }
-
-    protected void reset() {
-        this.timestamp = System.currentTimeMillis();
+    public void clear() {
+        this.logLines.clear();
+        this.reset();
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
+        JSONObject json = super.toJSON();
+
+        JSONArray lines = new JSONArray();
+        for (String line : this.logLines) {
+            lines.put(line);
+        }
+
         try {
-            json.put("name", this.name);
-            json.put("timestamp", this.timestamp);
-            json.put("reporter", this.reporter);
+            json.put("lines", lines);
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
         return json;
     }
 }

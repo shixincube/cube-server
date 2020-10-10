@@ -97,7 +97,7 @@ public class SignInTask extends Task {
     private JSONObject makeGatewayErrorPayload() {
         JSONObject payload = new JSONObject();
         try {
-            payload.put("state", StateCode.makeState(StateCode.GatewayError, "Gateway error"));
+            payload.put(StateCode.KEY, StateCode.makeState(StateCode.GatewayError, "Gateway error"));
         } catch (JSONException e) {
             e.printStackTrace();
         }

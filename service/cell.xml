@@ -49,7 +49,7 @@
 		<cellet port="6000">
 			<class>cube.service.contact.ContactServiceCellet</class>
 		</cellet>
-		<cellet port="6000" jar="../service-messaging/build/jar/cube-service-messaging.jar">
+		<cellet port="6000">
 			<class>cube.service.messaging.MessagingServiceCellet</class>
 		</cellet>
 	</cellets>

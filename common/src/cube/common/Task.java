@@ -62,7 +62,7 @@ public abstract class Task implements Runnable {
     protected JSONObject makeStatePayload(int stateCode, String stateDesc) {
         JSONObject payload = new JSONObject();
         try {
-            payload.put("state", StateCode.makeState(stateCode, stateDesc));
+            payload.put(StateCode.KEY, StateCode.makeState(stateCode, stateDesc));
         } catch (JSONException e) {
             e.printStackTrace();
         }

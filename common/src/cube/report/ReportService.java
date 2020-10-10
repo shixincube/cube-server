@@ -48,8 +48,14 @@ public class ReportService {
      */
     private ConcurrentLinkedQueue<Report> reports;
 
+    /**
+     * 存储到内存里的最大报告数量。
+     */
     private int maxQueueLength = 20;
 
+    /**
+     * 提交报告线程是否正在执行。
+     */
     private AtomicBoolean running;
 
     private ReportService() {

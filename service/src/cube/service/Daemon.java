@@ -38,6 +38,11 @@ public class Daemon extends TimerTask {
     private Kernel kernel;
 
     /**
+     * 日志报告间隔。
+     */
+    private long logReportInterval = 10L * 1000L;
+
+    /**
      * 报告发送间隔。
      */
     private long reportInterval = 60L * 1000L;
