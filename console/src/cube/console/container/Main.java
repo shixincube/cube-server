@@ -26,12 +26,15 @@
 
 package cube.console.container;
 
+import cell.util.log.LogLevel;
+import cell.util.log.LogManager;
+import cell.util.log.Logger;
 import cube.console.Console;
 import cube.console.ReportHandler;
+import cube.console.container.handler.ServerLogHandler;
 import cube.console.container.handler.ServersHandler;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -52,6 +55,9 @@ public class Main {
      * @param port
      */
     public static void start(int port) {
+        LogManager.getInstance().setLevel(LogLevel.DEBUG);
+        LogManager.getInstance().addHandle(LogManager.createSystemOutHandle());
+
         Console console = new Console();
         console.launch();
 
@@ -82,13 +88,14 @@ public class Main {
 
                 // For AJAX API
                 new ServersHandler(console),
+                new ServerLogHandler(console),
 
-                new StopHandler(server),
+                new StopHandler(server, console),
                 new DefaultHandler()});
 
         server.setHandler(handlers);
 
-        System.out.println("Cube Console - start server # " + port);
+        Logger.i(Main.class, "Start cube console server # " + port);
 
         try {
             server.start();

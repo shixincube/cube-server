@@ -38,16 +38,36 @@ import java.util.List;
  */
 public class LogReport extends Report {
 
-    private List<JSONObject> logLines;
+    public final static String NAME = "Log";
+
+    private List<LogLine> logLines;
 
     public LogReport(String reporter) {
-        super("Log");
+        super(LogReport.NAME);
         this.setReporter(reporter);
         this.logLines = new ArrayList<>();
     }
 
-    public void addLog(List<JSONObject> logs) {
+    public LogReport(JSONObject json) {
+        super(json);
+        try {
+            JSONArray array = json.getJSONArray("lines");
+            this.logLines = new ArrayList<>();
+            for (int i = 0; i < array.length(); ++i) {
+                JSONObject line = array.getJSONObject(i);
+                this.logLines.add(new LogLine(line));
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addLogs(List<LogLine> logs) {
         this.logLines.addAll(logs);
+    }
+
+    public List<LogLine> getLogs() {
+        return this.logLines;
     }
 
     public void clear() {
@@ -60,8 +80,8 @@ public class LogReport extends Report {
         JSONObject json = super.toJSON();
 
         JSONArray lines = new JSONArray();
-        for (JSONObject line : this.logLines) {
-            lines.put(line);
+        for (LogLine line : this.logLines) {
+            lines.put(line.toJSON());
         }
 
         try {

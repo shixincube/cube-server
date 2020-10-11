@@ -1,0 +1,14 @@
+/* console.css */
+
+.h-400px {
+    height: 400px;
+}
+
+.log-view {
+    font-size: 12px;
+    font-family: Menlo, "Courier New", Courier, monospace;
+}
+
+.log-view p {
+    margin: 0;
+}

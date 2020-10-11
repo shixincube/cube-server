@@ -14,9 +14,11 @@
   <link rel="stylesheet" href="plugins/ionicons/css/ionicons.min.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="assets/css/adminlte.min.css">
+  <!-- App style -->
+  <link rel="stylesheet" href="assets/css/console.css">
 </head>
 
-<body class="hold-transition sidebar-mini">
+<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed layout-footer-fixed">
 <div class="wrapper">
 
   <!-- Navbar -->
@@ -190,7 +192,7 @@
         <div class="row">
           <div class="col-lg-3 col-6">
             <!-- small box -->
-            <div class="small-box bg-info">
+            <div id="dispatcher-box" class="small-box bg-info">
               <div class="inner">
                 <h3>0</h3>
                 <p>网关节点</p>
@@ -204,7 +206,7 @@
           <!-- ./col -->
           <div class="col-lg-3 col-6">
             <!-- small box -->
-            <div class="small-box bg-success">
+            <div id="service-box" class="small-box bg-success">
               <div class="inner">
                 <h3>0</h3>
                 <p>服务单元节点</p>
@@ -326,7 +328,54 @@
           <!-- ./col -->
         </div>
         <!-- /.row -->
-      </div><!-- /.container-fluid -->
+        <div class="row">
+          <div class="col-lg-12 col-12">
+            <div class="card card-primary card-outline">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-terminal"></i>
+                  &nbsp;服务器日志
+                </h3>
+              </div>
+              <div class="card-body h-400px">
+                <div class="row">
+                  <div class="col-5 col-sm-3">
+                    <div class="nav flex-column nav-tabs h-100" id="log-tabs-tab" role="tablist" aria-orientation="vertical">
+                      <a class="nav-link active" id="log-tabs-home-tab" data-toggle="pill" href="#log-tabs-console" role="tab" aria-controls="log-tabs-console" aria-selected="true">Console</a>
+                      <a class="nav-link" id="log-tabs-server1-tab" data-toggle="pill" href="#log-tabs-server1" role="tab" aria-controls="log-tabs-server1" aria-selected="false">Server 1</a>
+                      <a class="nav-link" id="log-tabs-server2-tab" data-toggle="pill" href="#log-tabs-server2" role="tab" aria-controls="log-tabs-server2" aria-selected="false">Server 2</a>
+                      <a class="nav-link" id="log-tabs-server3-tab" data-toggle="pill" href="#log-tabs-server3" role="tab" aria-controls="log-tabs-server1" aria-selected="false">Server 3</a>
+                      <a class="nav-link" id="log-tabs-server4-tab" data-toggle="pill" href="#log-tabs-server4" role="tab" aria-controls="log-tabs-server2" aria-selected="false">Server 4</a>
+                    </div>
+                  </div>
+                  <div class="col-7 col-sm-9">
+                    <div class="tab-content" id="log-tabs-tabContent">
+                      <div class="tab-pane text-left fade show active" id="log-tabs-console" role="tabpanel" aria-labelledby="log-tabs-console-tab">
+                        <div class="log-view"></div>
+                      </div>
+                      <div class="tab-pane fade" id="log-tabs-server1" role="tabpanel" aria-labelledby="log-tabs-server1-tab">
+                        <div class="log-view"></div>
+                      </div>
+                      <div class="tab-pane fade" id="log-tabs-server2" role="tabpanel" aria-labelledby="log-tabs-server2-tab">
+                        <div class="log-view"></div>
+                      </div>
+                      <div class="tab-pane fade" id="log-tabs-server3" role="tabpanel" aria-labelledby="log-tabs-server3-tab">
+                        <div class="log-view"></div>
+                      </div>
+                      <div class="tab-pane fade" id="log-tabs-server4" role="tabpanel" aria-labelledby="log-tabs-server4-tab">
+                        <div class="log-view"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- /.card -->
+          </div>
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
     </div>
     <!-- /.content -->
   </div>

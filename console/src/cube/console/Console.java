@@ -29,19 +29,44 @@ package cube.console;
 import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cell.util.log.LogHandle;
+import cell.util.log.LogLevel;
+import cell.util.log.LogManager;
+import cube.report.LogLine;
+import cube.report.LogReport;
 import cube.util.ConfigUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 控制台数据管理类。
  */
-public final class Console {
+public final class Console implements Runnable {
 
     private Properties servers;
 
+    private ConcurrentHashMap<String, List<LogLine>> serverLogMap;
+
+    /**
+     * 记录每个服务器的最大日志行数。
+     */
+    private int maxLogLines = 5000;
+
+    private ScheduledExecutorService timer;
+
+    private ConsoleLogHandler logHandler;
+
     public Console() {
+        this.serverLogMap = new ConcurrentHashMap<>();
+        this.logHandler = new ConsoleLogHandler();
     }
 
     public void launch() {
@@ -50,6 +75,15 @@ public final class Console {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        LogManager.getInstance().addHandle(this.logHandler);
+
+        this.timer = Executors.newScheduledThreadPool(2);
+        this.timer.scheduleWithFixedDelay(this, 10L, 10L, TimeUnit.SECONDS);
+    }
+
+    public void destroy() {
+        this.timer.shutdown();
     }
 
     public JSONArray getDispatcherServers() {
@@ -100,5 +134,81 @@ public final class Console {
         }
 
         return array;
+    }
+
+    public void appendLogReport(LogReport report) {
+        List<LogLine> list = this.serverLogMap.get(report.getReporter());
+        if (null == list) {
+            list = new Vector<>();
+            this.serverLogMap.put(report.getReporter().toString(), list);
+        }
+
+        list.addAll(report.getLogs());
+
+        int d = list.size() - this.maxLogLines;
+        while (d > 0) {
+            list.remove(0);
+            --d;
+        }
+    }
+
+    public List<LogLine> queryLogs(long startTimestamp) {
+        ArrayList<LogLine> list = new ArrayList<>();
+        synchronized (this.logHandler.logLines) {
+            for (int i = 0, size = this.logHandler.logLines.size(); i < size; ++i) {
+                
+            }
+        }
+        return list;
+    }
+
+    @Override
+    public void run() {
+
+    }
+
+    protected class ConsoleLogHandler implements LogHandle {
+
+        protected List<LogLine> logLines;
+
+        public ConsoleLogHandler() {
+            this.logLines = new ArrayList<>();
+        }
+
+        @Override
+        public String getName() {
+            return "ConsoleLog";
+        }
+
+        @Override
+        public void logDebug(String tag, String text) {
+            this.recordLog(LogLevel.DEBUG, tag, text);
+        }
+
+        @Override
+        public void logInfo(String tag, String text) {
+            this.recordLog(LogLevel.INFO, tag, text);
+        }
+
+        @Override
+        public void logWarning(String tag, String text) {
+            this.recordLog(LogLevel.WARNING, tag, text);
+        }
+
+        @Override
+        public void logError(String tag, String text) {
+            this.recordLog(LogLevel.ERROR, tag, text);
+        }
+
+        private void recordLog(LogLevel level, String tag, String text) {
+            LogLine log = new LogLine(level.getCode(), tag, text, System.currentTimeMillis());
+            synchronized (this.logLines) {
+                this.logLines.add(log);
+
+                if (this.logLines.size() > maxLogLines) {
+                    this.logLines.remove(0);
+                }
+            }
+        }
     }
 }

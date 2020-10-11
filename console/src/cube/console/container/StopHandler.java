@@ -26,6 +26,8 @@
 
 package cube.console.container;
 
+import cell.util.log.Logger;
+import cube.console.Console;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
@@ -45,11 +47,13 @@ public class StopHandler extends ContextHandler {
 
     private Server server;
 
-    public StopHandler(Server server) {
+    private Console console;
+
+    public StopHandler(Server server, Console console) {
         super("/stop");
         this.setHandler(new Handler());
-
         this.server = server;
+        this.console = console;
     }
 
     protected class Handler extends AbstractHandler {
@@ -59,9 +63,18 @@ public class StopHandler extends ContextHandler {
                            HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
                 throws IOException, ServletException {
 
+            if (!request.getRemoteAddr().equals("127.0.0.1")) {
+                httpServletResponse.setStatus(HttpStatus.BAD_REQUEST_400);
+                request.setHandled(true);
+                return;
+            }
+
             (new Thread() {
                 @Override
                 public void run() {
+                    // 销毁控制台
+                    console.destroy();
+
                     try {
                         Thread.sleep(1000L);
                     } catch (InterruptedException e) {
@@ -70,7 +83,7 @@ public class StopHandler extends ContextHandler {
 
                     try {
                         ServerConnector conn = (ServerConnector) server.getConnectors()[0];
-                        System.out.println("Cube Console - stop server # " + conn.getPort());
+                        Logger.i(StopHandler.class, "Stop cube console server # " + conn.getPort());
                         server.stop();
                     } catch (Exception e) {
                         e.printStackTrace();

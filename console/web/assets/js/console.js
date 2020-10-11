@@ -28,11 +28,15 @@
  * Console
  */
 function Console() {
-	
+    this.dispatchers = null;
+    this.services = null;
 }
 
-Console.prototype.getDispatcherServers = function(handler) {
-    $.get('/servers/dispatcher', function(response, status, xhr) {
-        alert(response.data);
+Console.prototype.getServers = function(handler) {
+    var that = this;
+    $.get('/servers', function(response, status, xhr) {
+        that.dispatchers = response.dispatchers;
+        that.services = response.services;
+        handler(response);
     }, 'json');
 }

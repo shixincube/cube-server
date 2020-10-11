@@ -33,6 +33,7 @@ import cell.util.json.JSONObject;
 import cell.util.log.LogHandle;
 import cell.util.log.LogLevel;
 import cube.core.Kernel;
+import cube.report.LogLine;
 import cube.report.LogReport;
 import cube.report.ReportService;
 
@@ -67,7 +68,7 @@ public class Daemon extends TimerTask implements LogHandle {
     /**
      * 日志记录。
      */
-    private List<JSONObject> logRecords;
+    private List<LogLine> logRecords;
 
     public Daemon(Kernel kernel, Nucleus nucleus) {
         super();
@@ -88,7 +89,7 @@ public class Daemon extends TimerTask implements LogHandle {
                     Servable server = this.nucleus.getTalkService().getServers().get(0);
                     String reporter = server.getHost() + ":" + server.getPort();
                     report = new LogReport(reporter);
-                    report.addLog(this.logRecords);
+                    report.addLogs(this.logRecords);
                     this.logRecords.clear();
                 }
             }
@@ -127,16 +128,7 @@ public class Daemon extends TimerTask implements LogHandle {
     }
 
     private void recordLog(LogLevel level, String tag, String text) {
-        JSONObject log = new JSONObject();
-        try {
-            log.put("level", level.getCode());
-            log.put("tag", tag);
-            log.put("text", text);
-            log.put("time", System.currentTimeMillis());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
+        LogLine log = new LogLine(level.getCode(), tag, text, System.currentTimeMillis());
         synchronized (this.logRecords) {
             this.logRecords.add(log);
         }

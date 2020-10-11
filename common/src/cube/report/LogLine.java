@@ -31,70 +31,47 @@ import cell.util.json.JSONObject;
 import cube.common.JSONable;
 
 /**
- * 报告描述类。
+ * 日志行。
  */
-public class Report implements JSONable {
+public class LogLine implements JSONable {
 
-    /**
-     * 报告名称。
-     */
-    private String name;
+    public int level;
 
-    /**
-     * 报告时间戳。
-     */
-    private long timestamp;
+    public String tag;
 
-    /**
-     * 报告人描述。
-     */
-    private String reporter;
+    public String text;
 
-    public Report(String name) {
-        this.name = name;
-        this.timestamp = System.currentTimeMillis();
+    public long time;
+
+    public LogLine(int level, String tag, String text, long time) {
+        this.level = level;
+        this.tag = tag;
+        this.text = text;
+        this.time = time;
     }
 
-    public Report(JSONObject json) {
+    public LogLine(JSONObject json) {
         try {
-            this.name = json.getString("name");
-            this.timestamp = json.getLong("timestamp");
-            this.reporter = json.getString("reporter");
+            this.level = json.getInt("level");
+            this.tag = json.getString("tag");
+            this.text = json.getString("text");
+            this.time = json.getLong("time");
         } catch (JSONException e) {
             e.printStackTrace();
         }
-    }
-
-    public String getName() {
-        return this.name;
-    }
-
-    public void setReporter(String reporter) {
-        this.reporter = reporter;
-    }
-
-    public String getReporter() {
-        return this.reporter;
-    }
-
-    protected void reset() {
-        this.timestamp = System.currentTimeMillis();
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         try {
-            json.put("name", this.name);
-            json.put("timestamp", this.timestamp);
-            json.put("reporter", this.reporter);
+            json.put("level", this.level);
+            json.put("tag", this.tag);
+            json.put("text", this.text);
+            json.put("time", this.time);
         } catch (JSONException e) {
             e.printStackTrace();
         }
         return json;
-    }
-
-    public static String extractName(JSONObject json) throws JSONException {
-        return json.getString("name");
     }
 }

@@ -27,6 +27,8 @@
 package cube.console.container.handler;
 
 import cell.util.json.JSONArray;
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
 import cube.console.Console;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
@@ -54,6 +56,7 @@ public class ServersHandler extends ContextHandler  {
     protected class Handler extends AbstractHandler {
 
         public Handler() {
+            super();
         }
 
         @Override
@@ -67,7 +70,24 @@ public class ServersHandler extends ContextHandler  {
                 request.setHandled(true);
             }
             else if (target.equals("/service")) {
-
+                JSONArray list = console.getServiceServers();
+                httpServletResponse.setStatus(HttpStatus.OK_200);
+                httpServletResponse.getWriter().write(list.toString());
+                request.setHandled(true);
+            }
+            else {
+                JSONArray dispatcherList = console.getDispatcherServers();
+                JSONArray serviceList = console.getServiceServers();
+                JSONObject data = new JSONObject();
+                try {
+                    data.put("dispatchers", dispatcherList);
+                    data.put("services", serviceList);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                httpServletResponse.setStatus(HttpStatus.OK_200);
+                httpServletResponse.getWriter().write(data.toString());
+                request.setHandled(true);
             }
         }
     }
