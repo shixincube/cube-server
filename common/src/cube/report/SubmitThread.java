@@ -79,10 +79,10 @@ public class SubmitThread extends Thread {
                     long duration = System.currentTimeMillis() - time;
                     if (response.getStatus() == HttpStatus.OK_200) {
                         submitted = true;
-                        Logger.i(this.getClass(), "Report: \"" + report.getName() + "\" submitted - " + url + " - " + duration);
+                        Logger.i(this.getClass(), "Report: \"" + report.getName() + "\" (" + report.getReporter() + ") submitted - " + url + " - " + duration);
                     }
                     else {
-                        Logger.w(this.getClass(), "Report: \"" + report.getName() + "\" submit failed - " + url + " - " + duration);
+                        Logger.w(this.getClass(), "Report: \"" + report.getName() + "\" (" + report.getReporter() + ") submit failed - " + url + " - " + duration);
                     }
                 } catch (InterruptedException e) {
                     Logger.e(this.getClass(),

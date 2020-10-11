@@ -58,7 +58,7 @@ public final class Console implements Runnable {
     /**
      * 记录每个服务器的最大日志行数。
      */
-    private int maxLogLines = 5000;
+    private int maxLogLines = 1000;
 
     private ScheduledExecutorService timer;
 
@@ -95,17 +95,13 @@ public final class Console implements Runnable {
 
         int num = Integer.parseInt(this.servers.getProperty("dispatcher.num"));
         for (int i = 1; i <= num; ++i) {
+            String name = this.servers.getProperty("dispatcher." + i + ".name");
+            String listening = this.servers.getProperty("dispatcher." + i + ".listening");
             String address = this.servers.getProperty("dispatcher." + i + ".address");
             int port = Integer.parseInt(this.servers.getProperty("dispatcher." + i + ".port"));
-            JSONObject json = new JSONObject();
-            try {
-                json.put("address", address);
-                json.put("port", port);
-                array.put(json);
-            }
-            catch (JSONException e) {
-                e.printStackTrace();
-            }
+
+            Follower follower = new Follower(name, listening, address, port);
+            array.put(follower.toJSON());
         }
 
         return array;
@@ -120,17 +116,13 @@ public final class Console implements Runnable {
 
         int num = Integer.parseInt(this.servers.getProperty("service.num"));
         for (int i = 1; i <= num; ++i) {
+            String name = this.servers.getProperty("service." + i + ".name");
+            String listening = this.servers.getProperty("service." + i + ".listening");
             String address = this.servers.getProperty("service." + i + ".address");
             int port = Integer.parseInt(this.servers.getProperty("service." + i + ".port"));
-            JSONObject json = new JSONObject();
-            try {
-                json.put("address", address);
-                json.put("port", port);
-                array.put(json);
-            }
-            catch (JSONException e) {
-                e.printStackTrace();
-            }
+
+            Follower follower = new Follower(name, listening, address, port);
+            array.put(follower.toJSON());
         }
 
         return array;
@@ -152,11 +144,34 @@ public final class Console implements Runnable {
         }
     }
 
-    public List<LogLine> queryLogs(long startTimestamp) {
+    public List<LogLine> queryLogs(String serverName, long startTimestamp, int maxLength) {
+        ArrayList<LogLine> result = new ArrayList<>();
+        List<LogLine> list = this.serverLogMap.get(serverName);
+        if (null != list) {
+            for (int i = 0, size = list.size(); i < size; ++i) {
+                LogLine line = list.get(i);
+                if (line.time > startTimestamp) {
+                    result.add(line);
+                    if (result.size() >= maxLength) {
+                        break;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    public List<LogLine> queryConsoleLogs(long startTimestamp, int maxLength) {
         ArrayList<LogLine> list = new ArrayList<>();
         synchronized (this.logHandler.logLines) {
             for (int i = 0, size = this.logHandler.logLines.size(); i < size; ++i) {
-                
+                LogLine line = this.logHandler.logLines.get(i);
+                if (line.time > startTimestamp) {
+                    list.add(line);
+                    if (list.size() >= maxLength) {
+                        break;
+                    }
+                }
             }
         }
         return list;

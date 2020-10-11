@@ -33,12 +33,18 @@ import cube.cache.TimeseriesCache;
 import cube.mq.AdapterMQ;
 
 import java.util.Iterator;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 服务器上的内核。
  */
 public final class Kernel {
+
+    /**
+     * 服务器节点名。
+     */
+    private String nodeName;
 
     /**
      * 存储模块的映射。
@@ -59,6 +65,25 @@ public final class Kernel {
         this.moduleMap = new ConcurrentHashMap<>();
         this.cacheMap = new ConcurrentHashMap<>();
         this.mqMap = new ConcurrentHashMap<>();
+        this.nodeName = UUID.randomUUID().toString();
+    }
+
+    /**
+     * 设置节点名。
+     *
+     * @param name 指定节点名。
+     */
+    public void setNodeName(String name) {
+        this.nodeName = name;
+    }
+
+    /**
+     * 获取节点名。
+     *
+     * @return 返回节点名。
+     */
+    public String getNodeName() {
+        return this.nodeName;
     }
 
     /**

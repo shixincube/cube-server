@@ -28,8 +28,6 @@ package cube.service;
 
 import cell.api.Nucleus;
 import cell.api.Servable;
-import cell.util.json.JSONException;
-import cell.util.json.JSONObject;
 import cell.util.log.LogHandle;
 import cell.util.log.LogLevel;
 import cube.core.Kernel;
@@ -86,8 +84,7 @@ public class Daemon extends TimerTask implements LogHandle {
 
             synchronized (this.logRecords) {
                 if (!this.logRecords.isEmpty()) {
-                    Servable server = this.nucleus.getTalkService().getServers().get(0);
-                    String reporter = server.getHost() + ":" + server.getPort();
+                    String reporter = this.kernel.getNodeName();
                     report = new LogReport(reporter);
                     report.addLogs(this.logRecords);
                     this.logRecords.clear();

@@ -24,31 +24,28 @@
  * SOFTWARE.
  */
 
+package cube.console;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * Console
+ * 实用函数库。
  */
-function Console() {
-    this.dispatchers = null;
-    this.services = null;
-}
+public final class Utils {
 
-Console.prototype.getServers = function(handler) {
-    var that = this;
-    $.get('/servers', function(response, status, xhr) {
-        that.dispatchers = response.dispatchers;
-        that.services = response.services;
-        handler(response);
-    }, 'json');
-}
+    private Utils() {
+    }
 
-Console.prototype.queryConsoleLog = function(start, handler) {
-    $.get('/log/console', { "start": start }, function(response, status, xhr) {
-        handler(response);
-    }, 'json');
-}
+    public static Map<String, String> parseQueryStringParams(String queryString) {
+        Map<String, String> result = new HashMap<>();
+        String[] array = queryString.split("&");
 
-Console.prototype.queryLog = function(name, start, handler) {
-    $.get('/log/server', { "name": name, "start": start }, function(response, status, xhr) {
-        handler(response);
-    }, 'json');
+        for (String pair : array) {
+            String[] param = pair.split("=");
+            result.put(param[0], param[1]);
+        }
+
+        return result;
+    }
 }

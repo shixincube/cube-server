@@ -120,9 +120,15 @@ public class ServiceCarpet implements CellListener {
     private void initManagement() {
         // 配置控制台
         try {
-            Properties properties = ConfigUtils.readConsoleFollower();
-            ReportService.getInstance().addHost(properties.getProperty("host"),
-                    Integer.parseInt(properties.getProperty("port", "7080")));
+            Properties properties = ConfigUtils.readConsoleFollower("config/console-follower-service.properties");
+
+            // 设置接收报告的服务器
+            ReportService.getInstance().addHost(properties.getProperty("console.host"),
+                    Integer.parseInt(properties.getProperty("console.port", "7080")));
+
+            if (properties.containsKey("name")) {
+                this.kernel.setNodeName(properties.getProperty("name"));
+            }
         } catch (IOException e) {
             Logger.e(this.getClass(), "Read console follower config failed", e);
         }
