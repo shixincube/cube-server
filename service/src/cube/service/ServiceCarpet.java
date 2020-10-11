@@ -31,12 +31,17 @@ import cell.carpet.CellListener;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.LogManager;
+import cell.util.log.Logger;
 import cube.cache.SharedMemoryCache;
 import cube.core.Kernel;
 import cube.plugin.PluginSystem;
+import cube.report.ReportService;
 import cube.service.auth.AuthService;
+import cube.util.ConfigUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
 import java.util.Timer;
 
 /**
@@ -60,6 +65,8 @@ public class ServiceCarpet implements CellListener {
 
         this.daemon = new Daemon(this.kernel, nucleus);
         LogManager.getInstance().addHandle(this.daemon);
+
+        this.initManagement();
     }
 
     @Override
@@ -108,5 +115,16 @@ public class ServiceCarpet implements CellListener {
         this.kernel.shutdown();
 
         this.kernel.uninstallCache("TokenPool");
+    }
+
+    private void initManagement() {
+        // 配置控制台
+        try {
+            Properties properties = ConfigUtils.readConsoleFollower();
+            ReportService.getInstance().addHost(properties.getProperty("host"),
+                    Integer.parseInt(properties.getProperty("port", "7080")));
+        } catch (IOException e) {
+            Logger.e(this.getClass(), "Read console follower config failed", e);
+        }
     }
 }

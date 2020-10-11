@@ -26,6 +26,9 @@
 
 package cube.console.container;
 
+import cube.console.Console;
+import cube.console.ReportHandler;
+import cube.console.container.handler.ServersHandler;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpMethod;
@@ -42,7 +45,6 @@ import java.io.File;
 public class Main {
 
     public Main() {
-
     }
 
     /**
@@ -50,6 +52,9 @@ public class Main {
      * @param port
      */
     public static void start(int port) {
+        Console console = new Console();
+        console.launch();
+
         Server server = new Server(port);
 
         ResourceHandler resourceHandler = new ResourceHandler();
@@ -69,7 +74,17 @@ public class Main {
         indexHandler.setHandler(resourceHandler);
 
         HandlerList handlers = new HandlerList();
-        handlers.setHandlers(new Handler[] { indexHandler, new StopHandler(server), new DefaultHandler()});
+        handlers.setHandlers(new Handler[] {
+                indexHandler,
+
+                // For RESTful API
+                new ReportHandler(console),
+
+                // For AJAX API
+                new ServersHandler(console),
+
+                new StopHandler(server),
+                new DefaultHandler()});
 
         server.setHandler(handlers);
 

@@ -24,8 +24,9 @@
  * SOFTWARE.
  */
 
-package cube.console;
+package cube.console.container.handler;
 
+import cube.console.Console;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -36,25 +37,28 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * 报告处理器。
+ * 服务器信息句柄。
  */
-public class ReportHandler extends ContextHandler {
+public class ServersHandler extends ContextHandler  {
 
     private Console console;
 
-    public ReportHandler(Console console) {
-        super("/report");
+    public ServersHandler(Console console) {
+        super("/servers");
         this.setHandler(new Handler());
         this.console = console;
     }
 
     protected class Handler extends AbstractHandler {
 
+        public Handler() {
+        }
+
         @Override
         public void handle(String target, Request request,
                            HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
                 throws IOException, ServletException {
-
+            System.out.println("xjw: " + target);
         }
     }
 }

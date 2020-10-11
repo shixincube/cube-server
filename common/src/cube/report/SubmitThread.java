@@ -35,6 +35,7 @@ import org.eclipse.jetty.http.HttpStatus;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -73,20 +74,25 @@ public class SubmitThread extends Thread {
                 StringContentProvider provider = new StringContentProvider(report.toJSON().toString());
 
                 try {
-                    ContentResponse response = client.POST(url).content(provider).send();
+                    long time = System.currentTimeMillis();
+                    ContentResponse response = client.POST(url).content(provider).timeout(10, TimeUnit.SECONDS).send();
+                    long duration = System.currentTimeMillis() - time;
                     if (response.getStatus() == HttpStatus.OK_200) {
                         submitted = true;
-                        Logger.i(this.getClass(), "Report: \"" + report.getName() + "\" submitted - " + url);
+                        Logger.i(this.getClass(), "Report: \"" + report.getName() + "\" submitted - " + url + " - " + duration);
                     }
                     else {
-                        Logger.w(this.getClass(), "Report: \"" + report.getName() + "\" submit failed - " + url);
+                        Logger.w(this.getClass(), "Report: \"" + report.getName() + "\" submit failed - " + url + " - " + duration);
                     }
                 } catch (InterruptedException e) {
-                    Logger.e(this.getClass(), "", e);
+                    Logger.e(this.getClass(),
+                            "Submitting report \"" + report.getName() + "\" (" + report.getReporter() + ") failed", e);
                 } catch (TimeoutException e) {
-                    Logger.e(this.getClass(), "", e);
+                    Logger.w(this.getClass(),
+                            "Submitting report \"" + report.getName() + "\" (" + report.getReporter() + ") failed", e);
                 } catch (ExecutionException e) {
-                    Logger.e(this.getClass(), "", e);
+                    Logger.w(this.getClass(),
+                            "Submitting report \"" + report.getName() + "\" (" + report.getReporter() + ") failed", e);
                 }
             }
 

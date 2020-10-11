@@ -27,12 +27,14 @@
 package cube.service;
 
 import cell.api.Nucleus;
+import cell.api.Servable;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.LogHandle;
 import cell.util.log.LogLevel;
 import cube.core.Kernel;
 import cube.report.LogReport;
+import cube.report.ReportService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,9 +81,23 @@ public class Daemon extends TimerTask implements LogHandle {
         long now = System.currentTimeMillis();
 
         if (now - this.lastLogReport >= this.logReportInterval) {
-            LogReport report = new LogReport("");
+            LogReport report = null;
 
-            this.logRecords.clear();
+            synchronized (this.logRecords) {
+                if (!this.logRecords.isEmpty()) {
+                    Servable server = this.nucleus.getTalkService().getServers().get(0);
+                    String reporter = server.getHost() + ":" + server.getPort();
+                    report = new LogReport(reporter);
+                    report.addLog(this.logRecords);
+                    this.logRecords.clear();
+                }
+            }
+
+            if (null != report) {
+                ReportService.getInstance().submitReport(report);
+            }
+
+            this.lastLogReport = now;
         }
     }
 
