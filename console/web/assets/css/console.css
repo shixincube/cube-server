@@ -7,6 +7,8 @@
 .log-view {
     font-size: 12px;
     font-family: Menlo, "Courier New", Courier, monospace;
+    overflow: auto;
+    height: 360px;
 }
 
 .log-view p {

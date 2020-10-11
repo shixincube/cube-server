@@ -85,14 +85,11 @@ public class SubmitThread extends Thread {
                         Logger.w(this.getClass(), "Report: \"" + report.getName() + "\" (" + report.getReporter() + ") submit failed - " + url + " - " + duration);
                     }
                 } catch (InterruptedException e) {
-                    Logger.e(this.getClass(),
-                            "Submitting report \"" + report.getName() + "\" (" + report.getReporter() + ") failed", e);
+                    Logger.w(this.getClass(), "Submitting report \"" + report.getName() + "\" (" + report.getReporter() + ") failed", e);
                 } catch (TimeoutException e) {
-                    Logger.w(this.getClass(),
-                            "Submitting report \"" + report.getName() + "\" (" + report.getReporter() + ") failed", e);
+                    Logger.w(this.getClass(), "Submitting report \"" + report.getName() + "\" (" + report.getReporter() + ") failed", e);
                 } catch (ExecutionException e) {
-                    Logger.w(this.getClass(),
-                            "Submitting report \"" + report.getName() + "\" (" + report.getReporter() + ") failed", e);
+                    //Logger.d(this.getClass(), "Submitting report \"" + report.getName() + "\" (" + report.getReporter() + ") failed", e);
                 }
             }
 

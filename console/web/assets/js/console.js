@@ -32,6 +32,10 @@ function Console() {
     this.services = null;
 }
 
+Console.prototype.log = function(text) {
+    window.console.log(text);
+}
+
 Console.prototype.getServers = function(handler) {
     var that = this;
     $.get('/servers', function(response, status, xhr) {

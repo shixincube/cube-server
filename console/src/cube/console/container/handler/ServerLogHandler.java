@@ -102,7 +102,7 @@ public class ServerLogHandler extends ContextHandler {
                 long start = Long.parseLong(params.get("start"));
 
                 if (null != name) {
-                    List<LogLine> list = console.queryLogs(name, start, 20);
+                    List<LogLine> list = console.queryLogs(name, start, 40);
 
                     JSONArray result = new JSONArray();
                     for (LogLine line : list) {
@@ -111,6 +111,7 @@ public class ServerLogHandler extends ContextHandler {
 
                     JSONObject response = new JSONObject();
                     try {
+                        response.put("name", name);
                         response.put("lines", result);
                         if (list.isEmpty()) {
                             response.put("last", start);

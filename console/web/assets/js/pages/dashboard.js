@@ -7,25 +7,33 @@
     $.console = console;
 
     var consoleLogTime = 0;
-    var serverTagMap = {};
+    var serverDataMap = {};
+
+    var maxLogLine = 100;
 
     console.getServers(function(data) {
         $('#dispatcher-box').find('h3').text(data.dispatchers.length);
         $('#service-box').find('h3').text(data.services.length);
 
+        var now = Date.now();
+
         // 分配标签
         var tagIndex = 1;
         for (var i = 0; i < data.services.length; ++i) {
             var svr = data.services[i];
-            // 填写数据
-            svr.logTime = 0;
 
             var elTab = $('#log-tabs-server' + tagIndex + '-tab');
             elTab.css('visibility', 'visible');
             elTab.text('服务 ' + svr.name);
 
             var el = $('#log-tabs-server' + tagIndex).find('.log-view');
-            serverTagMap[svr.name] = el;
+
+            serverDataMap[svr.name] = {
+                "tabEl": el,
+                "logTime": now - 300000,    // 日志时间
+                "logTotal": 0               // 日志总行数
+            };
+
             ++tagIndex;
         }
     });
@@ -78,6 +86,14 @@
         el.append(p);
     }
 
+    function removeLog(el, num) {
+        var list = el.find('p');
+        for (var i = 0; i < list.length && i < num; ++i) {
+            var c = list[i];
+            $(c).remove();
+        }
+    }
+
     // 定时任务
     setInterval(function() {
         console.queryConsoleLog(consoleLogTime, function(data) {
@@ -87,8 +103,7 @@
 
             var el = $('#log-tabs-console').find('.log-view');
             for (var i = 0; i < data.lines.length; ++i) {
-                var line = data.lines[i];
-                appendLog(el, line);
+                appendLog(el, data.lines[i]);
             }
             consoleLogTime = data.last;
         });
@@ -96,12 +111,29 @@
         if (null != console.services) {
             for (var i = 0; i < console.services.length; ++i) {
                 var svr = console.services[i];
-                console.queryLog(svr.name, svr.logTime, function(data) {
+                console.queryLog(svr.name, serverDataMap[svr.name].logTime, function(data) {
                     if (data.lines.length == 0) {
                         return;
                     }
 
-                    svr.logTime = data.last;
+                    var total = serverDataMap[data.name].logTotal + data.lines.length;
+
+                    for (var i = 0; i < data.lines.length; ++i) {
+                        appendLog(serverDataMap[data.name].tabEl, data.lines[i]);
+                    }
+                    // 更新日志时间
+                    serverDataMap[data.name].logTime = data.last;
+
+                    // 更新总数
+                    serverDataMap[data.name].logTotal = total;
+
+                    var offset = parseInt(serverDataMap[data.name].tabEl.prop('scrollHeight'));
+                    serverDataMap[data.name].tabEl.scrollTop(offset);
+
+                    var d = total - maxLogLine;
+                    if (d > 0) {
+                        removeLog(serverDataMap[data.name].tabEl, d);
+                    }
                 });
             }
         }
