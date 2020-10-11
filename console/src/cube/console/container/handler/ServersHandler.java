@@ -26,7 +26,9 @@
 
 package cube.console.container.handler;
 
+import cell.util.json.JSONArray;
 import cube.console.Console;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -58,7 +60,15 @@ public class ServersHandler extends ContextHandler  {
         public void handle(String target, Request request,
                            HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
                 throws IOException, ServletException {
-            System.out.println("xjw: " + target);
+            if (target.equals("/dispatcher")) {
+                JSONArray list = console.getDispatcherServers();
+                httpServletResponse.setStatus(HttpStatus.OK_200);
+                httpServletResponse.getWriter().write(list.toString());
+                request.setHandled(true);
+            }
+            else if (target.equals("/service")) {
+
+            }
         }
     }
 }
