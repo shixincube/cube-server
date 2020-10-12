@@ -29,6 +29,8 @@ package cube.common;
 import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.core.Kernel;
@@ -57,6 +59,14 @@ public abstract class Task implements Runnable {
         this.talkContext = talkContext;
         this.primitive = primitive;
         this.kernel = (Kernel) cellet.getNucleus().getParameter("kernel");
+    }
+
+    public String getTokenCode(ActionDialect actionDialect) {
+        if (actionDialect.containsParam("token")) {
+
+        }
+
+        return null;
     }
 
     protected JSONObject makeStatePayload(int stateCode, String stateDesc) {

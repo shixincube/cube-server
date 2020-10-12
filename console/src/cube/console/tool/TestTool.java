@@ -24,44 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.service.auth;
+package cube.console.tool;
 
-import cell.util.json.JSONArray;
-import cell.util.json.JSONException;
-import cell.util.json.JSONObject;
-import cube.auth.AuthToken;
-
-import java.util.concurrent.ConcurrentHashMap;
-
-/**
- * 存储域对应的授权信息的类。
- */
-public class AuthDomain {
-
-    public String domainName;
-
-    public String appKey;
-
-    public ConcurrentHashMap<String, AuthToken> tokens;
-
-    public AuthDomain(String domainName, String appKey, JSONArray array) {
-        this.domainName = domainName;
-        this.appKey = appKey;
-        this.tokens = new ConcurrentHashMap<>();
-
-        try {
-            for (int i = 0; i < array.length(); ++i) {
-                JSONObject json = array.getJSONObject(i);
-                String code = json.getString("code");
-                long cid = json.getLong("cid");
-                long issues = json.getLong("issues");
-                long expiry = json.getLong("expiry");
-
-                AuthToken token = new AuthToken(code, domainName, appKey, cid, issues, expiry);
-                this.tokens.put(code, token);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
+public class TestTool {
 }

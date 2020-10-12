@@ -97,6 +97,25 @@ public class AuthToken implements JSONable {
     /**
      * 构造函数。
      *
+     * @param code 令牌的编码。
+     * @param domain 令牌有效域。
+     * @param appKey App 键。
+     * @param cid 关联的联系人 ID 。
+     * @param issues 令牌发布日期。
+     * @param expiry 令牌有效期。
+     */
+    public AuthToken(String code, String domain, String appKey, Long cid, long issues, long expiry) {
+        this.code = code;
+        this.domain = domain;
+        this.appKey = appKey;
+        this.cid = cid;
+        this.issues = issues;
+        this.expiry = expiry;
+    }
+
+    /**
+     * 构造函数。
+     *
      * @param json 描述令牌的 JSON 对象。
      */
     public AuthToken(JSONObject json) {
@@ -107,10 +126,21 @@ public class AuthToken implements JSONable {
             this.cid = json.getLong("cid");
             this.issues = json.getLong("issues");
             this.expiry = json.getLong("expiry");
-            this.description = new PrimaryDescription(json.getJSONObject("description"));
+            if (json.has("description")) {
+                this.description = new PrimaryDescription(json.getJSONObject("description"));
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 获取令牌编码。
+     *
+     * @return 返回令牌编码。
+     */
+    public String getCode() {
+        return this.code;
     }
 
     /**
@@ -135,7 +165,9 @@ public class AuthToken implements JSONable {
             json.put("cid", this.cid.longValue());
             json.put("issues", this.issues);
             json.put("expiry", this.expiry);
-            json.put("description", this.description.toJSON());
+            if (null != this.description) {
+                json.put("description", this.description.toJSON());
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }

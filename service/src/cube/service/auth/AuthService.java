@@ -36,7 +36,6 @@ import cube.cache.SMCacheValue;
 import cube.core.AbstractModule;
 import cube.core.Cache;
 import cube.core.CacheValue;
-import cube.core.MessageQueue;
 
 import java.util.Date;
 import java.util.List;
@@ -50,7 +49,7 @@ public class AuthService extends AbstractModule {
 
     public static String NAME = "Auth";
 
-    private List<AuthDomain> authDomainList;
+    private AuthDomainFileDB authDomainFileDB;
 
     private Cache tokenCache;
 
@@ -58,15 +57,14 @@ public class AuthService extends AbstractModule {
 
     public AuthService() {
         this.authTokenMap = new ConcurrentHashMap<>();
-        this.authDomainList = new Vector<>();
     }
 
     @Override
     public void start() {
         this.tokenCache = this.getCache("TokenPool");
 
-        AuthDomainFile adFile = new AuthDomainFile("config/domain.json");
-        this.authDomainList.addAll(adFile.getList());
+        // 启动文件数据库，该库仅用于测试
+        this.authDomainFileDB = new AuthDomainFileDB("config/domain.json");
     }
 
     @Override
@@ -82,10 +80,10 @@ public class AuthService extends AbstractModule {
      */
     public AuthToken applyToken(String domain, String appKey, Long cid) {
         AuthToken token = null;
-        
-        List<String> codes = this.findTokenCode(domain, appKey);
-        if (null != codes) {
-            String code = codes.get(0);
+
+        AuthDomain authDomain = this.authDomainFileDB.queryDomain(domain, appKey);
+        if (null != authDomain) {
+            String code = Utils.randomString(32);
 
             Date now = new Date();
             Date expiry = new Date(now.getTime() + 7L * 24L * 60L * 60L * 1000L);
@@ -100,6 +98,10 @@ public class AuthService extends AbstractModule {
 
             // 将 Code 写入令牌池
             this.tokenCache.put(new SMCacheKey(code), new SMCacheValue(token.toJSON()));
+
+            // 更新文件数据库
+            authDomain.tokens.put(code, token);
+            this.authDomainFileDB.update();
         }
         else {
             // TODO 从数据库中查询
@@ -119,50 +121,19 @@ public class AuthService extends AbstractModule {
             return token;
         }
 
-        token = this.findOrCreateToken(code);
-        if (null != token) {
-            return token;
-        }
-
         CacheValue value = this.tokenCache.get(new SMCacheKey(code));
         if (null != value) {
             SMCacheValue smv = (SMCacheValue) value;
             token = new AuthToken(smv.get());
+            return token;
+        }
+
+        token = this.authDomainFileDB.queryToken(code);
+        if (null != token) {
+            this.authTokenMap.put(code, token);
         }
 
         return token;
-    }
-
-    private List<String> findTokenCode(String domain, String appKey) {
-        List<String> result = null;
-        for (AuthDomain ad : this.authDomainList) {
-            if (ad.domainName.equalsIgnoreCase(domain) && ad.appKey.equalsIgnoreCase(appKey)) {
-                result = ad.codes;
-                break;
-            }
-        }
-        return result;
-    }
-
-    private AuthToken findOrCreateToken(String code) {
-        AuthToken result = null;
-        for (AuthDomain ad : this.authDomainList) {
-            List<String> codes = ad.codes;
-            if (codes.contains(code)) {
-                Date now = new Date();
-                Date expiry = new Date(now.getTime() + 7L * 24L * 60L * 60L * 1000L);
-
-                // 创建描述
-                PrimaryDescription description = new PrimaryDescription("127.0.0.1", createPrimaryContent());
-
-                result = new AuthToken(code, ad.domainName, ad.appKey, 0L, now, expiry, description);
-
-                // 本地缓存
-                this.authTokenMap.put(code, result);
-                break;
-            }
-        }
-        return result;
     }
 
     private JSONObject createPrimaryContent() {
