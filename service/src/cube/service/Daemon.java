@@ -27,7 +27,6 @@
 package cube.service;
 
 import cell.api.Nucleus;
-import cell.api.Servable;
 import cell.util.log.LogHandle;
 import cell.util.log.LogLevel;
 import cube.core.Kernel;

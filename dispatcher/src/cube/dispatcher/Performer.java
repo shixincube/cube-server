@@ -53,13 +53,15 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Performer implements TalkListener {
 
+    private final String performerKey = "_performer";
+
+    private final String directorKey = "_director";
+
     private TalkService talkService;
 
     private CelletService celletService;
 
-    private final String performerKey = "_performer";
-
-    private final String directorKey = "_director";
+    private String nodeName;
 
     /**
      * 服务主机列表。
@@ -116,6 +118,24 @@ public class Performer implements TalkListener {
         this.onlineContacts = new ConcurrentHashMap<>();
         this.transmissionMap = new ConcurrentHashMap<>();
         this.blockMap = new ConcurrentHashMap<>();
+    }
+
+    /**
+     * 设置节点名。
+     *
+     * @param nodeName 指定节点名。
+     */
+    public void setNodeName(String nodeName) {
+        this.nodeName = nodeName;
+    }
+
+    /**
+     * 获取节点名。
+     *
+     * @return 返回节点名。
+     */
+    public String getNodeName() {
+        return this.nodeName;
     }
 
     /**
@@ -191,7 +211,7 @@ public class Performer implements TalkListener {
      * @param contact
      * @return
      */
-    public void addContact(Contact contact) {
+    public void updateContact(Contact contact) {
         Contact current = this.onlineContacts.get(contact.getUniqueKey());
         if (null == current) {
             this.onlineContacts.put(contact.getUniqueKey(), contact);

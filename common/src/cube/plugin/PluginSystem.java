@@ -161,7 +161,7 @@ public class PluginSystem<T extends Hook> {
         // 读取配置文件
         JSONObject config = this.readConfig(configFilename);
         if (null == config) {
-            Logger.e(this.getClass(), "Load plugin config file failed: " + configFilename);
+            Logger.w(this.getClass(), "Load plugin config file failed: " + configFilename);
             return;
         }
 

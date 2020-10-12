@@ -29,22 +29,24 @@ package cube.dispatcher;
 import cell.core.talk.TalkContext;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cell.util.log.LogHandle;
+import cell.util.log.LogLevel;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.ContactActions;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.dispatcher.contact.ContactCellet;
+import cube.report.LogLine;
+import cube.report.LogReport;
+import cube.report.ReportService;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * 守护任务。
  */
-public class Daemon extends TimerTask {
+public class Daemon extends TimerTask implements LogHandle {
 
     private long contactTimeout = 30 * 1000L;
 
@@ -52,8 +54,19 @@ public class Daemon extends TimerTask {
 
     private Performer performer;
 
+    /**
+     * 报告发送间隔。
+     */
+    private long reportInterval = 60L * 1000L;
+
+    /**
+     * 日志记录。
+     */
+    private List<LogLine> logRecords;
+
     public Daemon(Performer performer) {
         this.performer = performer;
+        this.logRecords = new ArrayList<>();
     }
 
     @Override
@@ -69,7 +82,7 @@ public class Daemon extends TimerTask {
             for (Device device : devices) {
                 TalkContext context = device.getTalkContext();
                 if (null == context) {
-                    Logger.e(this.getClass(), "Error device, contact id: " + contact.getId() + " - " + device.getName());
+                    Logger.w(this.getClass(), "Error device, contact id: " + contact.getId() + " - " + device.getName());
                     continue;
                 }
                 if (!context.isValid()) {
@@ -97,6 +110,9 @@ public class Daemon extends TimerTask {
                 traniter.remove();
             }
         }
+
+        // 提交日志报告
+        this.submitLogReport();
     }
 
     private Packet createDeviceTimeout(Contact contact, Device device, long failureTime, long timeout) {
@@ -111,5 +127,52 @@ public class Daemon extends TimerTask {
         }
         Packet packet = new Packet(ContactActions.DeviceTimeout.name, data);
         return packet;
+    }
+
+    private void submitLogReport() {
+        synchronized (this.logRecords) {
+            if (this.logRecords.isEmpty()) {
+                return;
+            }
+
+            LogReport report = new LogReport(this.performer.getNodeName());
+            report.addLogs(this.logRecords);
+
+            ReportService.getInstance().submitReport(report);
+
+            this.logRecords.clear();
+        }
+    }
+
+    @Override
+    public String getName() {
+        return "Daemon";
+    }
+
+    @Override
+    public void logDebug(String tag, String text) {
+        this.recordLog(LogLevel.DEBUG, tag, text);
+    }
+
+    @Override
+    public void logInfo(String tag, String text) {
+        this.recordLog(LogLevel.INFO, tag, text);
+    }
+
+    @Override
+    public void logWarning(String tag, String text) {
+        this.recordLog(LogLevel.WARNING, tag, text);
+    }
+
+    @Override
+    public void logError(String tag, String text) {
+        this.recordLog(LogLevel.ERROR, tag, text);
+    }
+
+    private void recordLog(LogLevel level, String tag, String text) {
+        LogLine log = new LogLine(level.getCode(), tag, text, System.currentTimeMillis());
+        synchronized (this.logRecords) {
+            this.logRecords.add(log);
+        }
     }
 }

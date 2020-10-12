@@ -28,7 +28,10 @@ package cube.dispatcher;
 
 import cell.api.Nucleus;
 import cell.carpet.CellListener;
+import cell.util.log.LogManager;
 import cell.util.log.Logger;
+import cube.report.ReportService;
+import cube.util.ConfigUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,17 +46,24 @@ public class DispatcherListener implements CellListener {
 
     private Timer timer;
 
+    private Daemon daemon;
+
     public DispatcherListener() {
     }
 
     @Override
     public void cellPreinitialize(Nucleus nucleus) {
         Performer performer = new Performer(nucleus);
+        nucleus.setParameter("performer", performer);
 
         // 从配置文件加载配置数据
         this.config(performer);
 
-        nucleus.setParameter("performer", performer);
+        // 配置管理信息
+        this.initManagement(performer);
+
+        this.daemon = new Daemon(performer);
+        LogManager.getInstance().addHandle(this.daemon);
     }
 
     @Override
@@ -62,7 +72,7 @@ public class DispatcherListener implements CellListener {
         performer.start();
 
         this.timer = new Timer();
-        this.timer.schedule(new Daemon(performer), 10L * 1000L, 30L * 1000L);
+        this.timer.schedule(this.daemon, 10L * 1000L, 10L * 1000L);
     }
 
     @Override
@@ -93,6 +103,7 @@ public class DispatcherListener implements CellListener {
             e.printStackTrace();
         }
 
+        // 读取路由配置
         String prefix = "director.";
         for (int i = 1; i <= 10; ++i) {
             String keyAddress = prefix + (i) + ".address";
@@ -121,6 +132,22 @@ public class DispatcherListener implements CellListener {
             performer.addDirector(address, port, scope);
 
             Logger.i(this.getClass(), "Add director point " + address + ":" + port + " #" + weight);
+        }
+    }
+
+    private void initManagement(Performer performer) {
+        // 配置控制台
+        try {
+            Properties properties = ConfigUtils.readConsoleFollower("config/console-follower-dispatcher.properties");
+
+            // 设置接收报告的服务器
+            ReportService.getInstance().addHost(properties.getProperty("console.host"),
+                    Integer.parseInt(properties.getProperty("console.port", "7080")));
+
+            // 设置节点名
+            performer.setNodeName(properties.getProperty("name"));
+        } catch (IOException e) {
+            Logger.e(this.getClass(), "Read console follower config failed", e);
         }
     }
 }

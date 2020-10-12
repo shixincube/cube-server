@@ -80,7 +80,7 @@ public class SignInTask extends Task {
 
         // 将当前联系人与会话上下问关联
         Contact self = new Contact(selfJson, this.talkContext);
-        this.performer.addContact(self);
+        this.performer.updateContact(self);
 
         ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), actionDialect);
         if (null == response) {
