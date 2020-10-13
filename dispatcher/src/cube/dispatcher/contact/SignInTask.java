@@ -34,14 +34,14 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Packet;
 import cube.common.StateCode;
-import cube.common.Task;
 import cube.common.entity.Contact;
+import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
 
 /**
  * 设置自己联系人信息任务。
  */
-public class SignInTask extends Task {
+public class SignInTask extends DispatcherTask {
 
     private Performer performer;
 
@@ -50,24 +50,18 @@ public class SignInTask extends Task {
         this.performer = performer;
     }
 
-    protected void reset(TalkContext talkContext, Primitive primitive) {
-        this.talkContext = talkContext;
-        this.primitive = primitive;
-    }
-
     @Override
     public void run() {
-        ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(this.primitive);
-        Packet packet = new Packet(actionDialect);
-
-        String tokenCode = this.getTokenCode(actionDialect);
+        String tokenCode = this.getTokenCode(this.getAction());
         if (null == tokenCode) {
             // 无令牌码
-            Packet responsePacket = new Packet(packet.sn, packet.name, this.makeStatePayload(StateCode.NoAuthToken, "No token code"));
-            this.cellet.speak(this.talkContext, responsePacket.toDialect());
+            ActionDialect response = this.makeResponse(new JSONObject(), StateCode.NoAuthToken, "No token code");
+            this.cellet.speak(this.talkContext, response);
             ((ContactCellet)this.cellet).returnSignInTask(this);
             return;
         }
+
+        Packet packet = this.getRequest();
 
         JSONObject selfJson = null;
         JSONObject authTokenJson = null;
@@ -80,8 +74,8 @@ public class SignInTask extends Task {
 
         if (null == authTokenJson || null == selfJson) {
             // 没有令牌信息
-            Packet responsePacket = new Packet(packet.sn, packet.name, this.makeStatePayload(StateCode.InvalidParameter, "Parameter error"));
-            this.cellet.speak(this.talkContext, responsePacket.toDialect());
+            ActionDialect response = this.makeResponse(new JSONObject(), StateCode.InvalidParameter, "Parameter error");
+            this.cellet.speak(this.talkContext, response);
             ((ContactCellet)this.cellet).returnSignInTask(this);
             return;
         }
@@ -90,25 +84,17 @@ public class SignInTask extends Task {
         Contact self = new Contact(selfJson, this.talkContext);
         this.performer.updateContact(self);
 
-        ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), actionDialect);
+        ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
         if (null == response) {
             // 发生错误
-            Packet responsePacket = new Packet(packet.sn, packet.name, this.makeGatewayErrorPayload());
-            response = responsePacket.toDialect();
+            response = this.makeResponse(packet.data, StateCode.GatewayError, "Service is disabled");
+        }
+        else {
+            response = this.makeResponse(response);
         }
 
         this.cellet.speak(this.talkContext, response);
 
         ((ContactCellet)this.cellet).returnSignInTask(this);
-    }
-
-    private JSONObject makeGatewayErrorPayload() {
-        JSONObject payload = new JSONObject();
-        try {
-            payload.put(StateCode.KEY, StateCode.makeState(StateCode.GatewayError, "Gateway error"));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return payload;
     }
 }

@@ -35,13 +35,13 @@ import cell.util.json.JSONObject;
 import cube.common.Packet;
 import cube.common.StateCode;
 import cube.common.Task;
-import cube.dispatcher.Director;
+import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
 
 /**
  * 透传数据给服务层。
  */
-public class PassThroughTask extends Task {
+public class PassThroughTask extends DispatcherTask {
 
     private Performer performer;
 
@@ -61,41 +61,28 @@ public class PassThroughTask extends Task {
     }
 
     protected void reset(TalkContext talkContext, Primitive primitive, boolean sync) {
-        this.talkContext = talkContext;
-        this.primitive = primitive;
+        super.reset(talkContext, primitive);
         this.waitResponse = sync;
     }
 
     @Override
     public void run() {
-        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(this.primitive);
-
         if (this.waitResponse) {
-            ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), dialect);
+            ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
 
             if (null == response) {
-                Packet request = new Packet(dialect);
-                // 发生错误
-                Packet packet = new Packet(request.sn, request.name, this.makeGatewayErrorPayload());
-                response = packet.toDialect();
+                response = this.makeResponse(this.getRequest().data, StateCode.GatewayError, "Service failed");
+            }
+            else {
+                response = this.makeResponse(response);
             }
 
             this.cellet.speak(this.talkContext, response);
         }
         else {
-            this.performer.transmit(this.talkContext, this.cellet, dialect);
+            this.performer.transmit(this.talkContext, this.cellet, this.getAction());
         }
 
         ((MessagingCellet)this.cellet).returnTask(this);
-    }
-
-    private JSONObject makeGatewayErrorPayload() {
-        JSONObject payload = new JSONObject();
-        try {
-            payload.put(StateCode.KEY, StateCode.makeState(StateCode.GatewayError, "Gateway error"));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return payload;
     }
 }

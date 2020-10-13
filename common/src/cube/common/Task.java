@@ -30,9 +30,6 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.core.talk.dialect.DialectFactory;
-import cell.util.json.JSONException;
-import cell.util.json.JSONObject;
 import cube.core.Kernel;
 
 /**
@@ -73,16 +70,6 @@ public abstract class Task implements Runnable {
         }
 
         return null;
-    }
-
-    protected JSONObject makeStatePayload(int stateCode, String stateDesc) {
-        JSONObject payload = new JSONObject();
-        try {
-            payload.put(StateCode.KEY, StateCode.makeState(stateCode, stateDesc));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return payload;
     }
 
     @Override

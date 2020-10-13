@@ -74,52 +74,6 @@ public final class StateCode {
      */
     public final static int GatewayError = 2101;
 
-
-    /**
-     * 状态码的主键。
-     */
-    public final static String KEY = "_state_";
-
-    /**
-     * 提取状态码。
-     * @param payload
-     * @return
-     */
-    public static int extractCode(JSONObject payload) {
-        int code = -1;
-
-        try {
-            if (payload.has(KEY)) {
-                JSONObject state = payload.getJSONObject(KEY);
-                code = state.getInt("code");
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return code;
-    }
-
-    /**
-     * 提取状态描述。
-     * @param payload
-     * @return
-     */
-    public static String extractDesc(JSONObject payload) {
-        String desc = "";
-
-        try {
-            if (payload.has(KEY)) {
-                JSONObject state = payload.getJSONObject(KEY);
-                desc = state.getString("desc");
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return desc;
-    }
-
     /**
      * 创建状态描述对象。
      * @param stateCode
