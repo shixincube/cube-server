@@ -1,6 +1,5 @@
 package cube.service.messaging.plugin;
 
-import cell.util.log.Logger;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 

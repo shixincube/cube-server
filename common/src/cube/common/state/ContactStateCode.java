@@ -24,50 +24,43 @@
  * SOFTWARE.
  */
 
-package cube.service.contact;
+package cube.common.state;
 
 /**
- * 管理器守护线程。
+ * 联系人模块状态码。
  */
-public class ManagementDaemon extends Thread {
+public enum ContactStateCode {
 
-    private ContactManager manager;
+    /**
+     * 成功。
+     */
+    Ok(0),
 
-    private boolean spinning = true;
+    /**
+     * 遇到故障。
+     */
+    Failure(9),
 
-    private long spinningSleep = 10L * 1000L;
+    /**
+     * 令牌不一致。
+     */
+    InconsistentToken(21),
 
-    private int onlineContactTick = 60;
-    private int onlineContactTickCount = 0;
+    /**
+     * 不被接受的非法操作。
+     */
+    IllegalOperation(25),
 
-    public ManagementDaemon(ContactManager manager) {
-        this.manager = manager;
-        setName("ManagementDaemon");
-        setDaemon(true);
-    }
+    /**
+     * 未知的状态。
+     */
+    Unknown(99)
 
-    @Override
-    public void run() {
-        while (this.spinning) {
-            try {
-                Thread.sleep(this.spinningSleep);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+    ;
 
-            ++this.onlineContactTickCount;
-            if (this.onlineContactTickCount >= this.onlineContactTick) {
-                this.onlineContactTickCount = 0;
-                this.processOnlineContacts();
-            }
-        }
-    }
+    public final int code;
 
-    public final void terminate() {
-        this.spinning = false;
-    }
-
-    private void processOnlineContacts() {
-//        ConcurrentHashMap
+    ContactStateCode(int code) {
+        this.code = code;
     }
 }

@@ -58,12 +58,13 @@ public class PassThroughTask extends Task {
     @Override
     public void run() {
         ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(this.primitive);
+        Packet packet = new Packet(actionDialect);
+
         ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), actionDialect);
 
         if (null == response) {
-            Packet request = new Packet(actionDialect);
             // 发生错误
-            Packet packet = new Packet(request.sn, request.name, this.makeGatewayErrorPayload());
+            Packet responsePacket = new Packet(packet.sn, packet.name, this.makeGatewayErrorPayload());
             response = packet.toDialect();
         }
 

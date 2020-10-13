@@ -34,7 +34,6 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.auth.AuthToken;
 import cube.common.Packet;
-import cube.common.StateCode;
 import cube.common.Task;
 import cube.service.auth.AuthService;
 
@@ -64,48 +63,43 @@ public abstract class ServiceTask extends Task {
         return null;
     }
 
-    /**
-     * 生成指定包名和负载数据的应答原语。
-     * @param requestData
-     * @param packetName
-     * @param packetPayload
-     * @return
-     */
-    protected ActionDialect makeResponse(ActionDialect requestData, String packetName, JSONObject packetPayload) {
-        // 添加状态信息
+    protected JSONObject makePacketPayload(int stateCode, JSONObject data) {
+        JSONObject payload = new JSONObject();
         try {
-            packetPayload.put(StateCode.KEY, StateCode.makeState(StateCode.OK, "OK"));
+            payload.put("code", stateCode);
+            payload.put("data", data);
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        return payload;
+    }
 
-        long sn = requestData.getParamAsLong("sn");
-        Packet response = new Packet(sn, packetName, packetPayload);
+    /**
+     * 生成应答负载数据的应答原语。
+     *
+     * @param action
+     * @param request
+     * @param packetPayload
+     * @return
+     */
+    protected ActionDialect makeResponse(ActionDialect action, Packet request, JSONObject packetPayload) {
+        Packet response = new Packet(request.sn, request.name, packetPayload);
         ActionDialect responseDialect = response.toDialect();
-        Director.copyPerformer(requestData, responseDialect);
+        Director.copyPerformer(action, responseDialect);
         return responseDialect;
     }
 
     /**
-     * 生成指定状态码和描述的应答原语。
-     * @param requestData
-     * @param packetName
+     * 生成应答负载数据的应答原语。
+     *
+     * @param action
+     * @param request
      * @param stateCode
-     * @param stateDesc
+     * @param data
      * @return
      */
-    protected ActionDialect makeResponse(ActionDialect requestData, String packetName, int stateCode, String stateDesc) {
-        JSONObject payload = new JSONObject();
-        try {
-            payload.put(StateCode.KEY, StateCode.makeState(stateCode, stateDesc));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        long sn = requestData.getParamAsLong("sn");
-        Packet response = new Packet(sn, packetName, payload);
-        ActionDialect responseDialect = response.toDialect();
-        Director.copyPerformer(requestData, responseDialect);
-        return responseDialect;
+    protected ActionDialect makeResponse(ActionDialect action, Packet request, int stateCode, JSONObject data) {
+        JSONObject payload = this.makePacketPayload(stateCode, data);
+        return this.makeResponse(action, request, payload);
     }
 }

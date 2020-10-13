@@ -35,7 +35,7 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.auth.AuthToken;
 import cube.common.Packet;
-import cube.common.StateCode;
+import cube.common.state.AuthStateCode;
 import cube.service.ServiceTask;
 import cube.service.auth.AuthService;
 
@@ -50,8 +50,8 @@ public class GetTokenTask extends ServiceTask {
 
     @Override
     public void run() {
-        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(this.primitive);
-        Packet packet = new Packet(dialect);
+        ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
+        Packet packet = new Packet(action);
 
         JSONObject data = packet.data;
         String code = "";
@@ -65,10 +65,12 @@ public class GetTokenTask extends ServiceTask {
         AuthToken token = ((AuthService)this.kernel.getModule(AuthService.NAME)).getToken(code);
         if (null == token) {
             // 获取失败
-            this.cellet.speak(this.talkContext, this.makeResponse(dialect, packet.name, StateCode.BadRequest, "No token code"));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, AuthStateCode.Failure.code, data));
             return;
         }
 
-        this.cellet.speak(this.talkContext, this.makeResponse(dialect, packet.name, token.toJSON()));
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, AuthStateCode.Ok.code, token.toJSON()));
     }
 }

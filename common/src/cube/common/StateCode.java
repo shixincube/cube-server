@@ -50,7 +50,7 @@ public final class StateCode {
     public final static int NotFound = 1404;
 
     /**
-     * 授权码错误。
+     * 没有找到授权码。
      */
     public final static int NoAuthToken = 1501;
 

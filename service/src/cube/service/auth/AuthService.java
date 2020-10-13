@@ -38,8 +38,6 @@ import cube.core.Cache;
 import cube.core.CacheValue;
 
 import java.util.Date;
-import java.util.List;
-import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**

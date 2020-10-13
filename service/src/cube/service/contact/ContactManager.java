@@ -63,6 +63,11 @@ public class ContactManager implements CelletAdapterListener {
     protected ConcurrentHashMap<Domain, ContactTable> onlineTables;
 
     /**
+     * 令牌码对应联系人关系。
+     */
+    protected ConcurrentHashMap<String, Contact> tokenContactMap;
+
+    /**
      * 联系人数据缓存。
      */
     private SharedMemory contactsCache;
@@ -101,6 +106,7 @@ public class ContactManager implements CelletAdapterListener {
         this.daemon = new ManagementDaemon(this);
 
         this.onlineTables = new ConcurrentHashMap<>();
+        this.tokenContactMap = new ConcurrentHashMap<>();
 
         this.storage = new ContactStorage();
 
@@ -132,17 +138,19 @@ public class ContactManager implements CelletAdapterListener {
         this.storage.close();
 
         this.onlineTables.clear();
+        this.tokenContactMap.clear();
     }
 
     /**
      * 终端签入。
      * @param contact
+     * @param authToken
      * @return
      */
     public Contact signIn(final Contact contact, final AuthToken authToken) {
         // 判断 Domain 名称
         if (!authToken.getDomain().equals(contact.getDomain().getName())) {
-            return contact;
+            return null;
         }
 
         // 在该方法里插入 Hook
@@ -182,7 +190,7 @@ public class ContactManager implements CelletAdapterListener {
         }
 
         // 关注该用户数据
-        this.follow(contact);
+        this.follow(contact, authToken);
 
         return contact;
     }
@@ -293,7 +301,7 @@ public class ContactManager implements CelletAdapterListener {
         }
     }
 
-    private synchronized void follow(Contact contact) {
+    private synchronized void follow(Contact contact, AuthToken token) {
         // 订阅该用户事件
         this.contactsAdapter.subscribe(contact.getUniqueKey());
 
@@ -304,6 +312,9 @@ public class ContactManager implements CelletAdapterListener {
         }
         // 记录联系人的通信上下文
         table.add(contact);
+
+        // 记录令牌对应关系
+        this.tokenContactMap.put(token.getCode().toString(), contact);
     }
 
     @Override

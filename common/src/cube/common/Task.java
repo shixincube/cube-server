@@ -61,9 +61,15 @@ public abstract class Task implements Runnable {
         this.kernel = (Kernel) cellet.getNucleus().getParameter("kernel");
     }
 
+    /**
+     * 获取令牌码。
+     *
+     * @param actionDialect
+     * @return 如果在动作方言中找不到令牌码返回 {@code null} 值。
+     */
     public String getTokenCode(ActionDialect actionDialect) {
         if (actionDialect.containsParam("token")) {
-
+            return actionDialect.getParamAsString("token");
         }
 
         return null;

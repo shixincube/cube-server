@@ -33,12 +33,10 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.AuthActions;
-import cube.report.ServerReport;
 import cube.service.auth.task.ApplyTokenTask;
 import cube.service.auth.task.GetTokenTask;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 授权服务 Cellet 单元。

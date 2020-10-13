@@ -33,10 +33,8 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
-import cell.util.log.Logger;
-import cube.auth.AuthToken;
 import cube.common.Packet;
-import cube.common.StateCode;
+import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
 
@@ -52,26 +50,21 @@ public class GetContactTask extends ServiceTask {
     @Override
     public void run() {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
-
-        AuthToken authToken = this.extractAuthToken(action);
-        if (null == authToken) {
-            Logger.w(this.getClass(), "Can NOT extract auth token - " + action.getName());
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, action.getName(), StateCode.NoAuthToken, "No token code"));
-            return;
-        }
-
         Packet packet = new Packet(action);
+
         JSONObject data = packet.data;
 
         Long id = null;
+        String domain = null;
         try {
             id = data.getLong("id");
+            domain = data.getString("domain");
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        JSONObject contact = ContactManager.getInstance().getContactData(id, authToken.getDomain());
-        this.cellet.speak(this.talkContext, this.makeResponse(action, packet.name, contact));
+        JSONObject contact = ContactManager.getInstance().getContactData(id, domain);
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, contact));
     }
 }

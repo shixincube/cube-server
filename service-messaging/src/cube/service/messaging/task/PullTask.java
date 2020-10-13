@@ -36,11 +36,11 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Domain;
 import cube.common.Packet;
-import cube.common.StateCode;
 import cube.common.action.MessagingActions;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Message;
+import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
 import cube.service.messaging.MessagingManager;
@@ -60,8 +60,8 @@ public class PullTask extends ServiceTask {
 
     @Override
     public void run() {
-        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(this.primitive);
-        Packet packet = new Packet(dialect);
+        ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
+        Packet packet = new Packet(action);
 
         Long id = null;
         String domainName = null;
@@ -79,7 +79,7 @@ public class PullTask extends ServiceTask {
         } catch (JSONException e) {
             // 应答
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet.name, StateCode.PayloadFormat, "No device data"));
+                    this.makeResponse(action, packet, MessagingStateCode.NoDevice.code, packet.data));
             return;
         }
 
@@ -88,7 +88,7 @@ public class PullTask extends ServiceTask {
         if (null == contact) {
             // 应答
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet.name, StateCode.NotFound, "Can NOT find contact: " + id.toString()));
+                    this.makeResponse(action, packet, MessagingStateCode.NoContact.code, packet.data));
             return;
         }
 
@@ -96,7 +96,7 @@ public class PullTask extends ServiceTask {
         if (!contact.hasDevice(device)) {
             // 应答
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet.name, StateCode.BadRequest, "Device info error"));
+                    this.makeResponse(action, packet, MessagingStateCode.Failure.code, packet.data));
             return;
         }
 
@@ -118,9 +118,9 @@ public class PullTask extends ServiceTask {
 
             ++count;
             if (count >= 10) {
-                JSONObject payload = makePayload(total, timestamp, now, messageArray);
+                JSONObject payload = this.makePayload(total, timestamp, now, messageArray);
                 this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, MessagingActions.Pull.name, payload));
+                        this.makeResponse(action, packet, MessagingStateCode.Ok.code, payload));
 
                 try {
                     Thread.sleep(10L);
@@ -135,7 +135,7 @@ public class PullTask extends ServiceTask {
 
         JSONObject payload = makePayload(total, timestamp, now, messageArray);
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, MessagingActions.Pull.name, payload));
+                this.makeResponse(action, packet, MessagingStateCode.Ok.code, payload));
     }
 
     private JSONObject makePayload(int totalNum, long beginning, long ending, JSONArray messages) {

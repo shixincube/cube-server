@@ -60,21 +60,29 @@ public class SignInTask extends Task {
         ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(actionDialect);
 
+        String tokenCode = this.getTokenCode(actionDialect);
+        if (null == tokenCode) {
+            // 无令牌码
+            Packet responsePacket = new Packet(packet.sn, packet.name, this.makeStatePayload(StateCode.NoAuthToken, "No token code"));
+            this.cellet.speak(this.talkContext, responsePacket.toDialect());
+            ((ContactCellet)this.cellet).returnSignInTask(this);
+            return;
+        }
+
         JSONObject selfJson = null;
         JSONObject authTokenJson = null;
         try {
             selfJson = packet.data.getJSONObject("self");
-            if (packet.data.has("token")) {
-                authTokenJson = packet.data.getJSONObject("token");
-            }
+            authTokenJson = packet.data.getJSONObject("token");
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        if (null == authTokenJson) {
+        if (null == authTokenJson || null == selfJson) {
             // 没有令牌信息
-            Packet responsePacket = new Packet(packet.sn, packet.name, this.makeStatePayload(StateCode.InvalidParameter, "No token info"));
+            Packet responsePacket = new Packet(packet.sn, packet.name, this.makeStatePayload(StateCode.InvalidParameter, "Parameter error"));
             this.cellet.speak(this.talkContext, responsePacket.toDialect());
+            ((ContactCellet)this.cellet).returnSignInTask(this);
             return;
         }
 

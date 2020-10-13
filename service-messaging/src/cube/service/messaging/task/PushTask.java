@@ -32,9 +32,8 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.common.Packet;
-import cube.common.StateCode;
-import cube.common.action.MessagingActions;
 import cube.common.entity.Message;
+import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
 import cube.service.messaging.MessagingManager;
 
@@ -49,15 +48,15 @@ public class PushTask extends ServiceTask {
 
     @Override
     public void run() {
-        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(this.primitive);
-        Packet packet = new Packet(dialect);
+        ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
+        Packet packet = new Packet(action);
 
         // 创建消息实例
         Message message = new Message(packet);
 
         if (null == message.getDomain()) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, MessagingActions.Push.name, StateCode.BadRequest, "No domain"));
+                    this.makeResponse(action, packet, MessagingStateCode.NoDomain.code, packet.data));
             return;
         }
 
@@ -66,6 +65,6 @@ public class PushTask extends ServiceTask {
 
         // 应答
         this.cellet.speak(this.talkContext
-                , this.makeResponse(dialect, MessagingActions.Push.name, response.toJSON(false)));
+                , this.makeResponse(action, packet, MessagingStateCode.Ok.code, response.toJSON(false)));
     }
 }
