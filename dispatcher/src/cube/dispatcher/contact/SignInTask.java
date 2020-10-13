@@ -43,11 +43,8 @@ import cube.dispatcher.Performer;
  */
 public class SignInTask extends DispatcherTask {
 
-    private Performer performer;
-
     public SignInTask(ContactCellet cellet, TalkContext talkContext, Primitive primitive, Performer performer) {
-        super(cellet, talkContext, primitive);
-        this.performer = performer;
+        super(cellet, talkContext, primitive, performer);
     }
 
     @Override
@@ -80,8 +77,9 @@ public class SignInTask extends DispatcherTask {
             return;
         }
 
-        // 将当前联系人与会话上下问关联
+        // 将当前联系人的设备与会话上下问关联
         Contact self = new Contact(selfJson, this.talkContext);
+        self.getCurrentDevice().setToken(tokenCode);
         this.performer.updateContact(self);
 
         ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());

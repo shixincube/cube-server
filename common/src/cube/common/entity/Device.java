@@ -62,6 +62,11 @@ public class Device implements JSONable {
     private TalkContext talkContext;
 
     /**
+     * 客户端提供的令牌码。
+     */
+    private String token;
+
+    /**
      * 设备信息的 Hash 值。
      */
     private int hash = 0;
@@ -135,6 +140,14 @@ public class Device implements JSONable {
 
     public int getPort() {
         return this.port;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getToken() {
+        return this.token;
     }
 
     public TalkContext getTalkContext() {

@@ -52,11 +52,10 @@ public class DeviceTimeoutTask extends ServiceTask {
     public void run() {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
 
-        AuthToken authToken = this.extractAuthToken(action);
-
         Packet packet = new Packet(action);
 
         Long contactId = null;
+        String domainName = null;
         Device device = null;
         long failureTime = 0;
         long timeout = 0;
@@ -64,6 +63,7 @@ public class DeviceTimeoutTask extends ServiceTask {
         JSONObject data = packet.data;
         try {
             contactId = data.getLong("id");
+            domainName = data.getString("domain");
             JSONObject deviceJson = data.getJSONObject("device");
             failureTime = data.getLong("failureTime");
             timeout = data.getLong("timeout");
@@ -73,6 +73,6 @@ public class DeviceTimeoutTask extends ServiceTask {
         }
 
         // 移除联系人的设备
-        ContactManager.getInstance().removeContactDevice(contactId, authToken.getDomain(), device);
+        ContactManager.getInstance().removeContactDevice(contactId, domainName, device);
     }
 }

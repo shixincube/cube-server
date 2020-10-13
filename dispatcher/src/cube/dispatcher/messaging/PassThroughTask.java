@@ -29,12 +29,8 @@ package cube.dispatcher.messaging;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.core.talk.dialect.DialectFactory;
-import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
-import cube.common.Packet;
 import cube.common.StateCode;
-import cube.common.Task;
 import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
 
@@ -43,20 +39,16 @@ import cube.dispatcher.Performer;
  */
 public class PassThroughTask extends DispatcherTask {
 
-    private Performer performer;
-
     private boolean waitResponse = true;
 
     public PassThroughTask(MessagingCellet cellet, TalkContext talkContext, Primitive primitive
             , Performer performer) {
-        super(cellet, talkContext, primitive);
-        this.performer = performer;
+        super(cellet, talkContext, primitive, performer);
     }
 
     public PassThroughTask(MessagingCellet cellet, TalkContext talkContext, Primitive primitive
             , Performer performer, boolean sync) {
-        super(cellet, talkContext, primitive);
-        this.performer = performer;
+        super(cellet, talkContext, primitive, performer);
         this.waitResponse = sync;
     }
 
@@ -67,6 +59,15 @@ public class PassThroughTask extends DispatcherTask {
 
     @Override
     public void run() {
+        String tokenCode = this.getTokenCode(this.getAction());
+        if (null == tokenCode) {
+            // 无令牌码
+            ActionDialect response = this.makeResponse(new JSONObject(), StateCode.NoAuthToken, "No token code");
+            this.cellet.speak(this.talkContext, response);
+            ((MessagingCellet)this.cellet).returnTask(this);
+            return;
+        }
+
         if (this.waitResponse) {
             ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
 

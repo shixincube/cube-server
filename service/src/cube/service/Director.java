@@ -42,10 +42,11 @@ public class Director {
     protected Director() {
     }
 
-    public static ActionDialect attachDirector(ActionDialect dialect, long contactId) {
+    public static ActionDialect attachDirector(ActionDialect dialect, long contactId, String domain) {
         JSONObject director = new JSONObject();
         try {
             director.put("id", contactId);
+            director.put("domain", domain);
         } catch (JSONException e) {
             e.printStackTrace();
         }

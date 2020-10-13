@@ -32,15 +32,16 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.json.JSONObject;
 import cube.common.Packet;
 import cube.common.StateCode;
+import cube.common.entity.Contact;
 import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
 
 /**
- * 透传数据任务。
+ * 客户端断线后重新连接。
  */
-public class PassThroughTask extends DispatcherTask {
+public class ComebackTask extends DispatcherTask {
 
-    public PassThroughTask(ContactCellet cellet, TalkContext talkContext, Primitive primitive, Performer performer) {
+    public ComebackTask(ContactCellet cellet, TalkContext talkContext, Primitive primitive, Performer performer) {
         super(cellet, talkContext, primitive, performer);
     }
 
@@ -51,17 +52,21 @@ public class PassThroughTask extends DispatcherTask {
             // 无令牌码
             ActionDialect response = this.makeResponse(new JSONObject(), StateCode.NoAuthToken, "No token code");
             this.cellet.speak(this.talkContext, response);
-            ((ContactCellet)this.cellet).returnPassTask(this);
+            ((ContactCellet)this.cellet).returnComebackTask(this);
             return;
         }
 
-        ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
+        Packet packet = this.getRequest();
 
+        // 将当前联系人的设备与会话上下问关联
+        Contact self = new Contact(packet.data, this.talkContext);
+        self.getCurrentDevice().setToken(tokenCode);
+        this.performer.updateContact(self);
+
+        ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
         if (null == response) {
-            Packet request = this.getRequest();
             // 发生错误
-            Packet packet = new Packet(request.sn, request.name, new JSONObject());
-            response = this.makeGatewayErrorResponse(packet);
+            response = this.makeResponse(packet.data, StateCode.GatewayError, "Service is disabled");
         }
         else {
             response = this.makeResponse(response);
@@ -69,6 +74,6 @@ public class PassThroughTask extends DispatcherTask {
 
         this.cellet.speak(this.talkContext, response);
 
-        ((ContactCellet)this.cellet).returnPassTask(this);
+        ((ContactCellet)this.cellet).returnComebackTask(this);
     }
 }

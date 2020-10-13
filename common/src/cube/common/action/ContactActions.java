@@ -42,6 +42,11 @@ public enum ContactActions {
     SignOut("signOut"),
 
     /**
+     * 恢复终端当前连接。
+     */
+    Comeback("comeback"),
+
+    /**
      * 申请当前联系人的所有终端下线。
      */
     Leave("leave"),

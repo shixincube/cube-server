@@ -42,12 +42,15 @@ import cube.common.Task;
  */
 public abstract class DispatcherTask extends Task {
 
+    protected Performer performer;
+
     private Packet request;
 
     private ActionDialect action;
 
-    public DispatcherTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
+    public DispatcherTask(Cellet cellet, TalkContext talkContext, Primitive primitive, Performer performer) {
         super(cellet, talkContext, primitive);
+        this.performer = performer;
 
         this.action = DialectFactory.getInstance().createActionDialect(this.primitive);
         this.request = new Packet(this.action);

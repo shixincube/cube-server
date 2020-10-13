@@ -27,6 +27,7 @@
 package cube.dispatcher;
 
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.LogHandle;
@@ -91,8 +92,8 @@ public class Daemon extends TimerTask implements LogHandle {
                     if (now - time >= this.contactTimeout) {
                         contact.removeDevice(device);
 
-                        Packet packet = createDeviceTimeout(contact, device, time, now - time);
-                        this.performer.transmit(context, ContactCellet.NAME, packet.toDialect());
+                        ActionDialect actionDialect = createDeviceTimeout(contact, device, time, now - time);
+                        this.performer.transmit(context, ContactCellet.NAME, actionDialect);
 
                         // 删除超时的上下文
                         this.performer.removeTalkContext(context);
@@ -111,14 +112,25 @@ public class Daemon extends TimerTask implements LogHandle {
             }
         }
 
+        // 检查路由记录
+        Iterator<Map.Entry<TalkContext, Director>> tditer = this.performer.talkDirectorMap.entrySet().iterator();
+        while (tditer.hasNext()) {
+            Map.Entry<TalkContext, Director> e = tditer.next();
+            TalkContext talkContext = e.getKey();
+            if (!talkContext.isValid()) {
+                tditer.remove();
+            }
+        }
+
         // 提交日志报告
         this.submitLogReport();
     }
 
-    private Packet createDeviceTimeout(Contact contact, Device device, long failureTime, long timeout) {
+    private ActionDialect createDeviceTimeout(Contact contact, Device device, long failureTime, long timeout) {
         JSONObject data = new JSONObject();
         try {
             data.put("id", contact.getId().longValue());
+            data.put("domain", contact.getDomain().getName());
             data.put("device", device.toJSON());
             data.put("failureTime", failureTime);
             data.put("timeout", timeout);
@@ -126,7 +138,9 @@ public class Daemon extends TimerTask implements LogHandle {
             ex.printStackTrace();
         }
         Packet packet = new Packet(ContactActions.DeviceTimeout.name, data);
-        return packet;
+        ActionDialect actionDialect = packet.toDialect();
+        actionDialect.addParam("token", device.getToken());
+        return actionDialect;
     }
 
     private void submitLogReport() {

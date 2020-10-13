@@ -24,51 +24,45 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.contact;
+package cube.service.contact.task;
 
+import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.json.JSONObject;
+import cell.core.talk.dialect.DialectFactory;
 import cube.common.Packet;
-import cube.common.StateCode;
-import cube.dispatcher.DispatcherTask;
-import cube.dispatcher.Performer;
+import cube.common.entity.Contact;
+import cube.common.state.ContactStateCode;
+import cube.service.ServiceTask;
+import cube.service.contact.ContactManager;
 
 /**
- * 透传数据任务。
+ * 恢复联系人连接。
  */
-public class PassThroughTask extends DispatcherTask {
+public class ComebackTask extends ServiceTask {
 
-    public PassThroughTask(ContactCellet cellet, TalkContext talkContext, Primitive primitive, Performer performer) {
-        super(cellet, talkContext, primitive, performer);
+    public ComebackTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
+        super(cellet, talkContext, primitive);
     }
 
     @Override
     public void run() {
-        String tokenCode = this.getTokenCode(this.getAction());
-        if (null == tokenCode) {
-            // 无令牌码
-            ActionDialect response = this.makeResponse(new JSONObject(), StateCode.NoAuthToken, "No token code");
-            this.cellet.speak(this.talkContext, response);
-            ((ContactCellet)this.cellet).returnPassTask(this);
+        ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
+        Packet packet = new Packet(action);
+
+        // 创建联系人对象
+        Contact self = new Contact(packet.data, this.talkContext);
+
+        Contact newSelf = ContactManager.getInstance().comeback(self, this.getTokenCode(action));
+        if (null == newSelf) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, packet.data));
             return;
         }
 
-        ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
-
-        if (null == response) {
-            Packet request = this.getRequest();
-            // 发生错误
-            Packet packet = new Packet(request.sn, request.name, new JSONObject());
-            response = this.makeGatewayErrorResponse(packet);
-        }
-        else {
-            response = this.makeResponse(response);
-        }
-
-        this.cellet.speak(this.talkContext, response);
-
-        ((ContactCellet)this.cellet).returnPassTask(this);
+        // 应答
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, newSelf.toJSON()));
     }
 }

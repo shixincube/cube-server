@@ -39,20 +39,16 @@ import cube.dispatcher.Performer;
  */
 public class PassThroughTask extends DispatcherTask {
 
-    private Performer performer;
-
     private boolean waitResponse = true;
 
     public PassThroughTask(AuthCellet cellet, TalkContext talkContext, Primitive primitive
             , Performer performer) {
-        super(cellet, talkContext, primitive);
-        this.performer = performer;
+        super(cellet, talkContext, primitive, performer);
     }
 
     public PassThroughTask(AuthCellet cellet, TalkContext talkContext, Primitive primitive
             , Performer performer, boolean sync) {
-        super(cellet, talkContext, primitive);
-        this.performer = performer;
+        super(cellet, talkContext, primitive, performer);
         this.waitResponse = sync;
     }
 

@@ -219,7 +219,8 @@ public final class MessagingManager implements CelletAdapterListener {
 
     private void notifyMessage(TalkContext talkContext, Message message) {
         Packet packet = new Packet(MessagingActions.Notify.name, message.toJSON());
-        ActionDialect dialect = Director.attachDirector(packet.toDialect(), message.getTo().longValue());
+        ActionDialect dialect = Director.attachDirector(packet.toDialect(),
+                message.getTo().longValue(), message.getDomain().getName());
         this.cellet.speak(talkContext, dialect);
     }
 

@@ -76,7 +76,7 @@ public class Performer implements TalkListener {
     /**
      * 会话上下文对应的服务主机。
      */
-    private HashMap<TalkContext, Director> talkDirectorMap;
+    protected HashMap<TalkContext, Director> talkDirectorMap;
 
     /**
      * 执行机监听器。
@@ -218,7 +218,12 @@ public class Performer implements TalkListener {
         }
         else {
             current.setName(contact.getName());
-            current.setContext(contact.getContext());
+
+            JSONObject ctx = contact.getContext();
+            if (null != ctx) {
+                current.setContext(ctx);
+            }
+
             for (Device device : contact.getDeviceList()) {
                 current.addDevice(device);
             }
@@ -230,7 +235,7 @@ public class Performer implements TalkListener {
         this.onlineContacts.remove(key);
     }
 
-    public Map<String, Contact> getOnlineContacts() {
+    protected Map<String, Contact> getOnlineContacts() {
         return this.onlineContacts;
     }
 
@@ -441,7 +446,9 @@ public class Performer implements TalkListener {
                 actionDialect.removeParam(this.directorKey);
 
                 Long id = director.getLong("id");
-                Contact contact = this.onlineContacts.get(id);
+                String domain = director.getString("domain");
+                String key = UniqueKey.make(id, domain);
+                Contact contact = this.onlineContacts.get(key);
                 if (null != contact) {
                     for (Device device : contact.getDeviceList()) {
                         if (device.isOnline()) {

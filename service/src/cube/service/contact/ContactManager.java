@@ -196,6 +196,25 @@ public class ContactManager implements CelletAdapterListener {
     }
 
     /**
+     * 客户端在断线后恢复。
+     *
+     * @param contact
+     * @param tokenCode
+     * @return
+     */
+    public Contact comeback(final Contact contact, final String tokenCode) {
+        Contact onlineContact = this.tokenContactMap.get(tokenCode);
+
+        // 如果信息匹配，则返回服务器存储的实体
+        if (onlineContact.getDomain().equals(contact.getDomain()) &&
+            onlineContact.getId().longValue() == contact.getId().longValue()) {
+            return onlineContact;
+        }
+
+        return null;
+    }
+
+    /**
      * 获取联系人。
      *
      * @param id
@@ -280,15 +299,15 @@ public class ContactManager implements CelletAdapterListener {
         this.contactsCache.apply(key, new LockFuture() {
             @Override
             public void acquired(String key) {
-                JSONObject data = get();
-                if (null == data) {
-                    return;
-                }
+            JSONObject data = get();
+            if (null == data) {
+                return;
+            }
 
-                Contact contact = new Contact(data);
-                contact.removeDevice(device);
+            Contact contact = new Contact(data);
+            contact.removeDevice(device);
 
-                put(contact.toJSON());
+            put(contact.toJSON());
             }
         });
 
