@@ -33,6 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.ContactActions;
+import cube.service.contact.task.ComebackTask;
 import cube.service.contact.task.DeviceTimeoutTask;
 import cube.service.contact.task.GetContactTask;
 import cube.service.contact.task.SignInTask;
@@ -70,7 +71,10 @@ public class ContactServiceCellet extends Cellet {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
 
-        if (ContactActions.SignIn.name.equals(action)) {
+        if (ContactActions.Comeback.name.equals(action)) {
+            this.executor.execute(new ComebackTask(this, talkContext, primitive));
+        }
+        else if (ContactActions.SignIn.name.equals(action)) {
             this.executor.execute(new SignInTask(this, talkContext, primitive));
         }
         else if (ContactActions.GetContact.name.equals(action)) {

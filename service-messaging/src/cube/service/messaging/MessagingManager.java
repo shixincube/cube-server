@@ -36,6 +36,7 @@ import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.ModuleEvent;
@@ -43,6 +44,7 @@ import cube.common.Packet;
 import cube.common.UniqueKey;
 import cube.common.action.MessagingActions;
 import cube.common.entity.*;
+import cube.common.state.MessagingStateCode;
 import cube.service.Director;
 import cube.service.contact.ContactManager;
 
@@ -218,7 +220,14 @@ public final class MessagingManager implements CelletAdapterListener {
     }
 
     private void notifyMessage(TalkContext talkContext, Message message) {
-        Packet packet = new Packet(MessagingActions.Notify.name, message.toJSON());
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("code", MessagingStateCode.Ok.code);
+            payload.put("data", message.toJSON());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Packet packet = new Packet(MessagingActions.Notify.name, payload);
         ActionDialect dialect = Director.attachDirector(packet.toDialect(),
                 message.getTo().longValue(), message.getDomain().getName());
         this.cellet.speak(talkContext, dialect);
