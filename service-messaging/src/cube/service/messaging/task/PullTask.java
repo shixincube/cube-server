@@ -133,7 +133,7 @@ public class PullTask extends ServiceTask {
             }
         }
 
-        JSONObject payload = makePayload(total, timestamp, now, messageArray);
+        JSONObject payload = this.makePayload(total, timestamp, now, messageArray);
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, MessagingStateCode.Ok.code, payload));
     }

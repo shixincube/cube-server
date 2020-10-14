@@ -35,6 +35,7 @@ import cube.auth.AuthToken;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -70,6 +71,9 @@ public class AuthDomainFileDB {
             }
         }
 
+        boolean needUpdate = false;
+        long now = System.currentTimeMillis();
+
         try {
             JSONArray array = new JSONArray(buf.toString());
             for (int i = 0, size = array.length(); i < size; ++i) {
@@ -77,9 +81,28 @@ public class AuthDomainFileDB {
                 AuthDomain authDomain = new AuthDomain(item.getString("domain"),
                         item.getString("appKey"), item.getJSONArray("tokens"));
                 this.authDomainList.add(authDomain);
+
+                // 判断是否有超期记录，有则删除
+                Iterator<AuthToken> iter = authDomain.tokens.values().iterator();
+                while (iter.hasNext()) {
+                    AuthToken at = iter.next();
+                    if (at.getExpiry() < now) {
+                        needUpdate = true;
+                        iter.remove();
+                    }
+                }
             }
         } catch (JSONException e) {
             Logger.e(this.getClass(), "Read auth domain file format error", e);
+        }
+
+        if (needUpdate) {
+            (new Thread() {
+                @Override
+                public void run() {
+                    update();
+                }
+            }).start();
         }
 
         buf = null;

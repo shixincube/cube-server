@@ -153,6 +153,15 @@ public class AuthToken implements JSONable {
     }
 
     /**
+     * 获取超期时间。
+     *
+     * @return 返回超期时间。
+     */
+    public long getExpiry() {
+        return this.expiry;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
