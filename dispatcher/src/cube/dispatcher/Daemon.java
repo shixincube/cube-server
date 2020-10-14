@@ -89,7 +89,7 @@ public class Daemon extends TimerTask implements LogHandle {
                 if (!context.isValid()) {
                     // 上下文已失效
                     long time = context.getFailureTime();
-                    if (now - time >= this.contactTimeout) {
+                    if (time > 0 && now - time >= this.contactTimeout) {
                         contact.removeDevice(device);
 
                         ActionDialect actionDialect = createDeviceTimeout(contact, device, time, now - time);
@@ -119,6 +119,9 @@ public class Daemon extends TimerTask implements LogHandle {
             TalkContext talkContext = e.getKey();
             if (!talkContext.isValid()) {
                 tditer.remove();
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "Remove timeout talk context: " + e.getValue().endpoint.toString());
+                }
             }
         }
 
