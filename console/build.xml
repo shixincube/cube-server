@@ -1,0 +1,151 @@
+<?xml version="1.0"?>
+
+<!-- ======================================================================= -->
+<!-- Cube Console Build File                                                 -->
+<!-- ======================================================================= -->
+
+<project name="cube-console" default="build-release" basedir=".">
+
+	<property name="version.brand" value="3.0" />
+
+	<property name="version.tgt" value="1.8" />
+	<property name="version.src" value="1.8" />
+
+	<property name="src.dir" value="src" />
+	<property name="lib.dir" value="../../cube-server-dependencies" />
+	<property name="common.dir" value="../build" />
+	<property name="doc.dir" value="doc" />
+
+	<property name="build.dir" value="build" />
+	<property name="build.classes" value="${build.dir}/classes" />
+	<property name="build.jar" value="${build.dir}/jar" />
+
+	<path id="master-classpath">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="${common.dir}">
+			<include name="cube-common-*.jar" />
+			<exclude name="cube-console-*.jar" />
+		</fileset>
+		<pathelement path="${build.classes}" />
+	</path>
+
+	<target name="init">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${build.classes}" />
+		<mkdir dir="${build.jar}" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Cleans up generated stuff                                           -->
+	<!-- =================================================================== -->
+	<target name="clean">
+		<delete failonerror="false" includeemptydirs="true">
+			<fileset dir="${build.dir}"/>
+		</delete>
+		<delete file="../build/cube-console-${version.brand}.jar" failonerror="false" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Dispenses project for debug                                         -->
+	<!-- =================================================================== -->
+	<target name="debug" depends="clean, init">
+		<javac target="${version.tgt}" source="${version.src}" fork="yes" srcdir="${src.dir}" destdir="${build.classes}" debug="on" encoding="UTF-8" deprecation="on" optimize="off">
+			<classpath refid="master-classpath" />
+		</javac>
+		<delete file="${build.jar}/cube-console.jar" failonerror="false" />
+		<jar destfile="${build.jar}/cube-console.jar" basedir="${build.classes}" excludes="cube/console/test/**">
+			<manifest>
+				<attribute name="Main-Class" value="cube.console.container.Main" />
+			</manifest>
+		</jar>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Dispenses project for release                                       -->
+	<!-- =================================================================== -->
+	<target name="release" depends="clean, init">
+		<javac target="${version.tgt}" source="${version.src}" fork="yes" srcdir="${src.dir}" destdir="${build.classes}" debug="off" encoding="UTF-8" deprecation="on" optimize="on">
+			<classpath refid="master-classpath" />
+		</javac>
+		<delete file="${build.jar}/cube-console.jar" failonerror="false" />
+		<jar destfile="${build.jar}/cube-console.jar" basedir="${build.classes}" excludes="cube/console/test/**">
+			<manifest>
+				<attribute name="Main-Class" value="cube.console.container.Main" />
+			</manifest>
+		</jar>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Builds project for debug                                            -->
+	<!-- =================================================================== -->
+	<target name="build-debug" depends="debug">
+		<delete file="../build/cube-console-${version.brand}.jar" failonerror="false" />
+		<copy file="${build.jar}/cube-console.jar" tofile="../build/cube-console-${version.brand}.jar"/>
+		<echo>Build project for debug.</echo>
+		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Builds project for release                                          -->
+	<!-- =================================================================== -->
+	<target name="build-release" depends="release">
+		<delete file="../build/cube-console-${version.brand}.jar" failonerror="false" />
+		<copy file="${build.jar}/cube-console.jar" tofile="../build/cube-console-${version.brand}.jar"/>
+		<echo>Build project for release.</echo>
+		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>
+	</target>
+	
+	<!-- =================================================================== -->
+	<!-- Generates API document                                              -->
+	<!-- =================================================================== -->
+	<target name="doc">
+		<delete failonerror="false" includeemptydirs="true">
+			<fileset dir="${doc.dir}"/>
+		</delete>
+		<javadoc destdir="${doc.dir}" windowtitle="Cube Console Documents" encoding="UTF-8" docencoding="UTF-8">
+			<packageset dir="${src.dir}">
+				<include name="**"/>
+				<exclude name="cube/console/test/**" />
+			</packageset>
+		</javadoc>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Start console                                                       -->
+	<!-- =================================================================== -->
+	<target name="start">
+		<java dir="./" classname="cube.console.container.Main" fork="true" failonerror="true" maxmemory="256m">
+			<arg value="start" />
+			<classpath>
+				<fileset dir="${lib.dir}">
+					<include name="**/*.jar" />
+				</fileset>
+				<fileset dir="${common.dir}">
+					<include name="cube-common-*.jar" />
+					<include name="cube-console-*.jar" />
+				</fileset>
+			</classpath>
+		</java>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Stop console                                                        -->
+	<!-- =================================================================== -->
+	<target name="stop">
+		<java dir="./" classname="cube.console.container.Main" fork="true" failonerror="false" maxmemory="32m">
+			<arg value="stop" />
+			<classpath>
+				<fileset dir="${lib.dir}">
+					<include name="**/*.jar" />
+				</fileset>
+				<fileset dir="${common.dir}">
+					<include name="cube-common-*.jar" />
+					<include name="cube-console-*.jar" />
+				</fileset>
+			</classpath>
+		</java>
+	</target>
+
+</project>

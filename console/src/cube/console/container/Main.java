@@ -99,6 +99,28 @@ public class Main {
 
         Logger.i(Main.class, "Start cube console server # " + port);
 
+        System.out.println("" +
+                "                                             \n" +
+                "  ,----..                                    \n" +
+                " /   /   \\                ,---,              \n" +
+                "|   :     :         ,--,,---.'|              \n" +
+                ".   |  ;. /       ,'_ /||   | :              \n" +
+                ".   ; /--`   .--. |  | ::   : :      ,---.   \n" +
+                ";   | ;    ,'_ /| :  . |:     |,-.  /     \\  \n" +
+                "|   : |    |  ' | |  . .|   : '  | /    /  | \n" +
+                ".   | '___ |  | ' |  | ||   |  / :.    ' / | \n" +
+                "'   ; : .'|:  | : ;  ; |'   : |: |'   ;   /| \n" +
+                "'   | '/  :'  :  `--'   \\   | '/ :'   |  / | \n" +
+                "|   :    / :  ,      .-./   :    ||   :    | \n" +
+                " \\   \\ .'   `--`----'   /    \\  /  \\   \\  /  \n" +
+                "  `---`                 `-'----'    `----'   \n" +
+                "                                             ");
+
+        System.out.println("Enter \"http://localhost:" + port + "\" in your browser to login Cube Console.");
+        System.out.println();
+        System.out.println("在浏览器中输入 \"http://localhost:" + port + "\" 登录 Cube Console 。");
+        System.out.println();
+
         try {
             server.start();
             server.join();
@@ -123,7 +145,7 @@ public class Main {
             }
         } catch (Exception e) {
             System.err.println("Cube Console - STOP FAILED # " + port + " - " + e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
         } finally {
             try {
                 httpClient.stop();

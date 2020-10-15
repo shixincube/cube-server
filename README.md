@@ -131,21 +131,24 @@ Cube Server 目前支持的操作系统包括：**Ubuntu** 、**CentOS** 、**De
 
 从代码库下载代码之后，进入 *cube-server* 项目目录依次执行以下步骤来进行项目构建。
 
-1. 执行构建命令： `ant build-all` 。如果需要构建 DEBUG 版本，使用命令：`ant build-all-debug` 。
+1. 构建调度服务器和服务单元服务器，执行构建命令： `ant build-all` 。如果需要构建 DEBUG 版本，使用命令：`ant build-all-debug` 。
 
- 执行构建命令之后，会在项目目录的 `build` 子目录下生成 Cube Server 的工程输出文件。
+ 执行构建命令之后，会在项目目录的 `build` 子目录下生成各工程的工程输出文件。
 
 2. 执行部署命令：`ant deploy` ，将编译成功的工程文件安装到部署目录下。
 
 
 ### 4. 启动与停止服务器
 
-1. 启动服务。进入 `deploy` 目录，执行 `start.sh` 脚本。
+1. 启动服务器。进入 `deploy` 目录，执行 `start.sh` 脚本。
 
 ```shell
 cd deploy
 ./start.sh
 ```
+
+启动脚本将同时启动调度服务器和服务单元服务器。 `deploy` 目录下的 `logs` 目录是服务器程序的默认日志目录。可使用 `tail` 命令跟踪日志内容。
+
 
 2. 停止服务器。进入 `deploy` 目录，执行 `stop.sh` 脚本。
 
@@ -153,6 +156,24 @@ cd deploy
 cd deploy
 ./stop.sh
 ```
+
+### 5. 编译与使用控制台
+
+Cube Console 提供了管理、监视多个服务器节点的功能，通过浏览器进行服务器管理。
+
+1. 构建控制台程序，进入 `console` 工程目录，执行构建命令：
+
+```shell
+cd console
+ant build-release
+```
+
+***提示：在编译控制台之前，需要先执行服务器程序的构建脚本。具体步骤参看3.1节。***
+
+
+2. 启动控制台，执行 `ant start` ，之后可按照控制台提示登录浏览器进行服务节点管理。
+
+3. 关闭控制台，执行 `ant stop` 命令。
 
 
 ## 获得帮助
