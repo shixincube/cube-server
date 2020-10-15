@@ -116,9 +116,9 @@ public class Main {
                 "  `---`                 `-'----'    `----'   \n" +
                 "                                             ");
 
-        System.out.println("Enter \"http://localhost:" + port + "\" in your browser to login Cube Console.");
+        System.out.println("Enter \"http://Your-Server-IP:" + port + "\" in your browser to login Cube Console.");
         System.out.println();
-        System.out.println("在浏览器中输入 \"http://localhost:" + port + "\" 登录 Cube Console 。");
+        System.out.println("在浏览器中输入 \"http://您的服务器IP:" + port + "\" 登录 Cube Console 。");
         System.out.println();
 
         try {
