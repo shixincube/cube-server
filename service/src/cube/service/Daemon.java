@@ -30,6 +30,7 @@ import cell.api.Nucleus;
 import cell.util.log.LogHandle;
 import cell.util.log.LogLevel;
 import cube.core.Kernel;
+import cube.report.JVMReport;
 import cube.report.LogLine;
 import cube.report.LogReport;
 import cube.report.ReportService;
@@ -47,6 +48,8 @@ public class Daemon extends TimerTask implements LogHandle {
 
     private Kernel kernel;
 
+    private long startTime;
+
     /**
      * 日志报告间隔。
      */
@@ -63,12 +66,18 @@ public class Daemon extends TimerTask implements LogHandle {
     private long reportInterval = 60L * 1000L;
 
     /**
+     * 最近一次报告时间戳。
+     */
+    private long lastReportTime = 0;
+
+    /**
      * 日志记录。
      */
     private List<LogLine> logRecords;
 
     public Daemon(Kernel kernel, Nucleus nucleus) {
         super();
+        this.startTime = System.currentTimeMillis();
         this.kernel = kernel;
         this.nucleus = nucleus;
         this.logRecords = new ArrayList<>();
@@ -96,6 +105,17 @@ public class Daemon extends TimerTask implements LogHandle {
 
             this.lastLogReport = now;
         }
+
+        if (now - this.lastReportTime > this.reportInterval) {
+            this.submitJVMReport();
+            this.lastReportTime = now;
+        }
+    }
+
+    private void submitJVMReport() {
+        JVMReport report = new JVMReport(this.kernel.getNodeName());
+        report.setStartTime(this.startTime);
+        ReportService.getInstance().submitReport(report);
     }
 
     @Override

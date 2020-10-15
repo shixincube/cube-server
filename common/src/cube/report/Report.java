@@ -51,8 +51,12 @@ public class Report implements JSONable {
     private String reporter;
 
     public Report(String name) {
+        this(name, System.currentTimeMillis());
+    }
+
+    public Report(String name, long timestamp) {
         this.name = name;
-        this.timestamp = System.currentTimeMillis();
+        this.timestamp = timestamp;
     }
 
     public Report(JSONObject json) {
@@ -67,6 +71,10 @@ public class Report implements JSONable {
 
     public String getName() {
         return this.name;
+    }
+
+    public long getTimestamp() {
+        return this.timestamp;
     }
 
     public void setReporter(String reporter) {

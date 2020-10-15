@@ -6,11 +6,15 @@
     var console = new Console();
     $.console = console;
 
+    var chartDispatcher = null;
+    var chartService = null;
+
     var consoleLogTime = 0;
     var serverDataMap = {};
 
-    var maxLogLine = 100;
+    var maxLogLine = 60;
 
+    // 获取服务器信息
     console.getServers(function(data) {
         $('#dispatcher-box').find('h3').text(data.dispatchers.length);
         $('#service-box').find('h3').text(data.services.length);
@@ -53,9 +57,59 @@
 
             ++tagIndex;
         }
+
+        // 请求报告
+        setTimeout(function() { reportTask(); }, 1000);
     });
 
-    // 定时任务
+    // 初始化 Chart
+    chartDispatcher = dashboard.buildChart($('#dispatcher-chart'), dashboard.buildJVMChartDataTemplate());
+    chartService = dashboard.buildChart($('#service-chart'), dashboard.buildJVMChartDataTemplate());
+
+    var reportTask = function() {
+        var dispatchers = console.dispatchers;
+        for (var i = 0; i < dispatchers.length; ++i) {
+            var svr = dispatchers[i];
+            console.queryJVMReport(svr.name, 8, function(data) {
+                var labels = [];
+                var dataset0 = [];
+                var dataset1 = [];
+                for (var i = 0; i < data.list.length; ++i) {
+                    var report = data.list[i];
+                    labels.push(ui.formatTimeHHMM(report.timestamp));
+                    dataset0.push(report.totalMemory);
+                    dataset1.push(report.freeMemory);
+
+                    console.log(data.name + ' : ' + report.totalMemory + ', ' + report.freeMemory);
+                }
+
+                dashboard.updateChart(chartDispatcher, labels, [dataset0, dataset1]);
+            });
+        }
+
+        var services = console.services;
+        for (var i = 0; i < services.length; ++i) {
+            var svr = services[i];
+            console.queryJVMReport(svr.name, 8, function(data) {
+                var labels = [];
+                var dataset0 = [];
+                var dataset1 = [];
+                for (var i = 0; i < data.list.length; ++i) {
+                    var report = data.list[i];
+                    labels.push(ui.formatTimeHHMM(report.timestamp));
+                    dataset0.push(report.totalMemory);
+                    dataset1.push(report.freeMemory);
+                }
+
+                dashboard.updateChart(chartService, labels, [dataset0, dataset1]);
+            });
+        }
+    };
+
+    // 报告任务
+    setInterval(function() { reportTask(); }, 60000);
+
+    // 日志定时任务
     setInterval(function() {
         console.queryConsoleLog(consoleLogTime, function(data) {
             if (data.lines.length == 0) {

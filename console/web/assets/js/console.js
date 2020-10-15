@@ -56,3 +56,9 @@ Console.prototype.queryLog = function(name, start, handler) {
         handler(response);
     }, 'json');
 }
+
+Console.prototype.queryJVMReport = function(name, num, handler) {
+    $.get('/server-report', { "report": "JVMReport", "name": name, "num": num }, function(response, status, xhr) {
+        handler(response);
+    }, 'json');
+}

@@ -56,14 +56,14 @@ public class DispatcherListener implements CellListener {
         Performer performer = new Performer(nucleus);
         nucleus.setParameter("performer", performer);
 
+        this.daemon = new Daemon(performer);
+        LogManager.getInstance().addHandle(this.daemon);
+
         // 从配置文件加载配置数据
         this.config(performer);
 
         // 配置管理信息
         this.initManagement(performer);
-
-        this.daemon = new Daemon(performer);
-        LogManager.getInstance().addHandle(this.daemon);
     }
 
     @Override

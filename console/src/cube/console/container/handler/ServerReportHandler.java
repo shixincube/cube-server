@@ -24,13 +24,15 @@
  * SOFTWARE.
  */
 
-package cube.console;
+package cube.console.container.handler;
 
+import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.console.Console;
+import cube.console.Utils;
 import cube.report.JVMReport;
-import cube.report.LogReport;
-import cube.report.Report;
+import cube.report.LogLine;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -39,19 +41,21 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.util.List;
+import java.util.Map;
 
 /**
- * 报告处理器。
+ * 服务器报告信息。
  */
-public class ReportHandler extends ContextHandler {
+public class ServerReportHandler extends ContextHandler {
 
     private Console console;
 
-    public ReportHandler(Console console) {
-        super("/report");
-        this.setHandler(new Handler());
+    public ServerReportHandler(Console console) {
+        super("/server-report");
+        setHandler(new Handler());
         this.console = console;
     }
 
@@ -65,33 +69,39 @@ public class ReportHandler extends ContextHandler {
         public void handle(String target, Request request,
                            HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
                 throws IOException, ServletException {
-            BufferedReader reader = httpServletRequest.getReader();
 
-            StringBuilder buf = new StringBuilder();
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                buf.append(line);
+            String query = URLDecoder.decode(httpServletRequest.getQueryString(), "UTF-8");
+            Map<String, String> params = Utils.parseQueryStringParams(query);
+
+            String name = params.get("name");
+            String report = params.get("report");
+
+            if (null != name && null != report) {
+                if (report.equals(JVMReport.NAME)) {
+                    int num = Integer.parseInt(params.get("num"));
+
+                    List<JVMReport> list = console.queryJVMReport(name, num);
+
+                    JSONArray result = new JSONArray();
+                    for (JVMReport r : list) {
+                        result.put(r.toJSON());
+                    }
+
+                    JSONObject response = new JSONObject();
+                    try {
+                        response.put("name", name);
+                        response.put("list", result);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                    httpServletResponse.getWriter().write(response.toString());
+                }
             }
 
-            try {
-                JSONObject reportJson = new JSONObject(buf.toString());
-                String name = Report.extractName(reportJson);
-                if (LogReport.NAME.equals(name)) {
-                    LogReport report = new LogReport(reportJson);
-                    console.appendLogReport(report);
-                }
-                else if (JVMReport.NAME.equals(name)) {
-                    JVMReport report = new JVMReport(reportJson);
-                    console.appendJVMReport(report);
-                }
-
-                httpServletResponse.setStatus(HttpStatus.OK_200);
-                request.setHandled(true);
-            } catch (JSONException e) {
-                e.printStackTrace();
-                httpServletResponse.setStatus(HttpStatus.BAD_REQUEST_400);
-                request.setHandled(true);
-            }
+            httpServletResponse.setContentType("application/json");
+            httpServletResponse.setStatus(HttpStatus.OK_200);
+            request.setHandled(true);
         }
     }
 }

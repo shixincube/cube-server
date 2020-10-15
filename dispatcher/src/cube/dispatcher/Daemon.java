@@ -38,6 +38,7 @@ import cube.common.action.ContactActions;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.dispatcher.contact.ContactCellet;
+import cube.report.JVMReport;
 import cube.report.LogLine;
 import cube.report.LogReport;
 import cube.report.ReportService;
@@ -48,6 +49,8 @@ import java.util.*;
  * 守护任务。
  */
 public class Daemon extends TimerTask implements LogHandle {
+
+    private long startTime = 0;
 
     private long contactTimeout = 30 * 1000L;
 
@@ -61,11 +64,17 @@ public class Daemon extends TimerTask implements LogHandle {
     private long reportInterval = 60L * 1000L;
 
     /**
+     * 最近一次报告时间。
+     */
+    private long lastReportTime = 0;
+
+    /**
      * 日志记录。
      */
     private List<LogLine> logRecords;
 
     public Daemon(Performer performer) {
+        this.startTime = System.currentTimeMillis();
         this.performer = performer;
         this.logRecords = new ArrayList<>();
     }
@@ -125,6 +134,11 @@ public class Daemon extends TimerTask implements LogHandle {
             }
         }
 
+        if (now - this.lastReportTime > this.reportInterval) {
+            this.submitJVMReport();
+            this.lastReportTime = now;
+        }
+
         // 提交日志报告
         this.submitLogReport();
     }
@@ -159,6 +173,12 @@ public class Daemon extends TimerTask implements LogHandle {
 
             this.logRecords.clear();
         }
+    }
+
+    private void submitJVMReport() {
+        JVMReport report = new JVMReport(this.performer.getNodeName());
+        report.setStartTime(this.startTime);
+        ReportService.getInstance().submitReport(report);
     }
 
     @Override

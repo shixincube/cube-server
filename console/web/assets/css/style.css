@@ -14,3 +14,10 @@
 .log-view p {
     margin: 0;
 }
+
+.chart-color-1 {
+    color: #3c8dbc !important;
+}
+.chart-color-2 {
+    color: #d2d6de !important;
+}

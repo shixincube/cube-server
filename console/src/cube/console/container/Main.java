@@ -32,6 +32,7 @@ import cell.util.log.Logger;
 import cube.console.Console;
 import cube.console.ReportHandler;
 import cube.console.container.handler.ServerLogHandler;
+import cube.console.container.handler.ServerReportHandler;
 import cube.console.container.handler.ServersHandler;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -89,6 +90,7 @@ public class Main {
                 // For AJAX API
                 new ServersHandler(console),
                 new ServerLogHandler(console),
+                new ServerReportHandler(console),
 
                 new StopHandler(server, console),
                 new DefaultHandler()});

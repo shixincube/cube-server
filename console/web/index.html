@@ -15,7 +15,7 @@
   <!-- Theme style -->
   <link rel="stylesheet" href="assets/css/adminlte.min.css">
   <!-- App style -->
-  <link rel="stylesheet" href="assets/css/console.css">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed layout-footer-fixed">
@@ -246,11 +246,11 @@
             </div>
           </div>
           <!-- ./col -->
-          <div class="col-lg-6 col-6">
+          <div class="col-lg-6 col-12">
             <div class="card">
               <div class="card-header border-0">
                 <div class="d-flex justify-content-between">
-                  <h3 class="card-title">调度访问统计</h3>
+                  <h3 class="card-title">调度服务器统计</h3>
                     <a href="javascript:void(0);">查看报告</a>
                 </div>
               </div>
@@ -270,12 +270,15 @@
                 <!-- /.d-flex -->
   
                 <div class="position-relative mb-4">
-                  <canvas id="gateway_chart" height="200"></canvas>
+                  <canvas id="dispatcher-chart" height="200"></canvas>
                 </div>
   
                 <div class="d-flex flex-row justify-content-end">
                   <span class="mr-2">
-                    <i class="fas fa-square text-primary"></i> 127.0.0.1:7000
+                    <i class="fas fa-square chart-color-1"></i> 已使用内存(MB)
+                  </span>
+                  <span class="mr-2">
+                    <i class="fas fa-square chart-color-2"></i> 空余内存(MB)
                   </span>
                 </div>
               </div>
@@ -283,11 +286,11 @@
             <!-- /.card -->
           </div>
           <!-- ./col -->
-          <div class="col-lg-6 col-6">
+          <div class="col-lg-6 col-12">
             <div class="card">
               <div class="card-header border-0">
                 <div class="d-flex justify-content-between">
-                  <h3 class="card-title">服务单元统计</h3>
+                  <h3 class="card-title">服务单元服务器统计</h3>
                   <a href="javascript:void(0);">查看报告</a>
                 </div>
               </div>
@@ -307,18 +310,15 @@
                 <!-- /.d-flex -->
   
                 <div class="position-relative mb-4">
-                  <canvas id="service_chart" height="200"></canvas>
+                  <canvas id="service-chart" height="200"></canvas>
                 </div>
   
                 <div class="d-flex flex-row justify-content-end">
                   <span class="mr-2">
-                    <i class="fas fa-square text-lightblue"></i> 消息
+                    <i class="fas fa-square chart-color-1"></i> 已使用内存(MB)
                   </span>
                   <span class="mr-2">
-                    <i class="fas fa-square text-orange"></i> 音视频
-                  </span>
-                  <span class="mr-2">
-                    <i class="fas fa-square text-teal"></i> 文件
+                    <i class="fas fa-square chart-color-2"></i> 空余内存(MB)
                   </span>
                 </div>
               </div>

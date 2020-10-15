@@ -32,15 +32,14 @@ import cell.util.json.JSONObject;
 import cell.util.log.LogHandle;
 import cell.util.log.LogLevel;
 import cell.util.log.LogManager;
+import cell.util.log.Logger;
+import cube.report.JVMReport;
 import cube.report.LogLine;
 import cube.report.LogReport;
 import cube.util.ConfigUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -53,6 +52,9 @@ public final class Console implements Runnable {
 
     private Properties servers;
 
+    /**
+     * 日志记录。
+     */
     private ConcurrentHashMap<String, List<LogLine>> serverLogMap;
 
     /**
@@ -60,12 +62,20 @@ public final class Console implements Runnable {
      */
     private int maxLogLines = 1000;
 
+    /**
+     * JVM 信息记录。
+     */
+    private ConcurrentHashMap<String, List<JVMReport>> serverJVMMap;
+
+    private int maxReportNum = 20;
+
     private ScheduledExecutorService timer;
 
     private ConsoleLogHandler logHandler;
 
     public Console() {
         this.serverLogMap = new ConcurrentHashMap<>();
+        this.serverJVMMap = new ConcurrentHashMap<>();
         this.logHandler = new ConsoleLogHandler();
     }
 
@@ -175,6 +185,58 @@ public final class Console implements Runnable {
             }
         }
         return list;
+    }
+
+    public void appendJVMReport(JVMReport report) {
+        Logger.d(this.getClass(), "Received report from " + report.getReporter() + " (" + report.getName() + ")");
+
+        List<JVMReport> list = this.serverJVMMap.get(report.getReporter());
+        if (null == list) {
+            list = new Vector<>();
+            this.serverJVMMap.put(report.getReporter().toString(), list);
+        }
+
+        report.scaleValue(1048576);
+        list.add(report);
+        if (list.size() > this.maxReportNum) {
+            list.remove(0);
+        }
+    }
+
+    public List<JVMReport> queryJVMReport(String reporter, int num) {
+        List<JVMReport> result = new ArrayList<>(num);
+        List<JVMReport> list = this.serverJVMMap.get(reporter);
+        if (null == list) {
+            long time = System.currentTimeMillis();
+            for (int i = 0; i < num; ++i) {
+                JVMReport empty = new JVMReport(reporter, time);
+                time -= 60000L;
+                result.add(empty);
+            }
+            Collections.reverse(result);
+            return result;
+        }
+
+        for (int i = list.size() - 1; i >= 0; --i) {
+            result.add(list.get(i));
+            if (result.size() == num) {
+                break;
+            }
+        }
+
+        int d = num - result.size();
+        if (d > 0) {
+            long time = result.get(result.size() - 1).getTimestamp();
+            for (int i = 0; i < d; ++i) {
+                time -= 60000L;
+                JVMReport empty = new JVMReport(reporter, time);
+                result.add(empty);
+            }
+        }
+
+        Collections.reverse(result);
+
+        return result;
     }
 
     @Override

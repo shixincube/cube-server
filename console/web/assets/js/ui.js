@@ -26,6 +26,8 @@
 
 (function(global) {
 
+    global.ui = {};
+
     function formatNumber(num, length) {
         if (length == 2) {
             if (num < 10) {
@@ -53,6 +55,24 @@
         }
 
         return '' + num;
+    }
+    global.ui.formatNumber = formatNumber;
+
+    function formatTimeHHMM(time) {
+        var date = new Date(time);
+        return formatNumber(date.getHours(), 2) + ':' + formatNumber(date.getMinutes(), 2);
+    }
+    global.ui.formatTimeHHMM = formatTimeHHMM;
+
+    function makeTimeLineArray(start, num) {
+        var array = [];
+        var time = start;
+        for (var i = 0; i < num; ++i) {
+            var date = new Date(time);
+            array[i] = formatNumber(date.getHours(), 2) + ':' + formatNumber(date.getMinutes(), 2);
+            time += 60000;
+        }
+        return array;
     }
 
     global.dashboard = {
@@ -110,7 +130,80 @@
                 var c = list[i];
                 $(c).remove();
             }
+        },
+
+        buildJVMChartDataTemplate: function() {
+            var labels = makeTimeLineArray(Date.now(), 8);
+            var data = {
+                labels : labels,
+                datasets: [{
+                    label               : 'Total Memory (MB)',
+                    backgroundColor     : 'rgba(60,141,188, 0.9)',
+                    borderColor         : 'rgba(60,141,188, 0.8)',
+                    pointRadius          : false,
+                    pointColor          : '#3b8bba',
+                    pointStrokeColor    : 'rgba(60,141,188, 1)',
+                    pointHighlightFill  : '#fff',
+                    pointHighlightStroke: 'rgba(60,141,188, 1)',
+                    data                : [0, 0, 0, 0, 0, 0, 0, 0]
+                }, {
+                    label               : 'Free Memory (MB)',
+                    backgroundColor     : 'rgba(210,214,222, 1)',
+                    borderColor         : 'rgba(210,214,222, 1)',
+                    pointRadius         : false,
+                    pointColor          : 'rgba(210,214,222, 1)',
+                    pointStrokeColor    : '#c1c7d1',
+                    pointHighlightFill  : '#fff',
+                    pointHighlightStroke: 'rgba(220,220,220, 1)',
+                    data                : [0, 0, 0, 0, 0, 0, 0, 0]
+                }]
+            }
+            return data;
+        },
+
+        buildChart: function(el, data) {
+            var options = {
+                maintainAspectRatio : false,
+                responsive : true,
+                legend: {
+                    display: false
+                },
+                scales: {
+                    xAxes: [{
+                        stacked: true,
+                        gridLines : {
+                            display : false,
+                        }
+                    }],
+                    yAxes: [{
+                        stacked: true,
+                        ticks: {
+                            min: 0,
+                            beginAtZero: true,
+                            precision: 1
+                        },
+                        gridLines : {
+                            display : false,
+                        }
+                    }]
+                }
+            };
+
+            var canvas = el.get(0).getContext('2d');
+            var chart = new Chart(canvas, {
+                type: 'bar',
+                data: data,
+                options: options
+            });
+            return chart;
+        },
+
+        updateChart: function(chart, labels, datasets) {
+            chart.data.labels = labels;
+            for (var i = 0; i < datasets.length; ++i) {
+                chart.data.datasets[i].data = datasets[i];
+            }
+            chart.update();
         }
     }
-
 })(window);
