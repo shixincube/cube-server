@@ -68,46 +68,46 @@
 
     var reportTask = function() {
         var dispatchers = console.dispatchers;
-        for (var i = 0; i < dispatchers.length; ++i) {
-            var svr = dispatchers[i];
-            console.queryJVMReport(svr.name, 8, function(data) {
-                var labels = [];
-                var dataset0 = [];
-                var dataset1 = [];
-                for (var i = 0; i < data.list.length; ++i) {
-                    var report = data.list[i];
-                    labels.push(ui.formatTimeHHMM(report.timestamp));
-                    dataset0.push(report.totalMemory);
-                    dataset1.push(report.freeMemory);
+        var svr = dispatchers[0];
+        console.queryJVMReport(svr.name, 8, function(data) {
+            var labels = [];
+            var dataset0 = [];
+            var dataset1 = [];
+            for (var i = 0; i < data.list.length; ++i) {
+                var report = data.list[i];
+                labels.push(ui.formatTimeHHMM(report.timestamp));
+                dataset0.push(report.totalMemory);
+                dataset1.push(report.freeMemory);
+            }
 
-                    console.log(data.name + ' : ' + report.totalMemory + ', ' + report.freeMemory);
-                }
-
+            var t = setTimeout(function() {
+                clearTimeout(t);
                 dashboard.updateChart(chartDispatcher, labels, [dataset0, dataset1]);
-            });
-        }
+            }, 100);
+        });
 
         var services = console.services;
-        for (var i = 0; i < services.length; ++i) {
-            var svr = services[i];
-            console.queryJVMReport(svr.name, 8, function(data) {
-                var labels = [];
-                var dataset0 = [];
-                var dataset1 = [];
-                for (var i = 0; i < data.list.length; ++i) {
-                    var report = data.list[i];
-                    labels.push(ui.formatTimeHHMM(report.timestamp));
-                    dataset0.push(report.totalMemory);
-                    dataset1.push(report.freeMemory);
-                }
+        var svr = services[0];
+        console.queryJVMReport(svr.name, 8, function(data) {
+            var labels = [];
+            var dataset0 = [];
+            var dataset1 = [];
+            for (var i = 0; i < data.list.length; ++i) {
+                var report = data.list[i];
+                labels.push(ui.formatTimeHHMM(report.timestamp));
+                dataset0.push(report.totalMemory);
+                dataset1.push(report.freeMemory);
+            }
 
+            var t = setTimeout(function() {
+                clearTimeout(t);
                 dashboard.updateChart(chartService, labels, [dataset0, dataset1]);
-            });
-        }
+            }, 100);
+        });
     };
 
     // 报告任务
-    setInterval(function() { reportTask(); }, 60000);
+    setInterval(function() { reportTask(); }, 120000);
 
     // 日志定时任务
     setInterval(function() {
@@ -121,6 +121,17 @@
                 dashboard.appendLog(el, data.lines[i]);
             }
             consoleLogTime = data.last;
+
+            // 滚动条控制
+            var offset = parseInt(el.prop('scrollHeight'));
+            el.scrollTop(offset);
+
+            // 控制总条目数
+            var total = el.children('p').length;
+            var d = total - maxLogLine;
+            if (d > 0) {
+                dashboard.removeLog(el, d);
+            }
         });
 
         if (null != console.services) {
@@ -145,6 +156,7 @@
                     // 更新总数
                     serverDataMap[data.name].logTotal = total;
 
+                    // 滚动条控制
                     var offset = parseInt(serverDataMap[data.name].tabEl.prop('scrollHeight'));
                     serverDataMap[data.name].tabEl.scrollTop(offset);
 
