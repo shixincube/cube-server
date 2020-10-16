@@ -54,7 +54,7 @@ public class GetTokenTask extends ServiceTask {
         Packet packet = new Packet(action);
 
         JSONObject data = packet.data;
-        String code = "";
+        String code = null;
 
         try {
             code = data.getString("code");

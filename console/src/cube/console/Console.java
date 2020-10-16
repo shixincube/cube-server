@@ -60,7 +60,7 @@ public final class Console implements Runnable {
     /**
      * 记录每个服务器的最大日志行数。
      */
-    private int maxLogLines = 1000;
+    private int maxLogLines = 200;
 
     /**
      * JVM 信息记录。

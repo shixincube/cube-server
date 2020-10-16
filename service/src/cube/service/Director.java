@@ -29,6 +29,7 @@ package cube.service;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.entity.Device;
 
 /**
  * 导演机。
@@ -47,6 +48,19 @@ public class Director {
         try {
             director.put("id", contactId);
             director.put("domain", domain);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        dialect.addParam(sDirectorKey, director);
+        return dialect;
+    }
+
+    public static ActionDialect attachDirector(ActionDialect dialect, long contactId, String domain, Device device) {
+        JSONObject director = new JSONObject();
+        try {
+            director.put("id", contactId);
+            director.put("domain", domain);
+            director.put("device", device.toJSON());
         } catch (JSONException e) {
             e.printStackTrace();
         }

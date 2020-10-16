@@ -77,9 +77,7 @@ public class PullTask extends ServiceTask {
                 timestamp = packet.data.getLong("timestamp");
             }
         } catch (JSONException e) {
-            // 应答
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, MessagingStateCode.NoDevice.code, packet.data));
+            e.printStackTrace();
             return;
         }
 
@@ -88,7 +86,8 @@ public class PullTask extends ServiceTask {
         if (null == contact) {
             // 应答
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, MessagingStateCode.NoContact.code, packet.data));
+                    this.makeAsynchResponse(packet, id, domainName, device,
+                            MessagingStateCode.NoContact.code, packet.data));
             return;
         }
 
@@ -96,7 +95,8 @@ public class PullTask extends ServiceTask {
         if (!contact.hasDevice(device)) {
             // 应答
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, MessagingStateCode.Failure.code, packet.data));
+                    this.makeAsynchResponse(packet, id, domainName, device,
+                            MessagingStateCode.NoDevice.code, packet.data));
             return;
         }
 
@@ -120,7 +120,8 @@ public class PullTask extends ServiceTask {
             if (count >= 10) {
                 JSONObject payload = this.makePayload(total, timestamp, now, messageArray);
                 this.cellet.speak(this.talkContext,
-                        this.makeResponse(action, packet, MessagingStateCode.Ok.code, payload));
+                        this.makeAsynchResponse(packet, id, domainName, device,
+                                MessagingStateCode.Ok.code, payload));
 
                 try {
                     Thread.sleep(10L);
@@ -135,7 +136,8 @@ public class PullTask extends ServiceTask {
 
         JSONObject payload = this.makePayload(total, timestamp, now, messageArray);
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, MessagingStateCode.Ok.code, payload));
+                this.makeAsynchResponse(packet, id, domainName, device,
+                        MessagingStateCode.Ok.code, payload));
     }
 
     private JSONObject makePayload(int totalNum, long beginning, long ending, JSONArray messages) {

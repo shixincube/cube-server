@@ -35,6 +35,7 @@ import cell.util.json.JSONObject;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.Task;
+import cube.common.entity.Device;
 import cube.service.auth.AuthService;
 
 /**
@@ -101,5 +102,25 @@ public abstract class ServiceTask extends Task {
     protected ActionDialect makeResponse(ActionDialect action, Packet request, int stateCode, JSONObject data) {
         JSONObject payload = this.makePacketPayload(stateCode, data);
         return this.makeResponse(action, request, payload);
+    }
+
+    /**
+     * 生成异步应答数据的原语。
+     *
+     * @param request
+     * @param stateCode
+     * @param data
+     * @param id
+     * @param domain
+     * @param device
+     * @return
+     */
+    protected ActionDialect makeAsynchResponse(Packet request, long id, String domain, Device device,
+                                               int stateCode, JSONObject data) {
+        JSONObject payload = this.makePacketPayload(stateCode, data);
+        Packet response = new Packet(request.sn, request.name, payload);
+        ActionDialect responseDialect = response.toDialect();
+        Director.attachDirector(responseDialect, id, domain, device);
+        return responseDialect;
     }
 }

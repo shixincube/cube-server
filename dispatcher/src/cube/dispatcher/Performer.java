@@ -38,6 +38,7 @@ import cell.util.Utils;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
+import cube.common.StateCode;
 import cube.common.UniqueKey;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
@@ -415,6 +416,11 @@ public class Performer implements TalkListener {
         return json;
     }
 
+    private ActionDialect processResponse(ActionDialect response) {
+        response.addParam("state", StateCode.makeState(StateCode.OK, "OK"));
+        return response;
+    }
+
     @Override
     public void onListened(Speakable speakable, String celletName, Primitive primitive) {
         try {
@@ -436,7 +442,8 @@ public class Performer implements TalkListener {
                         // 移除 P-KEY
                         actionDialect.removeParam(this.performerKey);
                         // 向客户端发送数据
-                        transmission.cellet.speak(transmission.source, actionDialect);
+                        transmission.cellet.speak(transmission.source,
+                                this.processResponse(actionDialect));
                     }
                 }
             }
@@ -447,20 +454,34 @@ public class Performer implements TalkListener {
 
                 Long id = director.getLong("id");
                 String domain = director.getString("domain");
+                Device device = director.has("device") ? new Device(director.getJSONObject("device")) : null;
+
+                // 联系人 KEY
                 String key = UniqueKey.make(id, domain);
+
                 Contact contact = this.onlineContacts.get(key);
-                if (null != contact) {
-                    for (Device device : contact.getDeviceList()) {
-                        if (device.isOnline()) {
-                            Cellet cellet = this.celletService.getCellet(celletName);
-                            if (null != cellet) {
-                                cellet.speak(device.getTalkContext(), actionDialect);
+                Cellet cellet = this.celletService.getCellet(celletName);
+
+                if (null != contact && null != cellet) {
+                    if (null == device) {
+                        // 没有指定设备，进行广播
+                        for (Device dev : contact.getDeviceList()) {
+                            if (dev.isOnline()) {
+                                cellet.speak(dev.getTalkContext(), this.processResponse(actionDialect));
                             }
+                        }
+                    }
+                    else {
+                        // 指定设备
+                        Device dev = contact.getDevice(device);
+                        if (null != dev && dev.isOnline()) {
+                            cellet.speak(dev.getTalkContext(), this.processResponse(actionDialect));
                         }
                     }
                 }
                 else {
                     // TODO 日志报告
+                    Logger.w(this.getClass(), "Can NOT find online contact or cellet : " + key + " | " + celletName);
                 }
             }
             else {

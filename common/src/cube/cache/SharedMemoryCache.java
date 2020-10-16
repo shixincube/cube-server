@@ -112,6 +112,9 @@ public class SharedMemoryCache extends AbstractCache {
     public CacheValue get(CacheKey key) {
         SMCacheKey ck = (SMCacheKey) key;
         JSONObject value = this.memory.applyGet(ck.key);
+        if (null == value) {
+            return null;
+        }
         return new SMCacheValue(value);
     }
 

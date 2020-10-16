@@ -226,6 +226,21 @@ public class Contact extends Entity {
     }
 
     /**
+     * 获取与指定源设备相同描述的设备。
+     * @param src 指定对比的源设备。
+     * @return 返回该联系保存的设备实例。
+     */
+    public Device getDevice(Device src) {
+        for (Device device : this.deviceList) {
+            if (device.equals(src)) {
+                return device;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * 获取当前设备。
      *
      * @return
