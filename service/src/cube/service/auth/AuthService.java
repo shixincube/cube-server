@@ -31,8 +31,8 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
-import cube.cache.SMCacheKey;
-import cube.cache.SMCacheValue;
+import cube.cache.SharedMemoryKey;
+import cube.cache.SharedMemoryValue;
 import cube.core.AbstractModule;
 import cube.core.Cache;
 import cube.core.CacheValue;
@@ -61,7 +61,7 @@ public class AuthService extends AbstractModule {
     public void start() {
         this.tokenCache = this.getCache("TokenPool");
 
-        // 启动文件数据库，该库仅用于测试
+        // 文件数据库，该库仅用于测试
         this.authDomainFileDB = new AuthDomainFileDB("config/domain.json");
     }
 
@@ -95,7 +95,7 @@ public class AuthService extends AbstractModule {
             this.authTokenMap.put(code, token);
 
             // 将 Code 写入令牌池
-            this.tokenCache.put(new SMCacheKey(code), new SMCacheValue(token.toJSON()));
+            this.tokenCache.put(new SharedMemoryKey(code), new SharedMemoryValue(token.toJSON()));
 
             // 更新文件数据库
             authDomain.tokens.put(code, token);
@@ -119,9 +119,9 @@ public class AuthService extends AbstractModule {
             return token;
         }
 
-        CacheValue value = this.tokenCache.get(new SMCacheKey(code));
+        CacheValue value = this.tokenCache.get(new SharedMemoryKey(code));
         if (null != value) {
-            SMCacheValue smv = (SMCacheValue) value;
+            SharedMemoryValue smv = (SharedMemoryValue) value;
             token = new AuthToken(smv.get());
             return token;
         }

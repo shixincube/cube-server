@@ -36,7 +36,7 @@ public class TimeseriesCache extends AbstractCache {
     public final static String TYPE = "TSC";
 
     public TimeseriesCache(String name) {
-        super(name);
+        super(name, TYPE);
     }
 
     @Override

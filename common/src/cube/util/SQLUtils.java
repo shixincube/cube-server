@@ -24,30 +24,31 @@
  * SOFTWARE.
  */
 
-package cube.cache;
+package cube.util;
 
-import cube.core.CacheKey;
+import cube.core.StorageField;
 
 /**
- * Shared Memory 缓存的主键实现。
+ * SQL 辅助函数。
  */
-public class SMCacheKey extends CacheKey {
+public final class SQLUtils {
 
-    /**
-     * 主键。
-     */
-    protected String key;
-
-    public SMCacheKey(String key) {
-        this.key = key;
+    private SQLUtils() {
     }
 
-    /**
-     * 获取主键。
-     *
-     * @return 返回主键。
-     */
-    public String get() {
-        return this.key;
+    public static String spellSelect(String table, StorageField[] fields, String conditional) {
+        StringBuilder buf = new StringBuilder("select ");
+        for (StorageField field : fields) {
+            buf.append(field.getName());
+            buf.append(",");
+        }
+        buf.delete(buf.length() - 1, buf.length());
+
+        buf.append(" from ");
+        buf.append(table);
+        buf.append(" where ");
+        buf.append(conditional);
+
+        return buf.toString();
     }
 }

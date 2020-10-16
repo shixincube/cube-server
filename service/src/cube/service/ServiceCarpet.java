@@ -106,8 +106,6 @@ public class ServiceCarpet implements CellListener {
         }
         this.kernel.installCache("TokenPool", tokenCache);
 
-        this.kernel.installModule(AuthService.NAME, new AuthService());
-
         this.kernel.startup();
     }
 

@@ -24,48 +24,31 @@
  * SOFTWARE.
  */
 
-package cube.service.contact;
+package cube.cache;
 
 import cell.util.json.JSONObject;
-import cube.common.entity.Contact;
-import cube.core.AbstractStorage;
-import cube.core.Storage;
-
-import java.util.List;
+import cube.core.CacheValue;
 
 /**
- * 联系人存储。
+ * Shared Memory 缓存的值实现。
  */
-public class ContactStorage extends AbstractStorage {
+public class SharedMemoryValue extends CacheValue {
 
-    public ContactStorage() {
-        super("ContactStorage");
+    /**
+     * 数据值。
+     */
+    protected JSONObject value;
+
+    public SharedMemoryValue(JSONObject value) {
+        this.value = value;
     }
 
-    @Override
-    public void open() {
-
-    }
-
-    @Override
-    public void close() {
-
-    }
-
-    public void insertContact(Contact contact) {
-        Long id = contact.getId();
-        String name = contact.getName();
-    }
-
-    public JSONObject queryContact(String domain, Long id) {
-        return null;
-    }
-
-    public JSONObject queryGroup(String domain, Long id) {
-        return null;
-    }
-
-    public List<JSONObject> queryGroupMember(String domain, Long groupId) {
-        return null;
+    /**
+     * 获取 JSON 形式的数据值。
+     *
+     * @return 返回 JSON 形式的数据值。
+     */
+    public JSONObject get() {
+        return this.value;
     }
 }

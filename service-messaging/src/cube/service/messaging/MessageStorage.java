@@ -24,48 +24,30 @@
  * SOFTWARE.
  */
 
-package cube.service.contact;
+package cube.service.messaging;
 
 import cell.util.json.JSONObject;
-import cube.common.entity.Contact;
-import cube.core.AbstractStorage;
 import cube.core.Storage;
-
-import java.util.List;
+import cube.storage.StorageFactory;
+import cube.storage.StorageType;
 
 /**
- * 联系人存储。
+ * 消息存储器。
  */
-public class ContactStorage extends AbstractStorage {
+public class MessageStorage {
 
-    public ContactStorage() {
-        super("ContactStorage");
+    private Storage storage;
+
+    public MessageStorage(Storage storage) {
+        this.storage = storage;
     }
 
-    @Override
-    public void open() {
-
+    public MessageStorage(StorageType type, JSONObject config) {
+        this.storage = StorageFactory.getInstance().createStorage(type, "MessageStorage", config);
     }
 
-    @Override
-    public void close() {
-
+    public void execSelfChecking() {
     }
 
-    public void insertContact(Contact contact) {
-        Long id = contact.getId();
-        String name = contact.getName();
-    }
 
-    public JSONObject queryContact(String domain, Long id) {
-        return null;
-    }
-
-    public JSONObject queryGroup(String domain, Long id) {
-        return null;
-    }
-
-    public List<JSONObject> queryGroupMember(String domain, Long groupId) {
-        return null;
-    }
 }

@@ -50,7 +50,7 @@ public class SharedMemoryCache extends AbstractCache {
      * @param name 缓存器名称。
      */
     public SharedMemoryCache(String name) {
-        super(name);
+        super(name, TYPE);
     }
 
     /**
@@ -100,8 +100,8 @@ public class SharedMemoryCache extends AbstractCache {
      */
     @Override
     public void put(CacheKey key, CacheValue value) {
-        SMCacheKey ck = (SMCacheKey) key;
-        SMCacheValue cv = (SMCacheValue) value;
+        SharedMemoryKey ck = (SharedMemoryKey) key;
+        SharedMemoryValue cv = (SharedMemoryValue) value;
         this.memory.applyPut(ck.key, cv.value);
     }
 
@@ -110,12 +110,12 @@ public class SharedMemoryCache extends AbstractCache {
      */
     @Override
     public CacheValue get(CacheKey key) {
-        SMCacheKey ck = (SMCacheKey) key;
+        SharedMemoryKey ck = (SharedMemoryKey) key;
         JSONObject value = this.memory.applyGet(ck.key);
         if (null == value) {
             return null;
         }
-        return new SMCacheValue(value);
+        return new SharedMemoryValue(value);
     }
 
     /**
@@ -131,7 +131,7 @@ public class SharedMemoryCache extends AbstractCache {
      */
     @Override
     public void remove(CacheKey key) {
-        SMCacheKey ck = (SMCacheKey) key;
+        SharedMemoryKey ck = (SharedMemoryKey) key;
         this.memory.applyRemove(ck.key);
     }
 
@@ -140,7 +140,7 @@ public class SharedMemoryCache extends AbstractCache {
      */
     @Override
     public void execute(CacheKey key, final CacheTransaction transaction) {
-        SMCacheKey ck = (SMCacheKey) key;
+        SharedMemoryKey ck = (SharedMemoryKey) key;
         Context context = new Context(ck);
 
         LockFuture future = new LockFuture() {
@@ -163,7 +163,7 @@ public class SharedMemoryCache extends AbstractCache {
 
         protected LockFuture lockFuture;
 
-        public Context(SMCacheKey key) {
+        public Context(SharedMemoryKey key) {
             super(key);
         }
 
@@ -171,7 +171,7 @@ public class SharedMemoryCache extends AbstractCache {
         public CacheValue get() {
             JSONObject value = this.lockFuture.get();
             if (null != value) {
-                return new SMCacheValue(value);
+                return new SharedMemoryValue(value);
             }
 
             return null;
@@ -179,7 +179,7 @@ public class SharedMemoryCache extends AbstractCache {
 
         @Override
         public void put(CacheValue value) {
-            SMCacheValue cv = (SMCacheValue) value;
+            SharedMemoryValue cv = (SharedMemoryValue) value;
             this.lockFuture.put(cv.value);
         }
 

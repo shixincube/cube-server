@@ -33,6 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.AuthActions;
+import cube.core.Kernel;
 import cube.service.auth.task.ApplyTokenTask;
 import cube.service.auth.task.GetTokenTask;
 
@@ -54,12 +55,19 @@ public class AuthServiceCellet extends Cellet {
     @Override
     public boolean install() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
+
+        Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
+        kernel.installModule(AuthService.NAME, new AuthService());
+
         return true;
     }
 
     @Override
     public void uninstall() {
         this.executor.shutdown();
+
+        Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
+        kernel.uninstallModule(AuthService.NAME);
     }
 
     @Override

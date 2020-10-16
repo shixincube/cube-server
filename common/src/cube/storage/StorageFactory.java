@@ -24,48 +24,46 @@
  * SOFTWARE.
  */
 
-package cube.service.contact;
+package cube.storage;
 
 import cell.util.json.JSONObject;
-import cube.common.entity.Contact;
-import cube.core.AbstractStorage;
 import cube.core.Storage;
 
-import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 联系人存储。
+ * 存储工厂。
  */
-public class ContactStorage extends AbstractStorage {
+public final class StorageFactory {
 
-    public ContactStorage() {
-        super("ContactStorage");
+    private final static StorageFactory instance = new StorageFactory();
+
+    private ConcurrentHashMap<String, Storage> storageMap;
+
+    private StorageFactory() {
+        this.storageMap = new ConcurrentHashMap<>();
     }
 
-    @Override
-    public void open() {
-
+    public static StorageFactory getInstance() {
+        return StorageFactory.instance;
     }
 
-    @Override
-    public void close() {
+    public Storage createStorage(StorageType type, String name, JSONObject config) {
+        Storage storage = null;
 
+        if (type == StorageType.SQLite) {
+            storage = new SQLiteStorage(name);
+        }
+
+        if (null != storage) {
+            storage.configure(config);
+            this.storageMap.put(name, storage);
+        }
+
+        return storage;
     }
 
-    public void insertContact(Contact contact) {
-        Long id = contact.getId();
-        String name = contact.getName();
-    }
-
-    public JSONObject queryContact(String domain, Long id) {
-        return null;
-    }
-
-    public JSONObject queryGroup(String domain, Long id) {
-        return null;
-    }
-
-    public List<JSONObject> queryGroupMember(String domain, Long groupId) {
-        return null;
+    public Storage getStorage(String name) {
+        return this.storageMap.get(name);
     }
 }

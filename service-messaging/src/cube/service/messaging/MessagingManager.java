@@ -47,6 +47,7 @@ import cube.common.entity.*;
 import cube.common.state.MessagingStateCode;
 import cube.service.Director;
 import cube.service.contact.ContactManager;
+import cube.storage.StorageType;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -69,6 +70,11 @@ public final class MessagingManager implements CelletAdapterListener {
     private SeriesMemory messageCache;
 
     /**
+     * 消息存储。
+     */
+    private MessageStorage messageStorage;
+
+    /**
      * 联系人事件适配器。
      */
     private CelletAdapter contactsAdapter;
@@ -83,7 +89,6 @@ public final class MessagingManager implements CelletAdapterListener {
     }
 
     private MessagingManager() {
-        this.initMessageCache();
     }
 
     private void initMessageCache() {
@@ -95,6 +100,33 @@ public final class MessagingManager implements CelletAdapterListener {
 
         SeriesMemoryConfig config = new SeriesMemoryConfig(filepath);
         this.messageCache = new SeriesMemory(config);
+
+        this.messageCache.start();
+
+        int count = 10;
+        Logger.i(this.getClass(), "Waiting for message cache ready");
+        while (!this.messageCache.isReady()) {
+            try {
+                Thread.sleep(100L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            --count;
+            if (count == 0) {
+                break;
+            }
+        }
+    }
+
+    private void initMessageStorage() {
+        JSONObject config = new JSONObject();
+        try {
+            config.put("file", "storage/messages.db");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        this.messageStorage = new MessageStorage(StorageType.SQLite, config);
     }
 
     /**
@@ -109,15 +141,9 @@ public final class MessagingManager implements CelletAdapterListener {
 
         this.pluginSystem = new MessagingPluginSystem();
 
-        this.messageCache.start();
-        if (!this.messageCache.isReady()) {
-            Logger.i(this.getClass(), "Waiting for message cache ready");
-            try {
-                Thread.sleep(3000L);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        this.initMessageCache();
+
+        this.initMessageStorage();
     }
 
     /**

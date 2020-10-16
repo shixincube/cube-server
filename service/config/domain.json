@@ -3,6 +3,12 @@
     "appKey": "shixin-cubeteam-opensource-appkey",
     "tokens": [
         {
+            "code": "WHxlMZdmOoMPJQVjRlQfSQlbYpBEsQtU",
+            "expiry": 1603459892076,
+            "issues": 1602855092076,
+            "cid": 0
+        },
+        {
             "code": "YYPCKUnVgypPIvGWnALtbcSeadIxHLME",
             "expiry": 1603271595904,
             "issues": 1602666795904,
@@ -27,9 +33,21 @@
             "cid": 0
         },
         {
+            "code": "ivGPIxnfetpASZqHuaCIcEPMMQVVNEtu",
+            "expiry": 1603459891811,
+            "issues": 1602855091811,
+            "cid": 0
+        },
+        {
             "code": "dwxBuHcbHJdartQcBlaJcqXKOGpTEMuN",
             "expiry": 1603361160933,
             "issues": 1602756360933,
+            "cid": 0
+        },
+        {
+            "code": "liQqNZJOndfpimeQMNYTRrnMwCsOLuOX",
+            "expiry": 1603459939581,
+            "issues": 1602855139581,
             "cid": 0
         }
     ]

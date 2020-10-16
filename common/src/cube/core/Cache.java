@@ -41,6 +41,13 @@ public interface Cache {
     public String getName();
 
     /**
+     * 返回缓存器类型。
+     *
+     * @return 返回缓存器类型。
+     */
+    public String getType();
+
+    /**
      * 返回缓存的配置信息。
      *
      * @return 返回缓存的配置信息。

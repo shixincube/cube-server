@@ -35,6 +35,8 @@ public abstract class AbstractCache implements Cache {
 
     private String name;
 
+    private String type;
+
     private JSONObject config;
 
     /**
@@ -42,14 +44,13 @@ public abstract class AbstractCache implements Cache {
      *
      * @param name 缓存名称。
      */
-    public AbstractCache(String name) {
+    public AbstractCache(String name, String type) {
         this.name = name;
+        this.type = type;
     }
 
     /**
-     * 返回缓存名称。
-     *
-     * @return
+     * {@inheritDoc}
      */
     @Override
     public String getName() {
@@ -57,14 +58,24 @@ public abstract class AbstractCache implements Cache {
     }
 
     /**
-     *
-     * @return
+     * {@inheritDoc}
+     */
+    @Override
+    public String getType() {
+        return this.type;
+    }
+
+    /**
+     * {@inheritDoc}
      */
     @Override
     public JSONObject getConfig() {
         return this.config;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void configure(JSONObject config) {
         this.config = config;

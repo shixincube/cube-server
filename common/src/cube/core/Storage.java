@@ -24,7 +24,11 @@
  * SOFTWARE.
  */
 
-package cube.storage;
+package cube.core;
+
+import cell.util.json.JSONObject;
+
+import java.util.List;
 
 /**
  * 存储器接口。
@@ -32,13 +36,36 @@ package cube.storage;
 public interface Storage {
 
     /**
+     * 获取存储器名称。
+     *
+     * @return
+     */
+    public String getName();
+
+    /**
+     *
+     * @return
+     */
+    public JSONObject getConfig();
+
+    /**
+     *
+     * @param config
+     */
+    public void configure(JSONObject config);
+
+    /**
      * 打开存储仓库。
      */
-    void open();
+    public void open();
 
     /**
      * 关闭存储仓库。
      */
-    void close();
+    public void close();
+
+    public void executeUpdate(String sql);
+
+    public List<StorageField[]> executeQuery(String table, StorageField[] fields, String conditional);
 
 }
