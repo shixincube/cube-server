@@ -12,3 +12,7 @@ service/logs
 *.log
 dispatcher/bin
 out
+post.sh
+prep.sh
+domain-local.json
+domain-origin.json
