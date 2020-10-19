@@ -64,7 +64,13 @@ public interface Storage {
      */
     public void close();
 
-    public void executeUpdate(String sql);
+    public boolean exist(String table);
+
+    public boolean executeCreate(String table, StorageField[] fields);
+
+    public boolean executeInsert(String table, StorageField[] fields);
+
+    public List<StorageField[]> executeQuery(String table, StorageField[] fields);
 
     public List<StorageField[]> executeQuery(String table, StorageField[] fields, String conditional);
 

@@ -36,6 +36,7 @@ import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.CachedQueueExecutor;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
@@ -47,12 +48,14 @@ import cube.common.entity.*;
 import cube.common.state.MessagingStateCode;
 import cube.core.AbstractModule;
 import cube.service.Director;
+import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
 import cube.storage.StorageType;
 
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 消息管理器。
@@ -62,6 +65,11 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     public final static String NAME = "Messaging";
 
     private MessagingServiceCellet cellet;
+
+    /**
+     * 多线程执行器。
+     */
+    private ExecutorService executor;
 
     /**
      * 消息缓存器。
@@ -83,8 +91,14 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      */
     private MessagingPluginSystem pluginSystem;
 
+    /**
+     * 构造函数。
+     *
+     * @param cellet
+     */
     public MessagingService(MessagingServiceCellet cellet) {
         this.cellet = cellet;
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
     }
 
     private void initMessageCache() {
@@ -122,7 +136,18 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        this.messageStorage = new MessageStorage(StorageType.SQLite, config);
+        this.messageStorage = new MessageStorage(this.executor, StorageType.SQLite, config);
+
+        this.messageStorage.open();
+
+        (new Thread() {
+            @Override
+            public void run() {
+                // 存储进行自校验
+                AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
+                messageStorage.execSelfChecking(authService.getDomainList());
+            }
+        }).start();
     }
 
     /**
@@ -148,6 +173,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         if (null != this.contactsAdapter) {
             this.contactsAdapter.removeListener(this);
         }
+
+        this.messageStorage.close();
     }
 
     /**
@@ -166,7 +193,6 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         MessagingHook hook = this.pluginSystem.getPrePushHook();
         hook.apply(message);
 
-        // 进行消息的群组管理
         if (message.getTo().longValue() > 0) {
             // 唯一键是接收消息方的唯一键
             String key = UniqueKey.make(message.getTo(), message.getDomain());
@@ -178,6 +204,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             this.contactsAdapter.publish(key, event.toJSON());
         }
         else if (message.getSource().longValue() > 0) {
+            // 进行消息的群组管理
             Group group = ContactManager.getInstance().getGroup(message.getSource(), message.getDomain());
             if (null != group) {
                 List<Contact> list = group.getMembers();

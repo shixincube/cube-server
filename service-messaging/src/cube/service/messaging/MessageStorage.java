@@ -26,28 +26,159 @@
 
 package cube.service.messaging;
 
+import cell.core.talk.LiteralBase;
 import cell.util.json.JSONObject;
+import cell.util.log.Logger;
+import cube.common.entity.Message;
+import cube.core.Constraint;
 import cube.core.Storage;
+import cube.core.StorageField;
 import cube.storage.StorageFactory;
 import cube.storage.StorageType;
+import cube.util.SQLUtils;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 消息存储器。
  */
 public class MessageStorage {
 
+    private final String version = "1.0";
+
+    private ExecutorService executor = null;
+
     private Storage storage;
 
-    public MessageStorage(Storage storage) {
+    private final String messageTablePrefix = "messages_";
+
+    private Map<String, String> tableNameMap;
+
+    public MessageStorage(ExecutorService executor, Storage storage) {
+        this.executor = executor;
         this.storage = storage;
+        this.tableNameMap = new HashMap<>();
     }
 
-    public MessageStorage(StorageType type, JSONObject config) {
+    public MessageStorage(ExecutorService executor, StorageType type, JSONObject config) {
+        this.executor = executor;
         this.storage = StorageFactory.getInstance().createStorage(type, "MessageStorage", config);
+        this.tableNameMap = new HashMap<>();
     }
 
-    public void execSelfChecking() {
+    public void open() {
+        this.storage.open();
     }
 
+    public void close() {
+        this.storage.close();
+    }
 
+    public void execSelfChecking(List<String> domainNameList) {
+        String table = "cube";
+
+        StorageField[] fields = new StorageField[] {
+                new StorageField("item", LiteralBase.STRING),
+                new StorageField("desc", LiteralBase.STRING)
+        };
+
+        List<StorageField[]> result = this.storage.executeQuery(table, fields);
+        if (result.isEmpty()) {
+            // 数据库没有找到表，创建新表
+            if (this.storage.executeCreate(table, fields)) {
+                // 插入数据
+                StorageField[] data = new StorageField[] {
+                        new StorageField("item", LiteralBase.STRING, "version"),
+                        new StorageField("desc", LiteralBase.STRING, this.version)
+                };
+                this.storage.executeInsert(table, data);
+                Logger.i(this.getClass(), "Insert into 'cube' data");
+            }
+            else {
+                Logger.e(this.getClass(), "Create table 'cube' failed - " + this.storage.getName());
+            }
+        }
+        else {
+            // 校验版本
+            for (StorageField[] row : result) {
+                if (row[0].getString().equals("version")) {
+                    Logger.i(this.getClass(), "Message storage version " + row[1].getString());
+                }
+            }
+        }
+
+        // 校验域对应的表
+        for (String domain : domainNameList) {
+            this.checkMessageTable(domain);
+        }
+    }
+
+    public void write(final Message message) {
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                String domain = message.getDomain().getName();
+                // 取表名
+                String table = tableNameMap.get(domain);
+                if (null == table) {
+                    return;
+                }
+
+                StorageField[] fields = new StorageField[] {
+                        new StorageField("id", LiteralBase.LONG, message.getId()),
+                        new StorageField("from", LiteralBase.LONG, message.getFrom()),
+                        new StorageField("to", LiteralBase.LONG, message.getTo()),
+                        new StorageField("source", LiteralBase.LONG, message.getSource()),
+                        new StorageField("lts", LiteralBase.LONG, message.getLocalTimestamp()),
+                        new StorageField("rts", LiteralBase.LONG, message.getRemoteTimestamp()),
+                        new StorageField("payload", LiteralBase.STRING, message.getPayload().toString())
+                };
+                storage.executeInsert(table, fields);
+            }
+        });
+    }
+
+    private void checkMessageTable(String domain) {
+        String table = this.messageTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.tableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            StorageField[] fields = new StorageField[] {
+                    new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                            Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+                    }),
+                    new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                            Constraint.UNIQUE
+                    }),
+                    new StorageField("from", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("to", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("source", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL, Constraint.DEFAULT_0
+                    }),
+                    new StorageField("lts", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL, Constraint.DEFAULT_0
+                    }),
+                    new StorageField("rts", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL, Constraint.DEFAULT_0
+                    }),
+                    new StorageField("payload", LiteralBase.STRING, new Constraint[] {
+                            Constraint.NOT_NULL
+                    })
+            };
+
+            if (this.storage.executeCreate(table, fields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
 }

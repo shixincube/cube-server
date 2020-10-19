@@ -24,45 +24,34 @@
  * SOFTWARE.
  */
 
-package cube.service.contact;
-
-import cell.util.json.JSONObject;
-import cube.common.entity.Contact;
-import cube.core.AbstractStorage;
-import cube.core.Storage;
-
-import java.util.List;
+package cube.core;
 
 /**
- * 联系人存储。
+ * 字段约束。
  */
-public class ContactStorage {
+public enum Constraint {
 
-    public ContactStorage() {
+    NOT_NULL("NOT NULL"),
+
+    PRIMARY_KEY("PRIMARY KEY"),
+
+    AUTOINCREMENT("AUTOINCREMENT"),
+
+    UNIQUE("UNIQUE"),
+
+    DEFAULT("DEFAULT"),
+
+    DEFAULT_0("DEFAULT 0"),
+
+    CHECK("CHECK");
+
+    private String statement;
+
+    Constraint(String statement) {
+        this.statement = statement;
     }
 
-    public void open() {
-
-    }
-
-    public void close() {
-
-    }
-
-    public void insertContact(Contact contact) {
-        Long id = contact.getId();
-        String name = contact.getName();
-    }
-
-    public JSONObject queryContact(String domain, Long id) {
-        return null;
-    }
-
-    public JSONObject queryGroup(String domain, Long id) {
-        return null;
-    }
-
-    public List<JSONObject> queryGroupMember(String domain, Long groupId) {
-        return null;
+    public String getStatement() {
+        return this.statement;
     }
 }

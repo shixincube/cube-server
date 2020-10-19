@@ -37,7 +37,9 @@ import cube.core.AbstractModule;
 import cube.core.Cache;
 import cube.core.CacheValue;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -67,6 +69,19 @@ public class AuthService extends AbstractModule {
 
     @Override
     public void stop() {
+    }
+
+    /**
+     * 返回所有域的清单。
+     *
+     * @return
+     */
+    public List<String> getDomainList() {
+        List<String> result = new ArrayList<>();
+        for (AuthDomain authDomain : this.authDomainFileDB.getAuthDomainList()) {
+            result.add(authDomain.domainName);
+        }
+        return result;
     }
 
     /**

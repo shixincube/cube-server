@@ -108,6 +108,15 @@ public class AuthDomainFileDB {
         buf = null;
     }
 
+    /**
+     * 返回被管理的域清单。
+     *
+     * @return
+     */
+    public List<AuthDomain> getAuthDomainList() {
+        return this.authDomainList;
+    }
+
     public AuthDomain queryDomain(String domainName, String appKey) {
         for (AuthDomain domain : this.authDomainList) {
             if (domain.domainName.equals(domainName) && domain.appKey.equals(appKey)) {

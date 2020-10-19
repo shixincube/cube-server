@@ -28,6 +28,8 @@ package cube.core;
 
 import cell.core.talk.LiteralBase;
 
+import java.util.List;
+
 /**
  * 存储字段。
  */
@@ -38,6 +40,8 @@ public class StorageField {
     private LiteralBase literalBase;
 
     private Object value;
+
+    private Constraint[] constraints;
 
     /**
      * 构造函数。
@@ -61,6 +65,19 @@ public class StorageField {
         this.name = name;
         this.literalBase = literalBase;
         this.value = value;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param name 字段名。
+     * @param literalBase 字段的数据类型字面义。
+     * @param constraints 字段约束。
+     */
+    public StorageField(String name, LiteralBase literalBase, Constraint[] constraints) {
+        this.name = name;
+        this.literalBase = literalBase;
+        this.constraints = constraints;
     }
 
     /**
@@ -152,5 +169,23 @@ public class StorageField {
             return ((Boolean)this.value).booleanValue();
         }
         return false;
+    }
+
+    /**
+     * 设置约束。
+     *
+     * @param constraints
+     */
+    public void setConstraints(Constraint[] constraints) {
+        this.constraints = constraints;
+    }
+
+    /**
+     * 返回约束。
+     *
+     * @return
+     */
+    public Constraint[] getConstraints() {
+        return this.constraints;
     }
 }

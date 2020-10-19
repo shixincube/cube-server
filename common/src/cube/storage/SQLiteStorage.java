@@ -92,14 +92,14 @@ public class SQLiteStorage extends AbstractStorage {
     }
 
     @Override
-    public void executeUpdate(String sql) {
+    public boolean exist(String table) {
         Statement statement = null;
         try {
             statement = this.connection.createStatement();
             statement.setQueryTimeout(10);
-            statement.executeUpdate(sql);
+            statement.executeQuery("SELECT * FROM " + table + " LIMIT 1");
         } catch (SQLException e) {
-            Logger.w(this.getClass(), "executeUpdate", e);
+            return false;
         } finally {
             if (null != statement) {
                 try {
@@ -108,6 +108,57 @@ public class SQLiteStorage extends AbstractStorage {
                 }
             }
         }
+        return true;
+    }
+
+    @Override
+    public boolean executeCreate(String table, StorageField[] fields) {
+        // 拼写 SQL 语句
+        String sql = SQLUtils.spellCreateTable(table, fields);
+        Statement statement = null;
+        try {
+            statement = this.connection.createStatement();
+            statement.executeUpdate(sql);
+        } catch (SQLException e) {
+            Logger.e(this.getClass(), "SQL: " + sql, e);
+            return false;
+        } finally {
+            if (null != statement) {
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean executeInsert(String table, StorageField[] fields) {
+        // 拼写 SQL 语句
+        String sql = SQLUtils.spellInsert(table, fields);
+        Statement statement = null;
+        try {
+            statement = this.connection.createStatement();
+            statement.executeUpdate(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (null != statement) {
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public List<StorageField[]> executeQuery(String table, StorageField[] fields) {
+        return this.executeQuery(table, fields, null);
     }
 
     @Override
@@ -148,7 +199,7 @@ public class SQLiteStorage extends AbstractStorage {
                 result.add(row);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            Logger.d(this.getClass(), e.getMessage());
         } finally {
             if (null != statement) {
                 try {
