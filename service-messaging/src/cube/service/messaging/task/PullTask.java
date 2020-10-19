@@ -36,14 +36,14 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Domain;
 import cube.common.Packet;
-import cube.common.action.MessagingActions;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Message;
 import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
-import cube.service.messaging.MessagingManager;
+import cube.service.messaging.MessagingService;
+import cube.service.messaging.MessagingServiceCellet;
 
 import java.util.List;
 
@@ -107,7 +107,8 @@ public class PullTask extends ServiceTask {
         }
 
         // 获取指定起始时间的消息列表
-        List<Message> messageList = MessagingManager.getInstance().pullMessage(id, timestamp, now);
+        MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingServiceCellet.NAME);
+        List<Message> messageList = messagingService.pullMessage(id, timestamp, now);
         int total = messageList.size();
         int count = 0;
         JSONArray messageArray = new JSONArray();

@@ -33,6 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.MessagingActions;
+import cube.core.Kernel;
 import cube.service.messaging.task.PullTask;
 import cube.service.messaging.task.PushTask;
 
@@ -53,14 +54,18 @@ public class MessagingServiceCellet extends Cellet {
 
     @Override
     public boolean install() {
+        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
+        kernel.installModule(MessagingServiceCellet.NAME, new MessagingService(this));
+
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
-        MessagingManager.getInstance().start(this);
         return true;
     }
 
     @Override
     public void uninstall() {
-        MessagingManager.getInstance().stop();
+        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
+        kernel.uninstallModule(MessagingServiceCellet.NAME);
+
         this.executor.shutdown();
     }
 

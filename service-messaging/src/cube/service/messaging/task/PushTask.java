@@ -35,7 +35,8 @@ import cube.common.Packet;
 import cube.common.entity.Message;
 import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
-import cube.service.messaging.MessagingManager;
+import cube.service.messaging.MessagingService;
+import cube.service.messaging.MessagingServiceCellet;
 
 /**
  * 推送消息任务。
@@ -61,7 +62,8 @@ public class PushTask extends ServiceTask {
         }
 
         // 将消息推送到消息中心
-        Message response = MessagingManager.getInstance().pushMessage(message);
+        MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingServiceCellet.NAME);
+        Message response = messagingService.pushMessage(message);
 
         // 应答
         this.cellet.speak(this.talkContext

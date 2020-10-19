@@ -45,6 +45,7 @@ import cube.common.UniqueKey;
 import cube.common.action.MessagingActions;
 import cube.common.entity.*;
 import cube.common.state.MessagingStateCode;
+import cube.core.AbstractModule;
 import cube.service.Director;
 import cube.service.contact.ContactManager;
 import cube.storage.StorageType;
@@ -56,11 +57,9 @@ import java.util.List;
 /**
  * 消息管理器。
  */
-public final class MessagingManager implements CelletAdapterListener {
+public final class MessagingService extends AbstractModule implements CelletAdapterListener {
 
     public final static String NAME = "Messaging";
-
-    private final static MessagingManager instance = new MessagingManager();
 
     private MessagingServiceCellet cellet;
 
@@ -84,11 +83,8 @@ public final class MessagingManager implements CelletAdapterListener {
      */
     private MessagingPluginSystem pluginSystem;
 
-    public final static MessagingManager getInstance() {
-        return MessagingManager.instance;
-    }
-
-    private MessagingManager() {
+    public MessagingService(MessagingServiceCellet cellet) {
+        this.cellet = cellet;
     }
 
     private void initMessageCache() {
@@ -131,11 +127,8 @@ public final class MessagingManager implements CelletAdapterListener {
 
     /**
      * 启动服务。
-     * @param cellet
      */
-    public void start(MessagingServiceCellet cellet) {
-        this.cellet = cellet;
-
+    public void start() {
         this.contactsAdapter = CelletAdapterFactory.getInstance().getAdapter("Contacts");
         this.contactsAdapter.addListener(this);
 
@@ -181,7 +174,7 @@ public final class MessagingManager implements CelletAdapterListener {
             // 将消息写入缓存
             this.messageCache.add(key, message.toJSON(), message.getRemoteTimestamp());
 
-            ModuleEvent event = new ModuleEvent(MessagingManager.NAME, MessagingActions.Push.name, message.toJSON());
+            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Push.name, message.toJSON());
             this.contactsAdapter.publish(key, event.toJSON());
         }
         else if (message.getSource().longValue() > 0) {
@@ -200,7 +193,7 @@ public final class MessagingManager implements CelletAdapterListener {
                     // 将消息写入缓存
                     this.messageCache.add(key, copy.toJSON(), message.getRemoteTimestamp());
 
-                    ModuleEvent event = new ModuleEvent(MessagingManager.NAME, MessagingActions.Push.name, copy.toJSON());
+                    ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Push.name, copy.toJSON());
                     this.contactsAdapter.publish(key, event.toJSON());
                 }
             }
@@ -266,7 +259,7 @@ public final class MessagingManager implements CelletAdapterListener {
 
     @Override
     public void onDelivered(String topic, Endpoint endpoint, JSONObject jsonObject) {
-        if (MessagingManager.NAME.equals(ModuleEvent.getModuleName(jsonObject))) {
+        if (MessagingService.NAME.equals(ModuleEvent.getModuleName(jsonObject))) {
             // 消息模块
             ModuleEvent event = new ModuleEvent(jsonObject);
             if (event.getEventName().equals(MessagingActions.Push.name)) {
