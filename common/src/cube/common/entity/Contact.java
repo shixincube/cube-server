@@ -209,6 +209,15 @@ public class Contact extends Entity {
     }
 
     /**
+     * 返回设备数量。
+     *
+     * @return
+     */
+    public int numDevices() {
+        return this.deviceList.size();
+    }
+
+    /**
      * 通过客户端的 TalkContext 匹配获取对应的设备。
      * 该方法主要提供给网关节点使用。
      * @param talkContext

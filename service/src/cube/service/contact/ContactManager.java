@@ -196,6 +196,57 @@ public class ContactManager implements CelletAdapterListener {
     }
 
     /**
+     * 联系人签出。
+     *
+     * @param contact
+     * @param tokenCode
+     * @return
+     */
+    public Contact signOut(final Contact contact, String tokenCode) {
+        final Object mutex = new Object();
+        LockFuture future = this.contactsCache.apply(contact.getUniqueKey(), new LockFuture() {
+            @Override
+            public void acquired(String key) {
+            JSONObject data = get();
+            if (null != data) {
+                Contact current = new Contact(data);
+
+                // 删除设备
+                current.removeDevice(contact.getCurrentDevice());
+
+                if (current.numDevices() == 0) {
+                    remove();
+                }
+                else {
+                    for (Device dev : current.getDeviceList()) {
+                        contact.addDevice(dev);
+                    }
+
+                    put(current.toJSON());
+                }
+            }
+
+            synchronized (mutex) {
+                mutex.notify();
+            }
+            }
+        });
+
+        if (null != future) {
+            synchronized (mutex) {
+                try {
+                    mutex.wait(this.syncTimeout);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        this.repeal(contact, tokenCode);
+        return contact;
+    }
+
+    /**
      * 客户端在断线后恢复。
      *
      * @param contact
@@ -320,6 +371,12 @@ public class ContactManager implements CelletAdapterListener {
         }
     }
 
+    /**
+     * 跟踪该联系人数据。
+     *
+     * @param contact
+     * @param token
+     */
     private synchronized void follow(Contact contact, AuthToken token) {
         // 订阅该用户事件
         this.contactsAdapter.subscribe(contact.getUniqueKey());
@@ -334,6 +391,31 @@ public class ContactManager implements CelletAdapterListener {
 
         // 记录令牌对应关系
         this.tokenContactMap.put(token.getCode().toString(), contact);
+    }
+
+    /**
+     * 放弃管理该联系人数据。
+     *
+     * @param contact
+     */
+    private synchronized void repeal(Contact contact, String token) {
+        ContactTable table = this.onlineTables.get(contact.getDomain());
+
+        if (contact.numDevices() == 1) {
+            // 退订该用户事件
+            this.contactsAdapter.unsubscribe(contact.getUniqueKey());
+
+            if (null != table) {
+                table.remove(contact);
+            }
+        }
+        else {
+            if (null != table) {
+                table.update(contact);
+            }
+        }
+
+        this.tokenContactMap.remove(token);
     }
 
     @Override

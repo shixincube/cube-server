@@ -29,7 +29,6 @@ package cube.dispatcher.contact;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Packet;
 import cube.common.StateCode;
@@ -38,11 +37,11 @@ import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
 
 /**
- * 联系人签入任务。
+ * 联系人签出任务。
  */
-public class SignInTask extends DispatcherTask {
+public class SignOutTask extends DispatcherTask {
 
-    public SignInTask(ContactCellet cellet, TalkContext talkContext, Primitive primitive, Performer performer) {
+    public SignOutTask(ContactCellet cellet, TalkContext talkContext, Primitive primitive, Performer performer) {
         super(cellet, talkContext, primitive, performer);
     }
 
@@ -53,33 +52,17 @@ public class SignInTask extends DispatcherTask {
             // 无令牌码
             ActionDialect response = this.makeResponse(new JSONObject(), StateCode.NoAuthToken, "No token code");
             this.cellet.speak(this.talkContext, response);
-            ((ContactCellet)this.cellet).returnSignInTask(this);
+            ((ContactCellet)this.cellet).returnSignOutTask(this);
             return;
         }
 
         Packet packet = this.getRequest();
 
-        JSONObject selfJson = null;
-        JSONObject authTokenJson = null;
-        try {
-            selfJson = packet.data.getJSONObject("self");
-            authTokenJson = packet.data.getJSONObject("token");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        JSONObject selfJson = packet.data;
 
-        if (null == authTokenJson || null == selfJson) {
-            // 没有令牌信息
-            ActionDialect response = this.makeResponse(new JSONObject(), StateCode.InvalidParameter, "Parameter error");
-            this.cellet.speak(this.talkContext, response);
-            ((ContactCellet)this.cellet).returnSignInTask(this);
-            return;
-        }
-
-        // 将当前联系人的设备与会话上下问关联
+        // 移除当前上下文关联的联系人及其设备
         Contact self = new Contact(selfJson, this.talkContext);
-        self.getCurrentDevice().setToken(tokenCode);
-        this.performer.updateContact(self);
+        this.performer.removeContact(self);
 
         ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
         if (null == response) {
@@ -92,6 +75,6 @@ public class SignInTask extends DispatcherTask {
 
         this.cellet.speak(this.talkContext, response);
 
-        ((ContactCellet)this.cellet).returnSignInTask(this);
+        ((ContactCellet)this.cellet).returnSignOutTask(this);
     }
 }

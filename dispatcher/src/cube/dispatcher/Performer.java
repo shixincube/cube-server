@@ -231,9 +231,25 @@ public class Performer implements TalkListener {
         }
     }
 
-    public void removeContact(Long id, String domain) {
-        String key = UniqueKey.make(id, domain);
-        this.onlineContacts.remove(key);
+    /**
+     * 从在线列表移除联系人。
+     *
+     * @param contact
+     */
+    public void removeContact(Contact contact) {
+        Contact current = this.onlineContacts.get(contact.getUniqueKey());
+        if (null == current) {
+            return;
+        }
+
+        current.removeDevice(contact.getCurrentDevice());
+
+        if (current.numDevices() == 0) {
+            // 已经没有设备连接，从在线列表删除
+            this.onlineContacts.remove(contact.getUniqueKey());
+
+            Logger.i(this.getClass(), "Remove online contact: " + contact.getId());
+        }
     }
 
     protected Map<String, Contact> getOnlineContacts() {

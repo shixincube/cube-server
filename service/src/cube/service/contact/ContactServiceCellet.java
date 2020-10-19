@@ -33,10 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.ContactActions;
-import cube.service.contact.task.ComebackTask;
-import cube.service.contact.task.DeviceTimeoutTask;
-import cube.service.contact.task.GetContactTask;
-import cube.service.contact.task.SignInTask;
+import cube.service.contact.task.*;
 
 import java.util.concurrent.ExecutorService;
 
@@ -82,6 +79,9 @@ public class ContactServiceCellet extends Cellet {
         }
         else if (ContactActions.DeviceTimeout.name.equals(action)) {
             this.executor.execute(new DeviceTimeoutTask(this, talkContext, primitive));
+        }
+        else if (ContactActions.SignOut.name.equals(action)) {
+            this.executor.execute(new SignOutTask(this, talkContext, primitive));
         }
     }
 }

@@ -57,6 +57,10 @@ public class ContactTable {
         this.onlineContacts.put(contact.getId(), contact);
     }
 
+    public void update(Contact contact) {
+        this.onlineContacts.put(contact.getId(), contact);
+    }
+
     public void remove(Contact contact) {
         this.onlineContacts.remove(contact.getId());
     }

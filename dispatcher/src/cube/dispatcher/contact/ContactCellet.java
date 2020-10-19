@@ -64,6 +64,11 @@ public class ContactCellet extends Cellet {
     private ConcurrentLinkedQueue<SignInTask> signInTaskQueue;
 
     /**
+     * Sign out 任务对象的缓存队列。
+     */
+    private ConcurrentLinkedQueue<SignOutTask> signOutTaskQueue;
+
+    /**
      * Comeback 任务对象的缓存队列。
      */
     private ConcurrentLinkedQueue<ComebackTask> comebackTaskQueue;
@@ -76,6 +81,7 @@ public class ContactCellet extends Cellet {
     public ContactCellet() {
         super(NAME);
         this.signInTaskQueue = new ConcurrentLinkedQueue<>();
+        this.signOutTaskQueue = new ConcurrentLinkedQueue<>();
         this.comebackTaskQueue = new ConcurrentLinkedQueue<>();
         this.passTaskQueue = new ConcurrentLinkedQueue<>();
     }
@@ -103,6 +109,9 @@ public class ContactCellet extends Cellet {
         else if (ContactActions.SignIn.name.equals(action)) {
             this.executor.execute(this.borrowSignInTask(talkContext, primitive));
         }
+        else if (ContactActions.SignOut.name.equals(action)) {
+            this.executor.execute(this.borrowSignOutTask(talkContext, primitive));
+        }
         else {
             this.executor.execute(this.borrowPassTask(talkContext, primitive));
         }
@@ -120,6 +129,20 @@ public class ContactCellet extends Cellet {
 
     protected void returnSignInTask(SignInTask task) {
         this.signInTaskQueue.offer(task);
+    }
+
+    protected SignOutTask borrowSignOutTask(TalkContext talkContext, Primitive primitive) {
+        SignOutTask task = this.signOutTaskQueue.poll();
+        if (null == task) {
+            return new SignOutTask(this, talkContext, primitive, this.performer);
+        }
+
+        task.reset(talkContext, primitive);
+        return task;
+    }
+
+    protected void returnSignOutTask(SignOutTask task) {
+        this.signOutTaskQueue.offer(task);
     }
 
     protected ComebackTask borrowComebackTask(TalkContext talkContext, Primitive primitive) {

@@ -41,11 +41,11 @@ import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
 
 /**
- * 联系人签入。
+ * 联系人签出。
  */
-public class SignInTask extends ServiceTask {
+public class SignOutTask extends ServiceTask {
 
-    public SignInTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
+    public SignOutTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
 
@@ -54,30 +54,13 @@ public class SignInTask extends ServiceTask {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
-        JSONObject selfJson = null;
-        JSONObject authTokenJson = null;
-        try {
-            selfJson = packet.data.getJSONObject("self");
-            authTokenJson = packet.data.getJSONObject("token");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        // 校验 Token
-        AuthToken authToken = new AuthToken(authTokenJson);
-
-        String tokenCode = this.getTokenCode(action);
-        if (!tokenCode.equals(authToken.getCode())) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.InconsistentToken.code, packet.data));
-            return;
-        }
+        JSONObject selfJson = packet.data;
 
         // 创建联系人对象
         Contact self = new Contact(selfJson, this.talkContext);
 
         // 设置终端的对应关系
-        Contact newSelf = ContactManager.getInstance().signIn(self, authToken);
+        Contact newSelf = ContactManager.getInstance().signOut(self, this.getTokenCode(action));
         if (null == newSelf) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, packet.data));
