@@ -63,9 +63,9 @@ public class ContactManager implements CelletAdapterListener {
     protected ConcurrentHashMap<Domain, ContactTable> onlineTables;
 
     /**
-     * 令牌码对应联系人关系。
+     * 令牌码对应联系人和设备关系。
      */
-    protected ConcurrentHashMap<String, Contact> tokenContactMap;
+    protected ConcurrentHashMap<String, TokenDevice> tokenContactMap;
 
     /**
      * 联系人数据缓存。
@@ -254,7 +254,12 @@ public class ContactManager implements CelletAdapterListener {
      * @return
      */
     public Contact comeback(final Contact contact, final String tokenCode) {
-        Contact onlineContact = this.tokenContactMap.get(tokenCode);
+        TokenDevice tokenDevice = this.tokenContactMap.get(tokenCode);
+        if (null == tokenDevice) {
+            return null;
+        }
+
+        Contact onlineContact = tokenDevice.contact;
 
         // 如果信息匹配，则返回服务器存储的实体
         if (onlineContact.getDomain().equals(contact.getDomain()) &&
@@ -263,6 +268,21 @@ public class ContactManager implements CelletAdapterListener {
         }
 
         return null;
+    }
+
+    /**
+     * 获取令牌对应的设备。
+     *
+     * @param tokenCode
+     * @return
+     */
+    public Device getDevice(String tokenCode) {
+        TokenDevice device = this.tokenContactMap.get(tokenCode);
+        if (null == device) {
+            return null;
+        }
+
+        return device.device;
     }
 
     /**
@@ -390,7 +410,7 @@ public class ContactManager implements CelletAdapterListener {
         table.add(contact);
 
         // 记录令牌对应关系
-        this.tokenContactMap.put(token.getCode().toString(), contact);
+        this.tokenContactMap.put(token.getCode().toString(), new TokenDevice(contact, contact.getCurrentDevice()));
     }
 
     /**

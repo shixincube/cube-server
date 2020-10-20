@@ -181,27 +181,41 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * 将指定消息实体进行推送处理。
      * 
      * @param message
+     * @param sourceDevice
      * @return
      */
-    public Message pushMessage(Message message) {
-        // 打时间戳
+    public Message pushMessage(Message message, Device sourceDevice) {
+        // 记录时间戳
         message.setRemoteTimestamp(System.currentTimeMillis());
         // 更新状态
         message.setState(MessageState.Sent);
+
+        // 设置消息的来源设备
+        message.setSourceDevice(sourceDevice);
 
         // Hook PrePush
         MessagingHook hook = this.pluginSystem.getPrePushHook();
         hook.apply(message);
 
         if (message.getTo().longValue() > 0) {
-            // 唯一键是接收消息方的唯一键
-            String key = UniqueKey.make(message.getTo(), message.getDomain());
+            String toKey = UniqueKey.make(message.getTo(), message.getDomain());
+            String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
 
             // 将消息写入缓存
-            this.messageCache.add(key, message.toJSON(), message.getRemoteTimestamp());
+            // 写入 TO
+            this.messageCache.add(toKey, message.toJSON(), message.getRemoteTimestamp());
+            // 写入 FROM
+            this.messageCache.add(fromKey, message.toJSON(), message.getRemoteTimestamp());
 
+            // 发布消息事件
             ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Push.name, message.toJSON());
-            this.contactsAdapter.publish(key, event.toJSON());
+            // 发布给 TO
+            this.contactsAdapter.publish(toKey, event.toJSON());
+            // 发布给 FROM
+            this.contactsAdapter.publish(fromKey, event.toJSON());
+
+            // 写入存储
+            this.messageStorage.write(message);
         }
         else if (message.getSource().longValue() > 0) {
             // 进行消息的群组管理
@@ -245,27 +259,36 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * 拉取指定时间戳到当前时间段的所有消息内容。
      * @param contactId
      * @param beginningTime
-     * @param endingTime
      * @return
      */
-    public List<Message> pullMessage(Long contactId, long beginningTime, long endingTime) {
+    public List<Message> pullMessage(String domain, Long contactId, long beginningTime) {
         LinkedList<Message> result = new LinkedList<>();
 
-        if (beginningTime >= endingTime) {
-            // 时间设置错误
-            return result;
-        }
+        String key = UniqueKey.make(contactId, domain);
 
         // 从缓存里读取数据
-        List<SeriesItem> list = this.messageCache.query(contactId.toString(), beginningTime, endingTime);
+        List<SeriesItem> list = this.messageCache.query(key, beginningTime, System.currentTimeMillis());
         for (SeriesItem item : list) {
             Message message = new Message(item.data);
             result.add(message);
         }
+
+        // 如果缓存里没有数据，从存储里读取
+        if (result.isEmpty()) {
+            List<Message> messageList1 = this.messageStorage.readWithToOrderByTime(domain, contactId, beginningTime);
+            List<Message> messageList2 = this.messageStorage.readWithFromOrderByTime(domain, contactId, beginningTime);
+            result.addAll(messageList1);
+            result.addAll(messageList2);
+        }
+
         return result;
     }
 
     private void notifyMessage(TalkContext talkContext, Message message) {
+        if (null == talkContext) {
+            return;
+        }
+
         JSONObject payload = new JSONObject();
         try {
             payload.put("code", MessagingStateCode.Ok.code);
@@ -273,6 +296,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
         Packet packet = new Packet(MessagingActions.Notify.name, payload);
         ActionDialect dialect = Director.attachDirector(packet.toDialect(),
                 message.getTo().longValue(), message.getDomain().getName());
@@ -291,9 +315,25 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             ModuleEvent event = new ModuleEvent(jsonObject);
             if (event.getEventName().equals(MessagingActions.Push.name)) {
                 Message message = new Message(event.getData());
+
+                // 将消息发送给目标设备
                 Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain(), message.getTo());
                 if (null != contact) {
                     for (Device device : contact.getDeviceList()) {
+                        TalkContext talkContext = device.getTalkContext();
+                        notifyMessage(talkContext, message);
+                    }
+                }
+
+                // 将消息发送给源联系人的其他设备
+                Contact srcContact = ContactManager.getInstance().getOnlineContact(message.getDomain(), message.getFrom());
+                if (null != contact) {
+                    for (Device device : srcContact.getDeviceList()) {
+                        if (device.equals(message.getSourceDevice())) {
+                            // 跳过源设备
+                            continue;
+                        }
+
                         TalkContext talkContext = device.getTalkContext();
                         notifyMessage(talkContext, message);
                     }

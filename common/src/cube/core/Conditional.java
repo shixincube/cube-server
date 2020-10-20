@@ -26,9 +26,8 @@
 
 package cube.core;
 
+import cell.core.talk.LiteralBase;
 import cube.util.SQLUtils;
-
-import java.util.List;
 
 /**
  * 条件句式。
@@ -54,12 +53,29 @@ public class Conditional {
         return new Conditional("OR");
     }
 
-    public static Conditional createGreaterThan(StorageField field, long value) {
-        return new Conditional("[" + field.getName() + "]>" + value);
+    public static Conditional createLimit(int num) {
+        return new Conditional("LIMIT " + num);
     }
 
-    public static Conditional createLessThan(StorageField field, long value) {
-        return new Conditional("[" + field.getName() + "]<" + value);
+    public static Conditional createEqualTo(StorageField field) {
+        String value = field.getValue().toString();
+
+        if (field.getLiteralBase() == LiteralBase.BOOL) {
+            value = (field.getBoolean() ? "1" : "0");
+        }
+        else if (field.getLiteralBase() == LiteralBase.STRING) {
+            value = "'" + value + "'";
+        }
+
+        return new Conditional("[" + field.getName() + "]=" + value);
+    }
+
+    public static Conditional createGreaterThan(StorageField field) {
+        return new Conditional("[" + field.getName() + "]>" + field.getValue().toString());
+    }
+
+    public static Conditional createLessThan(StorageField field) {
+        return new Conditional("[" + field.getName() + "]<" + field.getValue().toString());
     }
 
     /**

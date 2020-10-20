@@ -32,9 +32,11 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.common.Packet;
+import cube.common.entity.Device;
 import cube.common.entity.Message;
 import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
+import cube.service.contact.ContactManager;
 import cube.service.messaging.MessagingService;
 import cube.service.messaging.MessagingServiceCellet;
 
@@ -61,9 +63,17 @@ public class PushTask extends ServiceTask {
             return;
         }
 
+        String tokenCode = this.getTokenCode(action);
+        Device device = ContactManager.getInstance().getDevice(tokenCode);
+        if (null == device) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, MessagingStateCode.NoDevice.code, packet.data));
+            return;
+        }
+
         // 将消息推送到消息中心
         MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingServiceCellet.NAME);
-        Message response = messagingService.pushMessage(message);
+        Message response = messagingService.pushMessage(message, device);
 
         // 应答
         this.cellet.speak(this.talkContext

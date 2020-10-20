@@ -74,6 +74,11 @@ public class Message extends Entity {
     private long remoteTimestamp;
 
     /**
+     * 消息的来源设备。
+     */
+    private Device sourceDevice;
+
+    /**
      * 消息状态。
      */
     private MessageState state = MessageState.Unknown;
@@ -100,6 +105,10 @@ public class Message extends Entity {
             this.localTimestamp = packet.data.getLong("lts");
             this.remoteTimestamp = packet.data.getLong("rts");
             this.payload = packet.data.getJSONObject("payload");
+
+            if (packet.data.has("device")) {
+                this.sourceDevice = new Device(packet.data.getJSONObject("device"));
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -124,6 +133,9 @@ public class Message extends Entity {
             this.localTimestamp = json.getLong("lts");
             this.remoteTimestamp = json.getLong("rts");
             this.payload = json.getJSONObject("payload");
+            if (json.has("device")) {
+                this.sourceDevice = new Device(json.getJSONObject("device"));
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -145,6 +157,7 @@ public class Message extends Entity {
         this.localTimestamp = src.localTimestamp;
         this.remoteTimestamp = src.remoteTimestamp;
         this.payload = src.payload;
+        this.sourceDevice = src.sourceDevice;
         this.state = src.state;
 
         this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
@@ -162,7 +175,8 @@ public class Message extends Entity {
      * @param remoteTimestamp
      * @param payload
      */
-    public Message(String domain, Long id, Long from, Long to, Long source, Long localTimestamp, Long remoteTimestamp, JSONObject payload) {
+    public Message(String domain, Long id, Long from, Long to, Long source,
+                   Long localTimestamp, Long remoteTimestamp, JSONObject sourceDevice, JSONObject payload) {
         super(domain);
         this.id = id;
         this.from = from;
@@ -171,6 +185,7 @@ public class Message extends Entity {
         this.localTimestamp = localTimestamp;
         this.remoteTimestamp = remoteTimestamp;
         this.payload = payload;
+        this.sourceDevice = new Device(sourceDevice);
 
         this.state = MessageState.Sent;
         this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
@@ -216,6 +231,14 @@ public class Message extends Entity {
         return this.payload;
     }
 
+    public void setSourceDevice(Device device) {
+        this.sourceDevice = device;
+    }
+
+    public Device getSourceDevice() {
+        return this.sourceDevice;
+    }
+
     public void setState(MessageState state) {
         this.state = state;
     }
@@ -257,6 +280,10 @@ public class Message extends Entity {
             json.put("lts", this.localTimestamp);
             json.put("rts", this.remoteTimestamp);
             json.put("payload", this.payload);
+
+            if (null != this.sourceDevice) {
+                json.put("device", this.sourceDevice.toJSON());
+            }
 
             if (this.state != MessageState.Unknown) {
                 json.put("state", this.state.getCode());

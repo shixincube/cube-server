@@ -108,7 +108,7 @@ public class PullTask extends ServiceTask {
 
         // 获取指定起始时间的消息列表
         MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingServiceCellet.NAME);
-        List<Message> messageList = messagingService.pullMessage(id, timestamp, now);
+        List<Message> messageList = messagingService.pullMessage(domainName, id, timestamp);
         int total = messageList.size();
         int count = 0;
         JSONArray messageArray = new JSONArray();

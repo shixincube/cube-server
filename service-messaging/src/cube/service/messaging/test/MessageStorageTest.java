@@ -100,7 +100,7 @@ public class MessageStorageTest {
                 json.put("from", 500100L);
                 json.put("to", 500200L);
                 json.put("source", 0L);
-                json.put("lts", System.currentTimeMillis());
+                json.put("lts", System.currentTimeMillis() + i);
                 json.put("rts", System.currentTimeMillis() + Utils.randomInt(1000, 9999));
                 json.put("payload", payload);
             } catch (JSONException e) {
