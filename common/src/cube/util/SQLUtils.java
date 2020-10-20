@@ -26,10 +26,9 @@
 
 package cube.util;
 
+import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.StorageField;
-
-import java.nio.charset.Charset;
 
 /**
  * SQL 辅助函数。
@@ -59,13 +58,13 @@ public final class SQLUtils {
      */
     public static String correctString(String string) {
         String result = string.replaceAll("'", "''");
-        result = result.replaceAll("/", "//");
-        result = result.replaceAll("%", "/%");
-        result = result.replaceAll("_", "/_");
-        result = result.replaceAll("\\[", "/[");
-        result = result.replaceAll("]", "/]");
-        result = result.replaceAll("\\(", "/(");
-        result = result.replaceAll("\\)", "/)");
+//        result = result.replaceAll("/", "//");
+//        result = result.replaceAll("%", "/%");
+//        result = result.replaceAll("_", "/_");
+//        result = result.replaceAll("\\[", "/[");
+//        result = result.replaceAll("]", "/]");
+//        result = result.replaceAll("\\(", "/(");
+//        result = result.replaceAll("\\)", "/)");
         return result;
     }
 
@@ -74,22 +73,30 @@ public final class SQLUtils {
      *
      * @param table
      * @param fields
-     * @param conditional
+     * @param conditionals
      * @return
      */
-    public static String spellSelect(String table, StorageField[] fields, String conditional) {
+    public static String spellSelect(String table, StorageField[] fields, Conditional[] conditionals) {
         StringBuilder buf = new StringBuilder("SELECT ");
-        for (StorageField field : fields) {
-            buf.append("[").append(field.getName()).append("]");
-            buf.append(",");
+
+        if (null != fields) {
+            for (StorageField field : fields) {
+                buf.append("[").append(field.getName()).append("]");
+                buf.append(",");
+            }
+            buf.delete(buf.length() - 1, buf.length());
         }
-        buf.delete(buf.length() - 1, buf.length());
+        else {
+            buf.append("*");
+        }
 
         buf.append(" FROM ");
         buf.append(table);
-        if (null != conditional && conditional.length() > 2) {
+        if (null != conditionals) {
             buf.append(" WHERE ");
-            buf.append(conditional);
+            for (Conditional cond : conditionals) {
+                buf.append(cond.toString()).append(" ");
+            }
         }
 
         return buf.toString();

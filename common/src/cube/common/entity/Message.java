@@ -85,6 +85,7 @@ public class Message extends Entity {
 
     /**
      * 构造函数。
+     *
      * @param packet
      */
     public Message(Packet packet) {
@@ -108,7 +109,8 @@ public class Message extends Entity {
 
     /**
      * 构造函数。
-     * @param json
+     *
+     * @param json 由 JSON 描述的消息。
      */
     public Message(JSONObject json) {
         super();
@@ -131,6 +133,7 @@ public class Message extends Entity {
 
     /**
      * 构造函数。
+     *
      * @param src 指定复制源。
      */
     public Message(Message src) {
@@ -144,6 +147,32 @@ public class Message extends Entity {
         this.payload = src.payload;
         this.state = src.state;
 
+        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param domain
+     * @param id
+     * @param from
+     * @param to
+     * @param source
+     * @param localTimestamp
+     * @param remoteTimestamp
+     * @param payload
+     */
+    public Message(String domain, Long id, Long from, Long to, Long source, Long localTimestamp, Long remoteTimestamp, JSONObject payload) {
+        super(domain);
+        this.id = id;
+        this.from = from;
+        this.to = to;
+        this.source = source;
+        this.localTimestamp = localTimestamp;
+        this.remoteTimestamp = remoteTimestamp;
+        this.payload = payload;
+
+        this.state = MessageState.Sent;
         this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
     }
 
@@ -193,6 +222,19 @@ public class Message extends Entity {
 
     public MessageState getState() {
         return this.state;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof Message) {
+            Message other = (Message) object;
+            if (other.id.longValue() == this.id.longValue() && other.from.longValue() == this.from.longValue()
+                && other.to.longValue() == this.to.longValue() && other.source.longValue() == this.source.longValue()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public JSONObject toJSON(boolean withPayload) {

@@ -64,10 +64,4 @@ public abstract class AbstractStorage implements Storage {
         this.config = config;
     }
 
-    public void executeUpdate(String sql) {
-    }
-
-    public List<StorageField[]> executeQuery(String table, StorageField[] fields, String conditional) {
-        return null;
-    }
 }

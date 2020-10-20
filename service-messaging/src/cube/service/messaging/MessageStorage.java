@@ -27,9 +27,11 @@
 package cube.service.messaging;
 
 import cell.core.talk.LiteralBase;
+import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.entity.Message;
+import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
@@ -37,6 +39,7 @@ import cube.storage.StorageFactory;
 import cube.storage.StorageType;
 import cube.util.SQLUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,6 +120,10 @@ public class MessageStorage {
     }
 
     public void write(final Message message) {
+        this.write(message, null);
+    }
+
+    public void write(final Message message, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -136,9 +143,60 @@ public class MessageStorage {
                         new StorageField("rts", LiteralBase.LONG, message.getRemoteTimestamp()),
                         new StorageField("payload", LiteralBase.STRING, message.getPayload().toString())
                 };
-                storage.executeInsert(table, fields);
+
+                synchronized (storage) {
+                    storage.executeInsert(table, fields);
+                }
+
+                if (null != completed) {
+                    completed.run();
+                }
             }
         });
+    }
+
+    public List<Message> read(String domain, List<Long> messageIdList) {
+        // 取表名
+        String table = tableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        StorageField[] fields = new StorageField[] {
+                new StorageField("id", LiteralBase.LONG),
+                new StorageField("from", LiteralBase.LONG),
+                new StorageField("to", LiteralBase.LONG),
+                new StorageField("source", LiteralBase.LONG),
+                new StorageField("lts", LiteralBase.LONG),
+                new StorageField("rts", LiteralBase.LONG),
+                new StorageField("payload", LiteralBase.STRING)
+        };
+
+        Object[] values = new Object[messageIdList.size()];
+        for (int i = 0; i < values.length; ++i) {
+            values[i] = messageIdList.get(i);
+        }
+
+        List<StorageField[]> result = null;
+        synchronized (this.storage) {
+            result = this.storage.executeQuery(table, fields, new Conditional[] { Conditional.createIN(fields[0], values) });
+        }
+
+        List<Message> messages = new ArrayList<>(result.size());
+        for (StorageField[] row : result) {
+            JSONObject payload = null;
+            try {
+                payload = new JSONObject(row[6].getString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            Message message = new Message(domain, row[0].getLong(), row[1].getLong(), row[2].getLong(), row[3].getLong(),
+                    row[4].getLong(), row[5].getLong(), payload);
+            messages.add(message);
+        }
+
+        return messages;
     }
 
     private void checkMessageTable(String domain) {

@@ -31,6 +31,7 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.core.AbstractStorage;
+import cube.core.Conditional;
 import cube.core.StorageField;
 import cube.util.SQLUtils;
 
@@ -143,7 +144,7 @@ public class SQLiteStorage extends AbstractStorage {
             statement = this.connection.createStatement();
             statement.executeUpdate(sql);
         } catch (SQLException e) {
-            e.printStackTrace();
+            Logger.e(this.getClass(), "SQL: " + sql, e);
             return false;
         } finally {
             if (null != statement) {
@@ -162,11 +163,11 @@ public class SQLiteStorage extends AbstractStorage {
     }
 
     @Override
-    public List<StorageField[]> executeQuery(String table, StorageField[] fields, String conditional) {
+    public List<StorageField[]> executeQuery(String table, StorageField[] fields, Conditional[] conditionals) {
         ArrayList<StorageField[]> result = new ArrayList<>();
 
         // 拼写 SQL 语句
-        String sql = SQLUtils.spellSelect(table, fields, conditional);
+        String sql = SQLUtils.spellSelect(table, fields, conditionals);
 
         Statement statement = null;
         try {
