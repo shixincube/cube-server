@@ -72,10 +72,7 @@ public class PullTask extends ServiceTask {
             domainName = packet.data.getString("domain");
             JSONObject dev = packet.data.getJSONObject("device");
             device = new Device(dev);
-
-            if (packet.data.has("timestamp")) {
-                timestamp = packet.data.getLong("timestamp");
-            }
+            timestamp = packet.data.getLong("timestamp");
         } catch (JSONException e) {
             e.printStackTrace();
             return;
@@ -102,7 +99,7 @@ public class PullTask extends ServiceTask {
 
         // 计算起始时间
         long now = System.currentTimeMillis();
-        if (timestamp == 0) {
+        if (timestamp < now - AWEEK) {
             timestamp = now - AWEEK;
         }
 
