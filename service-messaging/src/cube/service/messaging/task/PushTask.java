@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.json.JSONException;
 import cube.common.Packet;
 import cube.common.entity.Device;
 import cube.common.entity.Message;
@@ -55,7 +56,14 @@ public class PushTask extends ServiceTask {
         Packet packet = new Packet(action);
 
         // 创建消息实例
-        Message message = new Message(packet);
+        Message message = null;
+        try {
+            message = new Message(packet);
+        } catch (JSONException e) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, MessagingStateCode.DataStructureError.code, packet.data));
+            return;
+        }
 
         if (null == message.getDomain()) {
             this.cellet.speak(this.talkContext,

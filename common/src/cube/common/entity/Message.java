@@ -29,14 +29,13 @@ package cube.common.entity;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Domain;
-import cube.common.JSONable;
 import cube.common.Packet;
 import cube.common.UniqueKey;
 
 /**
  * 消息实体。
  */
-public class Message extends Entity {
+public class Message extends Entity implements Comparable<Message> {
 
     /**
      * 消息 ID 。
@@ -93,24 +92,20 @@ public class Message extends Entity {
      *
      * @param packet
      */
-    public Message(Packet packet) {
+    public Message(Packet packet) throws JSONException {
         super();
 
-        try {
-            this.domain = new Domain(packet.data.getString("domain"));
-            this.id = packet.data.getLong("id");
-            this.from = packet.data.getLong("from");
-            this.to = packet.data.getLong("to");
-            this.source = packet.data.getLong("source");
-            this.localTimestamp = packet.data.getLong("lts");
-            this.remoteTimestamp = packet.data.getLong("rts");
-            this.payload = packet.data.getJSONObject("payload");
+        this.domain = new Domain(packet.data.getString("domain"));
+        this.id = packet.data.getLong("id");
+        this.from = packet.data.getLong("from");
+        this.to = packet.data.getLong("to");
+        this.source = packet.data.getLong("source");
+        this.localTimestamp = packet.data.getLong("lts");
+        this.remoteTimestamp = packet.data.getLong("rts");
+        this.payload = packet.data.getJSONObject("payload");
 
-            if (packet.data.has("device")) {
-                this.sourceDevice = new Device(packet.data.getJSONObject("device"));
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (packet.data.has("device")) {
+            this.sourceDevice = new Device(packet.data.getJSONObject("device"));
         }
 
         this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
@@ -292,5 +287,10 @@ public class Message extends Entity {
             e.printStackTrace();
         }
         return json;
+    }
+
+    @Override
+    public int compareTo(Message other) {
+        return (int)(this.remoteTimestamp - other.remoteTimestamp);
     }
 }

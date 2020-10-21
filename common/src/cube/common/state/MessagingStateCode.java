@@ -62,6 +62,11 @@ public enum MessagingStateCode {
     NoContact(16),
 
     /**
+     * 数据结构错误。
+     */
+    DataStructureError(20),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)

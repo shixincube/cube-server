@@ -60,7 +60,7 @@ public class PassThroughTask extends DispatcherTask {
         if (null == response) {
             Packet request = this.getRequest();
             // 发生错误
-            Packet packet = new Packet(request.sn, request.name, new JSONObject());
+            Packet packet = new Packet(request.sn, request.name, request.data);
             response = this.makeGatewayErrorResponse(packet);
         }
         else {

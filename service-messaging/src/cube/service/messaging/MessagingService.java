@@ -53,6 +53,7 @@ import cube.service.contact.ContactManager;
 import cube.storage.StorageType;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -228,15 +229,29 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                     // 更新 To 数据
                     copy.setTo(contact.getId());
 
-                    // 生成唯一键
-                    String key = UniqueKey.make(contact.getId(), contact.getDomain());
-
                     // 将消息写入缓存
-                    this.messageCache.add(key, copy.toJSON(), message.getRemoteTimestamp());
+                    // 写入 TO
+                    String toKey = UniqueKey.make(contact.getId(), contact.getDomain());
+                    this.messageCache.add(toKey, copy.toJSON(), message.getRemoteTimestamp());
 
+                    // 发布给 TO
                     ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Push.name, copy.toJSON());
-                    this.contactsAdapter.publish(key, event.toJSON());
+                    this.contactsAdapter.publish(toKey, event.toJSON());
+
+                    // 写入存储
+                    this.messageStorage.write(copy);
                 }
+
+                // 写入 FROM
+                String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
+                this.messageCache.add(fromKey, message.toJSON(), message.getRemoteTimestamp());
+
+                // 发布给 FROM
+                ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Push.name, message.toJSON());
+                this.contactsAdapter.publish(fromKey, event.toJSON());
+
+                // 写入存储
+                this.messageStorage.write(message);
             }
             else {
                 // 设置为故障状态
@@ -280,6 +295,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             result.addAll(messageList1);
             result.addAll(messageList2);
         }
+
+        // 按照时间戳升序排序
+        Collections.sort(result);
 
         return result;
     }
