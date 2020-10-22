@@ -26,12 +26,28 @@
 
 package cube.core;
 
+import cell.util.json.JSONObject;
+
 /**
- * 缓存主键对应的数据值。
+ * 缓存器主键对应的数据值。
  */
-public abstract class CacheValue {
+public class CacheValue {
 
-    public CacheValue() {
+    /**
+     * 数据值。
+     */
+    protected JSONObject value;
 
+    public CacheValue(JSONObject value) {
+        this.value = value;
+    }
+
+    /**
+     * 获取 JSON 形式的数据值。
+     *
+     * @return 返回 JSON 形式的数据值。
+     */
+    public JSONObject get() {
+        return this.value;
     }
 }

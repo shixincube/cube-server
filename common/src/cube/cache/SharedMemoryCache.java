@@ -100,9 +100,7 @@ public class SharedMemoryCache extends AbstractCache {
      */
     @Override
     public void put(CacheKey key, CacheValue value) {
-        SharedMemoryKey ck = (SharedMemoryKey) key;
-        SharedMemoryValue cv = (SharedMemoryValue) value;
-        this.memory.applyPut(ck.key, cv.value);
+        this.memory.applyPut(key.get(), value.get());
     }
 
     /**
@@ -110,12 +108,11 @@ public class SharedMemoryCache extends AbstractCache {
      */
     @Override
     public CacheValue get(CacheKey key) {
-        SharedMemoryKey ck = (SharedMemoryKey) key;
-        JSONObject value = this.memory.applyGet(ck.key);
+        JSONObject value = this.memory.applyGet(key.get());
         if (null == value) {
             return null;
         }
-        return new SharedMemoryValue(value);
+        return new CacheValue(value);
     }
 
     /**
@@ -131,8 +128,7 @@ public class SharedMemoryCache extends AbstractCache {
      */
     @Override
     public void remove(CacheKey key) {
-        SharedMemoryKey ck = (SharedMemoryKey) key;
-        this.memory.applyRemove(ck.key);
+        this.memory.applyRemove(key.get());
     }
 
     /**
@@ -140,8 +136,7 @@ public class SharedMemoryCache extends AbstractCache {
      */
     @Override
     public void execute(CacheKey key, final CacheTransaction transaction) {
-        SharedMemoryKey ck = (SharedMemoryKey) key;
-        Context context = new Context(ck);
+        Context context = new Context(key);
 
         LockFuture future = new LockFuture() {
             @Override
@@ -152,7 +147,7 @@ public class SharedMemoryCache extends AbstractCache {
 
         context.lockFuture = future;
 
-        this.memory.apply(ck.key, future);
+        this.memory.apply(key.get(), future);
     }
 
 
@@ -163,7 +158,7 @@ public class SharedMemoryCache extends AbstractCache {
 
         protected LockFuture lockFuture;
 
-        public Context(SharedMemoryKey key) {
+        public Context(CacheKey key) {
             super(key);
         }
 
@@ -171,7 +166,7 @@ public class SharedMemoryCache extends AbstractCache {
         public CacheValue get() {
             JSONObject value = this.lockFuture.get();
             if (null != value) {
-                return new SharedMemoryValue(value);
+                return new CacheValue(value);
             }
 
             return null;
@@ -179,8 +174,7 @@ public class SharedMemoryCache extends AbstractCache {
 
         @Override
         public void put(CacheValue value) {
-            SharedMemoryValue cv = (SharedMemoryValue) value;
-            this.lockFuture.put(cv.value);
+            this.lockFuture.put(value.get());
         }
 
         @Override
