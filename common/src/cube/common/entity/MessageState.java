@@ -52,9 +52,14 @@ public enum MessageState {
     Read(1 << 3),
 
     /**
+     * 已召回。
+     */
+    Recalled(1 << 4),
+
+    /**
      * 消息处理失败。
      */
-    Fault(1 << 4),
+    Fault(1 << 5),
 
     /**
      * 未知状态。

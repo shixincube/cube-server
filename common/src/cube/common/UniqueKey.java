@@ -55,4 +55,24 @@ public final class UniqueKey {
     public static String make(Long id, Domain domain) {
         return id.toString() + "_" + domain.getName();
     }
+
+    /**
+     * 提取 ID 数据。
+     *
+     * @param key 唯一键。
+     * @return 返回 Key 里的 ID 值。如果提取失败，返回 {@code null} 值。
+     */
+    public static Long extractId(String key) {
+        int index = key.indexOf("_");
+        if (index > 0) {
+            String idstr = key.substring(0, index);
+            try {
+                return Long.parseLong(idstr);
+            } catch (Exception e) {
+                // Nothing
+            }
+        }
+
+        return null;
+    }
 }

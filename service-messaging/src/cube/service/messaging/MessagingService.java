@@ -302,9 +302,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         return result;
     }
 
-    private void notifyMessage(TalkContext talkContext, Message message) {
+    private boolean notifyMessage(TalkContext talkContext, Long contactId, Message message) {
         if (null == talkContext) {
-            return;
+            return false;
         }
 
         JSONObject payload = new JSONObject();
@@ -317,8 +317,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         Packet packet = new Packet(MessagingActions.Notify.name, payload);
         ActionDialect dialect = Director.attachDirector(packet.toDialect(),
-                message.getTo().longValue(), message.getDomain().getName());
+                contactId.longValue(), message.getDomain().getName());
         this.cellet.speak(talkContext, dialect);
+        return true;
     }
 
     @Override
@@ -330,30 +331,48 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     public void onDelivered(String topic, Endpoint endpoint, JSONObject jsonObject) {
         if (MessagingService.NAME.equals(ModuleEvent.getModuleName(jsonObject))) {
             // 消息模块
+
+            // 取主键 ID
+            Long id = UniqueKey.extractId(topic);
+            if (null == id) {
+                return;
+            }
+
             ModuleEvent event = new ModuleEvent(jsonObject);
             if (event.getEventName().equals(MessagingActions.Push.name)) {
                 Message message = new Message(event.getData());
 
-                // 将消息发送给目标设备
-                Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain(), message.getTo());
-                if (null != contact) {
-                    for (Device device : contact.getDeviceList()) {
-                        TalkContext talkContext = device.getTalkContext();
-                        notifyMessage(talkContext, message);
+                // 判断是否是推送给 TO 的消息还是推送给 FROM
+                if (id.longValue() == message.getTo().longValue()) {
+                    // 将消息发送给目标设备
+                    Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain(), message.getTo());
+                    if (null != contact) {
+                        for (Device device : contact.getDeviceList()) {
+                            TalkContext talkContext = device.getTalkContext();
+                            if (notifyMessage(talkContext, id, message)) {
+                                Logger.d(this.getClass(), "Notify message: '" + message.getFrom() + "' -> '" + message.getTo() + "'");
+                            }
+                            else {
+                                Logger.w(this.getClass(), "Error: notify message: '" + message.getFrom() + "' -> '" + message.getTo() + "'");
+                            }
+                        }
                     }
                 }
+                else if (id.longValue() == message.getFrom().longValue()) {
+                    // 将消息发送给源联系人的其他设备
+                    Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain(), message.getFrom());
+                    if (null != contact) {
+                        for (Device device : contact.getDeviceList()) {
+                            if (device.equals(message.getSourceDevice())) {
+                                // 跳过源设备
+                                continue;
+                            }
 
-                // 将消息发送给源联系人的其他设备
-                Contact srcContact = ContactManager.getInstance().getOnlineContact(message.getDomain(), message.getFrom());
-                if (null != contact) {
-                    for (Device device : srcContact.getDeviceList()) {
-                        if (device.equals(message.getSourceDevice())) {
-                            // 跳过源设备
-                            continue;
+                            TalkContext talkContext = device.getTalkContext();
+                            if (notifyMessage(talkContext, id, message)) {
+                                Logger.d(this.getClass(), "Notify message to other device: '" + message.getFrom() + "' -> '" + message.getTo() + "'");
+                            }
                         }
-
-                        TalkContext talkContext = device.getTalkContext();
-                        notifyMessage(talkContext, message);
                     }
                 }
             }

@@ -26,7 +26,6 @@
 
 package cube.plugin;
 
-import org.keplerproject.luajava.LuaException;
 import org.keplerproject.luajava.LuaState;
 import org.keplerproject.luajava.LuaStateFactory;
 
