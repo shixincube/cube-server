@@ -59,9 +59,9 @@ public class ComebackTask extends DispatcherTask {
         Packet packet = this.getRequest();
 
         // 将当前联系人的设备与会话上下问关联
-        Contact self = new Contact(packet.data, this.talkContext);
-        self.getCurrentDevice().setToken(tokenCode);
-        this.performer.updateContact(self);
+        Contact contact = new Contact(packet.data, this.talkContext);
+        contact.getDevice(this.talkContext).setToken(tokenCode);
+        this.performer.updateContact(contact);
 
         ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
         if (null == response) {

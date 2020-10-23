@@ -62,11 +62,6 @@ public class Contact extends Entity {
     private List<Device> deviceList;
 
     /**
-     * 当前设备。
-     */
-    private Device currentDevice;
-
-    /**
      * 联系人的唯一索引键。
      */
     private String uniqueKey;
@@ -142,8 +137,8 @@ public class Contact extends Entity {
             // 绑定设备到上下文
             if (json.has("device")) {
                 JSONObject deviceJson = json.getJSONObject("device");
-                this.currentDevice = new Device(deviceJson, talkContext);
-                this.addDevice(this.currentDevice);
+                Device device = new Device(deviceJson, talkContext);
+                this.addDevice(device);
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -255,15 +250,6 @@ public class Contact extends Entity {
         }
 
         return null;
-    }
-
-    /**
-     * 获取当前设备。
-     *
-     * @return
-     */
-    public Device getCurrentDevice() {
-        return this.currentDevice;
     }
 
     /**

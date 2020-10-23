@@ -36,7 +36,6 @@ import cube.cache.SharedMemoryCache;
 import cube.core.Kernel;
 import cube.plugin.PluginSystem;
 import cube.report.ReportService;
-import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
 import cube.util.ConfigUtils;
 
@@ -57,6 +56,10 @@ public class ServiceCarpet implements CellListener {
     private Timer timer;
 
     public ServiceCarpet() {
+        File path = new File("storage/");
+        if (!path.exists()) {
+            path.mkdirs();
+        }
     }
 
     @Override

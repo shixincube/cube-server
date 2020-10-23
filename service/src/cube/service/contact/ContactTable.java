@@ -26,8 +26,10 @@
 
 package cube.service.contact;
 
+import cell.util.json.JSONObject;
 import cube.common.Domain;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -53,12 +55,30 @@ public class ContactTable {
         return this.onlineContacts.get(id);
     }
 
-    public void add(Contact contact) {
-        this.onlineContacts.put(contact.getId(), contact);
+    public void add(Contact contact, Device device) {
+        Contact current = this.onlineContacts.get(contact.getId());
+        if (null == current) {
+            this.onlineContacts.put(contact.getId(), contact);
+        }
+        else {
+            current.setName(contact.getName());
+
+            JSONObject context = contact.getContext();
+            if (null != context) {
+                current.setContext(context);
+            }
+
+            // TODO 重置 Entity 时间戳
+
+            current.addDevice(device);
+        }
     }
 
-    public void update(Contact contact) {
-        this.onlineContacts.put(contact.getId(), contact);
+    public void remove(Contact contact, Device device) {
+        Contact current = this.onlineContacts.get(contact.getId());
+        if (null != current) {
+            current.removeDevice(device);
+        }
     }
 
     public void remove(Contact contact) {

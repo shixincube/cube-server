@@ -36,6 +36,7 @@ import cell.util.json.JSONObject;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -54,10 +55,10 @@ public class SignInTask extends ServiceTask {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
-        JSONObject selfJson = null;
+        JSONObject contactJson = null;
         JSONObject authTokenJson = null;
         try {
-            selfJson = packet.data.getJSONObject("self");
+            contactJson = packet.data.getJSONObject("self");
             authTokenJson = packet.data.getJSONObject("token");
         } catch (JSONException e) {
             e.printStackTrace();
@@ -74,11 +75,14 @@ public class SignInTask extends ServiceTask {
         }
 
         // 创建联系人对象
-        Contact self = new Contact(selfJson, this.talkContext);
+        Contact contact = new Contact(contactJson, this.talkContext);
+
+        // 活跃设备
+        Device activeDevice = contact.getDevice(this.talkContext);
 
         // 设置终端的对应关系
-        Contact newSelf = ContactManager.getInstance().signIn(self, authToken);
-        if (null == newSelf) {
+        Contact newContact = ContactManager.getInstance().signIn(contact, authToken, activeDevice);
+        if (null == newContact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, packet.data));
             return;
@@ -86,6 +90,6 @@ public class SignInTask extends ServiceTask {
 
         // 应答
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, newSelf.toJSON()));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, newContact.toJSON()));
     }
 }

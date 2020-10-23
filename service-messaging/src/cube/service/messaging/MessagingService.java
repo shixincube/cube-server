@@ -353,7 +353,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                                 Logger.d(this.getClass(), "Notify message: '" + message.getFrom() + "' -> '" + message.getTo() + "'");
                             }
                             else {
-                                Logger.w(this.getClass(), "Error: notify message: '" + message.getFrom() + "' -> '" + message.getTo() + "'");
+                                Logger.w(this.getClass(), "Notify message error: '" + message.getFrom() + "' -> '" + message.getTo() + "'");
                             }
                         }
                     }

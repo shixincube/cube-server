@@ -59,16 +59,16 @@ public class SignInTask extends DispatcherTask {
 
         Packet packet = this.getRequest();
 
-        JSONObject selfJson = null;
+        JSONObject contactJson = null;
         JSONObject authTokenJson = null;
         try {
-            selfJson = packet.data.getJSONObject("self");
+            contactJson = packet.data.getJSONObject("self");
             authTokenJson = packet.data.getJSONObject("token");
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        if (null == authTokenJson || null == selfJson) {
+        if (null == authTokenJson || null == contactJson) {
             // 没有令牌信息
             ActionDialect response = this.makeResponse(new JSONObject(), StateCode.InvalidParameter, "Parameter error");
             this.cellet.speak(this.talkContext, response);
@@ -77,9 +77,9 @@ public class SignInTask extends DispatcherTask {
         }
 
         // 将当前联系人的设备与会话上下问关联
-        Contact self = new Contact(selfJson, this.talkContext);
-        self.getCurrentDevice().setToken(tokenCode);
-        this.performer.updateContact(self);
+        Contact contact = new Contact(contactJson, this.talkContext);
+        contact.getDevice(this.talkContext).setToken(tokenCode);
+        this.performer.updateContact(contact);
 
         ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
         if (null == response) {

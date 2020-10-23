@@ -235,14 +235,15 @@ public class Performer implements TalkListener {
      * 从在线列表移除联系人。
      *
      * @param contact
+     * @param device
      */
-    public void removeContact(Contact contact) {
+    public void removeContact(Contact contact, Device device) {
         Contact current = this.onlineContacts.get(contact.getUniqueKey());
         if (null == current) {
             return;
         }
 
-        current.removeDevice(contact.getCurrentDevice());
+        current.removeDevice(device);
 
         if (current.numDevices() == 0) {
             // 已经没有设备连接，从在线列表删除

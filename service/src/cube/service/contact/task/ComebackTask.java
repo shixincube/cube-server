@@ -52,10 +52,10 @@ public class ComebackTask extends ServiceTask {
         Packet packet = new Packet(action);
 
         // 创建联系人对象
-        Contact self = new Contact(packet.data, this.talkContext);
+        Contact contact = new Contact(packet.data, this.talkContext);
 
-        Contact newSelf = ContactManager.getInstance().comeback(self, this.getTokenCode(action));
-        if (null == newSelf) {
+        Contact newContact = ContactManager.getInstance().comeback(contact, this.getTokenCode(action));
+        if (null == newContact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, packet.data));
             return;
@@ -63,6 +63,6 @@ public class ComebackTask extends ServiceTask {
 
         // 应答
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, newSelf.toJSON()));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, newContact.toJSON()));
     }
 }

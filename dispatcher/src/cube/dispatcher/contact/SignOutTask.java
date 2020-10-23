@@ -58,11 +58,11 @@ public class SignOutTask extends DispatcherTask {
 
         Packet packet = this.getRequest();
 
-        JSONObject selfJson = packet.data;
+        JSONObject contactJson = packet.data;
 
         // 移除当前上下文关联的联系人及其设备
-        Contact self = new Contact(selfJson, this.talkContext);
-        this.performer.removeContact(self);
+        Contact contact = new Contact(contactJson, this.talkContext);
+        this.performer.removeContact(contact, contact.getDevice(this.talkContext));
 
         ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
         if (null == response) {

@@ -36,6 +36,7 @@ import cell.util.json.JSONObject;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -54,13 +55,16 @@ public class SignOutTask extends ServiceTask {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
-        JSONObject selfJson = packet.data;
+        JSONObject contactJson = packet.data;
 
         // 创建联系人对象
-        Contact self = new Contact(selfJson, this.talkContext);
+        Contact contact = new Contact(contactJson, this.talkContext);
+
+        // 活跃设备
+        Device activeDevice = contact.getDevice(this.talkContext);
 
         // 设置终端的对应关系
-        Contact newSelf = ContactManager.getInstance().signOut(self, this.getTokenCode(action));
+        Contact newSelf = ContactManager.getInstance().signOut(contact, this.getTokenCode(action), activeDevice);
         if (null == newSelf) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, packet.data));

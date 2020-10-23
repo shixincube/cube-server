@@ -47,7 +47,6 @@ import cube.core.Kernel;
 import cube.service.auth.AuthService;
 import cube.storage.StorageType;
 
-import java.io.File;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -139,11 +138,6 @@ public class ContactManager implements CelletAdapterListener {
         (new Thread() {
             @Override
             public void run() {
-                File path = new File("storage/");
-                if (!path.exists()) {
-                    path.mkdirs();
-                }
-
                 JSONObject config = new JSONObject();
                 try {
                     config.put("file", "storage/ContactService.db");
@@ -179,9 +173,10 @@ public class ContactManager implements CelletAdapterListener {
      * 终端签入。
      * @param contact
      * @param authToken
+     * @param activeDevice
      * @return
      */
-    public Contact signIn(final Contact contact, final AuthToken authToken) {
+    public Contact signIn(final Contact contact, final AuthToken authToken, final Device activeDevice) {
         // 判断 Domain 名称
         if (!authToken.getDomain().equals(contact.getDomain().getName())) {
             return null;
@@ -191,40 +186,27 @@ public class ContactManager implements CelletAdapterListener {
         ContactHook hook = this.pluginSystem.getSignInHook();
         hook.apply(contact);
 
-        final Object mutex = new Object();
-        LockFuture future = this.contactsCache.apply(contact.getUniqueKey(), new LockFuture() {
+        this.contactsCache.apply(contact.getUniqueKey(), new LockFuture() {
             @Override
             public void acquired(String key) {
             JSONObject data = get();
             if (null != data) {
-                Contact old = new Contact(data);
+                Contact cached = new Contact(data);
 
                 // 追加设备
-                for (Device device : old.getDeviceList()) {
-                    contact.addDevice(device);
+                for (Device device : cached.getDeviceList()) {
+                    if (!contact.hasDevice(device)) {
+                        contact.addDevice(device);
+                    }
                 }
             }
 
             put(contact.toJSON());
-
-            synchronized (mutex) {
-                mutex.notify();
-            }
             }
         });
 
-        if (null != future) {
-            synchronized (mutex) {
-                try {
-                    mutex.wait(this.syncTimeout);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
         // 关注该用户数据
-        this.follow(contact, authToken);
+        this.follow(contact, authToken, activeDevice);
 
         return contact;
     }
@@ -234,9 +216,10 @@ public class ContactManager implements CelletAdapterListener {
      *
      * @param contact
      * @param tokenCode
+     * @param activeDevice
      * @return
      */
-    public Contact signOut(final Contact contact, String tokenCode) {
+    public Contact signOut(final Contact contact, String tokenCode, Device activeDevice) {
         final Object mutex = new Object();
         LockFuture future = this.contactsCache.apply(contact.getUniqueKey(), new LockFuture() {
             @Override
@@ -246,14 +229,16 @@ public class ContactManager implements CelletAdapterListener {
                 Contact current = new Contact(data);
 
                 // 删除设备
-                current.removeDevice(contact.getCurrentDevice());
+                current.removeDevice(activeDevice);
 
                 if (current.numDevices() == 0) {
                     remove();
                 }
                 else {
                     for (Device dev : current.getDeviceList()) {
-                        contact.addDevice(dev);
+                        if (!contact.hasDevice(dev)) {
+                            contact.addDevice(dev);
+                        }
                     }
 
                     put(current.toJSON());
@@ -276,7 +261,7 @@ public class ContactManager implements CelletAdapterListener {
             }
         }
 
-        this.repeal(contact, tokenCode);
+        this.repeal(contact, tokenCode, activeDevice);
         return contact;
     }
 
@@ -432,8 +417,9 @@ public class ContactManager implements CelletAdapterListener {
      *
      * @param contact
      * @param token
+     * @param activeDevice
      */
-    private synchronized void follow(Contact contact, AuthToken token) {
+    private synchronized void follow(Contact contact, AuthToken token, Device activeDevice) {
         // 订阅该用户事件
         this.contactsAdapter.subscribe(contact.getUniqueKey());
 
@@ -443,18 +429,20 @@ public class ContactManager implements CelletAdapterListener {
             this.onlineTables.put(table.getDomain(), table);
         }
         // 记录联系人的通信上下文
-        table.add(contact);
+        table.add(contact, activeDevice);
 
         // 记录令牌对应关系
-        this.tokenContactMap.put(token.getCode().toString(), new TokenDevice(contact, contact.getCurrentDevice()));
+        this.tokenContactMap.put(token.getCode().toString(), new TokenDevice(contact, activeDevice));
     }
 
     /**
      * 放弃管理该联系人数据。
      *
      * @param contact
+     * @param token
+     * @param activeDevice
      */
-    private synchronized void repeal(Contact contact, String token) {
+    private synchronized void repeal(Contact contact, String token, Device activeDevice) {
         ContactTable table = this.onlineTables.get(contact.getDomain());
 
         if (contact.numDevices() == 1) {
@@ -467,7 +455,7 @@ public class ContactManager implements CelletAdapterListener {
         }
         else {
             if (null != table) {
-                table.update(contact);
+                table.remove(contact, activeDevice);
             }
         }
 
