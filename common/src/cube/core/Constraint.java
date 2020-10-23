@@ -43,6 +43,8 @@ public enum Constraint {
 
     DEFAULT_0("DEFAULT 0"),
 
+    DEFAULT_NULL("DEFAULT NULL"),
+
     CHECK("CHECK");
 
     private String statement;

@@ -48,9 +48,14 @@ public abstract class Entity implements JSONable {
         this.timestamp = System.currentTimeMillis();
     }
 
-    public Entity(String domain) {
+    public Entity(String domainName) {
         this.timestamp = System.currentTimeMillis();
-        this.domain = new Domain(domain);
+        this.domain = new Domain(domainName);
+    }
+
+    public Entity(Domain domain) {
+        this.timestamp = System.currentTimeMillis();
+        this.domain = domain;
     }
 
     /**

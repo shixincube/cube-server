@@ -47,6 +47,7 @@ import cube.core.Kernel;
 import cube.service.auth.AuthService;
 import cube.storage.StorageType;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -138,6 +139,11 @@ public class ContactManager implements CelletAdapterListener {
         (new Thread() {
             @Override
             public void run() {
+                File path = new File("storage/");
+                if (!path.exists()) {
+                    path.mkdirs();
+                }
+
                 JSONObject config = new JSONObject();
                 try {
                     config.put("file", "storage/ContactService.db");

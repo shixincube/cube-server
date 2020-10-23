@@ -82,7 +82,7 @@ public class MessagingStorage {
 
     public MessagingStorage(ExecutorService executor, StorageType type, JSONObject config) {
         this.executor = executor;
-        this.storage = StorageFactory.getInstance().createStorage(type, "MessageStorage", config);
+        this.storage = StorageFactory.getInstance().createStorage(type, "MessagingStorage", config);
         this.tableNameMap = new HashMap<>();
     }
 

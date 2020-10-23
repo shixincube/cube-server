@@ -71,7 +71,15 @@ public class Contact extends Entity {
      */
     private String uniqueKey;
 
-    public Contact(Long id, String domain, String name) {
+    public Contact(Long id, String domainName, String name) {
+        super(domainName);
+        this.id = id;
+        this.uniqueKey = UniqueKey.make(id, domainName);
+        this.name = name;
+        this.deviceList = new ArrayList<>(1);
+    }
+
+    public Contact(Long id, Domain domain, String name) {
         super(domain);
         this.id = id;
         this.uniqueKey = UniqueKey.make(id, domain);
@@ -300,12 +308,14 @@ public class Contact extends Entity {
             json.put("domain", this.domain.getName());
             json.put("name", this.name);
 
-            JSONArray array = new JSONArray();
-            for (int i = 0, len = this.deviceList.size(); i < len; ++i) {
-                Device device = this.deviceList.get(i);
-                array.put(device.toJSON());
+            if (!this.deviceList.isEmpty()) {
+                JSONArray array = new JSONArray();
+                for (int i = 0, len = this.deviceList.size(); i < len; ++i) {
+                    Device device = this.deviceList.get(i);
+                    array.put(device.toJSON());
+                }
+                json.put("devices", array);
             }
-            json.put("devices", array);
 
             if (null != this.context) {
                 json.put("context", this.context);

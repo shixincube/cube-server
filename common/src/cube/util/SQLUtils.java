@@ -30,6 +30,8 @@ import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.StorageField;
 
+import java.util.List;
+
 /**
  * SQL 辅助函数。
  */
@@ -92,6 +94,46 @@ public final class SQLUtils {
 
         buf.append(" FROM ");
         buf.append(table);
+
+        if (null != conditionals) {
+            buf.append(" WHERE ");
+            for (Conditional cond : conditionals) {
+                buf.append(cond.toString()).append(" ");
+            }
+        }
+
+        return buf.toString();
+    }
+
+    /**
+     * 拼装 SELECT 语句。
+     *
+     * @param tables
+     * @param fields
+     * @param conditionals
+     * @return
+     */
+    public static String spellSelect(String[] tables, StorageField[] fields, Conditional[] conditionals) {
+        StringBuilder buf = new StringBuilder("SELECT ");
+
+        if (null != fields) {
+            for (StorageField field : fields) {
+                buf.append("[").append(field.getTableName()).append("].[").append(field.getName()).append("]");
+                buf.append(",");
+            }
+            buf.delete(buf.length() - 1, buf.length());
+        }
+        else {
+            buf.append("*");
+        }
+
+        buf.append(" FROM ");
+        for (String table : tables) {
+            buf.append(table);
+            buf.append(",");
+        }
+        buf.delete(buf.length() - 1, buf.length());
+
         if (null != conditionals) {
             buf.append(" WHERE ");
             for (Conditional cond : conditionals) {
@@ -162,6 +204,11 @@ public final class SQLUtils {
         buf.append(table);
         buf.append(" (");
         for (StorageField field : fields) {
+            if (null == field.getValue()) {
+                // 跳过空值
+                continue;
+            }
+
             buf.append("[").append(field.getName()).append("]");
             buf.append(",");
         }
@@ -170,6 +217,11 @@ public final class SQLUtils {
         buf.append(") VALUES (");
 
         for (StorageField field : fields) {
+            if (null == field.getValue()) {
+                // 跳过空值
+                continue;
+            }
+
             switch (field.getLiteralBase()) {
                 case STRING:
                     buf.append("'").append(SQLUtils.correctString(field.getString())).append("'");
@@ -192,6 +244,140 @@ public final class SQLUtils {
         buf.delete(buf.length() - 1, buf.length());
 
         buf.append(")");
+
+        return buf.toString();
+    }
+
+    /**
+     * 拼装 INSERT 语句。
+     *
+     * @param table
+     * @param fieldsList
+     * @return
+     */
+    public static String spellInsert(String table, List<StorageField[]> fieldsList) {
+        StringBuilder buf = new StringBuilder("INSERT INTO ");
+        buf.append(table);
+        buf.append(" (");
+        StorageField[] fieldNames = fieldsList.get(0);
+        for (StorageField field : fieldNames) {
+            if (null == field.getValue()) {
+                // 跳过空值
+                continue;
+            }
+
+            buf.append("[").append(field.getName()).append("]");
+            buf.append(",");
+        }
+        // 修正逗号
+        buf.delete(buf.length() - 1, buf.length());
+        buf.append(") VALUES ");
+
+        for (StorageField[] fields : fieldsList) {
+            buf.append("(");
+
+            for (StorageField field : fields) {
+                if (null == field.getValue()) {
+                    // 跳过空值
+                    continue;
+                }
+
+                switch (field.getLiteralBase()) {
+                    case STRING:
+                        buf.append("'").append(SQLUtils.correctString(field.getString())).append("'");
+                        break;
+                    case INT:
+                        buf.append(field.getInt());
+                        break;
+                    case LONG:
+                        buf.append(field.getLong());
+                        break;
+                    case BOOL:
+                        buf.append(field.getBoolean() ? 1 : 0);
+                        break;
+                    default:
+                        break;
+                }
+                buf.append(",");
+            }
+            // 修正逗号
+            buf.delete(buf.length() - 1, buf.length());
+
+            buf.append("),");
+        }
+
+        // 修正逗号
+        buf.delete(buf.length() - 1, buf.length());
+
+        return buf.toString();
+    }
+
+    /**
+     * 拼装 UPDATE 语句。
+     *
+     * @param table
+     * @param fields
+     * @param conditionals
+     * @return
+     */
+    public static String spellUpdate(String table, StorageField[] fields, Conditional[] conditionals) {
+        StringBuilder buf = new StringBuilder("UPDATE ");
+        buf.append(table);
+        buf.append(" SET ");
+
+        for (StorageField field : fields) {
+            if (null == field.getValue()) {
+                // 跳过空值
+                continue;
+            }
+
+            buf.append("[").append(field.getName()).append("]=");
+
+            switch (field.getLiteralBase()) {
+                case STRING:
+                    buf.append("'").append(SQLUtils.correctString(field.getString())).append("'");
+                    break;
+                case INT:
+                    buf.append(field.getInt());
+                    break;
+                case LONG:
+                    buf.append(field.getLong());
+                    break;
+                case BOOL:
+                    buf.append(field.getBoolean() ? 1 : 0);
+                    break;
+                default:
+                    break;
+            }
+            buf.append(",");
+        }
+        // 修正逗号
+        buf.delete(buf.length() - 1, buf.length());
+
+        buf.append(" WHERE ");
+        for (Conditional conditional : conditionals) {
+            buf.append(conditional.toString());
+            buf.append(" ");
+        }
+
+        return buf.toString();
+    }
+
+    /**
+     * 拼装 DELETE 语句。
+     *
+     * @param table
+     * @param conditionals
+     * @return
+     */
+    public static String spellDelete(String table, Conditional[] conditionals) {
+        StringBuilder buf = new StringBuilder("DELETE FROM ");
+        buf.append(table);
+        buf.append(" WHERE ");
+        for (Conditional conditional : conditionals) {
+            buf.append(conditional.toString());
+            buf.append(" ");
+        }
 
         return buf.toString();
     }

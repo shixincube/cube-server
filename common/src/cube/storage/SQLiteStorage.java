@@ -139,6 +139,76 @@ public class SQLiteStorage extends AbstractStorage {
     public boolean executeInsert(String table, StorageField[] fields) {
         // 拼写 SQL 语句
         String sql = SQLUtils.spellInsert(table, fields);
+
+        Statement statement = null;
+        try {
+            statement = this.connection.createStatement();
+            statement.executeUpdate(sql);
+        } catch (SQLException e) {
+            Logger.e(this.getClass(), "SQL: " + sql, e);
+            return false;
+        } finally {
+            if (null != statement) {
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean executeInsert(String table, List<StorageField[]> fieldsList) {
+        // 拼写 SQL 语句
+        String sql = SQLUtils.spellInsert(table, fieldsList);
+
+        Statement statement = null;
+        try {
+            statement = this.connection.createStatement();
+            statement.executeUpdate(sql);
+        } catch (SQLException e) {
+            Logger.e(this.getClass(), "SQL: " + sql, e);
+            return false;
+        } finally {
+            if (null != statement) {
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean executeUpdate(String table, StorageField[] fields, Conditional[] conditionals) {
+        // 拼写 SQL 语句
+        String sql = SQLUtils.spellUpdate(table, fields, conditionals);
+
+        Statement statement = null;
+        try {
+            statement = this.connection.createStatement();
+            statement.executeUpdate(sql);
+        } catch (SQLException e) {
+            Logger.e(this.getClass(), "SQL: " + sql, e);
+            return false;
+        } finally {
+            if (null != statement) {
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean executeDelete(String table, Conditional[] conditionals) {
+        // 拼写 SQL 语句
+        String sql = SQLUtils.spellDelete(table, conditionals);
+
         Statement statement = null;
         try {
             statement = this.connection.createStatement();
@@ -209,6 +279,58 @@ public class SQLiteStorage extends AbstractStorage {
                 }
             }
         }
+        return result;
+    }
+
+    @Override
+    public List<StorageField[]> executeQuery(String[] tables, StorageField[] fields, Conditional[] conditionals) {
+        ArrayList<StorageField[]> result = new ArrayList<>();
+
+        // 拼写 SQL 语句
+        String sql = SQLUtils.spellSelect(tables, fields, conditionals);
+
+        Statement statement = null;
+        try {
+            statement = this.connection.createStatement();
+            ResultSet rs = statement.executeQuery(sql);
+            while (rs.next()) {
+                StorageField[] row = new StorageField[fields.length];
+
+                for (int i = 0; i < fields.length; ++i) {
+                    StorageField sf = fields[i];
+                    LiteralBase literal = sf.getLiteralBase();
+
+                    if (literal == LiteralBase.STRING) {
+                        String value = rs.getString(sf.getName());
+                        row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                    }
+                    else if (literal == LiteralBase.LONG) {
+                        long value = rs.getLong(sf.getName());
+                        row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                    }
+                    else if (literal == LiteralBase.INT) {
+                        int value = rs.getInt(sf.getName());
+                        row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                    }
+                    else if (literal == LiteralBase.BOOL) {
+                        boolean value = rs.getBoolean(sf.getName());
+                        row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                    }
+                }
+
+                result.add(row);
+            }
+        } catch (SQLException e) {
+            Logger.d(this.getClass(), e.getMessage());
+        } finally {
+            if (null != statement) {
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+
         return result;
     }
 }

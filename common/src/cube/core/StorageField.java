@@ -28,20 +28,35 @@ package cube.core;
 
 import cell.core.talk.LiteralBase;
 
-import java.util.List;
-
 /**
  * 存储字段。
  */
 public class StorageField {
 
+    /**
+     * 字段名。
+     */
     private String name;
 
+    /**
+     * 字段数据类型字面义。
+     */
     private LiteralBase literalBase;
 
+    /**
+     * 字段数据值。
+     */
     private Object value;
 
+    /**
+     * 字段约束。
+     */
     private Constraint[] constraints;
+
+    /**
+     * JOIN 时的表名。
+     */
+    private String tableName;
 
     /**
      * 构造函数。
@@ -62,6 +77,34 @@ public class StorageField {
      * @param value 字段值。
      */
     public StorageField(String name, LiteralBase literalBase, Object value) {
+        this.name = name;
+        this.literalBase = literalBase;
+        this.value = value;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param tableName 表名。
+     * @param name 字段名。
+     * @param literalBase 字段的数据类型字面义。
+     */
+    public StorageField(String tableName, String name, LiteralBase literalBase) {
+        this.tableName = tableName;
+        this.name = name;
+        this.literalBase = literalBase;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param tableName 表名。
+     * @param name 字段名。
+     * @param literalBase 字段的数据类型字面义。
+     * @param value 数据值。
+     */
+    public StorageField(String tableName, String name, LiteralBase literalBase, Object value) {
+        this.tableName = tableName;
         this.name = name;
         this.literalBase = literalBase;
         this.value = value;
@@ -99,6 +142,15 @@ public class StorageField {
     }
 
     /**
+     * 获取表名。
+     *
+     * @return 返回表名。
+     */
+    public String getTableName() {
+        return this.tableName;
+    }
+
+    /**
      * 设置字段值。
      *
      * @param value 值对象。
@@ -114,6 +166,15 @@ public class StorageField {
      */
     public Object getValue() {
         return this.value;
+    }
+
+    /**
+     * 是否为空值。
+     *
+     * @return 如果是空值返回 {@code true} 。
+     */
+    public boolean isNullValue() {
+        return (null == this.value);
     }
 
     /**

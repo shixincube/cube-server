@@ -45,18 +45,40 @@ public class Conditional {
         return this.sql;
     }
 
+    /**
+     * 创建 AND 连接。
+     *
+     * @return
+     */
     public static Conditional createAnd() {
         return new Conditional("AND");
     }
 
+    /**
+     * 创建 OR 连接。
+     *
+     * @return
+     */
     public static Conditional createOr() {
         return new Conditional("OR");
     }
 
+    /**
+     * 创建 LIMIT 约束。
+     *
+     * @param num
+     * @return
+     */
     public static Conditional createLimit(int num) {
         return new Conditional("LIMIT " + num);
     }
 
+    /**
+     * 创建等于运算。
+     *
+     * @param field
+     * @return
+     */
     public static Conditional createEqualTo(StorageField field) {
         String value = field.getValue().toString();
 
@@ -67,13 +89,46 @@ public class Conditional {
             value = "'" + value + "'";
         }
 
-        return new Conditional("[" + field.getName() + "]=" + value);
+        String table = field.getTableName();
+        if (null != table) {
+            return new Conditional("[" + table + "].[" + field.getName() + "]=" + value);
+        }
+        else {
+            return new Conditional("[" + field.getName() + "]=" + value);
+        }
     }
 
+    /**
+     * 创建等于 JOIN 。
+     *
+     * @param leftJoinField
+     * @param rightJoinField
+     * @return
+     */
+    public static Conditional createEqualTo(StorageField leftJoinField, StorageField rightJoinField) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("[").append(leftJoinField.getTableName()).append("].[").append(leftJoinField.getName()).append("]");
+        buf.append("=");
+        buf.append("[").append(rightJoinField.getTableName()).append("].[").append(rightJoinField.getName()).append("]");
+        return new Conditional(buf.toString());
+    }
+
+    /**
+     * 创建大于运算。
+     *
+     * @param field
+     * @return
+     */
     public static Conditional createGreaterThan(StorageField field) {
         return new Conditional("[" + field.getName() + "]>" + field.getValue().toString());
     }
 
+    /**
+     * 创建小于运算。
+     *
+     * @param field
+     * @return
+     */
     public static Conditional createLessThan(StorageField field) {
         return new Conditional("[" + field.getName() + "]<" + field.getValue().toString());
     }

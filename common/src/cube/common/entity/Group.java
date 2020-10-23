@@ -30,6 +30,7 @@ import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -44,6 +45,11 @@ public class Group extends Contact {
     private Contact owner;
 
     /**
+     * 创建时间。
+     */
+    private long creationTime;
+
+    /**
      * 群组的成员列表。
      */
     private Vector<Contact> members;
@@ -56,9 +62,10 @@ public class Group extends Contact {
      * @param name 群组显示名。
      * @param owner 群组所有人。
      */
-    public Group(Long id, String domain, String name, Contact owner) {
+    public Group(Long id, String domain, String name, Contact owner, long creationTime) {
         super(id, domain, name);
         this.owner = owner;
+        this.creationTime = creationTime;
         this.members = new Vector<>();
         this.members.add(owner);
     }
@@ -77,12 +84,14 @@ public class Group extends Contact {
             this.owner = new Contact(ownerJson);
             this.members.add(owner);
 
+            this.creationTime = json.getLong("creation");
+
             if (json.has("members")) {
                 JSONArray array = json.getJSONArray("members");
                 for (int i = 0, len = array.length(); i < len; ++i) {
                     JSONObject obj = array.getJSONObject(i);
                     Contact contact = new Contact(obj);
-                    this.addContact(contact);
+                    this.addMember(contact);
                 }
             }
         } catch (JSONException e) {
@@ -94,7 +103,20 @@ public class Group extends Contact {
         return this.owner;
     }
 
-    public void addContact(Contact contact) {
+    public long getCreationTime() {
+        return this.creationTime;
+    }
+
+    /**
+     * 群成员数量。
+     *
+     * @return
+     */
+    public int numMembers() {
+        return this.members.size();
+    }
+
+    public void addMember(Contact contact) {
         if (this.members.contains(contact)) {
             return;
         }
@@ -102,16 +124,63 @@ public class Group extends Contact {
         this.members.add(contact);
     }
 
-    public boolean removeContact(Contact contact) {
+    public Contact removeMember(Contact contact) {
         if (contact.getId().longValue() == this.owner.getId().longValue()) {
-            return false;
+            return null;
         }
 
-        return this.members.remove(contact);
+        if (this.members.remove(contact)) {
+            return contact;
+        }
+
+        return null;
     }
 
     public List<Contact> getMembers() {
-        return this.members;
+        return new ArrayList<>(this.members);
+    }
+
+    public Contact getMember(Long id) {
+        for (int i = 0, size = this.members.size(); i < size; ++i) {
+            Contact member = this.members.get(i);
+            if (member.getId().longValue() == id.longValue()) {
+                return member;
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof Group) {
+            Group other = (Group) object;
+            if (!other.getId().equals(this.getId()) || !other.getName().equals(this.getName())
+                || !other.owner.getId().equals(this.owner.getId())) {
+                return false;
+            }
+
+            for (int i = 0, size = this.members.size(); i < size; ++i) {
+                Contact contact = this.members.get(i);
+                Contact otherContact = other.getMember(contact.getId());
+                if (null == otherContact) {
+                    return false;
+                }
+
+                if (!contact.equals(otherContact)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return (this.getId().hashCode() + this.getDomain().hashCode() * 3);
     }
 
     @Override
@@ -125,6 +194,7 @@ public class Group extends Contact {
             json.put("members", array);
 
             json.put("owner", this.owner.toJSON());
+            json.put("creation", this.creationTime);
         } catch (JSONException e) {
             e.printStackTrace();
         }

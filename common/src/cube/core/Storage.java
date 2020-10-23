@@ -70,8 +70,16 @@ public interface Storage {
 
     public boolean executeInsert(String table, StorageField[] fields);
 
+    public boolean executeInsert(String table, List<StorageField[]> fieldsList);
+
+    public boolean executeUpdate(String table, StorageField[] fields, Conditional[] conditionals);
+
+    public boolean executeDelete(String table, Conditional[] conditionals);
+
     public List<StorageField[]> executeQuery(String table, StorageField[] fields);
 
     public List<StorageField[]> executeQuery(String table, StorageField[] fields, Conditional[] conditionals);
+
+    public List<StorageField[]> executeQuery(String[] tables, StorageField[] fields, Conditional[] conditionals);
 
 }
