@@ -61,6 +61,14 @@ public enum ContactActions {
      */
     GetContact("getContact"),
 
+    /**
+     * 获取联系人列表。
+     */
+    GetContactList("getContactList"),
+
+    /**
+     * 未知动作。
+     */
     Unknown("")
 
     ;

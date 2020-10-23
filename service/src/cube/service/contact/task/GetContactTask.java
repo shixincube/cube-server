@@ -34,6 +34,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Packet;
+import cube.common.entity.Contact;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -63,8 +64,8 @@ public class GetContactTask extends ServiceTask {
             e.printStackTrace();
         }
 
-        JSONObject contact = ContactManager.getInstance().getContactData(id, domain);
+        Contact contact = ContactManager.getInstance().getContact(id, domain);
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, contact));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, contact.toJSON()));
     }
 }

@@ -171,6 +171,7 @@ public class ContactManager implements CelletAdapterListener {
 
     /**
      * 终端签入。
+     *
      * @param contact
      * @param authToken
      * @param activeDevice
@@ -327,6 +328,18 @@ public class ContactManager implements CelletAdapterListener {
     }
 
     /**
+     * 获取列表里联系人。
+     *
+     * @param domain
+     * @param idList
+     * @return
+     */
+    public List<Contact> getContactList(String domain, List<Long> idList) {
+
+        return null;
+    }
+
+    /**
      * 获取群组。
      *
      * @param id
@@ -358,16 +371,6 @@ public class ContactManager implements CelletAdapterListener {
         }
 
         return null;
-    }
-
-    public JSONObject getContactData(Long id, String domain) {
-        String key = UniqueKey.make(id, domain);
-        JSONObject data = this.contactsCache.applyGet(key);
-        if (null == data) {
-            Contact contact = new Contact(id, domain, "Cube-" + id.toString());
-            data = contact.toJSON();
-        }
-        return data;
     }
 
     public Contact getOnlineContact(Domain domain, Long id) {
