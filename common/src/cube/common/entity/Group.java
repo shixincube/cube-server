@@ -39,6 +39,11 @@ import java.util.Vector;
 public class Group extends Contact {
 
     /**
+     * 群的所有人。
+     */
+    private Contact owner;
+
+    /**
      * 群组的成员列表。
      */
     private Vector<Contact> members;
@@ -47,11 +52,15 @@ public class Group extends Contact {
      * 构造函数。
      *
      * @param id 群组 ID 。
+     * @param domain 群组域。
      * @param name 群组显示名。
+     * @param owner 群组所有人。
      */
-    public Group(Long id, String domain, String name) {
+    public Group(Long id, String domain, String name, Contact owner) {
         super(id, domain, name);
+        this.owner = owner;
         this.members = new Vector<>();
+        this.members.add(owner);
     }
 
     /**
@@ -62,24 +71,27 @@ public class Group extends Contact {
     public Group(JSONObject json) {
         super(json);
         this.members = new Vector<>();
+
         try {
+            JSONObject ownerJson = json.getJSONObject("owner");
+            this.owner = new Contact(ownerJson);
+            this.addContact(this.owner);
+
             if (json.has("members")) {
                 JSONArray array = json.getJSONArray("members");
                 for (int i = 0, len = array.length(); i < len; ++i) {
                     JSONObject obj = array.getJSONObject(i);
-                    if (Group.isGroup(obj)) {
-                        Group group = new Group(obj);
-                        this.addContact(group);
-                    }
-                    else {
-                        Contact contact = new Contact(obj);
-                        this.addContact(contact);
-                    }
+                    Contact contact = new Contact(obj);
+                    this.addContact(contact);
                 }
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public Contact getOwner() {
+        return this.owner;
     }
 
     public void addContact(Contact contact) {
@@ -90,8 +102,12 @@ public class Group extends Contact {
         this.members.add(contact);
     }
 
-    public void removeContact(Contact contact) {
-        this.members.remove(contact);
+    public boolean removeContact(Contact contact) {
+        if (contact.getId().longValue() == this.owner.getId().longValue()) {
+            return false;
+        }
+
+        return this.members.remove(contact);
     }
 
     public List<Contact> getMembers() {
@@ -107,6 +123,8 @@ public class Group extends Contact {
                 array.put(contact.toJSON());
             }
             json.put("members", array);
+
+            json.put("owner", this.owner.toJSON());
         } catch (JSONException e) {
             e.printStackTrace();
         }

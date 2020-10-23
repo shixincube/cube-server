@@ -76,13 +76,13 @@ public class Contact extends Entity {
         this.id = id;
         this.uniqueKey = UniqueKey.make(id, domain);
         this.name = name;
-        this.deviceList = new ArrayList<>(2);
+        this.deviceList = new ArrayList<>(1);
     }
 
     public Contact(JSONObject json) {
         super();
 
-        this.deviceList = new ArrayList<>(2);
+        this.deviceList = new ArrayList<>(1);
 
         try {
             this.id = json.getLong("id");
@@ -110,7 +110,7 @@ public class Contact extends Entity {
     public Contact(JSONObject json, TalkContext talkContext) {
         super();
 
-        this.deviceList = new ArrayList<>(2);
+        this.deviceList = new ArrayList<>(1);
 
         try {
             this.id = json.getLong("id");

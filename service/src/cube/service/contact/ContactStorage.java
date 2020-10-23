@@ -26,43 +26,125 @@
 
 package cube.service.contact;
 
+import cell.core.talk.LiteralBase;
 import cell.util.json.JSONObject;
 import cube.common.entity.Contact;
+import cube.common.entity.Group;
 import cube.core.AbstractStorage;
+import cube.core.Constraint;
 import cube.core.Storage;
+import cube.core.StorageField;
+import cube.storage.StorageFactory;
+import cube.storage.StorageType;
+import cube.util.SQLUtils;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 联系人存储。
  */
 public class ContactStorage {
 
-    public ContactStorage() {
+    private final String version = "1.0";
+
+    private final String groupTablePrefix = "groups_";
+
+    private final String groupMembersTablePrefix = "group_members_";
+
+    /**
+     * 群组字段描述。
+     */
+    private final StorageField[] groupFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG),
+            new StorageField("name", LiteralBase.STRING),
+            new StorageField("timestamp", LiteralBase.LONG),
+            new StorageField("owner", LiteralBase.LONG),
+            new StorageField("context", LiteralBase.STRING),
+            new StorageField("reserved", LiteralBase.STRING)
+    };
+
+    private final StorageField[] groupMembersFields = new StorageField[] {
+            new StorageField("group", LiteralBase.LONG),
+            new StorageField("contactId", LiteralBase.LONG),
+            new StorageField("contactName", LiteralBase.STRING),
+            new StorageField("timestamp", LiteralBase.LONG),
+            new StorageField("reserved", LiteralBase.STRING)
+    };
+
+    private ExecutorService executor;
+
+    private Storage storage;
+
+    private Map<String, String> tableNameMap;
+
+    public ContactStorage(ExecutorService executor, Storage storage) {
+        this.executor = executor;
+        this.storage = storage;
+        this.tableNameMap = new HashMap<>();
+    }
+
+    public ContactStorage(ExecutorService executor, StorageType type, JSONObject config) {
+        this.executor = executor;
+        this.storage = StorageFactory.getInstance().createStorage(type, "ContactStorage", config);
+        this.tableNameMap = new HashMap<>();
     }
 
     public void open() {
-
+        this.storage.open();
     }
 
     public void close() {
+        this.storage.close();
+    }
+
+    public void execSelfChecking(List<String> domainNameList) {
+        for (String domain : domainNameList) {
+            this.checkGroupTable(domain);
+        }
+    }
+
+    public void writeContact(Contact contact) {
 
     }
 
-    public void insertContact(Contact contact) {
-        Long id = contact.getId();
-        String name = contact.getName();
-    }
-
-    public JSONObject queryContact(String domain, Long id) {
+    public Contact readContact(String domain, Long id) {
         return null;
     }
 
-    public JSONObject queryGroup(String domain, Long id) {
+    public void writeGroup(Group group) {
+
+    }
+
+    public Group readGroup(String domain, Long groupId) {
         return null;
     }
 
-    public List<JSONObject> queryGroupMember(String domain, Long groupId) {
+    public List<Contact> readGroupMember(String domain, Long groupId) {
         return null;
+    }
+
+    private void checkGroupTable(String domain) {
+        String table = this.groupTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.tableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            StorageField[] fields = new StorageField[]{
+                    new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                            Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+                    }),
+                    new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                            Constraint.UNIQUE
+                    }),
+                    new StorageField("name", LiteralBase.STRING, new Constraint[] {
+                            Constraint.NOT_NULL
+                    })
+            };
+        }
     }
 }
