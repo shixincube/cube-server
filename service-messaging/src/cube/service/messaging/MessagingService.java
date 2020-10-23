@@ -80,7 +80,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     /**
      * 消息存储。
      */
-    private MessageStorage messageStorage;
+    private MessagingStorage storage;
 
     /**
      * 联系人事件适配器。
@@ -133,20 +133,20 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     private void initMessageStorage() {
         JSONObject config = new JSONObject();
         try {
-            config.put("file", "storage/messages.db");
+            config.put("file", "storage/MessagingService.db");
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        this.messageStorage = new MessageStorage(this.executor, StorageType.SQLite, config);
+        this.storage = new MessagingStorage(this.executor, StorageType.SQLite, config);
 
-        this.messageStorage.open();
+        this.storage.open();
 
         (new Thread() {
             @Override
             public void run() {
                 // 存储进行自校验
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
-                messageStorage.execSelfChecking(authService.getDomainList());
+                storage.execSelfChecking(authService.getDomainList());
             }
         }).start();
     }
@@ -175,7 +175,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             this.contactsAdapter.removeListener(this);
         }
 
-        this.messageStorage.close();
+        this.storage.close();
     }
 
     /**
@@ -216,7 +216,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             this.contactsAdapter.publish(fromKey, event.toJSON());
 
             // 写入存储
-            this.messageStorage.write(message);
+            this.storage.write(message);
         }
         else if (message.getSource().longValue() > 0) {
             // 进行消息的群组管理
@@ -239,7 +239,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                     this.contactsAdapter.publish(toKey, event.toJSON());
 
                     // 写入存储
-                    this.messageStorage.write(copy);
+                    this.storage.write(copy);
                 }
 
                 // 写入 FROM
@@ -251,7 +251,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 this.contactsAdapter.publish(fromKey, event.toJSON());
 
                 // 写入存储
-                this.messageStorage.write(message);
+                this.storage.write(message);
             }
             else {
                 // 设置为故障状态
@@ -290,8 +290,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         // 如果缓存里没有数据，从存储里读取
         if (result.isEmpty()) {
-            List<Message> messageList1 = this.messageStorage.readWithToOrderByTime(domain, contactId, beginningTime);
-            List<Message> messageList2 = this.messageStorage.readWithFromOrderByTime(domain, contactId, beginningTime);
+            List<Message> messageList1 = this.storage.readWithToOrderByTime(domain, contactId, beginningTime);
+            List<Message> messageList2 = this.storage.readWithFromOrderByTime(domain, contactId, beginningTime);
             result.addAll(messageList1);
             result.addAll(messageList2);
         }

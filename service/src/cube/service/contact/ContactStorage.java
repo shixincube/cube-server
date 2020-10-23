@@ -50,9 +50,9 @@ public class ContactStorage {
 
     private final String version = "1.0";
 
-    private final String groupTablePrefix = "groups_";
+    private final String groupTablePrefix = "group_";
 
-    private final String groupMembersTablePrefix = "group_members_";
+    private final String groupMemberTablePrefix = "group_member_";
 
     /**
      * 群组字段描述。

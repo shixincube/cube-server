@@ -140,7 +140,7 @@ public class ContactManager implements CelletAdapterListener {
             public void run() {
                 JSONObject config = new JSONObject();
                 try {
-                    config.put("file", "storage/contacts.db");
+                    config.put("file", "storage/ContactService.db");
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }

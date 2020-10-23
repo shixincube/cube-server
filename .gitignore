@@ -18,3 +18,5 @@ domain-local.json
 domain-origin.json
 messages.db
 contacts.db
+ContactService.db
+MessagingService.db

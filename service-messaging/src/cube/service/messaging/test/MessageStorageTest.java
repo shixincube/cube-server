@@ -31,7 +31,7 @@ import cell.util.Utils;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.entity.Message;
-import cube.service.messaging.MessageStorage;
+import cube.service.messaging.MessagingStorage;
 import cube.storage.StorageType;
 
 import java.io.File;
@@ -50,7 +50,7 @@ public class MessageStorageTest {
 
     private ExecutorService executor;
 
-    private MessageStorage storage;
+    private MessagingStorage storage;
 
     private List<String> domainList;
 
@@ -74,7 +74,7 @@ public class MessageStorageTest {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        this.storage = new MessageStorage(this.executor, StorageType.SQLite, config);
+        this.storage = new MessagingStorage(this.executor, StorageType.SQLite, config);
     }
 
     public void setup() {
