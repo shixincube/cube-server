@@ -37,6 +37,7 @@ import cube.core.Kernel;
 import cube.plugin.PluginSystem;
 import cube.report.ReportService;
 import cube.service.auth.AuthService;
+import cube.service.contact.ContactManager;
 import cube.util.ConfigUtils;
 
 import java.io.File;
@@ -107,9 +108,13 @@ public class ServiceCarpet implements CellListener {
         this.kernel.installCache("TokenPool", tokenCache);
 
         this.kernel.startup();
+
+        ContactManager.getInstance().startup(this.kernel);
     }
 
     private void teardownKernel() {
+        ContactManager.getInstance().shutdown();
+
         this.kernel.shutdown();
 
         this.kernel.uninstallCache("TokenPool");

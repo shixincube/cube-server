@@ -17,3 +17,4 @@ prep.sh
 domain-local.json
 domain-origin.json
 messages.db
+contacts.db

@@ -34,6 +34,8 @@ import cell.adapter.extra.memory.SharedMemory;
 import cell.adapter.extra.memory.SharedMemoryConfig;
 import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
+import cell.util.CachedQueueExecutor;
+import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.auth.AuthToken;
 import cube.common.Domain;
@@ -41,9 +43,13 @@ import cube.common.UniqueKey;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Group;
+import cube.core.Kernel;
+import cube.service.auth.AuthService;
+import cube.storage.StorageType;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 联系人管理器。
@@ -51,6 +57,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ContactManager implements CelletAdapterListener {
 
     private final static ContactManager instance = new ContactManager();
+
+    /**
+     * 多线程执行器。
+     */
+    private ExecutorService executor;
 
     /**
      * 管理线程。
@@ -102,13 +113,13 @@ public class ContactManager implements CelletAdapterListener {
     /**
      * 启动管理器。
      */
-    public void startup() {
+    public void startup(Kernel kernel) {
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
+
         this.daemon = new ManagementDaemon(this);
 
         this.onlineTables = new ConcurrentHashMap<>();
         this.tokenContactMap = new ConcurrentHashMap<>();
-
-        this.storage = new ContactStorage();
 
         SharedMemoryConfig config = new SharedMemoryConfig("config/contacts.properties");
 
@@ -123,8 +134,23 @@ public class ContactManager implements CelletAdapterListener {
         // 启动守护线程
         this.daemon.start();
 
-        // 启动存储
-        this.storage.open();
+        // 异步初始化存储
+        (new Thread() {
+            @Override
+            public void run() {
+                JSONObject config = new JSONObject();
+                try {
+                    config.put("file", "storage/contacts.db");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                storage = new ContactStorage(executor, StorageType.SQLite, config);
+                storage.open();
+
+                AuthService authService = (AuthService) kernel.getModule(AuthService.NAME);
+                storage.execSelfChecking(authService.getDomainList());
+            }
+        }).start();
     }
 
     /**
@@ -139,6 +165,8 @@ public class ContactManager implements CelletAdapterListener {
 
         this.onlineTables.clear();
         this.tokenContactMap.clear();
+
+        this.executor.shutdown();
     }
 
     /**
@@ -297,13 +325,13 @@ public class ContactManager implements CelletAdapterListener {
         JSONObject data = this.contactsCache.applyGet(key);
         if (null == data) {
             // 缓存里没有数据，从数据库读取
-            data = this.storage.queryContact(domain, id);
-            if (null == data) {
-                return null;
+            Contact contact = this.storage.readContact(domain, id);
+            if (null != contact) {
+                return contact;
             }
         }
 
-        Contact contact = new Contact(data);
+        Contact contact = new Contact(id, domain, "Cube-" + id);
         return contact;
     }
 
@@ -329,14 +357,16 @@ public class ContactManager implements CelletAdapterListener {
         String key = UniqueKey.make(id, domainName);
         JSONObject data = this.contactsCache.applyGet(key);
         if (null == data) {
-            data = this.storage.queryGroup(domainName, id);
-            if (null == data) {
-                return null;
+            Group group = this.storage.readGroup(domainName, id);
+            if (null != group) {
+                return group;
             }
         }
+        else {
+            return new Group(data);
+        }
 
-        Group group = new Group(data);
-        return group;
+        return null;
     }
 
     public JSONObject getContactData(Long id, String domain) {

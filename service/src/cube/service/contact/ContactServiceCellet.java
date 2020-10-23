@@ -53,13 +53,11 @@ public class ContactServiceCellet extends Cellet {
     @Override
     public boolean install() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
-        ContactManager.getInstance().startup();
         return true;
     }
 
     @Override
     public void uninstall() {
-        ContactManager.getInstance().shutdown();
         this.executor.shutdown();
     }
 

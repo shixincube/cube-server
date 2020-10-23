@@ -75,7 +75,7 @@ public class Group extends Contact {
         try {
             JSONObject ownerJson = json.getJSONObject("owner");
             this.owner = new Contact(ownerJson);
-            this.addContact(this.owner);
+            this.members.add(owner);
 
             if (json.has("members")) {
                 JSONArray array = json.getJSONArray("members");
