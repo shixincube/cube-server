@@ -67,6 +67,11 @@ public enum ContactActions {
     GetContactList("getContactList"),
 
     /**
+     * 按照指定参数列出群组清单。
+     */
+    ListGroups("listGroups"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

@@ -30,7 +30,6 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.json.JSONObject;
-import cube.common.Packet;
 import cube.common.StateCode;
 import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
@@ -40,8 +39,21 @@ import cube.dispatcher.Performer;
  */
 public class PassThroughTask extends DispatcherTask {
 
+    private boolean waitResponse = true;
+
     public PassThroughTask(ContactCellet cellet, TalkContext talkContext, Primitive primitive, Performer performer) {
         super(cellet, talkContext, primitive, performer);
+    }
+
+    public PassThroughTask(ContactCellet cellet, TalkContext talkContext, Primitive primitive
+            , Performer performer, boolean sync) {
+        super(cellet, talkContext, primitive, performer);
+        this.waitResponse = sync;
+    }
+
+    protected void reset(TalkContext talkContext, Primitive primitive, boolean sync) {
+        super.reset(talkContext, primitive);
+        this.waitResponse = sync;
     }
 
     @Override
@@ -55,19 +67,21 @@ public class PassThroughTask extends DispatcherTask {
             return;
         }
 
-        ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
+        if (this.waitResponse) {
+            ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
 
-        if (null == response) {
-            Packet request = this.getRequest();
-            // 发生错误
-            Packet packet = new Packet(request.sn, request.name, request.data);
-            response = this.makeGatewayErrorResponse(packet);
+            if (null == response) {
+                response = this.makeResponse(this.getRequest().data, StateCode.GatewayError, "Service failed");
+            }
+            else {
+                response = this.makeResponse(response);
+            }
+
+            this.cellet.speak(this.talkContext, response);
         }
         else {
-            response = this.makeResponse(response);
+            this.performer.transmit(this.talkContext, this.cellet, this.getAction());
         }
-
-        this.cellet.speak(this.talkContext, response);
 
         ((ContactCellet)this.cellet).returnPassTask(this);
     }

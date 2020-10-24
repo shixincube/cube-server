@@ -35,7 +35,7 @@ import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
 
 /**
- * 透传数据给服务层。
+ * 透传数据任务。
  */
 public class PassThroughTask extends DispatcherTask {
 

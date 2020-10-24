@@ -55,9 +55,10 @@ public class ContactTable {
         return this.onlineContacts.get(id);
     }
 
-    public void add(Contact contact, Device device) {
+    public Contact add(Contact contact, Device device) {
         Contact current = this.onlineContacts.get(contact.getId());
         if (null == current) {
+            current = contact;
             this.onlineContacts.put(contact.getId(), contact);
         }
         else {
@@ -68,16 +69,19 @@ public class ContactTable {
                 current.setContext(context);
             }
 
-            // TODO 重置 Entity 时间戳
+            current.resetTimestamp();
 
             current.addDevice(device);
         }
+
+        return current;
     }
 
     public void remove(Contact contact, Device device) {
         Contact current = this.onlineContacts.get(contact.getId());
         if (null != current) {
             current.removeDevice(device);
+            current.resetTimestamp();
         }
     }
 

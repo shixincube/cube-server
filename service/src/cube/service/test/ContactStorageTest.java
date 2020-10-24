@@ -59,6 +59,7 @@ public class ContactStorageTest {
     private List<String> domainList;
 
     private Group group = null;
+    private Contact member = null;
 
     public ContactStorageTest() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(2);
@@ -94,7 +95,8 @@ public class ContactStorageTest {
 
         Contact owner = new Contact(Utils.generateSerialNumber(), domain, "Cube-SHIXIN");
         this.group = new Group(Utils.generateSerialNumber(), domain, "Group-1", owner, System.currentTimeMillis());
-        this.group.addMember(new Contact(Utils.generateSerialNumber(), domain, "Cube-" + Utils.randomString(8)));
+        this.member = new Contact(Utils.generateSerialNumber(), domain, "Cube-" + Utils.randomString(8));
+        this.group.addMember(this.member);
     }
 
     public void teardown() {
@@ -216,6 +218,18 @@ public class ContactStorageTest {
         System.out.println("testDeleteMember - OK");
     }
 
+    public void testReadGroupList() {
+        System.out.println(this.getClass().getName() + " testReadGroupList");
+
+        List<Group> list = this.storage.readGroupsWithMember(this.group.getDomain().getName(), this.member.getId(), 0L);
+        if (!list.get(0).equals(this.group)) {
+            System.err.println("List groups error : \n" + this.group.toJSON().toString());
+            return;
+        }
+
+        System.out.println("testReadGroupList - OK");
+    }
+
     public static void main(String[] args) {
 
         ContactStorageTest testCase = new ContactStorageTest();
@@ -229,6 +243,8 @@ public class ContactStorageTest {
         testCase.testWriteMember();
 
         testCase.testDeleteMember();
+
+        testCase.testReadGroupList();
 
         testCase.teardown();
     }

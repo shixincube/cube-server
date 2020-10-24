@@ -50,6 +50,11 @@ public class Group extends Contact {
     private long creationTime;
 
     /**
+     * 活跃时间。
+     */
+    private long activeTime;
+
+    /**
      * 群组的成员列表。
      */
     private Vector<Contact> members;
@@ -66,6 +71,7 @@ public class Group extends Contact {
         super(id, domain, name);
         this.owner = owner;
         this.creationTime = creationTime;
+        this.activeTime = creationTime;
         this.members = new Vector<>();
         this.members.add(owner);
     }
@@ -85,6 +91,7 @@ public class Group extends Contact {
             this.members.add(owner);
 
             this.creationTime = json.getLong("creation");
+            this.activeTime = json.getLong("active");
 
             if (json.has("members")) {
                 JSONArray array = json.getJSONArray("members");
@@ -99,12 +106,40 @@ public class Group extends Contact {
         }
     }
 
+    /**
+     * 返回群的所有人。
+     *
+     * @return
+     */
     public Contact getOwner() {
         return this.owner;
     }
 
+    /**
+     * 返回群的创建时间。
+     *
+     * @return
+     */
     public long getCreationTime() {
         return this.creationTime;
+    }
+
+    /**
+     * 返回群的最近一次活跃时间。
+     *
+     * @return
+     */
+    public long getActiveTime() {
+        return this.activeTime;
+    }
+
+    /**
+     * 设置活跃时间。
+     *
+     * @param time
+     */
+    public void setActiveTime(long time) {
+        this.activeTime = time;
     }
 
     /**
@@ -195,6 +230,7 @@ public class Group extends Contact {
 
             json.put("owner", this.owner.toJSON());
             json.put("creation", this.creationTime);
+            json.put("active", this.activeTime);
         } catch (JSONException e) {
             e.printStackTrace();
         }

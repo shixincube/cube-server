@@ -65,6 +65,7 @@ public class ContactStorage {
             new StorageField("name", LiteralBase.STRING),
             new StorageField("owner", LiteralBase.LONG),
             new StorageField("creation_time", LiteralBase.LONG),
+            new StorageField("active_time", LiteralBase.LONG),
             new StorageField("context", LiteralBase.STRING)
             //new StorageField("reserved", LiteralBase.STRING)
     };
@@ -147,6 +148,7 @@ public class ContactStorage {
                                 new StorageField("name", LiteralBase.STRING, group.getName()),
                                 new StorageField("owner", LiteralBase.LONG, group.getOwner().getId()),
                                 new StorageField("creation_time", LiteralBase.LONG, group.getCreationTime()),
+                                new StorageField("active_time", LiteralBase.LONG, group.getActiveTime()),
                                 new StorageField("context", LiteralBase.STRING,
                                         (null == group.getContext()) ? null : group.getContext().toString())
                         });
@@ -180,6 +182,7 @@ public class ContactStorage {
                                 new StorageField("name", LiteralBase.STRING, group.getName()),
                                 new StorageField("owner", LiteralBase.LONG, group.getOwner().getId()),
                                 new StorageField("creation_time", LiteralBase.LONG, group.getCreationTime()),
+                                new StorageField("active_time", LiteralBase.LONG, group.getActiveTime()),
                                 new StorageField("context", LiteralBase.STRING,
                                         (null == group.getContext()) ? null : group.getContext().toString())
                         }, new Conditional[] {
@@ -244,6 +247,7 @@ public class ContactStorage {
             }
 
             group = new Group(groupFields[0].getLong(), domain, groupFields[1].getString(), owner, groupFields[3].getLong());
+            group.setActiveTime(groupFields[4].getLong());
 
             // 添加成员
             for (Contact member : members) {
@@ -251,8 +255,8 @@ public class ContactStorage {
             }
 
             // 是否有上下文数据
-            if (!groupFields[4].isNullValue()) {
-                JSONObject context = new JSONObject(groupFields[4].getString());
+            if (!groupFields[5].isNullValue()) {
+                JSONObject context = new JSONObject(groupFields[5].getString());
                 group.setContext(context);
             }
         } catch (JSONException e) {
@@ -261,6 +265,41 @@ public class ContactStorage {
         }
 
         return group;
+    }
+
+    public List<Group> readGroupsWithMember(String domain, Long memberId, Long beginningActiveTime) {
+        List<Group> result = new ArrayList<>();
+
+        String groupTable = this.groupTableNameMap.get(domain);
+        String groupMemberTable = this.groupMemberTableNameMap.get(domain);
+
+        synchronized (this.storage) {
+            // 查询有该成员的群信息
+            StorageField[] groupFields = new StorageField[] {
+                    new StorageField(groupTable, "id", LiteralBase.LONG)
+            };
+            // 查询群组成员
+            List<StorageField[]> groupsResult = this.storage.executeQuery(new String[] { groupTable, groupMemberTable },
+                    groupFields, new Conditional[] {
+                            // 群 ID 相等
+                            Conditional.createEqualTo(new StorageField(groupTable, "id", LiteralBase.LONG),
+                                    new StorageField(groupMemberTable, "group", LiteralBase.LONG)),
+                            Conditional.createAnd(),
+                            // 成员 ID 相等
+                            Conditional.createEqualTo(new StorageField(groupMemberTable, "contact_id", LiteralBase.LONG, memberId)),
+                            Conditional.createAnd(),
+                            // 活跃时间戳大于
+                            Conditional.createGreaterThan(new StorageField(groupTable, "active_time", LiteralBase.LONG, beginningActiveTime))
+                    });
+
+            for (StorageField[] fields : groupsResult) {
+                Long groupId = fields[0].getLong();
+                Group group = this.readGroup(domain, groupId);
+                result.add(group);
+            }
+        }
+
+        return result;
     }
 
     public void writeGroupMember(final Group group, final Contact member, final Runnable completed) {
@@ -328,6 +367,9 @@ public class ContactStorage {
                             Constraint.NOT_NULL
                     }),
                     new StorageField("creation_time", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("active_time", LiteralBase.LONG, new Constraint[] {
                             Constraint.NOT_NULL
                     }),
                     new StorageField("context", LiteralBase.STRING, new Constraint[] {

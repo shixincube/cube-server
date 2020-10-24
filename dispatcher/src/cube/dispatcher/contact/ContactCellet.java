@@ -112,8 +112,11 @@ public class ContactCellet extends Cellet {
         else if (ContactActions.SignOut.name.equals(action)) {
             this.executor.execute(this.borrowSignOutTask(talkContext, primitive));
         }
+        else if (ContactActions.ListGroups.name.equals(action)) {
+            this.executor.execute(this.borrowPassTask(talkContext, primitive, false));
+        }
         else {
-            this.executor.execute(this.borrowPassTask(talkContext, primitive));
+            this.executor.execute(this.borrowPassTask(talkContext, primitive, true));
         }
     }
 
@@ -159,13 +162,13 @@ public class ContactCellet extends Cellet {
         this.comebackTaskQueue.offer(task);
     }
 
-    protected PassThroughTask borrowPassTask(TalkContext talkContext, Primitive primitive) {
+    protected PassThroughTask borrowPassTask(TalkContext talkContext, Primitive primitive, boolean sync) {
         PassThroughTask task = this.passTaskQueue.poll();
         if (null == task) {
-            return new PassThroughTask(this, talkContext, primitive, this.performer);
+            return new PassThroughTask(this, talkContext, primitive, this.performer, sync);
         }
 
-        task.reset(talkContext, primitive);
+        task.reset(talkContext, primitive, sync);
         return task;
     }
 

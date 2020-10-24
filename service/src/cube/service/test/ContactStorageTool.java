@@ -24,62 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.service.test;
 
-import cube.common.Domain;
-import cube.common.JSONable;
-
-/**
- * 实体对象基类。
- */
-public abstract class Entity implements JSONable {
-
-    /**
-     * 实体创建的时间戳。
-     */
-    private long timestamp;
-
-    /**
-     * 实体所在域。
-     */
-    protected Domain domain;
-
-    public Entity() {
-        this.timestamp = System.currentTimeMillis();
-    }
-
-    public Entity(String domainName) {
-        this.timestamp = System.currentTimeMillis();
-        this.domain = new Domain(domainName);
-    }
-
-    public Entity(Domain domain) {
-        this.timestamp = System.currentTimeMillis();
-        this.domain = domain;
-    }
-
-    /**
-     * 获取实体创建的时间戳。
-     *
-     * @return 返回实体创建的时间戳。
-     */
-    public long getTimestamp() {
-        return this.timestamp;
-    }
-
-    /**
-     * 重置时间戳。
-     */
-    public void resetTimestamp() {
-        this.timestamp = System.currentTimeMillis();
-    }
-
-    /**
-     * 获取实体所在域。
-     *
-     * @return 返回实体所在域。
-     */
-    public Domain getDomain() {
-        return this.domain;
-    }
+public class ContactStorageTool {
 }

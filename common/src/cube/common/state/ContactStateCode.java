@@ -42,6 +42,11 @@ public enum ContactStateCode {
     Failure(9),
 
     /**
+     * 未签入联系人。
+     */
+    NoSignIn(11),
+
+    /**
      * 令牌不一致。
      */
     InconsistentToken(21),

@@ -75,6 +75,9 @@ public class ContactServiceCellet extends Cellet {
         else if (ContactActions.GetContact.name.equals(action)) {
             this.executor.execute(new GetContactTask(this, talkContext, primitive));
         }
+        else if (ContactActions.ListGroups.name.equals(action)) {
+            this.executor.execute(new ListGroupsTask(this, talkContext, primitive));
+        }
         else if (ContactActions.DeviceTimeout.name.equals(action)) {
             this.executor.execute(new DeviceTimeoutTask(this, talkContext, primitive));
         }

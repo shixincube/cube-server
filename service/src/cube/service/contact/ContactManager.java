@@ -47,6 +47,7 @@ import cube.core.Kernel;
 import cube.service.auth.AuthService;
 import cube.storage.StorageType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -284,6 +285,8 @@ public class ContactManager implements CelletAdapterListener {
         // 如果信息匹配，则返回服务器存储的实体
         if (onlineContact.getDomain().equals(contact.getDomain()) &&
             onlineContact.getId().longValue() == contact.getId().longValue()) {
+            // 重置时间戳
+            onlineContact.resetTimestamp();
             return onlineContact;
         }
 
@@ -303,6 +306,21 @@ public class ContactManager implements CelletAdapterListener {
         }
 
         return device.device;
+    }
+
+    /**
+     * 获取令牌对应的联系人。
+     *
+     * @param tokenCode
+     * @return
+     */
+    public Contact getContact(String tokenCode) {
+        TokenDevice device = this.tokenContactMap.get(tokenCode);
+        if (null == device) {
+            return null;
+        }
+
+        return device.contact;
     }
 
     /**
@@ -335,8 +353,21 @@ public class ContactManager implements CelletAdapterListener {
      * @return
      */
     public List<Contact> getContactList(String domain, List<Long> idList) {
+        List<Contact> result = new ArrayList<>(idList.size());
+        return result;
+    }
 
-        return null;
+    /**
+     * 获取成员所在的所有群。
+     *
+     * @param domain
+     * @param memberId
+     * @param beginningActiveTime
+     * @return
+     */
+    public List<Group> listGroupsWithMember(String domain, Long memberId, Long beginningActiveTime) {
+        List<Group> result = this.storage.readGroupsWithMember(domain, memberId, beginningActiveTime);
+        return result;
     }
 
     /**
@@ -373,6 +404,13 @@ public class ContactManager implements CelletAdapterListener {
         return null;
     }
 
+    /**
+     * 获取指定的在线联系人。
+     *
+     * @param domain
+     * @param id
+     * @return
+     */
     public Contact getOnlineContact(Domain domain, Long id) {
         ContactTable table = this.onlineTables.get(domain);
         if (null == table) {
@@ -432,10 +470,10 @@ public class ContactManager implements CelletAdapterListener {
             this.onlineTables.put(table.getDomain(), table);
         }
         // 记录联系人的通信上下文
-        table.add(contact, activeDevice);
+        Contact activeContact = table.add(contact, activeDevice);
 
         // 记录令牌对应关系
-        this.tokenContactMap.put(token.getCode().toString(), new TokenDevice(contact, activeDevice));
+        this.tokenContactMap.put(token.getCode().toString(), new TokenDevice(activeContact, activeDevice));
     }
 
     /**
