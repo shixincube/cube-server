@@ -311,4 +311,15 @@ public class Contact extends Entity {
         }
         return json;
     }
+
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("id", this.id);
+            json.put("name", this.name);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
 }

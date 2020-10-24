@@ -358,7 +358,7 @@ public class ContactManager implements CelletAdapterListener {
     }
 
     /**
-     * 获取成员所在的所有群。
+     * 获取指定联系人所在的所有群。
      *
      * @param domain
      * @param memberId

@@ -30,6 +30,7 @@ import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -50,9 +51,9 @@ public class Group extends Contact {
     private long creationTime;
 
     /**
-     * 活跃时间。
+     * 最近一次活跃时间。
      */
-    private long activeTime;
+    private long lastActiveTime;
 
     /**
      * 群组的成员列表。
@@ -71,7 +72,7 @@ public class Group extends Contact {
         super(id, domain, name);
         this.owner = owner;
         this.creationTime = creationTime;
-        this.activeTime = creationTime;
+        this.lastActiveTime = creationTime;
         this.members = new Vector<>();
         this.members.add(owner);
     }
@@ -91,7 +92,7 @@ public class Group extends Contact {
             this.members.add(owner);
 
             this.creationTime = json.getLong("creation");
-            this.activeTime = json.getLong("active");
+            this.lastActiveTime = json.getLong("lastActive");
 
             if (json.has("members")) {
                 JSONArray array = json.getJSONArray("members");
@@ -129,8 +130,8 @@ public class Group extends Contact {
      *
      * @return
      */
-    public long getActiveTime() {
-        return this.activeTime;
+    public long getLastActiveTime() {
+        return this.lastActiveTime;
     }
 
     /**
@@ -138,8 +139,8 @@ public class Group extends Contact {
      *
      * @param time
      */
-    public void setActiveTime(long time) {
-        this.activeTime = time;
+    public void setLastActiveTime(long time) {
+        this.lastActiveTime = time;
     }
 
     /**
@@ -228,9 +229,9 @@ public class Group extends Contact {
             }
             json.put("members", array);
 
-            json.put("owner", this.owner.toJSON());
+            json.put("owner", this.owner.toCompactJSON());
             json.put("creation", this.creationTime);
-            json.put("active", this.activeTime);
+            json.put("lastActive", this.lastActiveTime);
         } catch (JSONException e) {
             e.printStackTrace();
         }
