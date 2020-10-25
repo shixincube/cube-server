@@ -52,8 +52,6 @@ import java.util.List;
  */
 public class PullTask extends ServiceTask {
 
-    private static long AWEEK = 7L * 24L * 60L * 60L * 1000L;
-
     public PullTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
@@ -66,13 +64,14 @@ public class PullTask extends ServiceTask {
         Long id = null;
         String domainName = null;
         Device device = null;
-        long timestamp = 0;
+        long beginning = 0;
+        long ending = 0;
         try {
             id = packet.data.getLong("id");
             domainName = packet.data.getString("domain");
-            JSONObject dev = packet.data.getJSONObject("device");
-            device = new Device(dev);
-            timestamp = packet.data.getLong("timestamp");
+            device = new Device(packet.data.getJSONObject("device"));
+            beginning = packet.data.getLong("beginning");
+            ending = packet.data.getLong("ending");
         } catch (JSONException e) {
             e.printStackTrace();
             return;
@@ -97,15 +96,19 @@ public class PullTask extends ServiceTask {
             return;
         }
 
-        // 计算起始时间
+        // 修正起始时间
         long now = System.currentTimeMillis();
-        if (timestamp < now - AWEEK) {
-            timestamp = now - AWEEK;
+        if (beginning < now - ONE_MONTH) {
+            beginning = now - ONE_MONTH;
+        }
+        // 修正截止时间
+        if (ending == 0 || ending <= beginning) {
+            ending = now;
         }
 
         // 获取指定起始时间的消息列表
         MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingServiceCellet.NAME);
-        List<Message> messageList = messagingService.pullMessage(domainName, id, timestamp);
+        List<Message> messageList = messagingService.pullMessage(domainName, id, beginning, ending);
         int total = messageList.size();
         int count = 0;
         JSONArray messageArray = new JSONArray();
@@ -116,7 +119,7 @@ public class PullTask extends ServiceTask {
 
             ++count;
             if (count >= 10) {
-                JSONObject payload = this.makePayload(total, timestamp, now, messageArray);
+                JSONObject payload = this.makePayload(total, beginning, ending, messageArray);
                 this.cellet.speak(this.talkContext,
                         this.makeAsynchResponse(packet, id, domainName, device,
                                 MessagingStateCode.Ok.code, payload));
@@ -132,7 +135,7 @@ public class PullTask extends ServiceTask {
             }
         }
 
-        JSONObject payload = this.makePayload(total, timestamp, now, messageArray);
+        JSONObject payload = this.makePayload(total, beginning, ending, messageArray);
         this.cellet.speak(this.talkContext,
                 this.makeAsynchResponse(packet, id, domainName, device,
                         MessagingStateCode.Ok.code, payload));

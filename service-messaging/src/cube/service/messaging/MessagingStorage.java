@@ -207,7 +207,7 @@ public class MessagingStorage {
         return messages;
     }
 
-    public List<Message> readWithFromOrderByTime(String domain, Long id, long timestamp) {
+    public List<Message> readWithFromOrderByTime(String domain, Long id, long beginning, long ending) {
         // 取表名
         String table = this.tableNameMap.get(domain);
         if (null == table) {
@@ -217,9 +217,11 @@ public class MessagingStorage {
         List<StorageField[]> result = null;
         synchronized (this.storage) {
             result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("from", LiteralBase.LONG, id)),
-                            Conditional.createAnd(),
-                            Conditional.createGreaterThan(new StorageField("rts", LiteralBase.LONG, timestamp))
+                    Conditional.createEqualTo(new StorageField("from", LiteralBase.LONG, id)),
+                    Conditional.createAnd(),
+                    Conditional.createGreaterThanEqual(new StorageField("rts", LiteralBase.LONG, beginning)),
+                    Conditional.createAnd(),
+                    Conditional.createLessThan(new StorageField("rts", LiteralBase.LONG, ending))
             });
         }
 
@@ -242,7 +244,7 @@ public class MessagingStorage {
         return messages;
     }
 
-    public List<Message> readWithToOrderByTime(String domain, Long id, long timestamp) {
+    public List<Message> readWithToOrderByTime(String domain, Long id, long beginning, long ending) {
         // 取表名
         String table = this.tableNameMap.get(domain);
         if (null == table) {
@@ -254,7 +256,9 @@ public class MessagingStorage {
             result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
                     Conditional.createEqualTo(new StorageField("to", LiteralBase.LONG, id)),
                     Conditional.createAnd(),
-                    Conditional.createGreaterThan(new StorageField("rts", LiteralBase.LONG, timestamp))
+                    Conditional.createGreaterThanEqual(new StorageField("rts", LiteralBase.LONG, beginning)),
+                    Conditional.createAnd(),
+                    Conditional.createLessThan(new StorageField("rts", LiteralBase.LONG, ending))
             });
         }
 

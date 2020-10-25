@@ -267,7 +267,7 @@ public class ContactStorage {
         return group;
     }
 
-    public List<Group> readGroupsWithMember(String domain, Long memberId, Long beginningActiveTime) {
+    public List<Group> readGroupsWithMember(String domain, Long memberId, long beginningLastActive, long endingLastActive) {
         List<Group> result = new ArrayList<>();
 
         String groupTable = this.groupTableNameMap.get(domain);
@@ -288,8 +288,11 @@ public class ContactStorage {
                             // 成员 ID 相等
                             Conditional.createEqualTo(new StorageField(groupMemberTable, "contact_id", LiteralBase.LONG, memberId)),
                             Conditional.createAnd(),
-                            // 活跃时间戳大于
-                            Conditional.createGreaterThan(new StorageField(groupTable, "last_active", LiteralBase.LONG, beginningActiveTime))
+                            // 活跃时间戳大于等于
+                            Conditional.createGreaterThanEqual(new StorageField(groupTable, "last_active", LiteralBase.LONG, beginningLastActive)),
+                            Conditional.createAnd(),
+                            // 活跃时间戳小于
+                            Conditional.createLessThan(new StorageField(groupTable, "last_active", LiteralBase.LONG, endingLastActive))
                     });
 
             for (StorageField[] fields : groupsResult) {

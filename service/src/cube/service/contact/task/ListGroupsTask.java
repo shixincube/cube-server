@@ -74,22 +74,29 @@ public class ListGroupsTask extends ServiceTask {
         String domain = contact.getDomain().getName();
 
         // 获取查询起始时间
-        long timestamp = 0;
+        long beginning = 0;
+        long ending = 0;
         try {
-            timestamp = data.getLong("timestamp");
+            beginning = data.getLong("beginning");
+            ending = data.getLong("ending");
         } catch (JSONException e) {
             e.printStackTrace();
+        }
+
+        if (ending == 0) {
+            ending = System.currentTimeMillis();
         }
 
         int pageSize = 4;
 
         // 查询从指定活跃时间之后的该联系人所在的所有群
-        List<Group> list = ContactManager.getInstance().listGroupsWithMember(domain, contact.getId(), timestamp);
+        List<Group> list = ContactManager.getInstance().listGroupsWithMember(domain, contact.getId(), beginning, ending);
 
         try {
             if (list.isEmpty()) {
                 JSONObject responseData = new JSONObject();
-                responseData.put("timestamp", timestamp);
+                responseData.put("beginning", beginning);
+                responseData.put("ending", ending);
                 responseData.put("total", list.size());
                 responseData.put("list", new JSONArray());
                 this.cellet.speak(this.talkContext,
@@ -102,7 +109,8 @@ public class ListGroupsTask extends ServiceTask {
 
             while (!list.isEmpty()) {
                 JSONObject responseData = new JSONObject();
-                responseData.put("timestamp", timestamp);
+                responseData.put("beginning", beginning);
+                responseData.put("ending", ending);
                 responseData.put("total", total);
 
                 JSONArray array = new JSONArray();

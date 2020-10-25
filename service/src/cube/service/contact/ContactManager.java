@@ -363,11 +363,12 @@ public class ContactManager implements CelletAdapterListener {
      *
      * @param domain
      * @param memberId
-     * @param beginningActiveTime
+     * @param beginningLastActive
+     * @param endingLastActive
      * @return
      */
-    public List<Group> listGroupsWithMember(String domain, Long memberId, Long beginningActiveTime) {
-        List<Group> result = this.storage.readGroupsWithMember(domain, memberId, beginningActiveTime);
+    public List<Group> listGroupsWithMember(String domain, Long memberId, long beginningLastActive, long endingLastActive) {
+        List<Group> result = this.storage.readGroupsWithMember(domain, memberId, beginningLastActive, endingLastActive);
         Collections.sort(result);
         return result;
     }

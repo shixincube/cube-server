@@ -274,15 +274,16 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * 拉取指定时间戳到当前时间段的所有消息内容。
      * @param contactId
      * @param beginningTime
+     * @param endingTime
      * @return
      */
-    public List<Message> pullMessage(String domain, Long contactId, long beginningTime) {
+    public List<Message> pullMessage(String domain, Long contactId, long beginningTime, long endingTime) {
         LinkedList<Message> result = new LinkedList<>();
 
         String key = UniqueKey.make(contactId, domain);
 
         // 从缓存里读取数据
-        List<SeriesItem> list = this.messageCache.query(key, beginningTime, System.currentTimeMillis());
+        List<SeriesItem> list = this.messageCache.query(key, beginningTime, endingTime);
         for (SeriesItem item : list) {
             Message message = new Message(item.data);
             result.add(message);
@@ -290,8 +291,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         // 如果缓存里没有数据，从存储里读取
         if (result.isEmpty()) {
-            List<Message> messageList1 = this.storage.readWithToOrderByTime(domain, contactId, beginningTime);
-            List<Message> messageList2 = this.storage.readWithFromOrderByTime(domain, contactId, beginningTime);
+            List<Message> messageList1 = this.storage.readWithToOrderByTime(domain, contactId, beginningTime, endingTime);
+            List<Message> messageList2 = this.storage.readWithFromOrderByTime(domain, contactId, beginningTime, endingTime);
             result.addAll(messageList1);
             result.addAll(messageList2);
         }

@@ -124,6 +124,16 @@ public class Conditional {
     }
 
     /**
+     * 创建大于等于运算。
+     *
+     * @param field
+     * @return
+     */
+    public static Conditional createGreaterThanEqual(StorageField field) {
+        return new Conditional("[" + field.getName() + "]>=" + field.getValue().toString());
+    }
+
+    /**
      * 创建小于运算。
      *
      * @param field
@@ -131,6 +141,16 @@ public class Conditional {
      */
     public static Conditional createLessThan(StorageField field) {
         return new Conditional("[" + field.getName() + "]<" + field.getValue().toString());
+    }
+
+    /**
+     * 创建小于等于运算。
+     *
+     * @param field
+     * @return
+     */
+    public static Conditional createLessThanEqual(StorageField field) {
+        return new Conditional("[" + field.getName() + "]<=" + field.getValue().toString());
     }
 
     /**

@@ -43,6 +43,10 @@ import cube.service.auth.AuthService;
  */
 public abstract class ServiceTask extends Task {
 
+    public final static long ONE_WEEK = 7L * 24L * 60L * 60L * 1000L;
+
+    public final static long ONE_MONTH = 30L * 24L * 60L * 60L * 1000L;
+
     public ServiceTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
