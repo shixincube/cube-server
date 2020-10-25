@@ -37,6 +37,7 @@ import cell.core.talk.Primitive;
 import cell.util.CachedQueueExecutor;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.common.Domain;
 import cube.common.UniqueKey;
@@ -184,6 +185,9 @@ public class ContactManager implements CelletAdapterListener {
         if (!authToken.getDomain().equals(contact.getDomain().getName())) {
             return null;
         }
+
+        Logger.d(this.getClass(), "SignIn contact: " + contact.getId() + " (" + activeDevice.getName() + ") - " +
+                authToken.getCode());
 
         // 在该方法里插入 Hook
         ContactHook hook = this.pluginSystem.getSignInHook();

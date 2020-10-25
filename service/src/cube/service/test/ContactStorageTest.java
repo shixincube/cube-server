@@ -221,7 +221,8 @@ public class ContactStorageTest {
     public void testReadGroupList() {
         System.out.println(this.getClass().getName() + " testReadGroupList");
 
-        List<Group> list = this.storage.readGroupsWithMember(this.group.getDomain().getName(), this.member.getId(), 0L);
+        List<Group> list = this.storage.readGroupsWithMember(this.group.getDomain().getName(),
+                this.member.getId(), 0L, System.currentTimeMillis());
         if (!list.get(0).equals(this.group)) {
             System.err.println("List groups error : \n" + this.group.toJSON().toString());
             return;
