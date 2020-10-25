@@ -48,6 +48,7 @@ import cube.service.auth.AuthService;
 import cube.storage.StorageType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -367,6 +368,7 @@ public class ContactManager implements CelletAdapterListener {
      */
     public List<Group> listGroupsWithMember(String domain, Long memberId, Long beginningActiveTime) {
         List<Group> result = this.storage.readGroupsWithMember(domain, memberId, beginningActiveTime);
+        Collections.sort(result);
         return result;
     }
 

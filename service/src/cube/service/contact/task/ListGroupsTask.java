@@ -89,6 +89,7 @@ public class ListGroupsTask extends ServiceTask {
         try {
             if (list.isEmpty()) {
                 JSONObject responseData = new JSONObject();
+                responseData.put("timestamp", timestamp);
                 responseData.put("total", list.size());
                 responseData.put("list", new JSONArray());
                 this.cellet.speak(this.talkContext,
@@ -101,6 +102,7 @@ public class ListGroupsTask extends ServiceTask {
 
             while (!list.isEmpty()) {
                 JSONObject responseData = new JSONObject();
+                responseData.put("timestamp", timestamp);
                 responseData.put("total", total);
 
                 JSONArray array = new JSONArray();

@@ -38,7 +38,7 @@ import java.util.Vector;
 /**
  * 群组实体。
  */
-public class Group extends Contact {
+public class Group extends Contact implements Comparable<Group> {
 
     /**
      * 群的所有人。
@@ -88,8 +88,8 @@ public class Group extends Contact {
 
         try {
             JSONObject ownerJson = json.getJSONObject("owner");
-            this.owner = new Contact(ownerJson);
-            this.members.add(owner);
+            this.owner = new Contact(ownerJson, this.domain.getName());
+            this.members.add(this.owner);
 
             this.creationTime = json.getLong("creation");
             this.lastActiveTime = json.getLong("lastActive");
@@ -97,8 +97,8 @@ public class Group extends Contact {
             if (json.has("members")) {
                 JSONArray array = json.getJSONArray("members");
                 for (int i = 0, len = array.length(); i < len; ++i) {
-                    JSONObject obj = array.getJSONObject(i);
-                    Contact contact = new Contact(obj);
+                    JSONObject member = array.getJSONObject(i);
+                    Contact contact = new Contact(member, this.domain.getName());
                     this.addMember(contact);
                 }
             }
@@ -223,9 +223,13 @@ public class Group extends Contact {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         try {
+            if (json.has("devices")) {
+                json.remove("devices");
+            }
+
             JSONArray array = new JSONArray();
             for (Contact contact : this.members) {
-                array.put(contact.toJSON());
+                array.put(contact.toCompactJSON());
             }
             json.put("members", array);
 
@@ -236,6 +240,11 @@ public class Group extends Contact {
             e.printStackTrace();
         }
         return json;
+    }
+
+    @Override
+    public int compareTo(Group other) {
+        return (int)(other.lastActiveTime - this.lastActiveTime);
     }
 
     /**

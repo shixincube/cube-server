@@ -83,13 +83,17 @@ public class Contact extends Entity {
     }
 
     public Contact(JSONObject json) {
+        this(json, "");
+    }
+
+    public Contact(JSONObject json, String domain) {
         super();
 
         this.deviceList = new ArrayList<>(1);
 
         try {
             this.id = json.getLong("id");
-            this.domain = new Domain(json.getString("domain"));
+            this.domain = (null != domain && domain.length() > 1) ? new Domain(domain) : new Domain(json.getString("domain"));
             this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
             this.name = json.getString("name");
 
@@ -317,6 +321,9 @@ public class Contact extends Entity {
         try {
             json.put("id", this.id);
             json.put("name", this.name);
+            if (null != this.context) {
+                json.put("context", this.context);
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
