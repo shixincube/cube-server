@@ -219,9 +219,9 @@ public class MessagingStorage {
             result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
                     Conditional.createEqualTo(new StorageField("from", LiteralBase.LONG, id)),
                     Conditional.createAnd(),
-                    Conditional.createGreaterThanEqual(new StorageField("rts", LiteralBase.LONG, beginning)),
+                    Conditional.createGreaterThan(new StorageField("rts", LiteralBase.LONG, beginning)),
                     Conditional.createAnd(),
-                    Conditional.createLessThan(new StorageField("rts", LiteralBase.LONG, ending))
+                    Conditional.createLessThanEqual(new StorageField("rts", LiteralBase.LONG, ending))
             });
         }
 
@@ -256,9 +256,9 @@ public class MessagingStorage {
             result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
                     Conditional.createEqualTo(new StorageField("to", LiteralBase.LONG, id)),
                     Conditional.createAnd(),
-                    Conditional.createGreaterThanEqual(new StorageField("rts", LiteralBase.LONG, beginning)),
+                    Conditional.createGreaterThan(new StorageField("rts", LiteralBase.LONG, beginning)),
                     Conditional.createAnd(),
-                    Conditional.createLessThan(new StorageField("rts", LiteralBase.LONG, ending))
+                    Conditional.createLessThanEqual(new StorageField("rts", LiteralBase.LONG, ending))
             });
         }
 
