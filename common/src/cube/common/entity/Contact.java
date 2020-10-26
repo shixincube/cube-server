@@ -159,6 +159,16 @@ public class Contact extends Entity {
     }
 
     /**
+     * 重置 ID 。
+     *
+     * @param newId
+     */
+    public void resetId(Long newId) {
+        this.id = newId;
+        this.uniqueKey = UniqueKey.make(newId, this.domain);
+    }
+
+    /**
      * 获取唯一索引键。
      *
      * @return 返回唯一索引键。

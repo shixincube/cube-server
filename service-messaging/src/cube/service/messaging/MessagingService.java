@@ -330,10 +330,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
     @Override
     public void onDelivered(String topic, Endpoint endpoint, JSONObject jsonObject) {
-        if (MessagingService.NAME.equals(ModuleEvent.getModuleName(jsonObject))) {
+        if (MessagingService.NAME.equals(ModuleEvent.extractModuleName(jsonObject))) {
             // 消息模块
 
-            // 取主键 ID
+            // 取主键的 ID
             Long id = UniqueKey.extractId(topic);
             if (null == id) {
                 return;
@@ -382,21 +382,21 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
     @Override
     public void onDelivered(List<String> list, Endpoint endpoint, Primitive primitive) {
-
+        // Nothing
     }
 
     @Override
     public void onDelivered(List<String> list, Endpoint endpoint, JSONObject jsonObject) {
-
+        // Nothing
     }
 
     @Override
     public void onSubscribeFailed(String topic, Endpoint endpoint) {
-
+        // Nothing
     }
 
     @Override
     public void onUnsubscribeFailed(String topic, Endpoint endpoint) {
-
+        // Nothing
     }
 }

@@ -75,4 +75,29 @@ public final class UniqueKey {
 
         return null;
     }
+
+    /**
+     * 提取键包含的 ID 和域名称。
+     *
+     * @param key
+     * @return
+     */
+    public static Object[] extract(String key) {
+        int index = key.indexOf("_");
+        if (index > 0) {
+            Long id = null;
+            String idStr = key.substring(0, index);
+            try {
+                id = Long.parseLong(idStr);
+            } catch (Exception e) {
+                return null;
+            }
+
+            String domain = key.substring(index + 1, key.length());
+
+            return new Object[] { id, domain };
+        }
+
+        return null;
+    }
 }

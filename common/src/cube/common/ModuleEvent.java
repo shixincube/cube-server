@@ -102,7 +102,7 @@ public class ModuleEvent implements JSONable {
         return json;
     }
 
-    public static String getModuleName(JSONObject json) {
+    public static String extractModuleName(JSONObject json) {
         String mod = null;
         try {
             mod = json.getString("module");

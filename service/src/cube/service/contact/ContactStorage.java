@@ -125,6 +125,10 @@ public class ContactStorage {
         return null;
     }
 
+    public void writeGroup(final Group group) {
+        this.writeGroup(group, null);
+    }
+
     public void writeGroup(final Group group, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override

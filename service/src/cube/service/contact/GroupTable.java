@@ -24,53 +24,10 @@
  * SOFTWARE.
  */
 
-package cube.common.state;
+package cube.service.contact;
 
 /**
- * 联系人模块状态码。
+ * 群组表。
  */
-public enum ContactStateCode {
-
-    /**
-     * 成功。
-     */
-    Ok(0),
-
-    /**
-     * 遇到故障。
-     */
-    Failure(9),
-
-    /**
-     * 无效域信息。
-     */
-    InvalidDomain(11),
-
-    /**
-     * 未签入联系人。
-     */
-    NoSignIn(12),
-
-    /**
-     * 令牌不一致。
-     */
-    InconsistentToken(21),
-
-    /**
-     * 不被接受的非法操作。
-     */
-    IllegalOperation(25),
-
-    /**
-     * 未知的状态。
-     */
-    Unknown(99)
-
-    ;
-
-    public final int code;
-
-    ContactStateCode(int code) {
-        this.code = code;
-    }
+public class GroupTable {
 }

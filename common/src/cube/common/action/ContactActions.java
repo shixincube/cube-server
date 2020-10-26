@@ -72,6 +72,11 @@ public enum ContactActions {
     ListGroups("listGroups"),
 
     /**
+     * 创建群组。
+     */
+    CreateGroup("createGroup"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

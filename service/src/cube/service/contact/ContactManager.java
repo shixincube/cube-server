@@ -34,17 +34,25 @@ import cell.adapter.extra.memory.SharedMemory;
 import cell.adapter.extra.memory.SharedMemoryConfig;
 import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.CachedQueueExecutor;
+import cell.util.Utils;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.common.Domain;
+import cube.common.ModuleEvent;
+import cube.common.Packet;
 import cube.common.UniqueKey;
+import cube.common.action.ContactActions;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Group;
+import cube.common.state.ContactStateCode;
 import cube.core.Kernel;
+import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.storage.StorageType;
 
@@ -59,7 +67,14 @@ import java.util.concurrent.ExecutorService;
  */
 public class ContactManager implements CelletAdapterListener {
 
+    public final static String NAME = "Contact";
+
     private final static ContactManager instance = new ContactManager();
+
+    /**
+     * Cellet 实例。
+     */
+    private ContactServiceCellet cellet;
 
     /**
      * 多线程执行器。
@@ -84,7 +99,12 @@ public class ContactManager implements CelletAdapterListener {
     /**
      * 联系人数据缓存。
      */
-    private SharedMemory contactsCache;
+    private SharedMemory contactCache;
+
+    /**
+     * 群组数据缓存。
+     */
+    private SharedMemory groupCache;
 
     /**
      * 联系人存储。
@@ -124,10 +144,13 @@ public class ContactManager implements CelletAdapterListener {
         this.onlineTables = new ConcurrentHashMap<>();
         this.tokenContactMap = new ConcurrentHashMap<>();
 
-        SharedMemoryConfig config = new SharedMemoryConfig("config/contacts.properties");
+        // 联系人缓存
+        SharedMemoryConfig contactConfig = new SharedMemoryConfig("config/contact-cache.properties");
+        this.contactCache = new SharedMemory(contactConfig);
 
-        this.contactsCache = new SharedMemory(config);
-        this.contactsCache.start();
+        // 群组缓存
+        SharedMemoryConfig groupConfig = new SharedMemoryConfig("config/group-cache.properties");
+        this.groupCache = new SharedMemory(groupConfig);
 
         this.contactsAdapter = CelletAdapterFactory.getInstance().getAdapter("Contacts");
         this.contactsAdapter.addListener(this);
@@ -137,10 +160,16 @@ public class ContactManager implements CelletAdapterListener {
         // 启动守护线程
         this.daemon.start();
 
-        // 异步初始化存储
+        // 异步初始化缓存和存储
         (new Thread() {
             @Override
             public void run() {
+                // 启动联系人缓存
+                contactCache.start();
+
+                // 启动群组缓存
+                groupCache.start();
+
                 JSONObject config = new JSONObject();
                 try {
                     config.put("file", "storage/ContactService.db");
@@ -160,8 +189,6 @@ public class ContactManager implements CelletAdapterListener {
      * 关闭管理器。
      */
     public void shutdown() {
-        this.contactsCache.stop();
-
         this.daemon.terminate();
 
         this.storage.close();
@@ -169,7 +196,14 @@ public class ContactManager implements CelletAdapterListener {
         this.onlineTables.clear();
         this.tokenContactMap.clear();
 
+        this.contactCache.stop();
+        this.groupCache.stop();
+
         this.executor.shutdown();
+    }
+
+    public void setCellet(ContactServiceCellet cellet) {
+        this.cellet = cellet;
     }
 
     /**
@@ -193,7 +227,7 @@ public class ContactManager implements CelletAdapterListener {
         ContactHook hook = this.pluginSystem.getSignInHook();
         hook.apply(contact);
 
-        this.contactsCache.apply(contact.getUniqueKey(), new LockFuture() {
+        this.contactCache.apply(contact.getUniqueKey(), new LockFuture() {
             @Override
             public void acquired(String key) {
             JSONObject data = get();
@@ -228,7 +262,7 @@ public class ContactManager implements CelletAdapterListener {
      */
     public Contact signOut(final Contact contact, String tokenCode, Device activeDevice) {
         final Object mutex = new Object();
-        LockFuture future = this.contactsCache.apply(contact.getUniqueKey(), new LockFuture() {
+        LockFuture future = this.contactCache.apply(contact.getUniqueKey(), new LockFuture() {
             @Override
             public void acquired(String key) {
             JSONObject data = get();
@@ -337,7 +371,7 @@ public class ContactManager implements CelletAdapterListener {
      */
     public Contact getContact(Long id, String domain) {
         String key = UniqueKey.make(id, domain);
-        JSONObject data = this.contactsCache.applyGet(key);
+        JSONObject data = this.contactCache.applyGet(key);
         if (null == data) {
             // 缓存里没有数据，从数据库读取
             Contact contact = this.storage.readContact(domain, id);
@@ -378,6 +412,37 @@ public class ContactManager implements CelletAdapterListener {
     }
 
     /**
+     *
+     * @param group
+     * @return
+     */
+    public Group createGroup(Group group) {
+        long now = System.currentTimeMillis();
+
+        // 重新生成 ID
+        group.resetId(Utils.generateSerialNumber());
+        // 重置时间戳
+        group.setCreationTime(now);
+        group.setLastActiveTime(now);
+
+        // 写入存储
+        this.storage.writeGroup(group);
+
+        // 向群成员发送事件
+        for (Contact member : group.getMembers()) {
+            if (member.equals(group.getOwner())) {
+                // 创建群的所有者不进行通知
+                continue;
+            }
+
+            ModuleEvent event = new ModuleEvent(NAME, ContactActions.CreateGroup.name, group.toJSON());
+            this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
+        }
+
+        return group;
+    }
+
+    /**
      * 获取群组。
      *
      * @param id
@@ -397,7 +462,7 @@ public class ContactManager implements CelletAdapterListener {
      */
     public Group getGroup(Long id, String domainName) {
         String key = UniqueKey.make(id, domainName);
-        JSONObject data = this.contactsCache.applyGet(key);
+        JSONObject data = this.contactCache.applyGet(key);
         if (null == data) {
             Group group = this.storage.readGroup(domainName, id);
             if (null != group) {
@@ -436,7 +501,7 @@ public class ContactManager implements CelletAdapterListener {
      */
     public void removeContactDevice(final Long contactId, final String domainName, final Device device) {
         String key = UniqueKey.make(contactId, domainName);
-        this.contactsCache.apply(key, new LockFuture() {
+        this.contactCache.apply(key, new LockFuture() {
             @Override
             public void acquired(String key) {
             JSONObject data = get();
@@ -510,33 +575,81 @@ public class ContactManager implements CelletAdapterListener {
         this.tokenContactMap.remove(token);
     }
 
-    @Override
-    public void onDelivered(String topic, Endpoint endpoint, Primitive primitive) {
+    /**
+     * 向在线设备推送动作数据。
+     *
+     * @param actionName
+     * @param contact
+     * @param data
+     */
+    private void pushAction(String actionName, Contact contact, JSONObject data) {
+        for (Device device : contact.getDeviceList()) {
+            TalkContext talkContext = device.getTalkContext();
+            if (null == talkContext) {
+                continue;
+            }
 
+            JSONObject payload = new JSONObject();
+            try {
+                payload.put("code", ContactStateCode.Ok.code);
+                payload.put("data", data);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            Packet packet = new Packet(actionName, payload);
+            ActionDialect dialect = Director.attachDirector(packet.toDialect(),
+                    contact.getId().longValue(), contact.getDomain().getName());
+            this.cellet.speak(talkContext, dialect);
+        }
     }
 
     @Override
     public void onDelivered(String topic, Endpoint endpoint, JSONObject jsonObject) {
+        if (NAME.equals(ModuleEvent.extractModuleName(jsonObject))) {
+            // 提取主键的信息
+            Object[] key = UniqueKey.extract(topic);
+            if (null == key) {
+                return;
+            }
 
+            // 取主键的 ID
+            Long id = (Long) key[0];
+            // 取主键的域
+            Domain domain = new Domain((String) key[1]);
+
+            ModuleEvent event = new ModuleEvent(jsonObject);
+            if (event.getEventName().equals(ContactActions.CreateGroup.name)) {
+                // 获取在线的联系人信息
+                Contact contact = this.getOnlineContact(domain, id);
+                // 推送动作给终端设备
+                this.pushAction(ContactActions.CreateGroup.name, contact, event.getData());
+            }
+        }
+    }
+
+    @Override
+    public void onDelivered(String topic, Endpoint endpoint, Primitive primitive) {
+        // Nothing
     }
 
     @Override
     public void onDelivered(List<String> list, Endpoint endpoint, Primitive primitive) {
-
+        // Nothing
     }
 
     @Override
     public void onDelivered(List<String> list, Endpoint endpoint, JSONObject jsonObject) {
-
+        // Nothing
     }
 
     @Override
     public void onSubscribeFailed(String topic, Endpoint endpoint) {
-
+        // Nothing
     }
 
     @Override
     public void onUnsubscribeFailed(String topic, Endpoint endpoint) {
-
+        // Nothing
     }
 }

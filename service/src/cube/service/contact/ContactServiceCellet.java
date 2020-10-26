@@ -53,6 +53,7 @@ public class ContactServiceCellet extends Cellet {
     @Override
     public boolean install() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
+        ContactManager.getInstance().setCellet(this);
         return true;
     }
 
@@ -77,6 +78,9 @@ public class ContactServiceCellet extends Cellet {
         }
         else if (ContactActions.ListGroups.name.equals(action)) {
             this.executor.execute(new ListGroupsTask(this, talkContext, primitive));
+        }
+        else if (ContactActions.CreateGroup.name.equals(action)) {
+            this.executor.execute(new CreateGroupTask(this, talkContext, primitive));
         }
         else if (ContactActions.DeviceTimeout.name.equals(action)) {
             this.executor.execute(new DeviceTimeoutTask(this, talkContext, primitive));

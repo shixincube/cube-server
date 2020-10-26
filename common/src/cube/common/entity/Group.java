@@ -126,6 +126,15 @@ public class Group extends Contact implements Comparable<Group> {
     }
 
     /**
+     * 设置创建时间。
+     *
+     * @param value
+     */
+    public void setCreationTime(long value) {
+        this.creationTime = value;
+    }
+
+    /**
      * 返回群的最近一次活跃时间。
      *
      * @return
