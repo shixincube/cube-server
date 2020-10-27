@@ -72,7 +72,7 @@ public class CreateGroupTask extends ServiceTask {
 
         try {
             JSONObject groupJson = data.getJSONObject("group");
-            JSONArray memberIds = data.getJSONArray("members");
+            JSONArray members = data.getJSONArray("members");
 
             Group group = new Group(groupJson);
 
@@ -84,8 +84,9 @@ public class CreateGroupTask extends ServiceTask {
                 return;
             }
 
-            for (int i = 0, size = memberIds.length(); i < size; ++i) {
-                Contact member = ContactManager.getInstance().getContact(memberIds.getLong(i), domain);
+            for (int i = 0, size = members.length(); i < size; ++i) {
+                JSONObject memberJson = members.getJSONObject(i);
+                Contact member = new Contact(memberJson, domain);
                 group.addMember(member);
             }
 

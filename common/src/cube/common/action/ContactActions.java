@@ -77,6 +77,11 @@ public enum ContactActions {
     CreateGroup("createGroup"),
 
     /**
+     * 解散群组。
+     */
+    DissolveGroup("dissolveGroup"),
+
+    /**
      * 未知动作。
      */
     Unknown("")
