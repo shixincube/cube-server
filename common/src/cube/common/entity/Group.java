@@ -61,6 +61,11 @@ public class Group extends Contact implements Comparable<Group> {
     private Vector<Contact> members;
 
     /**
+     * 群组状态。
+     */
+    private GroupState state;
+
+    /**
      * 构造函数。
      *
      * @param id 群组 ID 。
@@ -73,6 +78,7 @@ public class Group extends Contact implements Comparable<Group> {
         this.owner = owner;
         this.creationTime = creationTime;
         this.lastActiveTime = creationTime;
+        this.state = GroupState.Normal;
         this.members = new Vector<>();
         this.members.add(owner);
     }
@@ -93,6 +99,7 @@ public class Group extends Contact implements Comparable<Group> {
 
             this.creationTime = json.getLong("creation");
             this.lastActiveTime = json.getLong("lastActive");
+            this.state = GroupState.parse(json.getInt("state"));
 
             if (json.has("members")) {
                 JSONArray array = json.getJSONArray("members");
@@ -150,6 +157,24 @@ public class Group extends Contact implements Comparable<Group> {
      */
     public void setLastActiveTime(long time) {
         this.lastActiveTime = time;
+    }
+
+    /**
+     * 获取状态。
+     *
+     * @return 返回状态。
+     */
+    public GroupState getState() {
+        return this.state;
+    }
+
+    /**
+     * 设置状态。
+     *
+     * @param state
+     */
+    public void setState(GroupState state) {
+        this.state = state;
     }
 
     /**
@@ -245,6 +270,7 @@ public class Group extends Contact implements Comparable<Group> {
             json.put("owner", this.owner.toCompactJSON());
             json.put("creation", this.creationTime);
             json.put("lastActive", this.lastActiveTime);
+            json.put("state", this.state.getCode());
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -268,6 +294,20 @@ public class Group extends Contact implements Comparable<Group> {
         }
         else {
             return false;
+        }
+    }
+
+    /**
+     * 更新状态。
+     *
+     * @param json
+     * @param newState
+     */
+    public static void updateState(JSONObject json, GroupState newState) {
+        try {
+            json.put("state", newState.getCode());
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
     }
 }

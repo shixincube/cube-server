@@ -32,6 +32,7 @@ import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
+import cube.common.entity.GroupState;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -66,6 +67,7 @@ public class ContactStorage {
             new StorageField("owner", LiteralBase.LONG),
             new StorageField("creation_time", LiteralBase.LONG),
             new StorageField("last_active", LiteralBase.LONG),
+            new StorageField("state", LiteralBase.INT),
             new StorageField("context", LiteralBase.STRING)
             //new StorageField("reserved", LiteralBase.STRING)
     };
@@ -77,7 +79,9 @@ public class ContactStorage {
             new StorageField("group", LiteralBase.LONG),
             new StorageField("contact_id", LiteralBase.LONG),
             new StorageField("contact_name", LiteralBase.STRING),
-            new StorageField("contact_context", LiteralBase.STRING)
+            new StorageField("contact_context", LiteralBase.STRING),
+            new StorageField("removing_time", LiteralBase.LONG),
+            new StorageField("removing_operator", LiteralBase.LONG)
             //new StorageField("reserved", LiteralBase.STRING)
     };
 
@@ -153,6 +157,7 @@ public class ContactStorage {
                                 new StorageField("owner", LiteralBase.LONG, group.getOwner().getId()),
                                 new StorageField("creation_time", LiteralBase.LONG, group.getCreationTime()),
                                 new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
+                                new StorageField("state", LiteralBase.INT, group.getState().getCode()),
                                 new StorageField("context", LiteralBase.STRING,
                                         (null == group.getContext()) ? null : group.getContext().toString())
                         });
@@ -187,6 +192,7 @@ public class ContactStorage {
                                 new StorageField("owner", LiteralBase.LONG, group.getOwner().getId()),
                                 new StorageField("creation_time", LiteralBase.LONG, group.getCreationTime()),
                                 new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
+                                new StorageField("state", LiteralBase.INT, group.getState().getCode()),
                                 new StorageField("context", LiteralBase.STRING,
                                         (null == group.getContext()) ? null : group.getContext().toString())
                         }, new Conditional[] {
@@ -219,7 +225,11 @@ public class ContactStorage {
             groupMemberResult = this.storage.executeQuery(new String[] { groupTable, groupMemberTable },
                     memberFields, new Conditional[] {
                             Conditional.createEqualTo(new StorageField(groupTable, "id", LiteralBase.LONG),
-                                    new StorageField(groupMemberTable, "group", LiteralBase.LONG))
+                                    new StorageField(groupMemberTable, "group", LiteralBase.LONG)),
+                            Conditional.createAnd(),
+                            // 没有被移除的成员
+                            Conditional.createEqualTo(
+                                    new StorageField(groupMemberTable, "removing_time", LiteralBase.INT, 0))
                     });
         }
 
@@ -252,6 +262,7 @@ public class ContactStorage {
 
             group = new Group(groupFields[0].getLong(), domain, groupFields[1].getString(), owner, groupFields[3].getLong());
             group.setLastActiveTime(groupFields[4].getLong());
+            group.setState(GroupState.parse(groupFields[5].getInt()));
 
             // 添加成员
             for (Contact member : members) {
@@ -259,8 +270,8 @@ public class ContactStorage {
             }
 
             // 是否有上下文数据
-            if (!groupFields[5].isNullValue()) {
-                JSONObject context = new JSONObject(groupFields[5].getString());
+            if (!groupFields[6].isNullValue()) {
+                JSONObject context = new JSONObject(groupFields[6].getString());
                 group.setContext(context);
             }
         } catch (JSONException e) {
@@ -309,6 +320,44 @@ public class ContactStorage {
         return result;
     }
 
+    /**
+     *
+     * @param group
+     * @param read 如果设置为 {@code true} 则更新状态数据之后从库里重新查询数据并返回。
+     * @return
+     */
+    public Group updateGroupState(final Group group, boolean read) {
+        String domain = group.getDomain().getName();
+
+        String groupTable = this.groupTableNameMap.get(domain);
+
+        if (read) {
+            // 执行更新
+            this.storage.executeUpdate(groupTable, new StorageField[] {
+                    new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
+                    new StorageField("state", LiteralBase.INT, group.getState().getCode())
+            }, new Conditional[] {
+                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
+            });
+
+            return this.readGroup(domain, group.getId());
+        }
+        else {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    storage.executeUpdate(groupTable, new StorageField[] {
+                            new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
+                            new StorageField("state", LiteralBase.INT, group.getState().getCode())
+                    }, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
+                    });
+                }
+            });
+            return null;
+        }
+    }
+
     public void writeGroupMember(final Group group, final Contact member, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
@@ -324,7 +373,9 @@ public class ContactStorage {
                 };
 
                 // 插入数据
-                storage.executeInsert(groupMemberTable, fields);
+                synchronized (storage) {
+                    storage.executeInsert(groupMemberTable, fields);
+                }
 
                 if (null != completed) {
                     completed.run();
@@ -333,17 +384,22 @@ public class ContactStorage {
         });
     }
 
-    public void deleteGroupMember(final Group group, final Long memberId, final Runnable completed) {
+    public void deleteGroupMember(final Group group, final Long memberId, final Long operatorId, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
                 String groupMemberTable = groupMemberTableNameMap.get(group.getDomain().getName());
 
-                storage.executeDelete(groupMemberTable, new Conditional[] {
-                        Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, group.getId())),
-                        Conditional.createAnd(),
-                        Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, memberId))
-                });
+                synchronized (storage) {
+                    storage.executeUpdate(groupMemberTable, new StorageField[] {
+                            new StorageField("removing_time", LiteralBase.LONG, System.currentTimeMillis()),
+                            new StorageField("removing_operator", LiteralBase.LONG, operatorId)
+                    }, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, group.getId())),
+                            Conditional.createAnd(),
+                            Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, memberId))
+                    });
+                }
 
                 if (null != completed) {
                     completed.run();
@@ -378,6 +434,9 @@ public class ContactStorage {
                     }),
                     new StorageField("last_active", LiteralBase.LONG, new Constraint[] {
                             Constraint.NOT_NULL
+                    }),
+                    new StorageField("state", LiteralBase.INT, new Constraint[] {
+                            Constraint.DEFAULT_0
                     }),
                     new StorageField("context", LiteralBase.STRING, new Constraint[] {
                             Constraint.DEFAULT_NULL
@@ -416,6 +475,12 @@ public class ContactStorage {
                     }),
                     new StorageField("contact_context", LiteralBase.STRING, new Constraint[] {
                             Constraint.DEFAULT_NULL
+                    }),
+                    new StorageField("removing_time", LiteralBase.LONG, new Constraint[] {
+                            Constraint.DEFAULT_0
+                    }),
+                    new StorageField("removing_operator", LiteralBase.LONG, new Constraint[] {
+                            Constraint.DEFAULT_0
                     }),
                     new StorageField("reserved", LiteralBase.STRING, new Constraint[] {
                             Constraint.DEFAULT_NULL

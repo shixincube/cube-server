@@ -192,7 +192,7 @@ public class ContactStorageTest {
         Contact member = this.group.removeMember(this.group.getMembers().get(this.group.numMembers() - 1));
 
         long time = System.currentTimeMillis();
-        this.storage.deleteGroupMember(this.group, member.getId(), new Runnable() {
+        this.storage.deleteGroupMember(this.group, member.getId(), this.group.getOwner().getId(), new Runnable() {
             @Override
             public void run() {
                 System.out.println("testDeleteMember: " + (System.currentTimeMillis() - time) + " ms");

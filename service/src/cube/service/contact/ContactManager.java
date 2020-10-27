@@ -47,9 +47,7 @@ import cube.common.ModuleEvent;
 import cube.common.Packet;
 import cube.common.UniqueKey;
 import cube.common.action.ContactActions;
-import cube.common.entity.Contact;
-import cube.common.entity.Device;
-import cube.common.entity.Group;
+import cube.common.entity.*;
 import cube.common.state.ContactStateCode;
 import cube.core.Kernel;
 import cube.service.Director;
@@ -385,6 +383,55 @@ public class ContactManager implements CelletAdapterListener {
     }
 
     /**
+     * 获取指定的在线联系人。
+     *
+     * @param domain
+     * @param id
+     * @return
+     */
+    public Contact getOnlineContact(Domain domain, Long id) {
+        ContactTable table = this.onlineTables.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        return table.get(id);
+    }
+
+    /**
+     * 移除指定联系人的设备。
+     *
+     * @param contactId
+     * @param domainName
+     * @param device
+     */
+    public void removeContactDevice(final Long contactId, final String domainName, final Device device) {
+        String key = UniqueKey.make(contactId, domainName);
+        this.contactCache.apply(key, new LockFuture() {
+            @Override
+            public void acquired(String key) {
+                JSONObject data = get();
+                if (null == data) {
+                    return;
+                }
+
+                Contact contact = new Contact(data);
+                contact.removeDevice(device);
+
+                put(contact.toJSON());
+            }
+        });
+
+        ContactTable table = this.onlineTables.get(new Domain(domainName));
+        if (null != table) {
+            Contact contact = table.get(contactId);
+            if (null != contact) {
+                contact.removeDevice(device);
+            }
+        }
+    }
+
+    /**
      * 获取列表里联系人。
      *
      * @param domain
@@ -409,40 +456,6 @@ public class ContactManager implements CelletAdapterListener {
         List<Group> result = this.storage.readGroupsWithMember(domain, memberId, beginningLastActive, endingLastActive);
         Collections.sort(result);
         return result;
-    }
-
-    /**
-     *
-     * @param group
-     * @return
-     */
-    public Group createGroup(Group group) {
-        long now = System.currentTimeMillis();
-
-        // 重新生成 ID
-        group.resetId(Utils.generateSerialNumber());
-        // 重置时间戳
-        group.setCreationTime(now);
-        group.setLastActiveTime(now);
-
-        // 写入存储
-        this.storage.writeGroup(group);
-
-        // 写入缓存
-        this.groupCache.applyPut(group.getUniqueKey(), group.toJSON());
-
-        // 向群成员发送事件
-        for (Contact member : group.getMembers()) {
-            if (member.equals(group.getOwner())) {
-                // 创建群的所有者不进行通知
-                continue;
-            }
-
-            ModuleEvent event = new ModuleEvent(NAME, ContactActions.CreateGroup.name, group.toJSON());
-            this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
-        }
-
-        return group;
     }
 
     /**
@@ -479,52 +492,111 @@ public class ContactManager implements CelletAdapterListener {
     }
 
     /**
-     * 获取指定的在线联系人。
+     * 创建群组。
      *
-     * @param domain
-     * @param id
+     * @param group
      * @return
      */
-    public Contact getOnlineContact(Domain domain, Long id) {
-        ContactTable table = this.onlineTables.get(domain);
-        if (null == table) {
-            return null;
+    public Group createGroup(Group group) {
+        long now = System.currentTimeMillis();
+
+        // 重新生成 ID
+        group.resetId(Utils.generateSerialNumber());
+        // 重置时间戳
+        group.setCreationTime(now);
+        group.setLastActiveTime(now);
+
+        // 写入存储
+        this.storage.writeGroup(group);
+
+        // 写入缓存
+        this.groupCache.applyPut(group.getUniqueKey(), group.toJSON());
+
+        // 向群成员发送事件
+        for (Contact member : group.getMembers()) {
+            if (member.equals(group.getOwner())) {
+                // 创建群的所有者不进行通知
+                continue;
+            }
+
+            ModuleEvent event = new ModuleEvent(NAME, ContactActions.CreateGroup.name, group.toJSON());
+            this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
         }
 
-        return table.get(id);
+        return group;
     }
 
     /**
-     * 移除指定联系人的设备。
+     * 解散群。
      *
-     * @param contactId
-     * @param domainName
-     * @param device
+     * @param group
+     * @return
      */
-    public void removeContactDevice(final Long contactId, final String domainName, final Device device) {
-        String key = UniqueKey.make(contactId, domainName);
-        this.contactCache.apply(key, new LockFuture() {
+    public Group dissolveGroup(final Group group) {
+        // 更新活跃时间戳
+        group.setLastActiveTime(System.currentTimeMillis());
+        // 更新状态
+        group.setState(GroupState.Dismissed);
+
+        final MutableGroup mGroup = new MutableGroup();
+
+        // 从缓存里获取群
+        final Object mutex = new Object();
+        LockFuture future = this.groupCache.apply(group.getUniqueKey(), new LockFuture() {
             @Override
             public void acquired(String key) {
-            JSONObject data = get();
-            if (null == data) {
-                return;
-            }
+                JSONObject data = get();
+                if (null != data) {
+                    Group current = new Group(data);
+                    // 更新状态
+                    current.setState(GroupState.Dismissed);
+                    // 更新时间戳
+                    current.setLastActiveTime(group.getLastActiveTime());
+                    mGroup.set(current);
+                    put(current.toJSON());
+                }
 
-            Contact contact = new Contact(data);
-            contact.removeDevice(device);
-
-            put(contact.toJSON());
+                synchronized (mutex) {
+                    mutex.notify();
+                }
             }
         });
 
-        ContactTable table = this.onlineTables.get(new Domain(domainName));
-        if (null != table) {
-            Contact contact = table.get(contactId);
-            if (null != contact) {
-                contact.removeDevice(device);
+        if (null != future) {
+            synchronized (mutex) {
+                try {
+                    mutex.wait(this.syncTimeout);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
+
+        if (mGroup.isNull()) {
+            // 因为缓存里没有数据，更新存储，并从存储里读取
+            Group newGroup = this.storage.updateGroupState(group, true);
+            this.groupCache.applyPut(newGroup.getUniqueKey(), newGroup.toJSON());
+            mGroup.set(newGroup);
+        }
+        else {
+            // 更新存储
+            this.storage.updateGroupState(group, false);
+        }
+
+        Group result = mGroup.get();
+
+        // 向群里的成员发送事件
+        for (Contact member : result.getMembers()) {
+            if (member.equals(result.getOwner())) {
+                // 创建群的所有者不进行通知
+                continue;
+            }
+
+            ModuleEvent event = new ModuleEvent(NAME, ContactActions.DissolveGroup.name, result.toJSON());
+            this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
+        }
+
+        return result;
     }
 
     /**
@@ -621,11 +693,17 @@ public class ContactManager implements CelletAdapterListener {
             Domain domain = new Domain((String) key[1]);
 
             ModuleEvent event = new ModuleEvent(jsonObject);
-            if (event.getEventName().equals(ContactActions.CreateGroup.name)) {
+            String eventName = event.getEventName();
+            if (eventName.equals(ContactActions.CreateGroup.name)
+                || eventName.equals(ContactActions.DissolveGroup.name)) {
                 // 获取在线的联系人信息
                 Contact contact = this.getOnlineContact(domain, id);
+                if (null == contact) {
+                    return;
+                }
+
                 // 推送动作给终端设备
-                this.pushAction(ContactActions.CreateGroup.name, contact, event.getData());
+                this.pushAction(eventName, contact, event.getData());
             }
         }
     }
