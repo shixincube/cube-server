@@ -428,6 +428,9 @@ public class ContactManager implements CelletAdapterListener {
         // 写入存储
         this.storage.writeGroup(group);
 
+        // 写入缓存
+        this.groupCache.applyPut(group.getUniqueKey(), group.toJSON());
+
         // 向群成员发送事件
         for (Contact member : group.getMembers()) {
             if (member.equals(group.getOwner())) {
@@ -462,15 +465,14 @@ public class ContactManager implements CelletAdapterListener {
      */
     public Group getGroup(Long id, String domainName) {
         String key = UniqueKey.make(id, domainName);
-        JSONObject data = this.contactCache.applyGet(key);
-        if (null == data) {
-            Group group = this.storage.readGroup(domainName, id);
-            if (null != group) {
-                return group;
-            }
-        }
-        else {
+        JSONObject data = this.groupCache.applyGet(key);
+        if (null != data) {
             return new Group(data);
+        }
+
+        Group group = this.storage.readGroup(domainName, id);
+        if (null != group) {
+            return group;
         }
 
         return null;

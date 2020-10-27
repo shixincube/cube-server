@@ -1,13 +1,15 @@
 # Cube Server
 
-**Cube** “时信魔方”是面向开发者的实时协作开发框架，其是 **Cooperative** ，**Ultrafast** ，**Best-practice** 和 **Efficient** 的首字母缩写。意在为开发者和用户提供专业、可靠的协作产品和技术支持，帮助客户快速部署和构建在线协作场景。
+**Cube** **时信魔方** 是面向开发者的实时协作开发框架。帮助开发者快速、高效的在项目中集成实时协作能力。
 
-支持的操作系统和软件包括：Windows、Linux 、macOS 、Android、iOS、Chrome、Firefox 等。
+支持的操作系统有：Windows、Linux 、macOS 、Android、iOS 等，支持的浏览器有：Chrome、Firefox、Safari 等。
 
-Cube 提供的协作功能包括：
+## 功能列表
+
+Cube 包含以下协作功能：
 
 * 即时消息（Instant Messaging / IM）。支持卡片消息、通知消息、文件消息和自定义消息等。
-* 实时多人语音/多人视频（Multi-party RTC）。支持自适应码率、超低延迟等，支持实时图像识别等。
+* 实时多人语音/多人视频（Multipoint RTC）。支持自适应码率、超低延迟等，支持实时图像识别等。
 * 超大规模(100+)会议 （Video Conference）。支持会议控制、演讲模式，自定义 MCU 和 SFU 布局等。
 * 群组管理（Group management）。支持集成式管理和扩展组织架构等。
 * 共享桌面（Remote Desktop Sharing）。支持无缝集成白板等。
