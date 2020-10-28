@@ -251,6 +251,9 @@ public class ContactManager implements CelletAdapterListener {
             }
         });
 
+        // 更新存储
+        this.storage.writeContact(contact, activeDevice);
+
         // 关注该用户数据
         this.follow(contact, authToken, activeDevice);
 
@@ -377,15 +380,17 @@ public class ContactManager implements CelletAdapterListener {
     public Contact getContact(Long id, String domain) {
         String key = UniqueKey.make(id, domain);
         JSONObject data = this.contactCache.applyGet(key);
-        if (null == data) {
-            // 缓存里没有数据，从数据库读取
-            Contact contact = this.storage.readContact(domain, id);
-            if (null != contact) {
-                return contact;
-            }
+        if (null != data) {
+            return new Contact(data);
         }
 
-        Contact contact = new Contact(id, domain, "Cube-" + id);
+        // 缓存里没有数据，从数据库读取
+        Contact contact = this.storage.readContact(domain, id);
+        if (null != contact) {
+            return contact;
+        }
+
+        contact = new Contact(id, domain, "Cube-" + id);
         return contact;
     }
 

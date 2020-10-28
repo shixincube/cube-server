@@ -31,6 +31,7 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.entity.Group;
 import cube.common.entity.GroupState;
 import cube.core.Conditional;
@@ -54,9 +55,20 @@ public class ContactStorage {
 
     private final String version = "1.0";
 
+    private final String contactTablePrefix = "contact_";
+
     private final String groupTablePrefix = "group_";
 
     private final String groupMemberTablePrefix = "group_member_";
+
+    private final StorageField[] contactFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG),
+            new StorageField("name", LiteralBase.STRING),
+            new StorageField("context", LiteralBase.STRING),
+            new StorageField("recent_device_name", LiteralBase.STRING),
+            new StorageField("recent_device_platform", LiteralBase.STRING)
+            //new StorageField("reserved", LiteralBase.STRING)
+    };
 
     /**
      * 群组字段描述。
@@ -89,12 +101,14 @@ public class ContactStorage {
 
     private Storage storage;
 
+    private Map<String, String> contactTableNameMap;
     private Map<String, String> groupTableNameMap;
     private Map<String, String> groupMemberTableNameMap;
 
     public ContactStorage(ExecutorService executor, Storage storage) {
         this.executor = executor;
         this.storage = storage;
+        this.contactTableNameMap = new HashMap<>();
         this.groupTableNameMap = new HashMap<>();
         this.groupMemberTableNameMap = new HashMap<>();
     }
@@ -102,6 +116,7 @@ public class ContactStorage {
     public ContactStorage(ExecutorService executor, StorageType type, JSONObject config) {
         this.executor = executor;
         this.storage = StorageFactory.getInstance().createStorage(type, "ContactStorage", config);
+        this.contactTableNameMap = new HashMap<>();
         this.groupTableNameMap = new HashMap<>();
         this.groupMemberTableNameMap = new HashMap<>();
     }
@@ -116,17 +131,108 @@ public class ContactStorage {
 
     public void execSelfChecking(List<String> domainNameList) {
         for (String domain : domainNameList) {
+            this.checkContactTable(domain);
             this.checkGroupTable(domain);
             this.checkGroupMemberTable(domain);
         }
     }
 
-    public void writeContact(Contact contact) {
+    public void writeContact(final Contact contact) {
+        this.writeContact(contact, null, null);
+    }
 
+    public void writeContact(final Contact contact, final Device device) {
+        this.writeContact(contact, device, null);
+    }
+
+    public void writeContact(final Contact contact, final Device device, final Runnable completed) {
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                String domain = contact.getDomain().getName();
+
+                String table = contactTableNameMap.get(domain);
+
+                synchronized (storage) {
+                    List<StorageField[]> list = storage.executeQuery(table,
+                            new StorageField[] { new StorageField("sn", LiteralBase.LONG) },
+                            new Conditional[] {
+                                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
+                            });
+
+                    if (list.isEmpty()) {
+                        // 没有数据，插入新数据
+                        storage.executeInsert(table, new StorageField[] {
+                                new StorageField("id", LiteralBase.LONG, contact.getId()),
+                                new StorageField("name", LiteralBase.STRING, contact.getName()),
+                                new StorageField("context", LiteralBase.STRING,
+                                        (null != contact.getContext()) ? contact.getContext().toString() : null),
+                                new StorageField("recent_device_name", LiteralBase.STRING,
+                                        (null != device) ? device.getName() : null),
+                                new StorageField("recent_device_platform", LiteralBase.STRING,
+                                        (null != device) ? device.getPlatform() : null)
+                        });
+                    }
+                    else {
+                        // 更新数据
+                        storage.executeUpdate(table, new StorageField[] {
+                                new StorageField("name", LiteralBase.STRING, contact.getName()),
+                                new StorageField("context", LiteralBase.STRING,
+                                        (null != contact.getContext()) ? contact.getContext().toString() : null),
+                                new StorageField("recent_device_name", LiteralBase.STRING,
+                                        (null != device) ? device.getName() : null),
+                                new StorageField("recent_device_platform", LiteralBase.STRING,
+                                        (null != device) ? device.getPlatform() : null)
+                        }, new Conditional[] {
+                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
+                        });
+                    }
+                }
+
+                if (null != completed) {
+                    completed.run();
+                }
+            }
+        });
     }
 
     public Contact readContact(String domain, Long id) {
-        return null;
+        List<StorageField[]> result = null;
+
+        synchronized (this.storage) {
+            String table = this.contactTableNameMap.get(domain);
+            result = this.storage.executeQuery(table, this.contactFields,
+                    new Conditional[] { Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, id)) });
+        }
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        StorageField[] data = result.get(0);
+
+        Contact contact = null;
+
+        try {
+            Long contactId = data[0].getLong();
+            String name = data[1].getString();
+            JSONObject context = data[2].isNullValue() ? null : new JSONObject(data[2].getString());
+            String deviceName = data[3].isNullValue() ? null : data[3].getString();
+            String devicePlatform = data[4].isNullValue() ? null : data[4].getString();
+
+            contact = new Contact(contactId, domain, name);
+            if (null != context) {
+                contact.setContext(context);
+            }
+            if (null != deviceName && null != devicePlatform) {
+                Device device = new Device(deviceName, devicePlatform);
+                contact.addDevice(device);
+            }
+        } catch (Exception e) {
+            // Nothing;
+        }
+
+        return contact;
     }
 
     public void writeGroup(final Group group) {
@@ -408,6 +514,44 @@ public class ContactStorage {
         });
     }
 
+    private void checkContactTable(String domain) {
+        String table = this.contactTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.contactTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            StorageField[] fields = new StorageField[] {
+                    new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                            Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+                    }),
+                    new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                            Constraint.UNIQUE, Constraint.NOT_NULL
+                    }),
+                    new StorageField("name", LiteralBase.STRING, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("context", LiteralBase.STRING, new Constraint[] {
+                            Constraint.DEFAULT_NULL
+                    }),
+                    new StorageField("recent_device_name", LiteralBase.STRING, new Constraint[] {
+                            Constraint.DEFAULT_NULL
+                    }),
+                    new StorageField("recent_device_platform", LiteralBase.STRING, new Constraint[] {
+                            Constraint.DEFAULT_NULL
+                    }),
+                    new StorageField("reserved", LiteralBase.STRING, new Constraint[] {
+                            Constraint.DEFAULT_NULL
+                    })
+            };
+
+            if (this.storage.executeCreate(table, fields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
     private void checkGroupTable(String domain) {
         String table = this.groupTablePrefix + domain;
 
@@ -416,7 +560,7 @@ public class ContactStorage {
 
         if (!this.storage.exist(table)) {
             // 表不存在，建表
-            StorageField[] fields = new StorageField[]{
+            StorageField[] fields = new StorageField[] {
                     new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                             Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
                     }),

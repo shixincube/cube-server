@@ -42,6 +42,7 @@ public class GroupTable {
 
     public GroupTable(Domain domain) {
         this.domain = domain;
+        this.groups = new ConcurrentHashMap<>();
     }
 
     public Group getGroup(Long id) {
@@ -51,6 +52,5 @@ public class GroupTable {
     public void updateGroup(Group group) {
         this.groups.put(group.getId(), group);
     }
-
 
 }
