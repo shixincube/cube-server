@@ -88,7 +88,7 @@ public class ContactCellet extends Cellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(64);
         this.performer = (Performer) this.getNucleus().getParameter("performer");
         return true;
     }

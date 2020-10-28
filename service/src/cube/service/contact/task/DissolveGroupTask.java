@@ -70,41 +70,35 @@ public class DissolveGroupTask extends ServiceTask {
         // 域
         String domain = contact.getDomain().getName();
 
-        try {
-            JSONObject groupJson = data.getJSONObject("group");
+        Group group = new Group(data);
 
-            Group group = new Group(groupJson);
-
-            // 判断域
-            if (!domain.equals(group.getDomain().getName())) {
-                // 返回无效的域信息
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(action, packet, ContactStateCode.InvalidDomain.code, data));
-                return;
-            }
-
-            // 检查是否有操作权限
-            Contact owner = group.getOwner();
-            if (!owner.equals(contact)) {
-                // 解散群操作只能由群的所有者进行
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));
-                return;
-            }
-
-            Group newGroup = ContactManager.getInstance().dissolveGroup(group);
-            if (null == newGroup) {
-                // 解散失败
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
-                return;
-            }
-
-            // 返回解散成功的群组
+        // 判断域
+        if (!domain.equals(group.getDomain().getName())) {
+            // 返回无效的域信息
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.Ok.code, newGroup.toJSON()));
-        } catch (JSONException e) {
-            Logger.e(this.getClass(), "", e);
+                    this.makeResponse(action, packet, ContactStateCode.InvalidDomain.code, data));
+            return;
         }
+
+        // 检查是否有操作权限
+        Contact owner = group.getOwner();
+        if (!owner.equals(contact)) {
+            // 解散群操作只能由群的所有者进行
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));
+            return;
+        }
+
+        Group newGroup = ContactManager.getInstance().dissolveGroup(group);
+        if (null == newGroup) {
+            // 解散失败
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
+            return;
+        }
+
+        // 返回解散成功的群组
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, newGroup.toJSON()));
     }
 }
