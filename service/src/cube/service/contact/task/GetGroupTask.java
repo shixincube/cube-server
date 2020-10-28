@@ -34,17 +34,17 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Packet;
-import cube.common.entity.Contact;
+import cube.common.entity.Group;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
 
 /**
- * 获取联系人信息任务。
+ * 获取群组信息任务。
  */
-public class GetContactTask extends ServiceTask {
+public class GetGroupTask extends ServiceTask {
 
-    public GetContactTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
+    public GetGroupTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
 
@@ -64,14 +64,14 @@ public class GetContactTask extends ServiceTask {
             e.printStackTrace();
         }
 
-        Contact contact = ContactManager.getInstance().getContact(id, domain);
-        if (null == contact) {
+        Group group = ContactManager.getInstance().getGroup(id, domain);
+        if (null == group) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
             return;
         }
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, contact.toJSON()));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, group.toJSON()));
     }
 }

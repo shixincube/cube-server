@@ -95,6 +95,11 @@ public class ContactManager implements CelletAdapterListener {
     protected ConcurrentHashMap<String, TokenDevice> tokenContactMap;
 
     /**
+     * 处于活跃状态的群组。
+     */
+    protected ConcurrentHashMap<Domain, GroupTable> activeGroupTables;
+
+    /**
      * 联系人数据缓存。
      */
     private SharedMemory contactCache;
@@ -141,6 +146,8 @@ public class ContactManager implements CelletAdapterListener {
 
         this.onlineTables = new ConcurrentHashMap<>();
         this.tokenContactMap = new ConcurrentHashMap<>();
+
+        this.activeGroupTables = new ConcurrentHashMap<>();
 
         // 联系人缓存
         SharedMemoryConfig contactConfig = new SharedMemoryConfig("config/contact-cache.properties");
@@ -466,7 +473,35 @@ public class ContactManager implements CelletAdapterListener {
      * @return
      */
     public Group getGroup(Long id, Domain domain) {
-        return this.getGroup(id, domain.getName());
+        String domainName = domain.getName();
+
+        GroupTable table = this.activeGroupTables.get(domain);
+        if (null != table) {
+            Group group = table.getGroup(id);
+            if (null != group) {
+                return group;
+            }
+        }
+
+        String key = UniqueKey.make(id, domainName);
+        JSONObject data = this.groupCache.applyGet(key);
+        if (null != data) {
+            Group group = new Group(data);
+            if (null != table) {
+                table.updateGroup(group);
+            }
+            return group;
+        }
+
+        Group group = this.storage.readGroup(domainName, id);
+        if (null != group) {
+            if (null != table) {
+                table.updateGroup(group);
+            }
+            return group;
+        }
+
+        return null;
     }
 
     /**
@@ -477,18 +512,7 @@ public class ContactManager implements CelletAdapterListener {
      * @return
      */
     public Group getGroup(Long id, String domainName) {
-        String key = UniqueKey.make(id, domainName);
-        JSONObject data = this.groupCache.applyGet(key);
-        if (null != data) {
-            return new Group(data);
-        }
-
-        Group group = this.storage.readGroup(domainName, id);
-        if (null != group) {
-            return group;
-        }
-
-        return null;
+        return this.getGroup(id, new Domain(domainName));
     }
 
     /**
@@ -511,6 +535,12 @@ public class ContactManager implements CelletAdapterListener {
 
         // 写入缓存
         this.groupCache.applyPut(group.getUniqueKey(), group.toJSON());
+
+        // 写入活跃表
+        GroupTable table = this.activeGroupTables.get(group.getDomain());
+        if (null != table) {
+            table.updateGroup(group);
+        }
 
         // 向群成员发送事件
         for (Contact member : group.getMembers()) {
@@ -585,6 +615,10 @@ public class ContactManager implements CelletAdapterListener {
 
         Group result = mGroup.get();
 
+        // 更新活跃表
+        GroupTable table = this.activeGroupTables.get(result.getDomain());
+        table.updateGroup(result);
+
         // 向群里的成员发送事件
         for (Contact member : result.getMembers()) {
             if (member.equals(result.getOwner())) {
@@ -620,6 +654,13 @@ public class ContactManager implements CelletAdapterListener {
 
         // 记录令牌对应关系
         this.tokenContactMap.put(token.getCode().toString(), new TokenDevice(activeContact, activeDevice));
+
+        // 建立群组缓存
+        GroupTable groupTable = this.activeGroupTables.get(contact.getDomain());
+        if (null == groupTable) {
+            Domain domain = new Domain(contact.getDomain().getName().toString());
+            this.activeGroupTables.put(domain, new GroupTable(domain));
+        }
     }
 
     /**

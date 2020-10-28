@@ -51,10 +51,23 @@ public class ContactTable {
         return this.domain;
     }
 
+    /**
+     * 返回指定 ID 的联系人。
+     *
+     * @param id
+     * @return
+     */
     public Contact get(Long id) {
         return this.onlineContacts.get(id);
     }
 
+    /**
+     * 更新联系人。
+     *
+     * @param contact
+     * @param device
+     * @return
+     */
     public Contact add(Contact contact, Device device) {
         Contact current = this.onlineContacts.get(contact.getId());
         if (null == current) {
@@ -77,6 +90,12 @@ public class ContactTable {
         return current;
     }
 
+    /**
+     * 移除联系人的设备。
+     *
+     * @param contact
+     * @param device
+     */
     public void remove(Contact contact, Device device) {
         Contact current = this.onlineContacts.get(contact.getId());
         if (null != current) {
@@ -85,6 +104,11 @@ public class ContactTable {
         }
     }
 
+    /**
+     * 移除联系人。
+     *
+     * @param contact
+     */
     public void remove(Contact contact) {
         this.onlineContacts.remove(contact.getId());
     }

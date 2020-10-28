@@ -324,11 +324,6 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     }
 
     @Override
-    public void onDelivered(String topic, Endpoint endpoint, Primitive primitive) {
-        // Nothing
-    }
-
-    @Override
     public void onDelivered(String topic, Endpoint endpoint, JSONObject jsonObject) {
         if (MessagingService.NAME.equals(ModuleEvent.extractModuleName(jsonObject))) {
             // 消息模块
@@ -378,6 +373,11 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 }
             }
         }
+    }
+
+    @Override
+    public void onDelivered(String topic, Endpoint endpoint, Primitive primitive) {
+        // Nothing
     }
 
     @Override

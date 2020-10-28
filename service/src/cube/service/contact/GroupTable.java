@@ -24,78 +24,33 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.contact;
+
+import cube.common.Domain;
+import cube.common.entity.Group;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 联系人模块动作定义。
+ * 用于暂存活跃群组的表格。
  */
-public enum ContactActions {
+public class GroupTable {
 
-    /**
-     * 终端签入。
-     */
-    SignIn("signIn"),
+    private Domain domain;
 
-    /**
-     * 终端签出。
-     */
-    SignOut("signOut"),
+    protected ConcurrentHashMap<Long, Group> groups;
 
-    /**
-     * 恢复终端当前连接。
-     */
-    Comeback("comeback"),
-
-    /**
-     * 申请当前联系人的所有终端下线。
-     */
-    Leave("leave"),
-
-    /**
-     * 设备超时。
-     */
-    DeviceTimeout("deviceTimeout"),
-
-    /**
-     * 获取联系人信息。
-     */
-    GetContact("getContact"),
-
-    /**
-     * 获取联系人列表。
-     */
-    GetContactList("getContactList"),
-
-    /**
-     * 获取群组信息。
-     */
-    GetGroup("getGroup"),
-
-    /**
-     * 按照指定参数列出群组清单。
-     */
-    ListGroups("listGroups"),
-
-    /**
-     * 创建群组。
-     */
-    CreateGroup("createGroup"),
-
-    /**
-     * 解散群组。
-     */
-    DissolveGroup("dissolveGroup"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public String name;
-
-    ContactActions(String name) {
-        this.name = name;
+    public GroupTable(Domain domain) {
+        this.domain = domain;
     }
+
+    public Group getGroup(Long id) {
+        return this.groups.get(id);
+    }
+
+    public void updateGroup(Group group) {
+        this.groups.put(group.getId(), group);
+    }
+
+
 }
