@@ -24,65 +24,26 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.service.contact;
+
+import cube.common.entity.Contact;
+import cube.common.entity.Group;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * 群状态。
+ * 群操作时用户捆绑相关成员的元素。
  */
-public enum GroupState {
+public class GroupBundle {
 
-    /**
-     * 正常状态。
-     */
-    Normal(0),
+    public Group group;
 
-    /**
-     * 解散状态。
-     */
-    Dismissed(1),
+    public List<Contact> members;
 
-    /**
-     * 禁用状态。
-     */
-    Forbidden(2),
-
-    /**
-     * 高风险状态。
-     */
-    HighRisk(3),
-
-    /**
-     * 失效状态。
-     */
-    Disabled(9),
-
-    /**
-     * 未知状态。
-     */
-    Unknown(-1);
-
-    private int code;
-
-    GroupState(int code) {
-        this.code = code;
-    }
-
-    public int getCode() {
-        return this.code;
-    }
-
-    public static GroupState parse(int code) {
-        switch (code) {
-            case 0:
-                return Normal;
-            case 1:
-                return Dismissed;
-            case 2:
-                return Forbidden;
-            case 3:
-                return HighRisk;
-            default:
-                return Unknown;
-        }
+    public GroupBundle(Group group, Contact member) {
+        this.group = group;
+        this.members = new ArrayList<>();
+        this.members.add(member);
     }
 }

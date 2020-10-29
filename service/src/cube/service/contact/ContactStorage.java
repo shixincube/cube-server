@@ -343,7 +343,7 @@ public class ContactStorage {
                             Conditional.createAnd(),
                             // 没有被移除的成员
                             Conditional.createEqualTo(
-                                    new StorageField(groupMemberTable, "removing_time", LiteralBase.INT, 0))
+                                    new StorageField(groupMemberTable, "removing_time", LiteralBase.LONG, 0L))
                     });
         }
 
@@ -416,6 +416,9 @@ public class ContactStorage {
                             Conditional.createAnd(),
                             // 成员 ID 相等
                             Conditional.createEqualTo(new StorageField(groupMemberTable, "contact_id", LiteralBase.LONG, memberId)),
+                            Conditional.createAnd(),
+                            // 群成员没有被移除
+                            Conditional.createEqualTo(new StorageField(groupMemberTable, "removing_time", LiteralBase.LONG, 0L)),
                             Conditional.createAnd(),
                             // 活跃时间戳大于等于
                             Conditional.createGreaterThanEqual(new StorageField(groupTable, "last_active", LiteralBase.LONG, beginningLastActive)),

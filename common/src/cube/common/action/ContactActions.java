@@ -87,6 +87,16 @@ public enum ContactActions {
     DissolveGroup("dissolveGroup"),
 
     /**
+     * 向群组添加成员。
+     */
+    AddGroupMember("addGroupMember"),
+
+    /**
+     * 从群组移除成员。
+     */
+    RemoveGroupMember("removeGroupMember"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

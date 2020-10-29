@@ -615,6 +615,12 @@ public class ContactManager implements CelletAdapterListener {
         return current;
     }
 
+    public GroupBundle removeGroupMember(String domain, Long groupId, Long memberId) {
+        Group group = this.getGroup(groupId, domain);
+
+        return null;
+    }
+
     /**
      * 跟踪该联系人数据。
      *

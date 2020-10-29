@@ -222,42 +222,48 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             // 进行消息的群组管理
             Group group = ContactManager.getInstance().getGroup(message.getSource(), message.getDomain());
             if (null != group) {
-                List<Contact> list = group.getMembers();
-                for (Contact contact : list) {
-                    // 创建副本
-                    Message copy = new Message(message);
-                    // 更新 To 数据
-                    copy.setTo(contact.getId());
+                if (group.getState() == GroupState.Normal) {
+                    List<Contact> list = group.getMembers();
+                    for (Contact contact : list) {
+                        // 创建副本
+                        Message copy = new Message(message);
+                        // 更新 To 数据
+                        copy.setTo(contact.getId());
 
-                    // 将消息写入缓存
-                    // 写入 TO
-                    String toKey = UniqueKey.make(contact.getId(), contact.getDomain());
-                    this.messageCache.add(toKey, copy.toJSON(), message.getRemoteTimestamp());
+                        // 将消息写入缓存
+                        // 写入 TO
+                        String toKey = UniqueKey.make(contact.getId(), contact.getDomain());
+                        this.messageCache.add(toKey, copy.toJSON(), copy.getRemoteTimestamp());
 
-                    // 发布给 TO
-                    ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Push.name, copy.toJSON());
-                    this.contactsAdapter.publish(toKey, event.toJSON());
+                        // 发布给 TO
+                        ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Push.name, copy.toJSON());
+                        this.contactsAdapter.publish(toKey, event.toJSON());
+
+                        // 写入存储
+                        this.storage.write(copy);
+                    }
+
+                    // 写入 FROM
+                    String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
+                    this.messageCache.add(fromKey, message.toJSON(), message.getRemoteTimestamp());
+
+                    // 发布给 FROM
+                    ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Push.name, message.toJSON());
+                    this.contactsAdapter.publish(fromKey, event.toJSON());
 
                     // 写入存储
-                    this.storage.write(copy);
+                    this.storage.write(message);
+
+                    // 更新群组活跃时间
+                    ContactManager.getInstance().updateGroupActiveTime(group, message.getRemoteTimestamp());
                 }
-
-                // 写入 FROM
-                String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
-                this.messageCache.add(fromKey, message.toJSON(), message.getRemoteTimestamp());
-
-                // 发布给 FROM
-                ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Push.name, message.toJSON());
-                this.contactsAdapter.publish(fromKey, event.toJSON());
-
-                // 写入存储
-                this.storage.write(message);
-
-                // 更新群组活跃时间
-                ContactManager.getInstance().updateGroupActiveTime(group, message.getRemoteTimestamp());
+                else {
+                    // 群组状态不正常，设置为故障状态
+                    message.setState(MessageState.Fault);
+                }
             }
             else {
-                // 设置为故障状态
+                // 找不到群组，设置为故障状态
                 message.setState(MessageState.Fault);
             }
         }
