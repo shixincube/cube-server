@@ -253,8 +253,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 // 写入存储
                 this.storage.write(message);
 
-                // 重置群组活跃时间
-                group.setLastActiveTime(message.getRemoteTimestamp());
+                // 更新群组活跃时间
+                ContactManager.getInstance().updateGroupActiveTime(group, message.getRemoteTimestamp());
             }
             else {
                 // 设置为故障状态

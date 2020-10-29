@@ -236,10 +236,14 @@ public class ContactStorage {
     }
 
     public void writeGroup(final Group group) {
-        this.writeGroup(group, null);
+        this.writeGroup(group, true, null);
     }
 
     public void writeGroup(final Group group, final Runnable completed) {
+        this.writeGroup(group, true, completed);
+    }
+
+    public void writeGroup(final Group group, final boolean writeMembers, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -304,6 +308,10 @@ public class ContactStorage {
                         }, new Conditional[] {
                                 Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, groupId))
                         });
+
+                        if (writeMembers) {
+                            // TODO 更新成员列表
+                        }
                     }
                 }
 
@@ -426,6 +434,29 @@ public class ContactStorage {
         return result;
     }
 
+    public void updateGroupName(final Group group) {
+
+    }
+
+    public void updateGroupActiveName(final Group group) {
+        String domain = group.getDomain().getName();
+
+        String groupTable = this.groupTableNameMap.get(domain);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (storage) {
+                    storage.executeUpdate(groupTable, new StorageField[] {
+                            new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime())
+                    }, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
+                    });
+                }
+            }
+        });
+    }
+
     /**
      *
      * @param group
@@ -439,12 +470,14 @@ public class ContactStorage {
 
         if (read) {
             // 执行更新
-            this.storage.executeUpdate(groupTable, new StorageField[] {
-                    new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
-                    new StorageField("state", LiteralBase.INT, group.getState().getCode())
-            }, new Conditional[] {
-                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
-            });
+            synchronized (this.storage) {
+                this.storage.executeUpdate(groupTable, new StorageField[]{
+                        new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
+                        new StorageField("state", LiteralBase.INT, group.getState().getCode())
+                }, new Conditional[]{
+                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
+                });
+            }
 
             return this.readGroup(domain, group.getId());
         }
@@ -452,12 +485,14 @@ public class ContactStorage {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    storage.executeUpdate(groupTable, new StorageField[] {
-                            new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
-                            new StorageField("state", LiteralBase.INT, group.getState().getCode())
-                    }, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
-                    });
+                    synchronized (storage) {
+                        storage.executeUpdate(groupTable, new StorageField[]{
+                                new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
+                                new StorageField("state", LiteralBase.INT, group.getState().getCode())
+                        }, new Conditional[]{
+                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
+                        });
+                    }
                 }
             });
             return null;

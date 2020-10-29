@@ -493,7 +493,7 @@ public class ContactManager implements CelletAdapterListener {
         if (null != data) {
             Group group = new Group(data);
             if (null != table) {
-                table.updateGroup(group);
+                table.putGroup(group);
             }
             return group;
         }
@@ -501,7 +501,7 @@ public class ContactManager implements CelletAdapterListener {
         Group group = this.storage.readGroup(domainName, id);
         if (null != group) {
             if (null != table) {
-                table.updateGroup(group);
+                table.putGroup(group);
             }
             return group;
         }
@@ -518,6 +518,19 @@ public class ContactManager implements CelletAdapterListener {
      */
     public Group getGroup(Long id, String domainName) {
         return this.getGroup(id, new Domain(domainName));
+    }
+
+    /**
+     * 更新群组的活跃时间。
+     *
+     * @param group
+     * @param timestamp
+     */
+    public void updateGroupActiveTime(Group group, long timestamp) {
+        GroupTable table = this.getGroupTable(group.getDomain());
+
+        // 更新活跃时间
+        table.updateActiveTime(group, timestamp);
     }
 
     /**
@@ -543,9 +556,11 @@ public class ContactManager implements CelletAdapterListener {
 
         // 写入活跃表
         GroupTable table = this.activeGroupTables.get(group.getDomain());
-        if (null != table) {
-            table.updateGroup(group);
+        if (null == table) {
+            table = new GroupTable(group.getDomain(), this.groupCache, this.storage);
+            this.activeGroupTables.put(table.getDomain(), table);
         }
+        table.putGroup(group);
 
         // 向群成员发送事件
         for (Contact member : group.getMembers()) {
@@ -558,6 +573,10 @@ public class ContactManager implements CelletAdapterListener {
             this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
         }
 
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "Group created : " + group.getUniqueKey() + " - \"" + group.getName() + "\"");
+        }
+
         return group;
     }
 
@@ -568,74 +587,32 @@ public class ContactManager implements CelletAdapterListener {
      * @return
      */
     public Group dissolveGroup(final Group group) {
-        // 更新活跃时间戳
-        group.setLastActiveTime(System.currentTimeMillis());
+        // 获取活跃表
+        GroupTable table = this.getGroupTable(group.getDomain());
+
         // 更新状态
-        group.setState(GroupState.Dismissed);
-
-        final MutableGroup mGroup = new MutableGroup();
-
-        // 从缓存里获取群
-        final Object mutex = new Object();
-        LockFuture future = this.groupCache.apply(group.getUniqueKey(), new LockFuture() {
-            @Override
-            public void acquired(String key) {
-                JSONObject data = get();
-                if (null != data) {
-                    Group current = new Group(data);
-                    // 更新状态
-                    current.setState(GroupState.Dismissed);
-                    // 更新时间戳
-                    current.setLastActiveTime(group.getLastActiveTime());
-                    mGroup.set(current);
-                    put(current.toJSON());
-                }
-
-                synchronized (mutex) {
-                    mutex.notify();
-                }
-            }
-        });
-
-        if (null != future) {
-            synchronized (mutex) {
-                try {
-                    mutex.wait(this.syncTimeout);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+        Group current = table.updateState(group, GroupState.Dismissed);
+        if (null == current) {
+            // 系统内没有该群组
+            return null;
         }
-
-        if (mGroup.isNull()) {
-            // 因为缓存里没有数据，更新存储，并从存储里读取
-            Group newGroup = this.storage.updateGroupState(group, true);
-            this.groupCache.applyPut(newGroup.getUniqueKey(), newGroup.toJSON());
-            mGroup.set(newGroup);
-        }
-        else {
-            // 更新存储
-            this.storage.updateGroupState(group, false);
-        }
-
-        Group result = mGroup.get();
-
-        // 更新活跃表
-        GroupTable table = this.activeGroupTables.get(result.getDomain());
-        table.updateGroup(result);
 
         // 向群里的成员发送事件
-        for (Contact member : result.getMembers()) {
-            if (member.equals(result.getOwner())) {
+        for (Contact member : current.getMembers()) {
+            if (member.equals(current.getOwner())) {
                 // 创建群的所有者不进行通知
                 continue;
             }
 
-            ModuleEvent event = new ModuleEvent(NAME, ContactActions.DissolveGroup.name, result.toJSON());
+            ModuleEvent event = new ModuleEvent(NAME, ContactActions.DissolveGroup.name, current.toJSON());
             this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
         }
 
-        return result;
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "Group dissolved : " + current.getUniqueKey() + " - \"" + current.getName() + "\"");
+        }
+
+        return current;
     }
 
     /**
@@ -664,7 +641,7 @@ public class ContactManager implements CelletAdapterListener {
         GroupTable groupTable = this.activeGroupTables.get(contact.getDomain());
         if (null == groupTable) {
             Domain domain = new Domain(contact.getDomain().getName().toString());
-            this.activeGroupTables.put(domain, new GroupTable(domain));
+            this.activeGroupTables.put(domain, new GroupTable(domain, this.groupCache, this.storage));
         }
     }
 
@@ -693,6 +670,15 @@ public class ContactManager implements CelletAdapterListener {
         }
 
         this.tokenContactMap.remove(token);
+    }
+
+    private GroupTable getGroupTable(final Domain domain) {
+        GroupTable table = this.activeGroupTables.get(domain);
+        if (null == table) {
+            table = new GroupTable(domain, this.groupCache, this.storage);
+            this.activeGroupTables.put(table.getDomain(), table);
+        }
+        return table;
     }
 
     /**

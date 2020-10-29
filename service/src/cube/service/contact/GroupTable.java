@@ -26,8 +26,11 @@
 
 package cube.service.contact;
 
+import cell.adapter.extra.memory.SharedMemory;
+import cell.util.json.JSONObject;
 import cube.common.Domain;
 import cube.common.entity.Group;
+import cube.common.entity.GroupState;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,19 +41,180 @@ public class GroupTable {
 
     private Domain domain;
 
+    private SharedMemory cache;
+
+    private ContactStorage storage;
+
     protected ConcurrentHashMap<Long, Group> groups;
 
-    public GroupTable(Domain domain) {
+    public GroupTable(Domain domain, SharedMemory cache, ContactStorage storage) {
         this.domain = domain;
+        this.cache = cache;
+        this.storage = storage;
         this.groups = new ConcurrentHashMap<>();
+    }
+
+    public Domain getDomain() {
+        return this.domain;
     }
 
     public Group getGroup(Long id) {
         return this.groups.get(id);
     }
 
-    public void updateGroup(Group group) {
+    public void putGroup(Group group) {
         this.groups.put(group.getId(), group);
     }
 
+    /**
+     * 更新群组。对群组进行比较，如果群组数据发生变化，则成为脏数据，由管理器进行更新
+     * @param group
+     * @return
+     */
+    public Group updateGroup(Group group) {
+        Group current = refresh(group);
+        if (null == current) {
+            this.groups.remove(group.getId());
+            return null;
+        }
+
+        boolean modified = false;
+
+        if (!current.getName().equals(group.getName())) {
+            modified = true;
+            current.setName(group.getName());
+        }
+
+        if (!current.getOwner().equals(group.getOwner())) {
+            modified = true;
+            current.setOwner(group.getOwner());
+        }
+
+        if (current.getLastActiveTime() != group.getLastActiveTime()) {
+            modified = true;
+            current.setLastActiveTime(group.getLastActiveTime());
+        }
+
+        JSONObject context = group.getContext();
+        if (null != context) {
+            if (null == current.getContext()) {
+                modified = true;
+                current.setContext(context);
+            }
+            else {
+                JSONObject currentCtx = current.getContext();
+                if (!currentCtx.toString().equals(context.toString())) {
+                    modified = true;
+                    current.setContext(context);
+                }
+            }
+        }
+
+        if (modified) {
+            this.cache.applyPut(current.getUniqueKey(), current.toJSON());
+            this.storage.writeGroup(current);
+        }
+
+        this.groups.put(current.getId(), current);
+
+        return current;
+    }
+
+    /**
+     * 更新状态。
+     *
+     * @param group
+     * @param state
+     * @return
+     */
+    public Group updateState(Group group, GroupState state) {
+        Group current = refresh(group);
+        if (null == current) {
+            this.groups.remove(group.getId());
+            return null;
+        }
+
+        boolean modified = false;
+        if (current.getState() != state) {
+            modified = true;
+        }
+
+        if (modified) {
+            current.setLastActiveTime(System.currentTimeMillis());
+            current.setState(state);
+
+            if (group != current) {
+                group.setLastActiveTime(current.getLastActiveTime());
+                group.setState(current.getState());
+            }
+
+            this.cache.applyPut(current.getUniqueKey(), current.toJSON());
+            this.storage.updateGroupState(current, false);
+        }
+
+        this.groups.put(current.getId(), current);
+
+        return current;
+    }
+
+    /**
+     *
+     * @param group
+     * @param timestamp
+     * @return
+     */
+    public Group updateActiveTime(Group group, long timestamp) {
+        Group current = refresh(group);
+        if (null == current) {
+            this.groups.remove(group.getId());
+            return null;
+        }
+
+        boolean modified = false;
+        if (current.getLastActiveTime() != timestamp) {
+            modified = true;
+        }
+
+        if (modified) {
+            current.setLastActiveTime(timestamp);
+
+            if (group != current) {
+                group.setLastActiveTime(timestamp);
+            }
+
+            this.cache.applyPut(current.getUniqueKey(), current.toJSON());
+            this.storage.updateGroupActiveName(current);
+        }
+
+        this.groups.put(current.getId(), current);
+
+        return current;
+    }
+
+    /**
+     *
+     * @param group
+     * @return
+     */
+    private Group refresh(Group group) {
+        Group result = null;
+
+        // 从集群里获取
+        JSONObject data = this.cache.applyGet(group.getUniqueKey());
+        if (null == data) {
+            // 缓存里没有，从存储里读取
+            result = this.storage.readGroup(group.getDomain().getName(), group.getId());
+            if (null == result) {
+                // 存储里没有
+                return null;
+            }
+
+            this.cache.applyPut(result.getUniqueKey(), result.toJSON());
+        }
+        else {
+            result = new Group(data);
+        }
+
+        return result;
+    }
 }

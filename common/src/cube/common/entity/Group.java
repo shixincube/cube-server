@@ -124,6 +124,15 @@ public class Group extends Contact implements Comparable<Group> {
     }
 
     /**
+     * 设置群的所有人。
+     *
+     * @param owner
+     */
+    public void setOwner(Contact owner) {
+        this.owner = owner;
+    }
+
+    /**
      * 返回群的创建时间。
      *
      * @return
@@ -277,6 +286,19 @@ public class Group extends Contact implements Comparable<Group> {
         return json;
     }
 
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toCompactJSON();
+        try {
+            json.put("owner", this.owner.toCompactJSON());
+            json.put("creation", this.creationTime);
+            json.put("lastActive", this.lastActiveTime);
+            json.put("state", this.state.getCode());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
+
     @Override
     public int compareTo(Group other) {
         return (int)(other.lastActiveTime - this.lastActiveTime);
@@ -294,20 +316,6 @@ public class Group extends Contact implements Comparable<Group> {
         }
         else {
             return false;
-        }
-    }
-
-    /**
-     * 更新状态。
-     *
-     * @param json
-     * @param newState
-     */
-    public static void updateState(JSONObject json, GroupState newState) {
-        try {
-            json.put("state", newState.getCode());
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
     }
 }

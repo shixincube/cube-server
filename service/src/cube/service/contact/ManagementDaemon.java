@@ -26,8 +26,11 @@
 
 package cube.service.contact;
 
+import cube.common.entity.Group;
+
 /**
  * 管理器守护线程。
+ * 不使用系统的定时器机制，而使用线程自旋方式，让整个任务始终持有时间片。
  */
 public class ManagementDaemon extends Thread {
 
@@ -35,10 +38,19 @@ public class ManagementDaemon extends Thread {
 
     private boolean spinning = true;
 
-    private long spinningSleep = 10L * 1000L;
+    private final long spinningSleep = 10L * 1000L;
 
-    private int onlineContactTick = 60;
-    private int onlineContactTickCount = 0;
+    /**
+     * 间隔 10 分钟，即 600 秒
+     */
+    private int contactTick = 60;
+    private int contactTickCount = 0;
+
+    /**
+     * 间隔 5 分钟，即 300 秒
+     */
+    private int groupTick = 30;
+    private int groupTickCount = 0;
 
     public ManagementDaemon(ContactManager manager) {
         this.manager = manager;
@@ -55,10 +67,16 @@ public class ManagementDaemon extends Thread {
                 e.printStackTrace();
             }
 
-            ++this.onlineContactTickCount;
-            if (this.onlineContactTickCount >= this.onlineContactTick) {
-                this.onlineContactTickCount = 0;
-                this.processOnlineContacts();
+            ++this.contactTickCount;
+            if (this.contactTickCount >= this.contactTick) {
+                this.contactTickCount = 0;
+                this.processContacts();
+            }
+
+            ++this.groupTickCount;
+            if (this.groupTickCount >= this.groupTick) {
+                this.groupTickCount = 0;
+                this.processGroups();
             }
         }
     }
@@ -67,7 +85,10 @@ public class ManagementDaemon extends Thread {
         this.spinning = false;
     }
 
-    private void processOnlineContacts() {
-//        ConcurrentHashMap
+    private void processContacts() {
+    }
+
+    private void processGroups() {
+
     }
 }

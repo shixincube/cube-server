@@ -26,5 +26,69 @@
 
 package cube.service.test;
 
+import cell.util.CachedQueueExecutor;
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
+import cube.common.entity.Group;
+import cube.service.contact.ContactStorage;
+import cube.storage.StorageType;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+
+/**
+ * 联系人存储工具。
+ */
 public class ContactStorageTool {
+
+    private ExecutorService executor;
+
+    private ContactStorage storage;
+
+    public ContactStorageTool() {
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(1);
+
+        JSONObject config = new JSONObject();
+        try {
+            config.put("file", "storage/ContactService.db");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        this.storage = new ContactStorage(this.executor, StorageType.SQLite, config);
+    }
+
+    public String printGroups(String domainName, Long memberId) {
+        StringBuilder buf = new StringBuilder();
+
+        List<Group> list = this.storage.readGroupsWithMember(domainName, memberId, 0, System.currentTimeMillis());
+        for (Group group : list) {
+            buf.append(group.toCompactJSON());
+            buf.append("\n");
+        }
+
+        return buf.toString();
+    }
+
+    public void open() {
+        this.storage.open();
+
+        List<String> domainList = new ArrayList<>();
+        domainList.add("shixincube.com");
+        this.storage.execSelfChecking(domainList);
+    }
+
+    public void close() {
+        this.storage.close();
+        this.executor.shutdown();
+    }
+
+    public static void main(String[] args) {
+        ContactStorageTool tool = new ContactStorageTool();
+        tool.open();
+
+        System.out.println(tool.printGroups("shixincube.com", 50001001L));
+
+        tool.close();
+    }
 }
