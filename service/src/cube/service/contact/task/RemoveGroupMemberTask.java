@@ -103,23 +103,8 @@ public class RemoveGroupMemberTask extends ServiceTask {
             return;
         }
 
-        JSONObject payload = new JSONObject();
-        try {
-            // group
-            payload.put("group", bundle.group.toJSON());
-
-            // removedMemberList
-            JSONArray removedMemberList = new JSONArray();
-            for (Contact member : bundle.members) {
-                removedMemberList.put(member.toCompactJSON());
-            }
-            payload.put("removedMemberList", removedMemberList);
-
-            // operator
-            payload.put("operator", bundle.operator.toCompactJSON());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        // 返回的数据负载
+        JSONObject payload = bundle.toJSON();
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, payload));

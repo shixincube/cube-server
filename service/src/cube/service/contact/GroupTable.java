@@ -194,6 +194,43 @@ public class GroupTable {
     }
 
     /**
+     * 添加群组成员。
+     *
+     * @param group
+     * @param addedContactList
+     * @param operator
+     * @return
+     */
+    public Group addGroupMembers(Group group, List<Contact> addedContactList, Contact operator) {
+        Group current = refresh(group);
+        if (null == current) {
+            this.groups.remove(group.getId());
+            return null;
+        }
+
+        // 添加成员
+        for (Contact member : addedContactList) {
+            current.addMember(member);
+        }
+
+        // 更新时间戳
+        current.setLastActiveTime(System.currentTimeMillis());
+
+        // 更新缓存
+        this.cache.applyPut(current.getUniqueKey(), current.toJSON());
+
+        this.storage.addGroupMembers(current, addedContactList, operator.getId(), new Runnable() {
+            @Override
+            public void run() {
+                storage.updateGroupActiveName(current);
+            }
+        });
+
+        this.groups.put(current.getId(), current);
+        return current;
+    }
+
+    /**
      * 移除群组成员。
      *
      * @param group

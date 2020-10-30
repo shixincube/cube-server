@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Packet;
@@ -38,13 +39,17 @@ import cube.common.entity.Contact;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
+import cube.service.contact.GroupBundle;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * 获取联系人信息任务。
+ * 添加群成员任务。
  */
-public class GetContactTask extends ServiceTask {
+public class AddGroupMemberTask extends ServiceTask {
 
-    public GetContactTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
+    public AddGroupMemberTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
 
@@ -55,23 +60,51 @@ public class GetContactTask extends ServiceTask {
 
         JSONObject data = packet.data;
 
-        Long id = null;
-        String domain = null;
+        String tokenCode = this.getTokenCode(action);
+        Contact contact = ContactManager.getInstance().getContact(tokenCode);
+        if (null == contact) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.NoSignIn.code, data));
+            return;
+        }
+
+        // 域
+        String domain = contact.getDomain().getName();
+
+        Long groupId = null;
+        List<Long> memberIdList = new ArrayList<>();
+        Contact operator = null;
         try {
-            id = data.getLong("id");
-            domain = data.getString("domain");
+            groupId = data.getLong("groupId");
+
+            JSONArray list = data.getJSONArray("memberIdList");
+            for (int i = 0; i < list.length(); ++i) {
+                memberIdList.add(list.getLong(i));
+            }
+
+            JSONObject operatorJson = data.getJSONObject("operator");
+            operator = new Contact(operatorJson, domain);
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        Contact contact = ContactManager.getInstance().getContact(domain, id);
-        if (null == contact) {
+        if (memberIdList.isEmpty()) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));
+            return;
+        }
+
+        GroupBundle bundle = ContactManager.getInstance().addGroupMembers(domain, groupId, memberIdList, operator);
+        if (null == bundle) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
             return;
         }
 
+        // 返回的数据负载
+        JSONObject payload = bundle.toJSON();
+
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, contact.toJSON()));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, payload));
     }
 }

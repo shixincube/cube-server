@@ -92,6 +92,8 @@ public class ContactStorage {
             new StorageField("contact_id", LiteralBase.LONG),
             new StorageField("contact_name", LiteralBase.STRING),
             new StorageField("contact_context", LiteralBase.STRING),
+            new StorageField("adding_time", LiteralBase.LONG),
+            new StorageField("adding_operator", LiteralBase.LONG),
             new StorageField("removing_time", LiteralBase.LONG),
             new StorageField("removing_operator", LiteralBase.LONG)
             //new StorageField("reserved", LiteralBase.STRING)
@@ -281,7 +283,9 @@ public class ContactStorage {
                                         new StorageField("contact_id", LiteralBase.LONG, contact.getId()),
                                         new StorageField("contact_name", LiteralBase.STRING, contact.getName()),
                                         new StorageField("contact_context", LiteralBase.STRING,
-                                                (null == contact.getContext()) ? null : contact.getContext().toString())
+                                                (null == contact.getContext()) ? null : contact.getContext().toString()),
+                                        new StorageField("adding_time", LiteralBase.LONG, group.getLastActiveTime()),
+                                        new StorageField("adding_operator", LiteralBase.LONG, group.getOwner().getId())
                                 };
                                 data.add(fields);
                             }
@@ -520,23 +524,37 @@ public class ContactStorage {
         }
     }
 
-    public void addGroupMember(final Group group, final Contact member, final Runnable completed) {
+    /**
+     * 添加群成员。
+     *
+     * @param group
+     * @param memberList
+     * @param operatorId
+     * @param completed
+     */
+    public void addGroupMembers(final Group group, final List<Contact> memberList, final Long operatorId, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
                 String groupMemberTable = groupMemberTableNameMap.get(group.getDomain().getName());
 
-                StorageField[] fields = new StorageField[] {
-                        new StorageField("group", LiteralBase.LONG, group.getId()),
-                        new StorageField("contact_id", LiteralBase.LONG, member.getId()),
-                        new StorageField("contact_name", LiteralBase.STRING, member.getName()),
-                        new StorageField("contact_context", LiteralBase.STRING,
-                                (null == member.getContext()) ? null : member.getContext().toString())
-                };
+                Long time = System.currentTimeMillis();
 
-                // 插入数据
-                synchronized (storage) {
-                    storage.executeInsert(groupMemberTable, fields);
+                for (Contact member : memberList) {
+                    StorageField[] fields = new StorageField[]{
+                            new StorageField("group", LiteralBase.LONG, group.getId()),
+                            new StorageField("contact_id", LiteralBase.LONG, member.getId()),
+                            new StorageField("contact_name", LiteralBase.STRING, member.getName()),
+                            new StorageField("contact_context", LiteralBase.STRING,
+                                    (null == member.getContext()) ? null : member.getContext().toString()),
+                            new StorageField("adding_time", LiteralBase.LONG, time),
+                            new StorageField("adding_operator", LiteralBase.LONG, operatorId)
+                    };
+
+                    // 插入数据
+                    synchronized (storage) {
+                        storage.executeInsert(groupMemberTable, fields);
+                    }
                 }
 
                 if (null != completed) {
@@ -546,6 +564,14 @@ public class ContactStorage {
         });
     }
 
+    /**
+     * 删除群成员。
+     *
+     * @param group
+     * @param memberList
+     * @param operatorId
+     * @param completed
+     */
     public void removeGroupMembers(final Group group, final List<Contact> memberList, final Long operatorId, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
@@ -679,6 +705,12 @@ public class ContactStorage {
                     }),
                     new StorageField("contact_context", LiteralBase.STRING, new Constraint[] {
                             Constraint.DEFAULT_NULL
+                    }),
+                    new StorageField("adding_time", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("adding_operator", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
                     }),
                     new StorageField("removing_time", LiteralBase.LONG, new Constraint[] {
                             Constraint.DEFAULT_0

@@ -211,12 +211,13 @@ public class Group extends Contact implements Comparable<Group> {
         return false;
     }
 
-    public void addMember(Contact contact) {
+    public Contact addMember(Contact contact) {
         if (this.members.contains(contact)) {
-            return;
+            return null;
         }
 
         this.members.add(contact);
+        return contact;
     }
 
     public Contact removeMember(Long contactId) {

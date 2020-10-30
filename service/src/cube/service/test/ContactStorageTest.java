@@ -149,8 +149,8 @@ public class ContactStorageTest {
         System.out.println("testRead - OK");
     }
 
-    public void testWriteMember() {
-        System.out.println(this.getClass().getName() + " testWriteMember");
+    public void testAddMember() {
+        System.out.println(this.getClass().getName() + " testAddMember");
 
         AtomicBoolean completed = new AtomicBoolean(false);
 
@@ -158,10 +158,12 @@ public class ContactStorageTest {
         this.group.addMember(member);
 
         long time = System.currentTimeMillis();
-        this.storage.addGroupMember(this.group, member, new Runnable() {
+        ArrayList<Contact> members = new ArrayList<>();
+        members.add(member);
+        this.storage.addGroupMembers(this.group, members, this.group.getOwner().getId(), new Runnable() {
             @Override
             public void run() {
-                System.out.println("testWriteMember: " + (System.currentTimeMillis() - time) + " ms");
+                System.out.println("testAddMember: " + (System.currentTimeMillis() - time) + " ms");
                 completed.set(true);
             }
         });
@@ -181,11 +183,11 @@ public class ContactStorageTest {
             return;
         }
 
-        System.out.println("testWriteMember - OK");
+        System.out.println("testAddMember - OK");
     }
 
-    public void testDeleteMember() {
-        System.out.println(this.getClass().getName() + " testDeleteMember");
+    public void testRemoveMember() {
+        System.out.println(this.getClass().getName() + " testRemoveMember");
 
         AtomicBoolean completed = new AtomicBoolean(false);
 
@@ -197,7 +199,7 @@ public class ContactStorageTest {
         this.storage.removeGroupMembers(this.group, members, this.group.getOwner().getId(), new Runnable() {
             @Override
             public void run() {
-                System.out.println("testDeleteMember: " + (System.currentTimeMillis() - time) + " ms");
+                System.out.println("testRemoveMember: " + (System.currentTimeMillis() - time) + " ms");
                 completed.set(true);
             }
         });
@@ -217,7 +219,7 @@ public class ContactStorageTest {
             return;
         }
 
-        System.out.println("testDeleteMember - OK");
+        System.out.println("testRemoveMember - OK");
     }
 
     public void testReadGroupList() {
@@ -243,9 +245,9 @@ public class ContactStorageTest {
 
         testCase.testRead();
 
-        testCase.testWriteMember();
+        testCase.testAddMember();
 
-        testCase.testDeleteMember();
+        testCase.testRemoveMember();
 
         testCase.testReadGroupList();
 

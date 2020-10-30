@@ -26,6 +26,10 @@
 
 package cube.service.contact;
 
+import cell.util.json.JSONArray;
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
+import cube.common.JSONable;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
 
@@ -35,7 +39,7 @@ import java.util.List;
 /**
  * 群操作时用户捆绑相关成员的元素。
  */
-public class GroupBundle {
+public class GroupBundle implements JSONable {
 
     public Group group;
 
@@ -52,5 +56,30 @@ public class GroupBundle {
     public GroupBundle(Group group, List<Contact> members) {
         this.group = group;
         this.members = new ArrayList<>(members);
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        try {
+            // group
+            json.put("group", this.group.toJSON());
+
+            // members
+            JSONArray memberList = new JSONArray();
+            for (Contact member : this.members) {
+                memberList.put(member.toCompactJSON());
+            }
+            json.put("modified", memberList);
+
+            // operator
+            if (null != this.operator) {
+                json.put("operator", this.operator.toCompactJSON());
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return json;
     }
 }

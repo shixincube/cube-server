@@ -220,7 +220,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         }
         else if (message.getSource().longValue() > 0) {
             // 进行消息的群组管理
-            Group group = ContactManager.getInstance().getGroup(message.getSource(), message.getDomain());
+            Group group = ContactManager.getInstance().getGroup(message.getSource(), message.getDomain().getName());
             if (null != group) {
                 if (group.getState() == GroupState.Normal) {
                     Long senderId = message.getFrom();
@@ -356,7 +356,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 // 判断是否是推送给 TO 的消息还是推送给 FROM
                 if (id.longValue() == message.getTo().longValue()) {
                     // 将消息发送给目标设备
-                    Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain(), message.getTo());
+                    Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(), message.getTo());
                     if (null != contact) {
                         for (Device device : contact.getDeviceList()) {
                             TalkContext talkContext = device.getTalkContext();
@@ -371,7 +371,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 }
                 else if (id.longValue() == message.getFrom().longValue()) {
                     // 将消息发送给源联系人的其他设备
-                    Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain(), message.getFrom());
+                    Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(), message.getFrom());
                     if (null != contact) {
                         for (Device device : contact.getDeviceList()) {
                             if (device.equals(message.getSourceDevice())) {

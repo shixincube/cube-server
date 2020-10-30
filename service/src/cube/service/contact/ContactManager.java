@@ -47,7 +47,10 @@ import cube.common.ModuleEvent;
 import cube.common.Packet;
 import cube.common.UniqueKey;
 import cube.common.action.ContactActions;
-import cube.common.entity.*;
+import cube.common.entity.Contact;
+import cube.common.entity.Device;
+import cube.common.entity.Group;
+import cube.common.entity.GroupState;
 import cube.common.state.ContactStateCode;
 import cube.core.Kernel;
 import cube.service.Director;
@@ -87,7 +90,7 @@ public class ContactManager implements CelletAdapterListener {
     /**
      * 在线的联系人表。
      */
-    protected ConcurrentHashMap<Domain, ContactTable> onlineTables;
+    protected ConcurrentHashMap<String, ContactTable> onlineTables;
 
     /**
      * 令牌码对应联系人和设备关系。
@@ -373,11 +376,11 @@ public class ContactManager implements CelletAdapterListener {
     /**
      * 获取联系人。
      *
-     * @param id
      * @param domain
+     * @param id
      * @return
      */
-    public Contact getContact(Long id, String domain) {
+    public Contact getContact(String domain, Long id) {
         String key = UniqueKey.make(id, domain);
         JSONObject data = this.contactCache.applyGet(key);
         if (null != data) {
@@ -397,12 +400,12 @@ public class ContactManager implements CelletAdapterListener {
     /**
      * 获取指定的在线联系人。
      *
-     * @param domain
+     * @param domainName
      * @param id
      * @return
      */
-    public Contact getOnlineContact(Domain domain, Long id) {
-        ContactTable table = this.onlineTables.get(domain);
+    public Contact getOnlineContact(String domainName, Long id) {
+        ContactTable table = this.onlineTables.get(domainName);
         if (null == table) {
             return null;
         }
@@ -434,7 +437,7 @@ public class ContactManager implements CelletAdapterListener {
             }
         });
 
-        ContactTable table = this.onlineTables.get(new Domain(domainName));
+        ContactTable table = this.onlineTables.get(domainName);
         if (null != table) {
             Contact contact = table.get(contactId);
             if (null != contact) {
@@ -474,13 +477,11 @@ public class ContactManager implements CelletAdapterListener {
      * 获取群组。
      *
      * @param id
-     * @param domain
+     * @param domainName
      * @return
      */
-    public Group getGroup(Long id, Domain domain) {
-        String domainName = domain.getName();
-
-        GroupTable table = this.activeGroupTables.get(domain.getName());
+    public Group getGroup(Long id, String domainName) {
+        GroupTable table = this.activeGroupTables.get(domainName);
         if (null != table) {
             Group group = table.getGroup(id);
             if (null != group) {
@@ -507,17 +508,6 @@ public class ContactManager implements CelletAdapterListener {
         }
 
         return null;
-    }
-
-    /**
-     * 获取群组。
-     *
-     * @param id
-     * @param domainName
-     * @return
-     */
-    public Group getGroup(Long id, String domainName) {
-        return this.getGroup(id, new Domain(domainName));
     }
 
     /**
@@ -616,7 +606,63 @@ public class ContactManager implements CelletAdapterListener {
     }
 
     /**
-     * 移除群组内的成员。
+     * 添加群组成员。
+     *
+     * @param domain
+     * @param groupId
+     * @param memberIdList
+     * @param operator
+     * @return
+     */
+    public GroupBundle addGroupMembers(String domain, Long groupId, List<Long> memberIdList, Contact operator) {
+        Group group = this.getGroup(groupId, domain);
+        if (null == group) {
+            Logger.w(this.getClass(), "Add group member : can not find group " + groupId);
+            return null;
+        }
+
+        ArrayList<Contact> addedList = new ArrayList<>();
+        for (Long memberId : memberIdList) {
+            Contact contact = this.getOnlineContact(domain, memberId);
+            if (null == contact) {
+                contact = this.getContact(domain, memberId);
+            }
+
+            Contact addedContact = group.addMember(contact);
+            if (null == addedContact) {
+                Logger.w(this.getClass(), "Add group member : try to add duplicative member - " + groupId);
+                continue;
+            }
+
+            addedList.add(addedContact);
+        }
+
+        GroupTable gt = this.getGroupTable(domain);
+        Group current = gt.addGroupMembers(group, addedList, operator);
+        if (null == current) {
+            Logger.w(this.getClass(), "Add group member : update cache & storage failed - " + groupId);
+            return null;
+        }
+
+        GroupBundle bundle = new GroupBundle(current, addedList);
+        bundle.operator = operator;
+
+        // 向群里的成员发送事件
+        for (Contact member : current.getMembers()) {
+            ModuleEvent event = new ModuleEvent(NAME, ContactActions.AddGroupMember.name, bundle.toJSON());
+            this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
+        }
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "Add group member : " + current.getUniqueKey() + " - \"" + current.getName() + "\"");
+        }
+
+        return bundle;
+    }
+
+    /**
+     * 移除群组成员。
+     *
      * @param domain
      * @param groupId
      * @param memberIdList
@@ -630,7 +676,8 @@ public class ContactManager implements CelletAdapterListener {
             return null;
         }
 
-        Logger.d(this.getClass(), "Remove members: " + memberIdList.toString());
+        // 最近的成员列表
+        List<Contact> recentMembers = group.getMembers();
 
         ArrayList<Contact> removedList = new ArrayList<>();
         for (Long memberId : memberIdList) {
@@ -658,6 +705,16 @@ public class ContactManager implements CelletAdapterListener {
         GroupBundle bundle = new GroupBundle(current, removedList);
         bundle.operator = operator;
 
+        // 向群里的成员发送事件，使用最近列表
+        for (Contact member : recentMembers) {
+            ModuleEvent event = new ModuleEvent(NAME, ContactActions.RemoveGroupMember.name, bundle.toJSON());
+            this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
+        }
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "Remove group member : " + current.getUniqueKey() + " - \"" + current.getName() + "\"");
+        }
+
         return bundle;
     }
 
@@ -672,10 +729,10 @@ public class ContactManager implements CelletAdapterListener {
         // 订阅该用户事件
         this.contactsAdapter.subscribe(contact.getUniqueKey());
 
-        ContactTable table = this.onlineTables.get(contact.getDomain());
+        ContactTable table = this.onlineTables.get(contact.getDomain().getName());
         if (null == table) {
             table = new ContactTable(new Domain(contact.getDomain().getName().toString()));
-            this.onlineTables.put(table.getDomain(), table);
+            this.onlineTables.put(table.getDomain().getName(), table);
         }
         // 记录联系人的通信上下文
         Contact activeContact = table.add(contact, activeDevice);
@@ -699,7 +756,7 @@ public class ContactManager implements CelletAdapterListener {
      * @param activeDevice
      */
     private synchronized void repeal(Contact contact, String token, Device activeDevice) {
-        ContactTable table = this.onlineTables.get(contact.getDomain());
+        ContactTable table = this.onlineTables.get(contact.getDomain().getName());
 
         if (contact.numDevices() == 1) {
             // 退订该用户事件
@@ -768,12 +825,14 @@ public class ContactManager implements CelletAdapterListener {
             // 取主键的 ID
             Long id = (Long) key[0];
             // 取主键的域
-            Domain domain = new Domain((String) key[1]);
+            String domain = (String) key[1];
 
             ModuleEvent event = new ModuleEvent(jsonObject);
             String eventName = event.getEventName();
             if (eventName.equals(ContactActions.CreateGroup.name)
-                || eventName.equals(ContactActions.DissolveGroup.name)) {
+                || eventName.equals(ContactActions.DissolveGroup.name)
+                || eventName.equals(ContactActions.AddGroupMember.name)
+                || eventName.equals(ContactActions.RemoveGroupMember.name)) {
                 // 获取在线的联系人信息
                 Contact contact = this.getOnlineContact(domain, id);
                 if (null == contact) {

@@ -34,7 +34,6 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
-import cube.common.Domain;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
@@ -78,7 +77,7 @@ public class PullTask extends ServiceTask {
         }
 
         // 获取联系人
-        Contact contact = ContactManager.getInstance().getOnlineContact(new Domain(domainName), id);
+        Contact contact = ContactManager.getInstance().getOnlineContact(domainName, id);
         if (null == contact) {
             // 应答
             this.cellet.speak(this.talkContext,
