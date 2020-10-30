@@ -223,8 +223,14 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             Group group = ContactManager.getInstance().getGroup(message.getSource(), message.getDomain());
             if (null != group) {
                 if (group.getState() == GroupState.Normal) {
+                    Long senderId = message.getFrom();
                     List<Contact> list = group.getMembers();
                     for (Contact contact : list) {
+                        if (contact.getId().longValue() == senderId.longValue()) {
+                            // 跳过发件人
+                            continue;
+                        }
+
                         // 创建副本
                         Message copy = new Message(message);
                         // 更新 To 数据
