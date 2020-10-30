@@ -31,15 +31,20 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
+import cube.common.entity.GroupState;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
 import cube.service.contact.GroupBundle;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 移除群成员任务。
@@ -69,22 +74,54 @@ public class RemoveGroupMemberTask extends ServiceTask {
         String domain = contact.getDomain().getName();
 
         Long groupId = null;
-        Long memberId = null;
+        List<Long> memberIdList = new ArrayList<>();
+        Contact operator = null;
         try {
             groupId = data.getLong("groupId");
-            memberId = data.getLong("memberId");
+
+            JSONArray list = data.getJSONArray("memberIdList");
+            for (int i = 0; i < list.length(); ++i) {
+                memberIdList.add(list.getLong(i));
+            }
+
+            JSONObject operatorJson = data.getJSONObject("operator");
+            operator = new Contact(operatorJson, domain);
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        GroupBundle groupBundle = ContactManager.getInstance().removeGroupMember(domain, groupId, memberId);
-        if (null == groupBundle) {
+        if (memberIdList.isEmpty()) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));
+            return;
+        }
+
+        GroupBundle bundle = ContactManager.getInstance().removeGroupMembers(domain, groupId, memberIdList, operator);
+        if (null == bundle) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
             return;
         }
 
-//        this.cellet.speak(this.talkContext,
-//                this.makeResponse(action, packet, ContactStateCode.Ok.code, group.toJSON()));
+        JSONObject payload = new JSONObject();
+        try {
+            // group
+            payload.put("group", bundle.group.toJSON());
+
+            // removedMemberList
+            JSONArray removedMemberList = new JSONArray();
+            for (Contact member : bundle.members) {
+                removedMemberList.put(member.toCompactJSON());
+            }
+            payload.put("removedMemberList", removedMemberList);
+
+            // operator
+            payload.put("operator", bundle.operator.toCompactJSON());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, payload));
     }
 }

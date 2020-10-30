@@ -158,7 +158,7 @@ public class ContactStorageTest {
         this.group.addMember(member);
 
         long time = System.currentTimeMillis();
-        this.storage.writeGroupMember(this.group, member, new Runnable() {
+        this.storage.addGroupMember(this.group, member, new Runnable() {
             @Override
             public void run() {
                 System.out.println("testWriteMember: " + (System.currentTimeMillis() - time) + " ms");
@@ -192,7 +192,9 @@ public class ContactStorageTest {
         Contact member = this.group.removeMember(this.group.getMembers().get(this.group.numMembers() - 1));
 
         long time = System.currentTimeMillis();
-        this.storage.deleteGroupMember(this.group, member.getId(), this.group.getOwner().getId(), new Runnable() {
+        ArrayList<Contact> members = new ArrayList<>();
+        members.add(member);
+        this.storage.removeGroupMembers(this.group, members, this.group.getOwner().getId(), new Runnable() {
             @Override
             public void run() {
                 System.out.println("testDeleteMember: " + (System.currentTimeMillis() - time) + " ms");

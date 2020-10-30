@@ -338,6 +338,8 @@ public class ContactStorage {
             // 查询群组成员
             groupMemberResult = this.storage.executeQuery(new String[] { groupTable, groupMemberTable },
                     memberFields, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField(groupTable, "id", LiteralBase.LONG, groupId)),
+                            Conditional.createAnd(),
                             Conditional.createEqualTo(new StorageField(groupTable, "id", LiteralBase.LONG),
                                     new StorageField(groupMemberTable, "group", LiteralBase.LONG)),
                             Conditional.createAnd(),
@@ -363,6 +365,7 @@ public class ContactStorage {
                 Long id = fields[1].getLong();
                 String name = fields[2].getString();
                 String context = fields[3].isNullValue() ? null : fields[3].getString();
+
                 Contact contact = new Contact(id, domain, name);
                 if (null != context) {
                     contact.setContext(new JSONObject(context));
@@ -427,11 +430,21 @@ public class ContactStorage {
                             Conditional.createLessThan(new StorageField(groupTable, "last_active", LiteralBase.LONG, endingLastActive))
                     });
 
+            ArrayList<Long> ids = new ArrayList<>(groupsResult.size());
             for (StorageField[] fields : groupsResult) {
                 Long groupId = fields[0].getLong();
+
+                if (ids.contains(groupId)) {
+                    continue;
+                }
+                ids.add(groupId);
+
                 Group group = this.readGroup(domain, groupId);
                 result.add(group);
             }
+
+            ids.clear();
+            ids = null;
         }
 
         return result;
@@ -441,6 +454,11 @@ public class ContactStorage {
 
     }
 
+    /**
+     * 更新群组的最近活跃时间戳。
+     *
+     * @param group
+     */
     public void updateGroupActiveName(final Group group) {
         String domain = group.getDomain().getName();
 
@@ -502,7 +520,7 @@ public class ContactStorage {
         }
     }
 
-    public void writeGroupMember(final Group group, final Contact member, final Runnable completed) {
+    public void addGroupMember(final Group group, final Contact member, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -528,21 +546,25 @@ public class ContactStorage {
         });
     }
 
-    public void deleteGroupMember(final Group group, final Long memberId, final Long operatorId, final Runnable completed) {
+    public void removeGroupMembers(final Group group, final List<Contact> memberList, final Long operatorId, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
                 String groupMemberTable = groupMemberTableNameMap.get(group.getDomain().getName());
 
+                Long time = System.currentTimeMillis();
+
                 synchronized (storage) {
-                    storage.executeUpdate(groupMemberTable, new StorageField[] {
-                            new StorageField("removing_time", LiteralBase.LONG, System.currentTimeMillis()),
-                            new StorageField("removing_operator", LiteralBase.LONG, operatorId)
-                    }, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, group.getId())),
-                            Conditional.createAnd(),
-                            Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, memberId))
-                    });
+                    for (Contact member : memberList) {
+                        storage.executeUpdate(groupMemberTable, new StorageField[] {
+                                new StorageField("removing_time", LiteralBase.LONG, time),
+                                new StorageField("removing_operator", LiteralBase.LONG, operatorId)
+                        }, new Conditional[] {
+                                Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, group.getId())),
+                                Conditional.createAnd(),
+                                Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, member.getId()))
+                        });
+                    }
                 }
 
                 if (null != completed) {

@@ -29,6 +29,7 @@ package cube.service.test;
 import cell.util.CachedQueueExecutor;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.entity.Contact;
 import cube.common.entity.Group;
 import cube.service.contact.ContactStorage;
 import cube.storage.StorageType;
@@ -61,10 +62,25 @@ public class ContactStorageTool {
     public String printGroups(String domainName, Long memberId) {
         StringBuilder buf = new StringBuilder();
 
-        List<Group> list = this.storage.readGroupsWithMember(domainName, memberId, 0, System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        long beginning = now - 7 * 24 * 60 * 60 * 1000L;
+
+        List<Group> list = this.storage.readGroupsWithMember(domainName, memberId, beginning, now);
         for (Group group : list) {
             buf.append(group.toCompactJSON());
             buf.append("\n");
+        }
+
+        return buf.toString();
+    }
+
+    public String printGroupMembers(String domainName, Long groupId) {
+        Group group = this.storage.readGroup(domainName, groupId);
+        StringBuilder buf = new StringBuilder();
+        buf.append(group.toCompactJSON()).append("\n");
+
+        for (Contact member : group.getMembers()) {
+            buf.append(member.toCompactJSON()).append("\n");
         }
 
         return buf.toString();
@@ -88,6 +104,8 @@ public class ContactStorageTool {
         tool.open();
 
         System.out.println(tool.printGroups("shixincube.com", 50001001L));
+
+//        System.out.println(tool.printGroupMembers("shixincube.com", 3960496863L));
 
         tool.close();
     }

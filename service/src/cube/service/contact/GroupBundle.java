@@ -41,9 +41,16 @@ public class GroupBundle {
 
     public List<Contact> members;
 
+    public Contact operator;
+
     public GroupBundle(Group group, Contact member) {
         this.group = group;
         this.members = new ArrayList<>();
         this.members.add(member);
+    }
+
+    public GroupBundle(Group group, List<Contact> members) {
+        this.group = group;
+        this.members = new ArrayList<>(members);
     }
 }

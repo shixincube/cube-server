@@ -29,9 +29,11 @@ package cube.service.contact;
 import cell.adapter.extra.memory.SharedMemory;
 import cell.util.json.JSONObject;
 import cube.common.Domain;
+import cube.common.entity.Contact;
 import cube.common.entity.Group;
 import cube.common.entity.GroupState;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -188,6 +190,43 @@ public class GroupTable {
 
         this.groups.put(current.getId(), current);
 
+        return current;
+    }
+
+    /**
+     * 移除群组成员。
+     *
+     * @param group
+     * @param removedContactList
+     * @param operator
+     * @return
+     */
+    public Group removeGroupMembers(Group group, List<Contact> removedContactList, Contact operator) {
+        Group current = refresh(group);
+        if (null == current) {
+            this.groups.remove(group.getId());
+            return null;
+        }
+
+        // 删除成员
+        for (Contact member : removedContactList) {
+            current.removeMember(member);
+        }
+
+        // 更新时间戳
+        current.setLastActiveTime(System.currentTimeMillis());
+
+        // 更新缓存
+        this.cache.applyPut(current.getUniqueKey(), current.toJSON());
+
+        this.storage.removeGroupMembers(current, removedContactList, operator.getId(), new Runnable() {
+            @Override
+            public void run() {
+                storage.updateGroupActiveName(current);
+            }
+        });
+
+        this.groups.put(current.getId(), current);
         return current;
     }
 

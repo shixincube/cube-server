@@ -97,7 +97,7 @@ public class ContactManager implements CelletAdapterListener {
     /**
      * 处于活跃状态的群组。
      */
-    protected ConcurrentHashMap<Domain, GroupTable> activeGroupTables;
+    protected ConcurrentHashMap<String, GroupTable> activeGroupTables;
 
     /**
      * 联系人数据缓存。
@@ -480,7 +480,7 @@ public class ContactManager implements CelletAdapterListener {
     public Group getGroup(Long id, Domain domain) {
         String domainName = domain.getName();
 
-        GroupTable table = this.activeGroupTables.get(domain);
+        GroupTable table = this.activeGroupTables.get(domain.getName());
         if (null != table) {
             Group group = table.getGroup(id);
             if (null != group) {
@@ -527,7 +527,7 @@ public class ContactManager implements CelletAdapterListener {
      * @param timestamp
      */
     public void updateGroupActiveTime(Group group, long timestamp) {
-        GroupTable table = this.getGroupTable(group.getDomain());
+        GroupTable table = this.getGroupTable(group.getDomain().getName());
 
         // 更新活跃时间
         table.updateActiveTime(group, timestamp);
@@ -555,10 +555,10 @@ public class ContactManager implements CelletAdapterListener {
         this.groupCache.applyPut(group.getUniqueKey(), group.toJSON());
 
         // 写入活跃表
-        GroupTable table = this.activeGroupTables.get(group.getDomain());
+        GroupTable table = this.activeGroupTables.get(group.getDomain().getName());
         if (null == table) {
             table = new GroupTable(group.getDomain(), this.groupCache, this.storage);
-            this.activeGroupTables.put(table.getDomain(), table);
+            this.activeGroupTables.put(table.getDomain().getName(), table);
         }
         table.putGroup(group);
 
@@ -588,7 +588,7 @@ public class ContactManager implements CelletAdapterListener {
      */
     public Group dissolveGroup(final Group group) {
         // 获取活跃表
-        GroupTable table = this.getGroupTable(group.getDomain());
+        GroupTable table = this.getGroupTable(group.getDomain().getName());
 
         // 更新状态
         Group current = table.updateState(group, GroupState.Dismissed);
@@ -615,10 +615,50 @@ public class ContactManager implements CelletAdapterListener {
         return current;
     }
 
-    public GroupBundle removeGroupMember(String domain, Long groupId, Long memberId) {
+    /**
+     * 移除群组内的成员。
+     * @param domain
+     * @param groupId
+     * @param memberIdList
+     * @param operator
+     * @return
+     */
+    public GroupBundle removeGroupMembers(String domain, Long groupId, List<Long> memberIdList, Contact operator) {
         Group group = this.getGroup(groupId, domain);
+        if (null == group) {
+            Logger.w(this.getClass(), "Remove group member : can not find group " + groupId);
+            return null;
+        }
 
-        return null;
+        Logger.d(this.getClass(), "Remove members: " + memberIdList.toString());
+
+        ArrayList<Contact> removedList = new ArrayList<>();
+        for (Long memberId : memberIdList) {
+            if (group.getOwner().getId().longValue() == memberId.longValue()) {
+                Logger.w(this.getClass(), "Remove group member : try to remove owner - " + groupId);
+                continue;
+            }
+
+            Contact removedContact = group.removeMember(memberId);
+            if (null == removedContact) {
+                Logger.w(this.getClass(), "Remove group member : try to remove non-member - " + groupId);
+                continue;
+            }
+
+            removedList.add(removedContact);
+        }
+
+        GroupTable gt = this.getGroupTable(domain);
+        Group current = gt.removeGroupMembers(group, removedList, operator);
+        if (null == current) {
+            Logger.w(this.getClass(), "Remove group member : update cache & storage failed - " + groupId);
+            return null;
+        }
+
+        GroupBundle bundle = new GroupBundle(current, removedList);
+        bundle.operator = operator;
+
+        return bundle;
     }
 
     /**
@@ -644,10 +684,10 @@ public class ContactManager implements CelletAdapterListener {
         this.tokenContactMap.put(token.getCode().toString(), new TokenDevice(activeContact, activeDevice));
 
         // 建立群组缓存
-        GroupTable groupTable = this.activeGroupTables.get(contact.getDomain());
+        GroupTable groupTable = this.activeGroupTables.get(contact.getDomain().getName());
         if (null == groupTable) {
             Domain domain = new Domain(contact.getDomain().getName().toString());
-            this.activeGroupTables.put(domain, new GroupTable(domain, this.groupCache, this.storage));
+            this.activeGroupTables.put(domain.getName(), new GroupTable(domain, this.groupCache, this.storage));
         }
     }
 
@@ -678,11 +718,11 @@ public class ContactManager implements CelletAdapterListener {
         this.tokenContactMap.remove(token);
     }
 
-    private GroupTable getGroupTable(final Domain domain) {
+    private GroupTable getGroupTable(final String domain) {
         GroupTable table = this.activeGroupTables.get(domain);
         if (null == table) {
-            table = new GroupTable(domain, this.groupCache, this.storage);
-            this.activeGroupTables.put(table.getDomain(), table);
+            table = new GroupTable(new Domain(domain), this.groupCache, this.storage);
+            this.activeGroupTables.put(table.getDomain().getName(), table);
         }
         return table;
     }

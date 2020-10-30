@@ -32,6 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
+import cell.util.log.Logger;
 import cube.common.action.ContactActions;
 import cube.service.contact.task.*;
 
@@ -88,11 +89,17 @@ public class ContactServiceCellet extends Cellet {
         else if (ContactActions.DissolveGroup.name.equals(action)) {
             this.executor.execute(new DissolveGroupTask(this, talkContext, primitive));
         }
+        else if (ContactActions.RemoveGroupMember.name.equals(action)) {
+            this.executor.execute(new RemoveGroupMemberTask(this, talkContext, primitive));
+        }
         else if (ContactActions.DeviceTimeout.name.equals(action)) {
             this.executor.execute(new DeviceTimeoutTask(this, talkContext, primitive));
         }
         else if (ContactActions.SignOut.name.equals(action)) {
             this.executor.execute(new SignOutTask(this, talkContext, primitive));
+        }
+        else {
+            Logger.w(this.getClass(), "Unsupported action: " + action);
         }
     }
 }

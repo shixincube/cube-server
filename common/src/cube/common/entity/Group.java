@@ -195,12 +195,37 @@ public class Group extends Contact implements Comparable<Group> {
         return this.members.size();
     }
 
+    /**
+     * 群组内是否包含指定成员。
+     *
+     * @param contactId
+     * @return
+     */
+    public boolean hasMember(Long contactId) {
+        for (int i = 0, size = this.members.size(); i < size; ++i) {
+            Contact member = this.members.get(i);
+            if (member.getId().longValue() == contactId.longValue()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void addMember(Contact contact) {
         if (this.members.contains(contact)) {
             return;
         }
 
         this.members.add(contact);
+    }
+
+    public Contact removeMember(Long contactId) {
+        Contact contact = this.getMember(contactId);
+        if (null == contact) {
+            return null;
+        }
+
+        return this.removeMember(contact);
     }
 
     public Contact removeMember(Contact contact) {
@@ -286,6 +311,7 @@ public class Group extends Contact implements Comparable<Group> {
         return json;
     }
 
+    @Override
     public JSONObject toCompactJSON() {
         JSONObject json = super.toCompactJSON();
         try {
@@ -293,6 +319,17 @@ public class Group extends Contact implements Comparable<Group> {
             json.put("creation", this.creationTime);
             json.put("lastActive", this.lastActiveTime);
             json.put("state", this.state.getCode());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
+
+    public JSONObject toJSON(GroupState state) {
+        JSONObject json = this.toJSON();
+        json.remove("state");
+        try {
+            json.put("state", state.getCode());
         } catch (JSONException e) {
             e.printStackTrace();
         }
