@@ -69,7 +69,7 @@ public class GroupTable {
     }
 
     /**
-     * 更新群组。对群组进行比较，如果群组数据发生变化，则成为脏数据，由管理器进行更新
+     * 更新群组。对群组进行比较，如果群组数据发生变化，则更新。
      * @param group
      * @return
      */
@@ -114,7 +114,7 @@ public class GroupTable {
 
         if (modified) {
             this.cache.applyPut(current.getUniqueKey(), current.toJSON());
-            this.storage.writeGroup(current);
+            this.storage.updateGroupWithoutMember(current);
         }
 
         this.groups.put(current.getId(), current);

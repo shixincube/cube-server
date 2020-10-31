@@ -97,6 +97,11 @@ public enum ContactActions {
     RemoveGroupMember("removeGroupMember"),
 
     /**
+     * 修改群组信息。
+     */
+    ModifyGroup("modifyGroup"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

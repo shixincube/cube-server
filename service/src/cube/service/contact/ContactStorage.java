@@ -454,8 +454,40 @@ public class ContactStorage {
         return result;
     }
 
-    public void updateGroupName(final Group group) {
+    public void updateGroupWithoutMember(final Group group) {
+        String domain = group.getDomain().getName();
+        String groupTable = this.groupTableNameMap.get(domain);
+        String groupMemberTable = this.groupMemberTableNameMap.get(domain);
 
+        Contact owner = group.getOwner();
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (storage) {
+                    storage.executeUpdate(groupTable, new StorageField[] {
+                            new StorageField("name", LiteralBase.STRING, group.getName()),
+                            new StorageField("owner", LiteralBase.LONG, group.getOwner().getId()),
+                            new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
+                            new StorageField("state", LiteralBase.INT, group.getState().getCode()),
+                            new StorageField("context", LiteralBase.STRING,
+                                    (null == group.getContext()) ? null : group.getContext().toString())
+                    }, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
+                    });
+
+                    storage.executeUpdate(groupMemberTable, new StorageField[] {
+                            new StorageField("contact_name", LiteralBase.STRING, owner.getName()),
+                            new StorageField("contact_context", LiteralBase.STRING,
+                                    (null == owner.getContext()) ? null : owner.getContext().toString())
+                    }, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, group.getId())),
+                            Conditional.createAnd(),
+                            Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, owner.getId()))
+                    });
+                }
+            }
+        });
     }
 
     /**
