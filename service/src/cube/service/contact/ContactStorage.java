@@ -541,19 +541,52 @@ public class ContactStorage {
                 Long time = System.currentTimeMillis();
 
                 for (Contact member : memberList) {
-                    StorageField[] fields = new StorageField[]{
-                            new StorageField("group", LiteralBase.LONG, group.getId()),
-                            new StorageField("contact_id", LiteralBase.LONG, member.getId()),
-                            new StorageField("contact_name", LiteralBase.STRING, member.getName()),
-                            new StorageField("contact_context", LiteralBase.STRING,
-                                    (null == member.getContext()) ? null : member.getContext().toString()),
-                            new StorageField("adding_time", LiteralBase.LONG, time),
-                            new StorageField("adding_operator", LiteralBase.LONG, operatorId)
-                    };
-
-                    // 插入数据
+                    // 先查询该成员是否之前就在群里
+                    List<StorageField[]> queryResult = null;
                     synchronized (storage) {
-                        storage.executeInsert(groupMemberTable, fields);
+                        queryResult = storage.executeQuery(groupMemberTable, new StorageField[] {
+                                new StorageField("sn", LiteralBase.LONG)
+                        }, new Conditional[] {
+                                Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, group.getId())),
+                                Conditional.createAnd(),
+                                Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, member.getId()))
+                        });
+                    }
+
+                    if (queryResult.isEmpty()) {
+                        // 没有记录，插入新记录
+                        StorageField[] fields = new StorageField[]{
+                                new StorageField("group", LiteralBase.LONG, group.getId()),
+                                new StorageField("contact_id", LiteralBase.LONG, member.getId()),
+                                new StorageField("contact_name", LiteralBase.STRING, member.getName()),
+                                new StorageField("contact_context", LiteralBase.STRING,
+                                        (null == member.getContext()) ? null : member.getContext().toString()),
+                                new StorageField("adding_time", LiteralBase.LONG, time),
+                                new StorageField("adding_operator", LiteralBase.LONG, operatorId)
+                        };
+
+                        // 插入数据
+                        synchronized (storage) {
+                            storage.executeInsert(groupMemberTable, fields);
+                        }
+                    }
+                    else {
+                        // 已经有记录，则更新记录
+                        Long sn = queryResult.get(0)[0].getLong();
+
+                        synchronized (storage) {
+                            storage.executeUpdate(groupMemberTable, new StorageField[] {
+                                    new StorageField("contact_name", LiteralBase.STRING, member.getName()),
+                                    new StorageField("contact_context", LiteralBase.STRING,
+                                            (null == member.getContext()) ? null : member.getContext().toString()),
+                                    new StorageField("adding_time", LiteralBase.LONG, time),
+                                    new StorageField("adding_operator", LiteralBase.LONG, operatorId),
+                                    new StorageField("removing_time", LiteralBase.LONG, 0L),
+                                    new StorageField("removing_operator", LiteralBase.LONG, 0L)
+                            }, new Conditional[] {
+                                    Conditional.createEqualTo(new StorageField("sn", LiteralBase.LONG, sn))
+                            });
+                        }
                     }
                 }
 

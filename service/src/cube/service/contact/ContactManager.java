@@ -614,7 +614,30 @@ public class ContactManager implements CelletAdapterListener {
      * @param operator
      * @return
      */
-    public GroupBundle addGroupMembers(String domain, Long groupId, List<Long> memberIdList, Contact operator) {
+    public GroupBundle addGroupMembersById(String domain, Long groupId, List<Long> memberIdList, Contact operator) {
+        ArrayList<Contact> memberList = new ArrayList<>(memberIdList.size());
+        for (Long id : memberIdList) {
+            Contact contact = this.getOnlineContact(domain, id);
+            if (null == contact) {
+                contact = this.getContact(domain, id);
+            }
+
+            memberList.add(contact);
+        }
+
+        return this.addGroupMembers(domain, groupId, memberList, operator);
+    }
+
+    /**
+     * 添加群组成员。
+     *
+     * @param domain
+     * @param groupId
+     * @param memberList
+     * @param operator
+     * @return
+     */
+    public GroupBundle addGroupMembers(String domain, Long groupId, List<Contact> memberList, Contact operator) {
         Group group = this.getGroup(groupId, domain);
         if (null == group) {
             Logger.w(this.getClass(), "Add group member : can not find group " + groupId);
@@ -622,12 +645,7 @@ public class ContactManager implements CelletAdapterListener {
         }
 
         ArrayList<Contact> addedList = new ArrayList<>();
-        for (Long memberId : memberIdList) {
-            Contact contact = this.getOnlineContact(domain, memberId);
-            if (null == contact) {
-                contact = this.getContact(domain, memberId);
-            }
-
+        for (Contact contact : memberList) {
             Contact addedContact = group.addMember(contact);
             if (null == addedContact) {
                 Logger.w(this.getClass(), "Add group member : try to add duplicative member - " + groupId);

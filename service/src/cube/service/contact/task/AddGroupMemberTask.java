@@ -72,14 +72,29 @@ public class AddGroupMemberTask extends ServiceTask {
         String domain = contact.getDomain().getName();
 
         Long groupId = null;
-        List<Long> memberIdList = new ArrayList<>();
+        List<Long> memberIdList = null;
+        List<Contact> memberList = null;
         Contact operator = null;
         try {
             groupId = data.getLong("groupId");
 
-            JSONArray list = data.getJSONArray("memberIdList");
-            for (int i = 0; i < list.length(); ++i) {
-                memberIdList.add(list.getLong(i));
+            if (data.has("memberIdList")) {
+                memberIdList = new ArrayList<>();
+
+                JSONArray list = data.getJSONArray("memberIdList");
+                for (int i = 0; i < list.length(); ++i) {
+                    memberIdList.add(list.getLong(i));
+                }
+            }
+            else {
+                memberList = new ArrayList<>();
+
+                JSONArray list = data.getJSONArray("memberList");
+                for (int i = 0; i < list.length(); ++i) {
+                    JSONObject json = list.getJSONObject(i);
+                    Contact member = new Contact(json, domain);
+                    memberList.add(member);
+                }
             }
 
             JSONObject operatorJson = data.getJSONObject("operator");
@@ -88,13 +103,26 @@ public class AddGroupMemberTask extends ServiceTask {
             e.printStackTrace();
         }
 
-        if (memberIdList.isEmpty()) {
+        // 判读参数列表里的成员数组是否为空
+        if (null != memberList && memberList.isEmpty()) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));
+            return;
+        }
+        else if (null != memberIdList && memberIdList.isEmpty()) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));
             return;
         }
 
-        GroupBundle bundle = ContactManager.getInstance().addGroupMembers(domain, groupId, memberIdList, operator);
+        GroupBundle bundle = null;
+        if (null != memberList) {
+            bundle = ContactManager.getInstance().addGroupMembers(domain, groupId, memberList, operator);
+        }
+        else {
+            bundle = ContactManager.getInstance().addGroupMembersById(domain, groupId, memberIdList, operator);
+        }
+
         if (null == bundle) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
