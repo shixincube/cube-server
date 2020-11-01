@@ -35,6 +35,11 @@ import cube.common.JSONable;
 public abstract class Entity implements JSONable {
 
     /**
+     * 实体 ID 。
+     */
+    protected Long id;
+
+    /**
      * 实体创建的时间戳。
      */
     private long timestamp;
@@ -48,14 +53,30 @@ public abstract class Entity implements JSONable {
         this.timestamp = System.currentTimeMillis();
     }
 
-    public Entity(String domainName) {
+    public Entity(Long id) {
+        this.id = id;
+        this.timestamp = System.currentTimeMillis();
+    }
+
+    public Entity(Long id, String domainName) {
+        this.id = id;
         this.timestamp = System.currentTimeMillis();
         this.domain = new Domain(domainName);
     }
 
-    public Entity(Domain domain) {
+    public Entity(Long id, Domain domain) {
+        this.id = id;
         this.timestamp = System.currentTimeMillis();
         this.domain = domain;
+    }
+
+    /**
+     * 获取实体 ID 。
+     *
+     * @return 返回实体 ID 。
+     */
+    public Long getId() {
+        return this.id;
     }
 
     /**

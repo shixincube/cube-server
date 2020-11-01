@@ -38,11 +38,6 @@ import cube.common.UniqueKey;
 public class Message extends Entity implements Comparable<Message> {
 
     /**
-     * 消息 ID 。
-     */
-    private Long id;
-
-    /**
      * 消息负载 JSON 数据。
      */
     private JSONObject payload;
@@ -144,8 +139,9 @@ public class Message extends Entity implements Comparable<Message> {
      * @param src 指定复制源。
      */
     public Message(Message src) {
+        super(src.id);
+
         this.domain = src.domain;
-        this.id = src.id;
         this.from = src.from;
         this.to = src.to;
         this.source = src.source;
@@ -172,8 +168,7 @@ public class Message extends Entity implements Comparable<Message> {
      */
     public Message(String domain, Long id, Long from, Long to, Long source,
                    Long localTimestamp, Long remoteTimestamp, JSONObject sourceDevice, JSONObject payload) {
-        super(domain);
-        this.id = id;
+        super(id, domain);
         this.from = from;
         this.to = to;
         this.source = source;
@@ -188,10 +183,6 @@ public class Message extends Entity implements Comparable<Message> {
 
     public String getUniqueKey() {
         return this.uniqueKey;
-    }
-
-    public Long getId() {
-        return this.id;
     }
 
     public Long getFrom() {

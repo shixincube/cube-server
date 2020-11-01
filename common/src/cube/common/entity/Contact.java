@@ -42,11 +42,6 @@ import java.util.List;
 public class Contact extends Entity {
 
     /**
-     * 联系人 ID 。
-     */
-    private Long id;
-
-    /**
      * 联系人显示名。
      */
     private String name;
@@ -67,16 +62,14 @@ public class Contact extends Entity {
     private String uniqueKey;
 
     public Contact(Long id, String domainName, String name) {
-        super(domainName);
-        this.id = id;
+        super(id, domainName);
         this.uniqueKey = UniqueKey.make(id, domainName);
         this.name = name;
         this.deviceList = new ArrayList<>(1);
     }
 
     public Contact(Long id, Domain domain, String name) {
-        super(domain);
-        this.id = id;
+        super(id, domain);
         this.uniqueKey = UniqueKey.make(id, domain);
         this.name = name;
         this.deviceList = new ArrayList<>(1);
@@ -150,15 +143,6 @@ public class Contact extends Entity {
     }
 
     /**
-     * 获取联系人的 ID 。
-     *
-     * @return 返回联系人的 ID 。
-     */
-    public Long getId() {
-        return this.id;
-    }
-
-    /**
      * 重置 ID 。
      *
      * @param newId
@@ -166,6 +150,10 @@ public class Contact extends Entity {
     public void resetId(Long newId) {
         this.id = newId;
         this.uniqueKey = UniqueKey.make(newId, this.domain);
+    }
+
+    public Long getId() {
+        return this.id;
     }
 
     /**
