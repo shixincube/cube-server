@@ -29,55 +29,55 @@ package cube.core;
 import cell.util.json.JSONObject;
 
 /**
- * 缓存器主键对应的数据值。
+ * 抽象层时序缓存。
  */
-public class CacheValue {
+public abstract class AbstractTimeSeriesCache implements TimeSeriesCache {
 
-    /**
-     * 数据值。
-     */
-    protected JSONObject value;
+    private String name;
 
-    /**
-     * 数据对应的时间戳。
-     */
-    protected long timestamp = 0;
+    private String type;
+
+    private JSONObject config;
 
     /**
      * 构造函数。
      *
-     * @param value 指定数据值。
+     * @param name 缓存名称。
      */
-    public CacheValue(JSONObject value) {
-        this.value = value;
+    public AbstractTimeSeriesCache(String name, String type) {
+        this.name = name;
+        this.type = type;
     }
 
     /**
-     * 构造函数。
-     *
-     * @param value 指定数据值。
-     * @param timestamp 指定时间戳。
+     * {@inheritDoc}
      */
-    public CacheValue(JSONObject value, long timestamp) {
-        this.value = value;
-        this.timestamp = timestamp;
+    @Override
+    public String getName() {
+        return this.name;
     }
 
     /**
-     * 获取 JSON 形式的数据值。
-     *
-     * @return 返回 JSON 形式的数据值。
+     * {@inheritDoc}
      */
-    public JSONObject get() {
-        return this.value;
+    @Override
+    public String getType() {
+        return this.type;
     }
 
     /**
-     * 获取数据的时间戳。
-     *
-     * @return 返回数据的时间戳。
+     * {@inheritDoc}
      */
-    public long getTimestamp() {
-        return this.timestamp;
+    @Override
+    public JSONObject getConfig() {
+        return this.config;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void configure(JSONObject config) {
+        this.config = config;
     }
 }

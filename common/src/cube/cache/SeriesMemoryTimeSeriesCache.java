@@ -26,30 +26,33 @@
 
 package cube.cache;
 
-import cell.adapter.extra.memory.LockFuture;
-import cell.adapter.extra.memory.SharedMemory;
-import cell.adapter.extra.memory.SharedMemoryConfig;
+import cell.adapter.extra.timeseries.SeriesItem;
+import cell.adapter.extra.timeseries.SeriesMemory;
+import cell.adapter.extra.timeseries.SeriesMemoryConfig;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.core.*;
 
-/**
- * Shared Memory 缓存。
- */
-public class SharedMemoryCache extends AbstractCache {
+import java.util.ArrayList;
+import java.util.List;
 
-    public final static String TYPE = "SMC";
+/**
+ * 时序缓存。
+ */
+public class SeriesMemoryTimeSeriesCache extends AbstractTimeSeriesCache {
+
+    public final static String TYPE = "SMTSC";
 
     private String configFile;
 
-    private SharedMemory memory;
+    private SeriesMemory memory;
 
     /**
      * 构造函数。
      *
      * @param name 缓存器名称。
      */
-    public SharedMemoryCache(String name) {
+    public SeriesMemoryTimeSeriesCache(String name) {
         super(name, TYPE);
     }
 
@@ -62,8 +65,8 @@ public class SharedMemoryCache extends AbstractCache {
             return;
         }
 
-        SharedMemoryConfig config = new SharedMemoryConfig(this.configFile);
-        this.memory = new SharedMemory(config);
+        SeriesMemoryConfig config = new SeriesMemoryConfig(this.configFile);
+        this.memory = new SeriesMemory(config);
 
         this.memory.start();
     }
@@ -99,87 +102,43 @@ public class SharedMemoryCache extends AbstractCache {
      * {@inheritDoc}
      */
     @Override
-    public void put(CacheKey key, CacheValue value) {
-        this.memory.applyPut(key.get(), value.get());
+    public void add(CacheKey key, CacheValue value) {
+        long timestamp = value.getTimestamp();
+        if (timestamp == 0) {
+            this.memory.add(key.get(), value.get());
+        }
+        else {
+            this.memory.add(key.get(), value.get(), timestamp);
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public CacheValue get(CacheKey key) {
-        JSONObject value = this.memory.applyGet(key.get());
-        if (null == value) {
-            return null;
-        }
-        return new CacheValue(value);
+    public void add(CacheKey key, CacheValue value, long timestamp) {
+        this.memory.add(key.get(), value.get(), timestamp);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public CacheValue get(CacheExpression expression) {
-        return null;
+    public List<CacheValue> query(CacheKey key, long beginningTime, long endingTime) {
+        List<SeriesItem> list = this.memory.query(key.get(), beginningTime, endingTime);
+        ArrayList<CacheValue> result = new ArrayList<>();
+        for (SeriesItem item : list) {
+            CacheValue value = new CacheValue(item.data, item.timestamp);
+            result.add(value);
+        }
+        return result;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void remove(CacheKey key) {
-        this.memory.applyRemove(key.get());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void execute(CacheKey key, final CacheTransaction transaction) {
-        Context context = new Context(key);
-
-        LockFuture future = new LockFuture() {
-            @Override
-            public void acquired(String key) {
-                transaction.perform(context);
-            }
-        };
-
-        context.lockFuture = future;
-
-        this.memory.apply(key.get(), future);
-    }
-
-
-    /**
-     * 事务上下文实现。
-     */
-    protected class Context extends TransactionContext {
-
-        protected LockFuture lockFuture;
-
-        public Context(CacheKey key) {
-            super(key);
-        }
-
-        @Override
-        public CacheValue get() {
-            JSONObject value = this.lockFuture.get();
-            if (null != value) {
-                return new CacheValue(value);
-            }
-
-            return null;
-        }
-
-        @Override
-        public void put(CacheValue value) {
-            this.lockFuture.put(value.get());
-        }
-
-        @Override
-        public void remove() {
-            this.lockFuture.remove();
-        }
+    public void delete(CacheKey key, long timestamp) {
+        this.memory.delete(key.get(), timestamp);
     }
 }

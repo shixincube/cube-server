@@ -29,7 +29,7 @@ package cube.core;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.cache.SharedMemoryCache;
-import cube.cache.TimeseriesCache;
+import cube.cache.SeriesMemoryTimeSeriesCache;
 import cube.mq.AdapterMQ;
 
 import java.util.Iterator;
@@ -180,8 +180,8 @@ public final class Kernel {
                 cache = new SharedMemoryCache(name);
                 cache.configure(config);
             }
-            else if (TimeseriesCache.TYPE.equalsIgnoreCase(type)) {
-                cache = new TimeseriesCache(name);
+            else if (SeriesMemoryTimeSeriesCache.TYPE.equalsIgnoreCase(type)) {
+                cache = new SeriesMemoryTimeSeriesCache(name);
                 cache.configure(config);
             }
         } catch (Exception e) {
