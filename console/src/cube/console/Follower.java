@@ -74,4 +74,9 @@ public class Follower implements JSONable {
         }
         return json;
     }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
 }

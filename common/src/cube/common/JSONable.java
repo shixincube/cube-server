@@ -33,6 +33,18 @@ import cell.util.json.JSONObject;
  */
 public interface JSONable {
 
+    /**
+     * 序列化为 JSON 格式。
+     *
+     * @return 返回 JSON 格式表示的数据。
+     */
     public JSONObject toJSON();
+
+    /**
+     * 序列化为简易/紧凑的 JSON 格式。
+     *
+     * @return 返回 JSON 格式表示的数据。
+     */
+    public JSONObject toCompactJSON();
 
 }

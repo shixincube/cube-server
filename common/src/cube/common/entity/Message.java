@@ -281,6 +281,11 @@ public class Message extends Entity implements Comparable<Message> {
     }
 
     @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON(false);
+    }
+
+    @Override
     public int compareTo(Message other) {
         return (int)(this.remoteTimestamp - other.remoteTimestamp);
     }

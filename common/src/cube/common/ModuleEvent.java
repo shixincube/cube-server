@@ -102,6 +102,11 @@ public class ModuleEvent implements JSONable {
         return json;
     }
 
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
+
     public static String extractModuleName(JSONObject json) {
         String mod = null;
         try {

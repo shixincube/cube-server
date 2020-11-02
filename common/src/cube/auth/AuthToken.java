@@ -183,6 +183,11 @@ public class AuthToken implements JSONable {
         return json;
     }
 
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
+
     /**
      * 生成 Base64 字符串。
      *

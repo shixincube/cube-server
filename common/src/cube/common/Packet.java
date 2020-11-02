@@ -87,6 +87,11 @@ public class Packet implements JSONable {
         return json;
     }
 
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
+
     public static ActionDialect toActionDialect(Packet packet) {
         ActionDialect result = new ActionDialect(packet.name);
         result.addParam("sn", packet.sn.longValue());

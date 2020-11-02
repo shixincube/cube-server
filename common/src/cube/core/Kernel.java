@@ -180,10 +180,6 @@ public final class Kernel {
                 cache = new SharedMemoryCache(name);
                 cache.configure(config);
             }
-            else if (SeriesMemoryTimeSeriesCache.TYPE.equalsIgnoreCase(type)) {
-                cache = new SeriesMemoryTimeSeriesCache(name);
-                cache.configure(config);
-            }
         } catch (Exception e) {
             Logger.w(this.getClass(), "installCache", e);
         }

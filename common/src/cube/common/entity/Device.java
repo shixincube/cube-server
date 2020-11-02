@@ -177,6 +177,18 @@ public class Device implements JSONable {
     }
 
     @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("name", this.name);
+            json.put("platform", this.platform);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (null != obj && obj instanceof Device) {
             Device other = (Device) obj;

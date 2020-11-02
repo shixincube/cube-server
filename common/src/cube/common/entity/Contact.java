@@ -61,6 +61,13 @@ public class Contact extends Entity {
      */
     private String uniqueKey;
 
+    /**
+     * 构造函数。
+     *
+     * @param id 联系人 ID 。
+     * @param domainName 所在域的域名。
+     * @param name 显示名。
+     */
     public Contact(Long id, String domainName, String name) {
         super(id, domainName);
         this.uniqueKey = UniqueKey.make(id, domainName);
@@ -68,6 +75,13 @@ public class Contact extends Entity {
         this.deviceList = new ArrayList<>(1);
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param id 联系人 ID 。
+     * @param domain 所在域。
+     * @param name 显示名。
+     */
     public Contact(Long id, Domain domain, String name) {
         super(id, domain);
         this.uniqueKey = UniqueKey.make(id, domain);
@@ -75,10 +89,21 @@ public class Contact extends Entity {
         this.deviceList = new ArrayList<>(1);
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param json 符合格式的 JSON 数据。
+     */
     public Contact(JSONObject json) {
         this(json, "");
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param json 符合格式的 JSON 数据。
+     * @param domain 指定的域。
+     */
     public Contact(JSONObject json, String domain) {
         super();
 
@@ -107,6 +132,12 @@ public class Contact extends Entity {
         }
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param json 符合格式的 JSON 数据。
+     * @param talkContext 关联的 Talk Context 。
+     */
     public Contact(JSONObject json, TalkContext talkContext) {
         super();
 
@@ -150,10 +181,6 @@ public class Contact extends Entity {
     public void resetId(Long newId) {
         this.id = newId;
         this.uniqueKey = UniqueKey.make(newId, this.domain);
-    }
-
-    public Long getId() {
-        return this.id;
     }
 
     /**

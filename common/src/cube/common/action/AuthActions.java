@@ -41,6 +41,9 @@ public enum AuthActions {
      */
     GetToken("getToken"),
 
+    /**
+     * 未知动作。
+     */
     Unknown("")
 
     ;

@@ -102,6 +102,11 @@ public class Report implements JSONable {
         return json;
     }
 
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
+
     public static String extractName(JSONObject json) throws JSONException {
         return json.getString("name");
     }

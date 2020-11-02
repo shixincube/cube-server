@@ -51,6 +51,9 @@ public enum MessagingActions {
      */
     Update("update"),
 
+    /**
+     * 未知动作。
+     */
     Unknown("")
 
     ;
