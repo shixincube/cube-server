@@ -829,7 +829,7 @@ public class ContactManager implements CelletAdapterListener {
         this.tokenContactMap.remove(token);
     }
 
-    private GroupTable getGroupTable(final String domain) {
+    private synchronized GroupTable getGroupTable(final String domain) {
         GroupTable table = this.activeGroupTables.get(domain);
         if (null == table) {
             table = new GroupTable(new Domain(domain), this.groupCache, this.storage);

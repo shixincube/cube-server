@@ -28,6 +28,9 @@ package cube.service.contact;
 
 import cube.common.entity.Group;
 
+import java.util.Iterator;
+import java.util.Map;
+
 /**
  * 管理器守护线程。
  * 不使用系统的定时器机制，而使用线程自旋方式，让整个任务始终持有时间片。
@@ -79,6 +82,9 @@ public class ManagementDaemon extends Thread {
                 this.processGroups();
             }
         }
+
+        // 退出时，更新数据
+        this.processGroups();
     }
 
     public final void terminate() {
@@ -89,6 +95,11 @@ public class ManagementDaemon extends Thread {
     }
 
     private void processGroups() {
-
+        Iterator<Map.Entry<String, GroupTable>> gtiter = this.manager.activeGroupTables.entrySet().iterator();
+        while (gtiter.hasNext()) {
+            Map.Entry<String, GroupTable> entry = gtiter.next();
+            GroupTable gt = entry.getValue();
+            gt.submitActiveTime();
+        }
     }
 }

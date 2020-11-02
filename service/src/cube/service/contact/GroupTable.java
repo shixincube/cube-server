@@ -29,12 +29,16 @@ package cube.service.contact;
 import cell.adapter.extra.memory.SharedMemory;
 import cell.util.json.JSONObject;
 import cube.common.Domain;
+import cube.common.UniqueKey;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
 import cube.common.entity.GroupState;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 用于暂存活跃群组的表格。
@@ -49,11 +53,17 @@ public class GroupTable {
 
     protected ConcurrentHashMap<Long, Group> groups;
 
+    /**
+     * 暂存群组的活跃时间，之后由守护任务同步到集群和存储。
+     */
+    protected ConcurrentHashMap<Long, AtomicLong> groupActiveTimeMap;
+
     public GroupTable(Domain domain, SharedMemory cache, ContactStorage storage) {
         this.domain = domain;
         this.cache = cache;
         this.storage = storage;
         this.groups = new ConcurrentHashMap<>();
+        this.groupActiveTimeMap = new ConcurrentHashMap<>();
     }
 
     public Domain getDomain() {
@@ -74,7 +84,7 @@ public class GroupTable {
      * @return
      */
     public Group updateGroup(Group group) {
-        Group current = refresh(group);
+        Group current = get(group);
         if (null == current) {
             this.groups.remove(group.getId());
             return null;
@@ -130,7 +140,7 @@ public class GroupTable {
      * @return
      */
     public Group updateState(Group group, GroupState state) {
-        Group current = refresh(group);
+        Group current = get(group);
         if (null == current) {
             this.groups.remove(group.getId());
             return null;
@@ -165,32 +175,46 @@ public class GroupTable {
      * @param timestamp
      * @return
      */
-    public Group updateActiveTime(Group group, long timestamp) {
-        Group current = refresh(group);
-        if (null == current) {
-            this.groups.remove(group.getId());
-            return null;
+    public void updateActiveTime(Group group, long timestamp) {
+        AtomicLong activeTime = this.groupActiveTimeMap.get(group.getId());
+        if (null == activeTime) {
+            this.groupActiveTimeMap.put(group.getId(), new AtomicLong(timestamp));
+            return;
         }
 
-        boolean modified = false;
-        if (current.getLastActiveTime() != timestamp) {
-            modified = true;
+        if (activeTime.get() < timestamp) {
+            activeTime.set(timestamp);
         }
 
-        if (modified) {
-            current.setLastActiveTime(timestamp);
+        group.setLastActiveTime(activeTime.get());
+    }
 
-            if (group != current) {
-                group.setLastActiveTime(timestamp);
+    protected void submitActiveTime() {
+        Iterator<Map.Entry<Long, AtomicLong>> iter = this.groupActiveTimeMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<Long, AtomicLong> entry = iter.next();
+            Long groupId = entry.getKey();
+            long timestamp = entry.getValue().get();
+
+            Group current = this.get(groupId);
+            if (null == current) {
+                // 群组不存在，跳过
+                iter.remove();
+                continue;
             }
+
+            if (current.getLastActiveTime() >= timestamp) {
+                // 时间戳过期
+                entry.getValue().set(current.getLastActiveTime());
+                continue;
+            }
+
+            // 更新
+            current.setLastActiveTime(timestamp);
 
             this.cache.applyPut(current.getUniqueKey(), current.toJSON());
             this.storage.updateGroupActiveTime(current);
         }
-
-        this.groups.put(current.getId(), current);
-
-        return current;
     }
 
     /**
@@ -201,7 +225,7 @@ public class GroupTable {
      * @return
      */
     public Contact updateGroupMember(Group group, Contact member) {
-        Group current = refresh(group);
+        Group current = get(group);
         if (null == current) {
             this.groups.remove(group.getId());
             return null;
@@ -228,7 +252,7 @@ public class GroupTable {
      * @return
      */
     public Group addGroupMembers(Group group, List<Contact> addedContactList, Contact operator) {
-        Group current = refresh(group);
+        Group current = get(group);
         if (null == current) {
             this.groups.remove(group.getId());
             return null;
@@ -268,7 +292,7 @@ public class GroupTable {
      * @return
      */
     public Group removeGroupMembers(Group group, List<Contact> removedContactList, Contact operator) {
-        Group current = refresh(group);
+        Group current = get(group);
         if (null == current) {
             this.groups.remove(group.getId());
             return null;
@@ -301,17 +325,22 @@ public class GroupTable {
 
     /**
      *
+     *
      * @param group
      * @return
      */
-    private Group refresh(Group group) {
+    private Group get(Group group) {
+        return this.get(group.getId());
+    }
+
+    private Group get(Long groupId) {
         Group result = null;
 
         // 从集群里获取
-        JSONObject data = this.cache.applyGet(group.getUniqueKey());
+        JSONObject data = this.cache.applyGet(UniqueKey.make(groupId, this.domain));
         if (null == data) {
             // 缓存里没有，从存储里读取
-            result = this.storage.readGroup(group.getDomain().getName(), group.getId());
+            result = this.storage.readGroup(this.domain.getName(), groupId);
             if (null == result) {
                 // 存储里没有
                 return null;
