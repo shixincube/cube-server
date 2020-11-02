@@ -62,6 +62,11 @@ public enum ContactActions {
     GetContact("getContact"),
 
     /**
+     * 修改联系人信息。
+     */
+    ModifyContact("modifyContact"),
+
+    /**
      * 获取联系人列表。
      */
     GetContactList("getContactList"),
@@ -100,6 +105,11 @@ public enum ContactActions {
      * 修改群组信息。
      */
     ModifyGroup("modifyGroup"),
+
+    /**
+     * 修改群组成员。
+     */
+    ModifyGroupMember("modifyGroupMember"),
 
     /**
      * 未知动作。

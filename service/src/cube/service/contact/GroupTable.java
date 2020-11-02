@@ -92,11 +92,6 @@ public class GroupTable {
             current.setOwner(group.getOwner());
         }
 
-        if (current.getLastActiveTime() != group.getLastActiveTime()) {
-            modified = true;
-            current.setLastActiveTime(group.getLastActiveTime());
-        }
-
         JSONObject context = group.getContext();
         if (null != context) {
             if (null == current.getContext()) {
@@ -113,6 +108,11 @@ public class GroupTable {
         }
 
         if (modified) {
+            current.setLastActiveTime(System.currentTimeMillis());
+            if (current != group) {
+                group.setLastActiveTime(current.getLastActiveTime());
+            }
+
             this.cache.applyPut(current.getUniqueKey(), current.toJSON());
             this.storage.updateGroupWithoutMember(current);
         }
@@ -185,12 +185,38 @@ public class GroupTable {
             }
 
             this.cache.applyPut(current.getUniqueKey(), current.toJSON());
-            this.storage.updateGroupActiveName(current);
+            this.storage.updateGroupActiveTime(current);
         }
 
         this.groups.put(current.getId(), current);
 
         return current;
+    }
+
+    /**
+     * 更新群组成员数据。
+     *
+     * @param group
+     * @param member
+     * @return
+     */
+    public Contact updateGroupMember(Group group, Contact member) {
+        Group current = refresh(group);
+        if (null == current) {
+            this.groups.remove(group.getId());
+            return null;
+        }
+
+        Contact updated = current.updateMember(member);
+
+        current.setLastActiveTime(System.currentTimeMillis());
+        if (group != current) {
+            group.setLastActiveTime(current.getLastActiveTime());
+        }
+
+        this.cache.applyPut(current.getUniqueKey(), current.toJSON());
+        this.storage.updateGroupMember(current, updated);
+        return updated;
     }
 
     /**
@@ -215,6 +241,9 @@ public class GroupTable {
 
         // 更新时间戳
         current.setLastActiveTime(System.currentTimeMillis());
+        if (current != group) {
+            group.setLastActiveTime(current.getLastActiveTime());
+        }
 
         // 更新缓存
         this.cache.applyPut(current.getUniqueKey(), current.toJSON());
@@ -222,7 +251,7 @@ public class GroupTable {
         this.storage.addGroupMembers(current, addedContactList, operator.getId(), new Runnable() {
             @Override
             public void run() {
-                storage.updateGroupActiveName(current);
+                storage.updateGroupActiveTime(current);
             }
         });
 
@@ -252,6 +281,9 @@ public class GroupTable {
 
         // 更新时间戳
         current.setLastActiveTime(System.currentTimeMillis());
+        if (current != group) {
+            group.setLastActiveTime(current.getLastActiveTime());
+        }
 
         // 更新缓存
         this.cache.applyPut(current.getUniqueKey(), current.toJSON());
@@ -259,7 +291,7 @@ public class GroupTable {
         this.storage.removeGroupMembers(current, removedContactList, operator.getId(), new Runnable() {
             @Override
             public void run() {
-                storage.updateGroupActiveName(current);
+                storage.updateGroupActiveTime(current);
             }
         });
 

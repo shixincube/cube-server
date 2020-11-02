@@ -39,13 +39,14 @@ import cube.common.entity.Group;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
+import cube.service.contact.GroupBundle;
 
 /**
- * 修改群组信息任务。
+ * 修改群组成员信息任务。
  */
-public class ModifyGroupTask extends ServiceTask {
+public class ModifyGroupMemberTask extends ServiceTask {
 
-    public ModifyGroupTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
+    public ModifyGroupMemberTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
 
@@ -68,20 +69,10 @@ public class ModifyGroupTask extends ServiceTask {
         String domain = contact.getDomain().getName();
 
         Long groupId = null;
-        Contact newOwner = null;
-        String newName = null;
-        JSONObject newContext = null;
+        Contact member = null;
         try {
             groupId = data.getLong("groupId");
-            if (data.has("owner")) {
-                newOwner = new Contact(data.getJSONObject("owner"), domain);
-            }
-            if (data.has("name")) {
-                newName = data.getString("name");
-            }
-            if (data.has("context")) {
-                newContext = data.getJSONObject("context");
-            }
+            member = new Contact(data.getJSONObject("member"), domain);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -94,23 +85,10 @@ public class ModifyGroupTask extends ServiceTask {
             return;
         }
 
-        if (null != newOwner) {
-            // 新的群组必须是当前的群成员
-            if (group.hasMember(newOwner.getId())) {
-                group.setOwner(newOwner);
-            }
-        }
-        if (null != newName) {
-            group.setName(newName);
-        }
-        if (null != newContext) {
-            group.setContext(newContext);
-        }
-
-        // 修改群组信息
-        Group result = ContactManager.getInstance().modifyGroup(group);
+        // 修改成员信息，并返回 Bundle
+        GroupBundle bundle = ContactManager.getInstance().modifyGroupMember(group, member);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, result.toJSON()));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, bundle.toCompactJSON()));
     }
 }

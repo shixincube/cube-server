@@ -74,6 +74,18 @@ public class Conditional {
     }
 
     /**
+     *  创建等于运算。
+     *
+     * @param fieldName
+     * @param literalBase
+     * @param value
+     * @return
+     */
+    public static Conditional createEqualTo(String fieldName, LiteralBase literalBase, Object value) {
+        return Conditional.createEqualTo(new StorageField(fieldName, literalBase, value));
+    }
+
+    /**
      * 创建等于运算。
      *
      * @param field

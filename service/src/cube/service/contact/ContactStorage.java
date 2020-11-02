@@ -495,7 +495,7 @@ public class ContactStorage {
      *
      * @param group
      */
-    public void updateGroupActiveName(final Group group) {
+    public void updateGroupActiveTime(final Group group) {
         String domain = group.getDomain().getName();
 
         String groupTable = this.groupTableNameMap.get(domain);
@@ -554,6 +554,37 @@ public class ContactStorage {
             });
             return null;
         }
+    }
+
+    /**
+     * 更新群成员信息。
+     *
+     * @param group
+     * @param member
+     */
+    public void updateGroupMember(final Group group, final Contact member) {
+        String domain = group.getDomain().getName();
+        String groupMemberTable = this.groupMemberTableNameMap.get(domain);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (storage) {
+                    storage.executeUpdate(groupMemberTable, new StorageField[] {
+                            new StorageField("contact_name", LiteralBase.STRING, member.getName()),
+                            new StorageField("contact_context", LiteralBase.STRING,
+                                    (null != member.getContext()) ? member.getContext().toString() : null)
+                    }, new Conditional[] {
+                            Conditional.createEqualTo("group", LiteralBase.LONG, group.getId()),
+                            Conditional.createAnd(),
+                            Conditional.createEqualTo("contact_id", LiteralBase.LONG, member.getId())
+                    });
+                }
+            }
+        });
+
+        // 更新活跃时间
+        this.updateGroupActiveTime(group);
     }
 
     /**

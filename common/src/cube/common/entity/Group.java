@@ -256,6 +256,20 @@ public class Group extends Contact implements Comparable<Group> {
         return null;
     }
 
+    public Contact updateMember(Contact member) {
+        if (!this.members.remove(member)) {
+            return null;
+        }
+
+        this.members.add(member);
+
+        if (member.getId().longValue() == this.owner.getId().longValue()) {
+            this.owner = member;
+        }
+
+        return member;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (null != object && object instanceof Group) {
@@ -312,6 +326,9 @@ public class Group extends Contact implements Comparable<Group> {
         return json;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = super.toCompactJSON();

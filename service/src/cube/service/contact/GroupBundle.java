@@ -82,4 +82,28 @@ public class GroupBundle implements JSONable {
 
         return json;
     }
+
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        try {
+            // group
+            json.put("group", this.group.toCompactJSON());
+
+            // members
+            JSONArray memberList = new JSONArray();
+            for (Contact member : this.members) {
+                memberList.put(member.toCompactJSON());
+            }
+            json.put("modified", memberList);
+
+            // operator
+            if (null != this.operator) {
+                json.put("operator", this.operator.toCompactJSON());
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return json;
+    }
 }

@@ -528,6 +528,25 @@ public class ContactManager implements CelletAdapterListener {
     }
 
     /**
+     * 修改群成员信息。
+     *
+     * @param group
+     * @param member
+     * @return
+     */
+    public GroupBundle modifyGroupMember(Group group, Contact member) {
+        GroupTable gt = this.getGroupTable(group.getDomain().getName());
+        Contact current = gt.updateGroupMember(group, member);
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "Modify group member " + group.getId() + " - " + member.getId());
+        }
+
+        GroupBundle bundle = new GroupBundle(group, current);
+        return bundle;
+    }
+
+    /**
      * 更新群组的活跃时间。
      *
      * @param group

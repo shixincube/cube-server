@@ -86,6 +86,9 @@ public class ContactServiceCellet extends Cellet {
         else if (ContactActions.ModifyGroup.name.equals(action)) {
             this.executor.execute(new ModifyGroupTask(this, talkContext, primitive));
         }
+        else if (ContactActions.ModifyGroupMember.name.equals(action)) {
+            this.executor.execute(new ModifyGroupMemberTask(this, talkContext, primitive));
+        }
         else if (ContactActions.CreateGroup.name.equals(action)) {
             this.executor.execute(new CreateGroupTask(this, talkContext, primitive));
         }
