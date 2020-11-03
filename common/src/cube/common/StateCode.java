@@ -76,9 +76,10 @@ public final class StateCode {
 
     /**
      * 创建状态描述对象。
-     * @param stateCode
-     * @param stateDesc
-     * @return
+     *
+     * @param stateCode 状态码。
+     * @param stateDesc 状态描述。
+     * @return 返回状态的 JSON 格式数据。
      */
     public static JSONObject makeState(int stateCode, String stateDesc) {
         JSONObject state = new JSONObject();

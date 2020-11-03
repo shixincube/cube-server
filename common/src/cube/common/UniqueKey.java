@@ -79,8 +79,8 @@ public final class UniqueKey {
     /**
      * 提取键包含的 ID 和域名称。
      *
-     * @param key
-     * @return
+     * @param key 唯一键。
+     * @return 包含 ID 和域数组。
      */
     public static Object[] extract(String key) {
         int index = key.indexOf("_");

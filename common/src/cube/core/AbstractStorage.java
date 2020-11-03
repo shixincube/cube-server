@@ -31,14 +31,25 @@ import cell.util.json.JSONObject;
 import java.util.List;
 
 /**
- * 抽象存储器。
+ * 存储器的抽象层。
  */
 public abstract class AbstractStorage implements Storage {
 
+    /**
+     * 存储名称。
+     */
     private String name;
 
+    /**
+     * 配置信息。
+     */
     protected JSONObject config;
 
+    /**
+     * 构造函数。
+     *
+     * @param name 指定存储名称。
+     */
     public AbstractStorage(String name) {
         this.name = name;
     }

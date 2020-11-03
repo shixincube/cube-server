@@ -34,8 +34,16 @@ import cube.util.SQLUtils;
  */
 public class Conditional {
 
+    /**
+     * 句式的 SQL 语句。
+     */
     private String sql;
 
+    /**
+     * 构造函数。
+     *
+     * @param sql 指定 SQL 字符串。
+     */
     protected Conditional(String sql) {
         this.sql = sql;
     }
@@ -48,7 +56,7 @@ public class Conditional {
     /**
      * 创建 AND 连接。
      *
-     * @return
+     * @return 返回条件句式实例。
      */
     public static Conditional createAnd() {
         return new Conditional("AND");
@@ -57,7 +65,7 @@ public class Conditional {
     /**
      * 创建 OR 连接。
      *
-     * @return
+     * @return 返回条件句式实例。
      */
     public static Conditional createOr() {
         return new Conditional("OR");
@@ -66,8 +74,8 @@ public class Conditional {
     /**
      * 创建 LIMIT 约束。
      *
-     * @param num
-     * @return
+     * @param num 指定约束数量。
+     * @return 返回条件句式实例。
      */
     public static Conditional createLimit(int num) {
         return new Conditional("LIMIT " + num);
@@ -76,10 +84,10 @@ public class Conditional {
     /**
      *  创建等于运算。
      *
-     * @param fieldName
-     * @param literalBase
-     * @param value
-     * @return
+     * @param fieldName 字段名。
+     * @param literalBase 字段类型。
+     * @param value 字段值。
+     * @return 返回条件句式实例。
      */
     public static Conditional createEqualTo(String fieldName, LiteralBase literalBase, Object value) {
         return Conditional.createEqualTo(new StorageField(fieldName, literalBase, value));
@@ -88,8 +96,8 @@ public class Conditional {
     /**
      * 创建等于运算。
      *
-     * @param field
-     * @return
+     * @param field 字段描述。
+     * @return 返回条件句式实例。
      */
     public static Conditional createEqualTo(StorageField field) {
         String value = field.getValue().toString();
@@ -113,9 +121,9 @@ public class Conditional {
     /**
      * 创建等于 JOIN 。
      *
-     * @param leftJoinField
-     * @param rightJoinField
-     * @return
+     * @param leftJoinField 左侧连接字段。
+     * @param rightJoinField 右侧连接字段。
+     * @return 返回条件句式实例。
      */
     public static Conditional createEqualTo(StorageField leftJoinField, StorageField rightJoinField) {
         StringBuilder buf = new StringBuilder();
@@ -128,8 +136,8 @@ public class Conditional {
     /**
      * 创建大于运算。
      *
-     * @param field
-     * @return
+     * @param field 字段描述。
+     * @return 返回条件句式实例。
      */
     public static Conditional createGreaterThan(StorageField field) {
         return new Conditional("[" + field.getName() + "]>" + field.getValue().toString());
@@ -138,8 +146,8 @@ public class Conditional {
     /**
      * 创建大于等于运算。
      *
-     * @param field
-     * @return
+     * @param field 字段描述。
+     * @return 返回条件句式实例。
      */
     public static Conditional createGreaterThanEqual(StorageField field) {
         return new Conditional("[" + field.getName() + "]>=" + field.getValue().toString());
@@ -148,8 +156,8 @@ public class Conditional {
     /**
      * 创建小于运算。
      *
-     * @param field
-     * @return
+     * @param field 字段描述。
+     * @return 返回条件句式实例。
      */
     public static Conditional createLessThan(StorageField field) {
         return new Conditional("[" + field.getName() + "]<" + field.getValue().toString());
@@ -158,8 +166,8 @@ public class Conditional {
     /**
      * 创建小于等于运算。
      *
-     * @param field
-     * @return
+     * @param field 字段描述
+     * @return 返回条件句式实例。
      */
     public static Conditional createLessThanEqual(StorageField field) {
         return new Conditional("[" + field.getName() + "]<=" + field.getValue().toString());
@@ -168,9 +176,9 @@ public class Conditional {
     /**
      * 创建 column IN (value1, value2, ...) 条件。
      *
-     * @param field
-     * @param values
-     * @return
+     * @param field 字段描述
+     * @param values 对应的值数组。
+     * @return 返回条件句式实例。
      */
     public static Conditional createIN(StorageField field, Object[] values) {
         StringBuilder buf = new StringBuilder();

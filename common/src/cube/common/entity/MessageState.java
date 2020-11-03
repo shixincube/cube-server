@@ -81,10 +81,14 @@ public enum MessageState {
             case 1:
                 return Unsent;
             case 1 << 1:
-                return Sent;
+                return Sending;
             case 1 << 2:
-                return Read;
+                return Sent;
             case 1 << 3:
+                return Read;
+            case 1 << 4:
+                return Recalled;
+            case 1 << 5:
                 return Fault;
             default:
                 return Unknown;

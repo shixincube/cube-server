@@ -192,22 +192,48 @@ public class Contact extends Entity {
         return this.uniqueKey;
     }
 
+    /**
+     * 获取联系人名称。
+     *
+     * @return 返回联系人名称。
+     */
     public String getName() {
         return this.name;
     }
 
+    /**
+     * 设置联系人名称。
+     *
+     * @param name 联系人名称。
+     */
     public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * 获取联系人上下文数据。
+     *
+     * @return 返回联系人上下文数据。
+     */
     public JSONObject getContext() {
         return this.context;
     }
 
+    /**
+     * 设置联系人上下文数据。
+     *
+     * @param context 联系人上下文数据。
+     */
     public void setContext(JSONObject context) {
         this.context = context;
     }
 
+    /**
+     * 添加设备。
+     *
+     * @param device 指定设备。
+     * @return 返回之前已经添加的同类型设备。
+     */
     public Device addDevice(Device device) {
         Device invalid = null;
         int index = this.deviceList.indexOf(device);
@@ -221,6 +247,14 @@ public class Contact extends Entity {
         return invalid;
     }
 
+    /**
+     * 添加设备。
+     *
+     * @param name 设备名称。
+     * @param platform 平台描述。
+     * @param talkContext 对应的会话上下文。
+     * @return 返回之前已经添加的同类型设备。
+     */
     public Device addDevice(String name, String platform, TalkContext talkContext) {
         Device invalid = null;
         Device device = new Device(name, platform, talkContext);
@@ -236,6 +270,11 @@ public class Contact extends Entity {
         return invalid;
     }
 
+    /**
+     * 移除设备。
+     *
+     * @param device 待移除设备。
+     */
     public void removeDevice(Device device) {
         this.deviceList.remove(device);
     }
@@ -243,7 +282,7 @@ public class Contact extends Entity {
     /**
      * 返回设备数量。
      *
-     * @return
+     * @return 返回设备数量。
      */
     public int numDevices() {
         return this.deviceList.size();
@@ -252,8 +291,9 @@ public class Contact extends Entity {
     /**
      * 通过客户端的 TalkContext 匹配获取对应的设备。
      * 该方法主要提供给网关节点使用。
-     * @param talkContext
-     * @return
+     *
+     * @param talkContext 会话上下文。
+     * @return 返回在此上下文上通信的设备。
      */
     public Device getDevice(TalkContext talkContext) {
         Device device = null;
@@ -268,6 +308,7 @@ public class Contact extends Entity {
 
     /**
      * 获取与指定源设备相同描述的设备。
+     *
      * @param src 指定对比的源设备。
      * @return 返回该联系保存的设备实例。
      */
@@ -283,6 +324,7 @@ public class Contact extends Entity {
 
     /**
      * 获取设备列表。
+     *
      * @return 返回设备列表。
      */
     public List<Device> getDeviceList() {
@@ -291,8 +333,9 @@ public class Contact extends Entity {
 
     /**
      * 是否包含指定设备。
-     * @param device
-     * @return
+     *
+     * @param device 指定设备实例。
+     * @return 如果包含该设备返回 {@code true} ，否则返回 {@code false} 。
      */
     public boolean hasDevice(Device device) {
         return this.deviceList.contains(device);
@@ -315,6 +358,9 @@ public class Contact extends Entity {
         return this.id.hashCode() * 3 + this.domain.hashCode() * 5;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -341,6 +387,9 @@ public class Contact extends Entity {
         return json;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
         try {

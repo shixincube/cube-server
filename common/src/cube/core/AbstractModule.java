@@ -27,28 +27,58 @@
 package cube.core;
 
 /**
- * 抽象层模块。
+ * 模块抽象层。
  */
 public abstract class AbstractModule implements Module {
 
+    /**
+     * 内核实例。
+     */
     private Kernel kernel;
 
+    /**
+     * 构造函数。
+     */
     public AbstractModule() {
     }
 
+    /**
+     * 设置内核实例。
+     *
+     * @param kernel 内核实例。
+     */
     protected void setKernel(Kernel kernel) {
         this.kernel = kernel;
     }
 
+    /**
+     * 获取内核实例。
+     *
+     * @return 返回内核实例。
+     */
     public Kernel getKernel() {
         return this.kernel;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Cache getCache(String name) {
         return this.kernel.getCache(name);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public TimeSeriesCache getTimeSeriesCache(String name) {
+        return this.kernel.getTimeSeriesCache(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public MessageQueue getMQ(String name) {
         return this.kernel.getMQ(name);

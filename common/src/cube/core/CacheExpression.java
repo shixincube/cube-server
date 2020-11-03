@@ -32,6 +32,5 @@ package cube.core;
 public abstract class CacheExpression {
 
     public CacheExpression() {
-
     }
 }

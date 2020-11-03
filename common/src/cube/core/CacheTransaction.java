@@ -31,6 +31,11 @@ package cube.core;
  */
 public interface CacheTransaction {
 
+    /**
+     * 执行事务。
+     *
+     * @param context 上下文 。
+     */
     public void perform(TransactionContext context);
 
 }

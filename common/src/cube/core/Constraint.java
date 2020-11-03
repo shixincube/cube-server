@@ -31,20 +31,44 @@ package cube.core;
  */
 public enum Constraint {
 
+    /**
+     * 对应 NOT NULL 。
+     */
     NOT_NULL("NOT NULL"),
 
+    /**
+     * 对应 PRIMARY KEY 。
+     */
     PRIMARY_KEY("PRIMARY KEY"),
 
+    /**
+     * 对应 AUTOINCREMENT 。
+     */
     AUTOINCREMENT("AUTOINCREMENT"),
 
+    /**
+     * 对应 UNIQUE 。
+     */
     UNIQUE("UNIQUE"),
 
+    /**
+     * 对应 DEFAULT 。
+     */
     DEFAULT("DEFAULT"),
 
+    /**
+     * 对应 DEFAULT 0 。
+     */
     DEFAULT_0("DEFAULT 0"),
 
+    /**
+     * 对应 DEFAULT NULL 。
+     */
     DEFAULT_NULL("DEFAULT NULL"),
 
+    /**
+     * 对应 CHECK 。
+     */
     CHECK("CHECK");
 
     private String statement;

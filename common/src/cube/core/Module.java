@@ -45,15 +45,23 @@ public interface Module {
      * 获取指定名称的缓存器。
      *
      * @param name 缓存器名称。
-     * @return
+     * @return 返回缓存实例。
      */
     public Cache getCache(String name);
+
+    /**
+     * 获取指定名称的时序缓存器。
+     *
+     * @param name 缓存器名称。
+     * @return 返回缓存实例。
+     */
+    public TimeSeriesCache getTimeSeriesCache(String name);
 
     /**
      * 获取指定名称的消息队列。
      *
      * @param name 消息队列名称。
-     * @return
+     * @return 返回消息队列实例。
      */
     public MessageQueue getMQ(String name);
 

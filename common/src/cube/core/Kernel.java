@@ -61,6 +61,9 @@ public final class Kernel {
      */
     private ConcurrentHashMap<String, AbstractMQ> mqMap;
 
+    /**
+     * 构造函数。
+     */
     public Kernel() {
         this.moduleMap = new ConcurrentHashMap<>();
         this.cacheMap = new ConcurrentHashMap<>();
@@ -140,8 +143,9 @@ public final class Kernel {
 
     /**
      * 安装模块。
-     * @param name
-     * @param module
+     *
+     * @param name 模块名称。
+     * @param module 模块实例。
      */
     public void installModule(String name, AbstractModule module) {
         this.moduleMap.put(name, module);
@@ -149,7 +153,8 @@ public final class Kernel {
 
     /**
      * 卸载模块。
-     * @param name
+     *
+     * @param name 模块名称。
      */
     public void uninstallModule(String name) {
         AbstractModule module = this.moduleMap.remove(name);
@@ -160,8 +165,9 @@ public final class Kernel {
 
     /**
      * 获取指定名称的模块。
-     * @param name
-     * @return
+     *
+     * @param name 指定模块名。
+     * @return 返回对应模块的实例。
      */
     public AbstractModule getModule(String name) {
         return this.moduleMap.get(name);
@@ -169,8 +175,9 @@ public final class Kernel {
 
     /**
      * 安装缓存。
-     * @param name
-     * @param config
+     *
+     * @param name 指定缓存名称。
+     * @param config 指定缓存配置信息。
      */
     public void installCache(String name, JSONObject config) {
         AbstractCache cache = null;
@@ -193,7 +200,8 @@ public final class Kernel {
 
     /**
      * 卸载缓存。
-     * @param name
+     *
+     * @param name 指定缓存名称。
      */
     public void uninstallCache(String name) {
         AbstractCache cache = this.cacheMap.remove(name);
@@ -204,17 +212,29 @@ public final class Kernel {
 
     /**
      * 获取指定名称缓存器。
-     * @param name
-     * @return
+     *
+     * @param name 指定缓存器名称。
+     * @return 返回缓存器实例。
      */
     public Cache getCache(String name) {
         return this.cacheMap.get(name);
     }
 
     /**
+     * 获取指定名称时序缓存器。
      *
-     * @param name
-     * @param config
+     * @param name 指定缓存器名称。
+     * @return 返回时序缓存器实例。
+     */
+    public TimeSeriesCache getTimeSeriesCache(String name) {
+        return null;
+    }
+
+    /**
+     * 安装消息队列。
+     *
+     * @param name 指定消息队列名称。
+     * @param config 指定队列配置信息。
      */
     public void installMQ(String name, JSONObject config) {
         AbstractMQ mq = null;
@@ -235,8 +255,9 @@ public final class Kernel {
     }
 
     /**
+     * 卸载消息队列。
      *
-     * @param name
+     * @param name 指定队列名称。
      */
     public void uninstallMQ(String name) {
         AbstractMQ mq = this.mqMap.get(name);
@@ -246,9 +267,10 @@ public final class Kernel {
     }
 
     /**
+     * 获取指定名称的消息队列。
      *
-     * @param name
-     * @return
+     * @param name 指定队列名称。
+     * @return 返回消息队列实例。
      */
     public AbstractMQ getMQ(String name) {
         return this.mqMap.get(name);

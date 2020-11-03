@@ -33,8 +33,18 @@ import cell.util.json.JSONObject;
  */
 public interface MessageQueue {
 
+    /**
+     * 返回缓存名称。
+     *
+     * @return 返回缓存名称。
+     */
     public String getName();
 
+    /**
+     * 返回配置数据。
+     *
+     * @return 返回配置数据。
+     */
     public JSONObject getConfig();
 
     public void configure(JSONObject config);

@@ -81,6 +81,8 @@ public enum GroupState {
                 return Forbidden;
             case 3:
                 return HighRisk;
+            case 9:
+                return Disabled;
             default:
                 return Unknown;
         }

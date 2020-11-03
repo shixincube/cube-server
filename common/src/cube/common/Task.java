@@ -47,10 +47,23 @@ public abstract class Task implements Runnable {
      */
     protected Cellet cellet;
 
+    /**
+     * 当前任务对应的上下文。
+     */
     protected TalkContext talkContext;
 
+    /**
+     * 当前接收到的原语数据。
+     */
     protected Primitive primitive;
 
+    /**
+     * 构造函数。
+     *
+     * @param cellet 指定 Cellet 实例。
+     * @param talkContext 指定会话上下文。
+     * @param primitive 指定原语数据。
+     */
     public Task(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         this.cellet = cellet;
         this.talkContext = talkContext;

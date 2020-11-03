@@ -85,7 +85,7 @@ public class Message extends Entity implements Comparable<Message> {
     /**
      * 构造函数。
      *
-     * @param packet
+     * @param packet 指定包含消息数据的数据包。
      */
     public Message(Packet packet) throws JSONException {
         super();
@@ -157,14 +157,14 @@ public class Message extends Entity implements Comparable<Message> {
     /**
      * 构造函数。
      *
-     * @param domain
-     * @param id
-     * @param from
-     * @param to
-     * @param source
-     * @param localTimestamp
-     * @param remoteTimestamp
-     * @param payload
+     * @param domain 指定所在域。
+     * @param id 指定消息 ID 。
+     * @param from 指定消息发件人 ID 。
+     * @param to 指定消息收件人 ID 。
+     * @param source 指定消息来源群的 ID 。
+     * @param localTimestamp 指定消息生成时的本地时间戳。
+     * @param remoteTimestamp 指定消息在服务器上被处理的时间戳。
+     * @param payload 指定消息负载数据。
      */
     public Message(String domain, Long id, Long from, Long to, Long source,
                    Long localTimestamp, Long remoteTimestamp, JSONObject sourceDevice, JSONObject payload) {
@@ -181,58 +181,117 @@ public class Message extends Entity implements Comparable<Message> {
         this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
     }
 
-    public String getUniqueKey() {
-        return this.uniqueKey;
-    }
-
+    /**
+     * 获取消息发件人 ID 。
+     *
+     * @return 返回消息发件人 ID 。
+     */
     public Long getFrom() {
         return this.from;
     }
 
+    /**
+     * 获取消息收件人 ID 。
+     *
+     * @return 返回消息收件人 ID 。
+     */
     public Long getTo() {
         return this.to;
     }
 
+    /**
+     * 设置消息收件人 ID 。
+     *
+     * @param to 新的收件人 ID 。
+     */
     public void setTo(Long to) {
         this.to = to;
     }
 
+    /**
+     * 获取消息的来源群的 ID 。
+     *
+     * @return 返回消息的来源群的 ID 。
+     */
     public Long getSource() {
         return this.source;
     }
 
+    /**
+     * 获取消息的本地时间戳。
+     *
+     * @return 返回消息的本地时间戳。
+     */
     public long getLocalTimestamp() {
         return this.localTimestamp;
     }
 
+    /**
+     * 获取消息的服务器时间戳。
+     *
+     * @return 返回消息的服务器时间戳。
+     */
     public long getRemoteTimestamp() {
         return this.remoteTimestamp;
     }
 
+    /**
+     * 设置消息的服务器时间戳。
+     *
+     * @param remoteTimestamp 指定服务器时间戳。
+     */
     public void setRemoteTimestamp(long remoteTimestamp) {
         this.remoteTimestamp = remoteTimestamp;
     }
 
+    /**
+     * 获取消息负载数据。
+     *
+     * @return 返回 JSON 形式的负载数据。
+     */
     public JSONObject getPayload() {
         return this.payload;
     }
 
+    /**
+     * 设置消息发送时的设备。
+     *
+     * @param device 设备实例。
+     */
     public void setSourceDevice(Device device) {
         this.sourceDevice = device;
     }
 
+    /**
+     * 获取消息发出的源设备。
+     *
+     * @return 返回消息发出的源设备，如果没有记录返回 {@code null} 值。
+     */
     public Device getSourceDevice() {
         return this.sourceDevice;
     }
 
+    /**
+     * 设置消息状态。
+     *
+     * @param state 消息状态。
+     */
     public void setState(MessageState state) {
         this.state = state;
     }
 
+    /**
+     * 获取消息状态。
+     *
+     * @return 返回消息状态。
+     */
     public MessageState getState() {
         return this.state;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equals(Object object) {
         if (null != object && object instanceof Message) {
@@ -246,14 +305,9 @@ public class Message extends Entity implements Comparable<Message> {
         return false;
     }
 
-    public JSONObject toJSON(boolean withPayload) {
-        JSONObject json = this.toJSON();
-        if (!withPayload) {
-            json.remove("payload");
-        }
-        return json;
-    }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -280,11 +334,19 @@ public class Message extends Entity implements Comparable<Message> {
         return json;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON(false);
+        JSONObject json = this.toJSON();
+        json.remove("payload");
+        return json;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int compareTo(Message other) {
         return (int)(this.remoteTimestamp - other.remoteTimestamp);

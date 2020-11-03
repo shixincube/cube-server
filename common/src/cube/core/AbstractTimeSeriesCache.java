@@ -29,14 +29,23 @@ package cube.core;
 import cell.util.json.JSONObject;
 
 /**
- * 抽象层时序缓存。
+ * 时序缓存的抽象层。
  */
 public abstract class AbstractTimeSeriesCache implements TimeSeriesCache {
 
+    /**
+     * 缓存名称。
+     */
     private String name;
 
+    /**
+     * 缓存类型描述。
+     */
     private String type;
 
+    /**
+     * 配置信息。
+     */
     private JSONObject config;
 
     /**

@@ -85,6 +85,6 @@ public class PushTask extends ServiceTask {
 
         // 应答
         this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, MessagingStateCode.Ok.code, response.toJSON(false)));
+                , this.makeResponse(action, packet, MessagingStateCode.Ok.code, response.toCompactJSON()));
     }
 }

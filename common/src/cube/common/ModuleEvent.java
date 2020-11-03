@@ -65,7 +65,7 @@ public class ModuleEvent implements JSONable {
     /**
      * 构造函数。
      *
-     * @param json
+     * @param json 模块事件的 JSON 格式。
      */
     public ModuleEvent(JSONObject json) {
         try {
@@ -77,14 +77,29 @@ public class ModuleEvent implements JSONable {
         }
     }
 
+    /**
+     * 获取模块名称。
+     *
+     * @return 返回模块名称。
+     */
     public String getModuleName() {
         return this.moduleName;
     }
 
+    /**
+     * 获取事件名称。
+     *
+     * @return 返回事件名称。
+     */
     public String getEventName() {
         return this.eventName;
     }
 
+    /**
+     * 获取事件的数据。
+     *
+     * @return 返回事件的数据。
+     */
     public JSONObject getData() {
         return this.data;
     }
@@ -107,6 +122,12 @@ public class ModuleEvent implements JSONable {
         return this.toJSON();
     }
 
+    /**
+     * 提取 JSON 数据里的模块名称。
+     *
+     * @param json 指定 JSON 数据。
+     * @return
+     */
     public static String extractModuleName(JSONObject json) {
         String mod = null;
         try {

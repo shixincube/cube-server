@@ -49,21 +49,41 @@ public abstract class Entity implements JSONable {
      */
     protected Domain domain;
 
+    /**
+     * 构造函数。
+     */
     public Entity() {
         this.timestamp = System.currentTimeMillis();
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param id 指定实体的 ID 。
+     */
     public Entity(Long id) {
         this.id = id;
         this.timestamp = System.currentTimeMillis();
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param id 指定实体 ID 。
+     * @param domainName 指定所在域。
+     */
     public Entity(Long id, String domainName) {
         this.id = id;
         this.timestamp = System.currentTimeMillis();
         this.domain = new Domain(domainName);
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param id 指定实体 ID 。
+     * @param domain 指定所在域。
+     */
     public Entity(Long id, Domain domain) {
         this.id = id;
         this.timestamp = System.currentTimeMillis();

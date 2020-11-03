@@ -71,11 +71,24 @@ public class Device implements JSONable {
      */
     private int hash = 0;
 
+    /**
+     * 构造函数。
+     *
+     * @param name 指定设备名。
+     * @param platform 指定平台描述。
+     */
     public Device(String name, String platform) {
         this.name = name;
         this.platform = platform;
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param name 指定设备名。
+     * @param platform 指定平台描述。
+     * @param talkContext 指定上下文。
+     */
     public Device(String name, String platform, TalkContext talkContext) {
         this.name = name;
         this.platform = platform;
@@ -84,6 +97,11 @@ public class Device implements JSONable {
         this.talkContext = talkContext;
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param deviceJson 指定符合格式的 JSON 数据。
+     */
     public Device(JSONObject deviceJson) {
         try {
             this.name = deviceJson.getString("name");
@@ -101,6 +119,12 @@ public class Device implements JSONable {
         }
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param deviceJson 指定符合格式的 JSON 数据。
+     * @param talkContext 指定会话上下文。
+     */
     public Device(JSONObject deviceJson, TalkContext talkContext) {
         try {
             this.name = deviceJson.getString("name");
@@ -126,38 +150,81 @@ public class Device implements JSONable {
         }
     }
 
+    /**
+     * 获取设备名称。
+     *
+     * @return 返回设备名称。
+     */
     public String getName() {
         return this.name;
     }
 
+    /**
+     * 获取平台描述。
+     *
+     * @return 返回平台描述。
+     */
     public String getPlatform() {
         return this.platform;
     }
 
+    /**
+     * 获取设备地址。
+     *
+     * @return 返回字符串形式的设备地址。
+     */
     public String getAddress() {
         return this.address;
     }
 
+    /**
+     * 获取设备的通信端口。
+     *
+     * @return 返回设备的通信端口。
+     */
     public int getPort() {
         return this.port;
     }
 
+    /**
+     * 设置设备对应的令牌编码。
+     *
+     * @param token 令牌编码。
+     */
     public void setToken(String token) {
         this.token = token;
     }
 
+    /**
+     * 获取令牌编码。
+     *
+     * @return 返回令牌编码。
+     */
     public String getToken() {
         return this.token;
     }
 
+    /**
+     * 返回会话上下文。
+     *
+     * @return 返回会话上下文。
+     */
     public TalkContext getTalkContext() {
         return this.talkContext;
     }
 
+    /**
+     * 判断设备是否在线。
+     *
+     * @return 如果设备在线返回 {@code true} ，否则返回 {@code false} 。
+     */
     public boolean isOnline() {
         return (null != this.talkContext) && this.talkContext.isValid();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -176,6 +243,9 @@ public class Device implements JSONable {
         return json;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();

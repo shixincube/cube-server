@@ -29,14 +29,23 @@ package cube.core;
 import cell.util.json.JSONObject;
 
 /**
- * 抽象层缓存。
+ * 缓存抽象层。
  */
 public abstract class AbstractCache implements Cache {
 
+    /**
+     * 缓存名称。
+     */
     private String name;
 
+    /**
+     * 缓存类型描述。
+     */
     private String type;
 
+    /**
+     * 缓存配置信息。
+     */
     private JSONObject config;
 
     /**

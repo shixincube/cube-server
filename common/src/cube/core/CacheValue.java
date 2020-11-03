@@ -80,4 +80,16 @@ public class CacheValue {
     public long getTimestamp() {
         return this.timestamp;
     }
+
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof CacheValue) {
+            CacheValue other = (CacheValue) object;
+            if (other.value.toString().equals(this.value.toString())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

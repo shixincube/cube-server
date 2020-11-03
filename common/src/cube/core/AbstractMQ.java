@@ -29,22 +29,31 @@ package cube.core;
 import cell.util.json.JSONObject;
 
 /**
- * 抽象层 MQ 。
+ * 消息队列的抽象层。
  */
 public abstract class AbstractMQ implements MessageQueue {
 
+    /**
+     * 队列名称。
+     */
     private String name;
 
+    /**
+     * 队列配置。
+     */
     private JSONObject config;
 
+    /**
+     * 构造函数。
+     *
+     * @param name 指定队列名称。
+     */
     public AbstractMQ(String name) {
         this.name = name;
     }
 
     /**
-     * 返回缓存名称。
-     *
-     * @return
+     * {@inheritDoc}
      */
     @Override
     public String getName() {
@@ -52,14 +61,16 @@ public abstract class AbstractMQ implements MessageQueue {
     }
 
     /**
-     *
-     * @return
+     * {@inheritDoc}
      */
     @Override
     public JSONObject getConfig() {
         return this.config;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void configure(JSONObject config) {
         this.config = config;

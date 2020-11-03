@@ -41,7 +41,7 @@ import java.util.Vector;
 public class Group extends Contact implements Comparable<Group> {
 
     /**
-     * 群的所有人。
+     * 群的群组。
      */
     private Contact owner;
 
@@ -71,7 +71,7 @@ public class Group extends Contact implements Comparable<Group> {
      * @param id 群组 ID 。
      * @param domain 群组域。
      * @param name 群组显示名。
-     * @param owner 群组所有人。
+     * @param owner 群组的群主。
      */
     public Group(Long id, String domain, String name, Contact owner, long creationTime) {
         super(id, domain, name);
@@ -115,18 +115,18 @@ public class Group extends Contact implements Comparable<Group> {
     }
 
     /**
-     * 返回群的所有人。
+     * 返回群的群主。
      *
-     * @return
+     * @return 返回群的群主。
      */
     public Contact getOwner() {
         return this.owner;
     }
 
     /**
-     * 设置群的所有人。
+     * 设置群的群主。
      *
-     * @param owner
+     * @param owner 指定群的群主。
      */
     public void setOwner(Contact owner) {
         this.owner = owner;
@@ -135,7 +135,7 @@ public class Group extends Contact implements Comparable<Group> {
     /**
      * 返回群的创建时间。
      *
-     * @return
+     * @return 返回群的创建时间。
      */
     public long getCreationTime() {
         return this.creationTime;
@@ -144,7 +144,7 @@ public class Group extends Contact implements Comparable<Group> {
     /**
      * 设置创建时间。
      *
-     * @param value
+     * @param value 设置创建时间。
      */
     public void setCreationTime(long value) {
         this.creationTime = value;
@@ -153,7 +153,7 @@ public class Group extends Contact implements Comparable<Group> {
     /**
      * 返回群的最近一次活跃时间。
      *
-     * @return
+     * @return 返回群的最近一次活跃时间。
      */
     public long getLastActiveTime() {
         return this.lastActiveTime;
@@ -162,7 +162,7 @@ public class Group extends Contact implements Comparable<Group> {
     /**
      * 设置活跃时间。
      *
-     * @param time
+     * @param time 指定活跃时间。
      */
     public void setLastActiveTime(long time) {
         this.lastActiveTime = time;
@@ -180,7 +180,7 @@ public class Group extends Contact implements Comparable<Group> {
     /**
      * 设置状态。
      *
-     * @param state
+     * @param state 群组状态。
      */
     public void setState(GroupState state) {
         this.state = state;
@@ -189,7 +189,7 @@ public class Group extends Contact implements Comparable<Group> {
     /**
      * 群成员数量。
      *
-     * @return
+     * @return 返回群成员数量。
      */
     public int numMembers() {
         return this.members.size();
@@ -198,8 +198,8 @@ public class Group extends Contact implements Comparable<Group> {
     /**
      * 群组内是否包含指定成员。
      *
-     * @param contactId
-     * @return
+     * @param contactId 指定待判断的成员 ID 。
+     * @return 如果包含指定成员返回 {@code true} ，否则返回 {@code false} 。
      */
     public boolean hasMember(Long contactId) {
         for (int i = 0, size = this.members.size(); i < size; ++i) {
@@ -211,6 +211,12 @@ public class Group extends Contact implements Comparable<Group> {
         return false;
     }
 
+    /**
+     * 添加成员。
+     *
+     * @param contact 指定待添加联系人。
+     * @return 如果添加成功返回添加的联系人，否则返回 {@code null} 值。
+     */
     public Contact addMember(Contact contact) {
         if (this.members.contains(contact)) {
             return null;
@@ -220,6 +226,13 @@ public class Group extends Contact implements Comparable<Group> {
         return contact;
     }
 
+    /**
+     * 移除成员。
+     * 注意：群组无法被移除。
+     *
+     * @param contactId 指定待移除的联系人 ID 。
+     * @return 如果移除成功返回被移除的联系人，否则返回 {@code null} 值。
+     */
     public Contact removeMember(Long contactId) {
         Contact contact = this.getMember(contactId);
         if (null == contact) {
@@ -229,6 +242,13 @@ public class Group extends Contact implements Comparable<Group> {
         return this.removeMember(contact);
     }
 
+    /**
+     * 移除成员。
+     * 注意：群组无法被移除。
+     *
+     * @param contact 指定待移除的联系人。
+     * @return 如果移除成功返回被移除的联系人，否则返回 {@code null} 值。
+     */
     public Contact removeMember(Contact contact) {
         if (contact.getId().longValue() == this.owner.getId().longValue()) {
             return null;
@@ -241,10 +261,21 @@ public class Group extends Contact implements Comparable<Group> {
         return null;
     }
 
+    /**
+     * 获取成员列表。
+     *
+     * @return 返回成员列表的副本。
+     */
     public List<Contact> getMembers() {
         return new ArrayList<>(this.members);
     }
 
+    /**
+     * 获取指定 ID 的成员。
+     *
+     * @param id 指定成员 ID 。
+     * @return 返回指定 ID 的成员实例。没有该成员时返回 {@code null} 值。
+     */
     public Contact getMember(Long id) {
         for (int i = 0, size = this.members.size(); i < size; ++i) {
             Contact member = this.members.get(i);
@@ -256,6 +287,12 @@ public class Group extends Contact implements Comparable<Group> {
         return null;
     }
 
+    /**
+     * 更新指定的成员数据。
+     *
+     * @param member 指定新的成员数据。
+     * @return 如果更新成功返回成员实例，否则返回 {@code null} 值。
+     */
     public Contact updateMember(Contact member) {
         if (!this.members.remove(member)) {
             return null;
@@ -270,6 +307,9 @@ public class Group extends Contact implements Comparable<Group> {
         return member;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equals(Object object) {
         if (null != object && object instanceof Group) {
@@ -297,11 +337,17 @@ public class Group extends Contact implements Comparable<Group> {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int hashCode() {
         return (this.getId().hashCode() + this.getDomain().hashCode() * 3);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
@@ -343,6 +389,12 @@ public class Group extends Contact implements Comparable<Group> {
         return json;
     }
 
+    /**
+     * 序列化为 JSON 格式，并使用指定的状态设置序列化的状态字段。
+     *
+     * @param state 指定序列化时的状态字段数据。
+     * @return 返回 JSON 格式。
+     */
     public JSONObject toJSON(GroupState state) {
         JSONObject json = this.toJSON();
         json.remove("state");
@@ -354,6 +406,9 @@ public class Group extends Contact implements Comparable<Group> {
         return json;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int compareTo(Group other) {
         return (int)(other.lastActiveTime - this.lastActiveTime);
@@ -366,7 +421,7 @@ public class Group extends Contact implements Comparable<Group> {
      * @return 如果 JSON 符合群组数据结构返回 {@code true} 。
      */
     public static boolean isGroup(JSONObject json) {
-        if (json.has("members")) {
+        if (json.has("members") || json.has("owner")) {
             return true;
         }
         else {
