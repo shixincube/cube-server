@@ -52,6 +52,9 @@
 		<cellet port="6000">
 			<class>cube.service.messaging.MessagingServiceCellet</class>
 		</cellet>
+		<cellet port="6000">
+			<class>cube.service.filestorage.FileStorageServiceCellet</class>
+		</cellet>
 	</cellets>
 
 	<!-- 适配器配置 -->

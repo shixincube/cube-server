@@ -29,10 +29,7 @@ package cube.dispatcher;
 import cell.api.*;
 import cell.core.cellet.Cellet;
 import cell.core.net.Endpoint;
-import cell.core.talk.Primitive;
-import cell.core.talk.PrimitiveInputStream;
-import cell.core.talk.TalkContext;
-import cell.core.talk.TalkError;
+import cell.core.talk.*;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.json.JSONException;
@@ -367,10 +364,15 @@ public class Performer implements TalkListener {
         actionDialect.addParam(this.performerKey, createPerformer(sn));
 
         // 绑定关系
-        Transmission tran = new Transmission(sn, cellet, talkContext);
-        this.transmissionMap.put(tran.sn, tran);
+        Transmission trans = new Transmission(sn, cellet, talkContext);
+        this.transmissionMap.put(trans.sn, trans);
 
         director.speaker.speak(cellet.getName(), actionDialect);
+    }
+
+    public void transmit(String tokenCode, String celletName, String streamName, byte[] data) {
+        Director director = null;
+        PrimitiveOutputStream stream = director.speaker.speakStream(celletName, streamName);
     }
 
     /**

@@ -32,18 +32,14 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
-import cube.common.entity.Message;
 import cube.service.contact.ContactStorage;
-import cube.service.messaging.MessagingStorage;
 import cube.storage.StorageType;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 消息存储测试。
