@@ -35,10 +35,23 @@
 			</ws-server>
 
 			<!-- WSS 服务器参数配置 -->
-			<wss-server></wss-server>
+			<wss-server>
+				<!-- 服务绑定的地址 -->
+				<host>0.0.0.0</host>
+				<!-- 服务绑定的端口号 -->
+				<port>7077</port>
+				<!-- 最大允许连接数 -->
+				<max-connection>1000</max-connection>
+			</wss-server>
 
 			<!-- SSL 配置 -->
-			<ssl></ssl>
+			<ssl>
+				<keystore>server.jks</keystore>
+				<password>
+					<store-password>shixincube.com</store-password>
+					<manager-password>shixincube.com</manager-password>
+				</password>
+			</ssl>
 		</talk>
 
 		<!-- 日志配置 -->
@@ -50,13 +63,13 @@
 
 	<!-- Cellet 配置 -->
 	<cellets>
-		<cellet port="7000,7070">
+		<cellet port="7000,7070,7077">
 			<class>cube.dispatcher.auth.AuthCellet</class>
 		</cellet>
-		<cellet port="7000,7070">
+		<cellet port="7000,7070,7077">
 			<class>cube.dispatcher.contact.ContactCellet</class>
 		</cellet>
-		<cellet port="7000,7070">
+		<cellet port="7000,7070,7077">
 			<class>cube.dispatcher.messaging.MessagingCellet</class>
 		</cellet>
 	</cellets>
