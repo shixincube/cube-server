@@ -29,6 +29,7 @@ package cube.dispatcher.filestorage;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.FileStorageActions;
 import cube.common.state.FileStorageStateCode;
@@ -40,6 +41,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.Map;
 
 /**
  * 文件上传处理器。
@@ -54,9 +57,17 @@ public class FileUploadHandler extends CrossDomainHandler {
     }
 
     @Override
-    public void doPut(HttpServletRequest request, HttpServletResponse response)
+    public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        request.getMethod();
+
+        // 解析参数
+        Map<String, String> params = this.parseParams(request);
+
+        // Token Code
+        String token = params.get("token");
+        Long sn = Long.parseLong(params.get("sn"));
+
+        // 读取流
         FlexibleByteBuffer buf = new FlexibleByteBuffer();
         byte[] bytes = new byte[4096];
         InputStream is = request.getInputStream();
@@ -69,18 +80,14 @@ public class FileUploadHandler extends CrossDomainHandler {
         // 整理缓存
         buf.flip();
 
-        FormData formData = new FormData(buf.array());
-
-        buf = null;
-
         // Contact ID
-        Long contact = null;
-        // Token Code
-        String token = null;
+        Long contactId = null;
+        // 域
+        String domain = null;
         // 文件大小
         long fileSize = 0;
         // 文件块所处的索引位置
-        int cursor = 0;
+        long cursor = 0;
         // 文件块大小
         int size = 0;
         // 文件名
@@ -89,26 +96,32 @@ public class FileUploadHandler extends CrossDomainHandler {
         byte[] data = null;
 
         try {
-            contact = Long.parseLong(formData.getValue("cid"));
-            token = formData.getValue("token");
+            FormData formData = new FormData(buf.array(), 0, buf.limit());
+
+            contactId = Long.parseLong(formData.getValue("cid"));
+            domain = formData.getValue("domain");
             fileSize = Long.parseLong(formData.getValue("fileSize"));
-            cursor = Integer.parseInt(formData.getValue("cursor"));
+            cursor = Long.parseLong(formData.getValue("cursor"));
             size = Integer.parseInt(formData.getValue("size"));
             fileName = formData.getFileName();
             data = formData.getFileChunk();
         } catch (Exception e) {
             response.setStatus(HttpStatus.FORBIDDEN_403);
+            Logger.w(this.getClass(), "FileUploadHandler", e);
             return;
         }
 
-        FileChunk chunk = new FileChunk(contact, token, fileName, fileSize, cursor, size, data);
-        this.fileChunkStorage.append(contact, chunk);
+        buf = null;
+
+        FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, cursor, size, data);
+        String fileCode = this.fileChunkStorage.append(chunk);
 
         JSONObject responseData = new JSONObject();
         try {
             responseData.put("fileName", fileName);
-            responseData.put("cursor", cursor);
-            responseData.put("size", size);
+            responseData.put("fileSize", fileSize);
+            responseData.put("fileCode", fileCode);
+            responseData.put("position", cursor + size);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -120,7 +133,7 @@ public class FileUploadHandler extends CrossDomainHandler {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        Packet packet = new Packet(FileStorageActions.UploadFile.name, payload);
+        Packet packet = new Packet(sn, FileStorageActions.UploadFile.name, payload);
 
         this.respondOk(response, packet.toJSON());
     }
@@ -128,6 +141,6 @@ public class FileUploadHandler extends CrossDomainHandler {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        this.doPut(request, response);
+        this.doPost(request, response);
     }
 }

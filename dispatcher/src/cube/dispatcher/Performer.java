@@ -42,7 +42,10 @@ import cube.common.entity.Device;
 import cube.dispatcher.auth.AuthCellet;
 import cube.dispatcher.contact.ContactCellet;
 import cube.dispatcher.messaging.MessagingCellet;
+import cube.dispatcher.util.HttpConfig;
+import cube.util.HttpServer;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,7 +63,15 @@ public class Performer implements TalkListener {
 
     private CelletService celletService;
 
+    /**
+     * 节点名称。
+     */
     private String nodeName;
+
+    /**
+     * HTTP 服务。
+     */
+    private HttpServer httpServer;
 
     /**
      * 服务主机列表。
@@ -141,6 +152,37 @@ public class Performer implements TalkListener {
      */
     public String getNodeName() {
         return this.nodeName;
+    }
+
+    /**
+     * 返回 HTTP 服务器实例。
+     *
+     * @return 返回 HTTP 服务器实例。
+     */
+    public HttpServer getHttpServer() {
+        return this.httpServer;
+    }
+
+    /**
+     * 配置 HTTP 服务器。
+     *
+     * @param config 指定配置信息。
+     */
+    public void configHttpServer(HttpConfig config) {
+        if (null == this.httpServer) {
+            this.httpServer = new HttpServer();
+        }
+
+        if (config.httpsPort > 0) {
+            try {
+                this.httpServer.setKeystorePath(config.keystore);
+            } catch (FileNotFoundException e) {
+                Logger.w(this.getClass(), "install", e);
+            }
+            this.httpServer.setKeystorePassword(config.storePassword, config.managerPassword);
+        }
+
+        this.httpServer.setPort(config.httpPort, config.httpsPort);
     }
 
     /**
@@ -332,9 +374,15 @@ public class Performer implements TalkListener {
             Speakable speakable = this.talkService.call(ep.getHost(), ep.getPort());
             director.speaker = speakable;
         }
+
+        // 启动 HTTP 服务器
+        this.httpServer.start();
     }
 
     public void stop() {
+        // 停止 HTTP 服务器
+        this.httpServer.stop();
+
         for (Director director : this.directorList) {
             Endpoint ep = director.endpoint;
             this.talkService.hangup(ep.getHost(), ep.getPort(), false);

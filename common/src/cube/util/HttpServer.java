@@ -46,6 +46,10 @@ public class HttpServer {
 
     private Server server;
 
+    private int plainPort;
+
+    private int securePort;
+
     private Path keystorePath;
 
     private String keyStorePassword;
@@ -72,18 +76,45 @@ public class HttpServer {
         this.keyManagerPassword = keyManagerPassword;
     }
 
+    public void setPort(int plainPort, int securePort) {
+        this.plainPort = plainPort;
+        this.securePort = securePort;
+    }
+
     public void addContextHandler(ContextHandler handler) {
         this.handlers.add(handler);
     }
 
+    /**
+     * 启动服务器。
+     */
+    public void start() {
+        this.start(this.plainPort, this.securePort);
+    }
+
+    /**
+     * 启动服务器。
+     *
+     * @param plainPort
+     */
     public void start(int plainPort) {
+        this.plainPort = plainPort;
         this.start(plainPort, 0);
     }
 
+    /**
+     * 启动服务器。
+     *
+     * @param plainPort
+     * @param securePort
+     */
     public void start(int plainPort, int securePort) {
         if (null != this.server) {
             return;
         }
+
+        this.plainPort = plainPort;
+        this.securePort = securePort;
 
         this.server = new Server();
 
@@ -137,13 +168,21 @@ public class HttpServer {
         // 设置处理句柄
         this.server.setHandler(contexts);
 
-        try {
-            this.server.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        (new Thread() {
+            @Override
+            public void run() {
+                try {
+                    server.start();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
+    /**
+     * 停止服务器，并退出线程。
+     */
     public void stop() {
         if (null == this.server) {
             return;

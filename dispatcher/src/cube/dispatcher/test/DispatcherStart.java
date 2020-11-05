@@ -43,13 +43,7 @@ public class DispatcherStart {
         boot.setTag("dispatcher");
         boot.start();
 
-        do {
-            try {
-                Thread.sleep(3000L);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        } while (boot.isRunning());
+        boot.join();
 
         System.out.println("Boot exit");
     }

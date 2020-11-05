@@ -55,9 +55,11 @@ public class FormData {
      *
      * @param content
      */
-    public FormData(byte[] content) {
+    public FormData(byte[] content, int offset, int length) {
+        byte[] data = new byte[length];
+        System.arraycopy(content, 0, data, 0, length);
         this.buf = new FlexibleByteBuffer(1024);
-        this.multipart = this.parse(content);
+        this.multipart = this.parse(data);
         this.buf = null;
     }
 
@@ -87,6 +89,12 @@ public class FormData {
                 cursor++;
                 break;
             }
+            else if (b1 == '\n') {
+                buf.flip();
+                boundary = new String(buf.array(), 0, buf.limit());
+                cursor++;
+                break;
+            }
 
             buf.put(b1);
         }
@@ -106,8 +114,10 @@ public class FormData {
 
             switch (action) {
                 case TO_FIND_DISPOSITION:
-                    if (b == '\r') {
-                        ++cursor;
+                    if (b == '\r' || b == '\n') {
+                        if (b == '\r') {
+                            ++cursor;
+                        }
 
                         buf.flip();
                         disposition = new String(buf.array(), 0, buf.limit(), Charset.forName("UTF-8"));
@@ -121,8 +131,10 @@ public class FormData {
                     break;
 
                 case TO_FIND_CONTENT:
-                    if (b == '\r') {
-                        ++cursor;
+                    if (b == '\r' || b == '\n') {
+                        if (b == '\r') {
+                            ++cursor;
+                        }
 
                         if (0 == buf.position()) {
                             break;
@@ -159,8 +171,10 @@ public class FormData {
                     break;
 
                 case TO_FIND_BOUNDARY:
-                    if (b == '\r') {
-                        ++cursor;
+                    if (b == '\r' || b == '\n') {
+                        if (b == '\r') {
+                            ++cursor;
+                        }
 
                         buf.flip();
                         String line = new String(buf.array(), 0, buf.limit(), Charset.forName("UTF-8"));
@@ -179,33 +193,13 @@ public class FormData {
                     break;
 
                 case TO_READ_STREAM:
-                    int taillen = boundary.length() + 2;
+                    int taillen = boundary.length() + 3;
                     if (content.length - cursor > taillen) {
-                        chunk = new byte[content.length - cursor - taillen - 1];
+                        chunk = new byte[content.length - cursor - taillen - 2];
                         System.arraycopy(content, cursor - 1, chunk, 0, chunk.length);
                         cursor = content.length;
                         break;
                     }
-                    /*if (b == '\r') {
-                        // 判断是否结束
-                        byte[] suspected = new byte[boundary.length()];
-                        // cursor + 1 避开 \n
-                        System.arraycopy(content, cursor + 1, suspected, 0, suspected.length);
-
-                        String endFlag = new String(suspected);
-                        if (boundary.equals(endFlag)) {
-                            // 数据结束
-                            buf.flip();
-                            stream = new byte[buf.limit()];
-                            System.arraycopy(buf.array(), 0, stream, 0, stream.length);
-                            buf.clear();
-
-                            // 后移一位，剔除 \n
-                            ++cursor;
-                            action = ActionType.TO_FIND_BOUNDARY;
-                            break;
-                        }
-                    }*/
                     break;
 
                 case TO_END:
@@ -244,16 +238,16 @@ public class FormData {
         TO_END
     }
 
-    /*
-    public static void main(String[] args) {
+
+    /*public static void main(String[] args) {
         String fc = Utils.randomString(512 * 1024);
 
-        String data = "------WebKitFormBoundaryAiKTL587TYHtWO2p\r\n" +
-                "Content-Disposition: form-data; name=\"starting\"\r\n" +
+        String data1 = "------WebKitFormBoundaryAiKTL587TYHtWO2p\r\n" +
+                "Content-Disposition: form-data; name=\"cursor\"\r\n" +
                 "\r\n" +
                 "0\r\n" +
                 "------WebKitFormBoundaryAiKTL587TYHtWO2p\r\n" +
-                "Content-Disposition: form-data; name=\"ending\"\r\n" +
+                "Content-Disposition: form-data; name=\"size\"\r\n" +
                 "\r\n" +
                 "1048576\r\n" +
                 "------WebKitFormBoundaryAiKTL587TYHtWO2p\r\n" +
@@ -263,12 +257,42 @@ public class FormData {
                 "XXX" + fc + "Z\r\n" +
                 "------WebKitFormBoundaryAiKTL587TYHtWO2p--";
 
-        long t = System.currentTimeMillis();
-        FormData form = new FormData(data.getBytes());
-        System.out.println("Time: " + (System.currentTimeMillis() - t));
-        System.out.println(form.getValue("starting"));
-        System.out.println(form.getValue("ending"));
-        System.out.println(form.getFileName());
-        System.out.println(form.getFileChunk().length);
+        String data2 = "-----------------------------131022975738869420362846154883\n" +
+                "Content-Disposition: form-data; name=\"cid\"\n" +
+                "\n" +
+                "10000\n" +
+                "-----------------------------131022975738869420362846154883\n" +
+                "Content-Disposition: form-data; name=\"fileSize\"\n" +
+                "\n" +
+                "705113\n" +
+                "-----------------------------131022975738869420362846154883\n" +
+                "Content-Disposition: form-data; name=\"cursor\"\n" +
+                "\n" +
+                "0\n" +
+                "-----------------------------131022975738869420362846154883\n" +
+                "Content-Disposition: form-data; name=\"size\"\n" +
+                "\n" +
+                "524289\n" +
+                "-----------------------------131022975738869420362846154883\n" +
+                "Content-Disposition: form-data; name=\"file\"; filename=\"3周年.png\"\n" +
+                "Content-Type: application/octet-stream\n" +
+                "\n" +
+                "�PNG\n" +
+                "\u001A\n" +
+                "IHDR" + "���I(dt�Wk\u0000n|�������6�Z��\\�Z�A��i�c�\u001Az�;I�� ����[9�+�\u0002E��\u0012�mb\u001F�=��3�)\u0002������\u0018J���(�p_F*�NYs�\u001F\u001B\u0001����Ł\u0014�2���h��/\u0017��S�\u00001�Q���\u0000��љ��\t@33���\u0000k\u0001\u0019��3�i��0��\u0013~�ȣ(�V>c�����} \u0019\u001Cr�_�������!\u0018\u001C�ba�2�'��{�ҹ�oQ\u001F?{�v\u0019�\u0010h\u0002�\u0000ps\n" +
+                "-----------------------------131022975738869420362846154883--";
+
+        String[] list = new String[] { data1, data2 };
+
+        for (String data : list) {
+            long t = System.currentTimeMillis();
+            byte[] bytes = data.getBytes();
+            FormData form = new FormData(bytes,0, bytes.length);
+            System.out.println("\nTime: " + (System.currentTimeMillis() - t));
+            System.out.println(form.getValue("cursor"));
+            System.out.println(form.getValue("size"));
+            System.out.println(form.getFileName());
+            System.out.println(form.getFileChunk().length);
+        }
     }*/
 }

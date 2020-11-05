@@ -30,6 +30,7 @@ import cell.api.Nucleus;
 import cell.carpet.CellListener;
 import cell.util.log.LogManager;
 import cell.util.log.Logger;
+import cube.dispatcher.util.HttpConfig;
 import cube.report.ReportService;
 import cube.util.ConfigUtils;
 
@@ -97,10 +98,19 @@ public class DispatcherListener implements CellListener {
         }
 
         Properties properties = new Properties();
+        FileInputStream fis = null;
         try {
-            properties.load(new FileInputStream(file));
+            fis = new FileInputStream(file);
+            properties.load(fis);
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            if (null != fis) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                }
+            }
         }
 
         // 读取路由配置
@@ -133,6 +143,22 @@ public class DispatcherListener implements CellListener {
 
             Logger.i(this.getClass(), "Add director point " + address + ":" + port + " #" + weight);
         }
+
+        // 加载 HTTP 配置
+        HttpConfig httpConfig = this.loadHttpConfig(properties);
+        performer.configHttpServer(httpConfig);
+    }
+
+    private HttpConfig loadHttpConfig(Properties properties) {
+        HttpConfig config = new HttpConfig();
+
+        config.httpPort = Integer.parseInt(properties.getProperty("http.port", "7010"));
+        config.httpsPort = Integer.parseInt(properties.getProperty("https.port", "0"));
+        config.keystore = properties.getProperty("keystore", "");
+        config.storePassword = properties.getProperty("storePassword", "");
+        config.managerPassword = properties.getProperty("managerPassword", "");
+
+        return config;
     }
 
     private void initManagement(Performer performer) {

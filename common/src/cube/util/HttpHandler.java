@@ -35,6 +35,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * HTTP 请求处理句柄。
@@ -54,7 +56,7 @@ public abstract class HttpHandler extends AbstractHandler {
             doGet(request, response);
         }
         else if (method.equals("POST")) {
-            doPut(request, response);
+            doPost(request, response);
         }
         else if (method.equals("OPTIONS")) {
             doOptions(request, response);
@@ -67,7 +69,7 @@ public abstract class HttpHandler extends AbstractHandler {
         // Nothing
     }
 
-    public void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         // Nothing
     }
 
@@ -75,11 +77,30 @@ public abstract class HttpHandler extends AbstractHandler {
         // Nothing
     }
 
+    /**
+     * 解析 URI 参数
+     * @param request
+     * @return
+     */
+    protected Map<String, String> parseParams(HttpServletRequest request) {
+        HashMap<String, String> result = new HashMap<>();
+        String queryString = request.getQueryString();
+        String[] sub = queryString.split("&");
+        for (String pair : sub) {
+            String[] array = pair.split("=");
+            if (array.length == 2) {
+                result.put(array[0], array[1]);
+            }
+        }
+        return result;
+    }
+
     public void respondOk(HttpServletResponse response, JSONObject data) {
         response.setStatus(HttpStatus.OK_200);
         response.setContentType("application/json");
         try {
             response.getWriter().write(data.toString());
+            response.getWriter().close();
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -43,13 +43,7 @@ public class Start {
         boot.setTag("cube-service");
         boot.start();
 
-        do {
-            try {
-                Thread.sleep(5000L);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        } while (boot.isRunning());
+        boot.join();
 
         System.out.println("Boot exit");
     }

@@ -24,48 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.filestorage;
-
-import cell.core.cellet.Cellet;
-import cube.dispatcher.Performer;
-import cube.util.HttpServer;
-import org.eclipse.jetty.server.handler.ContextHandler;
+package cube.dispatcher.util;
 
 /**
- * 文件存储模块的 Cellet 单元。
+ * HTTP 配置信息。
  */
-public class FileStorageCellet extends Cellet {
+public class HttpConfig {
 
-    /**
-     * Cellet 名称。
-     */
-    public final static String NAME = "FileStorage";
+    public int httpPort = 0;
+    public int httpsPort = 0;
+    public String keystore = null;
+    public String storePassword = null;
+    public String managerPassword = null;
 
-    private FileChunkStorage fileChunkStorage;
-
-    public FileStorageCellet() {
-        super(NAME);
-        this.fileChunkStorage = new FileChunkStorage("cube-fs-files");
-    }
-
-    @Override
-    public boolean install() {
-        this.fileChunkStorage.open();
-
-        Performer performer = (Performer) nucleus.getParameter("performer");
-        HttpServer httpServer = performer.getHttpServer();
-
-        // 添加句柄
-        ContextHandler upload = new ContextHandler();
-        upload.setContextPath("/filestorage/upload/");
-        upload.setHandler(new FileUploadHandler(this.fileChunkStorage));
-        httpServer.addContextHandler(upload);
-
-        return true;
-    }
-
-    @Override
-    public void uninstall() {
-        this.fileChunkStorage.close();
-    }
 }

@@ -57,9 +57,17 @@ public final class FileUtils {
     private FileUtils() {
     }
 
-    public static String makeFileCode(Long contactId, String fileName) {
+    /**
+     * 生成文件码。
+     *
+     * @param contactId
+     * @param fileName
+     * @param domain
+     * @return
+     */
+    public static String makeFileCode(Long contactId, String domain, String fileName) {
         StringBuilder buf = new StringBuilder(contactId.toString());
-        buf.append("_").append(fileName);
+        buf.append("_").append(domain).append("_").append(fileName);
 
         // 补空位
         if (buf.length() < 64) {

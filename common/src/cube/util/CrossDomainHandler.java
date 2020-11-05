@@ -55,7 +55,7 @@ public class CrossDomainHandler extends HttpHandler {
             doGet(request, response);
         }
         else if (method.equals("POST")) {
-            doPut(request, response);
+            doPost(request, response);
         }
         else if (method.equals("OPTIONS")) {
             doOptions(request, response);

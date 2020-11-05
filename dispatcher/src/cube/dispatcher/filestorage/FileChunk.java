@@ -25,13 +25,14 @@
  */
 
 package cube.dispatcher.filestorage;
-
 /**
  * 文件数据块。
  */
-public class FileChunk {
+public class FileChunk implements Comparable<FileChunk> {
 
     protected Long contactId;
+
+    protected String domain;
 
     protected String token;
 
@@ -39,25 +40,49 @@ public class FileChunk {
 
     protected long fileSize;
 
-    protected int cursor;
+    protected long cursor;
 
     protected int size;
 
     protected byte[] data;
 
     /**
+     * 构造函数。
      *
+     * @param contactId
+     * @param domain
+     * @param token
      * @param fileName
      * @param fileSize
      * @param cursor
      * @param size
      * @param data
      */
-    public FileChunk(Long contactId, String token, String fileName, long fileSize, int cursor, int size, byte[] data) {
+    public FileChunk(Long contactId, String domain, String token, String fileName, long fileSize, long cursor, int size, byte[] data) {
+        this.contactId = contactId;
+        this.domain = domain;
+        this.token = token;
         this.fileName = fileName;
         this.fileSize = fileSize;
         this.cursor = cursor;
         this.size = size;
         this.data = data;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof FileChunk) {
+            FileChunk other = (FileChunk) object;
+            if (other.cursor == this.cursor) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public int compareTo(FileChunk other) {
+        return (int) (this.cursor - other.cursor);
     }
 }
