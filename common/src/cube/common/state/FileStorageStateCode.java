@@ -24,43 +24,38 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.filestorage;
-
-import cell.core.cellet.Cellet;
-import cube.util.HttpServer;
+package cube.common.state;
 
 /**
- * 文件存储模块的 Cellet 单元。
+ * 文件存储模块状态码。
  */
-public class FileStorageCellet extends Cellet {
+public enum FileStorageStateCode {
 
     /**
-     * Cellet 名称。
+     * 成功。
      */
-    public final static String NAME = "FileStorage";
+    Ok(0),
 
-    private HttpServer httpServer;
+    /**
+     * 遇到故障。
+     */
+    Failure(9),
 
-    private FileChunkStorage fileChunkStorage;
+    /**
+     * 无效域信息。
+     */
+    InvalidDomain(11),
 
-    public FileStorageCellet() {
-        super(NAME);
-        this.fileChunkStorage = new FileChunkStorage("cube-fs-files");
+    /**
+     * 未知的状态。
+     */
+    Unknown(99)
+
+    ;
+
+    public final int code;
+
+    FileStorageStateCode(int code) {
+        this.code = code;
     }
-
-    @Override
-    public boolean install() {
-        this.fileChunkStorage.open();
-
-//        this.httpServer = new HttpServer();
-
-        return true;
-    }
-
-    @Override
-    public void uninstall() {
-        this.fileChunkStorage.close();
-    }
-
-
 }

@@ -34,6 +34,7 @@ import cell.util.json.JSONObject;
 import cube.common.Packet;
 import cube.common.StateCode;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
 
@@ -78,8 +79,9 @@ public class SignInTask extends DispatcherTask {
 
         // 将当前联系人的设备与会话上下问关联
         Contact contact = new Contact(contactJson, this.talkContext);
-        contact.getDevice(this.talkContext).setToken(tokenCode);
-        this.performer.updateContact(contact);
+        Device device = contact.getDevice(this.talkContext);
+        device.setToken(tokenCode);
+        this.performer.updateContact(contact, device);
 
         ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
         if (null == response) {

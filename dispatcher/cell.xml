@@ -72,6 +72,9 @@
 		<cellet port="7000,7070,7077">
 			<class>cube.dispatcher.messaging.MessagingCellet</class>
 		</cellet>
+		<cellet port="7000,7070,7077">
+			<class>cube.dispatcher.filestorage.FileStorageCellet</class>
+		</cellet>
 	</cellets>
 
 	<!-- 适配器配置 -->

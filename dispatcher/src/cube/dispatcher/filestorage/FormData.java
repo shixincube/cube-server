@@ -49,7 +49,7 @@ public class FormData {
 
     private String fileName;
 
-    private byte[] stream;
+    private byte[] chunk;
 
     /**
      *
@@ -65,8 +65,8 @@ public class FormData {
         return this.fileName;
     }
 
-    public byte[] getFileStream() {
-        return this.stream;
+    public byte[] getFileChunk() {
+        return this.chunk;
     }
 
     public String getValue(String name) {
@@ -181,8 +181,8 @@ public class FormData {
                 case TO_READ_STREAM:
                     int taillen = boundary.length() + 2;
                     if (content.length - cursor > taillen) {
-                        stream = new byte[content.length - cursor - taillen - 1];
-                        System.arraycopy(content, cursor - 1, stream, 0, stream.length);
+                        chunk = new byte[content.length - cursor - taillen - 1];
+                        System.arraycopy(content, cursor - 1, chunk, 0, chunk.length);
                         cursor = content.length;
                         break;
                     }
@@ -244,6 +244,7 @@ public class FormData {
         TO_END
     }
 
+    /*
     public static void main(String[] args) {
         String fc = Utils.randomString(512 * 1024);
 
@@ -268,6 +269,6 @@ public class FormData {
         System.out.println(form.getValue("starting"));
         System.out.println(form.getValue("ending"));
         System.out.println(form.getFileName());
-        System.out.println(form.getFileStream().length);
-    }
+        System.out.println(form.getFileChunk().length);
+    }*/
 }

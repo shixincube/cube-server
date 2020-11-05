@@ -37,6 +37,11 @@ import cube.common.JSONable;
 public class Device implements JSONable {
 
     /**
+     * 对应的联系人。
+     */
+    protected Contact contact;
+
+    /**
      * 设备名称。
      */
     private String name;
@@ -148,6 +153,15 @@ public class Device implements JSONable {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 获取联系人。
+     *
+     * @return 返回联系人。
+     */
+    public Contact getContact() {
+        return this.contact;
     }
 
     /**

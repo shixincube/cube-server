@@ -26,41 +26,49 @@
 
 package cube.dispatcher.filestorage;
 
-import cell.core.cellet.Cellet;
-import cube.util.HttpServer;
+import cell.util.CachedQueueExecutor;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 /**
- * 文件存储模块的 Cellet 单元。
+ * 文件块存储器。
  */
-public class FileStorageCellet extends Cellet {
+public class FileChunkStorage {
 
-    /**
-     * Cellet 名称。
-     */
-    public final static String NAME = "FileStorage";
+    private Path workingPath;
 
-    private HttpServer httpServer;
+    private ConcurrentHashMap<String, List<FileChunk>> fileChunks;
 
-    private FileChunkStorage fileChunkStorage;
+    private ExecutorService executor;
 
-    public FileStorageCellet() {
-        super(NAME);
-        this.fileChunkStorage = new FileChunkStorage("cube-fs-files");
+    public FileChunkStorage(String path) {
+        this.workingPath = Paths.get(path).toAbsolutePath();
+        if (!Files.exists(this.workingPath)) {
+            try {
+                Files.createDirectories(this.workingPath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        this.fileChunks = new ConcurrentHashMap<>();
     }
 
-    @Override
-    public boolean install() {
-        this.fileChunkStorage.open();
-
-//        this.httpServer = new HttpServer();
-
-        return true;
+    public void open() {
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(4);
     }
 
-    @Override
-    public void uninstall() {
-        this.fileChunkStorage.close();
+    public void close() {
+        this.executor.shutdown();
     }
 
+    public void append(Long contactId, FileChunk chunk) {
 
+    }
 }

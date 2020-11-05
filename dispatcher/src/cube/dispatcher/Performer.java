@@ -43,6 +43,7 @@ import cube.dispatcher.auth.AuthCellet;
 import cube.dispatcher.contact.ContactCellet;
 import cube.dispatcher.messaging.MessagingCellet;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -87,6 +88,11 @@ public class Performer implements TalkListener {
     private ConcurrentHashMap<String, Contact> onlineContacts;
 
     /**
+     * 令牌对应的设备。
+     */
+    private ConcurrentHashMap<String, Device> tokenDeviceMap;
+
+    /**
      * 数据传输记录。
      */
     protected ConcurrentHashMap<Long, Transmission> transmissionMap;
@@ -114,6 +120,7 @@ public class Performer implements TalkListener {
         this.talkDirectorMap = new HashMap<>();
         this.listenerMap = new ConcurrentHashMap<>();
         this.onlineContacts = new ConcurrentHashMap<>();
+        this.tokenDeviceMap = new ConcurrentHashMap<>();
         this.transmissionMap = new ConcurrentHashMap<>();
         this.blockMap = new ConcurrentHashMap<>();
     }
@@ -205,11 +212,15 @@ public class Performer implements TalkListener {
     }
 
     /**
-     * 添加联系人。
-     * @param contact
-     * @return
+     * 更新联系人。
+     *
+     * @param contact 指定联系人。
+     * @param device 指定当前设备。
      */
-    public void updateContact(Contact contact) {
+    public void updateContact(Contact contact, Device device) {
+        // 记录 Token 对应的设备
+        this.tokenDeviceMap.put(device.getToken(), device);
+
         Contact current = this.onlineContacts.get(contact.getUniqueKey());
         if (null == current) {
             this.onlineContacts.put(contact.getUniqueKey(), contact);
@@ -222,8 +233,8 @@ public class Performer implements TalkListener {
                 current.setContext(ctx);
             }
 
-            for (Device device : contact.getDeviceList()) {
-                current.addDevice(device);
+            for (Device dev : contact.getDeviceList()) {
+                current.addDevice(dev);
             }
         }
     }
@@ -267,6 +278,14 @@ public class Performer implements TalkListener {
             Transmission transmission = iter.next();
             if (transmission.source == context) {
                 iter.remove();
+            }
+        }
+
+        Iterator<Device> diter = this.tokenDeviceMap.values().iterator();
+        while (diter.hasNext()) {
+            Device device = diter.next();
+            if (device.getTalkContext() == context) {
+                diter.remove();
             }
         }
     }
@@ -371,8 +390,27 @@ public class Performer implements TalkListener {
     }
 
     public void transmit(String tokenCode, String celletName, String streamName, byte[] data) {
-        Director director = null;
+        Device device = this.tokenDeviceMap.get(tokenCode);
+        if (null == device) {
+            Logger.w(this.getClass(), "#transmit : Can NOT find token device, token: " + tokenCode);
+            return;
+        }
+
+        Director director = this.selectDirector(device.getTalkContext(), celletName);
+
+        // 发送数据
         PrimitiveOutputStream stream = director.speaker.speakStream(celletName, streamName);
+        try {
+            stream.write(data);
+        } catch (IOException e) {
+            Logger.e(this.getClass(), "Writing primitive output stream", e);
+        } finally {
+            try {
+                stream.close();
+            } catch (IOException e) {
+                // Nothing
+            }
+        }
     }
 
     /**

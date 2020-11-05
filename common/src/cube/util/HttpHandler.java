@@ -26,6 +26,8 @@
 
 package cube.util;
 
+import cell.util.json.JSONObject;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
@@ -71,5 +73,15 @@ public abstract class HttpHandler extends AbstractHandler {
 
     public void doOptions(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         // Nothing
+    }
+
+    public void respondOk(HttpServletResponse response, JSONObject data) {
+        response.setStatus(HttpStatus.OK_200);
+        response.setContentType("application/json");
+        try {
+            response.getWriter().write(data.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

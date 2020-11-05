@@ -242,6 +242,7 @@ public class Contact extends Entity {
             this.deviceList.remove(index);
         }
 
+        device.contact = this;
         this.deviceList.add(device);
 
         return invalid;
@@ -265,6 +266,7 @@ public class Contact extends Entity {
             this.deviceList.remove(index);
         }
 
+        device.contact = this;
         this.deviceList.add(device);
 
         return invalid;

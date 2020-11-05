@@ -27,9 +27,13 @@
 package cube.dispatcher.filestorage;
 
 import cell.util.collection.FlexibleByteBuffer;
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
+import cube.common.Packet;
+import cube.common.action.FileStorageActions;
+import cube.common.state.FileStorageStateCode;
 import cube.util.CrossDomainHandler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.eclipse.jetty.http.HttpStatus;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -42,8 +46,11 @@ import java.io.InputStream;
  */
 public class FileUploadHandler extends CrossDomainHandler {
 
-    public FileUploadHandler() {
+    private FileChunkStorage fileChunkStorage;
+
+    public FileUploadHandler(FileChunkStorage fileChunkStorage) {
         super();
+        this.fileChunkStorage = fileChunkStorage;
     }
 
     @Override
@@ -64,7 +71,58 @@ public class FileUploadHandler extends CrossDomainHandler {
 
         FormData formData = new FormData(buf.array());
 
+        buf = null;
 
+        // Contact ID
+        Long contact = null;
+        // Token Code
+        String token = null;
+        // 文件大小
+        long fileSize = 0;
+        // 文件块所处的索引位置
+        int cursor = 0;
+        // 文件块大小
+        int size = 0;
+        // 文件名
+        String fileName = null;
+        // 文件块数据
+        byte[] data = null;
+
+        try {
+            contact = Long.parseLong(formData.getValue("cid"));
+            token = formData.getValue("token");
+            fileSize = Long.parseLong(formData.getValue("fileSize"));
+            cursor = Integer.parseInt(formData.getValue("cursor"));
+            size = Integer.parseInt(formData.getValue("size"));
+            fileName = formData.getFileName();
+            data = formData.getFileChunk();
+        } catch (Exception e) {
+            response.setStatus(HttpStatus.FORBIDDEN_403);
+            return;
+        }
+
+        FileChunk chunk = new FileChunk(contact, token, fileName, fileSize, cursor, size, data);
+        this.fileChunkStorage.append(contact, chunk);
+
+        JSONObject responseData = new JSONObject();
+        try {
+            responseData.put("fileName", fileName);
+            responseData.put("cursor", cursor);
+            responseData.put("size", size);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("data", responseData);
+            payload.put("code", FileStorageStateCode.Ok.code);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Packet packet = new Packet(FileStorageActions.UploadFile.name, payload);
+
+        this.respondOk(response, packet.toJSON());
     }
 
     @Override

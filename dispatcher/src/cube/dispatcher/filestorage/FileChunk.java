@@ -26,41 +26,38 @@
 
 package cube.dispatcher.filestorage;
 
-import cell.core.cellet.Cellet;
-import cube.util.HttpServer;
-
 /**
- * 文件存储模块的 Cellet 单元。
+ * 文件数据块。
  */
-public class FileStorageCellet extends Cellet {
+public class FileChunk {
+
+    protected Long contactId;
+
+    protected String token;
+
+    protected String fileName;
+
+    protected long fileSize;
+
+    protected int cursor;
+
+    protected int size;
+
+    protected byte[] data;
 
     /**
-     * Cellet 名称。
+     *
+     * @param fileName
+     * @param fileSize
+     * @param cursor
+     * @param size
+     * @param data
      */
-    public final static String NAME = "FileStorage";
-
-    private HttpServer httpServer;
-
-    private FileChunkStorage fileChunkStorage;
-
-    public FileStorageCellet() {
-        super(NAME);
-        this.fileChunkStorage = new FileChunkStorage("cube-fs-files");
+    public FileChunk(Long contactId, String token, String fileName, long fileSize, int cursor, int size, byte[] data) {
+        this.fileName = fileName;
+        this.fileSize = fileSize;
+        this.cursor = cursor;
+        this.size = size;
+        this.data = data;
     }
-
-    @Override
-    public boolean install() {
-        this.fileChunkStorage.open();
-
-//        this.httpServer = new HttpServer();
-
-        return true;
-    }
-
-    @Override
-    public void uninstall() {
-        this.fileChunkStorage.close();
-    }
-
-
 }

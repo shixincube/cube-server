@@ -26,7 +26,7 @@
 
 package cube.dispatcher.test;
 
-import cell.carpet.Cell;
+import cell.carpet.CellBoot;
 
 /**
  *
@@ -38,6 +38,8 @@ public class DispatcherStop {
      * @param args
      */
     public static void main(String[] args) {
-        Cell.main(new String[]{ "stop" });
+        CellBoot boot = new CellBoot();
+        boot.setTag("dispatcher");
+        boot.stop();
     }
 }

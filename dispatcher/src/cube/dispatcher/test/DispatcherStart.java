@@ -26,7 +26,7 @@
 
 package cube.dispatcher.test;
 
-import cell.carpet.Cell;
+import cell.carpet.CellBoot;
 
 /**
  *
@@ -38,6 +38,19 @@ public class DispatcherStart {
      * @param args
      */
     public static void main(String[] args) {
-        Cell.main(new String[]{ "start" });
+        // 使用 Boot 启动 Cell 线程
+        CellBoot boot = new CellBoot();
+        boot.setTag("dispatcher");
+        boot.start();
+
+        do {
+            try {
+                Thread.sleep(3000L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } while (boot.isRunning());
+
+        System.out.println("Boot exit");
     }
 }
