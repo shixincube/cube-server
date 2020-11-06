@@ -26,35 +26,84 @@
 
 package cube.service.filestorage;
 
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
+import cell.util.log.Logger;
 import cube.core.AbstractModule;
+import cube.service.auth.AuthService;
+import cube.service.filestorage.system.DiskSystem;
+import cube.service.filestorage.system.FileDescriptor;
+import cube.service.filestorage.system.FileSystem;
+import cube.storage.StorageType;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 文件存储器服务模块。
  */
 public class FileStorageService extends AbstractModule {
 
+    private FileSystem fileSystem;
 
+    private FileCodeStorage fileCodeStorage;
 
-    public FileStorageService() {
+    /**
+     * 多线程执行器。
+     */
+    private ExecutorService executor;
+
+    public FileStorageService(ExecutorService executor) {
         super();
+        this.executor = executor;
     }
 
     @Override
     public void start() {
         // 加载配置
+        Properties properties = this.loadConfig();
+        if (null != properties) {
+            String filesystem = properties.getProperty("filesystem", "disk");
+            if (filesystem.equalsIgnoreCase("disk")) {
+                String path = properties.getProperty("disk.dir", "storage/files");
+                this.fileSystem = new DiskSystem(path);
+            }
+            else {
+                Logger.w(this.getClass(), "Unsupported file system: " + filesystem);
 
+                this.fileSystem = new DiskSystem("storage/files");
+            }
+        }
+        else {
+            Logger.e(this.getClass(), "Load config file failed");
+
+            this.fileSystem = new DiskSystem("storage/files");
+        }
+
+        // 初始化存储
+        this.initStorage();
     }
 
     @Override
     public void stop() {
+        this.fileCodeStorage.close();
+    }
 
+    /**
+     * 写文件到文件系统。
+     *
+     * @param fileCode
+     * @param inputStream
+     */
+    public void writeFile(String fileCode, InputStream inputStream) {
+        FileDescriptor descriptor = this.fileSystem.writeFile(fileCode, inputStream);
+        this.fileCodeStorage.writeFileDescriptor(fileCode, descriptor);
     }
 
     private Properties loadConfig() {
@@ -84,5 +133,26 @@ public class FileStorageService extends AbstractModule {
         }
 
         return properties;
+    }
+
+    private void initStorage() {
+        JSONObject config = new JSONObject();
+        try {
+            config.put("file", "storage/FileStorageService.db");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        this.fileCodeStorage = new FileCodeStorage(this.executor, StorageType.SQLite, config);
+
+        this.fileCodeStorage.open();
+
+        (new Thread() {
+            @Override
+            public void run() {
+                // 存储进行自校验
+                AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
+                fileCodeStorage.execSelfChecking(authService.getDomainList());
+            }
+        }).start();
     }
 }

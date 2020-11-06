@@ -47,6 +47,7 @@ import cube.util.HttpServer;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -413,6 +414,7 @@ public class Performer implements TalkListener {
 
     /**
      * 向服务单元发送数据，不等待应答。
+     *
      * @param talkContext
      * @param cellet
      * @param actionDialect
@@ -437,7 +439,15 @@ public class Performer implements TalkListener {
         director.speaker.speak(cellet.getName(), actionDialect);
     }
 
-    public void transmit(String tokenCode, String celletName, String streamName, byte[] data) {
+    /**
+     * 向服务单元发送流。
+     *
+     * @param tokenCode
+     * @param celletName
+     * @param streamName
+     * @param inputStream
+     */
+    public void transmit(String tokenCode, String celletName, String streamName, InputStream inputStream) {
         Device device = this.tokenDeviceMap.get(tokenCode);
         if (null == device) {
             Logger.w(this.getClass(), "#transmit : Can NOT find token device, token: " + tokenCode);
@@ -446,10 +456,16 @@ public class Performer implements TalkListener {
 
         Director director = this.selectDirector(device.getTalkContext(), celletName);
 
+        long total = 0;
         // 发送数据
         PrimitiveOutputStream stream = director.speaker.speakStream(celletName, streamName);
         try {
-            stream.write(data);
+            byte[] buf = new byte[64 * 1024];
+            int length = 0;
+            while ((length = inputStream.read(buf)) > 0) {
+                stream.write(buf, 0, length);
+                total += length;
+            }
         } catch (IOException e) {
             Logger.e(this.getClass(), "Writing primitive output stream", e);
         } finally {
@@ -459,6 +475,8 @@ public class Performer implements TalkListener {
                 // Nothing
             }
         }
+
+        System.out.println("XJW: " + total);
     }
 
     /**

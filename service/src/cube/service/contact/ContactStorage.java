@@ -30,6 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
+import cube.common.Storagable;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Group;
@@ -51,7 +52,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * 联系人存储。
  */
-public class ContactStorage {
+public class ContactStorage implements Storagable {
 
     private final String version = "1.0";
 
@@ -123,14 +124,17 @@ public class ContactStorage {
         this.groupMemberTableNameMap = new HashMap<>();
     }
 
+    @Override
     public void open() {
         this.storage.open();
     }
 
+    @Override
     public void close() {
         this.storage.close();
     }
 
+    @Override
     public void execSelfChecking(List<String> domainNameList) {
         for (String domain : domainNameList) {
             this.checkContactTable(domain);

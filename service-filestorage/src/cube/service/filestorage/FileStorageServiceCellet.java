@@ -30,7 +30,11 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkContext;
+import cell.util.CachedQueueExecutor;
 import cube.core.Kernel;
+import cube.service.filestorage.task.WriteFileTask;
+
+import java.util.concurrent.ExecutorService;
 
 /**
  * 文件存储器 Cellet 服务单元。
@@ -39,14 +43,19 @@ public class FileStorageServiceCellet extends Cellet {
 
     public final static String NAME = "FileStorage";
 
+    private ExecutorService executor = null;
+
     public FileStorageServiceCellet() {
         super(NAME);
     }
 
     @Override
     public boolean install() {
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
+
         Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.installModule(NAME, new FileStorageService());
+        kernel.installModule(NAME, new FileStorageService(this.executor));
+
         return true;
     }
 
@@ -54,6 +63,8 @@ public class FileStorageServiceCellet extends Cellet {
     public void uninstall() {
         Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
         kernel.uninstallModule(NAME);
+
+        this.executor.shutdown();
     }
 
     @Override
@@ -63,6 +74,6 @@ public class FileStorageServiceCellet extends Cellet {
 
     @Override
     public void onListened(TalkContext talkContext, PrimitiveInputStream stream) {
-
+        this.executor.execute(new WriteFileTask(this, talkContext, stream));
     }
 }

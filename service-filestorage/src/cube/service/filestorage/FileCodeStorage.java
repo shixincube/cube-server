@@ -26,15 +26,40 @@
 
 package cube.service.filestorage;
 
+import cell.util.json.JSONObject;
+import cube.common.Storagable;
+import cube.service.filestorage.system.FileDescriptor;
+import cube.storage.StorageType;
+
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+
 /**
  * 文件码存储器。
  * 用于管理文件码存储。
  */
-public class FileCodeStorage {
+public class FileCodeStorage implements Storagable {
 
-    public FileCodeStorage() {
+    public FileCodeStorage(ExecutorService executorService, StorageType type, JSONObject config) {
 
     }
 
+    @Override
+    public void open() {
 
+    }
+
+    @Override
+    public void close() {
+
+    }
+
+    @Override
+    public void execSelfChecking(List<String> domainNameList) {
+
+    }
+
+    public void writeFileDescriptor(String fileCode, FileDescriptor descriptor) {
+
+    }
 }

@@ -24,51 +24,40 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.filestorage;
+package cube.service.filestorage.task;
 
 import cell.core.cellet.Cellet;
-import cube.dispatcher.Performer;
-import cube.util.HttpServer;
-import org.eclipse.jetty.server.handler.ContextHandler;
+import cell.core.talk.PrimitiveInputStream;
+import cell.core.talk.TalkContext;
+import cube.core.Kernel;
+import cube.service.filestorage.FileStorageService;
+import cube.service.filestorage.FileStorageServiceCellet;
 
 /**
- * 文件存储模块的 Cellet 单元。
+ * 写文件任务。
  */
-public class FileStorageCellet extends Cellet {
+public class WriteFileTask implements Runnable {
 
     /**
-     * Cellet 名称。
+     * 框架的内核实例。
      */
-    public final static String NAME = "FileStorage";
+    protected Kernel kernel;
 
-    private FileChunkStorage fileChunkStorage;
+    protected TalkContext talkContext;
 
-    public FileStorageCellet() {
-        super(NAME);
-        this.fileChunkStorage = new FileChunkStorage("cube-fs-files");
+    protected PrimitiveInputStream inputStream;
+
+    protected FileStorageService service;
+
+    public WriteFileTask(Cellet cellet, TalkContext talkContext, PrimitiveInputStream inputStream) {
+        this.kernel = (Kernel) cellet.getNucleus().getParameter("kernel");
+        this.talkContext = talkContext;
+        this.inputStream = inputStream;
     }
 
     @Override
-    public boolean install() {
-        Performer performer = (Performer) nucleus.getParameter("performer");
-
-        // 打开存储管理器
-        this.fileChunkStorage.open(performer);
-
-        // 配置 HTTP/HTTPS 服务的句柄
-        HttpServer httpServer = performer.getHttpServer();
-
-        // 添加句柄
-        ContextHandler upload = new ContextHandler();
-        upload.setContextPath("/filestorage/upload/");
-        upload.setHandler(new FileUploadHandler(this.fileChunkStorage));
-        httpServer.addContextHandler(upload);
-
-        return true;
-    }
-
-    @Override
-    public void uninstall() {
-        this.fileChunkStorage.close();
+    public void run() {
+        this.service = (FileStorageService) this.kernel.getModule(FileStorageServiceCellet.NAME);
+        this.service.writeFile(this.inputStream.getName(), this.inputStream);
     }
 }

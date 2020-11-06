@@ -55,13 +55,16 @@ public class DiskSystem implements FileSystem {
     @Override
     public FileDescriptor writeFile(File file) {
         Path target = Paths.get(this.managingPath.toString(), file.getName());
+        long total = 0;
         try {
             Files.copy(Paths.get(file.getPath()), target);
+            total = Files.size(target);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        FileDescriptor descriptor = new FileDescriptor();
-        descriptor.addAttr("path", target.toAbsolutePath().toString());
+        FileDescriptor descriptor = new FileDescriptor("disk");
+        descriptor.attr("path", target.toAbsolutePath().toString());
+        descriptor.attr("total", total);
         return descriptor;
     }
 
@@ -69,6 +72,7 @@ public class DiskSystem implements FileSystem {
     public FileDescriptor writeFile(String fileName, InputStream inputStream) {
         Path target = Paths.get(this.managingPath.toAbsolutePath().toString(), fileName);
 
+        long total = 0;
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(target.toFile());
@@ -77,6 +81,7 @@ public class DiskSystem implements FileSystem {
             int length = 0;
             while ((length = inputStream.read(buf)) > 0) {
                 fos.write(buf, 0, length);
+                total += length;
             }
             fos.flush();
         } catch (IOException e) {
@@ -90,8 +95,12 @@ public class DiskSystem implements FileSystem {
             }
         }
 
-        FileDescriptor descriptor = new FileDescriptor();
-        descriptor.addAttr("path", target.toString());
+        FileDescriptor descriptor = new FileDescriptor("disk");
+        descriptor.attr("path", target.toString());
+        descriptor.attr("total", total);
+
+        System.out.println("XJW: " + descriptor.toJSON().toString());
+
         return descriptor;
     }
 

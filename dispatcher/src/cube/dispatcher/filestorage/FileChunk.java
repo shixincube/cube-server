@@ -42,6 +42,8 @@ public class FileChunk implements Comparable<FileChunk> {
 
     protected long cursor;
 
+    protected long position;
+
     protected int size;
 
     protected byte[] data;
@@ -67,6 +69,7 @@ public class FileChunk implements Comparable<FileChunk> {
         this.cursor = cursor;
         this.size = size;
         this.data = data;
+        this.position = cursor + size;
     }
 
     @Override

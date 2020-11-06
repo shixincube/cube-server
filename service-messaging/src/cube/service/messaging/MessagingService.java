@@ -154,6 +154,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     /**
      * 启动服务。
      */
+    @Override
     public void start() {
         this.contactsAdapter = CelletAdapterFactory.getInstance().getAdapter("Contacts");
         this.contactsAdapter.addListener(this);
@@ -168,6 +169,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     /**
      * 停止服务。
      */
+    @Override
     public void stop() {
         this.messageCache.stop();
 

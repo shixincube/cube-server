@@ -79,6 +79,11 @@ public class SignInTask extends ServiceTask {
 
         // 活跃设备
         Device activeDevice = contact.getDevice(this.talkContext);
+        if (null == activeDevice) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.Failure.code, packet.data));
+            return;
+        }
 
         // 设置终端的对应关系
         Contact newContact = ContactManager.getInstance().signIn(contact, authToken, activeDevice);

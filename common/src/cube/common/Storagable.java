@@ -24,51 +24,29 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.filestorage;
+package cube.common;
 
-import cell.core.cellet.Cellet;
-import cube.dispatcher.Performer;
-import cube.util.HttpServer;
-import org.eclipse.jetty.server.handler.ContextHandler;
+import java.util.List;
 
 /**
- * 文件存储模块的 Cellet 单元。
+ * 具备存储能力的接口。
  */
-public class FileStorageCellet extends Cellet {
+public interface Storagable {
 
     /**
-     * Cellet 名称。
+     * 开启存储。
      */
-    public final static String NAME = "FileStorage";
+    public void open();
 
-    private FileChunkStorage fileChunkStorage;
+    /**
+     * 关闭存储。
+     */
+    public void close();
 
-    public FileStorageCellet() {
-        super(NAME);
-        this.fileChunkStorage = new FileChunkStorage("cube-fs-files");
-    }
-
-    @Override
-    public boolean install() {
-        Performer performer = (Performer) nucleus.getParameter("performer");
-
-        // 打开存储管理器
-        this.fileChunkStorage.open(performer);
-
-        // 配置 HTTP/HTTPS 服务的句柄
-        HttpServer httpServer = performer.getHttpServer();
-
-        // 添加句柄
-        ContextHandler upload = new ContextHandler();
-        upload.setContextPath("/filestorage/upload/");
-        upload.setHandler(new FileUploadHandler(this.fileChunkStorage));
-        httpServer.addContextHandler(upload);
-
-        return true;
-    }
-
-    @Override
-    public void uninstall() {
-        this.fileChunkStorage.close();
-    }
+    /**
+     * 执行自检。
+     *
+     * @param domainNameList 存储需要支持的域的域名称列表。
+     */
+    public void execSelfChecking(List<String> domainNameList);
 }

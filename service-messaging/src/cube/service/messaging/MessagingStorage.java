@@ -30,6 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
+import cube.common.Storagable;
 import cube.common.entity.Message;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -48,7 +49,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * 消息存储器。
  */
-public class MessagingStorage {
+public class MessagingStorage implements Storagable {
 
     private final String version = "1.0";
 
@@ -86,14 +87,17 @@ public class MessagingStorage {
         this.tableNameMap = new HashMap<>();
     }
 
+    @Override
     public void open() {
         this.storage.open();
     }
 
+    @Override
     public void close() {
         this.storage.close();
     }
 
+    @Override
     public void execSelfChecking(List<String> domainNameList) {
         String table = "cube";
 

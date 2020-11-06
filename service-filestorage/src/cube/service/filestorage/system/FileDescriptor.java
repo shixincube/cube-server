@@ -28,23 +28,68 @@ package cube.service.filestorage.system;
 
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.JSONable;
 
 /**
  * 文件描述符。
  */
-public class FileDescriptor {
+public class FileDescriptor implements JSONable {
+
+    private String fileSystem;
 
     private JSONObject descriptor;
 
-    public FileDescriptor() {
+    public FileDescriptor(String fileSystem) {
+        this.fileSystem = fileSystem;
         this.descriptor = new JSONObject();
     }
 
-    public void addAttr(String name, String value) {
+    public void attr(String name, String value) {
         try {
             this.descriptor.put(name, value);
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public void attr(String name, long value) {
+        try {
+            this.descriptor.put(name, value);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void attr(String name, int value) {
+        try {
+            this.descriptor.put(name, value);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String attr(String name) {
+        String value = null;
+        try {
+            value = this.descriptor.getString(name);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return value;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        try {
+            this.descriptor.put("system", this.fileSystem);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return this.descriptor;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

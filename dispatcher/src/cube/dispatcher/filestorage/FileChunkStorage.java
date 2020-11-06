@@ -27,12 +27,12 @@
 package cube.dispatcher.filestorage;
 
 import cell.util.CachedQueueExecutor;
+import cell.util.log.Logger;
+import cube.common.Packet;
+import cube.dispatcher.Performer;
 import cube.util.FileUtils;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,15 +40,25 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 文件块存储器。
  */
 public class FileChunkStorage {
 
+    private final int blockSize = 128 * 1024;
+
+    private Performer performer;
+
     private Path workingPath;
 
     private ConcurrentHashMap<String, FileChunkStore> fileChunks;
+
+    /**
+     * 正在进行透传的区块。
+     */
+    private ConcurrentHashMap<String, ChunkInputStream> passingChunks;
 
     private ExecutorService executor;
 
@@ -61,11 +71,14 @@ public class FileChunkStorage {
                 e.printStackTrace();
             }
         }
+
         this.fileChunks = new ConcurrentHashMap<>();
+        this.passingChunks = new ConcurrentHashMap<>();
     }
 
-    public void open() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(4);
+    public void open(Performer performer) {
+        this.performer = performer;
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
     }
 
     public void close() {
@@ -77,13 +90,16 @@ public class FileChunkStorage {
 
         FileChunkStore store = this.fileChunks.get(fileCode);
         if (null == store) {
-            store = new FileChunkStore(fileCode);
+            store = new FileChunkStore(fileCode, chunk.token);
             this.fileChunks.put(fileCode, store);
         }
 
         store.add(chunk);
 
-        this.executor.execute(store);
+        if (!store.running.get()) {
+            store.running.set(true);
+            this.executor.execute(store);
+        }
 
         return fileCode;
     }
@@ -119,6 +135,27 @@ public class FileChunkStorage {
         }
     }
 
+    /**
+     * 将收到的数据实时转发给服务节点。
+     *
+     * @param fileChunkStore
+     */
+    public synchronized void expressToService(final FileChunkStore fileChunkStore) {
+        if (this.passingChunks.containsKey(fileChunkStore.fileCode)) {
+            return;
+        }
+
+        ChunkInputStream inputStream = new ChunkInputStream(fileChunkStore);
+        this.passingChunks.put(fileChunkStore.fileCode, inputStream);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                performer.transmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, fileChunkStore.fileCode, inputStream);
+            }
+        });
+    }
+
 
     /**
      * 文件块列表。
@@ -127,12 +164,17 @@ public class FileChunkStorage {
 
         protected String fileCode;
 
-        protected ArrayList<FileChunk> chunks;
+        protected String tokenCode;
+
+        private ArrayList<FileChunk> chunks;
 
         protected boolean completed = false;
 
-        protected FileChunkStore(String fileCode) {
+        protected AtomicBoolean running = new AtomicBoolean(false);
+
+        protected FileChunkStore(String fileCode, String tokenCode) {
             this.fileCode = fileCode;
+            this.tokenCode = tokenCode;
             this.chunks = new ArrayList<>();
         }
 
@@ -147,32 +189,59 @@ public class FileChunkStorage {
             }
         }
 
+        protected FileChunk last() {
+            synchronized (this.chunks) {
+                return this.chunks.get(this.chunks.size() - 1);
+            }
+        }
+
+        protected int numChunks() {
+            synchronized (this.chunks) {
+                return this.chunks.size();
+            }
+        }
+
+        protected FileChunk get(long cursor) {
+            synchronized (this.chunks) {
+                for (int i = 0, size = this.chunks.size(); i < size; ++i) {
+                    FileChunk fileChunk = this.chunks.get(i);
+                    if (fileChunk.cursor == cursor) {
+                        return fileChunk;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+
         @Override
         public void run() {
-            // 自检
-
-            // 排序
-            Collections.sort(this.chunks);
-
             // 检查块是否连续
             boolean continuous = true;
             boolean completed = false;
 
             synchronized (this.chunks) {
+                // 排序
+                Collections.sort(this.chunks);
+
+                // 检查状态
                 for (int i = 0, ni = 1, size = this.chunks.size(); i < size; ++i, ++ni) {
                     FileChunk chunk = this.chunks.get(i);
                     FileChunk next = ni < size ? this.chunks.get(ni) : null;
 
                     if (null != next) {
-                        if (chunk.cursor + chunk.size != next.cursor) {
+                        if (chunk.position != next.cursor) {
                             continuous = false;
                             break;
                         }
                     }
                     else {
                         // next 为空，chunk 是最后一块，判断是否结束
-                        if (chunk.cursor + chunk.size == chunk.fileSize) {
-                            completed = true;
+                        if (chunk.position == chunk.fileSize) {
+                            if (this.chunks.get(0).cursor == 0) {
+                                completed = true;
+                            }
                         }
                     }
                 }
@@ -183,6 +252,84 @@ public class FileChunkStorage {
                 // 完成写入磁盘
                 writeToDisk(this);
             }
+            else if (this.chunks.get(0).cursor == 0) {
+                expressToService(this);
+            }
+
+            this.running.set(false);
+        }
+    }
+
+    protected class ChunkInputStream extends InputStream {
+
+        private FileChunkStore store;
+
+        private int cursor = -1;
+
+        private int chunkCursor = -1;
+
+        private FileChunk current = null;
+
+        public ChunkInputStream(FileChunkStore store) {
+            this.store = store;
+            this.current = store.get(0);
+        }
+
+        @Override
+        public int read() throws IOException {
+            // 文件游标后移
+            ++this.cursor;
+            // 块游标后移
+            ++this.chunkCursor;
+
+            if (this.store.completed && this.chunkCursor >= this.current.size && this.current.position >= this.current.fileSize) {
+                // 已经完成读取
+                return -1;
+            }
+
+            if (this.chunkCursor >= this.current.size) {
+                // 重置块游标
+                this.chunkCursor = 0;
+
+                if (this.store.completed && this.current.position >= this.current.fileSize) {
+                    // 已经完成读取
+                    return -1;
+                }
+
+                FileChunk chunk = this.store.get(this.current.position);
+                if (null == chunk) {
+                    // 没有完成，但是无新数据，进行等待
+                    int waitCount = 3000;
+                    while (null == chunk) {
+                        // 等待
+                        try {
+                            Thread.sleep(100L);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        --waitCount;
+                        if (waitCount < 0) {
+                            break;
+                        }
+
+                        chunk = this.store.get(this.current.position);
+                    }
+
+                    if (null == chunk) {
+                        // 超时结束
+                        Logger.w(this.getClass(), "Chunk file stream timeout: " + this.store.fileCode);
+                        return -1;
+                    }
+
+                    this.current = chunk;
+                }
+                else {
+                    this.current = chunk;
+                }
+            }
+
+            byte b = this.current.data[this.chunkCursor];
+            return b & 0xFF;
         }
     }
 }
