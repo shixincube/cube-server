@@ -41,8 +41,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.util.Map;
 
 /**
  * 文件上传处理器。
@@ -60,12 +58,10 @@ public class FileUploadHandler extends CrossDomainHandler {
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
 
-        // 解析参数
-        Map<String, String> params = this.parseParams(request);
-
         // Token Code
-        String token = params.get("token");
-        Long sn = Long.parseLong(params.get("sn"));
+        String token = request.getParameter("token");
+        // SN
+        Long sn = Long.parseLong(request.getParameter("sn"));
 
         // 读取流
         FlexibleByteBuffer buf = new FlexibleByteBuffer();
@@ -106,8 +102,8 @@ public class FileUploadHandler extends CrossDomainHandler {
             fileName = formData.getFileName();
             data = formData.getFileChunk();
         } catch (Exception e) {
-            response.setStatus(HttpStatus.FORBIDDEN_403);
             Logger.w(this.getClass(), "FileUploadHandler", e);
+            this.respond(response, HttpStatus.FORBIDDEN_403, new JSONObject());
             return;
         }
 

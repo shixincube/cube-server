@@ -26,43 +26,15 @@
 
 package cube.service.filestorage;
 
-import cell.core.cellet.Cellet;
-import cell.core.talk.Primitive;
-import cell.core.talk.PrimitiveInputStream;
-import cell.core.talk.TalkContext;
-import cube.core.Kernel;
-
 /**
- * 文件存储器 Cellet 服务单元。
+ * 文件码存储器。
+ * 用于管理文件码存储。
  */
-public class FileStorageServiceCellet extends Cellet {
+public class FileCodeStorage {
 
-    public final static String NAME = "FileStorage";
-
-    public FileStorageServiceCellet() {
-        super(NAME);
-    }
-
-    @Override
-    public boolean install() {
-        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.installModule(NAME, new FileStorageService());
-        return true;
-    }
-
-    @Override
-    public void uninstall() {
-        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.uninstallModule(NAME);
-    }
-
-    @Override
-    public void onListened(TalkContext talkContext, Primitive primitive) {
+    public FileCodeStorage() {
 
     }
 
-    @Override
-    public void onListened(TalkContext talkContext, PrimitiveInputStream stream) {
 
-    }
 }

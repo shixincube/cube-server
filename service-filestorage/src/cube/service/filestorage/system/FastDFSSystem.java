@@ -24,45 +24,31 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage;
+package cube.service.filestorage.system;
 
-import cell.core.cellet.Cellet;
-import cell.core.talk.Primitive;
-import cell.core.talk.PrimitiveInputStream;
-import cell.core.talk.TalkContext;
-import cube.core.Kernel;
+import java.io.File;
+import java.io.InputStream;
 
 /**
- * 文件存储器 Cellet 服务单元。
+ * FastDFS 文件系统。
  */
-public class FileStorageServiceCellet extends Cellet {
+public class FastDFSSystem implements FileSystem {
 
-    public final static String NAME = "FileStorage";
-
-    public FileStorageServiceCellet() {
-        super(NAME);
+    public FastDFSSystem() {
     }
 
     @Override
-    public boolean install() {
-        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.installModule(NAME, new FileStorageService());
-        return true;
+    public FileDescriptor writeFile(File file) {
+        return null;
     }
 
     @Override
-    public void uninstall() {
-        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.uninstallModule(NAME);
+    public FileDescriptor writeFile(String fileName, InputStream inputStream) {
+        return null;
     }
 
     @Override
-    public void onListened(TalkContext talkContext, Primitive primitive) {
-
-    }
-
-    @Override
-    public void onListened(TalkContext talkContext, PrimitiveInputStream stream) {
-
+    public byte[] readFile(FileDescriptor descriptor) {
+        return new byte[0];
     }
 }

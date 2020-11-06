@@ -24,45 +24,27 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage;
+package cube.service.filestorage.system;
 
-import cell.core.cellet.Cellet;
-import cell.core.talk.Primitive;
-import cell.core.talk.PrimitiveInputStream;
-import cell.core.talk.TalkContext;
-import cube.core.Kernel;
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
 
 /**
- * 文件存储器 Cellet 服务单元。
+ * 文件描述符。
  */
-public class FileStorageServiceCellet extends Cellet {
+public class FileDescriptor {
 
-    public final static String NAME = "FileStorage";
+    private JSONObject descriptor;
 
-    public FileStorageServiceCellet() {
-        super(NAME);
+    public FileDescriptor() {
+        this.descriptor = new JSONObject();
     }
 
-    @Override
-    public boolean install() {
-        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.installModule(NAME, new FileStorageService());
-        return true;
-    }
-
-    @Override
-    public void uninstall() {
-        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.uninstallModule(NAME);
-    }
-
-    @Override
-    public void onListened(TalkContext talkContext, Primitive primitive) {
-
-    }
-
-    @Override
-    public void onListened(TalkContext talkContext, PrimitiveInputStream stream) {
-
+    public void addAttr(String name, String value) {
+        try {
+            this.descriptor.put(name, value);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }

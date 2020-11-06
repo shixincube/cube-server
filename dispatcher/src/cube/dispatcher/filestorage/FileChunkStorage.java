@@ -38,7 +38,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
@@ -181,6 +180,7 @@ public class FileChunkStorage {
 
             if (continuous && completed) {
                 this.completed = true;
+                // 完成写入磁盘
                 writeToDisk(this);
             }
         }

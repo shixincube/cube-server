@@ -28,10 +28,19 @@ package cube.service.filestorage;
 
 import cube.core.AbstractModule;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Properties;
+
 /**
  * 文件存储器服务模块。
  */
 public class FileStorageService extends AbstractModule {
+
+
 
     public FileStorageService() {
         super();
@@ -39,11 +48,41 @@ public class FileStorageService extends AbstractModule {
 
     @Override
     public void start() {
+        // 加载配置
 
     }
 
     @Override
     public void stop() {
 
+    }
+
+    private Properties loadConfig() {
+        Path path = Paths.get("config/file-storage.properties");
+        if (!Files.exists(path)) {
+            path = Paths.get("file-storage.properties");
+            if (!Files.exists(path)) {
+                return null;
+            }
+        }
+
+        Properties properties = new Properties();
+
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(path.toFile());
+            properties.load(fis);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != fis) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        return properties;
     }
 }

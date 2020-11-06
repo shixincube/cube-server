@@ -24,45 +24,39 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage;
+package cube.service.filestorage.system;
 
-import cell.core.cellet.Cellet;
-import cell.core.talk.Primitive;
-import cell.core.talk.PrimitiveInputStream;
-import cell.core.talk.TalkContext;
-import cube.core.Kernel;
+import java.io.File;
+import java.io.InputStream;
 
 /**
- * 文件存储器 Cellet 服务单元。
+ * 文件系统接口。
  */
-public class FileStorageServiceCellet extends Cellet {
+public interface FileSystem {
 
-    public final static String NAME = "FileStorage";
+    /**
+     * 写入文件。
+     *
+     * @param file
+     * @return
+     */
+    public FileDescriptor writeFile(File file);
 
-    public FileStorageServiceCellet() {
-        super(NAME);
-    }
+    /**
+     * 写入文件。
+     *
+     * @param fileName
+     * @param inputStream
+     * @return
+     */
+    public FileDescriptor writeFile(String fileName, InputStream inputStream);
 
-    @Override
-    public boolean install() {
-        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.installModule(NAME, new FileStorageService());
-        return true;
-    }
+    /**
+     * 读取文件。
+     *
+     * @param descriptor
+     * @return
+     */
+    public byte[] readFile(FileDescriptor descriptor);
 
-    @Override
-    public void uninstall() {
-        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.uninstallModule(NAME);
-    }
-
-    @Override
-    public void onListened(TalkContext talkContext, Primitive primitive) {
-
-    }
-
-    @Override
-    public void onListened(TalkContext talkContext, PrimitiveInputStream stream) {
-
-    }
 }

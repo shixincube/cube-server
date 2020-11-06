@@ -77,26 +77,12 @@ public abstract class HttpHandler extends AbstractHandler {
         // Nothing
     }
 
-    /**
-     * 解析 URI 参数
-     * @param request
-     * @return
-     */
-    protected Map<String, String> parseParams(HttpServletRequest request) {
-        HashMap<String, String> result = new HashMap<>();
-        String queryString = request.getQueryString();
-        String[] sub = queryString.split("&");
-        for (String pair : sub) {
-            String[] array = pair.split("=");
-            if (array.length == 2) {
-                result.put(array[0], array[1]);
-            }
-        }
-        return result;
+    public void respondOk(HttpServletResponse response, JSONObject data) {
+        this.respond(response, HttpStatus.OK_200, data);
     }
 
-    public void respondOk(HttpServletResponse response, JSONObject data) {
-        response.setStatus(HttpStatus.OK_200);
+    public void respond(HttpServletResponse response, int stateus, JSONObject data) {
+        response.setStatus(stateus);
         response.setContentType("application/json");
         try {
             response.getWriter().write(data.toString());
