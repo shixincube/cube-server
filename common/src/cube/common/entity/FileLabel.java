@@ -29,6 +29,7 @@ package cube.common.entity;
 import cell.util.Utils;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.Domain;
 
 /**
  * 文件标签。
@@ -59,12 +60,61 @@ public class FileLabel extends Entity {
         this.fileCode = fileCode;
     }
 
+    public FileLabel(JSONObject json) {
+        super();
+        try {
+            this.id = json.getLong("id");
+            this.domain = new Domain(json.getString("domain"));
+            this.ownerId = json.getLong("ownerId");
+            this.fileName = json.getString("fileName");
+            this.fileSize = json.getLong("fileSize");
+            this.completedTime = json.getLong("completed");
+            this.fileCode = json.getString("fileCode");
+            if (json.has("md5")) {
+                this.md5Code = json.getString("md5");
+            }
+            if (json.has("sha1")) {
+                this.sha1Code = json.getString("sha1");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Long getOwnerId() {
+        return this.ownerId;
+    }
+
+    public String getFileName() {
+        return this.fileName;
+    }
+
+    public long getFileSize() {
+        return this.fileSize;
+    }
+
+    public long getCompletedTime() {
+        return this.completedTime;
+    }
+
+    public String getFileCode() {
+        return this.fileCode;
+    }
+
     public void setMD5Code(String md5Code) {
         this.md5Code = md5Code;
     }
 
+    public String getMD5Code() {
+        return this.md5Code;
+    }
+
     public void setSHA1Code(String sha1Code) {
         this.sha1Code = sha1Code;
+    }
+
+    public String getSHA1Code() {
+        return this.sha1Code;
     }
 
     @Override
@@ -72,8 +122,8 @@ public class FileLabel extends Entity {
         JSONObject json = new JSONObject();
         try {
             json.put("id", this.id);
-            json.put("ownerId", this.ownerId);
             json.put("domain", this.domain);
+            json.put("ownerId", this.ownerId);
             json.put("fileName", this.fileName);
             json.put("fileSize", this.fileSize);
             json.put("completed", this.completedTime);

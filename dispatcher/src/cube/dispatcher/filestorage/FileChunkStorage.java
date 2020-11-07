@@ -27,7 +27,6 @@
 package cube.dispatcher.filestorage;
 
 import cell.util.CachedQueueExecutor;
-import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.FileStorageActions;
@@ -184,7 +183,7 @@ public class FileChunkStorage {
                 // 将文件流发给服务单元
                 performer.transmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, fileChunkStore.fileCode, inputStream);
 
-                // 发送将文件流进行标记
+                // 将文件流进行标记
                 claimStream(fileChunkStore);
 
                 fileChunkStores.remove(fileChunkStore.fileCode);
@@ -205,7 +204,7 @@ public class FileChunkStorage {
         Packet packet = new Packet(FileStorageActions.UploadFile.name, fileLabel.toJSON());
 
         // 发送
-        performer.transmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, packet.toDialect());
+        this.performer.transmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, packet.toDialect());
     }
 
 

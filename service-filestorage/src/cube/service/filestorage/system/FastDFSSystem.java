@@ -38,6 +38,16 @@ public class FastDFSSystem implements FileSystem {
     }
 
     @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void stop() {
+
+    }
+
+    @Override
     public FileDescriptor writeFile(File file) {
         return null;
     }

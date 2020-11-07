@@ -62,8 +62,8 @@ public class FileStorageCellet extends Cellet {
 
         // 添加句柄
         ContextHandler upload = new ContextHandler();
-        upload.setContextPath("/filestorage/upload/");
-        upload.setHandler(new FileUploadHandler(this.fileChunkStorage));
+        upload.setContextPath("/filestorage/file/");
+        upload.setHandler(new FileHandler(this.fileChunkStorage));
         httpServer.addContextHandler(upload);
 
         return true;

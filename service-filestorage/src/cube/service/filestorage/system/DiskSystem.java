@@ -26,7 +26,13 @@
 
 package cube.service.filestorage.system;
 
+import cell.core.net.Endpoint;
 import cell.util.log.Logger;
+import cube.util.HttpServer;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.util.resource.PathResource;
+import org.eclipse.jetty.util.resource.Resource;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -43,7 +49,15 @@ public class DiskSystem implements FileSystem {
 
     private Path managingPath;
 
-    public DiskSystem(String managingPath) {
+    private String contextPath = "/filestorage/";
+
+    private Endpoint endpoint;
+
+    private String url;
+
+    private HttpServer httpServer;
+
+    public DiskSystem(String managingPath, String host, int port) {
         this.managingPath = Paths.get(managingPath);
         if (!Files.exists(this.managingPath)) {
             try {
@@ -52,21 +66,51 @@ public class DiskSystem implements FileSystem {
                 e.printStackTrace();
             }
         }
+
+        this.endpoint = new Endpoint(host, port);
+
+        this.url = "http://" + host + ":" + port + this.contextPath;
+    }
+
+    @Override
+    public void start() {
+        this.httpServer = new HttpServer();
+
+        Resource resource = new PathResource(this.managingPath);
+
+        ResourceHandler resourceHandler = new ResourceHandler();
+        resourceHandler.setDirectoriesListed(false);
+
+        ContextHandler context = new ContextHandler();
+        context.setContextPath(this.contextPath);
+        context.setBaseResource(resource);
+        context.setHandler(resourceHandler);
+
+        this.httpServer.addContextHandler(context);
+
+        this.httpServer.start(this.endpoint.getPort());
+    }
+
+    @Override
+    public void stop() {
+        this.httpServer.stop();
     }
 
     @Override
     public FileDescriptor writeFile(File file) {
         Path target = Paths.get(this.managingPath.toString(), file.getName());
-        long total = 0;
+        long size = 0;
         try {
             Files.copy(Paths.get(file.getPath()), target);
-            total = Files.size(target);
+            size = Files.size(target);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        FileDescriptor descriptor = new FileDescriptor("disk");
+
+        FileDescriptor descriptor = new FileDescriptor("disk", this.url + file.getName());
+        descriptor.attr("file", file.getName());
         descriptor.attr("path", target.toAbsolutePath().toString());
-        descriptor.attr("total", total);
+        descriptor.attr("size", size);
         return descriptor;
     }
 
@@ -97,8 +141,8 @@ public class DiskSystem implements FileSystem {
             }
         }
 
-        FileDescriptor descriptor = new FileDescriptor("disk");
-        descriptor.attr("name", fileName);
+        FileDescriptor descriptor = new FileDescriptor("disk", this.url + fileName);
+        descriptor.attr("file", fileName);
         descriptor.attr("path", target.toString());
         descriptor.attr("size", size);
 

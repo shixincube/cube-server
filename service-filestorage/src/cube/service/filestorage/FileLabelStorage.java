@@ -28,6 +28,7 @@ package cube.service.filestorage;
 
 import cell.util.json.JSONObject;
 import cube.common.Storagable;
+import cube.common.entity.FileLabel;
 import cube.service.filestorage.system.FileDescriptor;
 import cube.storage.StorageType;
 
@@ -60,6 +61,10 @@ public class FileLabelStorage implements Storagable {
     }
 
     public void writeFileDescriptor(String fileCode, FileDescriptor descriptor) {
+
+    }
+
+    public void writeFileLabel(FileLabel fileLabel) {
 
     }
 }

@@ -26,6 +26,7 @@
 
 package cube.service.filestorage.system;
 
+import cell.core.net.Endpoint;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.JSONable;
@@ -37,10 +38,13 @@ public class FileDescriptor implements JSONable {
 
     private String fileSystem;
 
+    private String url;
+
     private JSONObject descriptor;
 
-    public FileDescriptor(String fileSystem) {
+    public FileDescriptor(String fileSystem, String url) {
         this.fileSystem = fileSystem;
+        this.url = url;
         this.descriptor = new JSONObject();
     }
 
@@ -80,12 +84,15 @@ public class FileDescriptor implements JSONable {
 
     @Override
     public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
         try {
-            this.descriptor.put("system", this.fileSystem);
+            json.put("system", this.fileSystem);
+            json.put("url", this.url);
+            json.put("descriptor", this.descriptor);
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return this.descriptor;
+        return json;
     }
 
     @Override

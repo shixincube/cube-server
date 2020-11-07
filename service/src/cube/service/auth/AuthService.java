@@ -152,8 +152,8 @@ public class AuthService extends AbstractModule {
 
         try {
             JSONObject fileStorageConfig = new JSONObject();
-            fileStorageConfig.put("uploadURL", "http://127.0.0.1:7010/filestorage/upload/");
-            fileStorageConfig.put("uploadSecureURL", "https://127.0.0.1:7017/filestorage/upload/");
+            fileStorageConfig.put("fileURL", "http://127.0.0.1:7010/filestorage/file/");
+            fileStorageConfig.put("fileSecureURL", "https://127.0.0.1:7017/filestorage/file/");
 
             result.put("FileStorage", fileStorageConfig);
         } catch (JSONException e) {

@@ -30,6 +30,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cube.common.Packet;
 import cube.service.ServiceTask;
 import cube.service.filestorage.FileStorageServiceCellet;
 
@@ -45,5 +46,8 @@ public class UploadTask extends ServiceTask {
     @Override
     public void run() {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(this.primitive);
+        Packet packet = new Packet(dialect);
+
+
     }
 }

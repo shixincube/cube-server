@@ -35,6 +35,16 @@ import java.io.InputStream;
 public interface FileSystem {
 
     /**
+     * 启动。
+     */
+    public void start();
+
+    /**
+     * 停止。
+     */
+    public void stop();
+
+    /**
      * 写入文件。
      *
      * @param file

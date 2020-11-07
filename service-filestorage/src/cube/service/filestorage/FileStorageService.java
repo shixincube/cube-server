@@ -29,6 +29,7 @@ package cube.service.filestorage;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
+import cube.common.entity.FileLabel;
 import cube.core.AbstractModule;
 import cube.service.auth.AuthService;
 import cube.service.filestorage.system.DiskSystem;
@@ -72,19 +73,25 @@ public class FileStorageService extends AbstractModule {
             String filesystem = properties.getProperty("filesystem", "disk");
             if (filesystem.equalsIgnoreCase("disk")) {
                 String path = properties.getProperty("disk.dir", "storage/files");
-                this.fileSystem = new DiskSystem(path);
+                String host = properties.getProperty("disk.host", "127.0.0.1");
+                int port = Integer.parseInt(properties.getProperty("disk.port", "6080"));
+
+                this.fileSystem = new DiskSystem(path, host, port);
             }
             else {
                 Logger.w(this.getClass(), "Unsupported file system: " + filesystem);
 
-                this.fileSystem = new DiskSystem("storage/files");
+                this.fileSystem = new DiskSystem("storage/files", "127.0.0.1", 6080);
             }
         }
         else {
             Logger.e(this.getClass(), "Load config file failed");
 
-            this.fileSystem = new DiskSystem("storage/files");
+            this.fileSystem = new DiskSystem("storage/files", "127.0.0.1", 6080);
         }
+
+        // 启动文件系统
+        this.fileSystem.start();
 
         // 初始化存储
         this.initStorage();
@@ -92,11 +99,14 @@ public class FileStorageService extends AbstractModule {
 
     @Override
     public void stop() {
+        // 停止文件系统
+        this.fileSystem.stop();
+
         this.fileLabelStorage.close();
     }
 
     /**
-     * 写文件到文件系统。
+     * 写文件描述。
      *
      * @param fileCode
      * @param inputStream
@@ -104,6 +114,17 @@ public class FileStorageService extends AbstractModule {
     public void writeFile(String fileCode, InputStream inputStream) {
         FileDescriptor descriptor = this.fileSystem.writeFile(fileCode, inputStream);
         this.fileLabelStorage.writeFileDescriptor(fileCode, descriptor);
+    }
+
+    /**
+     * 写文件标签。
+     *
+     * @param fileLabel
+     * @return
+     */
+    public FileLabel markUploadFile(FileLabel fileLabel) {
+        this.fileLabelStorage.writeFileLabel(fileLabel);
+        return fileLabel;
     }
 
     private Properties loadConfig() {
