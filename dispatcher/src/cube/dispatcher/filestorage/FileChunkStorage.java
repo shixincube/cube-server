@@ -27,8 +27,11 @@
 package cube.dispatcher.filestorage;
 
 import cell.util.CachedQueueExecutor;
+import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.Packet;
+import cube.common.action.FileStorageActions;
+import cube.common.entity.FileLabel;
 import cube.dispatcher.Performer;
 import cube.util.FileUtils;
 
@@ -36,6 +39,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,20 +52,29 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class FileChunkStorage {
 
-    private final int blockSize = 128 * 1024;
-
     private Performer performer;
 
     private Path workingPath;
 
-    private ConcurrentHashMap<String, FileChunkStore> fileChunks;
+    /**
+     * 文件码对应的文件块存储。
+     */
+    private ConcurrentHashMap<String, FileChunkStore> fileChunkStores;
 
     /**
      * 正在进行透传的区块。
      */
     private ConcurrentHashMap<String, ChunkInputStream> passingChunks;
 
+    /**
+     * 线程池。
+     */
     private ExecutorService executor;
+
+    /**
+     * 是否将文件写到磁盘。
+     */
+    private boolean writeDisk = false;
 
     public FileChunkStorage(String path) {
         this.workingPath = Paths.get(path).toAbsolutePath();
@@ -72,7 +86,7 @@ public class FileChunkStorage {
             }
         }
 
-        this.fileChunks = new ConcurrentHashMap<>();
+        this.fileChunkStores = new ConcurrentHashMap<>();
         this.passingChunks = new ConcurrentHashMap<>();
     }
 
@@ -85,13 +99,19 @@ public class FileChunkStorage {
         this.executor.shutdown();
     }
 
+    /**
+     * 添加文件数据块。
+     *
+     * @param chunk
+     * @return
+     */
     public String append(FileChunk chunk) {
         String fileCode = FileUtils.makeFileCode(chunk.contactId, chunk.domain, chunk.fileName);
 
-        FileChunkStore store = this.fileChunks.get(fileCode);
+        FileChunkStore store = this.fileChunkStores.get(fileCode);
         if (null == store) {
             store = new FileChunkStore(fileCode, chunk.token);
-            this.fileChunks.put(fileCode, store);
+            this.fileChunkStores.put(fileCode, store);
         }
 
         store.add(chunk);
@@ -104,7 +124,17 @@ public class FileChunkStorage {
         return fileCode;
     }
 
+    /**
+     * 将文件写到磁盘。
+     *
+     * @param fileChunkStore
+     */
     public void writeToDisk(FileChunkStore fileChunkStore) {
+        if (!this.writeDisk) {
+            // 不写入磁盘
+           return;
+        }
+
         if (!fileChunkStore.completed) {
             return;
         }
@@ -151,9 +181,31 @@ public class FileChunkStorage {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
+                // 将文件流发给服务单元
                 performer.transmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, fileChunkStore.fileCode, inputStream);
+
+                // 发送将文件流进行标记
+                claimStream(fileChunkStore);
+
+                fileChunkStores.remove(fileChunkStore.fileCode);
             }
         });
+    }
+
+    /**
+     * 认领传送给服务单元的文件流。
+     *
+     * @param fileChunkStore
+     */
+    private void claimStream(final FileChunkStore fileChunkStore) {
+        // 生成文件标签
+        FileLabel fileLabel = fileChunkStore.makeFileLabel();
+
+        // 创建包
+        Packet packet = new Packet(FileStorageActions.UploadFile.name, fileLabel.toJSON());
+
+        // 发送
+        performer.transmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, packet.toDialect());
     }
 
 
@@ -212,6 +264,46 @@ public class FileChunkStorage {
             }
 
             return null;
+        }
+
+        /**
+         * 生成文件标签。
+         *
+         * @return
+         */
+        protected FileLabel makeFileLabel() {
+            // 计算文件散列码
+            MessageDigest md5 = null;
+            MessageDigest sha1 = null;
+            try {
+                md5 = MessageDigest.getInstance("MD5");
+                sha1 = MessageDigest.getInstance("SHA1");
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
+
+            synchronized (this.chunks) {
+                // 排序
+                Collections.sort(this.chunks);
+
+                for (FileChunk chunk : this.chunks) {
+                    md5.update(chunk.data);
+                    sha1.update(chunk.data);
+                }
+            }
+
+            byte[] hashMD5 = md5.digest();
+            byte[] hashSHA1 = sha1.digest();
+            String md5Code = FileUtils.bytesToHexString(hashMD5);
+            String sha1Code = FileUtils.bytesToHexString(hashSHA1);
+
+            FileChunk chunk = this.chunks.get(0);
+
+            FileLabel fileLabel = new FileLabel(chunk.contactId, chunk.domain, chunk.fileName, chunk.fileSize,
+                    System.currentTimeMillis(), this.fileCode);
+            fileLabel.setMD5Code(md5Code);
+            fileLabel.setSHA1Code(sha1Code);
+            return fileLabel;
         }
 
 
@@ -330,6 +422,11 @@ public class FileChunkStorage {
 
             byte b = this.current.data[this.chunkCursor];
             return b & 0xFF;
+        }
+
+        @Override
+        public void close() throws IOException {
+            passingChunks.remove(this.store.fileCode);
         }
     }
 }

@@ -24,48 +24,42 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage.task;
+package cube.service.filestorage;
 
-import cell.core.cellet.Cellet;
-import cell.core.talk.PrimitiveInputStream;
-import cell.core.talk.TalkContext;
-import cube.core.Kernel;
-import cube.service.filestorage.FileStorageService;
-import cube.service.filestorage.FileStorageServiceCellet;
+import cell.util.json.JSONObject;
+import cube.common.Storagable;
+import cube.service.filestorage.system.FileDescriptor;
+import cube.storage.StorageType;
 
-import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
- * 写文件任务。
+ * 文件码存储器。
+ * 用于管理文件码存储。
  */
-public class WriteFileTask implements Runnable {
+public class FileLabelStorage implements Storagable {
 
-    /**
-     * 框架的内核实例。
-     */
-    protected Kernel kernel;
+    public FileLabelStorage(ExecutorService executorService, StorageType type, JSONObject config) {
 
-    protected TalkContext talkContext;
-
-    protected PrimitiveInputStream inputStream;
-
-    protected FileStorageService service;
-
-    public WriteFileTask(Cellet cellet, TalkContext talkContext, PrimitiveInputStream inputStream) {
-        this.kernel = (Kernel) cellet.getNucleus().getParameter("kernel");
-        this.talkContext = talkContext;
-        this.inputStream = inputStream;
     }
 
     @Override
-    public void run() {
-        this.service = (FileStorageService) this.kernel.getModule(FileStorageServiceCellet.NAME);
-        this.service.writeFile(this.inputStream.getName(), this.inputStream);
+    public void open() {
 
-        try {
-            this.inputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    }
+
+    @Override
+    public void close() {
+
+    }
+
+    @Override
+    public void execSelfChecking(List<String> domainNameList) {
+
+    }
+
+    public void writeFileDescriptor(String fileCode, FileDescriptor descriptor) {
+
     }
 }

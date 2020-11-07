@@ -52,7 +52,7 @@ public class FileStorageService extends AbstractModule {
 
     private FileSystem fileSystem;
 
-    private FileCodeStorage fileCodeStorage;
+    private FileLabelStorage fileLabelStorage;
 
     /**
      * 多线程执行器。
@@ -92,7 +92,7 @@ public class FileStorageService extends AbstractModule {
 
     @Override
     public void stop() {
-        this.fileCodeStorage.close();
+        this.fileLabelStorage.close();
     }
 
     /**
@@ -103,7 +103,7 @@ public class FileStorageService extends AbstractModule {
      */
     public void writeFile(String fileCode, InputStream inputStream) {
         FileDescriptor descriptor = this.fileSystem.writeFile(fileCode, inputStream);
-        this.fileCodeStorage.writeFileDescriptor(fileCode, descriptor);
+        this.fileLabelStorage.writeFileDescriptor(fileCode, descriptor);
     }
 
     private Properties loadConfig() {
@@ -142,16 +142,16 @@ public class FileStorageService extends AbstractModule {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        this.fileCodeStorage = new FileCodeStorage(this.executor, StorageType.SQLite, config);
+        this.fileLabelStorage = new FileLabelStorage(this.executor, StorageType.SQLite, config);
 
-        this.fileCodeStorage.open();
+        this.fileLabelStorage.open();
 
         (new Thread() {
             @Override
             public void run() {
                 // 存储进行自校验
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
-                fileCodeStorage.execSelfChecking(authService.getDomainList());
+                fileLabelStorage.execSelfChecking(authService.getDomainList());
             }
         }).start();
     }

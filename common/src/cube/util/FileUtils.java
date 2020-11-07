@@ -84,20 +84,23 @@ public final class FileUtils {
         return code;
     }
 
-    public static String makeStreamName(String token, String filename) {
-        StringBuilder buf = new StringBuilder(token);
-        return buf.append("_").append(filename).toString();
-    }
-
-    public static String[] extractStreamName(String streamName) {
-        int index = streamName.indexOf("_");
-        if (index > 0) {
-            String token = streamName.substring(0, index);
-            String filename = streamName.substring(index + 1, streamName.length());
-            return new String[] { token, filename };
+    /**
+     * 字节数组转16进制字符串。
+     *
+     * @param bytes
+     * @return
+     */
+    public static String bytesToHexString(byte[] bytes) {
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < bytes.length; ++i) {
+            byte b = bytes[i];
+            int n = b & 0xFF;
+            if (n < 16) {
+                buf.append("0");
+            }
+            buf.append(Integer.toHexString(n));
         }
-
-        return null;
+        return buf.toString();
     }
 
     private static String fashHash(List<byte[]> bytes) {

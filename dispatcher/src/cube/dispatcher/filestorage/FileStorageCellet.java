@@ -27,6 +27,8 @@
 package cube.dispatcher.filestorage;
 
 import cell.core.cellet.Cellet;
+import cell.core.talk.Primitive;
+import cell.core.talk.TalkContext;
 import cube.dispatcher.Performer;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -70,5 +72,10 @@ public class FileStorageCellet extends Cellet {
     @Override
     public void uninstall() {
         this.fileChunkStorage.close();
+    }
+
+    @Override
+    public void onListened(TalkContext talkContext, Primitive primitive) {
+
     }
 }

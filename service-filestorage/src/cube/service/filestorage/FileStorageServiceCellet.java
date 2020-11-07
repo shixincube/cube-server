@@ -30,8 +30,12 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
+import cube.common.action.FileStorageActions;
 import cube.core.Kernel;
+import cube.service.filestorage.task.UploadTask;
 import cube.service.filestorage.task.WriteFileTask;
 
 import java.util.concurrent.ExecutorService;
@@ -69,7 +73,12 @@ public class FileStorageServiceCellet extends Cellet {
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
+        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
+        String action = dialect.getName();
 
+        if (FileStorageActions.UploadFile.name.equals(action)) {
+            this.executor.execute(new UploadTask(this, talkContext, primitive));
+        }
     }
 
     @Override

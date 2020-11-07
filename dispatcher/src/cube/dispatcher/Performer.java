@@ -440,6 +440,31 @@ public class Performer implements TalkListener {
     }
 
     /**
+     * 向服务单元发送数据，该发送不做任何记录。
+     *
+     * @param tokenCode
+     * @param celletName
+     * @param actionDialect
+     */
+    public void transmit(String tokenCode, String celletName, ActionDialect actionDialect) {
+        Device device = this.tokenDeviceMap.get(tokenCode);
+        if (null == device) {
+            Logger.w(this.getClass(), "#transmit : Can NOT find token device, token: " + tokenCode);
+            return;
+        }
+
+        long sn = actionDialect.containsParam("sn") ?
+                actionDialect.getParamAsLong("sn") : Utils.generateSerialNumber();
+        
+        // 增加 P-KEY 记录
+        actionDialect.addParam(this.performerKey, createPerformer(sn));
+
+        Director director = this.selectDirector(device.getTalkContext(), celletName);
+
+        director.speaker.speak(celletName, actionDialect);
+    }
+
+    /**
      * 向服务单元发送流。
      *
      * @param tokenCode
@@ -474,9 +499,17 @@ public class Performer implements TalkListener {
             } catch (IOException e) {
                 // Nothing
             }
+
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                // Nothing
+            }
         }
 
-        System.out.println("XJW: " + total);
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#transmit stream '" + streamName + "' (" + total + " bytes) to " + tokenCode);
+        }
     }
 
     /**

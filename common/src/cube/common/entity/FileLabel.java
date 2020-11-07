@@ -24,77 +24,74 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage.system;
+package cube.common.entity;
 
+import cell.util.Utils;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
-import cube.common.JSONable;
 
 /**
- * 文件描述符。
+ * 文件标签。
  */
-public class FileDescriptor implements JSONable {
+public class FileLabel extends Entity {
 
-    private String fileSystem;
+    private Long ownerId;
 
-    private JSONObject descriptor;
+    private String fileName;
 
-    public FileDescriptor(String fileSystem) {
-        this.fileSystem = fileSystem;
-        this.descriptor = new JSONObject();
+    private long fileSize;
+
+    private long completedTime;
+
+    private String fileCode;
+
+    private String md5Code;
+
+    private String sha1Code;
+
+    public FileLabel(Long ownerId, String domainName, String fileName, long fileSize,
+                     long time, String fileCode) {
+        super(Utils.generateSerialNumber(), domainName);
+        this.ownerId = ownerId;
+        this.fileName = fileName;
+        this.fileSize = fileSize;
+        this.completedTime = time;
+        this.fileCode = fileCode;
     }
 
-    public void attr(String name, String value) {
-        try {
-            this.descriptor.put(name, value);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+    public void setMD5Code(String md5Code) {
+        this.md5Code = md5Code;
     }
 
-    public void attr(String name, long value) {
-        try {
-            this.descriptor.put(name, value);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void attr(String name, int value) {
-        try {
-            this.descriptor.put(name, value);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String attr(String name) {
-        String value = null;
-        try {
-            value = this.descriptor.getString(name);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return value;
+    public void setSHA1Code(String sha1Code) {
+        this.sha1Code = sha1Code;
     }
 
     @Override
     public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
         try {
-            this.descriptor.put("system", this.fileSystem);
+            json.put("id", this.id);
+            json.put("ownerId", this.ownerId);
+            json.put("domain", this.domain);
+            json.put("fileName", this.fileName);
+            json.put("fileSize", this.fileSize);
+            json.put("completed", this.completedTime);
+            json.put("fileCode", this.fileCode);
+            if (null != this.md5Code) {
+                json.put("md5", this.md5Code);
+            }
+            if (null != this.sha1Code) {
+                json.put("sha1", this.sha1Code);
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return this.descriptor;
+        return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         return this.toJSON();
-    }
-
-    @Override
-    public String toString() {
-        return this.descriptor.toString();
     }
 }

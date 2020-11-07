@@ -26,6 +26,8 @@
 
 package cube.service.filestorage.system;
 
+import cell.util.log.Logger;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -72,7 +74,7 @@ public class DiskSystem implements FileSystem {
     public FileDescriptor writeFile(String fileName, InputStream inputStream) {
         Path target = Paths.get(this.managingPath.toAbsolutePath().toString(), fileName);
 
-        long total = 0;
+        long size = 0;
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(target.toFile());
@@ -81,7 +83,7 @@ public class DiskSystem implements FileSystem {
             int length = 0;
             while ((length = inputStream.read(buf)) > 0) {
                 fos.write(buf, 0, length);
-                total += length;
+                size += length;
             }
             fos.flush();
         } catch (IOException e) {
@@ -96,10 +98,13 @@ public class DiskSystem implements FileSystem {
         }
 
         FileDescriptor descriptor = new FileDescriptor("disk");
+        descriptor.attr("name", fileName);
         descriptor.attr("path", target.toString());
-        descriptor.attr("total", total);
+        descriptor.attr("size", size);
 
-        System.out.println("XJW: " + descriptor.toJSON().toString());
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "Write file : " + descriptor);
+        }
 
         return descriptor;
     }

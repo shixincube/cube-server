@@ -22,3 +22,4 @@ ContactService.db
 MessagingService.db
 test-contacts.db
 dispatcher/cube-fs-files
+service/storage/files
