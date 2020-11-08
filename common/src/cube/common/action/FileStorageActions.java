@@ -34,6 +34,16 @@ public enum FileStorageActions {
     UploadFile("uploadFile"),
 
     /**
+     * 放置文件。
+     */
+    PutFile("putFile"),
+
+    /**
+     * 获取文件。
+     */
+    GetFile("getFile"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

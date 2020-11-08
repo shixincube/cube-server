@@ -217,6 +217,7 @@ public class Performer implements TalkListener {
 
     /**
      * 选择节点。
+     *
      * @param talkContext 会话上下文。
      * @param celletName Cellet 名称。
      * @return 返回被选中的导演机。
@@ -252,6 +253,24 @@ public class Performer implements TalkListener {
 
         Logger.w(this.getClass(), "Can NOT find director : " + celletName);
         return this.directorList.get(0);
+    }
+
+    /**
+     * 选择节点。
+     *
+     * @param tokenCode 令牌码。
+     * @param celletName Cellet 名称。
+     * @return 返回被选中的导演机。
+     */
+    private synchronized Director selectDirector(String tokenCode, String celletName) {
+        // 获取令牌对应的设备
+        Device device = this.tokenDeviceMap.get(tokenCode);
+        if (null == device) {
+            Logger.i(this.getClass(), "#selectDirector Can NOT find device by token: " + tokenCode);
+            return null;
+        }
+
+        return this.selectDirector(device.getTalkContext(), celletName);
     }
 
     /**
@@ -514,18 +533,19 @@ public class Performer implements TalkListener {
 
     /**
      * 向服务单元发送数据，并阻塞当前线程直到应答或超时。
+     *
      * @param talkContext
-     * @param cellet
+     * @param celletName
      * @param actionDialect
      * @return
      */
-    public ActionDialect syncTransmit(TalkContext talkContext, String cellet, ActionDialect actionDialect) {
+    public ActionDialect syncTransmit(TalkContext talkContext, String celletName, ActionDialect actionDialect) {
         long sn = actionDialect.containsParam("sn") ?
                 actionDialect.getParamAsLong("sn") : Utils.generateSerialNumber();
 
-        Director director = this.selectDirector(talkContext, cellet);
+        Director director = this.selectDirector(talkContext, celletName);
         if (null == director) {
-            Logger.e(this.getClass(), "Can not connect '" + cellet + "'");
+            Logger.e(this.getClass(), "Can not connect '" + celletName + "'");
             return null;
         }
 
@@ -535,7 +555,7 @@ public class Performer implements TalkListener {
         Block block = new Block(sn);
         this.blockMap.put(block.sn, block);
 
-        if (!director.speaker.speak(cellet, actionDialect)) {
+        if (!director.speaker.speak(celletName, actionDialect)) {
             this.blockMap.remove(block.sn);
             return null;
         }
@@ -556,9 +576,27 @@ public class Performer implements TalkListener {
             return block.dialect;
         }
         else {
-            Logger.e(this.getClass(), "Service timeout '" + cellet + "'");
+            Logger.e(this.getClass(), "Service timeout '" + celletName + "'");
             return null;
         }
+    }
+
+    /**
+     * 向服务单元发送数据，并阻塞当前线程直到应答或超时。
+     *
+     * @param tokenCode
+     * @param celletName
+     * @param actionDialect
+     * @return
+     */
+    public ActionDialect syncTransmit(String tokenCode, String celletName, ActionDialect actionDialect) {
+        Device device = this.tokenDeviceMap.get(tokenCode);
+        if (null == device) {
+            Logger.i(this.getClass(), "#syncTransmit Can NOT find device by token: " + tokenCode);
+            return null;
+        }
+
+        return this.syncTransmit(device.getTalkContext(), celletName, actionDialect);
     }
 
     private JSONObject createPerformer(long sn) {

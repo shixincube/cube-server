@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cube.dispatcher.Performer;
 import cube.util.HttpServer;
+import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.server.handler.ContextHandler;
 
 /**
@@ -45,9 +46,12 @@ public class FileStorageCellet extends Cellet {
 
     private FileChunkStorage fileChunkStorage;
 
+    private HttpClient httpClient;
+
     public FileStorageCellet() {
         super(NAME);
         this.fileChunkStorage = new FileChunkStorage("cube-fs-files");
+        this.httpClient = new HttpClient();
     }
 
     @Override
@@ -57,13 +61,20 @@ public class FileStorageCellet extends Cellet {
         // 打开存储管理器
         this.fileChunkStorage.open(performer);
 
+        // 启动 HTTP 客户端
+        try {
+            this.httpClient.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         // 配置 HTTP/HTTPS 服务的句柄
         HttpServer httpServer = performer.getHttpServer();
 
         // 添加句柄
         ContextHandler upload = new ContextHandler();
         upload.setContextPath("/filestorage/file/");
-        upload.setHandler(new FileHandler(this.fileChunkStorage));
+        upload.setHandler(new FileHandler(this.fileChunkStorage, performer, this.httpClient));
         httpServer.addContextHandler(upload);
 
         return true;
@@ -72,6 +83,12 @@ public class FileStorageCellet extends Cellet {
     @Override
     public void uninstall() {
         this.fileChunkStorage.close();
+
+        try {
+            this.httpClient.stop();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

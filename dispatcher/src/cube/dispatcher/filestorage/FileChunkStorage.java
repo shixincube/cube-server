@@ -184,7 +184,7 @@ public class FileChunkStorage {
                 performer.transmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, fileChunkStore.fileCode, inputStream);
 
                 // 将文件流进行标记
-                claimStream(fileChunkStore);
+                markStream(fileChunkStore);
 
                 fileChunkStores.remove(fileChunkStore.fileCode);
             }
@@ -192,16 +192,16 @@ public class FileChunkStorage {
     }
 
     /**
-     * 认领传送给服务单元的文件流。
+     * 标记传送给服务单元的文件流。
      *
      * @param fileChunkStore
      */
-    private void claimStream(final FileChunkStore fileChunkStore) {
+    private void markStream(final FileChunkStore fileChunkStore) {
         // 生成文件标签
         FileLabel fileLabel = fileChunkStore.makeFileLabel();
 
         // 创建包
-        Packet packet = new Packet(FileStorageActions.UploadFile.name, fileLabel.toJSON());
+        Packet packet = new Packet(FileStorageActions.PutFile.name, fileLabel.toJSON());
 
         // 发送
         this.performer.transmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, packet.toDialect());

@@ -26,6 +26,7 @@
 
 package cube.dispatcher.filestorage;
 
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
@@ -33,7 +34,9 @@ import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.FileStorageActions;
 import cube.common.state.FileStorageStateCode;
+import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
+import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.http.HttpStatus;
 
 import javax.servlet.ServletException;
@@ -49,9 +52,15 @@ public class FileHandler extends CrossDomainHandler {
 
     private FileChunkStorage fileChunkStorage;
 
-    public FileHandler(FileChunkStorage fileChunkStorage) {
+    private Performer performer;
+
+    private HttpClient httpClient;
+
+    public FileHandler(FileChunkStorage fileChunkStorage, Performer performer, HttpClient httpClient) {
         super();
         this.fileChunkStorage = fileChunkStorage;
+        this.performer = performer;
+        this.httpClient = httpClient;
     }
 
     /**
@@ -158,5 +167,26 @@ public class FileHandler extends CrossDomainHandler {
         Long sn = Long.parseLong(request.getParameter("sn"));
         // File Code
         String fileCode = request.getParameter("file");
+
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("fileCode", fileCode);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        Packet packet = new Packet(sn, FileStorageActions.GetFile.name, payload);
+        ActionDialect packetDialect = packet.toDialect();
+        packetDialect.addParam("token", token);
+
+        ActionDialect dialect = this.performer.syncTransmit(token, FileStorageCellet.NAME, packetDialect);
+        if (null == dialect) {
+            this.respond(response, HttpStatus.FORBIDDEN_403, packet.toJSON());
+            return;
+        }
+
+        String url = dialect.getParamAsString("url");
+
+//        this.httpClient.GET
     }
 }
