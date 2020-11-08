@@ -122,7 +122,7 @@ public class FileLabel extends Entity {
         JSONObject json = new JSONObject();
         try {
             json.put("id", this.id);
-            json.put("domain", this.domain);
+            json.put("domain", this.domain.getName());
             json.put("ownerId", this.ownerId);
             json.put("fileName", this.fileName);
             json.put("fileSize", this.fileSize);

@@ -41,6 +41,7 @@ import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.dispatcher.auth.AuthCellet;
 import cube.dispatcher.contact.ContactCellet;
+import cube.dispatcher.filestorage.FileStorageCellet;
 import cube.dispatcher.messaging.MessagingCellet;
 import cube.dispatcher.util.HttpConfig;
 import cube.util.HttpServer;
@@ -359,6 +360,7 @@ public class Performer implements TalkListener {
         this.talkService.setListener(AuthCellet.NAME, this);
         this.talkService.setListener(ContactCellet.NAME, this);
         this.talkService.setListener(MessagingCellet.NAME, this);
+        this.talkService.setListener(FileStorageCellet.NAME, this);
 
         Iterator<Map.Entry<String, List<Director>>> iter = this.celletDirectorMap.entrySet().iterator();
         while (iter.hasNext()) {
@@ -407,6 +409,21 @@ public class Performer implements TalkListener {
             Endpoint ep = director.endpoint;
             this.talkService.hangup(ep.getHost(), ep.getPort(), false);
         }
+    }
+
+    /**
+     * 获取指定令牌对应的会话上下文。
+     *
+     * @param tokenCode
+     * @return
+     */
+    public TalkContext getTalkContext(String tokenCode) {
+        Device device = this.tokenDeviceMap.get(tokenCode);
+        if (null == device) {
+            return null;
+        }
+
+        return device.getTalkContext();
     }
 
     /**

@@ -26,11 +26,14 @@
 
 package cube.dispatcher.filestorage;
 
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.FileStorageActions;
 import cube.common.entity.FileLabel;
+import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
 import cube.util.FileUtils;
 
@@ -50,6 +53,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 文件块存储器。
  */
 public class FileChunkStorage {
+
+    private FileStorageCellet cellet;
 
     private Performer performer;
 
@@ -89,7 +94,8 @@ public class FileChunkStorage {
         this.passingChunks = new ConcurrentHashMap<>();
     }
 
-    public void open(Performer performer) {
+    public void open(FileStorageCellet cellet, Performer performer) {
+        this.cellet = cellet;
         this.performer = performer;
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
     }
@@ -204,7 +210,20 @@ public class FileChunkStorage {
         Packet packet = new Packet(FileStorageActions.PutFile.name, fileLabel.toJSON());
 
         // 发送
-        this.performer.transmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, packet.toDialect());
+        ActionDialect dialect = this.performer.syncTransmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, packet.toDialect());
+        if (null == dialect) {
+            return;
+        }
+
+        // 将数据发送给客户端
+        TalkContext talkContext = this.performer.getTalkContext(fileChunkStore.tokenCode);
+        if (null == talkContext) {
+            Logger.w(this.getClass(), "Can NOT find talk context: " + fileChunkStore.tokenCode);
+            return;
+        }
+
+        // 返回给客户端，需要追加状态
+        this.cellet.speak(talkContext, DispatcherTask.appendState(dialect));
     }
 
 

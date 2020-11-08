@@ -89,4 +89,15 @@ public abstract class DispatcherTask extends Task {
         result.addParam("state", StateCode.makeState(StateCode.GatewayError, "Gateway error"));
         return result;
     }
+
+    /**
+     * 标记状态码。
+     *
+     * @param response
+     * @return
+     */
+    public static ActionDialect appendState(ActionDialect response) {
+        response.addParam("state", StateCode.makeState(StateCode.OK, "OK"));
+        return response;
+    }
 }

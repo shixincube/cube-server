@@ -59,7 +59,7 @@ public class FileStorageCellet extends Cellet {
         Performer performer = (Performer) nucleus.getParameter("performer");
 
         // 打开存储管理器
-        this.fileChunkStorage.open(performer);
+        this.fileChunkStorage.open(this, performer);
 
         // 启动 HTTP 客户端
         try {

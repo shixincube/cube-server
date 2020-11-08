@@ -122,7 +122,7 @@ public class FileStorageService extends AbstractModule {
      * @param fileLabel
      * @return
      */
-    public FileLabel markUploadFile(FileLabel fileLabel) {
+    public FileLabel putFile(FileLabel fileLabel) {
         this.fileLabelStorage.writeFileLabel(fileLabel);
         return fileLabel;
     }
