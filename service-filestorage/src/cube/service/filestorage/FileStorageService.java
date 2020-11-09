@@ -44,6 +44,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -52,6 +53,8 @@ import java.util.concurrent.ExecutorService;
 public class FileStorageService extends AbstractModule {
 
     private FileSystem fileSystem;
+
+    private ConcurrentHashMap<String, FileDescriptor> fileDescriptors;
 
     private FileLabelStorage fileLabelStorage;
 
@@ -63,6 +66,7 @@ public class FileStorageService extends AbstractModule {
     public FileStorageService(ExecutorService executor) {
         super();
         this.executor = executor;
+        this.fileDescriptors = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -112,7 +116,13 @@ public class FileStorageService extends AbstractModule {
      * @param inputStream
      */
     public void writeFile(String fileCode, InputStream inputStream) {
+        // 写入文件系统
         FileDescriptor descriptor = this.fileSystem.writeFile(fileCode, inputStream);
+
+        // 缓存文件标识
+        this.fileDescriptors.put(fileCode, descriptor);
+
+        // 存储文件标识
         this.fileLabelStorage.writeFileDescriptor(fileCode, descriptor);
     }
 
@@ -123,8 +133,44 @@ public class FileStorageService extends AbstractModule {
      * @return
      */
     public FileLabel putFile(FileLabel fileLabel) {
+        // 设置文件标签的 URL 信息
+
+        // 获取标识
+        FileDescriptor descriptor = this.fileDescriptors.get(fileLabel.getFileCode());
+        fileLabel.setDirectURL(descriptor.getURL());
+
+        // 获取外部访问的 URL 信息
+        String[] urls = this.getFileURLs(fileLabel.getDomain().getName());
+        if (null == urls) {
+            return null;
+        }
+
+        fileLabel.setFileURLs(urls[0] + fileLabel.getFileCode(),
+                urls[1] + fileLabel.getFileCode());
+
         this.fileLabelStorage.writeFileLabel(fileLabel);
+
         return fileLabel;
+    }
+
+    private String[] getFileURLs(String domain) {
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        JSONObject primary = authService.getPrimaryContent(domain);
+        if (null == primary) {
+            return null;
+        }
+
+        try {
+            JSONObject fileStorage = primary.getJSONObject(FileStorageServiceCellet.NAME);
+            String[] result = new String[2];
+            result[0] = fileStorage.getString("fileURL");
+            result[1] = fileStorage.getString("fileSecureURL");
+            return result;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     private Properties loadConfig() {

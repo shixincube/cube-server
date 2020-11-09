@@ -57,9 +57,15 @@ public class PutFileTask extends ServiceTask {
 
         // 放置文件
         FileLabel newFileLabel = service.putFile(fileLabel);
+        if (null == newFileLabel) {
+            // 发生错误
+            this.cellet.speak(this.talkContext
+                    , this.makeResponse(action, packet, FileStorageStateCode.Failure.code, fileLabel.toCompactJSON()));
+            return;
+        }
 
         // 应答
         this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, newFileLabel.toJSON()));
+                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, newFileLabel.toCompactJSON()));
     }
 }

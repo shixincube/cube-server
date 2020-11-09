@@ -50,6 +50,12 @@ public class FileLabel extends Entity {
 
     private String sha1Code;
 
+    private String fileURL;
+
+    private String fileSecureURL;
+
+    private String directURL;
+
     public FileLabel(Long ownerId, String domainName, String fileName, long fileSize,
                      long time, String fileCode) {
         super(Utils.generateSerialNumber(), domainName);
@@ -75,6 +81,15 @@ public class FileLabel extends Entity {
             }
             if (json.has("sha1")) {
                 this.sha1Code = json.getString("sha1");
+            }
+            if (json.has("fileURL")) {
+                this.fileURL = json.getString("fileURL");
+            }
+            if (json.has("fileSecureURL")) {
+                this.fileSecureURL = json.getString("fileSecureURL");
+            }
+            if (json.has("directURL")) {
+                this.directURL = json.getString("directURL");
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -117,6 +132,27 @@ public class FileLabel extends Entity {
         return this.sha1Code;
     }
 
+    public void setFileURLs(String fileURL, String fileSecureURL) {
+        this.fileURL = fileURL;
+        this.fileSecureURL = fileSecureURL;
+    }
+
+    public String getFileURL() {
+        return this.fileURL;
+    }
+
+    public String getFileSecureURL() {
+        return this.fileSecureURL;
+    }
+
+    public void setDirectURL(String url) {
+        this.directURL = url;
+    }
+
+    public String getDirectURL() {
+        return this.directURL;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -134,6 +170,15 @@ public class FileLabel extends Entity {
             if (null != this.sha1Code) {
                 json.put("sha1", this.sha1Code);
             }
+            if (null != this.fileURL) {
+                json.put("fileURL", this.fileURL);
+            }
+            if (null != this.fileSecureURL) {
+                json.put("fileSecureURL", this.fileSecureURL);
+            }
+            if (null != this.directURL) {
+                json.put("directURL", this.directURL);
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -142,6 +187,10 @@ public class FileLabel extends Entity {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = this.toJSON();
+        if (json.has("directURL")) {
+            json.remove("directURL");
+        }
+        return json;
     }
 }

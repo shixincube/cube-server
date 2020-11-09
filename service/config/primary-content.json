@@ -1,0 +1,8 @@
+{
+	"shixincube.com": {
+		"FileStorage": {
+			"fileURL": "http://127.0.0.1:7010/filestorage/file/",
+			"fileSecureURL": "https://127.0.0.1:7017/filestorage/file/"
+		}
+	}
+}

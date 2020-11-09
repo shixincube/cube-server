@@ -48,7 +48,9 @@ public class AuthService extends AbstractModule {
 
     public static String NAME = "Auth";
 
-    private AuthDomainFileDB authDomainFileDB;
+    private AuthDomainFile authDomainFile;
+
+    private PrimaryContentFile primaryContentFile;
 
     private Cache tokenCache;
 
@@ -63,7 +65,10 @@ public class AuthService extends AbstractModule {
         this.tokenCache = this.getCache("TokenPool");
 
         // 文件数据库，该库仅用于测试
-        this.authDomainFileDB = new AuthDomainFileDB("config/domain.json");
+        this.authDomainFile = new AuthDomainFile("config/domain.json");
+
+        // 存储主内容的文件
+        this.primaryContentFile = new PrimaryContentFile("config/primary-content.json");
     }
 
     @Override
@@ -77,7 +82,7 @@ public class AuthService extends AbstractModule {
      */
     public List<String> getDomainList() {
         List<String> result = new ArrayList<>();
-        for (AuthDomain authDomain : this.authDomainFileDB.getAuthDomainList()) {
+        for (AuthDomain authDomain : this.authDomainFile.getAuthDomainList()) {
             result.add(authDomain.domainName);
         }
         return result;
@@ -93,7 +98,7 @@ public class AuthService extends AbstractModule {
     public AuthToken applyToken(String domain, String appKey, Long cid) {
         AuthToken token = null;
 
-        AuthDomain authDomain = this.authDomainFileDB.queryDomain(domain, appKey);
+        AuthDomain authDomain = this.authDomainFile.queryDomain(domain, appKey);
         if (null != authDomain) {
             String code = Utils.randomString(32);
 
@@ -101,7 +106,7 @@ public class AuthService extends AbstractModule {
             Date expiry = new Date(now.getTime() + 7L * 24L * 60L * 60L * 1000L);
 
             // 创建描述
-            PrimaryDescription description = new PrimaryDescription("127.0.0.1", createPrimaryContent());
+            PrimaryDescription description = new PrimaryDescription("127.0.0.1", this.primaryContentFile.getContent(domain));
 
             token = new AuthToken(code, domain, appKey, cid, now, expiry, description);
 
@@ -113,7 +118,7 @@ public class AuthService extends AbstractModule {
 
             // 更新文件数据库
             authDomain.tokens.put(code, token);
-            this.authDomainFileDB.update();
+            this.authDomainFile.update();
         }
         else {
             // TODO 从数据库中查询
@@ -139,12 +144,22 @@ public class AuthService extends AbstractModule {
             return token;
         }
 
-        token = this.authDomainFileDB.queryToken(code);
+        token = this.authDomainFile.queryToken(code);
         if (null != token) {
             this.authTokenMap.put(code, token);
         }
 
         return token;
+    }
+
+    /**
+     * 返回指定域的主描述内容。
+     *
+     * @param domain
+     * @return
+     */
+    public JSONObject getPrimaryContent(String domain) {
+        return this.primaryContentFile.getContent(domain);
     }
 
     private JSONObject createPrimaryContent() {

@@ -33,10 +33,12 @@ import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.FileStorageActions;
+import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpStatus;
 
 import javax.servlet.ServletException;
@@ -44,6 +46,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * 文件上传处理。
@@ -185,8 +189,19 @@ public class FileHandler extends CrossDomainHandler {
             return;
         }
 
-        String url = dialect.getParamAsString("url");
+        Packet responsePacket = new Packet(dialect);
 
-//        this.httpClient.GET
+        FileLabel fileLabel = new FileLabel(responsePacket.data);
+
+        try {
+            ContentResponse httpResponse = this.httpClient.GET("");
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
     }
 }
