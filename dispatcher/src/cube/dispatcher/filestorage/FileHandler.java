@@ -40,20 +40,24 @@ import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.client.util.BufferingResponseListener;
 import org.eclipse.jetty.client.util.InputStreamResponseListener;
-import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpStatus;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.io.Writer;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 文件上传处理。
@@ -65,6 +69,8 @@ public class FileHandler extends CrossDomainHandler {
     private Performer performer;
 
     private HttpClient httpClient;
+
+    private int bufferSize = 10 * 1024 * 1024;
 
     public FileHandler(FileChunkStorage fileChunkStorage, Performer performer, HttpClient httpClient) {
         super();
@@ -198,50 +204,69 @@ public class FileHandler extends CrossDomainHandler {
         Packet responsePacket = new Packet(dialect);
 
         int code = -1;
-        FileLabel fileLabel = null;
+        JSONObject fileLabelJson = null;
         try {
             code = responsePacket.data.getInt("code");
             if (code != FileStorageStateCode.Ok.code) {
                 // 状态错误
-                this.respond(response, HttpStatus.NOT_FOUND_404, packet.toJSON());
+                this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
                 return;
             }
 
-            fileLabel = new FileLabel(responsePacket.data.getJSONObject("data"));
+            fileLabelJson = responsePacket.data.getJSONObject("data");
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        Object mutex = new Object();
+        final FileLabel fileLabel = new FileLabel(fileLabelJson);
 
-        PrintWriter writer = response.getWriter();
+        final Object mutex = new Object();
+
+        FlexibleByteBuffer buf = new FlexibleByteBuffer((int)fileLabel.getFileSize());
+
         this.httpClient.newRequest(fileLabel.getDirectURL())
-                .method("GET")
-                .onComplete(new Response.CompleteListener() {
+                .send(new BufferingResponseListener(this.bufferSize) {
                     @Override
                     public void onComplete(Result result) {
+                        if (!result.isFailed()) {
+                            byte[] responseContent = getContent();
+                            buf.put(responseContent);
+                        }
+
                         synchronized (mutex) {
                             mutex.notify();
                         }
-                    }
-                })
-                .send(new Response.Listener.Adapter() {
-                    @Override
-                    public void onContent(Response serverResponse, ByteBuffer buffer) {
-                        char[] buf = new char[buffer.limit()];
-                        System.arraycopy(buffer.array(), 0, buf, 0, buffer.limit());
-                        writer.write(buf);
                     }
                 });
 
         synchronized (mutex) {
             try {
-                mutex.wait(300L * 1000L);
+                mutex.wait(10L * 1000L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
+        // 追加 Content-Disposition
+        this.appendContentDisposition(response, fileLabel);
 
+        buf.flip();
+
+        ServletOutputStream outputStream = response.getOutputStream();
+        outputStream.write(buf.array(), 0, buf.limit());
+
+        response.setStatus(HttpStatus.OK_200);
+    }
+
+    private void appendContentDisposition(HttpServletResponse response, FileLabel fileLabel) {
+        try {
+            StringBuilder buf = new StringBuilder("attachment;");
+            buf.append("filename=").append(URLEncoder.encode(fileLabel.getFileName(), "UTF-8"));
+            response.setHeader("Content-Disposition", buf.toString());
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        response.setContentType("application/octet-stream");
+        response.setContentLengthLong(fileLabel.getFileSize());
     }
 }

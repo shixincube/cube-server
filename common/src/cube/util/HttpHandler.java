@@ -62,6 +62,7 @@ public abstract class HttpHandler extends AbstractHandler {
             doOptions(request, response);
         }
 
+        response.setHeader("Server", "Cube 3.0");
         baseRequest.setHandled(true);
     }
 
