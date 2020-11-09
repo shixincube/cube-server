@@ -62,6 +62,11 @@ public final class Kernel {
     private ConcurrentHashMap<String, AbstractMQ> mqMap;
 
     /**
+     * 是否已启动。
+     */
+    private boolean started = false;
+
+    /**
      * 构造函数。
      */
     public Kernel() {
@@ -93,6 +98,8 @@ public final class Kernel {
      * 启动内核。
      */
     public void startup() {
+        this.started = true;
+
         Iterator<AbstractCache> citer = this.cacheMap.values().iterator();
         while (citer.hasNext()) {
             AbstractCache cache = citer.next();
@@ -179,7 +186,7 @@ public final class Kernel {
      * @param name 指定缓存名称。
      * @param config 指定缓存配置信息。
      */
-    public void installCache(String name, JSONObject config) {
+    public AbstractCache installCache(String name, JSONObject config) {
         AbstractCache cache = null;
         try {
             String type = config.getString("type");
@@ -192,10 +199,16 @@ public final class Kernel {
         }
 
         if (null == cache) {
-            return;
+            return null;
         }
 
         this.cacheMap.put(name, cache);
+
+        if (this.started) {
+            cache.start();
+        }
+
+        return cache;
     }
 
     /**
@@ -236,7 +249,7 @@ public final class Kernel {
      * @param name 指定消息队列名称。
      * @param config 指定队列配置信息。
      */
-    public void installMQ(String name, JSONObject config) {
+    public AbstractMQ installMQ(String name, JSONObject config) {
         AbstractMQ mq = null;
         try {
             String type = config.getString("type");
@@ -248,10 +261,16 @@ public final class Kernel {
         }
 
         if (null == mq) {
-            return;
+            return null;
         }
 
         this.mqMap.put(name, mq);
+
+        if (this.started) {
+            mq.start();
+        }
+
+        return mq;
     }
 
     /**

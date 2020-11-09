@@ -30,6 +30,7 @@ import cell.util.Utils;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Domain;
+import cube.util.FileType;
 
 /**
  * 文件标签。
@@ -45,6 +46,8 @@ public class FileLabel extends Entity {
     private long completedTime;
 
     private String fileCode;
+
+    private FileType fileType = FileType.UNKNOWN;
 
     private String md5Code;
 
@@ -76,6 +79,7 @@ public class FileLabel extends Entity {
             this.fileSize = json.getLong("fileSize");
             this.completedTime = json.getLong("completed");
             this.fileCode = json.getString("fileCode");
+            this.fileType = FileType.parse(json.getString("fileType"));
             if (json.has("md5")) {
                 this.md5Code = json.getString("md5");
             }
@@ -114,6 +118,14 @@ public class FileLabel extends Entity {
 
     public String getFileCode() {
         return this.fileCode;
+    }
+
+    public void setFileType(FileType fileType) {
+        this.fileType = fileType;
+    }
+
+    public FileType getFileType() {
+        return this.fileType;
     }
 
     public void setMD5Code(String md5Code) {
@@ -164,6 +176,7 @@ public class FileLabel extends Entity {
             json.put("fileSize", this.fileSize);
             json.put("completed", this.completedTime);
             json.put("fileCode", this.fileCode);
+            json.put("fileType", this.fileType.getExtension());
             if (null != this.md5Code) {
                 json.put("md5", this.md5Code);
             }

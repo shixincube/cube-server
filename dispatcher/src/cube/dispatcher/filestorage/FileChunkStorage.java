@@ -35,6 +35,7 @@ import cube.common.action.FileStorageActions;
 import cube.common.entity.FileLabel;
 import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
+import cube.util.FileType;
 import cube.util.FileUtils;
 
 import java.io.*;
@@ -317,10 +318,15 @@ public class FileChunkStorage {
 
             FileChunk chunk = this.chunks.get(0);
 
+            // 判断文件类型
+            FileType fileType = FileUtils.verifyFileType(chunk.fileName, chunk.data);
+
             FileLabel fileLabel = new FileLabel(chunk.contactId, chunk.domain, chunk.fileName, chunk.fileSize,
                     System.currentTimeMillis(), this.fileCode);
+            fileLabel.setFileType(fileType);
             fileLabel.setMD5Code(md5Code);
             fileLabel.setSHA1Code(sha1Code);
+
             return fileLabel;
         }
 
@@ -363,6 +369,7 @@ public class FileChunkStorage {
                 writeToDisk(this);
             }
             else if (this.chunks.get(0).cursor == 0) {
+                // 检测文件类型
                 expressToService(this);
             }
 

@@ -29,8 +29,12 @@ package cube.service.filestorage;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
+import cube.cache.SharedMemoryCache;
 import cube.common.entity.FileLabel;
 import cube.core.AbstractModule;
+import cube.core.Cache;
+import cube.core.CacheKey;
+import cube.core.CacheValue;
 import cube.service.auth.AuthService;
 import cube.service.filestorage.system.DiskSystem;
 import cube.service.filestorage.system.FileDescriptor;
@@ -56,6 +60,8 @@ public class FileStorageService extends AbstractModule {
 
     private ConcurrentHashMap<String, FileDescriptor> fileDescriptors;
 
+    private Cache fileLabelCache;
+
     private FileLabelStorage fileLabelStorage;
 
     /**
@@ -73,7 +79,9 @@ public class FileStorageService extends AbstractModule {
     public void start() {
         // 加载配置
         Properties properties = this.loadConfig();
+
         if (null != properties) {
+            // 创建文件系统
             String filesystem = properties.getProperty("filesystem", "disk");
             if (filesystem.equalsIgnoreCase("disk")) {
                 String path = properties.getProperty("disk.dir", "storage/files");
@@ -87,11 +95,33 @@ public class FileStorageService extends AbstractModule {
 
                 this.fileSystem = new DiskSystem("storage/files", "127.0.0.1", 6080);
             }
+
+            // 创建缓存
+            String cacheConfigString = properties.getProperty("label.cache.config", "{}");
+            JSONObject cacheConfig = null;
+            try {
+                cacheConfig = new JSONObject(cacheConfigString);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            // 安装缓存
+            this.fileLabelCache = this.getKernel().installCache(properties.getProperty("label.cache.name", "FileLabelCache"),
+                    cacheConfig);
         }
         else {
             Logger.e(this.getClass(), "Load config file failed");
 
             this.fileSystem = new DiskSystem("storage/files", "127.0.0.1", 6080);
+
+            JSONObject cacheConfig = new JSONObject();
+            try {
+                cacheConfig.put("configFile", "config/filelabel-cache.properties");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            this.fileLabelCache = new SharedMemoryCache("FileLabelCache");
+            this.fileLabelCache.configure(cacheConfig);
+            this.fileLabelCache.start();
         }
 
         // 启动文件系统
@@ -148,9 +178,29 @@ public class FileStorageService extends AbstractModule {
         fileLabel.setFileURLs(urls[0] + fileLabel.getFileCode(),
                 urls[1] + fileLabel.getFileCode());
 
+        // 写入到存储器进行记录
         this.fileLabelStorage.writeFileLabel(fileLabel);
 
+        // 写入集群缓存
+        this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
+
         return fileLabel;
+    }
+
+    /**
+     * 读文件标签。
+     *
+     * @param fileCode
+     * @return
+     */
+    public FileLabel getFile(String fileCode) {
+        CacheValue value = this.fileLabelCache.get(new CacheKey(fileCode));
+        if (null == value) {
+            FileLabel fileLabel = this.fileLabelStorage.readFileLabel(fileCode);
+            return fileLabel;
+        }
+
+        return new FileLabel(value.get());
     }
 
     private String[] getFileURLs(String domain) {

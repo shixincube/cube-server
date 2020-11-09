@@ -38,7 +38,10 @@ import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.client.util.InputStreamResponseListener;
+import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpStatus;
 
 import javax.servlet.ServletException;
@@ -46,6 +49,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -191,17 +197,51 @@ public class FileHandler extends CrossDomainHandler {
 
         Packet responsePacket = new Packet(dialect);
 
-        FileLabel fileLabel = new FileLabel(responsePacket.data);
-
+        int code = -1;
+        FileLabel fileLabel = null;
         try {
-            ContentResponse httpResponse = this.httpClient.GET("");
+            code = responsePacket.data.getInt("code");
+            if (code != FileStorageStateCode.Ok.code) {
+                // 状态错误
+                this.respond(response, HttpStatus.NOT_FOUND_404, packet.toJSON());
+                return;
+            }
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
+            fileLabel = new FileLabel(responsePacket.data.getJSONObject("data"));
+        } catch (JSONException e) {
             e.printStackTrace();
         }
+
+        Object mutex = new Object();
+
+        PrintWriter writer = response.getWriter();
+        this.httpClient.newRequest(fileLabel.getDirectURL())
+                .method("GET")
+                .onComplete(new Response.CompleteListener() {
+                    @Override
+                    public void onComplete(Result result) {
+                        synchronized (mutex) {
+                            mutex.notify();
+                        }
+                    }
+                })
+                .send(new Response.Listener.Adapter() {
+                    @Override
+                    public void onContent(Response serverResponse, ByteBuffer buffer) {
+                        char[] buf = new char[buffer.limit()];
+                        System.arraycopy(buffer.array(), 0, buf, 0, buffer.limit());
+                        writer.write(buf);
+                    }
+                });
+
+        synchronized (mutex) {
+            try {
+                mutex.wait(300L * 1000L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+
     }
 }

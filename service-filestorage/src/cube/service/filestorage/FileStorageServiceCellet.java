@@ -35,6 +35,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.FileStorageActions;
 import cube.core.Kernel;
+import cube.service.filestorage.task.GetFileTask;
 import cube.service.filestorage.task.PutFileTask;
 import cube.service.filestorage.task.WriteFileTask;
 
@@ -76,7 +77,10 @@ public class FileStorageServiceCellet extends Cellet {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
 
-        if (FileStorageActions.PutFile.name.equals(action)) {
+        if (FileStorageActions.GetFile.name.equals(action)) {
+            this.executor.execute(new GetFileTask(this, talkContext, primitive));
+        }
+        else if (FileStorageActions.PutFile.name.equals(action)) {
             this.executor.execute(new PutFileTask(this, talkContext, primitive));
         }
     }

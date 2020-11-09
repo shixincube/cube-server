@@ -30,6 +30,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.json.JSONException;
 import cube.common.Packet;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
@@ -38,11 +39,11 @@ import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 
 /**
- * 放置文件任务。
+ * 获取文件任务。
  */
-public class PutFileTask extends ServiceTask {
+public class GetFileTask extends ServiceTask {
 
-    public PutFileTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
+    public GetFileTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
 
@@ -51,21 +52,26 @@ public class PutFileTask extends ServiceTask {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
-        FileLabel fileLabel = new FileLabel(packet.data);
+        String fileCode = null;
+        try {
+            fileCode = packet.data.getString("fileCode");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageServiceCellet.NAME);
 
         // 放置文件
-        FileLabel newFileLabel = service.putFile(fileLabel);
-        if (null == newFileLabel) {
+        FileLabel fileLabel = service.getFile(fileCode);
+        if (null == fileLabel) {
             // 发生错误
             this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Failure.code, fileLabel.toCompactJSON()));
+                    , this.makeResponse(action, packet, FileStorageStateCode.Failure.code, packet.data));
             return;
         }
 
         // 应答
         this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, newFileLabel.toCompactJSON()));
+                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, fileLabel.toJSON()));
     }
 }

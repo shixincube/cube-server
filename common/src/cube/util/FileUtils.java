@@ -27,6 +27,7 @@
 package cube.util;
 
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -155,6 +156,36 @@ public final class FileUtils {
             list.add(source);
         }
         return list;
+    }
+
+    /**
+     * 提取文件扩展名。
+     *
+     * @param fileName
+     * @return
+     */
+    public static FileType extractFileExtension(String fileName) {
+        int index = fileName.lastIndexOf(".");
+        String extension = fileName.substring(index + 1);
+        return FileType.parse(extension);
+    }
+
+    /**
+     * 校验文件类型。
+     *
+     * @param fileName
+     * @param data
+     * @return
+     */
+    public static FileType verifyFileType(String fileName, byte[] data) {
+        // 通过数据进行判断
+        FileType dataType = FileType.extractFileType(data);
+        if (dataType != FileType.UNKNOWN) {
+            return dataType;
+        }
+
+        // 判断扩展名类型
+        return extractFileExtension(fileName);
     }
 
 //    public static void main(String[] arg) {

@@ -67,4 +67,8 @@ public class FileLabelStorage implements Storagable {
     public void writeFileLabel(FileLabel fileLabel) {
 
     }
+
+    public FileLabel readFileLabel(String fileCode) {
+        return null;
+    }
 }
