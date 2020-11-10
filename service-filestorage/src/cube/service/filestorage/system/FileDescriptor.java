@@ -37,18 +37,55 @@ public class FileDescriptor implements JSONable {
 
     private String fileSystem;
 
+    private String fileName;
+
     private String url;
 
     private JSONObject descriptor;
 
-    public FileDescriptor(String fileSystem, String url) {
+    /**
+     * 构造函数。
+     *
+     * @param fileSystem
+     * @param url
+     */
+    public FileDescriptor(String fileSystem, String fileName, String url) {
         this.fileSystem = fileSystem;
+        this.fileName = fileName;
         this.url = url;
         this.descriptor = new JSONObject();
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param json
+     */
+    public FileDescriptor(JSONObject json) {
+        try {
+            this.fileSystem = json.getString("system");
+            this.fileName = json.getString("filename");
+            this.url = json.getString("url");
+            this.descriptor = json.getJSONObject("descriptor");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getFileSystem() {
+        return this.fileSystem;
+    }
+
+    public String getFileName() {
+        return this.fileName;
+    }
+
     public String getURL() {
         return this.url;
+    }
+
+    public JSONObject getDescriptor() {
+        return this.descriptor;
     }
 
     public void attr(String name, String value) {
@@ -90,6 +127,7 @@ public class FileDescriptor implements JSONable {
         JSONObject json = new JSONObject();
         try {
             json.put("system", this.fileSystem);
+            json.put("filename", this.fileName);
             json.put("url", this.url);
             json.put("descriptor", this.descriptor);
         } catch (JSONException e) {

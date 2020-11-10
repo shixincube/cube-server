@@ -44,18 +44,16 @@ import java.util.concurrent.ExecutorService;
  */
 public class MessagingServiceCellet extends Cellet {
 
-    public final static String NAME = "Messaging";
-
     private ExecutorService executor = null;
 
     public MessagingServiceCellet() {
-        super(NAME);
+        super(MessagingService.NAME);
     }
 
     @Override
     public boolean install() {
         Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.installModule(NAME, new MessagingService(this));
+        kernel.installModule(this.getName(), new MessagingService(this));
 
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
         return true;
@@ -64,7 +62,7 @@ public class MessagingServiceCellet extends Cellet {
     @Override
     public void uninstall() {
         Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.uninstallModule(NAME);
+        kernel.uninstallModule(this.getName());
 
         this.executor.shutdown();
     }

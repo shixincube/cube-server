@@ -43,12 +43,10 @@ import java.util.concurrent.ExecutorService;
  */
 public class ContactServiceCellet extends Cellet {
 
-    public final static String NAME = "Contact";
-
     private ExecutorService executor = null;
 
     public ContactServiceCellet() {
-        super(NAME);
+        super(ContactManager.NAME);
     }
 
     @Override

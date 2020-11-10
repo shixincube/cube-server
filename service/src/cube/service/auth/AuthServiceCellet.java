@@ -44,12 +44,10 @@ import java.util.concurrent.ExecutorService;
  */
 public class AuthServiceCellet extends Cellet {
 
-    public final static String NAME = "Auth";
-
     private ExecutorService executor;
 
     public AuthServiceCellet() {
-        super(NAME);
+        super(AuthService.NAME);
     }
 
     @Override

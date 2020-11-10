@@ -53,7 +53,7 @@ public class PutFileTask extends ServiceTask {
 
         FileLabel fileLabel = new FileLabel(packet.data);
 
-        FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageServiceCellet.NAME);
+        FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
 
         // 放置文件
         FileLabel newFileLabel = service.putFile(fileLabel);

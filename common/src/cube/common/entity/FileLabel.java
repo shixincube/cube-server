@@ -102,7 +102,7 @@ public class FileLabel extends Entity {
      * @param time
      * @param fileCode
      */
-    public FileLabel(Long ownerId, String domainName, String fileName, long fileSize,
+    public FileLabel(String domainName, Long ownerId, String fileName, long fileSize,
                      long time, String fileCode) {
         super(Utils.generateSerialNumber(), domainName);
         this.ownerId = ownerId;
@@ -112,6 +112,31 @@ public class FileLabel extends Entity {
         this.fileCode = fileCode;
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param id
+     * @param domainName
+     * @param ownerId
+     * @param fileName
+     * @param fileSize
+     * @param time
+     * @param fileCode
+     */
+    public FileLabel(Long id, String domainName, Long ownerId, String fileName, long fileSize, long time, String fileCode) {
+        super(id, domainName);
+        this.ownerId = ownerId;
+        this.fileName = fileName;
+        this.fileSize = fileSize;
+        this.completedTime = time;
+        this.fileCode = fileCode;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param json
+     */
     public FileLabel(JSONObject json) {
         super();
         try {

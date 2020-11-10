@@ -31,10 +31,12 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.json.JSONException;
+import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
+import cube.service.auth.AuthService;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 
@@ -52,6 +54,20 @@ public class GetFileTask extends ServiceTask {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
+        // 获取令牌码
+        String tokenCode = this.getTokenCode(action);
+        AuthService authService = (AuthService) this.kernel.getModule(AuthService.NAME);
+        AuthToken authToken = authService.getToken(tokenCode);
+        if (null == authToken) {
+            // 发生错误
+            this.cellet.speak(this.talkContext
+                    , this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            return;
+        }
+
+        // 域
+        String domain = authToken.getDomain();
+
         String fileCode = null;
         try {
             fileCode = packet.data.getString("fileCode");
@@ -59,10 +75,10 @@ public class GetFileTask extends ServiceTask {
             e.printStackTrace();
         }
 
-        FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageServiceCellet.NAME);
+        FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
 
         // 放置文件
-        FileLabel fileLabel = service.getFile(fileCode);
+        FileLabel fileLabel = service.getFile(domain, fileCode);
         if (null == fileLabel) {
             // 发生错误
             this.cellet.speak(this.talkContext

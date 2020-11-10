@@ -46,12 +46,10 @@ import java.util.concurrent.ExecutorService;
  */
 public class FileStorageServiceCellet extends Cellet {
 
-    public final static String NAME = "FileStorage";
-
     private ExecutorService executor = null;
 
     public FileStorageServiceCellet() {
-        super(NAME);
+        super(FileStorageService.NAME);
     }
 
     @Override
@@ -59,7 +57,7 @@ public class FileStorageServiceCellet extends Cellet {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
 
         Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.installModule(NAME, new FileStorageService(this.executor));
+        kernel.installModule(this.getName(), new FileStorageService(this.executor));
 
         return true;
     }
@@ -67,7 +65,7 @@ public class FileStorageServiceCellet extends Cellet {
     @Override
     public void uninstall() {
         Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.uninstallModule(NAME);
+        kernel.uninstallModule(this.getName());
 
         this.executor.shutdown();
     }

@@ -56,6 +56,8 @@ import java.util.concurrent.ExecutorService;
  */
 public class FileStorageService extends AbstractModule {
 
+    public final static String NAME = "FileStorage";
+
     /**
      * 文件系统。
      */
@@ -169,9 +171,6 @@ public class FileStorageService extends AbstractModule {
 
         // 缓存文件标识
         this.fileDescriptors.put(fileCode, descriptor);
-
-        // 存储文件标识
-        this.fileLabelStorage.writeFileDescriptor(fileCode, descriptor);
     }
 
     /**
@@ -197,7 +196,7 @@ public class FileStorageService extends AbstractModule {
         fileLabel.setFileURLs(urls[0] + queryString, urls[1] + queryString);
 
         // 写入到存储器进行记录
-        this.fileLabelStorage.writeFileLabel(fileLabel);
+        this.fileLabelStorage.writeFileLabel(fileLabel, descriptor);
 
         // 写入集群缓存
         this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
@@ -211,10 +210,11 @@ public class FileStorageService extends AbstractModule {
      * @param fileCode
      * @return
      */
-    public FileLabel getFile(String fileCode) {
+    public FileLabel getFile(String domainName, String fileCode) {
         CacheValue value = this.fileLabelCache.get(new CacheKey(fileCode));
         if (null == value) {
-            FileLabel fileLabel = this.fileLabelStorage.readFileLabel(fileCode);
+            FileLabel fileLabel = this.fileLabelStorage.readFileLabel(domainName, fileCode);
+            this.fileLabelCache.put(new CacheKey(fileCode), new CacheValue(fileLabel.toJSON()));
             return fileLabel;
         }
 
@@ -235,7 +235,7 @@ public class FileStorageService extends AbstractModule {
         }
 
         try {
-            JSONObject fileStorage = primary.getJSONObject(FileStorageServiceCellet.NAME);
+            JSONObject fileStorage = primary.getJSONObject(FileStorageService.NAME);
             String[] result = new String[2];
             result[0] = fileStorage.getString("fileURL");
             result[1] = fileStorage.getString("fileSecureURL");
