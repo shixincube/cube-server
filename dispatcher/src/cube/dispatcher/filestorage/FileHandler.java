@@ -44,20 +44,16 @@ import org.eclipse.jetty.client.util.BufferingResponseListener;
 import org.eclipse.jetty.client.util.InputStreamResponseListener;
 import org.eclipse.jetty.http.HttpStatus;
 
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 文件上传处理。
@@ -70,8 +66,15 @@ public class FileHandler extends CrossDomainHandler {
 
     private HttpClient httpClient;
 
-    private int bufferSize = 10 * 1024 * 1024;
+    private int bufferSize = 5 * 1024 * 1024;
 
+    /**
+     *
+     *
+     * @param fileChunkStorage
+     * @param performer
+     * @param httpClient
+     */
     public FileHandler(FileChunkStorage fileChunkStorage, Performer performer, HttpClient httpClient) {
         super();
         this.fileChunkStorage = fileChunkStorage;
@@ -182,7 +185,7 @@ public class FileHandler extends CrossDomainHandler {
         // SN
         Long sn = Long.parseLong(request.getParameter("sn"));
         // File Code
-        String fileCode = request.getParameter("file");
+        String fileCode = request.getParameter("fc");
 
         JSONObject payload = new JSONObject();
         try {
@@ -218,11 +221,21 @@ public class FileHandler extends CrossDomainHandler {
             e.printStackTrace();
         }
 
-        final FileLabel fileLabel = new FileLabel(fileLabelJson);
+        FileLabel fileLabel = new FileLabel(fileLabelJson);
 
+        if (fileLabel.getFileSize() > (long) this.bufferSize) {
+            this.processByNonBlocking(request, response, fileLabel);
+        }
+        else {
+            this.processByBlocking(request, response, fileLabel);
+        }
+    }
+
+    private void processByBlocking(HttpServletRequest request, HttpServletResponse response, FileLabel fileLabel)
+            throws IOException, ServletException {
         final Object mutex = new Object();
 
-        FlexibleByteBuffer buf = new FlexibleByteBuffer((int)fileLabel.getFileSize());
+        final FlexibleByteBuffer buf = new FlexibleByteBuffer((int)fileLabel.getFileSize());
 
         this.httpClient.newRequest(fileLabel.getDirectURL())
                 .send(new BufferingResponseListener(this.bufferSize) {
@@ -241,24 +254,85 @@ public class FileHandler extends CrossDomainHandler {
 
         synchronized (mutex) {
             try {
-                mutex.wait(10L * 1000L);
+                mutex.wait(30L * 1000L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
-        // 追加 Content-Disposition
-        this.appendContentDisposition(response, fileLabel);
-
         buf.flip();
+
+        // 填写头信息
+        this.fillHeaders(response, fileLabel, buf.limit());
 
         ServletOutputStream outputStream = response.getOutputStream();
         outputStream.write(buf.array(), 0, buf.limit());
 
+        buf.clear();
+
         response.setStatus(HttpStatus.OK_200);
     }
 
-    private void appendContentDisposition(HttpServletResponse response, FileLabel fileLabel) {
+    private void processByNonBlocking(HttpServletRequest request, HttpServletResponse response, FileLabel fileLabel)
+            throws IOException, ServletException {
+        InputStreamResponseListener listener = new InputStreamResponseListener();
+        this.httpClient.newRequest(fileLabel.getDirectURL())
+                .timeout(10, TimeUnit.SECONDS)
+                .send(listener);
+
+        Response clientResponse = null;
+        try {
+            clientResponse = listener.get(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        if (null != clientResponse && clientResponse.getStatus() == HttpStatus.OK_200) {
+            InputStream content = listener.getInputStream();
+
+            // async output
+            AsyncContext async = request.startAsync();
+            ServletOutputStream output = response.getOutputStream();
+            StandardDataStream dataStream = new StandardDataStream(content, async, output);
+            async.addListener(new AsyncListener() {
+                @Override
+                public void onStartAsync(AsyncEvent asyncEvent) throws IOException {
+                    Logger.d(this.getClass(), "onStartAsync");
+                }
+
+                @Override
+                public void onComplete(AsyncEvent asyncEvent) throws IOException {
+                    Logger.d(this.getClass(), "onComplete");
+                }
+
+                @Override
+                public void onTimeout(AsyncEvent asyncEvent) throws IOException {
+                    Logger.d(this.getClass(), "onTimeout");
+                }
+
+                @Override
+                public void onError(AsyncEvent asyncEvent) throws IOException {
+                    Logger.d(this.getClass(), "onError");
+                }
+            });
+
+            // 设置数据写入监听器
+            output.setWriteListener(dataStream);
+
+            // 填充 Header
+            fillHeaders(response, fileLabel, 0);
+            response.setStatus(HttpStatus.OK_200);
+        }
+        else {
+            this.respond(response, HttpStatus.BAD_REQUEST_400, fileLabel.toCompactJSON());
+        }
+    }
+
+    private void fillHeaders(HttpServletResponse response, FileLabel fileLabel, long length) {
         try {
             StringBuilder buf = new StringBuilder("attachment;");
             buf.append("filename=").append(URLEncoder.encode(fileLabel.getFileName(), "UTF-8"));
@@ -267,6 +341,61 @@ public class FileHandler extends CrossDomainHandler {
             e.printStackTrace();
         }
         response.setContentType("application/octet-stream");
-        response.setContentLengthLong(fileLabel.getFileSize());
+        if (length > 0) {
+            response.setContentLengthLong(length);
+        }
+    }
+
+    /**
+     * 标准数据流输出。
+     */
+    private final class StandardDataStream implements WriteListener {
+
+        private final InputStream content;
+        private final AsyncContext async;
+        private final ServletOutputStream output;
+
+        protected long contentLength = 0;
+
+        private StandardDataStream(InputStream content, AsyncContext async, ServletOutputStream output) {
+            this.content = content;
+            this.async = async;
+            this.output = output;
+        }
+
+        @Override
+        public void onWritePossible() throws IOException {
+            byte[] buffer = new byte[4096];
+
+            // 输出流是否就绪
+            while (this.output.isReady()) {
+                int len = this.content.read(buffer);
+                if (len < 0) {
+                    this.async.complete();
+                    try {
+                        this.content.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return;
+                }
+
+                // 将数据写入输出流
+                this.output.write(buffer, 0, len);
+                this.contentLength += len;
+            }
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            Logger.w(this.getClass(), "Async Error", throwable);
+            this.async.complete();
+
+            try {
+                this.content.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

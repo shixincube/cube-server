@@ -62,7 +62,6 @@ public class CrossDomainHandler extends HttpHandler {
         }
 
         response.setHeader("Server", "Cube 3.0");
-        baseRequest.setHandled(true);
     }
 
     public void doOptions(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {

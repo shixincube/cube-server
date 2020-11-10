@@ -175,7 +175,7 @@ public class FileStorageService extends AbstractModule {
             return null;
         }
 
-        String queryString = "?file=" + fileLabel.getFileCode();
+        String queryString = "?fc=" + fileLabel.getFileCode();
         fileLabel.setFileURLs(urls[0] + queryString, urls[1] + queryString);
 
         // 写入到存储器进行记录
