@@ -56,12 +56,24 @@ import java.util.concurrent.ExecutorService;
  */
 public class FileStorageService extends AbstractModule {
 
+    /**
+     * 文件系统。
+     */
     private FileSystem fileSystem;
 
+    /**
+     * 文件描述符缓存。
+     */
     private ConcurrentHashMap<String, FileDescriptor> fileDescriptors;
 
+    /**
+     * 文件标签的集群缓存。
+     */
     private Cache fileLabelCache;
 
+    /**
+     * 文件标签存储器。
+     */
     private FileLabelStorage fileLabelStorage;
 
     /**
@@ -69,6 +81,11 @@ public class FileStorageService extends AbstractModule {
      */
     private ExecutorService executor;
 
+    /**
+     * 构造函数。
+     *
+     * @param executor 多线程执行器。
+     */
     public FileStorageService(ExecutorService executor) {
         super();
         this.executor = executor;
@@ -136,11 +153,12 @@ public class FileStorageService extends AbstractModule {
         // 停止文件系统
         this.fileSystem.stop();
 
+        // 关闭存储
         this.fileLabelStorage.close();
     }
 
     /**
-     * 写文件描述。
+     * 向文件系统写入文件数据。
      *
      * @param fileCode
      * @param inputStream
@@ -203,6 +221,12 @@ public class FileStorageService extends AbstractModule {
         return new FileLabel(value.get());
     }
 
+    /**
+     * 从授权模块获取指定域对应的文件访问地址。
+     *
+     * @param domain
+     * @return
+     */
     private String[] getFileURLs(String domain) {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         JSONObject primary = authService.getPrimaryContent(domain);
@@ -223,6 +247,11 @@ public class FileStorageService extends AbstractModule {
         return null;
     }
 
+    /**
+     * 从配置文件加载配置。
+     *
+     * @return
+     */
     private Properties loadConfig() {
         Path path = Paths.get("config/file-storage.properties");
         if (!Files.exists(path)) {
@@ -252,6 +281,9 @@ public class FileStorageService extends AbstractModule {
         return properties;
     }
 
+    /**
+     * 初始化存储。
+     */
     private void initStorage() {
         JSONObject config = new JSONObject();
         try {

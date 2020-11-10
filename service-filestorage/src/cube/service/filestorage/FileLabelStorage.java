@@ -26,13 +26,19 @@
 
 package cube.service.filestorage;
 
+import cell.core.talk.LiteralBase;
 import cell.util.json.JSONObject;
 import cube.common.Storagable;
 import cube.common.entity.FileLabel;
+import cube.core.Storage;
+import cube.core.StorageField;
 import cube.service.filestorage.system.FileDescriptor;
+import cube.storage.StorageFactory;
 import cube.storage.StorageType;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -41,18 +47,34 @@ import java.util.concurrent.ExecutorService;
  */
 public class FileLabelStorage implements Storagable {
 
-    public FileLabelStorage(ExecutorService executorService, StorageType type, JSONObject config) {
+    private final String version = "1.0";
 
+    private final String labelTablePrefix = "filelabel_";
+
+    private final StorageField[] labelFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG)
+    };
+
+    private ExecutorService executor;
+
+    private Storage storage;
+
+    private Map<String, String> tableNameMap;
+
+    public FileLabelStorage(ExecutorService executorService, StorageType type, JSONObject config) {
+        this.executor = executorService;
+        this.storage = StorageFactory.getInstance().createStorage(type, "FileLabelStorage", config);
+        this.tableNameMap = new HashMap<>();
     }
 
     @Override
     public void open() {
-
+        this.storage.open();
     }
 
     @Override
     public void close() {
-
+        this.storage.close();
     }
 
     @Override

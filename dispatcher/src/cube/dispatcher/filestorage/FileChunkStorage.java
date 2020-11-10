@@ -69,7 +69,7 @@ public class FileChunkStorage {
     /**
      * 正在进行透传的区块。
      */
-    private ConcurrentHashMap<String, ChunkInputStream> passingChunks;
+    private ConcurrentHashMap<String, ChunkInputStream> passingChunkInputStreams;
 
     /**
      * 线程池。
@@ -80,6 +80,11 @@ public class FileChunkStorage {
      * 是否将文件写到磁盘。
      */
     private boolean writeDisk = false;
+
+    /**
+     * 为每一个文件分配的内存缓存大小，超过该大小的部分将写入临时文件。
+     */
+    private int sizeEachFile = 5 * 1024 * 1024;
 
     public FileChunkStorage(String path) {
         this.workingPath = Paths.get(path).toAbsolutePath();
@@ -92,7 +97,7 @@ public class FileChunkStorage {
         }
 
         this.fileChunkStores = new ConcurrentHashMap<>();
-        this.passingChunks = new ConcurrentHashMap<>();
+        this.passingChunkInputStreams = new ConcurrentHashMap<>();
     }
 
     public void open(FileStorageCellet cellet, Performer performer) {
@@ -131,6 +136,20 @@ public class FileChunkStorage {
     }
 
     /**
+     * 关闭指定文件码的文件。
+     *
+     * @param fileCode
+     */
+    public void closeFile(String fileCode) {
+        this.passingChunkInputStreams.remove(fileCode);
+
+        FileChunkStore store = this.fileChunkStores.remove(fileCode);
+        if (null != store) {
+            store.close();
+        }
+    }
+
+    /**
      * 将文件写到磁盘。
      *
      * @param fileChunkStore
@@ -154,7 +173,7 @@ public class FileChunkStorage {
         try {
             fos = new FileOutputStream(file);
             for (FileChunk chunk : fileChunkStore.chunks) {
-                fos.write(chunk.data);
+                fos.write(chunk.getData());
             }
             fos.flush();
         } catch (FileNotFoundException e) {
@@ -177,12 +196,12 @@ public class FileChunkStorage {
      * @param fileChunkStore
      */
     public synchronized void expressToService(final FileChunkStore fileChunkStore) {
-        if (this.passingChunks.containsKey(fileChunkStore.fileCode)) {
+        if (this.passingChunkInputStreams.containsKey(fileChunkStore.fileCode)) {
             return;
         }
 
         ChunkInputStream inputStream = new ChunkInputStream(fileChunkStore);
-        this.passingChunks.put(fileChunkStore.fileCode, inputStream);
+        this.passingChunkInputStreams.put(fileChunkStore.fileCode, inputStream);
 
         this.executor.execute(new Runnable() {
             @Override
@@ -193,7 +212,8 @@ public class FileChunkStorage {
                 // 将文件流进行标记
                 markStream(fileChunkStore);
 
-                fileChunkStores.remove(fileChunkStore.fileCode);
+                // 清理内存
+                closeFile(fileChunkStore.fileCode);
             }
         });
     }
@@ -243,6 +263,8 @@ public class FileChunkStorage {
 
         protected AtomicBoolean running = new AtomicBoolean(false);
 
+        private long totalLength = 0;
+
         protected FileChunkStore(String fileCode, String tokenCode) {
             this.fileCode = fileCode;
             this.tokenCode = tokenCode;
@@ -257,6 +279,14 @@ public class FileChunkStorage {
                 }
 
                 this.chunks.add(fileChunk);
+
+                // 更新总大小
+                this.totalLength += fileChunk.size;
+
+                if (this.totalLength > sizeEachFile) {
+                    // 超过缓存阀值
+                    fileChunk.flush(workingPath, fileCode + "." + fileChunk.cursor + ".tmp");
+                }
             }
         }
 
@@ -285,6 +315,16 @@ public class FileChunkStorage {
             return null;
         }
 
+        protected void close() {
+            synchronized (this.chunks) {
+                for (FileChunk chunk : this.chunks) {
+                    chunk.clear();
+                }
+
+                this.chunks.clear();
+            }
+        }
+
         /**
          * 生成文件标签。
          *
@@ -306,8 +346,9 @@ public class FileChunkStorage {
                 Collections.sort(this.chunks);
 
                 for (FileChunk chunk : this.chunks) {
-                    md5.update(chunk.data);
-                    sha1.update(chunk.data);
+                    byte[] data = chunk.getData();
+                    md5.update(data);
+                    sha1.update(data);
                 }
             }
 
@@ -319,7 +360,7 @@ public class FileChunkStorage {
             FileChunk chunk = this.chunks.get(0);
 
             // 判断文件类型
-            FileType fileType = FileUtils.verifyFileType(chunk.fileName, chunk.data);
+            FileType fileType = FileUtils.verifyFileType(chunk.fileName, chunk.getData());
 
             FileLabel fileLabel = new FileLabel(chunk.contactId, chunk.domain, chunk.fileName, chunk.fileSize,
                     System.currentTimeMillis(), this.fileCode);
@@ -387,9 +428,12 @@ public class FileChunkStorage {
 
         private FileChunk current = null;
 
+        private byte[] currentData = null;
+
         public ChunkInputStream(FileChunkStore store) {
             this.store = store;
             this.current = store.get(0);
+            this.currentData = this.current.getData();
         }
 
         @Override
@@ -439,19 +483,23 @@ public class FileChunkStorage {
                     }
 
                     this.current = chunk;
+                    this.currentData = chunk.getData();
                 }
                 else {
                     this.current = chunk;
+                    this.currentData = chunk.getData();
                 }
             }
 
-            byte b = this.current.data[this.chunkCursor];
+            byte b = this.currentData[this.chunkCursor];
             return b & 0xFF;
         }
 
         @Override
         public void close() throws IOException {
-            passingChunks.remove(this.store.fileCode);
+            this.current = null;
+            this.currentData = null;
+            passingChunkInputStreams.remove(this.store.fileCode);
         }
     }
 }

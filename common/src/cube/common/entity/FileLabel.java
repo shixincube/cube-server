@@ -37,28 +37,71 @@ import cube.util.FileType;
  */
 public class FileLabel extends Entity {
 
+    /**
+     * 文件所有人 ID 。
+     */
     private Long ownerId;
 
+    /**
+     * 文件名。
+     */
     private String fileName;
 
+    /**
+     * 文件大小。
+     */
     private long fileSize;
 
+    /**
+     * 文件的完成时间。
+     */
     private long completedTime;
 
+    /**
+     * 文件访问码。
+     */
     private String fileCode;
 
+    /**
+     * 文件类型。
+     */
     private FileType fileType = FileType.UNKNOWN;
 
+    /**
+     * 文件 MD5 码。
+     */
     private String md5Code;
 
+    /**
+     * 文件 SHA1 码。
+     */
     private String sha1Code;
 
+    /**
+     * 访问文件的 HTTP URL 。
+     */
     private String fileURL;
 
+    /**
+     * 访问文件的 HTTPS URL 。
+     */
     private String fileSecureURL;
 
+    /**
+     * 内部服务的直接访问 URL 。
+     */
     private String directURL;
 
+    /**
+     * 构造函数。
+     *
+     * @param ownerId
+     * @param domainName
+     * @param fileName
+     * @param fileSize
+     * @param time
+     * @param fileCode
+     */
     public FileLabel(Long ownerId, String domainName, String fileName, long fileSize,
                      long time, String fileCode) {
         super(Utils.generateSerialNumber(), domainName);
