@@ -73,7 +73,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 文件标签存储器。
      */
-    private FileLabelStorage fileLabelStorage;
+    private FileStructStorage fileStructStorage;
 
     /**
      * 多线程执行器。
@@ -127,8 +127,9 @@ public class FileStorageService extends AbstractModule {
                 e.printStackTrace();
             }
             // 安装缓存
-            this.fileLabelCache = this.getKernel().installCache(properties.getProperty("label.cache.name", "FileLabelCache"),
-                    cacheConfig);
+            this.fileLabelCache = this.getKernel().installCache(
+                    properties.getProperty("label.cache.name", "FileLabelCache"),
+                        cacheConfig);
         }
         else {
             Logger.e(this.getClass(), "Load config file failed");
@@ -159,7 +160,7 @@ public class FileStorageService extends AbstractModule {
         this.fileSystem.stop();
 
         // 关闭存储
-        this.fileLabelStorage.close();
+        this.fileStructStorage.close();
     }
 
     @Override
@@ -204,7 +205,7 @@ public class FileStorageService extends AbstractModule {
         fileLabel.setFileURLs(urls[0] + queryString, urls[1] + queryString);
 
         // 写入到存储器进行记录
-        this.fileLabelStorage.writeFileLabel(fileLabel, descriptor);
+        this.fileStructStorage.writeFileLabel(fileLabel, descriptor);
 
         // 写入集群缓存
         this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
@@ -221,12 +222,16 @@ public class FileStorageService extends AbstractModule {
     public FileLabel getFile(String domainName, String fileCode) {
         CacheValue value = this.fileLabelCache.get(new CacheKey(fileCode));
         if (null == value) {
-            FileLabel fileLabel = this.fileLabelStorage.readFileLabel(domainName, fileCode);
+            FileLabel fileLabel = this.fileStructStorage.readFileLabel(domainName, fileCode);
             this.fileLabelCache.put(new CacheKey(fileCode), new CacheValue(fileLabel.toJSON()));
             return fileLabel;
         }
 
         return new FileLabel(value.get());
+    }
+
+    public void createDir() {
+
     }
 
     /**
@@ -299,16 +304,16 @@ public class FileStorageService extends AbstractModule {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        this.fileLabelStorage = new FileLabelStorage(this.executor, StorageType.SQLite, config);
+        this.fileStructStorage = new FileStructStorage(this.executor, StorageType.SQLite, config);
 
-        this.fileLabelStorage.open();
+        this.fileStructStorage.open();
 
         (new Thread() {
             @Override
             public void run() {
                 // 存储进行自校验
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
-                fileLabelStorage.execSelfChecking(authService.getDomainList());
+                fileStructStorage.execSelfChecking(authService.getDomainList());
             }
         }).start();
     }

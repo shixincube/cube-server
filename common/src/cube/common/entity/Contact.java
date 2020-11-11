@@ -57,11 +57,6 @@ public class Contact extends Entity {
     private List<Device> deviceList;
 
     /**
-     * 联系人的唯一索引键。
-     */
-    private String uniqueKey;
-
-    /**
      * 构造函数。
      *
      * @param id 联系人 ID 。
@@ -70,7 +65,6 @@ public class Contact extends Entity {
      */
     public Contact(Long id, String domainName, String name) {
         super(id, domainName);
-        this.uniqueKey = UniqueKey.make(id, domainName);
         this.name = name;
         this.deviceList = new ArrayList<>(1);
     }
@@ -84,7 +78,6 @@ public class Contact extends Entity {
      */
     public Contact(Long id, Domain domain, String name) {
         super(id, domain);
-        this.uniqueKey = UniqueKey.make(id, domain);
         this.name = name;
         this.deviceList = new ArrayList<>(1);
     }
@@ -181,15 +174,6 @@ public class Contact extends Entity {
     public void resetId(Long newId) {
         this.id = newId;
         this.uniqueKey = UniqueKey.make(newId, this.domain);
-    }
-
-    /**
-     * 获取唯一索引键。
-     *
-     * @return 返回唯一索引键。
-     */
-    public String getUniqueKey() {
-        return this.uniqueKey;
     }
 
     /**

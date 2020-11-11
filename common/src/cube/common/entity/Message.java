@@ -78,11 +78,6 @@ public class Message extends Entity implements Comparable<Message> {
     private MessageState state = MessageState.Unknown;
 
     /**
-     * 消息的唯一键。
-     */
-    private String uniqueKey;
-
-    /**
      * 构造函数。
      *
      * @param packet 指定包含消息数据的数据包。

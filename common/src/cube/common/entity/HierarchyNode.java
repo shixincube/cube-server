@@ -26,6 +26,9 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
+import cell.util.json.JSONArray;
+import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 
 import java.util.ArrayList;
@@ -40,24 +43,23 @@ public class HierarchyNode extends Entity {
 
     private List<HierarchyNode> children;
 
-    private List<Entity> contents;
+    private List<String> relatedKeys;
 
-    public HierarchyNode() {
+    private JSONObject context;
+
+    public HierarchyNode(Long id, String domain) {
+        super(id, domain);
         this.children = new ArrayList<>();
-        this.contents = new ArrayList<>();
+        this.relatedKeys = new ArrayList<>();
+        this.context = new JSONObject();
     }
 
     public HierarchyNode(HierarchyNode parent) {
+        super(Utils.generateSerialNumber(), parent.domain);
         this.parent = parent;
         this.children = new ArrayList<>();
-        this.contents = new ArrayList<>();
-    }
-
-    public HierarchyNode(JSONObject json) {
-        this.children = new ArrayList<>();
-        this.contents = new ArrayList<>();
-
-
+        this.relatedKeys = new ArrayList<>();
+        this.context = new JSONObject();
     }
 
     public void setParent(HierarchyNode parent) {
@@ -84,36 +86,62 @@ public class HierarchyNode extends Entity {
         return new ArrayList<>(this.children);
     }
 
-    public void addContent(Entity entity) {
-        if (this.contents.contains(entity)) {
-            return;
-        }
-
-        this.contents.add(entity);
-    }
-
-    public void removeContent(Entity entity) {
-        this.contents.remove(entity);
-    }
-
-    public Entity getContent(Long id) {
-        for (int i = 0, size = this.contents.size(); i < size; ++i) {
-            Entity entity = this.contents.get(i);
-            if (entity.id.longValue() == id.longValue()) {
-                return entity;
+    public void link(Entity entity) {
+        synchronized (this.relatedKeys) {
+            if (this.relatedKeys.contains(entity.getUniqueKey())) {
+                return;
             }
-        }
 
-        return null;
+            this.relatedKeys.add(entity.getUniqueKey());
+        }
     }
 
-    public List<Entity> getContents() {
-        return new ArrayList<>(this.contents);
+    public void unlink(Entity entity) {
+        synchronized (this.relatedKeys) {
+            this.relatedKeys.remove(entity.getUniqueKey());
+        }
+    }
+
+    public List<String> getRelatedKeys() {
+        synchronized (this.relatedKeys) {
+            return new ArrayList<>(this.relatedKeys);
+        }
+    }
+
+    public boolean hasRelated(String key) {
+        synchronized (this.relatedKeys) {
+            return this.relatedKeys.contains(key);
+        }
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+
+        try {
+            json.put("id", this.id.longValue());
+            json.put("domain", this.domain.getName());
+
+            if (null != this.parent) {
+                json.put("parent", this.parent.getUniqueKey());
+            }
+
+            JSONArray children = new JSONArray();
+            for (int i = 0; i < this.children.size(); ++i) {
+                children.put(this.children.get(i).getUniqueKey());
+            }
+            json.put("children", children);
+
+            JSONArray relatedKeys = new JSONArray();
+            for (int i = 0; i < this.relatedKeys.size(); ++i) {
+                relatedKeys.put(this.relatedKeys.get(i));
+            }
+            json.put("related", relatedKeys);
+
+            json.put("context", this.context);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         return json;
     }
@@ -121,6 +149,18 @@ public class HierarchyNode extends Entity {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
+        try {
+            json.put("id", this.id.longValue());
+            json.put("domain", this.domain.getName());
+
+            if (null != this.parent) {
+                json.put("parent", this.parent.getUniqueKey());
+            }
+
+            json.put("context", this.context);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         return json;
     }
 }

@@ -28,6 +28,7 @@ package cube.common.entity;
 
 import cube.common.Domain;
 import cube.common.JSONable;
+import cube.common.UniqueKey;
 
 /**
  * 实体对象基类。
@@ -40,14 +41,19 @@ public abstract class Entity implements JSONable {
     protected Long id;
 
     /**
-     * 实体创建的时间戳。
-     */
-    private long timestamp;
-
-    /**
      * 实体所在域。
      */
     protected Domain domain;
+
+    /**
+     * 唯一索引键。
+     */
+    protected String uniqueKey;
+
+    /**
+     * 实体创建的时间戳。
+     */
+    private long timestamp;
 
     /**
      * 构造函数。
@@ -63,6 +69,7 @@ public abstract class Entity implements JSONable {
      */
     public Entity(Long id) {
         this.id = id;
+        this.uniqueKey = UniqueKey.make(id, "");
         this.timestamp = System.currentTimeMillis();
     }
 
@@ -74,8 +81,9 @@ public abstract class Entity implements JSONable {
      */
     public Entity(Long id, String domainName) {
         this.id = id;
-        this.timestamp = System.currentTimeMillis();
         this.domain = new Domain(domainName);
+        this.uniqueKey = UniqueKey.make(id, domainName);
+        this.timestamp = System.currentTimeMillis();
     }
 
     /**
@@ -86,8 +94,9 @@ public abstract class Entity implements JSONable {
      */
     public Entity(Long id, Domain domain) {
         this.id = id;
-        this.timestamp = System.currentTimeMillis();
         this.domain = domain;
+        this.uniqueKey = UniqueKey.make(id, domain.getName());
+        this.timestamp = System.currentTimeMillis();
     }
 
     /**
@@ -97,6 +106,24 @@ public abstract class Entity implements JSONable {
      */
     public Long getId() {
         return this.id;
+    }
+
+    /**
+     * 获取实体所在域。
+     *
+     * @return 返回实体所在域。
+     */
+    public Domain getDomain() {
+        return this.domain;
+    }
+
+    /**
+     * 获取唯一索引键。
+     *
+     * @return 返回唯一索引键。
+     */
+    public String getUniqueKey() {
+        return this.uniqueKey;
     }
 
     /**
@@ -113,15 +140,6 @@ public abstract class Entity implements JSONable {
      */
     public void resetTimestamp() {
         this.timestamp = System.currentTimeMillis();
-    }
-
-    /**
-     * 获取实体所在域。
-     *
-     * @return 返回实体所在域。
-     */
-    public Domain getDomain() {
-        return this.domain;
     }
 
     @Override
@@ -145,6 +163,6 @@ public abstract class Entity implements JSONable {
 
     @Override
     public int hashCode() {
-        return this.id.hashCode();
+        return this.uniqueKey.hashCode();
     }
 }

@@ -105,6 +105,7 @@ public class FileLabel extends Entity {
     public FileLabel(String domainName, Long ownerId, String fileName, long fileSize,
                      long time, String fileCode) {
         super(Utils.generateSerialNumber(), domainName);
+        this.uniqueKey = fileCode;
         this.ownerId = ownerId;
         this.fileName = fileName;
         this.fileSize = fileSize;
@@ -125,6 +126,7 @@ public class FileLabel extends Entity {
      */
     public FileLabel(Long id, String domainName, Long ownerId, String fileName, long fileSize, long time, String fileCode) {
         super(id, domainName);
+        this.uniqueKey = fileCode;
         this.ownerId = ownerId;
         this.fileName = fileName;
         this.fileSize = fileSize;
@@ -166,6 +168,8 @@ public class FileLabel extends Entity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+        this.uniqueKey = this.fileCode;
     }
 
     public Long getOwnerId() {
