@@ -33,6 +33,7 @@ import cube.cache.SharedMemoryCache;
 import cube.common.entity.FileLabel;
 import cube.core.*;
 import cube.service.auth.AuthService;
+import cube.service.filestorage.hierarchy.FileHierarchyManager;
 import cube.service.filestorage.system.DiskSystem;
 import cube.service.filestorage.system.FileDescriptor;
 import cube.service.filestorage.system.FileSystem;
@@ -74,6 +75,11 @@ public class FileStorageService extends AbstractModule {
      * 文件标签存储器。
      */
     private FileStructStorage fileStructStorage;
+
+    /**
+     * 文件层级管理器。
+     */
+    private FileHierarchyManager fileHierarchyManager;
 
     /**
      * 多线程执行器。
@@ -152,6 +158,9 @@ public class FileStorageService extends AbstractModule {
 
         // 初始化存储
         this.initStorage();
+
+        // 创建文件层级管理器
+        this.fileHierarchyManager = new FileHierarchyManager(this.fileStructStorage);
     }
 
     @Override

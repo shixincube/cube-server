@@ -27,6 +27,7 @@
 package cube.service.filestorage;
 
 import cell.core.talk.LiteralBase;
+import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.Storagable;
@@ -59,6 +60,8 @@ public class FileStructStorage implements Storagable {
 
     private final String descriptorTablePrefix = "descriptor_";
 
+    private final String hierarchyTablePrefix = "hierarchy_";
+
     /**
      * 文件标签字段。
      */
@@ -90,19 +93,40 @@ public class FileStructStorage implements Storagable {
             //new StorageField("reserved", LiteralBase.STRING)
     };
 
+    /**
+     * 层级表字段。
+     */
+    private final StorageField[] hierarchyFields = new StorageField[] {
+            new StorageField("node_id", LiteralBase.LONG),
+            new StorageField("data", LiteralBase.STRING)
+            //new StorageField("reserved", LiteralBase.STRING)
+    };
+
     private ExecutorService executor;
 
     private Storage storage;
 
+    /**
+     * 文件标签表。
+     */
     private Map<String, String> labelTableNameMap;
 
+    /**
+     * 文件描述符表。
+     */
     private Map<String, String> descriptorTableNameMap;
+
+    /**
+     * 层级表。
+     */
+    private Map<String, String> hierarchyTableNameMap;
 
     public FileStructStorage(ExecutorService executorService, StorageType type, JSONObject config) {
         this.executor = executorService;
         this.storage = StorageFactory.getInstance().createStorage(type, "FileLabelStorage", config);
         this.labelTableNameMap = new HashMap<>();
         this.descriptorTableNameMap = new HashMap<>();
+        this.hierarchyTableNameMap = new HashMap<>();
     }
 
     @Override
@@ -123,6 +147,9 @@ public class FileStructStorage implements Storagable {
 
             // 检查描述符表
             this.checkDescriptorTable(domain);
+
+            // 检查层级表
+            this.checkHierarchyTable(domain);
         }
     }
 
@@ -239,6 +266,84 @@ public class FileStructStorage implements Storagable {
         return null;
     }
 
+    /**
+     * 写入节点数据。
+     *
+     * @param json
+     */
+    public void writeHierarchyNode(String domain, Long nodeId, JSONObject json) {
+        String table = this.hierarchyTableNameMap.get(domain);
+        if (null == table) {
+            return;
+        }
+
+        StorageField[] fields = new StorageField[] {
+                new StorageField("node_id", LiteralBase.LONG, nodeId),
+                new StorageField("data", LiteralBase.STRING, json.toString())
+        };
+
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+                new StorageField("sn", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("node_id", LiteralBase.LONG, nodeId))
+        });
+
+        if (result.isEmpty()) {
+            this.storage.executeInsert(table, fields);
+        }
+        else {
+            this.storage.executeUpdate(table, fields, new Conditional[] {
+                    Conditional.createEqualTo(new StorageField("node_id", LiteralBase.LONG, nodeId))
+            });
+        }
+    }
+
+    /**
+     * 读取节点数据。
+     *
+     * @param domain
+     * @param nodeId
+     * @return
+     */
+    public JSONObject readHierarchyNode(String domain, Long nodeId) {
+        String table = this.hierarchyTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, this.hierarchyFields, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("node_id", LiteralBase.LONG, nodeId))
+        });
+
+        if (!result.isEmpty()) {
+            try {
+                JSONObject data = new JSONObject(result.get(0)[1].getString());
+                return data;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 删除节点数据。
+     *
+     * @param domain
+     * @param nodeId
+     */
+    public void deleteHierarchyNode(String domain, Long nodeId) {
+        String table = this.hierarchyTableNameMap.get(domain);
+        if (null == table) {
+            return;
+        }
+
+        this.storage.executeDelete(table, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("node_id", LiteralBase.LONG, nodeId))
+        });
+    }
+
     private void checkLabelTable(String domain) {
         String table = this.labelTablePrefix + domain;
 
@@ -323,6 +428,35 @@ public class FileStructStorage implements Storagable {
                             Constraint.DEFAULT_NULL
                     }),
                     new StorageField("descriptor", LiteralBase.STRING, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("reserved", LiteralBase.STRING, new Constraint[] {
+                            Constraint.DEFAULT_NULL
+                    })
+            };
+
+            if (this.storage.executeCreate(table, fields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkHierarchyTable(String domain) {
+        String table = this.hierarchyTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.hierarchyTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            StorageField[] fields = new StorageField[] {
+                    new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                            Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+                    }),
+                    new StorageField("node_id", LiteralBase.LONG, new Constraint[] {
+                            Constraint.UNIQUE
+                    }),
+                    new StorageField("data", LiteralBase.STRING, new Constraint[] {
                             Constraint.NOT_NULL
                     }),
                     new StorageField("reserved", LiteralBase.STRING, new Constraint[] {

@@ -26,29 +26,55 @@
 
 package cube.service.filestorage.hierarchy;
 
+import cube.common.UniqueKey;
 import cube.common.entity.HierarchyNode;
+import cube.common.entity.HierarchyNodes;
+import cube.service.filestorage.FileStructStorage;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 文件层级管理器。
  */
 public class FileHierarchyManager {
 
+    private ConcurrentHashMap<String, FileHierarchy> roots;
+
     private FileHierarchyCache fileHierarchyCache;
 
-    public FileHierarchyManager() {
-        this.fileHierarchyCache = new FileHierarchyCache();
+    public FileHierarchyManager(FileStructStorage structStorage) {
+        this.fileHierarchyCache = new FileHierarchyCache(structStorage);
+        this.roots = new ConcurrentHashMap<>();
     }
 
-    public FileHierarchy getContactRoot(Long contactId, String domainName) {
-        return null;
+    /**
+     * 仅用于辅助测试的方法。
+     */
+    public void clearMemory() {
+        this.roots.clear();
     }
 
-    public FileHierarchy createDirectory(Long contactId, String domainName, HierarchyNode parentDir) {
-//        FileHierarchy fileHierarchy = new FileHierarchy();
-        return null;
-    }
+    public synchronized FileHierarchy getFileHierarchy(Long contactId, String domainName) {
+        String uniqueKey = UniqueKey.make(contactId, domainName);
+        FileHierarchy root = this.roots.get(uniqueKey);
+        if (null != root) {
+            return root;
+        }
 
-    public void deleteDirectory() {
+        HierarchyNode node = HierarchyNodes.load(this.fileHierarchyCache, uniqueKey);
+        if (null != node) {
+            root = new FileHierarchy(this.fileHierarchyCache, node);
+            this.roots.put(uniqueKey, root);
+            return root;
+        }
 
+        // 没有创建过根目录，创建根目录
+        node = new HierarchyNode(contactId, domainName);
+        root = new FileHierarchy(this.fileHierarchyCache, node);
+        this.roots.put(uniqueKey, root);
+
+        HierarchyNodes.save(this.fileHierarchyCache, node);
+
+        return root;
     }
 }

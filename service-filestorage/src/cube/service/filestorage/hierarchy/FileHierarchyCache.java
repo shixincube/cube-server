@@ -26,6 +26,8 @@
 
 package cube.service.filestorage.hierarchy;
 
+import cell.util.json.JSONObject;
+import cube.common.UniqueKey;
 import cube.core.*;
 import cube.service.filestorage.FileStructStorage;
 
@@ -36,42 +38,60 @@ public class FileHierarchyCache extends AbstractCache {
 
     private FileStructStorage structStorage;
 
-    public FileHierarchyCache() {
+    public FileHierarchyCache(FileStructStorage structStorage) {
         super("FileHierarchyCache", "FileHierarchyCache");
+        this.structStorage = structStorage;
     }
 
     @Override
     public void start() {
-
+        // Nothing
     }
 
     @Override
     public void stop() {
-
+        // Nothing
     }
 
     @Override
     public void put(CacheKey key, CacheValue value) {
-
+        Object[] uk = UniqueKey.extract(key.get());
+        Long id = (Long) uk[0];
+        String domain = (String) uk[1];
+        this.structStorage.writeHierarchyNode(domain, id, value.get());
     }
 
     @Override
     public CacheValue get(CacheKey key) {
-        return null;
-    }
+        Object[] uk = UniqueKey.extract(key.get());
+        Long id = (Long) uk[0];
+        String domain = (String) uk[1];
 
-    @Override
-    public CacheValue get(CacheExpression expression) {
-        return null;
+        JSONObject json = this.structStorage.readHierarchyNode(domain, id);
+        if (null == json) {
+            return null;
+        }
+
+        CacheValue value = new CacheValue(json);
+        return value;
     }
 
     @Override
     public void remove(CacheKey key) {
+        Object[] uk = UniqueKey.extract(key.get());
+        Long id = (Long) uk[0];
+        String domain = (String) uk[1];
+        this.structStorage.deleteHierarchyNode(domain, id);
+    }
 
+    @Override
+    public CacheValue get(CacheExpression expression) {
+        // Nothing
+        return null;
     }
 
     @Override
     public void execute(CacheKey key, CacheTransaction transaction) {
-
+        // Nothing
     }
 }

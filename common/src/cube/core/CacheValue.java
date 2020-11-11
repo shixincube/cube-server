@@ -39,6 +39,11 @@ public class CacheValue {
     protected JSONObject value;
 
     /**
+     * 对象类型的值。
+     */
+    protected Object objectValue = null;
+
+    /**
      * 数据对应的时间戳。
      */
     protected long timestamp = 0;
@@ -50,6 +55,15 @@ public class CacheValue {
      */
     public CacheValue(JSONObject value) {
         this.value = value;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param value 指定对象实例类型的值。
+     */
+    public CacheValue(Object value) {
+        this.objectValue = value;
     }
 
     /**
@@ -70,6 +84,24 @@ public class CacheValue {
      */
     public JSONObject get() {
         return this.value;
+    }
+
+    /**
+     * 设置对象实例值。
+     *
+     * @param value 对象实例。
+     */
+    public void setObjectValue(Object value) {
+        this.objectValue = value;
+    }
+
+    /**
+     * 返回对象实例值。
+     *
+     * @return 返回对象实例值。
+     */
+    public Object getObjectValue() {
+        return this.objectValue;
     }
 
     /**

@@ -30,6 +30,8 @@ import cell.util.Utils;
 import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.Domain;
+import cube.common.UniqueKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +49,8 @@ public class HierarchyNode extends Entity {
 
     private JSONObject context;
 
+    protected List<String> unloadChildrenKey;
+
     public HierarchyNode(Long id, String domain) {
         super(id, domain);
         this.children = new ArrayList<>();
@@ -62,6 +66,40 @@ public class HierarchyNode extends Entity {
         this.context = new JSONObject();
     }
 
+    public HierarchyNode(JSONObject json) {
+        super();
+
+        this.children = new ArrayList<>();
+        this.relatedKeys = new ArrayList<>();
+        this.context = new JSONObject();
+
+        this.unloadChildrenKey = new ArrayList<>();
+
+        try {
+            this.id = json.getLong("id");
+            this.domain = new Domain(json.getString("domain"));
+
+            this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
+
+            this.context = json.getJSONObject("context");
+
+            JSONArray relatedArray = json.getJSONArray("related");
+            for (int i = 0; i < relatedArray.length(); ++i) {
+                String uk = relatedArray.getString(i);
+                this.relatedKeys.add(uk);
+            }
+
+            // 预存子节点的键
+            JSONArray childrenKeys = json.getJSONArray("children");
+            for (int i = 0; i < childrenKeys.length(); ++i) {
+                String key = childrenKeys.getString(i);
+                this.unloadChildrenKey.add(key);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void setParent(HierarchyNode parent) {
         this.parent = parent;
     }
@@ -75,15 +113,25 @@ public class HierarchyNode extends Entity {
             return;
         }
 
+        child.parent = this;
         this.children.add(child);
+
+        this.unloadChildrenKey.remove(child.getUniqueKey());
     }
 
     public void removeChild(HierarchyNode child) {
         this.children.remove(child);
+        child.parent = null;
+
+        this.unloadChildrenKey.remove(child.getUniqueKey());
     }
 
     public List<HierarchyNode> getChildren() {
         return new ArrayList<>(this.children);
+    }
+
+    public int numChildren() {
+        return this.children.size();
     }
 
     public void link(Entity entity) {
@@ -112,6 +160,16 @@ public class HierarchyNode extends Entity {
         synchronized (this.relatedKeys) {
             return this.relatedKeys.contains(key);
         }
+    }
+
+    public int numRelatedKeys() {
+        synchronized (this.relatedKeys) {
+            return this.relatedKeys.size();
+        }
+    }
+
+    public JSONObject getContext() {
+        return this.context;
     }
 
     @Override

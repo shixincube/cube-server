@@ -24,3 +24,4 @@ test-contacts.db
 dispatcher/cube-fs-files
 service/storage/files
 FileStorageService.db
+*.db
