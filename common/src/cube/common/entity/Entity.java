@@ -123,4 +123,28 @@ public abstract class Entity implements JSONable {
     public Domain getDomain() {
         return this.domain;
     }
+
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof Entity) {
+            Entity other = (Entity) object;
+            if (null != this.domain) {
+                if (this.id.longValue() == other.id.longValue() && this.domain.equals(other.domain)) {
+                    return true;
+                }
+            }
+            else {
+                if (this.id.longValue() == other.id.longValue()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.id.hashCode();
+    }
 }
