@@ -31,10 +31,7 @@ import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.cache.SharedMemoryCache;
 import cube.common.entity.FileLabel;
-import cube.core.AbstractModule;
-import cube.core.Cache;
-import cube.core.CacheKey;
-import cube.core.CacheValue;
+import cube.core.*;
 import cube.service.auth.AuthService;
 import cube.service.filestorage.system.DiskSystem;
 import cube.service.filestorage.system.FileDescriptor;
@@ -66,7 +63,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 文件描述符缓存。
      */
-    private ConcurrentHashMap<String, FileDescriptor> fileDescriptors;
+    protected ConcurrentHashMap<String, FileDescriptor> fileDescriptors;
 
     /**
      * 文件标签的集群缓存。
@@ -84,6 +81,11 @@ public class FileStorageService extends AbstractModule {
     private ExecutorService executor;
 
     /**
+     * 守护任务。
+     */
+    private DaemonTask daemonTask;
+
+    /**
      * 构造函数。
      *
      * @param executor 多线程执行器。
@@ -92,6 +94,7 @@ public class FileStorageService extends AbstractModule {
         super();
         this.executor = executor;
         this.fileDescriptors = new ConcurrentHashMap<>();
+        this.daemonTask = new DaemonTask(this);
     }
 
     @Override
@@ -157,6 +160,11 @@ public class FileStorageService extends AbstractModule {
 
         // 关闭存储
         this.fileLabelStorage.close();
+    }
+
+    @Override
+    public void onTick(Module module, Kernel kernel) {
+        this.daemonTask.run();
     }
 
     /**

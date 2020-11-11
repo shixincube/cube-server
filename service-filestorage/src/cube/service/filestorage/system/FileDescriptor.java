@@ -43,6 +43,8 @@ public class FileDescriptor implements JSONable {
 
     private JSONObject descriptor;
 
+    private long timestamp;
+
     /**
      * 构造函数。
      *
@@ -54,6 +56,7 @@ public class FileDescriptor implements JSONable {
         this.fileName = fileName;
         this.url = url;
         this.descriptor = new JSONObject();
+        this.timestamp = System.currentTimeMillis();
     }
 
     /**
@@ -70,6 +73,7 @@ public class FileDescriptor implements JSONable {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        this.timestamp = System.currentTimeMillis();
     }
 
     public String getFileSystem() {
@@ -86,6 +90,10 @@ public class FileDescriptor implements JSONable {
 
     public JSONObject getDescriptor() {
         return this.descriptor;
+    }
+
+    public long getTimestamp() {
+        return this.timestamp;
     }
 
     public void attr(String name, String value) {

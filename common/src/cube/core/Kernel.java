@@ -32,7 +32,9 @@ import cube.cache.SharedMemoryCache;
 import cube.cache.SeriesMemoryTimeSeriesCache;
 import cube.mq.AdapterMQ;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -65,6 +67,11 @@ public final class Kernel {
      * 是否已启动。
      */
     private boolean started = false;
+
+    /**
+     * 管理守护。
+     */
+    private ManagementDaemon daemon;
 
     /**
      * 构造函数。
@@ -123,12 +130,17 @@ public final class Kernel {
             AbstractModule module = miter.next();
             module.start();
         }
+
+        this.daemon = new ManagementDaemon(this);
+        this.daemon.start();
     }
 
     /**
      * 停止内核。
      */
     public void shutdown() {
+        this.daemon.terminate();
+        
         Iterator<AbstractModule> miter = this.moduleMap.values().iterator();
         while (miter.hasNext()) {
             AbstractModule module = miter.next();
@@ -178,6 +190,15 @@ public final class Kernel {
      */
     public AbstractModule getModule(String name) {
         return this.moduleMap.get(name);
+    }
+
+    /**
+     * 获取所有模块。
+     *
+     * @return 返回所有模块的列表。
+     */
+    public List<AbstractModule> getModules() {
+        return new ArrayList<>(this.moduleMap.values());
     }
 
     /**

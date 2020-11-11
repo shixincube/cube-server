@@ -47,6 +47,8 @@ import cube.common.action.MessagingActions;
 import cube.common.entity.*;
 import cube.common.state.MessagingStateCode;
 import cube.core.AbstractModule;
+import cube.core.Kernel;
+import cube.core.Module;
 import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
@@ -178,6 +180,11 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         }
 
         this.storage.close();
+    }
+
+    @Override
+    public void onTick(Module module, Kernel kernel) {
+
     }
 
     /**

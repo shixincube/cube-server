@@ -52,7 +52,9 @@ import cube.common.entity.Device;
 import cube.common.entity.Group;
 import cube.common.entity.GroupState;
 import cube.common.state.ContactStateCode;
+import cube.core.AbstractModule;
 import cube.core.Kernel;
+import cube.core.Module;
 import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.storage.StorageType;
@@ -66,7 +68,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * 联系人管理器。
  */
-public class ContactManager implements CelletAdapterListener {
+public class ContactManager extends AbstractModule implements CelletAdapterListener {
 
     public final static String NAME = "Contact";
 
@@ -83,9 +85,9 @@ public class ContactManager implements CelletAdapterListener {
     private ExecutorService executor;
 
     /**
-     * 管理线程。
+     * 守护任务。
      */
-    private ManagementDaemon daemon;
+    private DaemonTask daemon;
 
     /**
      * 在线的联系人表。
@@ -139,13 +141,11 @@ public class ContactManager implements CelletAdapterListener {
         return ContactManager.instance;
     }
 
-    /**
-     * 启动管理器。
-     */
-    public void startup(Kernel kernel) {
+    @Override
+    public void start() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
 
-        this.daemon = new ManagementDaemon(this);
+        this.daemon = new DaemonTask(this);
 
         this.onlineTables = new ConcurrentHashMap<>();
         this.tokenContactMap = new ConcurrentHashMap<>();
@@ -164,9 +164,6 @@ public class ContactManager implements CelletAdapterListener {
         this.contactsAdapter.addListener(this);
 
         this.pluginSystem = new ContactPluginSystem();
-
-        // 启动守护线程
-        this.daemon.start();
 
         // 异步初始化缓存和存储
         (new Thread() {
@@ -187,18 +184,14 @@ public class ContactManager implements CelletAdapterListener {
                 storage = new ContactStorage(executor, StorageType.SQLite, config);
                 storage.open();
 
-                AuthService authService = (AuthService) kernel.getModule(AuthService.NAME);
+                AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
                 storage.execSelfChecking(authService.getDomainList());
             }
         }).start();
     }
 
-    /**
-     * 关闭管理器。
-     */
-    public void shutdown() {
-        this.daemon.terminate();
-
+    @Override
+    public void stop() {
         this.storage.close();
 
         this.onlineTables.clear();
@@ -208,6 +201,11 @@ public class ContactManager implements CelletAdapterListener {
         this.groupCache.stop();
 
         this.executor.shutdown();
+    }
+
+    @Override
+    public void onTick(Module module, Kernel kernel) {
+        this.daemon.run();
     }
 
     public void setCellet(ContactServiceCellet cellet) {

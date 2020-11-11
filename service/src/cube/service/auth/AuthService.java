@@ -31,10 +31,7 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
-import cube.core.AbstractModule;
-import cube.core.Cache;
-import cube.core.CacheKey;
-import cube.core.CacheValue;
+import cube.core.*;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -73,6 +70,11 @@ public class AuthService extends AbstractModule {
 
     @Override
     public void stop() {
+    }
+
+    @Override
+    public void onTick(Module module, Kernel kernel) {
+
     }
 
     /**
@@ -176,4 +178,6 @@ public class AuthService extends AbstractModule {
         }
         return result;
     }
+
+
 }

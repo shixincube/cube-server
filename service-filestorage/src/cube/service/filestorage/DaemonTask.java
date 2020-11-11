@@ -24,47 +24,38 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage.task;
+package cube.service.filestorage;
 
-import cell.core.cellet.Cellet;
-import cell.core.talk.PrimitiveInputStream;
-import cell.core.talk.TalkContext;
-import cube.core.Kernel;
-import cube.service.filestorage.FileStorageService;
+import cube.service.filestorage.system.FileDescriptor;
 
-import java.io.IOException;
+import java.util.Iterator;
 
 /**
- * 写文件任务。
+ * 守护任务。
  */
-public class WriteFileTask implements Runnable {
+public class DaemonTask implements Runnable {
 
     /**
-     * 框架的内核实例。
+     * 文件描述符的超时时长。
      */
-    protected Kernel kernel;
+    private final long fileDescriptorTimeout = 60L * 60L * 1000L;
 
-    protected TalkContext talkContext;
+    private FileStorageService service;
 
-    protected PrimitiveInputStream inputStream;
-
-    protected FileStorageService service;
-
-    public WriteFileTask(Cellet cellet, TalkContext talkContext, PrimitiveInputStream inputStream) {
-        this.kernel = (Kernel) cellet.getNucleus().getParameter("kernel");
-        this.talkContext = talkContext;
-        this.inputStream = inputStream;
+    public DaemonTask(FileStorageService service) {
+        this.service = service;
     }
 
     @Override
     public void run() {
-        this.service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-        this.service.writeFile(this.inputStream.getName(), this.inputStream);
+        long now = System.currentTimeMillis();
 
-        try {
-            this.inputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        Iterator<FileDescriptor> fditer = this.service.fileDescriptors.values().iterator();
+        while (fditer.hasNext()) {
+            FileDescriptor descriptor = fditer.next();
+            if (now - descriptor.getTimestamp() > this.fileDescriptorTimeout) {
+                fditer.remove();
+            }
         }
     }
 }

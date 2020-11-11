@@ -34,6 +34,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
 import cube.common.action.ContactActions;
+import cube.core.Kernel;
 import cube.service.contact.task.*;
 
 import java.util.concurrent.ExecutorService;
@@ -52,13 +53,21 @@ public class ContactServiceCellet extends Cellet {
     @Override
     public boolean install() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
+
+        Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
+        kernel.installModule(ContactManager.NAME, ContactManager.getInstance());
+
         ContactManager.getInstance().setCellet(this);
+
         return true;
     }
 
     @Override
     public void uninstall() {
         this.executor.shutdown();
+
+        Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
+        kernel.uninstallModule(ContactManager.NAME);
     }
 
     @Override

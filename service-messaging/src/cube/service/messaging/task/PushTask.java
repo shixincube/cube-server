@@ -39,7 +39,6 @@ import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
 import cube.service.messaging.MessagingService;
-import cube.service.messaging.MessagingServiceCellet;
 
 /**
  * 推送消息任务。
@@ -80,7 +79,7 @@ public class PushTask extends ServiceTask {
         }
 
         // 将消息推送到消息中心
-        MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingServiceCellet.NAME);
+        MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingService.NAME);
         Message response = messagingService.pushMessage(message, device);
 
         // 应答

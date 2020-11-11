@@ -24,47 +24,58 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage.task;
+package cube.service.contact;
 
-import cell.core.cellet.Cellet;
-import cell.core.talk.PrimitiveInputStream;
-import cell.core.talk.TalkContext;
-import cube.core.Kernel;
-import cube.service.filestorage.FileStorageService;
-
-import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
- * 写文件任务。
+ * 管理守护任务。
  */
-public class WriteFileTask implements Runnable {
+public class DaemonTask implements Runnable {
+
+    private ContactManager manager;
 
     /**
-     * 框架的内核实例。
+     * 间隔 10 分钟
      */
-    protected Kernel kernel;
+    private int contactTick = 10;
+    private int contactTickCount = 0;
 
-    protected TalkContext talkContext;
+    /**
+     * 间隔 5 分钟
+     */
+    private int groupTick = 5;
+    private int groupTickCount = 0;
 
-    protected PrimitiveInputStream inputStream;
-
-    protected FileStorageService service;
-
-    public WriteFileTask(Cellet cellet, TalkContext talkContext, PrimitiveInputStream inputStream) {
-        this.kernel = (Kernel) cellet.getNucleus().getParameter("kernel");
-        this.talkContext = talkContext;
-        this.inputStream = inputStream;
+    public DaemonTask(ContactManager manager) {
+        this.manager = manager;
     }
 
     @Override
     public void run() {
-        this.service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-        this.service.writeFile(this.inputStream.getName(), this.inputStream);
+        ++this.contactTickCount;
+        if (this.contactTickCount >= this.contactTick) {
+            this.contactTickCount = 0;
+            this.processContacts();
+        }
 
-        try {
-            this.inputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        ++this.groupTickCount;
+        if (this.groupTickCount >= this.groupTick) {
+            this.groupTickCount = 0;
+            this.processGroups();
+        }
+    }
+
+    private void processContacts() {
+    }
+
+    private void processGroups() {
+        Iterator<Map.Entry<String, GroupTable>> gtiter = this.manager.activeGroupTables.entrySet().iterator();
+        while (gtiter.hasNext()) {
+            Map.Entry<String, GroupTable> entry = gtiter.next();
+            GroupTable gt = entry.getValue();
+            gt.submitActiveTime();
         }
     }
 }

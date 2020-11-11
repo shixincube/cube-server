@@ -65,4 +65,10 @@ public interface Module {
      */
     public MessageQueue getMQ(String name);
 
+    /**
+     * 内核每一个维护周期回调该方法。
+     *
+     * @param kernel 当前内核实例。
+     */
+    public void onTick(Module module, Kernel kernel);
 }

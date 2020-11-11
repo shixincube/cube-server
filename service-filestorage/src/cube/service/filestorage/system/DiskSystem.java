@@ -107,7 +107,7 @@ public class DiskSystem implements FileSystem {
             e.printStackTrace();
         }
 
-        FileDescriptor descriptor = new FileDescriptor("disk", this.url + file.getName());
+        FileDescriptor descriptor = new FileDescriptor("disk", file.getName(), this.url + file.getName());
         descriptor.attr("file", file.getName());
         descriptor.attr("path", target.toAbsolutePath().toString());
         descriptor.attr("size", size);
@@ -141,7 +141,7 @@ public class DiskSystem implements FileSystem {
             }
         }
 
-        FileDescriptor descriptor = new FileDescriptor("disk", this.url + fileName);
+        FileDescriptor descriptor = new FileDescriptor("disk", fileName, this.url + fileName);
         descriptor.attr("file", fileName);
         descriptor.attr("path", target.toString());
         descriptor.attr("size", size);
