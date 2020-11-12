@@ -32,6 +32,7 @@ import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.entity.HierarchyNode;
 import cube.service.filestorage.FileStructStorage;
+import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchy;
 import cube.service.filestorage.hierarchy.FileHierarchyManager;
 import cube.storage.StorageType;
@@ -80,24 +81,24 @@ public class FileHierarchyTest {
         // 获取根目录
         FileHierarchy fileHierarchy = this.manager.getFileHierarchy(contactId, domainName);
 
-        HierarchyNode root = fileHierarchy.getRoot();
+        Directory root = fileHierarchy.getRoot();
         Assert.equals(contactId, root.getId());
         Assert.equals(domainName, root.getDomain().getName());
-        Assert.equals(0, root.numChildren());
+        Assert.equals(0, root.numSubdirectories());
 
         // 创建子目录
         String dir1Name = "这是一级目录-相册文件夹";
-        HierarchyNode dir1 = fileHierarchy.createDirectory(root, dir1Name);
-        Assert.equals(dir1Name, fileHierarchy.getDirectoryName(dir1));
+        Directory dir1 = root.createDirectory(dir1Name);
+        Assert.equals(dir1Name, dir1.getName());
         // 判断子目录数量
-        Assert.equals(1, root.numChildren());
+        Assert.equals(1, root.numSubdirectories());
 
         // 再创创建子目录
         String dir2Name = "这是一级目录-资料文件夹";
-        HierarchyNode dir2 = fileHierarchy.createDirectory(root, dir2Name);
-        Assert.equals(dir2Name, fileHierarchy.getDirectoryName(dir2));
+        Directory dir2 = root.createDirectory(dir2Name);
+        Assert.equals(dir2Name, dir2.getName());
         // 判断子目录数量
-        Assert.equals(2, root.numChildren());
+        Assert.equals(2, root.numSubdirectories());
 
         // 清空内存
         this.manager.clearMemory();
@@ -105,19 +106,21 @@ public class FileHierarchyTest {
         // 重新获取根目录
         fileHierarchy = this.manager.getFileHierarchy(contactId, domainName);
         root = fileHierarchy.getRoot();
-        Assert.equals(2, root.numChildren());
+        Assert.equals(2, root.numSubdirectories());
 
         // 删除第二个目录
-        dir2 = root.getChildren().get(1);
-        fileHierarchy.deleteDirectory(dir2);
+        List<Directory> dirs = root.getSubdirectories();
+        dir2 = dirs.get(1);
+        Assert.equals("delete dir2", true, root.deleteDirectory(dir2));
         // 判断目录数量
-        Assert.equals(1, root.numChildren());
+        Assert.equals(1, root.numSubdirectories());
 
         // 删除第一个目录
-        dir1 = root.getChildren().get(0);
-        fileHierarchy.deleteDirectory(dir1);
+        dirs = root.getSubdirectories();
+        dir1 = dirs.get(0);
+        root.deleteDirectory(dir1);
         // 判断目录数量
-        Assert.equals(0, root.numChildren());
+        Assert.equals(0, root.numSubdirectories());
 
         this.manager.clearMemory();
     }
@@ -127,21 +130,34 @@ public class FileHierarchyTest {
 
         String domainName = this.domainList.get(0);
 
-        // 获取根目录
+        // 读取
         FileHierarchy fileHierarchy = this.manager.getFileHierarchy(contactId, domainName);
 
-        HierarchyNode parent = fileHierarchy.getRoot();
+        Directory parent = fileHierarchy.getRoot();
 
         int depth = 32;
         for (int i = 0; i < depth; ++i) {
-            HierarchyNode dir = fileHierarchy.createDirectory(parent, "这是第[" + (0+1) + "]层");
+            Directory dir = parent.createDirectory("这是第[" + (i+1) + "]层");
+            System.out.println("New dir : " + dir.getName());
             parent = dir;
         }
 
         // 清空内存
         this.manager.clearMemory();
 
+        // 逐层遍历
+        int count = 0;
+        fileHierarchy = this.manager.getFileHierarchy(contactId, domainName);
+        parent = fileHierarchy.getRoot();
+        while (parent.numSubdirectories() > 0) {
+            List<Directory> subs = parent.getSubdirectories();
+            Directory dir = subs.get(0);
+            System.out.println("Dir : " + dir.getName());
+            parent = dir;
+            ++count;
+        }
 
+        Assert.equals("Depth", depth, count);
     }
 
     public void teardown() {

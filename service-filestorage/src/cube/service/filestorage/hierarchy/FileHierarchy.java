@@ -34,6 +34,7 @@ import cube.core.Cache;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 文件层级描述类。
@@ -46,106 +47,31 @@ public class FileHierarchy {
 
     private Cache cache;
 
-    private HierarchyNode root;
+    private Directory root;
+
+    private ConcurrentHashMap<Long, Directory> directories;
 
     public FileHierarchy(Cache cache, HierarchyNode root) {
         this.cache = cache;
-        this.root = root;
-
-        try {
-            JSONObject context = this.root.getContext();
-            if (!context.has(KEY_CREATION)) {
-                context.put(KEY_CREATION, System.currentTimeMillis());
-                context.put(KEY_LAST_MODIFIED, System.currentTimeMillis());
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        this.root = new Directory(this, root);
+        this.directories = new ConcurrentHashMap<>();
     }
 
-    public HierarchyNode getRoot() {
+    public Directory getRoot() {
         return this.root;
-    }
-
-    public String getDirectoryName(HierarchyNode directory) {
-        try {
-            return directory.getContext().getString(KEY_DIR_NAME);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
-    public HierarchyNode createDirectory(HierarchyNode hierarchy, String directoryName) {
-        if (this.existsDirectory(hierarchy, directoryName)) {
-            // 目录重名，不允许创建
-            return null;
-        }
-
-        long now = System.currentTimeMillis();
-
-        // 创建目录
-        HierarchyNode dirNode = new HierarchyNode(hierarchy);
-        try {
-            JSONObject context = dirNode.getContext();
-            context.put(KEY_DIR_NAME, directoryName);
-            context.put(KEY_CREATION, now);
-            context.put(KEY_LAST_MODIFIED, now);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        // 添加为子节点
-        hierarchy.addChild(dirNode);
-
-        HierarchyNodes.save(cache, dirNode);
-        HierarchyNodes.save(cache, hierarchy);
-
-        return dirNode;
-    }
-
-    public boolean deleteDirectory(HierarchyNode directory) {
-        if (this.root.equals(directory)) {
-            // 不能删除根
-            return false;
-        }
-
-        HierarchyNode root = HierarchyNodes.traversalUp(directory, 0);
-        if (!root.equals(this.root)) {
-            // 不是同一个根
-            return false;
-        }
-
-        // 目录里是否还有数据
-        if (0 != directory.numRelatedKeys()) {
-            // 不允许删除非空目录
-            return false;
-        }
-
-        HierarchyNode parent = directory.getParent();
-        parent.removeChild(directory);
-
-        HierarchyNodes.save(cache, parent);
-        HierarchyNodes.delete(cache, directory);
-
-        return true;
-    }
-
-    public List<HierarchyNode> getSubdirectories(HierarchyNode directory) {
-        return null;
     }
 
     /**
      * 是否存在同名目录。
      *
-     * @param hierarchy
+     * @param directory
      * @param directoryName
      * @return
      */
-    public boolean existsDirectory(HierarchyNode hierarchy, String directoryName) {
+    protected boolean existsDirectory(Directory directory, String directoryName) {
         try {
-            for (HierarchyNode node : hierarchy.getChildren()) {
+            List<HierarchyNode> children = HierarchyNodes.traversalChildren(this.cache, directory.node);
+            for (HierarchyNode node : children) {
                 JSONObject context = node.getContext();
                 String dirName = context.getString(KEY_DIR_NAME);
                 if (dirName.equals(directoryName)) {
@@ -157,5 +83,126 @@ public class FileHierarchy {
         }
 
         return false;
+    }
+
+    /**
+     * 是否存在相同目录。
+     *
+     * @param parentNode
+     * @param child
+     * @return
+     */
+    protected boolean existsDirectory(HierarchyNode parentNode, Directory child) {
+        List<HierarchyNode> children = HierarchyNodes.traversalChildren(this.cache, parentNode);
+        for (HierarchyNode node : children) {
+            if (node.equals(child.node)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 新建目录。
+     *
+     * @param directory
+     * @param directoryName
+     * @return
+     */
+    protected Directory createDirectory(Directory directory, String directoryName) {
+        if (this.existsDirectory(directory, directoryName)) {
+            // 目录重名，不允许创建
+            return null;
+        }
+
+        long now = System.currentTimeMillis();
+
+        // 创建目录
+        HierarchyNode dirNode = new HierarchyNode(directory.node);
+        try {
+            JSONObject context = dirNode.getContext();
+            context.put(KEY_DIR_NAME, directoryName);
+            context.put(KEY_CREATION, now);
+            context.put(KEY_LAST_MODIFIED, now);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        // 添加为子节点
+        directory.node.addChild(dirNode);
+
+        HierarchyNodes.save(this.cache, dirNode);
+        HierarchyNodes.save(this.cache, directory.node);
+
+        Directory dir = new Directory(this, dirNode);
+        this.directories.put(dir.getId(), dir);
+
+        return dir;
+    }
+
+    /**
+     * 删除目录。
+     *
+     * @param directory
+     * @param subdirectory
+     * @return
+     */
+    protected boolean deleteDirectory(Directory directory, Directory subdirectory) {
+        if (this.root.equals(subdirectory)) {
+            // 不能删除根
+            return false;
+        }
+
+        if (!this.existsDirectory(directory.node, subdirectory)) {
+            // 没有这个子目录
+            return false;
+        }
+
+        // 目录里是否还有数据
+        if (0 != subdirectory.node.numRelatedKeys()) {
+            // 不允许删除非空目录
+            return false;
+        }
+
+        HierarchyNode parent = directory.node;
+        if (parent.getId().longValue() != subdirectory.node.getParent().getId().longValue()) {
+            // 不是父子关系节点
+            return false;
+        }
+
+        parent.removeChild(subdirectory.node);
+
+        HierarchyNodes.save(this.cache, parent);
+        HierarchyNodes.delete(this.cache, subdirectory.node);
+
+        this.directories.remove(subdirectory.getId());
+
+        return true;
+    }
+
+    /**
+     * 获取指定目录的所有子目录。
+     *
+     * @param directory
+     * @return
+     */
+    protected List<Directory> getSubdirectories(Directory directory) {
+        List<Directory> result = new ArrayList<>();
+
+        List<HierarchyNode> nodes = HierarchyNodes.traversalChildren(this.cache, directory.node);
+        for (HierarchyNode node : nodes) {
+            Directory dir = this.directories.get(node.getId());
+            if (null != dir) {
+                result.add(dir);
+                continue;
+            }
+
+            dir = new Directory(this, node);
+            this.directories.put(dir.getId(), dir);
+            result.add(dir);
+        }
+
+        return result;
     }
 }

@@ -52,21 +52,49 @@ public final class Assert {
         System.err.println("Assert Failed : " + expectedValue + " != " + actualValue);
     }
 
-    public static void equals(int expectedValue, int actualValue) {
+    public static void equals(String tag, int expectedValue, int actualValue) {
         if (expectedValue == actualValue) {
-            System.out.println("Assert OK - " + expectedValue);
+            if (null != tag) {
+                System.out.println(tag + " - Assert OK - " + expectedValue);
+            }
+            else {
+                System.out.println("Assert OK - " + expectedValue);
+            }
             return;
         }
 
-        System.err.println("Assert Failed : " + expectedValue + " != " + actualValue);
+        if (null != tag) {
+            System.err.println(tag + " - Assert Failed : " + expectedValue + " != " + actualValue);
+        }
+        else {
+            System.err.println("Assert Failed : " + expectedValue + " != " + actualValue);
+        }
+    }
+
+    public static void equals(int expectedValue, int actualValue) {
+        Assert.equals(null, expectedValue, actualValue);
+    }
+
+    public static void equals(String tag, boolean expectedValue, boolean actualValue) {
+        if (expectedValue == actualValue) {
+            if (null != tag) {
+                System.out.println(tag + " - Assert OK - " + expectedValue);
+            }
+            else {
+                System.out.println("Assert OK - " + expectedValue);
+            }
+            return;
+        }
+
+        if (null != tag) {
+            System.err.println(tag + " - Assert Failed : " + expectedValue + " != " + actualValue);
+        }
+        else {
+            System.err.println("Assert Failed : " + expectedValue + " != " + actualValue);
+        }
     }
 
     public static void equals(boolean expectedValue, boolean actualValue) {
-        if (expectedValue == actualValue) {
-            System.out.println("Assert OK - " + expectedValue);
-            return;
-        }
-
-        System.err.println("Assert Failed : " + expectedValue + " != " + actualValue);
+        Assert.equals(null, expectedValue, actualValue);
     }
 }

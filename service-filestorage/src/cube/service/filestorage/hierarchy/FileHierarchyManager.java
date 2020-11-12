@@ -47,13 +47,6 @@ public class FileHierarchyManager {
         this.roots = new ConcurrentHashMap<>();
     }
 
-    /**
-     * 仅用于辅助测试的方法。
-     */
-    public void clearMemory() {
-        this.roots.clear();
-    }
-
     public synchronized FileHierarchy getFileHierarchy(Long contactId, String domainName) {
         String uniqueKey = UniqueKey.make(contactId, domainName);
         FileHierarchy root = this.roots.get(uniqueKey);
@@ -76,5 +69,12 @@ public class FileHierarchyManager {
         HierarchyNodes.save(this.fileHierarchyCache, node);
 
         return root;
+    }
+
+    /**
+     * 仅用于辅助测试的方法。
+     */
+    public void clearMemory() {
+        this.roots.clear();
     }
 }

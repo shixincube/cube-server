@@ -124,7 +124,22 @@ public final class HierarchyNodes {
     }
 
     public static List<HierarchyNode> traversalChildren(Cache cache, HierarchyNode node) {
-        List<HierarchyNode> result = new ArrayList<>();
-        return result;
+        if (null != node.unloadChildrenKeys && !node.unloadChildrenKeys.isEmpty()) {
+            List<String> keys = new ArrayList<>(node.unloadChildrenKeys);
+            for (int i = 0; i < keys.size(); ++i) {
+                String key = keys.get(i);
+
+                CacheValue value = cache.get(new CacheKey(key));
+                if (null != value) {
+                    HierarchyNode child = new HierarchyNode(value.get());
+
+                    node.addChild(child);
+                }
+            }
+
+            keys.clear();
+        }
+
+        return node.getChildren();
     }
 }

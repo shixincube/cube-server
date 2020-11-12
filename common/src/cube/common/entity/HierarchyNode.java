@@ -49,7 +49,7 @@ public class HierarchyNode extends Entity {
 
     private JSONObject context;
 
-    protected List<String> unloadChildrenKey;
+    protected List<String> unloadChildrenKeys;
 
     public HierarchyNode(Long id, String domain) {
         super(id, domain);
@@ -73,7 +73,7 @@ public class HierarchyNode extends Entity {
         this.relatedKeys = new ArrayList<>();
         this.context = new JSONObject();
 
-        this.unloadChildrenKey = new ArrayList<>();
+        this.unloadChildrenKeys = new ArrayList<>();
 
         try {
             this.id = json.getLong("id");
@@ -93,7 +93,7 @@ public class HierarchyNode extends Entity {
             JSONArray childrenKeys = json.getJSONArray("children");
             for (int i = 0; i < childrenKeys.length(); ++i) {
                 String key = childrenKeys.getString(i);
-                this.unloadChildrenKey.add(key);
+                this.unloadChildrenKeys.add(key);
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -109,6 +109,10 @@ public class HierarchyNode extends Entity {
     }
 
     public void addChild(HierarchyNode child) {
+        if (child == this) {
+            return;
+        }
+        
         if (this.children.contains(child)) {
             return;
         }
@@ -116,14 +120,18 @@ public class HierarchyNode extends Entity {
         child.parent = this;
         this.children.add(child);
 
-        this.unloadChildrenKey.remove(child.getUniqueKey());
+        if (null != this.unloadChildrenKeys) {
+            this.unloadChildrenKeys.remove(child.getUniqueKey());
+        }
     }
 
     public void removeChild(HierarchyNode child) {
         this.children.remove(child);
         child.parent = null;
 
-        this.unloadChildrenKey.remove(child.getUniqueKey());
+        if (null != this.unloadChildrenKeys) {
+            this.unloadChildrenKeys.remove(child.getUniqueKey());
+        }
     }
 
     public List<HierarchyNode> getChildren() {
@@ -131,6 +139,10 @@ public class HierarchyNode extends Entity {
     }
 
     public int numChildren() {
+        if (null != this.unloadChildrenKeys && !this.unloadChildrenKeys.isEmpty()) {
+            return this.unloadChildrenKeys.size();
+        }
+
         return this.children.size();
     }
 
