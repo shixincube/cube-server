@@ -68,6 +68,11 @@ public class Message extends Entity implements Comparable<Message> {
     private long remoteTimestamp;
 
     /**
+     * 消息的文件附件。
+     */
+    private FileAttachment attachment;
+
+    /**
      * 消息的来源设备。
      */
     private Device sourceDevice;
@@ -87,6 +92,8 @@ public class Message extends Entity implements Comparable<Message> {
 
         this.domain = new Domain(packet.data.getString("domain"));
         this.id = packet.data.getLong("id");
+        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
+
         this.from = packet.data.getLong("from");
         this.to = packet.data.getLong("to");
         this.source = packet.data.getLong("source");
@@ -94,11 +101,14 @@ public class Message extends Entity implements Comparable<Message> {
         this.remoteTimestamp = packet.data.getLong("rts");
         this.payload = packet.data.getJSONObject("payload");
 
+        if (packet.data.has("attachment")) {
+            // 解析文件附件
+            this.attachment = new FileAttachment(packet.data.getJSONObject("attachment"));
+        }
+
         if (packet.data.has("device")) {
             this.sourceDevice = new Device(packet.data.getJSONObject("device"));
         }
-
-        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
     }
 
     /**
@@ -118,6 +128,11 @@ public class Message extends Entity implements Comparable<Message> {
             this.localTimestamp = json.getLong("lts");
             this.remoteTimestamp = json.getLong("rts");
             this.payload = json.getJSONObject("payload");
+
+            if (json.has("attachment")) {
+                this.attachment = new FileAttachment(json.getJSONObject("attachment"));
+            }
+
             if (json.has("device")) {
                 this.sourceDevice = new Device(json.getJSONObject("device"));
             }
@@ -143,6 +158,7 @@ public class Message extends Entity implements Comparable<Message> {
         this.localTimestamp = src.localTimestamp;
         this.remoteTimestamp = src.remoteTimestamp;
         this.payload = src.payload;
+        this.attachment = src.attachment;
         this.sourceDevice = src.sourceDevice;
         this.state = src.state;
 
@@ -162,18 +178,24 @@ public class Message extends Entity implements Comparable<Message> {
      * @param payload 指定消息负载数据。
      */
     public Message(String domain, Long id, Long from, Long to, Long source,
-                   Long localTimestamp, Long remoteTimestamp, JSONObject sourceDevice, JSONObject payload) {
+                   Long localTimestamp, Long remoteTimestamp, JSONObject sourceDevice,
+                   JSONObject payload, JSONObject attachment) {
         super(id, domain);
         this.from = from;
         this.to = to;
         this.source = source;
         this.localTimestamp = localTimestamp;
         this.remoteTimestamp = remoteTimestamp;
-        this.payload = payload;
+
         this.sourceDevice = new Device(sourceDevice);
 
+        this.payload = payload;
+
+        if (null != attachment) {
+            this.attachment = new FileAttachment(attachment);
+        }
+
         this.state = MessageState.Sent;
-        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
     }
 
     /**
@@ -249,6 +271,15 @@ public class Message extends Entity implements Comparable<Message> {
     }
 
     /**
+     * 获取消息附件。
+     *
+     * @return 返回消息的文件附件。
+     */
+    public FileAttachment getAttachment() {
+        return this.attachment;
+    }
+
+    /**
      * 设置消息发送时的设备。
      *
      * @param device 设备实例。
@@ -316,6 +347,10 @@ public class Message extends Entity implements Comparable<Message> {
             json.put("rts", this.remoteTimestamp);
             json.put("payload", this.payload);
 
+            if (null != this.attachment) {
+                json.put("attachment", this.attachment.toJSON());
+            }
+
             if (null != this.sourceDevice) {
                 json.put("device", this.sourceDevice.toJSON());
             }
@@ -336,6 +371,7 @@ public class Message extends Entity implements Comparable<Message> {
     public JSONObject toCompactJSON() {
         JSONObject json = this.toJSON();
         json.remove("payload");
+        json.remove("attachment");
         return json;
     }
 

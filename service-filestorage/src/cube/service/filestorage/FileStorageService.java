@@ -33,6 +33,7 @@ import cube.cache.SharedMemoryCache;
 import cube.common.entity.FileLabel;
 import cube.core.*;
 import cube.service.auth.AuthService;
+import cube.service.filestorage.hierarchy.FileHierarchy;
 import cube.service.filestorage.hierarchy.FileHierarchyManager;
 import cube.service.filestorage.system.DiskSystem;
 import cube.service.filestorage.system.FileDescriptor;
@@ -223,6 +224,22 @@ public class FileStorageService extends AbstractModule {
     }
 
     /**
+     * 文件是否存在。
+     *
+     * @param domainName
+     * @param fileCode
+     * @return
+     */
+    public boolean existsFile(String domainName, String fileCode) {
+        CacheValue value = this.fileLabelCache.get(new CacheKey(fileCode));
+        if (null != value) {
+            return true;
+        }
+
+        return this.fileStructStorage.existsFileLabel(domainName, fileCode);
+    }
+
+    /**
      * 读文件标签。
      *
      * @param fileCode
@@ -239,8 +256,15 @@ public class FileStorageService extends AbstractModule {
         return new FileLabel(value.get());
     }
 
-    public void createDir() {
-
+    /**
+     * 获取指定域下，联系人或群组的文件目录。
+     *
+     * @param domainName
+     * @param contactOrGroupId
+     * @return
+     */
+    public FileHierarchy getFileHierarchy(String domainName, Long contactOrGroupId) {
+        return this.fileHierarchyManager.getFileHierarchy(contactOrGroupId, domainName);
     }
 
     /**

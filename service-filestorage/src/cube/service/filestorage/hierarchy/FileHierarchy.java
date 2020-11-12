@@ -45,6 +45,8 @@ public class FileHierarchy {
     protected final static String KEY_LAST_MODIFIED = "lastModified";
     protected final static String KEY_DIR_NAME = "name";
 
+    protected final static String KEY_RESERVED = "reserved";
+
     private Cache cache;
 
     private Directory root;
@@ -172,6 +174,13 @@ public class FileHierarchy {
         }
 
         parent.removeChild(subdirectory.node);
+
+        // 更新时间戳
+        try {
+            directory.node.getContext().put(KEY_LAST_MODIFIED, System.currentTimeMillis());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         HierarchyNodes.save(this.cache, parent);
         HierarchyNodes.delete(this.cache, subdirectory.node);

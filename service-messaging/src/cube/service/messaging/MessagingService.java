@@ -52,12 +52,16 @@ import cube.core.Module;
 import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
+import cube.service.filestorage.FileStorageService;
+import cube.service.filestorage.hierarchy.Directory;
+import cube.service.filestorage.hierarchy.FileHierarchy;
 import cube.storage.StorageType;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -101,7 +105,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      */
     public MessagingService(MessagingServiceCellet cellet) {
         this.cellet = cellet;
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(32);
     }
 
     private void initMessageCache() {
@@ -202,6 +206,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         // 设置消息的来源设备
         message.setSourceDevice(sourceDevice);
+
+        // 处理附件
+        this.processAttachment(message);
 
         // Hook PrePush
         MessagingHook hook = this.pluginSystem.getPrePushHook();
@@ -345,6 +352,45 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 contactId.longValue(), message.getDomain().getName());
         this.cellet.speak(talkContext, dialect);
         return true;
+    }
+
+    /**
+     * 处理消息的附件。
+     *
+     * @param message
+     */
+    private void processAttachment(Message message) {
+        FileAttachment fileAttachment = message.getAttachment();
+        if (null == fileAttachment) {
+            return;
+        }
+
+        FileStorageService fileStorageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+
+        String domainName = message.getDomain().getName();
+
+        int count = 60;
+        while (!fileStorageService.existsFile(domainName, fileAttachment.getFileCode())) {
+            try {
+                Thread.sleep(100L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            --count;
+            if (count <= 0) {
+                break;
+            }
+        }
+
+        FileHierarchy fileHierarchy = null;
+        if (message.getSource().longValue() > 0) {
+            fileHierarchy = fileStorageService.getFileHierarchy(domainName, message.getSource());
+            Directory root = fileHierarchy.getRoot();
+
+        }
+        else {
+            fileHierarchy = fileStorageService.getFileHierarchy(domainName, message.getFrom());
+        }
     }
 
     @Override

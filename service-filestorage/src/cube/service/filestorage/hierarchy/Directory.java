@@ -56,6 +56,9 @@ public class Directory {
             if (!context.has(FileHierarchy.KEY_DIR_NAME)) {
                 context.put(FileHierarchy.KEY_DIR_NAME, "root");
             }
+            if (!context.has(FileHierarchy.KEY_RESERVED)) {
+                context.put(FileHierarchy.KEY_RESERVED, false);
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -77,6 +80,24 @@ public class Directory {
         }
 
         return null;
+    }
+
+    public long getCreationTime() {
+        try {
+            return this.node.getContext().getLong(FileHierarchy.KEY_CREATION);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public long getLastModified() {
+        try {
+            return this.node.getContext().getLong(FileHierarchy.KEY_LAST_MODIFIED);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     public int numSubdirectories() {

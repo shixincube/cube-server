@@ -118,7 +118,7 @@ public class Performer implements TalkListener {
     /**
      * 阻塞超时时长。
      */
-    private long blockTimeout = 6000L;
+    private long blockTimeout = 10000L;
 
     /**
      * 构造函数。

@@ -155,6 +155,24 @@ public class FileStructStorage implements Storagable {
 
     /**
      *
+     * @param domain
+     * @param fileCode
+     * @return
+     */
+    public boolean existsFileLabel(String domain, String fileCode) {
+        String labelTable = this.labelTableNameMap.get(domain);
+
+        List<StorageField[]> result = this.storage.executeQuery(labelTable, new StorageField[] {
+                new StorageField("id", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("file_code", LiteralBase.STRING, fileCode))
+        });
+
+        return (!result.isEmpty());
+    }
+
+    /**
+     *
      * @param fileLabel
      * @param fileDescriptor
      */

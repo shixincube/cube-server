@@ -324,7 +324,7 @@ public class FileHandler extends CrossDomainHandler {
             output.setWriteListener(dataStream);
 
             // 填充 Header
-            fillHeaders(response, fileLabel, 0);
+            fillHeaders(response, fileLabel, fileLabel.getFileSize());
             response.setStatus(HttpStatus.OK_200);
         }
         else {

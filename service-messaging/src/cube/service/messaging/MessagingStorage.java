@@ -66,7 +66,8 @@ public class MessagingStorage implements Storagable {
             new StorageField("lts", LiteralBase.LONG),
             new StorageField("rts", LiteralBase.LONG),
             new StorageField("device", LiteralBase.STRING),
-            new StorageField("payload", LiteralBase.STRING)
+            new StorageField("payload", LiteralBase.STRING),
+            new StorageField("attachment", LiteralBase.STRING)
     };
 
     private ExecutorService executor;
@@ -160,7 +161,9 @@ public class MessagingStorage implements Storagable {
                         new StorageField("lts", LiteralBase.LONG, message.getLocalTimestamp()),
                         new StorageField("rts", LiteralBase.LONG, message.getRemoteTimestamp()),
                         new StorageField("device", LiteralBase.STRING, message.getSourceDevice().toJSON().toString()),
-                        new StorageField("payload", LiteralBase.STRING, message.getPayload().toString())
+                        new StorageField("payload", LiteralBase.STRING, message.getPayload().toString()),
+                        new StorageField("attachment", LiteralBase.STRING,
+                                (null != message.getAttachment()) ? message.getAttachment().toJSON().toString() : null)
                 };
 
                 synchronized (storage) {
@@ -196,15 +199,19 @@ public class MessagingStorage implements Storagable {
         for (StorageField[] row : result) {
             JSONObject device = null;
             JSONObject payload = null;
+            JSONObject attachment = null;
             try {
                 device = new JSONObject(row[6].getString());
                 payload = new JSONObject(row[7].getString());
+                if (!row[8].isNullValue()) {
+                    attachment = new JSONObject(row[8].getString());
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
             Message message = new Message(domain, row[0].getLong(), row[1].getLong(), row[2].getLong(), row[3].getLong(),
-                    row[4].getLong(), row[5].getLong(), device, payload);
+                    row[4].getLong(), row[5].getLong(), device, payload, attachment);
             messages.add(message);
         }
 
@@ -233,15 +240,19 @@ public class MessagingStorage implements Storagable {
         for (StorageField[] row : result) {
             JSONObject device = null;
             JSONObject payload = null;
+            JSONObject attachment = null;
             try {
                 device = new JSONObject(row[6].getString());
                 payload = new JSONObject(row[7].getString());
+                if (!row[8].isNullValue()) {
+                    attachment = new JSONObject(row[8].getString());
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
             Message message = new Message(domain, row[0].getLong(), row[1].getLong(), row[2].getLong(), row[3].getLong(),
-                    row[4].getLong(), row[5].getLong(), device, payload);
+                    row[4].getLong(), row[5].getLong(), device, payload, attachment);
             messages.add(message);
         }
 
@@ -270,15 +281,19 @@ public class MessagingStorage implements Storagable {
         for (StorageField[] row : result) {
             JSONObject device = null;
             JSONObject payload = null;
+            JSONObject attachment = null;
             try {
                 device = new JSONObject(row[6].getString());
                 payload = new JSONObject(row[7].getString());
+                if (!row[8].isNullValue()) {
+                    attachment = new JSONObject(row[8].getString());
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
             Message message = new Message(domain, row[0].getLong(), row[1].getLong(), row[2].getLong(), row[3].getLong(),
-                    row[4].getLong(), row[5].getLong(), device, payload);
+                    row[4].getLong(), row[5].getLong(), device, payload, attachment);
             messages.add(message);
         }
 
@@ -320,6 +335,9 @@ public class MessagingStorage implements Storagable {
                     }),
                     new StorageField("payload", LiteralBase.STRING, new Constraint[] {
                             Constraint.NOT_NULL
+                    }),
+                    new StorageField("attachment", LiteralBase.STRING, new Constraint[] {
+                            Constraint.DEFAULT_NULL
                     })
             };
 
