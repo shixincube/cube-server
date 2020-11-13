@@ -27,6 +27,7 @@
 package cube.dispatcher.filestorage;
 
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Utils;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
@@ -182,10 +183,22 @@ public class FileHandler extends CrossDomainHandler {
             throws IOException, ServletException {
         // Token Code
         String token = request.getParameter("token");
-        // SN
-        Long sn = Long.parseLong(request.getParameter("sn"));
         // File Code
         String fileCode = request.getParameter("fc");
+
+        if (null == token || null == fileCode) {
+            this.respond(response, HttpStatus.BAD_REQUEST_400, null);
+            return;
+        }
+
+        // SN
+        Long sn = null;
+        if (null != request.getParameter("sn")) {
+            sn = Long.parseLong(request.getParameter("sn"));
+        }
+        else {
+            sn = Utils.generateSerialNumber();
+        }
 
         JSONObject payload = new JSONObject();
         try {

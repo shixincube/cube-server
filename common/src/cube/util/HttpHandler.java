@@ -35,8 +35,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * HTTP 请求处理句柄。
@@ -83,12 +81,15 @@ public abstract class HttpHandler extends AbstractHandler {
 
     public void respond(HttpServletResponse response, int stateus, JSONObject data) {
         response.setStatus(stateus);
-        response.setContentType("application/json");
-        try {
-            response.getWriter().write(data.toString());
-            response.getWriter().close();
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        if (null != data) {
+            response.setContentType("application/json");
+            try {
+                response.getWriter().write(data.toString());
+                response.getWriter().close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
