@@ -84,21 +84,21 @@ public class FileHierarchyTest {
         Directory root = fileHierarchy.getRoot();
         Assert.equals(contactId, root.getId());
         Assert.equals(domainName, root.getDomain().getName());
-        Assert.equals(0, root.numSubdirectories());
+        Assert.equals(0, root.numDirectories());
 
         // 创建子目录
         String dir1Name = "这是一级目录-相册文件夹";
         Directory dir1 = root.createDirectory(dir1Name);
         Assert.equals(dir1Name, dir1.getName());
         // 判断子目录数量
-        Assert.equals(1, root.numSubdirectories());
+        Assert.equals(1, root.numDirectories());
 
         // 再创创建子目录
         String dir2Name = "这是一级目录-资料文件夹";
         Directory dir2 = root.createDirectory(dir2Name);
         Assert.equals(dir2Name, dir2.getName());
         // 判断子目录数量
-        Assert.equals(2, root.numSubdirectories());
+        Assert.equals(2, root.numDirectories());
 
         // 清空内存
         this.manager.clearMemory();
@@ -106,21 +106,21 @@ public class FileHierarchyTest {
         // 重新获取根目录
         fileHierarchy = this.manager.getFileHierarchy(contactId, domainName);
         root = fileHierarchy.getRoot();
-        Assert.equals(2, root.numSubdirectories());
+        Assert.equals(2, root.numDirectories());
 
         // 删除第二个目录
-        List<Directory> dirs = root.getSubdirectories();
+        List<Directory> dirs = root.getDirectories();
         dir2 = dirs.get(1);
         Assert.equals("delete dir2", true, root.deleteDirectory(dir2));
         // 判断目录数量
-        Assert.equals(1, root.numSubdirectories());
+        Assert.equals(1, root.numDirectories());
 
         // 删除第一个目录
-        dirs = root.getSubdirectories();
+        dirs = root.getDirectories();
         dir1 = dirs.get(0);
         root.deleteDirectory(dir1);
         // 判断目录数量
-        Assert.equals(0, root.numSubdirectories());
+        Assert.equals(0, root.numDirectories());
 
         this.manager.clearMemory();
     }
@@ -149,8 +149,8 @@ public class FileHierarchyTest {
         int count = 0;
         fileHierarchy = this.manager.getFileHierarchy(contactId, domainName);
         parent = fileHierarchy.getRoot();
-        while (parent.numSubdirectories() > 0) {
-            List<Directory> subs = parent.getSubdirectories();
+        while (parent.numDirectories() > 0) {
+            List<Directory> subs = parent.getDirectories();
             Directory dir = subs.get(0);
             System.out.println("Dir : " + dir.getName());
             parent = dir;

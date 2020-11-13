@@ -71,6 +71,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
     public final static String NAME = "Messaging";
 
+    private final static String HIDDEN_DIR = "_CubeMessaging_";
+
     private MessagingServiceCellet cellet;
 
     /**
@@ -369,10 +371,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         String domainName = message.getDomain().getName();
 
-        int count = 60;
+        int count = 12;
         while (!fileStorageService.existsFile(domainName, fileAttachment.getFileCode())) {
             try {
-                Thread.sleep(100L);
+                Thread.sleep(500L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -382,15 +384,47 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             }
         }
 
+        // 获取文件标签
+        FileLabel fileLabel = fileStorageService.getFile(domainName, fileAttachment.getFileCode());
+
         FileHierarchy fileHierarchy = null;
         if (message.getSource().longValue() > 0) {
+            // 存入群组的隐藏目录里
+
             fileHierarchy = fileStorageService.getFileHierarchy(domainName, message.getSource());
             Directory root = fileHierarchy.getRoot();
 
+            // 将文件存到隐藏目录里
+            Directory dir = null;
+            if (!root.existsDirectory(HIDDEN_DIR)) {
+                dir = root.createDirectory(HIDDEN_DIR);
+                dir.setHidden(true);
+            }
+            else {
+                dir = root.getDirectory(HIDDEN_DIR);
+            }
+
+            // 添加文件
+            dir.addFile(fileLabel);
         }
         else {
+            // 存入发件人的隐藏目录里
+
             fileHierarchy = fileStorageService.getFileHierarchy(domainName, message.getFrom());
+            Directory root = fileHierarchy.getRoot();
+
+            Directory dir = root.getDirectory(HIDDEN_DIR);
+            if (null == dir) {
+                dir = root.createDirectory(HIDDEN_DIR);
+                dir.setHidden(true);
+            }
+
+            // 添加文件
+            dir.addFile(fileLabel);
         }
+
+        // 向消息附件追加文件标签
+        fileAttachment.setFileLabel(fileLabel);
     }
 
     @Override
@@ -416,10 +450,12 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                         for (Device device : contact.getDeviceList()) {
                             TalkContext talkContext = device.getTalkContext();
                             if (notifyMessage(talkContext, id, message)) {
-                                Logger.d(this.getClass(), "Notify message: '" + message.getFrom() + "' -> '" + message.getTo() + "'");
+                                Logger.d(this.getClass(), "Notify message: '" + message.getFrom()
+                                        + "' -> '" + message.getTo() + "'");
                             }
                             else {
-                                Logger.w(this.getClass(), "Notify message error: '" + message.getFrom() + "' -> '" + message.getTo() + "'");
+                                Logger.w(this.getClass(), "Notify message error: '" + message.getFrom()
+                                        + "' -> '" + message.getTo() + "'");
                             }
                         }
                     }
@@ -436,7 +472,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
                             TalkContext talkContext = device.getTalkContext();
                             if (notifyMessage(talkContext, id, message)) {
-                                Logger.d(this.getClass(), "Notify message to other device: '" + message.getFrom() + "' -> '" + message.getTo() + "'");
+                                Logger.d(this.getClass(), "Notify message to other device: '"
+                                        + message.getFrom() + "' -> '" + message.getTo() + "'");
                             }
                         }
                     }

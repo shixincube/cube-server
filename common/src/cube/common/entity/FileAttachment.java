@@ -72,6 +72,10 @@ public class FileAttachment implements JSONable {
         return this.fileLabel;
     }
 
+    public void setFileLabel(FileLabel fileLabel) {
+        this.fileLabel = fileLabel;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

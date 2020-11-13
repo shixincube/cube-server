@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.locks.Condition;
 
 /**
  * 文件码存储器。
@@ -72,6 +73,7 @@ public class FileStructStorage implements Storagable {
             new StorageField("file_name", LiteralBase.STRING),
             new StorageField("file_size", LiteralBase.LONG),
             new StorageField("completed_time", LiteralBase.LONG),
+            new StorageField("expiry_time", LiteralBase.LONG),
             new StorageField("file_type", LiteralBase.STRING),
             new StorageField("md5", LiteralBase.STRING),
             new StorageField("sha1", LiteralBase.STRING),
@@ -154,6 +156,7 @@ public class FileStructStorage implements Storagable {
     }
 
     /**
+     * 是否存在该文件标签。
      *
      * @param domain
      * @param fileCode
@@ -190,6 +193,7 @@ public class FileStructStorage implements Storagable {
                         new StorageField("file_name", LiteralBase.STRING, fileLabel.getFileName()),
                         new StorageField("file_size", LiteralBase.LONG, fileLabel.getFileSize()),
                         new StorageField("completed_time", LiteralBase.LONG, fileLabel.getCompletedTime()),
+                        new StorageField("expiry_time", LiteralBase.LONG, fileLabel.getExpiryTime()),
                         new StorageField("file_type", LiteralBase.STRING, fileLabel.getFileType().getExtension()),
                         new StorageField("md5", LiteralBase.STRING, fileLabel.getMD5Code()),
                         new StorageField("sha1", LiteralBase.STRING, fileLabel.getSHA1Code()),
@@ -259,9 +263,9 @@ public class FileStructStorage implements Storagable {
             // 将字段转为映射关系，便于代码阅读
             Map<String, StorageField> map = StorageFields.get(fields);
 
-            FileLabel label = new FileLabel(map.get("id").getLong(), domain, map.get("owner_id").getLong(),
-                    map.get("file_name").getString(), map.get("file_size").getLong(),
-                    map.get("completed_time").getLong(), map.get("file_code").getString());
+            FileLabel label = new FileLabel(map.get("id").getLong(), domain, map.get("file_code").getString(),
+                    map.get("owner_id").getLong(), map.get("file_name").getString(), map.get("file_size").getLong(),
+                    map.get("completed_time").getLong(), map.get("expiry_time").getLong());
 
             label.setFileType(FileType.parse(map.get("file_type").getString()));
 
@@ -390,6 +394,9 @@ public class FileStructStorage implements Storagable {
                             Constraint.NOT_NULL
                     }),
                     new StorageField("completed_time", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("expiry_time", LiteralBase.LONG, new Constraint[] {
                             Constraint.NOT_NULL
                     }),
                     new StorageField("file_type", LiteralBase.STRING, new Constraint[] {

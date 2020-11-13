@@ -146,19 +146,21 @@ public class HierarchyNode extends Entity {
         return this.children.size();
     }
 
-    public void link(Entity entity) {
+    public boolean link(Entity entity) {
         synchronized (this.relatedKeys) {
             if (this.relatedKeys.contains(entity.getUniqueKey())) {
-                return;
+                return false;
             }
 
             this.relatedKeys.add(entity.getUniqueKey());
+
+            return true;
         }
     }
 
-    public void unlink(Entity entity) {
+    public boolean unlink(Entity entity) {
         synchronized (this.relatedKeys) {
-            this.relatedKeys.remove(entity.getUniqueKey());
+            return this.relatedKeys.remove(entity.getUniqueKey());
         }
     }
 

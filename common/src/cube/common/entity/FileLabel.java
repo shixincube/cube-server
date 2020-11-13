@@ -58,6 +58,11 @@ public class FileLabel extends Entity {
     private long completedTime;
 
     /**
+     * 文件的到期时间。
+     */
+    private long expiryTime;
+
+    /**
      * 文件访问码。
      */
     private String fileCode;
@@ -95,22 +100,24 @@ public class FileLabel extends Entity {
     /**
      * 构造函数。
      *
-     * @param ownerId
      * @param domainName
+     * @param fileCode
+     * @param ownerId
      * @param fileName
      * @param fileSize
-     * @param time
-     * @param fileCode
+     * @param completedTime
+     * @param expiryTime
      */
-    public FileLabel(String domainName, Long ownerId, String fileName, long fileSize,
-                     long time, String fileCode) {
+    public FileLabel(String domainName, String fileCode, Long ownerId, String fileName, long fileSize,
+                     long completedTime, long expiryTime) {
         super(Utils.generateSerialNumber(), domainName);
-        this.uniqueKey = fileCode;
+        this.uniqueKey = fileCode;      // Unique Key 设置为文件码
+        this.fileCode = fileCode;
         this.ownerId = ownerId;
         this.fileName = fileName;
         this.fileSize = fileSize;
-        this.completedTime = time;
-        this.fileCode = fileCode;
+        this.completedTime = completedTime;
+        this.expiryTime = expiryTime;
     }
 
     /**
@@ -118,20 +125,23 @@ public class FileLabel extends Entity {
      *
      * @param id
      * @param domainName
+     * @param fileCode
      * @param ownerId
      * @param fileName
      * @param fileSize
-     * @param time
-     * @param fileCode
+     * @param completedTime
+     * @param expiryTime
      */
-    public FileLabel(Long id, String domainName, Long ownerId, String fileName, long fileSize, long time, String fileCode) {
+    public FileLabel(Long id, String domainName, String fileCode, Long ownerId, String fileName,
+                     long fileSize, long completedTime, long expiryTime) {
         super(id, domainName);
-        this.uniqueKey = fileCode;
+        this.uniqueKey = fileCode;      // Unique Key 设置为文件码
+        this.fileCode = fileCode;
         this.ownerId = ownerId;
         this.fileName = fileName;
         this.fileSize = fileSize;
-        this.completedTime = time;
-        this.fileCode = fileCode;
+        this.completedTime = completedTime;
+        this.expiryTime = expiryTime;
     }
 
     /**
@@ -144,11 +154,12 @@ public class FileLabel extends Entity {
         try {
             this.id = json.getLong("id");
             this.domain = new Domain(json.getString("domain"));
+            this.fileCode = json.getString("fileCode");
             this.ownerId = json.getLong("ownerId");
             this.fileName = json.getString("fileName");
             this.fileSize = json.getLong("fileSize");
             this.completedTime = json.getLong("completed");
-            this.fileCode = json.getString("fileCode");
+            this.expiryTime = json.getLong("expiry");
             this.fileType = FileType.parse(json.getString("fileType"));
             if (json.has("md5")) {
                 this.md5Code = json.getString("md5");
@@ -187,6 +198,8 @@ public class FileLabel extends Entity {
     public long getCompletedTime() {
         return this.completedTime;
     }
+
+    public long getExpiryTime() { return this.expiryTime; }
 
     public String getFileCode() {
         return this.fileCode;
@@ -243,11 +256,12 @@ public class FileLabel extends Entity {
         try {
             json.put("id", this.id);
             json.put("domain", this.domain.getName());
+            json.put("fileCode", this.fileCode);
             json.put("ownerId", this.ownerId);
             json.put("fileName", this.fileName);
             json.put("fileSize", this.fileSize);
             json.put("completed", this.completedTime);
-            json.put("fileCode", this.fileCode);
+            json.put("expiry", this.expiryTime);
             json.put("fileType", this.fileType.getExtension());
             if (null != this.md5Code) {
                 json.put("md5", this.md5Code);

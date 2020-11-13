@@ -29,6 +29,7 @@ package cube.service.filestorage.hierarchy;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Domain;
+import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
 
 import java.util.List;
@@ -42,6 +43,12 @@ public class Directory {
 
     protected HierarchyNode node;
 
+    /**
+     * 构造函数。
+     *
+     * @param fileHierarchy
+     * @param node
+     */
     public Directory(FileHierarchy fileHierarchy, HierarchyNode node) {
         this.fileHierarchy = fileHierarchy;
         this.node = node;
@@ -56,8 +63,8 @@ public class Directory {
             if (!context.has(FileHierarchy.KEY_DIR_NAME)) {
                 context.put(FileHierarchy.KEY_DIR_NAME, "root");
             }
-            if (!context.has(FileHierarchy.KEY_RESERVED)) {
-                context.put(FileHierarchy.KEY_RESERVED, false);
+            if (!context.has(FileHierarchy.KEY_HIDDEN)) {
+                context.put(FileHierarchy.KEY_HIDDEN, false);
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -100,12 +107,30 @@ public class Directory {
         return 0;
     }
 
-    public int numSubdirectories() {
+    /**
+     * 是否是隐藏目录。
+     *
+     * @return
+     */
+    public boolean isHidden() {
+        try {
+            return this.node.getContext().getBoolean(FileHierarchy.KEY_HIDDEN);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public int numDirectories() {
         return this.node.numChildren();
     }
 
-    public List<Directory> getSubdirectories() {
+    public List<Directory> getDirectories() {
         return this.fileHierarchy.getSubdirectories(this);
+    }
+
+    public Directory getDirectory(String directoryName) {
+        return this.fileHierarchy.getSubdirectory(this, directoryName);
     }
 
     public boolean existsDirectory(String directoryName) {
@@ -118,6 +143,18 @@ public class Directory {
 
     public boolean deleteDirectory(Directory subdirectory) {
         return this.fileHierarchy.deleteDirectory(this, subdirectory);
+    }
+
+    public void setHidden(boolean hidden) {
+        this.fileHierarchy.setHidden(this, hidden);
+    }
+
+    public void addFile(FileLabel fileLabel) {
+        this.fileHierarchy.addFileLabel(this, fileLabel);
+    }
+
+    public void removeFile(FileLabel fileLabel) {
+        this.fileHierarchy.removeFileLabel(this, fileLabel);
     }
 
     @Override

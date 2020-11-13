@@ -362,8 +362,8 @@ public class FileChunkStorage {
             // 判断文件类型
             FileType fileType = FileUtils.verifyFileType(chunk.fileName, chunk.getData());
 
-            FileLabel fileLabel = new FileLabel(chunk.domain, chunk.contactId, chunk.fileName, chunk.fileSize,
-                    System.currentTimeMillis(), this.fileCode);
+            FileLabel fileLabel = new FileLabel(chunk.domain, this.fileCode, chunk.contactId, chunk.fileName, chunk.fileSize,
+                    System.currentTimeMillis(), 0);
             fileLabel.setFileType(fileType);
             fileLabel.setMD5Code(md5Code);
             fileLabel.setSHA1Code(sha1Code);

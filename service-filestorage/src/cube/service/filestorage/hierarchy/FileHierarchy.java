@@ -28,6 +28,7 @@ package cube.service.filestorage.hierarchy;
 
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
 import cube.common.entity.HierarchyNodes;
 import cube.core.Cache;
@@ -45,7 +46,7 @@ public class FileHierarchy {
     protected final static String KEY_LAST_MODIFIED = "lastModified";
     protected final static String KEY_DIR_NAME = "name";
 
-    protected final static String KEY_RESERVED = "reserved";
+    protected final static String KEY_HIDDEN = "hidden";
 
     private Cache cache;
 
@@ -197,21 +198,116 @@ public class FileHierarchy {
      * @return
      */
     protected List<Directory> getSubdirectories(Directory directory) {
+        return this.getSubdirectories(directory, false);
+    }
+
+    /**
+     * 获取指定目录的子目录。
+     *
+     * @param directory
+     * @param includeHidden
+     * @return
+     */
+    protected List<Directory> getSubdirectories(Directory directory, boolean includeHidden) {
         List<Directory> result = new ArrayList<>();
 
         List<HierarchyNode> nodes = HierarchyNodes.traversalChildren(this.cache, directory.node);
         for (HierarchyNode node : nodes) {
+
             Directory dir = this.directories.get(node.getId());
-            if (null != dir) {
-                result.add(dir);
-                continue;
+            if (null == dir) {
+                dir = new Directory(this, node);
+                this.directories.put(dir.getId(), dir);
             }
 
-            dir = new Directory(this, node);
-            this.directories.put(dir.getId(), dir);
-            result.add(dir);
+            if (!dir.isHidden()) {
+                result.add(dir);
+            }
+            else {
+                if (includeHidden) {
+                    result.add(dir);
+                }
+            }
         }
 
         return result;
+    }
+
+    /**
+     * 获取指定名称的子目录。
+     *
+     * @param directory
+     * @param subdirectory
+     * @return
+     */
+    protected Directory getSubdirectory(Directory directory, String subdirectory) {
+        List<HierarchyNode> nodes = HierarchyNodes.traversalChildren(this.cache, directory.node);
+        for (HierarchyNode node : nodes) {
+            Directory dir = this.directories.get(node.getId());
+            if (null == dir) {
+                dir = new Directory(this, node);
+                this.directories.put(dir.getId(), dir);
+            }
+
+            if (dir.getName().equals(subdirectory)) {
+                return dir;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 设置目录为隐藏目录。
+     *
+     * @param directory
+     * @param hidden
+     */
+    protected void setHidden(Directory directory, boolean hidden) {
+        try {
+            directory.node.getContext().put(KEY_HIDDEN, hidden);
+            directory.node.getContext().put(KEY_LAST_MODIFIED, System.currentTimeMillis());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        HierarchyNodes.save(this.cache, directory.node);
+    }
+
+    /**
+     *
+     * @param directory
+     * @param fileLabel
+     */
+    protected void addFileLabel(Directory directory, FileLabel fileLabel) {
+        if (!directory.node.link(fileLabel)) {
+            // 链接失败
+            return;
+        }
+
+        // 更新时间戳
+        try {
+            directory.node.getContext().put(KEY_LAST_MODIFIED, System.currentTimeMillis());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        HierarchyNodes.save(this.cache, directory.node);
+    }
+
+    protected void removeFileLabel(Directory directory, FileLabel fileLabel) {
+        if (!directory.node.unlink(fileLabel)) {
+            // 解除链接失败
+            return;
+        }
+
+        // 更新时间戳
+        try {
+            directory.node.getContext().put(KEY_LAST_MODIFIED, System.currentTimeMillis());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        HierarchyNodes.save(this.cache, directory.node);
     }
 }
