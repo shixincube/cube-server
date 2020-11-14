@@ -167,7 +167,7 @@ public final class FileUtils {
     public static FileType extractFileExtension(String fileName) {
         int index = fileName.lastIndexOf(".");
         String extension = fileName.substring(index + 1);
-        return FileType.parse(extension);
+        return FileType.matchExtension(extension);
     }
 
     /**

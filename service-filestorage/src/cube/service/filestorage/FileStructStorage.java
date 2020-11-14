@@ -193,7 +193,7 @@ public class FileStructStorage implements Storagable {
                         new StorageField("file_size", LiteralBase.LONG, fileLabel.getFileSize()),
                         new StorageField("completed_time", LiteralBase.LONG, fileLabel.getCompletedTime()),
                         new StorageField("expiry_time", LiteralBase.LONG, fileLabel.getExpiryTime()),
-                        new StorageField("file_type", LiteralBase.STRING, fileLabel.getFileType().getExtension()),
+                        new StorageField("file_type", LiteralBase.STRING, fileLabel.getFileType().getPreferredExtension()),
                         new StorageField("md5", LiteralBase.STRING, fileLabel.getMD5Code()),
                         new StorageField("sha1", LiteralBase.STRING, fileLabel.getSHA1Code()),
                         new StorageField("file_url", LiteralBase.STRING, fileLabel.getFileURL()),

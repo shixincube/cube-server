@@ -160,7 +160,7 @@ public class FileLabel extends Entity {
             this.fileSize = json.getLong("fileSize");
             this.completedTime = json.getLong("completed");
             this.expiryTime = json.getLong("expiry");
-            this.fileType = FileType.parse(json.getString("fileType"));
+            this.fileType = FileType.matchExtension(json.getString("fileType"));
             if (json.has("md5")) {
                 this.md5Code = json.getString("md5");
             }
@@ -262,7 +262,7 @@ public class FileLabel extends Entity {
             json.put("fileSize", this.fileSize);
             json.put("completed", this.completedTime);
             json.put("expiry", this.expiryTime);
-            json.put("fileType", this.fileType.getExtension());
+            json.put("fileType", this.fileType.getPreferredExtension());
             if (null != this.md5Code) {
                 json.put("md5", this.md5Code);
             }

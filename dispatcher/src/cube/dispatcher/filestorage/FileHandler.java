@@ -38,6 +38,7 @@ import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
+import cube.util.FileType;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
@@ -191,6 +192,10 @@ public class FileHandler extends CrossDomainHandler {
             return;
         }
 
+        // Type
+        String typeDesc = request.getParameter("type");
+        FileType type = FileType.matchExtension(typeDesc);
+
         // SN
         Long sn = null;
         if (null != request.getParameter("sn")) {
@@ -237,14 +242,15 @@ public class FileHandler extends CrossDomainHandler {
         FileLabel fileLabel = new FileLabel(fileLabelJson);
 
         if (fileLabel.getFileSize() > (long) this.bufferSize) {
-            this.processByNonBlocking(request, response, fileLabel);
+            this.processByNonBlocking(request, response, fileLabel, type);
         }
         else {
-            this.processByBlocking(request, response, fileLabel);
+            this.processByBlocking(request, response, fileLabel, type);
         }
     }
 
-    private void processByBlocking(HttpServletRequest request, HttpServletResponse response, FileLabel fileLabel)
+    private void processByBlocking(HttpServletRequest request, HttpServletResponse response,
+                                   FileLabel fileLabel, FileType type)
             throws IOException, ServletException {
         final Object mutex = new Object();
 
@@ -276,7 +282,7 @@ public class FileHandler extends CrossDomainHandler {
         buf.flip();
 
         // 填写头信息
-        this.fillHeaders(response, fileLabel, buf.limit());
+        this.fillHeaders(response, type, fileLabel, buf.limit());
 
         ServletOutputStream outputStream = response.getOutputStream();
         outputStream.write(buf.array(), 0, buf.limit());
@@ -286,7 +292,8 @@ public class FileHandler extends CrossDomainHandler {
         response.setStatus(HttpStatus.OK_200);
     }
 
-    private void processByNonBlocking(HttpServletRequest request, HttpServletResponse response, FileLabel fileLabel)
+    private void processByNonBlocking(HttpServletRequest request, HttpServletResponse response,
+                                      FileLabel fileLabel, FileType type)
             throws IOException, ServletException {
         InputStreamResponseListener listener = new InputStreamResponseListener();
         this.httpClient.newRequest(fileLabel.getDirectURL())
@@ -337,7 +344,7 @@ public class FileHandler extends CrossDomainHandler {
             output.setWriteListener(dataStream);
 
             // 填充 Header
-            fillHeaders(response, fileLabel, fileLabel.getFileSize());
+            fillHeaders(response, type, fileLabel, fileLabel.getFileSize());
             response.setStatus(HttpStatus.OK_200);
         }
         else {
@@ -345,7 +352,7 @@ public class FileHandler extends CrossDomainHandler {
         }
     }
 
-    private void fillHeaders(HttpServletResponse response, FileLabel fileLabel, long length) {
+    private void fillHeaders(HttpServletResponse response, FileType type, FileLabel fileLabel, long length) {
         try {
             StringBuilder buf = new StringBuilder("attachment;");
             buf.append("filename=").append(URLEncoder.encode(fileLabel.getFileName(), "UTF-8"));
@@ -353,7 +360,7 @@ public class FileHandler extends CrossDomainHandler {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        response.setContentType("application/octet-stream");
+        response.setContentType(type.getMimeType());
         if (length > 0) {
             response.setContentLengthLong(length);
         }
