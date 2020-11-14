@@ -194,7 +194,7 @@ public class FileHandler extends CrossDomainHandler {
 
         // Type
         String typeDesc = request.getParameter("type");
-        FileType type = FileType.matchExtension(typeDesc);
+        FileType type = (null != typeDesc) ? FileType.matchExtension(typeDesc) : null;
 
         // SN
         Long sn = null;
@@ -282,7 +282,7 @@ public class FileHandler extends CrossDomainHandler {
         buf.flip();
 
         // 填写头信息
-        this.fillHeaders(response, type, fileLabel, buf.limit());
+        this.fillHeaders(response, fileLabel, buf.limit(), type);
 
         ServletOutputStream outputStream = response.getOutputStream();
         outputStream.write(buf.array(), 0, buf.limit());
@@ -344,7 +344,7 @@ public class FileHandler extends CrossDomainHandler {
             output.setWriteListener(dataStream);
 
             // 填充 Header
-            fillHeaders(response, type, fileLabel, fileLabel.getFileSize());
+            fillHeaders(response, fileLabel, fileLabel.getFileSize(), type);
             response.setStatus(HttpStatus.OK_200);
         }
         else {
@@ -352,15 +352,22 @@ public class FileHandler extends CrossDomainHandler {
         }
     }
 
-    private void fillHeaders(HttpServletResponse response, FileType type, FileLabel fileLabel, long length) {
-        try {
-            StringBuilder buf = new StringBuilder("attachment;");
-            buf.append("filename=").append(URLEncoder.encode(fileLabel.getFileName(), "UTF-8"));
-            response.setHeader("Content-Disposition", buf.toString());
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+    private void fillHeaders(HttpServletResponse response, FileLabel fileLabel, long length, FileType type) {
+        if (null != type) {
+            response.setContentType(type.getMimeType());
         }
-        response.setContentType(type.getMimeType());
+        else {
+            try {
+                StringBuilder buf = new StringBuilder("attachment;");
+                buf.append("filename=").append(URLEncoder.encode(fileLabel.getFileName(), "UTF-8"));
+                response.setHeader("Content-Disposition", buf.toString());
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+
+            response.setContentType(fileLabel.getFileType().getMimeType());
+        }
+
         if (length > 0) {
             response.setContentLengthLong(length);
         }

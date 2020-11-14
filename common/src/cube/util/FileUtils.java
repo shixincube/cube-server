@@ -166,6 +166,10 @@ public final class FileUtils {
      */
     public static FileType extractFileExtension(String fileName) {
         int index = fileName.lastIndexOf(".");
+        if (index <= 0) {
+            return FileType.UNKNOWN;
+        }
+
         String extension = fileName.substring(index + 1);
         return FileType.matchExtension(extension);
     }
