@@ -169,6 +169,10 @@ public class FileHandler extends CrossDomainHandler {
         Packet packet = new Packet(sn, FileStorageActions.UploadFile.name, payload);
 
         this.respondOk(response, packet.toJSON());
+
+        System.out.println("XJW: " + packet.toJSON().toString());
+
+        this.complete();
     }
 
     /**
@@ -246,6 +250,8 @@ public class FileHandler extends CrossDomainHandler {
         }
         else {
             this.processByBlocking(request, response, fileLabel, type);
+
+            this.complete();
         }
     }
 

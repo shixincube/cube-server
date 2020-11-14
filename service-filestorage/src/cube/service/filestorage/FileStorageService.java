@@ -249,6 +249,10 @@ public class FileStorageService extends AbstractModule {
         CacheValue value = this.fileLabelCache.get(new CacheKey(fileCode));
         if (null == value) {
             FileLabel fileLabel = this.fileStructStorage.readFileLabel(domainName, fileCode);
+            if (null == fileLabel) {
+                return null;
+            }
+
             this.fileLabelCache.put(new CacheKey(fileCode), new CacheValue(fileLabel.toJSON()));
             return fileLabel;
         }

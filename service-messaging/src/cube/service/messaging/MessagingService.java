@@ -390,6 +390,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         // 获取文件标签
         FileLabel fileLabel = fileStorageService.getFile(domainName, fileAttachment.getFileCode());
+        if (null == fileLabel) {
+            Logger.e(this.getClass(), "Can NOT find file label : " + fileAttachment.getFileLabel());
+            return;
+        }
 
         FileHierarchy fileHierarchy = null;
         if (message.getSource().longValue() > 0) {

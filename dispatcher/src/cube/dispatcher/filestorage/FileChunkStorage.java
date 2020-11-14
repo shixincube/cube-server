@@ -404,14 +404,15 @@ public class FileChunkStorage {
                 }
             }
 
+            if (this.chunks.get(0).cursor == 0) {
+                // 将文件传输给服务节点
+                expressToService(this);
+            }
+
             if (continuous && completed) {
                 this.completed = true;
                 // 完成写入磁盘
                 writeToDisk(this);
-            }
-            else if (this.chunks.get(0).cursor == 0) {
-                // 检测文件类型
-                expressToService(this);
             }
 
             this.running.set(false);
