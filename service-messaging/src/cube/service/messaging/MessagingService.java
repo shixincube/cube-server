@@ -367,6 +367,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             return;
         }
 
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "Process attachment : " + message.getFrom() + " -> " + message.getAttachment().getFileCode());
+        }
+
         FileStorageService fileStorageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
 
         String domainName = message.getDomain().getName();
@@ -425,6 +429,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         // 向消息附件追加文件标签
         fileAttachment.setFileLabel(fileLabel);
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "Process attachment end : " + message.getFrom() + " -> " + fileAttachment.getFileLabel().getFileCode());
+        }
     }
 
     @Override

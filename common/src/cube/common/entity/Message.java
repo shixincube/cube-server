@@ -371,7 +371,6 @@ public class Message extends Entity implements Comparable<Message> {
     public JSONObject toCompactJSON() {
         JSONObject json = this.toJSON();
         json.remove("payload");
-        json.remove("attachment");
         return json;
     }
 

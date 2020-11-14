@@ -266,7 +266,7 @@ public class FileStructStorage implements Storagable {
                     map.get("owner_id").getLong(), map.get("file_name").getString(), map.get("file_size").getLong(),
                     map.get("completed_time").getLong(), map.get("expiry_time").getLong());
 
-            label.setFileType(FileType.parse(map.get("file_type").getString()));
+            label.setFileType(FileType.matchExtension(map.get("file_type").getString()));
 
             if (!map.get("md5").isNullValue()) {
                 label.setMD5Code(map.get("md5").getString());
