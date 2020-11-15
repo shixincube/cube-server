@@ -59,7 +59,7 @@ public enum MessageState {
     /**
      * 已删除。
      */
-    Removed(40),
+    Deleted(40),
 
     /**
      * 消息处理失败。
@@ -83,17 +83,19 @@ public enum MessageState {
 
     public static MessageState parse(int code) {
         switch (code) {
-            case 1:
+            case 5:
                 return Unsent;
-            case 1 << 1:
+            case 9:
                 return Sending;
-            case 1 << 2:
+            case 10:
                 return Sent;
-            case 1 << 3:
+            case 20:
                 return Read;
-            case 1 << 4:
+            case 30:
                 return Recalled;
-            case 1 << 5:
+            case 40:
+                return Deleted;
+            case 1:
                 return Fault;
             default:
                 return Unknown;

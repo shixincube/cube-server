@@ -155,7 +155,7 @@ public class MessagingStorageTest {
             System.out.println("Message id: " + message.getId());
         }
 
-        List<Message> actualList = this.storage.read(this.domainList.get(0), idList);
+        List<Message> actualList = this.storage.read(this.domainList.get(0), 500100L, idList);
         if (actualList.size() != this.messageList.size()) {
             System.err.println("Error size : " + actualList.size() + " != " + this.messageList.size());
             return;

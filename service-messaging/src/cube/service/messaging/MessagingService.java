@@ -59,8 +59,10 @@ import cube.storage.StorageType;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
@@ -86,6 +88,11 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     private SeriesMemory messageCache;
 
     /**
+     * 消息状态映射。
+     */
+    private ConcurrentHashMap<MessageKey, MessageStateBundle> messageStateMap;
+
+    /**
      * 消息存储。
      */
     private MessagingStorage storage;
@@ -94,6 +101,11 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * 联系人事件适配器。
      */
     private CelletAdapter contactsAdapter;
+
+    /**
+     * 召回消息的时间限制。
+     */
+    private long recallLimited = 2L * 60L * 1000L;
 
     /**
      * 消息模块的插件系统。
@@ -108,6 +120,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     public MessagingService(MessagingServiceCellet cellet) {
         this.cellet = cellet;
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(32);
+        this.messageStateMap = new ConcurrentHashMap<>();
     }
 
     private void initMessageCache() {
@@ -190,7 +203,17 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
     @Override
     public void onTick(Module module, Kernel kernel) {
+        long DAY30 = 30 * 24 * 60 * 60 * 1000L;
+        long now = System.currentTimeMillis();
+        long delta = now - DAY30;
 
+        Iterator<MessageStateBundle> msbiter = this.messageStateMap.values().iterator();
+        while (msbiter.hasNext()) {
+            MessageStateBundle messageStateBundle = msbiter.next();
+            if (messageStateBundle.timestamp < delta) {
+                msbiter.remove();
+            }
+        }
     }
 
     /**
@@ -240,6 +263,12 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
             // 写入存储
             this.storage.write(message);
+
+            // 在内存里记录状态
+            this.messageStateMap.put(new MessageKey(message.getTo(), message.getId()),
+                    new MessageStateBundle(message.getId(), message.getTo(), MessageState.Sent));
+            this.messageStateMap.put(new MessageKey(message.getFrom(), message.getId()),
+                    new MessageStateBundle(message.getId(), message.getFrom(), MessageState.Sent));
         }
         else if (message.getSource().longValue() > 0) {
             // 进行消息的群组管理
@@ -270,6 +299,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
                         // 写入存储
                         this.storage.write(copy);
+
+                        // 在内存里记录状态
+                        this.messageStateMap.put(new MessageKey(contact.getId(), copy.getId()),
+                                new MessageStateBundle(copy.getId(), copy.getTo(), MessageState.Sent));
                     }
 
                     // 写入 FROM
@@ -282,6 +315,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
                     // 写入存储
                     this.storage.write(message);
+
+                    // 在内存里记录状态
+                    this.messageStateMap.put(new MessageKey(message.getFrom(), message.getId()),
+                            new MessageStateBundle(message.getId(), message.getFrom(), MessageState.Sent));
 
                     // 更新群组活跃时间
                     ContactManager.getInstance().updateGroupActiveTime(group, message.getRemoteTimestamp());
@@ -310,6 +347,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
     /**
      * 拉取指定时间戳到当前时间段的所有消息内容。
+     *
      * @param contactId
      * @param beginningTime
      * @param endingTime
@@ -324,7 +362,27 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         List<SeriesItem> list = this.messageCache.query(key, beginningTime, endingTime);
         for (SeriesItem item : list) {
             Message message = new Message(item.data);
-            result.add(message);
+            MessageState state = message.getState();
+
+            MessageKey messageKey = new MessageKey(contactId, message.getId());
+
+            MessageStateBundle msb = this.messageStateMap.get(messageKey);
+            if (null != msb) {
+                state = msb.state;
+            }
+            else {
+                MessageState ms = this.storage.readMessageState(domain, contactId, message.getId());
+                if (null != ms) {
+                    this.messageStateMap.put(messageKey, new MessageStateBundle(message.getId(), contactId, ms));
+                    state = ms;
+                }
+            }
+
+            if (state == MessageState.Sent || state == MessageState.Read) {
+                // 重置状态
+                message.setState(state);
+                result.add(message);
+            }
         }
 
         // 如果缓存里没有数据，从存储里读取
@@ -339,6 +397,93 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         Collections.sort(result);
 
         return result;
+    }
+
+    /**
+     * 撤回消息。
+     *
+     * @param domain
+     * @param fromId
+     * @param messageId
+     * @return
+     */
+    public boolean recallMessage(String domain, Long fromId, Long messageId) {
+        long now = System.currentTimeMillis();
+        String key = UniqueKey.make(fromId, domain);
+
+        // 查询时限内的消息
+        List<SeriesItem> list = this.messageCache.query(key, now - this.recallLimited, now);
+        if (list.isEmpty()) {
+            // 没有找到消息
+            return false;
+        }
+
+        Message message = null;
+        for (SeriesItem item : list) {
+            Message msg = new Message(item.data);
+            if (msg.getFrom().longValue() == fromId.longValue()
+                    && msg.getId().longValue() == messageId.longValue()) {
+                // 找到指定的消息
+                message = msg;
+                break;
+            }
+        }
+
+        if (null == message) {
+            // 没有找到消息
+            return false;
+        }
+
+        // 更新消息状态
+        message.setState(MessageState.Recalled);
+
+        // 修改该 ID 的所有消息的状态
+        this.storage.writeMessageState(domain, messageId, MessageState.Recalled);
+
+        // 更新内存里的数据
+        MessageKey messageKey = new MessageKey(fromId, messageId);
+        MessageStateBundle stateBundle = this.messageStateMap.get(messageKey);
+        if (null != stateBundle) {
+            stateBundle.state = MessageState.Recalled;
+        }
+
+        // 从存储器里读取出该 ID 的所有消息
+        List<Message> msgList = this.storage.read(domain, messageId);
+        for (Message msg : msgList) {
+            if (msg.getTo().longValue() == 0) {
+                continue;
+            }
+
+            // 更新内存里的数据
+            messageKey = new MessageKey(msg.getTo(), messageId);
+            stateBundle = this.messageStateMap.get(messageKey);
+            if (null != stateBundle) {
+                stateBundle.state = MessageState.Recalled;
+            }
+
+            String toKey = UniqueKey.make(msg.getTo(), domain);
+            // 发布给 TO Recall 动作
+            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Recall.name, msg.toCompactJSON());
+            this.contactsAdapter.publish(toKey, event.toJSON());
+        }
+
+        String fromKey = UniqueKey.make(fromId, domain);
+        // 发布给 FROM Recall 动作
+        ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Recall.name, message.toCompactJSON());
+        this.contactsAdapter.publish(fromKey, event.toJSON());
+
+        return true;
+    }
+
+    public void deleteMessage(String domain, Long contactId, Long messageId) {
+        String key = UniqueKey.make(contactId, domain);
+
+        MessageStateBundle stateBundle = this.messageStateMap.get(key);
+        if (null != stateBundle) {
+            stateBundle.state = MessageState.Deleted;
+        }
+
+        this.storage.writeMessageState(domain, contactId, messageId, MessageState.Deleted);
     }
 
     private boolean notifyMessage(TalkContext talkContext, Long contactId, Message message) {
@@ -500,6 +645,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                         }
                     }
                 }
+            }
+            else if (event.getEventName().equals(MessagingActions.Recall.name)) {
+                Message message = new Message(event.getData());
             }
         }
     }

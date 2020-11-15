@@ -24,43 +24,39 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.messaging;
 
 /**
- * 消息模块动作定义。
+ * 消息记录的主键。
  */
-public enum MessagingActions {
+public class MessageKey {
 
-    /**
-     * 将消息推送给指定目标。
-     */
-    Push("push"),
+    protected Long contactId;
 
-    /**
-     * 从自己的消息队列里获取消息。
-     */
-    Pull("pull"),
+    protected Long messageId;
 
-    /**
-     * 通知接收方有消息送达。
-     */
-    Notify("notify"),
+    protected int hash = 0;
 
-    /**
-     * 撤回消息。
-     */
-    Recall("recall"),
+    protected MessageKey(Long contactId, Long messageId) {
+        this.contactId = contactId;
+        this.messageId = messageId;
+        this.hash = contactId.hashCode() * 3 + messageId.hashCode() * 7;
+    }
 
-    /**
-     * 未知动作。
-     */
-    Unknown("")
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof MessageKey) {
+            MessageKey other = (MessageKey) object;
+            if (other.contactId.equals(this.contactId) && other.messageId.equals(this.messageId)) {
+                return true;
+            }
+        }
 
-    ;
+        return false;
+    }
 
-    public String name;
-
-    MessagingActions(String name) {
-        this.name = name;
+    @Override
+    public int hashCode() {
+        return this.hash;
     }
 }

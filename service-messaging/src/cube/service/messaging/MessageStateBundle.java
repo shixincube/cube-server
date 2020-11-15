@@ -24,43 +24,27 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.messaging;
+
+import cube.common.entity.MessageState;
 
 /**
- * 消息模块动作定义。
+ * 消息状态束。
  */
-public enum MessagingActions {
+public class MessageStateBundle {
 
-    /**
-     * 将消息推送给指定目标。
-     */
-    Push("push"),
+    protected Long messageId;
 
-    /**
-     * 从自己的消息队列里获取消息。
-     */
-    Pull("pull"),
+    protected Long contactId;
 
-    /**
-     * 通知接收方有消息送达。
-     */
-    Notify("notify"),
+    protected MessageState state;
 
-    /**
-     * 撤回消息。
-     */
-    Recall("recall"),
+    protected long timestamp;
 
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public String name;
-
-    MessagingActions(String name) {
-        this.name = name;
+    public MessageStateBundle(Long messageId, Long contactId, MessageState state) {
+        this.messageId = messageId;
+        this.contactId = contactId;
+        this.state = state;
+        this.timestamp = System.currentTimeMillis();
     }
 }

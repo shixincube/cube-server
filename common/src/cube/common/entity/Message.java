@@ -99,6 +99,8 @@ public class Message extends Entity implements Comparable<Message> {
         this.source = packet.data.getLong("source");
         this.localTimestamp = packet.data.getLong("lts");
         this.remoteTimestamp = packet.data.getLong("rts");
+        this.state = MessageState.parse(packet.data.getInt("state"));
+
         this.payload = packet.data.getJSONObject("payload");
 
         if (packet.data.has("attachment")) {
@@ -127,6 +129,8 @@ public class Message extends Entity implements Comparable<Message> {
             this.source = json.getLong("source");
             this.localTimestamp = json.getLong("lts");
             this.remoteTimestamp = json.getLong("rts");
+            this.state = MessageState.parse(json.getInt("state"));
+
             this.payload = json.getJSONObject("payload");
 
             if (json.has("attachment")) {
@@ -157,10 +161,10 @@ public class Message extends Entity implements Comparable<Message> {
         this.source = src.source;
         this.localTimestamp = src.localTimestamp;
         this.remoteTimestamp = src.remoteTimestamp;
+        this.state = src.state;
         this.payload = src.payload;
         this.attachment = src.attachment;
         this.sourceDevice = src.sourceDevice;
-        this.state = src.state;
 
         this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
     }
@@ -175,18 +179,21 @@ public class Message extends Entity implements Comparable<Message> {
      * @param source 指定消息来源群的 ID 。
      * @param localTimestamp 指定消息生成时的本地时间戳。
      * @param remoteTimestamp 指定消息在服务器上被处理的时间戳。
+     * @param state 指定消息状态。
+     * @param sourceDevice 指定源设备。
      * @param payload 指定消息负载数据。
+     * @param attachment 指定消息附件。
      */
     public Message(String domain, Long id, Long from, Long to, Long source,
-                   Long localTimestamp, Long remoteTimestamp, JSONObject sourceDevice,
-                   JSONObject payload, JSONObject attachment) {
+                   Long localTimestamp, Long remoteTimestamp, int state,
+                   JSONObject sourceDevice, JSONObject payload, JSONObject attachment) {
         super(id, domain);
         this.from = from;
         this.to = to;
         this.source = source;
         this.localTimestamp = localTimestamp;
         this.remoteTimestamp = remoteTimestamp;
-
+        this.state = MessageState.parse(state);
         this.sourceDevice = new Device(sourceDevice);
 
         this.payload = payload;
@@ -194,8 +201,6 @@ public class Message extends Entity implements Comparable<Message> {
         if (null != attachment) {
             this.attachment = new FileAttachment(attachment);
         }
-
-        this.state = MessageState.Sent;
     }
 
     /**
@@ -345,6 +350,7 @@ public class Message extends Entity implements Comparable<Message> {
             json.put("source", this.source.longValue());
             json.put("lts", this.localTimestamp);
             json.put("rts", this.remoteTimestamp);
+            json.put("state", this.state.getCode());
             json.put("payload", this.payload);
 
             if (null != this.attachment) {
@@ -353,10 +359,6 @@ public class Message extends Entity implements Comparable<Message> {
 
             if (null != this.sourceDevice) {
                 json.put("device", this.sourceDevice.toJSON());
-            }
-
-            if (this.state != MessageState.Unknown) {
-                json.put("state", this.state.getCode());
             }
         } catch (JSONException e) {
             e.printStackTrace();

@@ -32,11 +32,13 @@ import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.Storagable;
 import cube.common.entity.Message;
+import cube.common.entity.MessageState;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
 import cube.storage.StorageFactory;
+import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.SQLUtils;
 
@@ -55,6 +57,8 @@ public class MessagingStorage implements Storagable {
 
     private final String messageTablePrefix = "message_";
 
+    private final String stateTablePrefix = "state_";
+
     /**
      * 消息字段描述。
      */
@@ -65,27 +69,42 @@ public class MessagingStorage implements Storagable {
             new StorageField("source", LiteralBase.LONG),
             new StorageField("lts", LiteralBase.LONG),
             new StorageField("rts", LiteralBase.LONG),
+            new StorageField("state", LiteralBase.INT),
             new StorageField("device", LiteralBase.STRING),
             new StorageField("payload", LiteralBase.STRING),
             new StorageField("attachment", LiteralBase.STRING)
+    };
+
+    /**
+     * 消息状态描述。
+     */
+    private final StorageField[] stateFields = new StorageField[] {
+            new StorageField("contact_id", LiteralBase.LONG),
+            new StorageField("message_id", LiteralBase.LONG),
+            new StorageField("state", LiteralBase.INT),
+            new StorageField("timestamp", LiteralBase.LONG)
     };
 
     private ExecutorService executor;
 
     private Storage storage;
 
-    private Map<String, String> tableNameMap;
+    private Map<String, String> messageTableNameMap;
+
+//    private Map<String, String> stateTableNameMap;
 
     public MessagingStorage(ExecutorService executor, Storage storage) {
         this.executor = executor;
         this.storage = storage;
-        this.tableNameMap = new HashMap<>();
+        this.messageTableNameMap = new HashMap<>();
+//        this.stateTableNameMap = new HashMap<>();
     }
 
     public MessagingStorage(ExecutorService executor, StorageType type, JSONObject config) {
         this.executor = executor;
         this.storage = StorageFactory.getInstance().createStorage(type, "MessagingStorage", config);
-        this.tableNameMap = new HashMap<>();
+        this.messageTableNameMap = new HashMap<>();
+//        this.stateTableNameMap = new HashMap<>();
     }
 
     @Override
@@ -134,21 +153,34 @@ public class MessagingStorage implements Storagable {
 
         // 校验域对应的表
         for (String domain : domainNameList) {
+            // 检查消息表
             this.checkMessageTable(domain);
+
+            // 检查状态表
+//            this.checkStateTable(domain);
         }
     }
 
+    /**
+     *
+     * @param message
+     */
     public void write(final Message message) {
         this.write(message, null);
     }
 
+    /**
+     *
+     * @param message
+     * @param completed
+     */
     public void write(final Message message, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
                 String domain = message.getDomain().getName();
                 // 取表名
-                String table = tableNameMap.get(domain);
+                String table = messageTableNameMap.get(domain);
                 if (null == table) {
                     return;
                 }
@@ -160,6 +192,7 @@ public class MessagingStorage implements Storagable {
                         new StorageField("source", LiteralBase.LONG, message.getSource()),
                         new StorageField("lts", LiteralBase.LONG, message.getLocalTimestamp()),
                         new StorageField("rts", LiteralBase.LONG, message.getRemoteTimestamp()),
+                        new StorageField("state", LiteralBase.INT, message.getState().getCode()),
                         new StorageField("device", LiteralBase.STRING, message.getSourceDevice().toJSON().toString()),
                         new StorageField("payload", LiteralBase.STRING, message.getPayload().toString()),
                         new StorageField("attachment", LiteralBase.STRING,
@@ -177,9 +210,106 @@ public class MessagingStorage implements Storagable {
         });
     }
 
-    public List<Message> read(String domain, List<Long> messageIdList) {
+    public Message read(String domain, Long contactId, Long messageId) {
+        String table = this.messageTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        List<StorageField[]> result = null;
+
+        synchronized (this.storage) {
+            result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
+                    Conditional.createEqualTo("id", LiteralBase.LONG, messageId),
+                    Conditional.createAnd(),
+                    Conditional.createBracket(new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("from", LiteralBase.LONG, contactId)),
+                            Conditional.createOr(),
+                            Conditional.createEqualTo(new StorageField("to", LiteralBase.LONG, contactId))
+                    })
+            });
+        }
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+
+        JSONObject device = null;
+        JSONObject payload = null;
+        JSONObject attachment = null;
+        try {
+            device = new JSONObject(map.get("device").getString());
+            payload = new JSONObject(map.get("payload").getString());
+            if (!map.get("attachment").isNullValue()) {
+                attachment = new JSONObject(map.get("attachment").getString());
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        Message message = new Message(domain, map.get("id").getLong(),
+                map.get("from").getLong(), map.get("to").getLong(), map.get("source").getLong(),
+                map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
+                device, payload, attachment);
+        return message;
+    }
+
+    /**
+     * 读取指定消息 ID 的所有消息。
+     *
+     * @param domain
+     * @param messageId
+     * @return
+     */
+    public List<Message> read(String domain, Long messageId) {
+        List<Message> result = new ArrayList<>();
+
+        String table = this.messageTableNameMap.get(domain);
+
+        List<StorageField[]> list = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId))
+        });
+
+        for (StorageField[] row : list) {
+            Map<String, StorageField> map = StorageFields.get(row);
+
+            JSONObject device = null;
+            JSONObject payload = null;
+            JSONObject attachment = null;
+            try {
+                device = new JSONObject(map.get("device").getString());
+                payload = new JSONObject(map.get("payload").getString());
+                if (!map.get("attachment").isNullValue()) {
+                    attachment = new JSONObject(map.get("attachment").getString());
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            Message message = new Message(domain, map.get("id").getLong(),
+                    map.get("from").getLong(), map.get("to").getLong(), map.get("source").getLong(),
+                    map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
+                    device, payload, attachment);
+
+            result.add(message);
+        }
+
+        return result;
+    }
+
+    /**
+     * 读取消息。
+     *
+     * @param domain
+     * @param contactId
+     * @param messageIdList
+     * @return
+     */
+    public List<Message> read(String domain, Long contactId, List<Long> messageIdList) {
         // 取表名
-        String table = this.tableNameMap.get(domain);
+        String table = this.messageTableNameMap.get(domain);
         if (null == table) {
             return null;
         }
@@ -197,22 +327,29 @@ public class MessagingStorage implements Storagable {
 
         List<Message> messages = new ArrayList<>(result.size());
         for (StorageField[] row : result) {
+            Map<String, StorageField> map = StorageFields.get(row);
+
             JSONObject device = null;
             JSONObject payload = null;
             JSONObject attachment = null;
             try {
-                device = new JSONObject(row[6].getString());
-                payload = new JSONObject(row[7].getString());
-                if (!row[8].isNullValue()) {
-                    attachment = new JSONObject(row[8].getString());
+                device = new JSONObject(map.get("device").getString());
+                payload = new JSONObject(map.get("payload").getString());
+                if (!map.get("attachment").isNullValue()) {
+                    attachment = new JSONObject(map.get("attachment").getString());
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            Message message = new Message(domain, row[0].getLong(), row[1].getLong(), row[2].getLong(), row[3].getLong(),
-                    row[4].getLong(), row[5].getLong(), device, payload, attachment);
-            messages.add(message);
+            Message message = new Message(domain, map.get("id").getLong(),
+                    map.get("from").getLong(), map.get("to").getLong(), map.get("source").getLong(),
+                    map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
+                    device, payload, attachment);
+            if (message.getFrom().longValue() == contactId.longValue()
+                    || message.getTo().longValue() == contactId.longValue()) {
+                messages.add(message);
+            }
         }
 
         return messages;
@@ -220,7 +357,7 @@ public class MessagingStorage implements Storagable {
 
     public List<Message> readWithFromOrderByTime(String domain, Long id, long beginning, long ending) {
         // 取表名
-        String table = this.tableNameMap.get(domain);
+        String table = this.messageTableNameMap.get(domain);
         if (null == table) {
             return null;
         }
@@ -238,22 +375,28 @@ public class MessagingStorage implements Storagable {
 
         List<Message> messages = new ArrayList<>(result.size());
         for (StorageField[] row : result) {
+            Map<String, StorageField> map = StorageFields.get(row);
+
             JSONObject device = null;
             JSONObject payload = null;
             JSONObject attachment = null;
             try {
-                device = new JSONObject(row[6].getString());
-                payload = new JSONObject(row[7].getString());
-                if (!row[8].isNullValue()) {
-                    attachment = new JSONObject(row[8].getString());
+                device = new JSONObject(map.get("device").getString());
+                payload = new JSONObject(map.get("payload").getString());
+                if (!map.get("attachment").isNullValue()) {
+                    attachment = new JSONObject(map.get("attachment").getString());
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            Message message = new Message(domain, row[0].getLong(), row[1].getLong(), row[2].getLong(), row[3].getLong(),
-                    row[4].getLong(), row[5].getLong(), device, payload, attachment);
-            messages.add(message);
+            Message message = new Message(domain, map.get("id").getLong(),
+                    map.get("from").getLong(), map.get("to").getLong(), map.get("source").getLong(),
+                    map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
+                    device, payload, attachment);
+            if (message.getState() == MessageState.Read && message.getState() == MessageState.Sent) {
+                messages.add(message);
+            }
         }
 
         return messages;
@@ -261,7 +404,7 @@ public class MessagingStorage implements Storagable {
 
     public List<Message> readWithToOrderByTime(String domain, Long id, long beginning, long ending) {
         // 取表名
-        String table = this.tableNameMap.get(domain);
+        String table = this.messageTableNameMap.get(domain);
         if (null == table) {
             return null;
         }
@@ -278,33 +421,115 @@ public class MessagingStorage implements Storagable {
         }
 
         List<Message> messages = new ArrayList<>(result.size());
+
         for (StorageField[] row : result) {
+            Map<String, StorageField> map = StorageFields.get(row);
+
             JSONObject device = null;
             JSONObject payload = null;
             JSONObject attachment = null;
             try {
-                device = new JSONObject(row[6].getString());
-                payload = new JSONObject(row[7].getString());
-                if (!row[8].isNullValue()) {
-                    attachment = new JSONObject(row[8].getString());
+                device = new JSONObject(map.get("device").getString());
+                payload = new JSONObject(map.get("payload").getString());
+                if (!map.get("attachment").isNullValue()) {
+                    attachment = new JSONObject(map.get("attachment").getString());
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            Message message = new Message(domain, row[0].getLong(), row[1].getLong(), row[2].getLong(), row[3].getLong(),
-                    row[4].getLong(), row[5].getLong(), device, payload, attachment);
-            messages.add(message);
+            Message message = new Message(domain, map.get("id").getLong(),
+                    map.get("from").getLong(), map.get("to").getLong(), map.get("source").getLong(),
+                    map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
+                    device, payload, attachment);
+            if (message.getState() == MessageState.Read && message.getState() == MessageState.Sent) {
+                messages.add(message);
+            }
         }
 
         return messages;
+    }
+
+    public void writeMessageState(String domain, Long messageId, MessageState state) {
+        String table = this.messageTableNameMap.get(domain);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                StorageField[] fields = new StorageField[] {
+                        new StorageField("state", LiteralBase.INT, state.getCode())
+                };
+
+                synchronized (storage) {
+                    storage.executeUpdate(table, fields, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId))
+                    });
+                }
+            }
+        });
+    }
+
+    public void writeMessageState(String domain, Long contactId, Long messageId, MessageState state) {
+        String table = this.messageTableNameMap.get(domain);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                StorageField[] fields = new StorageField[] {
+                        new StorageField("state", LiteralBase.INT, state.getCode())
+                };
+
+                synchronized (storage) {
+                    storage.executeUpdate(table, fields, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId)),
+                            Conditional.createAnd(),
+                            Conditional.createBracket(new Conditional[] {
+                                    Conditional.createEqualTo(new StorageField("from", LiteralBase.LONG, contactId)),
+                                    Conditional.createOr(),
+                                    Conditional.createEqualTo(new StorageField("to", LiteralBase.LONG, contactId))
+                            })
+                    });
+                }
+            }
+        });
+    }
+
+    public MessageState readMessageState(String domain, Long contactId, Long messageId) {
+        String table = this.messageTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        StorageField[] fields = new StorageField[] {
+                new StorageField("state", LiteralBase.INT)
+        };
+
+        List<StorageField[]> result = null;
+        synchronized (this.storage) {
+            result = this.storage.executeQuery(table, fields, new Conditional[]{
+                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId)),
+                    Conditional.createAnd(),
+                    Conditional.createBracket(new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("from", LiteralBase.LONG, contactId)),
+                            Conditional.createOr(),
+                            Conditional.createEqualTo(new StorageField("to", LiteralBase.LONG, contactId))
+                    })
+            });
+
+            if (result.isEmpty()) {
+                return null;
+            }
+        }
+
+        int state = result.get(0)[0].getInt();
+        return MessageState.parse(state);
     }
 
     private void checkMessageTable(String domain) {
         String table = this.messageTablePrefix + domain;
 
         table = SQLUtils.correctTableName(table);
-        this.tableNameMap.put(domain, table);
+        this.messageTableNameMap.put(domain, table);
 
         if (!this.storage.exist(table)) {
             // 表不存在，建表
@@ -313,7 +538,7 @@ public class MessagingStorage implements Storagable {
                             Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
                     }),
                     new StorageField("id", LiteralBase.LONG, new Constraint[] {
-                            Constraint.UNIQUE
+                            Constraint.NOT_NULL
                     }),
                     new StorageField("from", LiteralBase.LONG, new Constraint[] {
                             Constraint.NOT_NULL
@@ -328,6 +553,9 @@ public class MessagingStorage implements Storagable {
                             Constraint.NOT_NULL, Constraint.DEFAULT_0
                     }),
                     new StorageField("rts", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL, Constraint.DEFAULT_0
+                    }),
+                    new StorageField("state", LiteralBase.INT, new Constraint[] {
                             Constraint.NOT_NULL, Constraint.DEFAULT_0
                     }),
                     new StorageField("device", LiteralBase.STRING, new Constraint[] {
@@ -346,4 +574,36 @@ public class MessagingStorage implements Storagable {
             }
         }
     }
+
+    /*private void checkStateTable(String domain) {
+        String table = this.stateTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.stateTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            StorageField[] fields = new StorageField[] {
+                    new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                            Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+                    }),
+                    new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("message_id", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("state", LiteralBase.INT, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
+                    })
+            };
+
+            if (this.storage.executeCreate(table, fields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }*/
 }

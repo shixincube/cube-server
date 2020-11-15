@@ -72,6 +72,21 @@ public class Conditional {
     }
 
     /**
+     * 创建括号操作。
+     *
+     * @param conditionals 括号内的表达式。
+     * @return 返回括号句式实例。
+     */
+    public static Conditional createBracket(Conditional[] conditionals) {
+        StringBuilder buf = new StringBuilder("( ");
+        for (Conditional cond : conditionals) {
+            buf.append(cond.sql).append(" ");
+        }
+        buf.append(")");
+        return new Conditional(buf.toString());
+    }
+
+    /**
      * 创建 LIMIT 约束。
      *
      * @param num 指定约束数量。
