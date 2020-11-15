@@ -34,32 +34,37 @@ public enum MessageState {
     /**
      * 未发送状态。
      */
-    Unsent(1),
+    Unsent(5),
 
     /**
      * 正在发送状态。
      */
-    Sending(1 << 1),
+    Sending(9),
 
     /**
      * 已发送状态。
      */
-    Sent(1 << 2),
+    Sent(10),
 
     /**
      * 已被阅读状态。
      */
-    Read(1 << 3),
+    Read(20),
 
     /**
      * 已召回。
      */
-    Recalled(1 << 4),
+    Recalled(30),
+
+    /**
+     * 已删除。
+     */
+    Removed(40),
 
     /**
      * 消息处理失败。
      */
-    Fault(1 << 5),
+    Fault(1),
 
     /**
      * 未知状态。

@@ -81,6 +81,11 @@ public class PushTask extends ServiceTask {
         // 将消息推送到消息中心
         MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingService.NAME);
         Message response = messagingService.pushMessage(message, device);
+        if (null == response) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, MessagingStateCode.Failure.code, packet.data));
+            return;
+        }
 
         // 应答
         this.cellet.speak(this.talkContext

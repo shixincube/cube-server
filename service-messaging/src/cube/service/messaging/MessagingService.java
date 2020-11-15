@@ -203,14 +203,19 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     public Message pushMessage(Message message, Device sourceDevice) {
         // 记录时间戳
         message.setRemoteTimestamp(System.currentTimeMillis());
-        // 更新状态
-        message.setState(MessageState.Sent);
 
         // 设置消息的来源设备
         message.setSourceDevice(sourceDevice);
 
         // 处理附件
-        this.processAttachment(message);
+        if (!this.processAttachment(message)) {
+            // 更新状态
+            message.setState(MessageState.Fault);
+            return null;
+        }
+
+        // 更新状态
+        message.setState(MessageState.Sent);
 
         // Hook PrePush
         MessagingHook hook = this.pluginSystem.getPrePushHook();
@@ -360,15 +365,17 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * 处理消息的附件。
      *
      * @param message
+     * @return 返回是否处理成功。
      */
-    private void processAttachment(Message message) {
+    private boolean processAttachment(Message message) {
         FileAttachment fileAttachment = message.getAttachment();
         if (null == fileAttachment) {
-            return;
+            return true;
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "Process attachment : " + message.getFrom() + " -> " + message.getAttachment().getFileCode());
+            Logger.d(this.getClass(), "Process attachment : " + message.getFrom() + " -> "
+                    + message.getAttachment().getFileCode());
         }
 
         FileStorageService fileStorageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
@@ -392,7 +399,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         FileLabel fileLabel = fileStorageService.getFile(domainName, fileAttachment.getFileCode());
         if (null == fileLabel) {
             Logger.e(this.getClass(), "Can NOT find file label : " + fileAttachment.getFileLabel());
-            return;
+            return false;
         }
 
         FileHierarchy fileHierarchy = null;
@@ -435,8 +442,11 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         fileAttachment.setFileLabel(fileLabel);
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "Process attachment end : " + message.getFrom() + " -> " + fileAttachment.getFileLabel().getFileCode());
+            Logger.d(this.getClass(), "Process attachment end : " + message.getFrom() + " -> "
+                    + fileAttachment.getFileLabel().getFileCode());
         }
+
+        return true;
     }
 
     @Override
