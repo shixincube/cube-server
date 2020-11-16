@@ -43,7 +43,7 @@ import cell.util.log.Logger;
 import cube.common.ModuleEvent;
 import cube.common.Packet;
 import cube.common.UniqueKey;
-import cube.common.action.MessagingActions;
+import cube.common.action.MessagingAction;
 import cube.common.entity.*;
 import cube.common.state.MessagingStateCode;
 import cube.core.AbstractModule;
@@ -63,7 +63,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -255,7 +254,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             this.messageCache.add(fromKey, message.toJSON(), message.getRemoteTimestamp());
 
             // 发布消息事件
-            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Push.name, message.toJSON());
+            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, message.toJSON());
             // 发布给 TO
             this.contactsAdapter.publish(toKey, event.toJSON());
             // 发布给 FROM
@@ -294,7 +293,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                         this.messageCache.add(toKey, copy.toJSON(), copy.getRemoteTimestamp());
 
                         // 发布给 TO
-                        ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Push.name, copy.toJSON());
+                        ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, copy.toJSON());
                         this.contactsAdapter.publish(toKey, event.toJSON());
 
                         // 写入存储
@@ -310,7 +309,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                     this.messageCache.add(fromKey, message.toJSON(), message.getRemoteTimestamp());
 
                     // 发布给 FROM
-                    ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Push.name, message.toJSON());
+                    ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, message.toJSON());
                     this.contactsAdapter.publish(fromKey, event.toJSON());
 
                     // 写入存储
@@ -463,13 +462,27 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
             String toKey = UniqueKey.make(msg.getTo(), domain);
             // 发布给 TO Recall 动作
-            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Recall.name, msg.toCompactJSON());
+            JSONObject data = new JSONObject();
+            try {
+                data.put("message", msg.toCompactJSON());
+                data.put("target", msg.getTo());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Recall.name, data);
             this.contactsAdapter.publish(toKey, event.toJSON());
         }
 
         String fromKey = UniqueKey.make(fromId, domain);
         // 发布给 FROM Recall 动作
-        ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingActions.Recall.name, message.toCompactJSON());
+        JSONObject data = new JSONObject();
+        try {
+            data.put("message", message.toCompactJSON());
+            data.put("target", fromId);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Recall.name, data);
         this.contactsAdapter.publish(fromKey, event.toJSON());
 
         return true;
@@ -486,7 +499,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         this.storage.writeMessageState(domain, contactId, messageId, MessageState.Deleted);
     }
 
-    private boolean notifyMessage(TalkContext talkContext, Long contactId, Message message) {
+    private boolean notifyMessage(MessagingAction action, TalkContext talkContext, Long contactId, Message message) {
         if (null == talkContext) {
             return false;
         }
@@ -499,7 +512,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             e.printStackTrace();
         }
 
-        Packet packet = new Packet(MessagingActions.Notify.name, payload);
+        Packet packet = new Packet(action.name, payload);
         ActionDialect dialect = Director.attachDirector(packet.toDialect(),
                 contactId.longValue(), message.getDomain().getName());
         this.cellet.speak(talkContext, dialect);
@@ -606,7 +619,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             }
 
             ModuleEvent event = new ModuleEvent(jsonObject);
-            if (event.getEventName().equals(MessagingActions.Push.name)) {
+            if (event.getEventName().equals(MessagingAction.Push.name)) {
                 Message message = new Message(event.getData());
 
                 // 判断是否是推送给 TO 的消息还是推送给 FROM
@@ -616,7 +629,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                     if (null != contact) {
                         for (Device device : contact.getDeviceList()) {
                             TalkContext talkContext = device.getTalkContext();
-                            if (notifyMessage(talkContext, id, message)) {
+                            if (notifyMessage(MessagingAction.Notify, talkContext, id, message)) {
                                 Logger.d(this.getClass(), "Notify message: '" + message.getFrom()
                                         + "' -> '" + message.getTo() + "'");
                             }
@@ -638,7 +651,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                             }
 
                             TalkContext talkContext = device.getTalkContext();
-                            if (notifyMessage(talkContext, id, message)) {
+                            if (notifyMessage(MessagingAction.Notify, talkContext, id, message)) {
                                 Logger.d(this.getClass(), "Notify message to other device: '"
                                         + message.getFrom() + "' -> '" + message.getTo() + "'");
                             }
@@ -646,8 +659,25 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                     }
                 }
             }
-            else if (event.getEventName().equals(MessagingActions.Recall.name)) {
-                Message message = new Message(event.getData());
+            else if (event.getEventName().equals(MessagingAction.Recall.name)) {
+                Message message = null;
+                String domainName = null;
+                Long targetId = null;
+                JSONObject data = event.getData();
+                try {
+                    message = new Message(data.getJSONObject("message"));
+                    domainName = data.getString("domain");
+                    targetId = data.getLong("target");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                Contact contact = ContactManager.getInstance().getOnlineContact(domainName, targetId);
+                if (null != contact) {
+                    for (Device device : contact.getDeviceList()) {
+                        notifyMessage(MessagingAction.Recall, device.getTalkContext(), targetId, message);
+                    }
+                }
             }
         }
     }

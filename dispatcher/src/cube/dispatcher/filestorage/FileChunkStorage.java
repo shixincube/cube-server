@@ -31,7 +31,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
 import cube.common.Packet;
-import cube.common.action.FileStorageActions;
+import cube.common.action.FileStorageAction;
 import cube.common.entity.FileLabel;
 import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
@@ -228,7 +228,7 @@ public class FileChunkStorage {
         FileLabel fileLabel = fileChunkStore.makeFileLabel();
 
         // 创建包
-        Packet packet = new Packet(FileStorageActions.PutFile.name, fileLabel.toJSON());
+        Packet packet = new Packet(FileStorageAction.PutFile.name, fileLabel.toJSON());
 
         // 发送
         ActionDialect dialect = this.performer.syncTransmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, packet.toDialect());

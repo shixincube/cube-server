@@ -33,7 +33,7 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.Packet;
-import cube.common.action.FileStorageActions;
+import cube.common.action.FileStorageAction;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
@@ -166,7 +166,7 @@ public class FileHandler extends CrossDomainHandler {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        Packet packet = new Packet(sn, FileStorageActions.UploadFile.name, payload);
+        Packet packet = new Packet(sn, FileStorageAction.UploadFile.name, payload);
 
         this.respondOk(response, packet.toJSON());
 
@@ -216,7 +216,7 @@ public class FileHandler extends CrossDomainHandler {
             e.printStackTrace();
         }
 
-        Packet packet = new Packet(sn, FileStorageActions.GetFile.name, payload);
+        Packet packet = new Packet(sn, FileStorageAction.GetFile.name, payload);
         ActionDialect packetDialect = packet.toDialect();
         packetDialect.addParam("token", token);
 

@@ -46,7 +46,7 @@ import cube.common.Domain;
 import cube.common.ModuleEvent;
 import cube.common.Packet;
 import cube.common.UniqueKey;
-import cube.common.action.ContactActions;
+import cube.common.action.ContactAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Group;
@@ -593,7 +593,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 continue;
             }
 
-            ModuleEvent event = new ModuleEvent(NAME, ContactActions.CreateGroup.name, group.toJSON());
+            ModuleEvent event = new ModuleEvent(NAME, ContactAction.CreateGroup.name, group.toJSON());
             this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
         }
 
@@ -628,7 +628,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 continue;
             }
 
-            ModuleEvent event = new ModuleEvent(NAME, ContactActions.DissolveGroup.name, current.toJSON());
+            ModuleEvent event = new ModuleEvent(NAME, ContactAction.DissolveGroup.name, current.toJSON());
             this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
         }
 
@@ -701,7 +701,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         // 向群里的成员发送事件
         for (Contact member : current.getMembers()) {
-            ModuleEvent event = new ModuleEvent(NAME, ContactActions.AddGroupMember.name, bundle.toJSON());
+            ModuleEvent event = new ModuleEvent(NAME, ContactAction.AddGroupMember.name, bundle.toJSON());
             this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
         }
 
@@ -759,7 +759,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         // 向群里的成员发送事件，使用最近列表
         for (Contact member : recentMembers) {
-            ModuleEvent event = new ModuleEvent(NAME, ContactActions.RemoveGroupMember.name, bundle.toJSON());
+            ModuleEvent event = new ModuleEvent(NAME, ContactAction.RemoveGroupMember.name, bundle.toJSON());
             this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
         }
 
@@ -881,10 +881,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
             ModuleEvent event = new ModuleEvent(jsonObject);
             String eventName = event.getEventName();
-            if (eventName.equals(ContactActions.CreateGroup.name)
-                || eventName.equals(ContactActions.DissolveGroup.name)
-                || eventName.equals(ContactActions.AddGroupMember.name)
-                || eventName.equals(ContactActions.RemoveGroupMember.name)) {
+            if (eventName.equals(ContactAction.CreateGroup.name)
+                || eventName.equals(ContactAction.DissolveGroup.name)
+                || eventName.equals(ContactAction.AddGroupMember.name)
+                || eventName.equals(ContactAction.RemoveGroupMember.name)) {
                 // 获取在线的联系人信息
                 Contact contact = this.getOnlineContact(domain, id);
                 if (null == contact) {

@@ -34,7 +34,7 @@ import cell.util.log.LogHandle;
 import cell.util.log.LogLevel;
 import cell.util.log.Logger;
 import cube.common.Packet;
-import cube.common.action.ContactActions;
+import cube.common.action.ContactAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.dispatcher.contact.ContactCellet;
@@ -154,7 +154,7 @@ public class Daemon extends TimerTask implements LogHandle {
         } catch (JSONException ex) {
             ex.printStackTrace();
         }
-        Packet packet = new Packet(ContactActions.DeviceTimeout.name, data);
+        Packet packet = new Packet(ContactAction.DeviceTimeout.name, data);
         ActionDialect actionDialect = packet.toDialect();
         actionDialect.addParam("token", device.getToken());
         return actionDialect;

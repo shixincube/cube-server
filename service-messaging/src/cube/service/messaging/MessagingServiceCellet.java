@@ -32,7 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
-import cube.common.action.MessagingActions;
+import cube.common.action.MessagingAction;
 import cube.core.Kernel;
 import cube.service.messaging.task.PullTask;
 import cube.service.messaging.task.PushTask;
@@ -72,10 +72,10 @@ public class MessagingServiceCellet extends Cellet {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
 
-        if (MessagingActions.Push.name.equals(action)) {
+        if (MessagingAction.Push.name.equals(action)) {
             this.executor.execute(new PushTask(this, talkContext, primitive));
         }
-        else if (MessagingActions.Pull.name.equals(action)) {
+        else if (MessagingAction.Pull.name.equals(action)) {
             this.executor.execute(new PullTask(this, talkContext, primitive));
         }
     }

@@ -131,7 +131,9 @@ public class Message extends Entity implements Comparable<Message> {
             this.remoteTimestamp = json.getLong("rts");
             this.state = MessageState.parse(json.getInt("state"));
 
-            this.payload = json.getJSONObject("payload");
+            if (json.has("payload")) {
+                this.payload = json.getJSONObject("payload");
+            }
 
             if (json.has("attachment")) {
                 this.attachment = new FileAttachment(json.getJSONObject("attachment"));
@@ -351,7 +353,10 @@ public class Message extends Entity implements Comparable<Message> {
             json.put("lts", this.localTimestamp);
             json.put("rts", this.remoteTimestamp);
             json.put("state", this.state.getCode());
-            json.put("payload", this.payload);
+
+            if (null != this.payload) {
+                json.put("payload", this.payload);
+            }
 
             if (null != this.attachment) {
                 json.put("attachment", this.attachment.toJSON());
@@ -372,7 +377,9 @@ public class Message extends Entity implements Comparable<Message> {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = this.toJSON();
-        json.remove("payload");
+        if (json.has("payload")) {
+            json.remove("payload");
+        }
         return json;
     }
 

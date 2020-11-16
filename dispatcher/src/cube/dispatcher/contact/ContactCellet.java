@@ -32,7 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
-import cube.common.action.ContactActions;
+import cube.common.action.ContactAction;
 import cube.dispatcher.Performer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -103,16 +103,16 @@ public class ContactCellet extends Cellet {
         ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = actionDialect.getName();
 
-        if (ContactActions.Comeback.name.equals(action)) {
+        if (ContactAction.Comeback.name.equals(action)) {
             this.executor.execute(this.borrowComebackTask(talkContext, primitive));
         }
-        else if (ContactActions.SignIn.name.equals(action)) {
+        else if (ContactAction.SignIn.name.equals(action)) {
             this.executor.execute(this.borrowSignInTask(talkContext, primitive));
         }
-        else if (ContactActions.SignOut.name.equals(action)) {
+        else if (ContactAction.SignOut.name.equals(action)) {
             this.executor.execute(this.borrowSignOutTask(talkContext, primitive));
         }
-        else if (ContactActions.ListGroups.name.equals(action)) {
+        else if (ContactAction.ListGroups.name.equals(action)) {
             this.executor.execute(this.borrowPassTask(talkContext, primitive, false));
         }
         else {

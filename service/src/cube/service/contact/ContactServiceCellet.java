@@ -33,7 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
-import cube.common.action.ContactActions;
+import cube.common.action.ContactAction;
 import cube.core.Kernel;
 import cube.service.contact.task.*;
 
@@ -75,43 +75,43 @@ public class ContactServiceCellet extends Cellet {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
 
-        if (ContactActions.Comeback.name.equals(action)) {
+        if (ContactAction.Comeback.name.equals(action)) {
             this.executor.execute(new ComebackTask(this, talkContext, primitive));
         }
-        else if (ContactActions.SignIn.name.equals(action)) {
+        else if (ContactAction.SignIn.name.equals(action)) {
             this.executor.execute(new SignInTask(this, talkContext, primitive));
         }
-        else if (ContactActions.GetContact.name.equals(action)) {
+        else if (ContactAction.GetContact.name.equals(action)) {
             this.executor.execute(new GetContactTask(this, talkContext, primitive));
         }
-        else if (ContactActions.GetGroup.name.equals(action)) {
+        else if (ContactAction.GetGroup.name.equals(action)) {
             this.executor.execute(new GetGroupTask(this, talkContext, primitive));
         }
-        else if (ContactActions.ListGroups.name.equals(action)) {
+        else if (ContactAction.ListGroups.name.equals(action)) {
             this.executor.execute(new ListGroupsTask(this, talkContext, primitive));
         }
-        else if (ContactActions.ModifyGroup.name.equals(action)) {
+        else if (ContactAction.ModifyGroup.name.equals(action)) {
             this.executor.execute(new ModifyGroupTask(this, talkContext, primitive));
         }
-        else if (ContactActions.ModifyGroupMember.name.equals(action)) {
+        else if (ContactAction.ModifyGroupMember.name.equals(action)) {
             this.executor.execute(new ModifyGroupMemberTask(this, talkContext, primitive));
         }
-        else if (ContactActions.CreateGroup.name.equals(action)) {
+        else if (ContactAction.CreateGroup.name.equals(action)) {
             this.executor.execute(new CreateGroupTask(this, talkContext, primitive));
         }
-        else if (ContactActions.DissolveGroup.name.equals(action)) {
+        else if (ContactAction.DissolveGroup.name.equals(action)) {
             this.executor.execute(new DissolveGroupTask(this, talkContext, primitive));
         }
-        else if (ContactActions.AddGroupMember.name.equals(action)) {
+        else if (ContactAction.AddGroupMember.name.equals(action)) {
             this.executor.execute(new AddGroupMemberTask(this, talkContext, primitive));
         }
-        else if (ContactActions.RemoveGroupMember.name.equals(action)) {
+        else if (ContactAction.RemoveGroupMember.name.equals(action)) {
             this.executor.execute(new RemoveGroupMemberTask(this, talkContext, primitive));
         }
-        else if (ContactActions.DeviceTimeout.name.equals(action)) {
+        else if (ContactAction.DeviceTimeout.name.equals(action)) {
             this.executor.execute(new DeviceTimeoutTask(this, talkContext, primitive));
         }
-        else if (ContactActions.SignOut.name.equals(action)) {
+        else if (ContactAction.SignOut.name.equals(action)) {
             this.executor.execute(new SignOutTask(this, talkContext, primitive));
         }
         else {

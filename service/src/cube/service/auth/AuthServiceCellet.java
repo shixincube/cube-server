@@ -32,7 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
-import cube.common.action.AuthActions;
+import cube.common.action.AuthAction;
 import cube.core.Kernel;
 import cube.service.auth.task.ApplyTokenTask;
 import cube.service.auth.task.GetTokenTask;
@@ -73,10 +73,10 @@ public class AuthServiceCellet extends Cellet {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
 
-        if (AuthActions.ApplyToken.name.equals(action)) {
+        if (AuthAction.ApplyToken.name.equals(action)) {
             this.executor.execute(new ApplyTokenTask(this, talkContext, primitive));
         }
-        else if (AuthActions.GetToken.name.equals(action)) {
+        else if (AuthAction.GetToken.name.equals(action)) {
             this.executor.execute(new GetTokenTask(this, talkContext, primitive));
         }
     }

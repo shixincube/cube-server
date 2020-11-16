@@ -32,7 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
-import cube.common.action.MessagingActions;
+import cube.common.action.MessagingAction;
 import cube.dispatcher.Performer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -85,9 +85,9 @@ public class MessagingCellet extends Cellet {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
         
-        if (MessagingActions.Pull.name.equals(action) ||
-            MessagingActions.Recall.name.equals(action) ||
-            MessagingActions.Delete.name.equals(action)) {
+        if (MessagingAction.Pull.name.equals(action) ||
+            MessagingAction.Recall.name.equals(action) ||
+            MessagingAction.Delete.name.equals(action)) {
             this.executor.execute(this.borrowTask(talkContext, primitive, false));
         }
         else {

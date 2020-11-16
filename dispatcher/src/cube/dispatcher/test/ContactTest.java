@@ -37,7 +37,7 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.Packet;
-import cube.common.action.ContactActions;
+import cube.common.action.ContactAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 
@@ -83,7 +83,7 @@ public class ContactTest implements TalkListener {
 
         Logger.i(this.getClass(), "Start [testSetSelf] - " + self.getId());
 
-        Packet packet = new Packet(ContactActions.SignIn.name, self.toJSON());
+        Packet packet = new Packet(ContactAction.SignIn.name, self.toJSON());
         this.nucleus.getTalkService().speak("Contact", packet.toDialect());
 
         synchronized (this.mutex) {
@@ -102,7 +102,7 @@ public class ContactTest implements TalkListener {
 
         JSONObject json = new JSONObject();
         json.put("id", 300200100);
-        Packet packet = new Packet(ContactActions.GetContact.name, json);
+        Packet packet = new Packet(ContactAction.GetContact.name, json);
         this.nucleus.getTalkService().speak("Contact", packet.toDialect());
 
         synchronized (this.mutex) {
@@ -120,14 +120,14 @@ public class ContactTest implements TalkListener {
     public void onListened(Speakable speakable, String cellet, Primitive primitive) {
         ActionDialect dialect = new ActionDialect(primitive);
         String action = dialect.getName();
-        if (action.equals(ContactActions.SignIn.name)) {
+        if (action.equals(ContactAction.SignIn.name)) {
             Packet packet = new Packet(dialect);
             Logger.i(action, "Data: " + packet.data.toString());
             synchronized (this.mutex) {
                 this.mutex.notify();
             }
         }
-        else if (action.equals(ContactActions.GetContact.name)) {
+        else if (action.equals(ContactAction.GetContact.name)) {
             Packet packet = new Packet(dialect);
             Logger.i(action, "Data: " + packet.data.toString());
             synchronized (this.mutex) {
