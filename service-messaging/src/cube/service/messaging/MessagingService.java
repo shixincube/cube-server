@@ -474,6 +474,13 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         return true;
     }
 
+    /**
+     * 删除消息。
+     *
+     * @param domain
+     * @param contactId
+     * @param messageId
+     */
     public void deleteMessage(String domain, Long contactId, Long messageId) {
         String key = UniqueKey.make(contactId, domain);
 

@@ -35,7 +35,6 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Packet;
 import cube.common.entity.Contact;
-import cube.common.state.ContactStateCode;
 import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
