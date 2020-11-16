@@ -462,27 +462,13 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
             String toKey = UniqueKey.make(msg.getTo(), domain);
             // 发布给 TO Recall 动作
-            JSONObject data = new JSONObject();
-            try {
-                data.put("message", msg.toCompactJSON());
-                data.put("target", msg.getTo());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Recall.name, data);
+            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Recall.name, msg.toCompactJSON());
             this.contactsAdapter.publish(toKey, event.toJSON());
         }
 
         String fromKey = UniqueKey.make(fromId, domain);
         // 发布给 FROM Recall 动作
-        JSONObject data = new JSONObject();
-        try {
-            data.put("message", message.toCompactJSON());
-            data.put("target", fromId);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Recall.name, data);
+        ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Recall.name, message.toCompactJSON());
         this.contactsAdapter.publish(fromKey, event.toJSON());
 
         return true;
@@ -642,7 +628,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 }
                 else if (id.longValue() == message.getFrom().longValue()) {
                     // 将消息发送给源联系人的其他设备
-                    Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(), message.getFrom());
+                    Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(),
+                            message.getFrom());
                     if (null != contact) {
                         for (Device device : contact.getDeviceList()) {
                             if (device.equals(message.getSourceDevice())) {
@@ -660,22 +647,13 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 }
             }
             else if (event.getEventName().equals(MessagingAction.Recall.name)) {
-                Message message = null;
-                String domainName = null;
-                Long targetId = null;
-                JSONObject data = event.getData();
-                try {
-                    message = new Message(data.getJSONObject("message"));
-                    domainName = data.getString("domain");
-                    targetId = data.getLong("target");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                Contact contact = ContactManager.getInstance().getOnlineContact(domainName, targetId);
+                Message message = new Message(event.getData());
+                Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(), id);
                 if (null != contact) {
                     for (Device device : contact.getDeviceList()) {
-                        notifyMessage(MessagingAction.Recall, device.getTalkContext(), targetId, message);
+                        if (notifyMessage(MessagingAction.Recall, device.getTalkContext(), id, message)) {
+                            Logger.d(this.getClass(), "Recall message : '" + message.getId() + "' - '" + id + "'");
+                        }
                     }
                 }
             }
