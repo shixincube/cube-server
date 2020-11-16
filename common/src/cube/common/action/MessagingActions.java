@@ -52,6 +52,11 @@ public enum MessagingActions {
     Recall("recall"),
 
     /**
+     * 删除消息。
+     */
+    Delete("delete"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

@@ -84,7 +84,10 @@ public class MessagingCellet extends Cellet {
     public void onListened(TalkContext talkContext, Primitive primitive) {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
-        if (MessagingActions.Pull.name.equals(action)) {
+        
+        if (MessagingActions.Pull.name.equals(action) ||
+            MessagingActions.Recall.name.equals(action) ||
+            MessagingActions.Delete.name.equals(action)) {
             this.executor.execute(this.borrowTask(talkContext, primitive, false));
         }
         else {
