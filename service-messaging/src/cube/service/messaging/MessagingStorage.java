@@ -67,6 +67,7 @@ public class MessagingStorage implements Storagable {
             new StorageField("from", LiteralBase.LONG),
             new StorageField("to", LiteralBase.LONG),
             new StorageField("source", LiteralBase.LONG),
+            new StorageField("owner", LiteralBase.LONG),
             new StorageField("lts", LiteralBase.LONG),
             new StorageField("rts", LiteralBase.LONG),
             new StorageField("state", LiteralBase.INT),
@@ -190,6 +191,7 @@ public class MessagingStorage implements Storagable {
                         new StorageField("from", LiteralBase.LONG, message.getFrom()),
                         new StorageField("to", LiteralBase.LONG, message.getTo()),
                         new StorageField("source", LiteralBase.LONG, message.getSource()),
+                        new StorageField("owner", LiteralBase.LONG, message.getOwner()),
                         new StorageField("lts", LiteralBase.LONG, message.getLocalTimestamp()),
                         new StorageField("rts", LiteralBase.LONG, message.getRemoteTimestamp()),
                         new StorageField("state", LiteralBase.INT, message.getState().getCode()),
@@ -222,11 +224,7 @@ public class MessagingStorage implements Storagable {
             result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
                     Conditional.createEqualTo("id", LiteralBase.LONG, messageId),
                     Conditional.createAnd(),
-                    Conditional.createBracket(new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("from", LiteralBase.LONG, contactId)),
-                            Conditional.createOr(),
-                            Conditional.createEqualTo(new StorageField("to", LiteralBase.LONG, contactId))
-                    })
+                    Conditional.createEqualTo("owner", LiteralBase.LONG, contactId)
             });
         }
 
@@ -249,8 +247,8 @@ public class MessagingStorage implements Storagable {
             e.printStackTrace();
         }
 
-        Message message = new Message(domain, map.get("id").getLong(),
-                map.get("from").getLong(), map.get("to").getLong(), map.get("source").getLong(),
+        Message message = new Message(domain, map.get("id").getLong(), map.get("from").getLong(),
+                map.get("to").getLong(), map.get("source").getLong(), map.get("owner").getLong(),
                 map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
                 device, payload, attachment);
         return message;
@@ -288,8 +286,8 @@ public class MessagingStorage implements Storagable {
                 e.printStackTrace();
             }
 
-            Message message = new Message(domain, map.get("id").getLong(),
-                    map.get("from").getLong(), map.get("to").getLong(), map.get("source").getLong(),
+            Message message = new Message(domain, map.get("id").getLong(), map.get("from").getLong(),
+                    map.get("to").getLong(), map.get("source").getLong(), map.get("owner").getLong(),
                     map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
                     device, payload, attachment);
 
@@ -342,12 +340,12 @@ public class MessagingStorage implements Storagable {
                 e.printStackTrace();
             }
 
-            Message message = new Message(domain, map.get("id").getLong(),
-                    map.get("from").getLong(), map.get("to").getLong(), map.get("source").getLong(),
+            Message message = new Message(domain, map.get("id").getLong(), map.get("from").getLong(),
+                    map.get("to").getLong(), map.get("source").getLong(), map.get("owner").getLong(),
                     map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
                     device, payload, attachment);
-            if (message.getFrom().longValue() == contactId.longValue()
-                    || message.getTo().longValue() == contactId.longValue()) {
+
+            if (message.getOwner().longValue() == contactId.longValue()) {
                 messages.add(message);
             }
         }
@@ -355,7 +353,7 @@ public class MessagingStorage implements Storagable {
         return messages;
     }
 
-    public List<Message> readWithFromOrderByTime(String domain, Long id, long beginning, long ending) {
+    public List<Message> readOrderByTime(String domain, Long contactId, long beginning, long ending) {
         // 取表名
         String table = this.messageTableNameMap.get(domain);
         if (null == table) {
@@ -365,7 +363,7 @@ public class MessagingStorage implements Storagable {
         List<StorageField[]> result = null;
         synchronized (this.storage) {
             result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
-                    Conditional.createEqualTo(new StorageField("from", LiteralBase.LONG, id)),
+                    Conditional.createEqualTo(new StorageField("owner", LiteralBase.LONG, contactId)),
                     Conditional.createAnd(),
                     Conditional.createGreaterThan(new StorageField("rts", LiteralBase.LONG, beginning)),
                     Conditional.createAnd(),
@@ -390,58 +388,11 @@ public class MessagingStorage implements Storagable {
                 e.printStackTrace();
             }
 
-            Message message = new Message(domain, map.get("id").getLong(),
-                    map.get("from").getLong(), map.get("to").getLong(), map.get("source").getLong(),
+            Message message = new Message(domain, map.get("id").getLong(), map.get("from").getLong(),
+                    map.get("to").getLong(), map.get("source").getLong(), map.get("owner").getLong(),
                     map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
                     device, payload, attachment);
-            if (message.getState() == MessageState.Read && message.getState() == MessageState.Sent) {
-                messages.add(message);
-            }
-        }
 
-        return messages;
-    }
-
-    public List<Message> readWithToOrderByTime(String domain, Long id, long beginning, long ending) {
-        // 取表名
-        String table = this.messageTableNameMap.get(domain);
-        if (null == table) {
-            return null;
-        }
-
-        List<StorageField[]> result = null;
-        synchronized (this.storage) {
-            result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
-                    Conditional.createEqualTo(new StorageField("to", LiteralBase.LONG, id)),
-                    Conditional.createAnd(),
-                    Conditional.createGreaterThan(new StorageField("rts", LiteralBase.LONG, beginning)),
-                    Conditional.createAnd(),
-                    Conditional.createLessThanEqual(new StorageField("rts", LiteralBase.LONG, ending))
-            });
-        }
-
-        List<Message> messages = new ArrayList<>(result.size());
-
-        for (StorageField[] row : result) {
-            Map<String, StorageField> map = StorageFields.get(row);
-
-            JSONObject device = null;
-            JSONObject payload = null;
-            JSONObject attachment = null;
-            try {
-                device = new JSONObject(map.get("device").getString());
-                payload = new JSONObject(map.get("payload").getString());
-                if (!map.get("attachment").isNullValue()) {
-                    attachment = new JSONObject(map.get("attachment").getString());
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            Message message = new Message(domain, map.get("id").getLong(),
-                    map.get("from").getLong(), map.get("to").getLong(), map.get("source").getLong(),
-                    map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
-                    device, payload, attachment);
             if (message.getState() == MessageState.Read && message.getState() == MessageState.Sent) {
                 messages.add(message);
             }
@@ -483,11 +434,7 @@ public class MessagingStorage implements Storagable {
                     storage.executeUpdate(table, fields, new Conditional[] {
                             Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId)),
                             Conditional.createAnd(),
-                            Conditional.createBracket(new Conditional[] {
-                                    Conditional.createEqualTo(new StorageField("from", LiteralBase.LONG, contactId)),
-                                    Conditional.createOr(),
-                                    Conditional.createEqualTo(new StorageField("to", LiteralBase.LONG, contactId))
-                            })
+                            Conditional.createEqualTo(new StorageField("owner", LiteralBase.LONG, contactId))
                     });
                 }
             }
@@ -509,11 +456,7 @@ public class MessagingStorage implements Storagable {
             result = this.storage.executeQuery(table, fields, new Conditional[]{
                     Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId)),
                     Conditional.createAnd(),
-                    Conditional.createBracket(new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("from", LiteralBase.LONG, contactId)),
-                            Conditional.createOr(),
-                            Conditional.createEqualTo(new StorageField("to", LiteralBase.LONG, contactId))
-                    })
+                    Conditional.createEqualTo(new StorageField("owner", LiteralBase.LONG, contactId))
             });
 
             if (result.isEmpty()) {
@@ -548,6 +491,9 @@ public class MessagingStorage implements Storagable {
                     }),
                     new StorageField("source", LiteralBase.LONG, new Constraint[] {
                             Constraint.NOT_NULL, Constraint.DEFAULT_0
+                    }),
+                    new StorageField("owner", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
                     }),
                     new StorageField("lts", LiteralBase.LONG, new Constraint[] {
                             Constraint.NOT_NULL, Constraint.DEFAULT_0

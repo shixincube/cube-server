@@ -58,6 +58,11 @@ public class Message extends Entity implements Comparable<Message> {
     private Long source = 0L;
 
     /**
+     * 副本持有人。
+     */
+    private Long owner = 0L;
+
+    /**
      * 消息生成时的源时间戳。
      */
     private long localTimestamp;
@@ -131,6 +136,10 @@ public class Message extends Entity implements Comparable<Message> {
             this.remoteTimestamp = json.getLong("rts");
             this.state = MessageState.parse(json.getInt("state"));
 
+            if (json.has("owner")) {
+                this.owner = json.getLong("owner");
+            }
+
             if (json.has("payload")) {
                 this.payload = json.getJSONObject("payload");
             }
@@ -161,6 +170,7 @@ public class Message extends Entity implements Comparable<Message> {
         this.from = src.from;
         this.to = src.to;
         this.source = src.source;
+        this.owner = src.owner;
         this.localTimestamp = src.localTimestamp;
         this.remoteTimestamp = src.remoteTimestamp;
         this.state = src.state;
@@ -179,6 +189,7 @@ public class Message extends Entity implements Comparable<Message> {
      * @param from 指定消息发件人 ID 。
      * @param to 指定消息收件人 ID 。
      * @param source 指定消息来源群的 ID 。
+     * @param owner 指定消息的副本持有人 ID 。
      * @param localTimestamp 指定消息生成时的本地时间戳。
      * @param remoteTimestamp 指定消息在服务器上被处理的时间戳。
      * @param state 指定消息状态。
@@ -186,13 +197,14 @@ public class Message extends Entity implements Comparable<Message> {
      * @param payload 指定消息负载数据。
      * @param attachment 指定消息附件。
      */
-    public Message(String domain, Long id, Long from, Long to, Long source,
+    public Message(String domain, Long id, Long from, Long to, Long source, Long owner,
                    Long localTimestamp, Long remoteTimestamp, int state,
                    JSONObject sourceDevice, JSONObject payload, JSONObject attachment) {
         super(id, domain);
         this.from = from;
         this.to = to;
         this.source = source;
+        this.owner = owner;
         this.localTimestamp = localTimestamp;
         this.remoteTimestamp = remoteTimestamp;
         this.state = MessageState.parse(state);
@@ -239,6 +251,24 @@ public class Message extends Entity implements Comparable<Message> {
      */
     public Long getSource() {
         return this.source;
+    }
+
+    /**
+     * 设置消息副本持有人。
+     *
+     * @param ownerId 指定持有人 ID 。
+     */
+    public void setOwner(Long ownerId) {
+        this.owner = ownerId;
+    }
+
+    /**
+     * 获取消息副本持有人。
+     *
+     * @return 返回消息副本持有人 ID 。
+     */
+    public Long getOwner() {
+        return this.owner;
     }
 
     /**
@@ -329,8 +359,8 @@ public class Message extends Entity implements Comparable<Message> {
     public boolean equals(Object object) {
         if (null != object && object instanceof Message) {
             Message other = (Message) object;
-            if (other.id.longValue() == this.id.longValue() && other.from.longValue() == this.from.longValue()
-                && other.to.longValue() == this.to.longValue() && other.source.longValue() == this.source.longValue()) {
+            if (other.id.longValue() == this.id.longValue()
+                    && other.owner.longValue() == this.owner.longValue()) {
                 return true;
             }
         }
@@ -350,6 +380,7 @@ public class Message extends Entity implements Comparable<Message> {
             json.put("from", this.from.longValue());
             json.put("to", this.to.longValue());
             json.put("source", this.source.longValue());
+            json.put("owner", this.owner.longValue());
             json.put("lts", this.localTimestamp);
             json.put("rts", this.remoteTimestamp);
             json.put("state", this.state.getCode());

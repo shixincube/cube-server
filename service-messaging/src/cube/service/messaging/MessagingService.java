@@ -247,33 +247,42 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             String toKey = UniqueKey.make(message.getTo(), message.getDomain());
             String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
 
-            // 将消息写入缓存
-            // 写入 TO
-            this.messageCache.add(toKey, message.toJSON(), message.getRemoteTimestamp());
-            // 写入 FROM
-            this.messageCache.add(fromKey, message.toJSON(), message.getRemoteTimestamp());
+            // 创建副本
+            Message[] copies = this.makeMessageCopies(message);
+            Message fromCopy = copies[0];
+            Message toCopy = copies[1];
 
-            // 发布消息事件
-            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, message.toJSON());
-            // 发布给 TO
+            // 将消息写入 TO 缓存
+            this.messageCache.add(toKey, toCopy.toJSON(), toCopy.getRemoteTimestamp());
+            // 将消息写入 FROM 缓存
+            this.messageCache.add(fromKey, fromCopy.toJSON(), fromCopy.getRemoteTimestamp());
+
+            // 发布消息事件给 TO
+            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, toCopy.toJSON());
             this.contactsAdapter.publish(toKey, event.toJSON());
-            // 发布给 FROM
+
+            // 发布消息事件给 FROM
+            event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, fromCopy.toJSON());
             this.contactsAdapter.publish(fromKey, event.toJSON());
 
-            // 写入存储
-            this.storage.write(message);
+            // TO 副本写入存储
+            this.storage.write(toCopy);
+            // FROM 副本写入存储
+            this.storage.write(fromCopy);
 
             // 在内存里记录状态
-            this.messageStateMap.put(new MessageKey(message.getTo(), message.getId()),
-                    new MessageStateBundle(message.getId(), message.getTo(), MessageState.Sent));
-            this.messageStateMap.put(new MessageKey(message.getFrom(), message.getId()),
-                    new MessageStateBundle(message.getId(), message.getFrom(), MessageState.Sent));
+            this.messageStateMap.put(new MessageKey(toCopy.getOwner(), toCopy.getId()),
+                    new MessageStateBundle(toCopy.getId(), toCopy.getOwner(), MessageState.Sent));
+            this.messageStateMap.put(new MessageKey(fromCopy.getOwner(), fromCopy.getId()),
+                    new MessageStateBundle(fromCopy.getId(), fromCopy.getOwner(), MessageState.Sent));
         }
         else if (message.getSource().longValue() > 0) {
             // 进行消息的群组管理
             Group group = ContactManager.getInstance().getGroup(message.getSource(), message.getDomain().getName());
             if (null != group) {
                 if (group.getState() == GroupState.Normal) {
+                    // 群组状态正常
+
                     Long senderId = message.getFrom();
                     List<Contact> list = group.getMembers();
                     for (Contact contact : list) {
@@ -282,10 +291,12 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                             continue;
                         }
 
-                        // 创建副本
+                        // 创建 TO 副本
                         Message copy = new Message(message);
                         // 更新 To 数据
                         copy.setTo(contact.getId());
+                        // 设置 Owner
+                        copy.setOwner(contact.getId());
 
                         // 将消息写入缓存
                         // 写入 TO
@@ -301,23 +312,27 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
                         // 在内存里记录状态
                         this.messageStateMap.put(new MessageKey(contact.getId(), copy.getId()),
-                                new MessageStateBundle(copy.getId(), copy.getTo(), MessageState.Sent));
+                                new MessageStateBundle(copy.getId(), contact.getId(), MessageState.Sent));
                     }
 
+                    // 创建 FROM 副本
+                    Message copy = new Message(message);
+                    copy.setOwner(message.getFrom());
+
                     // 写入 FROM
-                    String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
-                    this.messageCache.add(fromKey, message.toJSON(), message.getRemoteTimestamp());
+                    String fromKey = UniqueKey.make(copy.getFrom(), message.getDomain());
+                    this.messageCache.add(fromKey, copy.toJSON(), copy.getRemoteTimestamp());
 
                     // 发布给 FROM
-                    ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, message.toJSON());
+                    ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, copy.toJSON());
                     this.contactsAdapter.publish(fromKey, event.toJSON());
 
                     // 写入存储
-                    this.storage.write(message);
+                    this.storage.write(copy);
 
                     // 在内存里记录状态
-                    this.messageStateMap.put(new MessageKey(message.getFrom(), message.getId()),
-                            new MessageStateBundle(message.getId(), message.getFrom(), MessageState.Sent));
+                    this.messageStateMap.put(new MessageKey(copy.getOwner(), copy.getId()),
+                            new MessageStateBundle(copy.getId(), copy.getOwner(), MessageState.Sent));
 
                     // 更新群组活跃时间
                     ContactManager.getInstance().updateGroupActiveTime(group, message.getRemoteTimestamp());
@@ -386,10 +401,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         // 如果缓存里没有数据，从存储里读取
         if (result.isEmpty()) {
-            List<Message> messageList1 = this.storage.readWithToOrderByTime(domain, contactId, beginningTime, endingTime);
-            List<Message> messageList2 = this.storage.readWithFromOrderByTime(domain, contactId, beginningTime, endingTime);
-            result.addAll(messageList1);
-            result.addAll(messageList2);
+            List<Message> messageList = this.storage.readOrderByTime(domain, contactId, beginningTime, endingTime);
+            result.addAll(messageList);
         }
 
         // 按照时间戳升序排序
@@ -439,37 +452,21 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         // 修改该 ID 的所有消息的状态
         this.storage.writeMessageState(domain, messageId, MessageState.Recalled);
 
-        // 更新内存里的数据
-        MessageKey messageKey = new MessageKey(fromId, messageId);
-        MessageStateBundle stateBundle = this.messageStateMap.get(messageKey);
-        if (null != stateBundle) {
-            stateBundle.state = MessageState.Recalled;
-        }
-
         // 从存储器里读取出该 ID 的所有消息
         List<Message> msgList = this.storage.read(domain, messageId);
         for (Message msg : msgList) {
-            if (msg.getTo().longValue() == 0) {
-                continue;
-            }
-
             // 更新内存里的数据
-            messageKey = new MessageKey(msg.getTo(), messageId);
-            stateBundle = this.messageStateMap.get(messageKey);
+            MessageKey messageKey = new MessageKey(msg.getOwner(), messageId);
+            MessageStateBundle stateBundle = this.messageStateMap.get(messageKey);
             if (null != stateBundle) {
                 stateBundle.state = MessageState.Recalled;
             }
 
-            String toKey = UniqueKey.make(msg.getTo(), domain);
-            // 发布给 TO Recall 动作
+            String copyKey = UniqueKey.make(msg.getOwner(), domain);
+            // 发布 Recall 动作
             ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Recall.name, msg.toCompactJSON());
-            this.contactsAdapter.publish(toKey, event.toJSON());
+            this.contactsAdapter.publish(copyKey, event.toJSON());
         }
-
-        String fromKey = UniqueKey.make(fromId, domain);
-        // 发布给 FROM Recall 动作
-        ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Recall.name, message.toCompactJSON());
-        this.contactsAdapter.publish(fromKey, event.toJSON());
 
         return true;
     }
@@ -490,6 +487,26 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         }
 
         this.storage.writeMessageState(domain, contactId, messageId, MessageState.Deleted);
+    }
+
+    /**
+     * 生成消息的 From 和 To 的两个副本。
+     *
+     * @param message
+     * @return
+     */
+    private Message[] makeMessageCopies(Message message) {
+        Message[] result = new Message[2];
+
+        Message fromCopy = new Message(message);
+        fromCopy.setOwner(message.getFrom());
+        result[0] = fromCopy;
+
+        Message toCopy = new Message(message);
+        toCopy.setOwner(message.getTo());
+        result[1]= toCopy;
+
+        return result;
     }
 
     private boolean notifyMessage(MessagingAction action, TalkContext talkContext, Long contactId, Message message) {
@@ -606,23 +623,25 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             // 消息模块
 
             // 取主键的 ID
-            Long id = UniqueKey.extractId(topic);
-            if (null == id) {
-                return;
-            }
+//            Long id = UniqueKey.extractId(topic);
+//            if (null == id) {
+//                return;
+//            }
 
             ModuleEvent event = new ModuleEvent(jsonObject);
             if (event.getEventName().equals(MessagingAction.Push.name)) {
                 Message message = new Message(event.getData());
 
+                Long ownerId = message.getOwner();
+
                 // 判断是否是推送给 TO 的消息还是推送给 FROM
-                if (id.longValue() == message.getTo().longValue()) {
+                if (ownerId.longValue() == message.getTo().longValue()) {
                     // 将消息发送给目标设备
                     Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(), message.getTo());
                     if (null != contact) {
                         for (Device device : contact.getDeviceList()) {
                             TalkContext talkContext = device.getTalkContext();
-                            if (notifyMessage(MessagingAction.Notify, talkContext, id, message)) {
+                            if (notifyMessage(MessagingAction.Notify, talkContext, ownerId, message)) {
                                 Logger.d(this.getClass(), "Notify message: '" + message.getFrom()
                                         + "' -> '" + message.getTo() + "'");
                             }
@@ -633,7 +652,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                         }
                     }
                 }
-                else if (id.longValue() == message.getFrom().longValue()) {
+                else if (ownerId.longValue() == message.getFrom().longValue()) {
                     // 将消息发送给源联系人的其他设备
                     Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(),
                             message.getFrom());
@@ -645,7 +664,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                             }
 
                             TalkContext talkContext = device.getTalkContext();
-                            if (notifyMessage(MessagingAction.Notify, talkContext, id, message)) {
+                            if (notifyMessage(MessagingAction.Notify, talkContext, ownerId, message)) {
                                 Logger.d(this.getClass(), "Notify message to other device: '"
                                         + message.getFrom() + "' -> '" + message.getTo() + "'");
                             }
@@ -655,11 +674,14 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             }
             else if (event.getEventName().equals(MessagingAction.Recall.name)) {
                 Message message = new Message(event.getData());
-                Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(), id);
+
+                Long ownerId = message.getOwner();
+
+                Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(), ownerId);
                 if (null != contact) {
                     for (Device device : contact.getDeviceList()) {
-                        if (notifyMessage(MessagingAction.Recall, device.getTalkContext(), id, message)) {
-                            Logger.d(this.getClass(), "Recall message : '" + message.getId() + "' - '" + id + "'");
+                        if (notifyMessage(MessagingAction.Recall, device.getTalkContext(), ownerId, message)) {
+                            Logger.d(this.getClass(), "Recall message : '" + message.getId() + "' - '" + ownerId + "'");
                         }
                     }
                 }
