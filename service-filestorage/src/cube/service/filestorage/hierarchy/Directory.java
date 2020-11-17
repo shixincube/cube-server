@@ -39,15 +39,21 @@ import java.util.List;
  */
 public class Directory {
 
+    /**
+     * 目录的文件层级容器。
+     */
     private FileHierarchy fileHierarchy;
 
+    /**
+     * 目录对应的层级节点。
+     */
     protected HierarchyNode node;
 
     /**
      * 构造函数。
      *
-     * @param fileHierarchy
-     * @param node
+     * @param fileHierarchy 目录的文件层级容器。
+     * @param node 目录对应的层级节点。
      */
     public Directory(FileHierarchy fileHierarchy, HierarchyNode node) {
         this.fileHierarchy = fileHierarchy;
@@ -66,19 +72,37 @@ public class Directory {
             if (!context.has(FileHierarchy.KEY_HIDDEN)) {
                 context.put(FileHierarchy.KEY_HIDDEN, false);
             }
+            if (!context.has(FileHierarchy.KEY_SIZE)) {
+                context.put(FileHierarchy.KEY_SIZE, 0L);
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * 获取目录的 ID 。
+     *
+     * @return 返回目录的 ID 。
+     */
     public Long getId() {
         return this.node.getId();
     }
 
+    /**
+     * 获取域。
+     *
+     * @return 返回域。
+     */
     public Domain getDomain() {
         return this.node.getDomain();
     }
 
+    /**
+     * 获取目录名。
+     *
+     * @return 返回目录名。
+     */
     public String getName() {
         try {
             return this.node.getContext().getString(FileHierarchy.KEY_DIR_NAME);
@@ -89,6 +113,11 @@ public class Directory {
         return null;
     }
 
+    /**
+     * 获取目录创建时间。
+     *
+     * @return 返回目录创建时间。
+     */
     public long getCreationTime() {
         try {
             return this.node.getContext().getLong(FileHierarchy.KEY_CREATION);
@@ -98,6 +127,11 @@ public class Directory {
         return 0;
     }
 
+    /**
+     * 获取目录最后一次修改时间。
+     *
+     * @return 返回目录最后一次修改时间。
+     */
     public long getLastModified() {
         try {
             return this.node.getContext().getLong(FileHierarchy.KEY_LAST_MODIFIED);
@@ -110,7 +144,7 @@ public class Directory {
     /**
      * 是否是隐藏目录。
      *
-     * @return
+     * @return 如果是隐藏目录返回 {@code true} 。
      */
     public boolean isHidden() {
         try {
@@ -121,38 +155,101 @@ public class Directory {
         return false;
     }
 
+    /**
+     * 获取目录占用的空间大小。
+     *
+     * @return 返回目录占用的空间大小。
+     */
+    public long getSize() {
+        try {
+            return this.node.getContext().getLong(FileHierarchy.KEY_SIZE);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    /**
+     * 获取子目录数量。
+     *
+     * @return 返回子目录数量。
+     */
     public int numDirectories() {
         return this.node.numChildren();
     }
 
+    /**
+     * 获取所有子目录。
+     *
+     * @return 返回所有子目录。
+     */
     public List<Directory> getDirectories() {
         return this.fileHierarchy.getSubdirectories(this);
     }
 
+    /**
+     * 获取指定名称的目录。
+     *
+     * @param directoryName 指定目录名。
+     * @return 返回指定名称的目录。
+     */
     public Directory getDirectory(String directoryName) {
         return this.fileHierarchy.getSubdirectory(this, directoryName);
     }
 
+    /**
+     * 是否存在指定名称的目录。
+     *
+     * @param directoryName 指定目录名。
+     * @return 如果包含指定名称的目录返回 {@code true} 。
+     */
     public boolean existsDirectory(String directoryName) {
         return this.fileHierarchy.existsDirectory(this, directoryName);
     }
 
+    /**
+     * 创建子目录。
+     *
+     * @param directoryName 指定目录名。
+     * @return 返回新创建的子目录。
+     */
     public Directory createDirectory(String directoryName) {
         return this.fileHierarchy.createDirectory(this, directoryName);
     }
 
+    /**
+     * 删除子目录。
+     *
+     * @param subdirectory 指定待删除的目录。
+     * @return 如果删除成功返回 {@code true} 。
+     */
     public boolean deleteDirectory(Directory subdirectory) {
         return this.fileHierarchy.deleteDirectory(this, subdirectory);
     }
 
+    /**
+     * 设置是否为隐藏目录。
+     *
+     * @param hidden 指定是否隐藏。
+     */
     public void setHidden(boolean hidden) {
         this.fileHierarchy.setHidden(this, hidden);
     }
 
+    /**
+     * 添加文件到目录。
+     *
+     * @param fileLabel 指定文件标签。
+     */
     public void addFile(FileLabel fileLabel) {
         this.fileHierarchy.addFileLabel(this, fileLabel);
     }
 
+    /**
+     * 从目录移除文件。
+     *
+     * @param fileLabel 指定文件标签。
+     */
     public void removeFile(FileLabel fileLabel) {
         this.fileHierarchy.removeFileLabel(this, fileLabel);
     }

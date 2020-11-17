@@ -42,10 +42,16 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class FileHierarchy {
 
+    /** 目录创建时间。 */
     protected final static String KEY_CREATION = "creation";
+    /** 目录最后一次修改时间。 */
     protected final static String KEY_LAST_MODIFIED = "lastModified";
+    /** 目录名。 */
     protected final static String KEY_DIR_NAME = "name";
+    /** 是否隐藏目录。 */
     protected final static String KEY_HIDDEN = "hidden";
+    /** 目录内文件占用的空间大小。 */
+    protected final static String KEY_SIZE = "size";
 
     private Cache cache;
 
@@ -61,6 +67,11 @@ public class FileHierarchy {
         this.directories = new ConcurrentHashMap<>();
     }
 
+    /**
+     * 设置监听器。
+     *
+     * @param listener
+     */
     public void setListener(FileHierarchyListener listener) {
         this.listener = listener;
     }
@@ -296,8 +307,12 @@ public class FileHierarchy {
             return;
         }
 
-        // 更新时间戳
         try {
+            // 更新大小
+            long size = directory.node.getContext().getLong(KEY_SIZE);
+            directory.node.getContext().put(KEY_SIZE, size + fileLabel.getFileSize());
+
+            // 更新时间戳
             directory.node.getContext().put(KEY_LAST_MODIFIED, System.currentTimeMillis());
         } catch (JSONException e) {
             e.printStackTrace();
@@ -322,8 +337,12 @@ public class FileHierarchy {
             return;
         }
 
-        // 更新时间戳
         try {
+            // 更新大小
+            long size = directory.node.getContext().getLong(KEY_SIZE);
+            directory.node.getContext().put(KEY_SIZE, size - fileLabel.getFileSize());
+
+            // 更新时间戳
             directory.node.getContext().put(KEY_LAST_MODIFIED, System.currentTimeMillis());
         } catch (JSONException e) {
             e.printStackTrace();

@@ -54,11 +54,11 @@ public class FileHierarchyManager implements FileHierarchyListener {
     }
 
     /**
-     * 获取文件层级实例。
+     * 获取指定联系人的文件层级实例。
      *
      * @param contactId 指定联系人 ID 。
      * @param domainName 指定域名称。
-     * @return
+     * @return 返回指定联系人的文件层级实例。
      */
     public synchronized FileHierarchy getFileHierarchy(Long contactId, String domainName) {
         String uniqueKey = UniqueKey.make(contactId, domainName);
