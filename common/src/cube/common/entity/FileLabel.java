@@ -100,13 +100,13 @@ public class FileLabel extends Entity {
     /**
      * 构造函数。
      *
-     * @param domainName
-     * @param fileCode
-     * @param ownerId
-     * @param fileName
-     * @param fileSize
-     * @param completedTime
-     * @param expiryTime
+     * @param domainName 域名称。
+     * @param fileCode 文件码。
+     * @param ownerId 文件所有人 ID 。
+     * @param fileName 文件名。
+     * @param fileSize 文件大小。
+     * @param completedTime 文件进入系统的时间。
+     * @param expiryTime 文件的到期时间。
      */
     public FileLabel(String domainName, String fileCode, Long ownerId, String fileName, long fileSize,
                      long completedTime, long expiryTime) {
@@ -123,14 +123,14 @@ public class FileLabel extends Entity {
     /**
      * 构造函数。
      *
-     * @param id
-     * @param domainName
-     * @param fileCode
-     * @param ownerId
-     * @param fileName
-     * @param fileSize
-     * @param completedTime
-     * @param expiryTime
+     * @param id 文件标签 ID 。
+     * @param domainName 域名称。
+     * @param fileCode 文件码。
+     * @param ownerId 文件所有人 ID 。
+     * @param fileName 文件名。
+     * @param fileSize 文件大小。
+     * @param completedTime 文件进入系统的时间。
+     * @param expiryTime 文件的到期时间。
      */
     public FileLabel(Long id, String domainName, String fileCode, Long ownerId, String fileName,
                      long fileSize, long completedTime, long expiryTime) {
@@ -147,7 +147,7 @@ public class FileLabel extends Entity {
     /**
      * 构造函数。
      *
-     * @param json
+     * @param json 文件标签的 JSON 格式。
      */
     public FileLabel(JSONObject json) {
         super();
@@ -183,10 +183,20 @@ public class FileLabel extends Entity {
         this.uniqueKey = this.fileCode;
     }
 
+    /**
+     * 获取所有人 ID 。
+     *
+     * @return 所有人 ID 。
+     */
     public Long getOwnerId() {
         return this.ownerId;
     }
 
+    /**
+     * 获取文件名。
+     *
+     * @return 返回文件名。
+     */
     public String getFileName() {
         return this.fileName;
     }
@@ -197,6 +207,10 @@ public class FileLabel extends Entity {
 
     public long getCompletedTime() {
         return this.completedTime;
+    }
+
+    public void setExpiryTime(long expiryTime) {
+        this.expiryTime = expiryTime;
     }
 
     public long getExpiryTime() { return this.expiryTime; }
@@ -250,6 +264,9 @@ public class FileLabel extends Entity {
         return this.directURL;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -284,6 +301,9 @@ public class FileLabel extends Entity {
         return json;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = this.toJSON();

@@ -419,6 +419,9 @@ public class FileChunkStorage {
         }
     }
 
+    /**
+     * 文件块输入流。
+     */
     protected class ChunkInputStream extends InputStream {
 
         private FileChunkStore store;

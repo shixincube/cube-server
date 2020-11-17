@@ -174,6 +174,7 @@ public class FileStructStorage implements Storagable {
     }
 
     /**
+     * 写入文件标签。
      *
      * @param fileLabel
      * @param fileDescriptor
@@ -243,6 +244,7 @@ public class FileStructStorage implements Storagable {
     /**
      * 读取指定域下对应文件码的文件标签。
      *
+     * @param domain
      * @param fileCode
      * @return
      */
@@ -290,6 +292,8 @@ public class FileStructStorage implements Storagable {
     /**
      * 写入节点数据。
      *
+     * @param domain
+     * @param nodeId
      * @param json
      */
     public void writeHierarchyNode(String domain, Long nodeId, JSONObject json) {

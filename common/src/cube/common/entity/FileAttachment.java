@@ -35,10 +35,21 @@ import cube.common.JSONable;
  */
 public class FileAttachment implements JSONable {
 
+    /**
+     * JSON 格式描述的锚点。
+     */
     private JSONObject fileAnchor;
 
+    /**
+     * 文件标签。
+     */
     private FileLabel fileLabel;
 
+    /**
+     * 构造函数。
+     *
+     * @param json 附件的 JSON 结构。
+     */
     public FileAttachment(JSONObject json) {
         try {
             if (json.has("anchor")) {
@@ -52,6 +63,11 @@ public class FileAttachment implements JSONable {
         }
     }
 
+    /**
+     * 返回文件码。
+     *
+     * @return 返回文件码。
+     */
     public String getFileCode() {
         if (null != this.fileAnchor) {
             try {
@@ -68,14 +84,27 @@ public class FileAttachment implements JSONable {
         return null;
     }
 
+    /**
+     * 返回文件标签。
+     *
+     * @return 返回文件标签。
+     */
     public FileLabel getFileLabel() {
         return this.fileLabel;
     }
 
+    /**
+     * 设置文件标签。
+     *
+     * @param fileLabel 指定文件标签。
+     */
     public void setFileLabel(FileLabel fileLabel) {
         this.fileLabel = fileLabel;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -99,9 +128,11 @@ public class FileAttachment implements JSONable {
         return json;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        return json;
+        return this.toJSON();
     }
 }

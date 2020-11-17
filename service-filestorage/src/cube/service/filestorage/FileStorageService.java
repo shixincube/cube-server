@@ -58,6 +58,11 @@ public class FileStorageService extends AbstractModule {
     public final static String NAME = "FileStorage";
 
     /**
+     * 默认的文件有效时长。
+     */
+    private long defaultFileDuration = 30L * 24L * 60L * 60L * 1000L;
+
+    /**
      * 文件系统。
      */
     private FileSystem fileSystem;
@@ -70,7 +75,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 文件标签的集群缓存。
      */
-    private Cache fileLabelCache;
+    protected Cache fileLabelCache;
 
     /**
      * 文件标签存储器。
@@ -213,6 +218,9 @@ public class FileStorageService extends AbstractModule {
 
         String queryString = "?fc=" + fileLabel.getFileCode();
         fileLabel.setFileURLs(urls[0] + queryString, urls[1] + queryString);
+
+        // 设置有效期
+        fileLabel.setExpiryTime(fileLabel.getCompletedTime() + this.defaultFileDuration);
 
         // 写入到存储器进行记录
         this.fileStructStorage.writeFileLabel(fileLabel, descriptor);
