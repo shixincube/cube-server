@@ -104,7 +104,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     /**
      * 召回消息的时间限制。
      */
-    private long recallLimited = 2L * 60L * 1000L;
+    private long recallLimited = 3L * 60L * 1000L;
 
     /**
      * 消息模块的插件系统。

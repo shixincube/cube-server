@@ -393,7 +393,7 @@ public class MessagingStorage implements Storagable {
                     map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
                     device, payload, attachment);
 
-            if (message.getState() == MessageState.Read && message.getState() == MessageState.Sent) {
+            if (message.getState() == MessageState.Read || message.getState() == MessageState.Sent) {
                 messages.add(message);
             }
         }

@@ -86,8 +86,7 @@ public class MessagingCellet extends Cellet {
         String action = dialect.getName();
         
         if (MessagingAction.Pull.name.equals(action) ||
-            MessagingAction.Recall.name.equals(action) ||
-            MessagingAction.Delete.name.equals(action)) {
+            MessagingAction.Recall.name.equals(action)) {
             this.executor.execute(this.borrowTask(talkContext, primitive, false));
         }
         else {

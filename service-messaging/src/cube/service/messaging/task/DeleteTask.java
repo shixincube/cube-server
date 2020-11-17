@@ -85,5 +85,8 @@ public class DeleteTask extends ServiceTask {
         MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingService.NAME);
         // 标记消息删除
         messagingService.deleteMessage(domain, contactId, messageId);
+
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, MessagingStateCode.Ok.code, data));
     }
 }
