@@ -27,6 +27,7 @@
 package cube.service.filestorage.hierarchy;
 
 import cube.common.UniqueKey;
+import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
 import cube.common.entity.HierarchyNodes;
 import cube.service.filestorage.FileStructStorage;
@@ -36,17 +37,29 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 文件层级管理器。
  */
-public class FileHierarchyManager {
+public class FileHierarchyManager implements FileHierarchyListener {
 
     private ConcurrentHashMap<String, FileHierarchy> roots;
 
     private FileHierarchyCache fileHierarchyCache;
 
+    /**
+     * 构造函数。
+     *
+     * @param structStorage
+     */
     public FileHierarchyManager(FileStructStorage structStorage) {
         this.fileHierarchyCache = new FileHierarchyCache(structStorage);
         this.roots = new ConcurrentHashMap<>();
     }
 
+    /**
+     * 获取文件层级实例。
+     *
+     * @param contactId 指定联系人 ID 。
+     * @param domainName 指定域名称。
+     * @return
+     */
     public synchronized FileHierarchy getFileHierarchy(Long contactId, String domainName) {
         String uniqueKey = UniqueKey.make(contactId, domainName);
         FileHierarchy root = this.roots.get(uniqueKey);
@@ -66,12 +79,23 @@ public class FileHierarchyManager {
         root = new FileHierarchy(this.fileHierarchyCache, node);
         this.roots.put(uniqueKey, root);
 
+        // 设置监听器
+        root.setListener(this);
+
         HierarchyNodes.save(this.fileHierarchyCache, node);
 
         return root;
     }
 
+    @Override
+    public void onFileLabelAdded(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel) {
 
+    }
+
+    @Override
+    public void onFileLabelRemoved(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel) {
+
+    }
 
     /**
      * 仅用于辅助测试的方法。

@@ -88,10 +88,22 @@ public final class HierarchyNodes {
         return node;
     }
 
+    /**
+     * 保存节点。
+     *
+     * @param cache
+     * @param node
+     */
     public static void save(Cache cache, HierarchyNode node) {
         cache.put(new CacheKey(node.getUniqueKey()), new CacheValue(node.toJSON()));
     }
 
+    /**
+     * 删除节点。
+     *
+     * @param cache
+     * @param node
+     */
     public static void delete(Cache cache, HierarchyNode node) {
         cache.remove(new CacheKey(node.getUniqueKey()));
     }
@@ -123,6 +135,13 @@ public final class HierarchyNodes {
         return ret;
     }
 
+    /**
+     * 遍历所有的子节点。
+     *
+     * @param cache
+     * @param node
+     * @return
+     */
     public static List<HierarchyNode> traversalChildren(Cache cache, HierarchyNode node) {
         if (null != node.unloadChildrenKeys && !node.unloadChildrenKeys.isEmpty()) {
             List<String> keys = new ArrayList<>(node.unloadChildrenKeys);

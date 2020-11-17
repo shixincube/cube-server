@@ -45,7 +45,6 @@ public class FileHierarchy {
     protected final static String KEY_CREATION = "creation";
     protected final static String KEY_LAST_MODIFIED = "lastModified";
     protected final static String KEY_DIR_NAME = "name";
-
     protected final static String KEY_HIDDEN = "hidden";
 
     private Cache cache;
@@ -54,12 +53,23 @@ public class FileHierarchy {
 
     private ConcurrentHashMap<Long, Directory> directories;
 
+    private FileHierarchyListener listener;
+
     public FileHierarchy(Cache cache, HierarchyNode root) {
         this.cache = cache;
         this.root = new Directory(this, root);
         this.directories = new ConcurrentHashMap<>();
     }
 
+    public void setListener(FileHierarchyListener listener) {
+        this.listener = listener;
+    }
+
+    /**
+     * 返回根目录。
+     *
+     * @return 返回根目录。
+     */
     public Directory getRoot() {
         return this.root;
     }
@@ -275,6 +285,7 @@ public class FileHierarchy {
     }
 
     /**
+     * 添加文件标签。
      *
      * @param directory
      * @param fileLabel
@@ -293,8 +304,18 @@ public class FileHierarchy {
         }
 
         HierarchyNodes.save(this.cache, directory.node);
+
+        if (null != this.listener) {
+            this.listener.onFileLabelAdded(this, directory, fileLabel);
+        }
     }
 
+    /**
+     * 移除文件标签。
+     *
+     * @param directory
+     * @param fileLabel
+     */
     protected void removeFileLabel(Directory directory, FileLabel fileLabel) {
         if (!directory.node.unlink(fileLabel)) {
             // 解除链接失败
@@ -309,5 +330,9 @@ public class FileHierarchy {
         }
 
         HierarchyNodes.save(this.cache, directory.node);
+
+        if (null != this.listener) {
+            this.listener.onFileLabelRemoved(this, directory, fileLabel);
+        }
     }
 }

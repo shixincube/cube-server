@@ -32,6 +32,6 @@ package cube.service.filestorage.recycle;
 public class RecycleBin {
 
     public RecycleBin() {
-        
+
     }
 }

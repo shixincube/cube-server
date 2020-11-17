@@ -36,15 +36,19 @@ public interface FileHierarchyListener {
     /**
      * 当添加文件标签时调用该函数。
      *
+     * @param fileHierarchy 文件层级。
+     * @param directory 文件目录。
      * @param fileLabel 文件标签。
      */
-    public void onFileLabelAdded(FileLabel fileLabel);
+    public void onFileLabelAdded(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel);
 
     /**
      * 当移除文件标签时调用该函数。
      *
+     * @param fileHierarchy 文件层级。
+     * @param directory 文件目录。
      * @param fileLabel 文件标签。
      */
-    public void onFileLabelRemoved(FileLabel fileLabel);
+    public void onFileLabelRemoved(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel);
 
 }

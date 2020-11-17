@@ -201,65 +201,146 @@ public class FileLabel extends Entity {
         return this.fileName;
     }
 
+    /**
+     * 获取文件大小。
+     *
+     * @return 返回文件大小。
+     */
     public long getFileSize() {
         return this.fileSize;
     }
 
+    /**
+     * 获取文件完成存储的时间。
+     *
+     * @return 返回文件完成存储的时间。
+     */
     public long getCompletedTime() {
         return this.completedTime;
     }
 
+    /**
+     * 设置有效期。
+     *
+     * @param expiryTime 指定有效期。
+     */
     public void setExpiryTime(long expiryTime) {
         this.expiryTime = expiryTime;
     }
 
+    /**
+     * 获取有效期。
+     *
+     * @return 返回有效期。
+     */
     public long getExpiryTime() { return this.expiryTime; }
 
+    /**
+     * 获取文件码。
+     *
+     * @return 返回文件码。
+     */
     public String getFileCode() {
         return this.fileCode;
     }
 
+    /**
+     * 设置文件类型。
+     *
+     * @param fileType 文件类型。
+     */
     public void setFileType(FileType fileType) {
         this.fileType = fileType;
     }
 
+    /**
+     * 获取文件类型。
+     *
+     * @return 返回文件类型。
+     */
     public FileType getFileType() {
         return this.fileType;
     }
 
+    /**
+     * 设置 MD5 码。
+     *
+     * @param md5Code 指定 MD5 码。
+     */
     public void setMD5Code(String md5Code) {
         this.md5Code = md5Code;
     }
 
+    /**
+     * 获取 MD5 码。
+     *
+     * @return 返回 MD5 码。
+     */
     public String getMD5Code() {
         return this.md5Code;
     }
 
+    /**
+     * 设置 SHA1 码。
+     *
+     * @param sha1Code 指定 SHA1 码。
+     */
     public void setSHA1Code(String sha1Code) {
         this.sha1Code = sha1Code;
     }
 
+    /**
+     * 获取 SHA1 码。
+     *
+     * @return 返回 SHA1 码。
+     */
     public String getSHA1Code() {
         return this.sha1Code;
     }
 
+    /**
+     * 设置文件的 URL 访问地址。
+     *
+     * @param fileURL 指定文件的 URL 访问地址。
+     * @param fileSecureURL 指定文件的安全 URL 访问地址。
+     */
     public void setFileURLs(String fileURL, String fileSecureURL) {
         this.fileURL = fileURL;
         this.fileSecureURL = fileSecureURL;
     }
 
+    /**
+     * 获取文件的 URL 访问地址。
+     *
+     * @return 返回文件的 URL 访问地址。
+     */
     public String getFileURL() {
         return this.fileURL;
     }
 
+    /**
+     * 获取文件的安全 URL 访问地址。
+     *
+     * @return 返回文件的安全 URL 访问地址。
+     */
     public String getFileSecureURL() {
         return this.fileSecureURL;
     }
 
+    /**
+     * 设置文件的直接 URL 地址。
+     *
+     * @param url 指定 URL 。
+     */
     public void setDirectURL(String url) {
         this.directURL = url;
     }
 
+    /**
+     * 获取文件的直接 URL 地址。
+     *
+     * @return 返回文件的直接 URL 地址。
+     */
     public String getDirectURL() {
         return this.directURL;
     }
