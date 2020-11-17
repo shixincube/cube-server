@@ -39,8 +39,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class FileHierarchyManager implements FileHierarchyListener {
 
+    /**
+     * 所有联系人的基础文件层级。
+     */
     private ConcurrentHashMap<String, FileHierarchy> roots;
 
+    /**
+     * 用于读写层级节点的缓存封装。
+     */
     private FileHierarchyCache fileHierarchyCache;
 
     /**
@@ -87,14 +93,34 @@ public class FileHierarchyManager implements FileHierarchyListener {
         return root;
     }
 
-    @Override
-    public void onFileLabelAdded(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel) {
+    public void onTick() {
 
     }
 
     @Override
-    public void onFileLabelRemoved(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel) {
+    public void onFileLabelAdd(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel) {
+        // 更新容量
+        long fileSize = fileLabel.getFileSize();
 
+        Directory parent = directory.getParent();
+        while (null != parent) {
+            long size = parent.getSize();
+            fileHierarchy.setDirectorySize(parent, size + fileSize);
+            parent = parent.getParent();
+        }
+    }
+
+    @Override
+    public void onFileLabelRemove(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel) {
+        // 更新容量
+        long fileSize = fileLabel.getFileSize();
+
+        Directory parent = directory.getParent();
+        while (null != parent) {
+            long size = parent.getSize();
+            fileHierarchy.setDirectorySize(parent, size - fileSize);
+            parent = parent.getParent();
+        }
     }
 
     /**

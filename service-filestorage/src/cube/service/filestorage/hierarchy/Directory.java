@@ -170,6 +170,15 @@ public class Directory {
     }
 
     /**
+     * 获取父目录。
+     *
+     * @return 返回父目录。
+     */
+    public Directory getParent() {
+        return this.fileHierarchy.getParent(this);
+    }
+
+    /**
      * 获取子目录数量。
      *
      * @return 返回子目录数量。
@@ -240,18 +249,20 @@ public class Directory {
      * 添加文件到目录。
      *
      * @param fileLabel 指定文件标签。
+     * @return 添加成功返回 {@code true} 。
      */
-    public void addFile(FileLabel fileLabel) {
-        this.fileHierarchy.addFileLabel(this, fileLabel);
+    public boolean addFile(FileLabel fileLabel) {
+        return this.fileHierarchy.addFileLabel(this, fileLabel);
     }
 
     /**
      * 从目录移除文件。
      *
      * @param fileLabel 指定文件标签。
+     * @return 移除成功返回 {@code true} 。
      */
-    public void removeFile(FileLabel fileLabel) {
-        this.fileHierarchy.removeFileLabel(this, fileLabel);
+    public boolean removeFile(FileLabel fileLabel) {
+        return this.fileHierarchy.removeFileLabel(this, fileLabel);
     }
 
     @Override

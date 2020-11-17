@@ -53,18 +53,50 @@ public class FileHierarchy {
     /** 目录内文件占用的空间大小。 */
     protected final static String KEY_SIZE = "size";
 
+    /**
+     * 该文件层级允许存入的文件的总大小。
+     */
+    private long capacity = 1L * 1024L * 1024L * 1024L;
+
+    /**
+     * 用于读写节点的缓存。
+     */
     private Cache cache;
 
+    /**
+     * 根目录。
+     */
     private Directory root;
 
+    /**
+     * 所有目录。
+     */
     private ConcurrentHashMap<Long, Directory> directories;
 
+    /**
+     * 事件监听器。
+     */
     private FileHierarchyListener listener;
 
+    /**
+     * 构造函数。
+     *
+     * @param cache 用于读写节点的缓存。
+     * @param root 根目录。
+     */
     public FileHierarchy(Cache cache, HierarchyNode root) {
         this.cache = cache;
         this.root = new Directory(this, root);
         this.directories = new ConcurrentHashMap<>();
+    }
+
+    /**
+     * 获取当前的容量。
+     *
+     * @return 返回当前的容量。
+     */
+    public long getCapacity() {
+        return this.capacity;
     }
 
     /**
@@ -149,6 +181,8 @@ public class FileHierarchy {
             context.put(KEY_DIR_NAME, directoryName);
             context.put(KEY_CREATION, now);
             context.put(KEY_LAST_MODIFIED, now);
+            context.put(KEY_HIDDEN, false);
+            context.put(KEY_SIZE, 0);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -210,6 +244,27 @@ public class FileHierarchy {
         this.directories.remove(subdirectory.getId());
 
         return true;
+    }
+
+    /**
+     * 获取父目录。
+     *
+     * @param directory 指定目录。
+     * @return 返回父目录实例，如果没有父目录返回 {@code null} 值。
+     */
+    protected Directory getParent(Directory directory) {
+        HierarchyNode parentNode = directory.node.getParent();
+        if (null == parentNode) {
+            return null;
+        }
+
+        Directory parent = this.directories.get(parentNode.getId());
+        if (null == parent) {
+            parent = new Directory(this, parentNode);
+            this.directories.put(parent.getId(), parent);
+        }
+
+        return parent;
     }
 
     /**
@@ -296,15 +351,37 @@ public class FileHierarchy {
     }
 
     /**
+     * 设置目录大小。
+     *
+     * @param directory
+     * @param newSize
+     */
+    protected void setDirectorySize(Directory directory, long newSize) {
+        try {
+            directory.node.getContext().put(KEY_SIZE, newSize);
+            directory.node.getContext().put(KEY_LAST_MODIFIED, System.currentTimeMillis());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        HierarchyNodes.save(this.cache, directory.node);
+    }
+
+    /**
      * 添加文件标签。
      *
      * @param directory
      * @param fileLabel
+     * @return
      */
-    protected void addFileLabel(Directory directory, FileLabel fileLabel) {
+    protected boolean addFileLabel(Directory directory, FileLabel fileLabel) {
         if (!directory.node.link(fileLabel)) {
             // 链接失败
-            return;
+            return false;
+        }
+
+        if (null != this.listener) {
+            this.listener.onFileLabelAdd(this, directory, fileLabel);
         }
 
         try {
@@ -320,9 +397,7 @@ public class FileHierarchy {
 
         HierarchyNodes.save(this.cache, directory.node);
 
-        if (null != this.listener) {
-            this.listener.onFileLabelAdded(this, directory, fileLabel);
-        }
+        return true;
     }
 
     /**
@@ -330,11 +405,16 @@ public class FileHierarchy {
      *
      * @param directory
      * @param fileLabel
+     * @return
      */
-    protected void removeFileLabel(Directory directory, FileLabel fileLabel) {
+    protected boolean removeFileLabel(Directory directory, FileLabel fileLabel) {
         if (!directory.node.unlink(fileLabel)) {
             // 解除链接失败
-            return;
+            return false;
+        }
+
+        if (null != this.listener) {
+            this.listener.onFileLabelRemove(this, directory, fileLabel);
         }
 
         try {
@@ -350,8 +430,6 @@ public class FileHierarchy {
 
         HierarchyNodes.save(this.cache, directory.node);
 
-        if (null != this.listener) {
-            this.listener.onFileLabelRemoved(this, directory, fileLabel);
-        }
+        return true;
     }
 }

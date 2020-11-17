@@ -40,7 +40,7 @@ public interface FileHierarchyListener {
      * @param directory 文件目录。
      * @param fileLabel 文件标签。
      */
-    public void onFileLabelAdded(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel);
+    public void onFileLabelAdd(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel);
 
     /**
      * 当移除文件标签时调用该函数。
@@ -49,6 +49,6 @@ public interface FileHierarchyListener {
      * @param directory 文件目录。
      * @param fileLabel 文件标签。
      */
-    public void onFileLabelRemoved(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel);
+    public void onFileLabelRemove(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel);
 
 }
