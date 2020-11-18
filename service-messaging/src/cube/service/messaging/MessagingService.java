@@ -48,7 +48,6 @@ import cube.common.entity.*;
 import cube.common.state.MessagingStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
-import cube.core.Module;
 import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
@@ -201,7 +200,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     }
 
     @Override
-    public void onTick(Module module, Kernel kernel) {
+    public void onTick(cube.core.Module module, Kernel kernel) {
         long DAY30 = 30 * 24 * 60 * 60 * 1000L;
         long now = System.currentTimeMillis();
         long delta = now - DAY30;

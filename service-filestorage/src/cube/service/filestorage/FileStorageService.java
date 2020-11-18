@@ -179,7 +179,7 @@ public class FileStorageService extends AbstractModule {
     }
 
     @Override
-    public void onTick(Module module, Kernel kernel) {
+    public void onTick(cube.core.Module module, Kernel kernel) {
         this.daemonTask.run();
 
         this.fileHierarchyManager.onTick();

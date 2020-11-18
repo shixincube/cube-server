@@ -12,6 +12,7 @@
 	<property name="project-dispatcher.dir" value="dispatcher" />
 	<property name="project-service.dir" value="service" />
 
+	<property name="project-service-filestorage.dir" value="service-filestorage" />
 	<property name="project-service-messaging.dir" value="service-messaging" />
 
 	<property name="build.dir" value="build" />
@@ -76,6 +77,11 @@
 			 inheritrefs="false"
 			 target="build-debug" />
 		<ant antfile="build.xml"
+			 dir="${project-service-filestorage.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-debug" />
+		<ant antfile="build.xml"
 			 dir="${project-service-messaging.dir}"
 			 inheritall="false"
 			 inheritrefs="false"
@@ -88,6 +94,11 @@
 	<target name="build-service-release" depends="build-common-release">
 		<ant antfile="build.xml"
 			 dir="${project-service.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-release" />
+		<ant antfile="build.xml"
+			 dir="${project-service-filestorage.dir}"
 			 inheritall="false"
 			 inheritrefs="false"
 			 target="build-release" />
@@ -107,11 +118,13 @@
 				<include name="cube-common-*.jar" />
 				<include name="cube-dispatcher-*.jar" />
 				<include name="cube-service-*.jar" />
+				<exclude name="*service-filestorage*" />
 				<exclude name="*service-messaging*" />
 			</fileset>
 		</copy>
 		<copy todir="${deploy.dir}/cellets/">
 			<fileset dir="${build.dir}">
+				<include name="cube-service-filestorage-*.jar" />
 				<include name="cube-service-messaging-*.jar" />
 			</fileset>
 		</copy>
@@ -130,6 +143,7 @@
 		</delete>
 		<delete failonerror="false" includeemptydirs="true">
 			<fileset dir="${deploy.dir}/cellets/">
+				<include name="cube-service-filestorage-*.jar" />
 				<include name="cube-service-messaging-*.jar" />
 			</fileset>
 		</delete>

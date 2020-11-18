@@ -54,7 +54,6 @@ import cube.common.entity.GroupState;
 import cube.common.state.ContactStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
-import cube.core.Module;
 import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.storage.StorageType;
@@ -204,7 +203,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     @Override
-    public void onTick(Module module, Kernel kernel) {
+    public void onTick(cube.core.Module module, Kernel kernel) {
         this.daemon.run();
     }
 
