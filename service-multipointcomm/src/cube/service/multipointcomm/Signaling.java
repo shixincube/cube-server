@@ -24,40 +24,29 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.multipointcomm;
+
+import cell.util.json.JSONObject;
+import cube.common.JSONable;
 
 /**
- *
+ * 信令。
  */
-public enum MultipointCommAction {
+public class Signaling implements JSONable {
 
-    OpenField("openField"),
+    public Signaling() {
 
-    CloseField("closeField"),
-
-    Offer("offer"),
-
-    Answer("answer"),
-
-    Join("join"),
-
-    Quit("quit"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public String name;
-
-    MultipointCommAction(String name) {
-        this.name = name;
     }
 
     @Override
-    public String toString() {
-        return this.name;
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        return json;
     }
 }

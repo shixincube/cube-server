@@ -24,40 +24,19 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.multipointcomm;
 
 /**
- *
+ * 多点通讯的守护任务。
  */
-public enum MultipointCommAction {
+public class DaemonTask implements Runnable {
 
-    OpenField("openField"),
+    public DaemonTask() {
 
-    CloseField("closeField"),
-
-    Offer("offer"),
-
-    Answer("answer"),
-
-    Join("join"),
-
-    Quit("quit"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public String name;
-
-    MultipointCommAction(String name) {
-        this.name = name;
     }
 
     @Override
-    public String toString() {
-        return this.name;
+    public void run() {
+
     }
 }

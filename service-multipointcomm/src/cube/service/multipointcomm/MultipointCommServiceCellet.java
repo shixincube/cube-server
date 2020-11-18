@@ -24,40 +24,26 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.multipointcomm;
+
+import cell.core.cellet.Cellet;
 
 /**
- *
+ * 多方通讯服务的 Cellet 。
  */
-public enum MultipointCommAction {
+public class MultipointCommServiceCellet extends Cellet {
 
-    OpenField("openField"),
-
-    CloseField("closeField"),
-
-    Offer("offer"),
-
-    Answer("answer"),
-
-    Join("join"),
-
-    Quit("quit"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public String name;
-
-    MultipointCommAction(String name) {
-        this.name = name;
+    public MultipointCommServiceCellet() {
+        super(MultipointCommService.NAME);
     }
 
     @Override
-    public String toString() {
-        return this.name;
+    public boolean install() {
+        return false;
+    }
+
+    @Override
+    public void uninstall() {
+
     }
 }

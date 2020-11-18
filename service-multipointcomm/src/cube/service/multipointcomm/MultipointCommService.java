@@ -24,40 +24,43 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.multipointcomm;
+
+import cube.common.action.MultipointCommAction;
+import cube.core.AbstractModule;
+import cube.core.Kernel;
+import cube.core.Module;
 
 /**
- *
+ * 多方通讯服务。
  */
-public enum MultipointCommAction {
-
-    OpenField("openField"),
-
-    CloseField("closeField"),
-
-    Offer("offer"),
-
-    Answer("answer"),
-
-    Join("join"),
-
-    Quit("quit"),
+public class MultipointCommService extends AbstractModule {
 
     /**
-     * 未知动作。
+     * 服务单元名。
      */
-    Unknown("")
+    public final static String NAME = "MultipointComm";
 
-    ;
+    public MultipointCommService() {
 
-    public String name;
-
-    MultipointCommAction(String name) {
-        this.name = name;
     }
 
     @Override
-    public String toString() {
-        return this.name;
+    public void start() {
+
+    }
+
+    @Override
+    public void stop() {
+
+    }
+
+    @Override
+    public void onTick(Module module, Kernel kernel) {
+
+    }
+
+    public void processSignaling(MultipointCommAction signaling) {
+
     }
 }

@@ -80,6 +80,7 @@ public class DiskSystem implements FileSystem {
 
         ResourceHandler resourceHandler = new ResourceHandler();
         resourceHandler.setDirectoriesListed(false);
+        resourceHandler.setAcceptRanges(true);
 
         ContextHandler context = new ContextHandler();
         context.setContextPath(this.contextPath);
