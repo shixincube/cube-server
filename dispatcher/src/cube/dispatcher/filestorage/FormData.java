@@ -26,7 +26,6 @@
 
 package cube.dispatcher.filestorage;
 
-import cell.util.Utils;
 import cell.util.collection.FlexibleByteBuffer;
 
 import java.nio.charset.Charset;
@@ -244,7 +243,10 @@ public class FormData {
 
 
     /*public static void main(String[] args) {
-        String fc = Utils.randomString(64 * 1024);
+        StringBuilder buf = new StringBuilder(Utils.randomString(32 * 1024));
+        buf.append("\r\n").append(Utils.randomString(16 * 1024));
+        buf.append("\n").append(Utils.randomString(16 * 1024));
+        String fc = buf.toString();
 
         String data1 = "------WebKitFormBoundaryAiKTL587TYHtWO2p\r\n" +
                 "Content-Disposition: form-data; name=\"cursor\"\r\n" +

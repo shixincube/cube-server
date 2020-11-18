@@ -43,7 +43,7 @@ public final class FileUtils {
             'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
     };
 
-    private static byte[] PADDING_TABLE = new byte[] {
+    private final static byte[] PADDING_TABLE = new byte[] {
             'Q', 'm', 'W', 'n', 'E', 'b', 'R', 'v', 'T', 'c', 'Y', 'x', 'U',
             'z', 'I', 'l', 'O', 'k', 'P', 'j', 'A', 'h', 'S', 'g', 'D', 'f',
             'F', 'd', 'G', 's', 'H', 'a', 'J', 'p', 'K', 'o', 'L', 'i', 'Z',
@@ -54,6 +54,11 @@ public final class FileUtils {
             'U', 'x', 'Y', 'c', 'T', 'v', 'R', 'b', 'E', 'n', 'W', 'm', 'Q',
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
     };
+
+    private final static long KB = 1024L;
+    private final static long MB = 1024L * KB;
+    private final static long GB = 1024L * MB;
+    private final static long TB = 1024L * GB;
 
     private FileUtils() {
     }
@@ -192,11 +197,51 @@ public final class FileUtils {
         return extractFileExtension(fileName);
     }
 
+    /**
+     * 缩放文件大小。
+     *
+     * @param sizeInBytes
+     * @return
+     */
+    public static FileSize scaleFileSize(long sizeInBytes) {
+        String value = null;
+        String unit = null;
+
+        if (sizeInBytes < KB) {
+            double d = (sizeInBytes / KB);
+            value = String.format("%.2f", d);
+            unit = "KB";
+        }
+        else if (sizeInBytes >= KB && sizeInBytes < MB) {
+            double d = (sizeInBytes / KB);
+            value = String.format("%.2f", d);
+            unit = "KB";
+        }
+        else if (sizeInBytes >= MB && sizeInBytes < GB) {
+            double d = (sizeInBytes / MB);
+            value = String.format("%.2f", d);
+            unit = "MB";
+        }
+        else if (sizeInBytes >= GB && sizeInBytes < TB) {
+            double d = (sizeInBytes / GB);
+            value = String.format("%.2f", d);
+            unit = "GB";
+        }
+        else {
+            double d = (sizeInBytes / TB);
+            value = String.format("%.2f", d);
+            unit = "TB";
+        }
+
+        return new FileSize(sizeInBytes, value, unit);
+    }
+
 //    public static void main(String[] arg) {
 //        System.out.println(FileUtils.makeFileCode(50001001L, "三周年纪念.png"));
 //        System.out.println(FileUtils.makeFileCode(50001001L, "三周年纪念.jpg"));
 //        System.out.println(FileUtils.makeFileCode(50002001L, "三周年纪念.png"));
 //        System.out.println();
-//        System.out.println(FileUtils.makeFileCode(2005179136L, "这个文件的文件名很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长.txt"));
+//        System.out.println(FileUtils.makeFileCode(2005179136L, "这个文件的文件名很长很长很长很长很长很长很长"
+//          + "很长很长很长很长很长很长很长很长很长很长很长.txt"));
 //    }
 }

@@ -26,18 +26,26 @@
 
 package cube.service.filestorage.hierarchy;
 
+import cell.util.log.Logger;
 import cube.common.UniqueKey;
 import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
 import cube.common.entity.HierarchyNodes;
 import cube.service.filestorage.FileStructStorage;
+import cube.util.FileUtils;
 
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 文件层级管理器。
  */
 public class FileHierarchyManager implements FileHierarchyListener {
+
+    /**
+     * 对象的生命周期。
+     */
+    private long fileHierarchyDuration = 24L * 60L * 60L * 1000L;
 
     /**
      * 所有联系人的基础文件层级。
@@ -94,7 +102,24 @@ public class FileHierarchyManager implements FileHierarchyListener {
     }
 
     public void onTick() {
+        long now = System.currentTimeMillis();
 
+        Iterator<FileHierarchy> fhiter = this.roots.values().iterator();
+        while (fhiter.hasNext()) {
+            FileHierarchy hierarchy = fhiter.next();
+            // 容量校验
+            if (hierarchy.getRoot().getSize() > hierarchy.getCapacity()) {
+                // 容量越界
+                Logger.w(this.getClass(), "File hierarchy capacity overflow ： " + hierarchy.getId()
+                        + " - " + FileUtils.scaleFileSize(hierarchy.getRoot().getSize())
+                        + "/" + FileUtils.scaleFileSize(hierarchy.getCapacity()));
+            }
+
+            if (now - hierarchy.getTimestamp() > this.fileHierarchyDuration) {
+                // 到期，从内存里移除
+                fhiter.remove();
+            }
+        }
     }
 
     @Override

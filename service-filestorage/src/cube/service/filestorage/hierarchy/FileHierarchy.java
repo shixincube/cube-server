@@ -74,6 +74,11 @@ public class FileHierarchy {
     private ConcurrentHashMap<Long, Directory> directories;
 
     /**
+     * 时间戳。
+     */
+    private long timestamp;
+
+    /**
      * 事件监听器。
      */
     private FileHierarchyListener listener;
@@ -88,6 +93,16 @@ public class FileHierarchy {
         this.cache = cache;
         this.root = new Directory(this, root);
         this.directories = new ConcurrentHashMap<>();
+        this.timestamp = System.currentTimeMillis();
+    }
+
+    /**
+     * 获取 ID 。
+     *
+     * @return 返回 ID 。
+     */
+    public long getId() {
+        return this.root.getId();
     }
 
     /**
@@ -97,6 +112,15 @@ public class FileHierarchy {
      */
     public long getCapacity() {
         return this.capacity;
+    }
+
+    /**
+     * 获取当前时间戳。
+     *
+     * @return 返回当前时间戳。
+     */
+    public long getTimestamp() {
+        return this.timestamp;
     }
 
     /**
@@ -125,6 +149,8 @@ public class FileHierarchy {
      * @return
      */
     protected boolean existsDirectory(Directory directory, String directoryName) {
+        this.timestamp = System.currentTimeMillis();
+
         try {
             List<HierarchyNode> children = HierarchyNodes.traversalChildren(this.cache, directory.node);
             for (HierarchyNode node : children) {
@@ -149,6 +175,8 @@ public class FileHierarchy {
      * @return
      */
     protected boolean existsDirectory(HierarchyNode parentNode, Directory child) {
+        this.timestamp = System.currentTimeMillis();
+
         List<HierarchyNode> children = HierarchyNodes.traversalChildren(this.cache, parentNode);
         for (HierarchyNode node : children) {
             if (node.equals(child.node)) {
@@ -173,6 +201,8 @@ public class FileHierarchy {
         }
 
         long now = System.currentTimeMillis();
+
+        this.timestamp = now;
 
         // 创建目录
         HierarchyNode dirNode = new HierarchyNode(directory.node);
@@ -232,8 +262,9 @@ public class FileHierarchy {
         parent.removeChild(subdirectory.node);
 
         // 更新时间戳
+        this.timestamp = System.currentTimeMillis();
         try {
-            directory.node.getContext().put(KEY_LAST_MODIFIED, System.currentTimeMillis());
+            directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -340,9 +371,12 @@ public class FileHierarchy {
      * @param hidden
      */
     protected void setHidden(Directory directory, boolean hidden) {
+        // 更新时间戳
+        this.timestamp = System.currentTimeMillis();
+
         try {
             directory.node.getContext().put(KEY_HIDDEN, hidden);
-            directory.node.getContext().put(KEY_LAST_MODIFIED, System.currentTimeMillis());
+            directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -357,9 +391,12 @@ public class FileHierarchy {
      * @param newSize
      */
     protected void setDirectorySize(Directory directory, long newSize) {
+        // 更新时间戳
+        this.timestamp = System.currentTimeMillis();
+
         try {
             directory.node.getContext().put(KEY_SIZE, newSize);
-            directory.node.getContext().put(KEY_LAST_MODIFIED, System.currentTimeMillis());
+            directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -380,6 +417,9 @@ public class FileHierarchy {
             return false;
         }
 
+        // 更新时间戳
+        this.timestamp = System.currentTimeMillis();
+
         if (null != this.listener) {
             this.listener.onFileLabelAdd(this, directory, fileLabel);
         }
@@ -390,7 +430,7 @@ public class FileHierarchy {
             directory.node.getContext().put(KEY_SIZE, size + fileLabel.getFileSize());
 
             // 更新时间戳
-            directory.node.getContext().put(KEY_LAST_MODIFIED, System.currentTimeMillis());
+            directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -413,6 +453,9 @@ public class FileHierarchy {
             return false;
         }
 
+        // 更新时间戳
+        this.timestamp = System.currentTimeMillis();
+
         if (null != this.listener) {
             this.listener.onFileLabelRemove(this, directory, fileLabel);
         }
@@ -423,7 +466,7 @@ public class FileHierarchy {
             directory.node.getContext().put(KEY_SIZE, size - fileLabel.getFileSize());
 
             // 更新时间戳
-            directory.node.getContext().put(KEY_LAST_MODIFIED, System.currentTimeMillis());
+            directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
         } catch (JSONException e) {
             e.printStackTrace();
         }
