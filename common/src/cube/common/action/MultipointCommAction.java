@@ -27,21 +27,19 @@
 package cube.common.action;
 
 /**
- *
+ * 多方通讯模块的动作定义。
  */
 public enum MultipointCommAction {
 
-    OpenField("openField"),
+    OpenField("open"),
 
-    CloseField("closeField"),
+    CloseField("close"),
 
     Offer("offer"),
 
     Answer("answer"),
 
-    Join("join"),
-
-    Quit("quit"),
+    Terminate("terminate"),
 
     /**
      * 未知动作。

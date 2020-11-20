@@ -34,10 +34,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.MessagingAction;
 import cube.core.Kernel;
-import cube.service.messaging.task.DeleteTask;
-import cube.service.messaging.task.PullTask;
-import cube.service.messaging.task.PushTask;
-import cube.service.messaging.task.RecallTask;
+import cube.service.messaging.task.*;
 
 import java.util.concurrent.ExecutorService;
 
@@ -79,6 +76,9 @@ public class MessagingServiceCellet extends Cellet {
         }
         else if (MessagingAction.Pull.name.equals(action)) {
             this.executor.execute(new PullTask(this, talkContext, primitive));
+        }
+        else if (MessagingAction.Read.name.equals(action)) {
+            this.executor.execute(new ReadTask(this, talkContext, primitive));
         }
         else if (MessagingAction.Recall.name.equals(action)) {
             this.executor.execute(new RecallTask(this, talkContext, primitive));

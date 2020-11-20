@@ -31,5 +31,7 @@ package cube.storage;
  */
 public enum StorageType {
 
-    SQLite
+    SQLite,
+
+    MySQL
 }

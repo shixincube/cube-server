@@ -24,53 +24,31 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.multipointcomm.signaling;
+
+import cell.util.json.JSONObject;
+import cube.common.JSONable;
 
 /**
- * 消息模块动作定义。
+ * 信令。
  */
-public enum MessagingAction {
+public class Signaling implements JSONable {
 
-    /**
-     * 将消息推送给指定目标。
-     */
-    Push("push"),
+    private String name;
 
-    /**
-     * 从自己的消息队列里获取消息。
-     */
-    Pull("pull"),
-
-    /**
-     * 通知接收方有消息送达。
-     */
-    Notify("notify"),
-
-    /**
-     * 撤回消息。
-     */
-    Recall("recall"),
-
-    /**
-     * 删除消息。
-     */
-    Delete("delete"),
-
-    /**
-     * 标记已读。
-     */
-    Read("read"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public String name;
-
-    MessagingAction(String name) {
+    public Signaling(String name) {
         this.name = name;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        return json;
     }
 }

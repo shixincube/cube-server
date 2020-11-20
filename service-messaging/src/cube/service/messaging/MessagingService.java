@@ -478,14 +478,54 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * @param messageId
      */
     public void deleteMessage(String domain, Long contactId, Long messageId) {
-        String key = UniqueKey.make(contactId, domain);
+        MessageKey messageKey = new MessageKey(contactId, messageId);
 
-        MessageStateBundle stateBundle = this.messageStateMap.get(key);
+        MessageStateBundle stateBundle = this.messageStateMap.get(messageKey);
         if (null != stateBundle) {
             stateBundle.state = MessageState.Deleted;
         }
 
         this.storage.writeMessageState(domain, contactId, messageId, MessageState.Deleted);
+    }
+
+    /**
+     * 标记消息已读。将 TO 的消息副本标记为已读状态。
+     * 修改之后将该状态通知给消息的发送人。
+     *
+     * @param domain
+     * @param contactId
+     * @param messageId
+     * @return
+     */
+    public boolean markReadMessage(String domain, Long contactId, Long messageId) {
+        Message message = this.storage.read(domain, contactId, messageId);
+        if (null == message) {
+            // 没有找到消息
+            return false;
+        }
+
+        if (message.getTo().longValue() != contactId.longValue()) {
+            // 消息的收件人不正确
+            return false;
+        }
+
+        MessageKey key = new MessageKey(contactId, messageId);
+        MessageStateBundle stateBundle = this.messageStateMap.get(key);
+        if (null != stateBundle) {
+            stateBundle.state = MessageState.Read;
+        }
+
+        // 修改状态
+        message.setState(MessageState.Read);
+        // 更新存储
+        this.storage.writeMessageState(domain, contactId, messageId, MessageState.Read);
+
+        // 通知发件人
+        String fromKey = UniqueKey.make(message.getFrom(), domain);
+        ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Read.name, message.toCompactJSON());
+        this.contactsAdapter.publish(fromKey, event.toJSON());
+
+        return true;
     }
 
     /**
@@ -667,6 +707,20 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                                 Logger.d(this.getClass(), "Notify message to other device: '"
                                         + message.getFrom() + "' -> '" + message.getTo() + "'");
                             }
+                        }
+                    }
+                }
+            }
+            else if (event.getEventName().equals(MessagingAction.Read.name)) {
+                Message message = new Message(event.getData());
+
+                Long fromId = message.getId();
+
+                Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(), fromId);
+                if (null != contact) {
+                    for (Device device : contact.getDeviceList()) {
+                        if (notifyMessage(MessagingAction.Read, device.getTalkContext(), fromId, message)) {
+                            Logger.d(this.getClass(), "Mark read message : '" + message.getTo() + "' mark, from '" + fromId + "'");
                         }
                     }
                 }
