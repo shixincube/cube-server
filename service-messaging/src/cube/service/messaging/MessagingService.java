@@ -497,16 +497,16 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * @param messageId
      * @return
      */
-    public boolean markReadMessage(String domain, Long contactId, Long messageId) {
+    public Message markReadMessage(String domain, Long contactId, Long messageId) {
         Message message = this.storage.read(domain, contactId, messageId);
         if (null == message) {
             // 没有找到消息
-            return false;
+            return null;
         }
 
         if (message.getTo().longValue() != contactId.longValue()) {
             // 消息的收件人不正确
-            return false;
+            return null;
         }
 
         MessageKey key = new MessageKey(contactId, messageId);
@@ -525,7 +525,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Read.name, message.toCompactJSON());
         this.contactsAdapter.publish(fromKey, event.toJSON());
 
-        return true;
+        return message;
     }
 
     /**

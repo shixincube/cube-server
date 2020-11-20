@@ -35,6 +35,7 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.Message;
 import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -83,14 +84,15 @@ public class ReadTask extends ServiceTask {
         }
 
         MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingService.NAME);
-        // 标记消息删除
-        if (!messagingService.markReadMessage(domain, contactId, messageId)) {
+        // 标记消息已读
+        Message message = messagingService.markReadMessage(domain, contactId, messageId);
+        if (null == message) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.Failure.code, data));
             return;
         }
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, MessagingStateCode.Ok.code, data));
+                this.makeResponse(action, packet, MessagingStateCode.Ok.code, message.toCompactJSON()));
     }
 }
