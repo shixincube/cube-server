@@ -27,11 +27,23 @@
 package cube.service.multipointcomm;
 
 import cell.core.cellet.Cellet;
+import cell.core.talk.Primitive;
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
+import cell.util.CachedQueueExecutor;
+import cube.common.action.MultipointCommAction;
+import cube.core.Kernel;
+import cube.service.multipointcomm.task.OfferTask;
+
+import java.util.concurrent.ExecutorService;
 
 /**
  * 多方通讯服务的 Cellet 。
  */
 public class MultipointCommServiceCellet extends Cellet {
+
+    private ExecutorService executor = null;
 
     public MultipointCommServiceCellet() {
         super(MultipointCommService.NAME);
@@ -39,11 +51,28 @@ public class MultipointCommServiceCellet extends Cellet {
 
     @Override
     public boolean install() {
-        return false;
+        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
+        kernel.installModule(this.getName(), new MultipointCommService(this));
+
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
+        return true;
     }
 
     @Override
     public void uninstall() {
+        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
+        kernel.uninstallModule(this.getName());
 
+        this.executor.shutdown();
+    }
+
+    @Override
+    public void onListened(TalkContext talkContext, Primitive primitive) {
+        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
+        String action = dialect.getName();
+
+        if (MultipointCommAction.Offer.name.equals(action)) {
+            this.executor.execute(new OfferTask(this, talkContext, primitive));
+        }
     }
 }

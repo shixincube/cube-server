@@ -24,39 +24,49 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.multipointcomm.signaling;
+
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
 
 /**
- * 多方通讯模块的动作定义。
+ * Offer 信令。
  */
-public enum MultipointCommAction {
+public class OfferSignaling extends Signaling {
 
-    Offer("offer"),
+    private JSONObject sessionDescription;
 
-    Answer("answer"),
+    public OfferSignaling(JSONObject json) {
+        super(json);
 
-    Terminate("terminate"),
-
-
-    OpenField("open"),
-
-    CloseField("close"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public String name;
-
-    MultipointCommAction(String name) {
-        this.name = name;
+        try {
+            this.sessionDescription = json.getJSONObject("description");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
-    @Override
-    public String toString() {
-        return this.name;
+    public JSONObject getSessionDescription() {
+        return this.sessionDescription;
+    }
+
+    public String getType() {
+        try {
+            return this.sessionDescription.getString("type");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public String getSDP() {
+        try {
+            return this.sessionDescription.getString("sdp");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }

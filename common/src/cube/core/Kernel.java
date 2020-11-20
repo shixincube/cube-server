@@ -26,6 +26,7 @@
 
 package cube.core;
 
+import cell.api.Nucleus;
 import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.cache.SharedMemoryCache;
@@ -42,6 +43,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * 服务器上的内核。
  */
 public final class Kernel {
+
+    /**
+     * 容器内核。
+     */
+    private Nucleus nucleus;
 
     /**
      * 服务器节点名。
@@ -76,11 +82,21 @@ public final class Kernel {
     /**
      * 构造函数。
      */
-    public Kernel() {
+    public Kernel(Nucleus nucleus) {
+        this.nucleus = nucleus;
         this.moduleMap = new ConcurrentHashMap<>();
         this.cacheMap = new ConcurrentHashMap<>();
         this.mqMap = new ConcurrentHashMap<>();
         this.nodeName = UUID.randomUUID().toString();
+    }
+
+    /**
+     * 获取 Cell 容器内核。
+     *
+     * @return 返回 Cell 容器内核实例。
+     */
+    public Nucleus getNucleus() {
+        return this.nucleus;
     }
 
     /**

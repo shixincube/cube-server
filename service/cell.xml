@@ -55,6 +55,9 @@
 		<cellet port="6000">
 			<class>cube.service.filestorage.FileStorageServiceCellet</class>
 		</cellet>
+		<cellet port="6000">
+			<class>cube.service.multipointcomm.MultipointCommServiceCellet</class>
+		</cellet>
 	</cellets>
 
 	<!-- 适配器配置 -->

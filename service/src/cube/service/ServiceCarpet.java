@@ -63,7 +63,7 @@ public class ServiceCarpet implements CellListener {
 
     @Override
     public void cellPreinitialize(Nucleus nucleus) {
-        this.kernel = new Kernel();
+        this.kernel = new Kernel(nucleus);
         nucleus.setParameter("kernel", this.kernel);
 
         this.daemon = new Daemon(this.kernel, nucleus);

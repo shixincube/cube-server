@@ -97,6 +97,16 @@ public class Contact extends Entity {
      * @param json 符合格式的 JSON 数据。
      * @param domain 指定的域。
      */
+    public Contact(JSONObject json, Domain domain) {
+        this(json, domain.getName());
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param json 符合格式的 JSON 数据。
+     * @param domain 指定的域。
+     */
     public Contact(JSONObject json, String domain) {
         super();
 

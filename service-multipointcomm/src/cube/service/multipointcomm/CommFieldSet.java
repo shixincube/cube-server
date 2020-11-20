@@ -24,39 +24,10 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.multipointcomm;
 
 /**
- * 多方通讯模块的动作定义。
+ *
  */
-public enum MultipointCommAction {
-
-    Offer("offer"),
-
-    Answer("answer"),
-
-    Terminate("terminate"),
-
-
-    OpenField("open"),
-
-    CloseField("close"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public String name;
-
-    MultipointCommAction(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public String toString() {
-        return this.name;
-    }
+public class CommFieldSet {
 }

@@ -26,33 +26,60 @@
 
 package cube.service.multipointcomm;
 
+import cell.adapter.CelletAdapter;
+import cell.adapter.CelletAdapterFactory;
+import cell.adapter.CelletAdapterListener;
+import cell.core.net.Endpoint;
+import cell.core.talk.Primitive;
+import cell.util.json.JSONObject;
+import cube.common.ModuleEvent;
 import cube.common.action.MultipointCommAction;
+import cube.common.entity.CommField;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
+import cube.service.multipointcomm.signaling.OfferSignaling;
+
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 多方通讯服务。
  */
-public class MultipointCommService extends AbstractModule {
+public class MultipointCommService extends AbstractModule implements CelletAdapterListener {
 
     /**
      * 服务单元名。
      */
     public final static String NAME = "MultipointComm";
 
-    public MultipointCommService() {
+    private MultipointCommServiceCellet cellet;
 
+    /**
+     * 联系人事件适配器。
+     */
+    private CelletAdapter contactsAdapter;
+
+    /**
+     * 联系人正在呼叫的 Field 。
+     */
+    private ConcurrentHashMap<String, CommField> callingFields;
+
+    public MultipointCommService(MultipointCommServiceCellet cellet) {
+        this.cellet = cellet;
     }
 
     @Override
     public void start() {
-
+        this.contactsAdapter = CelletAdapterFactory.getInstance().getAdapter("Contacts");
+        this.contactsAdapter.addListener(this);
     }
 
     @Override
     public void stop() {
-
+        if (null != this.contactsAdapter) {
+            this.contactsAdapter.removeListener(this);
+        }
     }
 
     @Override
@@ -60,7 +87,39 @@ public class MultipointCommService extends AbstractModule {
 
     }
 
-    public void processSignaling(MultipointCommAction signaling) {
+    public void processOffer(OfferSignaling signaling) {
 
+    }
+
+    @Override
+    public void onDelivered(String topic, Endpoint endpoint, JSONObject jsonObject) {
+        if (MultipointCommService.NAME.equals(ModuleEvent.extractModuleName(jsonObject))) {
+
+        }
+    }
+
+    @Override
+    public void onDelivered(String topic, Endpoint endpoint, Primitive primitive) {
+        // Nothing
+    }
+
+    @Override
+    public void onDelivered(List<String> list, Endpoint endpoint, Primitive primitive) {
+        // Nothing
+    }
+
+    @Override
+    public void onDelivered(List<String> list, Endpoint endpoint, JSONObject jsonObject) {
+        // Nothing
+    }
+
+    @Override
+    public void onSubscribeFailed(String topic, Endpoint endpoint) {
+        // Nothing
+    }
+
+    @Override
+    public void onUnsubscribeFailed(String topic, Endpoint endpoint) {
+        // Nothing
     }
 }

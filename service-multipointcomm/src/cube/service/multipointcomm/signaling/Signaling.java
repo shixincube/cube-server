@@ -26,29 +26,79 @@
 
 package cube.service.multipointcomm.signaling;
 
+import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.JSONable;
+import cube.common.entity.CommField;
+import cube.common.entity.Contact;
 
 /**
  * 信令。
  */
-public class Signaling implements JSONable {
+public abstract class Signaling implements JSONable {
 
-    private String name;
+    protected String name;
 
-    public Signaling(String name) {
+    protected CommField field;
+
+    protected Contact contact;
+
+    protected Long target;
+
+    public Signaling(String name, CommField field, Contact contact) {
         this.name = name;
+        this.field = field;
+        this.contact = contact;
+        this.target = 0L;
+    }
+
+    public Signaling(JSONObject json) {
+        try {
+            this.name = json.getString("name");
+            this.field = new CommField(json.getJSONObject("field"));
+            this.contact = new Contact(json.getJSONObject("contact"), this.field.getDomain());
+            this.target = json.getLong("target");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public CommField getField() {
+        return this.field;
+    }
+
+    public Contact getContact() {
+        return this.contact;
+    }
+
+    public void setTarget(Long target) {
+        this.target = target;
+    }
+
+    public Long getTarget() {
+        return this.target;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        try {
+            json.put("name", this.name);
+            json.put("field", this.field.toCompactJSON());
+            json.put("contact", this.contact.toCompactJSON());
+            json.put("target", this.target.longValue());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        return json;
+        return this.toJSON();
     }
 }

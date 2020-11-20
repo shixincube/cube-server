@@ -1,0 +1,138 @@
+/**
+ * This source file is part of Cube.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2020 Shixin Cube Team.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+package cube.common.entity;
+
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
+import cube.common.Domain;
+import cube.common.UniqueKey;
+
+import java.util.List;
+
+/**
+ * 通讯场域里的媒体节点。
+ */
+public class CommFieldEndpoint extends Entity {
+
+    private String name;
+
+    private Contact contact;
+
+    private boolean videoEnabled = true;
+
+    private boolean videoStreamEnabled = true;
+
+    private boolean audioEnabled = true;
+
+    private boolean audioStreamEnabled = true;
+
+    public CommFieldEndpoint(Long id, Contact contact) {
+        super(id, contact.domain);
+
+        this.contact = contact;
+
+        List<Device> devices = contact.getDeviceList();
+        if (devices.isEmpty()) {
+            this.name = contact.getUniqueKey() + "_Unknown_Unknown";
+        }
+        else {
+            Device device = devices.get(devices.size() - 1);
+            this.name = contact.getUniqueKey() + "_" + device.getName() + "_" + device.getPlatform();
+        }
+    }
+
+    public CommFieldEndpoint(JSONObject json) {
+        super();
+
+        try {
+            this.id = json.getLong("id");
+            this.domain = new Domain(json.getString("domain"));
+            this.contact = new Contact(json.getJSONObject("contact"), this.domain);
+            this.name = json.getString("name");
+
+            JSONObject video = json.getJSONObject("video");
+            this.videoEnabled = video.getBoolean("enabled");
+            this.videoStreamEnabled = video.getBoolean("streamEnabled");
+
+            JSONObject audio = json.getJSONObject("audio");
+            this.audioEnabled = audio.getBoolean("enabled");
+            this.audioStreamEnabled = audio.getBoolean("streamEnabled");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        this.uniqueKey = UniqueKey.make(this.id, this.domain);
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("id", this.id.longValue());
+            json.put("domain", this.domain.getName());
+            json.put("name", this.name);
+            json.put("contact", this.contact.toJSON());
+
+            JSONObject video = new JSONObject();
+            video.put("enabled", this.videoEnabled);
+            video.put("streamEnabled", this.videoStreamEnabled);
+            json.put("video", video);
+
+            JSONObject audio = new JSONObject();
+            audio.put("enabled", this.audioEnabled);
+            audio.put("streamEnabled", this.audioStreamEnabled);
+            json.put("audio", audio);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("id", this.id.longValue());
+            json.put("domain", this.domain.getName());
+            json.put("name", this.name);
+            json.put("contact", this.contact.toCompactJSON());
+
+            JSONObject video = new JSONObject();
+            video.put("enabled", this.videoEnabled);
+            video.put("streamEnabled", this.videoStreamEnabled);
+            json.put("video", video);
+
+            JSONObject audio = new JSONObject();
+            audio.put("enabled", this.audioEnabled);
+            audio.put("streamEnabled", this.audioStreamEnabled);
+            json.put("audio", audio);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
+}

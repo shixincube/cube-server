@@ -24,39 +24,40 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.multipointcomm.task;
+
+import cell.core.cellet.Cellet;
+import cell.core.talk.Primitive;
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
+import cube.common.Packet;
+import cube.common.state.MessagingStateCode;
+import cube.service.ServiceTask;
+import cube.service.multipointcomm.MultipointCommService;
+import cube.service.multipointcomm.signaling.OfferSignaling;
 
 /**
- * 多方通讯模块的动作定义。
+ * Offer 信令任务。
  */
-public enum MultipointCommAction {
+public class OfferTask extends ServiceTask {
 
-    Offer("offer"),
-
-    Answer("answer"),
-
-    Terminate("terminate"),
-
-
-    OpenField("open"),
-
-    CloseField("close"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public String name;
-
-    MultipointCommAction(String name) {
-        this.name = name;
+    public OfferTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
+        super(cellet, talkContext, primitive);
     }
 
     @Override
-    public String toString() {
-        return this.name;
+    public void run() {
+        ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
+        Packet packet = new Packet(action);
+
+        OfferSignaling offer = new OfferSignaling(packet.data);
+
+        MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
+
+
+
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, MessagingStateCode.Ok.code, packet.data));
     }
 }
