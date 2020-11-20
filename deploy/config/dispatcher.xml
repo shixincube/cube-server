@@ -66,8 +66,8 @@
 		<cellet port="7000,7070,7077">
 			<class>cube.dispatcher.auth.AuthCellet</class>
 			<class>cube.dispatcher.contact.ContactCellet</class>
-			<class>cube.dispatcher.messaging.MessagingCellet</class>
 			<class>cube.dispatcher.filestorage.FileStorageCellet</class>
+			<class>cube.dispatcher.messaging.MessagingCellet</class>
 		</cellet>
 	</cellets>
 

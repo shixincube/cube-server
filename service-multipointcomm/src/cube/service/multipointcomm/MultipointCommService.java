@@ -33,11 +33,13 @@ import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
 import cell.util.json.JSONObject;
 import cube.common.ModuleEvent;
-import cube.common.action.MultipointCommAction;
 import cube.common.entity.CommField;
+import cube.common.entity.Contact;
+import cube.common.state.MultipointCommStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
+import cube.service.contact.ContactManager;
 import cube.service.multipointcomm.signaling.OfferSignaling;
 
 import java.util.List;
@@ -61,12 +63,13 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     private CelletAdapter contactsAdapter;
 
     /**
-     * 联系人正在呼叫的 Field 。
+     * 联系人对应场域集合。
      */
-    private ConcurrentHashMap<String, CommField> callingFields;
+    private ConcurrentHashMap<Long, CommFieldSet> commFieldSets;
 
     public MultipointCommService(MultipointCommServiceCellet cellet) {
         this.cellet = cellet;
+        this.commFieldSets = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -87,8 +90,24 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
     }
 
-    public void processOffer(OfferSignaling signaling) {
+    public MultipointCommStateCode processOffer(OfferSignaling signaling) {
+        CommFieldSet fieldSet = this.commFieldSets.get(signaling.getContact().getId());
+        if (null == fieldSet) {
+            Contact contact = signaling.getContact();
+            fieldSet = new CommFieldSet(ContactManager.getInstance().getContact(contact.getDomain().getName(), contact.getId()));
+            this.commFieldSets.put(contact.getId(), fieldSet);
+        }
 
+//        fieldSet.
+
+        if (fieldSet.isBusy()) {
+            return MultipointCommStateCode.CallerBusy;
+        }
+
+        signaling.getField();
+        // 向目标联系人推送 Offer
+
+        return MultipointCommStateCode.Failure;
     }
 
     @Override

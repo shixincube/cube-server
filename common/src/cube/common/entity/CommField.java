@@ -75,6 +75,10 @@ public class CommField extends Entity {
         this.uniqueKey = UniqueKey.make(this.id, this.domain);
     }
 
+    public boolean isPrivate() {
+        return (this.id.longValue() == this.founder.getId().longValue());
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

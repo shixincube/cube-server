@@ -26,8 +26,28 @@
 
 package cube.service.multipointcomm;
 
+import cube.common.entity.Contact;
+
 /**
- *
+ * 联系对应的所关联的通讯场域。
  */
 public class CommFieldSet {
+
+    protected Contact contact;
+
+    public CommFieldSet(Contact contact) {
+        this.contact = contact;
+    }
+
+    public boolean isBusy() {
+        return false;
+    }
+
+    public void add() {
+
+    }
+
+    public void remove() {
+
+    }
 }

@@ -24,40 +24,68 @@
  * SOFTWARE.
  */
 
-package cube.service.multipointcomm.task;
-
-import cell.core.cellet.Cellet;
-import cell.core.talk.Primitive;
-import cell.core.talk.TalkContext;
-import cell.core.talk.dialect.ActionDialect;
-import cell.core.talk.dialect.DialectFactory;
-import cube.common.Packet;
-import cube.common.state.MessagingStateCode;
-import cube.service.ServiceTask;
-import cube.service.multipointcomm.MultipointCommService;
-import cube.service.multipointcomm.signaling.OfferSignaling;
+package cube.common.state;
 
 /**
- * Offer 信令任务。
+ * 多方通讯状态码。
  */
-public class OfferTask extends ServiceTask {
+public enum MultipointCommStateCode {
 
-    public OfferTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
-    }
+    /**
+     * 成功。
+     */
+    Ok(0),
 
-    @Override
-    public void run() {
-        ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
-        Packet packet = new Packet(action);
+    /**
+     * 遇到故障。
+     */
+    Failure(9),
 
-        OfferSignaling offer = new OfferSignaling(packet.data);
+    /**
+     * 无效域信息。
+     */
+    InvalidDomain(11),
 
-        MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
+    /**
+     * 没有域信息。
+     */
+    NoDomain(12),
 
-        service.processOffer(offer);
+    /**
+     * 没有设备信息。
+     */
+    NoDevice(15),
 
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, MessagingStateCode.Ok.code, packet.data));
+    /**
+     * 没有找到联系人。
+     */
+    NoContact(16),
+
+    /**
+     * 数据结构错误。
+     */
+    DataStructureError(20),
+
+    /**
+     * 主叫忙。
+     */
+    CallerBusy(28),
+
+    /**
+     * 被叫忙。
+     */
+    CalleeBusy(29),
+
+    /**
+     * 未知的状态。
+     */
+    Unknown(99)
+
+    ;
+
+    public final int code;
+
+    MultipointCommStateCode(int code) {
+        this.code = code;
     }
 }
