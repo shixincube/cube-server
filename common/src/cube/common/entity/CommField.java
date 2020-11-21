@@ -32,6 +32,7 @@ import cell.util.json.JSONObject;
 import cube.common.Domain;
 import cube.common.UniqueKey;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
@@ -101,13 +102,21 @@ public class CommField extends Entity {
         return false;
     }
 
-    public void markCall(Contact proposer, Contact target) {
+    public void markOutboundCall(Contact proposer, Contact target) {
         OutboundCalling oc = new OutboundCalling(proposer, target);
         if (this.outboundCallingList.contains(oc)) {
             return;
         }
 
         this.outboundCallingList.add(oc);
+    }
+
+    public List<Contact> getOutboundCallTargets() {
+        List<Contact> result = new ArrayList<>();
+        for (OutboundCalling oc : this.outboundCallingList) {
+            result.add(oc.target);
+        }
+        return result;
     }
 
     public void addEndpoint(CommFieldEndpoint endpoint) {

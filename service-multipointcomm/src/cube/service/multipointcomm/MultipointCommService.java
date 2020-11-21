@@ -33,9 +33,11 @@ import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
 import cell.util.json.JSONObject;
 import cube.common.ModuleEvent;
+import cube.common.action.MultipointCommAction;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.state.MultipointCommStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -109,7 +111,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             }
 
             // 标记 Call
-            current.markCall(proposer, target);
+            current.markOutboundCall(proposer, target);
             return MultipointCommStateCode.Ok;
         }
 
@@ -124,6 +126,18 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             return MultipointCommStateCode.NoCommField;
         }
 
+        // 添加主叫终端
+        Long cfeID = this.makeCommFieldEndpointId(signaling.getContact(), signaling.getDevice());
+        CommFieldEndpoint cfe = new CommFieldEndpoint(cfeID, signaling.getContact(), signaling.getDevice());
+        current.addEndpoint(cfe);
+
+        List<Contact> targets = current.getOutboundCallTargets();
+        for (Contact target : targets) {
+            ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
+                    MultipointCommAction.Offer.name, signaling.toJSON());
+            this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
+        }
+
         return MultipointCommStateCode.Failure;
     }
 
@@ -131,10 +145,23 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
     }
 
+    private long makeCommFieldEndpointId(Contact contact, Device device) {
+        long id = 0;
+        String string = contact.getUniqueKey() + "_" + device.getName() + "_" + device.getPlatform();
+        for (int i = 0, len = string.length(); i < len; ++i) {
+            int c = string.codePointAt(i);
+            id += c * 3 + id * 3;
+        }
+        return Math.abs(id);
+    }
+
     @Override
     public void onDelivered(String topic, Endpoint endpoint, JSONObject jsonObject) {
         if (MultipointCommService.NAME.equals(ModuleEvent.extractModuleName(jsonObject))) {
-
+            ModuleEvent event = new ModuleEvent(jsonObject);
+            if (event.getEventName().equals(MultipointCommAction.Offer.name)) {
+                
+            }
         }
     }
 
