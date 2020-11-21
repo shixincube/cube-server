@@ -28,6 +28,7 @@ package cube.service.multipointcomm.signaling;
 
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.entity.Contact;
 
 /**
  * Offer 信令。
@@ -36,14 +37,28 @@ public class OfferSignaling extends Signaling {
 
     private JSONObject sessionDescription;
 
+    private Contact callee;
+
     public OfferSignaling(JSONObject json) {
         super(json);
 
         try {
             this.sessionDescription = json.getJSONObject("description");
+
+            if (json.has("callee")) {
+                this.callee = new Contact(json.getJSONObject("callee"));
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setCallee(Contact callee) {
+        this.callee = callee;
+    }
+
+    public Contact getCallee() {
+        return this.callee;
     }
 
     public JSONObject getSessionDescription() {
@@ -68,5 +83,24 @@ public class OfferSignaling extends Signaling {
         }
 
         return null;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        try {
+            json.put("description", this.sessionDescription);
+            if (null != this.callee) {
+                json.put("callee", this.callee.toBasicJSON());
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

@@ -26,72 +26,37 @@
 
 package cube.service.multipointcomm.signaling;
 
+import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
-import cube.common.JSONable;
+import cube.common.action.MultipointCommAction;
 import cube.common.entity.CommField;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 
+import java.util.List;
+
 /**
- * 信令。
+ * Ringing 信令。
  */
-public abstract class Signaling implements JSONable {
+public class RingingSignaling extends Signaling {
 
-    protected String name;
+    private List<Contact> callees;
 
-    protected CommField field;
-
-    protected Contact contact;
-
-    protected Device device;
-
-    public Signaling(String name, CommField field, Contact contact, Device device) {
-        this.name = name;
-        this.field = field;
-        this.contact = contact;
-        this.device = device;
-    }
-
-    public Signaling(JSONObject json) {
-        try {
-            this.name = json.getString("name");
-            this.field = new CommField(json.getJSONObject("field"));
-            this.contact = new Contact(json.getJSONObject("contact"), this.field.getDomain());
-            this.device = new Device(json.getJSONObject("device"));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String getName() {
-        return this.name;
-    }
-
-    public void setField(CommField commField) {
-        this.field = commField;
-    }
-
-    public CommField getField() {
-        return this.field;
-    }
-
-    public Contact getContact() {
-        return this.contact;
-    }
-
-    public Device getDevice() {
-        return this.device;
+    public RingingSignaling(CommField field, Contact contact, Device device, List<Contact> callees) {
+        super(MultipointCommAction.Ringing.name, field, contact, device);
+        this.callees = callees;
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
+        JSONObject json = super.toJSON();
         try {
-            json.put("name", this.name);
-            json.put("field", this.field.toCompactJSON());
-            json.put("contact", this.contact.toCompactJSON());
-            json.put("device", this.device.toCompactJSON());
+            JSONArray array = new JSONArray();
+            for (Contact callee : this.callees) {
+                array.put(callee.toBasicJSON());
+            }
+            json.put("callees", array);
         } catch (JSONException e) {
             e.printStackTrace();
         }

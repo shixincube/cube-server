@@ -36,6 +36,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 多方通信场域。
@@ -46,7 +49,11 @@ public class CommField extends Entity {
 
     private ConcurrentHashMap<Long, CommFieldEndpoint> fieldEndpoints;
 
+    private ConcurrentHashMap<Long, ScheduledFuture<?>> offerFutureMap;
+
     private List<OutboundCalling> outboundCallingList;
+
+    private long offerTimeout = 45L;
 
     public CommField(Long id, String domainName, Contact founder) {
         super(id, domainName);
@@ -125,6 +132,23 @@ public class CommField extends Entity {
 
     public void removeEndpoint(CommFieldEndpoint endpoint) {
         this.fieldEndpoints.remove(endpoint.getId());
+    }
+
+    public void traceOffer(ScheduledExecutorService scheduledExecutor, CommFieldEndpoint endpoint,
+                           Runnable timeoutCallback) {
+        if (null == this.offerFutureMap) {
+            this.offerFutureMap = new ConcurrentHashMap<>();
+        }
+
+        ScheduledFuture<?> future = scheduledExecutor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                offerFutureMap.remove(endpoint.getId());
+                timeoutCallback.run();
+            }
+        }, this.offerTimeout, TimeUnit.SECONDS);
+
+        this.offerFutureMap.put(endpoint.getId(), future);
     }
 
     @Override

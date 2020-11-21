@@ -35,14 +35,14 @@ import cube.common.Packet;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.ServiceTask;
 import cube.service.multipointcomm.MultipointCommService;
-import cube.service.multipointcomm.signaling.OfferSignaling;
+import cube.service.multipointcomm.signaling.AnswerSignaling;
 
 /**
- * Offer 信令任务。
+ * Answer 信令任务。
  */
-public class OfferTask extends ServiceTask {
+public class AnswerTask extends ServiceTask {
 
-    public OfferTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
+    public AnswerTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
 
@@ -51,19 +51,12 @@ public class OfferTask extends ServiceTask {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
-        // 解析信令
-        OfferSignaling offer = new OfferSignaling(packet.data);
-
-        if (null == offer.getSessionDescription()) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, MultipointCommStateCode.DataStructureError.code, packet.data));
-            return;
-        }
+        AnswerSignaling signaling = new AnswerSignaling(packet.data);
 
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
 
-        // 处理 Offer
-        MultipointCommStateCode state = service.processOffer(offer, this.talkContext);
+        // 申请对指定目标进行外呼
+        MultipointCommStateCode state = service.processAnswer(signaling);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, state.code, packet.data));

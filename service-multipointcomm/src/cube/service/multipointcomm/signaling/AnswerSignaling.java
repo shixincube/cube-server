@@ -24,45 +24,16 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.multipointcomm.signaling;
+
+import cell.util.json.JSONObject;
 
 /**
- * 多方通讯模块的动作定义。
+ * Answer 信令。
  */
-public enum MultipointCommAction {
+public class AnswerSignaling extends Signaling {
 
-    Offer("offer"),
-
-    Answer("answer"),
-
-    Candidate("candidate"),
-
-    Ringing("ringing"),
-
-    Terminate("terminate"),
-
-    ApplyCall("applyCall"),
-
-
-    OpenField("open"),
-
-    CloseField("close"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public String name;
-
-    MultipointCommAction(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public String toString() {
-        return this.name;
+    public AnswerSignaling(JSONObject json) {
+        super(json);
     }
 }

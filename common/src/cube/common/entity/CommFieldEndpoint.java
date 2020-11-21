@@ -45,6 +45,8 @@ public class CommFieldEndpoint extends Entity {
 
     private MultipointCommStateCode state;
 
+    private JSONObject sessionDescription;
+
     private boolean videoEnabled = true;
 
     private boolean videoStreamEnabled = true;
@@ -57,18 +59,10 @@ public class CommFieldEndpoint extends Entity {
         super(id, contact.domain);
 
         this.contact = contact;
-
         this.device = device;
-
         this.state = MultipointCommStateCode.Ok;
 
         this.name = contact.getUniqueKey() + "_" + device.getName() + "_" + device.getPlatform();
-    }
-
-    public CommFieldEndpoint(Contact contact) {
-        super();
-
-
     }
 
     public CommFieldEndpoint(JSONObject json) {
@@ -94,6 +88,18 @@ public class CommFieldEndpoint extends Entity {
         }
 
         this.uniqueKey = UniqueKey.make(this.id, this.domain);
+    }
+
+    public Contact getContact() {
+        return this.contact;
+    }
+
+    public Device getDevice() {
+        return this.device;
+    }
+
+    public void setSessionDescription(JSONObject sessionDescription) {
+        this.sessionDescription = sessionDescription;
     }
 
     public void setState(MultipointCommStateCode state) {

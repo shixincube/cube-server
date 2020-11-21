@@ -399,4 +399,16 @@ public class Contact extends Entity {
         }
         return json;
     }
+
+    public JSONObject toBasicJSON() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("id", this.id);
+            json.put("domain", this.domain.getName());
+            json.put("name", this.name);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
 }
