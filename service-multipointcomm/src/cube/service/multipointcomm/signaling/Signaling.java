@@ -31,6 +31,7 @@ import cell.util.json.JSONObject;
 import cube.common.JSONable;
 import cube.common.entity.CommField;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 
 /**
  * 信令。
@@ -43,13 +44,13 @@ public abstract class Signaling implements JSONable {
 
     protected Contact contact;
 
-    protected Long target;
+    protected Device device;
 
-    public Signaling(String name, CommField field, Contact contact) {
+    public Signaling(String name, CommField field, Contact contact, Device device) {
         this.name = name;
         this.field = field;
         this.contact = contact;
-        this.target = 0L;
+        this.device = device;
     }
 
     public Signaling(JSONObject json) {
@@ -57,7 +58,7 @@ public abstract class Signaling implements JSONable {
             this.name = json.getString("name");
             this.field = new CommField(json.getJSONObject("field"));
             this.contact = new Contact(json.getJSONObject("contact"), this.field.getDomain());
-            this.target = json.getLong("target");
+            this.device = new Device(json.getJSONObject("device"));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -75,12 +76,8 @@ public abstract class Signaling implements JSONable {
         return this.contact;
     }
 
-    public void setTarget(Long target) {
-        this.target = target;
-    }
-
-    public Long getTarget() {
-        return this.target;
+    public Device getDevice() {
+        return this.device;
     }
 
     @Override
@@ -90,7 +87,7 @@ public abstract class Signaling implements JSONable {
             json.put("name", this.name);
             json.put("field", this.field.toCompactJSON());
             json.put("contact", this.contact.toCompactJSON());
-            json.put("target", this.target.longValue());
+            json.put("device", this.device.toCompactJSON());
         } catch (JSONException e) {
             e.printStackTrace();
         }

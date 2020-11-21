@@ -62,9 +62,19 @@ public enum MultipointCommStateCode {
     NoContact(16),
 
     /**
+     * 没有找到通讯场域。
+     */
+    NoCommField(17),
+
+    /**
      * 数据结构错误。
      */
     DataStructureError(20),
+
+    /**
+     * 正在建立通话。
+     */
+    Calling(27),
 
     /**
      * 主叫忙。
@@ -87,5 +97,15 @@ public enum MultipointCommStateCode {
 
     MultipointCommStateCode(int code) {
         this.code = code;
+    }
+
+    public static MultipointCommStateCode match(int code) {
+        for (MultipointCommStateCode state : MultipointCommStateCode.values()) {
+            if (state.code == code) {
+                return state;
+            }
+        }
+
+        return MultipointCommStateCode.Unknown;
     }
 }

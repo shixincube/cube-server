@@ -34,6 +34,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.MultipointCommAction;
 import cube.core.Kernel;
+import cube.service.multipointcomm.task.ApplyCallTask;
 import cube.service.multipointcomm.task.OfferTask;
 
 import java.util.concurrent.ExecutorService;
@@ -73,6 +74,9 @@ public class MultipointCommServiceCellet extends Cellet {
 
         if (MultipointCommAction.Offer.name.equals(action)) {
             this.executor.execute(new OfferTask(this, talkContext, primitive));
+        }
+        else if (MultipointCommAction.ApplyCall.name.equals(action)) {
+            this.executor.execute(new ApplyCallTask(this, talkContext, primitive));
         }
     }
 }

@@ -34,6 +34,7 @@ import cell.core.talk.Primitive;
 import cell.util.json.JSONObject;
 import cube.common.ModuleEvent;
 import cube.common.entity.CommField;
+import cube.common.entity.CommFieldEndpoint;
 import cube.common.entity.Contact;
 import cube.common.state.MultipointCommStateCode;
 import cube.core.AbstractModule;
@@ -63,13 +64,16 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     private CelletAdapter contactsAdapter;
 
     /**
-     * 联系人对应场域集合。
+     * Comm Field 映射。
      */
-    private ConcurrentHashMap<Long, CommFieldSet> commFieldSets;
+    private ConcurrentHashMap<Long, CommField> commFieldMap;
+
+    private MediaUnitLeader leader;
 
     public MultipointCommService(MultipointCommServiceCellet cellet) {
         this.cellet = cellet;
-        this.commFieldSets = new ConcurrentHashMap<>();
+        this.commFieldMap = new ConcurrentHashMap<Long, CommField>();
+        this.leader = new MediaUnitLeader();
     }
 
     @Override
@@ -90,24 +94,41 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
     }
 
+    public MultipointCommStateCode applyCall(CommField commField, Contact proposer, Contact target) {
+        CommField current = this.commFieldMap.get(commField.getId());
+        if (null == current) {
+            current = commField;
+            this.commFieldMap.put(current.getId(), current);
+        }
+
+        if (current.isPrivate()) {
+            // 私域
+            if (current.hasOutboundCall(proposer)) {
+                // 主叫忙
+                return MultipointCommStateCode.CallerBusy;
+            }
+
+            // 标记 Call
+            current.markCall(proposer, target);
+            return MultipointCommStateCode.Ok;
+        }
+
+        // 向 MU 请求 Offer
+
+        return MultipointCommStateCode.Ok;
+    }
+
     public MultipointCommStateCode processOffer(OfferSignaling signaling) {
-        CommFieldSet fieldSet = this.commFieldSets.get(signaling.getContact().getId());
-        if (null == fieldSet) {
-            Contact contact = signaling.getContact();
-            fieldSet = new CommFieldSet(ContactManager.getInstance().getContact(contact.getDomain().getName(), contact.getId()));
-            this.commFieldSets.put(contact.getId(), fieldSet);
+        CommField current = this.commFieldMap.get(signaling.getField());
+        if (null == current) {
+            return MultipointCommStateCode.NoCommField;
         }
-
-//        fieldSet.
-
-        if (fieldSet.isBusy()) {
-            return MultipointCommStateCode.CallerBusy;
-        }
-
-        signaling.getField();
-        // 向目标联系人推送 Offer
 
         return MultipointCommStateCode.Failure;
+    }
+
+    private void call(CommField commField) {
+
     }
 
     @Override

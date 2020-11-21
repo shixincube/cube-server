@@ -30,8 +30,7 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Domain;
 import cube.common.UniqueKey;
-
-import java.util.List;
+import cube.common.state.MultipointCommStateCode;
 
 /**
  * 通讯场域里的媒体节点。
@@ -42,6 +41,10 @@ public class CommFieldEndpoint extends Entity {
 
     private Contact contact;
 
+    private Device device;
+
+    private MultipointCommStateCode state;
+
     private boolean videoEnabled = true;
 
     private boolean videoStreamEnabled = true;
@@ -50,19 +53,22 @@ public class CommFieldEndpoint extends Entity {
 
     private boolean audioStreamEnabled = true;
 
-    public CommFieldEndpoint(Long id, Contact contact) {
+    public CommFieldEndpoint(Long id, Contact contact, Device device) {
         super(id, contact.domain);
 
         this.contact = contact;
 
-        List<Device> devices = contact.getDeviceList();
-        if (devices.isEmpty()) {
-            this.name = contact.getUniqueKey() + "_Unknown_Unknown";
-        }
-        else {
-            Device device = devices.get(devices.size() - 1);
-            this.name = contact.getUniqueKey() + "_" + device.getName() + "_" + device.getPlatform();
-        }
+        this.device = device;
+
+        this.state = MultipointCommStateCode.Ok;
+
+        this.name = contact.getUniqueKey() + "_" + device.getName() + "_" + device.getPlatform();
+    }
+
+    public CommFieldEndpoint(Contact contact) {
+        super();
+
+
     }
 
     public CommFieldEndpoint(JSONObject json) {
@@ -72,7 +78,9 @@ public class CommFieldEndpoint extends Entity {
             this.id = json.getLong("id");
             this.domain = new Domain(json.getString("domain"));
             this.contact = new Contact(json.getJSONObject("contact"), this.domain);
+            this.device = new Device(json.getJSONObject("device"));
             this.name = json.getString("name");
+            this.state = MultipointCommStateCode.match(json.getInt("state"));
 
             JSONObject video = json.getJSONObject("video");
             this.videoEnabled = video.getBoolean("enabled");
@@ -88,14 +96,36 @@ public class CommFieldEndpoint extends Entity {
         this.uniqueKey = UniqueKey.make(this.id, this.domain);
     }
 
+    public void setState(MultipointCommStateCode state) {
+        this.state = state;
+    }
+
+    public MultipointCommStateCode getState() {
+        return this.state;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof CommFieldEndpoint) {
+            CommFieldEndpoint other = (CommFieldEndpoint) object;
+            if (other.name.equals(this.name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         try {
             json.put("id", this.id.longValue());
             json.put("domain", this.domain.getName());
-            json.put("name", this.name);
             json.put("contact", this.contact.toJSON());
+            json.put("device", this.device.toJSON());
+            json.put("name", this.name);
+            json.put("state", this.state.code);
 
             JSONObject video = new JSONObject();
             video.put("enabled", this.videoEnabled);
@@ -118,8 +148,10 @@ public class CommFieldEndpoint extends Entity {
         try {
             json.put("id", this.id.longValue());
             json.put("domain", this.domain.getName());
-            json.put("name", this.name);
             json.put("contact", this.contact.toCompactJSON());
+            json.put("device", this.device.toCompactJSON());
+            json.put("name", this.name);
+            json.put("state", this.state.code);
 
             JSONObject video = new JSONObject();
             video.put("enabled", this.videoEnabled);

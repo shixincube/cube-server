@@ -37,6 +37,8 @@ public enum MultipointCommAction {
 
     Terminate("terminate"),
 
+    ApplyCall("applyCall"),
+
 
     OpenField("open"),
 

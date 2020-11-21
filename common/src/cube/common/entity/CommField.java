@@ -32,6 +32,8 @@ import cell.util.json.JSONObject;
 import cube.common.Domain;
 import cube.common.UniqueKey;
 
+import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -43,12 +45,16 @@ public class CommField extends Entity {
 
     private ConcurrentHashMap<Long, CommFieldEndpoint> fieldEndpoints;
 
+    private List<OutboundCalling> outboundCallingList;
+
     public CommField(Long id, String domainName, Contact founder) {
         super(id, domainName);
 
         this.founder = founder;
 
         this.fieldEndpoints = new ConcurrentHashMap<>();
+
+        this.outboundCallingList = new Vector<>();
     }
 
     public CommField(JSONObject json) {
@@ -77,6 +83,56 @@ public class CommField extends Entity {
 
     public boolean isPrivate() {
         return (this.id.longValue() == this.founder.getId().longValue());
+    }
+
+    /**
+     * 查询指定联系人是否正在进行外呼。
+     *
+     * @param contact
+     * @return
+     */
+    public boolean hasOutboundCall(Contact contact) {
+        for (OutboundCalling oc : this.outboundCallingList) {
+            if (oc.proposer.equals(contact)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void markCall(Contact proposer, Contact target) {
+        OutboundCalling oc = new OutboundCalling(proposer, target);
+        if (this.outboundCallingList.contains(oc)) {
+            return;
+        }
+
+        this.outboundCallingList.add(oc);
+    }
+
+    public void addEndpoint(CommFieldEndpoint endpoint) {
+        this.fieldEndpoints.put(endpoint.getId(), endpoint);
+    }
+
+    public void removeEndpoint(CommFieldEndpoint endpoint) {
+        this.fieldEndpoints.remove(endpoint.getId());
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof CommField) {
+            CommField other = (CommField) object;
+            if (other.getUniqueKey().equals(this.getUniqueKey())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.getUniqueKey().hashCode();
     }
 
     @Override
@@ -109,5 +165,32 @@ public class CommField extends Entity {
             e.printStackTrace();
         }
         return json;
+    }
+
+
+    protected class OutboundCalling {
+
+        protected Contact proposer;
+
+        protected Contact target;
+
+        protected long timestamp;
+
+        public OutboundCalling(Contact proposer, Contact target) {
+            this.proposer = proposer;
+            this.target = target;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (null != object && object instanceof OutboundCalling) {
+                OutboundCalling other = (OutboundCalling) object;
+                if (other.proposer.equals(this.proposer) && other.target.equals(this.target)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

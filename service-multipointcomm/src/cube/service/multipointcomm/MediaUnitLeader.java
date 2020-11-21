@@ -26,34 +26,5 @@
 
 package cube.service.multipointcomm;
 
-import cube.common.entity.CommField;
-import cube.common.entity.Contact;
-
-import java.util.concurrent.ConcurrentLinkedQueue;
-
-/**
- * 联系对应的所关联的通讯场域。
- */
-public class CommFieldSet {
-
-    protected Contact contact;
-
-    protected ConcurrentLinkedQueue<CommField> commFields;
-
-    public CommFieldSet(Contact contact) {
-        this.contact = contact;
-        this.commFields = new ConcurrentLinkedQueue<>();
-    }
-
-    public boolean isBusy() {
-        return false;
-    }
-
-    public void add(CommField commField) {
-
-    }
-
-    public void remove(CommField commField) {
-
-    }
+public class MediaUnitLeader {
 }
