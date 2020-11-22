@@ -37,6 +37,8 @@ public class OfferSignaling extends Signaling {
 
     private JSONObject sessionDescription;
 
+    private Contact caller;
+
     private Contact callee;
 
     public OfferSignaling(JSONObject json) {
@@ -45,12 +47,23 @@ public class OfferSignaling extends Signaling {
         try {
             this.sessionDescription = json.getJSONObject("description");
 
+            if (json.has("caller")) {
+                this.caller = new Contact(json.getJSONObject("caller"));
+            }
             if (json.has("callee")) {
                 this.callee = new Contact(json.getJSONObject("callee"));
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setCaller(Contact caller) {
+        this.caller = caller;
+    }
+
+    public Contact getCaller() {
+        return this.caller;
     }
 
     public void setCallee(Contact callee) {
@@ -90,6 +103,9 @@ public class OfferSignaling extends Signaling {
         JSONObject json = super.toJSON();
         try {
             json.put("description", this.sessionDescription);
+            if (null != this.caller) {
+                json.put("caller", this.caller.toBasicJSON());
+            }
             if (null != this.callee) {
                 json.put("callee", this.callee.toBasicJSON());
             }

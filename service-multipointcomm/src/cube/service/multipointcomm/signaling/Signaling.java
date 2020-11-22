@@ -90,7 +90,7 @@ public abstract class Signaling implements JSONable {
         try {
             json.put("name", this.name);
             json.put("field", this.field.toCompactJSON());
-            json.put("contact", this.contact.toCompactJSON());
+            json.put("contact", this.contact.toBasicJSON());
             json.put("device", this.device.toCompactJSON());
         } catch (JSONException e) {
             e.printStackTrace();

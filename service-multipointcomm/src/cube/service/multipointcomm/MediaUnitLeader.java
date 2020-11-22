@@ -26,5 +26,19 @@
 
 package cube.service.multipointcomm;
 
+import cube.common.entity.CommField;
+import cube.service.multipointcomm.signaling.Signaling;
+
+/**
+ * 媒体单元的主机。
+ */
 public class MediaUnitLeader {
+
+    public MediaUnitLeader() {
+
+    }
+
+    public void dispatch(CommField commField, Signaling signaling) {
+
+    }
 }

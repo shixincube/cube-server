@@ -53,6 +53,8 @@ public class CommField extends Entity {
 
     private List<OutboundCalling> outboundCallingList;
 
+    private List<InboundCalling> inboundCallingList;
+
     private long offerTimeout = 45L;
 
     public CommField(Long id, String domainName, Contact founder) {
@@ -63,6 +65,7 @@ public class CommField extends Entity {
         this.fieldEndpoints = new ConcurrentHashMap<>();
 
         this.outboundCallingList = new Vector<>();
+        this.inboundCallingList = new Vector<>();
     }
 
     public CommField(JSONObject json) {
@@ -91,6 +94,10 @@ public class CommField extends Entity {
 
     public boolean isPrivate() {
         return (this.id.longValue() == this.founder.getId().longValue());
+    }
+
+    public Contact getFounder() {
+        return this.founder;
     }
 
     /**
@@ -124,6 +131,31 @@ public class CommField extends Entity {
             result.add(oc.target);
         }
         return result;
+    }
+
+    public void clearOutboundCall() {
+        this.outboundCallingList.clear();
+    }
+
+    public void markInboundCall(Contact proposer, Contact target) {
+        InboundCalling ic = new InboundCalling(proposer, target);
+        if (this.inboundCallingList.contains(ic)) {
+            return;
+        }
+
+        this.inboundCallingList.add(ic);
+    }
+
+    public Contact getInboundCallProposer() {
+        if (this.inboundCallingList.isEmpty()) {
+            return null;
+        }
+
+        return this.inboundCallingList.get(0).proposer;
+    }
+
+    public void clearInboundCall() {
+        this.inboundCallingList.clear();
     }
 
     public void addEndpoint(CommFieldEndpoint endpoint) {
@@ -174,7 +206,7 @@ public class CommField extends Entity {
         try {
             json.put("id", this.id);
             json.put("domain", this.domain.getName());
-            json.put("founder", this.founder.toCompactJSON());
+            json.put("founder", this.founder.toBasicJSON());
 
             JSONArray array = new JSONArray();
             for (CommFieldEndpoint cfe : this.fieldEndpoints.values()) {
@@ -193,7 +225,7 @@ public class CommField extends Entity {
         try {
             json.put("id", this.id);
             json.put("domain", this.domain.getName());
-            json.put("founder", this.founder.toCompactJSON());
+            json.put("founder", this.founder.toBasicJSON());
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -212,6 +244,34 @@ public class CommField extends Entity {
         public OutboundCalling(Contact proposer, Contact target) {
             this.proposer = proposer;
             this.target = target;
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (null != object && object instanceof OutboundCalling) {
+                OutboundCalling other = (OutboundCalling) object;
+                if (other.proposer.equals(this.proposer) && other.target.equals(this.target)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    protected class InboundCalling {
+
+        protected Contact proposer;
+
+        protected Contact target;
+
+        protected long timestamp;
+
+        public InboundCalling(Contact proposer, Contact target) {
+            this.proposer = proposer;
+            this.target = target;
+            this.timestamp = System.currentTimeMillis();
         }
 
         @Override

@@ -28,6 +28,7 @@ package cube.service.multipointcomm.signaling;
 
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.entity.Contact;
 
 /**
  * Answer 信令。
@@ -36,14 +37,41 @@ public class AnswerSignaling extends Signaling {
 
     private JSONObject sessionDescription;
 
+    private Contact caller;
+
+    private Contact callee;
+
     public AnswerSignaling(JSONObject json) {
         super(json);
 
         try {
             this.sessionDescription = json.getJSONObject("description");
+
+            if (json.has("caller")) {
+                this.caller = new Contact(json.getJSONObject("caller"));
+            }
+            if (json.has("callee")) {
+                this.caller = new Contact(json.getJSONObject("callee"));
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setCaller(Contact caller) {
+        this.caller = caller;
+    }
+
+    public Contact getCaller() {
+        return this.caller;
+    }
+
+    public void setCallee(Contact callee) {
+        this.callee = callee;
+    }
+
+    public Contact getCallee() {
+        return this.callee;
     }
 
     public JSONObject getSessionDescription() {
@@ -75,6 +103,12 @@ public class AnswerSignaling extends Signaling {
         JSONObject json = super.toJSON();
         try {
             json.put("description", this.sessionDescription);
+            if (null != this.caller) {
+                json.put("caller", this.caller.toBasicJSON());
+            }
+            if (null != this.callee) {
+                json.put("callee", this.callee.toBasicJSON());
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
