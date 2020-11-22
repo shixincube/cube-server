@@ -24,43 +24,47 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.multipointcomm.signaling;
+
+import cell.util.json.JSONArray;
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
+import cube.common.action.MultipointCommAction;
+import cube.common.entity.CommField;
+import cube.common.entity.Contact;
+import cube.common.entity.Device;
+
+import java.util.List;
 
 /**
- * 多方通讯模块的动作定义。
+ * Ringing 信令。
  */
-public enum MultipointCommAction {
+public class ByeSignaling extends Signaling {
 
-    Offer("offer"),
+    private List<Contact> callees;
 
-    Answer("answer"),
-
-    Bye("bye"),
-
-    Candidate("candidate"),
-
-    ApplyCall("applyCall"),
-
-
-    OpenField("open"),
-
-    CloseField("close"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public String name;
-
-    MultipointCommAction(String name) {
-        this.name = name;
+    public ByeSignaling(CommField field, Contact contact, Device device, List<Contact> callees) {
+        super(MultipointCommAction.Bye.name, field, contact, device);
+        this.callees = callees;
     }
 
     @Override
-    public String toString() {
-        return this.name;
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        try {
+            JSONArray array = new JSONArray();
+            for (Contact callee : this.callees) {
+                array.put(callee.toBasicJSON());
+            }
+            json.put("callees", array);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

@@ -38,10 +38,11 @@ import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.ModuleEvent;
 import cube.common.Packet;
-import cube.common.action.MessagingAction;
 import cube.common.action.MultipointCommAction;
-import cube.common.entity.*;
-import cube.common.state.MessagingStateCode;
+import cube.common.entity.CommField;
+import cube.common.entity.CommFieldEndpoint;
+import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.state.MultipointCommStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -50,7 +51,6 @@ import cube.service.Director;
 import cube.service.contact.ContactManager;
 import cube.service.multipointcomm.signaling.AnswerSignaling;
 import cube.service.multipointcomm.signaling.OfferSignaling;
-import cube.service.multipointcomm.signaling.RingingSignaling;
 import cube.service.multipointcomm.signaling.Signaling;
 
 import java.util.List;
@@ -139,7 +139,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         return MultipointCommStateCode.Ok;
     }
 
-    public MultipointCommStateCode processOffer(OfferSignaling signaling, TalkContext talkContext) {
+    public MultipointCommStateCode processOffer(OfferSignaling signaling) {
         CommField current = this.commFieldMap.get(signaling.getField().getId());
         if (null == current) {
             return MultipointCommStateCode.NoCommField;
@@ -174,17 +174,24 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
         }
 
-        // 向主叫方发送 Ringing
-        RingingSignaling ringingSignaling = new RingingSignaling(current,
-                signaling.getContact(), signaling.getDevice(), targets);
-        this.pushSignaling(talkContext, signaling.getContact().getId(),
-                signaling.getContact().getDomain().getName(),
-                ringingSignaling);
-
         return MultipointCommStateCode.Ok;
     }
 
     public MultipointCommStateCode processAnswer(AnswerSignaling signaling) {
+        CommField current = this.commFieldMap.get(signaling.getField().getId());
+        if (null == current) {
+            return MultipointCommStateCode.NoCommField;
+        }
+
+        // 添加被叫终端
+        Long endpointId = this.makeCommFieldEndpointId(signaling.getContact(), signaling.getDevice());
+        CommFieldEndpoint endpoint = new CommFieldEndpoint(endpointId, signaling.getContact(), signaling.getDevice());
+        endpoint.setSessionDescription(signaling.getSessionDescription());
+        current.addEndpoint(endpoint);
+
+        // 更新信令的 Field
+        signaling.setField(current);
+
         return MultipointCommStateCode.Ok;
     }
 

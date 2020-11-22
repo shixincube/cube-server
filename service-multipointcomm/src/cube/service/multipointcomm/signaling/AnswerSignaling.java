@@ -26,6 +26,7 @@
 
 package cube.service.multipointcomm.signaling;
 
+import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 
 /**
@@ -33,7 +34,55 @@ import cell.util.json.JSONObject;
  */
 public class AnswerSignaling extends Signaling {
 
+    private JSONObject sessionDescription;
+
     public AnswerSignaling(JSONObject json) {
         super(json);
+
+        try {
+            this.sessionDescription = json.getJSONObject("description");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public JSONObject getSessionDescription() {
+        return this.sessionDescription;
+    }
+
+    public String getType() {
+        try {
+            return this.sessionDescription.getString("type");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public String getSDP() {
+        try {
+            return this.sessionDescription.getString("sdp");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        try {
+            json.put("description", this.sessionDescription);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

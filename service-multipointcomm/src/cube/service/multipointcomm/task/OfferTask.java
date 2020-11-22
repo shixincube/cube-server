@@ -63,7 +63,7 @@ public class OfferTask extends ServiceTask {
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
 
         // 处理 Offer
-        MultipointCommStateCode state = service.processOffer(offer, this.talkContext);
+        MultipointCommStateCode state = service.processOffer(offer);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, state.code, packet.data));
