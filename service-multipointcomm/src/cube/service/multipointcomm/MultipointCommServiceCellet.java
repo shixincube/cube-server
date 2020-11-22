@@ -32,6 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
+import cell.util.log.Logger;
 import cube.common.action.MultipointCommAction;
 import cube.core.Kernel;
 import cube.service.multipointcomm.task.AnswerTask;
@@ -81,6 +82,9 @@ public class MultipointCommServiceCellet extends Cellet {
         }
         else if (MultipointCommAction.ApplyCall.name.equals(action)) {
             this.executor.execute(new ApplyCallTask(this, talkContext, primitive));
+        }
+        else {
+            Logger.w(this.getClass(), "Unsupported action: " + action);
         }
     }
 }

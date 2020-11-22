@@ -39,10 +39,6 @@ import cube.common.StateCode;
 import cube.common.UniqueKey;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
-import cube.dispatcher.auth.AuthCellet;
-import cube.dispatcher.contact.ContactCellet;
-import cube.dispatcher.filestorage.FileStorageCellet;
-import cube.dispatcher.messaging.MessagingCellet;
 import cube.dispatcher.util.HttpConfig;
 import cube.util.HttpServer;
 
@@ -356,11 +352,10 @@ public class Performer implements TalkListener {
     /**
      * 启动执行机，并对路由权重和范围进行初始化。
      */
-    public void start() {
-        this.talkService.setListener(AuthCellet.NAME, this);
-        this.talkService.setListener(ContactCellet.NAME, this);
-        this.talkService.setListener(MessagingCellet.NAME, this);
-        this.talkService.setListener(FileStorageCellet.NAME, this);
+    public void start(List<String> cellets) {
+        for (String cellet : cellets) {
+            this.talkService.setListener(cellet, this);
+        }
 
         Iterator<Map.Entry<String, List<Director>>> iter = this.celletDirectorMap.entrySet().iterator();
         while (iter.hasNext()) {

@@ -55,6 +55,8 @@ public class CommField extends Entity {
 
     private List<InboundCalling> inboundCallingList;
 
+    private long defaultTimeout = 42L * 1000L;
+
     private long offerTimeout = 45L;
 
     public CommField(Long id, String domainName, Contact founder) {
@@ -63,13 +65,16 @@ public class CommField extends Entity {
         this.founder = founder;
 
         this.fieldEndpoints = new ConcurrentHashMap<>();
-
         this.outboundCallingList = new Vector<>();
         this.inboundCallingList = new Vector<>();
     }
 
     public CommField(JSONObject json) {
         super();
+
+        this.fieldEndpoints = new ConcurrentHashMap<>();
+        this.outboundCallingList = new Vector<>();
+        this.inboundCallingList = new Vector<>();
 
         try {
             this.id = json.getLong("id");
@@ -109,6 +114,13 @@ public class CommField extends Entity {
     public boolean hasOutboundCall(Contact contact) {
         for (OutboundCalling oc : this.outboundCallingList) {
             if (oc.proposer.equals(contact)) {
+
+                // 判断超时
+                if (System.currentTimeMillis() - oc.timestamp > this.defaultTimeout) {
+                    this.outboundCallingList.remove(oc);
+                    return false;
+                }
+
                 return true;
             }
         }

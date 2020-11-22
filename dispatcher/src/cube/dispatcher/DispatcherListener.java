@@ -37,6 +37,8 @@ import cube.util.ConfigUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.Timer;
 
@@ -48,6 +50,8 @@ public class DispatcherListener implements CellListener {
     private Timer timer;
 
     private Daemon daemon;
+
+    private List<String> cellets;
 
     public DispatcherListener() {
     }
@@ -70,7 +74,9 @@ public class DispatcherListener implements CellListener {
     @Override
     public void cellInitialized(Nucleus nucleus) {
         Performer performer = (Performer) nucleus.getParameter("performer");
-        performer.start();
+        performer.start(this.cellets);
+        this.cellets.clear();
+        this.cellets = null;
 
         this.timer = new Timer();
         this.timer.schedule(this.daemon, 10L * 1000L, 10L * 1000L);
@@ -111,6 +117,14 @@ public class DispatcherListener implements CellListener {
                 } catch (IOException e) {
                 }
             }
+        }
+
+        // 读取管理的 Cellet 名称
+        String celletsConfig = properties.getProperty("cellets");
+        String[] celletNames = celletsConfig.split(",");
+        this.cellets = new ArrayList<>(celletNames.length);
+        for (String cellet : celletNames) {
+            this.cellets.add(cellet.trim());
         }
 
         // 读取路由配置
