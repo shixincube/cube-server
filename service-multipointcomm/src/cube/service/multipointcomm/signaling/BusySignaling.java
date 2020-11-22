@@ -31,15 +31,15 @@ import cell.util.json.JSONObject;
 import cube.common.entity.Contact;
 
 /**
- * Byte 信令。
+ * Busy 信令。
  */
-public class ByeSignaling extends Signaling {
+public class BusySignaling extends Signaling {
 
     private Contact caller;
 
     private Contact callee;
 
-    public ByeSignaling(JSONObject json) {
+    public BusySignaling(JSONObject json) {
         super(json);
 
         try {

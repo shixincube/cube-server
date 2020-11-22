@@ -55,9 +55,9 @@ public class CommField extends Entity {
 
     private List<InboundCalling> inboundCallingList;
 
-    private long defaultTimeout = 42L * 1000L;
+    private long defaultTimeout = 33L * 1000L;
 
-    private long offerTimeout = 45L;
+    private long offerTimeout = 35L;
 
     public CommField(Long id, String domainName, Contact founder) {
         super(id, domainName);

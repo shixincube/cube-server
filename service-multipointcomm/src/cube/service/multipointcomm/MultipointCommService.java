@@ -49,9 +49,7 @@ import cube.core.Kernel;
 import cube.core.Module;
 import cube.service.Director;
 import cube.service.contact.ContactManager;
-import cube.service.multipointcomm.signaling.AnswerSignaling;
-import cube.service.multipointcomm.signaling.OfferSignaling;
-import cube.service.multipointcomm.signaling.Signaling;
+import cube.service.multipointcomm.signaling.*;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -230,8 +228,18 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         return MultipointCommStateCode.Ok;
     }
 
+    public MultipointCommStateCode processBye(ByeSignaling signaling) {
+        return MultipointCommStateCode.Ok;
+    }
+
+    public MultipointCommStateCode processBusy(BusySignaling signaling) {
+        return MultipointCommStateCode.Ok;
+    }
+
     protected void fireOfferTimeout(CommField field, CommFieldEndpoint endpoint) {
         field.removeEndpoint(endpoint);
+        field.clearInboundCall();
+        field.clearOutboundCall();
 
         Contact contact = ContactManager.getInstance().getOnlineContact(field.getDomain().getName(),
                 endpoint.getContact().getId());

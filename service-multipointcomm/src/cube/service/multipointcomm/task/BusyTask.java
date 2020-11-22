@@ -35,14 +35,14 @@ import cube.common.Packet;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.ServiceTask;
 import cube.service.multipointcomm.MultipointCommService;
-import cube.service.multipointcomm.signaling.AnswerSignaling;
+import cube.service.multipointcomm.signaling.BusySignaling;
 
 /**
- * Answer 信令任务。
+ * Busy 信令任务。
  */
-public class AnswerTask extends ServiceTask {
+public class BusyTask extends ServiceTask {
 
-    public AnswerTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
+    public BusyTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
 
@@ -51,12 +51,13 @@ public class AnswerTask extends ServiceTask {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
-        AnswerSignaling answer = new AnswerSignaling(packet.data);
+        // 解析信令
+        BusySignaling busy = new BusySignaling(packet.data);
 
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
 
-        // 处理 Answer
-        MultipointCommStateCode state = service.processAnswer(answer);
+        // 处理 Busy
+        MultipointCommStateCode state = service.processBusy(busy);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, state.code, packet.data));
