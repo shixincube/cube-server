@@ -178,6 +178,44 @@ public class CommField extends Entity {
         this.fieldEndpoints.remove(endpoint.getId());
     }
 
+    public void clearEndpoint(CommFieldEndpoint endpoint) {
+        Contact contact = endpoint.getContact();
+
+        for (OutboundCalling oc : this.outboundCallingList) {
+            if (oc.proposer.equals(contact)) {
+                this.outboundCallingList.remove(oc);
+                break;
+            }
+            else if (oc.target.equals(contact)) {
+                this.outboundCallingList.remove(oc);
+                break;
+            }
+        }
+
+        for (InboundCalling ic : this.inboundCallingList) {
+            if (ic.proposer.equals(contact)) {
+                this.inboundCallingList.remove(ic);
+                break;
+            }
+            else if (ic.target.equals(contact)) {
+                this.inboundCallingList.remove(ic);
+                break;
+            }
+        }
+
+        this.fieldEndpoints.remove(endpoint.getId());
+    }
+
+    public CommFieldEndpoint getEndpoint(Contact contact, Device device) {
+        for (CommFieldEndpoint endpoint : this.fieldEndpoints.values()) {
+            if (endpoint.getContact().equals(contact) && endpoint.getDevice().equals(device)) {
+                return endpoint;
+            }
+        }
+
+        return null;
+    }
+
     public void traceOffer(ScheduledExecutorService scheduledExecutor, CommFieldEndpoint endpoint,
                            Runnable timeoutCallback) {
         if (null == this.offerFutureMap) {
@@ -193,6 +231,13 @@ public class CommField extends Entity {
         }, this.offerTimeout, TimeUnit.SECONDS);
 
         this.offerFutureMap.put(endpoint.getId(), future);
+    }
+
+    public void stopTrace(CommFieldEndpoint endpoint) {
+        ScheduledFuture<?> future = this.offerFutureMap.remove(endpoint.getId());
+        if (null != future) {
+            future.cancel(true);
+        }
     }
 
     @Override

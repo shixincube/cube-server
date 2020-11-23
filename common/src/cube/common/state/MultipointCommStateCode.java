@@ -87,6 +87,16 @@ public enum MultipointCommStateCode {
     CalleeBusy(29),
 
     /**
+     * 通话已接通。
+     */
+    CallConnected(30),
+
+    /**
+     * 通话结束。
+     */
+    CallBye(33),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)

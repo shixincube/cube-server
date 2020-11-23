@@ -229,17 +229,53 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     }
 
     public MultipointCommStateCode processBye(ByeSignaling signaling) {
+        CommField current = this.commFieldMap.get(signaling.getField().getId());
+        if (null == current) {
+            return MultipointCommStateCode.NoCommField;
+        }
+
+        if (current.isPrivate()) {
+            CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
+            if (null != endpoint) {
+                // 更新状态
+                endpoint.setState(MultipointCommStateCode.CallBye);
+
+                // 停止追踪
+                current.stopTrace(endpoint);
+            }
+        }
+        else {
+
+        }
+
         return MultipointCommStateCode.Ok;
     }
 
     public MultipointCommStateCode processBusy(BusySignaling signaling) {
+        CommField current = this.commFieldMap.get(signaling.getField().getId());
+        if (null == current) {
+            return MultipointCommStateCode.NoCommField;
+        }
+
+        if (current.isPrivate()) {
+            CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
+            if (null != endpoint) {
+                // 更新状态
+                endpoint.setState(MultipointCommStateCode.CalleeBusy);
+
+                // 停止追踪
+                current.stopTrace(endpoint);
+            }
+        }
+        else {
+
+        }
+
         return MultipointCommStateCode.Ok;
     }
 
     protected void fireOfferTimeout(CommField field, CommFieldEndpoint endpoint) {
-        field.removeEndpoint(endpoint);
-        field.clearInboundCall();
-        field.clearOutboundCall();
+        field.clearEndpoint(endpoint);
 
         Contact contact = ContactManager.getInstance().getOnlineContact(field.getDomain().getName(),
                 endpoint.getContact().getId());
