@@ -32,6 +32,9 @@ import cube.common.Domain;
 import cube.common.UniqueKey;
 import cube.common.state.MultipointCommStateCode;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 通讯场域里的媒体节点。
  */
@@ -46,6 +49,8 @@ public class CommFieldEndpoint extends Entity {
     private MultipointCommStateCode state;
 
     private JSONObject sessionDescription;
+
+    private List<JSONObject> candidateList;
 
     private boolean videoEnabled = true;
 
@@ -102,6 +107,18 @@ public class CommFieldEndpoint extends Entity {
         this.sessionDescription = sessionDescription;
     }
 
+    public synchronized void addCandidate(JSONObject candidate) {
+        if (null == this.candidateList) {
+            this.candidateList = new ArrayList<>();
+        }
+
+        this.candidateList.add(candidate);
+    }
+
+    public List<JSONObject> getCandidates() {
+        return this.candidateList;
+    }
+
     public void setState(MultipointCommStateCode state) {
         this.state = state;
     }
@@ -154,7 +171,7 @@ public class CommFieldEndpoint extends Entity {
         try {
             json.put("id", this.id.longValue());
             json.put("domain", this.domain.getName());
-            json.put("contact", this.contact.toCompactJSON());
+            json.put("contact", this.contact.toBasicJSON());
             json.put("device", this.device.toCompactJSON());
             json.put("name", this.name);
             json.put("state", this.state.code);

@@ -78,6 +78,9 @@ public class MultipointCommServiceCellet extends Cellet {
         else if (MultipointCommAction.Answer.name.equals(action)) {
             this.executor.execute(new AnswerTask(this, talkContext, primitive));
         }
+        else if (MultipointCommAction.Candidate.name.equals(action)) {
+            this.executor.execute(new CandidateTask(this, talkContext, primitive));
+        }
         else if (MultipointCommAction.Bye.name.equals(action)) {
             this.executor.execute(new ByeTask(this, talkContext, primitive));
         }

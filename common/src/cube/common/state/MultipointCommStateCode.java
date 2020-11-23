@@ -67,6 +67,11 @@ public enum MultipointCommStateCode {
     NoCommField(17),
 
     /**
+     * 没有找到 Endpoint 。
+     */
+    NoCommFieldEndpoint(18),
+
+    /**
      * 数据结构错误。
      */
     DataStructureError(20),

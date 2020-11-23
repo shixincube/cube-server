@@ -31,17 +31,40 @@ package cube.common.action;
  */
 public enum MultipointCommAction {
 
+    /**
+     * 信令 Offer
+     */
     Offer("offer"),
 
+    /**
+     * 信令 Answer
+     */
     Answer("answer"),
 
+    /**
+     * 信令 Bye
+     */
     Bye("bye"),
 
+    /**
+     * 信令 Busy
+     */
     Busy("busy"),
 
+    /**
+     * 信令 Candidate
+     */
     Candidate("candidate"),
 
+    /**
+     * 执行申请主叫。
+     */
     ApplyCall("applyCall"),
+
+    /**
+     * 申请进入场域。
+     */
+    ApplyEnter("applyEnter"),
 
 
     OpenField("open"),

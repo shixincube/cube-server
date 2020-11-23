@@ -113,6 +113,22 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
     }
 
+    public MultipointCommStateCode applyEntry(CommField commField, Contact contact, Device device) {
+        CommField current = this.commFieldMap.get(commField.getId());
+        if (null == current) {
+            current = commField;
+            this.commFieldMap.put(current.getId(), current);
+        }
+
+        if (current.isPrivate()) {
+            Long endpointId = this.makeCommFieldEndpointId(contact, device);
+            CommFieldEndpoint endpoint = new CommFieldEndpoint(endpointId, contact, device);
+            current.addEndpoint(endpoint);
+        }
+
+        return MultipointCommStateCode.Ok;
+    }
+
     public MultipointCommStateCode applyCall(CommField commField, Contact proposer, Contact target) {
         CommField current = this.commFieldMap.get(commField.getId());
         if (null == current) {
@@ -154,18 +170,22 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             return MultipointCommStateCode.NoCommField;
         }
 
-        // 添加主叫终端
-        Long endpointId = this.makeCommFieldEndpointId(signaling.getContact(), signaling.getDevice());
-        CommFieldEndpoint endpoint = new CommFieldEndpoint(endpointId, signaling.getContact(), signaling.getDevice());
+        // 更新终端
+        CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
+        if (null == endpoint) {
+            Long endpointId = this.makeCommFieldEndpointId(signaling.getContact(), signaling.getDevice());
+            endpoint = new CommFieldEndpoint(endpointId, signaling.getContact(), signaling.getDevice());
+            current.addEndpoint(endpoint);
+        }
         endpoint.setSessionDescription(signaling.getSessionDescription());
         endpoint.setState(MultipointCommStateCode.Calling);
-        current.addEndpoint(endpoint);
 
+        final CommFieldEndpoint offerEndpoint = endpoint;
         // 追踪
         current.traceOffer(this.scheduledExecutor, endpoint, new Runnable() {
             @Override
             public void run() {
-                fireOfferTimeout(current, endpoint);
+                fireOfferTimeout(current, offerEndpoint);
             }
         });
 
@@ -174,7 +194,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
         if (current.isPrivate()) {
             // 设置主叫
-            signaling.setCaller(current.getFounder());
+            signaling.setCaller(signaling.getContact());
 
             List<Contact> targets = current.getOutboundCallTargets();
             for (Contact target : targets) {
@@ -200,12 +220,15 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             return MultipointCommStateCode.NoCommField;
         }
 
-        // 添加被叫终端
-        Long endpointId = this.makeCommFieldEndpointId(signaling.getContact(), signaling.getDevice());
-        CommFieldEndpoint endpoint = new CommFieldEndpoint(endpointId, signaling.getContact(), signaling.getDevice());
+        // 更新终端
+        CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
+        if (null == endpoint) {
+            Long endpointId = this.makeCommFieldEndpointId(signaling.getContact(), signaling.getDevice());
+            endpoint = new CommFieldEndpoint(endpointId, signaling.getContact(), signaling.getDevice());
+            current.addEndpoint(endpoint);
+        }
         endpoint.setSessionDescription(signaling.getSessionDescription());
-        endpoint.setState(MultipointCommStateCode.Calling);
-        current.addEndpoint(endpoint);
+        endpoint.setState(MultipointCommStateCode.CallConnected);
 
         // 更新信令的 Field
         signaling.setField(current);
@@ -215,14 +238,48 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             // 设置主叫
             signaling.setCaller(caller);
             // 设置被叫
-            signaling.setCallee(current.getFounder());
+            signaling.setCallee(signaling.getContact());
+
             // 推送信令到集群
             ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
                     MultipointCommAction.Answer.name, signaling.toJSON());
             this.contactsAdapter.publish(caller.getUniqueKey(), event.toJSON());
+
+            // 向被叫推送 Candidate
+            CommField callerField = this.commFieldMap.get(caller.getId());
+            CommFieldEndpoint callerEndpoint = callerField.getEndpoint(caller);
+            // 修改主叫状态
+            callerEndpoint.setState(MultipointCommStateCode.CallConnected);
+
+            // 填写 Candidate 数据
+            CandidateSignaling candidateSignaling = new CandidateSignaling(callerField,
+                    callerEndpoint.getContact(), callerEndpoint.getDevice());
+            candidateSignaling.setCandidateList(callerEndpoint.getCandidates());
+            event = new ModuleEvent(MultipointCommService.NAME,
+                    MultipointCommAction.Candidate.name, candidateSignaling.toJSON());
+            // 目标是被叫端
+            this.contactsAdapter.publish(signaling.getContact().getUniqueKey(), event.toJSON());
         }
         else {
             this.mediaUnitLeader.dispatch(current, signaling);
+        }
+
+        return MultipointCommStateCode.Ok;
+    }
+
+    public MultipointCommStateCode processCandidate(CandidateSignaling signaling) {
+        CommField current = this.commFieldMap.get(signaling.getField().getId());
+        if (null == current) {
+            return MultipointCommStateCode.NoCommField;
+        }
+
+        if (current.isPrivate()) {
+            CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
+            if (null == endpoint) {
+                return MultipointCommStateCode.NoCommFieldEndpoint;
+            }
+
+            endpoint.addCandidate(signaling.getCandidate());
         }
 
         return MultipointCommStateCode.Ok;
@@ -333,7 +390,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         if (Logger.isDebugLevel()) {
             Logger.i(this.getClass(), "Comm field offer timeout: " + field.getId());
         }
-        
+
         field.clearEndpoint(endpoint);
 
         Contact contact = ContactManager.getInstance().getOnlineContact(field.getDomain().getName(),

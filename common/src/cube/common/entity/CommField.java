@@ -222,6 +222,16 @@ public class CommField extends Entity {
         this.fieldEndpoints.remove(endpoint.getId());
     }
 
+    public CommFieldEndpoint getEndpoint(Contact contact) {
+        for (CommFieldEndpoint endpoint : this.fieldEndpoints.values()) {
+            if (endpoint.getContact().equals(contact)) {
+                return endpoint;
+            }
+        }
+
+        return null;
+    }
+
     public CommFieldEndpoint getEndpoint(Contact contact, Device device) {
         for (CommFieldEndpoint endpoint : this.fieldEndpoints.values()) {
             if (endpoint.getContact().equals(contact) && endpoint.getDevice().equals(device)) {
