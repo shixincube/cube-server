@@ -60,6 +60,6 @@ public class BusyTask extends ServiceTask {
         MultipointCommStateCode state = service.processBusy(busy);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, state.code, packet.data));
+                this.makeResponse(action, packet, state.code, busy.toJSON()));
     }
 }

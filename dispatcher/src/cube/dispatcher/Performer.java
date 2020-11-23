@@ -355,6 +355,7 @@ public class Performer implements TalkListener {
     public void start(List<String> cellets) {
         for (String cellet : cellets) {
             this.talkService.setListener(cellet, this);
+            Logger.i(this.getClass(), "Set cellet '" + cellet + "' listener");
         }
 
         Iterator<Map.Entry<String, List<Director>>> iter = this.celletDirectorMap.entrySet().iterator();

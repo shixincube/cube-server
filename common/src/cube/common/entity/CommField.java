@@ -55,9 +55,9 @@ public class CommField extends Entity {
 
     private List<InboundCalling> inboundCallingList;
 
-    private long defaultTimeout = 33L * 1000L;
+    private long defaultTimeout = 40L * 1000L;
 
-    private long offerTimeout = 35L;
+    private long offerTimeout = 45L;
 
     public CommField(Long id, String domainName, Contact founder) {
         super(id, domainName);
@@ -145,6 +145,14 @@ public class CommField extends Entity {
         return result;
     }
 
+    public Contact getOutboundCallTarget() {
+        if (this.outboundCallingList.isEmpty()) {
+            return null;
+        }
+
+        return this.outboundCallingList.get(0).target;
+    }
+
     public void clearOutboundCall() {
         this.outboundCallingList.clear();
     }
@@ -164,6 +172,14 @@ public class CommField extends Entity {
         }
 
         return this.inboundCallingList.get(0).proposer;
+    }
+
+    public Contact getInboundCallTarget() {
+        if (this.inboundCallingList.isEmpty()) {
+            return null;
+        }
+
+        return this.inboundCallingList.get(0).target;
     }
 
     public void clearInboundCall() {

@@ -59,6 +59,6 @@ public class AnswerTask extends ServiceTask {
         MultipointCommStateCode state = service.processAnswer(answer);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, state.code, packet.data));
+                this.makeResponse(action, packet, state.code, answer.toJSON()));
     }
 }

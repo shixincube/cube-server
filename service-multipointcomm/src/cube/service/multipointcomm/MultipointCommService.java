@@ -242,6 +242,33 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
                 // 停止追踪
                 current.stopTrace(endpoint);
+
+                Contact caller = null;
+                Contact callee = null;
+                Contact target = null;
+
+                if (current.hasOutboundCall(signaling.getContact())) {
+                    // 主叫发送的 Bye
+                    caller = signaling.getContact();
+                    callee = current.getOutboundCallTarget();
+
+                    // 向被叫推送 Bye
+                    target = callee;
+                }
+                else {
+                    // 被叫发送的 Bye
+                    caller = current.getInboundCallProposer();
+                    callee = current.getInboundCallTarget();
+
+                    // 向主叫推送 Bye
+                    target = caller;
+                }
+
+                signaling.setCaller(caller);
+                signaling.setCallee(callee);
+
+                ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, signaling.getName(), signaling.toJSON());
+                this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
             }
         }
         else {
@@ -265,6 +292,34 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
                 // 停止追踪
                 current.stopTrace(endpoint);
+
+                Contact caller = null;
+                Contact callee = null;
+                Contact target = null;
+
+                if (current.hasOutboundCall(signaling.getContact())) {
+                    caller = signaling.getContact();
+                    callee = current.getOutboundCallTarget();
+
+                    // 向被叫推送 Busy
+                    target = callee;
+                }
+                else {
+                    caller = current.getInboundCallProposer();
+                    callee = current.getInboundCallTarget();
+
+                    signaling.setCaller(caller);
+                    signaling.setCallee(callee);
+
+                    // 向主叫推送 Busy
+                    target = caller;
+                }
+
+                signaling.setCaller(caller);
+                signaling.setCallee(callee);
+
+                ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, signaling.getName(), signaling.toJSON());
+                this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
             }
         }
         else {
@@ -275,6 +330,10 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     }
 
     protected void fireOfferTimeout(CommField field, CommFieldEndpoint endpoint) {
+        if (Logger.isDebugLevel()) {
+            Logger.i(this.getClass(), "Comm field offer timeout: " + field.getId());
+        }
+        
         field.clearEndpoint(endpoint);
 
         Contact contact = ContactManager.getInstance().getOnlineContact(field.getDomain().getName(),
@@ -360,6 +419,44 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                                 contact.getDomain().getName(), signaling)) {
                             Logger.d(this.getClass(), "Push signaling '" + signaling.getName()
                                     + "' to '" + caller.getId() + "'");
+                        }
+                    }
+                }
+            }
+            else if (event.getEventName().equals(MultipointCommAction.Bye.name)) {
+                // 处理 Bye 信令
+                ByeSignaling signaling = new ByeSignaling(event.getData());
+                Contact source = signaling.getContact();
+                Contact target = source.equals(signaling.getCaller()) ? signaling.getCallee() : signaling.getCaller();
+                // 获取联系人
+                Contact contact = ContactManager.getInstance()
+                        .getOnlineContact(target.getDomain().getName(), target.getId());
+                if (null != contact) {
+                    // 向联系人所有设备推送
+                    for (Device device : contact.getDeviceList()) {
+                        if (pushSignaling(device.getTalkContext(), contact.getId(),
+                                contact.getDomain().getName(), signaling)) {
+                            Logger.d(this.getClass(), "Push signaling '" + signaling.getName()
+                                    + "' to '" + target.getId() + "'");
+                        }
+                    }
+                }
+            }
+            else if (event.getEventName().equals(MultipointCommAction.Busy.name)) {
+                // 处理 Bye 信令
+                BusySignaling signaling = new BusySignaling(event.getData());
+                Contact source = signaling.getContact();
+                Contact target = source.equals(signaling.getCaller()) ? signaling.getCallee() : signaling.getCaller();
+                // 获取联系人
+                Contact contact = ContactManager.getInstance()
+                        .getOnlineContact(target.getDomain().getName(), target.getId());
+                if (null != contact) {
+                    // 向联系人所有设备推送
+                    for (Device device : contact.getDeviceList()) {
+                        if (pushSignaling(device.getTalkContext(), contact.getId(),
+                                contact.getDomain().getName(), signaling)) {
+                            Logger.d(this.getClass(), "Push signaling '" + signaling.getName()
+                                    + "' to '" + target.getId() + "'");
                         }
                     }
                 }

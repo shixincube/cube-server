@@ -37,6 +37,8 @@ public enum MultipointCommAction {
 
     Bye("bye"),
 
+    Busy("busy"),
+
     Candidate("candidate"),
 
     ApplyCall("applyCall"),

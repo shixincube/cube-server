@@ -54,6 +54,22 @@ public class ByeSignaling extends Signaling {
         }
     }
 
+    public void setCaller(Contact caller) {
+        this.caller = caller;
+    }
+
+    public Contact getCaller() {
+        return this.caller;
+    }
+
+    public void setCallee(Contact callee) {
+        this.callee = callee;
+    }
+
+    public Contact getCallee() {
+        return this.callee;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
