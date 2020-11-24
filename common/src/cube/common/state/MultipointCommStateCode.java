@@ -77,6 +77,11 @@ public enum MultipointCommStateCode {
     DataStructureError(20),
 
     /**
+     * 场域状态错误。
+     */
+    CommFieldStateError(21),
+
+    /**
      * 正在建立通话。
      */
     Calling(27),

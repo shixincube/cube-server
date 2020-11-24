@@ -35,17 +35,17 @@ import cell.util.json.JSONException;
 import cube.common.Packet;
 import cube.common.entity.CommField;
 import cube.common.entity.Contact;
-import cube.common.state.MessagingStateCode;
+import cube.common.entity.Device;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.ServiceTask;
 import cube.service.multipointcomm.MultipointCommService;
 
 /**
- * Apply Call 任务。
+ * Apply Enter 任务。
  */
-public class ApplyCallTask extends ServiceTask {
+public class ApplyEnterTask extends ServiceTask {
 
-    public ApplyCallTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
+    public ApplyEnterTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
 
@@ -55,21 +55,21 @@ public class ApplyCallTask extends ServiceTask {
         Packet packet = new Packet(action);
 
         CommField field = null;
-        Contact proposer = null;
-        Contact target = null;
+        Contact contact = null;
+        Device device = null;
 
         try {
             field = new CommField(packet.data.getJSONObject("field"));
-            proposer = new Contact(packet.data.getJSONObject("proposer"), field.getDomain());
-            target = new Contact(packet.data.getJSONObject("target"), field.getDomain());
+            contact = new Contact(packet.data.getJSONObject("contact"), field.getDomain());
+            device = new Device(packet.data.getJSONObject("device"));
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
 
-        // 申请对指定目标进行外呼
-        MultipointCommStateCode state = service.applyCall(field, proposer, target);
+        // 申请进入 Comm Field
+        MultipointCommStateCode state = service.applyEnter(field, contact, device);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, state.code, packet.data));

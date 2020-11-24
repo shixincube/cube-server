@@ -90,6 +90,9 @@ public class MultipointCommServiceCellet extends Cellet {
         else if (MultipointCommAction.ApplyCall.name.equals(action)) {
             this.executor.execute(new ApplyCallTask(this, talkContext, primitive));
         }
+        else if (MultipointCommAction.ApplyEnter.name.equals(action)) {
+            this.executor.execute(new ApplyEnterTask(this, talkContext, primitive));
+        }
         else {
             Logger.w(this.getClass(), "Unsupported action: " + action);
         }

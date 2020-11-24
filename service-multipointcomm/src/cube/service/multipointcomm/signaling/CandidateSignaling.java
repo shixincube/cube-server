@@ -26,6 +26,7 @@
 
 package cube.service.multipointcomm.signaling;
 
+import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.action.MultipointCommAction;
@@ -33,6 +34,7 @@ import cube.common.entity.CommField;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -69,7 +71,11 @@ public class CandidateSignaling extends Signaling {
     }
 
     public void setCandidateList(List<JSONObject> candidates) {
+        if (null == this.candidateList) {
+            this.candidateList = new ArrayList<>();
+        }
 
+        this.candidateList.addAll(candidates);
     }
 
     @Override
@@ -78,6 +84,15 @@ public class CandidateSignaling extends Signaling {
         try {
             if (null != this.candidate) {
                 json.put("candidate", this.candidate);
+            }
+
+            if (null != this.candidateList) {
+                JSONArray array = new JSONArray();
+                for (JSONObject candidate : this.candidateList) {
+                    array.put(candidate);
+                }
+
+                json.put("candidates", array);
             }
         } catch (JSONException e) {
             e.printStackTrace();
