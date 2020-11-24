@@ -31,8 +31,8 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.Domain;
 import cube.common.UniqueKey;
+import cube.common.state.MultipointCommStateCode;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
@@ -140,17 +140,30 @@ public class CommField extends Entity {
         return false;
     }
 
+    /**
+     * 标记 Calling
+     *
+     * @param caller
+     * @param callee
+     */
     public void markCalling(Contact caller, Contact callee) {
         BoundCalling calling = new BoundCalling(caller, callee);
-        if (this.boundCallingList.contains(calling)) {
-            return;
-        }
-
+        this.boundCallingList.remove(calling);
         this.boundCallingList.add(calling);
     }
 
     public boolean isCalling() {
-        return (!this.boundCallingList.isEmpty());
+        if (!this.boundCallingList.isEmpty()) {
+            BoundCalling calling = this.boundCallingList.get(0);
+            if (System.currentTimeMillis() - calling.timestamp > this.defaultTimeout) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -171,12 +184,54 @@ public class CommField extends Entity {
      *
      * @return
      */
+    public MultipointCommStateCode getCallerState() {
+        if (this.boundCallingList.isEmpty()) {
+            return MultipointCommStateCode.Unknown;
+        }
+
+        return this.boundCallingList.get(0).callerState;
+    }
+
+    public void updateCallerState(MultipointCommStateCode state) {
+        if (this.boundCallingList.isEmpty()) {
+            return;
+        }
+
+        this.boundCallingList.get(0).callerState = state;
+    }
+
+    /**
+     * 仅用于私域下。
+     *
+     * @return
+     */
     public Contact getCallee() {
         if (this.boundCallingList.isEmpty()) {
             return null;
         }
 
         return this.boundCallingList.get(0).callee;
+    }
+
+    /**
+     * 仅用于私域下。
+     *
+     * @return
+     */
+    public MultipointCommStateCode getCalleeState() {
+        if (this.boundCallingList.isEmpty()) {
+            return MultipointCommStateCode.Unknown;
+        }
+
+        return this.boundCallingList.get(0).calleeState;
+    }
+
+    public void updateCalleeState(MultipointCommStateCode state) {
+        if (this.boundCallingList.isEmpty()) {
+            return;
+        }
+
+        this.boundCallingList.get(0).calleeState = state;
     }
 
     public void clearCalling() {
@@ -318,7 +373,11 @@ public class CommField extends Entity {
 
         protected Contact caller;
 
+        protected MultipointCommStateCode callerState = MultipointCommStateCode.Ok;
+
         protected Contact callee;
+
+        protected MultipointCommStateCode calleeState = MultipointCommStateCode.Ok;
 
         protected long timestamp;
 

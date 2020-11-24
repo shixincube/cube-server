@@ -119,6 +119,12 @@ public class CommFieldEndpoint extends Entity {
         return this.candidateList;
     }
 
+    public void clearCandidates() {
+        if (null != this.candidateList) {
+            this.candidateList.clear();
+        }
+    }
+
     public void setState(MultipointCommStateCode state) {
         this.state = state;
     }
