@@ -181,10 +181,10 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             }
 
             // 标记 Call
-            current.markCalling(proposer, target);
+            current.markSingleCalling(proposer, target);
 
             // 标记 Call
-            calleeField.markCalling(proposer, target);
+            calleeField.markSingleCalling(proposer, target);
 
             return MultipointCommStateCode.Ok;
         }
@@ -411,7 +411,6 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         if (current.isPrivate()) {
             CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
             if (null != endpoint) {
-
                 Logger.i(this.getClass(), "Bye: " + current.getFounder().getId());
 
                 // 更新状态

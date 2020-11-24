@@ -146,9 +146,10 @@ public class CommField extends Entity {
      * @param caller
      * @param callee
      */
-    public void markCalling(Contact caller, Contact callee) {
+    public void markSingleCalling(Contact caller, Contact callee) {
+        this.boundCallingList.clear();
+
         BoundCalling calling = new BoundCalling(caller, callee);
-        this.boundCallingList.remove(calling);
         this.boundCallingList.add(calling);
     }
 
