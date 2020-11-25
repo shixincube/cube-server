@@ -153,14 +153,31 @@ public class CommField extends Entity {
         this.boundCallingList.add(calling);
     }
 
-    public boolean isCalling() {
-        if (!this.boundCallingList.isEmpty()) {
-            BoundCalling calling = this.boundCallingList.get(0);
-            if (System.currentTimeMillis() - calling.timestamp > this.defaultTimeout) {
-                return false;
+    public boolean isCalling(Contact contact) {
+        long now = System.currentTimeMillis();
+        for (BoundCalling calling : this.boundCallingList) {
+            if (now - calling.timestamp > this.defaultTimeout) {
+                continue;
             }
-            else {
-                return true;
+
+            if (calling.caller.equals(contact)) {
+                if (calling.callerState == MultipointCommStateCode.CallBye
+                        || calling.callerState == MultipointCommStateCode.Ok) {
+                    continue;
+                }
+                else {
+                    return true;
+                }
+            }
+
+            if (calling.callee.equals(contact)) {
+                if (calling.calleeState == MultipointCommStateCode.CallBye
+                        || calling.calleeState == MultipointCommStateCode.Ok) {
+                    continue;
+                }
+                else {
+                    return true;
+                }
             }
         }
 

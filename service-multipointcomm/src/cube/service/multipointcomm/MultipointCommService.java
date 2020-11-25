@@ -157,7 +157,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
         if (current.isPrivate()) {
             // 私域
-            if (current.isCalling()) {
+            if (current.isCalling(proposer)) {
                 // 主叫忙
                 return MultipointCommStateCode.CallerBusy;
             }
@@ -169,8 +169,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 this.commFieldMap.put(calleeField.getId(), calleeField);
             }
 
-            if (calleeField.isCalling()) {
-                if (calleeField.getCallerState() == MultipointCommStateCode.CallBye) {
+            if (calleeField.isCalling(target)) {
+                if (calleeField.isCaller(proposer) && calleeField.getCallerState() == MultipointCommStateCode.CallBye) {
                     // 主叫状态为 Bye 说明通话结束
                     calleeField.clearCalling();
                 }
@@ -221,7 +221,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         signaling.setField(current);
 
         if (current.isPrivate()) {
-            if (!current.isCalling()) {
+            if (!current.isCalling(signaling.getContact())) {
                 endpoint.setState(MultipointCommStateCode.Ok);
                 return MultipointCommStateCode.CommFieldStateError;
             }
@@ -282,7 +282,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         signaling.setField(current);
 
         if (current.isPrivate()) {
-            if (!current.isCalling()) {
+            if (!current.isCalling(signaling.getContact())) {
                 // 没有呼叫信息
                 endpoint.setState(MultipointCommStateCode.Ok);
                 return MultipointCommStateCode.CommFieldStateError;
