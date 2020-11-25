@@ -494,6 +494,20 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         }
 
         if (current.isPrivate()) {
+            Contact caller = current.getCaller();
+            Contact callee = current.getCallee();
+            Contact target = null;
+
+            if (signaling.getContact().equals(caller)) {
+                target = callee;
+            }
+            else {
+                target = caller;
+            }
+
+            signaling.setCaller(current.getCaller());
+            signaling.setCallee(current.getCallee());
+
             CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
             if (null != endpoint) {
                 // 更新状态
@@ -505,35 +519,21 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
                 current.updateCalleeState(MultipointCommStateCode.CalleeBusy);
 
-                Contact caller = current.getCaller();
-                Contact callee = current.getCallee();
-                Contact target = null;
+                current.clearCalling();
+            }
 
-                if (signaling.getContact().equals(caller)) {
-                    // 向被叫推送 Busy
-                    target = callee;
-                }
-                else {
-                    // 向主叫推送 Busy
-                    target = caller;
-                }
+            // 对方的通信场域
+            CommField targetField = this.commFieldMap.get(target.getId());
+            // 更新状态
+            targetField.updateCalleeState(MultipointCommStateCode.CalleeBusy);
 
-                signaling.setCaller(caller);
-                signaling.setCallee(callee);
-
-                // 对方的通信场域
-                CommField targetField = this.commFieldMap.get(target.getId());
-                // 更新状态
-                targetField.updateCalleeState(MultipointCommStateCode.CalleeBusy);
-
-                CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
-                if (null != targetEndpoint) {
-                    BusySignaling toTarget = new BusySignaling(targetField,
-                            targetEndpoint.getContact(), targetEndpoint.getDevice());
-                    toTarget.copy(signaling);
-                    ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, toTarget.getName(), toTarget.toJSON());
-                    this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
-                }
+            CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
+            if (null != targetEndpoint) {
+                BusySignaling toTarget = new BusySignaling(targetField,
+                        targetEndpoint.getContact(), targetEndpoint.getDevice());
+                toTarget.copy(signaling);
+                ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, toTarget.getName(), toTarget.toJSON());
+                this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
             }
         }
         else {
