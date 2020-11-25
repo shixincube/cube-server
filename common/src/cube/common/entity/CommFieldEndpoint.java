@@ -50,6 +50,8 @@ public class CommFieldEndpoint extends Entity {
 
     private JSONObject sessionDescription;
 
+    private JSONObject mediaConstraint;
+
     private List<JSONObject> candidateList;
 
     private boolean videoEnabled = true;
@@ -107,6 +109,10 @@ public class CommFieldEndpoint extends Entity {
         this.sessionDescription = sessionDescription;
     }
 
+    public void setMediaConstraint(JSONObject mediaConstraint) {
+        this.mediaConstraint = mediaConstraint;
+    }
+
     public synchronized void addCandidate(JSONObject candidate) {
         if (null == this.candidateList) {
             this.candidateList = new ArrayList<>();
@@ -116,6 +122,10 @@ public class CommFieldEndpoint extends Entity {
     }
 
     public List<JSONObject> getCandidates() {
+        if (null == this.candidateList) {
+            return new ArrayList<>();
+        }
+
         return this.candidateList;
     }
 

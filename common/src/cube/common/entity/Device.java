@@ -292,4 +292,13 @@ public class Device implements JSONable {
 
         return this.hash;
     }
+
+    /**
+     * 创建无设备描述的设备。
+     *
+     * @return
+     */
+    public static Device createDevice() {
+        return new Device("Unknown", "Unknown");
+    }
 }

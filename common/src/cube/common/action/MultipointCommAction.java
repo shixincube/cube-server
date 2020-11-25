@@ -57,6 +57,26 @@ public enum MultipointCommAction {
     Candidate("candidate"),
 
     /**
+     * 应答 Offer
+     */
+    OfferAck("offerAck"),
+
+    /**
+     * 应答 Answer
+     */
+    AnswerAck("answerAck"),
+
+    /**
+     * 应答 Candidate
+     */
+    CandidateAck("candidateAck"),
+
+    /**
+     * 应答 Bye
+     */
+    ByeAck("byeAck"),
+
+    /**
      * 执行申请主叫。
      */
     ApplyCall("applyCall"),
@@ -78,7 +98,7 @@ public enum MultipointCommAction {
 
     ;
 
-    public String name;
+    public final String name;
 
     MultipointCommAction(String name) {
         this.name = name;

@@ -28,7 +28,10 @@ package cube.service.multipointcomm.signaling;
 
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.action.MultipointCommAction;
+import cube.common.entity.CommField;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 
 /**
  * Byte 信令。
@@ -38,6 +41,10 @@ public class ByeSignaling extends Signaling {
     private Contact caller;
 
     private Contact callee;
+
+    public ByeSignaling(CommField commField, Contact contact, Device device) {
+        super(MultipointCommAction.Bye.name, commField, contact, device);
+    }
 
     public ByeSignaling(JSONObject json) {
         super(json);
@@ -52,6 +59,11 @@ public class ByeSignaling extends Signaling {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public void copy(ByeSignaling source) {
+        this.caller = source.caller;
+        this.callee = source.callee;
     }
 
     public void setCaller(Contact caller) {

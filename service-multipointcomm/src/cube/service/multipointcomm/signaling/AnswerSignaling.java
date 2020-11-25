@@ -28,7 +28,10 @@ package cube.service.multipointcomm.signaling;
 
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.action.MultipointCommAction;
+import cube.common.entity.CommField;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 
 /**
  * Answer 信令。
@@ -37,15 +40,22 @@ public class AnswerSignaling extends Signaling {
 
     private JSONObject sessionDescription;
 
+    private JSONObject mediaConstraint;
+
     private Contact caller;
 
     private Contact callee;
+
+    public AnswerSignaling(CommField field, Contact contact, Device device) {
+        super(MultipointCommAction.Answer.name, field, contact, device);
+    }
 
     public AnswerSignaling(JSONObject json) {
         super(json);
 
         try {
             this.sessionDescription = json.getJSONObject("description");
+            this.mediaConstraint = json.getJSONObject("constraint");
 
             if (json.has("caller")) {
                 this.caller = new Contact(json.getJSONObject("caller"));
@@ -56,6 +66,13 @@ public class AnswerSignaling extends Signaling {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public void copy(AnswerSignaling source) {
+        this.caller = source.caller;
+        this.callee = source.callee;
+        this.sessionDescription = source.sessionDescription;
+        this.mediaConstraint = source.mediaConstraint;
     }
 
     public void setCaller(Contact caller) {
@@ -76,6 +93,10 @@ public class AnswerSignaling extends Signaling {
 
     public JSONObject getSessionDescription() {
         return this.sessionDescription;
+    }
+
+    public JSONObject getMediaConstraint() {
+        return this.mediaConstraint;
     }
 
     public String getType() {
@@ -103,6 +124,7 @@ public class AnswerSignaling extends Signaling {
         JSONObject json = super.toJSON();
         try {
             json.put("description", this.sessionDescription);
+            json.put("constraint", this.mediaConstraint);
             if (null != this.caller) {
                 json.put("caller", this.caller.toBasicJSON());
             }

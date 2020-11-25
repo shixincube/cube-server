@@ -161,8 +161,7 @@ public class CommField extends Entity {
             }
 
             if (calling.caller.equals(contact)) {
-                if (calling.callerState == MultipointCommStateCode.CallBye
-                        || calling.callerState == MultipointCommStateCode.Ok) {
+                if (calling.callerState == MultipointCommStateCode.CallBye) {
                     continue;
                 }
                 else {
@@ -171,8 +170,7 @@ public class CommField extends Entity {
             }
 
             if (calling.callee.equals(contact)) {
-                if (calling.calleeState == MultipointCommStateCode.CallBye
-                        || calling.calleeState == MultipointCommStateCode.Ok) {
+                if (calling.calleeState == MultipointCommStateCode.CallBye) {
                     continue;
                 }
                 else {
@@ -326,6 +324,10 @@ public class CommField extends Entity {
     }
 
     public void stopTrace(CommFieldEndpoint endpoint) {
+        if (null == this.offerFutureMap) {
+            return;
+        }
+
         ScheduledFuture<?> future = this.offerFutureMap.remove(endpoint.getId());
         if (null != future) {
             future.cancel(true);

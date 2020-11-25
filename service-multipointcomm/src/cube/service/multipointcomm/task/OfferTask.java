@@ -32,6 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.common.Packet;
+import cube.common.action.MultipointCommAction;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.ServiceTask;
 import cube.service.multipointcomm.MultipointCommService;
@@ -66,6 +67,6 @@ public class OfferTask extends ServiceTask {
         MultipointCommStateCode state = service.processOffer(offer);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, state.code, offer.toJSON()));
+                this.makeResponse(action, packet, MultipointCommAction.OfferAck.name, state.code, offer.toJSON()));
     }
 }

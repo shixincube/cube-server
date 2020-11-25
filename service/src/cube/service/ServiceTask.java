@@ -99,6 +99,22 @@ public abstract class ServiceTask extends Task {
      *
      * @param action
      * @param request
+     * @param packetName
+     * @param packetPayload
+     * @return
+     */
+    protected ActionDialect makeResponse(ActionDialect action, Packet request, String packetName, JSONObject packetPayload) {
+        Packet response = new Packet(request.sn, packetName, packetPayload);
+        ActionDialect responseDialect = response.toDialect();
+        Director.copyPerformer(action, responseDialect);
+        return responseDialect;
+    }
+
+    /**
+     * 生成应答负载数据的应答原语。
+     *
+     * @param action
+     * @param request
      * @param stateCode
      * @param data
      * @return
@@ -106,6 +122,21 @@ public abstract class ServiceTask extends Task {
     protected ActionDialect makeResponse(ActionDialect action, Packet request, int stateCode, JSONObject data) {
         JSONObject payload = this.makePacketPayload(stateCode, data);
         return this.makeResponse(action, request, payload);
+    }
+
+    /**
+     * 生成应答负载数据的应答原语。
+     *
+     * @param action
+     * @param request
+     * @param packetName
+     * @param stateCode
+     * @param data
+     * @return
+     */
+    protected ActionDialect makeResponse(ActionDialect action, Packet request, String packetName, int stateCode, JSONObject data) {
+        JSONObject payload = this.makePacketPayload(stateCode, data);
+        return this.makeResponse(action, request, packetName, payload);
     }
 
     /**

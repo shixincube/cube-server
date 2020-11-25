@@ -28,7 +28,10 @@ package cube.service.multipointcomm.signaling;
 
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.action.MultipointCommAction;
+import cube.common.entity.CommField;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 
 /**
  * Busy 信令。
@@ -38,6 +41,10 @@ public class BusySignaling extends Signaling {
     private Contact caller;
 
     private Contact callee;
+
+    public BusySignaling(CommField commField, Contact contact, Device device) {
+        super(MultipointCommAction.Busy.name, commField, contact, device);
+    }
 
     public BusySignaling(JSONObject json) {
         super(json);
@@ -52,6 +59,11 @@ public class BusySignaling extends Signaling {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public void copy(BusySignaling source) {
+        this.caller = source.caller;
+        this.callee = source.callee;
     }
 
     public void setCaller(Contact caller) {

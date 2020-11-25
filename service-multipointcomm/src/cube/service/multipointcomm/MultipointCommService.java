@@ -215,6 +215,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             current.addEndpoint(endpoint);
         }
         endpoint.setSessionDescription(signaling.getSessionDescription());
+        endpoint.setMediaConstraint(signaling.getMediaConstraint());
         endpoint.setState(MultipointCommStateCode.Calling);
 
         // 更新信令的 Field
@@ -234,9 +235,14 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             // 被叫
             signaling.setCallee(current.getCallee());
 
+            // 被叫的域
+            CommField calleeField = this.commFieldMap.get(current.getCallee().getId());
+
             // 推送信令
+            OfferSignaling toCallee = new OfferSignaling(calleeField, calleeField.getFounder(), Device.createDevice());
+            toCallee.copy(signaling);
             ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
-                    MultipointCommAction.Offer.name, signaling.toJSON());
+                    MultipointCommAction.Offer.name, toCallee.toJSON());
             this.contactsAdapter.publish(current.getCallee().getUniqueKey(), event.toJSON());
 
             final CommFieldEndpoint offerEndpoint = endpoint;
@@ -275,7 +281,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             current.addEndpoint(endpoint);
         }
         endpoint.setSessionDescription(signaling.getSessionDescription());
-        // 更新状态
+        endpoint.setMediaConstraint(signaling.getMediaConstraint());
         endpoint.setState(MultipointCommStateCode.CallConnected);
 
         // 更新信令的 Field
@@ -299,20 +305,22 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             // 设置被叫
             signaling.setCallee(signaling.getContact());
 
-            // 向主叫发送 Answer
-            ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
-                    MultipointCommAction.Answer.name, signaling.toJSON());
-            this.contactsAdapter.publish(caller.getUniqueKey(), event.toJSON());
-
             // 获取主叫的 Comm Field
             CommField callerField = this.commFieldMap.get(caller.getId());
             callerField.updateCallerState(MultipointCommStateCode.CallConnected);
             callerField.updateCalleeState(MultipointCommStateCode.CallConnected);
 
             CommFieldEndpoint callerEndpoint = callerField.getEndpoint(caller);
-
             // 修改主叫状态
             callerEndpoint.setState(MultipointCommStateCode.CallConnected);
+
+            // 向主叫发送 Answer
+            AnswerSignaling toCaller = new AnswerSignaling(callerField,
+                    callerEndpoint.getContact(), callerEndpoint.getDevice());
+            toCaller.copy(signaling);
+            ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
+                    MultipointCommAction.Answer.name, toCaller.toJSON());
+            this.contactsAdapter.publish(caller.getUniqueKey(), event.toJSON());
 
             // 向主叫推送 Candidate
             CandidateSignaling candidateSignaling = new CandidateSignaling(callerField,
@@ -411,11 +419,18 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         if (current.isPrivate()) {
             CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
             if (null != endpoint) {
+                if (endpoint.getState() == MultipointCommStateCode.CallBye) {
+                    return MultipointCommStateCode.Ok;
+                }
+
                 Logger.i(this.getClass(), "Bye: " + current.getFounder().getId());
 
                 // 更新状态
                 endpoint.setState(MultipointCommStateCode.CallBye);
                 endpoint.clearCandidates();
+
+                current.updateCallerState(MultipointCommStateCode.CallBye);
+                current.updateCalleeState(MultipointCommStateCode.CallBye);
 
                 // 停止追踪
                 current.stopTrace(endpoint);
@@ -438,17 +453,25 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 signaling.setCaller(caller);
                 signaling.setCallee(callee);
 
-                ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, signaling.getName(), signaling.toJSON());
-                this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
+                // 对方的通信场域
+                CommField targetField = this.commFieldMap.get(target.getId());
+                // 更新状态
+                targetField.updateCallerState(MultipointCommStateCode.CallBye);
+                targetField.updateCalleeState(MultipointCommStateCode.CallBye);
+
+                CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
+                if (null != targetEndpoint) {
+                    targetEndpoint.setState(MultipointCommStateCode.CallBye);
+
+                    ByeSignaling toTarget = new ByeSignaling(targetField,
+                            targetEndpoint.getContact(), targetEndpoint.getDevice());
+                    toTarget.copy(signaling);
+                    ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, toTarget.getName(), toTarget.toJSON());
+                    this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
+                }
 
                 // 清空
                 current.clearAll();
-
-                // 对方的通信场域
-                CommField peerField = this.commFieldMap.get(target.getId());
-                // 更新状态
-                peerField.updateCallerState(MultipointCommStateCode.CallBye);
-                peerField.updateCalleeState(MultipointCommStateCode.CallBye);
             }
         }
         else {
@@ -480,6 +503,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 // 停止追踪
                 current.stopTrace(endpoint);
 
+                current.updateCalleeState(MultipointCommStateCode.CalleeBusy);
+
                 Contact caller = current.getCaller();
                 Contact callee = current.getCallee();
                 Contact target = null;
@@ -496,8 +521,19 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 signaling.setCaller(caller);
                 signaling.setCallee(callee);
 
-                ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, signaling.getName(), signaling.toJSON());
-                this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
+                // 对方的通信场域
+                CommField targetField = this.commFieldMap.get(target.getId());
+                // 更新状态
+                targetField.updateCalleeState(MultipointCommStateCode.CalleeBusy);
+
+                CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
+                if (null != targetEndpoint) {
+                    BusySignaling toTarget = new BusySignaling(targetField,
+                            targetEndpoint.getContact(), targetEndpoint.getDevice());
+                    toTarget.copy(signaling);
+                    ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, toTarget.getName(), toTarget.toJSON());
+                    this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
+                }
             }
         }
         else {
@@ -575,7 +611,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                     for (Device device : contact.getDeviceList()) {
                         if (pushSignaling(device.getTalkContext(), contact.getId(),
                                 contact.getDomain().getName(), signaling)) {
-                            Logger.d(this.getClass(), "Push signaling '" + signaling.getName()
+                            Logger.i(this.getClass(), "Push signaling '" + signaling.getName()
                                     + "' to '" + callee.getId() + "'");
                         }
                     }
@@ -584,18 +620,18 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             else if (MultipointCommAction.Answer.name.equals(eventName)) {
                 // 处理 Answer 信令
                 AnswerSignaling signaling = new AnswerSignaling(event.getData());
-                // 主叫
-                Contact caller = signaling.getCaller();
+                // 目标
+                Contact target = signaling.getContact();
                 // 获取联系人
                 Contact contact = ContactManager.getInstance()
-                        .getOnlineContact(caller.getDomain().getName(), caller.getId());
+                        .getOnlineContact(target.getDomain().getName(), target.getId());
                 if (null != contact) {
-                    // 向联系人所有设备推送
-                    for (Device device : contact.getDeviceList()) {
+                    Device device = contact.getDevice(signaling.getDevice());
+                    if (null != device) {
                         if (pushSignaling(device.getTalkContext(), contact.getId(),
                                 contact.getDomain().getName(), signaling)) {
-                            Logger.d(this.getClass(), "Push signaling '" + signaling.getName()
-                                    + "' to '" + caller.getId() + "'");
+                            Logger.i(this.getClass(), "Push signaling '" + signaling.getName()
+                                    + "' to '" + target.getId() + "'");
                         }
                     }
                 }
@@ -603,17 +639,16 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             else if (MultipointCommAction.Bye.name.equals(eventName)) {
                 // 处理 Bye 信令
                 ByeSignaling signaling = new ByeSignaling(event.getData());
-                Contact source = signaling.getContact();
-                Contact target = source.equals(signaling.getCaller()) ? signaling.getCallee() : signaling.getCaller();
+                Contact target = signaling.getContact();
                 // 获取联系人
                 Contact contact = ContactManager.getInstance()
                         .getOnlineContact(target.getDomain().getName(), target.getId());
                 if (null != contact) {
-                    // 向联系人所有设备推送
-                    for (Device device : contact.getDeviceList()) {
+                    Device device = contact.getDevice(signaling.getDevice());
+                    if (null != device) {
                         if (pushSignaling(device.getTalkContext(), contact.getId(),
                                 contact.getDomain().getName(), signaling)) {
-                            Logger.d(this.getClass(), "Push signaling '" + signaling.getName()
+                            Logger.i(this.getClass(), "Push signaling '" + signaling.getName()
                                     + "' to '" + target.getId() + "'");
                         }
                     }
@@ -622,17 +657,16 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             else if (MultipointCommAction.Busy.name.equals(eventName)) {
                 // 处理 Bye 信令
                 BusySignaling signaling = new BusySignaling(event.getData());
-                Contact source = signaling.getContact();
-                Contact target = source.equals(signaling.getCaller()) ? signaling.getCallee() : signaling.getCaller();
+                Contact target = signaling.getContact();
                 // 获取联系人
                 Contact contact = ContactManager.getInstance()
                         .getOnlineContact(target.getDomain().getName(), target.getId());
                 if (null != contact) {
-                    // 向联系人所有设备推送
-                    for (Device device : contact.getDeviceList()) {
+                    Device device = contact.getDevice(signaling.getDevice());
+                    if (null != device) {
                         if (pushSignaling(device.getTalkContext(), contact.getId(),
                                 contact.getDomain().getName(), signaling)) {
-                            Logger.d(this.getClass(), "Push signaling '" + signaling.getName()
+                            Logger.i(this.getClass(), "Push signaling '" + signaling.getName()
                                     + "' to '" + target.getId() + "'");
                         }
                     }
