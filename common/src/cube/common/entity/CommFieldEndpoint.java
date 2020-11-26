@@ -40,28 +40,68 @@ import java.util.List;
  */
 public class CommFieldEndpoint extends Entity {
 
+    /**
+     * 节点名。
+     */
     private String name;
 
+    /**
+     * 节点的联系人。
+     */
     private Contact contact;
 
+    /**
+     * 节点的设备。
+     */
     private Device device;
 
+    /**
+     * 当前节点的状态。
+     */
     private MultipointCommStateCode state;
 
+    /**
+     * 当前节点的 SDP 信息。
+     */
     private JSONObject sessionDescription;
 
+    /**
+     * 当前节点的媒体约束。
+     */
     private JSONObject mediaConstraint;
 
+    /**
+     * 当前节点提交的 ICE Candidate 数据。
+     */
     private List<JSONObject> candidateList;
 
+    /**
+     * 视频是否启用。
+     */
     private boolean videoEnabled = true;
 
+    /**
+     * 视频流是否开启。
+     */
     private boolean videoStreamEnabled = true;
 
+    /**
+     * 音频是否启用。
+     */
     private boolean audioEnabled = true;
 
+    /**
+     * 音频流是否开启。
+     */
     private boolean audioStreamEnabled = true;
 
+    /**
+     * 构造函数。
+     *
+     * @param id
+     * @param contact
+     * @param device
+     */
     public CommFieldEndpoint(Long id, Contact contact, Device device) {
         super(id, contact.domain);
 
@@ -72,6 +112,11 @@ public class CommFieldEndpoint extends Entity {
         this.name = contact.getUniqueKey() + "_" + device.getName() + "_" + device.getPlatform();
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param json
+     */
     public CommFieldEndpoint(JSONObject json) {
         super();
 
@@ -97,22 +142,46 @@ public class CommFieldEndpoint extends Entity {
         this.uniqueKey = UniqueKey.make(this.id, this.domain);
     }
 
+    /**
+     * 获取联系人实例。
+     *
+     * @return
+     */
     public Contact getContact() {
         return this.contact;
     }
 
+    /**
+     * 获取设备实例。
+     *
+     * @return
+     */
     public Device getDevice() {
         return this.device;
     }
 
+    /**
+     * 设置 WebRTC 的 session description 。
+     * @param sessionDescription
+     */
     public void setSessionDescription(JSONObject sessionDescription) {
         this.sessionDescription = sessionDescription;
     }
 
+    /**
+     * 设置媒体约束。
+     *
+     * @param mediaConstraint
+     */
     public void setMediaConstraint(JSONObject mediaConstraint) {
         this.mediaConstraint = mediaConstraint;
     }
 
+    /**
+     * 添加 ICE Candidate 。
+     *
+     * @param candidate
+     */
     public synchronized void addCandidate(JSONObject candidate) {
         if (null == this.candidateList) {
             this.candidateList = new ArrayList<>();
@@ -121,6 +190,11 @@ public class CommFieldEndpoint extends Entity {
         this.candidateList.add(candidate);
     }
 
+    /**
+     * 获取 ICE Candidate 列表。
+     *
+     * @return
+     */
     public List<JSONObject> getCandidates() {
         if (null == this.candidateList) {
             return new ArrayList<>();
@@ -129,16 +203,29 @@ public class CommFieldEndpoint extends Entity {
         return this.candidateList;
     }
 
+    /**
+     * 清空所有 ICE Candidate 。
+     */
     public void clearCandidates() {
         if (null != this.candidateList) {
             this.candidateList.clear();
         }
     }
 
+    /**
+     * 设置状态。
+     *
+     * @param state
+     */
     public void setState(MultipointCommStateCode state) {
         this.state = state;
     }
 
+    /**
+     * 返回状态。
+     *
+     * @return
+     */
     public MultipointCommStateCode getState() {
         return this.state;
     }

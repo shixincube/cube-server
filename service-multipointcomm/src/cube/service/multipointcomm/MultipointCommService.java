@@ -247,7 +247,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             final CommFieldEndpoint offerEndpoint = endpoint;
             // 追踪
-            current.traceOffer(this.scheduledExecutor, endpoint, new Runnable() {
+            current.startTrace(this.scheduledExecutor, endpoint, new Runnable() {
                 @Override
                 public void run() {
                     fireOfferTimeout(current, offerEndpoint);
@@ -543,6 +543,12 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         return MultipointCommStateCode.Ok;
     }
 
+    /**
+     * 触发 Offer 超时。
+     *
+     * @param field
+     * @param endpoint
+     */
     protected void fireOfferTimeout(CommField field, CommFieldEndpoint endpoint) {
         if (Logger.isDebugLevel()) {
             Logger.i(this.getClass(), "Comm field offer timeout: " + field.getId());
@@ -559,6 +565,15 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         }
     }
 
+    /**
+     * 向指定上下文推送信令数据。
+     *
+     * @param talkContext
+     * @param contactId
+     * @param domainName
+     * @param signaling
+     * @return
+     */
     private boolean pushSignaling(TalkContext talkContext, Long contactId, String domainName, Signaling signaling) {
         if (null == talkContext) {
             return false;
@@ -580,6 +595,13 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         return true;
     }
 
+    /**
+     * 生成通讯场域终端 ID 。
+     *
+     * @param contact
+     * @param device
+     * @return
+     */
     private long makeCommFieldEndpointId(Contact contact, Device device) {
         long id = 0;
         String string = contact.getUniqueKey() + "_" + device.getName() + "_" + device.getPlatform();

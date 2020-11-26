@@ -38,14 +38,34 @@ import cube.common.entity.Device;
  */
 public abstract class Signaling implements JSONable {
 
+    /**
+     * 信令名。
+     */
     protected String name;
 
+    /**
+     * 信令的场域。
+     */
     protected CommField field;
 
+    /**
+     * 传送/接收信令的联系人。
+     */
     protected Contact contact;
 
+    /**
+     * 传送/接收信令的设备。
+     */
     protected Device device;
 
+    /**
+     * 构造函数。
+     *
+     * @param name
+     * @param field
+     * @param contact
+     * @param device
+     */
     public Signaling(String name, CommField field, Contact contact, Device device) {
         this.name = name;
         this.field = field;
@@ -53,6 +73,11 @@ public abstract class Signaling implements JSONable {
         this.device = device;
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param json
+     */
     public Signaling(JSONObject json) {
         try {
             this.name = json.getString("name");

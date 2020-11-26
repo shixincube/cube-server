@@ -42,23 +42,42 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 多方通信场域。
+ * 多方通讯场域。
  */
 public class CommField extends Entity {
 
-    private Contact founder;
-
-    private ConcurrentHashMap<Long, CommFieldEndpoint> fieldEndpoints;
-
-    private ConcurrentHashMap<Long, ScheduledFuture<?>> offerFutureMap;
-
-    private List<BoundCalling> boundCallingList;
-
+    /**
+     * 默认超时时间。
+     */
     private long defaultTimeout = 40L * 1000L;
 
-    private long offerTimeout = 45L * 1000L;
+    /**
+     * 定时器超时时间。
+     */
+    private long timerTimeout = 45L * 1000L;
 
     /**
+     * 创建人。
+     */
+    private Contact founder;
+
+    /**
+     * 场域包含的终端节点。
+     */
+    private ConcurrentHashMap<Long, CommFieldEndpoint> fieldEndpoints;
+
+    /**
+     * 超时任务的 ScheduledFuture 映射。
+     */
+    private ConcurrentHashMap<Long, ScheduledFuture<?>> timeoutFutureMap;
+
+    /**
+     * 当前场域内的通话关系清单。
+     */
+    private List<BoundCalling> boundCallingList;
+
+    /**
+     * 构造函数。
      *
      * @param id
      * @param domainName
@@ -73,6 +92,11 @@ public class CommField extends Entity {
         this.boundCallingList = new Vector<>();
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param json
+     */
     public CommField(JSONObject json) {
         super();
 
@@ -100,6 +124,11 @@ public class CommField extends Entity {
         this.uniqueKey = UniqueKey.make(this.id, this.domain);
     }
 
+    /**
+     * 是否是私有场域。
+     *
+     * @return
+     */
     public boolean isPrivate() {
         return (this.id.longValue() == this.founder.getId().longValue());
     }
@@ -141,7 +170,7 @@ public class CommField extends Entity {
     }
 
     /**
-     * 标记 Calling
+     * 标记为单一 Calling 记录。
      *
      * @param caller
      * @param callee
@@ -153,6 +182,12 @@ public class CommField extends Entity {
         this.boundCallingList.add(calling);
     }
 
+    /**
+     * 指定联系人是否正在场域内进行呼叫操作。
+     *
+     * @param contact
+     * @return
+     */
     public boolean isCalling(Contact contact) {
         long now = System.currentTimeMillis();
         for (BoundCalling calling : this.boundCallingList) {
@@ -183,6 +218,7 @@ public class CommField extends Entity {
     }
 
     /**
+     * 获取主叫
      * 仅用于私域下。
      *
      * @return
@@ -196,6 +232,7 @@ public class CommField extends Entity {
     }
 
     /**
+     * 获取被叫。
      * 仅用于私域下。
      *
      * @return
@@ -208,6 +245,12 @@ public class CommField extends Entity {
         return this.boundCallingList.get(0).callerState;
     }
 
+    /**
+     * 更新主叫状态。
+     * 仅用于私域下。
+     *
+     * @param state
+     */
     public void updateCallerState(MultipointCommStateCode state) {
         if (this.boundCallingList.isEmpty()) {
             return;
@@ -217,6 +260,7 @@ public class CommField extends Entity {
     }
 
     /**
+     * 获取被叫。
      * 仅用于私域下。
      *
      * @return
@@ -230,6 +274,7 @@ public class CommField extends Entity {
     }
 
     /**
+     * 获取被叫状态。
      * 仅用于私域下。
      *
      * @return
@@ -242,6 +287,12 @@ public class CommField extends Entity {
         return this.boundCallingList.get(0).calleeState;
     }
 
+    /**
+     * 更新被叫状态。
+     * 仅用于私域下。
+     *
+     * @param state
+     */
     public void updateCalleeState(MultipointCommStateCode state) {
         if (this.boundCallingList.isEmpty()) {
             return;
@@ -250,22 +301,43 @@ public class CommField extends Entity {
         this.boundCallingList.get(0).calleeState = state;
     }
 
+    /**
+     * 清空所有呼叫状态。
+     */
     public void clearCalling() {
         this.boundCallingList.clear();
     }
 
+    /**
+     * 添加终端节点。
+     *
+     * @param endpoint
+     */
     public void addEndpoint(CommFieldEndpoint endpoint) {
         this.fieldEndpoints.put(endpoint.getId(), endpoint);
     }
 
+    /**
+     * 移除终端节点。
+     *
+     * @param endpoint
+     */
     public void removeEndpoint(CommFieldEndpoint endpoint) {
         this.fieldEndpoints.remove(endpoint.getId());
     }
 
+    /**
+     * 清空所有终端节点。
+     */
     public void clearEndpoints() {
         this.fieldEndpoints.clear();
     }
 
+    /**
+     * 清理指定终端节点。
+     *
+     * @param endpoint
+     */
     public void clearEndpoint(CommFieldEndpoint endpoint) {
         Contact contact = endpoint.getContact();
 
@@ -281,6 +353,7 @@ public class CommField extends Entity {
     }
 
     /**
+     * 获取联系人对应的场域节点。
      * 仅用于私域下。
      *
      * @param contact
@@ -296,6 +369,13 @@ public class CommField extends Entity {
         return null;
     }
 
+    /**
+     * 获取指定联系人及其设备的场域节点。
+     *
+     * @param contact
+     * @param device
+     * @return
+     */
     public CommFieldEndpoint getEndpoint(Contact contact, Device device) {
         for (CommFieldEndpoint endpoint : this.fieldEndpoints.values()) {
             if (endpoint.getContact().equals(contact) && endpoint.getDevice().equals(device)) {
@@ -306,34 +386,49 @@ public class CommField extends Entity {
         return null;
     }
 
-    public void traceOffer(ScheduledExecutorService scheduledExecutor, CommFieldEndpoint endpoint,
+    /**
+     * 追踪指定终端的呼叫。
+     *
+     * @param scheduledExecutor
+     * @param endpoint
+     * @param timeoutCallback
+     */
+    public void startTrace(ScheduledExecutorService scheduledExecutor, CommFieldEndpoint endpoint,
                            Runnable timeoutCallback) {
-        if (null == this.offerFutureMap) {
-            this.offerFutureMap = new ConcurrentHashMap<>();
+        if (null == this.timeoutFutureMap) {
+            this.timeoutFutureMap = new ConcurrentHashMap<>();
         }
 
         ScheduledFuture<?> future = scheduledExecutor.schedule(new Runnable() {
             @Override
             public void run() {
-                offerFutureMap.remove(endpoint.getId());
+                timeoutFutureMap.remove(endpoint.getId());
                 timeoutCallback.run();
             }
-        }, this.offerTimeout, TimeUnit.MILLISECONDS);
+        }, this.timerTimeout, TimeUnit.MILLISECONDS);
 
-        this.offerFutureMap.put(endpoint.getId(), future);
+        this.timeoutFutureMap.put(endpoint.getId(), future);
     }
 
+    /**
+     * 停止超时追踪。
+     *
+     * @param endpoint
+     */
     public void stopTrace(CommFieldEndpoint endpoint) {
-        if (null == this.offerFutureMap) {
+        if (null == this.timeoutFutureMap) {
             return;
         }
 
-        ScheduledFuture<?> future = this.offerFutureMap.remove(endpoint.getId());
+        ScheduledFuture<?> future = this.timeoutFutureMap.remove(endpoint.getId());
         if (null != future) {
             future.cancel(true);
         }
     }
 
+    /**
+     * 清除所有呼叫和终端。但是不能清除定时器。
+     */
     public void clearAll() {
         this.clearCalling();
         this.clearEndpoints();
@@ -389,6 +484,9 @@ public class CommField extends Entity {
     }
 
 
+    /**
+     * 呼叫记录。
+     */
     protected class BoundCalling {
 
         protected Contact caller;
