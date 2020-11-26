@@ -26,22 +26,15 @@
 
 package cube.service.multipointcomm;
 
-import cell.api.Speakable;
-
 /**
- * 媒体单元描述。
+ * 一般函数回调接口。
  */
-public class MediaUnit {
+public interface Callback {
 
-    protected String address;
-
-    protected int port;
-
-    protected Speakable speaker;
-
-    public MediaUnit() {
-
-    }
-
-
+    /**
+     * 回调时被调用。
+     *
+     * @param data
+     */
+    public void on(Object data);
 }

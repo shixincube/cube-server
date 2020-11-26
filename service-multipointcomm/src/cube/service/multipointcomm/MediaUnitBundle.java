@@ -26,22 +26,12 @@
 
 package cube.service.multipointcomm;
 
-import cell.api.Speakable;
-
 /**
- * 媒体单元描述。
+ * 媒体单元对应关系。
  */
-public class MediaUnit {
+public class MediaUnitBundle {
 
-    protected String address;
-
-    protected int port;
-
-    protected Speakable speaker;
-
-    public MediaUnit() {
+    public MediaUnitBundle() {
 
     }
-
-
 }

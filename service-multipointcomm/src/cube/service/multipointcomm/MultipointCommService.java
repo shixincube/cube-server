@@ -51,7 +51,11 @@ import cube.service.Director;
 import cube.service.contact.ContactManager;
 import cube.service.multipointcomm.signaling.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -97,6 +101,12 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         this.contactsAdapter.addListener(this);
 
         this.scheduledExecutor = Executors.newScheduledThreadPool(16);
+
+        // 读取 Media Unit 配置
+        Properties properties = this.loadConfig();
+        this.mediaUnitLeader.readConfig(properties);
+
+        this.mediaUnitLeader.start(this.getKernel().getNucleus().getTalkService());
     }
 
     @Override
@@ -105,12 +115,39 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             this.contactsAdapter.removeListener(this);
         }
 
+        this.mediaUnitLeader.stop();
+
         this.scheduledExecutor.shutdown();
     }
 
     @Override
     public void onTick(Module module, Kernel kernel) {
 
+    }
+
+    private Properties loadConfig() {
+        File file = new File("config/multipoint-comm.properties");
+        if (!file.exists()) {
+            file = new File("multipoint-comm.properties");
+        }
+
+        FileInputStream fis = null;
+        Properties properties = new Properties();
+        try {
+            fis = new FileInputStream(file);
+            properties.load(fis);
+        } catch (IOException e) {
+            Logger.e(this.getClass(), "Can NOT find config file", e);
+        } finally {
+            if (null != fis) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        return properties;
     }
 
     /**

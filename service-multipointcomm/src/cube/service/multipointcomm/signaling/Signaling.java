@@ -26,6 +26,7 @@
 
 package cube.service.multipointcomm.signaling;
 
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.JSONable;
@@ -126,5 +127,10 @@ public abstract class Signaling implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         return this.toJSON();
+    }
+
+    public ActionDialect toActionDialect() {
+        ActionDialect dialect = new ActionDialect(this.name);
+        return dialect;
     }
 }
