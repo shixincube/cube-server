@@ -35,8 +35,10 @@ import cube.common.Packet;
 import cube.common.action.MultipointCommAction;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.ServiceTask;
+import cube.service.multipointcomm.SignalingCallback;
 import cube.service.multipointcomm.MultipointCommService;
 import cube.service.multipointcomm.signaling.OfferSignaling;
+import cube.service.multipointcomm.signaling.Signaling;
 
 /**
  * Offer 信令任务。
@@ -64,9 +66,12 @@ public class OfferTask extends ServiceTask {
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
 
         // 处理 Offer
-        MultipointCommStateCode state = service.processOffer(offer);
-
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, MultipointCommAction.OfferAck.name, state.code, offer.toJSON()));
+        service.processOffer(offer, new SignalingCallback() {
+            @Override
+            public void on(MultipointCommStateCode stateCode, Signaling signaling) {
+                cellet.speak(talkContext,
+                        makeResponse(action, packet, MultipointCommAction.OfferAck.name, stateCode.code, signaling.toJSON()));
+            }
+        });
     }
 }

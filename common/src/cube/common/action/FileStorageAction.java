@@ -50,7 +50,7 @@ public enum FileStorageAction {
 
     ;
 
-    public String name;
+    public final String name;
 
     FileStorageAction(String name) {
         this.name = name;

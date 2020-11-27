@@ -48,7 +48,7 @@ public enum AuthAction {
 
     ;
 
-    public String name;
+    public final String name;
 
     AuthAction(String name) {
         this.name = name;

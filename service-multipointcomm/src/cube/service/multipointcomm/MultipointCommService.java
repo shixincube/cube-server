@@ -236,12 +236,13 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
      * 处理 Offer 信令。
      *
      * @param signaling
-     * @return
+     * @param callback
      */
-    public MultipointCommStateCode processOffer(OfferSignaling signaling) {
+    public void processOffer(OfferSignaling signaling, SignalingCallback callback) {
         CommField current = this.commFieldMap.get(signaling.getField().getId());
         if (null == current) {
-            return MultipointCommStateCode.NoCommField;
+            callback.on(MultipointCommStateCode.NoCommField, signaling);
+            return;
         }
 
         // 更新终端
@@ -261,7 +262,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         if (current.isPrivate()) {
             if (!current.isCalling(signaling.getContact())) {
                 endpoint.setState(MultipointCommStateCode.Ok);
-                return MultipointCommStateCode.CommFieldStateError;
+                callback.on(MultipointCommStateCode.CommFieldStateError, signaling);
+                return;
             }
 
             Logger.i(this.getClass(), "Offer: " + current.getCaller().getId() + " -> " + current.getCallee().getId());
@@ -290,24 +292,25 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                     fireOfferTimeout(current, offerEndpoint);
                 }
             });
+
+            callback.on(MultipointCommStateCode.Ok, signaling);
         }
         else {
-            this.mediaUnitLeader.dispatch(current, signaling);
+            this.mediaUnitLeader.dispatch(current, signaling, callback);
         }
-
-        return MultipointCommStateCode.Ok;
     }
 
     /**
      * 处理 Answer 信令。
      *
      * @param signaling
-     * @return
+     * @param callback
      */
-    public MultipointCommStateCode processAnswer(AnswerSignaling signaling) {
+    public void processAnswer(AnswerSignaling signaling, SignalingCallback callback) {
         CommField current = this.commFieldMap.get(signaling.getField().getId());
         if (null == current) {
-            return MultipointCommStateCode.NoCommField;
+            callback.on(MultipointCommStateCode.NoCommField, signaling);
+            return;
         }
 
         // 更新终端
@@ -328,7 +331,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             if (!current.isCalling(signaling.getContact())) {
                 // 没有呼叫信息
                 endpoint.setState(MultipointCommStateCode.Ok);
-                return MultipointCommStateCode.CommFieldStateError;
+                callback.on(MultipointCommStateCode.CommFieldStateError, signaling);
+                return;
             }
 
             Logger.i(this.getClass(), "Answer: " + current.getCallee().getId() + " -> " + current.getCaller().getId());
@@ -376,12 +380,12 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             event = new ModuleEvent(MultipointCommService.NAME, MultipointCommAction.Candidate.name,
                     candidateSignaling.toJSON());
             this.contactsAdapter.publish(endpoint.getContact().getUniqueKey(), event.toJSON());
+
+            callback.on(MultipointCommStateCode.Ok, signaling);
         }
         else {
-            this.mediaUnitLeader.dispatch(current, signaling);
+            this.mediaUnitLeader.dispatch(current, signaling, callback);
         }
-
-        return MultipointCommStateCode.Ok;
     }
 
     /**

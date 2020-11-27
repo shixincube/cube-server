@@ -26,12 +26,19 @@
 
 package cube.service.multipointcomm;
 
+import cube.common.entity.CommField;
+
 /**
  * 媒体单元对应关系。
  */
 public class MediaUnitBundle {
 
-    public MediaUnitBundle() {
+    protected MediaUnit mediaUnit;
 
+    protected CommField commField;
+
+    public MediaUnitBundle(MediaUnit mediaUnit, CommField commField) {
+        this.mediaUnit = mediaUnit;
+        this.commField = commField;
     }
 }

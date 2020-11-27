@@ -136,7 +136,7 @@
                     </div>
 
                     <p>
-                        You can customize Date Range Picker with options, and get notified when the user chooses new dates by providing a callback function.
+                        You can customize Date Range Picker with options, and get notified when the user chooses new dates by providing a signalingCallback function.
                     </p>
 
                     <h1><a id="examples" href="#examples">Examples</a></h1>
@@ -384,7 +384,7 @@
                             to customize these options.
                         </li>
                         <li>
-                            <code>singleDatePicker</code>: (true/false) Show only a single calendar to choose one date, instead of a range picker with two calendars. The start and end dates provided to your callback will be the same single date chosen.
+                            <code>singleDatePicker</code>: (true/false) Show only a single calendar to choose one date, instead of a range picker with two calendars. The start and end dates provided to your signalingCallback will be the same single date chosen.
                         </li>
                         <li>
                             <code>autoApply</code>: (true/false) Hide the apply and cancel buttons, and automatically apply a new date range as soon as two dates are clicked.
@@ -474,7 +474,7 @@
                     <br/>
 
                     <p>
-                        While passing in a callback to the constructor is the easiest way to listen for changes in the selected date range, you can also do something every time the apply button is clicked even if the selection hasn't changed:
+                        While passing in a signalingCallback to the constructor is the easiest way to listen for changes in the selected date range, you can also do something every time the apply button is clicked even if the selection hasn't changed:
                     </p>
 
                     <script src="https://gist.github.com/dangrossman/0c6c911fea1459b5fd13.js"></script>

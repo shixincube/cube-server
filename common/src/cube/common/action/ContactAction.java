@@ -118,7 +118,7 @@ public enum ContactAction {
 
     ;
 
-    public String name;
+    public final String name;
 
     ContactAction(String name) {
         this.name = name;

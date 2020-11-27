@@ -24,53 +24,21 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.multipointcomm;
+
+import cube.common.state.MultipointCommStateCode;
+import cube.service.multipointcomm.signaling.Signaling;
 
 /**
- * 消息模块动作定义。
+ * 一般函数回调接口。
  */
-public enum MessagingAction {
-
+public interface SignalingCallback {
+    
     /**
-     * 将消息推送给指定目标。
+     * 回调时被调用。
+     *
+     * @param stateCode
+     * @param signaling
      */
-    Push("push"),
-
-    /**
-     * 从自己的消息队列里获取消息。
-     */
-    Pull("pull"),
-
-    /**
-     * 通知接收方有消息送达。
-     */
-    Notify("notify"),
-
-    /**
-     * 撤回消息。
-     */
-    Recall("recall"),
-
-    /**
-     * 删除消息。
-     */
-    Delete("delete"),
-
-    /**
-     * 标记已读。
-     */
-    Read("read"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    MessagingAction(String name) {
-        this.name = name;
-    }
+    public void on(MultipointCommStateCode stateCode, Signaling signaling);
 }

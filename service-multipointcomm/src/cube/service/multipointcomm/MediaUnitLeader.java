@@ -32,10 +32,15 @@ import cell.api.TalkService;
 import cell.core.talk.Primitive;
 import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkError;
+import cell.core.talk.dialect.ActionDialect;
+import cell.util.Utils;
+import cell.util.log.Logger;
+import cube.common.Packet;
 import cube.common.entity.CommField;
 import cube.service.multipointcomm.signaling.Signaling;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,11 +56,17 @@ public class MediaUnitLeader implements TalkListener {
 
     private List<MediaUnit> mediaUnitList;
 
+    private HashMap<Speakable, MediaUnit> speakableMap;
+
     private ConcurrentHashMap<Long, MediaUnitBundle> bundles;
+
+    private ConcurrentHashMap<Long, MediaUnit> processingMap;
 
     public MediaUnitLeader() {
         this.mediaUnitList = new ArrayList<>();
+        this.speakableMap = new HashMap<>();
         this.bundles = new ConcurrentHashMap<>();
+        this.processingMap = new ConcurrentHashMap<>();
     }
 
     public void start(TalkService talkService) {
@@ -64,6 +75,7 @@ public class MediaUnitLeader implements TalkListener {
 
         for (MediaUnit mediaUnit : this.mediaUnitList) {
             mediaUnit.speaker = this.talkService.call(mediaUnit.address, mediaUnit.port);
+            this.speakableMap.put(mediaUnit.speaker, mediaUnit);
         }
     }
 
@@ -75,21 +87,32 @@ public class MediaUnitLeader implements TalkListener {
         }
     }
 
-    public void dispatch(CommField commField, Signaling signaling) {
+    public void dispatch(CommField commField, Signaling signaling, SignalingCallback signalingCallback) {
         // 选择媒体单元
         MediaUnit mediaUnit = selectMediaUnit(commField);
 
         // 向媒体单元发送信令
-        this.sendSignaling(mediaUnit, signaling);
+        this.sendSignaling(mediaUnit, signaling, signalingCallback);
     }
 
     private MediaUnit selectMediaUnit(CommField commField) {
         MediaUnitBundle bundle = this.bundles.get(commField.getId());
-        return null;
+        if (null == bundle) {
+            // 随机媒体单元，需要通过服务能力进行选择
+            int index = Utils.randomInt(0, this.mediaUnitList.size() - 1);
+            MediaUnit mediaUnit = this.mediaUnitList.get(index);
+            bundle = new MediaUnitBundle(mediaUnit, commField);
+            this.bundles.put(commField.getId(), bundle);
+        }
+
+        return bundle.mediaUnit;
     }
 
-    private void sendSignaling(MediaUnit mediaUnit, Signaling signaling) {
-        mediaUnit.speaker.speak(CELLET_NAME, signaling.toActionDialect());
+    private void sendSignaling(MediaUnit mediaUnit, Signaling signaling, SignalingCallback signalingCallback) {
+        Packet packet = new Packet(MediaUnitAction.Signaling.name, signaling.toJSON());
+        if (mediaUnit.transmit(packet, signaling, signalingCallback)) {
+            this.processingMap.put(packet.sn, mediaUnit);
+        }
     }
 
     protected void readConfig(Properties properties) {
@@ -97,14 +120,31 @@ public class MediaUnitLeader implements TalkListener {
         for (int i = 1; i <= 50; ++i) {
             String keyAddress = "unit." + i + ".address";
             if (properties.containsKey(keyAddress)) {
-//                String address =
+                String keyPort = "unit." + i + ".port";
+                String address = properties.getProperty(keyAddress);
+                int port = Integer.parseInt(properties.getProperty(keyPort, "7777"));
+
+                MediaUnit unit = new MediaUnit(address, port);
+                this.mediaUnitList.add(unit);
             }
         }
     }
 
     @Override
     public void onListened(Speakable speaker, String cellet, Primitive primitive) {
+        ActionDialect actionDialect = new ActionDialect(primitive);
+        Packet packet = new Packet(actionDialect);
+        MediaUnit unit = this.processingMap.remove(packet.sn);
+        if (null == unit) {
+            unit = this.speakableMap.get(speaker);
+        }
 
+        if (null != unit) {
+            unit.receive(packet);
+        }
+        else {
+            Logger.e(this.getClass(), "Can NOT find media unit: " + speaker.getRemoteAddress().getHostString());
+        }
     }
 
     @Override

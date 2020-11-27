@@ -36,7 +36,9 @@ import cube.common.action.MultipointCommAction;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.ServiceTask;
 import cube.service.multipointcomm.MultipointCommService;
+import cube.service.multipointcomm.SignalingCallback;
 import cube.service.multipointcomm.signaling.AnswerSignaling;
+import cube.service.multipointcomm.signaling.Signaling;
 
 /**
  * Answer 信令任务。
@@ -57,9 +59,12 @@ public class AnswerTask extends ServiceTask {
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
 
         // 处理 Answer
-        MultipointCommStateCode state = service.processAnswer(answer);
-
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, MultipointCommAction.AnswerAck.name, state.code, answer.toJSON()));
+        service.processAnswer(answer, new SignalingCallback() {
+            @Override
+            public void on(MultipointCommStateCode stateCode, Signaling signaling) {
+                cellet.speak(talkContext,
+                        makeResponse(action, packet, MultipointCommAction.AnswerAck.name, stateCode.code, signaling.toJSON()));
+            }
+        });
     }
 }

@@ -24,42 +24,14 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.multipointcomm;
 
 /**
- * 消息模块动作定义。
+ * 媒体单元动作。
  */
-public enum MessagingAction {
+public enum MediaUnitAction {
 
-    /**
-     * 将消息推送给指定目标。
-     */
-    Push("push"),
-
-    /**
-     * 从自己的消息队列里获取消息。
-     */
-    Pull("pull"),
-
-    /**
-     * 通知接收方有消息送达。
-     */
-    Notify("notify"),
-
-    /**
-     * 撤回消息。
-     */
-    Recall("recall"),
-
-    /**
-     * 删除消息。
-     */
-    Delete("delete"),
-
-    /**
-     * 标记已读。
-     */
-    Read("read"),
+    Signaling("signaling"),
 
     /**
      * 未知动作。
@@ -70,7 +42,12 @@ public enum MessagingAction {
 
     public final String name;
 
-    MessagingAction(String name) {
+    MediaUnitAction(String name) {
         this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return this.name;
     }
 }
