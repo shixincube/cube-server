@@ -89,7 +89,7 @@ public class MediaUnitLeader implements TalkListener {
 
     public void dispatch(CommField commField, Signaling signaling, SignalingCallback signalingCallback) {
         // 选择媒体单元
-        MediaUnit mediaUnit = selectMediaUnit(commField);
+        MediaUnit mediaUnit = this.selectMediaUnit(commField);
 
         // 向媒体单元发送信令
         this.sendSignaling(mediaUnit, signaling, signalingCallback);

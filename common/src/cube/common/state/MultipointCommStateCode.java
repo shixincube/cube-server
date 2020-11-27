@@ -82,6 +82,11 @@ public enum MultipointCommStateCode {
     CommFieldStateError(21),
 
     /**
+     * 媒体单元故障。
+     */
+    MediaUnitField(23),
+
+    /**
      * 正在建立通话。
      */
     Calling(27),

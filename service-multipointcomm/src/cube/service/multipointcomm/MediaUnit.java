@@ -27,8 +27,12 @@
 package cube.service.multipointcomm;
 
 import cell.api.Speakable;
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
 import cube.common.Packet;
+import cube.common.state.MultipointCommStateCode;
 import cube.service.multipointcomm.signaling.Signaling;
+import cube.service.multipointcomm.signaling.SignalingFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -67,7 +71,15 @@ public class MediaUnit {
         SignalingBundle bundle = this.sentSignalings.remove(packet.sn);
         if (null != bundle) {
             // 处理信令
-//            bundle.callback.on();
+            try {
+                int code = packet.data.getInt("code");
+                JSONObject data = packet.data.getJSONObject("data");
+
+                Signaling signaling = SignalingFactory.getInstance().createSignaling(data);
+                bundle.callback.on(MultipointCommStateCode.match(code), signaling);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
         else {
             // 接收
@@ -81,11 +93,11 @@ public class MediaUnit {
 
         protected Signaling signaling;
 
-        protected SignalingCallback signalingCallback;
+        protected SignalingCallback callback;
 
-        protected SignalingBundle(Signaling signaling, SignalingCallback signalingCallback) {
+        protected SignalingBundle(Signaling signaling, SignalingCallback callback) {
             this.signaling = signaling;
-            this.signalingCallback = signalingCallback;
+            this.callback = callback;
         }
     }
 }

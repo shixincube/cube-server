@@ -24,97 +24,34 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.multipointcomm;
+
+import cell.util.json.JSONObject;
+import cube.common.JSONable;
+import cube.common.entity.CommField;
+import cube.common.entity.CommFieldEndpoint;
 
 /**
- * 多方通讯模块的动作定义。
+ * 场域的更新信息。
  */
-public enum MultipointCommAction {
+public class CommFieldUpdate implements JSONable {
 
-    /**
-     * 信令 Offer
-     */
-    Offer("offer"),
+    protected CommField field;
 
-    /**
-     * 信令 Answer
-     */
-    Answer("answer"),
+    protected CommFieldEndpoint endpoint;
 
-    /**
-     * 信令 Bye
-     */
-    Bye("bye"),
-
-    /**
-     * 信令 Busy
-     */
-    Busy("busy"),
-
-    /**
-     * 信令 Candidate
-     */
-    Candidate("candidate"),
-
-    /**
-     * 应答 Offer
-     */
-    OfferAck("offerAck"),
-
-    /**
-     * 应答 Answer
-     */
-    AnswerAck("answerAck"),
-
-    /**
-     * 应答 Candidate
-     */
-    CandidateAck("candidateAck"),
-
-    /**
-     * 应答 Bye
-     */
-    ByeAck("byeAck"),
-
-    /**
-     * 执行申请主叫。
-     */
-    ApplyCall("applyCall"),
-
-    /**
-     * 申请进入场域。
-     */
-    ApplyEnter("applyEnter"),
-
-    /**
-     * 终端节点进入。
-     */
-    Entered("entered"),
-
-    /**
-     * 终端节点退出。
-     */
-    Left("left"),
-
-    OpenField("open"),
-
-    CloseField("close"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    MultipointCommAction(String name) {
-        this.name = name;
+    public CommFieldUpdate(CommField field, CommFieldEndpoint endpoint) {
+        this.field = field;
+        this.endpoint = endpoint;
     }
 
     @Override
-    public String toString() {
-        return this.name;
+    public JSONObject toJSON() {
+        return null;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return null;
     }
 }

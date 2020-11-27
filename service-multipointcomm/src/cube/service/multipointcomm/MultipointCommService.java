@@ -296,7 +296,26 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             callback.on(MultipointCommStateCode.Ok, signaling);
         }
         else {
-            this.mediaUnitLeader.dispatch(current, signaling, callback);
+            Logger.i(this.getClass(), "Offer: " + current.getId() + " - " + signaling.getContact().getId());
+
+            SignalingCallback processCallback = new SignalingCallback() {
+                @Override
+                public void on(MultipointCommStateCode stateCode, Signaling responseSignaling) {
+                    if (null == responseSignaling) {
+                        callback.on(MultipointCommStateCode.MediaUnitField, signaling);
+                        return;
+                    }
+
+                    // 回调
+                    callback.on(stateCode, responseSignaling);
+
+                    // 向场域里的其他终端发送事件
+                    broadcastEnteredEvent(current, current.getEndpoint(signaling.getContact(), signaling.getDevice()));
+                }
+            };
+
+            // 由 Leader 派发信令
+            this.mediaUnitLeader.dispatch(current, signaling, processCallback);
         }
     }
 
@@ -604,6 +623,20 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         else {
             // TODO
         }
+    }
+
+    private void broadcastEnteredEvent(CommField commField, CommFieldEndpoint endpoint) {
+        for (CommFieldEndpoint target : commField.getEndpoints()) {
+            CommFieldUpdate update = new CommFieldUpdate(commField, endpoint);
+            ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
+                    MultipointCommAction.Entered.name,
+                    update.toCompactJSON());
+            this.contactsAdapter.publish(target.getContact().getUniqueKey(), event.toJSON());
+        }
+    }
+
+    private void broadcastLeftEvent(CommField commField, CommFieldEndpoint endpoint) {
+
     }
 
     /**

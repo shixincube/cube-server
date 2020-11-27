@@ -33,6 +33,7 @@ import cube.common.Domain;
 import cube.common.UniqueKey;
 import cube.common.state.MultipointCommStateCode;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
@@ -350,6 +351,15 @@ public class CommField extends Entity {
         }
 
         this.fieldEndpoints.remove(endpoint.getId());
+    }
+
+    /**
+     * 获取所有终端节点。
+     *
+     * @return
+     */
+    public List<CommFieldEndpoint> getEndpoints() {
+        return new ArrayList<>(this.fieldEndpoints.values());
     }
 
     /**
