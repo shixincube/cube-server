@@ -24,36 +24,49 @@
  * SOFTWARE.
  */
 
-package cube.service.multipointcomm;
+package cube.common.entity;
 
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.JSONable;
-import cube.common.entity.CommField;
-import cube.common.entity.CommFieldEndpoint;
-import cube.common.entity.Contact;
-import cube.common.entity.Device;
 
 /**
- * 场域的更新信息。
+ * 目标上下文。
  */
-public class CommFieldUpdate implements JSONable {
+public class TargetContext implements JSONable {
 
-    protected CommField field;
+    private Contact contact;
 
-    protected CommFieldEndpoint endpoint;
+    private Device device;
 
-    public CommFieldUpdate(CommField field, CommFieldEndpoint endpoint) {
-        this.field = field;
-        this.endpoint = endpoint;
+    public TargetContext(Contact contact, Device device) {
+        this.contact = contact;
+        this.device = device;
+    }
+
+    public TargetContext(JSONObject json) {
+        try {
+            this.contact = new Contact(json.getJSONObject("contact"));
+            this.device = new Device(json.getJSONObject("device"));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Contact getContact() {
+        return this.contact;
+    }
+
+    public Device getDevice() {
+        return this.device;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         try {
-            json.put("field", this.field.toJSON());
-            json.put("endpoint", this.endpoint.toCompactJSON());
+            json.put("contact", this.contact.toBasicJSON());
+            json.put("device", this.device.toCompactJSON());
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -64,5 +77,4 @@ public class CommFieldUpdate implements JSONable {
     public JSONObject toCompactJSON() {
         return this.toJSON();
     }
-
 }

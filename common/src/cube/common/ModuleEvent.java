@@ -50,6 +50,11 @@ public class ModuleEvent implements JSONable {
     private JSONObject data;
 
     /**
+     * 事件上下文。
+     */
+    private JSONObject context;
+
+    /**
      * 构造函数。
      *
      * @param moduleName 模块名。
@@ -72,6 +77,9 @@ public class ModuleEvent implements JSONable {
             this.moduleName = json.getString("module");
             this.eventName = json.getString("event");
             this.data = json.getJSONObject("data");
+            if (json.has("context")) {
+                this.context = json.getJSONObject("context");
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -104,6 +112,24 @@ public class ModuleEvent implements JSONable {
         return this.data;
     }
 
+    /**
+     * 设置上下文。
+     *
+     * @param context
+     */
+    public void setContext(JSONObject context) {
+        this.context = context;
+    }
+
+    /**
+     * 获取上下文。
+     *
+     * @return 返回上下文。
+     */
+    public JSONObject getContext() {
+        return this.context;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -111,6 +137,9 @@ public class ModuleEvent implements JSONable {
             json.put("module", this.moduleName);
             json.put("event", this.eventName);
             json.put("data", this.data);
+            if (null != this.context) {
+                json.put("context", this.context);
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
