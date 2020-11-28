@@ -109,13 +109,24 @@ public class ServiceCarpet implements CellListener {
         }
         this.kernel.installCache("TokenPool", tokenCache);
 
+        JSONObject config = new JSONObject();
+        try {
+            config.put("type", SharedMemoryCache.TYPE);
+            config.put("configFile", "config/general-cache.properties");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        this.kernel.installCache("General", config);
+
         this.kernel.startup();
     }
 
     private void teardownKernel() {
-        this.kernel.shutdown();
+        this.kernel.uninstallCache("General");
 
         this.kernel.uninstallCache("TokenPool");
+
+        this.kernel.shutdown();
     }
 
     private void initManagement() {

@@ -41,9 +41,7 @@ import cube.common.Packet;
 import cube.common.action.MultipointCommAction;
 import cube.common.entity.*;
 import cube.common.state.MultipointCommStateCode;
-import cube.core.AbstractModule;
-import cube.core.Kernel;
-import cube.core.Module;
+import cube.core.*;
 import cube.service.Director;
 import cube.service.contact.ContactManager;
 import cube.service.multipointcomm.signaling.*;
@@ -51,6 +49,7 @@ import cube.service.multipointcomm.signaling.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,6 +66,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
      */
     public final static String NAME = "MultipointComm";
 
+    /**
+     *
+     */
     private MultipointCommServiceCellet cellet;
 
     /**
@@ -80,10 +82,23 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     private ScheduledExecutorService scheduledExecutor;
 
     /**
+     * 场域的缓存时长。
+     */
+    private long fieldLifespan = 12L * 60L * 60L * 1000L;
+
+    /**
      * Comm Field 映射。
      */
     private ConcurrentHashMap<Long, CommField> commFieldMap;
 
+    /**
+     * 缓存。
+     */
+    private Cache cache;
+
+    /**
+     * 媒体单元的管理器。
+     */
     private MediaUnitLeader mediaUnitLeader;
 
     public MultipointCommService(MultipointCommServiceCellet cellet) {
@@ -98,6 +113,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         this.contactsAdapter.addListener(this);
 
         this.scheduledExecutor = Executors.newScheduledThreadPool(16);
+
+        this.cache = this.getKernel().getCache("General");
 
         // 读取 Media Unit 配置
         Properties properties = this.loadConfig();
@@ -119,7 +136,15 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
     @Override
     public void onTick(Module module, Kernel kernel) {
+        long now = System.currentTimeMillis();
 
+        Iterator<CommField> fiter = this.commFieldMap.values().iterator();
+        while (fiter.hasNext()) {
+            CommField field = fiter.next();
+            if (now - field.getTimestamp() > this.fieldLifespan) {
+                fiter.remove();
+            }
+        }
     }
 
     private Properties loadConfig() {
@@ -148,6 +173,26 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     }
 
     /**
+     * 获取指定的场域。
+     *
+     * @param commFieldId
+     * @return
+     */
+    public CommField getCommField(Long commFieldId) {
+        CommField field = this.commFieldMap.get(commFieldId);
+        if (null == field) {
+            CacheValue value = this.cache.get(new CacheKey(commFieldId));
+            if (null != value) {
+                JSONObject json = value.get();
+                field = new CommField(json);
+                this.commFieldMap.put(field.getId(), field);
+            }
+        }
+
+        return field;
+    }
+
+    /**
      * 申请终端进入场域。
      *
      * @param commField
@@ -156,10 +201,19 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
      * @return
      */
     public MultipointCommStateCode applyEnter(CommField commField, Contact contact, Device device) {
-        CommField current = this.commFieldMap.get(commField.getId());
-        if (null == current) {
-            current = commField;
-            this.commFieldMap.put(current.getId(), current);
+        CommField current = null;
+        if (commField.isPrivate()) {
+            current = this.commFieldMap.get(commField.getId());
+            if (null == current) {
+                current = commField;
+                this.commFieldMap.put(current.getId(), current);
+            }
+        }
+        else {
+            current = this.getCommField(commField.getId());
+            if (null == current) {
+                return MultipointCommStateCode.NoCommField;
+            }
         }
 
         if (current.isPrivate()) {
@@ -183,10 +237,19 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
      * @return
      */
     public MultipointCommStateCode applyCall(CommField commField, Contact proposer, Contact target) {
-        CommField current = this.commFieldMap.get(commField.getId());
-        if (null == current) {
-            current = commField;
-            this.commFieldMap.put(current.getId(), current);
+        CommField current = null;
+        if (commField.isPrivate()) {
+            current = this.commFieldMap.get(commField.getId());
+            if (null == current) {
+                current = commField;
+                this.commFieldMap.put(current.getId(), current);
+            }
+        }
+        else {
+            current = this.getCommField(commField.getId());
+            if (null == current) {
+                return MultipointCommStateCode.NoCommField;
+            }
         }
 
         if (current.isPrivate()) {
@@ -236,7 +299,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
      * @param callback
      */
     public void processOffer(OfferSignaling signaling, SignalingCallback callback) {
-        CommField current = this.commFieldMap.get(signaling.getField().getId());
+        CommField current = this.getCommField(signaling.getField().getId());
         if (null == current) {
             callback.on(MultipointCommStateCode.NoCommField, signaling);
             return;
@@ -295,6 +358,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         else {
             Logger.i(this.getClass(), "Offer: " + current.getId() + " - " + signaling.getContact().getId());
 
+            // 更新缓存
+            this.cache.put(new CacheKey(current.getId()), new CacheValue(current.toJSON()));
+
             SignalingCallback processCallback = new SignalingCallback() {
                 @Override
                 public void on(MultipointCommStateCode stateCode, Signaling responseSignaling) {
@@ -323,7 +389,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
      * @param callback
      */
     public void processAnswer(AnswerSignaling signaling, SignalingCallback callback) {
-        CommField current = this.commFieldMap.get(signaling.getField().getId());
+        CommField current = this.getCommField(signaling.getField().getId());
         if (null == current) {
             callback.on(MultipointCommStateCode.NoCommField, signaling);
             return;
@@ -400,6 +466,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             callback.on(MultipointCommStateCode.Ok, signaling);
         }
         else {
+            // 更新缓存
+            this.cache.put(new CacheKey(current.getId()), new CacheValue(current.toJSON()));
+
             this.mediaUnitLeader.dispatch(current, signaling, callback);
         }
     }
@@ -411,7 +480,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
      * @return
      */
     public MultipointCommStateCode processCandidate(CandidateSignaling signaling) {
-        CommField current = this.commFieldMap.get(signaling.getField().getId());
+        CommField current = this.getCommField(signaling.getField().getId());
         if (null == current) {
             return MultipointCommStateCode.NoCommField;
         }
@@ -457,6 +526,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                         + signaling.getContact().getId() + " " + signaling.getCandidate().toString());
             }
         }
+        else {
+            // TODO
+        }
 
         return MultipointCommStateCode.Ok;
     }
@@ -468,7 +540,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
      * @return
      */
     public MultipointCommStateCode processBye(ByeSignaling signaling) {
-        CommField current = this.commFieldMap.get(signaling.getField().getId());
+        CommField current = this.getCommField(signaling.getField().getId());
         if (null == current) {
             return MultipointCommStateCode.NoCommField;
         }
@@ -545,7 +617,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
      * @return
      */
     public MultipointCommStateCode processBusy(BusySignaling signaling) {
-        CommField current = this.commFieldMap.get(signaling.getField().getId());
+        CommField current = this.getCommField(signaling.getField().getId());
         if (null == current) {
             return MultipointCommStateCode.NoCommField;
         }
@@ -580,7 +652,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             }
 
             // 对方的通信场域
-            CommField targetField = this.commFieldMap.get(target.getId());
+            CommField targetField = this.getCommField(target.getId());
             // 更新状态
             targetField.updateCalleeState(MultipointCommStateCode.CalleeBusy);
 

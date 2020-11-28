@@ -51,6 +51,12 @@ public class MediaUnit {
 
     private ConcurrentHashMap<Long, SignalingBundle> sentSignalings;
 
+    /**
+     * 构造函数。
+     *
+     * @param address
+     * @param port
+     */
     public MediaUnit(String address, int port) {
         this.address = address;
         this.port = port;

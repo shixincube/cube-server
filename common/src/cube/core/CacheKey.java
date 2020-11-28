@@ -46,6 +46,15 @@ public class CacheKey {
     }
 
     /**
+     * 构造函数。
+     *
+     * @param key 指定键。
+     */
+    public CacheKey(Long key) {
+        this.key = key.toString();
+    }
+
+    /**
      * 获取主键。
      *
      * @return 返回主键。

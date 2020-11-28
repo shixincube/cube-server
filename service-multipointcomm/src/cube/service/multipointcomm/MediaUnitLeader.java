@@ -69,6 +69,10 @@ public class MediaUnitLeader implements TalkListener {
         this.processingMap = new ConcurrentHashMap<>();
     }
 
+    /**
+     *
+     * @param talkService
+     */
     public void start(TalkService talkService) {
         this.talkService = talkService;
         this.talkService.setListener(CELLET_NAME, this);
@@ -79,6 +83,9 @@ public class MediaUnitLeader implements TalkListener {
         }
     }
 
+    /**
+     *
+     */
     public void stop() {
         this.talkService.removeListener(CELLET_NAME);
 

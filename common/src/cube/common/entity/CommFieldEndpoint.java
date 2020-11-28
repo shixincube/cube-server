@@ -128,6 +128,14 @@ public class CommFieldEndpoint extends Entity {
             this.name = json.getString("name");
             this.state = MultipointCommStateCode.match(json.getInt("state"));
 
+            if (json.has("description")) {
+                this.sessionDescription = json.getJSONObject("description");
+            }
+
+            if (json.has("constraint")) {
+                this.mediaConstraint = json.getJSONObject("constraint");
+            }
+
             JSONObject video = json.getJSONObject("video");
             this.videoEnabled = video.getBoolean("enabled");
             this.videoStreamEnabled = video.getBoolean("streamEnabled");
@@ -248,10 +256,18 @@ public class CommFieldEndpoint extends Entity {
         try {
             json.put("id", this.id.longValue());
             json.put("domain", this.domain.getName());
-            json.put("contact", this.contact.toJSON());
-            json.put("device", this.device.toJSON());
+            json.put("contact", this.contact.toBasicJSON());
+            json.put("device", this.device.toCompactJSON());
             json.put("name", this.name);
             json.put("state", this.state.code);
+
+            if (null != this.sessionDescription) {
+                json.put("description", this.sessionDescription);
+            }
+
+            if (null != this.mediaConstraint) {
+                json.put("constraint", this.mediaConstraint);
+            }
 
             JSONObject video = new JSONObject();
             video.put("enabled", this.videoEnabled);
