@@ -638,20 +638,31 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     }
 
     private void broadcastLeftEvent(CommField commField, CommFieldEndpoint endpoint) {
+        for (CommFieldEndpoint target : commField.getEndpoints()) {
+            if (target.equals(endpoint)) {
+                continue;
+            }
 
+            CommFieldUpdate update = new CommFieldUpdate(commField, endpoint);
+            ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
+                    MultipointCommAction.Left.name,
+                    update.toJSON());
+            event.setContext((new TargetContext(target.getContact(), target.getDevice())).toJSON());
+            this.contactsAdapter.publish(target.getContact().getUniqueKey(), event.toJSON());
+        }
     }
 
     /**
      * 向指定上下文推送数据。
      *
      * @param talkContext
-     * @param contactId
-     * @param domainName
+     * @param contact
+     * @param device
      * @param packetName
      * @param data
      * @return
      */
-    private boolean pushPacket(TalkContext talkContext, Long contactId, String domainName,
+    private boolean pushPacket(TalkContext talkContext, Contact contact, Device device,
                                String packetName, JSONObject data) {
         if (null == talkContext) {
             return false;
@@ -666,8 +677,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         }
 
         Packet packet = new Packet(packetName, payload);
-        ActionDialect dialect = Director.attachDirector(packet.toDialect(),
-                contactId.longValue(), domainName);
+        ActionDialect dialect = Director.attachDirector(packet.toDialect(), contact, device);
         this.cellet.speak(talkContext, dialect);
 
         return true;
@@ -709,8 +719,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 if (null != contact) {
                     // 向联系人所有设备推送
                     for (Device device : contact.getDeviceList()) {
-                        if (pushPacket(device.getTalkContext(), contact.getId(),
-                                contact.getDomain().getName(), signaling.getName(), signaling.toJSON())) {
+                        if (pushPacket(device.getTalkContext(), contact, device,
+                                signaling.getName(), signaling.toJSON())) {
                             Logger.i(this.getClass(), "Push signaling '" + signaling.getName()
                                     + "' to '" + callee.getId() + "'");
                         }
@@ -728,8 +738,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 if (null != contact) {
                     Device device = contact.getDevice(signaling.getDevice());
                     if (null != device) {
-                        if (pushPacket(device.getTalkContext(), contact.getId(),
-                                contact.getDomain().getName(), signaling.getName(), signaling.toJSON())) {
+                        if (pushPacket(device.getTalkContext(), contact, device, signaling.getName(), signaling.toJSON())) {
                             Logger.i(this.getClass(), "Push signaling '" + signaling.getName()
                                     + "' to '" + target.getId() + "'");
                         }
@@ -746,8 +755,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 if (null != contact) {
                     Device device = contact.getDevice(signaling.getDevice());
                     if (null != device) {
-                        if (pushPacket(device.getTalkContext(), contact.getId(),
-                                contact.getDomain().getName(), signaling.getName(), signaling.toJSON())) {
+                        if (pushPacket(device.getTalkContext(), contact, device,
+                                signaling.getName(), signaling.toJSON())) {
                             Logger.i(this.getClass(), "Push signaling '" + signaling.getName()
                                     + "' to '" + target.getId() + "'");
                         }
@@ -764,8 +773,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 if (null != contact) {
                     Device device = contact.getDevice(signaling.getDevice());
                     if (null != device) {
-                        if (pushPacket(device.getTalkContext(), contact.getId(),
-                                contact.getDomain().getName(), signaling.getName(), signaling.toJSON())) {
+                        if (pushPacket(device.getTalkContext(), contact, device,
+                                signaling.getName(), signaling.toJSON())) {
                             Logger.i(this.getClass(), "Push signaling '" + signaling.getName()
                                     + "' to '" + target.getId() + "'");
                         }
@@ -780,14 +789,15 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 if (null != contact) {
                     // 发送给指定设备
                     Device device = contact.getDevice(signaling.getDevice());
-                    if (null != device && pushPacket(device.getTalkContext(), contact.getId(),
-                            contact.getDomain().getName(), signaling.getName(), signaling.toJSON())) {
+                    if (null != device && pushPacket(device.getTalkContext(), contact, device,
+                            signaling.getName(), signaling.toJSON())) {
                         Logger.d(this.getClass(), "Push signaling '" + signaling.getName()
                                 + "' to '" + contact.getId() + "'");
                     }
                 }
             }
-            else if (MultipointCommAction.Entered.name.equals(eventName)) {
+            else if (MultipointCommAction.Entered.name.equals(eventName) ||
+                    MultipointCommAction.Left.name.equals(eventName)) {
                 JSONObject context = event.getContext();
                 TargetContext target = new TargetContext(context);
                 Contact contact = ContactManager.getInstance().getOnlineContact(
@@ -795,8 +805,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 if (null != contact) {
                     Device device = contact.getDevice(target.getDevice());
                     if (null != device) {
-                        pushPacket(device.getTalkContext(), contact.getId(), contact.getDomain().getName(),
-                                MultipointCommAction.Entered.name, event.getData());
+                        pushPacket(device.getTalkContext(), contact, device,
+                                eventName, event.getData());
                     }
                 }
             }

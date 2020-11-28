@@ -29,6 +29,7 @@ package cube.service;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.common.entity.Contact;
 import cube.common.entity.Device;
 
 /**
@@ -41,6 +42,14 @@ public class Director {
     private final static String sDirectorKey = "_director";
 
     protected Director() {
+    }
+
+    public static ActionDialect attachDirector(ActionDialect dialect, Contact contact) {
+        return Director.attachDirector(dialect, contact.getId(), contact.getDomain().getName());
+    }
+
+    public static ActionDialect attachDirector(ActionDialect dialect, Contact contact, Device device) {
+        return Director.attachDirector(dialect, contact.getId(), contact.getDomain().getName(), device);
     }
 
     public static ActionDialect attachDirector(ActionDialect dialect, long contactId, String domain) {
@@ -60,7 +69,7 @@ public class Director {
         try {
             director.put("id", contactId);
             director.put("domain", domain);
-            director.put("device", device.toJSON());
+            director.put("device", device.toCompactJSON());
         } catch (JSONException e) {
             e.printStackTrace();
         }
