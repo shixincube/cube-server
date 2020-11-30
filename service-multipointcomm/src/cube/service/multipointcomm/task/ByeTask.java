@@ -36,7 +36,9 @@ import cube.common.action.MultipointCommAction;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.ServiceTask;
 import cube.service.multipointcomm.MultipointCommService;
+import cube.service.multipointcomm.SignalingCallback;
 import cube.service.multipointcomm.signaling.ByeSignaling;
+import cube.service.multipointcomm.signaling.Signaling;
 
 /**
  * Bye 信令任务。
@@ -58,9 +60,12 @@ public class ByeTask extends ServiceTask {
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
 
         // 处理 Bye
-        MultipointCommStateCode state = service.processBye(bye);
-
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, MultipointCommAction.ByeAck.name, state.code, bye.toJSON()));
+        service.processBye(bye, new SignalingCallback() {
+            @Override
+            public void on(MultipointCommStateCode stateCode, Signaling signaling) {
+                cellet.speak(talkContext,
+                        makeResponse(action, packet, MultipointCommAction.ByeAck.name, stateCode.code, signaling.toJSON()));
+            }
+        });
     }
 }

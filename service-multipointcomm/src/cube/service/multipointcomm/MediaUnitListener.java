@@ -26,36 +26,18 @@
 
 package cube.service.multipointcomm;
 
+import cube.service.multipointcomm.signaling.Signaling;
+
 /**
- * 媒体单元动作。
+ * 媒体单元监听器。
  */
-public enum MediaUnitAction {
+public interface MediaUnitListener {
 
     /**
-     * 发送信令。
+     * 当接收到信令时回调。
+     *
+     * @param signaling
+     * @return 返回应答。
      */
-    Signaling("signaling"),
-
-    /**
-     * 信令应答。
-     */
-    SignalingAck("signalingAck"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    MediaUnitAction(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public String toString() {
-        return this.name;
-    }
+    public Signaling onSignaling(Signaling signaling);
 }

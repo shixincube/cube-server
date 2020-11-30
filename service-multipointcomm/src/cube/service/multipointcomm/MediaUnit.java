@@ -29,6 +29,7 @@ package cube.service.multipointcomm;
 import cell.api.Speakable;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.multipointcomm.signaling.Signaling;
@@ -49,6 +50,8 @@ public class MediaUnit {
 
     protected Speakable speaker;
 
+    protected MediaUnitListener listener;
+
     private ConcurrentHashMap<Long, SignalingBundle> sentSignalings;
 
     /**
@@ -57,12 +60,21 @@ public class MediaUnit {
      * @param address
      * @param port
      */
-    public MediaUnit(String address, int port) {
+    public MediaUnit(String address, int port, MediaUnitListener listener) {
         this.address = address;
         this.port = port;
+        this.listener = listener;
         this.sentSignalings = new ConcurrentHashMap<>();
     }
 
+    /**
+     * 发送信令数据到该媒体单元。
+     *
+     * @param packet
+     * @param signaling
+     * @param signalingCallback
+     * @return
+     */
     public boolean transmit(Packet packet, Signaling signaling, SignalingCallback signalingCallback) {
         if (this.speaker.speak(CELLET_NAME, packet.toDialect())) {
             SignalingBundle bundle = new SignalingBundle(signaling, signalingCallback);
@@ -73,22 +85,51 @@ public class MediaUnit {
         return false;
     }
 
+    /**
+     * 接收来自媒体单元的数据包。
+     *
+     * @param packet
+     */
     public void receive(Packet packet) {
         SignalingBundle bundle = this.sentSignalings.remove(packet.sn);
         if (null != bundle) {
-            // 处理信令
-            try {
-                int code = packet.data.getInt("code");
-                JSONObject data = packet.data.getJSONObject("data");
+            // 处理信令回包
+            if (null != bundle.callback) {
+                try {
+                    int code = packet.data.getInt("code");
+                    JSONObject data = packet.data.getJSONObject("data");
 
-                Signaling signaling = SignalingFactory.getInstance().createSignaling(data);
-                bundle.callback.on(MultipointCommStateCode.match(code), signaling);
-            } catch (JSONException e) {
-                e.printStackTrace();
+                    Signaling signaling = SignalingFactory.getInstance().createSignaling(data);
+                    bundle.callback.on(MultipointCommStateCode.match(code), signaling);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         }
         else {
-            // 接收
+            // 接收处理数据
+
+            if (MediaUnitAction.Signaling.name.equals(packet.name)) {
+                Signaling signaling = SignalingFactory.getInstance().createSignaling(packet.data);
+                Signaling response = this.listener.onSignaling(signaling);
+
+                try {
+                    int code = MultipointCommStateCode.Ok.code;
+                    JSONObject data = response.toCompactJSON();
+
+                    JSONObject payload = new JSONObject();
+                    payload.put("code", code);
+                    payload.put("data", data);
+
+                    Packet responsePacket = new Packet(packet.sn, MediaUnitAction.SignalingAck.name, payload);
+                    this.speaker.speak(CELLET_NAME, responsePacket.toDialect());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            else {
+                Logger.e(this.getClass(), "Unknown media unit action: " + packet.name);
+            }
         }
     }
 
