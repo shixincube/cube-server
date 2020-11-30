@@ -63,7 +63,7 @@ public class FastDFSSystem implements FileSystem {
     }
 
     @Override
-    public String readFileToDisk(String fileName) {
+    public String loadFileToDisk(String fileName) {
         return null;
     }
 }

@@ -75,6 +75,6 @@ public interface FileSystem {
      * @param fileName
      * @return 返回文件所在的磁盘目录。
      */
-    public String readFileToDisk(String fileName);
+    public String loadFileToDisk(String fileName);
 
 }

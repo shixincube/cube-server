@@ -160,7 +160,8 @@ public class DiskSystem implements FileSystem {
     }
 
     @Override
-    public String readFileToDisk(String fileName) {
-        return null;
+    public String loadFileToDisk(String fileName) {
+        Path path = Paths.get(this.managingPath.toString(), fileName);
+        return path.toAbsolutePath().toString();
     }
 }

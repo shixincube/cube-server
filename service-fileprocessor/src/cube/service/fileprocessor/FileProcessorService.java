@@ -26,9 +26,11 @@
 
 package cube.service.fileprocessor;
 
+import cube.common.entity.FileLabel;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
+import cube.service.filestorage.FileStorageService;
 
 import java.util.concurrent.ExecutorService;
 
@@ -61,7 +63,13 @@ public class FileProcessorService extends AbstractModule {
 
     }
 
-    public void makeThumbnail(String fileCode) {
+    public FileLabel makeThumbnail(String domainName, String fileCode) {
+        FileStorageService fileStorage = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+        String fullpath = fileStorage.loadFileToDisk(domainName, fileCode);
+        if (null == fullpath) {
+            return null;
+        }
 
+        return null;
     }
 }

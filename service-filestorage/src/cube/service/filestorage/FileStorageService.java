@@ -64,6 +64,11 @@ public class FileStorageService extends AbstractModule {
     private long defaultFileDuration = 30L * 24L * 60L * 60L * 1000L;
 
     /**
+     * 文件大小门限。
+     */
+    private long fileSizeThreshold = 20L * 1024L * 1024L;
+
+    /**
      * 文件系统。
      */
     private FileSystem fileSystem;
@@ -285,12 +290,16 @@ public class FileStorageService extends AbstractModule {
     /**
      * 加载文件到本地。
      *
-     * @param domainName
      * @param fileCode
      * @return
      */
     public String loadFileToDisk(String domainName, String fileCode) {
-        return null;
+        FileLabel fileLabel = this.getFile(domainName, fileCode);
+        if (null == fileLabel || fileLabel.getFileSize() > this.fileSizeThreshold) {
+            return null;
+        }
+
+        return this.fileSystem.loadFileToDisk(fileCode);
     }
 
     public void writeFileFromDisk(File file) {
