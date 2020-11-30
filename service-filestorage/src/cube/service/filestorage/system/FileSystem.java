@@ -69,4 +69,12 @@ public interface FileSystem {
      */
     public byte[] readFile(FileDescriptor descriptor);
 
+    /**
+     * 将文件读取到磁盘。
+     *
+     * @param fileName
+     * @return 返回文件所在的磁盘目录。
+     */
+    public String readFileToDisk(String fileName);
+
 }

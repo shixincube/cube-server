@@ -24,46 +24,47 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage.system;
+package cube.service.fileprocessor;
 
-import java.io.File;
-import java.io.InputStream;
+import cell.core.cellet.Cellet;
+import cell.core.talk.Primitive;
+import cell.core.talk.TalkContext;
+import cell.util.CachedQueueExecutor;
+import cube.core.Kernel;
+
+import java.util.concurrent.ExecutorService;
 
 /**
- * FastDFS 文件系统。
+ * 文件处理服务的 Cellet 服务。
  */
-public class FastDFSSystem implements FileSystem {
+public class FileProcessorServiceCellet extends Cellet {
 
-    public FastDFSSystem() {
+    private ExecutorService executor = null;
+
+    public FileProcessorServiceCellet() {
+        super(FileProcessorService.NAME);
     }
 
     @Override
-    public void start() {
+    public boolean install() {
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
 
+        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
+        kernel.installModule(this.getName(), new FileProcessorService(this.executor));
+
+        return true;
     }
 
     @Override
-    public void stop() {
+    public void uninstall() {
+        Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
+        kernel.uninstallModule(this.getName());
 
+        this.executor.shutdown();
     }
 
     @Override
-    public FileDescriptor writeFile(File file) {
-        return null;
-    }
+    public void onListened(TalkContext talkContext, Primitive primitive) {
 
-    @Override
-    public FileDescriptor writeFile(String fileName, InputStream inputStream) {
-        return null;
-    }
-
-    @Override
-    public byte[] readFile(FileDescriptor descriptor) {
-        return new byte[0];
-    }
-
-    @Override
-    public String readFileToDisk(String fileName) {
-        return null;
     }
 }

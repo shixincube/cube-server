@@ -40,6 +40,7 @@ import cube.service.filestorage.system.FileDescriptor;
 import cube.service.filestorage.system.FileSystem;
 import cube.storage.StorageType;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -279,6 +280,21 @@ public class FileStorageService extends AbstractModule {
      */
     public FileHierarchy getFileHierarchy(String domainName, Long contactOrGroupId) {
         return this.fileHierarchyManager.getFileHierarchy(contactOrGroupId, domainName);
+    }
+
+    /**
+     * 加载文件到本地。
+     *
+     * @param domainName
+     * @param fileCode
+     * @return
+     */
+    public String loadFileToDisk(String domainName, String fileCode) {
+        return null;
+    }
+
+    public void writeFileFromDisk(File file) {
+
     }
 
     /**

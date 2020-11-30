@@ -24,46 +24,25 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage.system;
+package cube.common.action;
 
-import java.io.File;
-import java.io.InputStream;
+public enum FileProcessorAction {
 
-/**
- * FastDFS 文件系统。
- */
-public class FastDFSSystem implements FileSystem {
+    /**
+     * 生成缩略图。
+     */
+    Thumb("thumb"),
 
-    public FastDFSSystem() {
-    }
+    /**
+     * 未知动作。
+     */
+    Unknown("")
 
-    @Override
-    public void start() {
+    ;
 
-    }
+    public final String name;
 
-    @Override
-    public void stop() {
-
-    }
-
-    @Override
-    public FileDescriptor writeFile(File file) {
-        return null;
-    }
-
-    @Override
-    public FileDescriptor writeFile(String fileName, InputStream inputStream) {
-        return null;
-    }
-
-    @Override
-    public byte[] readFile(FileDescriptor descriptor) {
-        return new byte[0];
-    }
-
-    @Override
-    public String readFileToDisk(String fileName) {
-        return null;
+    FileProcessorAction(String name) {
+        this.name = name;
     }
 }

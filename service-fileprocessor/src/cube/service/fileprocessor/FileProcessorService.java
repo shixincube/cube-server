@@ -24,17 +24,26 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage.system;
+package cube.service.fileprocessor;
 
-import java.io.File;
-import java.io.InputStream;
+import cube.core.AbstractModule;
+import cube.core.Kernel;
+import cube.core.Module;
+
+import java.util.concurrent.ExecutorService;
 
 /**
- * FastDFS 文件系统。
+ * 文件处理服务。
  */
-public class FastDFSSystem implements FileSystem {
+public class FileProcessorService extends AbstractModule {
 
-    public FastDFSSystem() {
+    public final static String NAME = "FileProcessor";
+
+    private ExecutorService executor = null;
+
+    public FileProcessorService(ExecutorService executor) {
+        super();
+        this.executor = executor;
     }
 
     @Override
@@ -48,22 +57,11 @@ public class FastDFSSystem implements FileSystem {
     }
 
     @Override
-    public FileDescriptor writeFile(File file) {
-        return null;
+    public void onTick(Module module, Kernel kernel) {
+
     }
 
-    @Override
-    public FileDescriptor writeFile(String fileName, InputStream inputStream) {
-        return null;
-    }
+    public void makeThumbnail(String fileCode) {
 
-    @Override
-    public byte[] readFile(FileDescriptor descriptor) {
-        return new byte[0];
-    }
-
-    @Override
-    public String readFileToDisk(String fileName) {
-        return null;
     }
 }

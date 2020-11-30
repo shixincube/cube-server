@@ -158,4 +158,9 @@ public class DiskSystem implements FileSystem {
     public byte[] readFile(FileDescriptor descriptor) {
         return new byte[0];
     }
+
+    @Override
+    public String readFileToDisk(String fileName) {
+        return null;
+    }
 }

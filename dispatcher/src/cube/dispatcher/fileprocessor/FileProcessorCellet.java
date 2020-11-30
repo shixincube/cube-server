@@ -24,13 +24,11 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.multipointcomm;
+package cube.dispatcher.fileprocessor;
 
 import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
-import cell.core.talk.dialect.ActionDialect;
-import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.dispatcher.Performer;
 
@@ -38,11 +36,14 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
 /**
- * 多方通讯的 Cellet 服务单元。
+ * 文件处理模块网关的 Cellet 服务单元。
  */
-public class MultipointCommCellet extends Cellet {
+public class FileProcessorCellet extends Cellet {
 
-    public final static String NAME = "MultipointComm";
+    /**
+     * Cellet 名称。
+     */
+    public final static String NAME = "FileProcessor";
 
     /**
      * 线程池。
@@ -59,7 +60,7 @@ public class MultipointCommCellet extends Cellet {
      */
     private ConcurrentLinkedQueue<PassThroughTask> taskQueue;
 
-    public MultipointCommCellet() {
+    public FileProcessorCellet() {
         super(NAME);
         this.taskQueue = new ConcurrentLinkedQueue<>();
     }
