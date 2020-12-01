@@ -24,46 +24,41 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage.system;
+package cube.common.entity;
 
-import java.io.File;
-import java.io.InputStream;
+import cell.util.json.JSONObject;
 
 /**
- * FastDFS 文件系统。
+ * 文件缩略图。
  */
-public class FastDFSSystem implements FileSystem {
+public class FileThumbnail extends Entity {
 
-    public FastDFSSystem() {
+    private FileLabel fileLabel;
+
+    private String sourceFileCode;
+
+    private int sourceWidth;
+
+    private int sourceHeight;
+
+    private double outputQuality = 0.7;
+
+    private int width;
+
+    private int height;
+
+    public FileThumbnail(FileLabel fileLabel, int width, int height,
+                         String sourceFileCode, int sourceWidth, int sourceHeight) {
+
     }
 
     @Override
-    public void start() {
-
-    }
-
-    @Override
-    public void stop() {
-
-    }
-
-    @Override
-    public FileDescriptor writeFile(String fileName, File file) {
+    public JSONObject toJSON() {
         return null;
     }
 
     @Override
-    public FileDescriptor writeFile(String fileName, InputStream inputStream) {
-        return null;
-    }
-
-    @Override
-    public byte[] readFile(FileDescriptor descriptor) {
-        return new byte[0];
-    }
-
-    @Override
-    public String loadFileToDisk(String fileName) {
+    public JSONObject toCompactJSON() {
         return null;
     }
 }

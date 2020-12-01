@@ -30,6 +30,8 @@ import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.JSONable;
 
+import java.util.List;
+
 /**
  * 文件附件。
  */
@@ -44,6 +46,11 @@ public class FileAttachment implements JSONable {
      * 文件标签。
      */
     private FileLabel fileLabel;
+
+    /**
+     * 文件缩略图列表。
+     */
+    private List<FileThumbnail> thumbList;
 
     /**
      * 构造函数。

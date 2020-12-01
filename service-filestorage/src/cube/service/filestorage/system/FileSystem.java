@@ -50,7 +50,7 @@ public interface FileSystem {
      * @param file
      * @return
      */
-    public FileDescriptor writeFile(File file);
+    public FileDescriptor writeFile(String fileName, File file);
 
     /**
      * 写入文件。

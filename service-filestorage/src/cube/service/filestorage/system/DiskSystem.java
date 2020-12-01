@@ -98,8 +98,8 @@ public class DiskSystem implements FileSystem {
     }
 
     @Override
-    public FileDescriptor writeFile(File file) {
-        Path target = Paths.get(this.managingPath.toString(), file.getName());
+    public FileDescriptor writeFile(String fileName, File file) {
+        Path target = Paths.get(this.managingPath.toString(), fileName);
         long size = 0;
         try {
             Files.copy(Paths.get(file.getPath()), target);
@@ -108,10 +108,15 @@ public class DiskSystem implements FileSystem {
             e.printStackTrace();
         }
 
-        FileDescriptor descriptor = new FileDescriptor("disk", file.getName(), this.url + file.getName());
-        descriptor.attr("file", file.getName());
-        descriptor.attr("path", target.toAbsolutePath().toString());
+        FileDescriptor descriptor = new FileDescriptor("disk", fileName, this.url + fileName);
+        descriptor.attr("file", fileName);
+        descriptor.attr("path", target.toString());
         descriptor.attr("size", size);
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "Write file : " + descriptor);
+        }
+
         return descriptor;
     }
 

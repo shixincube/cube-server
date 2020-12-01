@@ -180,6 +180,21 @@ public final class FileUtils {
     }
 
     /**
+     * 提取文件名。
+     *
+     * @param fileName
+     * @return
+     */
+    public static String extractFileName(String fileName) {
+        int index = fileName.lastIndexOf(".");
+        if (index <= 0) {
+            return fileName;
+        }
+
+        return fileName.substring(0, index);
+    }
+
+    /**
      * 校验文件类型。
      *
      * @param fileName
@@ -236,7 +251,28 @@ public final class FileUtils {
         return new FileSize(sizeInBytes, value, unit);
     }
 
-//    public static void main(String[] arg) {
+    /**
+     * 在文件名里插入后缀。
+     *
+     * @param fileName
+     * @param postfix
+     * @return
+     */
+    public static String insertPostfix(String fileName, String postfix) {
+        int index = fileName.lastIndexOf(".");
+        if (index > 0) {
+            String name = fileName.substring(0, index);
+            String extension = fileName.substring(index + 1);
+            StringBuilder buf = new StringBuilder(name);
+            buf.append(postfix).append(".").append(extension);
+            return buf.toString();
+        }
+        else {
+            return fileName + postfix;
+        }
+    }
+
+//    public static void main(String[] args) {
 //        System.out.println(FileUtils.makeFileCode(50001001L, "三周年纪念.png"));
 //        System.out.println(FileUtils.makeFileCode(50001001L, "三周年纪念.jpg"));
 //        System.out.println(FileUtils.makeFileCode(50002001L, "三周年纪念.png"));

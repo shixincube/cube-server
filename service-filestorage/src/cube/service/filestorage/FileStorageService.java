@@ -39,6 +39,7 @@ import cube.service.filestorage.system.DiskSystem;
 import cube.service.filestorage.system.FileDescriptor;
 import cube.service.filestorage.system.FileSystem;
 import cube.storage.StorageType;
+import net.coobird.thumbnailator.Thumbnails;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -206,7 +207,21 @@ public class FileStorageService extends AbstractModule {
     }
 
     /**
-     * 写文件标签。
+     * 向文件系统写入文件数据。
+     *
+     * @param fileCode
+     * @param file
+     */
+    public void writeFile(String fileCode, File file) {
+        // 写入文件系统
+        FileDescriptor descriptor = this.fileSystem.writeFile(fileCode, file);
+
+        // 缓存文件标识
+        this.fileDescriptors.put(fileCode, descriptor);
+    }
+
+    /**
+     * 放置文件标签。
      *
      * @param fileLabel
      * @return
@@ -300,10 +315,6 @@ public class FileStorageService extends AbstractModule {
         }
 
         return this.fileSystem.loadFileToDisk(fileCode);
-    }
-
-    public void writeFileFromDisk(File file) {
-
     }
 
     /**
