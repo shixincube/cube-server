@@ -669,6 +669,9 @@ public class Performer implements TalkListener {
                 Contact contact = this.onlineContacts.get(key);
                 Cellet cellet = this.celletService.getCellet(celletName);
 
+//                Logger.d(this.getClass(), "#" + celletName + " - " + contact.getId() + " - " + actionDialect.getName()
+//                        + " - " + actionDialect.getParamAsJson("data").toString());
+
                 if (null != contact && null != cellet) {
                     if (null == device) {
                         // 没有指定设备，进行广播
@@ -687,7 +690,6 @@ public class Performer implements TalkListener {
                     }
                 }
                 else {
-                    // TODO 日志报告
                     Logger.w(this.getClass(), "Can NOT find online contact or cellet : " + key + " | " + celletName);
                 }
             }

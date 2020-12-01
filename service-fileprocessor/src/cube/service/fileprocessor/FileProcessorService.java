@@ -26,12 +26,19 @@
 
 package cube.service.fileprocessor;
 
+import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.service.filestorage.FileStorageService;
+import net.coobird.thumbnailator.Thumbnailator;
+import net.coobird.thumbnailator.Thumbnails;
+import net.coobird.thumbnailator.util.ThumbnailatorUtils;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -63,11 +70,20 @@ public class FileProcessorService extends AbstractModule {
 
     }
 
-    public FileLabel makeThumbnail(String domainName, String fileCode) {
+    public FileLabel makeThumbnail(String domainName, String fileCode, int size) {
         FileStorageService fileStorage = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
-        String fullpath = fileStorage.loadFileToDisk(domainName, fileCode);
-        if (null == fullpath) {
+        String path = fileStorage.loadFileToDisk(domainName, fileCode);
+        if (null == path) {
             return null;
+        }
+
+        File input = new File(path);
+        Thumbnails.Builder<File> fileBuilder = Thumbnails.of(input).scale(1.0).outputQuality(1.0);
+        try {
+            BufferedImage src = fileBuilder.asBufferedImage();
+
+        } catch (IOException e) {
+            Logger.e(this.getClass(), "#makeThumbnail", e);
         }
 
         return null;

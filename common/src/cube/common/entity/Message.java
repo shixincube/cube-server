@@ -394,7 +394,7 @@ public class Message extends Entity implements Comparable<Message> {
             }
 
             if (null != this.sourceDevice) {
-                json.put("device", this.sourceDevice.toJSON());
+                json.put("device", this.sourceDevice.toCompactJSON());
             }
         } catch (JSONException e) {
             e.printStackTrace();

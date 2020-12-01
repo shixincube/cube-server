@@ -243,8 +243,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         hook.apply(message);
 
         if (message.getTo().longValue() > 0) {
-            String toKey = UniqueKey.make(message.getTo(), message.getDomain());
             String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
+            String toKey = UniqueKey.make(message.getTo(), message.getDomain());
 
             // 创建副本
             Message[] copies = this.makeMessageCopies(message);
@@ -543,7 +543,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         Message toCopy = new Message(message);
         toCopy.setOwner(message.getTo());
-        result[1]= toCopy;
+        result[1] = toCopy;
 
         return result;
     }
@@ -660,12 +660,6 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     public void onDelivered(String topic, Endpoint endpoint, JSONObject jsonObject) {
         if (MessagingService.NAME.equals(ModuleEvent.extractModuleName(jsonObject))) {
             // 消息模块
-
-            // 取主键的 ID
-//            Long id = UniqueKey.extractId(topic);
-//            if (null == id) {
-//                return;
-//            }
 
             ModuleEvent event = new ModuleEvent(jsonObject);
             if (event.getEventName().equals(MessagingAction.Push.name)) {
