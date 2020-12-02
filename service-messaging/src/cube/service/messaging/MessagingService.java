@@ -51,6 +51,7 @@ import cube.core.Kernel;
 import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
+import cube.service.fileprocessor.FileProcessorService;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchy;
@@ -581,7 +582,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "Process attachment : " + message.getFrom() + " -> "
+            Logger.d(this.getClass(), "Process attachment : " + message.getFrom() + " - "
                     + message.getAttachment().getFileCode());
         }
 
@@ -648,9 +649,32 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         // 向消息附件追加文件标签
         fileAttachment.setFileLabel(fileLabel);
 
-        if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "Process attachment end : " + message.getFrom() + " -> "
-                    + fileAttachment.getFileLabel().getFileCode());
+        // 是否生成缩略图
+        JSONObject thumbConfig = fileAttachment.getThumbConfig();
+        if (null != thumbConfig && this.getKernel().hasModule(FileProcessorService.NAME)) {
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "Make thumb : " + message.getFrom() + " - "
+                        + fileAttachment.getFileLabel().getFileCode());
+            }
+
+            int size = 480;
+            double quality = 0.7;
+            try {
+                size = thumbConfig.getInt("size");
+                quality = thumbConfig.getDouble("quality");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            FileProcessorService processor = (FileProcessorService) this.getKernel().getModule(FileProcessorService.NAME);
+
+            // 生成缩略图
+            FileThumbnail thumbnail = processor.makeThumbnail(domainName, fileLabel.getFileCode(), size, quality);
+
+            // 添加缩略图
+            if (null != thumbnail) {
+                fileAttachment.addThumbnail(thumbnail);
+            }
         }
 
         return true;

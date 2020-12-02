@@ -74,6 +74,15 @@ public class FileProcessorService extends AbstractModule {
 
     }
 
+    /**
+     * 生成缩略图。
+     *
+     * @param domainName
+     * @param fileCode
+     * @param size
+     * @param quality
+     * @return
+     */
     public FileThumbnail makeThumbnail(String domainName, String fileCode, int size, double quality) {
         FileStorageService fileStorage = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
 
@@ -115,7 +124,7 @@ public class FileProcessorService extends AbstractModule {
 
             if (srcWidth > size || srcHeight > size) {
                 Thumbnails.Builder<File> builder = Thumbnails.of(input);
-                builder.size(size, size).outputFormat("jpg").outputQuality(0.7).toFile(outputFile);
+                builder.size(size, size).outputFormat("jpg").outputQuality(quality).toFile(outputFile);
 
                 BufferedImage thumb = builder.asBufferedImage();
                 thumbWidth = thumb.getWidth();
@@ -123,7 +132,7 @@ public class FileProcessorService extends AbstractModule {
                 thumb = null;
             }
             else {
-                Thumbnails.of(input).scale(1.0).outputQuality(0.7).toFile(outputFile);
+                Thumbnails.of(input).scale(1.0).outputQuality(quality).toFile(outputFile);
 
                 thumbWidth = srcWidth;
                 thumbHeight = srcHeight;
@@ -146,7 +155,7 @@ public class FileProcessorService extends AbstractModule {
 
         // 创建文件缩略图
         fileThumbnail = new FileThumbnail(fileLabel, thumbWidth, thumbHeight,
-                srcFileLabel.getFileCode(), srcWidth, srcHeight);
+                srcFileLabel.getFileCode(), srcWidth, srcHeight, quality);
 
         return fileThumbnail;
     }

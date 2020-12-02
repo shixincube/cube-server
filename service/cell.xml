@@ -53,6 +53,9 @@
 			<class>cube.service.filestorage.FileStorageServiceCellet</class>
 		</cellet>
 		<cellet port="6000">
+			<class>cube.service.fileprocessor.FileProcessorServiceCellet</class>
+		</cellet>
+		<cellet port="6000">
 			<class>cube.service.messaging.MessagingServiceCellet</class>
 		</cellet>
 		<cellet port="6000">

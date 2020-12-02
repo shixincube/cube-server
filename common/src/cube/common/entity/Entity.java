@@ -26,6 +26,8 @@
 
 package cube.common.entity;
 
+import cell.util.json.JSONException;
+import cell.util.json.JSONObject;
 import cube.common.Domain;
 import cube.common.JSONable;
 import cube.common.UniqueKey;
@@ -60,6 +62,30 @@ public abstract class Entity implements JSONable {
      */
     public Entity() {
         this.timestamp = System.currentTimeMillis();
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param json 实体的 JSON 数据结构。
+     */
+    public Entity(JSONObject json) {
+        this.timestamp = System.currentTimeMillis();
+
+        try {
+            if (json.has("id")) {
+                this.id = json.getLong("id");
+            }
+            if (json.has("domain")) {
+                this.domain = new Domain(json.getString("domain"));
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        if (null != this.id && null != this.domain) {
+            this.uniqueKey = UniqueKey.make(this.id, this.domain);
+        }
     }
 
     /**

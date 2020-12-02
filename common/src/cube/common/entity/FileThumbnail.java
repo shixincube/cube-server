@@ -26,6 +26,8 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
+import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 
 /**
@@ -35,30 +37,79 @@ public class FileThumbnail extends Entity {
 
     private FileLabel fileLabel;
 
+    private int width;
+
+    private int height;
+
     private String sourceFileCode;
 
     private int sourceWidth;
 
     private int sourceHeight;
 
-    private double outputQuality = 0.7;
-
-    private int width;
-
-    private int height;
+    private double quality;
 
     public FileThumbnail(FileLabel fileLabel, int width, int height,
-                         String sourceFileCode, int sourceWidth, int sourceHeight) {
+                         String sourceFileCode, int sourceWidth, int sourceHeight,
+                         double quality) {
+        super(Utils.generateSerialNumber(), fileLabel.getDomain());
+        this.fileLabel = fileLabel;
+        this.width = width;
+        this.height = height;
+        this.sourceFileCode = sourceFileCode;
+        this.sourceWidth = sourceWidth;
+        this.sourceHeight = sourceHeight;
+        this.quality = quality;
+    }
 
+    public FileThumbnail(JSONObject json) {
+        super(json);
+        try {
+            this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
+            this.width = json.getInt("width");
+            this.height = json.getInt("height");
+            this.sourceFileCode = json.getString("sourceFileCode");
+            this.sourceWidth = json.getInt("sourceWidth");
+            this.sourceHeight = json.getInt("sourceHeight");
+            this.quality = json.getDouble("quality");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof FileThumbnail) {
+            FileThumbnail other = (FileThumbnail) object;
+            if (other.fileLabel.equals(this.fileLabel)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override
     public JSONObject toJSON() {
-        return null;
+        JSONObject json = new JSONObject();
+        try {
+            json.put("id", this.getId());
+            json.put("domain", this.getDomain().getName());
+            json.put("fileLabel", this.fileLabel.toJSON());
+            json.put("width", this.width);
+            json.put("height", this.height);
+            json.put("sourceFileCode", this.sourceFileCode);
+            json.put("sourceWidth", this.sourceWidth);
+            json.put("sourceHeight", this.sourceHeight);
+            json.put("quality", this.quality);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return null;
+        return this.toJSON();
     }
 }

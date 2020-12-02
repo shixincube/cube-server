@@ -345,6 +345,18 @@ public class FileLabel extends Entity {
         return this.directURL;
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof FileLabel) {
+            FileLabel other = (FileLabel) object;
+            if (other.fileCode.equals(this.fileCode)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * {@inheritDoc}
      */

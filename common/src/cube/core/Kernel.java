@@ -218,6 +218,16 @@ public final class Kernel {
     }
 
     /**
+     * 是否安装了指定模块。
+     *
+     * @param name 指定模块名。
+     * @return 返回是否安装了指定模块。
+     */
+    public boolean hasModule(String name) {
+        return this.moduleMap.containsKey(name);
+    }
+
+    /**
      * 安装缓存。
      *
      * @param name 指定缓存名称。

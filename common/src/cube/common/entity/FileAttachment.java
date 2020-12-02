@@ -26,10 +26,12 @@
 
 package cube.common.entity;
 
+import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
 import cube.common.JSONable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,6 +50,11 @@ public class FileAttachment implements JSONable {
     private FileLabel fileLabel;
 
     /**
+     * 生成文件缩略图的参数信息。
+     */
+    private JSONObject thumbConfig;
+
+    /**
      * 文件缩略图列表。
      */
     private List<FileThumbnail> thumbList;
@@ -64,6 +71,12 @@ public class FileAttachment implements JSONable {
             }
             if (json.has("label")) {
                 this.fileLabel = new FileLabel(json.getJSONObject("label"));
+            }
+            if (json.has("thumbConfig")) {
+                this.thumbConfig = json.getJSONObject("thumbConfig");
+            }
+            if (json.has("thumbs")) {
+                JSONArray array = json.getJSONArray("thumbs");
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -110,6 +123,31 @@ public class FileAttachment implements JSONable {
     }
 
     /**
+     * 缩略图配置参数。
+     *
+     * @return
+     */
+    public JSONObject getThumbConfig() {
+        return this.thumbConfig;
+    }
+
+    public void addThumbnail(FileThumbnail thumbnail) {
+        if (null == this.thumbList) {
+            this.thumbList = new ArrayList<>();
+        }
+
+        this.thumbList.add(thumbnail);
+    }
+
+    public void removeThumbnail(FileThumbnail thumbnail) {
+        if (null == this.thumbList) {
+            return;
+        }
+
+        this.thumbList.remove(thumbnail);
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -127,6 +165,26 @@ public class FileAttachment implements JSONable {
         if (null != this.fileLabel) {
             try {
                 json.put("label", this.fileLabel.toJSON());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (null != this.thumbConfig) {
+            try {
+                json.put("thumbConfig", this.thumbConfig);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (null != this.thumbList) {
+            try {
+                JSONArray array = new JSONArray();
+                for (int i = 0; i < this.thumbList.size(); ++i) {
+                    array.put(this.thumbList.get(i).toJSON());
+                }
+                json.put("thumbs", array);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
