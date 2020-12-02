@@ -669,7 +669,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             FileProcessorService processor = (FileProcessorService) this.getKernel().getModule(FileProcessorService.NAME);
 
             // 生成缩略图
-            FileThumbnail thumbnail = processor.makeThumbnail(domainName, fileLabel.getFileCode(), size, quality);
+            FileThumbnail thumbnail = processor.makeThumbnail(domainName, fileLabel, size, quality);
 
             // 添加缩略图
             if (null != thumbnail) {

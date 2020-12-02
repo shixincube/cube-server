@@ -33,6 +33,7 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.service.filestorage.FileStorageService;
+import cube.util.FileType;
 import cube.util.FileUtils;
 import net.coobird.thumbnailator.Thumbnails;
 
@@ -91,6 +92,34 @@ public class FileProcessorService extends AbstractModule {
         if (null == srcFileLabel) {
             return null;
         }
+
+        return this.makeThumbnail(domainName, srcFileLabel, size, quality);
+    }
+
+    /**
+     * 生成缩略图。
+     *
+     * @param domainName
+     * @param srcFileLabel
+     * @param size
+     * @param quality
+     * @return
+     */
+    public FileThumbnail makeThumbnail(String domainName, FileLabel srcFileLabel, int size, double quality) {
+        boolean supported = false;
+        FileType fileType = srcFileLabel.getFileType();
+        if (fileType == FileType.JPEG || fileType == FileType.PNG || fileType == FileType.GIF) {
+            supported = true;
+        }
+
+        if (!supported) {
+            // 不支持的格式
+            return null;
+        }
+
+        FileStorageService fileStorage = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+
+        String fileCode = srcFileLabel.getFileCode();
 
         // 本地路径
         String path = fileStorage.loadFileToDisk(domainName, fileCode);

@@ -76,7 +76,12 @@ public class FileAttachment implements JSONable {
                 this.thumbConfig = json.getJSONObject("thumbConfig");
             }
             if (json.has("thumbs")) {
+                this.thumbList = new ArrayList<>();
+
                 JSONArray array = json.getJSONArray("thumbs");
+                for (int i = 0, length = array.length(); i < length; ++i) {
+                    this.thumbList.add(new FileThumbnail(array.getJSONObject(i)));
+                }
             }
         } catch (JSONException e) {
             e.printStackTrace();
