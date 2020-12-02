@@ -40,6 +40,7 @@ import net.coobird.thumbnailator.Thumbnails;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
@@ -63,6 +64,13 @@ public class FileProcessorService extends AbstractModule {
     @Override
     public void start() {
         this.workPath = Paths.get("storage/tmp");
+        if (!Files.exists(this.workPath)) {
+            try {
+                Files.createDirectories(this.workPath);
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#start", e);
+            }
+        }
     }
 
     @Override
@@ -174,12 +182,16 @@ public class FileProcessorService extends AbstractModule {
         }
 
         // 写入到文件系统
-        File thumbFile = new File(outputFile);
+        File thumbFile = new File(outputFile + ".jpg");
         fileStorage.writeFile(thumbFileCode, thumbFile);
+
+        // 删除临时文件
+        thumbFile.delete();
 
         // 放置文件标签
         FileLabel fileLabel = new FileLabel(domainName, thumbFileCode, srcFileLabel.getOwnerId(),
                 thumbFileName, thumbFile.length(), System.currentTimeMillis(), srcFileLabel.getExpiryTime());
+        fileLabel.setFileType(FileType.JPEG);
         fileLabel = fileStorage.putFile(fileLabel);
 
         // 创建文件缩略图
