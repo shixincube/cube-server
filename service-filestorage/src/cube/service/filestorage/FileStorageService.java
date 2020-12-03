@@ -199,6 +199,9 @@ public class FileStorageService extends AbstractModule {
      * @param inputStream
      */
     public void writeFile(String fileCode, InputStream inputStream) {
+        // 删除旧文件
+        this.fileSystem.deleteFile(fileCode);
+
         // 写入文件系统
         FileDescriptor descriptor = this.fileSystem.writeFile(fileCode, inputStream);
 
@@ -213,6 +216,9 @@ public class FileStorageService extends AbstractModule {
      * @param file
      */
     public void writeFile(String fileCode, File file) {
+        // 删除旧文件
+        this.fileSystem.deleteFile(fileCode);
+
         // 写入文件系统
         FileDescriptor descriptor = this.fileSystem.writeFile(fileCode, file);
 
@@ -252,6 +258,20 @@ public class FileStorageService extends AbstractModule {
         this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
 
         return fileLabel;
+    }
+
+    /**
+     * 文件是否存在在本地系统。
+     *
+     * @param fileCode
+     * @return
+     */
+    public boolean existsLocalFile(String fileCode) {
+        if (this.fileSystem.isWriting(fileCode)) {
+            return false;
+        }
+
+        return this.fileSystem.existsFile(fileCode);
     }
 
     /**

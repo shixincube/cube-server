@@ -66,8 +66,6 @@ public class FileHandler extends CrossDomainHandler {
 
     private Performer performer;
 
-    private HttpClient httpClient;
-
     private int bufferSize = 5 * 1024 * 1024;
 
     /**
@@ -75,13 +73,11 @@ public class FileHandler extends CrossDomainHandler {
      *
      * @param fileChunkStorage
      * @param performer
-     * @param httpClient
      */
-    public FileHandler(FileChunkStorage fileChunkStorage, Performer performer, HttpClient httpClient) {
+    public FileHandler(FileChunkStorage fileChunkStorage, Performer performer) {
         super();
         this.fileChunkStorage = fileChunkStorage;
         this.performer = performer;
-        this.httpClient = httpClient;
     }
 
     /**
@@ -169,8 +165,6 @@ public class FileHandler extends CrossDomainHandler {
         Packet packet = new Packet(sn, FileStorageAction.UploadFile.name, payload);
 
         this.respondOk(response, packet.toJSON());
-
-        System.out.println("XJW: " + packet.toJSON().toString());
 
         this.complete();
     }
@@ -262,7 +256,8 @@ public class FileHandler extends CrossDomainHandler {
 
         final FlexibleByteBuffer buf = new FlexibleByteBuffer((int)fileLabel.getFileSize());
 
-        this.httpClient.newRequest(fileLabel.getDirectURL())
+        HttpClient httpClient = HttpClientFactory.getInstance().createHttpClient();
+        httpClient.newRequest(fileLabel.getDirectURL())
                 .send(new BufferingResponseListener(this.bufferSize) {
                     @Override
                     public void onComplete(Result result) {
@@ -296,13 +291,17 @@ public class FileHandler extends CrossDomainHandler {
         buf.clear();
 
         response.setStatus(HttpStatus.OK_200);
+
+        HttpClientFactory.getInstance().destroyHttpClient(httpClient);
     }
 
     private void processByNonBlocking(HttpServletRequest request, HttpServletResponse response,
                                       FileLabel fileLabel, FileType type)
             throws IOException, ServletException {
         InputStreamResponseListener listener = new InputStreamResponseListener();
-        this.httpClient.newRequest(fileLabel.getDirectURL())
+
+        HttpClient httpClient = HttpClientFactory.getInstance().createHttpClient();
+        httpClient.newRequest(fileLabel.getDirectURL())
                 .timeout(10, TimeUnit.SECONDS)
                 .send(listener);
 
@@ -333,16 +332,19 @@ public class FileHandler extends CrossDomainHandler {
                 @Override
                 public void onComplete(AsyncEvent asyncEvent) throws IOException {
                     Logger.d(this.getClass(), "onComplete");
+                    HttpClientFactory.getInstance().destroyHttpClient(httpClient);
                 }
 
                 @Override
                 public void onTimeout(AsyncEvent asyncEvent) throws IOException {
                     Logger.d(this.getClass(), "onTimeout");
+                    HttpClientFactory.getInstance().destroyHttpClient(httpClient);
                 }
 
                 @Override
                 public void onError(AsyncEvent asyncEvent) throws IOException {
                     Logger.d(this.getClass(), "onError");
+                    HttpClientFactory.getInstance().destroyHttpClient(httpClient);
                 }
             });
 
@@ -355,6 +357,7 @@ public class FileHandler extends CrossDomainHandler {
         }
         else {
             this.respond(response, HttpStatus.BAD_REQUEST_400, fileLabel.toCompactJSON());
+            HttpClientFactory.getInstance().destroyHttpClient(httpClient);
         }
     }
 

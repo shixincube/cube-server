@@ -62,12 +62,27 @@ public interface FileSystem {
     public FileDescriptor writeFile(String fileName, InputStream inputStream);
 
     /**
-     * 读取文件。
+     * 指定名称的文件是否正在写入。
      *
-     * @param descriptor
+     * @param fileName
      * @return
      */
-    public byte[] readFile(FileDescriptor descriptor);
+    public boolean isWriting(String fileName);
+
+    /**
+     * 删除文件。
+     *
+     * @param fileName
+     */
+    public void deleteFile(String fileName);
+
+    /**
+     * 文件是否存在。
+     *
+     * @param fileName
+     * @return
+     */
+    public boolean existsFile(String fileName);
 
     /**
      * 将文件读取到磁盘。

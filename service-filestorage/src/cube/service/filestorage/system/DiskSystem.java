@@ -41,6 +41,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 磁盘文件系统。
@@ -57,6 +60,8 @@ public class DiskSystem implements FileSystem {
 
     private HttpServer httpServer;
 
+    private List<String> writingFiles;
+
     public DiskSystem(String managingPath, String host, int port) {
         this.managingPath = Paths.get(managingPath);
         if (!Files.exists(this.managingPath)) {
@@ -70,6 +75,8 @@ public class DiskSystem implements FileSystem {
         this.endpoint = new Endpoint(host, port);
 
         this.url = "http://" + host + ":" + port + this.contextPath;
+
+        this.writingFiles = new ArrayList<>();
     }
 
     @Override
@@ -99,10 +106,16 @@ public class DiskSystem implements FileSystem {
 
     @Override
     public FileDescriptor writeFile(String fileName, File file) {
+        synchronized (this.writingFiles) {
+            if (!this.writingFiles.contains(fileName)) {
+                this.writingFiles.add(fileName);
+            }
+        }
+
         Path target = Paths.get(this.managingPath.toString(), fileName);
         long size = 0;
         try {
-            Files.copy(Paths.get(file.getPath()), target);
+            Files.copy(Paths.get(file.getPath()), target, StandardCopyOption.REPLACE_EXISTING);
             size = Files.size(target);
         } catch (IOException e) {
             e.printStackTrace();
@@ -117,11 +130,21 @@ public class DiskSystem implements FileSystem {
             Logger.d(this.getClass(), "Write file : " + descriptor);
         }
 
+        synchronized (this.writingFiles) {
+            this.writingFiles.remove(fileName);
+        }
+
         return descriptor;
     }
 
     @Override
     public FileDescriptor writeFile(String fileName, InputStream inputStream) {
+        synchronized (this.writingFiles) {
+            if (!this.writingFiles.contains(fileName)) {
+                this.writingFiles.add(fileName);
+            }
+        }
+
         Path target = Paths.get(this.managingPath.toAbsolutePath().toString(), fileName);
 
         long size = 0;
@@ -156,12 +179,34 @@ public class DiskSystem implements FileSystem {
             Logger.d(this.getClass(), "Write file : " + descriptor);
         }
 
+        synchronized (this.writingFiles) {
+            this.writingFiles.remove(fileName);
+        }
+
         return descriptor;
     }
 
     @Override
-    public byte[] readFile(FileDescriptor descriptor) {
-        return new byte[0];
+    public boolean isWriting(String fileName) {
+        synchronized (this.writingFiles) {
+            return this.writingFiles.contains(fileName);
+        }
+    }
+
+    @Override
+    public void deleteFile(String fileName) {
+        Path file = Paths.get(this.managingPath.toString(), fileName);
+        try {
+            Files.delete(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public boolean existsFile(String fileName) {
+        Path file = Paths.get(this.managingPath.toString(), fileName);
+        return Files.exists(file);
     }
 
     @Override

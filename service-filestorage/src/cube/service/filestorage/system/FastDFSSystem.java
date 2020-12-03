@@ -58,8 +58,18 @@ public class FastDFSSystem implements FileSystem {
     }
 
     @Override
-    public byte[] readFile(FileDescriptor descriptor) {
-        return new byte[0];
+    public boolean isWriting(String fileName) {
+        return false;
+    }
+
+    @Override
+    public void deleteFile(String fileName) {
+
+    }
+
+    @Override
+    public boolean existsFile(String fileName) {
+        return false;
     }
 
     @Override

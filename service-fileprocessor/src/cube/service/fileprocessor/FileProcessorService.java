@@ -39,7 +39,9 @@ import net.coobird.thumbnailator.Thumbnails;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -135,6 +137,14 @@ public class FileProcessorService extends AbstractModule {
             return null;
         }
 
+        Logger.d(this.getClass(), "#makeThumbnail - file path: " + path);
+
+        File input = new File(path);
+        if (!input.exists()) {
+            Logger.w(this.getClass(), "#makeThumbnail - can not find file: " + path);
+            return null;
+        }
+
         FileThumbnail fileThumbnail = null;
 
         // 生成缩略图文件名
@@ -152,9 +162,14 @@ public class FileProcessorService extends AbstractModule {
         int thumbWidth = 0;
         int thumbHeight = 0;
 
-        File input = new File(path);
-        Thumbnails.Builder<File> fileBuilder = Thumbnails.of(input).scale(1.0).outputQuality(1.0);
+        FileInputStream fis = null;
+
         try {
+            fis = new FileInputStream(input);
+
+            Thumbnails.Builder<? extends InputStream> fileBuilder = Thumbnails.of(fis).scale(1.0).outputQuality(1.0);
+//            Thumbnails.Builder<File> fileBuilder = Thumbnails.of(input).scale(1.0).outputQuality(1.0);
+
             BufferedImage src = fileBuilder.asBufferedImage();
             srcWidth = src.getWidth();
             srcHeight = src.getHeight();
@@ -179,6 +194,14 @@ public class FileProcessorService extends AbstractModule {
         } catch (IOException e) {
             Logger.e(this.getClass(), "#makeThumbnail", e);
             return null;
+        } finally {
+            if (null != fis) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    // Nothing
+                }
+            }
         }
 
         // 写入到文件系统
