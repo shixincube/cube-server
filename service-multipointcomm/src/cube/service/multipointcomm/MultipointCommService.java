@@ -135,7 +135,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     }
 
     @Override
-    public void onTick(Module module, Kernel kernel) {
+    public void onTick(cube.core.Module module, Kernel kernel) {
         long now = System.currentTimeMillis();
 
         Iterator<CommField> fiter = this.commFieldMap.values().iterator();

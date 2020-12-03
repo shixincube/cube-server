@@ -70,10 +70,10 @@
 			<class>cube.dispatcher.contact.ContactCellet</class>
 		</cellet>
 		<cellet port="7000,7070,7077">
-			<class>cube.dispatcher.fileprocessor.FileProcessorCellet</class>
+			<class>cube.dispatcher.filestorage.FileStorageCellet</class>
 		</cellet>
 		<cellet port="7000,7070,7077">
-			<class>cube.dispatcher.filestorage.FileStorageCellet</class>
+			<class>cube.dispatcher.fileprocessor.FileProcessorCellet</class>
 		</cellet>
 		<cellet port="7000,7070,7077">
 			<class>cube.dispatcher.messaging.MessagingCellet</class>

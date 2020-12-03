@@ -31,7 +31,6 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.FileThumbnail;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
-import cube.core.Module;
 import cube.service.filestorage.FileStorageService;
 import cube.util.FileType;
 import cube.util.FileUtils;
@@ -81,7 +80,7 @@ public class FileProcessorService extends AbstractModule {
     }
 
     @Override
-    public void onTick(Module module, Kernel kernel) {
+    public void onTick(cube.core.Module module, Kernel kernel) {
 
     }
 

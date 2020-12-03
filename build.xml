@@ -13,7 +13,9 @@
 	<property name="project-service.dir" value="service" />
 
 	<property name="project-service-filestorage.dir" value="service-filestorage" />
+	<property name="project-service-fileprocessor.dir" value="service-fileprocessor" />
 	<property name="project-service-messaging.dir" value="service-messaging" />
+	<property name="project-service-multipointcomm.dir" value="service-multipointcomm" />
 
 	<property name="build.dir" value="build" />
 
@@ -82,7 +84,17 @@
 			 inheritrefs="false"
 			 target="build-debug" />
 		<ant antfile="build.xml"
+			 dir="${project-service-fileprocessor.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-debug" />
+		<ant antfile="build.xml"
 			 dir="${project-service-messaging.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-debug" />
+		<ant antfile="build.xml"
+			 dir="${project-service-multipointcomm.dir}"
 			 inheritall="false"
 			 inheritrefs="false"
 			 target="build-debug" />
@@ -103,7 +115,17 @@
 			 inheritrefs="false"
 			 target="build-release" />
 		<ant antfile="build.xml"
+			 dir="${project-service-fileprocessor.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-release" />
+		<ant antfile="build.xml"
 			 dir="${project-service-messaging.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-release" />
+		<ant antfile="build.xml"
+			 dir="${project-service-multipointcomm.dir}"
 			 inheritall="false"
 			 inheritrefs="false"
 			 target="build-release" />
@@ -119,13 +141,17 @@
 				<include name="cube-dispatcher-*.jar" />
 				<include name="cube-service-*.jar" />
 				<exclude name="*service-filestorage*" />
+				<exclude name="*service-fileprocessor*" />
 				<exclude name="*service-messaging*" />
+				<exclude name="*service-multipointcomm*" />
 			</fileset>
 		</copy>
 		<copy todir="${deploy.dir}/cellets/">
 			<fileset dir="${build.dir}">
 				<include name="cube-service-filestorage-*.jar" />
+				<include name="cube-service-fileprocessor-*.jar" />
 				<include name="cube-service-messaging-*.jar" />
+				<include name="cube-service-multipointcomm-*.jar" />
 			</fileset>
 		</copy>
 	</target>
@@ -144,7 +170,9 @@
 		<delete failonerror="false" includeemptydirs="true">
 			<fileset dir="${deploy.dir}/cellets/">
 				<include name="cube-service-filestorage-*.jar" />
+				<include name="cube-service-fileprocessor-*.jar" />
 				<include name="cube-service-messaging-*.jar" />
+				<include name="cube-service-multipointcomm-*.jar" />
 			</fileset>
 		</delete>
 		<delete failonerror="false" includeemptydirs="true">
