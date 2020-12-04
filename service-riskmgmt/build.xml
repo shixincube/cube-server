@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+
+<!-- ======================================================================= -->
+<!-- Cube Risk Management Build File                                         -->
+<!-- ======================================================================= -->
+
+<project name="cube-service-riskmgmt" default="build-release" basedir=".">
+
+	<property name="version.brand" value="3.0" />
+
+	<property name="version.tgt" value="1.8" />
+	<property name="version.src" value="1.8" />
+
+	<property name="src.dir" value="src" />
+	<property name="lib.dir" value="../../cube-server-dependencies" />
+	<property name="dependencies.dir" value="../build" />
+	<property name="doc.dir" value="doc" />
+
+	<property name="build.dir" value="build" />
+	<property name="build.classes" value="${build.dir}/classes" />
+	<property name="build.jar" value="${build.dir}/jar" />
+
+	<path id="master-classpath">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="${dependencies.dir}">
+			<include name="cube-common-*.jar" />
+			<include name="cube-service-*.jar" />
+		</fileset>
+		<pathelement path="${build.classes}" />
+	</path>
+
+	<target name="init">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${build.classes}" />
+		<mkdir dir="${build.jar}" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Cleans up generated stuff                                           -->
+	<!-- =================================================================== -->
+	<target name="clean">
+		<delete failonerror="false" includeemptydirs="true">
+			<fileset dir="${build.dir}"/>
+		</delete>
+		<delete file="${dependencies.dir}/cube-service-riskmgmt-${version.brand}.jar" failonerror="false" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Dispenses project for debug                                         -->
+	<!-- =================================================================== -->
+	<target name="debug" depends="clean, init">
+		<javac target="${version.tgt}" source="${version.src}" fork="yes" srcdir="${src.dir}" destdir="${build.classes}" debug="on" encoding="UTF-8" deprecation="on" optimize="off">
+			<classpath refid="master-classpath" />
+		</javac>
+		<delete file="${build.jar}/cube-service-riskmgmt.jar" failonerror="false" />
+		<jar destfile="${build.jar}/cube-service-riskmgmt.jar" basedir="${build.classes}"
+			 excludes="cube/service/riskmgmt/test/**, cube/service/riskmgmt/plugin/**"/>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Dispenses project for release                                       -->
+	<!-- =================================================================== -->
+	<target name="release" depends="clean, init">
+		<javac target="${version.tgt}" source="${version.src}" fork="yes" srcdir="${src.dir}" destdir="${build.classes}" debug="off" encoding="UTF-8" deprecation="on" optimize="on">
+			<classpath refid="master-classpath" />
+		</javac>
+		<delete file="${build.jar}/cube-service-riskmgmt.jar" failonerror="false" />
+		<jar destfile="${build.jar}/cube-service-riskmgmt.jar" basedir="${build.classes}"
+			 excludes="cube/service/riskmgmt/test/**, cube/service/riskmgmt/plugin/**" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Builds project for debug                                            -->
+	<!-- =================================================================== -->
+	<target name="build-debug" depends="debug">
+		<delete file="../build/cube-service-riskmgmt-${version.brand}.jar" failonerror="false" />
+		<copy file="${build.jar}/cube-service-riskmgmt.jar" tofile="../build/cube-service-riskmgmt-${version.brand}.jar"/>
+		<echo>Build project for debug.</echo>
+		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Builds project for release                                          -->
+	<!-- =================================================================== -->
+	<target name="build-release" depends="release">
+		<delete file="../build/cube-service-riskmgmt-${version.brand}.jar" failonerror="false" />
+		<copy file="${build.jar}/cube-service-riskmgmt.jar" tofile="../build/cube-service-riskmgmt-${version.brand}.jar"/>
+		<echo>Build project for release.</echo>
+		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Package plugin                                                      -->
+	<!-- =================================================================== -->
+	<target name="pack-plugin">
+		<jar destfile="${build.jar}/rickmgmt-messaging.jar" basedir="${build.classes}"
+			 includes="cube/service/riskmgmt/plugin/Messaging*"
+			 excludes="cube/service/riskmgmt/test/**, cube/service/riskmgmt/*.class" />
+		<copy file="${build.jar}/rickmgmt-messaging.jar" tofile="../service/plugin/rickmgmt-messaging.jar"/>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Generates API document                                              -->
+	<!-- =================================================================== -->
+	<target name="doc">
+		<delete failonerror="false" includeemptydirs="true">
+			<fileset dir="${doc.dir}"/>
+		</delete>
+		<javadoc destdir="${doc.dir}" windowtitle="Cube Risk Management API Documents" encoding="UTF-8" docencoding="UTF-8">
+			<packageset dir="${src.dir}">
+				<include name="**"/>
+				<exclude name="cube/service/riskmgmt/test/**" />
+			</packageset>
+		</javadoc>
+	</target>
+
+</project>
