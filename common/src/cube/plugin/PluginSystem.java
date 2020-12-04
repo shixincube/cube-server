@@ -26,15 +26,8 @@
 
 package cube.plugin;
 
-import cell.util.json.JSONArray;
-import cell.util.json.JSONException;
-import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
@@ -99,11 +92,22 @@ public class PluginSystem<T extends Hook> {
         hook.system = this;
     }
 
+    /**
+     * 移除 Hook 。
+     *
+     * @param hook
+     */
     public void removeHook(T hook) {
         this.hooks.remove(hook.getKey());
         hook.system = null;
     }
 
+    /**
+     * 返回指定 Hook 。
+     *
+     * @param key
+     * @return
+     */
     public T getHook(String key) {
         return (T) this.hooks.get(key);
     }
@@ -152,12 +156,23 @@ public class PluginSystem<T extends Hook> {
         }
     }
 
+    protected void apply(String key, PluginContext context) {
+        List<Plugin> list = this.plugins.get(key);
+        if (null == list) {
+            return;
+        }
+
+        for (Plugin plugin : list) {
+            plugin.onAction(context);
+        }
+    }
+
     /**
      * 从配置文件加载插件。
      *
      * @param configFilename
      */
-    public void loadPlugin(String configFilename) {
+    /*public void loadPlugin(String configFilename) {
         // 读取配置文件
         JSONObject config = this.readConfig(configFilename);
         if (null == config) {
@@ -177,23 +192,9 @@ public class PluginSystem<T extends Hook> {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
-    protected PluginContext syncApply(String key, Object data) {
-        List<Plugin> list = this.plugins.get(key);
-        if (null == list) {
-            return null;
-        }
-
-        PluginContext ctx = new PluginContext(data);
-        for (Plugin plugin : list) {
-            plugin.onAction(ctx);
-        }
-
-        return ctx;
-    }
-
-    private JSONObject readConfig(String pathname) {
+    /*private JSONObject readConfig(String pathname) {
         File file = new File(pathname);
         if (!file.exists()) {
             return null;
@@ -228,5 +229,5 @@ public class PluginSystem<T extends Hook> {
         }
 
         return json;
-    }
+    }*/
 }

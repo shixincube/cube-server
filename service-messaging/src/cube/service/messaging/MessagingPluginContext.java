@@ -24,57 +24,23 @@
  * SOFTWARE.
  */
 
-package cube.service.messaging.plugin;
+package cube.service.messaging;
 
-import cell.util.json.JSONException;
-import cell.util.log.Logger;
 import cube.common.entity.Message;
-import cube.plugin.LuaPlugin;
 import cube.plugin.PluginContext;
 
-import java.io.FileNotFoundException;
-
 /**
- * 检查消息内容插件。
+ * 消息插件上下文。
  */
-public class SimplePlugin extends LuaPlugin {
+public class MessagingPluginContext extends PluginContext {
 
-    public SimplePlugin() {
-        super("plugins/SimplePlugin.lua");
+    private Message message;
+
+    public MessagingPluginContext(Message message) {
+        this.message = message;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public synchronized void onAction(PluginContext context) {
-        Logger.i(this.getClass(), "Run lua script: " + this.getLuaFile().getName());
-
-        PluginContext ctx = null;
-
-        Message message = (Message) context.getData();
-        if (message.getPayload().has("content")) {
-            try {
-                ctx = new PluginContext(message.getPayload().getString("content"));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        else {
-            return;
-        }
-
-        try {
-            this.call(ctx);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        // 更新消息内容
-        try {
-            message.getPayload().put("content", ctx.getResult().toString());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+    public Message getMessage() {
+        return this.message;
     }
 }

@@ -29,29 +29,8 @@ package cube.plugin;
 /**
  * 插件进行数据传递的上下文。
  */
-public class PluginContext {
+public abstract class PluginContext {
 
-    private Object data;
-
-    private Object result;
-
-    public PluginContext(Object data) {
-        this.data = data;
-    }
-
-    public void setData(Object data) {
-        this.data = data;
-    }
-
-    public Object getData() {
-        return this.data;
-    }
-
-    public void setResult(Object result) {
-        this.result = result;
-    }
-
-    public Object getResult() {
-        return this.result;
+    public PluginContext() {
     }
 }

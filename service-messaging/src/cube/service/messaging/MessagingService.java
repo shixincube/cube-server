@@ -241,7 +241,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         // Hook PrePush
         MessagingHook hook = this.pluginSystem.getPrePushHook();
-        hook.apply(message);
+        hook.apply(new MessagingPluginContext(message));
 
         if (message.getTo().longValue() > 0) {
             String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
@@ -354,7 +354,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         // Hook PostPush
         hook = this.pluginSystem.getPostPushHook();
-        hook.apply(message);
+        hook.apply(new MessagingPluginContext(message));
 
         return message;
     }

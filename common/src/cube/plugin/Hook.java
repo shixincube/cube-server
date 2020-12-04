@@ -41,15 +41,30 @@ public class Hook {
      */
     protected PluginSystem system;
 
+    /**
+     * 构造函数。
+     *
+     * @param key
+     */
     public Hook(String key) {
         this.key = key;
     }
 
+    /**
+     * 获取对应的触发关键字。
+     *
+     * @return 返回对应的触发关键字。
+     */
     public String getKey() {
         return this.key;
     }
 
-    public PluginContext apply(Object data) {
-        return this.system.syncApply(this.key, data);
+    /**
+     * 触发插件回调。
+     *
+     * @param context
+     */
+    public void apply(PluginContext context) {
+        this.system.apply(this.key, context);
     }
 }

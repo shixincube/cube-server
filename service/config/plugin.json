@@ -1,0 +1,12 @@
+{
+	"deploy": [
+		{
+			"module": "Messaging",
+			"file": "plugin/rick-messaging.jar",
+			"plugins": [{
+				"event": "Push",
+				"class": "cube.rick.MessagingPlugin"
+			}]
+		}
+	]
+}

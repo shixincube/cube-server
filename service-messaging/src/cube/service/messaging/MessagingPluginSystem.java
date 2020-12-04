@@ -51,7 +51,5 @@ public class MessagingPluginSystem extends PluginSystem<MessagingHook> {
 
         hook = new MessagingHook(MessagingHook.PostPush);
         this.addHook(hook);
-
-        this.loadPlugin("plugin-messaging.json");
     }
 }
