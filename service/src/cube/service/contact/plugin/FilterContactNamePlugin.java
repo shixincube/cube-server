@@ -29,6 +29,7 @@ package cube.service.contact.plugin;
 import cube.common.entity.Contact;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
+import cube.service.contact.ContactPluginContext;
 
 /**
  * 过滤联系人名插件。
@@ -43,10 +44,11 @@ public class FilterContactNamePlugin implements Plugin {
      */
     @Override
     public void onAction(PluginContext context) {
-        Contact contact = (Contact) context.getData();
+        ContactPluginContext ctx = (ContactPluginContext) context;
+        Contact contact = ctx.getContact();
 
         String name = contact.getName();
-        name = name.replace("时信魔方", "*");
+        name = name.replace("时信", "*");
         contact.setName(name);
     }
 }

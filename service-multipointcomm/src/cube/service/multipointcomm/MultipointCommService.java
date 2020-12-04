@@ -42,6 +42,7 @@ import cube.common.action.MultipointCommAction;
 import cube.common.entity.*;
 import cube.common.state.MultipointCommStateCode;
 import cube.core.*;
+import cube.plugin.PluginSystem;
 import cube.service.Director;
 import cube.service.contact.ContactManager;
 import cube.service.multipointcomm.signaling.*;
@@ -132,6 +133,11 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         this.mediaUnitLeader.stop();
 
         this.scheduledExecutor.shutdown();
+    }
+
+    @Override
+    public PluginSystem<?> getPluginSystem() {
+        return null;
     }
 
     @Override

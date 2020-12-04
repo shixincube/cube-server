@@ -26,6 +26,8 @@
 
 package cube.core;
 
+import cube.plugin.PluginSystem;
+
 /**
  * 模块描述类。
  */
@@ -40,6 +42,13 @@ public interface Module {
      * 停止模块。
      */
     public void stop();
+
+    /**
+     * 获取模块的插件系统。
+     *
+     * @return 返回模块的插件系统实例。
+     */
+    public PluginSystem<?> getPluginSystem();
 
     /**
      * 获取指定名称的缓存器。

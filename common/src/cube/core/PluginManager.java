@@ -29,6 +29,7 @@ package cube.core;
 import cell.util.json.JSONArray;
 import cell.util.json.JSONException;
 import cell.util.json.JSONObject;
+import cube.plugin.Plugin;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -37,6 +38,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 插件管理器。
@@ -54,15 +57,25 @@ public class PluginManager {
     public void start() {
         this.config = this.readConfig();
         if (null != this.config) {
+            List<PluginDesc> list = new ArrayList<>();
+
             if (this.config.has("deploy")) {
                 try {
                     JSONArray array = this.config.getJSONArray("deploy");
                     for (int i = 0, len = array.length(); i < len; ++i) {
-
+                        JSONObject plugin = array.getJSONObject(i);
+                        PluginDesc desc = new PluginDesc(plugin);
+                        list.add(desc);
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+            }
+
+            // 注册插件
+            for (PluginDesc desc : list) {
+                Module module = this.kernel.getModule(desc.module);
+
             }
         }
     }
@@ -118,6 +131,26 @@ public class PluginManager {
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * 插件信息描述。
+     */
+    protected class PluginDesc {
+
+        protected String module;
+
+        protected PluginDesc(JSONObject json) {
+            try {
+                String filepath = json.getString("file");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        protected Plugin[] load() {
+            return null;
         }
     }
 }

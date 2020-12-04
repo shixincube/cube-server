@@ -70,6 +70,11 @@ public final class Kernel {
     private ConcurrentHashMap<String, AbstractMQ> mqMap;
 
     /**
+     * 插件管理器。
+     */
+    private PluginManager pluginManager;
+
+    /**
      * 是否已启动。
      */
     private boolean started = false;
@@ -88,6 +93,7 @@ public final class Kernel {
         this.cacheMap = new ConcurrentHashMap<>();
         this.mqMap = new ConcurrentHashMap<>();
         this.nodeName = UUID.randomUUID().toString();
+        this.pluginManager = new PluginManager(this);
     }
 
     /**
@@ -147,6 +153,8 @@ public final class Kernel {
             module.start();
         }
 
+        this.pluginManager.start();
+
         this.daemon = new ManagementDaemon(this);
         this.daemon.start();
     }
@@ -155,6 +163,8 @@ public final class Kernel {
      * 停止内核。
      */
     public void shutdown() {
+        this.pluginManager.stop();
+
         this.daemon.terminate();
         
         Iterator<AbstractModule> miter = this.moduleMap.values().iterator();

@@ -37,6 +37,7 @@ import cube.core.CacheKey;
 import cube.core.CacheValue;
 import cube.core.Kernel;
 import cube.core.Module;
+import cube.plugin.PluginSystem;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -75,6 +76,11 @@ public class AuthService extends AbstractModule {
 
     @Override
     public void stop() {
+    }
+
+    @Override
+    public PluginSystem<?> getPluginSystem() {
+        return null;
     }
 
     @Override

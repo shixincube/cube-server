@@ -37,6 +37,7 @@ public class MessagingPluginContext extends PluginContext {
     private Message message;
 
     public MessagingPluginContext(Message message) {
+        super();
         this.message = message;
     }
 

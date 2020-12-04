@@ -46,7 +46,7 @@ public class TestLuaPlugin {
         SimplePlugin plugin = new SimplePlugin();
 
         for (int i = 0; i < 2; ++i) {
-            PluginContext context = new PluginContext("This is a plugin context");
+            SimpleContext context = new SimpleContext("This is a plugin with lua");
 
             System.out.println("----------------------------------------");
 
@@ -91,7 +91,17 @@ public class TestLuaPlugin {
                 e.printStackTrace();
             }
 
-            System.out.println("Data: " + context.getResult().toString());
+            System.out.println("Data: " + ((SimpleContext)context).text);
+        }
+    }
+
+    public class SimpleContext extends PluginContext {
+
+        protected String text;
+
+        public SimpleContext(String text) {
+            super();
+            this.text = text;
         }
     }
 }

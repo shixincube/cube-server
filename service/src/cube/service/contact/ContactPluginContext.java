@@ -26,26 +26,22 @@
 
 package cube.service.contact;
 
-import cube.plugin.PluginSystem;
+import cube.common.entity.Contact;
+import cube.plugin.PluginContext;
 
 /**
- * 联系模块插件系统。
+ * 联系人模块插件上下文。
  */
-public class ContactPluginSystem extends PluginSystem<ContactHook> {
+public class ContactPluginContext extends PluginContext {
 
-    public ContactPluginSystem() {
-        this.build();
+    private Contact contact;
+
+    public ContactPluginContext(Contact contact) {
+        super();
+        this.contact = contact;
     }
 
-    public ContactHook getSignInHook() {
-        return this.getHook(ContactHook.SignIn);
-    }
-
-    private void build() {
-        ContactHook hook = new ContactHook(ContactHook.SignIn);
-        this.addHook(hook);
-
-        hook = new ContactHook(ContactHook.DeviceTimeout);
-        this.addHook(hook);
+    public Contact getContact() {
+        return this.contact;
     }
 }

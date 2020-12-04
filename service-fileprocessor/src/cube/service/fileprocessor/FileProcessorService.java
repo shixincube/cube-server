@@ -31,6 +31,7 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.FileThumbnail;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
+import cube.plugin.PluginSystem;
 import cube.service.filestorage.FileStorageService;
 import cube.util.FileType;
 import cube.util.FileUtils;
@@ -77,6 +78,11 @@ public class FileProcessorService extends AbstractModule {
     @Override
     public void stop() {
 
+    }
+
+    @Override
+    public PluginSystem<?> getPluginSystem() {
+        return null;
     }
 
     @Override

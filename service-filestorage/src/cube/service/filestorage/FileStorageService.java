@@ -32,6 +32,7 @@ import cell.util.log.Logger;
 import cube.cache.SharedMemoryCache;
 import cube.common.entity.FileLabel;
 import cube.core.*;
+import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
 import cube.service.filestorage.hierarchy.FileHierarchy;
 import cube.service.filestorage.hierarchy.FileHierarchyManager;
@@ -183,6 +184,11 @@ public class FileStorageService extends AbstractModule {
 
         // 关闭存储
         this.fileStructStorage.close();
+    }
+
+    @Override
+    public PluginSystem<?> getPluginSystem() {
+        return null;
     }
 
     @Override

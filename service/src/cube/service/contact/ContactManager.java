@@ -54,8 +54,10 @@ import cube.common.entity.GroupState;
 import cube.common.state.ContactStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
+import cube.plugin.PluginSystem;
 import cube.service.Director;
 import cube.service.auth.AuthService;
+import cube.service.contact.plugin.FilterContactNamePlugin;
 import cube.storage.StorageType;
 
 import java.util.ArrayList;
@@ -163,6 +165,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         this.contactsAdapter.addListener(this);
 
         this.pluginSystem = new ContactPluginSystem();
+        // 内置插件
+        this.buildInPlugins();
 
         // 异步初始化缓存和存储
         (new Thread() {
@@ -203,10 +207,25 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     @Override
+    public PluginSystem<?> getPluginSystem() {
+        return this.pluginSystem;
+    }
+
+    @Override
     public void onTick(cube.core.Module module, Kernel kernel) {
         this.daemon.run();
     }
 
+    /**
+     * 内置插件。
+     */
+    private void buildInPlugins() {
+        this.pluginSystem.register(ContactHook.SignIn, new FilterContactNamePlugin());
+    }
+
+    /**
+     * @param cellet
+     */
     public void setCellet(ContactServiceCellet cellet) {
         this.cellet = cellet;
     }
@@ -228,9 +247,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         Logger.d(this.getClass(), "SignIn contact: " + contact.getId() + " (" + activeDevice.getName() + ") - " +
                 authToken.getCode());
 
-        // 在该方法里插入 Hook
+        // Hook sign-in
         ContactHook hook = this.pluginSystem.getSignInHook();
-        hook.apply(contact);
+        hook.apply(new ContactPluginContext(contact));
 
         this.contactCache.apply(contact.getUniqueKey(), new LockFuture() {
             @Override
