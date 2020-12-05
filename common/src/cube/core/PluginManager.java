@@ -88,7 +88,7 @@ public class PluginManager {
 
                 for (Map.Entry<String, Plugin> e : desc.pluginMap.entrySet()) {
                     ps.register(e.getKey(), e.getValue());
-                    Logger.i(this.getClass(), "Register plugin : #" + e.getKey() + " - " + e.getValue().getClass().getName());
+                    Logger.i(this.getClass(), "Register plugin : #" + desc.module + " [" + e.getKey() + "] - " + e.getValue().getClass().getName());
                 }
             }
 

@@ -1,0 +1,12 @@
+{
+	"deploy": [
+		{
+			"file": "plugin/rickmgmt-messaging.jar",
+			"module": "Messaging",
+			"plugins": [{
+				"hook": "Push",
+				"class": "cube.service.riskmgmt.plugin.MessagingPlugin"
+			}]
+		}
+	]
+}

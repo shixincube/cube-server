@@ -48,7 +48,7 @@ public class FilterContactNamePlugin implements Plugin {
         Contact contact = ctx.getContact();
 
         String name = contact.getName();
-        name = name.replace("时信", "*");
+        name = name.replace("时信互联", "*");
         contact.setName(name);
     }
 }
