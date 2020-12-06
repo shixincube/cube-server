@@ -4,6 +4,17 @@
 
 支持的操作系统有：Windows、Linux 、macOS 、Android、iOS 等，支持的浏览器有：Chrome、Firefox、Safari 等。
 
+
+## 简介
+
+Cube Server 是 Cube 的服务器端项目。 Cube 服务器端由四个主要功能单元组成：
+
+1. 网关层的调度机。
+2. 功能业务单元与集群总线。
+3. 存储管理。
+4. 媒体数据传输与处理。
+
+
 ## 功能列表
 
 Cube 包含以下协作功能：
@@ -21,62 +32,6 @@ Cube 包含以下协作功能：
 * 在线文档协作（Online Document Collaboration）。支持 Word、PowerPoint、Excel 等主流格式文多人在写协作。
 * 安全与运维管理（Operation and Maintenance management）。所有数据通道支持加密，可支持国密算法等。
 * 风控管理（Risk Management）。对系统内所有文本、图片、视频、文件等内容进行包括 NLP、OCR、IR 等技术手段的风险控制和预警等。
-
-
-## 功能展示
-
-| 即时消息 |
-|:----:|
-|![IM](https://static.shixincube.com/cube/assets/showcase/im.gif)|
-
-| 视频聊天(1) | 视频聊天(2) |
-|:----:|:----:|
-|![VideoChat1](https://static.shixincube.com/cube/assets/showcase/videochat_1.gif)|![VideoChat2](https://static.shixincube.com/cube/assets/showcase/videochat_2.gif)|
-
-| 多人视频聊天(1) | 多人视频聊天(2) |
-|:----:|:----:|
-|![VideoChat3](https://static.shixincube.com/cube/assets/showcase/videochat_3.gif)|![VideoChat4](https://static.shixincube.com/cube/assets/showcase/videochat_4.gif)|
-
-| 会议 |
-|:----:|
-|![Conf100](https://static.shixincube.com/cube/assets/showcase/screen_conference.jpg)|
-|![ConfTile](https://static.shixincube.com/cube/assets/showcase/screen_conference_tile.jpg)|
-|![StartConf](https://static.shixincube.com/cube/assets/showcase/start_conference.gif)|
-
-| 共享桌面 |
-|:----:|
-|![ScreenSharing](https://static.shixincube.com/cube/assets/showcase/screen_sharing.gif)|
-
-| 云端文件存储 |
-|:----:|
-|![CFS](https://static.shixincube.com/cube/assets/showcase/cloud_file.gif)|
-
-| 白板 |
-|:----:|
-|![Whiteboard](https://static.shixincube.com/cube/assets/showcase/whiteboard.gif)|
-
-| 直播 |
-|:----:|
-|![Live](https://static.shixincube.com/cube/assets/showcase/live.gif)|
-
-| 在线课堂 |
-|:----:|
-|![OnlineClassroom](https://static.shixincube.com/cube/assets/showcase/online_classroom.gif)|
-
-| 文档协作 |
-|:----:|
-|![DocCollaboration](https://static.shixincube.com/cube/assets/showcase/doc_collaboration_excel.gif)|
-|![DocCollaboration](https://static.shixincube.com/cube/assets/showcase/doc_collaboration.gif)|
-
-
-## 简介
-
-Cube Server 是 Cube 的服务器端项目。 Cube 服务器端由四个主要功能单元组成：
-
-1. 网关层的调度机。
-2. 功能业务单元与集群总线。
-3. 存储管理。
-4. 媒体数据传输与处理。
 
 
 ## 如何从源代码构建项目
@@ -179,6 +134,52 @@ Cube Console 提供了管理、监视多个服务器节点的功能，通过浏�
 3. 关闭控制台，执行 `ant stop` 命令。
 
 一般的，控制台登录地址是：`http://您运行控制台程序的服务器地址:7080/` 。超级管理员账号：`admin`，超级管理员密码：`123456` 。
+
+
+## 功能展示
+
+| 即时消息 |
+|:----:|
+|![IM](https://static.shixincube.com/cube/assets/showcase/im.gif)|
+
+| 视频聊天(1) | 视频聊天(2) |
+|:----:|:----:|
+|![VideoChat1](https://static.shixincube.com/cube/assets/showcase/videochat_1.gif)|![VideoChat2](https://static.shixincube.com/cube/assets/showcase/videochat_2.gif)|
+
+| 多人视频聊天(1) | 多人视频聊天(2) |
+|:----:|:----:|
+|![VideoChat3](https://static.shixincube.com/cube/assets/showcase/videochat_3.gif)|![VideoChat4](https://static.shixincube.com/cube/assets/showcase/videochat_4.gif)|
+
+| 会议 |
+|:----:|
+|![Conf100](https://static.shixincube.com/cube/assets/showcase/screen_conference.jpg)|
+|![ConfTile](https://static.shixincube.com/cube/assets/showcase/screen_conference_tile.jpg)|
+|![StartConf](https://static.shixincube.com/cube/assets/showcase/start_conference.gif)|
+
+| 共享桌面 |
+|:----:|
+|![ScreenSharing](https://static.shixincube.com/cube/assets/showcase/screen_sharing.gif)|
+
+| 云端文件存储 |
+|:----:|
+|![CFS](https://static.shixincube.com/cube/assets/showcase/cloud_file.gif)|
+
+| 白板 |
+|:----:|
+|![Whiteboard](https://static.shixincube.com/cube/assets/showcase/whiteboard.gif)|
+
+| 直播 |
+|:----:|
+|![Live](https://static.shixincube.com/cube/assets/showcase/live.gif)|
+
+| 在线课堂 |
+|:----:|
+|![OnlineClassroom](https://static.shixincube.com/cube/assets/showcase/online_classroom.gif)|
+
+| 文档协作 |
+|:----:|
+|![DocCollaboration](https://static.shixincube.com/cube/assets/showcase/doc_collaboration_excel.gif)|
+|![DocCollaboration](https://static.shixincube.com/cube/assets/showcase/doc_collaboration.gif)|
 
 
 ## 获得帮助
