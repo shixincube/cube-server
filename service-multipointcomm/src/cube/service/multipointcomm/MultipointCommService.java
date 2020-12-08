@@ -615,6 +615,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             // 清空
             current.clearAll();
+
+            // 回调
+            callback.on(MultipointCommStateCode.Ok, signaling);
         }
         else {
             Logger.i(this.getClass(), "Bye: " + signaling.getContact().getId());
