@@ -42,8 +42,8 @@ public class ByeSignaling extends Signaling {
 
     private Contact callee;
 
-    public ByeSignaling(CommField commField, Contact contact, Device device) {
-        super(MultipointCommAction.Bye.name, commField, contact, device);
+    public ByeSignaling(CommField commField, Contact contact, Device device, Long endpointSN) {
+        super(MultipointCommAction.Bye.name, commField, contact, device, endpointSN);
     }
 
     public ByeSignaling(JSONObject json) {

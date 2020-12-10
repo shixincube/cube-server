@@ -344,7 +344,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             CommField calleeField = this.commFieldMap.get(current.getCallee().getId());
 
             // 推送信令
-            OfferSignaling toCallee = new OfferSignaling(calleeField, calleeField.getFounder(), Device.createDevice());
+            OfferSignaling toCallee = new OfferSignaling(calleeField, calleeField.getFounder(), Device.createDevice(),
+                    signaling.getEndpointSN());
             toCallee.copy(signaling);
             ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
                     MultipointCommAction.Offer.name, toCallee.toJSON());
@@ -445,7 +446,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             // 向主叫发送 Answer
             AnswerSignaling toCaller = new AnswerSignaling(callerField,
-                    callerEndpoint.getContact(), callerEndpoint.getDevice());
+                    callerEndpoint.getContact(), callerEndpoint.getDevice(), signaling.getEndpointSN());
             toCaller.copy(signaling);
             ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
                     MultipointCommAction.Answer.name, toCaller.toJSON());
@@ -453,7 +454,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             // 向主叫推送 Candidate
             CandidateSignaling candidateSignaling = new CandidateSignaling(callerField,
-                    callerEndpoint.getContact(), callerEndpoint.getDevice());
+                    callerEndpoint.getContact(), callerEndpoint.getDevice(), signaling.getEndpointSN());
             // 填写被叫的 Candidates
             candidateSignaling.setCandidateList(endpoint.getCandidates());
             event = new ModuleEvent(MultipointCommService.NAME, MultipointCommAction.Candidate.name,
@@ -462,7 +463,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             // 向被叫推送 Candidate
             candidateSignaling = new CandidateSignaling(current,
-                    endpoint.getContact(), endpoint.getDevice());
+                    endpoint.getContact(), endpoint.getDevice(), signaling.getEndpointSN());
             // 填写主叫的 Candidates
             candidateSignaling.setCandidateList(callerEndpoint.getCandidates());
             event = new ModuleEvent(MultipointCommService.NAME, MultipointCommAction.Candidate.name,
@@ -519,7 +520,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 CommFieldEndpoint peerEndpoint = peerField.getEndpoint(peer);
 
                 CandidateSignaling candidateSignaling = new CandidateSignaling(peerField,
-                        peerEndpoint.getContact(), peerEndpoint.getDevice());
+                        peerEndpoint.getContact(), peerEndpoint.getDevice(), signaling.getEndpointSN());
                 candidateSignaling.setCandidate(signaling.getCandidate());
 
                 ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, MultipointCommAction.Candidate.name,
@@ -607,7 +608,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 targetEndpoint.setState(MultipointCommStateCode.CallBye);
 
                 ByeSignaling toTarget = new ByeSignaling(targetField,
-                        targetEndpoint.getContact(), targetEndpoint.getDevice());
+                        targetEndpoint.getContact(), targetEndpoint.getDevice(), signaling.getEndpointSN());
                 toTarget.copy(signaling);
                 ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, toTarget.getName(), toTarget.toJSON());
                 this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
@@ -701,7 +702,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
             if (null != targetEndpoint) {
                 BusySignaling toTarget = new BusySignaling(targetField,
-                        targetEndpoint.getContact(), targetEndpoint.getDevice());
+                        targetEndpoint.getContact(), targetEndpoint.getDevice(), signaling.getEndpointSN());
                 toTarget.copy(signaling);
                 ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, toTarget.getName(), toTarget.toJSON());
                 this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());

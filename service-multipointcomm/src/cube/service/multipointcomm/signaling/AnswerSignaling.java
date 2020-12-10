@@ -46,8 +46,8 @@ public class AnswerSignaling extends Signaling {
 
     private Contact callee;
 
-    public AnswerSignaling(CommField field, Contact contact, Device device) {
-        super(MultipointCommAction.Answer.name, field, contact, device);
+    public AnswerSignaling(CommField field, Contact contact, Device device, Long endpointSN) {
+        super(MultipointCommAction.Answer.name, field, contact, device, endpointSN);
     }
 
     public AnswerSignaling(JSONObject json) {

@@ -46,8 +46,8 @@ public class OfferSignaling extends Signaling {
 
     private Contact callee;
 
-    public OfferSignaling(CommField field, Contact contact, Device device) {
-        super(MultipointCommAction.Offer.name, field, contact, device);
+    public OfferSignaling(CommField field, Contact contact, Device device, Long endpointSN) {
+        super(MultipointCommAction.Offer.name, field, contact, device, endpointSN);
     }
 
     public OfferSignaling(JSONObject json) {

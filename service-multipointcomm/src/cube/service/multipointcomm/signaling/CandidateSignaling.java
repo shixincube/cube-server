@@ -46,8 +46,8 @@ public class CandidateSignaling extends Signaling {
 
     private List<JSONObject> candidateList;
 
-    public CandidateSignaling(CommField field, Contact contact, Device device) {
-        super(MultipointCommAction.Candidate.name, field, contact, device);
+    public CandidateSignaling(CommField field, Contact contact, Device device, Long endpointSN) {
+        super(MultipointCommAction.Candidate.name, field, contact, device, endpointSN);
     }
 
     public CandidateSignaling(JSONObject json) {
