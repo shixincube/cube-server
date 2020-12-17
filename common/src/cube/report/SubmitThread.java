@@ -90,6 +90,8 @@ public class SubmitThread extends Thread {
                     Logger.w(this.getClass(), "Submitting report \"" + report.getName() + "\" (" + report.getReporter() + ") failed", e);
                 } catch (ExecutionException e) {
                     //Logger.d(this.getClass(), "Submitting report \"" + report.getName() + "\" (" + report.getReporter() + ") failed", e);
+                } catch (ArithmeticException e) {
+                    // Nothing
                 }
             }
 
