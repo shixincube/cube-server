@@ -49,16 +49,16 @@
 		<cellet port="6000">
 			<class>cube.service.contact.ContactServiceCellet</class>
 		</cellet>
-		<cellet port="6000" jar="cellets/cube-service-filestorage.jar">
+		<cellet port="6000" jar="cellets/cube-service-filestorage-3.0.jar">
 			<class>cube.service.filestorage.FileStorageServiceCellet</class>
 		</cellet>
-		<cellet port="6000" jar="cellets/cube-service-fileprocessor.jar">
+		<cellet port="6000" jar="cellets/cube-service-fileprocessor-3.0.jar">
 			<class>cube.service.fileprocessor.FileProcessorServiceCellet</class>
 		</cellet>
-		<cellet port="6000" jar="cellets/cube-service-messaging.jar">
+		<cellet port="6000" jar="cellets/cube-service-messaging-3.0.jar">
 			<class>cube.service.messaging.MessagingServiceCellet</class>
 		</cellet>
-		<cellet port="6000" jar="cellets/cube-service-multipointcomm.jar">
+		<cellet port="6000" jar="cellets/cube-service-multipointcomm-3.0.jar">
 			<class>cube.service.multipointcomm.MultipointCommServiceCellet</class>
 		</cellet>
 	</cellets>
