@@ -59,9 +59,9 @@ public abstract class Signaling implements JSONable {
     protected Device device;
 
     /**
-     * 客户端 RTC 终端的 SN 。
+     * 客户端 RTC 设备的 SN 。
      */
-    protected Long endpointSN;
+    protected Long rtcSN;
 
     /**
      * 构造函数。
@@ -70,14 +70,14 @@ public abstract class Signaling implements JSONable {
      * @param field
      * @param contact
      * @param device
-     * @param endpointSN
+     * @param rtcSN
      */
-    public Signaling(String name, CommField field, Contact contact, Device device, Long endpointSN) {
+    public Signaling(String name, CommField field, Contact contact, Device device, Long rtcSN) {
         this.name = name;
         this.field = field;
         this.contact = contact;
         this.device = device;
-        this.endpointSN = endpointSN;
+        this.rtcSN = rtcSN;
     }
 
     /**
@@ -91,7 +91,7 @@ public abstract class Signaling implements JSONable {
             this.field = new CommField(json.getJSONObject("field"));
             this.contact = new Contact(json.getJSONObject("contact"), this.field.getDomain());
             this.device = new Device(json.getJSONObject("device"));
-            this.endpointSN = json.getLong("endpointSN");
+            this.rtcSN = json.getLong("rtcSN");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -117,8 +117,8 @@ public abstract class Signaling implements JSONable {
         return this.device;
     }
 
-    public Long getEndpointSN() {
-        return this.endpointSN;
+    public Long getRTCSerialNumber() {
+        return this.rtcSN;
     }
 
     @Override
@@ -129,7 +129,7 @@ public abstract class Signaling implements JSONable {
             json.put("field", this.field.toCompactJSON());
             json.put("contact", this.contact.toBasicJSON());
             json.put("device", this.device.toCompactJSON());
-            json.put("endpointSN", this.endpointSN.longValue());
+            json.put("rtcSN", this.rtcSN.longValue());
         } catch (JSONException e) {
             e.printStackTrace();
         }
