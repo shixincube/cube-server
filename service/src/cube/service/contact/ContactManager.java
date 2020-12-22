@@ -47,6 +47,7 @@ import cube.common.ModuleEvent;
 import cube.common.Packet;
 import cube.common.UniqueKey;
 import cube.common.action.ContactAction;
+import cube.common.action.MessagingAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Group;
@@ -357,6 +358,17 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         return null;
+    }
+
+    /**
+     * 报告指定的联系人的设备断开连接。
+     *
+     * @param contact
+     */
+    public void reportDisconnect(Contact contact) {
+        String key = contact.getUniqueKey();
+        ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.Disconnect.name, contact.toJSON());
+        this.contactsAdapter.publish(key, event.toJSON());
     }
 
     /**

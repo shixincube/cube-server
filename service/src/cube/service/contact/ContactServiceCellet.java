@@ -81,6 +81,9 @@ public class ContactServiceCellet extends Cellet {
         else if (ContactAction.SignIn.name.equals(action)) {
             this.executor.execute(new SignInTask(this, talkContext, primitive));
         }
+        else if (ContactAction.Disconnect.name.equals(action)) {
+            this.executor.execute(new DisconnectTask(this, talkContext, primitive));
+        }
         else if (ContactAction.GetContact.name.equals(action)) {
             this.executor.execute(new GetContactTask(this, talkContext, primitive));
         }

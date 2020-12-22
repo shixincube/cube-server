@@ -42,8 +42,8 @@ public class BusySignaling extends Signaling {
 
     private Contact callee;
 
-    public BusySignaling(CommField commField, Contact contact, Device device, Long endpointSN) {
-        super(MultipointCommAction.Busy.name, commField, contact, device, endpointSN);
+    public BusySignaling(CommField commField, Contact contact, Device device, Long rtcSN) {
+        super(MultipointCommAction.Busy.name, commField, contact, device, rtcSN);
     }
 
     public BusySignaling(JSONObject json) {

@@ -52,6 +52,11 @@ public enum ContactAction {
     Leave("leave"),
 
     /**
+     * 设备断线。
+     */
+    Disconnect("disconnect"),
+
+    /**
      * 设备超时。
      */
     DeviceTimeout("deviceTimeout"),

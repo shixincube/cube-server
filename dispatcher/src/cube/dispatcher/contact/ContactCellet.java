@@ -26,6 +26,7 @@
 
 package cube.dispatcher.contact;
 
+import cell.api.Servable;
 import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
@@ -78,12 +79,18 @@ public class ContactCellet extends Cellet {
      */
     private ConcurrentLinkedQueue<PassThroughTask> passTaskQueue;
 
+    /**
+     * Disconnect 任务对象的缓存队列。
+     */
+    private ConcurrentLinkedQueue<DisconnectTask> disconnTaskQueue;
+
     public ContactCellet() {
         super(NAME);
         this.signInTaskQueue = new ConcurrentLinkedQueue<>();
         this.signOutTaskQueue = new ConcurrentLinkedQueue<>();
         this.comebackTaskQueue = new ConcurrentLinkedQueue<>();
         this.passTaskQueue = new ConcurrentLinkedQueue<>();
+        this.disconnTaskQueue = new ConcurrentLinkedQueue<>();
     }
 
     @Override
@@ -118,6 +125,11 @@ public class ContactCellet extends Cellet {
         else {
             this.executor.execute(this.borrowPassTask(talkContext, primitive, true));
         }
+    }
+
+    @Override
+    public void onQuitted(TalkContext context, Servable server) {
+        this.executor.execute(this.borrowDisconnectTask(context));
     }
 
     protected SignInTask borrowSignInTask(TalkContext talkContext, Primitive primitive) {
@@ -174,5 +186,19 @@ public class ContactCellet extends Cellet {
 
     protected void returnPassTask(PassThroughTask task) {
         this.passTaskQueue.offer(task);
+    }
+
+    protected DisconnectTask borrowDisconnectTask(TalkContext talkContext) {
+        DisconnectTask task = this.disconnTaskQueue.poll();
+        if (null == task) {
+            return new DisconnectTask(this, talkContext, this.performer);
+        }
+
+        task.reset(talkContext);
+        return task;
+    }
+
+    protected void returnDisconnectTask(DisconnectTask task) {
+        this.disconnTaskQueue.offer(task);
     }
 }

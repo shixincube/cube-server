@@ -166,4 +166,20 @@ public class ModuleEvent implements JSONable {
         }
         return mod;
     }
+
+    /**
+     * 提取 JSON 数据里的事件名。
+     *
+     * @param json 指定 JSON 数据。
+     * @return
+     */
+    public static String extractEventName(JSONObject json) {
+        String event = null;
+        try {
+            event = json.getString("event");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return event;
+    }
 }

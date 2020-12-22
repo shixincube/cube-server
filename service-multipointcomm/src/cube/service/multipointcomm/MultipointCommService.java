@@ -38,6 +38,7 @@ import cell.util.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.ModuleEvent;
 import cube.common.Packet;
+import cube.common.action.ContactAction;
 import cube.common.action.MultipointCommAction;
 import cube.common.entity.*;
 import cube.common.state.MultipointCommStateCode;
@@ -54,6 +55,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -76,6 +78,11 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
      * 联系人事件适配器。
      */
     private CelletAdapter contactsAdapter;
+
+    /**
+     * 线程池执行器。
+     */
+    private ExecutorService executor;
 
     /**
      * 定时器线程池。
@@ -113,6 +120,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         this.contactsAdapter = CelletAdapterFactory.getInstance().getAdapter("Contacts");
         this.contactsAdapter.addListener(this);
 
+        this.executor = Executors.newCachedThreadPool();
+
         this.scheduledExecutor = Executors.newScheduledThreadPool(16);
 
         this.cache = this.getKernel().getCache("General");
@@ -133,6 +142,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         this.mediaUnitLeader.stop();
 
         this.scheduledExecutor.shutdown();
+
+        this.executor.shutdown();
     }
 
     @Override
@@ -815,9 +826,24 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         return Math.abs(id);
     }
 
+    private CommField queryCommField(Contact contact, Device device) {
+        CommField field = null;
+        Iterator<CommField> iter = this.commFieldMap.values().iterator();
+        while (iter.hasNext()) {
+            CommField commField = iter.next();
+            CommFieldEndpoint endpoint = commField.getEndpoint(contact, device);
+            if (null != endpoint) {
+                field = commField;
+                break;
+            }
+        }
+        return field;
+    }
+
     @Override
     public void onDelivered(String topic, Endpoint endpoint, JSONObject jsonObject) {
-        if (MultipointCommService.NAME.equals(ModuleEvent.extractModuleName(jsonObject))) {
+        String moduleName = ModuleEvent.extractModuleName(jsonObject);
+        if (MultipointCommService.NAME.equals(moduleName)) {
             // 解析事件
             ModuleEvent event = new ModuleEvent(jsonObject);
             // 事件名
@@ -924,6 +950,32 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                                 eventName, event.getData());
                     }
                 }
+            }
+        }
+        else if (ContactManager.NAME.equals(moduleName)) {
+            // 联系人模块的事件，处理联系人设备断开
+            String eventName = ModuleEvent.extractEventName(jsonObject);
+            if (ContactAction.Disconnect.name.equals(eventName)) {
+                final ModuleEvent event = new ModuleEvent(jsonObject);
+                // 异步执行 Bye
+                this.executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        Contact contact = new Contact(event.getData());
+                        Device device = contact.getDeviceList().get(0);
+                        // 查找断开连接终端所在的通信场
+                        CommField commField = queryCommField(contact, device);
+                        ByeSignaling bye = SignalingTool.createByeSignaling(contact, device, commField);
+                        processBye(bye, new SignalingCallback() {
+                            @Override
+                            public void on(MultipointCommStateCode stateCode, Signaling signaling) {
+                                if (Logger.isDebugLevel()) {
+                                    Logger.d(MultipointCommService.class, "Device disconnect, simulate bye");
+                                }
+                            }
+                        });
+                    }
+                });
             }
         }
     }

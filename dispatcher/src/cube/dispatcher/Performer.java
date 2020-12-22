@@ -423,6 +423,26 @@ public class Performer implements TalkListener {
     }
 
     /**
+     * 查询联系人。
+     *
+     * @param talkContext 指定会话上下文。
+     * @return
+     */
+    public Contact queryContact(TalkContext talkContext) {
+        Iterator<Contact> iter = this.onlineContacts.values().iterator();
+        while (iter.hasNext()) {
+            Contact contact = iter.next();
+            Device device = contact.getDevice(talkContext);
+            if (null != device) {
+                Contact result = new Contact(contact.getId(), contact.getDomain(), contact.getName());
+                result.addDevice(device);
+                return result;
+            }
+        }
+        return null;
+    }
+
+    /**
      * 向服务单元发送数据，不等待应答。
      * @param talkContext
      * @param celletName

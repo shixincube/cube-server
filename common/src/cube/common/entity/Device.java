@@ -293,6 +293,11 @@ public class Device implements JSONable {
         return this.hash;
     }
 
+    @Override
+    public String toString() {
+        return this.name + "/" + this.platform;
+    }
+
     /**
      * 创建无设备描述的设备。
      *
