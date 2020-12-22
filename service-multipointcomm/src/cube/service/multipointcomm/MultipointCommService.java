@@ -329,6 +329,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             endpoint = new CommFieldEndpoint(endpointId, signaling.getContact(), signaling.getDevice());
             current.addEndpoint(endpoint);
         }
+        endpoint.setRTCSerialNumber(signaling.getRTCSerialNumber());
         endpoint.setSessionDescription(signaling.getSessionDescription());
         endpoint.setMediaConstraint(signaling.getMediaConstraint());
         endpoint.setState(MultipointCommStateCode.Calling);
@@ -416,13 +417,13 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         // 更新终端
         CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
         if (null == endpoint) {
-            Long endpointId = this.makeCommFieldEndpointId(signaling.getContact(), signaling.getDevice());
-            endpoint = new CommFieldEndpoint(endpointId, signaling.getContact(), signaling.getDevice());
-            current.addEndpoint(endpoint);
+            callback.on(MultipointCommStateCode.NoCommFieldEndpoint, signaling);
+            return;
         }
+
+        endpoint.setRTCSerialNumber(signaling.getRTCSerialNumber());
         endpoint.setSessionDescription(signaling.getSessionDescription());
         endpoint.setMediaConstraint(signaling.getMediaConstraint());
-        endpoint.setState(MultipointCommStateCode.CallConnected);
 
         // 更新信令的 Field
         signaling.setField(current);
@@ -434,6 +435,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 callback.on(MultipointCommStateCode.CommFieldStateError, signaling);
                 return;
             }
+
+            // 更新状态
+            endpoint.setState(MultipointCommStateCode.CallConnected);
 
             Logger.i(this.getClass(), "Answer: " + current.getCallee().getId() + " -> " + current.getCaller().getId());
 
@@ -457,7 +461,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             // 向主叫发送 Answer
             AnswerSignaling toCaller = new AnswerSignaling(callerField,
-                    callerEndpoint.getContact(), callerEndpoint.getDevice(), signaling.getRTCSerialNumber());
+                    callerEndpoint.getContact(), callerEndpoint.getDevice(), callerEndpoint.getRTCSerialNumber());
             toCaller.copy(signaling);
             ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
                     MultipointCommAction.Answer.name, toCaller.toJSON());
@@ -465,18 +469,28 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             // 向主叫推送 Candidate
             CandidateSignaling candidateSignaling = new CandidateSignaling(callerField,
-                    callerEndpoint.getContact(), callerEndpoint.getDevice(), signaling.getRTCSerialNumber());
+                    callerEndpoint.getContact(), callerEndpoint.getDevice(), callerEndpoint.getRTCSerialNumber());
             // 填写被叫的 Candidates
-            candidateSignaling.setCandidateList(endpoint.getCandidates());
+            List<JSONObject> candidates = endpoint.getCandidates();
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#processAnswer candidate " + endpoint.getContact().getId()
+                        + " -> " + caller.getId() + " : " + candidates.size());
+            }
+            candidateSignaling.setCandidateList(candidates);
             event = new ModuleEvent(MultipointCommService.NAME, MultipointCommAction.Candidate.name,
                     candidateSignaling.toJSON());
             this.contactsAdapter.publish(callerEndpoint.getContact().getUniqueKey(), event.toJSON());
 
             // 向被叫推送 Candidate
             candidateSignaling = new CandidateSignaling(current,
-                    endpoint.getContact(), endpoint.getDevice(), signaling.getRTCSerialNumber());
+                    endpoint.getContact(), endpoint.getDevice(), endpoint.getRTCSerialNumber());
             // 填写主叫的 Candidates
-            candidateSignaling.setCandidateList(callerEndpoint.getCandidates());
+            candidates = callerEndpoint.getCandidates();
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#processAnswer candidate " + caller.getId()
+                        + " -> " + endpoint.getContact().getId() + " : " + candidates.size());
+            }
+            candidateSignaling.setCandidateList(candidates);
             event = new ModuleEvent(MultipointCommService.NAME, MultipointCommAction.Candidate.name,
                     candidateSignaling.toJSON());
             this.contactsAdapter.publish(endpoint.getContact().getUniqueKey(), event.toJSON());
@@ -531,7 +545,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 CommFieldEndpoint peerEndpoint = peerField.getEndpoint(peer);
 
                 CandidateSignaling candidateSignaling = new CandidateSignaling(peerField,
-                        peerEndpoint.getContact(), peerEndpoint.getDevice(), signaling.getRTCSerialNumber());
+                        peerEndpoint.getContact(), peerEndpoint.getDevice(), peerEndpoint.getRTCSerialNumber());
                 candidateSignaling.setCandidate(signaling.getCandidate());
 
                 ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, MultipointCommAction.Candidate.name,
@@ -935,6 +949,10 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                         Logger.d(this.getClass(), "Push signaling '" + signaling.getName()
                                 + "' to '" + contact.getId() + "'");
                     }
+                    else {
+                        Logger.e(this.getClass(), "Push signaling failed: " + signaling.getName()
+                                + "' to '" + contact.getId() + "'");
+                    }
                 }
             }
             else if (MultipointCommAction.Entered.name.equals(eventName) ||
@@ -963,14 +981,20 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                     public void run() {
                         Contact contact = new Contact(event.getData());
                         Device device = contact.getDeviceList().get(0);
-                        // 查找断开连接终端所在的通信场
+                        // 查找断开连接终端所在的通讯场
                         CommField commField = queryCommField(contact, device);
+                        if (null == commField) {
+                            // 没有找到通讯场
+                            return;
+                        }
+
                         ByeSignaling bye = SignalingTool.createByeSignaling(contact, device, commField);
                         processBye(bye, new SignalingCallback() {
                             @Override
                             public void on(MultipointCommStateCode stateCode, Signaling signaling) {
                                 if (Logger.isDebugLevel()) {
-                                    Logger.d(MultipointCommService.class, "Device disconnect, simulate bye");
+                                    Logger.d(MultipointCommService.class,
+                                            "Device disconnect, simulate bye : " + stateCode.code);
                                 }
                             }
                         });

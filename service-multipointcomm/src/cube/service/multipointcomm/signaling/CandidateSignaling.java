@@ -102,6 +102,6 @@ public class CandidateSignaling extends Signaling {
 
     @Override
     public JSONObject toCompactJSON() {
-        return super.toCompactJSON();
+        return this.toJSON();
     }
 }
