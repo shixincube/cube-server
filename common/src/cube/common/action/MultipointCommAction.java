@@ -77,6 +77,11 @@ public enum MultipointCommAction {
     ByeAck("byeAck"),
 
     /**
+     * 应答 Busys
+     */
+    BusyAck("busyAck"),
+
+    /**
      * 执行申请主叫。
      */
     ApplyCall("applyCall"),

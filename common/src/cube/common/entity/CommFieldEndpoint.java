@@ -66,6 +66,11 @@ public class CommFieldEndpoint extends Entity {
     private MultipointCommStateCode state;
 
     /**
+     * 最近一次修改状态时间戳。
+     */
+    private long lastModified = 0L;
+
+    /**
      * 当前节点的 SDP 信息。
      */
     private JSONObject sessionDescription;
@@ -101,6 +106,11 @@ public class CommFieldEndpoint extends Entity {
     private boolean audioStreamEnabled = true;
 
     /**
+     * 节点就绪时间戳。
+     */
+    public long readyTimestamp = 0L;
+
+    /**
      * 构造函数。
      *
      * @param id
@@ -113,6 +123,7 @@ public class CommFieldEndpoint extends Entity {
         this.contact = contact;
         this.device = device;
         this.state = MultipointCommStateCode.Ok;
+        this.lastModified = System.currentTimeMillis();
 
         this.name = contact.getUniqueKey() + "_" + device.getName() + "_" + device.getPlatform();
     }
@@ -173,10 +184,20 @@ public class CommFieldEndpoint extends Entity {
         return this.device;
     }
 
+    /**
+     * 设置 RTC 设备的序号。
+     *
+     * @param rtcSN
+     */
     public void setRTCSerialNumber(Long rtcSN) {
         this.rtcSN = rtcSN;
     }
 
+    /**
+     * 获取 RTC 设备的序号。
+     *
+     * @return
+     */
     public Long getRTCSerialNumber() {
         return this.rtcSN;
     }
@@ -240,6 +261,7 @@ public class CommFieldEndpoint extends Entity {
      */
     public void setState(MultipointCommStateCode state) {
         this.state = state;
+        this.lastModified = System.currentTimeMillis();
     }
 
     /**
@@ -249,6 +271,15 @@ public class CommFieldEndpoint extends Entity {
      */
     public MultipointCommStateCode getState() {
         return this.state;
+    }
+
+    /**
+     * 返回最近一次修改状态的时间戳。
+     *
+     * @return
+     */
+    public long getLastModified() {
+        return this.lastModified;
     }
 
     @Override

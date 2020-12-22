@@ -436,7 +436,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 return;
             }
 
-            // 更新状态
+            // 修改被叫状态
             endpoint.setState(MultipointCommStateCode.CallConnected);
 
             Logger.i(this.getClass(), "Answer: " + current.getCallee().getId() + " -> " + current.getCaller().getId());
@@ -496,6 +496,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             this.contactsAdapter.publish(endpoint.getContact().getUniqueKey(), event.toJSON());
 
             callback.on(MultipointCommStateCode.Ok, signaling);
+
+            // 设置就绪时间戳
+            callerEndpoint.readyTimestamp = endpoint.readyTimestamp = System.currentTimeMillis();
         }
         else {
             Logger.i(this.getClass(), "Answer: " + current.getId() + " - " + signaling.getContact().getId());
@@ -596,6 +599,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             // 更新状态
             endpoint.setState(MultipointCommStateCode.CallBye);
+            endpoint.readyTimestamp = 0L;
             endpoint.clearCandidates();
 
             current.updateCallerState(MultipointCommStateCode.CallBye);
@@ -631,6 +635,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
             if (null != targetEndpoint) {
                 targetEndpoint.setState(MultipointCommStateCode.CallBye);
+                targetEndpoint.readyTimestamp = 0L;
 
                 ByeSignaling toTarget = new ByeSignaling(targetField,
                         targetEndpoint.getContact(), targetEndpoint.getDevice(), signaling.getRTCSerialNumber());
