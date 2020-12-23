@@ -57,6 +57,15 @@ public class CandidateSignaling extends Signaling {
             if (json.has("candidate")) {
                 this.candidate = json.getJSONObject("candidate");
             }
+
+            if (json.has("candidates")) {
+                JSONArray array = json.getJSONArray("candidates");
+                this.candidateList = new ArrayList<>(array.length());
+                for (int i = 0; i < array.length(); ++i) {
+                    JSONObject candidate = array.getJSONObject(i);
+                    this.candidateList.add(candidate);
+                }
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -76,6 +85,15 @@ public class CandidateSignaling extends Signaling {
         }
 
         this.candidateList.addAll(candidates);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public int numCandidates() {
+        int num = (null != this.candidate) ? 1 : 0;
+        return (num + ((null != this.candidateList) ? this.candidateList.size() : 0));
     }
 
     @Override

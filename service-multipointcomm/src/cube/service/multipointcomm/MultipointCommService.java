@@ -952,11 +952,11 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                     if (null != device && pushPacket(device.getTalkContext(), contact, device,
                             signaling.getName(), signaling.toJSON())) {
                         Logger.d(this.getClass(), "Push signaling '" + signaling.getName()
-                                + "' to '" + contact.getId() + "'");
+                                + "' to '" + contact.getId() + "' : " + signaling.numCandidates());
                     }
                     else {
                         Logger.e(this.getClass(), "Push signaling failed: " + signaling.getName()
-                                + "' to '" + contact.getId() + "'");
+                                + "' to '" + contact.getId() + "' : " + signaling.numCandidates());
                     }
                 }
             }
