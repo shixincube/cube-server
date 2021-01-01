@@ -29,9 +29,13 @@ package cube.dispatcher.filestorage;
 import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
+import cell.util.CachedQueueExecutor;
 import cube.dispatcher.Performer;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
+
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 文件存储模块的 Cellet 单元。
@@ -43,16 +47,36 @@ public class FileStorageCellet extends Cellet {
      */
     public final static String NAME = "FileStorage";
 
+    /**
+     * 线程池。
+     */
+    private ExecutorService executor;
+
+    /**
+     * 文件块存储。
+     */
     private FileChunkStorage fileChunkStorage;
+
+    /**
+     * 执行机。
+     */
+    private Performer performer;
+
+    /**
+     * 任务缓存队列。
+     */
+    private ConcurrentLinkedQueue<PassThroughTask> taskQueue;
 
     public FileStorageCellet() {
         super(NAME);
         this.fileChunkStorage = new FileChunkStorage("cube-fs-files");
+        this.taskQueue = new ConcurrentLinkedQueue<>();
     }
 
     @Override
     public boolean install() {
-        Performer performer = (Performer) nucleus.getParameter("performer");
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
+        this.performer = (Performer) nucleus.getParameter("performer");
 
         // 打开存储管理器
         this.fileChunkStorage.open(this, performer);
@@ -74,10 +98,26 @@ public class FileStorageCellet extends Cellet {
         this.fileChunkStorage.close();
 
         HttpClientFactory.getInstance().close();
+
+        this.executor.shutdown();
     }
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
+        this.executor.execute(this.borrowTask(talkContext, primitive, true));
+    }
 
+    protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive, boolean sync) {
+        PassThroughTask task = this.taskQueue.poll();
+        if (null == task) {
+            return new PassThroughTask(this, talkContext, primitive, this.performer, sync);
+        }
+
+        task.reset(talkContext, primitive, sync);
+        return task;
+    }
+
+    protected void returnTask(PassThroughTask task) {
+        this.taskQueue.offer(task);
     }
 }

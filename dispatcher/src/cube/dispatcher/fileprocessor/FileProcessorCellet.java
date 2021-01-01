@@ -67,7 +67,7 @@ public class FileProcessorCellet extends Cellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(64);
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(32);
         this.performer = (Performer) this.getNucleus().getParameter("performer");
         return true;
     }
