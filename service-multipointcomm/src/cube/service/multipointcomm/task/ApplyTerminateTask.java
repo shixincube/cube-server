@@ -31,21 +31,20 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.json.JSONException;
 import cube.common.Packet;
-import cube.common.action.MultipointCommAction;
+import cube.common.entity.CommField;
+import cube.common.entity.Contact;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.ServiceTask;
 import cube.service.multipointcomm.MultipointCommService;
-import cube.service.multipointcomm.SignalingCallback;
-import cube.service.multipointcomm.signaling.OfferSignaling;
-import cube.service.multipointcomm.signaling.Signaling;
 
 /**
- * Offer 信令任务。
+ * Apply Terminate 任务。
  */
-public class OfferTask extends ServiceTask {
+public class ApplyTerminateTask extends ServiceTask {
 
-    public OfferTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
+    public ApplyTerminateTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
 
@@ -54,24 +53,24 @@ public class OfferTask extends ServiceTask {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
-        // 解析信令
-        OfferSignaling offer = new OfferSignaling(packet.data);
+        CommField field = null;
+        Contact proposer = null;
+        Contact target = null;
 
-        if (null == offer.getSessionDescription()) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, MultipointCommStateCode.DataStructureError.code, packet.data));
-            return;
+        try {
+            field = new CommField(packet.data.getJSONObject("field"));
+            proposer = new Contact(packet.data.getJSONObject("proposer"), field.getDomain());
+            target = new Contact(packet.data.getJSONObject("target"), field.getDomain());
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
 
-        // 处理 Offer
-        service.processOffer(offer, new SignalingCallback() {
-            @Override
-            public void on(MultipointCommStateCode stateCode, Signaling signaling) {
-                cellet.speak(talkContext,
-                        makeResponse(action, packet, MultipointCommAction.OfferAck.name, stateCode.code, signaling.toJSON()));
-            }
-        });
+        // 申请对指定目标进行外呼
+        MultipointCommStateCode state = service.applyTerminate(field, proposer, target);
+
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, state.code, packet.data));
     }
 }

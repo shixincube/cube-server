@@ -237,6 +237,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             Long endpointId = this.makeCommFieldEndpointId(contact, device);
             CommFieldEndpoint endpoint = new CommFieldEndpoint(endpointId, contact, device);
             current.addEndpoint(endpoint);
+
+            Logger.i(this.getClass(), "#applyEnter() - " + contact.getId() + " - " + device.toString());
         }
         else {
             // TODO
@@ -300,7 +302,85 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             // 标记 Call
             calleeField.markSingleCalling(proposer, target);
 
+            Logger.i(this.getClass(), "#applyCall() - " + proposer.getId() + " -> " + target.getId());
+
             return MultipointCommStateCode.Ok;
+        }
+        else {
+            // TODO
+        }
+
+        return MultipointCommStateCode.Ok;
+    }
+
+    /**
+     * 申请终止呼叫记录。
+     *
+     * @param commField
+     * @param proposer
+     * @param target
+     * @return
+     */
+    public MultipointCommStateCode applyTerminate(CommField commField, Contact proposer, Contact target) {
+        CommField current = null;
+        if (commField.isPrivate()) {
+            current = this.commFieldMap.get(commField.getId());
+            if (null == current) {
+                current = commField;
+                this.commFieldMap.put(current.getId(), current);
+            }
+        }
+        else {
+            current = this.getCommField(commField.getId());
+            if (null == current) {
+                return MultipointCommStateCode.NoCommField;
+            }
+        }
+
+        if (current.isPrivate()) {
+            // 主叫
+            Contact caller = current.getCaller();
+            if (null == caller) {
+                return MultipointCommStateCode.NoCommFieldEndpoint;
+            }
+            // 被叫
+            Contact callee = current.getCallee();
+            if (null == callee) {
+                return MultipointCommStateCode.NoCommFieldEndpoint;
+            }
+
+            if (caller.equals(proposer)) {
+                // 申请人是主叫，则校验被叫的状态
+                // 为被叫准备 CommField
+                CommField calleeField = this.commFieldMap.get(target.getId());
+                if (null != calleeField) {
+                    Contact callerInCallee = calleeField.getCaller();
+                    if (callerInCallee.equals(caller)) {
+                        // 被叫记录的主叫信息一致
+                        calleeField.clearCalling();
+                        calleeField.clearEndpoints();
+
+                        Logger.i(this.getClass(), "#applyTerminate() [caller] " + proposer.getId() + " - " + target.getId());
+                    }
+                }
+            }
+            else if (callee.equals(proposer)) {
+                // 申请人是被叫，则校验主叫的状态
+                CommField callerField = this.commFieldMap.get(target.getId());
+                if (null != callerField) {
+                    Contact calleeInCaller = callerField.getCallee();
+                    if (calleeInCaller.equals(callee)) {
+                        // 主叫记录的被叫信息一致
+                        callerField.clearCalling();
+                        callerField.clearEndpoints();
+
+                        Logger.i(this.getClass(), "#applyTerminate() [callee] " + proposer.getId() + " - " + target.getId());
+                    }
+                }
+            }
+
+            current.clearCalling();
+            current.clearEndpoints();
         }
         else {
             // TODO

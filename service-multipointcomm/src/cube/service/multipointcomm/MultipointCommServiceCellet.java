@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -92,6 +92,9 @@ public class MultipointCommServiceCellet extends Cellet {
         }
         else if (MultipointCommAction.ApplyEnter.name.equals(action)) {
             this.executor.execute(new ApplyEnterTask(this, talkContext, primitive));
+        }
+        else if (MultipointCommAction.ApplyTerminate.name.equals(action)) {
+            this.executor.execute(new ApplyTerminateTask(this, talkContext, primitive));
         }
         else {
             Logger.w(this.getClass(), "Unsupported action: " + action);
