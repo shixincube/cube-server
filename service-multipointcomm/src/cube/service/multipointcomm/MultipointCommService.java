@@ -516,6 +516,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 return;
             }
 
+            // 停止超时追踪
+            current.stopTrace(endpoint);
+
             // 修改被叫状态
             endpoint.setState(MultipointCommStateCode.CallConnected);
 
@@ -536,6 +539,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             callerField.updateCalleeState(MultipointCommStateCode.CallConnected);
 
             CommFieldEndpoint callerEndpoint = callerField.getEndpoint(caller);
+            // 停止超时追踪
+            callerField.stopTrace(callerEndpoint);
             // 修改主叫状态
             callerEndpoint.setState(MultipointCommStateCode.CallConnected);
 
@@ -665,17 +670,25 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
         CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
         if (null == endpoint) {
+            Logger.w(this.getClass(), "#processBye() - NoCommFieldEndpoint : "
+                    + signaling.getContact().getId() + " - "
+                    + signaling.getDevice().toString());
+
             callback.on(MultipointCommStateCode.NoCommFieldEndpoint, signaling);
             return;
         }
 
         if (current.isPrivate()) {
+            Logger.i(this.getClass(), "Bye: " + current.getFounder().getId());
+
             if (endpoint.getState() == MultipointCommStateCode.CallBye) {
                 callback.on(MultipointCommStateCode.Ok, signaling);
+
+                // 接收方收到 Bye，回复到服务器，删除对应的信息
+                current.clearAll();
+                current.clearTrace();
                 return;
             }
-
-            Logger.i(this.getClass(), "Bye: " + current.getFounder().getId());
 
             // 更新状态
             endpoint.setState(MultipointCommStateCode.CallBye);
@@ -708,27 +721,38 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             // 对方的通信场域
             CommField targetField = this.commFieldMap.get(target.getId());
-            // 更新状态
-            targetField.updateCallerState(MultipointCommStateCode.CallBye);
-            targetField.updateCalleeState(MultipointCommStateCode.CallBye);
+            // 对方通信场域是否正在和当前场域通信
+            if (targetField.getCaller().equals(caller) || targetField.getCallee().equals(callee)) {
+                // 更新状态
+                targetField.updateCallerState(MultipointCommStateCode.CallBye);
+                targetField.updateCalleeState(MultipointCommStateCode.CallBye);
 
-            CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
-            if (null != targetEndpoint) {
-                targetEndpoint.setState(MultipointCommStateCode.CallBye);
-                targetEndpoint.readyTimestamp = 0L;
+                CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
+                if (null != targetEndpoint) {
+                    targetEndpoint.setState(MultipointCommStateCode.CallBye);
+                    targetEndpoint.readyTimestamp = 0L;
+                    targetEndpoint.clearCandidates();
 
-                ByeSignaling toTarget = new ByeSignaling(targetField,
-                        targetEndpoint.getContact(), targetEndpoint.getDevice(), signaling.getRTCSerialNumber());
-                toTarget.copy(signaling);
-                ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, toTarget.getName(), toTarget.toJSON());
-                this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
+                    targetField.stopTrace(targetEndpoint);
+
+                    ByeSignaling toTarget = new ByeSignaling(targetField,
+                            targetEndpoint.getContact(), targetEndpoint.getDevice(), signaling.getRTCSerialNumber());
+                    toTarget.copy(signaling);
+                    ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, toTarget.getName(), toTarget.toJSON());
+                    this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
+                }
+
+                // 清空 Calling 信息
+                current.clearAll();
+                current.clearTrace();
+
+                // 回调
+                callback.on(MultipointCommStateCode.Ok, signaling);
             }
-
-            // 清空
-            current.clearAll();
-
-            // 回调
-            callback.on(MultipointCommStateCode.Ok, signaling);
+            else {
+                // 回调
+                callback.on(MultipointCommStateCode.NoPeerEndpoint, signaling);
+            }
         }
         else {
             Logger.i(this.getClass(), "Bye: " + signaling.getContact().getId());

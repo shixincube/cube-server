@@ -134,6 +134,11 @@ public class CommField extends Entity {
         return (this.id.longValue() == this.founder.getId().longValue());
     }
 
+    /**
+     * 返回创建人。
+     *
+     * @return
+     */
     public Contact getFounder() {
         return this.founder;
     }
@@ -434,6 +439,14 @@ public class CommField extends Entity {
         if (null != future) {
             future.cancel(true);
         }
+    }
+
+    public void clearTrace() {
+        Iterator<ScheduledFuture<?>> iter = this.timeoutFutureMap.values().iterator();
+        while (iter.hasNext()) {
+            iter.next().cancel(true);
+        }
+        this.timeoutFutureMap.clear();
     }
 
     /**
