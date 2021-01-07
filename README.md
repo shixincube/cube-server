@@ -50,7 +50,11 @@ Cube Server 目前支持的操作系统包括：**Ubuntu** 、**CentOS** 、**De
   适用 Ubuntu 的安装命令：`sudo apt-get install ant`
   适用 CentOS 的安装命令：`yum -y install ant`
 
-3. 安装 [gcc](http://gcc.gnu.org/) 、[make](http://www.gnu.org/software/make/) 、[cmake](https://cmake.org/) 等。
+3. 安装 [Gradle](https://gradle.org/) 。
+  适用 Ubuntu 的安装命令：`sudo apt-get install gradle`
+  适用 CentOS 的安装命令：`yum -y install gradle`
+
+4. 安装 [gcc](http://gcc.gnu.org/) 、[make](http://www.gnu.org/software/make/) 、[cmake](https://cmake.org/) 等。
   适用 Ubuntu 的安装命令：`sudo apt-get install build-essential`
   适用 CentOS 的安装命令：`yum groupinstall "Development Tools" "Development Libraries"`
 
