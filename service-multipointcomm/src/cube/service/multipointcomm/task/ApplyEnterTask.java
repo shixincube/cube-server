@@ -31,7 +31,6 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
-import cell.util.json.JSONException;
 import cube.common.Packet;
 import cube.common.entity.CommField;
 import cube.common.entity.Contact;
@@ -39,6 +38,7 @@ import cube.common.entity.Device;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.ServiceTask;
 import cube.service.multipointcomm.MultipointCommService;
+import org.json.JSONException;
 
 /**
  * Apply Enter 任务。

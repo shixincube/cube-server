@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,10 +27,10 @@
 package cube.service;
 
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.json.JSONException;
-import cell.util.json.JSONObject;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * 导演机。

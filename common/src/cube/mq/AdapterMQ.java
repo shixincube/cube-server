@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,10 +27,10 @@
 package cube.mq;
 
 import cell.adapter.CelletAdapter;
-import cell.util.json.JSONObject;
 import cube.core.AbstractMQ;
 import cube.core.MQMessage;
 import cube.core.MQTopic;
+import org.json.JSONObject;
 
 /**
  * 基于适配器实现的 MQ 。

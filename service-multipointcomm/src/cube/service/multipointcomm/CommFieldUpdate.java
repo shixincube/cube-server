@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,13 +26,11 @@
 
 package cube.service.multipointcomm;
 
-import cell.util.json.JSONException;
-import cell.util.json.JSONObject;
 import cube.common.JSONable;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
-import cube.common.entity.Contact;
-import cube.common.entity.Device;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * 场域的更新信息。
