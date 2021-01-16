@@ -58,6 +58,8 @@ public class FileProcessorService extends AbstractModule {
 
     private Path workPath;
 
+    private CVConnector cvConnector;
+
     public FileProcessorService(ExecutorService executor) {
         super();
         this.executor = executor;
@@ -73,11 +75,15 @@ public class FileProcessorService extends AbstractModule {
                 Logger.e(this.getClass(), "#start", e);
             }
         }
+
+        this.cvConnector = new CVConnector("DJLService",
+                this.getKernel().getNucleus().getTalkService());
+        this.cvConnector.start("127.0.0.1", 7711);
     }
 
     @Override
     public void stop() {
-
+        this.cvConnector.stop();
     }
 
     @Override
@@ -229,8 +235,10 @@ public class FileProcessorService extends AbstractModule {
         return fileThumbnail;
     }
 
-    public void detect(String domainName, String fileCode) {
+    public void detectImageObject(String domainName, String fileCode) {
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
         String path = storageService.loadFileToDisk(domainName, fileCode);
+
+
     }
 }

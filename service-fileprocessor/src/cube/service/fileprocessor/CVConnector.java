@@ -31,9 +31,16 @@ import cell.api.TalkListener;
 import cell.api.TalkService;
 import cell.core.talk.Primitive;
 import cell.core.talk.PrimitiveInputStream;
+import cell.core.talk.PrimitiveOutputStream;
 import cell.core.talk.TalkError;
+import cell.core.talk.dialect.ActionDialect;
+import cube.common.action.FileProcessorAction;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * 计算机视觉系统连接器。
@@ -67,8 +74,38 @@ public class CVConnector implements TalkListener {
     }
 
     public void detectObjects(File file, String fileCode, CVCallback callback) {
+        FileInputStream fis = null;
+        PrimitiveOutputStream stream = this.talkService.speakStream(this.celletName, fileCode);
 
-//        PrimitiveOutputStream stream = this.talkService.speakStream(this.celletName, fileLabel.getFileCode());
+        try {
+            fis = new FileInputStream(file);
+            int length = 0;
+            byte[] buf = new byte[4096];
+            while ((length = fis.read(buf)) > 0) {
+                stream.write(buf, 0, length);
+            }
+            stream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != fis) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                }
+            }
+
+            if (null != stream) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        ActionDialect dialect = new ActionDialect(FileProcessorAction.DetectObject.name);
+        dialect.addParam("file", fileCode);
+
     }
 
     @Override
@@ -108,6 +145,19 @@ public class CVConnector implements TalkListener {
 
     @Override
     public void onFailed(Speakable speakable, TalkError talkError) {
+        (new Thread() {
+            @Override
+            public void run() {
+                talkService.hangup(host, port, false);
+            }
+        }).start();
 
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                talkService.call(host, port);
+            }
+        }, 45L * 1000L);
     }
 }
