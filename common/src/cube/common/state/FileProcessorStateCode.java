@@ -24,23 +24,43 @@
  * SOFTWARE.
  */
 
-package cube.service.fileprocessor;
+package cube.common.state;
 
 /**
- * CV 处理结果。
+ * 文件处理状态码。
  */
-public class CVResult {
+public enum FileProcessorStateCode {
 
-    private int code;
+    /**
+     * 成功。
+     */
+    Ok(0),
 
-    public CVResult() {
-    }
+    /**
+     * 遇到故障。
+     */
+    Failure(9),
 
-    public CVResult(int code) {
+    /**
+     * 无效域信息。
+     */
+    InvalidDomain(11),
+
+    /**
+     * 与 CV 服务器无连接。
+     */
+    NoCVConnection(21),
+
+    /**
+     * 未知的状态。
+     */
+    Unknown(99)
+
+    ;
+
+    public final int code;
+
+    FileProcessorStateCode(int code) {
         this.code = code;
-    }
-
-    public void set(CVResult result) {
-
     }
 }

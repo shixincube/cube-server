@@ -235,10 +235,45 @@ public class FileProcessorService extends AbstractModule {
         return fileThumbnail;
     }
 
-    public void detectImageObject(String domainName, String fileCode) {
+    public CVResult detectImageObject(String domainName, String fileCode) {
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
         String path = storageService.loadFileToDisk(domainName, fileCode);
 
+        File file = new File(path);
+        if (!file.exists()) {
+            Logger.w(this.getClass(), "#detectImageObject - can not find file: " + path);
+            return null;
+        }
 
+        final Object mutex = new Object();
+        final CVResult cvResult = new CVResult();
+
+        this.cvConnector.detectObjects(file, fileCode, new CVCallback() {
+            @Override
+            public void handleSuccess(CVResult result) {
+                cvResult.set(result);
+
+                synchronized (mutex) {
+                    mutex.notify();
+                }
+            }
+
+            @Override
+            public void handleFailure(CVResult result) {
+                synchronized (mutex) {
+                    mutex.notify();
+                }
+            }
+        });
+
+        synchronized (mutex) {
+            try {
+                mutex.wait(30L * 1000L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return cvResult;
     }
 }

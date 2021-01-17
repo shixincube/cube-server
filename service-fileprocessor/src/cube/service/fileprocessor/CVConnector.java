@@ -34,13 +34,16 @@ import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.PrimitiveOutputStream;
 import cell.core.talk.TalkError;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Utils;
 import cube.common.action.FileProcessorAction;
+import cube.common.state.FileProcessorStateCode;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 计算机视觉系统连接器。
@@ -55,9 +58,12 @@ public class CVConnector implements TalkListener {
 
     private int port;
 
+    private ConcurrentHashMap<String, Block> blockMap;
+
     public CVConnector(String celletName, TalkService talkService) {
         this.celletName = celletName;
         this.talkService = talkService;
+        this.blockMap = new ConcurrentHashMap<>();
     }
 
     public void start(String host, int port) {
@@ -74,6 +80,11 @@ public class CVConnector implements TalkListener {
     }
 
     public void detectObjects(File file, String fileCode, CVCallback callback) {
+        if (!this.talkService.isCalled(this.host, this.port)) {
+            callback.handleFailure(new CVResult(FileProcessorStateCode.NoCVConnection.code));
+            return;
+        }
+
         FileInputStream fis = null;
         PrimitiveOutputStream stream = this.talkService.speakStream(this.celletName, fileCode);
 
@@ -103,9 +114,25 @@ public class CVConnector implements TalkListener {
             }
         }
 
+        long sn = Utils.generateSerialNumber();
         ActionDialect dialect = new ActionDialect(FileProcessorAction.DetectObject.name);
+        dialect.addParam("sn", sn);
         dialect.addParam("file", fileCode);
 
+        this.talkService.speak(this.celletName, dialect);
+
+        Block block = new Block(sn, fileCode);
+        this.blockMap.put(fileCode, block);
+
+        synchronized (block) {
+            try {
+                block.wait(30L * 1000L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        this.blockMap.remove(fileCode);
     }
 
     @Override
@@ -159,5 +186,20 @@ public class CVConnector implements TalkListener {
                 talkService.call(host, port);
             }
         }, 45L * 1000L);
+    }
+
+    /**
+     * 阻塞块。
+     */
+    protected class Block {
+
+        protected Long sn;
+
+        protected String fileCode;
+
+        protected Block(Long sn, String fileCode) {
+            this.sn = sn;
+            this.fileCode = fileCode;
+        }
     }
 }
