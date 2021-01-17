@@ -26,6 +26,15 @@
 
 package cube.service.fileprocessor;
 
+import cell.core.talk.dialect.ActionDialect;
+import cube.common.entity.BoundingBox;
+import cube.common.entity.DetectedObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * CV 处理结果。
  */
@@ -33,14 +42,38 @@ public class CVResult {
 
     private int code;
 
+    private String fileCode;
+
+    private List<DetectedObject> detectedObjects;
+
     public CVResult() {
     }
 
-    public CVResult(int code) {
+    public CVResult(int code, String fileCode) {
         this.code = code;
+        this.fileCode = fileCode;
     }
 
     public void set(CVResult result) {
-
+        this.code = result.code;
+        this.fileCode = result.fileCode;
+        this.detectedObjects = result.detectedObjects;
     }
+
+    public List<DetectedObject> getDetectedObjects() {
+        return this.detectedObjects;
+    }
+
+    public void setDetectedObjects(JSONArray array) {
+        this.detectedObjects = new ArrayList<>();
+
+        for (int i = 0; i < array.length(); ++i) {
+            JSONObject json = array.getJSONObject(i);
+            DetectedObject obj = new DetectedObject(json.getString("class"),
+                    json.getDouble("probability"),
+                    new BoundingBox(json.getJSONObject("bound")));
+            this.detectedObjects.add(obj);
+        }
+    }
+
 }

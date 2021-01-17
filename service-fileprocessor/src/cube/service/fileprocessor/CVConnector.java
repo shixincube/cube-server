@@ -34,9 +34,11 @@ import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.PrimitiveOutputStream;
 import cell.core.talk.TalkError;
 import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
 import cell.util.Utils;
 import cube.common.action.FileProcessorAction;
 import cube.common.state.FileProcessorStateCode;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -58,7 +60,7 @@ public class CVConnector implements TalkListener {
 
     private int port;
 
-    private ConcurrentHashMap<String, Block> blockMap;
+    private ConcurrentHashMap<Long, Block> blockMap;
 
     public CVConnector(String celletName, TalkService talkService) {
         this.celletName = celletName;
@@ -81,7 +83,7 @@ public class CVConnector implements TalkListener {
 
     public void detectObjects(File file, String fileCode, CVCallback callback) {
         if (!this.talkService.isCalled(this.host, this.port)) {
-            callback.handleFailure(new CVResult(FileProcessorStateCode.NoCVConnection.code));
+            callback.handleFailure(new CVResult(FileProcessorStateCode.NoCVConnection.code, fileCode));
             return;
         }
 
@@ -122,7 +124,7 @@ public class CVConnector implements TalkListener {
         this.talkService.speak(this.celletName, dialect);
 
         Block block = new Block(sn, fileCode);
-        this.blockMap.put(fileCode, block);
+        this.blockMap.put(sn, block);
 
         synchronized (block) {
             try {
@@ -132,12 +134,47 @@ public class CVConnector implements TalkListener {
             }
         }
 
-        this.blockMap.remove(fileCode);
+        // 应答的数据
+        ActionDialect response = block.response;
+
+        this.blockMap.remove(sn);
+
+        if (null == response) {
+            callback.handleFailure(new CVResult(FileProcessorStateCode.Failure.code, fileCode));
+            return;
+        }
+
+        // 应答状态码
+        int code = response.getParamAsInt("code");
+
+        if (code != FileProcessorStateCode.Ok.code) {
+            CVResult result = new CVResult(code, fileCode);
+            callback.handleFailure(result);
+            return;
+        }
+
+        JSONObject data = response.getParamAsJson("data");
+
+        CVResult result = new CVResult(code, fileCode);
+        result.setDetectedObjects(data.getJSONArray("list"));
+        callback.handleSuccess(result);
     }
 
     @Override
     public void onListened(Speakable speakable, String cellet, Primitive primitive) {
+        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
+        String action = dialect.getName();
 
+        if (FileProcessorAction.DetectObjectAck.name.equals(action)) {
+            Long sn = dialect.getParamAsLong("sn");
+            Block block = this.blockMap.remove(sn);
+            if (null != block) {
+                block.response = dialect;
+                synchronized (block) {
+                    block.notify();
+                }
+            }
+        }
     }
 
     @Override
@@ -196,6 +233,8 @@ public class CVConnector implements TalkListener {
         protected Long sn;
 
         protected String fileCode;
+
+        protected ActionDialect response;
 
         protected Block(Long sn, String fileCode) {
             this.sn = sn;

@@ -24,22 +24,50 @@
  * SOFTWARE.
  */
 
-package cube.service.fileprocessor;
+package cube.common.entity;
+
+import org.json.JSONObject;
 
 /**
- * 回调。
+ * 已检测到的对象。
  */
-public interface CVCallback {
+public class DetectedObject extends Entity {
 
-    /**
-     * 成功回调。
-     * @param result
-     */
-    public void handleSuccess(CVResult result);
+    private String className;
 
-    /**
-     * 失败回调。
-     * @param result
-     */
-    public void handleFailure(CVResult result);
+    private double probability;
+
+    private BoundingBox bbox;
+
+    public DetectedObject(String className, double probability, BoundingBox bbox) {
+        this.className = className;
+        this.probability = probability;
+        this.bbox = bbox;
+    }
+
+    public String getClassName() {
+        return this.className;
+    }
+
+    public double getProbability() {
+        return this.probability;
+    }
+
+    public BoundingBox getBoundingBox() {
+        return this.bbox;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("class", this.className);
+        json.put("probability", this.probability);
+        json.put("bound", this.bbox.toJSON());
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
 }

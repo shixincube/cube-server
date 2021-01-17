@@ -260,6 +260,8 @@ public class FileProcessorService extends AbstractModule {
 
             @Override
             public void handleFailure(CVResult result) {
+                cvResult.set(result);
+
                 synchronized (mutex) {
                     mutex.notify();
                 }
@@ -268,7 +270,7 @@ public class FileProcessorService extends AbstractModule {
 
         synchronized (mutex) {
             try {
-                mutex.wait(30L * 1000L);
+                mutex.wait(40L * 1000L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
