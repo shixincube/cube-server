@@ -237,11 +237,17 @@ public class FileProcessorService extends AbstractModule {
 
     public CVResult detectObject(String domainName, String fileCode) {
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+        FileLabel label = storageService.getFile(domainName, fileCode);
+        if (null == label) {
+            Logger.w(this.getClass(), "#detectObject - can not find file label: " + fileCode);
+            return null;
+        }
+
         String path = storageService.loadFileToDisk(domainName, fileCode);
 
         File file = new File(path);
         if (!file.exists()) {
-            Logger.w(this.getClass(), "#detectImageObject - can not find file: " + path);
+            Logger.w(this.getClass(), "#detectObject - can not find file: " + path);
             return null;
         }
 

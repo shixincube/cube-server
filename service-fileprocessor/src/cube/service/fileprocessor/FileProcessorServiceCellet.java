@@ -34,6 +34,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.FileProcessorAction;
 import cube.core.Kernel;
+import cube.service.fileprocessor.task.DetectObjectTask;
 
 import java.util.concurrent.ExecutorService;
 
@@ -80,6 +81,7 @@ public class FileProcessorServiceCellet extends Cellet {
         String action = dialect.getName();
 
         if (FileProcessorAction.DetectObject.name.equals(action)) {
+            this.executor.execute(new DetectObjectTask(this, talkContext, primitive));
         }
     }
 }

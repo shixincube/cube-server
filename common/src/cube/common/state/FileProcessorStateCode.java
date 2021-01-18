@@ -47,6 +47,11 @@ public enum FileProcessorStateCode {
     InvalidDomain(11),
 
     /**
+     * 操作超时。
+     */
+    OptTimeout(12),
+
+    /**
      * 与 CV 服务器无连接。
      */
     NoCVConnection(21),
