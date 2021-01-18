@@ -235,7 +235,7 @@ public class FileProcessorService extends AbstractModule {
         return fileThumbnail;
     }
 
-    public CVResult detectImageObject(String domainName, String fileCode) {
+    public CVResult detectObject(String domainName, String fileCode) {
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
         String path = storageService.loadFileToDisk(domainName, fileCode);
 
