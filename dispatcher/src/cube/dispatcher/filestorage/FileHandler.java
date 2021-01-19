@@ -192,7 +192,7 @@ public class FileHandler extends CrossDomainHandler {
 
         // Type
         String typeDesc = request.getParameter("type");
-        FileType type = (null != typeDesc) ? FileType.matchExtension(typeDesc) : null;
+        FileType type = FileType.matchExtension(typeDesc);
 
         // SN
         Long sn = null;
@@ -362,10 +362,7 @@ public class FileHandler extends CrossDomainHandler {
     }
 
     private void fillHeaders(HttpServletResponse response, FileLabel fileLabel, long length, FileType type) {
-        if (null != type) {
-            response.setContentType(type.getMimeType());
-        }
-        else {
+        if (FileType.FILE == type) {
             try {
                 StringBuilder buf = new StringBuilder("attachment;");
                 buf.append("filename=").append(URLEncoder.encode(fileLabel.getFileName(), "UTF-8"));
@@ -374,6 +371,15 @@ public class FileHandler extends CrossDomainHandler {
                 e.printStackTrace();
             }
 
+            response.setContentType(type.getMimeType());
+        }
+        else if (FileType.UNKNOWN == type) {
+            response.setContentType(fileLabel.getFileType().getMimeType());
+        }
+        else if (null != type) {
+            response.setContentType(type.getMimeType());
+        }
+        else {
             response.setContentType(fileLabel.getFileType().getMimeType());
         }
 

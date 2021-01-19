@@ -33,6 +33,8 @@ import java.util.HashMap;
  */
 public enum FileType {
 
+    FILE(new String[] { "" }, "application/octet-stream"),
+
     BMP(new String[]{ "bmp" }, "image/bmp", new byte[] { 0x42, 0x4d }),
 
     BZIP(new String[]{ "bz" }, "application/x-bzip", new byte[] { 0x42, 0x5a }),
@@ -1132,6 +1134,10 @@ public enum FileType {
     public static FileType matchExtension(String extension) {
         if (null == extension) {
             return UNKNOWN;
+        }
+
+        if (extension.equalsIgnoreCase("ignore")) {
+            return FILE;
         }
 
         String lowerCase = extension.toLowerCase();
