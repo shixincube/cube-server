@@ -87,7 +87,7 @@ public abstract class ServiceTask extends Task {
      * @param packetPayload
      * @return
      */
-    protected ActionDialect makeResponse(ActionDialect action, Packet request, JSONObject packetPayload) {
+    private ActionDialect makeDispatcherResponse(ActionDialect action, Packet request, JSONObject packetPayload) {
         Packet response = new Packet(request.sn, request.name, packetPayload);
         ActionDialect responseDialect = response.toDialect();
         Director.copyPerformer(action, responseDialect);
@@ -103,7 +103,7 @@ public abstract class ServiceTask extends Task {
      * @param packetPayload
      * @return
      */
-    protected ActionDialect makeResponse(ActionDialect action, Packet request, String packetName, JSONObject packetPayload) {
+    private ActionDialect makeDispatcherResponse(ActionDialect action, Packet request, String packetName, JSONObject packetPayload) {
         Packet response = new Packet(request.sn, packetName, packetPayload);
         ActionDialect responseDialect = response.toDialect();
         Director.copyPerformer(action, responseDialect);
@@ -121,7 +121,7 @@ public abstract class ServiceTask extends Task {
      */
     protected ActionDialect makeResponse(ActionDialect action, Packet request, int stateCode, JSONObject data) {
         JSONObject payload = this.makePacketPayload(stateCode, data);
-        return this.makeResponse(action, request, payload);
+        return this.makeDispatcherResponse(action, request, payload);
     }
 
     /**
@@ -136,7 +136,7 @@ public abstract class ServiceTask extends Task {
      */
     protected ActionDialect makeResponse(ActionDialect action, Packet request, String packetName, int stateCode, JSONObject data) {
         JSONObject payload = this.makePacketPayload(stateCode, data);
-        return this.makeResponse(action, request, packetName, payload);
+        return this.makeDispatcherResponse(action, request, packetName, payload);
     }
 
     /**
@@ -150,7 +150,7 @@ public abstract class ServiceTask extends Task {
      * @param device
      * @return
      */
-    protected ActionDialect makeAsynchResponse(Packet request, long id, String domain, Device device,
+    protected ActionDialect makeAsynResponse(Packet request, long id, String domain, Device device,
                                                int stateCode, JSONObject data) {
         JSONObject payload = this.makePacketPayload(stateCode, data);
         Packet response = new Packet(request.sn, request.name, payload);

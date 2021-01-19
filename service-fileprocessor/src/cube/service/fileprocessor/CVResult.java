@@ -80,11 +80,19 @@ public class CVResult implements JSONable {
 
     @Override
     public JSONObject toJSON() {
-        return null;
+        JSONObject json = new JSONObject();
+        json.put("fileCode", this.fileCode);
+
+        JSONArray objects = new JSONArray();
+        for (DetectedObject object : this.detectedObjects) {
+            objects.put(object.toJSON());
+        }
+        json.put("detectedObjects", objects);
+        return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return null;
+        return this.toJSON();
     }
 }

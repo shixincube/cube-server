@@ -39,6 +39,13 @@ public class DetectedObject extends Entity {
 
     private BoundingBox bbox;
 
+    /**
+     * 构造函数。
+     *
+     * @param className
+     * @param probability
+     * @param bbox
+     */
     public DetectedObject(String className, double probability, BoundingBox bbox) {
         this.className = className;
         this.probability = probability;

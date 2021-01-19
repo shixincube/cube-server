@@ -33,6 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.common.Packet;
 import cube.common.action.FileProcessorAction;
+import cube.common.state.FileProcessorStateCode;
 import cube.service.ServiceTask;
 import cube.service.fileprocessor.CVResult;
 import cube.service.fileprocessor.FileProcessorService;
@@ -72,7 +73,7 @@ public class DetectObjectTask extends ServiceTask {
 
         // 应答
         ActionDialect response = this.makeResponse(action, packet,
-                FileProcessorAction.DetectObjectAck.name, result.toJSON());
+                FileProcessorAction.DetectObjectAck.name, FileProcessorStateCode.Ok.code, result.toJSON());
         this.cellet.speak(this.talkContext, response);
     }
 }

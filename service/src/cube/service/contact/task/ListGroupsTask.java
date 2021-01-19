@@ -100,7 +100,7 @@ public class ListGroupsTask extends ServiceTask {
                 responseData.put("total", list.size());
                 responseData.put("list", new JSONArray());
                 this.cellet.speak(this.talkContext,
-                        this.makeAsynchResponse(packet, contact.getId(), domain, device,
+                        this.makeAsynResponse(packet, contact.getId(), domain, device,
                                 ContactStateCode.Ok.code, responseData));
                 return;
             }
@@ -125,7 +125,7 @@ public class ListGroupsTask extends ServiceTask {
                 responseData.put("list", array);
 
                 this.cellet.speak(this.talkContext,
-                        this.makeAsynchResponse(packet, contact.getId(), domain, device,
+                        this.makeAsynResponse(packet, contact.getId(), domain, device,
                                 ContactStateCode.Ok.code, responseData));
             }
         } catch (JSONException e) {

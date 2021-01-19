@@ -80,7 +80,7 @@ public class PullTask extends ServiceTask {
         if (null == contact) {
             // 应答
             this.cellet.speak(this.talkContext,
-                    this.makeAsynchResponse(packet, id, domainName, device,
+                    this.makeAsynResponse(packet, id, domainName, device,
                             MessagingStateCode.NoContact.code, packet.data));
             return;
         }
@@ -89,7 +89,7 @@ public class PullTask extends ServiceTask {
         if (!contact.hasDevice(device)) {
             // 应答
             this.cellet.speak(this.talkContext,
-                    this.makeAsynchResponse(packet, id, domainName, device,
+                    this.makeAsynResponse(packet, id, domainName, device,
                             MessagingStateCode.NoDevice.code, packet.data));
             return;
         }
@@ -119,7 +119,7 @@ public class PullTask extends ServiceTask {
             if (count >= 10) {
                 JSONObject payload = this.makePayload(total, beginning, ending, messageArray);
                 this.cellet.speak(this.talkContext,
-                        this.makeAsynchResponse(packet, id, domainName, device,
+                        this.makeAsynResponse(packet, id, domainName, device,
                                 MessagingStateCode.Ok.code, payload));
 
                 try {
@@ -135,7 +135,7 @@ public class PullTask extends ServiceTask {
 
         JSONObject payload = this.makePayload(total, beginning, ending, messageArray);
         this.cellet.speak(this.talkContext,
-                this.makeAsynchResponse(packet, id, domainName, device,
+                this.makeAsynResponse(packet, id, domainName, device,
                         MessagingStateCode.Ok.code, payload));
     }
 
