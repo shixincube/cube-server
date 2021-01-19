@@ -83,7 +83,7 @@ public class CVConnector implements TalkListener {
 
     public void detectObjects(File file, String fileCode, CVCallback callback) {
         if (!this.talkService.isCalled(this.host, this.port)) {
-            callback.handleFailure(new CVResult(FileProcessorStateCode.NoCVConnection.code, fileCode));
+            callback.handleFailure(FileProcessorStateCode.NoCVConnection, new CVResult(fileCode));
             return;
         }
 
@@ -140,7 +140,7 @@ public class CVConnector implements TalkListener {
         this.blockMap.remove(sn);
 
         if (null == response) {
-            callback.handleFailure(new CVResult(FileProcessorStateCode.Failure.code, fileCode));
+            callback.handleFailure(FileProcessorStateCode.Failure, new CVResult(fileCode));
             return;
         }
 
@@ -148,14 +148,13 @@ public class CVConnector implements TalkListener {
         int code = response.getParamAsInt("code");
 
         if (code != FileProcessorStateCode.Ok.code) {
-            CVResult result = new CVResult(code, fileCode);
-            callback.handleFailure(result);
+            callback.handleFailure(FileProcessorStateCode.parse(code), new CVResult(fileCode));
             return;
         }
 
         JSONObject data = response.getParamAsJson("data");
 
-        CVResult result = new CVResult(code, fileCode);
+        CVResult result = new CVResult(fileCode);
         result.setDetectedObjects(data.getJSONArray("list"));
         callback.handleSuccess(result);
     }

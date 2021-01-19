@@ -26,6 +26,8 @@
 
 package cube.service.fileprocessor;
 
+import cube.common.state.FileProcessorStateCode;
+
 /**
  * 回调。
  */
@@ -41,5 +43,5 @@ public interface CVCallback {
      * 失败回调。
      * @param result
      */
-    public void handleFailure(CVResult result);
+    public void handleFailure(FileProcessorStateCode stateCode, CVResult result);
 }

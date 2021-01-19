@@ -29,7 +29,6 @@ package cube.service.fileprocessor;
 import cube.common.JSONable;
 import cube.common.entity.BoundingBox;
 import cube.common.entity.DetectedObject;
-import cube.common.state.FileProcessorStateCode;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -41,23 +40,18 @@ import java.util.List;
  */
 public class CVResult implements JSONable {
 
-    private int code;
-
     private String fileCode;
 
     private List<DetectedObject> detectedObjects;
 
     public CVResult() {
-        this.code = FileProcessorStateCode.OptTimeout.code;
     }
 
-    public CVResult(int code, String fileCode) {
-        this.code = code;
+    public CVResult(String fileCode) {
         this.fileCode = fileCode;
     }
 
     public void set(CVResult result) {
-        this.code = result.code;
         this.fileCode = result.fileCode;
         this.detectedObjects = result.detectedObjects;
     }

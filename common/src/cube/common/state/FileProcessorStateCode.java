@@ -57,6 +57,11 @@ public enum FileProcessorStateCode {
     NoCVConnection(21),
 
     /**
+     * 无文件。
+     */
+    NoFile(110),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)
@@ -67,5 +72,14 @@ public enum FileProcessorStateCode {
 
     FileProcessorStateCode(int code) {
         this.code = code;
+    }
+
+    public static FileProcessorStateCode parse(int code) {
+        for (FileProcessorStateCode sc : FileProcessorStateCode.values()) {
+            if (sc.code == code) {
+                return sc;
+            }
+        }
+        return FileProcessorStateCode.Unknown;
     }
 }

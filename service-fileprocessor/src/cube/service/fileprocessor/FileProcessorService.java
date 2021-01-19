@@ -29,6 +29,7 @@ package cube.service.fileprocessor;
 import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
 import cube.common.entity.FileThumbnail;
+import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.plugin.PluginSystem;
@@ -46,6 +47,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 文件处理服务。
@@ -78,7 +80,7 @@ public class FileProcessorService extends AbstractModule {
 
         this.cvConnector = new CVConnector("DJLService",
                 this.getKernel().getNucleus().getTalkService());
-        this.cvConnector.start("127.0.0.1", 7711);
+//        this.cvConnector.start("127.0.0.1", 7711);
     }
 
     @Override
@@ -253,6 +255,7 @@ public class FileProcessorService extends AbstractModule {
 
         final Object mutex = new Object();
         final CVResult cvResult = new CVResult();
+        final AtomicBoolean failure = new AtomicBoolean(false);
 
         this.cvConnector.detectObjects(file, fileCode, new CVCallback() {
             @Override
@@ -265,9 +268,9 @@ public class FileProcessorService extends AbstractModule {
             }
 
             @Override
-            public void handleFailure(CVResult result) {
-                cvResult.set(result);
-
+            public void handleFailure(FileProcessorStateCode stateCode, CVResult result) {
+                Logger.w(FileStorageService.class, "#detectObject - failure : " + stateCode.code);
+                failure.set(true);
                 synchronized (mutex) {
                     mutex.notify();
                 }
@@ -280,6 +283,10 @@ public class FileProcessorService extends AbstractModule {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+
+        if (failure.get()) {
+            return null;
         }
 
         return cvResult;

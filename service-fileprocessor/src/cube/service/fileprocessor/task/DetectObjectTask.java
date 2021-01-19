@@ -70,6 +70,13 @@ public class DetectObjectTask extends ServiceTask {
 
         // 进行识别
         CVResult result = service.detectObject(domain, fileCode);
+        if (null == result) {
+            // 应答
+            ActionDialect response = this.makeResponse(action, packet,
+                    FileProcessorAction.DetectObjectAck.name, FileProcessorStateCode.Failure.code, data);
+            this.cellet.speak(this.talkContext, response);
+            return;
+        }
 
         // 应答
         ActionDialect response = this.makeResponse(action, packet,
