@@ -35,7 +35,6 @@ import cube.common.Packet;
 import cube.common.Task;
 import cube.common.entity.Device;
 import cube.service.auth.AuthService;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -70,12 +69,8 @@ public abstract class ServiceTask extends Task {
 
     protected JSONObject makePacketPayload(int stateCode, JSONObject data) {
         JSONObject payload = new JSONObject();
-        try {
-            payload.put("code", stateCode);
-            payload.put("data", data);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        payload.put("code", stateCode);
+        payload.put("data", data);
         return payload;
     }
 

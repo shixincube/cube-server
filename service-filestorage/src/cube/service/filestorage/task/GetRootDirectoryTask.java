@@ -30,19 +30,22 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cube.auth.AuthToken;
 import cube.common.Packet;
-import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
+import cube.service.auth.AuthService;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
+import cube.service.filestorage.hierarchy.Directory;
+import cube.service.filestorage.hierarchy.FileHierarchy;
 
 /**
- * 放置文件任务。
+ * 获取指定联系人或群组的根目录。
  */
-public class PutFileTask extends ServiceTask {
+public class GetRootDirectoryTask extends ServiceTask {
 
-    public PutFileTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
+    public GetRootDirectoryTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
 
@@ -51,21 +54,45 @@ public class PutFileTask extends ServiceTask {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
-        FileLabel fileLabel = new FileLabel(packet.data);
-
-        FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-
-        // 放置文件
-        FileLabel newFileLabel = service.putFile(fileLabel);
-        if (null == newFileLabel) {
+        // 获取令牌码
+        String tokenCode = this.getTokenCode(action);
+        AuthService authService = (AuthService) this.kernel.getModule(AuthService.NAME);
+        AuthToken authToken = authService.getToken(tokenCode);
+        if (null == authToken) {
             // 发生错误
             this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Failure.code, fileLabel.toCompactJSON()));
+                    , this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
             return;
         }
 
-        // 应答
+        // 域
+        String domain = authToken.getDomain();
+
+        // ID
+        if (!packet.data.has("id")) {
+            // 发生错误
+            this.cellet.speak(this.talkContext
+                    , this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
+            return;
+        }
+
+        // 获取服务
+        FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
+
+        Long id = packet.data.getLong("id");
+
+        // 获取指定 ID 对应的文件层级描述
+        FileHierarchy fileHierarchy = service.getFileHierarchy(domain, id);
+
+        if (null == fileHierarchy) {
+            // 发生错误
+            this.cellet.speak(this.talkContext
+                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            return;
+        }
+
+        Directory directory = fileHierarchy.getRoot();
         this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, newFileLabel.toCompactJSON()));
+                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, directory.toJSON()));
     }
 }

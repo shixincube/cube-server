@@ -24,47 +24,20 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage.task;
+package cube.service.filestorage.hierarchy;
 
-import cell.core.cellet.Cellet;
-import cell.core.talk.PrimitiveInputStream;
-import cell.core.talk.TalkContext;
-import cube.core.Kernel;
-import cube.service.filestorage.FileStorageService;
-
-import java.io.IOException;
+import org.json.JSONObject;
 
 /**
- * 写文件任务。
+ * 文件层级系统辅助工具。
  */
-public class WriteFileTask implements Runnable {
+public final class FileHierarchyTool {
 
-    /**
-     * 框架的内核实例。
-     */
-    protected Kernel kernel;
-
-    protected TalkContext talkContext;
-
-    protected PrimitiveInputStream inputStream;
-
-    protected FileStorageService service;
-
-    public WriteFileTask(Cellet cellet, TalkContext talkContext, PrimitiveInputStream inputStream) {
-        this.kernel = (Kernel) cellet.getNucleus().getParameter("kernel");
-        this.talkContext = talkContext;
-        this.inputStream = inputStream;
+    private FileHierarchyTool() {
     }
 
-    @Override
-    public void run() {
-        this.service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-        this.service.writeFile(this.inputStream.getName(), this.inputStream);
-
-        try {
-            this.inputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public static JSONObject toJSON(Directory directory) {
+        JSONObject json = new JSONObject();
+        return json;
     }
 }

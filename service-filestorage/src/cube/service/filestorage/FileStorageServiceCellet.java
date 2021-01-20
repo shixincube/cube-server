@@ -36,6 +36,7 @@ import cell.util.CachedQueueExecutor;
 import cube.common.action.FileStorageAction;
 import cube.core.Kernel;
 import cube.service.filestorage.task.GetFileTask;
+import cube.service.filestorage.task.GetRootDirectoryTask;
 import cube.service.filestorage.task.PutFileTask;
 import cube.service.filestorage.task.WriteFileTask;
 
@@ -80,6 +81,9 @@ public class FileStorageServiceCellet extends Cellet {
         }
         else if (FileStorageAction.PutFile.name.equals(action)) {
             this.executor.execute(new PutFileTask(this, talkContext, primitive));
+        }
+        else if (FileStorageAction.GetRoot.name.equals(action)) {
+            this.executor.execute(new GetRootDirectoryTask(this, talkContext, primitive));
         }
     }
 

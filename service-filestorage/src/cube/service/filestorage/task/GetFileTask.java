@@ -38,7 +38,6 @@ import cube.service.ServiceTask;
 import cube.service.auth.AuthService;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
-import org.json.JSONException;
 
 /**
  * 获取文件任务。
@@ -68,12 +67,7 @@ public class GetFileTask extends ServiceTask {
         // 域
         String domain = authToken.getDomain();
 
-        String fileCode = null;
-        try {
-            fileCode = packet.data.getString("fileCode");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        String fileCode = packet.data.getString("fileCode");
 
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
 

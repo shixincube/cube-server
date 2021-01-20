@@ -27,6 +27,7 @@
 package cube.service.filestorage.hierarchy;
 
 import cube.common.Domain;
+import cube.common.JSONable;
 import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
 import org.json.JSONException;
@@ -37,7 +38,7 @@ import java.util.List;
 /**
  * 文件目录。
  */
-public class Directory {
+public class Directory implements JSONable {
 
     /**
      * 目录的文件层级容器。
@@ -278,5 +279,16 @@ public class Directory {
     @Override
     public int hashCode() {
         return this.node.hashCode();
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

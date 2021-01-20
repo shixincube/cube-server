@@ -47,6 +47,16 @@ public enum FileStorageStateCode {
     InvalidDomain(11),
 
     /**
+     * 无效的参数，禁止访问。
+     */
+    Forbidden(12),
+
+    /**
+     * 未找到指定数据。
+     */
+    NotFound(13),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)
