@@ -51,4 +51,13 @@ public interface FileHierarchyListener {
      */
     public void onFileLabelRemove(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel);
 
+    /**
+     * 查询指定的文件标签。
+     *
+     * @param fileHierarchy
+     * @param directory
+     * @param uniqueKey
+     * @return
+     */
+    public FileLabel onQueryFileLabel(FileHierarchy fileHierarchy, Directory directory, String uniqueKey);
 }

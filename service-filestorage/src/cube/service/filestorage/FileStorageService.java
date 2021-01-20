@@ -173,7 +173,7 @@ public class FileStorageService extends AbstractModule {
         this.initStorage();
 
         // 创建文件层级管理器
-        this.fileHierarchyManager = new FileHierarchyManager(this.fileStructStorage);
+        this.fileHierarchyManager = new FileHierarchyManager(this.fileStructStorage, this);
     }
 
     @Override

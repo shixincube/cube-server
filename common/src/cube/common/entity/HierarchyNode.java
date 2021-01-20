@@ -249,6 +249,30 @@ public class HierarchyNode extends Entity {
     }
 
     /**
+     * 获取指定索引范围内的关联实体的唯一键。
+     *
+     * @param beginIndex 起始位置索引。
+     * @param endIndex 结束位置索引。
+     * @return 获取所有关联的实体的唯一键。如果没有数据返回 {@code null} 值。
+     */
+    public List<String> getRelatedKeys(int beginIndex, int endIndex) {
+        int begin = beginIndex;
+        int end = endIndex;
+
+        if (end + 1 > this.relatedKeys.size()) {
+            end = this.relatedKeys.size();
+        }
+
+        if (begin >= end) {
+            return null;
+        }
+
+        synchronized (this.relatedKeys) {
+            return this.relatedKeys.subList(begin, end);
+        }
+    }
+
+    /**
      * 是否包含了关联的实体唯一键。
      *
      * @param key 指定键。

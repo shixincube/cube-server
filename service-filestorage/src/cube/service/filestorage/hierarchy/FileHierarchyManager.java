@@ -31,6 +31,7 @@ import cube.common.UniqueKey;
 import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
 import cube.common.entity.HierarchyNodes;
+import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStructStorage;
 import cube.util.FileUtils;
 
@@ -58,12 +59,18 @@ public class FileHierarchyManager implements FileHierarchyListener {
     private FileHierarchyCache fileHierarchyCache;
 
     /**
+     * 文件存储服务。
+     */
+    private FileStorageService fileStorageService;
+
+    /**
      * 构造函数。
      *
      * @param structStorage
      */
-    public FileHierarchyManager(FileStructStorage structStorage) {
+    public FileHierarchyManager(FileStructStorage structStorage, FileStorageService fileStorageService) {
         this.fileHierarchyCache = new FileHierarchyCache(structStorage);
+        this.fileStorageService = fileStorageService;
         this.roots = new ConcurrentHashMap<>();
     }
 
@@ -146,6 +153,11 @@ public class FileHierarchyManager implements FileHierarchyListener {
             fileHierarchy.setDirectorySize(parent, size - fileSize);
             parent = parent.getParent();
         }
+    }
+
+    @Override
+    public FileLabel onQueryFileLabel(FileHierarchy fileHierarchy, Directory directory, String uniqueKey) {
+        return this.fileStorageService.getFile(directory.getDomain().getName(), uniqueKey);
     }
 
     /**

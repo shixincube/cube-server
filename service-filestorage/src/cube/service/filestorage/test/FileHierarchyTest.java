@@ -69,7 +69,7 @@ public class FileHierarchyTest {
         Logger.i(getClass(), "setup");
         this.initStorage();
 
-        this.manager = new FileHierarchyManager(this.fileStructStorage);
+        this.manager = new FileHierarchyManager(this.fileStructStorage, null);
     }
 
     public void test() {

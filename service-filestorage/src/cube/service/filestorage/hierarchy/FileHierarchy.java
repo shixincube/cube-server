@@ -320,7 +320,6 @@ public class FileHierarchy {
 
         List<HierarchyNode> nodes = HierarchyNodes.traversalChildren(this.cache, directory.node);
         for (HierarchyNode node : nodes) {
-
             Directory dir = this.directories.get(node.getId());
             if (null == dir) {
                 dir = new Directory(this, node);
@@ -474,5 +473,33 @@ public class FileHierarchy {
         HierarchyNodes.save(this.cache, directory.node);
 
         return true;
+    }
+
+    protected List<FileLabel> listFileLabels(Directory directory, int beginIndex, int endIndex) {
+        List<String> ukeys = directory.node.getRelatedKeys(beginIndex, endIndex);
+        if (null == ukeys) {
+            return null;
+        }
+
+        List<FileLabel> result = new ArrayList<>();
+
+        for (String key : ukeys) {
+            FileLabel fileLabel = this.listener.onQueryFileLabel(this, directory, key);
+            if (null != fileLabel) {
+                result.add(fileLabel);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * 文件数量。
+     *
+     * @param directory
+     * @return
+     */
+    protected int numFiles(Directory directory) {
+        return directory.node.numRelatedKeys();
     }
 }

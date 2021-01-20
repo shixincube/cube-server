@@ -30,7 +30,7 @@ import cube.common.Domain;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
-import org.json.JSONException;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.List;
@@ -60,24 +60,20 @@ public class Directory implements JSONable {
         this.fileHierarchy = fileHierarchy;
         this.node = node;
 
-        try {
-            JSONObject context = node.getContext();
-            if (!context.has(FileHierarchy.KEY_CREATION)) {
-                long now = System.currentTimeMillis();
-                context.put(FileHierarchy.KEY_CREATION, now);
-                context.put(FileHierarchy.KEY_LAST_MODIFIED, now);
-            }
-            if (!context.has(FileHierarchy.KEY_DIR_NAME)) {
-                context.put(FileHierarchy.KEY_DIR_NAME, "root");
-            }
-            if (!context.has(FileHierarchy.KEY_HIDDEN)) {
-                context.put(FileHierarchy.KEY_HIDDEN, false);
-            }
-            if (!context.has(FileHierarchy.KEY_SIZE)) {
-                context.put(FileHierarchy.KEY_SIZE, 0L);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        JSONObject context = node.getContext();
+        if (!context.has(FileHierarchy.KEY_CREATION)) {
+            long now = System.currentTimeMillis();
+            context.put(FileHierarchy.KEY_CREATION, now);
+            context.put(FileHierarchy.KEY_LAST_MODIFIED, now);
+        }
+        if (!context.has(FileHierarchy.KEY_DIR_NAME)) {
+            context.put(FileHierarchy.KEY_DIR_NAME, "root");
+        }
+        if (!context.has(FileHierarchy.KEY_HIDDEN)) {
+            context.put(FileHierarchy.KEY_HIDDEN, false);
+        }
+        if (!context.has(FileHierarchy.KEY_SIZE)) {
+            context.put(FileHierarchy.KEY_SIZE, 0L);
         }
     }
 
@@ -107,7 +103,7 @@ public class Directory implements JSONable {
     public String getName() {
         try {
             return this.node.getContext().getString(FileHierarchy.KEY_DIR_NAME);
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -122,7 +118,7 @@ public class Directory implements JSONable {
     public long getCreationTime() {
         try {
             return this.node.getContext().getLong(FileHierarchy.KEY_CREATION);
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return 0;
@@ -136,7 +132,7 @@ public class Directory implements JSONable {
     public long getLastModified() {
         try {
             return this.node.getContext().getLong(FileHierarchy.KEY_LAST_MODIFIED);
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return 0;
@@ -150,7 +146,7 @@ public class Directory implements JSONable {
     public boolean isHidden() {
         try {
             return this.node.getContext().getBoolean(FileHierarchy.KEY_HIDDEN);
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return false;
@@ -164,7 +160,7 @@ public class Directory implements JSONable {
     public long getSize() {
         try {
             return this.node.getContext().getLong(FileHierarchy.KEY_SIZE);
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return -1;
@@ -177,6 +173,15 @@ public class Directory implements JSONable {
      */
     public Directory getParent() {
         return this.fileHierarchy.getParent(this);
+    }
+
+    /**
+     * 是否有父目录。
+     *
+     * @return 如果有父目录返回 {@code true} 。
+     */
+    public boolean hasParent() {
+        return (null != this.fileHierarchy.getParent(this));
     }
 
     /**
@@ -195,6 +200,15 @@ public class Directory implements JSONable {
      */
     public List<Directory> getDirectories() {
         return this.fileHierarchy.getSubdirectories(this);
+    }
+
+    /**
+     * 获取所有子目录，包括隐藏目录。
+     *
+     * @return 返回所有子目录，包括隐藏目录。
+     */
+    public List<Directory> getAllDirectories() {
+        return this.fileHierarchy.getSubdirectories(this, true);
     }
 
     /**
@@ -266,6 +280,26 @@ public class Directory implements JSONable {
         return this.fileHierarchy.removeFileLabel(this, fileLabel);
     }
 
+    /**
+     * 查询指定索引范围内的所有文件标签实体。
+     *
+     * @param beginIndex
+     * @param endIndex
+     * @return
+     */
+    public List<FileLabel> listFiles(int beginIndex, int endIndex) {
+        return this.fileHierarchy.listFileLabels(this, beginIndex, endIndex);
+    }
+
+    /**
+     * 获取文件数量。
+     *
+     * @return 返回文件数量。
+     */
+    public int numFiles() {
+        return this.fileHierarchy.numFiles(this);
+    }
+
     @Override
     public boolean equals(Object object) {
         if (null != object && object instanceof Directory) {
@@ -284,11 +318,38 @@ public class Directory implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("owner", this.fileHierarchy.getId());
+        json.put("id", this.getId().longValue());
+        json.put("domain", this.getDomain().getName());
+        json.put("name", this.getName());
+        json.put("creation", this.getCreationTime());
+        json.put("lastModified", this.getLastModified());
+        json.put("size", this.getSize());
+        json.put("hidden", this.isHidden());
+        if (this.hasParent()) {
+            json.put("parent", this.getParent().getId());
+        }
+
+        JSONArray dirArray = new JSONArray();
+        List<Directory> dirs = this.getAllDirectories();
+        for (Directory dir : dirs) {
+            dirArray.put(dir.toCompactJSON());
+        }
+        json.put("dirs", dirArray);
+
+        // 文件数量
+        json.put("numFiles", this.numFiles());
+
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        json.put("id", this.getId().longValue());
+        json.put("name", this.getName());
+        json.put("lastModified", this.getLastModified());
+        json.put("hidden", this.isHidden());
+        return json;
     }
 }
