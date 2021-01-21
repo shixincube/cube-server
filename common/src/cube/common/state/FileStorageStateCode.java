@@ -57,6 +57,11 @@ public enum FileStorageStateCode {
     NotFound(13),
 
     /**
+     * 未授权访问。
+     */
+    Unauthorized(14),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)

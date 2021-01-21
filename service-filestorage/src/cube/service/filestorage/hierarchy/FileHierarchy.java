@@ -30,7 +30,6 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
 import cube.common.entity.HierarchyNodes;
 import cube.core.Cache;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -142,6 +141,49 @@ public class FileHierarchy {
     }
 
     /**
+     * 返回指定 ID 的目录。
+     *
+     * @param id
+     * @return
+     */
+    public Directory getDirectory(Long id) {
+        Directory dir = this.directories.get(id);
+        if (null != dir) {
+            return dir;
+        }
+
+        // 递归方式遍历
+        HierarchyNode node = traversal(this.cache, this.root.node, id);
+        if (null != node) {
+            dir = new Directory(this, node);
+            this.directories.put(dir.getId(), dir);
+        }
+
+        return dir;
+    }
+
+    private HierarchyNode traversal(Cache cache, HierarchyNode node, Long id) {
+        List<HierarchyNode> children = HierarchyNodes.traversalChildren(cache, node);
+        if (children.isEmpty()) {
+            return null;
+        }
+
+        for (HierarchyNode child : children) {
+            if (child.getId().longValue() == id.longValue()) {
+                return child;
+            }
+            else {
+                HierarchyNode result = traversal(cache, child, id);
+                if (null != result) {
+                    return result;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * 是否存在同名目录。
      *
      * @param directory
@@ -151,17 +193,13 @@ public class FileHierarchy {
     protected boolean existsDirectory(Directory directory, String directoryName) {
         this.timestamp = System.currentTimeMillis();
 
-        try {
-            List<HierarchyNode> children = HierarchyNodes.traversalChildren(this.cache, directory.node);
-            for (HierarchyNode node : children) {
-                JSONObject context = node.getContext();
-                String dirName = context.getString(KEY_DIR_NAME);
-                if (dirName.equals(directoryName)) {
-                    return true;
-                }
+        List<HierarchyNode> children = HierarchyNodes.traversalChildren(this.cache, directory.node);
+        for (HierarchyNode node : children) {
+            JSONObject context = node.getContext();
+            String dirName = context.getString(KEY_DIR_NAME);
+            if (dirName.equals(directoryName)) {
+                return true;
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
 
         return false;
@@ -213,7 +251,7 @@ public class FileHierarchy {
             context.put(KEY_LAST_MODIFIED, now);
             context.put(KEY_HIDDEN, false);
             context.put(KEY_SIZE, 0);
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -263,11 +301,7 @@ public class FileHierarchy {
 
         // 更新时间戳
         this.timestamp = System.currentTimeMillis();
-        try {
-            directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
 
         HierarchyNodes.save(this.cache, parent);
         HierarchyNodes.delete(this.cache, subdirectory.node);
@@ -316,6 +350,8 @@ public class FileHierarchy {
      * @return
      */
     protected List<Directory> getSubdirectories(Directory directory, boolean includeHidden) {
+        this.timestamp = System.currentTimeMillis();
+
         List<Directory> result = new ArrayList<>();
 
         List<HierarchyNode> nodes = HierarchyNodes.traversalChildren(this.cache, directory.node);
@@ -347,6 +383,8 @@ public class FileHierarchy {
      * @return
      */
     protected Directory getSubdirectory(Directory directory, String subdirectory) {
+        this.timestamp = System.currentTimeMillis();
+
         List<HierarchyNode> nodes = HierarchyNodes.traversalChildren(this.cache, directory.node);
         for (HierarchyNode node : nodes) {
             Directory dir = this.directories.get(node.getId());
@@ -373,12 +411,8 @@ public class FileHierarchy {
         // 更新时间戳
         this.timestamp = System.currentTimeMillis();
 
-        try {
-            directory.node.getContext().put(KEY_HIDDEN, hidden);
-            directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        directory.node.getContext().put(KEY_HIDDEN, hidden);
+        directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
 
         HierarchyNodes.save(this.cache, directory.node);
     }
@@ -393,12 +427,8 @@ public class FileHierarchy {
         // 更新时间戳
         this.timestamp = System.currentTimeMillis();
 
-        try {
-            directory.node.getContext().put(KEY_SIZE, newSize);
-            directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        directory.node.getContext().put(KEY_SIZE, newSize);
+        directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
 
         HierarchyNodes.save(this.cache, directory.node);
     }
@@ -423,16 +453,12 @@ public class FileHierarchy {
             this.listener.onFileLabelAdd(this, directory, fileLabel);
         }
 
-        try {
-            // 更新大小
-            long size = directory.node.getContext().getLong(KEY_SIZE);
-            directory.node.getContext().put(KEY_SIZE, size + fileLabel.getFileSize());
+        // 更新大小
+        long size = directory.node.getContext().getLong(KEY_SIZE);
+        directory.node.getContext().put(KEY_SIZE, size + fileLabel.getFileSize());
 
-            // 更新时间戳
-            directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        // 更新时间戳
+        directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
 
         HierarchyNodes.save(this.cache, directory.node);
 
@@ -459,16 +485,12 @@ public class FileHierarchy {
             this.listener.onFileLabelRemove(this, directory, fileLabel);
         }
 
-        try {
-            // 更新大小
-            long size = directory.node.getContext().getLong(KEY_SIZE);
-            directory.node.getContext().put(KEY_SIZE, size - fileLabel.getFileSize());
+        // 更新大小
+        long size = directory.node.getContext().getLong(KEY_SIZE);
+        directory.node.getContext().put(KEY_SIZE, size - fileLabel.getFileSize());
 
-            // 更新时间戳
-            directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        // 更新时间戳
+        directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
 
         HierarchyNodes.save(this.cache, directory.node);
 

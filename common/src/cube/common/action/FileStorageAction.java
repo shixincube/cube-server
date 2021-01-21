@@ -49,6 +49,16 @@ public enum FileStorageAction {
     GetRoot("getRoot"),
 
     /**
+     * 罗列目录清单。
+     */
+    ListDirs("listDirs"),
+
+    /**
+     * 罗列文件清单。
+     */
+    ListFiles("listFiles"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

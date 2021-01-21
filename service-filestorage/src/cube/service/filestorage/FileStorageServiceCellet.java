@@ -35,10 +35,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.FileStorageAction;
 import cube.core.Kernel;
-import cube.service.filestorage.task.GetFileTask;
-import cube.service.filestorage.task.GetRootDirectoryTask;
-import cube.service.filestorage.task.PutFileTask;
-import cube.service.filestorage.task.WriteFileTask;
+import cube.service.filestorage.task.*;
 
 import java.util.concurrent.ExecutorService;
 
@@ -84,6 +81,12 @@ public class FileStorageServiceCellet extends Cellet {
         }
         else if (FileStorageAction.GetRoot.name.equals(action)) {
             this.executor.execute(new GetRootDirectoryTask(this, talkContext, primitive));
+        }
+        else if (FileStorageAction.ListDirs.name.equals(action)) {
+            this.executor.execute(new ListDirectoriesTask(this, talkContext, primitive));
+        }
+        else if (FileStorageAction.ListFiles.name.equals(action)) {
+            this.executor.execute(new ListFilesTask(this, talkContext, primitive));
         }
     }
 

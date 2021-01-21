@@ -326,9 +326,15 @@ public class Directory implements JSONable {
         json.put("lastModified", this.getLastModified());
         json.put("size", this.getSize());
         json.put("hidden", this.isHidden());
+
         if (this.hasParent()) {
             json.put("parent", this.getParent().getId());
         }
+
+        // 子目录数量
+        json.put("numDirs", this.numDirectories());
+        // 文件数量
+        json.put("numFiles", this.numFiles());
 
         JSONArray dirArray = new JSONArray();
         List<Directory> dirs = this.getAllDirectories();
@@ -337,19 +343,30 @@ public class Directory implements JSONable {
         }
         json.put("dirs", dirArray);
 
-        // 文件数量
-        json.put("numFiles", this.numFiles());
-
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
+        json.put("owner", this.fileHierarchy.getId());
         json.put("id", this.getId().longValue());
+        json.put("domain", this.getDomain().getName());
         json.put("name", this.getName());
+        json.put("creation", this.getCreationTime());
         json.put("lastModified", this.getLastModified());
+        json.put("size", this.getSize());
         json.put("hidden", this.isHidden());
+
+        if (this.hasParent()) {
+            json.put("parent", this.getParent().getId());
+        }
+
+        // 子目录数量
+        json.put("numDirs", this.numDirectories());
+        // 文件数量
+        json.put("numFiles", this.numFiles());
+        
         return json;
     }
 }

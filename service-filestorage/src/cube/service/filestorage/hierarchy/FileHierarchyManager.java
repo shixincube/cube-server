@@ -75,14 +75,14 @@ public class FileHierarchyManager implements FileHierarchyListener {
     }
 
     /**
-     * 获取指定联系人的文件层级实例。
+     * 获取指定 ROOT 的文件层级实例。
      *
-     * @param contactId 指定联系人 ID 。
+     * @param rootId 指定联系人 ID 。
      * @param domainName 指定域名称。
      * @return 返回指定联系人的文件层级实例。
      */
-    public synchronized FileHierarchy getFileHierarchy(Long contactId, String domainName) {
-        String uniqueKey = UniqueKey.make(contactId, domainName);
+    public synchronized FileHierarchy getFileHierarchy(Long rootId, String domainName) {
+        String uniqueKey = UniqueKey.make(rootId, domainName);
         FileHierarchy root = this.roots.get(uniqueKey);
         if (null != root) {
             return root;
@@ -96,7 +96,7 @@ public class FileHierarchyManager implements FileHierarchyListener {
         }
 
         // 没有创建过根目录，创建根目录
-        node = new HierarchyNode(contactId, domainName);
+        node = new HierarchyNode(rootId, domainName);
         root = new FileHierarchy(this.fileHierarchyCache, node);
         this.roots.put(uniqueKey, root);
 
