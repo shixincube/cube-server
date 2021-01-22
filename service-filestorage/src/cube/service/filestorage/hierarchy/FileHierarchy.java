@@ -147,6 +147,10 @@ public class FileHierarchy {
      * @return
      */
     public Directory getDirectory(Long id) {
+        if (id.longValue() == this.root.getId().longValue()) {
+            return this.root;
+        }
+
         Directory dir = this.directories.get(id);
         if (null != dir) {
             return dir;

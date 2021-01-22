@@ -190,7 +190,7 @@ public class Directory implements JSONable {
      * @return 返回子目录数量。
      */
     public int numDirectories() {
-        return this.node.numChildren();
+        return this.fileHierarchy.getSubdirectories(this).size();
     }
 
     /**
