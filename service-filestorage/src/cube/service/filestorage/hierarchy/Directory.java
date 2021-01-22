@@ -222,6 +222,16 @@ public class Directory implements JSONable {
     }
 
     /**
+     * 获取指定 ID 的目录。
+     *
+     * @param id
+     * @return
+     */
+    public Directory getDirectory(Long id) {
+        return this.fileHierarchy.getSubdirectory(this, id);
+    }
+
+    /**
      * 是否存在指定名称的目录。
      *
      * @param directoryName 指定目录名。
@@ -245,10 +255,11 @@ public class Directory implements JSONable {
      * 删除子目录。
      *
      * @param subdirectory 指定待删除的目录。
+     * @param recursive 指定是否递归删除子目录。
      * @return 如果删除成功返回 {@code true} 。
      */
-    public boolean deleteDirectory(Directory subdirectory) {
-        return this.fileHierarchy.deleteDirectory(this, subdirectory);
+    public boolean deleteDirectory(Directory subdirectory, boolean recursive) {
+        return this.fileHierarchy.deleteDirectory(this, subdirectory, recursive);
     }
 
     /**

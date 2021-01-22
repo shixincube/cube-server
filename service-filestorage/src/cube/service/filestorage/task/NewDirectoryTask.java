@@ -32,7 +32,6 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
 import cube.common.Packet;
-import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
 import cube.service.auth.AuthService;
@@ -46,11 +45,11 @@ import org.json.JSONObject;
 import java.util.List;
 
 /**
- * 罗列目录下的文件。
+ * 新建文件夹。
  */
-public class ListFilesTask extends ServiceTask {
+public class NewDirectoryTask extends ServiceTask {
 
-    public ListFilesTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
+    public NewDirectoryTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
 
@@ -73,33 +72,23 @@ public class ListFilesTask extends ServiceTask {
         // 域
         String domain = authToken.getDomain();
 
-        // 根目录 ID 和目录 ID
-        if (!packet.data.has("root") || !packet.data.has("id")) {
+        // 读取参数
+        if (!packet.data.has("root") || !packet.data.has("workingId") || !packet.data.has("dirName")) {
             // 发生错误
             this.cellet.speak(this.talkContext
                     , this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
             return;
         }
 
-        // 参数
-        if (!packet.data.has("begin") || !packet.data.has("end")) {
-            // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
-            return;
-        }
-
         Long rootId = packet.data.getLong("root");
-        Long id = packet.data.getLong("id");
-        int begin = packet.data.getInt("begin");
-        int end = packet.data.getInt("end");
+        Long workingId = packet.data.getLong("workingId");
+        String dirName = packet.data.getString("dirName");
 
         // 获取服务
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
 
         // 获取指定 ROOT ID 对应的文件层级描述
         FileHierarchy fileHierarchy = service.getFileHierarchy(domain, rootId);
-
         if (null == fileHierarchy) {
             // 发生错误
             this.cellet.speak(this.talkContext
@@ -108,7 +97,7 @@ public class ListFilesTask extends ServiceTask {
         }
 
         // 查找指定 ID 的目录
-        Directory directory = fileHierarchy.getDirectory(id);
+        Directory directory = fileHierarchy.getDirectory(workingId);
         if (null == directory) {
             // 发生错误
             this.cellet.speak(this.talkContext
@@ -116,20 +105,17 @@ public class ListFilesTask extends ServiceTask {
             return;
         }
 
-        JSONObject result = new JSONObject();
-        result.put("root", rootId.longValue());
-        result.put("id", id.longValue());
-        result.put("begin", begin);
-        result.put("end", end);
-
-        List<FileLabel> fileList = directory.listFiles(begin, end);
-        JSONArray array = new JSONArray();
-        for (FileLabel file : fileList) {
-            array.put(file.toJSON());
+        // 创建目录
+        Directory newDir = directory.createDirectory(dirName);
+        if (null == newDir) {
+            // 发生错误
+            this.cellet.speak(this.talkContext
+                    , this.makeResponse(action, packet, FileStorageStateCode.DuplicationOfName.code, packet.data));
+            return;
         }
-        result.put("list", array);
 
+        // 成功
         this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
+                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, newDir.toJSON()));
     }
 }

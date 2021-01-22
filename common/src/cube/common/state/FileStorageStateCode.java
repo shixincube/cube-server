@@ -62,6 +62,16 @@ public enum FileStorageStateCode {
     Unauthorized(14),
 
     /**
+     * 拒绝操作。
+     */
+    Reject(15),
+
+    /**
+     * 重名。
+     */
+    DuplicationOfName(20),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)

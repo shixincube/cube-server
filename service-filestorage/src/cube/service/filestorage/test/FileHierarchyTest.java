@@ -110,14 +110,14 @@ public class FileHierarchyTest {
         // 删除第二个目录
         List<Directory> dirs = root.getDirectories();
         dir2 = dirs.get(1);
-        Assert.equals("delete dir2", true, root.deleteDirectory(dir2));
+        Assert.equals("delete dir2", true, root.deleteDirectory(dir2, false));
         // 判断目录数量
         Assert.equals(1, root.numDirectories());
 
         // 删除第一个目录
         dirs = root.getDirectories();
         dir1 = dirs.get(0);
-        root.deleteDirectory(dir1);
+        root.deleteDirectory(dir1, false);
         // 判断目录数量
         Assert.equals(0, root.numDirectories());
 

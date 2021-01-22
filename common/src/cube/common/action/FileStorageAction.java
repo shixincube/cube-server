@@ -59,6 +59,16 @@ public enum FileStorageAction {
     ListFiles("listFiles"),
 
     /**
+     * 创建新目录。
+     */
+    NewDir("newDir"),
+
+    /**
+     * 删除目录。
+     */
+    DeleteDir("deleteDir"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

@@ -276,9 +276,10 @@ public class FileHierarchy {
      *
      * @param directory
      * @param subdirectory
+     * @param recursive
      * @return
      */
-    protected boolean deleteDirectory(Directory directory, Directory subdirectory) {
+    protected boolean deleteDirectory(Directory directory, Directory subdirectory, boolean recursive) {
         if (this.root.equals(subdirectory)) {
             // 不能删除根
             return false;
@@ -289,8 +290,8 @@ public class FileHierarchy {
             return false;
         }
 
-        // 目录里是否还有数据
-        if (0 != subdirectory.node.numRelatedKeys()) {
+        // 目录里是否还有子目录
+        if (!recursive && 0 != subdirectory.node.numChildren()) {
             // 不允许删除非空目录
             return false;
         }
@@ -301,6 +302,7 @@ public class FileHierarchy {
             return false;
         }
 
+        // 删除
         parent.removeChild(subdirectory.node);
 
         // 更新时间戳
@@ -398,6 +400,32 @@ public class FileHierarchy {
             }
 
             if (dir.getName().equals(subdirectory)) {
+                return dir;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 获取指定 ID 的子目录。
+     *
+     * @param directory
+     * @param id
+     * @return
+     */
+    protected Directory getSubdirectory(Directory directory, Long id) {
+        this.timestamp = System.currentTimeMillis();
+
+        List<HierarchyNode> nodes = HierarchyNodes.traversalChildren(this.cache, directory.node);
+        for (HierarchyNode node : nodes) {
+            Directory dir = this.directories.get(node.getId());
+            if (null == dir) {
+                dir = new Directory(this, node);
+                this.directories.put(dir.getId(), dir);
+            }
+
+            if (dir.getId().longValue() == id.longValue()) {
                 return dir;
             }
         }

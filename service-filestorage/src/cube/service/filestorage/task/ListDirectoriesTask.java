@@ -46,7 +46,7 @@ import org.json.JSONObject;
 import java.util.List;
 
 /**
- * 获取指定联系人或群组的根目录。
+ * 罗列子目录。
  */
 public class ListDirectoriesTask extends ServiceTask {
 
