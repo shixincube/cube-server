@@ -110,7 +110,7 @@ public class ListDirectoriesTask extends ServiceTask {
         result.put("root", rootId.longValue());
         result.put("id", id.longValue());
 
-        List<Directory> dirList = directory.getAllDirectories();
+        List<Directory> dirList = directory.getDirectories();
         JSONArray array = new JSONArray();
         for (Directory dir : dirList) {
             array.put(dir.toJSON());

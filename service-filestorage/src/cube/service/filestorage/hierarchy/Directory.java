@@ -337,7 +337,7 @@ public class Directory implements JSONable {
         json.put("numFiles", this.numFiles());
 
         JSONArray dirArray = new JSONArray();
-        List<Directory> dirs = this.getAllDirectories();
+        List<Directory> dirs = this.getDirectories();
         for (Directory dir : dirs) {
             dirArray.put(dir.toCompactJSON());
         }
