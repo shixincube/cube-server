@@ -94,6 +94,9 @@ public class FileStorageServiceCellet extends Cellet {
         else if (FileStorageAction.DeleteDir.name.equals(action)) {
             this.executor.execute(new DeleteDirectoryTask(this, talkContext, primitive));
         }
+        else if (FileStorageAction.InsertFile.name.equals(action)) {
+            this.executor.execute(new InsertFileTask(this, talkContext, primitive));
+        }
     }
 
     @Override

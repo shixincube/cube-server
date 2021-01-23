@@ -67,6 +67,11 @@ public enum FileStorageStateCode {
     Reject(15),
 
     /**
+     * 文件标签错误。
+     */
+    FileLabelError(16),
+
+    /**
      * 重名。
      */
     DuplicationOfName(20),
