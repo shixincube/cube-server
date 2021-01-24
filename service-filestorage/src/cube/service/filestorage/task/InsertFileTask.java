@@ -40,6 +40,7 @@ import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchy;
+import org.json.JSONObject;
 
 /**
  * 向指定目录插入文件。
@@ -120,7 +121,11 @@ public class InsertFileTask extends ServiceTask {
             return;
         }
 
+        JSONObject response = new JSONObject();
+        response.put("directory", directory.toCompactJSON());
+        response.put("file", fileLabel.toJSON());
+
         this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, directory.toCompactJSON()));
+                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, response));
     }
 }

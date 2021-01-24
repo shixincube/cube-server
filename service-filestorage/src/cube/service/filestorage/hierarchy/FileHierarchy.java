@@ -88,9 +88,10 @@ public class FileHierarchy {
      * @param cache 用于读写节点的缓存。
      * @param root 根目录。
      */
-    public FileHierarchy(Cache cache, HierarchyNode root) {
+    public FileHierarchy(Cache cache, HierarchyNode root, FileHierarchyListener listener) {
         this.cache = cache;
         this.root = new Directory(this, root);
+        this.listener = listener;
         this.directories = new ConcurrentHashMap<>();
         this.timestamp = System.currentTimeMillis();
     }
@@ -120,15 +121,6 @@ public class FileHierarchy {
      */
     public long getTimestamp() {
         return this.timestamp;
-    }
-
-    /**
-     * 设置监听器。
-     *
-     * @param listener
-     */
-    public void setListener(FileHierarchyListener listener) {
-        this.listener = listener;
     }
 
     /**

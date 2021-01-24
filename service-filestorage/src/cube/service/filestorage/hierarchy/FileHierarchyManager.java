@@ -90,18 +90,15 @@ public class FileHierarchyManager implements FileHierarchyListener {
 
         HierarchyNode node = HierarchyNodes.load(this.fileHierarchyCache, uniqueKey);
         if (null != node) {
-            root = new FileHierarchy(this.fileHierarchyCache, node);
+            root = new FileHierarchy(this.fileHierarchyCache, node, this);
             this.roots.put(uniqueKey, root);
             return root;
         }
 
         // 没有创建过根目录，创建根目录
         node = new HierarchyNode(rootId, domainName);
-        root = new FileHierarchy(this.fileHierarchyCache, node);
+        root = new FileHierarchy(this.fileHierarchyCache, node, this);
         this.roots.put(uniqueKey, root);
-
-        // 设置监听器
-        root.setListener(this);
 
         HierarchyNodes.save(this.fileHierarchyCache, node);
 
