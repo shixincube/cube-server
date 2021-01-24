@@ -263,6 +263,17 @@ public class Directory implements JSONable {
     }
 
     /**
+     * 删除多个子目录。
+     *
+     * @param subdirectories 指定待删除的目录列表。
+     * @param recursive 指定是否递归删除子目录。
+     * @return 返回被删除的目录，如果没有删除目录成功，返回 {@code null} 值。
+     */
+    public List<Directory> deleteDirectories(List<Directory> subdirectories, boolean recursive) {
+        return this.fileHierarchy.deleteDirectories(this, subdirectories, recursive);
+    }
+
+    /**
      * 设置是否为隐藏目录。
      *
      * @param hidden 指定是否隐藏。

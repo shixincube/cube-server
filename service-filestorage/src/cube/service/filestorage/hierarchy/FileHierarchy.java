@@ -272,6 +272,62 @@ public class FileHierarchy {
     }
 
     /**
+     * 删除多个目录。
+     *
+     * @param directory
+     * @param subdirectories
+     * @param recursive
+     * @return
+     */
+    protected List<Directory> deleteDirectories(Directory directory, List<Directory> subdirectories, boolean recursive) {
+        HierarchyNode parent = directory.node;
+
+        List<Directory> result = new ArrayList<>();
+
+        for (Directory subdirectory : subdirectories) {
+            if (this.root.equals(subdirectory)) {
+                // 不能删除根
+                continue;
+            }
+
+            if (!this.existsDirectory(directory.node, subdirectory)) {
+                // 没有这个子目录
+                continue;
+            }
+
+            // 目录里是否还有子目录和文件
+            if (!recursive && (0 != subdirectory.node.numChildren() || 0 != subdirectory.node.numRelatedKeys())) {
+                // 不允许删除非空目录
+                continue;
+            }
+
+            // 删除
+            parent.removeChild(subdirectory.node);
+
+            // 更新缓存
+            HierarchyNodes.delete(this.cache, subdirectory.node);
+
+            // 从内存里移除
+            this.directories.remove(subdirectory.getId());
+
+            result.add(subdirectory);
+        }
+
+        if (result.isEmpty()) {
+            // 没有目录被删除
+            return null;
+        }
+
+        // 更新时间戳
+        this.timestamp = System.currentTimeMillis();
+        parent.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
+
+        HierarchyNodes.save(this.cache, parent);
+
+        return result;
+    }
+
+    /**
      * 删除目录。
      *
      * @param directory
@@ -290,24 +346,24 @@ public class FileHierarchy {
             return false;
         }
 
-        // 目录里是否还有子目录
-        if (!recursive && 0 != subdirectory.node.numChildren()) {
+        // 目录里是否还有子目录和文件
+        if (!recursive && (0 != subdirectory.node.numChildren() || 0 != subdirectory.node.numRelatedKeys())) {
             // 不允许删除非空目录
             return false;
         }
 
         HierarchyNode parent = directory.node;
-        if (parent.getId().longValue() != subdirectory.node.getParent().getId().longValue()) {
-            // 不是父子关系节点
-            return false;
-        }
+//        if (parent.getId().longValue() != subdirectory.node.getParent().getId().longValue()) {
+//            // 不是父子关系节点
+//            return false;
+//        }
 
         // 删除
         parent.removeChild(subdirectory.node);
 
         // 更新时间戳
         this.timestamp = System.currentTimeMillis();
-        directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
+        parent.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
 
         HierarchyNodes.save(this.cache, parent);
         HierarchyNodes.delete(this.cache, subdirectory.node);

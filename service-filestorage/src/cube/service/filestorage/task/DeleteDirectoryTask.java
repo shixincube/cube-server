@@ -39,6 +39,11 @@ import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchy;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 删除文件夹。
@@ -70,7 +75,7 @@ public class DeleteDirectoryTask extends ServiceTask {
 
         // 读取参数
         if (!packet.data.has("root") || !packet.data.has("workingId")
-                || !packet.data.has("dirId") || !packet.data.has("recursive")) {
+                || !packet.data.has("dirList") || !packet.data.has("recursive")) {
             // 发生错误
             this.cellet.speak(this.talkContext
                     , this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
@@ -79,7 +84,7 @@ public class DeleteDirectoryTask extends ServiceTask {
 
         Long rootId = packet.data.getLong("root");
         Long workingId = packet.data.getLong("workingId");
-        Long dirId = packet.data.getLong("dirId");
+        JSONArray dirList = packet.data.getJSONArray("dirList");
         boolean recursive = packet.data.getBoolean("recursive");
 
         // 获取服务
@@ -104,8 +109,16 @@ public class DeleteDirectoryTask extends ServiceTask {
         }
 
         // 查找指定 ID 的目录
-        Directory directory = workingDir.getDirectory(dirId);
-        if (null == directory) {
+        List<Directory> directories = new ArrayList<>();
+        for (int i = 0; i < dirList.length(); ++i) {
+            Long dirId = dirList.getLong(i);
+            Directory directory = workingDir.getDirectory(dirId);
+            if (null != directory) {
+                directories.add(directory);
+            }
+        }
+
+        if (0 == directories.size()) {
             // 发生错误
             this.cellet.speak(this.talkContext
                     , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
@@ -113,15 +126,25 @@ public class DeleteDirectoryTask extends ServiceTask {
         }
 
         // 删除目录
-        if (!workingDir.deleteDirectory(directory, recursive)) {
+        List<Directory> deletedList = workingDir.deleteDirectories(directories, recursive);
+        if (null == deletedList) {
             // 删除失败
             this.cellet.speak(this.talkContext
                     , this.makeResponse(action, packet, FileStorageStateCode.Reject.code, packet.data));
             return;
         }
 
+        JSONArray deleted = new JSONArray();
+        for (Directory deletedDir : deletedList) {
+            deleted.put(deletedDir.toCompactJSON());
+        }
+
+        JSONObject result = new JSONObject();
+        result.put("workingId", workingId.longValue());
+        result.put("deletedList", deleted);
+
         // 成功
         this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, directory.toJSON()));
+                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
     }
 }
