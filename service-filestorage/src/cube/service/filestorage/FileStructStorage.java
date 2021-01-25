@@ -62,6 +62,8 @@ public class FileStructStorage implements Storagable {
 
     private final String hierarchyTablePrefix = "hierarchy_";
 
+    private final String recyclebinTablePrefix = "recyclebin_";
+
     /**
      * 文件标签字段。
      */
@@ -99,6 +101,13 @@ public class FileStructStorage implements Storagable {
      */
     private final StorageField[] hierarchyFields = new StorageField[] {
             new StorageField("node_id", LiteralBase.LONG),
+            new StorageField("data", LiteralBase.STRING)
+            //new StorageField("reserved", LiteralBase.STRING)
+    };
+
+    private final StorageField[] recyclebinFields = new StorageField[] {
+            new StorageField("node_id", LiteralBase.LONG),
+            new StorageField("entry", LiteralBase.INT),
             new StorageField("data", LiteralBase.STRING)
             //new StorageField("reserved", LiteralBase.STRING)
     };

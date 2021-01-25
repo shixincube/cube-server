@@ -125,7 +125,7 @@ public class ListFilesTask extends ServiceTask {
         List<FileLabel> fileList = directory.listFiles(begin, end);
         JSONArray array = new JSONArray();
         for (FileLabel file : fileList) {
-            array.put(file.toJSON());
+            array.put(file.toCompactJSON());
         }
         result.put("list", array);
 

@@ -29,7 +29,6 @@ package cube.common.entity;
 import cell.util.Utils;
 import cube.common.Domain;
 import cube.util.FileType;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -151,33 +150,30 @@ public class FileLabel extends Entity {
      */
     public FileLabel(JSONObject json) {
         super();
-        try {
-            this.id = json.getLong("id");
-            this.domain = new Domain(json.getString("domain"));
-            this.fileCode = json.getString("fileCode");
-            this.ownerId = json.getLong("ownerId");
-            this.fileName = json.getString("fileName");
-            this.fileSize = json.getLong("fileSize");
-            this.completedTime = json.getLong("completed");
-            this.expiryTime = json.getLong("expiry");
-            this.fileType = FileType.matchExtension(json.getString("fileType"));
-            if (json.has("md5")) {
-                this.md5Code = json.getString("md5");
-            }
-            if (json.has("sha1")) {
-                this.sha1Code = json.getString("sha1");
-            }
-            if (json.has("fileURL")) {
-                this.fileURL = json.getString("fileURL");
-            }
-            if (json.has("fileSecureURL")) {
-                this.fileSecureURL = json.getString("fileSecureURL");
-            }
-            if (json.has("directURL")) {
-                this.directURL = json.getString("directURL");
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+
+        this.id = json.getLong("id");
+        this.domain = new Domain(json.getString("domain"));
+        this.fileCode = json.getString("fileCode");
+        this.ownerId = json.getLong("ownerId");
+        this.fileName = json.getString("fileName");
+        this.fileSize = json.getLong("fileSize");
+        this.completedTime = json.getLong("completed");
+        this.expiryTime = json.getLong("expiry");
+        this.fileType = FileType.matchExtension(json.getString("fileType"));
+        if (json.has("md5")) {
+            this.md5Code = json.getString("md5");
+        }
+        if (json.has("sha1")) {
+            this.sha1Code = json.getString("sha1");
+        }
+        if (json.has("fileURL")) {
+            this.fileURL = json.getString("fileURL");
+        }
+        if (json.has("fileSecureURL")) {
+            this.fileSecureURL = json.getString("fileSecureURL");
+        }
+        if (json.has("directURL")) {
+            this.directURL = json.getString("directURL");
         }
 
         this.uniqueKey = this.fileCode;
@@ -363,33 +359,29 @@ public class FileLabel extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("id", this.id);
-            json.put("domain", this.domain.getName());
-            json.put("fileCode", this.fileCode);
-            json.put("ownerId", this.ownerId);
-            json.put("fileName", this.fileName);
-            json.put("fileSize", this.fileSize);
-            json.put("completed", this.completedTime);
-            json.put("expiry", this.expiryTime);
-            json.put("fileType", this.fileType.getPreferredExtension());
-            if (null != this.md5Code) {
-                json.put("md5", this.md5Code);
-            }
-            if (null != this.sha1Code) {
-                json.put("sha1", this.sha1Code);
-            }
-            if (null != this.fileURL) {
-                json.put("fileURL", this.fileURL);
-            }
-            if (null != this.fileSecureURL) {
-                json.put("fileSecureURL", this.fileSecureURL);
-            }
-            if (null != this.directURL) {
-                json.put("directURL", this.directURL);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        json.put("id", this.id);
+        json.put("domain", this.domain.getName());
+        json.put("fileCode", this.fileCode);
+        json.put("ownerId", this.ownerId);
+        json.put("fileName", this.fileName);
+        json.put("fileSize", this.fileSize);
+        json.put("completed", this.completedTime);
+        json.put("expiry", this.expiryTime);
+        json.put("fileType", this.fileType.getPreferredExtension());
+        if (null != this.md5Code) {
+            json.put("md5", this.md5Code);
+        }
+        if (null != this.sha1Code) {
+            json.put("sha1", this.sha1Code);
+        }
+        if (null != this.fileURL) {
+            json.put("fileURL", this.fileURL);
+        }
+        if (null != this.fileSecureURL) {
+            json.put("fileSecureURL", this.fileSecureURL);
+        }
+        if (null != this.directURL) {
+            json.put("directURL", this.directURL);
         }
         return json;
     }

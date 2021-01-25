@@ -24,56 +24,54 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage.hierarchy;
+package cube.service.filestorage.recycle;
 
-import cube.common.entity.FileLabel;
+import cube.common.JSONable;
+import cube.service.filestorage.hierarchy.Directory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.LinkedList;
-import java.util.List;
 
 /**
- * 文件层级系统辅助工具。
+ * 回收链。
  */
-public final class FileHierarchyTool {
+public final class RecycleChain implements JSONable {
 
-    private FileHierarchyTool() {
+    private LinkedList<Directory> nodes;
+
+    public RecycleChain(LinkedList<Directory> nodes) {
+        this.nodes = new LinkedList<>(nodes);
     }
 
-    public static void recurse(LinkedList<Directory> list, Directory directory) {
-        list.addFirst(directory);
-
-        Directory parent = directory.getParent();
-        if (null == parent) {
-            return;
-        }
-
-        FileHierarchyTool.recurse(list, parent);
+    public void append(Directory node) {
+        this.nodes.add(node);
     }
 
-    /**
-     * 打包目录所有的数据到 JSON 描述的数据里。
-     *
-     * @param directory
-     * @param json
-     */
-    public static void packDirectory(Directory directory, JSONObject json) {
-        JSONArray files = new JSONArray();
-        int numFiles = directory.numFiles();
-        List<FileLabel> fileList = directory.listFiles(0, numFiles);
-        for (FileLabel fl : fileList) {
-            files.put(fl.toCompactJSON());
-        }
-        json.put("files", files);
+    public Directory getFirst() {
+        return this.nodes.getFirst();
+    }
 
-        JSONArray dirs = new JSONArray();
-        List<Directory> directoryList = directory.getDirectories();
-        for (Directory dir : directoryList) {
-            JSONObject dirJson = dir.toCompactJSON();
-            FileHierarchyTool.packDirectory(dir, dirJson);
-            dirs.put(dirJson);
+    public Directory getLast() {
+        return this.nodes.getLast();
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("first", this.getFirst().getId());
+        json.put("last", this.getLast().getId());
+
+        JSONArray array = new JSONArray();
+        for (Directory dir : this.nodes) {
+            array.put(dir.toCompactJSON());
         }
-        json.put("dirs", dirs);
+        json.put("nodes", array);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }
