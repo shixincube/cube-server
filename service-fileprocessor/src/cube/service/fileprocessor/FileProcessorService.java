@@ -131,7 +131,8 @@ public class FileProcessorService extends AbstractModule {
     public FileThumbnail makeThumbnail(String domainName, FileLabel srcFileLabel, int size, double quality) {
         boolean supported = false;
         FileType fileType = srcFileLabel.getFileType();
-        if (fileType == FileType.JPEG || fileType == FileType.PNG || fileType == FileType.GIF) {
+        if (fileType == FileType.JPEG || fileType == FileType.PNG
+                || fileType == FileType.GIF || fileType == FileType.BMP) {
             supported = true;
         }
 
@@ -221,9 +222,6 @@ public class FileProcessorService extends AbstractModule {
         File thumbFile = new File(outputFile + ".jpg");
         fileStorage.writeFile(thumbFileCode, thumbFile);
 
-        // 删除临时文件
-        thumbFile.delete();
-
         // 放置文件标签
         FileLabel fileLabel = new FileLabel(domainName, thumbFileCode, srcFileLabel.getOwnerId(),
                 thumbFileName, thumbFile.length(), System.currentTimeMillis(), srcFileLabel.getExpiryTime());
@@ -233,6 +231,9 @@ public class FileProcessorService extends AbstractModule {
         // 创建文件缩略图
         fileThumbnail = new FileThumbnail(fileLabel, thumbWidth, thumbHeight,
                 srcFileLabel.getFileCode(), srcWidth, srcHeight, quality);
+
+        // 删除临时文件
+        thumbFile.delete();
 
         return fileThumbnail;
     }
