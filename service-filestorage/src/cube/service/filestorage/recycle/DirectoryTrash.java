@@ -26,36 +26,28 @@
 
 package cube.service.filestorage.recycle;
 
-import cube.service.filestorage.FileStructStorage;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchyTool;
-
-import java.util.LinkedList;
+import org.json.JSONObject;
 
 /**
- * 文件回收站。
+ * 垃圾目录。
  */
-public class RecycleBin {
+public class DirectoryTrash extends Trash {
 
-    private FileStructStorage structStorage;
+    private Directory directory;
 
-    public RecycleBin(FileStructStorage structStorage) {
-        this.structStorage = structStorage;
+    public DirectoryTrash(Long rootId, RecycleChain chain, Directory directory) {
+        super(rootId, chain);
+        this.directory = directory;
     }
 
-    public void put(Directory root, Directory directory) {
-        // 遍历目录结构
-        LinkedList<Directory> list = new LinkedList<>();
-        FileHierarchyTool.recurse(list, directory);
-
-        // 创建数据实体
-        RecycleChain chain = new RecycleChain(list);
-        DirectoryTrash directoryTrash = new DirectoryTrash(root.getId(), chain, directory);
-
-
-    }
-
-    public void recover(Directory root, Long directoryId) {
-
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        JSONObject dirJson = this.directory.toCompactJSON();
+        FileHierarchyTool.packDirectory(this.directory, dirJson);
+        json.put("directory", dirJson);
+        return json;
     }
 }

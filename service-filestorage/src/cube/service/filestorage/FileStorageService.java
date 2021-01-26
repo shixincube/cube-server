@@ -34,6 +34,7 @@ import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
 import cube.service.filestorage.hierarchy.FileHierarchy;
 import cube.service.filestorage.hierarchy.FileHierarchyManager;
+import cube.service.filestorage.recycle.RecycleBin;
 import cube.service.filestorage.system.DiskSystem;
 import cube.service.filestorage.system.FileDescriptor;
 import cube.service.filestorage.system.FileSystem;
@@ -93,6 +94,11 @@ public class FileStorageService extends AbstractModule {
      * 文件层级管理器。
      */
     private FileHierarchyManager fileHierarchyManager;
+
+    /**
+     * 文件回收站。
+     */
+    private RecycleBin recycleBin;
 
     /**
      * 多线程执行器。
@@ -174,6 +180,9 @@ public class FileStorageService extends AbstractModule {
 
         // 创建文件层级管理器
         this.fileHierarchyManager = new FileHierarchyManager(this.fileStructStorage, this);
+
+        // 回收站
+        this.recycleBin = new RecycleBin(this.fileStructStorage);
     }
 
     @Override
