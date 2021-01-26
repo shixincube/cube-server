@@ -26,12 +26,25 @@
 
 package cube.service.filestorage.recycle;
 
+import cube.common.entity.FileLabel;
+import cube.service.filestorage.hierarchy.Directory;
+import org.json.JSONObject;
+
 /**
  * 垃圾文件。
  */
 public class FileTrash extends Trash {
 
-    public FileTrash(Long rootId, RecycleChain chain) {
-        super(rootId, chain);
+    public FileTrash(Directory root, RecycleChain chain, FileLabel fileLabel) {
+        super(fileLabel.getId(), root, chain);
+    }
+
+    public FileTrash(Directory root, JSONObject json) {
+        super(json.getJSONObject("file").getLong("id"), root, json);
+    }
+
+    @Override
+    public Directory getParent() {
+        return null;
     }
 }

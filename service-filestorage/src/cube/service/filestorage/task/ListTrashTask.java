@@ -32,7 +32,6 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
 import cube.common.Packet;
-import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
 import cube.service.auth.AuthService;
@@ -40,14 +39,18 @@ import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchy;
+import cube.service.filestorage.recycle.Trash;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
-/**
- * 向指定目录插入文件。
- */
-public class InsertFileTask extends ServiceTask {
+import java.util.List;
 
-    public InsertFileTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
+/**
+ * 罗列回收站内的废弃数据。
+ */
+public class ListTrashTask extends ServiceTask {
+
+    public ListTrashTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
 
@@ -70,24 +73,24 @@ public class InsertFileTask extends ServiceTask {
         // 域
         String domain = authToken.getDomain();
 
-        // 检查数据
-        if (!packet.data.has("root") || !packet.data.has("dirId")
-            || !packet.data.has("fileCode")) {
+        // 根目录 ID 和目录 ID
+        if (!packet.data.has("root") || !packet.data.has("begin") || !packet.data.has("end")) {
             // 发生错误
             this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
+                    , this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
             return;
         }
+
+        Long rootId = packet.data.getLong("root");
+        int beginIndex = packet.data.getInt("begin");
+        int endIndex = packet.data.getInt("end");
 
         // 获取服务
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
 
-        Long rootId = packet.data.getLong("root");
-        Long dirId = packet.data.getLong("dirId");
-        String fileCode = packet.data.getString("fileCode");
-
-        // 获取指定 ID 对应的文件层级描述
+        // 获取指定 ROOT ID 对应的文件层级描述
         FileHierarchy fileHierarchy = service.getFileHierarchy(domain, rootId);
+
         if (null == fileHierarchy) {
             // 发生错误
             this.cellet.speak(this.talkContext
@@ -95,40 +98,22 @@ public class InsertFileTask extends ServiceTask {
             return;
         }
 
-        // 获取指定目录
-        Directory directory = fileHierarchy.getDirectory(dirId);
-        if (null == directory) {
-            // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
-            return;
+        // 获取废弃的目录和文件
+        List<Trash> list = service.getRecycleBin().get(fileHierarchy.getRoot(), beginIndex, endIndex);
+
+        JSONObject result = new JSONObject();
+        result.put("root", rootId.longValue());
+        result.put("begin", beginIndex);
+        result.put("end", endIndex);
+        result.put("size", list.size());
+
+        JSONArray array = new JSONArray();
+        for (Trash trash : list) {
+            array.put(trash.toJSON());
         }
-
-        // 获取指定文件
-        FileLabel fileLabel = service.getFile(domain, fileCode);
-        if (null == fileLabel) {
-            // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.FileLabelError.code, packet.data));
-            return;
-        }
-
-        // 添加文件标签
-        if (!directory.addFile(fileLabel)) {
-            // 文件重复
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.DuplicationOfName.code, packet.data));
-            return;
-        }
-
-        // 更新文件有效期，更新为永久有效
-        service.updateFileExpiryTime(fileLabel, 0L);
-
-        JSONObject response = new JSONObject();
-        response.put("directory", directory.toCompactJSON());
-        response.put("file", fileLabel.toJSON());
+        result.put("list", array);
 
         this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, response));
+                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
     }
 }

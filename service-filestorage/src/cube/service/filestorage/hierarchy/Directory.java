@@ -60,20 +60,22 @@ public class Directory implements JSONable {
         this.fileHierarchy = fileHierarchy;
         this.node = node;
 
-        JSONObject context = node.getContext();
-        if (!context.has(FileHierarchy.KEY_CREATION)) {
-            long now = System.currentTimeMillis();
-            context.put(FileHierarchy.KEY_CREATION, now);
-            context.put(FileHierarchy.KEY_LAST_MODIFIED, now);
-        }
-        if (!context.has(FileHierarchy.KEY_DIR_NAME)) {
-            context.put(FileHierarchy.KEY_DIR_NAME, "root");
-        }
-        if (!context.has(FileHierarchy.KEY_HIDDEN)) {
-            context.put(FileHierarchy.KEY_HIDDEN, false);
-        }
-        if (!context.has(FileHierarchy.KEY_SIZE)) {
-            context.put(FileHierarchy.KEY_SIZE, 0L);
+        if (null != node) {
+            JSONObject context = node.getContext();
+            if (!context.has(FileHierarchy.KEY_CREATION)) {
+                long now = System.currentTimeMillis();
+                context.put(FileHierarchy.KEY_CREATION, now);
+                context.put(FileHierarchy.KEY_LAST_MODIFIED, now);
+            }
+            if (!context.has(FileHierarchy.KEY_DIR_NAME)) {
+                context.put(FileHierarchy.KEY_DIR_NAME, "root");
+            }
+            if (!context.has(FileHierarchy.KEY_HIDDEN)) {
+                context.put(FileHierarchy.KEY_HIDDEN, false);
+            }
+            if (!context.has(FileHierarchy.KEY_SIZE)) {
+                context.put(FileHierarchy.KEY_SIZE, 0L);
+            }
         }
     }
 
@@ -340,7 +342,11 @@ public class Directory implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("owner", this.fileHierarchy.getId());
+
+        if (null != this.fileHierarchy) {
+            json.put("owner", this.fileHierarchy.getId());
+        }
+
         json.put("id", this.getId().longValue());
         json.put("domain", this.getDomain().getName());
         json.put("name", this.getName());
@@ -350,7 +356,7 @@ public class Directory implements JSONable {
         json.put("hidden", this.isHidden());
 
         if (this.hasParent()) {
-            json.put("parent", this.getParent().getId());
+            json.put("parentId", this.getParent().getId().longValue());
         }
 
         // 子目录数量
@@ -371,7 +377,11 @@ public class Directory implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
-        json.put("owner", this.fileHierarchy.getId());
+
+        if (null != this.fileHierarchy) {
+            json.put("owner", this.fileHierarchy.getId());
+        }
+
         json.put("id", this.getId().longValue());
         json.put("domain", this.getDomain().getName());
         json.put("name", this.getName());
@@ -381,7 +391,7 @@ public class Directory implements JSONable {
         json.put("hidden", this.isHidden());
 
         if (this.hasParent()) {
-            json.put("parent", this.getParent().getId());
+            json.put("parentId", this.getParent().getId().longValue());
         }
 
         // 子目录数量

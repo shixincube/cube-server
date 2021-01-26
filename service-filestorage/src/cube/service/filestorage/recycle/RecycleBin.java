@@ -29,8 +29,11 @@ package cube.service.filestorage.recycle;
 import cube.service.filestorage.FileStructStorage;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchyTool;
+import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * 文件回收站。
@@ -43,6 +46,26 @@ public class RecycleBin {
         this.structStorage = structStorage;
     }
 
+    public List<Trash> get(Directory root, int beginIndex, int endIndex) {
+        List<JSONObject> result = this.structStorage.listTrash(root.getDomain().getName(), root.getId(), beginIndex, endIndex);
+        if (null == result) {
+            return null;
+        }
+
+        List<Trash> list = new ArrayList<>(result.size());
+        for (JSONObject json : result) {
+            if (json.has("directory")) {
+                DirectoryTrash trash = new DirectoryTrash(root, json);
+                list.add(trash);
+            }
+            else {
+                FileTrash trash = new FileTrash(root, json);
+                list.add(trash);
+            }
+        }
+        return list;
+    }
+
     public void put(Directory root, Directory directory) {
         // 遍历目录结构
         LinkedList<Directory> list = new LinkedList<>();
@@ -50,9 +73,9 @@ public class RecycleBin {
 
         // 创建数据实体
         RecycleChain chain = new RecycleChain(list);
-        DirectoryTrash directoryTrash = new DirectoryTrash(root.getId(), chain, directory);
+        DirectoryTrash directoryTrash = new DirectoryTrash(root, chain, directory);
 
-
+        this.structStorage.writeDirectoryTrash(directoryTrash);
     }
 
     public void recover(Directory root, Long directoryId) {

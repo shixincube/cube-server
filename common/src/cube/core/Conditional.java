@@ -97,6 +97,17 @@ public class Conditional {
     }
 
     /**
+     * 创建 LIMIT 约束。
+     *
+     * @param pos 指定开始位置。
+     * @param count 指定数量。
+     * @return 返回条件句式实例。
+     */
+    public static Conditional createLimit(int pos, int count) {
+        return new Conditional("LIMIT " + pos + "," + count);
+    }
+
+    /**
      *  创建等于运算。
      *
      * @param fieldName 字段名。

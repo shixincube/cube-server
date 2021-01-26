@@ -127,6 +127,11 @@ public class FileHierarchyManager implements FileHierarchyListener {
     }
 
     @Override
+    public void onDirectoryRemove(FileHierarchy fileHierarchy, Directory directory) {
+        this.fileStorageService.getRecycleBin().put(fileHierarchy.getRoot(), directory);
+    }
+
+    @Override
     public void onFileLabelAdd(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel) {
         // 更新容量
         long fileSize = fileLabel.getFileSize();

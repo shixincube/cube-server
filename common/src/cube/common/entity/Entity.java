@@ -168,6 +168,14 @@ public abstract class Entity implements JSONable {
         this.timestamp = System.currentTimeMillis();
     }
 
+    /**
+     * 设置时间戳。
+     * @param timestamp
+     */
+    protected void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (null != object && object instanceof Entity) {

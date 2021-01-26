@@ -74,6 +74,11 @@ public enum FileStorageAction {
     DeleteDir("deleteDir"),
 
     /**
+     * 罗列回收站里的垃圾数据。
+     */
+    ListTrash("listTrash"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

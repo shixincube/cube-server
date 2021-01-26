@@ -207,6 +207,15 @@ public class FileStorageService extends AbstractModule {
     }
 
     /**
+     * 获取回收站实例。
+     *
+     * @return 返回回收站实例。
+     */
+    public RecycleBin getRecycleBin() {
+        return this.recycleBin;
+    }
+
+    /**
      * 向文件系统写入文件数据。
      *
      * @param fileCode
@@ -272,6 +281,30 @@ public class FileStorageService extends AbstractModule {
         this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
 
         return fileLabel;
+    }
+
+    /**
+     * 更新指定文件的有效期。
+     *
+     * @param fileLabel
+     * @param expiryTime
+     * @return
+     */
+    public boolean updateFileExpiryTime(FileLabel fileLabel, long expiryTime) {
+        if (expiryTime > 0 && expiryTime < fileLabel.getCompletedTime()) {
+            return false;
+        }
+
+        // 修改超期时间
+        fileLabel.setExpiryTime(expiryTime);
+
+        // 更新存储器
+        this.fileStructStorage.updateFileLabel(fileLabel);
+
+        // 更新集群缓存
+        this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
+
+        return true;
     }
 
     /**

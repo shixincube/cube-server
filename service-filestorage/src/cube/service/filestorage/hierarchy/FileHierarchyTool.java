@@ -59,6 +59,11 @@ public final class FileHierarchyTool {
      * @param json
      */
     public static void packDirectory(Directory directory, JSONObject json) {
+        Directory parent = directory.getParent();
+        if (null != parent) {
+            json.put("parent", parent.toCompactJSON());
+        }
+
         JSONArray files = new JSONArray();
         int numFiles = directory.numFiles();
         List<FileLabel> fileList = directory.listFiles(0, numFiles);
@@ -75,5 +80,35 @@ public final class FileHierarchyTool {
             dirs.put(dirJson);
         }
         json.put("dirs", dirs);
+    }
+
+    /**
+     * 解包数据被打包的目录数据结构。
+     *
+     * @param json
+     * @return
+     */
+    public static MetaDirectory unpackDirectory(JSONObject json) {
+        MetaDirectory directory = new MetaDirectory(json);
+
+        if (json.has("parent")) {
+            directory.setParent(new MetaDirectory(json.getJSONObject("parent")));
+        }
+
+        JSONArray files = json.getJSONArray("files");
+        for (int i = 0; i < files.length(); ++i) {
+            JSONObject fileJson = files.getJSONObject(i);
+            FileLabel fileLabel = new FileLabel(fileJson);
+            directory.addFile(fileLabel);
+        }
+
+        JSONArray dirs = json.getJSONArray("dirs");
+        for (int i = 0; i < dirs.length(); ++i) {
+            JSONObject dirJson = dirs.getJSONObject(i);
+            MetaDirectory dir = FileHierarchyTool.unpackDirectory(dirJson);
+            directory.addChild(dir);
+        }
+
+        return directory;
     }
 }

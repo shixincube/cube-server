@@ -34,6 +34,14 @@ import cube.common.entity.FileLabel;
 public interface FileHierarchyListener {
 
     /**
+     * 当目录删除时调用该函数。
+     *
+     * @param fileHierarchy
+     * @param directory
+     */
+    public void onDirectoryRemove(FileHierarchy fileHierarchy, Directory directory);
+
+    /**
      * 当添加文件标签时调用该函数。
      *
      * @param fileHierarchy 文件层级。

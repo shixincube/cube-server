@@ -28,10 +28,12 @@ package cube.service.filestorage.recycle;
 
 import cube.common.JSONable;
 import cube.service.filestorage.hierarchy.Directory;
+import cube.service.filestorage.hierarchy.MetaDirectory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * 回收链。
@@ -44,8 +46,15 @@ public final class RecycleChain implements JSONable {
         this.nodes = new LinkedList<>(nodes);
     }
 
-    public void append(Directory node) {
-        this.nodes.add(node);
+    public RecycleChain(JSONObject json) {
+        this.nodes = new LinkedList<>();
+
+        JSONArray array = json.getJSONArray("nodes");
+        for (int i = 0; i < array.length(); ++i) {
+            JSONObject dirJson = array.getJSONObject(i);
+            MetaDirectory dir = new MetaDirectory(dirJson);
+            this.nodes.add(dir);
+        }
     }
 
     public Directory getFirst() {
@@ -56,11 +65,15 @@ public final class RecycleChain implements JSONable {
         return this.nodes.getLast();
     }
 
+    public List<Directory> getNodes() {
+        return this.nodes;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("first", this.getFirst().getId());
-        json.put("last", this.getLast().getId());
+        json.put("first", this.getFirst().getId().longValue());
+        json.put("last", this.getLast().getId().longValue());
 
         JSONArray array = new JSONArray();
         for (Directory dir : this.nodes) {

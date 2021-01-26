@@ -34,6 +34,7 @@ import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
+import cube.service.filestorage.recycle.DirectoryTrash;
 import cube.service.filestorage.system.FileDescriptor;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
@@ -43,6 +44,7 @@ import cube.util.SQLUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,9 +107,15 @@ public class FileStructStorage implements Storagable {
             //new StorageField("reserved", LiteralBase.STRING)
     };
 
+    /**
+     * 回收站表字段。
+     */
     private final StorageField[] recyclebinFields = new StorageField[] {
-            new StorageField("node_id", LiteralBase.LONG),
-            new StorageField("entry", LiteralBase.INT),
+            new StorageField("id", LiteralBase.LONG),
+            new StorageField("root_id", LiteralBase.LONG),
+            new StorageField("dir_id", LiteralBase.LONG),
+            new StorageField("file_code", LiteralBase.STRING),
+            new StorageField("timestamp", LiteralBase.LONG),
             new StorageField("data", LiteralBase.STRING)
             //new StorageField("reserved", LiteralBase.STRING)
     };
@@ -131,12 +139,18 @@ public class FileStructStorage implements Storagable {
      */
     private Map<String, String> hierarchyTableNameMap;
 
+    /**
+     * 回收站表。
+     */
+    private Map<String, String> recyclebinTableNameMap;
+
     public FileStructStorage(ExecutorService executorService, StorageType type, JSONObject config) {
         this.executor = executorService;
         this.storage = StorageFactory.getInstance().createStorage(type, "FileLabelStorage", config);
         this.labelTableNameMap = new HashMap<>();
         this.descriptorTableNameMap = new HashMap<>();
         this.hierarchyTableNameMap = new HashMap<>();
+        this.recyclebinTableNameMap = new HashMap<>();
     }
 
     @Override
@@ -160,6 +174,9 @@ public class FileStructStorage implements Storagable {
 
             // 检查层级表
             this.checkHierarchyTable(domain);
+
+            // 检查回收站表
+            this.checkRecyclebinTable(domain);
         }
     }
 
@@ -180,6 +197,27 @@ public class FileStructStorage implements Storagable {
         });
 
         return (!result.isEmpty());
+    }
+
+    /**
+     * 更新文件标签。
+     *
+     * @param fileLabel
+     */
+    public void updateFileLabel(final FileLabel fileLabel) {
+        String labelTable = this.labelTableNameMap.get(fileLabel.getDomain().getName());
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                storage.executeUpdate(labelTable, new StorageField[] {
+                        new StorageField("file_name", LiteralBase.LONG, fileLabel.getFileName()),
+                        new StorageField("expiry_time", LiteralBase.LONG, fileLabel.getExpiryTime())
+                }, new Conditional[] {
+                        Conditional.createEqualTo(new StorageField("file_code", LiteralBase.STRING, fileLabel.getFileCode()))
+                });
+            }
+        });
     }
 
     /**
@@ -350,12 +388,8 @@ public class FileStructStorage implements Storagable {
         });
 
         if (!result.isEmpty()) {
-            try {
-                JSONObject data = new JSONObject(result.get(0)[1].getString());
-                return data;
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            JSONObject data = new JSONObject(result.get(0)[1].getString());
+            return data;
         }
 
         return null;
@@ -376,6 +410,95 @@ public class FileStructStorage implements Storagable {
         this.storage.executeDelete(table, new Conditional[] {
                 Conditional.createEqualTo(new StorageField("node_id", LiteralBase.LONG, nodeId))
         });
+    }
+
+    /**
+     * 列出指定索引范围内的回收站数据。
+     *
+     * @param domain
+     * @param rootId
+     * @param beginIndex
+     * @param endIndex
+     * @return
+     */
+    public List<JSONObject> listTrash(String domain, Long rootId, int beginIndex, int endIndex) {
+        if (endIndex <= beginIndex) {
+            return null;
+        }
+
+        String table = this.recyclebinTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+                new StorageField("data", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("root_id", LiteralBase.LONG, rootId)),
+                Conditional.createLimit(beginIndex, (endIndex - beginIndex))
+        });
+
+        List<JSONObject> jsonList = new ArrayList<>();
+        for (StorageField[] data : result) {
+            jsonList.add(new JSONObject(data[0].getString()));
+        }
+        return jsonList;
+    }
+
+    /**
+     * 将废弃目录写入回收站。
+     *
+     * @param trash
+     */
+    public void writeDirectoryTrash(DirectoryTrash trash) {
+        String table = this.recyclebinTableNameMap.get(trash.getDomainName());
+        if (null == table) {
+            return;
+        }
+
+        StorageField[] fields = new StorageField[] {
+                new StorageField("id", LiteralBase.LONG, trash.getId()),
+                new StorageField("root_id", LiteralBase.LONG, trash.getRoot().getId()),
+                new StorageField("dir_id", LiteralBase.LONG, trash.getParent().getId()),
+                new StorageField("timestamp", LiteralBase.LONG, trash.getTimestamp()),
+                new StorageField("data", LiteralBase.STRING, trash.toJSON().toString())
+        };
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                storage.executeInsert(table, fields);
+            }
+        });
+    }
+
+    /**
+     * 读取在回收站的废弃目录的数据。
+     *
+     * @param domain
+     * @param rootId
+     * @param id
+     * @return
+     */
+    public JSONObject readTrash(String domain, Long rootId, Long id) {
+        String table = this.recyclebinTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+                new StorageField("data", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, id)),
+                Conditional.createAnd(),
+                Conditional.createEqualTo(new StorageField("root_id", LiteralBase.LONG, rootId))
+        });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        return new JSONObject(result.get(0)[0].getString());
     }
 
     private void checkLabelTable(String domain) {
@@ -492,6 +615,44 @@ public class FileStructStorage implements Storagable {
                     }),
                     new StorageField("node_id", LiteralBase.LONG, new Constraint[] {
                             Constraint.UNIQUE
+                    }),
+                    new StorageField("data", LiteralBase.STRING, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("reserved", LiteralBase.STRING, new Constraint[] {
+                            Constraint.DEFAULT_NULL
+                    })
+            };
+
+            if (this.storage.executeCreate(table, fields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkRecyclebinTable(String domain) {
+        String table = this.recyclebinTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.recyclebinTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            StorageField[] fields = new StorageField[]{
+                    new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                            Constraint.PRIMARY_KEY
+                    }),
+                    new StorageField("root_id", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("dir_id", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
+                            Constraint.DEFAULT_NULL
+                    }),
+                    new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
                     }),
                     new StorageField("data", LiteralBase.STRING, new Constraint[] {
                             Constraint.NOT_NULL

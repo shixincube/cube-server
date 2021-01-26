@@ -37,9 +37,23 @@ public class DirectoryTrash extends Trash {
 
     private Directory directory;
 
-    public DirectoryTrash(Long rootId, RecycleChain chain, Directory directory) {
-        super(rootId, chain);
+    public DirectoryTrash(Directory root, RecycleChain chain, Directory directory) {
+        super(directory.getId(), root, chain);
         this.directory = directory;
+    }
+
+    public DirectoryTrash(Directory root, JSONObject json) {
+        super(json.getJSONObject("directory").getLong("id"), root, json);
+        this.directory = FileHierarchyTool.unpackDirectory(json.getJSONObject("directory"));
+    }
+
+    @Override
+    public Directory getParent() {
+        return this.directory.getParent();
+    }
+
+    public Directory getDirectory() {
+        return this.directory;
     }
 
     @Override

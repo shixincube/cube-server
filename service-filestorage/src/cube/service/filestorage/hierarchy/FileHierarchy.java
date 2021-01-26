@@ -302,7 +302,11 @@ public class FileHierarchy {
             // 从内存里移除
             this.directories.remove(subdirectory.getId());
 
+            // 记录被删除的目录
             result.add(subdirectory);
+
+            // 回调
+            this.listener.onDirectoryRemove(this, subdirectory);
         }
 
         if (result.isEmpty()) {
@@ -361,6 +365,9 @@ public class FileHierarchy {
         HierarchyNodes.delete(this.cache, subdirectory.node);
 
         this.directories.remove(subdirectory.getId());
+
+        // 回调
+        this.listener.onDirectoryRemove(this, subdirectory);
 
         return true;
     }
@@ -529,9 +536,7 @@ public class FileHierarchy {
         // 更新时间戳
         this.timestamp = System.currentTimeMillis();
 
-        if (null != this.listener) {
-            this.listener.onFileLabelAdd(this, directory, fileLabel);
-        }
+        this.listener.onFileLabelAdd(this, directory, fileLabel);
 
         // 更新大小
         long size = directory.node.getContext().getLong(KEY_SIZE);
@@ -561,9 +566,7 @@ public class FileHierarchy {
         // 更新时间戳
         this.timestamp = System.currentTimeMillis();
 
-        if (null != this.listener) {
-            this.listener.onFileLabelRemove(this, directory, fileLabel);
-        }
+        this.listener.onFileLabelRemove(this, directory, fileLabel);
 
         // 更新大小
         long size = directory.node.getContext().getLong(KEY_SIZE);

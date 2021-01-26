@@ -27,40 +27,57 @@
 package cube.service.filestorage.recycle;
 
 import cube.common.entity.Entity;
+import cube.service.filestorage.hierarchy.Directory;
 import org.json.JSONObject;
 
 /**
  * 垃圾记录。
  */
-public class Trash extends Entity {
+public abstract class Trash extends Entity {
 
-    private Long rootId;
+    private Directory root;
 
     private RecycleChain chain;
 
-    private long timestamp;
+    public Trash(Long id, Directory root, RecycleChain chain) {
+        super(id);
 
-    public Trash(Long rootId, RecycleChain chain) {
-        super();
-
-        this.rootId = rootId;
+        this.root = root;
         this.chain = chain;
-        this.timestamp = System.currentTimeMillis();
     }
 
-    public Long getRootId() {
-        return this.rootId;
+    public Trash(Long id, Directory root, JSONObject json) {
+        super(id);
+
+        this.root = root;
+        this.setTimestamp(json.getLong("timestamp"));
+
+        JSONObject chainJson = json.getJSONObject("chain");
+        this.chain = new RecycleChain(chainJson);
+    }
+
+    public String getDomainName() {
+        return this.root.getDomain().getName();
+    }
+
+    public Directory getRoot() {
+        return this.root;
     }
 
     public RecycleChain getChain() {
         return this.chain;
     }
 
+    public abstract Directory getParent();
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("rootId", this.rootId.longValue());
+        json.put("id", this.getId().longValue());
+        json.put("rootId", this.root.getId().longValue());
+        json.put("parentId", this.getParent().getId().longValue());
         json.put("chain", this.chain.toJSON());
+        json.put("timestamp", this.getTimestamp());
         return json;
     }
 
