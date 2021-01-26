@@ -75,6 +75,7 @@ public class FileStructStorage implements Storagable {
             new StorageField("owner_id", LiteralBase.LONG),
             new StorageField("file_name", LiteralBase.STRING),
             new StorageField("file_size", LiteralBase.LONG),
+            new StorageField("last_modified", LiteralBase.LONG),
             new StorageField("completed_time", LiteralBase.LONG),
             new StorageField("expiry_time", LiteralBase.LONG),
             new StorageField("file_type", LiteralBase.STRING),
@@ -212,6 +213,7 @@ public class FileStructStorage implements Storagable {
             public void run() {
                 storage.executeUpdate(labelTable, new StorageField[] {
                         new StorageField("file_name", LiteralBase.LONG, fileLabel.getFileName()),
+                        new StorageField("last_modified", LiteralBase.LONG, fileLabel.getLastModified()),
                         new StorageField("expiry_time", LiteralBase.LONG, fileLabel.getExpiryTime())
                 }, new Conditional[] {
                         Conditional.createEqualTo(new StorageField("file_code", LiteralBase.STRING, fileLabel.getFileCode()))
@@ -239,6 +241,7 @@ public class FileStructStorage implements Storagable {
                         new StorageField("owner_id", LiteralBase.LONG, fileLabel.getOwnerId()),
                         new StorageField("file_name", LiteralBase.STRING, fileLabel.getFileName()),
                         new StorageField("file_size", LiteralBase.LONG, fileLabel.getFileSize()),
+                        new StorageField("last_modified", LiteralBase.LONG, fileLabel.getLastModified()),
                         new StorageField("completed_time", LiteralBase.LONG, fileLabel.getCompletedTime()),
                         new StorageField("expiry_time", LiteralBase.LONG, fileLabel.getExpiryTime()),
                         new StorageField("file_type", LiteralBase.STRING, fileLabel.getFileType().getPreferredExtension()),
@@ -313,7 +316,7 @@ public class FileStructStorage implements Storagable {
 
             FileLabel label = new FileLabel(map.get("id").getLong(), domain, map.get("file_code").getString(),
                     map.get("owner_id").getLong(), map.get("file_name").getString(), map.get("file_size").getLong(),
-                    map.get("completed_time").getLong(), map.get("expiry_time").getLong());
+                    map.get("last_modified").getLong(), map.get("completed_time").getLong(), map.get("expiry_time").getLong());
 
             label.setFileType(FileType.matchExtension(map.get("file_type").getString()));
 
@@ -526,6 +529,9 @@ public class FileStructStorage implements Storagable {
                             Constraint.NOT_NULL
                     }),
                     new StorageField("file_size", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("last_modified", LiteralBase.LONG, new Constraint[] {
                             Constraint.NOT_NULL
                     }),
                     new StorageField("completed_time", LiteralBase.LONG, new Constraint[] {

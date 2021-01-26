@@ -52,6 +52,11 @@ public class FileLabel extends Entity {
     private long fileSize;
 
     /**
+     * 文件最后修改时间。
+     */
+    private long lastModified;
+
+    /**
      * 文件的完成时间。
      */
     private long completedTime;
@@ -104,17 +109,19 @@ public class FileLabel extends Entity {
      * @param ownerId 文件所有人 ID 。
      * @param fileName 文件名。
      * @param fileSize 文件大小。
+     * @param lastModified 文件最后修改时间。
      * @param completedTime 文件进入系统的时间。
      * @param expiryTime 文件的到期时间。
      */
     public FileLabel(String domainName, String fileCode, Long ownerId, String fileName, long fileSize,
-                     long completedTime, long expiryTime) {
+                     long lastModified, long completedTime, long expiryTime) {
         super(Utils.generateSerialNumber(), domainName);
         this.uniqueKey = fileCode;      // Unique Key 设置为文件码
         this.fileCode = fileCode;
         this.ownerId = ownerId;
         this.fileName = fileName;
         this.fileSize = fileSize;
+        this.lastModified = lastModified;
         this.completedTime = completedTime;
         this.expiryTime = expiryTime;
     }
@@ -132,13 +139,14 @@ public class FileLabel extends Entity {
      * @param expiryTime 文件的到期时间。
      */
     public FileLabel(Long id, String domainName, String fileCode, Long ownerId, String fileName,
-                     long fileSize, long completedTime, long expiryTime) {
+                     long fileSize, long lastModified, long completedTime, long expiryTime) {
         super(id, domainName);
         this.uniqueKey = fileCode;      // Unique Key 设置为文件码
         this.fileCode = fileCode;
         this.ownerId = ownerId;
         this.fileName = fileName;
         this.fileSize = fileSize;
+        this.lastModified = lastModified;
         this.completedTime = completedTime;
         this.expiryTime = expiryTime;
     }
@@ -157,6 +165,7 @@ public class FileLabel extends Entity {
         this.ownerId = json.getLong("ownerId");
         this.fileName = json.getString("fileName");
         this.fileSize = json.getLong("fileSize");
+        this.lastModified = json.getLong("lastModified");
         this.completedTime = json.getLong("completed");
         this.expiryTime = json.getLong("expiry");
         this.fileType = FileType.matchExtension(json.getString("fileType"));
@@ -204,6 +213,15 @@ public class FileLabel extends Entity {
      */
     public long getFileSize() {
         return this.fileSize;
+    }
+
+    /**
+     * 获取文件最后一次修改时间。
+     *
+     * @return 返回文件最后一次修改时间。
+     */
+    public long getLastModified() {
+        return this.lastModified;
     }
 
     /**
@@ -365,6 +383,7 @@ public class FileLabel extends Entity {
         json.put("ownerId", this.ownerId);
         json.put("fileName", this.fileName);
         json.put("fileSize", this.fileSize);
+        json.put("lastModified", this.lastModified);
         json.put("completed", this.completedTime);
         json.put("expiry", this.expiryTime);
         json.put("fileType", this.fileType.getPreferredExtension());

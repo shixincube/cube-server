@@ -42,10 +42,23 @@ public class RecycleBin {
 
     private FileStructStorage structStorage;
 
+    /**
+     * 构造函数。
+     *
+     * @param structStorage
+     */
     public RecycleBin(FileStructStorage structStorage) {
         this.structStorage = structStorage;
     }
 
+    /**
+     * 读取指定根的废弃文件。
+     *
+     * @param root
+     * @param beginIndex
+     * @param endIndex
+     * @return
+     */
     public List<Trash> get(Directory root, int beginIndex, int endIndex) {
         List<JSONObject> result = this.structStorage.listTrash(root.getDomain().getName(), root.getId(), beginIndex, endIndex);
         if (null == result) {
@@ -66,6 +79,12 @@ public class RecycleBin {
         return list;
     }
 
+    /**
+     * 将指定目录放入回收站。
+     *
+     * @param root
+     * @param directory
+     */
     public void put(Directory root, Directory directory) {
         // 遍历目录结构
         LinkedList<Directory> list = new LinkedList<>();

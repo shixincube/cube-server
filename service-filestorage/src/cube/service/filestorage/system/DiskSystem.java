@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -197,7 +197,9 @@ public class DiskSystem implements FileSystem {
     public void deleteFile(String fileName) {
         Path file = Paths.get(this.managingPath.toString(), fileName);
         try {
-            Files.delete(file);
+            if (Files.exists(file)) {
+                Files.delete(file);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -293,20 +293,20 @@ public class FileHierarchy {
                 continue;
             }
 
+            // 回调
+            this.listener.onDirectoryRemove(this, subdirectory);
+
             // 删除
             parent.removeChild(subdirectory.node);
-
-            // 更新缓存
-            HierarchyNodes.delete(this.cache, subdirectory.node);
 
             // 从内存里移除
             this.directories.remove(subdirectory.getId());
 
+            // 更新缓存
+            HierarchyNodes.delete(this.cache, subdirectory.node);
+
             // 记录被删除的目录
             result.add(subdirectory);
-
-            // 回调
-            this.listener.onDirectoryRemove(this, subdirectory);
         }
 
         if (result.isEmpty()) {

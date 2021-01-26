@@ -115,6 +115,8 @@ public class FileHandler extends CrossDomainHandler {
         String domain = null;
         // 文件大小
         long fileSize = 0;
+        // 文件修改时间
+        long lastModified = 0;
         // 文件块所处的索引位置
         long cursor = 0;
         // 文件块大小
@@ -130,6 +132,7 @@ public class FileHandler extends CrossDomainHandler {
             contactId = Long.parseLong(formData.getValue("cid"));
             domain = formData.getValue("domain");
             fileSize = Long.parseLong(formData.getValue("fileSize"));
+            lastModified = Long.parseLong(formData.getValue("lastModified"));
             cursor = Long.parseLong(formData.getValue("cursor"));
             size = Integer.parseInt(formData.getValue("size"));
             fileName = formData.getFileName();
@@ -142,7 +145,7 @@ public class FileHandler extends CrossDomainHandler {
 
         buf = null;
 
-        FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, cursor, size, data);
+        FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, lastModified, cursor, size, data);
         String fileCode = this.fileChunkStorage.append(chunk);
 
         JSONObject responseData = new JSONObject();

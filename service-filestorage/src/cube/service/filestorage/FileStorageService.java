@@ -308,12 +308,12 @@ public class FileStorageService extends AbstractModule {
     }
 
     /**
-     * 文件是否存在在本地系统。
+     * 文件是否存在文件系统里。
      *
      * @param fileCode
      * @return
      */
-    public boolean existsLocalFile(String fileCode) {
+    public boolean existsFileData(String fileCode) {
         if (this.fileSystem.isWriting(fileCode)) {
             return false;
         }
@@ -344,6 +344,14 @@ public class FileStorageService extends AbstractModule {
      * @return
      */
     public FileLabel getFile(String domainName, String fileCode) {
+        if (this.fileSystem.isWriting(fileCode)) {
+            try {
+                Thread.sleep(500L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         CacheValue value = this.fileLabelCache.get(new CacheKey(fileCode));
         if (null == value) {
             FileLabel fileLabel = this.fileStructStorage.readFileLabel(domainName, fileCode);

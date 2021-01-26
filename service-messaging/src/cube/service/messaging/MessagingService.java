@@ -597,7 +597,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         String domainName = message.getDomain().getName();
 
         int count = 12;
-        while (!fileStorageService.existsLocalFile(fileAttachment.getFileCode())) {
+        while (!fileStorageService.existsFileData(fileAttachment.getFileCode())) {
             try {
                 Thread.sleep(500L);
             } catch (InterruptedException e) {

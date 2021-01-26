@@ -224,7 +224,8 @@ public class FileProcessorService extends AbstractModule {
 
         // 放置文件标签
         FileLabel fileLabel = new FileLabel(domainName, thumbFileCode, srcFileLabel.getOwnerId(),
-                thumbFileName, thumbFile.length(), System.currentTimeMillis(), srcFileLabel.getExpiryTime());
+                thumbFileName, thumbFile.length(), thumbFile.lastModified(),
+                System.currentTimeMillis(), srcFileLabel.getExpiryTime());
         fileLabel.setFileType(FileType.JPEG);
         fileLabel = fileStorage.putFile(fileLabel);
 

@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -63,6 +63,11 @@ public class FileChunk implements Comparable<FileChunk> {
     protected long fileSize;
 
     /**
+     * 文件最后修改时间。
+     */
+    protected long lastModified;
+
+    /**
      * 当前数据库对应的文件的游标。
      */
     protected long cursor;
@@ -100,12 +105,13 @@ public class FileChunk implements Comparable<FileChunk> {
      * @param data
      */
     public FileChunk(Long contactId, String domain, String token, String fileName,
-                     long fileSize, long cursor, int size, byte[] data) {
+                     long fileSize, long lastModified, long cursor, int size, byte[] data) {
         this.contactId = contactId;
         this.domain = domain;
         this.token = token;
         this.fileName = fileName;
         this.fileSize = fileSize;
+        this.lastModified = lastModified;
         this.cursor = cursor;
         this.size = size;
         this.data = data;
