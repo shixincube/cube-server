@@ -581,12 +581,12 @@ public class FileHierarchy {
     }
 
     protected List<FileLabel> listFileLabels(Directory directory, int beginIndex, int endIndex) {
+        List<FileLabel> result = new ArrayList<>();
+
         List<String> ukeys = directory.node.getRelatedKeys(beginIndex, endIndex);
         if (null == ukeys) {
-            return null;
+            return result;
         }
-
-        List<FileLabel> result = new ArrayList<>();
 
         for (String key : ukeys) {
             FileLabel fileLabel = this.listener.onQueryFileLabel(this, directory, key);
