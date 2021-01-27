@@ -97,6 +97,14 @@ public class RecycleBin {
         this.structStorage.writeDirectoryTrash(directoryTrash);
     }
 
+    public void remove(Directory root, Long directoryId) {
+
+    }
+
+    public void cleanup(Directory root) {
+
+    }
+
     public void recover(Directory root, Long directoryId) {
 
     }

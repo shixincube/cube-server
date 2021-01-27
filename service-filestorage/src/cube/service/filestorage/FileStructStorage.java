@@ -212,7 +212,7 @@ public class FileStructStorage implements Storagable {
             @Override
             public void run() {
                 storage.executeUpdate(labelTable, new StorageField[] {
-                        new StorageField("file_name", LiteralBase.LONG, fileLabel.getFileName()),
+                        new StorageField("file_name", LiteralBase.STRING, fileLabel.getFileName()),
                         new StorageField("last_modified", LiteralBase.LONG, fileLabel.getLastModified()),
                         new StorageField("expiry_time", LiteralBase.LONG, fileLabel.getExpiryTime())
                 }, new Conditional[] {
@@ -502,6 +502,22 @@ public class FileStructStorage implements Storagable {
         }
 
         return new JSONObject(result.get(0)[0].getString());
+    }
+
+    public void cleanupTrash(String domain, Long rootId) {
+        String table = this.recyclebinTableNameMap.get(domain);
+        if (null == table) {
+            return;
+        }
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                storage.executeDelete(table, new Conditional[] {
+                        Conditional.createEqualTo("root_id", LiteralBase.LONG, rootId)
+                });
+            }
+        });
     }
 
     private void checkLabelTable(String domain) {
