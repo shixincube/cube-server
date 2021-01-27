@@ -37,9 +37,15 @@ public abstract class AbstractModule implements Module {
     private Kernel kernel;
 
     /**
+     * 是否已启动。
+     */
+    protected volatile boolean started;
+
+    /**
      * 构造函数。
      */
     public AbstractModule() {
+        this.started = false;
     }
 
     /**
@@ -58,6 +64,14 @@ public abstract class AbstractModule implements Module {
      */
     public Kernel getKernel() {
         return this.kernel;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isStarted() {
+        return this.started;
     }
 
     /**

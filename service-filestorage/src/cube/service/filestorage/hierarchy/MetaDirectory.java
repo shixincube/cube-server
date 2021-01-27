@@ -145,7 +145,7 @@ public class MetaDirectory extends Directory {
         }
 
         if (begin >= end) {
-            return null;
+            return new ArrayList<>();
         }
         return this.files.subList(begin, end);
     }

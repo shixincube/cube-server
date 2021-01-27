@@ -32,24 +32,21 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
 import cube.common.Packet;
+import cube.common.entity.Contact;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
 import cube.service.auth.AuthService;
+import cube.service.contact.ContactManager;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 import cube.service.filestorage.hierarchy.FileHierarchy;
-import cube.service.filestorage.recycle.Trash;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.util.List;
 
 /**
- * 罗列回收站内的废弃数据。
+ * 清空回收站内的垃圾文件。
  */
-public class ListTrashTask extends ServiceTask {
+public class EmptyTrashTask extends ServiceTask {
 
-    public ListTrashTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
+    public EmptyTrashTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
     }
 
@@ -73,7 +70,7 @@ public class ListTrashTask extends ServiceTask {
         String domain = authToken.getDomain();
 
         // 根目录 ID 和目录 ID
-        if (!packet.data.has("root") || !packet.data.has("begin") || !packet.data.has("end")) {
+        if (!packet.data.has("root")) {
             // 发生错误
             this.cellet.speak(this.talkContext
                     , this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
@@ -81,15 +78,22 @@ public class ListTrashTask extends ServiceTask {
         }
 
         Long rootId = packet.data.getLong("root");
-        int beginIndex = packet.data.getInt("begin");
-        int endIndex = packet.data.getInt("end");
+
+        // 获取指定的联系人
+        Contact contact = ContactManager.getInstance().getContact(tokenCode);
+        // 校验根目录和联系人
+        if (contact.getId().longValue() != rootId.longValue()) {
+            // 发生错误
+            this.cellet.speak(this.talkContext
+                    , this.makeResponse(action, packet, FileStorageStateCode.Reject.code, packet.data));
+            return;
+        }
 
         // 获取服务
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
 
         // 获取指定 ROOT ID 对应的文件层级描述
         FileHierarchy fileHierarchy = service.getFileHierarchy(domain, rootId);
-
         if (null == fileHierarchy) {
             // 发生错误
             this.cellet.speak(this.talkContext
@@ -97,22 +101,10 @@ public class ListTrashTask extends ServiceTask {
             return;
         }
 
-        // 获取废弃的目录和文件
-        List<Trash> list = service.getRecycleBin().get(fileHierarchy.getRoot(), beginIndex, endIndex);
-
-        JSONObject result = new JSONObject();
-        result.put("root", rootId.longValue());
-        result.put("begin", beginIndex);
-        result.put("end", endIndex);
-        result.put("size", list.size());
-
-        JSONArray array = new JSONArray();
-        for (Trash trash : list) {
-            array.put(trash.toJSON());
-        }
-        result.put("list", array);
+        // 清空回收站内的垃圾文件
+        service.getRecycleBin().empty(fileHierarchy.getRoot());
 
         this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
+                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, fileHierarchy.getRoot().toCompactJSON()));
     }
 }

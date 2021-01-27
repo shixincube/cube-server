@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,6 +50,13 @@ public class ComebackTask extends ServiceTask {
     public void run() {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
+
+        // 没有启动服务
+        if (!ContactManager.getInstance().isStarted()) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.Failure.code, packet.data));
+            return;
+        }
 
         // 创建联系人对象
         Contact contact = new Contact(packet.data, this.talkContext);

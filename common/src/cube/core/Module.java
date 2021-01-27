@@ -44,6 +44,13 @@ public interface Module {
     public void stop();
 
     /**
+     * 是否已启动。
+     *
+     * @return 返回是否已启动模块。
+     */
+    public boolean isStarted();
+
+    /**
      * 获取模块的插件系统。
      *
      * @return 返回模块的插件系统实例。

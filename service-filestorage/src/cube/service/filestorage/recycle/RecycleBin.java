@@ -101,8 +101,13 @@ public class RecycleBin {
 
     }
 
-    public void cleanup(Directory root) {
-
+    /**
+     * 清空回收站。
+     *
+     * @param root
+     */
+    public void empty(Directory root) {
+        this.structStorage.emptyTrash(root.getDomain().getName(), root.getId());
     }
 
     public void recover(Directory root, Long directoryId) {

@@ -504,7 +504,13 @@ public class FileStructStorage implements Storagable {
         return new JSONObject(result.get(0)[0].getString());
     }
 
-    public void cleanupTrash(String domain, Long rootId) {
+    /**
+     * 清空垃圾文件。
+     *
+     * @param domain
+     * @param rootId
+     */
+    public void emptyTrash(String domain, Long rootId) {
         String table = this.recyclebinTableNameMap.get(domain);
         if (null == table) {
             return;

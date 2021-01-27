@@ -150,6 +150,7 @@ public final class Kernel {
         while (miter.hasNext()) {
             AbstractModule module = miter.next();
             module.start();
+            module.started = true;
         }
 
         this.pluginManager.start();
