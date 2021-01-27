@@ -36,6 +36,7 @@ import cube.service.filestorage.FileStructStorage;
 import cube.util.FileUtils;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -127,8 +128,10 @@ public class FileHierarchyManager implements FileHierarchyListener {
     }
 
     @Override
-    public void onDirectoryRemove(FileHierarchy fileHierarchy, Directory directory) {
-        this.fileStorageService.getRecycleBin().put(fileHierarchy.getRoot(), directory);
+    public void onDirectoryRemove(FileHierarchy fileHierarchy, List<Directory> directories) {
+        for (Directory directory : directories) {
+            this.fileStorageService.getRecycleBin().put(fileHierarchy.getRoot(), directory);
+        }
     }
 
     @Override
@@ -145,9 +148,12 @@ public class FileHierarchyManager implements FileHierarchyListener {
     }
 
     @Override
-    public void onFileLabelRemove(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel) {
+    public void onFileLabelRemove(FileHierarchy fileHierarchy, Directory directory, List<FileLabel> fileLabels) {
         // 更新容量
-        long fileSize = fileLabel.getFileSize();
+        long fileSize = 0;
+        for (FileLabel fileLabel : fileLabels) {
+            fileSize += fileLabel.getFileSize();
+        }
 
         Directory parent = directory.getParent();
         while (null != parent) {

@@ -27,7 +27,6 @@
 package cube.service.filestorage.system;
 
 import cube.common.JSONable;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -65,14 +64,10 @@ public class FileDescriptor implements JSONable {
      * @param json
      */
     public FileDescriptor(JSONObject json) {
-        try {
-            this.fileSystem = json.getString("system");
-            this.fileName = json.getString("filename");
-            this.url = json.getString("url");
-            this.descriptor = json.getJSONObject("descriptor");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        this.fileSystem = json.getString("system");
+        this.fileName = json.getString("filename");
+        this.url = json.getString("url");
+        this.descriptor = json.getJSONObject("descriptor");
         this.timestamp = System.currentTimeMillis();
     }
 
@@ -97,50 +92,28 @@ public class FileDescriptor implements JSONable {
     }
 
     public void attr(String name, String value) {
-        try {
-            this.descriptor.put(name, value);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        this.descriptor.put(name, value);
     }
 
     public void attr(String name, long value) {
-        try {
-            this.descriptor.put(name, value);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        this.descriptor.put(name, value);
     }
 
     public void attr(String name, int value) {
-        try {
-            this.descriptor.put(name, value);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        this.descriptor.put(name, value);
     }
 
     public String attr(String name) {
-        String value = null;
-        try {
-            value = this.descriptor.getString(name);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return value;
+        return this.descriptor.getString(name);
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("system", this.fileSystem);
-            json.put("filename", this.fileName);
-            json.put("url", this.url);
-            json.put("descriptor", this.descriptor);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        json.put("system", this.fileSystem);
+        json.put("filename", this.fileName);
+        json.put("url", this.url);
+        json.put("descriptor", this.descriptor);
         return json;
     }
 

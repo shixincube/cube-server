@@ -26,6 +26,7 @@
 
 package cube.service.filestorage.hierarchy;
 
+import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
 import cube.common.entity.HierarchyNodes;
@@ -276,6 +277,8 @@ public class FileHierarchy {
 
         List<Directory> result = new ArrayList<>();
 
+        long totalSize = 0L;
+
         for (Directory subdirectory : subdirectories) {
             if (this.root.equals(subdirectory)) {
                 // 不能删除根
@@ -293,9 +296,6 @@ public class FileHierarchy {
                 continue;
             }
 
-            // 回调
-            this.listener.onDirectoryRemove(this, subdirectory);
-
             // 删除
             parent.removeChild(subdirectory.node);
 
@@ -307,16 +307,23 @@ public class FileHierarchy {
 
             // 记录被删除的目录
             result.add(subdirectory);
+
+            // 计算大小
+            totalSize += subdirectory.getSize();
         }
 
         if (result.isEmpty()) {
             // 没有目录被删除
-            return null;
+            return result;
         }
+
+        // 回调
+        this.listener.onDirectoryRemove(this, result);
 
         // 更新时间戳
         this.timestamp = System.currentTimeMillis();
         parent.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
+        parent.getContext().put(KEY_SIZE, parent.getContext().getLong(KEY_SIZE) - totalSize);
 
         HierarchyNodes.save(this.cache, parent);
 
@@ -360,6 +367,7 @@ public class FileHierarchy {
         // 更新时间戳
         this.timestamp = System.currentTimeMillis();
         parent.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
+        parent.getContext().put(KEY_SIZE, parent.getContext().getLong(KEY_SIZE) - subdirectory.getSize());
 
         HierarchyNodes.save(this.cache, parent);
         HierarchyNodes.delete(this.cache, subdirectory.node);
@@ -367,7 +375,9 @@ public class FileHierarchy {
         this.directories.remove(subdirectory.getId());
 
         // 回调
-        this.listener.onDirectoryRemove(this, subdirectory);
+        ArrayList<Directory> list = new ArrayList<>(1);
+        list.add(subdirectory);
+        this.listener.onDirectoryRemove(this, list);
 
         return true;
     }
@@ -566,7 +576,9 @@ public class FileHierarchy {
         // 更新时间戳
         this.timestamp = System.currentTimeMillis();
 
-        this.listener.onFileLabelRemove(this, directory, fileLabel);
+        ArrayList<FileLabel> fileLabels = new ArrayList<>(1);
+        fileLabels.add(fileLabel);
+        this.listener.onFileLabelRemove(this, directory, fileLabels);
 
         // 更新大小
         long size = directory.node.getContext().getLong(KEY_SIZE);
@@ -578,6 +590,72 @@ public class FileHierarchy {
         HierarchyNodes.save(this.cache, directory.node);
 
         return true;
+    }
+
+    /**
+     * 删除多个文件。
+     *
+     * @param directory
+     * @param fileCodes
+     * @return
+     */
+    protected List<FileLabel> removeFileLabelWithFileCodes(Directory directory, List<String> fileCodes) {
+        List<FileLabel> result = new ArrayList<>();
+        for (String fileCode : fileCodes) {
+            FileLabel fileLabel = this.listener.onQueryFileLabel(this, directory, fileCode);
+            if (null == fileLabel) {
+                Logger.w(this.getClass(), "#removeFileLabelWithFileCode - Can NOT find file label: " + fileCode);
+                continue;
+            }
+
+            result.add(fileLabel);
+        }
+
+        return this.removeFileLabels(directory, result);
+    }
+
+    /**
+     * 移除多个文件标签。
+     *
+     * @param directory
+     * @param fileLabels
+     * @return 返回成功移除的文件码。
+     */
+    protected List<FileLabel> removeFileLabels(Directory directory, List<FileLabel> fileLabels) {
+        List<FileLabel> result = new ArrayList<>();
+
+        long totalSize = 0;
+        for (FileLabel fileLabel : fileLabels) {
+            if (!directory.node.unlink(fileLabel)) {
+                // 解除链接失败
+                continue;
+            }
+
+            result.add(fileLabel);
+
+            totalSize += fileLabel.getFileSize();
+        }
+
+        if (result.isEmpty()) {
+            return result;
+        }
+
+        // 回调
+        this.listener.onFileLabelRemove(this, directory, result);
+
+        // 更新时间戳
+        this.timestamp = System.currentTimeMillis();
+
+        // 更新大小
+        long size = directory.node.getContext().getLong(KEY_SIZE);
+        directory.node.getContext().put(KEY_SIZE, size - totalSize);
+
+        // 更新时间戳
+        directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
+
+        HierarchyNodes.save(this.cache, directory.node);
+
+        return result;
     }
 
     protected List<FileLabel> listFileLabels(Directory directory, int beginIndex, int endIndex) {

@@ -238,6 +238,18 @@ public class HierarchyNode extends Entity {
     }
 
     /**
+     * 断开指定唯一键的实体。
+     *
+     * @param uniqueKey
+     * @return
+     */
+    public boolean unlink(String uniqueKey) {
+        synchronized (this.relatedKeys) {
+            return this.relatedKeys.remove(uniqueKey);
+        }
+    }
+
+    /**
      * 获取所有关联的实体的唯一键。
      *
      * @return 获取所有关联的实体的唯一键。

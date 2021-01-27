@@ -103,13 +103,7 @@ public class Directory implements JSONable {
      * @return 返回目录名。
      */
     public String getName() {
-        try {
-            return this.node.getContext().getString(FileHierarchy.KEY_DIR_NAME);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return null;
+        return this.node.getContext().getString(FileHierarchy.KEY_DIR_NAME);
     }
 
     /**
@@ -118,12 +112,7 @@ public class Directory implements JSONable {
      * @return 返回目录创建时间。
      */
     public long getCreationTime() {
-        try {
-            return this.node.getContext().getLong(FileHierarchy.KEY_CREATION);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return 0;
+        return this.node.getContext().getLong(FileHierarchy.KEY_CREATION);
     }
 
     /**
@@ -132,12 +121,7 @@ public class Directory implements JSONable {
      * @return 返回目录最后一次修改时间。
      */
     public long getLastModified() {
-        try {
-            return this.node.getContext().getLong(FileHierarchy.KEY_LAST_MODIFIED);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return 0;
+        return this.node.getContext().getLong(FileHierarchy.KEY_LAST_MODIFIED);
     }
 
     /**
@@ -146,12 +130,7 @@ public class Directory implements JSONable {
      * @return 如果是隐藏目录返回 {@code true} 。
      */
     public boolean isHidden() {
-        try {
-            return this.node.getContext().getBoolean(FileHierarchy.KEY_HIDDEN);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
+        return this.node.getContext().getBoolean(FileHierarchy.KEY_HIDDEN);
     }
 
     /**
@@ -160,12 +139,7 @@ public class Directory implements JSONable {
      * @return 返回目录占用的空间大小。
      */
     public long getSize() {
-        try {
-            return this.node.getContext().getLong(FileHierarchy.KEY_SIZE);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return -1;
+        return this.node.getContext().getLong(FileHierarchy.KEY_SIZE);
     }
 
     /**
@@ -302,6 +276,16 @@ public class Directory implements JSONable {
      */
     public boolean removeFile(FileLabel fileLabel) {
         return this.fileHierarchy.removeFileLabel(this, fileLabel);
+    }
+
+    /**
+     * 从目录移除文件。
+     *
+     * @param fileCodes 指定待移除的文件的文件码列表。
+     * @return 返回移除的文件标签。
+     */
+    public List<FileLabel> removeFiles(List<String> fileCodes) {
+        return this.fileHierarchy.removeFileLabelWithFileCodes(this, fileCodes);
     }
 
     /**

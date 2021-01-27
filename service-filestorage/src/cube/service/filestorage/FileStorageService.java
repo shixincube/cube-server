@@ -260,6 +260,28 @@ public class FileStorageService extends AbstractModule {
 
         // 获取标识
         FileDescriptor descriptor = this.fileDescriptors.get(fileLabel.getFileCode());
+
+        int count = 100;
+        while (null == descriptor) {
+            --count;
+            if (count <= 0) {
+                break;
+            }
+
+            try {
+                Thread.sleep(100L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            descriptor = this.fileDescriptors.get(fileLabel.getFileCode());
+        }
+
+        if (null == descriptor) {
+            // 没有获取正确的文件描述符
+            Logger.e(this.getClass(), "#putFile - Can NOT find file descriptor: " + fileLabel.getFileCode());
+            return null;
+        }
+
         fileLabel.setDirectURL(descriptor.getURL());
 
         // 获取外部访问的 URL 信息
@@ -344,14 +366,6 @@ public class FileStorageService extends AbstractModule {
      * @return
      */
     public FileLabel getFile(String domainName, String fileCode) {
-        if (this.fileSystem.isWriting(fileCode)) {
-            try {
-                Thread.sleep(500L);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
         CacheValue value = this.fileLabelCache.get(new CacheKey(fileCode));
         if (null == value) {
             FileLabel fileLabel = this.fileStructStorage.readFileLabel(domainName, fileCode);
