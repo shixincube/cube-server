@@ -537,6 +537,31 @@ public class FileStructStorage implements Storagable {
     }
 
     /**
+     * 删除废弃的数据。
+     *
+     * @param domain
+     * @param rootId
+     * @param id
+     */
+    public void deleteTrash(String domain, Long rootId, Long id) {
+        String table = this.recyclebinTableNameMap.get(domain);
+        if (null == table) {
+            return;
+        }
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                storage.executeDelete(table, new Conditional[] {
+                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, id)),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo(new StorageField("root_id", LiteralBase.LONG, rootId))
+                });
+            }
+        });
+    }
+
+    /**
      * 清空垃圾文件。
      *
      * @param domain

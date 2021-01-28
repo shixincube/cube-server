@@ -272,6 +272,14 @@ public final class FileUtils {
         }
     }
 
+    public static boolean isImageType(FileType fileType) {
+        if (fileType == FileType.JPEG) {
+            return true;
+        }
+
+        return false;
+    }
+
 //    public static void main(String[] args) {
 //        System.out.println(FileUtils.makeFileCode(50001001L, "三周年纪念.png"));
 //        System.out.println(FileUtils.makeFileCode(50001001L, "三周年纪念.jpg"));

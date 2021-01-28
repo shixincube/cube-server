@@ -41,7 +41,13 @@ public final class FileHierarchyTool {
     private FileHierarchyTool() {
     }
 
-    public static void recurse(LinkedList<Directory> list, Directory directory) {
+    /**
+     * 从指定目录开始递归所有父目录。
+     *
+     * @param list
+     * @param directory
+     */
+    public static void recurseParent(LinkedList<Directory> list, Directory directory) {
         list.addFirst(directory);
 
         Directory parent = directory.getParent();
@@ -49,7 +55,7 @@ public final class FileHierarchyTool {
             return;
         }
 
-        FileHierarchyTool.recurse(list, parent);
+        FileHierarchyTool.recurseParent(list, parent);
     }
 
     /**
@@ -110,5 +116,9 @@ public final class FileHierarchyTool {
         }
 
         return directory;
+    }
+
+    public static List<FileLabel> recurseFile() {
+        return null;
     }
 }

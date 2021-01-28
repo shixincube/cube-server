@@ -89,7 +89,7 @@ public class RecycleBin {
     public void put(Directory root, Directory directory) {
         // 遍历目录结构
         LinkedList<Directory> list = new LinkedList<>();
-        FileHierarchyTool.recurse(list, directory);
+        FileHierarchyTool.recurseParent(list, directory);
 
         // 创建回收链
         RecycleChain chain = new RecycleChain(list);
@@ -100,10 +100,22 @@ public class RecycleBin {
         this.structStorage.writeDirectoryTrash(directoryTrash);
     }
 
+    /**
+     * 将指定文件放入回收站。
+     *
+     * @param root
+     * @param directory
+     * @param fileLabel
+     */
     public void put(Directory root, Directory directory, FileLabel fileLabel) {
+        // TODO 相同文件码的记录管理
+        // 目前的实现没有考虑相同文件码的文件，重复放入回收站是否记录每个文件副本。
+        // 当相同的文件码放入回收站时，回收站目前依然记录，也就是说相同文件码的文件如果多次放入回收站，
+        // 回收站每次都会记录，但是恢复的时候仅能恢复最后一次的数据。
+
         // 遍历目录结构
         LinkedList<Directory> list = new LinkedList<>();
-        FileHierarchyTool.recurse(list, directory);
+        FileHierarchyTool.recurseParent(list, directory);
 
         // 创建回收链
         RecycleChain chain = new RecycleChain(list);
@@ -114,8 +126,16 @@ public class RecycleBin {
         this.structStorage.writeFileTrash(fileTrash);
     }
 
-    public void remove(Directory root, Long directoryId) {
-
+    /**
+     * 将回收站内的废弃数据抹除，抹除后不可恢复。
+     *
+     * @param root
+     * @param trashIdList
+     */
+    public void erase(Directory root, List<Long> trashIdList) {
+        for (Long trashId : trashIdList) {
+            this.structStorage.deleteTrash(root.getDomain().getName(), root.getId(), trashId);
+        }
     }
 
     /**
