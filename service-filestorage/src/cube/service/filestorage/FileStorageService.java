@@ -362,6 +362,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 读文件标签。
      *
+     * @param domainName
      * @param fileCode
      * @return
      */
@@ -394,6 +395,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 加载文件到本地。
      *
+     * @param domainName
      * @param fileCode
      * @return
      */

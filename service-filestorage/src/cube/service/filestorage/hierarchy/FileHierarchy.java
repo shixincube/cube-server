@@ -36,7 +36,6 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * 文件层级描述类。
@@ -75,6 +74,11 @@ public class FileHierarchy {
     private ConcurrentHashMap<Long, Directory> directories;
 
     /**
+     * 文件分类器。
+     */
+    private FileSearcher fileSearcher;
+
+    /**
      * 时间戳。
      */
     private long timestamp;
@@ -95,6 +99,7 @@ public class FileHierarchy {
         this.root = new Directory(this, root);
         this.listener = listener;
         this.directories = new ConcurrentHashMap<>();
+        this.fileSearcher = new FileSearcher(this.root, listener);
         this.timestamp = System.currentTimeMillis();
     }
 
@@ -544,6 +549,8 @@ public class FileHierarchy {
             return false;
         }
 
+        this.fileSearcher.addFile(directory, fileLabel);
+
         // 更新时间戳
         this.timestamp = System.currentTimeMillis();
 
@@ -573,6 +580,8 @@ public class FileHierarchy {
             // 解除链接失败
             return false;
         }
+
+        this.fileSearcher.removeFile(directory, fileLabel);
 
         // 更新时间戳
         this.timestamp = System.currentTimeMillis();
@@ -634,6 +643,8 @@ public class FileHierarchy {
 
             result.add(fileLabel);
 
+            this.fileSearcher.removeFile(directory, fileLabel);
+
             totalSize += fileLabel.getFileSize();
         }
 
@@ -659,6 +670,14 @@ public class FileHierarchy {
         return result;
     }
 
+    /**
+     * 罗列指定范围内的文件。
+     *
+     * @param directory
+     * @param beginIndex
+     * @param endIndex
+     * @return
+     */
     protected List<FileLabel> listFileLabels(Directory directory, int beginIndex, int endIndex) {
         List<FileLabel> result = new ArrayList<>();
 
@@ -671,6 +690,7 @@ public class FileHierarchy {
             FileLabel fileLabel = this.listener.onQueryFileLabel(this, directory, key);
             if (null != fileLabel) {
                 result.add(fileLabel);
+                this.fileSearcher.addFile(directory, fileLabel);
             }
         }
 

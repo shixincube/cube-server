@@ -118,7 +118,28 @@ public final class FileHierarchyTool {
         return directory;
     }
 
-    public static List<FileLabel> recurseFile() {
-        return null;
+    /**
+     * 递归文件。
+     *
+     * @param directory
+     * @param handler
+     * @return
+     */
+    public static boolean recurseFile(Directory directory, RecurseHandler handler) {
+        List<FileLabel> list = directory.listFiles(0, directory.numFiles());
+        for (FileLabel fileLabel : list) {
+            if (!handler.handle(directory, fileLabel)) {
+                return false;
+            }
+        }
+
+        List<Directory> subdirs = directory.getDirectories();
+        for (Directory subdir : subdirs) {
+            if (!FileHierarchyTool.recurseFile(subdir, handler)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

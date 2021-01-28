@@ -273,11 +273,15 @@ public final class FileUtils {
     }
 
     public static boolean isImageType(FileType fileType) {
-        if (fileType == FileType.JPEG) {
-            return true;
+        switch (fileType) {
+            case JPEG:
+            case PNG:
+            case GIF:
+            case BMP:
+                return true;
+            default:
+                return false;
         }
-
-        return false;
     }
 
 //    public static void main(String[] args) {
