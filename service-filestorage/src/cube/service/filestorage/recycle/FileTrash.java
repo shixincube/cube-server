@@ -35,16 +35,35 @@ import org.json.JSONObject;
  */
 public class FileTrash extends Trash {
 
+    private Directory parent;
+
+    private FileLabel fileLabel;
+
     public FileTrash(Directory root, RecycleChain chain, FileLabel fileLabel) {
-        super(fileLabel.getId(), root, chain);
+        super(root, chain, fileLabel.getId());
+        this.fileLabel = fileLabel;
+        this.parent = chain.getLast();
     }
 
     public FileTrash(Directory root, JSONObject json) {
-        super(json.getJSONObject("file").getLong("id"), root, json);
+        super(root, json);
+        this.parent = getChain().getLast();
+        this.fileLabel = new FileLabel(json.getJSONObject("file"));
     }
 
     @Override
     public Directory getParent() {
-        return null;
+        return this.parent;
+    }
+
+    public String getFileCode() {
+        return this.fileLabel.getFileCode();
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("file", this.fileLabel.toCompactJSON());
+        return json;
     }
 }

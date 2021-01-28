@@ -26,6 +26,7 @@
 
 package cube.service.filestorage.recycle;
 
+import cube.common.entity.FileLabel;
 import cube.service.filestorage.FileStructStorage;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchyTool;
@@ -52,7 +53,7 @@ public class RecycleBin {
     }
 
     /**
-     * 读取指定根的废弃文件。
+     * 读取指定根的废弃文件和目录。
      *
      * @param root
      * @param beginIndex
@@ -90,11 +91,27 @@ public class RecycleBin {
         LinkedList<Directory> list = new LinkedList<>();
         FileHierarchyTool.recurse(list, directory);
 
-        // 创建数据实体
+        // 创建回收链
         RecycleChain chain = new RecycleChain(list);
+
+        // 废弃目录
         DirectoryTrash directoryTrash = new DirectoryTrash(root, chain, directory);
 
         this.structStorage.writeDirectoryTrash(directoryTrash);
+    }
+
+    public void put(Directory root, Directory directory, FileLabel fileLabel) {
+        // 遍历目录结构
+        LinkedList<Directory> list = new LinkedList<>();
+        FileHierarchyTool.recurse(list, directory);
+
+        // 创建回收链
+        RecycleChain chain = new RecycleChain(list);
+
+        // 废弃文件
+        FileTrash fileTrash = new FileTrash(root, chain, fileLabel);
+
+        this.structStorage.writeFileTrash(fileTrash);
     }
 
     public void remove(Directory root, Long directoryId) {

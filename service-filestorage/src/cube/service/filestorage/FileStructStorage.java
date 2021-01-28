@@ -35,6 +35,7 @@ import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
 import cube.service.filestorage.recycle.DirectoryTrash;
+import cube.service.filestorage.recycle.FileTrash;
 import cube.service.filestorage.system.FileDescriptor;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
@@ -113,10 +114,11 @@ public class FileStructStorage implements Storagable {
      */
     private final StorageField[] recyclebinFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG),
-            new StorageField("root_id", LiteralBase.LONG),
-            new StorageField("dir_id", LiteralBase.LONG),
-            new StorageField("file_code", LiteralBase.STRING),
             new StorageField("timestamp", LiteralBase.LONG),
+            new StorageField("root_id", LiteralBase.LONG),
+            new StorageField("parent_id", LiteralBase.LONG),
+            new StorageField("original_id", LiteralBase.LONG),
+            new StorageField("file_code", LiteralBase.STRING),
             new StorageField("data", LiteralBase.STRING)
             //new StorageField("reserved", LiteralBase.STRING)
     };
@@ -461,9 +463,39 @@ public class FileStructStorage implements Storagable {
 
         StorageField[] fields = new StorageField[] {
                 new StorageField("id", LiteralBase.LONG, trash.getId()),
-                new StorageField("root_id", LiteralBase.LONG, trash.getRoot().getId()),
-                new StorageField("dir_id", LiteralBase.LONG, trash.getParent().getId()),
                 new StorageField("timestamp", LiteralBase.LONG, trash.getTimestamp()),
+                new StorageField("root_id", LiteralBase.LONG, trash.getRoot().getId()),
+                new StorageField("parent_id", LiteralBase.LONG, trash.getParent().getId()),
+                new StorageField("original_id", LiteralBase.LONG, trash.getOriginalId()),
+                new StorageField("data", LiteralBase.STRING, trash.toJSON().toString())
+        };
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                storage.executeInsert(table, fields);
+            }
+        });
+    }
+
+    /**
+     * 将废弃文件写入回收站。
+     *
+     * @param trash
+     */
+    public void writeFileTrash(FileTrash trash) {
+        String table = this.recyclebinTableNameMap.get(trash.getDomainName());
+        if (null == table) {
+            return;
+        }
+
+        StorageField[] fields = new StorageField[] {
+                new StorageField("id", LiteralBase.LONG, trash.getId()),
+                new StorageField("timestamp", LiteralBase.LONG, trash.getTimestamp()),
+                new StorageField("root_id", LiteralBase.LONG, trash.getRoot().getId()),
+                new StorageField("parent_id", LiteralBase.LONG, trash.getParent().getId()),
+                new StorageField("original_id", LiteralBase.LONG, trash.getOriginalId()),
+                new StorageField("file_code", LiteralBase.STRING, trash.getFileCode()),
                 new StorageField("data", LiteralBase.STRING, trash.toJSON().toString())
         };
 
@@ -670,17 +702,20 @@ public class FileStructStorage implements Storagable {
                     new StorageField("id", LiteralBase.LONG, new Constraint[] {
                             Constraint.PRIMARY_KEY
                     }),
+                    new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
                     new StorageField("root_id", LiteralBase.LONG, new Constraint[] {
                             Constraint.NOT_NULL
                     }),
-                    new StorageField("dir_id", LiteralBase.LONG, new Constraint[] {
+                    new StorageField("parent_id", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("original_id", LiteralBase.LONG, new Constraint[] {
                             Constraint.NOT_NULL
                     }),
                     new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
                             Constraint.DEFAULT_NULL
-                    }),
-                    new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
-                            Constraint.NOT_NULL
                     }),
                     new StorageField("data", LiteralBase.STRING, new Constraint[] {
                             Constraint.NOT_NULL

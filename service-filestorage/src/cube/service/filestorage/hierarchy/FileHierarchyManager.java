@@ -130,6 +130,7 @@ public class FileHierarchyManager implements FileHierarchyListener {
     @Override
     public void onDirectoryRemove(FileHierarchy fileHierarchy, List<Directory> directories) {
         for (Directory directory : directories) {
+            // 将数据放入回收站
             this.fileStorageService.getRecycleBin().put(fileHierarchy.getRoot(), directory);
         }
     }
@@ -153,6 +154,8 @@ public class FileHierarchyManager implements FileHierarchyListener {
         long fileSize = 0;
         for (FileLabel fileLabel : fileLabels) {
             fileSize += fileLabel.getFileSize();
+            // 将数据放入回收站
+            this.fileStorageService.getRecycleBin().put(fileHierarchy.getRoot(), directory, fileLabel);
         }
 
         Directory parent = directory.getParent();

@@ -26,6 +26,7 @@
 
 package cube.service.filestorage.recycle;
 
+import cell.util.Utils;
 import cube.common.entity.Entity;
 import cube.service.filestorage.hierarchy.Directory;
 import org.json.JSONObject;
@@ -35,25 +36,48 @@ import org.json.JSONObject;
  */
 public abstract class Trash extends Entity {
 
+    /**
+     * 所属根目录。
+     */
     private Directory root;
 
+    /**
+     * 回收链。
+     */
     private RecycleChain chain;
 
-    public Trash(Long id, Directory root, RecycleChain chain) {
-        super(id);
+    /**
+     * 原数据的 ID 。
+     */
+    private Long originalId;
+
+    /**
+     * 构造函数。
+     *
+     * @param root
+     * @param chain
+     * @param originalId
+     */
+    public Trash(Directory root, RecycleChain chain, Long originalId) {
+        super(Utils.generateSerialNumber());
 
         this.root = root;
         this.chain = chain;
+        this.originalId = originalId;
     }
 
-    public Trash(Long id, Directory root, JSONObject json) {
-        super(id);
+    public Trash(Directory root, JSONObject json) {
+        super(json.getLong("id"));
 
         this.root = root;
+
+        // 时间戳
         this.setTimestamp(json.getLong("timestamp"));
 
         JSONObject chainJson = json.getJSONObject("chain");
         this.chain = new RecycleChain(chainJson);
+
+        this.originalId = json.getLong("originalId");
     }
 
     public String getDomainName() {
@@ -68,16 +92,21 @@ public abstract class Trash extends Entity {
         return this.chain;
     }
 
+    public Long getOriginalId() {
+        return this.originalId;
+    }
+
     public abstract Directory getParent();
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("id", this.getId().longValue());
+        json.put("timestamp", this.getTimestamp());
         json.put("rootId", this.root.getId().longValue());
         json.put("parentId", this.getParent().getId().longValue());
+        json.put("originalId", this.originalId.longValue());
         json.put("chain", this.chain.toJSON());
-        json.put("timestamp", this.getTimestamp());
         return json;
     }
 
