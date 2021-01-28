@@ -178,7 +178,6 @@ public class HierarchyNode extends Entity {
      */
     public void removeChild(HierarchyNode child) {
         this.children.remove(child);
-        child.parent = null;
 
         if (null != this.unloadChildrenKeys) {
             this.unloadChildrenKeys.remove(child.getUniqueKey());

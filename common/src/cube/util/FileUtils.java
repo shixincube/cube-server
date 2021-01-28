@@ -204,7 +204,7 @@ public final class FileUtils {
     public static FileType verifyFileType(String fileName, byte[] data) {
         // 通过数据进行判断
         FileType dataType = FileType.extractFileType(data);
-        if (dataType != FileType.UNKNOWN && dataType != FileType.ZIP) {
+        if (dataType != FileType.UNKNOWN && dataType != FileType.ZIP && dataType != FileType.GZIP) {
             return dataType;
         }
 

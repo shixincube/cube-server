@@ -102,6 +102,7 @@ public abstract class Trash extends Entity {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("id", this.getId().longValue());
+        json.put("domain", this.root.getDomain().getName());
         json.put("timestamp", this.getTimestamp());
         json.put("rootId", this.root.getId().longValue());
         json.put("parentId", this.getParent().getId().longValue());
