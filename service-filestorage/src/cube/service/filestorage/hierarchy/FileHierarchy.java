@@ -140,6 +140,15 @@ public class FileHierarchy {
     }
 
     /**
+     * 获取文件检索器。
+     *
+     * @return 返回文件检索器。
+     */
+    public FileSearcher getFileSearcher() {
+        return this.fileSearcher;
+    }
+
+    /**
      * 返回指定 ID 的目录。
      *
      * @param id

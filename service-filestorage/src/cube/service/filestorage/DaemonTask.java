@@ -57,5 +57,7 @@ public class DaemonTask implements Runnable {
                 fditer.remove();
             }
         }
+
+        // TODO 清理 File Hierarchy
     }
 }

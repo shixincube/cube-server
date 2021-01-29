@@ -27,6 +27,8 @@
 package cube.service.filestorage.hierarchy;
 
 import cube.util.FileType;
+import cube.util.FileUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -47,8 +49,29 @@ public class SearchFilter {
 
     private int hash = 0;
 
+    /**
+     * 构造函数。
+     *
+     * @param json
+     */
     public SearchFilter(JSONObject json) {
+        if (json.has("begin")) {
+            this.beginIndex = json.getInt("begin");
+        }
+        if (json.has("end")) {
+            this.endIndex = json.getInt("end");
+        }
 
+        if (json.has("type")) {
+            JSONArray array = json.getJSONArray("type");
+            for (int i = 0; i < array.length(); ++i) {
+                String typeString = array.getString(i);
+                this.fileTypes.add(FileType.matchExtension(typeString));
+            }
+        }
+        else {
+            this.fileTypes.add(FileType.UNKNOWN);
+        }
     }
 
     /**

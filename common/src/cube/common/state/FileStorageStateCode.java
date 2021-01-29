@@ -77,6 +77,11 @@ public enum FileStorageStateCode {
     DuplicationOfName(20),
 
     /**
+     * 搜索条件错误。
+     */
+    SearchConditionError(25),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)

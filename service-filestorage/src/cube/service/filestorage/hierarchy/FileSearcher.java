@@ -26,7 +26,9 @@
 
 package cube.service.filestorage.hierarchy;
 
+import cube.common.JSONable;
 import cube.common.entity.FileLabel;
+import org.json.JSONObject;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,9 +66,6 @@ public class FileSearcher {
         IndexingItem item = new IndexingItem(key, directory, fileLabel);
         this.repository.put(key, item);
         this.fileQueue.add(item);
-
-        // 排序
-        Collections.sort(this.fileQueue);
     }
 
     public void removeFile(Directory directory, FileLabel fileLabel) {
@@ -84,6 +83,10 @@ public class FileSearcher {
      * @return
      */
     public List<IndexingItem> search(SearchFilter filter) {
+        if (filter.beginIndex >= filter.endIndex) {
+            return null;
+        }
+
         List<IndexingItem> record = this.searchResultMap.get(filter);
         if (null != record) {
             return record;
@@ -100,67 +103,34 @@ public class FileSearcher {
         FileHierarchyTool.recurseFile(this.root, new RecurseHandler() {
             @Override
             public boolean handle(Directory directory, FileLabel fileLabel) {
-                index.incrementAndGet();
-                
                 if (result.size() >= num) {
                     return false;
                 }
 
                 if (filter.containsFileType(fileLabel.getFileType())) {
+                    // 文件类型匹配
+                    int curIndex = index.get();
+                    if (curIndex >= begin && curIndex <= end) {
+                        result.add(new IndexingItem(FileSearcher.makeKey(directory, fileLabel),
+                                directory, fileLabel));
+                    }
 
+                    // 更新索引
+                    index.incrementAndGet();
                 }
 
                 return true;
             }
         });
 
-        if (end + 1 > result.size()) {
-            end = result.size();
-        }
+        // 排序
+        Collections.sort(result);
 
-        if (begin >= end) {
-            return null;
-        }
+        // 缓存记录
+        this.searchResultMap.put(filter, result);
 
         return result;
     }
-
-    /*
-    public List<IndexingItem> listImageFile(final int beginIndex, final int endIndex) {
-        if (this.fileQueue.size() < endIndex) {
-            // 遍历
-            FileHierarchyTool.recurseFile(this.root, new RecurseHandler() {
-                @Override
-                public boolean handle(Directory directory, FileLabel fileLabel) {
-                    if (imageFiles.size() >= endIndex) {
-                        return false;
-                    }
-
-                    return true;
-                }
-            });
-        }
-
-        if (beginIndex >= this.imageFiles.size()) {
-            return new ArrayList<>();
-        }
-
-        List<IndexingItem> list = new ArrayList<>(this.imageFiles);
-
-        int begin = beginIndex;
-        int end = endIndex;
-
-        if (end + 1 > list.size()) {
-            end = list.size();
-        }
-
-        if (begin >= end) {
-            return null;
-        }
-
-        list = list.subList(begin, end);
-        return list;
-    }*/
 
     protected static String makeKey(Directory directory, FileLabel fileLabel) {
         return directory.getId().toString() + fileLabel.getFileCode();
@@ -169,7 +139,7 @@ public class FileSearcher {
     /**
      *
      */
-    public class IndexingItem implements Comparable<IndexingItem> {
+    public class IndexingItem implements Comparable<IndexingItem>, JSONable {
 
         protected String key;
 
@@ -186,7 +156,6 @@ public class FileSearcher {
         @Override
         public int compareTo(IndexingItem o) {
             // 时间倒序
-
             if (this.fileLabel.getLastModified() < o.fileLabel.getLastModified()) {
                 return 1;
             }
@@ -196,6 +165,19 @@ public class FileSearcher {
             else {
                 return 0;
             }
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("directory", this.directory.toCompactJSON());
+            json.put("file", this.fileLabel.toCompactJSON());
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
         }
     }
 }

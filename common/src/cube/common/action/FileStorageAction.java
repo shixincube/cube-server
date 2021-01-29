@@ -94,6 +94,11 @@ public enum FileStorageAction {
     EmptyTrash("emptyTrash"),
 
     /**
+     * 检索文件。
+     */
+    SearchFile("searchFile"),
+
+    /**
      * 未知动作。
      */
     Unknown("")
