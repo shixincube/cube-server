@@ -151,8 +151,8 @@ public class FileHierarchy {
     /**
      * 返回指定 ID 的目录。
      *
-     * @param id
-     * @return
+     * @param id 指定目录 ID 。
+     * @return 返回指定 ID 的目录。
      */
     public Directory getDirectory(Long id) {
         if (id.longValue() == this.root.getId().longValue()) {
@@ -174,6 +174,14 @@ public class FileHierarchy {
         return dir;
     }
 
+    /**
+     * 递归方式查找指定 ID 的分层节点。
+     *
+     * @param cache 缓存。
+     * @param node 入口节点。
+     * @param id 指定的节点 ID 。
+     * @return 返回查找的节点。
+     */
     private HierarchyNode traversal(Cache cache, HierarchyNode node, Long id) {
         List<HierarchyNode> children = HierarchyNodes.traversalChildren(cache, node);
         if (children.isEmpty()) {
@@ -196,11 +204,11 @@ public class FileHierarchy {
     }
 
     /**
-     * 是否存在同名目录。
+     * 是否存在同名子目录。
      *
-     * @param directory
-     * @param directoryName
-     * @return
+     * @param directory 指定父目录。
+     * @param directoryName 指定目录名。
+     * @return 如果有同名目录返回 {@code true} 。
      */
     protected boolean existsDirectory(Directory directory, String directoryName) {
         this.timestamp = System.currentTimeMillis();
@@ -218,11 +226,11 @@ public class FileHierarchy {
     }
 
     /**
-     * 是否存在相同目录。
+     * 是否存在指定的子目录。
      *
-     * @param parentNode
-     * @param child
-     * @return
+     * @param parentNode 指定父节点。
+     * @param child 指定子目录。
+     * @return 返回是否存在指定的子目录。
      */
     protected boolean existsDirectory(HierarchyNode parentNode, Directory child) {
         this.timestamp = System.currentTimeMillis();
@@ -240,9 +248,9 @@ public class FileHierarchy {
     /**
      * 新建目录。
      *
-     * @param directory
-     * @param directoryName
-     * @return
+     * @param directory 指定工作目录。
+     * @param directoryName 指定新目录名。
+     * @return 创建失败返回 {@code null} 值。
      */
     protected Directory createDirectory(Directory directory, String directoryName) {
         if (this.existsDirectory(directory, directoryName)) {
@@ -280,12 +288,12 @@ public class FileHierarchy {
     }
 
     /**
-     * 删除多个目录。
+     * 删除多个子目录。
      *
-     * @param directory
-     * @param subdirectories
-     * @param recursive
-     * @return
+     * @param directory 指定工作目录。
+     * @param subdirectories 指定待删除的子目录。
+     * @param recursive 是否递归方式删除子目录下的所有目录。
+     * @return 返回被删除的目录列表。
      */
     protected List<Directory> deleteDirectories(Directory directory, List<Directory> subdirectories, boolean recursive) {
         HierarchyNode parent = directory.node;
@@ -348,10 +356,10 @@ public class FileHierarchy {
     /**
      * 删除目录。
      *
-     * @param directory
-     * @param subdirectory
-     * @param recursive
-     * @return
+     * @param directory 工作目录。
+     * @param subdirectory 待删除的子目录。
+     * @param recursive 是否递归方式删除子目录下的所有目录。
+     * @return 如果删除成功返回 {@code true} 。
      */
     protected boolean deleteDirectory(Directory directory, Directory subdirectory, boolean recursive) {
         if (this.root.equals(subdirectory)) {
@@ -421,8 +429,8 @@ public class FileHierarchy {
     /**
      * 获取指定目录的所有子目录。
      *
-     * @param directory
-     * @return
+     * @param directory 工作目录。
+     * @return 返回所有子目录。
      */
     protected List<Directory> getSubdirectories(Directory directory) {
         return this.getSubdirectories(directory, false);
@@ -431,9 +439,9 @@ public class FileHierarchy {
     /**
      * 获取指定目录的子目录。
      *
-     * @param directory
-     * @param includeHidden
-     * @return
+     * @param directory 工作目录。
+     * @param includeHidden 是否获取隐藏目录。
+     * @return 返回所有子目录。
      */
     protected List<Directory> getSubdirectories(Directory directory, boolean includeHidden) {
         this.timestamp = System.currentTimeMillis();
@@ -464,9 +472,9 @@ public class FileHierarchy {
     /**
      * 获取指定名称的子目录。
      *
-     * @param directory
-     * @param subdirectory
-     * @return
+     * @param directory 工作目录。
+     * @param subdirectory 子目录名。
+     * @return 返回指定名称的子目录。
      */
     protected Directory getSubdirectory(Directory directory, String subdirectory) {
         this.timestamp = System.currentTimeMillis();
@@ -490,9 +498,9 @@ public class FileHierarchy {
     /**
      * 获取指定 ID 的子目录。
      *
-     * @param directory
-     * @param id
-     * @return
+     * @param directory 工作目录。
+     * @param id 子目录 ID 。
+     * @return 返回指定 ID 的子目录。
      */
     protected Directory getSubdirectory(Directory directory, Long id) {
         this.timestamp = System.currentTimeMillis();
@@ -516,8 +524,8 @@ public class FileHierarchy {
     /**
      * 设置目录为隐藏目录。
      *
-     * @param directory
-     * @param hidden
+     * @param directory 指定目录。
+     * @param hidden 是否为隐藏目录。
      */
     protected void setHidden(Directory directory, boolean hidden) {
         // 更新时间戳
@@ -532,8 +540,8 @@ public class FileHierarchy {
     /**
      * 设置目录大小。
      *
-     * @param directory
-     * @param newSize
+     * @param directory 指定目录。
+     * @param newSize 指定目录占用空间大小。
      */
     protected void setDirectorySize(Directory directory, long newSize) {
         // 更新时间戳
@@ -546,11 +554,11 @@ public class FileHierarchy {
     }
 
     /**
-     * 添加文件标签。
+     * 添加文件标签到目录。
      *
-     * @param directory
-     * @param fileLabel
-     * @return
+     * @param directory 指定目录。
+     * @param fileLabel 指定文件标签。
+     * @return 添加成功返回 {@code true} ，否则返回 {@code false} 。
      */
     protected boolean addFileLabel(Directory directory, FileLabel fileLabel) {
         if (!directory.node.link(fileLabel)) {
@@ -578,11 +586,11 @@ public class FileHierarchy {
     }
 
     /**
-     * 移除文件标签。
+     * 从指定目录移除文件标签。
      *
-     * @param directory
-     * @param fileLabel
-     * @return
+     * @param directory 指定目录。
+     * @param fileLabel 指定文件标签。
+     * @return 移除成功返回 {@code true} 。
      */
     protected boolean removeFileLabel(Directory directory, FileLabel fileLabel) {
         if (!directory.node.unlink(fileLabel)) {
@@ -614,9 +622,9 @@ public class FileHierarchy {
     /**
      * 删除多个文件。
      *
-     * @param directory
-     * @param fileCodes
-     * @return
+     * @param directory 指定工作目录。
+     * @param fileCodes 指定文件码列表。
+     * @return 返回删除成功的文件标签列表。
      */
     protected List<FileLabel> removeFileLabelWithFileCodes(Directory directory, List<String> fileCodes) {
         List<FileLabel> result = new ArrayList<>();
@@ -636,9 +644,9 @@ public class FileHierarchy {
     /**
      * 移除多个文件标签。
      *
-     * @param directory
-     * @param fileLabels
-     * @return 返回成功移除的文件码。
+     * @param directory 指定工作目录。
+     * @param fileLabels 指定文件标签列表。
+     * @return 返回成功移除的文件标签。
      */
     protected List<FileLabel> removeFileLabels(Directory directory, List<FileLabel> fileLabels) {
         List<FileLabel> result = new ArrayList<>();
@@ -682,10 +690,10 @@ public class FileHierarchy {
     /**
      * 罗列指定范围内的文件。
      *
-     * @param directory
-     * @param beginIndex
-     * @param endIndex
-     * @return
+     * @param directory 工作目录。
+     * @param beginIndex 起始索引。
+     * @param endIndex 结束索引。
+     * @return 返回查找到的文件标签列表。
      */
     protected List<FileLabel> listFileLabels(Directory directory, int beginIndex, int endIndex) {
         List<FileLabel> result = new ArrayList<>();
@@ -707,10 +715,10 @@ public class FileHierarchy {
     }
 
     /**
-     * 文件数量。
+     * 获取指定目录的文件数量。
      *
-     * @param directory
-     * @return
+     * @param directory 指定目录。
+     * @return 返回指定目录的文件数量。
      */
     protected int numFiles(Directory directory) {
         return directory.node.numRelatedKeys();

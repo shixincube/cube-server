@@ -291,9 +291,9 @@ public class Directory implements JSONable {
     /**
      * 查询指定索引范围内的所有文件标签实体。
      *
-     * @param beginIndex
-     * @param endIndex
-     * @return
+     * @param beginIndex 起始索引。
+     * @param endIndex 结束索引。
+     * @return 返回索引范围内的文件。
      */
     public List<FileLabel> listFiles(int beginIndex, int endIndex) {
         return this.fileHierarchy.listFileLabels(this, beginIndex, endIndex);

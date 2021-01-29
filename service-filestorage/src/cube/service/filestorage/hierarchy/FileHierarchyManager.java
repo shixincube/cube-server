@@ -106,6 +106,9 @@ public class FileHierarchyManager implements FileHierarchyListener {
         return root;
     }
 
+    /**
+     * 周期回调。用于维护过期的数据。
+     */
     public void onTick() {
         long now = System.currentTimeMillis();
 
@@ -127,6 +130,9 @@ public class FileHierarchyManager implements FileHierarchyListener {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onDirectoryRemove(FileHierarchy fileHierarchy, List<Directory> directories) {
         for (Directory directory : directories) {
@@ -135,6 +141,9 @@ public class FileHierarchyManager implements FileHierarchyListener {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onFileLabelAdd(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel) {
         // 更新容量
@@ -148,6 +157,9 @@ public class FileHierarchyManager implements FileHierarchyListener {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onFileLabelRemove(FileHierarchy fileHierarchy, Directory directory, List<FileLabel> fileLabels) {
         // 更新容量
@@ -166,6 +178,9 @@ public class FileHierarchyManager implements FileHierarchyListener {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public FileLabel onQueryFileLabel(FileHierarchy fileHierarchy, Directory directory, String uniqueKey) {
         return this.fileStorageService.getFile(directory.getDomain().getName(), uniqueKey);
