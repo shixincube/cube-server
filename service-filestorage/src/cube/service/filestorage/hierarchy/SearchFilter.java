@@ -65,7 +65,10 @@ public class SearchFilter {
             JSONArray array = json.getJSONArray("type");
             for (int i = 0; i < array.length(); ++i) {
                 String typeString = array.getString(i);
-                this.fileTypes.add(FileType.matchExtension(typeString));
+                FileType fileType = FileType.matchExtension(typeString);
+                if (fileType != FileType.UNKNOWN && fileType != FileType.FILE) {
+                    this.fileTypes.add(fileType);
+                }
             }
         }
         else {
