@@ -272,6 +272,12 @@ public final class FileUtils {
         }
     }
 
+    /**
+     * 是否是常用图片类型。
+     *
+     * @param fileType
+     * @return
+     */
     public static boolean isImageType(FileType fileType) {
         switch (fileType) {
             case JPEG:

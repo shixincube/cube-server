@@ -27,12 +27,10 @@
 package cube.service.filestorage.hierarchy;
 
 import cube.common.entity.FileLabel;
-import cube.util.FileUtils;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 文件分类器。
@@ -45,13 +43,16 @@ public class FileSearcher {
 
     private LinkedHashMap<String, IndexingItem> repository;
 
-    private ConcurrentLinkedQueue<IndexingItem> imageFiles;
+    private Vector<IndexingItem> fileQueue;
+
+    private ConcurrentHashMap<SearchFilter, List<IndexingItem>> searchResultMap;
 
     public FileSearcher(Directory root, FileHierarchyListener listener) {
         this.root = root;
         this.listener = listener;
         this.repository = new LinkedHashMap<>();
-        this.imageFiles = new ConcurrentLinkedQueue<>();
+        this.fileQueue = new Vector<>();
+        this.searchResultMap = new ConcurrentHashMap<>();
     }
 
     public void addFile(Directory directory, FileLabel fileLabel) {
@@ -62,22 +63,71 @@ public class FileSearcher {
 
         IndexingItem item = new IndexingItem(key, directory, fileLabel);
         this.repository.put(key, item);
+        this.fileQueue.add(item);
 
-        if (FileUtils.isImageType(fileLabel.getFileType())) {
-            this.imageFiles.offer(item);
-        }
+        // 排序
+        Collections.sort(this.fileQueue);
     }
 
     public void removeFile(Directory directory, FileLabel fileLabel) {
         String key = FileSearcher.makeKey(directory, fileLabel);
         IndexingItem item = this.repository.remove(key);
         if (null != item) {
-            this.imageFiles.remove(item);
+            this.fileQueue.remove(item);
         }
     }
 
+    /**
+     * 搜索指定规则的文件。
+     *
+     * @param filter
+     * @return
+     */
+    public List<IndexingItem> search(SearchFilter filter) {
+        List<IndexingItem> record = this.searchResultMap.get(filter);
+        if (null != record) {
+            return record;
+        }
+
+        List<IndexingItem> result = new ArrayList<>();
+
+        int begin = filter.beginIndex;
+        int end = filter.endIndex;
+        final int num = end - begin;
+
+        // 从根目录开始进行递归
+        AtomicInteger index = new AtomicInteger(0);
+        FileHierarchyTool.recurseFile(this.root, new RecurseHandler() {
+            @Override
+            public boolean handle(Directory directory, FileLabel fileLabel) {
+                index.incrementAndGet();
+                
+                if (result.size() >= num) {
+                    return false;
+                }
+
+                if (filter.containsFileType(fileLabel.getFileType())) {
+
+                }
+
+                return true;
+            }
+        });
+
+        if (end + 1 > result.size()) {
+            end = result.size();
+        }
+
+        if (begin >= end) {
+            return null;
+        }
+
+        return result;
+    }
+
+    /*
     public List<IndexingItem> listImageFile(final int beginIndex, final int endIndex) {
-        if (this.imageFiles.size() < endIndex) {
+        if (this.fileQueue.size() < endIndex) {
             // 遍历
             FileHierarchyTool.recurseFile(this.root, new RecurseHandler() {
                 @Override
@@ -110,7 +160,7 @@ public class FileSearcher {
 
         list = list.subList(begin, end);
         return list;
-    }
+    }*/
 
     protected static String makeKey(Directory directory, FileLabel fileLabel) {
         return directory.getId().toString() + fileLabel.getFileCode();
@@ -119,7 +169,7 @@ public class FileSearcher {
     /**
      *
      */
-    public class IndexingItem {
+    public class IndexingItem implements Comparable<IndexingItem> {
 
         protected String key;
 
@@ -131,6 +181,21 @@ public class FileSearcher {
             this.key = key;
             this.directory = directory;
             this.fileLabel = fileLabel;
+        }
+
+        @Override
+        public int compareTo(IndexingItem o) {
+            // 时间倒序
+
+            if (this.fileLabel.getLastModified() < o.fileLabel.getLastModified()) {
+                return 1;
+            }
+            else if (this.fileLabel.getLastModified() > o.fileLabel.getLastModified()) {
+                return -1;
+            }
+            else {
+                return 0;
+            }
         }
     }
 }
