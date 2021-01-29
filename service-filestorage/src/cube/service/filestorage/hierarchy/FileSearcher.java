@@ -66,6 +66,14 @@ public class FileSearcher {
         IndexingItem item = new IndexingItem(key, directory, fileLabel);
         this.repository.put(key, item);
         this.fileQueue.add(item);
+
+        // 如果文件符合检索规则，删除指定过滤器的缓存
+        List<SearchFilter> list = this.matchFilter(fileLabel);
+        if (!list.isEmpty()) {
+            for (SearchFilter filter : list) {
+                this.searchResultMap.remove(filter);
+            }
+        }
     }
 
     public void removeFile(Directory directory, FileLabel fileLabel) {
@@ -73,7 +81,35 @@ public class FileSearcher {
         IndexingItem item = this.repository.remove(key);
         if (null != item) {
             this.fileQueue.remove(item);
+
+            // 如果文件符合检索规则，删除指定过滤器的缓存
+            List<SearchFilter> list = this.matchFilter(fileLabel);
+            if (!list.isEmpty()) {
+                for (SearchFilter filter : list) {
+                    this.searchResultMap.remove(filter);
+                }
+            }
         }
+    }
+
+    /**
+     * 匹配已缓存的过滤器。
+     *
+     * @param fileLabel
+     * @return
+     */
+    private List<SearchFilter> matchFilter(FileLabel fileLabel) {
+        List<SearchFilter> result = new ArrayList<>();
+
+        Enumeration<SearchFilter> enumeration = this.searchResultMap.keys();
+        while (enumeration.hasMoreElements()) {
+            SearchFilter filter = enumeration.nextElement();
+            if (filter.containsFileType(fileLabel.getFileType())) {
+                result.add(filter);
+            }
+        }
+
+        return result;
     }
 
     /**

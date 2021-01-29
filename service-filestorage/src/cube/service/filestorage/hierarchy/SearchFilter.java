@@ -27,7 +27,6 @@
 package cube.service.filestorage.hierarchy;
 
 import cube.util.FileType;
-import cube.util.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
