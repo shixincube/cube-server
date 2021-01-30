@@ -206,7 +206,19 @@ public class FileSearcher {
         @Override
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
-            json.put("directory", this.directory.toCompactJSON());
+
+            JSONObject dir = this.directory.toCompactJSON();
+            Directory parent = this.directory.getParent();
+
+            JSONObject dirJson = dir;
+            while (null != parent) {
+                JSONObject parentJson = parent.toCompactJSON();
+                dirJson.put("parent", parentJson);
+                dirJson = parentJson;
+                parent = parent.getParent();
+            }
+
+            json.put("directory", dir);
             json.put("file", this.fileLabel.toCompactJSON());
             return json;
         }
