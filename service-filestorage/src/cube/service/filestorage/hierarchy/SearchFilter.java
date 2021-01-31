@@ -26,6 +26,7 @@
 
 package cube.service.filestorage.hierarchy;
 
+import cube.common.entity.FileLabel;
 import cube.util.FileType;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -39,6 +40,8 @@ import java.util.List;
 public class SearchFilter {
 
     protected List<FileType> fileTypes = new ArrayList<>();
+
+    protected List<String> extensions = new ArrayList<>();
 
     protected boolean inverseOrder = true;
 
@@ -65,6 +68,8 @@ public class SearchFilter {
             JSONArray array = json.getJSONArray("type");
             for (int i = 0; i < array.length(); ++i) {
                 String typeString = array.getString(i);
+                this.extensions.add(typeString.toLowerCase());
+
                 FileType fileType = FileType.matchExtension(typeString);
                 if (fileType != FileType.UNKNOWN && fileType != FileType.FILE) {
                     this.fileTypes.add(fileType);
@@ -79,11 +84,15 @@ public class SearchFilter {
     /**
      * 判断指定的文件类型是否包含在搜索条件里。
      *
-     * @param fileType
+     * @param fileLabel
      * @return
      */
-    public boolean containsFileType(FileType fileType) {
-        return this.fileTypes.contains(fileType);
+    public boolean containsFileType(FileLabel fileLabel) {
+        if (this.fileTypes.contains(fileLabel.getFileType())) {
+            return true;
+        }
+
+        return this.extensions.contains(fileLabel.getFileExtension().toLowerCase());
     }
 
     @Override

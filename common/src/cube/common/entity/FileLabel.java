@@ -29,6 +29,7 @@ package cube.common.entity;
 import cell.util.Utils;
 import cube.common.Domain;
 import cube.util.FileType;
+import cube.util.FileUtils;
 import org.json.JSONObject;
 
 /**
@@ -274,6 +275,15 @@ public class FileLabel extends Entity {
      */
     public FileType getFileType() {
         return this.fileType;
+    }
+
+    /**
+     * 返回文件扩展名。
+     *
+     * @return 返回文件扩展名。
+     */
+    public String getFileExtension() {
+        return FileUtils.extractFileExtension(this.fileName);
     }
 
     /**

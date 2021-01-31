@@ -104,7 +104,7 @@ public class FileSearcher {
         Enumeration<SearchFilter> enumeration = this.searchResultMap.keys();
         while (enumeration.hasMoreElements()) {
             SearchFilter filter = enumeration.nextElement();
-            if (filter.containsFileType(fileLabel.getFileType())) {
+            if (filter.containsFileType(fileLabel)) {
                 result.add(filter);
             }
         }
@@ -143,7 +143,7 @@ public class FileSearcher {
                     return false;
                 }
 
-                if (filter.containsFileType(fileLabel.getFileType())) {
+                if (filter.containsFileType(fileLabel)) {
                     // 文件类型匹配
                     int curIndex = index.get();
                     if (curIndex >= begin && curIndex <= end) {

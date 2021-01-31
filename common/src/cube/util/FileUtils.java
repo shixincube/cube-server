@@ -169,7 +169,7 @@ public final class FileUtils {
      * @param fileName
      * @return
      */
-    public static FileType extractFileExtension(String fileName) {
+    public static FileType extractFileExtensionType(String fileName) {
         int index = fileName.lastIndexOf(".");
         if (index <= 0) {
             return FileType.UNKNOWN;
@@ -177,6 +177,21 @@ public final class FileUtils {
 
         String extension = fileName.substring(index + 1);
         return FileType.matchExtension(extension);
+    }
+
+    /**
+     * 提取文件扩展名。
+     *
+     * @param fileName 文件名。
+     * @return
+     */
+    public static String extractFileExtension(String fileName) {
+        int index = fileName.lastIndexOf(".");
+        if (index <= 0) {
+            return "";
+        }
+
+        return fileName.substring(index + 1);
     }
 
     /**
@@ -209,7 +224,7 @@ public final class FileUtils {
         }
 
         // 判断扩展名类型
-        return extractFileExtension(fileName);
+        return extractFileExtensionType(fileName);
     }
 
     /**
