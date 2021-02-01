@@ -54,6 +54,11 @@ public class DisconnectTask extends Task {
         // 查询联系人
         Contact contact = this.performer.queryContact(this.talkContext);
 
+        if (null == contact) {
+            ((ContactCellet) this.cellet).returnDisconnectTask(this);
+            return;
+        }
+
         // 打包
         Packet packet = new Packet(ContactAction.Disconnect.name, contact.toJSON());
 
