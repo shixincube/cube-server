@@ -360,25 +360,21 @@ public class Contact extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("id", this.id);
-            json.put("domain", this.domain.getName());
-            json.put("name", this.name);
+        json.put("id", this.id);
+        json.put("domain", this.domain.getName());
+        json.put("name", this.name);
 
-            if (!this.deviceList.isEmpty()) {
-                JSONArray array = new JSONArray();
-                for (int i = 0, len = this.deviceList.size(); i < len; ++i) {
-                    Device device = this.deviceList.get(i);
-                    array.put(device.toJSON());
-                }
-                json.put("devices", array);
+        if (!this.deviceList.isEmpty()) {
+            JSONArray array = new JSONArray();
+            for (int i = 0, len = this.deviceList.size(); i < len; ++i) {
+                Device device = this.deviceList.get(i);
+                array.put(device.toJSON());
             }
+            json.put("devices", array);
+        }
 
-            if (null != this.context) {
-                json.put("context", this.context);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (null != this.context) {
+            json.put("context", this.context);
         }
         return json;
     }
@@ -388,27 +384,19 @@ public class Contact extends Entity {
      */
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("id", this.id);
-            json.put("name", this.name);
-            if (null != this.context) {
-                json.put("context", this.context);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        json.put("id", this.id);
+        json.put("name", this.name);
+        if (null != this.context) {
+            json.put("context", this.context);
         }
         return json;
     }
 
     public JSONObject toBasicJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("id", this.id);
-            json.put("domain", this.domain.getName());
-            json.put("name", this.name);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        json.put("id", this.id);
+        json.put("domain", this.domain.getName());
+        json.put("name", this.name);
         return json;
     }
 }
