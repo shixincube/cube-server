@@ -111,6 +111,12 @@ public class ContactServiceCellet extends Cellet {
         else if (ContactAction.RemoveGroupMember.name.equals(action)) {
             this.executor.execute(new RemoveGroupMemberTask(this, talkContext, primitive));
         }
+        else if (ContactAction.GetAppendix.name.equals(action)) {
+            this.executor.execute(new GetAppendixTask(this, talkContext, primitive));
+        }
+        else if (ContactAction.UpdateAppendix.name.equals(action)) {
+            this.executor.execute(new UpdateAppendixTask(this, talkContext, primitive));
+        }
         else if (ContactAction.DeviceTimeout.name.equals(action)) {
             this.executor.execute(new DeviceTimeoutTask(this, talkContext, primitive));
         }

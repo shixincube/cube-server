@@ -29,7 +29,6 @@ package cube.common.entity;
 import cube.common.Domain;
 import cube.common.JSONable;
 import cube.common.UniqueKey;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -72,15 +71,11 @@ public abstract class Entity implements JSONable {
     public Entity(JSONObject json) {
         this.timestamp = System.currentTimeMillis();
 
-        try {
-            if (json.has("id")) {
-                this.id = json.getLong("id");
-            }
-            if (json.has("domain")) {
-                this.domain = new Domain(json.getString("domain"));
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (json.has("id")) {
+            this.id = json.getLong("id");
+        }
+        if (json.has("domain")) {
+            this.domain = new Domain(json.getString("domain"));
         }
 
         if (null != this.id && null != this.domain) {

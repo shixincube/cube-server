@@ -29,15 +29,13 @@ package cube.service.contact;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
-import cube.common.entity.Contact;
-import cube.common.entity.Device;
-import cube.common.entity.Group;
-import cube.common.entity.GroupState;
+import cube.common.entity.*;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
 import cube.storage.StorageFactory;
+import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.SQLUtils;
 import org.json.JSONException;
@@ -61,6 +59,8 @@ public class ContactStorage implements Storagable {
     private final String groupTablePrefix = "group_";
 
     private final String groupMemberTablePrefix = "group_member_";
+
+    private final String appendixTablePrefix = "appendix_";
 
     private final StorageField[] contactFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG),
@@ -100,6 +100,15 @@ public class ContactStorage implements Storagable {
             //new StorageField("reserved", LiteralBase.STRING)
     };
 
+    /**
+     * 附件表字段描述。
+     */
+    private final StorageField[] appendixFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG),
+            new StorageField("appendix", LiteralBase.STRING)
+            //new StorageField("reserved", LiteralBase.STRING)
+    };
+
     private ExecutorService executor;
 
     private Storage storage;
@@ -107,6 +116,7 @@ public class ContactStorage implements Storagable {
     private Map<String, String> contactTableNameMap;
     private Map<String, String> groupTableNameMap;
     private Map<String, String> groupMemberTableNameMap;
+    private Map<String, String> appendixTableNameMap;
 
     public ContactStorage(ExecutorService executor, Storage storage) {
         this.executor = executor;
@@ -114,6 +124,7 @@ public class ContactStorage implements Storagable {
         this.contactTableNameMap = new HashMap<>();
         this.groupTableNameMap = new HashMap<>();
         this.groupMemberTableNameMap = new HashMap<>();
+        this.appendixTableNameMap = new HashMap<>();
     }
 
     public ContactStorage(ExecutorService executor, StorageType type, JSONObject config) {
@@ -122,6 +133,7 @@ public class ContactStorage implements Storagable {
         this.contactTableNameMap = new HashMap<>();
         this.groupTableNameMap = new HashMap<>();
         this.groupMemberTableNameMap = new HashMap<>();
+        this.appendixTableNameMap = new HashMap<>();
     }
 
     @Override
@@ -140,6 +152,7 @@ public class ContactStorage implements Storagable {
             this.checkContactTable(domain);
             this.checkGroupTable(domain);
             this.checkGroupMemberTable(domain);
+            this.checkAppendixTable(domain);
         }
     }
 
@@ -700,6 +713,125 @@ public class ContactStorage implements Storagable {
         });
     }
 
+    /**
+     * 写入附录数据。
+     *
+     * @param appendix
+     */
+    public void writeAppendix(ContactAppendix appendix) {
+        String table = this.appendixTableNameMap.get(appendix.getOwner().getDomain().getName());
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (storage) {
+                    List<StorageField[]> list = storage.executeQuery(table, new StorageField[] {
+                            new StorageField("id", LiteralBase.LONG)
+                    }, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
+                    });
+
+                    if (list.isEmpty()) {
+                        storage.executeInsert(table, new StorageField[] {
+                                new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()),
+                                new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
+                        });
+                    }
+                    else {
+                        storage.executeUpdate(table, new StorageField[] {
+                                new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
+                        }, new Conditional[] {
+                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
+                        });
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * 读取附录数据。
+     *
+     * @param contact
+     * @return
+     */
+    public ContactAppendix readAppendix(Contact contact) {
+        String table = this.appendixTableNameMap.get(contact.getDomain().getName());
+
+        List<StorageField[]> result = null;
+        synchronized (this.storage) {
+            result = this.storage.executeQuery(table, this.appendixFields, new Conditional[] {
+                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
+            });
+        }
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        String appendixContent = result.get(0)[1].getString();
+
+        return new ContactAppendix(contact, new JSONObject(appendixContent));
+    }
+
+    /**
+     * 写入附录数据。
+     *
+     * @param appendix
+     */
+    public void writeAppendix(GroupAppendix appendix) {
+        String table = this.appendixTableNameMap.get(appendix.getOwner().getDomain().getName());
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (storage) {
+                    List<StorageField[]> list = storage.executeQuery(table, new StorageField[] {
+                            new StorageField("id", LiteralBase.LONG)
+                    }, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
+                    });
+
+                    if (list.isEmpty()) {
+                        storage.executeInsert(table, new StorageField[] {
+                                new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()),
+                                new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
+                        });
+                    }
+                    else {
+                        storage.executeUpdate(table, new StorageField[] {
+                                new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
+                        }, new Conditional[] {
+                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
+                        });
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * 读取附录数据。
+     *
+     * @param group
+     * @return
+     */
+    public GroupAppendix readAppendix(Group group) {
+        String table = this.appendixTableNameMap.get(group.getDomain().getName());
+
+        List<StorageField[]> result = null;
+        synchronized (this.storage) {
+            result = this.storage.executeQuery(table, this.appendixFields, new Conditional[] {
+                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
+            });
+        }
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        String appendixContent = result.get(0)[1].getString();
+        return new GroupAppendix(group, new JSONObject(appendixContent));
+    }
+
     private void checkContactTable(String domain) {
         String table = this.contactTablePrefix + domain;
 
@@ -817,6 +949,32 @@ public class ContactStorage implements Storagable {
                     }),
                     new StorageField("removing_operator", LiteralBase.LONG, new Constraint[] {
                             Constraint.DEFAULT_0
+                    }),
+                    new StorageField("reserved", LiteralBase.STRING, new Constraint[] {
+                            Constraint.DEFAULT_NULL
+                    })
+            };
+
+            if (this.storage.executeCreate(table, fields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkAppendixTable(String domain) {
+        String table = this.appendixTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.appendixTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            StorageField[] fields = new StorageField[] {
+                    new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                            Constraint.PRIMARY_KEY
+                    }),
+                    new StorageField("appendix", LiteralBase.STRING, new Constraint[] {
+                            Constraint.NOT_NULL
                     }),
                     new StorageField("reserved", LiteralBase.STRING, new Constraint[] {
                             Constraint.DEFAULT_NULL

@@ -45,10 +45,7 @@ import cube.common.ModuleEvent;
 import cube.common.Packet;
 import cube.common.UniqueKey;
 import cube.common.action.ContactAction;
-import cube.common.entity.Contact;
-import cube.common.entity.Device;
-import cube.common.entity.Group;
-import cube.common.entity.GroupState;
+import cube.common.entity.*;
 import cube.common.state.ContactStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -106,6 +103,16 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     protected ConcurrentHashMap<String, GroupTable> activeGroupTables;
 
     /**
+     * 联系人附录。
+     */
+    protected ConcurrentHashMap<String, ContactAppendix> contactAppendixMap;
+
+    /**
+     * 群组附录。
+     */
+    protected ConcurrentHashMap<String, GroupAppendix> groupAppendixMap;
+
+    /**
      * 联系人数据缓存。
      */
     private SharedMemory contactCache;
@@ -152,6 +159,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         this.tokenContactMap = new ConcurrentHashMap<>();
 
         this.activeGroupTables = new ConcurrentHashMap<>();
+
+        this.contactAppendixMap = new ConcurrentHashMap<>();
+        this.groupAppendixMap = new ConcurrentHashMap<>();
 
         // 联系人缓存
         SharedMemoryConfig contactConfig = new SharedMemoryConfig("config/contact-cache.properties");
@@ -797,6 +807,35 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         return bundle;
+    }
+
+    /**
+     * 获取指定联系人的附录。
+     *
+     * @param contact
+     * @return
+     */
+    public ContactAppendix getAppendix(Contact contact) {
+        ContactAppendix appendix = this.contactAppendixMap.get(contact.getUniqueKey());
+        if (null == appendix) {
+            appendix = this.storage.readAppendix(contact);
+            if (null == appendix) {
+                appendix = new ContactAppendix(contact);
+            }
+
+            this.contactAppendixMap.put(contact.getUniqueKey(), appendix);
+        }
+        return appendix;
+    }
+
+    /**
+     * 更新附录。
+     *
+     * @param appendix
+     */
+    public void updateAppendix(ContactAppendix appendix) {
+        this.contactAppendixMap.put(appendix.getOwner().getUniqueKey(), appendix);
+        this.storage.writeAppendix(appendix);
     }
 
     /**

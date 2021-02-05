@@ -27,7 +27,6 @@
 package cube.common.entity;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -91,25 +90,21 @@ public class Group extends Contact implements Comparable<Group> {
         super(json);
         this.members = new Vector<>();
 
-        try {
-            JSONObject ownerJson = json.getJSONObject("owner");
-            this.owner = new Contact(ownerJson, this.domain.getName());
-            this.members.add(this.owner);
+        JSONObject ownerJson = json.getJSONObject("owner");
+        this.owner = new Contact(ownerJson, this.domain.getName());
+        this.members.add(this.owner);
 
-            this.creationTime = json.getLong("creation");
-            this.lastActiveTime = json.getLong("lastActive");
-            this.state = GroupState.parse(json.getInt("state"));
+        this.creationTime = json.getLong("creation");
+        this.lastActiveTime = json.getLong("lastActive");
+        this.state = GroupState.parse(json.getInt("state"));
 
-            if (json.has("members")) {
-                JSONArray array = json.getJSONArray("members");
-                for (int i = 0, len = array.length(); i < len; ++i) {
-                    JSONObject member = array.getJSONObject(i);
-                    Contact contact = new Contact(member, this.domain.getName());
-                    this.addMember(contact);
-                }
+        if (json.has("members")) {
+            JSONArray array = json.getJSONArray("members");
+            for (int i = 0, len = array.length(); i < len; ++i) {
+                JSONObject member = array.getJSONObject(i);
+                Contact contact = new Contact(member, this.domain.getName());
+                this.addMember(contact);
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
     }
 
@@ -350,24 +345,20 @@ public class Group extends Contact implements Comparable<Group> {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        try {
-            if (json.has("devices")) {
-                json.remove("devices");
-            }
-
-            JSONArray array = new JSONArray();
-            for (Contact contact : this.members) {
-                array.put(contact.toCompactJSON());
-            }
-            json.put("members", array);
-
-            json.put("owner", this.owner.toCompactJSON());
-            json.put("creation", this.creationTime);
-            json.put("lastActive", this.lastActiveTime);
-            json.put("state", this.state.getCode());
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (json.has("devices")) {
+            json.remove("devices");
         }
+
+        JSONArray array = new JSONArray();
+        for (Contact contact : this.members) {
+            array.put(contact.toCompactJSON());
+        }
+        json.put("members", array);
+
+        json.put("owner", this.owner.toCompactJSON());
+        json.put("creation", this.creationTime);
+        json.put("lastActive", this.lastActiveTime);
+        json.put("state", this.state.getCode());
         return json;
     }
 
@@ -377,14 +368,10 @@ public class Group extends Contact implements Comparable<Group> {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = super.toCompactJSON();
-        try {
-            json.put("owner", this.owner.toCompactJSON());
-            json.put("creation", this.creationTime);
-            json.put("lastActive", this.lastActiveTime);
-            json.put("state", this.state.getCode());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        json.put("owner", this.owner.toCompactJSON());
+        json.put("creation", this.creationTime);
+        json.put("lastActive", this.lastActiveTime);
+        json.put("state", this.state.getCode());
         return json;
     }
 
@@ -397,11 +384,7 @@ public class Group extends Contact implements Comparable<Group> {
     public JSONObject toJSON(GroupState state) {
         JSONObject json = this.toJSON();
         json.remove("state");
-        try {
-            json.put("state", state.getCode());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        json.put("state", state.getCode());
         return json;
     }
 

@@ -30,7 +30,6 @@ import cell.core.talk.TalkContext;
 import cube.common.Domain;
 import cube.common.UniqueKey;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -112,26 +111,22 @@ public class Contact extends Entity {
 
         this.deviceList = new ArrayList<>(1);
 
-        try {
-            this.id = json.getLong("id");
-            this.domain = (null != domain && domain.length() > 1) ? new Domain(domain) : new Domain(json.getString("domain"));
-            this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
-            this.name = json.getString("name");
+        this.id = json.getLong("id");
+        this.domain = (null != domain && domain.length() > 1) ? new Domain(domain) : new Domain(json.getString("domain"));
+        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
+        this.name = json.getString("name");
 
-            if (json.has("devices")) {
-                JSONArray array = json.getJSONArray("devices");
-                for (int i = 0; i < array.length(); ++i) {
-                    JSONObject devJson = array.getJSONObject(i);
-                    Device device = new Device(devJson);
-                    this.addDevice(device);
-                }
+        if (json.has("devices")) {
+            JSONArray array = json.getJSONArray("devices");
+            for (int i = 0; i < array.length(); ++i) {
+                JSONObject devJson = array.getJSONObject(i);
+                Device device = new Device(devJson);
+                this.addDevice(device);
             }
+        }
 
-            if (json.has("context")) {
-                this.context = json.getJSONObject("context");
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (json.has("context")) {
+            this.context = json.getJSONObject("context");
         }
     }
 
@@ -146,33 +141,29 @@ public class Contact extends Entity {
 
         this.deviceList = new ArrayList<>(1);
 
-        try {
-            this.id = json.getLong("id");
-            this.domain = new Domain(json.getString("domain"));
-            this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
-            this.name = json.getString("name");
+        this.id = json.getLong("id");
+        this.domain = new Domain(json.getString("domain"));
+        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
+        this.name = json.getString("name");
 
-            if (json.has("devices")) {
-                JSONArray array = json.getJSONArray("devices");
-                for (int i = 0; i < array.length(); ++i) {
-                    JSONObject devJson = array.getJSONObject(i);
-                    Device device = new Device(devJson);
-                    this.addDevice(device);
-                }
-            }
-
-            if (json.has("context")) {
-                this.context = json.getJSONObject("context");
-            }
-
-            // 绑定设备到上下文
-            if (json.has("device")) {
-                JSONObject deviceJson = json.getJSONObject("device");
-                Device device = new Device(deviceJson, talkContext);
+        if (json.has("devices")) {
+            JSONArray array = json.getJSONArray("devices");
+            for (int i = 0; i < array.length(); ++i) {
+                JSONObject devJson = array.getJSONObject(i);
+                Device device = new Device(devJson);
                 this.addDevice(device);
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        }
+
+        if (json.has("context")) {
+            this.context = json.getJSONObject("context");
+        }
+
+        // 绑定设备到上下文
+        if (json.has("device")) {
+            JSONObject deviceJson = json.getJSONObject("device");
+            Device device = new Device(deviceJson, talkContext);
+            this.addDevice(device);
         }
     }
 

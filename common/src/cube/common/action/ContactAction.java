@@ -117,6 +117,16 @@ public enum ContactAction {
     ModifyGroupMember("modifyGroupMember"),
 
     /**
+     * 获取指定的附录。
+     */
+    GetAppendix("getAppendix"),
+
+    /**
+     * 更新附录。
+     */
+    UpdateAppendix("updateAppendix"),
+
+    /**
      * 未知动作。
      */
     Unknown("")
