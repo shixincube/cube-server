@@ -68,13 +68,13 @@ public class ContactAppendix extends Entity {
 
     /**
      * 指定联系人备注在该联系人的名称。
-     * 即 contact 把 this 备注为 name 。
+     * 即 marker 把 this 备注为 name 。
      *
-     * @param contact
+     * @param marker
      * @param name
      */
-    public void remarkName(Contact contact, String name) {
-        this.remarkNames.put(contact.getId(), name);
+    public void remarkName(Contact marker, String name) {
+        this.remarkNames.put(marker.getId(), name);
         this.resetTimestamp();
     }
 
