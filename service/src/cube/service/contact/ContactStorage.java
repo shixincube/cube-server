@@ -331,7 +331,46 @@ public class ContactStorage implements Storagable {
                         });
 
                         if (writeMembers) {
-                            // TODO 更新成员列表
+                            // 更新成员列表
+                            for (Contact contact : group.getMembers()) {
+                                // 查询成员
+                                List<StorageField[]> cr = storage.executeQuery(groupMemberTable, new StorageField[] {
+                                        new StorageField("sn", LiteralBase.LONG)
+                                }, new Conditional[] {
+                                        Conditional.createEqualTo("group", LiteralBase.LONG, groupId),
+                                        Conditional.createAnd(),
+                                        Conditional.createEqualTo("contact_id", LiteralBase.LONG, contact.getId())
+                                });
+
+                                if (cr.isEmpty()) {
+                                    // 没有该成员数据，进行插入
+                                    // 成员数据字段
+                                    StorageField[] fields = new StorageField[] {
+                                            new StorageField("group", LiteralBase.LONG, groupId),
+                                            new StorageField("contact_id", LiteralBase.LONG, contact.getId()),
+                                            new StorageField("contact_name", LiteralBase.STRING, contact.getName()),
+                                            new StorageField("contact_context", LiteralBase.STRING,
+                                                    (null == contact.getContext()) ? null : contact.getContext().toString()),
+                                            new StorageField("adding_time", LiteralBase.LONG, group.getLastActiveTime()),
+                                            new StorageField("adding_operator", LiteralBase.LONG, group.getOwner().getId())
+                                    };
+                                    storage.executeInsert(groupMemberTable, fields);
+                                }
+                                else {
+                                    // 有该成员数据，进行更新
+                                    // 成员数据字段
+                                    StorageField[] fields = new StorageField[] {
+                                            new StorageField("contact_name", LiteralBase.STRING, contact.getName()),
+                                            new StorageField("contact_context", LiteralBase.STRING,
+                                                    (null == contact.getContext()) ? null : contact.getContext().toString())
+                                    };
+                                    storage.executeUpdate(groupMemberTable, fields, new Conditional[] {
+                                            Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, groupId)),
+                                            Conditional.createAnd(),
+                                            Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, contact.getId()))
+                                    });
+                                }
+                            }
                         }
                     }
                 }

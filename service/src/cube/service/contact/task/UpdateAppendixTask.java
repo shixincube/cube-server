@@ -34,6 +34,8 @@ import cell.core.talk.dialect.DialectFactory;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.ContactAppendix;
+import cube.common.entity.Group;
+import cube.common.entity.GroupAppendix;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -65,11 +67,13 @@ public class UpdateAppendixTask extends ServiceTask {
 
         if (data.has("contactId")) {
             Long id = data.getLong("contactId");
-            String remarkName = data.getString("remarkName");
-
             Contact target = ContactManager.getInstance().getContact(contact.getDomain().getName(), id);
 
+            // 获取附录
             ContactAppendix appendix = ContactManager.getInstance().getAppendix(target);
+
+            // 更新备注名
+            String remarkName = data.getString("remarkName");
             appendix.remarkName(contact, remarkName);
 
             ContactManager.getInstance().updateAppendix(appendix);
@@ -77,8 +81,37 @@ public class UpdateAppendixTask extends ServiceTask {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Ok.code, appendix.packJSON(contact)));
         }
-        else {
+        else if (data.has("groupId")) {
+            Long groupId = data.getLong("groupId");
+            Group group = ContactManager.getInstance().getGroup(groupId, contact.getDomain().getName());
+            if (null == group) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, ContactStateCode.NotFindGroup.code, data));
+                return;
+            }
 
+            // 判断是否是群组成员
+            if (!group.hasMember(contact.getId())) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));
+                return;
+            }
+
+            // 获取附录
+            GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
+
+            // 更新备注
+            String remarkContent = data.getString("remark");
+            appendix.remark(contact, remarkContent);
+
+            ContactManager.getInstance().updateAppendix(appendix);
+
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.Ok.code, appendix.packJSON(contact)));
+        }
+        else {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
         }
     }
 }

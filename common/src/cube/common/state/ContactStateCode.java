@@ -52,6 +52,11 @@ public enum ContactStateCode {
     NoSignIn(12),
 
     /**
+     * 未找到群组。
+     */
+    NotFindGroup(15),
+
+    /**
      * 令牌不一致。
      */
     InconsistentToken(21),

@@ -35,6 +35,7 @@ import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.ContactAppendix;
 import cube.common.entity.Group;
+import cube.common.entity.GroupAppendix;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -73,6 +74,31 @@ public class GetAppendixTask extends ServiceTask {
 
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Ok.code, appendix.packJSON(contact)));
+        }
+        else if (data.has("groupId")) {
+            Long groupId = data.getLong("groupId");
+            Group group = ContactManager.getInstance().getGroup(groupId, contact.getDomain().getName());
+            if (null == group) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, ContactStateCode.NotFindGroup.code, data));
+                return;
+            }
+
+            // 判断是否是群组成员
+            if (!group.hasMember(contact.getId())) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));
+                return;
+            }
+
+            GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
+
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.Ok.code, appendix.packJSON(contact)));
+        }
+        else {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
         }
     }
 }

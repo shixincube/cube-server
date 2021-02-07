@@ -50,7 +50,7 @@ public class DaemonTask implements Runnable {
     /**
      * 附录空闲时长。
      */
-    private long appendixIdle = 30L * 60L * 1000L;
+    private long appendixIdle = 1L * 60L * 1000L;
 
     /**
      * 间隔 10 分钟

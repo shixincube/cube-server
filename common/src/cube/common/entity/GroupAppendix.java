@@ -34,7 +34,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * 联系人的附录。
+ * 群组的附录。
  */
 public class GroupAppendix extends Entity {
 
@@ -66,14 +66,37 @@ public class GroupAppendix extends Entity {
         return this.owner;
     }
 
+    /**
+     * 指定成员备注该群组的信息。
+     *
+     * @param member
+     * @param content
+     */
     public void remark(Contact member, String content) {
         this.remarkContents.put(member.getId(), content);
         this.resetTimestamp();
     }
 
+    /**
+     * 获取指定成员对该群组的备注信息。
+     *
+     * @param member
+     * @return
+     */
     public String getRemark(Contact member) {
         this.resetTimestamp();
         return this.remarkContents.get(member.getId());
+    }
+
+    public JSONObject packJSON(Contact member) {
+        JSONObject json = new JSONObject();
+        json.put("owner", this.owner.toCompactJSON());
+        String remarkContent = this.remarkContents.get(member.getId());
+        if (null == remarkContent) {
+            remarkContent = "";
+        }
+        json.put("remark", remarkContent);
+        return json;
     }
 
     @Override

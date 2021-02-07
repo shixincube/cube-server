@@ -518,29 +518,24 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @return
      */
     public Group getGroup(Long id, String domainName) {
-        GroupTable table = this.activeGroupTables.get(domainName);
-        if (null != table) {
-            Group group = table.getGroup(id);
-            if (null != group) {
-                return group;
-            }
+        GroupTable table = this.getGroupTable(domainName);
+        Group group = table.getGroup(id);
+        if (null != group) {
+            return group;
         }
 
         String key = UniqueKey.make(id, domainName);
         JSONObject data = this.groupCache.applyGet(key);
         if (null != data) {
-            Group group = new Group(data);
-            if (null != table) {
-                table.putGroup(group);
-            }
+            group = new Group(data);
+            table.putGroup(group);
             return group;
         }
 
-        Group group = this.storage.readGroup(domainName, id);
+        group = this.storage.readGroup(domainName, id);
         if (null != group) {
-            if (null != table) {
-                table.putGroup(group);
-            }
+            table.putGroup(group);
+            this.groupCache.applyPut(key, group.toJSON());
             return group;
         }
 
@@ -829,12 +824,41 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 获取指定群组的附录。
+     *
+     * @param group
+     * @return
+     */
+    public GroupAppendix getAppendix(Group group) {
+        GroupAppendix appendix = this.groupAppendixMap.get(group.getUniqueKey());
+        if (null == appendix) {
+            appendix = this.storage.readAppendix(group);
+            if (null == appendix) {
+                appendix = new GroupAppendix(group);
+            }
+
+            this.groupAppendixMap.put(group.getUniqueKey(), appendix);
+        }
+        return appendix;
+    }
+
+    /**
      * 更新附录。
      *
      * @param appendix
      */
     public void updateAppendix(ContactAppendix appendix) {
         this.contactAppendixMap.put(appendix.getOwner().getUniqueKey(), appendix);
+        this.storage.writeAppendix(appendix);
+    }
+
+    /**
+     * 更新附录。
+     *
+     * @param appendix
+     */
+    public void updateAppendix(GroupAppendix appendix) {
+        this.groupAppendixMap.put(appendix.getOwner().getUniqueKey(), appendix);
         this.storage.writeAppendix(appendix);
     }
 
