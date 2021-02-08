@@ -160,25 +160,29 @@ public class SQLiteStorage extends AbstractStorage {
 
     @Override
     public boolean executeInsert(String table, List<StorageField[]> fieldsList) {
-        // 拼写 SQL 语句
-        String sql = SQLUtils.spellInsert(table, fieldsList);
+        boolean success = true;
+        for (StorageField[] fields : fieldsList) {
+            // 拼写 SQL 语句
+            String sql = SQLUtils.spellInsert(table, fields);
 
-        Statement statement = null;
-        try {
-            statement = this.connection.createStatement();
-            statement.executeUpdate(sql);
-        } catch (SQLException e) {
-            Logger.e(this.getClass(), "SQL: " + sql, e);
-            return false;
-        } finally {
-            if (null != statement) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
+            Statement statement = null;
+            try {
+                statement = this.connection.createStatement();
+                statement.executeUpdate(sql);
+            } catch (SQLException e) {
+                Logger.e(this.getClass(), "SQL: " + sql, e);
+                success = false;
+                continue;
+            } finally {
+                if (null != statement) {
+                    try {
+                        statement.close();
+                    } catch (SQLException e) {
+                    }
                 }
             }
         }
-        return true;
+        return success;
     }
 
     @Override
