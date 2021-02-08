@@ -144,13 +144,5 @@ public class DaemonTask implements Runnable {
                 caiter.remove();
             }
         }
-
-        Iterator<Map.Entry<String, GroupAppendix>> gaiter = this.manager.groupAppendixMap.entrySet().iterator();
-        while (gaiter.hasNext()) {
-            Map.Entry<String, GroupAppendix> entry = gaiter.next();
-            if (now - entry.getValue().getTimestamp() > this.appendixIdle) {
-                gaiter.remove();
-            }
-        }
     }
 }

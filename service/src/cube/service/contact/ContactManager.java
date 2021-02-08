@@ -108,11 +108,6 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     protected ConcurrentHashMap<String, ContactAppendix> contactAppendixMap;
 
     /**
-     * 群组附录。
-     */
-    protected ConcurrentHashMap<String, GroupAppendix> groupAppendixMap;
-
-    /**
      * 联系人数据缓存。
      */
     private SharedMemory contactCache;
@@ -161,7 +156,6 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         this.activeGroupTables = new ConcurrentHashMap<>();
 
         this.contactAppendixMap = new ConcurrentHashMap<>();
-        this.groupAppendixMap = new ConcurrentHashMap<>();
 
         // 联系人缓存
         SharedMemoryConfig contactConfig = new SharedMemoryConfig("config/contact-cache.properties");
@@ -830,15 +824,18 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @return
      */
     public GroupAppendix getAppendix(Group group) {
-        GroupAppendix appendix = this.groupAppendixMap.get(group.getUniqueKey());
-        if (null == appendix) {
-            appendix = this.storage.readAppendix(group);
-            if (null == appendix) {
-                appendix = new GroupAppendix(group);
-            }
-
-            this.groupAppendixMap.put(group.getUniqueKey(), appendix);
+        String key = GroupAppendix.makeUniqueKey(group);
+        JSONObject json = this.groupCache.applyGet(key);
+        if (null != json) {
+            return new GroupAppendix(group, json);
         }
+
+        GroupAppendix appendix = this.storage.readAppendix(group);
+        if (null == appendix) {
+            appendix = new GroupAppendix(group);
+        }
+
+        this.groupCache.applyPut(key, appendix.toJSON());
         return appendix;
     }
 
@@ -858,7 +855,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param appendix
      */
     public void updateAppendix(GroupAppendix appendix) {
-        this.groupAppendixMap.put(appendix.getOwner().getUniqueKey(), appendix);
+        this.groupCache.applyPut(appendix.getUniqueKey(), appendix.toJSON());
         this.storage.writeAppendix(appendix);
     }
 

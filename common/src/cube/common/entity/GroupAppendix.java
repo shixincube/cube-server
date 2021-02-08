@@ -42,14 +42,29 @@ public class GroupAppendix extends Entity {
 
     private HashMap<Long, String> remarkContents;
 
+    private String notice;
+
+    /**
+     * 构造函数。
+     *
+     * @param owner
+     */
     public GroupAppendix(Group owner) {
         super();
+        this.uniqueKey = owner.getUniqueKey() + "_appendix";
         this.owner = owner;
         this.remarkContents = new HashMap<>();
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param owner
+     * @param json
+     */
     public GroupAppendix(Group owner, JSONObject json) {
         super();
+        this.uniqueKey = owner.getUniqueKey() + "_appendix";
         this.owner = owner;
         this.remarkContents = new HashMap<>();
 
@@ -60,8 +75,17 @@ public class GroupAppendix extends Entity {
             String content = item.getString("content");
             this.remarkContents.put(id, content);
         }
+
+        if (json.has("notice")) {
+            this.notice = json.getString("notice");
+        }
     }
 
+    /**
+     * 返回附件所属的群组。
+     *
+     * @return 返回附件所属的群组。
+     */
     public Group getOwner() {
         return this.owner;
     }
@@ -88,6 +112,16 @@ public class GroupAppendix extends Entity {
         return this.remarkContents.get(member.getId());
     }
 
+    /**
+     * 设置群组公告。
+     *
+     * @param notice
+     */
+    public void setNotice(String notice) {
+        this.resetTimestamp();
+        this.notice = notice;
+    }
+
     public JSONObject packJSON(Contact member) {
         JSONObject json = new JSONObject();
         json.put("owner", this.owner.toCompactJSON());
@@ -96,6 +130,7 @@ public class GroupAppendix extends Entity {
             remarkContent = "";
         }
         json.put("remark", remarkContent);
+        json.put("notice", (null == this.notice) ? "" : this.notice);
         return json;
     }
 
@@ -114,11 +149,24 @@ public class GroupAppendix extends Entity {
             remarkContentsArray.put(item);
         }
         json.put("remarkContents", remarkContentsArray);
+
+        json.put("notice", (null == this.notice) ? "" : this.notice);
+
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         return this.toJSON();
+    }
+
+    /**
+     * 生成附录的唯一键。
+     *
+     * @param group
+     * @return
+     */
+    public static String makeUniqueKey(Group group) {
+        return group.getUniqueKey() + "_appendix";
     }
 }

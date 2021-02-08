@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cube.common.UniqueKey;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -42,14 +43,27 @@ public class ContactAppendix extends Entity {
 
     private HashMap<Long, String> remarkNames;
 
+    /**
+     * 构造函数。
+     *
+     * @param owner
+     */
     public ContactAppendix(Contact owner) {
         super();
+        this.uniqueKey = owner.getUniqueKey() + "_appendix";
         this.owner = owner;
         this.remarkNames = new HashMap<>();
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param owner
+     * @param json
+     */
     public ContactAppendix(Contact owner, JSONObject json) {
         super();
+        this.uniqueKey = owner.getUniqueKey() + "_appendix";
         this.owner = owner;
         this.remarkNames = new HashMap<>();
 
@@ -62,6 +76,11 @@ public class ContactAppendix extends Entity {
         }
     }
 
+    /**
+     * 返回附录所属的联系人。
+     *
+     * @return 返回附录所属的联系人。
+     */
     public Contact getOwner() {
         return this.owner;
     }

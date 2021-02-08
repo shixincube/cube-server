@@ -100,9 +100,14 @@ public class UpdateAppendixTask extends ServiceTask {
             // 获取附录
             GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
 
-            // 更新备注
-            String remarkContent = data.getString("remark");
-            appendix.remark(contact, remarkContent);
+            if (data.has("remark")) {
+                // 更新备注
+                appendix.remark(contact, data.getString("remark"));
+            }
+            else if (data.has("notice")) {
+                // 更新公告
+                appendix.setNotice(data.getString("notice"));
+            }
 
             ContactManager.getInstance().updateAppendix(appendix);
 
