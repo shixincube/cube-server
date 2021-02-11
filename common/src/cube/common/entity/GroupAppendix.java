@@ -44,6 +44,8 @@ public class GroupAppendix extends Entity {
 
     private String notice;
 
+    private HashMap<Long, String> memberRemarks;
+
     /**
      * 构造函数。
      *
@@ -54,6 +56,7 @@ public class GroupAppendix extends Entity {
         this.uniqueKey = owner.getUniqueKey() + "_appendix";
         this.owner = owner;
         this.remarkContents = new HashMap<>();
+        this.memberRemarks = new HashMap<>();
     }
 
     /**
@@ -67,6 +70,7 @@ public class GroupAppendix extends Entity {
         this.uniqueKey = owner.getUniqueKey() + "_appendix";
         this.owner = owner;
         this.remarkContents = new HashMap<>();
+        this.memberRemarks = new HashMap<>();
 
         JSONArray remarkNamesArray = json.getJSONArray("remarkContents");
         for (int i = 0; i < remarkNamesArray.length(); ++i) {
@@ -78,6 +82,16 @@ public class GroupAppendix extends Entity {
 
         if (json.has("notice")) {
             this.notice = json.getString("notice");
+        }
+
+        if (json.has("memberRemarks")) {
+            JSONArray array = json.getJSONArray("memberRemarks");
+            for (int i = 0; i < array.length(); ++i) {
+                JSONObject item = array.getJSONObject(i);
+                Long id = item.getLong("id");
+                String remark = item.getString("remark");
+                this.memberRemarks.put(id, remark);
+            }
         }
     }
 
@@ -122,6 +136,26 @@ public class GroupAppendix extends Entity {
         this.notice = notice;
     }
 
+    /**
+     * 获取指定成员的备注。
+     *
+     * @param memberId
+     * @return
+     */
+    public String getMemberRemark(Long memberId) {
+        return this.memberRemarks.get(memberId);
+    }
+
+    /**
+     * 设置成员的备注。
+     *
+     * @param memberId
+     * @param remark
+     */
+    public void setMemberRemark(Long memberId, String remark) {
+        this.memberRemarks.put(memberId, remark);
+    }
+
     public JSONObject packJSON(Contact member) {
         JSONObject json = new JSONObject();
         json.put("owner", this.owner.toCompactJSON());
@@ -131,6 +165,16 @@ public class GroupAppendix extends Entity {
         }
         json.put("remark", remarkContent);
         json.put("notice", (null == this.notice) ? "" : this.notice);
+
+        JSONArray memberRemarkArray = new JSONArray();
+        for (Map.Entry<Long, String> e : this.memberRemarks.entrySet()) {
+            JSONObject mr = new JSONObject();
+            mr.put("id", e.getKey().longValue());
+            mr.put("remark", e.getValue());
+            memberRemarkArray.put(mr);
+        }
+        json.put("memberRemarks", memberRemarkArray);
+
         return json;
     }
 
@@ -151,6 +195,15 @@ public class GroupAppendix extends Entity {
         json.put("remarkContents", remarkContentsArray);
 
         json.put("notice", (null == this.notice) ? "" : this.notice);
+
+        JSONArray memberRemarkArray = new JSONArray();
+        for (Map.Entry<Long, String> e : this.memberRemarks.entrySet()) {
+            JSONObject mr = new JSONObject();
+            mr.put("id", e.getKey().longValue());
+            mr.put("remark", e.getValue());
+            memberRemarkArray.put(mr);
+        }
+        json.put("memberRemarks", memberRemarkArray);
 
         return json;
     }

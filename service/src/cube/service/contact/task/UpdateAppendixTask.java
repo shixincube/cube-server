@@ -108,6 +108,10 @@ public class UpdateAppendixTask extends ServiceTask {
                 // 更新公告
                 appendix.setNotice(data.getString("notice"));
             }
+            else if (data.has("memberRemark")) {
+                JSONObject remark = data.getJSONObject("memberRemark");
+                appendix.setMemberRemark(remark.getLong("id"), remark.getString("remark"));
+            }
 
             ContactManager.getInstance().updateAppendix(appendix);
 
