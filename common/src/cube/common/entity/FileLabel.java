@@ -166,8 +166,8 @@ public class FileLabel extends Entity {
         this.ownerId = json.getLong("ownerId");
         this.fileName = json.getString("fileName");
         this.fileSize = json.getLong("fileSize");
-        this.lastModified = json.getLong("lastModified");
         this.completedTime = json.getLong("completed");
+        this.lastModified = json.has("lastModified") ? json.getLong("lastModified") : this.completedTime;
         this.expiryTime = json.getLong("expiry");
         this.fileType = FileType.matchExtension(json.getString("fileType"));
         if (json.has("md5")) {
