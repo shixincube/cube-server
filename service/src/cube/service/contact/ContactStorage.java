@@ -243,11 +243,9 @@ public class ContactStorage implements Storagable {
     public Contact readContact(String domain, Long id) {
         List<StorageField[]> result = null;
 
-        synchronized (this.storage) {
-            String table = this.contactTableNameMap.get(domain);
-            result = this.storage.executeQuery(table, this.contactFields,
-                    new Conditional[] { Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, id)) });
-        }
+        String table = this.contactTableNameMap.get(domain);
+        result = this.storage.executeQuery(table, this.contactFields,
+                new Conditional[] { Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, id)) });
 
         if (result.isEmpty()) {
             return null;
@@ -440,24 +438,23 @@ public class ContactStorage implements Storagable {
 
         List<StorageField[]> groupResult = null;
         List<StorageField[]> groupMemberResult = null;
-        synchronized (this.storage) {
-            // 查询群组信息
-            groupResult = this.storage.executeQuery(groupTable, this.groupFields,
-                    new Conditional[] { Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, groupId)) });
 
-            // 查询群组成员
-            groupMemberResult = this.storage.executeQuery(new String[] { groupTable, groupMemberTable },
-                    memberFields, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField(groupTable, "id", LiteralBase.LONG, groupId)),
-                            Conditional.createAnd(),
-                            Conditional.createEqualTo(new StorageField(groupTable, "id", LiteralBase.LONG),
-                                    new StorageField(groupMemberTable, "group", LiteralBase.LONG)),
-                            Conditional.createAnd(),
-                            // 没有被移除的成员
-                            Conditional.createEqualTo(
-                                    new StorageField(groupMemberTable, "removing_time", LiteralBase.LONG, 0L))
-                    });
-        }
+        // 查询群组信息
+        groupResult = this.storage.executeQuery(groupTable, this.groupFields,
+                new Conditional[] { Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, groupId)) });
+
+        // 查询群组成员
+        groupMemberResult = this.storage.executeQuery(new String[] { groupTable, groupMemberTable },
+                memberFields, new Conditional[] {
+                        Conditional.createEqualTo(new StorageField(groupTable, "id", LiteralBase.LONG, groupId)),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo(new StorageField(groupTable, "id", LiteralBase.LONG),
+                                new StorageField(groupMemberTable, "group", LiteralBase.LONG)),
+                        Conditional.createAnd(),
+                        // 没有被移除的成员
+                        Conditional.createEqualTo(
+                                new StorageField(groupMemberTable, "removing_time", LiteralBase.LONG, 0L))
+                });
 
         if (groupResult.isEmpty() || groupMemberResult.isEmpty()) {
             return null;
@@ -524,47 +521,45 @@ public class ContactStorage implements Storagable {
         String groupTable = this.groupTableNameMap.get(domain);
         String groupMemberTable = this.groupMemberTableNameMap.get(domain);
 
-        synchronized (this.storage) {
-            // 查询有该成员的群信息
-            StorageField[] groupFields = new StorageField[] {
-                    new StorageField(groupTable, "id", LiteralBase.LONG)
-            };
-            // 查询群组成员
-            List<StorageField[]> groupsResult = this.storage.executeQuery(new String[] { groupTable, groupMemberTable },
-                    groupFields, new Conditional[] {
-                            // 群 ID 相等
-                            Conditional.createEqualTo(new StorageField(groupTable, "id", LiteralBase.LONG),
-                                    new StorageField(groupMemberTable, "group", LiteralBase.LONG)),
-                            Conditional.createAnd(),
-                            // 成员 ID 相等
-                            Conditional.createEqualTo(new StorageField(groupMemberTable, "contact_id", LiteralBase.LONG, memberId)),
-                            Conditional.createAnd(),
-                            // 群成员没有被移除
-                            Conditional.createEqualTo(new StorageField(groupMemberTable, "removing_time", LiteralBase.LONG, 0L)),
-                            Conditional.createAnd(),
-                            // 活跃时间戳大于等于
-                            Conditional.createGreaterThanEqual(new StorageField(groupTable, "last_active", LiteralBase.LONG, beginningLastActive)),
-                            Conditional.createAnd(),
-                            // 活跃时间戳小于
-                            Conditional.createLessThan(new StorageField(groupTable, "last_active", LiteralBase.LONG, endingLastActive))
-                    });
+        // 查询有该成员的群信息
+        StorageField[] groupFields = new StorageField[] {
+                new StorageField(groupTable, "id", LiteralBase.LONG)
+        };
+        // 查询群组成员
+        List<StorageField[]> groupsResult = this.storage.executeQuery(new String[] { groupTable, groupMemberTable },
+                groupFields, new Conditional[] {
+                        // 群 ID 相等
+                        Conditional.createEqualTo(new StorageField(groupTable, "id", LiteralBase.LONG),
+                                new StorageField(groupMemberTable, "group", LiteralBase.LONG)),
+                        Conditional.createAnd(),
+                        // 成员 ID 相等
+                        Conditional.createEqualTo(new StorageField(groupMemberTable, "contact_id", LiteralBase.LONG, memberId)),
+                        Conditional.createAnd(),
+                        // 群成员没有被移除
+                        Conditional.createEqualTo(new StorageField(groupMemberTable, "removing_time", LiteralBase.LONG, 0L)),
+                        Conditional.createAnd(),
+                        // 活跃时间戳大于等于
+                        Conditional.createGreaterThanEqual(new StorageField(groupTable, "last_active", LiteralBase.LONG, beginningLastActive)),
+                        Conditional.createAnd(),
+                        // 活跃时间戳小于
+                        Conditional.createLessThan(new StorageField(groupTable, "last_active", LiteralBase.LONG, endingLastActive))
+                });
 
-            ArrayList<Long> ids = new ArrayList<>(groupsResult.size());
-            for (StorageField[] fields : groupsResult) {
-                Long groupId = fields[0].getLong();
+        ArrayList<Long> ids = new ArrayList<>(groupsResult.size());
+        for (StorageField[] fields : groupsResult) {
+            Long groupId = fields[0].getLong();
 
-                if (ids.contains(groupId)) {
-                    continue;
-                }
-                ids.add(groupId);
-
-                Group group = this.readGroup(domain, groupId);
-                result.add(group);
+            if (ids.contains(groupId)) {
+                continue;
             }
+            ids.add(groupId);
 
-            ids.clear();
-            ids = null;
+            Group group = this.readGroup(domain, groupId);
+            result.add(group);
         }
+
+        ids.clear();
+        ids = null;
 
         return result;
     }
@@ -623,13 +618,11 @@ public class ContactStorage implements Storagable {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                synchronized (storage) {
-                    storage.executeUpdate(groupTable, new StorageField[] {
-                            new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime())
-                    }, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
-                    });
-                }
+                storage.executeUpdate(groupTable, new StorageField[] {
+                        new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime())
+                }, new Conditional[] {
+                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
+                });
             }
         });
     }
@@ -648,14 +641,12 @@ public class ContactStorage implements Storagable {
 
         if (read) {
             // 执行更新
-            synchronized (this.storage) {
-                this.storage.executeUpdate(groupTable, new StorageField[]{
-                        new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
-                        new StorageField("state", LiteralBase.INT, group.getState().getCode())
-                }, new Conditional[]{
-                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
-                });
-            }
+            this.storage.executeUpdate(groupTable, new StorageField[]{
+                    new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
+                    new StorageField("state", LiteralBase.INT, group.getState().getCode())
+            }, new Conditional[]{
+                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
+            });
 
             return this.readGroup(domain, group.getId());
         }
@@ -663,14 +654,12 @@ public class ContactStorage implements Storagable {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    synchronized (storage) {
-                        storage.executeUpdate(groupTable, new StorageField[]{
-                                new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
-                                new StorageField("state", LiteralBase.INT, group.getState().getCode())
-                        }, new Conditional[]{
-                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
-                        });
-                    }
+                    storage.executeUpdate(groupTable, new StorageField[]{
+                            new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
+                            new StorageField("state", LiteralBase.INT, group.getState().getCode())
+                    }, new Conditional[]{
+                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
+                    });
                 }
             });
             return null;
@@ -690,17 +679,15 @@ public class ContactStorage implements Storagable {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                synchronized (storage) {
-                    storage.executeUpdate(groupMemberTable, new StorageField[] {
-                            new StorageField("contact_name", LiteralBase.STRING, member.getName()),
-                            new StorageField("contact_context", LiteralBase.STRING,
-                                    (null != member.getContext()) ? member.getContext().toString() : null)
-                    }, new Conditional[] {
-                            Conditional.createEqualTo("group", LiteralBase.LONG, group.getId()),
-                            Conditional.createAnd(),
-                            Conditional.createEqualTo("contact_id", LiteralBase.LONG, member.getId())
-                    });
-                }
+                storage.executeUpdate(groupMemberTable, new StorageField[] {
+                        new StorageField("contact_name", LiteralBase.STRING, member.getName()),
+                        new StorageField("contact_context", LiteralBase.STRING,
+                                (null != member.getContext()) ? member.getContext().toString() : null)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("group", LiteralBase.LONG, group.getId()),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("contact_id", LiteralBase.LONG, member.getId())
+                });
             }
         });
 
@@ -726,16 +713,13 @@ public class ContactStorage implements Storagable {
 
                 for (Contact member : memberList) {
                     // 先查询该成员是否之前就在群里
-                    List<StorageField[]> queryResult = null;
-                    synchronized (storage) {
-                        queryResult = storage.executeQuery(groupMemberTable, new StorageField[] {
-                                new StorageField("sn", LiteralBase.LONG)
-                        }, new Conditional[] {
-                                Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, group.getId())),
-                                Conditional.createAnd(),
-                                Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, member.getId()))
-                        });
-                    }
+                    List<StorageField[]> queryResult = storage.executeQuery(groupMemberTable, new StorageField[] {
+                            new StorageField("sn", LiteralBase.LONG)
+                    }, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, group.getId())),
+                            Conditional.createAnd(),
+                            Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, member.getId()))
+                    });
 
                     if (queryResult.isEmpty()) {
                         // 没有记录，插入新记录
@@ -750,27 +734,23 @@ public class ContactStorage implements Storagable {
                         };
 
                         // 插入数据
-                        synchronized (storage) {
-                            storage.executeInsert(groupMemberTable, fields);
-                        }
+                        storage.executeInsert(groupMemberTable, fields);
                     }
                     else {
                         // 已经有记录，则更新记录
                         Long sn = queryResult.get(0)[0].getLong();
 
-                        synchronized (storage) {
-                            storage.executeUpdate(groupMemberTable, new StorageField[] {
-                                    new StorageField("contact_name", LiteralBase.STRING, member.getName()),
-                                    new StorageField("contact_context", LiteralBase.STRING,
-                                            (null == member.getContext()) ? null : member.getContext().toString()),
-                                    new StorageField("adding_time", LiteralBase.LONG, time),
-                                    new StorageField("adding_operator", LiteralBase.LONG, operatorId),
-                                    new StorageField("removing_time", LiteralBase.LONG, 0L),
-                                    new StorageField("removing_operator", LiteralBase.LONG, 0L)
-                            }, new Conditional[] {
-                                    Conditional.createEqualTo(new StorageField("sn", LiteralBase.LONG, sn))
-                            });
-                        }
+                        storage.executeUpdate(groupMemberTable, new StorageField[] {
+                                new StorageField("contact_name", LiteralBase.STRING, member.getName()),
+                                new StorageField("contact_context", LiteralBase.STRING,
+                                        (null == member.getContext()) ? null : member.getContext().toString()),
+                                new StorageField("adding_time", LiteralBase.LONG, time),
+                                new StorageField("adding_operator", LiteralBase.LONG, operatorId),
+                                new StorageField("removing_time", LiteralBase.LONG, 0L),
+                                new StorageField("removing_operator", LiteralBase.LONG, 0L)
+                        }, new Conditional[] {
+                                Conditional.createEqualTo(new StorageField("sn", LiteralBase.LONG, sn))
+                        });
                     }
                 }
 
@@ -797,17 +777,15 @@ public class ContactStorage implements Storagable {
 
                 Long time = System.currentTimeMillis();
 
-                synchronized (storage) {
-                    for (Contact member : memberList) {
-                        storage.executeUpdate(groupMemberTable, new StorageField[] {
-                                new StorageField("removing_time", LiteralBase.LONG, time),
-                                new StorageField("removing_operator", LiteralBase.LONG, operatorId)
-                        }, new Conditional[] {
-                                Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, group.getId())),
-                                Conditional.createAnd(),
-                                Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, member.getId()))
-                        });
-                    }
+                for (Contact member : memberList) {
+                    storage.executeUpdate(groupMemberTable, new StorageField[] {
+                            new StorageField("removing_time", LiteralBase.LONG, time),
+                            new StorageField("removing_operator", LiteralBase.LONG, operatorId)
+                    }, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, group.getId())),
+                            Conditional.createAnd(),
+                            Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, member.getId()))
+                    });
                 }
 
                 if (null != completed) {
@@ -828,26 +806,24 @@ public class ContactStorage implements Storagable {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                synchronized (storage) {
-                    List<StorageField[]> list = storage.executeQuery(table, new StorageField[] {
-                            new StorageField("id", LiteralBase.LONG)
+                List<StorageField[]> list = storage.executeQuery(table, new StorageField[] {
+                        new StorageField("id", LiteralBase.LONG)
+                }, new Conditional[] {
+                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
+                });
+
+                if (list.isEmpty()) {
+                    storage.executeInsert(table, new StorageField[] {
+                            new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()),
+                            new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
+                    });
+                }
+                else {
+                    storage.executeUpdate(table, new StorageField[] {
+                            new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
                     }, new Conditional[] {
                             Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
                     });
-
-                    if (list.isEmpty()) {
-                        storage.executeInsert(table, new StorageField[] {
-                                new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()),
-                                new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
-                        });
-                    }
-                    else {
-                        storage.executeUpdate(table, new StorageField[] {
-                                new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
-                        }, new Conditional[] {
-                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
-                        });
-                    }
                 }
             }
         });
@@ -862,12 +838,10 @@ public class ContactStorage implements Storagable {
     public ContactAppendix readAppendix(Contact contact) {
         String table = this.appendixTableNameMap.get(contact.getDomain().getName());
 
-        List<StorageField[]> result = null;
-        synchronized (this.storage) {
-            result = this.storage.executeQuery(table, this.appendixFields, new Conditional[] {
-                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
-            });
-        }
+        List<StorageField[]> result = this.storage.executeQuery(table, this.appendixFields, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
+        });
+
         if (result.isEmpty()) {
             return null;
         }
@@ -888,26 +862,24 @@ public class ContactStorage implements Storagable {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                synchronized (storage) {
-                    List<StorageField[]> list = storage.executeQuery(table, new StorageField[] {
-                            new StorageField("id", LiteralBase.LONG)
+                List<StorageField[]> list = storage.executeQuery(table, new StorageField[] {
+                        new StorageField("id", LiteralBase.LONG)
+                }, new Conditional[] {
+                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
+                });
+
+                if (list.isEmpty()) {
+                    storage.executeInsert(table, new StorageField[] {
+                            new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()),
+                            new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
+                    });
+                }
+                else {
+                    storage.executeUpdate(table, new StorageField[] {
+                            new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
                     }, new Conditional[] {
                             Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
                     });
-
-                    if (list.isEmpty()) {
-                        storage.executeInsert(table, new StorageField[] {
-                                new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()),
-                                new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
-                        });
-                    }
-                    else {
-                        storage.executeUpdate(table, new StorageField[] {
-                                new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
-                        }, new Conditional[] {
-                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
-                        });
-                    }
                 }
             }
         });
@@ -922,12 +894,10 @@ public class ContactStorage implements Storagable {
     public GroupAppendix readAppendix(Group group) {
         String table = this.appendixTableNameMap.get(group.getDomain().getName());
 
-        List<StorageField[]> result = null;
-        synchronized (this.storage) {
-            result = this.storage.executeQuery(table, this.appendixFields, new Conditional[] {
-                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
-            });
-        }
+        List<StorageField[]> result = this.storage.executeQuery(table, this.appendixFields, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
+        });
+
         if (result.isEmpty()) {
             return null;
         }

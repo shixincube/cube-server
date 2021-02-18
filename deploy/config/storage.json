@@ -1,0 +1,16 @@
+{
+	"Contact": {
+		"type": "SQLite",
+		"file": "storage/ContactService.db"
+	},
+
+	"Messaging": {
+		"type": "SQLite",
+		"file": "storage/MessagingService.db"
+	},
+
+	"FileStorage": {
+		"type": "SQLite",
+		"file": "storage/FileStorageService.db"
+	}
+}

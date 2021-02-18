@@ -95,21 +95,25 @@ public class SQLiteStorage extends AbstractStorage {
     @Override
     public boolean exist(String table) {
         Statement statement = null;
-        try {
-            statement = this.connection.createStatement();
-            statement.setQueryTimeout(10);
-            statement.executeQuery("SELECT * FROM " + table + " LIMIT 1");
-        } catch (SQLException e) {
-            return false;
-        } finally {
-            if (null != statement) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
+
+        synchronized (this.connection) {
+            try {
+                statement = this.connection.createStatement();
+                statement.setQueryTimeout(10);
+                statement.executeQuery("SELECT * FROM " + table + " LIMIT 1");
+            } catch (SQLException e) {
+                return false;
+            } finally {
+                if (null != statement) {
+                    try {
+                        statement.close();
+                    } catch (SQLException e) {
+                    }
                 }
             }
+
+            return true;
         }
-        return true;
     }
 
     @Override
@@ -120,18 +124,22 @@ public class SQLiteStorage extends AbstractStorage {
 
         // 拼写 SQL 语句
         String sql = SQLUtils.spellCreateTable(table, fields);
+
         Statement statement = null;
-        try {
-            statement = this.connection.createStatement();
-            statement.executeUpdate(sql);
-        } catch (SQLException e) {
-            Logger.e(this.getClass(), "SQL: " + sql, e);
-            return false;
-        } finally {
-            if (null != statement) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
+
+        synchronized (this.connection) {
+            try {
+                statement = this.connection.createStatement();
+                statement.executeUpdate(sql);
+            } catch (SQLException e) {
+                Logger.e(this.getClass(), "SQL: " + sql, e);
+                return false;
+            } finally {
+                if (null != statement) {
+                    try {
+                        statement.close();
+                    } catch (SQLException e) {
+                    }
                 }
             }
         }
@@ -151,38 +159,14 @@ public class SQLiteStorage extends AbstractStorage {
         String sql = SQLUtils.spellInsert(table, fields);
 
         Statement statement = null;
-        try {
-            statement = this.connection.createStatement();
-            statement.executeUpdate(sql);
-        } catch (SQLException e) {
-            Logger.e(this.getClass(), "SQL: " + sql, e);
-            return false;
-        } finally {
-            if (null != statement) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
-                }
-            }
-        }
-        return true;
-    }
 
-    @Override
-    public boolean executeInsert(String table, List<StorageField[]> fieldsList) {
-        boolean success = true;
-        for (StorageField[] fields : fieldsList) {
-            // 拼写 SQL 语句
-            String sql = SQLUtils.spellInsert(table, fields);
-
-            Statement statement = null;
+        synchronized (this.connection) {
             try {
                 statement = this.connection.createStatement();
                 statement.executeUpdate(sql);
             } catch (SQLException e) {
                 Logger.e(this.getClass(), "SQL: " + sql, e);
-                success = false;
-                continue;
+                return false;
             } finally {
                 if (null != statement) {
                     try {
@@ -192,6 +176,37 @@ public class SQLiteStorage extends AbstractStorage {
                 }
             }
         }
+        return true;
+    }
+
+    @Override
+    public boolean executeInsert(String table, List<StorageField[]> fieldsList) {
+        boolean success = true;
+
+        synchronized (this.connection) {
+            for (StorageField[] fields : fieldsList) {
+                // 拼写 SQL 语句
+                String sql = SQLUtils.spellInsert(table, fields);
+
+                Statement statement = null;
+                try {
+                    statement = this.connection.createStatement();
+                    statement.executeUpdate(sql);
+                } catch (SQLException e) {
+                    Logger.e(this.getClass(), "SQL: " + sql, e);
+                    success = false;
+                    continue;
+                } finally {
+                    if (null != statement) {
+                        try {
+                            statement.close();
+                        } catch (SQLException e) {
+                        }
+                    }
+                }
+            }
+        }
+
         return success;
     }
 
@@ -201,20 +216,24 @@ public class SQLiteStorage extends AbstractStorage {
         String sql = SQLUtils.spellUpdate(table, fields, conditionals);
 
         Statement statement = null;
-        try {
-            statement = this.connection.createStatement();
-            statement.executeUpdate(sql);
-        } catch (SQLException e) {
-            Logger.e(this.getClass(), "SQL: " + sql, e);
-            return false;
-        } finally {
-            if (null != statement) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
+
+        synchronized (this.connection) {
+            try {
+                statement = this.connection.createStatement();
+                statement.executeUpdate(sql);
+            } catch (SQLException e) {
+                Logger.e(this.getClass(), "SQL: " + sql, e);
+                return false;
+            } finally {
+                if (null != statement) {
+                    try {
+                        statement.close();
+                    } catch (SQLException e) {
+                    }
                 }
             }
         }
+
         return true;
     }
 
@@ -224,17 +243,20 @@ public class SQLiteStorage extends AbstractStorage {
         String sql = SQLUtils.spellDelete(table, conditionals);
 
         Statement statement = null;
-        try {
-            statement = this.connection.createStatement();
-            statement.executeUpdate(sql);
-        } catch (SQLException e) {
-            Logger.e(this.getClass(), "SQL: " + sql, e);
-            return false;
-        } finally {
-            if (null != statement) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
+
+        synchronized (this.connection) {
+            try {
+                statement = this.connection.createStatement();
+                statement.executeUpdate(sql);
+            } catch (SQLException e) {
+                Logger.e(this.getClass(), "SQL: " + sql, e);
+                return false;
+            } finally {
+                if (null != statement) {
+                    try {
+                        statement.close();
+                    } catch (SQLException e) {
+                    }
                 }
             }
         }
@@ -254,45 +276,46 @@ public class SQLiteStorage extends AbstractStorage {
         String sql = SQLUtils.spellSelect(table, fields, conditionals);
 
         Statement statement = null;
-        try {
-            statement = this.connection.createStatement();
-            ResultSet rs = statement.executeQuery(sql);
-            while (rs.next()) {
-                StorageField[] row = new StorageField[fields.length];
 
-                for (int i = 0; i < fields.length; ++i) {
-                    StorageField sf = fields[i];
-                    LiteralBase literal = sf.getLiteralBase();
-                    if (literal == LiteralBase.STRING) {
-                        String value = rs.getString(sf.getName());
-                        row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+        synchronized (this.connection) {
+            try {
+                statement = this.connection.createStatement();
+                ResultSet rs = statement.executeQuery(sql);
+                while (rs.next()) {
+                    StorageField[] row = new StorageField[fields.length];
+
+                    for (int i = 0; i < fields.length; ++i) {
+                        StorageField sf = fields[i];
+                        LiteralBase literal = sf.getLiteralBase();
+                        if (literal == LiteralBase.STRING) {
+                            String value = rs.getString(sf.getName());
+                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                        } else if (literal == LiteralBase.LONG) {
+                            long value = rs.getLong(sf.getName());
+                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                        } else if (literal == LiteralBase.INT) {
+                            int value = rs.getInt(sf.getName());
+                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                        } else if (literal == LiteralBase.BOOL) {
+                            boolean value = rs.getBoolean(sf.getName());
+                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                        }
                     }
-                    else if (literal == LiteralBase.LONG) {
-                        long value = rs.getLong(sf.getName());
-                        row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                    }
-                    else if (literal == LiteralBase.INT) {
-                        int value = rs.getInt(sf.getName());
-                        row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                    }
-                    else if (literal == LiteralBase.BOOL) {
-                        boolean value = rs.getBoolean(sf.getName());
-                        row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                    }
+
+                    result.add(row);
                 }
-
-                result.add(row);
-            }
-        } catch (SQLException e) {
-            Logger.d(this.getClass(), e.getMessage());
-        } finally {
-            if (null != statement) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
+            } catch (SQLException e) {
+                Logger.d(this.getClass(), e.getMessage());
+            } finally {
+                if (null != statement) {
+                    try {
+                        statement.close();
+                    } catch (SQLException e) {
+                    }
                 }
             }
         }
+
         return result;
     }
 
@@ -304,43 +327,43 @@ public class SQLiteStorage extends AbstractStorage {
         String sql = SQLUtils.spellSelect(tables, fields, conditionals);
 
         Statement statement = null;
-        try {
-            statement = this.connection.createStatement();
-            ResultSet rs = statement.executeQuery(sql);
-            while (rs.next()) {
-                StorageField[] row = new StorageField[fields.length];
 
-                for (int i = 0; i < fields.length; ++i) {
-                    StorageField sf = fields[i];
-                    LiteralBase literal = sf.getLiteralBase();
+        synchronized (this.connection) {
+            try {
+                statement = this.connection.createStatement();
+                ResultSet rs = statement.executeQuery(sql);
+                while (rs.next()) {
+                    StorageField[] row = new StorageField[fields.length];
 
-                    if (literal == LiteralBase.STRING) {
-                        String value = rs.getString(sf.getName());
-                        row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                    for (int i = 0; i < fields.length; ++i) {
+                        StorageField sf = fields[i];
+                        LiteralBase literal = sf.getLiteralBase();
+
+                        if (literal == LiteralBase.STRING) {
+                            String value = rs.getString(sf.getName());
+                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                        } else if (literal == LiteralBase.LONG) {
+                            long value = rs.getLong(sf.getName());
+                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                        } else if (literal == LiteralBase.INT) {
+                            int value = rs.getInt(sf.getName());
+                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                        } else if (literal == LiteralBase.BOOL) {
+                            boolean value = rs.getBoolean(sf.getName());
+                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                        }
                     }
-                    else if (literal == LiteralBase.LONG) {
-                        long value = rs.getLong(sf.getName());
-                        row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                    }
-                    else if (literal == LiteralBase.INT) {
-                        int value = rs.getInt(sf.getName());
-                        row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                    }
-                    else if (literal == LiteralBase.BOOL) {
-                        boolean value = rs.getBoolean(sf.getName());
-                        row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                    }
+
+                    result.add(row);
                 }
-
-                result.add(row);
-            }
-        } catch (SQLException e) {
-            Logger.d(this.getClass(), e.getMessage());
-        } finally {
-            if (null != statement) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
+            } catch (SQLException e) {
+                Logger.d(this.getClass(), e.getMessage());
+            } finally {
+                if (null != statement) {
+                    try {
+                        statement.close();
+                    } catch (SQLException e) {
+                    }
                 }
             }
         }

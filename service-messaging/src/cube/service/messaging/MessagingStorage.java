@@ -163,6 +163,7 @@ public class MessagingStorage implements Storagable {
     }
 
     /**
+     * 写入消息。
      *
      * @param message
      */
@@ -171,6 +172,7 @@ public class MessagingStorage implements Storagable {
     }
 
     /**
+     * 写入消息。
      *
      * @param message
      * @param completed
@@ -201,9 +203,7 @@ public class MessagingStorage implements Storagable {
                                 (null != message.getAttachment()) ? message.getAttachment().toJSON().toString() : null)
                 };
 
-                synchronized (storage) {
-                    storage.executeInsert(table, fields);
-                }
+                storage.executeInsert(table, fields);
 
                 if (null != completed) {
                     completed.run();
@@ -212,21 +212,25 @@ public class MessagingStorage implements Storagable {
         });
     }
 
+    /**
+     * 读取属于指定联系人的消息。
+     *
+     * @param domain
+     * @param contactId
+     * @param messageId
+     * @return
+     */
     public Message read(String domain, Long contactId, Long messageId) {
         String table = this.messageTableNameMap.get(domain);
         if (null == table) {
             return null;
         }
 
-        List<StorageField[]> result = null;
-
-        synchronized (this.storage) {
-            result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
-                    Conditional.createEqualTo("id", LiteralBase.LONG, messageId),
-                    Conditional.createAnd(),
-                    Conditional.createEqualTo("owner", LiteralBase.LONG, contactId)
-            });
-        }
+        List<StorageField[]> result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
+                Conditional.createEqualTo("id", LiteralBase.LONG, messageId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("owner", LiteralBase.LONG, contactId)
+        });
 
         if (result.isEmpty()) {
             return null;
@@ -317,11 +321,8 @@ public class MessagingStorage implements Storagable {
             values[i] = messageIdList.get(i);
         }
 
-        List<StorageField[]> result = null;
-        synchronized (this.storage) {
-            result = this.storage.executeQuery(table, this.messageFields,
-                    new Conditional[] { Conditional.createIN(this.messageFields[0], values) });
-        }
+        List<StorageField[]> result = this.storage.executeQuery(table, this.messageFields,
+                new Conditional[] { Conditional.createIN(this.messageFields[0], values) });
 
         List<Message> messages = new ArrayList<>(result.size());
         for (StorageField[] row : result) {
@@ -353,6 +354,15 @@ public class MessagingStorage implements Storagable {
         return messages;
     }
 
+    /**
+     * 按照指定的起止时间顺序读取消息。
+     *
+     * @param domain
+     * @param contactId
+     * @param beginning
+     * @param ending
+     * @return
+     */
     public List<Message> readOrderByTime(String domain, Long contactId, long beginning, long ending) {
         // 取表名
         String table = this.messageTableNameMap.get(domain);
@@ -360,16 +370,13 @@ public class MessagingStorage implements Storagable {
             return null;
         }
 
-        List<StorageField[]> result = null;
-        synchronized (this.storage) {
-            result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
-                    Conditional.createEqualTo(new StorageField("owner", LiteralBase.LONG, contactId)),
-                    Conditional.createAnd(),
-                    Conditional.createGreaterThan(new StorageField("rts", LiteralBase.LONG, beginning)),
-                    Conditional.createAnd(),
-                    Conditional.createLessThanEqual(new StorageField("rts", LiteralBase.LONG, ending))
-            });
-        }
+        List<StorageField[]> result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("owner", LiteralBase.LONG, contactId)),
+                Conditional.createAnd(),
+                Conditional.createGreaterThan(new StorageField("rts", LiteralBase.LONG, beginning)),
+                Conditional.createAnd(),
+                Conditional.createLessThanEqual(new StorageField("rts", LiteralBase.LONG, ending))
+        });
 
         List<Message> messages = new ArrayList<>(result.size());
         for (StorageField[] row : result) {
@@ -401,6 +408,13 @@ public class MessagingStorage implements Storagable {
         return messages;
     }
 
+    /**
+     * 写入消息状态。
+     *
+     * @param domain
+     * @param messageId
+     * @param state
+     */
     public void writeMessageState(String domain, Long messageId, MessageState state) {
         String table = this.messageTableNameMap.get(domain);
 
@@ -411,15 +425,21 @@ public class MessagingStorage implements Storagable {
                         new StorageField("state", LiteralBase.INT, state.getCode())
                 };
 
-                synchronized (storage) {
-                    storage.executeUpdate(table, fields, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId))
-                    });
-                }
+                storage.executeUpdate(table, fields, new Conditional[] {
+                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId))
+                });
             }
         });
     }
 
+    /**
+     * 写入消息状态。
+     *
+     * @param domain
+     * @param contactId
+     * @param messageId
+     * @param state
+     */
     public void writeMessageState(String domain, Long contactId, Long messageId, MessageState state) {
         String table = this.messageTableNameMap.get(domain);
 
@@ -430,17 +450,23 @@ public class MessagingStorage implements Storagable {
                         new StorageField("state", LiteralBase.INT, state.getCode())
                 };
 
-                synchronized (storage) {
-                    storage.executeUpdate(table, fields, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId)),
-                            Conditional.createAnd(),
-                            Conditional.createEqualTo(new StorageField("owner", LiteralBase.LONG, contactId))
-                    });
-                }
+                storage.executeUpdate(table, fields, new Conditional[] {
+                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId)),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo(new StorageField("owner", LiteralBase.LONG, contactId))
+                });
             }
         });
     }
 
+    /**
+     * 读取消息状态。
+     *
+     * @param domain
+     * @param contactId
+     * @param messageId
+     * @return
+     */
     public MessageState readMessageState(String domain, Long contactId, Long messageId) {
         String table = this.messageTableNameMap.get(domain);
         if (null == table) {
@@ -451,17 +477,14 @@ public class MessagingStorage implements Storagable {
                 new StorageField("state", LiteralBase.INT)
         };
 
-        List<StorageField[]> result = null;
-        synchronized (this.storage) {
-            result = this.storage.executeQuery(table, fields, new Conditional[]{
-                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId)),
-                    Conditional.createAnd(),
-                    Conditional.createEqualTo(new StorageField("owner", LiteralBase.LONG, contactId))
-            });
+        List<StorageField[]> result = this.storage.executeQuery(table, fields, new Conditional[]{
+                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId)),
+                Conditional.createAnd(),
+                Conditional.createEqualTo(new StorageField("owner", LiteralBase.LONG, contactId))
+        });
 
-            if (result.isEmpty()) {
-                return null;
-            }
+        if (result.isEmpty()) {
+            return null;
         }
 
         int state = result.get(0)[0].getInt();
