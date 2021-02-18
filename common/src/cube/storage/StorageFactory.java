@@ -48,11 +48,22 @@ public final class StorageFactory {
         return StorageFactory.instance;
     }
 
+    /**
+     * 创构建存储。
+     *
+     * @param type 存储类型。
+     * @param name 存储名称。
+     * @param config 存储的配置。
+     * @return 返回存储实例。
+     */
     public Storage createStorage(StorageType type, String name, JSONObject config) {
         Storage storage = null;
 
         if (type == StorageType.SQLite) {
             storage = new SQLiteStorage(name);
+        }
+        else if (type == StorageType.MySQL) {
+            storage = new MySQLStorage(name);
         }
 
         if (null != storage) {
@@ -63,6 +74,12 @@ public final class StorageFactory {
         return storage;
     }
 
+    /**
+     * 获取指定名称的存储。
+     *
+     * @param name 指定存储器名称。
+     * @return 返回存储器实例。
+     */
     public Storage getStorage(String name) {
         return this.storageMap.get(name);
     }

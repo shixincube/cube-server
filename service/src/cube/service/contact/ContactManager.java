@@ -53,10 +53,15 @@ import cube.plugin.PluginSystem;
 import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.service.contact.plugin.FilterContactNamePlugin;
+import cube.storage.StorageFactory;
 import cube.storage.StorageType;
+import cube.util.ConfigUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -182,13 +187,21 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 // 启动群组缓存
                 groupCache.start();
 
-                JSONObject config = new JSONObject();
-                try {
-                    config.put("file", "storage/ContactService.db");
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                // 读取存储配置
+                JSONObject config = ConfigUtils.readStorageConfig();
+                if (config.has(ContactManager.NAME)) {
+                    config = config.getJSONObject(ContactManager.NAME);
+                    if (config.getString("type").equals("SQLite")) {
+                        storage = new ContactStorage(executor, StorageType.SQLite, config);
+                    }
+                    else {
+                        storage = new ContactStorage(executor, StorageType.MySQL, config);
+                    }
                 }
-                storage = new ContactStorage(executor, StorageType.SQLite, config);
+                else {
+                    config.put("file", "storage/ContactService.db");
+                    storage = new ContactStorage(executor, StorageType.SQLite, config);
+                }
                 storage.open();
 
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);

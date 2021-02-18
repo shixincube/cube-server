@@ -47,6 +47,11 @@ public enum Constraint {
     AUTOINCREMENT("AUTOINCREMENT"),
 
     /**
+     * 对应 AUTO_INCREMENT 。
+     */
+    AUTO_INCREMENT("AUTO_INCREMENT"),
+
+    /**
      * 对应 UNIQUE 。
      */
     UNIQUE("UNIQUE"),

@@ -34,6 +34,8 @@ import cube.util.SQLUtils;
  */
 public class Conditional {
 
+    public final static String Quote = "`";
+
     /**
      * 句式的 SQL 语句。
      */
@@ -137,10 +139,10 @@ public class Conditional {
 
         String table = field.getTableName();
         if (null != table) {
-            return new Conditional("[" + table + "].[" + field.getName() + "]=" + value);
+            return new Conditional(Quote + table + Quote + "." + Quote + field.getName() + Quote + "=" + value);
         }
         else {
-            return new Conditional("[" + field.getName() + "]=" + value);
+            return new Conditional(Quote + field.getName() + Quote + "=" + value);
         }
     }
 
@@ -153,9 +155,9 @@ public class Conditional {
      */
     public static Conditional createEqualTo(StorageField leftJoinField, StorageField rightJoinField) {
         StringBuilder buf = new StringBuilder();
-        buf.append("[").append(leftJoinField.getTableName()).append("].[").append(leftJoinField.getName()).append("]");
+        buf.append(Quote).append(leftJoinField.getTableName()).append(Quote + "." + Quote).append(leftJoinField.getName()).append(Quote);
         buf.append("=");
-        buf.append("[").append(rightJoinField.getTableName()).append("].[").append(rightJoinField.getName()).append("]");
+        buf.append(Quote).append(rightJoinField.getTableName()).append(Quote + "." + Quote).append(rightJoinField.getName()).append(Quote);
         return new Conditional(buf.toString());
     }
 
@@ -166,7 +168,7 @@ public class Conditional {
      * @return 返回条件句式实例。
      */
     public static Conditional createGreaterThan(StorageField field) {
-        return new Conditional("[" + field.getName() + "]>" + field.getValue().toString());
+        return new Conditional(Quote + field.getName() + Quote + ">" + field.getValue().toString());
     }
 
     /**
@@ -176,7 +178,7 @@ public class Conditional {
      * @return 返回条件句式实例。
      */
     public static Conditional createGreaterThanEqual(StorageField field) {
-        return new Conditional("[" + field.getName() + "]>=" + field.getValue().toString());
+        return new Conditional(Quote + field.getName() + Quote + ">=" + field.getValue().toString());
     }
 
     /**
@@ -186,7 +188,7 @@ public class Conditional {
      * @return 返回条件句式实例。
      */
     public static Conditional createLessThan(StorageField field) {
-        return new Conditional("[" + field.getName() + "]<" + field.getValue().toString());
+        return new Conditional(Quote + field.getName() + Quote + "<" + field.getValue().toString());
     }
 
     /**
@@ -196,7 +198,7 @@ public class Conditional {
      * @return 返回条件句式实例。
      */
     public static Conditional createLessThanEqual(StorageField field) {
-        return new Conditional("[" + field.getName() + "]<=" + field.getValue().toString());
+        return new Conditional(Quote + field.getName() + Quote + "<=" + field.getValue().toString());
     }
 
     /**
@@ -208,7 +210,7 @@ public class Conditional {
      */
     public static Conditional createIN(StorageField field, Object[] values) {
         StringBuilder buf = new StringBuilder();
-        buf.append("[").append(field.getName()).append("]");
+        buf.append(Quote).append(field.getName()).append(Quote);
         buf.append(" IN (");
         for (Object value : values) {
             switch (field.getLiteralBase()) {

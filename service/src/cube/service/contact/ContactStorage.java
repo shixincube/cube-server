@@ -156,14 +156,32 @@ public class ContactStorage implements Storagable {
         }
     }
 
+    /**
+     * 写入联系人数据。
+     *
+     * @param contact
+     */
     public void writeContact(final Contact contact) {
         this.writeContact(contact, null, null);
     }
 
+    /**
+     * 写入联系人数据。
+     *
+     * @param contact
+     * @param device
+     */
     public void writeContact(final Contact contact, final Device device) {
         this.writeContact(contact, device, null);
     }
 
+    /**
+     * 写入联系人数据。
+     *
+     * @param contact
+     * @param device
+     * @param completed
+     */
     public void writeContact(final Contact contact, final Device device, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
@@ -215,6 +233,13 @@ public class ContactStorage implements Storagable {
         });
     }
 
+    /**
+     * 读取联系人数据。
+     *
+     * @param domain
+     * @param id
+     * @return
+     */
     public Contact readContact(String domain, Long id) {
         List<StorageField[]> result = null;
 
@@ -254,14 +279,32 @@ public class ContactStorage implements Storagable {
         return contact;
     }
 
+    /**
+     * 写入群组数据。
+     *
+     * @param group
+     */
     public void writeGroup(final Group group) {
         this.writeGroup(group, true, null);
     }
 
+    /**
+     * 写入群组数据。
+     *
+     * @param group
+     * @param completed
+     */
     public void writeGroup(final Group group, final Runnable completed) {
         this.writeGroup(group, true, completed);
     }
 
+    /**
+     * 写入群组数据。
+     *
+     * @param group
+     * @param writeMembers
+     * @param completed
+     */
     public void writeGroup(final Group group, final boolean writeMembers, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
@@ -382,6 +425,13 @@ public class ContactStorage implements Storagable {
         });
     }
 
+    /**
+     * 读取群组数据。
+     *
+     * @param domain
+     * @param groupId
+     * @return
+     */
     public Group readGroup(String domain, Long groupId) {
         String groupTable = this.groupTableNameMap.get(domain);
         String groupMemberTable = this.groupMemberTableNameMap.get(domain);
@@ -459,6 +509,15 @@ public class ContactStorage implements Storagable {
         return group;
     }
 
+    /**
+     * 读取包含指定成员的所有群组。
+     *
+     * @param domain
+     * @param memberId
+     * @param beginningLastActive
+     * @param endingLastActive
+     * @return
+     */
     public List<Group> readGroupsWithMember(String domain, Long memberId, long beginningLastActive, long endingLastActive) {
         List<Group> result = new ArrayList<>();
 
@@ -510,6 +569,11 @@ public class ContactStorage implements Storagable {
         return result;
     }
 
+    /**
+     * 更新群组数据，但是不更新群组成员数据。
+     *
+     * @param group
+     */
     public void updateGroupWithoutMember(final Group group) {
         String domain = group.getDomain().getName();
         String groupTable = this.groupTableNameMap.get(domain);
@@ -571,6 +635,7 @@ public class ContactStorage implements Storagable {
     }
 
     /**
+     * 更新群组状态。
      *
      * @param group
      * @param read 如果设置为 {@code true} 则更新状态数据之后从库里重新查询数据并返回。

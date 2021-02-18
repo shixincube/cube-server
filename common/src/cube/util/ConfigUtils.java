@@ -26,10 +26,15 @@
 
 package cube.util;
 
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 /**
@@ -77,5 +82,21 @@ public final class ConfigUtils {
         }
 
         return result;
+    }
+
+    /**
+     * 读取存储配置文件。
+     *
+     * @return
+     */
+    public static JSONObject readStorageConfig() {
+        JSONObject json = new JSONObject();
+        try {
+            byte[] data = Files.readAllBytes(Paths.get("config/storage-config.json"));
+            json = new JSONObject(new String(data, Charset.forName("UTF-8")));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return json;
     }
 }

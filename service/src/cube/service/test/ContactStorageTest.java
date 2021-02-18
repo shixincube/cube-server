@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ContactStorageTest {
 
-    private boolean clean = true;
+    private boolean useSQLite = false;
 
     private ExecutorService executor;
 
@@ -60,21 +60,25 @@ public class ContactStorageTest {
     public ContactStorageTest() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(2);
 
-        String dbfile = "storage/test-contacts.db";
-        if (clean) {
+        JSONObject config = new JSONObject();
+        if (useSQLite) {
+            String dbfile = "storage/test-contacts.db";
             File file = new File(dbfile);
             if (file.exists()) {
                 file.delete();
             }
-        }
 
-        JSONObject config = new JSONObject();
-        try {
             config.put("file", dbfile);
-        } catch (JSONException e) {
-            e.printStackTrace();
+            this.storage = new ContactStorage(this.executor, StorageType.SQLite, config);
         }
-        this.storage = new ContactStorage(this.executor, StorageType.SQLite, config);
+        else {
+            config.put("host", "211.157.135.146");
+            config.put("port", 63307);
+            config.put("schema", "cube_3");
+            config.put("user", "root");
+            config.put("password", "Cube_2020");
+            this.storage = new ContactStorage(this.executor, StorageType.MySQL, config);
+        }
     }
 
     public void setup() {

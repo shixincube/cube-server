@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,13 @@ package cube.storage;
  */
 public enum StorageType {
 
+    /**
+     * 基于 SQLite 实现的存储。
+     */
     SQLite,
 
+    /**
+     * 基于 MySQL 实现的存储。
+     */
     MySQL
 }

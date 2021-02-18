@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,8 @@ import java.util.List;
  * SQL 辅助函数。
  */
 public final class SQLUtils {
+
+    public final static String Quote = "`";
 
     private SQLUtils() {
     }
@@ -83,7 +85,7 @@ public final class SQLUtils {
 
         if (null != fields) {
             for (StorageField field : fields) {
-                buf.append("[").append(field.getName()).append("]");
+                buf.append(Quote).append(field.getName()).append(Quote);
                 buf.append(",");
             }
             buf.delete(buf.length() - 1, buf.length());
@@ -118,7 +120,8 @@ public final class SQLUtils {
 
         if (null != fields) {
             for (StorageField field : fields) {
-                buf.append("[").append(field.getTableName()).append("].[").append(field.getName()).append("]");
+                buf.append(Quote).append(field.getTableName()).append(Quote)
+                        .append(".").append(Quote).append(field.getName()).append(Quote);
                 buf.append(",");
             }
             buf.delete(buf.length() - 1, buf.length());
@@ -154,18 +157,20 @@ public final class SQLUtils {
     public static String spellCreateTable(String table, StorageField[] fields) {
         StringBuilder buf = new StringBuilder("CREATE TABLE IF NOT EXISTS ");
         buf.append(table);
-        buf.append(" ( ");
+        buf.append(" (");
         for (StorageField field : fields) {
             // 字段名
-            buf.append("[").append(field.getName()).append("]");
+            buf.append(Quote).append(field.getName()).append(Quote);
 
             switch (field.getLiteralBase()) {
                 case STRING:
                     buf.append(" TEXT ");
                     break;
                 case INT:
-                case LONG:
                     buf.append(" INTEGER ");
+                    break;
+                case LONG:
+                    buf.append(" BIGINT ");
                     break;
                 case BOOL:
                     buf.append(" BOOLEAN ");
@@ -187,7 +192,7 @@ public final class SQLUtils {
         // 修正逗号
         buf.delete(buf.length() - 1, buf.length());
 
-        buf.append(" )");
+        buf.append(")");
 
         return buf.toString();
     }
@@ -209,7 +214,7 @@ public final class SQLUtils {
                 continue;
             }
 
-            buf.append("[").append(field.getName()).append("]");
+            buf.append(Quote).append(field.getName()).append(Quote);
             buf.append(",");
         }
         // 修正逗号
@@ -267,7 +272,7 @@ public final class SQLUtils {
                 continue;
             }
 
-            buf.append("[").append(field.getName()).append("]=");
+            buf.append(Quote).append(field.getName()).append(Quote).append("=");
 
             switch (field.getLiteralBase()) {
                 case STRING:

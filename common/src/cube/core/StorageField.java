@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2022 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -139,6 +139,15 @@ public class StorageField {
      */
     public LiteralBase getLiteralBase() {
         return this.literalBase;
+    }
+
+    /**
+     * 重置字面义。
+     *
+     * @param base 新的字面义。
+     */
+    public void resetLiteralBase(LiteralBase base) {
+        this.literalBase = base;
     }
 
     /**
