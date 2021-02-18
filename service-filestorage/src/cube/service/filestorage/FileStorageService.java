@@ -39,6 +39,7 @@ import cube.service.filestorage.system.DiskSystem;
 import cube.service.filestorage.system.FileDescriptor;
 import cube.service.filestorage.system.FileSystem;
 import cube.storage.StorageType;
+import cube.util.ConfigUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -472,19 +473,28 @@ public class FileStorageService extends AbstractModule {
      * 初始化存储。
      */
     private void initStorage() {
-        JSONObject config = new JSONObject();
-        try {
-            config.put("file", "storage/FileStorageService.db");
-        } catch (JSONException e) {
-            e.printStackTrace();
+        // 读取存储配置
+        JSONObject config = ConfigUtils.readStorageConfig();
+        if (config.has(FileStorageService.NAME)) {
+            config = config.getJSONObject(FileStorageService.NAME);
+            if (config.getString("type").equalsIgnoreCase("SQLite")) {
+                this.fileStructStorage = new FileStructStorage(this.executor, StorageType.SQLite, config);
+            }
+            else {
+                this.fileStructStorage = new FileStructStorage(this.executor, StorageType.MySQL, config);
+            }
         }
-        this.fileStructStorage = new FileStructStorage(this.executor, StorageType.SQLite, config);
-
-        this.fileStructStorage.open();
+        else {
+            config.put("file", "storage/FileStorageService.db");
+            this.fileStructStorage = new FileStructStorage(this.executor, StorageType.SQLite, config);
+        }
 
         (new Thread() {
             @Override
             public void run() {
+                // 打开存储器
+                fileStructStorage.open();
+
                 // 存储进行自校验
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
                 fileStructStorage.execSelfChecking(authService.getDomainList());

@@ -26,6 +26,7 @@
 
 package cube.util;
 
+import cell.util.log.Logger;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -92,10 +93,10 @@ public final class ConfigUtils {
     public static JSONObject readStorageConfig() {
         JSONObject json = new JSONObject();
         try {
-            byte[] data = Files.readAllBytes(Paths.get("config/storage-config.json"));
+            byte[] data = Files.readAllBytes(Paths.get("config/storage.json"));
             json = new JSONObject(new String(data, Charset.forName("UTF-8")));
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.d(ConfigUtils.class, "#readStorageConfig - " + e.getMessage());
         }
         return json;
     }

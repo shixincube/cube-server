@@ -149,7 +149,7 @@ public class FileStructStorage implements Storagable {
 
     public FileStructStorage(ExecutorService executorService, StorageType type, JSONObject config) {
         this.executor = executorService;
-        this.storage = StorageFactory.getInstance().createStorage(type, "FileLabelStorage", config);
+        this.storage = StorageFactory.getInstance().createStorage(type, "FileStructStorage", config);
         this.labelTableNameMap = new HashMap<>();
         this.descriptorTableNameMap = new HashMap<>();
         this.hierarchyTableNameMap = new HashMap<>();

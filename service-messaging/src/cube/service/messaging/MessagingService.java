@@ -37,8 +37,6 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.CachedQueueExecutor;
-import org.json.JSONException;
-import org.json.JSONObject;
 import cell.util.log.Logger;
 import cube.common.ModuleEvent;
 import cube.common.Packet;
@@ -57,6 +55,9 @@ import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchy;
 import cube.storage.StorageType;
+import cube.util.ConfigUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.util.Collections;
@@ -152,19 +153,28 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     }
 
     private void initMessageStorage() {
-        JSONObject config = new JSONObject();
-        try {
-            config.put("file", "storage/MessagingService.db");
-        } catch (JSONException e) {
-            e.printStackTrace();
+        // 读取存储配置
+        JSONObject config = ConfigUtils.readStorageConfig();
+        if (config.has(MessagingService.NAME)) {
+            config = config.getJSONObject(MessagingService.NAME);
+            if (config.getString("type").equalsIgnoreCase("SQLite")) {
+                this.storage = new MessagingStorage(this.executor, StorageType.SQLite, config);
+            }
+            else {
+                this.storage = new MessagingStorage(this.executor, StorageType.MySQL, config);
+            }
         }
-        this.storage = new MessagingStorage(this.executor, StorageType.SQLite, config);
-
-        this.storage.open();
+        else {
+            config.put("file", "storage/MessagingService.db");
+            this.storage = new MessagingStorage(this.executor, StorageType.SQLite, config);
+        }
 
         (new Thread() {
             @Override
             public void run() {
+                // 打开存储器
+                storage.open();
+
                 // 存储进行自校验
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
                 storage.execSelfChecking(authService.getDomainList());

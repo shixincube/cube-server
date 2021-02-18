@@ -191,7 +191,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 JSONObject config = ConfigUtils.readStorageConfig();
                 if (config.has(ContactManager.NAME)) {
                     config = config.getJSONObject(ContactManager.NAME);
-                    if (config.getString("type").equals("SQLite")) {
+                    if (config.getString("type").equalsIgnoreCase("SQLite")) {
                         storage = new ContactStorage(executor, StorageType.SQLite, config);
                     }
                     else {
