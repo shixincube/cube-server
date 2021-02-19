@@ -24,45 +24,26 @@
  * SOFTWARE.
  */
 
-/**
- * Console
- */
-function Console() {
-    this.dispatchers = null;
-    this.services = null;
+body {
+    font-size: 14px !important;
 }
 
-Console.prototype.checkCookie = function() {
-    return false;
+.btn {
+    font-size: 14px;
 }
 
-Console.prototype.log = function(text) {
-    window.console.log(text);
+.card {
+    font-size: 14px;
 }
 
-Console.prototype.getServers = function(handler) {
-    var that = this;
-    $.get('/servers', function(response, status, xhr) {
-        that.dispatchers = response.dispatchers;
-        that.services = response.services;
-        handler(response);
-    }, 'json');
+.form-control {
+    font-size: 14px;
 }
 
-Console.prototype.queryConsoleLog = function(start, handler) {
-    $.get('/log/console', { "start": start }, function(response, status, xhr) {
-        handler(response);
-    }, 'json');
+.login-box .copyright {
+    font-size: 12px;
 }
 
-Console.prototype.queryLog = function(name, start, handler) {
-    $.get('/log/server', { "name": name, "start": start }, function(response, status, xhr) {
-        handler(response);
-    }, 'json');
-}
-
-Console.prototype.queryJVMReport = function(name, num, handler) {
-    $.get('/server-report', { "report": "JVMReport", "name": name, "num": num }, function(response, status, xhr) {
-        handler(response);
-    }, 'json');
+.h-400px {
+    height: 400px;
 }

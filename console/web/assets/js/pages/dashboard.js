@@ -6,6 +6,11 @@
     var console = new Console();
     $.console = console;
 
+    if (!console.checkCookie()) {
+        window.location.href = 'index.html';
+        return;
+    }
+
     var chartDispatcher = null;
     var chartService = null;
 

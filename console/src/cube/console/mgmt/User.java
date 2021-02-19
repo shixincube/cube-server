@@ -24,45 +24,37 @@
  * SOFTWARE.
  */
 
+package cube.console.mgmt;
+
+import java.util.List;
+import java.util.Vector;
+
 /**
- * Console
+ * 用户。
  */
-function Console() {
-    this.dispatchers = null;
-    this.services = null;
-}
+public class User {
 
-Console.prototype.checkCookie = function() {
-    return false;
-}
+    public String name;
 
-Console.prototype.log = function(text) {
-    window.console.log(text);
-}
+    protected String password;
 
-Console.prototype.getServers = function(handler) {
-    var that = this;
-    $.get('/servers', function(response, status, xhr) {
-        that.dispatchers = response.dispatchers;
-        that.services = response.services;
-        handler(response);
-    }, 'json');
-}
+    public List<String> tokenList;
 
-Console.prototype.queryConsoleLog = function(start, handler) {
-    $.get('/log/console', { "start": start }, function(response, status, xhr) {
-        handler(response);
-    }, 'json');
-}
+    public User(String name) {
+        this(name, null);
+    }
 
-Console.prototype.queryLog = function(name, start, handler) {
-    $.get('/log/server', { "name": name, "start": start }, function(response, status, xhr) {
-        handler(response);
-    }, 'json');
-}
+    public User(String name, String password) {
+        this.name = name;
+        this.password = password;
+        this.tokenList = new Vector<>();
+    }
 
-Console.prototype.queryJVMReport = function(name, num, handler) {
-    $.get('/server-report', { "report": "JVMReport", "name": name, "num": num }, function(response, status, xhr) {
-        handler(response);
-    }, 'json');
+    public void addToken(String token) {
+        if (this.tokenList.contains(token)) {
+            return;
+        }
+
+        this.tokenList.add(token);
+    }
 }

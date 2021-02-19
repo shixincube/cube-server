@@ -30,6 +30,7 @@ import cell.util.log.LogHandle;
 import cell.util.log.LogLevel;
 import cell.util.log.LogManager;
 import cell.util.log.Logger;
+import cube.console.mgmt.UserManager;
 import cube.report.JVMReport;
 import cube.report.LogLine;
 import cube.report.LogReport;
@@ -71,10 +72,18 @@ public final class Console implements Runnable {
 
     private ConsoleLogHandler logHandler;
 
+    private UserManager userManager;
+
     public Console() {
         this.serverLogMap = new ConcurrentHashMap<>();
         this.serverJVMMap = new ConcurrentHashMap<>();
         this.logHandler = new ConsoleLogHandler();
+
+        this.userManager = new UserManager();
+    }
+
+    public UserManager getUserManager() {
+        return this.userManager;
     }
 
     public void launch() {

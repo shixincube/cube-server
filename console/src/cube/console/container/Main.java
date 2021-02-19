@@ -34,6 +34,7 @@ import cube.console.ReportHandler;
 import cube.console.container.handler.ServerLogHandler;
 import cube.console.container.handler.ServerReportHandler;
 import cube.console.container.handler.ServersHandler;
+import cube.console.container.handler.SigninHandler;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpStatus;
@@ -91,6 +92,9 @@ public class Main {
                 new ServersHandler(console),
                 new ServerLogHandler(console),
                 new ServerReportHandler(console),
+
+                // For Web
+                new SigninHandler(console.getUserManager()),
 
                 new StopHandler(server, console),
                 new DefaultHandler()});

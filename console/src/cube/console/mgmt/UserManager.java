@@ -24,45 +24,46 @@
  * SOFTWARE.
  */
 
+package cube.console.mgmt;
+
+import cell.util.Utils;
+
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
- * Console
+ * 用户管理器。
  */
-function Console() {
-    this.dispatchers = null;
-    this.services = null;
-}
+public class UserManager {
 
-Console.prototype.checkCookie = function() {
-    return false;
-}
+    private ConcurrentHashMap<String, User> tokenMap;
 
-Console.prototype.log = function(text) {
-    window.console.log(text);
-}
+    public UserManager() {
+        this.tokenMap = new ConcurrentHashMap<>();
+    }
 
-Console.prototype.getServers = function(handler) {
-    var that = this;
-    $.get('/servers', function(response, status, xhr) {
-        that.dispatchers = response.dispatchers;
-        that.services = response.services;
-        handler(response);
-    }, 'json');
-}
+    public String signin(String userName, String password) {
+        User user = getUser(userName);
+        if (null == user) {
+            return null;
+        }
 
-Console.prototype.queryConsoleLog = function(start, handler) {
-    $.get('/log/console', { "start": start }, function(response, status, xhr) {
-        handler(response);
-    }, 'json');
-}
+        if (!user.password.equalsIgnoreCase(password)) {
+            return null;
+        }
 
-Console.prototype.queryLog = function(name, start, handler) {
-    $.get('/log/server', { "name": name, "start": start }, function(response, status, xhr) {
-        handler(response);
-    }, 'json');
-}
+        String token = Utils.randomString(32);
+        user.addToken(token);
+        this.tokenMap.put(token, user);
 
-Console.prototype.queryJVMReport = function(name, num, handler) {
-    $.get('/server-report', { "report": "JVMReport", "name": name, "num": num }, function(response, status, xhr) {
-        handler(response);
-    }, 'json');
+        return token;
+    }
+
+    protected User getUser(String userName) {
+        if (userName.equals("cube")) {
+            // 密码：shixincube
+            return new User("cube", "c7af98d321febe62e04d45e8806852e0");
+        }
+
+        return null;
+    }
 }
