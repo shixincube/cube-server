@@ -26,6 +26,8 @@
 
 package cube.console.storage;
 
+import cube.core.StorageField;
+
 import java.util.Properties;
 
 /**
@@ -33,11 +35,24 @@ import java.util.Properties;
  */
 public class DispatcherStorage extends ConsoleStorage {
 
+    private final StorageField[] fields = new StorageField[] {
+//            new StorageField("sn")
+    };
+
     public DispatcherStorage(Properties properties) {
         super("DispatcherStorage", properties);
     }
 
-    public void autoCheckTable() {
+    public void open() {
+        this.storage.open();
+        this.autoCheckTable();
+    }
+
+    public void close() {
+        this.storage.close();
+    }
+
+    private void autoCheckTable() {
 
     }
 }

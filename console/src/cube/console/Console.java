@@ -99,6 +99,7 @@ public final class Console implements Runnable {
 
         LogManager.getInstance().addHandle(this.logHandler);
 
+        this.userManager.start();
         this.dispatcherManager.start();
 
         this.timer = Executors.newScheduledThreadPool(2);
@@ -106,6 +107,9 @@ public final class Console implements Runnable {
     }
 
     public void destroy() {
+        this.dispatcherManager.stop();
+        this.userManager.stop();
+
         this.timer.shutdown();
     }
 

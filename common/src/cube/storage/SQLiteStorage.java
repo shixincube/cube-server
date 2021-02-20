@@ -30,6 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.core.AbstractStorage;
 import cube.core.Conditional;
+import cube.core.Constraint;
 import cube.core.StorageField;
 import cube.util.SQLUtils;
 import org.json.JSONException;
@@ -121,7 +122,7 @@ public class SQLiteStorage extends AbstractStorage {
     @Override
     public boolean executeCreate(String table, StorageField[] fields) {
         for (StorageField field : fields) {
-            this.fixBigint(field);
+            this.fixBigintAndAutoIncrement(field);
         }
 
         // 拼写 SQL 语句
@@ -149,9 +150,17 @@ public class SQLiteStorage extends AbstractStorage {
         return true;
     }
 
-    private void fixBigint(StorageField field) {
+    private void fixBigintAndAutoIncrement(StorageField field) {
         if (field.getLiteralBase() == LiteralBase.LONG) {
             field.resetLiteralBase(LiteralBase.INT);
+        }
+
+        Constraint[] constraints = field.getConstraints();
+        for (int i = 0; i < constraints.length; ++i) {
+            Constraint constraint = constraints[i];
+            if (constraint == Constraint.AUTO_INCREMENT) {
+                constraints[i] = Constraint.AUTOINCREMENT;
+            }
         }
     }
 

@@ -27,7 +27,13 @@
 package cube.console.mgmt;
 
 import cell.util.Utils;
+import cell.util.log.Logger;
+import cube.console.storage.UserStorage;
+import cube.util.ConfigUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -35,14 +41,57 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class UserManager {
 
-    private ConcurrentHashMap<String, User> tokenMap;
+    private long tokenAge = 7L * 24L * 60L * 60L * 1000L;
+
+    private ConcurrentHashMap<String, UserToken> tokenMap;
+
+    private UserStorage storage;
 
     public UserManager() {
         this.tokenMap = new ConcurrentHashMap<>();
     }
 
-    public String signin(String userName, String password) {
-        User user = getUser(userName);
+    public void start() {
+        String filepath = "console.properties";
+        File file = new File(filepath);
+        if (!file.exists()) {
+            filepath = "config/console.properties";
+            file = new File(filepath);
+            if (!file.exists()) {
+                return;
+            }
+        }
+
+        try {
+            Properties properties = ConfigUtils.readProperties(filepath);
+            this.storage = new UserStorage(properties);
+            this.storage.open();
+        } catch (IOException e) {
+            Logger.w(this.getClass(), "#start", e);
+        }
+    }
+
+    public void stop() {
+        if (null != this.storage) {
+            this.storage.close();
+        }
+    }
+
+    public UserToken signIn(String tokenString) {
+        UserToken userToken = this.tokenMap.get(tokenString);
+
+        if (null == userToken) {
+            userToken = this.storage.readToken(tokenString);
+            if (null != userToken) {
+                this.tokenMap.put(userToken.token, userToken);
+            }
+        }
+
+        return userToken;
+    }
+
+    public UserToken signIn(String userName, String password) {
+        User user = this.storage.readUser(userName);
         if (null == user) {
             return null;
         }
@@ -51,19 +100,19 @@ public class UserManager {
             return null;
         }
 
-        String token = Utils.randomString(32);
-        user.addToken(token);
-        this.tokenMap.put(token, user);
+        String tokenString = Utils.randomString(32);
+
+        long time = System.currentTimeMillis();
+        long expire = time + this.tokenAge;
+
+        UserToken token = new UserToken(tokenString, time, expire);
+        token.user = user;
+
+        this.tokenMap.put(tokenString, token);
+
+        // 写入存储
+        this.storage.writeToken(token);
 
         return token;
-    }
-
-    protected User getUser(String userName) {
-        if (userName.equals("cube")) {
-            // 密码：shixincube
-            return new User("cube", "c7af98d321febe62e04d45e8806852e0");
-        }
-
-        return null;
     }
 }

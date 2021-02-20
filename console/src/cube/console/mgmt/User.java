@@ -26,35 +26,24 @@
 
 package cube.console.mgmt;
 
-import java.util.List;
-import java.util.Vector;
-
 /**
  * 用户。
  */
 public class User {
 
-    public String name;
+    public final Long id;
+
+    public final String name;
 
     protected String password;
 
-    public List<String> tokenList;
-
-    public User(String name) {
-        this(name, null);
+    public User(Long id, String name) {
+        this(id, name, null);
     }
 
-    public User(String name, String password) {
+    public User(Long id, String name, String password) {
+        this.id = id;
         this.name = name;
         this.password = password;
-        this.tokenList = new Vector<>();
-    }
-
-    public void addToken(String token) {
-        if (this.tokenList.contains(token)) {
-            return;
-        }
-
-        this.tokenList.add(token);
     }
 }

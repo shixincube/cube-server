@@ -66,4 +66,15 @@
         var hash = md5(password);
         passwordEl.val(hash);
     });
+
+    $(document).ready(function() {
+        $.ajax({
+            type: 'post',
+            url: '/signin/'
+        }).done(function(response) {
+            window.location.href = 'dashboard.html';
+        }).fail(function() {
+            console.log('登录过期，重新登录');
+        });
+    });
 })(jQuery);

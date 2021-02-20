@@ -27,6 +27,7 @@
 package cube.console.container.handler;
 
 import cube.console.mgmt.UserManager;
+import cube.console.mgmt.UserToken;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
@@ -64,22 +65,40 @@ public class SigninHandler extends ContextHandler {
         public void handle(String target, Request baseRequest,
                            HttpServletRequest request, HttpServletResponse response)
                 throws IOException, ServletException {
-
             if (baseRequest.getMethod().equalsIgnoreCase(HttpMethod.GET.asString())) {
                 baseRequest.setHandled(true);
                 return;
             }
 
-            String username = baseRequest.getParameter("username");
-            String password = baseRequest.getParameter("password");
+            String username = request.getParameter("username");
+            String password = request.getParameter("password");
             if (null == username || null == password) {
+
+                // 尝试读取 Cookie
+                Cookie[] cookies = request.getCookies();
+                for (Cookie cookie : cookies) {
+                    if (COOKIE_NAME_TOKEN.equalsIgnoreCase(cookie.getName())) {
+                        // 发现当前请求包含 Cookie 信息
+                        String value = cookie.getValue();
+                        UserToken token = userManager.signIn(value);
+                        if (null != token) {
+                            response.setStatus(HttpStatus.OK_200);
+                        }
+                        else {
+                            response.setStatus(HttpStatus.BAD_REQUEST_400);
+                        }
+                        baseRequest.setHandled(true);
+                        return;
+                    }
+                }
+
                 response.setStatus(HttpStatus.FOUND_302);
                 response.setHeader("Location", "/index.html?e=" + 9);
                 baseRequest.setHandled(true);
                 return;
             }
 
-            String token = userManager.signin(username, password);
+            UserToken token = userManager.signIn(username, password);
             if (null == token) {
                 response.setStatus(HttpStatus.FOUND_302);
                 response.setHeader("Location", "/index.html?e=" + 10);
@@ -87,7 +106,7 @@ public class SigninHandler extends ContextHandler {
                 return;
             }
 
-            Cookie cookie = new Cookie(COOKIE_NAME_TOKEN, token);
+            Cookie cookie = new Cookie(COOKIE_NAME_TOKEN, token.token);
             cookie.setMaxAge(24 * 60 * 60);
             cookie.setPath("/");
             response.addCookie(cookie);

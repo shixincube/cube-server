@@ -60,29 +60,14 @@ public class Main {
         LogManager.getInstance().setLevel(LogLevel.DEBUG);
         LogManager.getInstance().addHandle(LogManager.createSystemOutHandle());
 
+        // 创建 Console
         Console console = new Console();
         console.launch();
 
+        // 创建服务器
         Server server = new Server(port);
 
-        ResourceHandler resourceHandler = new ResourceHandler();
-        resourceHandler.setDirectoriesListed(false);
-        resourceHandler.setWelcomeFiles(new String[] { "index.html" });
-
-        // 判断目录
-        File path = new File("web");
-        if (path.exists() && path.isDirectory()) {
-            resourceHandler.setResourceBase("web");
-        }
-        else {
-            resourceHandler.setResourceBase("WebContent");
-        }
-
-        ContextHandler indexHandler = new ContextHandler("/");
-        indexHandler.setHandler(resourceHandler);
-
         HandlerList handlers = ContainerHandlers.createHandlerList(server, console);
-        handlers.addHandler(indexHandler);
         server.setHandler(handlers);
 
         Logger.i(Main.class, "Start cube console server # " + port);

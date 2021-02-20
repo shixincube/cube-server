@@ -34,8 +34,12 @@ import cube.console.container.handler.ServersHandler;
 import cube.console.container.handler.SigninHandler;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.handler.ResourceHandler;
+
+import java.io.File;
 
 /**
  * HTTP 处理句柄集合。
@@ -46,8 +50,27 @@ public final class ContainerHandlers {
     }
 
     public static HandlerList createHandlerList(Server server, Console console) {
+        ResourceHandler resourceHandler = new ResourceHandler();
+        resourceHandler.setDirectoriesListed(false);
+        resourceHandler.setWelcomeFiles(new String[] { "index.html" });
+
+        // 判断目录
+        File path = new File("web");
+        if (path.exists() && path.isDirectory()) {
+            resourceHandler.setResourceBase("web");
+        }
+        else {
+            resourceHandler.setResourceBase("WebContent");
+        }
+
+        ContextHandler indexHandler = new ContextHandler("/");
+        indexHandler.setHandler(resourceHandler);
+
         HandlerList handlers = new HandlerList();
         handlers.setHandlers(new Handler[] {
+                // 索引页
+                indexHandler,
+
                 // For RESTful API
                 new ReportHandler(console),
 

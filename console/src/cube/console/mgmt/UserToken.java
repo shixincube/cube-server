@@ -26,48 +26,22 @@
 
 package cube.console.mgmt;
 
-import cell.util.log.Logger;
-import cube.console.storage.DispatcherStorage;
-import cube.util.ConfigUtils;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Properties;
-
 /**
- * 调度机管理器。
+ * 访问令牌。
  */
-public class DispatcherManager {
+public class UserToken {
 
-    private DispatcherStorage storage;
+    public final String token;
 
-    public DispatcherManager() {
+    public final long creation;
 
-    }
+    public final long expire;
 
-    public void start() {
-        String filepath = "console.properties";
-        File file = new File(filepath);
-        if (!file.exists()) {
-            filepath = "config/console.properties";
-            file = new File(filepath);
-            if (!file.exists()) {
-                return;
-            }
-        }
+    public User user;
 
-        try {
-            Properties properties = ConfigUtils.readProperties(filepath);
-            this.storage = new DispatcherStorage(properties);
-            this.storage.open();
-        } catch (IOException e) {
-            Logger.w(this.getClass(), "#start", e);
-        }
-    }
-
-    public void stop() {
-        if (null != this.storage) {
-            this.storage.close();
-        }
+    public UserToken(String token, long creation, long expire) {
+        this.token = token;
+        this.creation = creation;
+        this.expire = expire;
     }
 }
