@@ -44,6 +44,8 @@ import java.util.List;
  */
 public class SQLiteStorage extends AbstractStorage {
 
+    public final static String CONFIG_FILE = "file";
+
     private Connection connection = null;
 
     public SQLiteStorage(String name) {
@@ -59,7 +61,7 @@ public class SQLiteStorage extends AbstractStorage {
         JSONObject config = this.getConfig();
         String file = null;
         try {
-            file = config.getString("file");
+            file = config.getString(CONFIG_FILE);
         } catch (JSONException e) {
             Logger.e(this.getClass(), "Open SQLite Storage", e);
             return;

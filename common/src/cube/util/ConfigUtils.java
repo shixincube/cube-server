@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,7 @@ import java.nio.file.Paths;
 import java.util.Properties;
 
 /**
- * 配置管理使用函数库。
+ * 配置管理数据实用函数库。
  */
 public final class ConfigUtils {
 
@@ -62,7 +62,7 @@ public final class ConfigUtils {
         return ConfigUtils.readProperties(path);
     }
 
-    private static Properties readProperties(String path) throws IOException {
+    public static Properties readProperties(String path) throws IOException {
         Properties result = new Properties();
 
         FileInputStream fis = null;

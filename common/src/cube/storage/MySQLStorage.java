@@ -46,6 +46,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MySQLStorage extends AbstractStorage {
 
+    public final static String CONFIG_HOST = "host";
+    public final static String CONFIG_PORT = "port";
+    public final static String CONFIG_SCHEMA = "schema";
+    public final static String CONFIG_USER = "user";
+    public final static String CONFIG_PASSWORD = "password";
+
     private ConnectionPool pool;
 
     public MySQLStorage(String name) {
@@ -401,16 +407,16 @@ public class MySQLStorage extends AbstractStorage {
             if (null == conn) {
                 StringBuilder url = new StringBuilder();
                 url.append("jdbc:mysql://");
-                url.append(this.config.has("host") ? this.config.getString("host") : "127.0.0.1");
+                url.append(this.config.has(CONFIG_HOST) ? this.config.getString(CONFIG_HOST) : "127.0.0.1");
                 url.append(":");
-                url.append(this.config.has("port") ? this.config.getInt("port") : 3306);
+                url.append(this.config.has(CONFIG_PORT) ? this.config.getInt(CONFIG_PORT) : 3306);
                 url.append("/");
-                url.append(this.config.has("schema") ? this.config.getString("schema") : "cube");
+                url.append(this.config.has(CONFIG_SCHEMA) ? this.config.getString(CONFIG_SCHEMA) : "cube");
                 url.append("?useSSL=false&allowPublicKeyRetrieval=true");
 
                 try {
                    conn = DriverManager.getConnection(url.toString(),
-                            this.config.getString("user"), this.config.getString("password"));
+                            this.config.getString(CONFIG_USER), this.config.getString(CONFIG_PASSWORD));
                 } catch (SQLException e) {
                     Logger.e(this.getClass(), "#open", e);
                 }

@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -81,24 +81,8 @@ public class Main {
         ContextHandler indexHandler = new ContextHandler("/");
         indexHandler.setHandler(resourceHandler);
 
-        HandlerList handlers = new HandlerList();
-        handlers.setHandlers(new Handler[] {
-                indexHandler,
-
-                // For RESTful API
-                new ReportHandler(console),
-
-                // For AJAX API
-                new ServersHandler(console),
-                new ServerLogHandler(console),
-                new ServerReportHandler(console),
-
-                // For Web
-                new SigninHandler(console.getUserManager()),
-
-                new StopHandler(server, console),
-                new DefaultHandler()});
-
+        HandlerList handlers = ContainerHandlers.createHandlerList(server, console);
+        handlers.addHandler(indexHandler);
         server.setHandler(handlers);
 
         Logger.i(Main.class, "Start cube console server # " + port);

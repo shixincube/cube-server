@@ -30,6 +30,7 @@ import cell.util.log.LogHandle;
 import cell.util.log.LogLevel;
 import cell.util.log.LogManager;
 import cell.util.log.Logger;
+import cube.console.mgmt.DispatcherManager;
 import cube.console.mgmt.UserManager;
 import cube.report.JVMReport;
 import cube.report.LogLine;
@@ -74,12 +75,15 @@ public final class Console implements Runnable {
 
     private UserManager userManager;
 
+    private DispatcherManager dispatcherManager;
+
     public Console() {
         this.serverLogMap = new ConcurrentHashMap<>();
         this.serverJVMMap = new ConcurrentHashMap<>();
         this.logHandler = new ConsoleLogHandler();
 
         this.userManager = new UserManager();
+        this.dispatcherManager = new DispatcherManager();
     }
 
     public UserManager getUserManager() {
@@ -87,13 +91,15 @@ public final class Console implements Runnable {
     }
 
     public void launch() {
-        try {
-            this.servers = ConfigUtils.readConsoleServers();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            this.servers = ConfigUtils.readConsoleServers();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         LogManager.getInstance().addHandle(this.logHandler);
+
+        this.dispatcherManager.start();
 
         this.timer = Executors.newScheduledThreadPool(2);
         this.timer.scheduleWithFixedDelay(this, 10L, 10L, TimeUnit.SECONDS);

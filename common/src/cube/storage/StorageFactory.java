@@ -36,6 +36,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class StorageFactory {
 
+    public final static String SQLITE_FILE = SQLiteStorage.CONFIG_FILE;
+
+    public final static String MYSQL_HOST = MySQLStorage.CONFIG_HOST;
+    public final static String MYSQL_PORT = MySQLStorage.CONFIG_PORT;
+    public final static String MYSQL_SCHEMA = MySQLStorage.CONFIG_SCHEMA;
+    public final static String MYSQL_USER = MySQLStorage.CONFIG_USER;
+    public final static String MYSQL_PASSWORD = MySQLStorage.CONFIG_PASSWORD;
+
     private final static StorageFactory instance = new StorageFactory();
 
     private ConcurrentHashMap<String, Storage> storageMap;
