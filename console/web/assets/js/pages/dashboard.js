@@ -31,20 +31,19 @@
     $.console = console;
 
     // 检查是否合法
-    console.checkCookie(function(valid) {
+    console.checkUser(function(valid) {
         if (!valid) {
             window.location.href = 'index.html';
         }
         else {
+            g.common.updateView(console);
             g.dashboard.launch();
         }
     });
 
     g.dashboard = {
         launch: function() {
-            var userPanel = $('.user-panel');
-            userPanel.find('img[data-target="avatar"]').attr('src', console.user.avatar);
-            userPanel.find('a[data-target="name"]').text(console.user.displayName);
+            
         },
 
         appendLog: function(el, line) {

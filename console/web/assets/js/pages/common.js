@@ -24,49 +24,14 @@
  * SOFTWARE.
  */
 
-body {
-    font-size: 14px !important;
-}
+(function($, g) {
 
-.main-footer {
-    font-size: 14px;
-    padding: 0.75rem;
-}
+    g.common = {
+        updateView: function(console) {
+            var userPanel = $('.user-panel');
+            userPanel.find('img[data-target="avatar"]').attr('src', console.user.avatar);
+            userPanel.find('a[data-target="name"]').text(console.user.displayName);
+        }
+    };
 
-.btn {
-    font-size: 14px;
-}
-
-.card {
-    font-size: 14px;
-}
-
-.form-control {
-    font-size: 14px;
-}
-
-.user-panel .info {
-    font-size: 16px;
-}
-
-.h-400px {
-    height: 400px;
-}
-
-.log-view {
-    font-size: 12px;
-    font-family: Menlo, "Courier New", Courier, monospace;
-    overflow: auto;
-    height: 360px;
-}
-
-.log-view p {
-    margin: 0;
-}
-
-.chart-color-1 {
-    color: #3c8dbc !important;
-}
-.chart-color-2 {
-    color: #d2d6de !important;
-}
+})(jQuery, window);

@@ -34,7 +34,7 @@ function Console() {
     this.services = null;
 }
 
-Console.prototype.checkCookie = function(handler) {
+Console.prototype.checkUser = function(handler) {
     var token = null;
     var val = document.cookie;
     var array = val.split(';');

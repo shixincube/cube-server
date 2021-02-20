@@ -127,18 +127,30 @@
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a href="#" class="nav-link active">
+                                <a href="dashboard.html" class="nav-link active">
                                     <i class="far fa-circle nav-icon"></i>
-                                    <p>服务器汇总</p>
+                                    <p>服务器概览</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="#" class="nav-link">
+                                <a href="dashboard.html?tab=contacts" class="nav-link">
                                     <i class="far fa-circle nav-icon"></i>
-                                    <p>终端汇总</p>
+                                    <p>用户数据概览</p>
                                 </a>
                             </li>
                         </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a href="dispatchers.html" class="nav-link">
+                            <i class="nav-icon fas fa-sitemap"></i>
+                            <p>调度机 <span class="right badge badge-info">0</span></p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="services.html" class="nav-link">
+                            <i class="nav-icon fas fa-server"></i>
+                            <p>模块服务器 <span class="right badge badge-info">0</span></p>
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a href="#" class="nav-link">
@@ -158,12 +170,12 @@
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1 class="m-0 text-dark">服务器汇总</h1>
+                        <h3 class="m-0 text-dark">服务器概览</h3>
                     </div><!-- /.col -->
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
                             <li class="breadcrumb-item"><a href="/">首页</a></li>
-                            <li class="breadcrumb-item active">服务器汇总</li>
+                            <li class="breadcrumb-item active">服务器概览</li>
                         </ol>
                     </div><!-- /.col -->
                 </div><!-- /.row -->
@@ -179,7 +191,7 @@
                         <div id="dispatcher-box" class="small-box bg-info">
                             <div class="inner">
                                 <h3>0</h3>
-                                <p>调度节点</p>
+                                <p>调度机</p>
                             </div>
                             <div class="icon">
                                 <i class="ion ion-android-globe"></i>
@@ -192,7 +204,7 @@
                         <div id="service-box" class="small-box bg-success">
                             <div class="inner">
                                 <h3>0</h3>
-                                <p>服务单元节点</p>
+                                <p>模块服务器</p>
                             </div>
                             <div class="icon">
                                 <i class="ion ion-cube"></i>
@@ -205,7 +217,7 @@
                         <div class="small-box bg-warning">
                             <div class="inner">
                                 <h3>0</h3>
-                                <p>媒体服务节点</p>
+                                <p>媒体服务器</p>
                             </div>
                             <div class="icon">
                                 <i class="ion ion-videocamera"></i>
@@ -351,7 +363,7 @@
         <!-- Control sidebar content goes here -->
         <div class="p-3">
             <h5>控制台手册</h5>
-            <p>Cube Console 即时信魔方控制台是监控服务器运行状态的管理程序。</p>
+            <p>Cube Console 时信魔方控制台是监控服务器运行状态的管理程序。</p>
         </div>
     </aside>
     <!-- /.control-sidebar -->
@@ -373,6 +385,7 @@
 <script src="plugins/chart.js/Chart.min.js"></script>
 <script src="assets/js/util.js"></script>
 <script src="assets/js/console.js"></script>
+<script src="assets/js/pages/common.js"></script>
 <script src="assets/js/pages/dashboard.js"></script>
 </body>
 </html>

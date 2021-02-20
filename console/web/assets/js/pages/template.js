@@ -24,49 +24,23 @@
  * SOFTWARE.
  */
 
-body {
-    font-size: 14px !important;
-}
+(function ($, g) {
+    'use strict'
 
-.main-footer {
-    font-size: 14px;
-    padding: 0.75rem;
-}
+    var console = new Console();
+    $.console = console;
 
-.btn {
-    font-size: 14px;
-}
+    var console = new Console();
+    $.console = console;
 
-.card {
-    font-size: 14px;
-}
+    // 检查是否合法
+    console.checkUser(function(valid) {
+        if (!valid) {
+            window.location.href = 'index.html';
+        }
+        else {
+            g.common.updateView(console);
+        }
+    });
 
-.form-control {
-    font-size: 14px;
-}
-
-.user-panel .info {
-    font-size: 16px;
-}
-
-.h-400px {
-    height: 400px;
-}
-
-.log-view {
-    font-size: 12px;
-    font-family: Menlo, "Courier New", Courier, monospace;
-    overflow: auto;
-    height: 360px;
-}
-
-.log-view p {
-    margin: 0;
-}
-
-.chart-color-1 {
-    color: #3c8dbc !important;
-}
-.chart-color-2 {
-    color: #d2d6de !important;
-}
+})(jQuery, window);
