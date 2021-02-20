@@ -28,11 +28,43 @@
  * Console
  */
 function Console() {
+    this.user = null;
+
     this.dispatchers = null;
     this.services = null;
 }
 
-Console.prototype.checkCookie = function() {
+Console.prototype.checkCookie = function(handler) {
+    var token = null;
+    var val = document.cookie;
+    var array = val.split(';');
+    for (var i = 0; i < array.length; ++i) {
+        val = array[i].split('=');
+        if (val.length == 2) {
+            if (val[0] == 'cube-console-token') {
+                token = val[1].trim();
+                break;
+            }
+        }
+    }
+
+    if (null == token) {
+        handler(false);
+        return;
+    }
+
+    var that = this;
+
+    $.ajax({
+        type: 'post',
+        url: '/signin/'
+    }).done(function(response) {
+        that.user = response.user;
+        handler(true);
+    }).fail(function() {
+        handler(false);
+    });
+
     return false;
 }
 

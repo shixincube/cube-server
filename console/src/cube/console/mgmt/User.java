@@ -26,24 +26,47 @@
 
 package cube.console.mgmt;
 
+import cube.common.JSONable;
+import org.json.JSONObject;
+
 /**
  * 用户。
  */
-public class User {
+public class User implements JSONable {
 
     public final Long id;
 
     public final String name;
 
+    public final String avatar;
+
+    public final String displayName;
+
     protected String password;
 
-    public User(Long id, String name) {
-        this(id, name, null);
+    public User(Long id, String name, String avatar, String displayName) {
+        this(id, name, avatar, displayName, null);
     }
 
-    public User(Long id, String name, String password) {
+    public User(Long id, String name, String avatar, String displayName, String password) {
         this.id = id;
         this.name = name;
+        this.avatar = avatar;
+        this.displayName = displayName;
         this.password = password;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("name", this.name);
+        json.put("avatar", this.avatar);
+        json.put("displayName", this.displayName);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

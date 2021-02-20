@@ -83,6 +83,8 @@ public class SigninHandler extends ContextHandler {
                         UserToken token = userManager.signIn(value);
                         if (null != token) {
                             response.setStatus(HttpStatus.OK_200);
+                            response.setContentType("application/json");
+                            response.getWriter().write(token.toJSON().toString());
                         }
                         else {
                             response.setStatus(HttpStatus.BAD_REQUEST_400);

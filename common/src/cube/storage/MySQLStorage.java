@@ -412,7 +412,7 @@ public class MySQLStorage extends AbstractStorage {
                 url.append(this.config.has(CONFIG_PORT) ? this.config.getInt(CONFIG_PORT) : 3306);
                 url.append("/");
                 url.append(this.config.has(CONFIG_SCHEMA) ? this.config.getString(CONFIG_SCHEMA) : "cube");
-                url.append("?useSSL=false&allowPublicKeyRetrieval=true");
+                url.append("?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8");
 
                 try {
                    conn = DriverManager.getConnection(url.toString(),

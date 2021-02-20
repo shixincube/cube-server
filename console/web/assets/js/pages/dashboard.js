@@ -24,15 +24,158 @@
  * SOFTWARE.
  */
 
-(function ($) {
+(function ($, g) {
     'use strict'
 
     var console = new Console();
     $.console = console;
 
-    if (!console.checkCookie()) {
-        window.location.href = 'index.html';
-        return;
+    // 检查是否合法
+    console.checkCookie(function(valid) {
+        if (!valid) {
+            window.location.href = 'index.html';
+        }
+        else {
+            g.dashboard.launch();
+        }
+    });
+
+    g.dashboard = {
+        launch: function() {
+            var userPanel = $('.user-panel');
+            userPanel.find('img[data-target="avatar"]').attr('src', console.user.avatar);
+            userPanel.find('a[data-target="name"]').text(console.user.displayName);
+        },
+
+        appendLog: function(el, line) {
+            var content = [];
+
+            var date = new Date(line.time);
+            content.push(formatNumber(date.getMonth() + 1, 2));
+            content.push('-');
+            content.push(formatNumber(date.getDate(), 2));
+            content.push(' ');
+            content.push(formatNumber(date.getHours(), 2));
+            content.push(':');
+            content.push(formatNumber(date.getMinutes(), 2));
+            content.push(':');
+            content.push(formatNumber(date.getSeconds(), 2));
+            content.push('.');
+            content.push(formatNumber(date.getMilliseconds(), 3));
+            content.push(' ');
+
+            var p = document.createElement('p');
+
+            if (line.level == 1) {
+                // Debug
+                content.push('[DEBUG] ');
+                p.setAttribute('class', 'text-muted');
+            }
+            else if (line.level == 2) {
+                // Info
+                content.push('[INFO]  ');
+                p.setAttribute('class', 'text-info');
+            }
+            else if (line.level == 3) {
+                // Warning
+                content.push('[WARN]  ');
+                p.setAttribute('class', 'text-warning');
+            }
+            else if (line.level == 4) {
+                // Error
+                content.push('[ERROR] ');
+                p.setAttribute('class', 'text-danger');
+            }
+
+            content.push(line.tag);
+            content.push(' - ');
+            content.push(line.text);
+
+            p.innerText = content.join('');
+            el.append(p);
+        },
+
+        removeLog: function(el, num) {
+            var list = el.find('p');
+            for (var i = 0; i < list.length && i < num; ++i) {
+                var c = list[i];
+                $(c).remove();
+            }
+        },
+
+        buildJVMChartDataTemplate: function() {
+            var labels = g.ui.makeTimeLineArray(Date.now(), 8);
+            var data = {
+                labels : labels,
+                datasets: [{
+                    label               : 'Total Memory (MB)',
+                    backgroundColor     : 'rgba(60,141,188, 0.9)',
+                    borderColor         : 'rgba(60,141,188, 0.8)',
+                    pointRadius          : false,
+                    pointColor          : '#3b8bba',
+                    pointStrokeColor    : 'rgba(60,141,188, 1)',
+                    pointHighlightFill  : '#fff',
+                    pointHighlightStroke: 'rgba(60,141,188, 1)',
+                    data                : [0, 0, 0, 0, 0, 0, 0, 0]
+                }, {
+                    label               : 'Free Memory (MB)',
+                    backgroundColor     : 'rgba(210,214,222, 1)',
+                    borderColor         : 'rgba(210,214,222, 1)',
+                    pointRadius         : false,
+                    pointColor          : 'rgba(210,214,222, 1)',
+                    pointStrokeColor    : '#c1c7d1',
+                    pointHighlightFill  : '#fff',
+                    pointHighlightStroke: 'rgba(220,220,220, 1)',
+                    data                : [0, 0, 0, 0, 0, 0, 0, 0]
+                }]
+            }
+            return data;
+        },
+
+        buildChart: function(el, data) {
+            var options = {
+                maintainAspectRatio : false,
+                responsive : true,
+                legend: {
+                    display: false
+                },
+                scales: {
+                    xAxes: [{
+                        stacked: true,
+                        gridLines : {
+                            display : false,
+                        }
+                    }],
+                    yAxes: [{
+                        stacked: true,
+                        ticks: {
+                            min: 0,
+                            beginAtZero: true,
+                            precision: 1
+                        },
+                        gridLines : {
+                            display : false,
+                        }
+                    }]
+                }
+            };
+
+            var canvas = el.get(0).getContext('2d');
+            var chart = new Chart(canvas, {
+                type: 'bar',
+                data: data,
+                options: options
+            });
+            return chart;
+        },
+
+        updateChart: function(chart, labels, datasets) {
+            chart.data.labels = labels;
+            for (var i = 0; i < datasets.length; ++i) {
+                chart.data.datasets[i].data = datasets[i];
+            }
+            chart.update();
+        }
     }
 
     /*
@@ -200,4 +343,4 @@
         }
     }, 10000);
     */
-})(jQuery);
+})(jQuery, window);

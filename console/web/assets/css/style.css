@@ -28,16 +28,20 @@ body {
     font-size: 14px !important;
 }
 
+.main-footer {
+    font-size: 14px;
+}
+
+.btn {
+    font-size: 14px;
+}
+
 .card {
     font-size: 14px;
 }
 
 .form-control {
     font-size: 14px;
-}
-
-.login-box .copyright {
-    font-size: 12px;
 }
 
 .h-400px {

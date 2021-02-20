@@ -29,8 +29,8 @@ package cube.console.storage;
 import cell.core.talk.LiteralBase;
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.console.mgmt.UserToken;
 import cube.console.mgmt.User;
+import cube.console.mgmt.UserToken;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.StorageField;
@@ -49,7 +49,9 @@ public class UserStorage extends ConsoleStorage {
             new StorageField("sn", LiteralBase.LONG),
             new StorageField("id", LiteralBase.LONG),
             new StorageField("name", LiteralBase.STRING),
-            new StorageField("password", LiteralBase.STRING)
+            new StorageField("password", LiteralBase.STRING),
+            new StorageField("avatar", LiteralBase.STRING),
+            new StorageField("display_name", LiteralBase.STRING)
     };
 
     private final StorageField[] tokenFields = new StorageField[] {
@@ -88,7 +90,8 @@ public class UserStorage extends ConsoleStorage {
 
         StorageField[] data = result.get(0);
         Map<String, StorageField> map = StorageFields.get(data);
-        return new User(map.get("id").getLong(), map.get("name").getString(), map.get("password").getString());
+        return new User(map.get("id").getLong(), map.get("name").getString(),
+                map.get("avatar").getString(), map.get("display_name").getString(), map.get("password").getString());
     }
 
     public User readUser(long id) {
@@ -102,7 +105,8 @@ public class UserStorage extends ConsoleStorage {
 
         StorageField[] data = result.get(0);
         Map<String, StorageField> map = StorageFields.get(data);
-        return new User(map.get("id").getLong(), map.get("name").getString(), map.get("password").getString());
+        return new User(map.get("id").getLong(), map.get("name").getString(),
+                map.get("avatar").getString(), map.get("display_name").getString(), map.get("password").getString());
     }
 
     public void writeToken(UserToken token) {
@@ -149,6 +153,12 @@ public class UserStorage extends ConsoleStorage {
                     }),
                     new StorageField("password", LiteralBase.STRING, new Constraint[] {
                             Constraint.NOT_NULL
+                    }),
+                    new StorageField("avatar", LiteralBase.STRING, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("display_name", LiteralBase.STRING, new Constraint[] {
+                            Constraint.NOT_NULL
                     })
             };
 
@@ -159,7 +169,9 @@ public class UserStorage extends ConsoleStorage {
             fields = new StorageField[] {
                     new StorageField("id", LiteralBase.LONG, Utils.generateSerialNumber()),
                     new StorageField("name", LiteralBase.STRING, "cube"),
-                    new StorageField("password", LiteralBase.STRING, "c7af98d321febe62e04d45e8806852e0")
+                    new StorageField("password", LiteralBase.STRING, "c7af98d321febe62e04d45e8806852e0"),
+                    new StorageField("avatar", LiteralBase.STRING, "assets/img/avatar.png"),
+                    new StorageField("display_name", LiteralBase.STRING, "魔方管理员")
             };
             this.storage.executeInsert(this.userTable, fields);
 

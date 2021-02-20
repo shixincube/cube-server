@@ -26,10 +26,13 @@
 
 package cube.console.mgmt;
 
+import cube.common.JSONable;
+import org.json.JSONObject;
+
 /**
  * 访问令牌。
  */
-public class UserToken {
+public class UserToken implements JSONable {
 
     public final String token;
 
@@ -43,5 +46,20 @@ public class UserToken {
         this.token = token;
         this.creation = creation;
         this.expire = expire;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("token", this.token);
+        json.put("creation", this.creation);
+        json.put("expire", this.expire);
+        json.put("user", this.user.toJSON());
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }
