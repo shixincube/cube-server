@@ -70,4 +70,10 @@ public class DispatcherManager {
             this.storage.close();
         }
     }
+
+    private void searchDeploy() {
+        String[] list = new String[] {
+                ""
+        };
+    }
 }

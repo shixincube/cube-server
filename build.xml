@@ -12,6 +12,8 @@
 	<property name="project-dispatcher.dir" value="dispatcher" />
 	<property name="project-service.dir" value="service" />
 
+	<property name="project-console.dir" value="console" />
+
 	<property name="project-service-filestorage.dir" value="service-filestorage" />
 	<property name="project-service-fileprocessor.dir" value="service-fileprocessor" />
 	<property name="project-service-messaging.dir" value="service-messaging" />
@@ -42,6 +44,28 @@
 	<target name="build-common-release">
 		<ant antfile="build.xml"
 			 dir="${project-common.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-release" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Builds project console for debug                                    -->
+	<!-- =================================================================== -->
+	<target name="build-console-debug">
+		<ant antfile="build.xml"
+			 dir="${project-console.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-debug" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Builds project console for release                                  -->
+	<!-- =================================================================== -->
+	<target name="build-console-release">
+		<ant antfile="build.xml"
+			 dir="${project-console.dir}"
 			 inheritall="false"
 			 inheritrefs="false"
 			 target="build-release" />
@@ -185,14 +209,14 @@
 	<!-- =================================================================== -->
 	<!-- Builds all projects for debug                                       -->
 	<!-- =================================================================== -->
-	<target name="build-all-debug" depends="init,build-common-debug,build-dispatcher-debug,build-service-debug">
+	<target name="build-all-debug" depends="init,build-common-debug,build-dispatcher-debug,build-service-debug,build-console-debug">
 		<echo>Build all projects for debug.</echo>
 	</target>
 
 	<!-- =================================================================== -->
 	<!-- Builds all projects for release                                     -->
 	<!-- =================================================================== -->
-	<target name="build-all" depends="init,build-common-release,build-dispatcher-release,build-service-release">
+	<target name="build-all" depends="init,build-common-release,build-dispatcher-release,build-service-release,build-console-release">
 		<echo>Build all projects.</echo>
 	</target>
 
