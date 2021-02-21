@@ -72,8 +72,9 @@ public class DispatcherManager {
     }
 
     private void searchDeploy() {
-        String[] list = new String[] {
-                ""
+        String[] pathList = new String[] {
+                "deploy",
+                "../deploy"
         };
     }
 }

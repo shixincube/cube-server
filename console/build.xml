@@ -84,7 +84,7 @@
 		<delete file="../build/cube-console-${version.brand}.jar" failonerror="false" />
 		<copy file="${build.jar}/cube-console.jar" tofile="../build/cube-console-${version.brand}.jar"/>
 		<echo>Build project for debug.</echo>
-		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>
+		<echo>Copyright (C) 2020-2021 Cube Team. All rights reserved.</echo>
 	</target>
 
 	<!-- =================================================================== -->
@@ -94,7 +94,7 @@
 		<delete file="../build/cube-console-${version.brand}.jar" failonerror="false" />
 		<copy file="${build.jar}/cube-console.jar" tofile="../build/cube-console-${version.brand}.jar"/>
 		<echo>Build project for release.</echo>
-		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>
+		<echo>Copyright (C) 2020-2021 Cube Team. All rights reserved.</echo>
 	</target>
 	
 	<!-- =================================================================== -->

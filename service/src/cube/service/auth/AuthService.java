@@ -79,7 +79,7 @@ public class AuthService extends AbstractModule {
     }
 
     @Override
-    public void onTick(Module module, Kernel kernel) {
+    public void onTick(cube.core.Module module, Kernel kernel) {
 
     }
 
