@@ -72,6 +72,13 @@ Console.prototype.log = function(text) {
     window.console.log(text);
 }
 
+Console.prototype.getDispatchers = function(handler) {
+    var that = this;
+    $.get('/servers/dispatcher', function(response, status, xhr) {
+        handler(response.tag, response.list);
+    }, 'json');
+}
+
 Console.prototype.getServers = function(handler) {
     var that = this;
     $.get('/servers', function(response, status, xhr) {

@@ -112,7 +112,17 @@ public final class Console implements Runnable {
             for (String mac : macList) {
                 md5.update(mac.getBytes());
             }
-            this.consoleTag = FileUtils.bytesToHexString(md5.digest());
+
+            byte[] md5data = md5.digest();
+            byte[] compressed = new byte[md5data.length / 2];
+            int index = 0;
+            for (int i = 0; i < md5data.length; i += 2) {
+                int temp = (md5data[i] >= 0 ? md5data[i] : 256 + md5data[i])
+                        + (md5data[i + 1] >= 0 ? md5data[i + 1] : 256 + md5data[i + 1]);
+                compressed[index] = (byte) temp;
+                ++index;
+            }
+            this.consoleTag = FileUtils.bytesToHexString(compressed);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#launch", e);
         }
@@ -133,6 +143,7 @@ public final class Console implements Runnable {
         this.timer.shutdown();
     }
 
+    @Deprecated
     public JSONArray getDispatcherServers() {
         if (null == this.servers) {
             return null;
@@ -154,6 +165,7 @@ public final class Console implements Runnable {
         return array;
     }
 
+    @Deprecated
     public JSONArray getServiceServers() {
         if (null == this.servers) {
             return null;

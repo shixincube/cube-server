@@ -111,7 +111,7 @@ public final class DeployTool {
     public static List<String> getMACList() throws Exception {
         java.util.Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
         StringBuilder sb = new StringBuilder();
-        ArrayList<String> tmpMacList=new ArrayList<>();
+        ArrayList<String> tmpMacList = new ArrayList<>();
         while (en.hasMoreElements()) {
             NetworkInterface iface = en.nextElement();
             List<InterfaceAddress> addrs = iface.getInterfaceAddresses();

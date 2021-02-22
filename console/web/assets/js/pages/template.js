@@ -30,9 +30,6 @@
     var console = new Console();
     $.console = console;
 
-    var console = new Console();
-    $.console = console;
-
     // 检查是否合法
     console.checkUser(function(valid) {
         if (!valid) {

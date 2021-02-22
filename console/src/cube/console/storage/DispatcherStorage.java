@@ -38,7 +38,7 @@ import java.util.Properties;
 /**
  * 网关机信息存储器。
  */
-public class DispatcherStorage extends ConsoleStorage {
+public class DispatcherStorage extends AbstractStorage {
 
     private final StorageField[] dispatcherFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {

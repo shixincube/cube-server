@@ -34,13 +34,16 @@ import org.json.JSONObject;
  */
 public class DispatcherServer implements JSONable {
 
+    private String tag;
+
     private String deployPath;
 
     private String cellConfigFile = "dispatcher.xml";
 
     private String propertiesFile = "dispatcher.properties";
 
-    public DispatcherServer(String deployPath, String cellConfigFile, String propertiesFile) {
+    public DispatcherServer(String tag, String deployPath, String cellConfigFile, String propertiesFile) {
+        this.tag = tag;
         this.deployPath = deployPath;
         this.cellConfigFile = cellConfigFile;
         this.propertiesFile = propertiesFile;
@@ -49,7 +52,7 @@ public class DispatcherServer implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-
+        json.put("deployPath", this.deployPath);
         return json;
     }
 

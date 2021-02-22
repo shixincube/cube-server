@@ -24,35 +24,33 @@
  * SOFTWARE.
  */
 
-(function ($, g) {
-    'use strict'
+package cube.console.storage;
 
-    var that = null;
+import cube.core.Storage;
+import cube.storage.StorageFactory;
+import cube.storage.StorageType;
+import org.json.JSONObject;
 
-    var console = new Console();
-    $.console = console;
+import java.util.Properties;
 
-    var dispatcherList = [];
+/**
+ * 控制器的存储器。
+ */
+public abstract class AbstractStorage {
 
-    // 检查是否合法
-    console.checkUser(function(valid) {
-        if (!valid) {
-            window.location.href = 'index.html';
+    protected Storage storage;
+
+    public AbstractStorage(String name, Properties properties) {
+        String dbType = properties.getProperty("db");
+
+        if (dbType.equalsIgnoreCase("mysql")) {
+            JSONObject config = new JSONObject();
+            config.put(StorageFactory.MYSQL_HOST, properties.getProperty("mysql.host"));
+            config.put(StorageFactory.MYSQL_PORT, properties.getProperty("mysql.port"));
+            config.put(StorageFactory.MYSQL_SCHEMA, properties.getProperty("mysql.schema"));
+            config.put(StorageFactory.MYSQL_USER, properties.getProperty("mysql.user"));
+            config.put(StorageFactory.MYSQL_PASSWORD, properties.getProperty("mysql.password"));
+            this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL, name, config);
         }
-        else {
-            g.common.updateView(console);
-            g.dispatcher.launch();
-        }
-    });
-
-    g.dispatcher = {
-        launch: function() {
-            console.getDispatchers(function(tag, list) {
-                dispatcherList = list;
-            });
-        }
-    };
-
-    that = g.dispatcher;
-
-})(jQuery, window);
+    }
+}

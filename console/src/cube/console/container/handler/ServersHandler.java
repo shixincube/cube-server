@@ -28,12 +28,9 @@ package cube.console.container.handler;
 
 import cube.console.Console;
 import cube.console.mgmt.DispatcherServer;
-import org.eclipse.jetty.http.HttpStatus;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
+import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.servlet.ServletException;
@@ -55,43 +52,37 @@ public class ServersHandler extends ContextHandler  {
         this.console = console;
     }
 
-    protected class Handler extends AbstractHandler {
+    protected class Handler extends CrossDomainHandler {
 
         public Handler() {
             super();
         }
 
         @Override
-        public void handle(String target, Request request,
-                           HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
-                throws IOException, ServletException {
+        public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             if (target.equals("/dispatcher")) {
-//                JSONArray list = console.getDispatcherServers();
+                JSONObject data = new JSONObject();
+                data.put("tag", console.getTag());
+
+                JSONArray array = new JSONArray();
                 List<DispatcherServer> list = console.getDispatcherManager().listDispatcherServers();
-                httpServletResponse.setStatus(HttpStatus.OK_200);
-                httpServletResponse.getWriter().write(list.toString());
-                request.setHandled(true);
+                if (null != list) {
+                    for (DispatcherServer server : list) {
+                        array.put(server.toJSON());
+                    }
+                }
+                data.put("list", array);
+
+                respondOk(response, data);
             }
             else if (target.equals("/service")) {
-                JSONArray list = console.getServiceServers();
-                httpServletResponse.setStatus(HttpStatus.OK_200);
-                httpServletResponse.getWriter().write(list.toString());
-                request.setHandled(true);
+                // TODO
             }
             else {
-                JSONArray dispatcherList = console.getDispatcherServers();
-                JSONArray serviceList = console.getServiceServers();
-                JSONObject data = new JSONObject();
-                try {
-                    data.put("dispatchers", dispatcherList);
-                    data.put("services", serviceList);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                httpServletResponse.setStatus(HttpStatus.OK_200);
-                httpServletResponse.getWriter().write(data.toString());
-                request.setHandled(true);
+                // TODO
             }
+
+            complete();
         }
     }
 }

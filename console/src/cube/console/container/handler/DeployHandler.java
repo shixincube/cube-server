@@ -24,35 +24,43 @@
  * SOFTWARE.
  */
 
-(function ($, g) {
-    'use strict'
+package cube.console.container.handler;
 
-    var that = null;
+import cube.console.Console;
+import cube.util.CrossDomainHandler;
+import org.eclipse.jetty.server.handler.ContextHandler;
 
-    var console = new Console();
-    $.console = console;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
-    var dispatcherList = [];
+/**
+ * 请求进行部署。
+ */
+public class DeployHandler extends ContextHandler {
 
-    // 检查是否合法
-    console.checkUser(function(valid) {
-        if (!valid) {
-            window.location.href = 'index.html';
+    private Console console;
+
+    public DeployHandler(Console console) {
+        super("/deploy");
+        this.setHandler(new Handler());
+        this.console = console;
+    }
+
+
+    /**
+     * 处理句柄。
+     */
+    protected class Handler extends CrossDomainHandler {
+
+        protected Handler() {
+            super();
         }
-        else {
-            g.common.updateView(console);
-            g.dispatcher.launch();
+
+        @Override
+        public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+
         }
-    });
-
-    g.dispatcher = {
-        launch: function() {
-            console.getDispatchers(function(tag, list) {
-                dispatcherList = list;
-            });
-        }
-    };
-
-    that = g.dispatcher;
-
-})(jQuery, window);
+    }
+}

@@ -43,7 +43,7 @@ import java.util.Properties;
 /**
  * 用户信息存储。
  */
-public class UserStorage extends ConsoleStorage {
+public class UserStorage extends AbstractStorage {
 
     private final StorageField[] userFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG),

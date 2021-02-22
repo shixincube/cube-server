@@ -41,6 +41,8 @@ import java.io.IOException;
  */
 public abstract class HttpHandler extends AbstractHandler {
 
+    protected String target;
+
     private Request baseRequest;
 
     public HttpHandler() {
@@ -51,6 +53,7 @@ public abstract class HttpHandler extends AbstractHandler {
     public void handle(String target, Request baseRequest,
                        HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
+        this.target = target;
         this.baseRequest = baseRequest;
 
         String method = request.getMethod().toUpperCase();

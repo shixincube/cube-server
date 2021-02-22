@@ -30,22 +30,11 @@ import cell.util.log.LogLevel;
 import cell.util.log.LogManager;
 import cell.util.log.Logger;
 import cube.console.Console;
-import cube.console.ReportHandler;
-import cube.console.container.handler.ServerLogHandler;
-import cube.console.container.handler.ServerReportHandler;
-import cube.console.container.handler.ServersHandler;
-import cube.console.container.handler.SigninHandler;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpStatus;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
-import org.eclipse.jetty.server.handler.ResourceHandler;
-
-import java.io.File;
 
 public class Main {
 
@@ -67,7 +56,7 @@ public class Main {
         // 创建服务器
         Server server = new Server(port);
 
-        HandlerList handlers = ContainerHandlers.createHandlerList(server, console);
+        HandlerList handlers = Handlers.createHandlerList(server, console);
         server.setHandler(handlers);
 
         Logger.i(Main.class, "Start cube console server # " + port);

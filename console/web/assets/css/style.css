@@ -28,7 +28,7 @@ body {
     font-size: 14px !important;
 }
 
-.h3 {
+h3 {
     font-size: 24px;
 }
 
@@ -52,6 +52,20 @@ body {
 .user-panel .info {
     font-size: 16px;
 }
+
+.main-toolbar {
+    margin-bottom: 1rem;
+}
+
+.tag-display {
+    max-width: 120px;
+    overflow: hidden;
+    -ms-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
 
 .h-400px {
     height: 400px;
