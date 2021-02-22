@@ -30,35 +30,26 @@ import cube.common.JSONable;
 import org.json.JSONObject;
 
 /**
- * 访问令牌。
+ * 调度服务器描述。
  */
-public class UserToken implements JSONable {
+public class DispatcherServer implements JSONable {
 
-    public final String token;
+    private String deployPath;
 
-    public final long creation;
+    private String cellConfigFile = "dispatcher.xml";
 
-    public final long expire;
+    private String propertiesFile = "dispatcher.properties";
 
-    public User user;
-
-    public UserToken(String token, long creation, long expire) {
-        this.token = token;
-        this.creation = creation;
-        this.expire = expire;
-    }
-
-    public int getAgeInSeconds() {
-        return (int) Math.round((this.expire - this.creation) / 1000.0);
+    public DispatcherServer(String deployPath, String cellConfigFile, String propertiesFile) {
+        this.deployPath = deployPath;
+        this.cellConfigFile = cellConfigFile;
+        this.propertiesFile = propertiesFile;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("token", this.token);
-        json.put("creation", this.creation);
-        json.put("expire", this.expire);
-        json.put("user", this.user.toJSON());
+
         return json;
     }
 

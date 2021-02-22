@@ -28,10 +28,13 @@ package cube.console.mgmt;
 
 import cell.util.log.Logger;
 import cube.console.storage.DispatcherStorage;
+import cube.console.tool.DeployTool;
 import cube.util.ConfigUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -41,8 +44,9 @@ public class DispatcherManager {
 
     private DispatcherStorage storage;
 
-    public DispatcherManager() {
+    private Path deploySourcePath;
 
+    public DispatcherManager() {
     }
 
     public void start() {
@@ -63,6 +67,14 @@ public class DispatcherManager {
         } catch (IOException e) {
             Logger.w(this.getClass(), "#start", e);
         }
+
+        this.deploySourcePath = DeployTool.searchDeploySource();
+        if (null != this.deploySourcePath) {
+            Logger.i(this.getClass(), "Deploy source path: " + this.deploySourcePath.toAbsolutePath().toString());
+        }
+        else {
+            Logger.e(this.getClass(), "Can NOT find deploy source path");
+        }
     }
 
     public void stop() {
@@ -71,10 +83,11 @@ public class DispatcherManager {
         }
     }
 
-    private void searchDeploy() {
-        String[] pathList = new String[] {
-                "deploy",
-                "../deploy"
-        };
+    public List<DispatcherServer> listDispatcherServers() {
+        if (null == this.deploySourcePath) {
+            return null;
+        }
+
+        return this.storage.listServers();
     }
 }

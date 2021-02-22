@@ -26,9 +26,12 @@
 
 package cube.util;
 
+import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -305,7 +308,54 @@ public final class FileUtils {
         }
     }
 
+    /**
+     * 优化文件路径显示。
+     *
+     * @param absolutePath
+     * @return
+     */
+    public static String fixFilePath(String absolutePath) {
+        int index = absolutePath.indexOf(File.separator);
+        if (index < 0) {
+            return absolutePath;
+        }
+
+        String[] array = absolutePath.split(File.separator);
+        LinkedList<String> list = new LinkedList<>();
+        for (int i = 0; i < array.length; ++i) {
+            list.add(array[i]);
+        }
+
+        Iterator<String> iter = list.iterator();
+        while (iter.hasNext()) {
+            String path = iter.next();
+            if (path.equals(".")) {
+                iter.remove();
+            }
+        }
+
+        for (int i = 0; i < list.size(); ++i) {
+            String path = list.get(i);
+            if (path.equals("..")) {
+                list.remove(i);
+                list.remove(i - 1);
+                i -= 2;
+            }
+        }
+
+        StringBuilder result = new StringBuilder();
+        for (String path : list) {
+            result.append(path);
+            result.append(File.separator);
+        }
+        result.delete(result.length() - 1, result.length());
+        return result.toString();
+    }
+
 //    public static void main(String[] args) {
+//        System.out.println(FileUtils.fixFilePath("/Users/ambrose/Documents/Repositories/Cube3/cube-server/console/../deploy"));
+//        System.out.println(FileUtils.fixFilePath("D:/ambrose/Documents/Repositories/Cube3/cube-server/console/../deploy"));
+//        System.out.println(FileUtils.fixFilePath("D:\\ambrose\\Documents\\Repositories\\Cube3\\cube-server\\console\\..\\deploy"));
 //        System.out.println(FileUtils.makeFileCode(50001001L, "三周年纪念.png"));
 //        System.out.println(FileUtils.makeFileCode(50001001L, "三周年纪念.jpg"));
 //        System.out.println(FileUtils.makeFileCode(50002001L, "三周年纪念.png"));

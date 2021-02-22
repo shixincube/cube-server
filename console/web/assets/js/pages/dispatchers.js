@@ -24,46 +24,23 @@
  * SOFTWARE.
  */
 
-package cube.console.mgmt;
+(function ($, g) {
+    'use strict'
 
-import cube.common.JSONable;
-import org.json.JSONObject;
+    var console = new Console();
+    $.console = console;
 
-/**
- * 访问令牌。
- */
-public class UserToken implements JSONable {
+    var console = new Console();
+    $.console = console;
 
-    public final String token;
+    // 检查是否合法
+    console.checkUser(function(valid) {
+        if (!valid) {
+            window.location.href = 'index.html';
+        }
+        else {
+            g.common.updateView(console);
+        }
+    });
 
-    public final long creation;
-
-    public final long expire;
-
-    public User user;
-
-    public UserToken(String token, long creation, long expire) {
-        this.token = token;
-        this.creation = creation;
-        this.expire = expire;
-    }
-
-    public int getAgeInSeconds() {
-        return (int) Math.round((this.expire - this.creation) / 1000.0);
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("token", this.token);
-        json.put("creation", this.creation);
-        json.put("expire", this.expire);
-        json.put("user", this.user.toJSON());
-        return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
-    }
-}
+})(jQuery, window);

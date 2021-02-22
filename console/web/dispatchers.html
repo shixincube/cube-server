@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>Cube Console - 时信魔方控制台</title>
+    <title>调度机 - Cube Console</title>
     <link rel="icon" href="assets/img/favicon.png" size="192x192" type="image/png">
     <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
     <link rel="stylesheet" href="plugins/ionicons/css/ionicons.min.css">
@@ -141,7 +141,7 @@
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a href="dispatchers.html" class="nav-link">
+                        <a href="dispatchers.html" class="nav-link active">
                             <i class="nav-icon fas fa-sitemap"></i>
                             <p>调度机 <span class="right badge badge-info">0</span></p>
                         </a>
@@ -170,12 +170,12 @@
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h3 class="m-0 text-dark">标题</h3>
+                        <h3 class="m-0 text-dark">调度机</h3>
                     </div><!-- /.col -->
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
                             <li class="breadcrumb-item"><a href="/">首页</a></li>
-                            <li class="breadcrumb-item active">标题</li>
+                            <li class="breadcrumb-item active">调度机</li>
                         </ol>
                     </div><!-- /.col -->
                 </div><!-- /.row -->
@@ -186,7 +186,60 @@
         <div class="content">
             <div class="container-fluid">
                 <div class="row">
-                    
+                    <div class="col-lg-12 col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">已部署列表</h3>
+                                <div class="card-tools">
+                                    <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                              <table class="table table-striped projects">
+                                  <thead>
+                                      <tr>
+                                          <th style="width: 1%">#</th>
+                                          <th style="width: 20%">标签</th>
+                                          <th style="width: 20%">部署路径</th>
+                                          <th style="width: 20%">负载</th>
+                                          <th style="width: 8%" class="text-center">状态</th>
+                                          <th></th>
+                                      </tr>
+                                  </thead>
+                                  <tbody>
+                                      <tr>
+                                          <td>1</td>
+                                          <td><span>3ec233f8395efffbb9ce7133f07c700e</span></td>
+                                          <td><span>/deploy/path</span></td>
+                                          <td class="project_progress">
+                                              <div class="progress progress-sm">
+                                                  <div class="progress-bar bg-green" role="progressbar" aria-volumenow="57" aria-volumemin="0" aria-volumemax="100" style="width: 57%"></div>
+                                              </div>
+                                              <small>57%</small>
+                                          </td>
+                                          <td class="project-state">
+                                              <span class="badge badge-success">运行中</span>
+                                          </td>
+                                          <td class="project-actions text-right">
+                                              <a class="btn btn-primary btn-sm" href="#">
+                                                  <i class="fas fa-folder"></i> 详情
+                                              </a>
+                                              <a class="btn btn-info btn-sm" href="#">
+                                                  <i class="fas fa-pencil-alt"></i> 配置
+                                              </a>
+                                              <a class="btn btn-danger btn-sm" href="#">
+                                                  <i class="fas fa-trash"></i> 停止
+                                              </a>
+                                          </td>
+                                      </tr>
+                                  </tbody>
+                              </table>
+                            </div>
+                            <!-- /.card-body -->
+                          </div>
+                    </div>
                 </div><!-- /.row -->
             </div><!-- /.container-fluid -->
         </div><!-- /.content -->
@@ -219,6 +272,6 @@
 <script src="assets/js/util.js"></script>
 <script src="assets/js/console.js"></script>
 <script src="assets/js/pages/common.js"></script>
-<script src="assets/js/pages/template.js"></script>
+<script src="assets/js/pages/dispatchers.js"></script>
 </body>
 </html>

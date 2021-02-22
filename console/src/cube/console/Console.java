@@ -32,13 +32,16 @@ import cell.util.log.LogManager;
 import cell.util.log.Logger;
 import cube.console.mgmt.DispatcherManager;
 import cube.console.mgmt.UserManager;
+import cube.console.tool.DeployTool;
 import cube.report.JVMReport;
 import cube.report.LogLine;
 import cube.report.LogReport;
 import cube.util.ConfigUtils;
+import cube.util.FileUtils;
 import org.json.JSONArray;
 
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -49,6 +52,8 @@ import java.util.concurrent.TimeUnit;
  * 控制台数据管理类。
  */
 public final class Console implements Runnable {
+
+    private String consoleTag;
 
     private Properties servers;
 
@@ -86,24 +91,39 @@ public final class Console implements Runnable {
         this.dispatcherManager = new DispatcherManager();
     }
 
+    public String getTag() {
+        return this.consoleTag;
+    }
+
     public UserManager getUserManager() {
         return this.userManager;
     }
 
-    public void launch() {
-//        try {
-//            this.servers = ConfigUtils.readConsoleServers();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+    public DispatcherManager getDispatcherManager() {
+        return this.dispatcherManager;
+    }
 
+    public void launch() {
         LogManager.getInstance().addHandle(this.logHandler);
+
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            List<String> macList = DeployTool.getMACList();
+            for (String mac : macList) {
+                md5.update(mac.getBytes());
+            }
+            this.consoleTag = FileUtils.bytesToHexString(md5.digest());
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#launch", e);
+        }
 
         this.userManager.start();
         this.dispatcherManager.start();
 
         this.timer = Executors.newScheduledThreadPool(2);
         this.timer.scheduleWithFixedDelay(this, 10L, 10L, TimeUnit.SECONDS);
+
+        Logger.i(this.getClass(), "#launch - tag: " + this.consoleTag);
     }
 
     public void destroy() {

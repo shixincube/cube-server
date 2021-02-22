@@ -27,6 +27,7 @@
 package cube.console.container.handler;
 
 import cube.console.Console;
+import cube.console.mgmt.DispatcherServer;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -39,6 +40,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * 服务器信息句柄。
@@ -64,7 +66,8 @@ public class ServersHandler extends ContextHandler  {
                            HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
                 throws IOException, ServletException {
             if (target.equals("/dispatcher")) {
-                JSONArray list = console.getDispatcherServers();
+//                JSONArray list = console.getDispatcherServers();
+                List<DispatcherServer> list = console.getDispatcherManager().listDispatcherServers();
                 httpServletResponse.setStatus(HttpStatus.OK_200);
                 httpServletResponse.getWriter().write(list.toString());
                 request.setHandled(true);

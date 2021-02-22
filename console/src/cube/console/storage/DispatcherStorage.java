@@ -26,8 +26,13 @@
 
 package cube.console.storage;
 
+import cell.core.talk.LiteralBase;
+import cell.util.log.Logger;
+import cube.console.mgmt.DispatcherServer;
+import cube.core.Constraint;
 import cube.core.StorageField;
 
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -35,9 +40,25 @@ import java.util.Properties;
  */
 public class DispatcherStorage extends ConsoleStorage {
 
-    private final StorageField[] fields = new StorageField[] {
-//            new StorageField("sn")
+    private final StorageField[] dispatcherFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTO_INCREMENT
+            }),
+            new StorageField("tag", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("deploy_path", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("config", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("properties", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
     };
+
+    private final String dispatcherTable = "dispatcher";
 
     public DispatcherStorage(Properties properties) {
         super("DispatcherStorage", properties);
@@ -52,7 +73,20 @@ public class DispatcherStorage extends ConsoleStorage {
         this.storage.close();
     }
 
-    private void autoCheckTable() {
+    public List<DispatcherServer> listServers() {
+        List<StorageField[]> list = this.storage.executeQuery(this.dispatcherTable, this.dispatcherFields);
+        if (list.isEmpty()) {
+            return null;
+        }
 
+
+        return null;
+    }
+
+    private void autoCheckTable() {
+        if (!this.storage.exist(this.dispatcherTable)) {
+            this.storage.executeCreate(this.dispatcherTable, this.dispatcherFields);
+            Logger.i(this.getClass(), "Create table '" + this.dispatcherTable + "'");
+        }
     }
 }

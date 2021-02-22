@@ -76,21 +76,23 @@ public class SigninHandler extends ContextHandler {
 
                 // 尝试读取 Cookie
                 Cookie[] cookies = request.getCookies();
-                for (Cookie cookie : cookies) {
-                    if (COOKIE_NAME_TOKEN.equalsIgnoreCase(cookie.getName())) {
-                        // 发现当前请求包含 Cookie 信息
-                        String value = cookie.getValue();
-                        UserToken token = userManager.signIn(value);
-                        if (null != token) {
-                            response.setStatus(HttpStatus.OK_200);
-                            response.setContentType("application/json");
-                            response.getWriter().write(token.toJSON().toString());
+                if (null != cookies) {
+                    for (Cookie cookie : cookies) {
+                        if (COOKIE_NAME_TOKEN.equalsIgnoreCase(cookie.getName())) {
+                            // 发现当前请求包含 Cookie 信息
+                            String value = cookie.getValue();
+                            UserToken token = userManager.signIn(value);
+                            if (null != token) {
+                                response.setStatus(HttpStatus.OK_200);
+                                response.setContentType("application/json");
+                                response.getWriter().write(token.toJSON().toString());
+                            }
+                            else {
+                                response.setStatus(HttpStatus.BAD_REQUEST_400);
+                            }
+                            baseRequest.setHandled(true);
+                            return;
                         }
-                        else {
-                            response.setStatus(HttpStatus.BAD_REQUEST_400);
-                        }
-                        baseRequest.setHandled(true);
-                        return;
                     }
                 }
 
@@ -109,7 +111,7 @@ public class SigninHandler extends ContextHandler {
             }
 
             Cookie cookie = new Cookie(COOKIE_NAME_TOKEN, token.token);
-            cookie.setMaxAge(24 * 60 * 60);
+            cookie.setMaxAge(token.getAgeInSeconds());
             cookie.setPath("/");
             response.addCookie(cookie);
 

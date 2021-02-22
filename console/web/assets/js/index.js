@@ -68,6 +68,23 @@
     });
 
     $(document).ready(function() {
+        var token = null;
+        var val = document.cookie;
+        var array = val.split(';');
+        for (var i = 0; i < array.length; ++i) {
+            val = array[i].split('=');
+            if (val.length == 2) {
+                if (val[0] == 'cube-console-token') {
+                    token = val[1].trim();
+                    break;
+                }
+            }
+        }
+
+        if (null == token) {
+            return;
+        }
+
         $.ajax({
             type: 'post',
             url: '/signin/'
