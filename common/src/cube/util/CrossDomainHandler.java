@@ -47,6 +47,8 @@ public class CrossDomainHandler extends HttpHandler {
     public void handle(String target, Request baseRequest,
                        HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
+        this.target = target;
+        this.baseRequest = baseRequest;
 
         this.allowCrossDomain(response);
 

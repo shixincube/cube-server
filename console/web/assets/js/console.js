@@ -41,7 +41,7 @@ Console.prototype.checkUser = function(handler) {
     for (var i = 0; i < array.length; ++i) {
         val = array[i].split('=');
         if (val.length == 2) {
-            if (val[0] == 'cube-console-token') {
+            if (val[0] == 'CubeConsoleToken') {
                 token = val[1].trim();
                 break;
             }
@@ -73,9 +73,14 @@ Console.prototype.log = function(text) {
 }
 
 Console.prototype.getDispatchers = function(handler) {
-    var that = this;
     $.get('/servers/dispatcher', function(response, status, xhr) {
         handler(response.tag, response.list);
+    }, 'json');
+}
+
+Console.prototype.getDispatcherDefaultDeploy = function(handler) {
+    $.get('/deploy/dispatcher', function(response, status, xhr) {
+        handler(response);
     }, 'json');
 }
 

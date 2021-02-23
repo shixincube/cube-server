@@ -25,3 +25,11 @@ dispatcher/cube-fs-files
 service/storage/files
 FileStorageService.db
 *.db
+cube-service-fileprocessor-3.0.jar
+cube-service-filestorage-3.0.jar
+cube-service-messaging-3.0.jar
+cube-service-multipointcomm-3.0.jar
+cube-common-3.0.jar
+cube-dispatcher-3.0.jar
+cube-service-3.0.jar
+cube-service-riskmgmt-3.0.jar

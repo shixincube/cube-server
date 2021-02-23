@@ -106,6 +106,7 @@ public final class Console implements Runnable {
     public void launch() {
         LogManager.getInstance().addHandle(this.logHandler);
 
+        // 生成服务器基于 MAC 地址信息的识别标识
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             List<String> macList = DeployTool.getMACList();

@@ -43,7 +43,7 @@ public abstract class HttpHandler extends AbstractHandler {
 
     protected String target;
 
-    private Request baseRequest;
+    protected Request baseRequest;
 
     public HttpHandler() {
         super();

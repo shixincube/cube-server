@@ -74,7 +74,7 @@
         for (var i = 0; i < array.length; ++i) {
             val = array[i].split('=');
             if (val.length == 2) {
-                if (val[0] == 'cube-console-token') {
+                if (val[0] == 'CubeConsoleToken') {
                     token = val[1].trim();
                     break;
                 }

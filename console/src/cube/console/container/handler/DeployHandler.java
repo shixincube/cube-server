@@ -28,9 +28,11 @@ package cube.console.container.handler;
 
 import cube.console.Console;
 import cube.console.container.Handlers;
+import cube.console.mgmt.DispatcherManager;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONObject;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -61,6 +63,37 @@ public class DeployHandler extends ContextHandler {
         }
 
         @Override
+        public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+            if (!Handlers.checkCookie(request, console)) {
+                respond(response, HttpStatus.UNAUTHORIZED_401);
+                complete();
+                return;
+            }
+
+            if (target.equals("/dispatcher")) {
+                DispatcherManager manager = console.getDispatcherManager();
+                String tag = console.getTag();
+
+                JSONObject data = new JSONObject();
+                data.put("tag", tag);
+
+                String deployPath = manager.getDefaultDeployPath();
+                if (null != deployPath) {
+                    String cellConfigFile = manager.getDefaultCellConfigFile();
+                    String propertiesFile = manager.getDefaultPropertiesFile();
+
+                    data.put("deployPath", deployPath);
+                    data.put("cellConfigFile", cellConfigFile);
+                    data.put("propertiesFile", propertiesFile);
+                }
+
+                respondOk(response, data);
+            }
+
+            complete();
+        }
+
+        @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             if (!Handlers.checkCookie(request, console)) {
                 respond(response, HttpStatus.UNAUTHORIZED_401);
@@ -69,7 +102,7 @@ public class DeployHandler extends ContextHandler {
             }
 
             String deployPath = request.getParameter("deployPath");
-            
+
 
             complete();
         }

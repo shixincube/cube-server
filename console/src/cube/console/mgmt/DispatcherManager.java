@@ -34,6 +34,7 @@ import cube.util.ConfigUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
 
@@ -81,6 +82,24 @@ public class DispatcherManager {
         if (null != this.storage) {
             this.storage.close();
         }
+    }
+
+    public String getDefaultDeployPath() {
+        if (null == this.deploySourcePath) {
+            return null;
+        }
+
+        return this.deploySourcePath.toAbsolutePath().toString();
+    }
+
+    public String getDefaultCellConfigFile() {
+        Path file = Paths.get(this.deploySourcePath.toAbsolutePath().toString(), "config/dispatcher.xml");
+        return file.toAbsolutePath().toString();
+    }
+
+    public String getDefaultPropertiesFile() {
+        Path file = Paths.get(this.deploySourcePath.toAbsolutePath().toString(), "config/dispatcher.properties");
+        return file.toAbsolutePath().toString();
     }
 
     public List<DispatcherServer> listDispatcherServers() {

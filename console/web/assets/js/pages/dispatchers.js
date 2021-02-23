@@ -32,6 +32,8 @@
     var console = new Console();
     $.console = console;
 
+    var defaultDeploy = null;
+
     var dispatcherList = [];
 
     // 检查是否合法
@@ -45,11 +47,50 @@
         }
     });
 
+    var btnNewDeploy = null;
+
     g.dispatcher = {
         launch: function() {
+            btnNewDeploy = $('#btn_new_deploy');
+            btnNewDeploy.click(function() {
+                that.showNewDeployDialog();
+            });
+
+            // 获取默认部署数据
+            console.getDispatcherDefaultDeploy(function(data) {
+                if (undefined !== data.deployPath) {
+                    defaultDeploy = data;
+                }
+                else {
+                    $('.header-tip').html('控制台没有找到部署文件，请参考 <a href="https://gitee.com/shixinhulian/cube-manual/blob/master/QuickStart.md" target="_blank">快速开始</a> 进行操作。');
+                }
+            });
+
             console.getDispatchers(function(tag, list) {
                 dispatcherList = list;
             });
+        },
+
+        showNewDeployDialog: function() {
+            if (null == defaultDeploy) {
+                alert('控制台没有找到部署文件');
+                return;
+            }
+
+            var el = $('#modal_new_deploy');
+            var serversEl = el.find('#select_server');
+            serversEl.append('<option value="' + defaultDeploy.tag + '">' + defaultDeploy.tag + '</option>');
+
+            var deployPathEl = el.find('#input_deploy_path');
+            deployPathEl.val(defaultDeploy.deployPath);
+
+            var cellConfigEl = el.find('#input_cell_config');
+            cellConfigEl.val(defaultDeploy.cellConfigFile);
+
+            var propertiesEl = el.find('#input_properties');
+            propertiesEl.val(defaultDeploy.propertiesFile);
+
+            el.modal('show');
         }
     };
 

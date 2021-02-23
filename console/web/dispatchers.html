@@ -169,10 +169,13 @@
         <div class="content-header">
             <div class="container-fluid">
                 <div class="row mb-2">
-                    <div class="col-sm-6">
+                    <div class="col-sm-3">
                         <h3 class="m-0 text-dark">调度机</h3>
                     </div><!-- /.col -->
                     <div class="col-sm-6">
+                        <span class="header-tip text-danger"></span>
+                    </div><!-- /.col -->
+                    <div class="col-sm-3">
                         <ol class="breadcrumb float-sm-right">
                             <li class="breadcrumb-item"><a href="/">首页</a></li>
                             <li class="breadcrumb-item active">调度机</li>
@@ -189,7 +192,7 @@
                     <div class="col-lg-12 col-12">
                         <div class="btn-toolbar main-toolbar" role="toolbar" aria-label="Main Toolbar">
                             <div class="btn-group mr-2" role="group" aria-label="Toolbar">
-                                <button type="button" class="btn btn-primary">
+                                <button id="btn_new_deploy" type="button" class="btn btn-primary">
                                     <i class="fas fa-plus"></i> 部署调度机
                                 </button>
                             </div>
@@ -281,7 +284,7 @@
 
 <!-- Confirm modal -->
 <div id="modal_new_deploy" class="modal fade">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-huge">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">部署调度机服务器</h5>
@@ -290,7 +293,44 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p>&hellip;</p>
+                <form class="form-horizontal">
+                    <div class="card-body">
+                        <div class="form-group row">
+                            <label for="select_server" class="col-sm-2 col-form-label">主机</label>
+                            <div class="col-sm-10">
+                                <select id="select_server" class="form-control"></select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="input_deploy_path" class="col-sm-2 col-form-label">部署路径</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="input_deploy_path" placeholder="" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="input_cell_config" class="col-sm-2 col-form-label">容器配置</label>
+                            <div class="col-sm-10">
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control" id="input_cell_config" placeholder="" disabled />
+                                    <span class="input-group-append">
+                                        <button type="button" class="btn btn-primary btn-flat"><i class="fas fa-edit"></i></button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="input_properties" class="col-sm-2 col-form-label">业务配置</label>
+                            <div class="col-sm-10">
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control" id="input_properties" placeholder="" disabled />
+                                    <span class="input-group-append">
+                                        <button type="button" class="btn btn-primary btn-flat"><i class="fas fa-edit"></i></button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer justify-content-between">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="javascript:;">取消</button>
