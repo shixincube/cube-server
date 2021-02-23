@@ -404,6 +404,16 @@ public class MySQLStorage extends AbstractStorage {
             }
 
             Connection conn = this.connections.poll();
+            if (null != conn) {
+                try {
+                    if (conn.isClosed()) {
+                        conn = null;
+                    }
+                } catch (SQLException e) {
+                    Logger.w(this.getClass(), "#get", e);
+                }
+            }
+
             if (null == conn) {
                 StringBuilder url = new StringBuilder();
                 url.append("jdbc:mysql://");
@@ -427,7 +437,13 @@ public class MySQLStorage extends AbstractStorage {
         }
 
         protected void returnConn(Connection connection) {
-            this.connections.offer(connection);
+            try {
+                if (!connection.isClosed()) {
+                    this.connections.offer(connection);
+                }
+            } catch (SQLException e) {
+                Logger.e(this.getClass(), "#returnConn", e);
+            }
 
             if (this.count.get() >= this.maxConn) {
                 synchronized (this) {

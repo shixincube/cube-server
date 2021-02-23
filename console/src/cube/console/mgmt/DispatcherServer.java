@@ -77,6 +77,10 @@ public class DispatcherServer implements JSONable {
         json.put("cellConfigFile", this.cellConfigFile.getFullPath());
         json.put("propertiesFile", this.propertiesFile);
         json.put("running", this.running);
+        json.put("server", this.cellConfigFile.getAccessPoint().toJSON());
+        json.put("wsServer", this.cellConfigFile.getWSAccessPoint().toJSON());
+        json.put("wssServer", this.cellConfigFile.getWSSAccessPoint().toJSON());
+
         return json;
     }
 

@@ -27,16 +27,30 @@
 package cube.console.mgmt;
 
 import cell.core.net.Endpoint;
+import cube.common.JSONable;
+import org.json.JSONObject;
 
 /**
  * 服务器的接入点。
  */
-public class AccessPoint extends Endpoint  {
+public class AccessPoint extends Endpoint implements JSONable {
 
     public final int maxConnection;
 
     public AccessPoint(String host, int port, int maxConnection) {
         super(host, port);
         this.maxConnection = maxConnection;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("maxConnection", this.maxConnection);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

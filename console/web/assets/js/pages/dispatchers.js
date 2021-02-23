@@ -86,7 +86,7 @@
                             value.running ? 1 : 0, '" aria-volumemin="0" aria-volumemax="100" style="width:',
                             value.running ? 1 : 0, '%"></div>',
                     '</div>',
-                    '<small>', value.running ? 1 : 0, '%</small>',
+                    '<small>', value.running ? 1 : 0, '%</small>'
                 ];
 
                 var html = [
@@ -100,24 +100,30 @@
                         '<td class="server-state text-center">',
                             value.running ? 
                                 '<span class="badge badge-success">运行中</span>' : 
-                                '<span class="badge badge-primary">已关闭</span>',
+                                '<span class="badge badge-danger">已关闭</span>',
                         '</td>',
                         '<td class="server-actions text-right">',
-                            '<a class="btn btn-primary btn-sm" href="#">',
+                            '<button type="button" class="btn btn-primary btn-sm" onclick="javascript:dispatcher.showDetails(\'', value.deployPath, '\');">',
                                 '<i class="fas fa-tasks"></i> 详情',
-                            '</a>',
-                            '<a class="btn btn-info btn-sm" href="#">',
+                            '</button>',
+                            '<button type="button" class="btn btn-info btn-sm" onclick="javascript:;">',
                                 '<i class="fas fa-cog"></i> 配置',
-                            '</a>',
-                            '<a class="btn btn-success btn-sm" href="#">',
+                            '</button>',
+                            '<button type="button" class="btn btn-success btn-sm" onclick="javascript:;">',
                                 '<i class="fas fa-play"></i> 启动',
-                            '</a>',
+                            '</button>',
                         '</td>',
-                    '</tr>',
+                    '</tr>'
                 ];
 
                 body.append($(html.join('')));
             });
+        },
+
+        showDetails: function(deployPath) {
+            var el = $('#modal_details');
+
+            el.modal('show');
         },
 
         showNewDeployDialog: function() {

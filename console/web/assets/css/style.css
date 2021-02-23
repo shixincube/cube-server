@@ -31,6 +31,12 @@ body {
 h3 {
     font-size: 24px;
 }
+h4 {
+    font-size: 22px;
+}
+h5 {
+    font-size: 20px;
+}
 
 .main-footer {
     font-size: 14px;
@@ -76,8 +82,27 @@ h3 {
     white-space: nowrap;
 }
 
-.server-actions a {
+.server-actions button {
     margin-right: 4px;
+}
+
+.server-detail-group {
+    margin-bottom: 0.8rem;
+}
+.server-detail-group .detail-label {
+    display: inline-block;
+    font-weight: bold;
+    min-width: 130px;
+}
+.detail-label i {
+    margin-right: 8px;
+}
+.server-detail-group .detail-content {
+    display: inline-block;
+}
+.server-detail-group-append {
+    display: inline-block;
+    margin-left: 120px;
 }
 
 /** dispatchers - end */
