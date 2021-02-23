@@ -46,14 +46,6 @@ public final class ConfigUtils {
     private ConfigUtils() {
     }
 
-    public static Properties readConsoleServers() throws IOException {
-        return ConfigUtils.readConsoleServers("config/servers.properties");
-    }
-
-    public static Properties readConsoleServers(String path) throws IOException {
-        return ConfigUtils.readProperties(path);
-    }
-
     public static Properties readConsoleFollower() throws IOException {
         return ConfigUtils.readConsoleFollower("config/console-follower.properties");
     }

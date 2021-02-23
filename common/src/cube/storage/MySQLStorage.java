@@ -38,6 +38,8 @@ import org.json.JSONObject;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -375,7 +377,7 @@ public class MySQLStorage extends AbstractStorage {
     /**
      * 连接池。
      */
-    protected class ConnectionPool {
+    protected class ConnectionPool extends TimerTask {
 
         private int maxConn = 4;
 
@@ -385,11 +387,15 @@ public class MySQLStorage extends AbstractStorage {
 
         private AtomicInteger count;
 
+        private Timer timer;
+
         protected ConnectionPool(int maxConn, JSONObject config) {
             this.maxConn = maxConn;
             this.config = config;
             this.connections = new ConcurrentLinkedQueue<>();
             this.count = new AtomicInteger(0);
+            this.timer = new Timer();
+            this.timer.schedule(this, 60L * 1000L, 60L * 1000L);
         }
 
         protected Connection get() {
@@ -455,6 +461,8 @@ public class MySQLStorage extends AbstractStorage {
         }
 
         protected void close() {
+            this.timer.cancel();
+
             this.count.set(0);
 
             synchronized (this) {
@@ -470,6 +478,37 @@ public class MySQLStorage extends AbstractStorage {
             }
 
             this.connections.clear();
+        }
+
+        @Override
+        public void run() {
+            List<Connection> tmpList = new ArrayList<>();
+            Connection conn = this.connections.poll();
+            while (null != conn) {
+                Statement statement = null;
+                try {
+                    statement = conn.createStatement();
+                    ResultSet rs = statement.executeQuery("select version()");
+                    if (rs.next()) {
+//                        Logger.d(this.getClass(), "Connection keep alive: " + rs.getString("version()"));
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (null != statement) {
+                        try {
+                            statement.close();
+                        } catch (SQLException e) {
+                        }
+                    }
+                }
+                tmpList.add(conn);
+
+                conn = this.connections.poll();
+            }
+
+            this.connections.addAll(tmpList);
+            tmpList.clear();
         }
     }
 }
