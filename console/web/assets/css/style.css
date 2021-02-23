@@ -66,6 +66,8 @@ h3 {
     display: inline-block;
 }
 
+/** dispatchers - begin */
+
 .tag-display {
     max-width: 120px;
     overflow: hidden;
@@ -74,6 +76,11 @@ h3 {
     white-space: nowrap;
 }
 
+.server-actions a {
+    margin-right: 4px;
+}
+
+/** dispatchers - end */
 
 
 .h-400px {

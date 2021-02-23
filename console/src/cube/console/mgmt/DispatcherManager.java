@@ -43,11 +43,14 @@ import java.util.Properties;
  */
 public class DispatcherManager {
 
+    private String tag;
+
     private DispatcherStorage storage;
 
     private Path deploySourcePath;
 
-    public DispatcherManager() {
+    public DispatcherManager(String tag) {
+        this.tag = tag;
     }
 
     public void start() {
@@ -71,7 +74,15 @@ public class DispatcherManager {
 
         this.deploySourcePath = DeployTool.searchDeploySource();
         if (null != this.deploySourcePath) {
-            Logger.i(this.getClass(), "Deploy source path: " + this.deploySourcePath.toAbsolutePath().toString());
+            Logger.i(this.getClass(), "Deploy source path: " + this.deploySourcePath.toString());
+
+            // 检查当前库里是否有默认部署信息
+            DispatcherServer server = this.storage.readServerByDeployPath(this.tag, this.deploySourcePath.toString());
+            if (null == server) {
+                // 插入本地部署
+                this.storage.writeServer(this.tag, this.getDefaultDeployPath(),
+                        this.getDefaultCellConfigFile(), this.getDefaultPropertiesFile());
+            }
         }
         else {
             Logger.e(this.getClass(), "Can NOT find deploy source path");
@@ -89,17 +100,17 @@ public class DispatcherManager {
             return null;
         }
 
-        return this.deploySourcePath.toAbsolutePath().toString();
+        return this.deploySourcePath.toString();
     }
 
     public String getDefaultCellConfigFile() {
-        Path file = Paths.get(this.deploySourcePath.toAbsolutePath().toString(), "config/dispatcher.xml");
-        return file.toAbsolutePath().toString();
+        Path file = Paths.get(this.deploySourcePath.toString(), "config/dispatcher.xml");
+        return file.toString();
     }
 
     public String getDefaultPropertiesFile() {
-        Path file = Paths.get(this.deploySourcePath.toAbsolutePath().toString(), "config/dispatcher.properties");
-        return file.toAbsolutePath().toString();
+        Path file = Paths.get(this.deploySourcePath.toString(), "config/dispatcher.properties");
+        return file.toString();
     }
 
     public List<DispatcherServer> listDispatcherServers() {
@@ -107,6 +118,15 @@ public class DispatcherManager {
             return null;
         }
 
-        return this.storage.listServers();
+        List<DispatcherServer> list = this.storage.listServers();
+        if (null == list) {
+            return null;
+        }
+
+        for (DispatcherServer server : list) {
+            server.refresh();
+        }
+
+        return list;
     }
 }

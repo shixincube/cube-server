@@ -27,7 +27,10 @@
 package cube.console.mgmt;
 
 import cube.common.JSONable;
+import cube.console.tool.Detector;
 import org.json.JSONObject;
+
+import java.io.File;
 
 /**
  * 调度服务器描述。
@@ -38,21 +41,42 @@ public class DispatcherServer implements JSONable {
 
     private String deployPath;
 
-    private String cellConfigFile = "dispatcher.xml";
-
     private String propertiesFile = "dispatcher.properties";
+
+    private CellConfigFile cellConfigFile;
+
+    private boolean running = false;
 
     public DispatcherServer(String tag, String deployPath, String cellConfigFile, String propertiesFile) {
         this.tag = tag;
         this.deployPath = deployPath;
-        this.cellConfigFile = cellConfigFile;
+        this.cellConfigFile = new CellConfigFile(cellConfigFile);
         this.propertiesFile = propertiesFile;
+    }
+
+    public void refresh() {
+        this.cellConfigFile.refresh();
+
+        // 检查是否正在运行
+        File tagFile = new File(this.deployPath + File.separator + "bin/tag_dispatcher");
+        if (tagFile.exists()) {
+            // 尝试检测网络
+            AccessPoint ap = this.cellConfigFile.getAccessPoint();
+            this.running = Detector.detectCellServer(ap.getHost(), ap.getPort());
+        }
+        else {
+            this.running = false;
+        }
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("tag", this.tag);
         json.put("deployPath", this.deployPath);
+        json.put("cellConfigFile", this.cellConfigFile.getFullPath());
+        json.put("propertiesFile", this.propertiesFile);
+        json.put("running", this.running);
         return json;
     }
 

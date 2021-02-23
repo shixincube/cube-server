@@ -74,6 +74,5 @@
         }
         return array;
     }
-
     global.ui.makeTimeLineArray = makeTimeLineArray;
 })(window);

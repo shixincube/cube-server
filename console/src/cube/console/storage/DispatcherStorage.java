@@ -29,10 +29,14 @@ package cube.console.storage;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.console.mgmt.DispatcherServer;
+import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.StorageField;
+import cube.storage.StorageFields;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -73,14 +77,48 @@ public class DispatcherStorage extends AbstractStorage {
         this.storage.close();
     }
 
+    public void writeServer(String tag, String deployPath, String cellConfigFile, String propertiesFile) {
+        StorageField[] fields = new StorageField[] {
+                new StorageField("tag", LiteralBase.STRING, tag),
+                new StorageField("deploy_path", LiteralBase.STRING, deployPath),
+                new StorageField("config", LiteralBase.STRING, cellConfigFile),
+                new StorageField("properties", LiteralBase.STRING, propertiesFile)
+        };
+
+        this.storage.executeInsert(this.dispatcherTable, fields);
+    }
+
+    public DispatcherServer readServerByDeployPath(String tag, String deployPath) {
+        List<StorageField[]> result = this.storage.executeQuery(this.dispatcherTable, this.dispatcherFields, new Conditional[] {
+                Conditional.createEqualTo("tag", LiteralBase.STRING, tag)
+        });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+
+        DispatcherServer server = new DispatcherServer(tag, deployPath, map.get("config").getString(),
+                map.get("properties").getString());
+        return server;
+    }
+
     public List<DispatcherServer> listServers() {
         List<StorageField[]> list = this.storage.executeQuery(this.dispatcherTable, this.dispatcherFields);
         if (list.isEmpty()) {
             return null;
         }
 
+        List<DispatcherServer> result = new ArrayList<>();
+        for (StorageField[] fields : list) {
+            Map<String, StorageField> map = StorageFields.get(fields);
+            DispatcherServer server = new DispatcherServer(map.get("tag").getString(),
+                    map.get("deploy_path").getString(), map.get("config").getString(), map.get("properties").getString());
+            result.add(server);
+        }
 
-        return null;
+        return result;
     }
 
     private void autoCheckTable() {

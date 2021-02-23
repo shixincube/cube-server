@@ -48,6 +48,7 @@
     });
 
     var btnNewDeploy = null;
+    var tableEl = null;
 
     g.dispatcher = {
         launch: function() {
@@ -55,6 +56,8 @@
             btnNewDeploy.click(function() {
                 that.showNewDeployDialog();
             });
+
+            tableEl = $('#server_table');
 
             // 获取默认部署数据
             console.getDispatcherDefaultDeploy(function(data) {
@@ -68,6 +71,52 @@
 
             console.getDispatchers(function(tag, list) {
                 dispatcherList = list;
+                that.refreshServerTable();
+            });
+        },
+
+        refreshServerTable: function() {
+            var body = tableEl.find('tbody');
+            body.empty();
+
+            dispatcherList.forEach(function(value, index) {
+                var capacityHTML = [
+                    '<div class="progress progress-sm">',
+                        '<div class="progress-bar bg-green" role="progressbar" aria-volumenow="',
+                            value.running ? 1 : 0, '" aria-volumemin="0" aria-volumemax="100" style="width:',
+                            value.running ? 1 : 0, '%"></div>',
+                    '</div>',
+                    '<small>', value.running ? 1 : 0, '%</small>',
+                ];
+
+                var html = [
+                    '<tr>',
+                        '<td>', (index + 1), '</td>',
+                        '<td class="tag-display">', value.tag, '</td>',
+                        '<td><span>', value.deployPath, '</span></td>',
+                        '<td class="server-capacity">',
+                            capacityHTML.join(''),
+                        '</td>',
+                        '<td class="server-state text-center">',
+                            value.running ? 
+                                '<span class="badge badge-success">运行中</span>' : 
+                                '<span class="badge badge-primary">已关闭</span>',
+                        '</td>',
+                        '<td class="server-actions text-right">',
+                            '<a class="btn btn-primary btn-sm" href="#">',
+                                '<i class="fas fa-tasks"></i> 详情',
+                            '</a>',
+                            '<a class="btn btn-info btn-sm" href="#">',
+                                '<i class="fas fa-cog"></i> 配置',
+                            '</a>',
+                            '<a class="btn btn-success btn-sm" href="#">',
+                                '<i class="fas fa-play"></i> 启动',
+                            '</a>',
+                        '</td>',
+                    '</tr>',
+                ];
+
+                body.append($(html.join('')));
             });
         },
 

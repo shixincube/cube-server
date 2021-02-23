@@ -24,38 +24,19 @@
  * SOFTWARE.
  */
 
-package cube.console.tool;
+package cube.console.mgmt;
 
-import cell.api.Nucleus;
-import cell.api.NucleusConfig;
-import cell.api.NucleusDevice;
-import cube.auth.AuthToken;
+import cell.core.net.Endpoint;
 
 /**
- * 简单客户端。
+ * 服务器的接入点。
  */
-public class SimpleClient {
+public class AccessPoint extends Endpoint  {
 
-    private AuthToken authToken;
+    public final int maxConnection;
 
-    private Nucleus nucleus;
-
-    public SimpleClient(AuthToken authToken) {
-        this.authToken = authToken;
-    }
-
-    public void start(String address, int port) {
-        NucleusConfig config = new NucleusConfig(NucleusDevice.DESKTOP);
-        this.nucleus = new Nucleus(config);
-
-        this.nucleus.getTalkService().call(address, port);
-    }
-
-    public void stop() {
-
-    }
-
-    public void signIn() {
-
+    public AccessPoint(String host, int port, int maxConnection) {
+        super(host, port);
+        this.maxConnection = maxConnection;
     }
 }
