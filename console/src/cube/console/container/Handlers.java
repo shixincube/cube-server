@@ -29,6 +29,8 @@ package cube.console.container;
 import cube.console.Console;
 import cube.console.ReportHandler;
 import cube.console.container.handler.*;
+import cube.console.mgmt.UserToken;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -36,6 +38,8 @@ import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 
 /**
@@ -43,9 +47,18 @@ import java.io.File;
  */
 public final class Handlers {
 
+    private final static String COOKIE_NAME_TOKEN = "CubeConsoleToken";
+
     private Handlers() {
     }
 
+    /**
+     * 创建所有的 Handler 实例。
+     *
+     * @param server
+     * @param console
+     * @return
+     */
     public static HandlerList createHandlerList(Server server, Console console) {
         ResourceHandler resourceHandler = new ResourceHandler();
         resourceHandler.setDirectoriesListed(false);
@@ -82,5 +95,28 @@ public final class Handlers {
                 new StopHandler(server, console),
                 new DefaultHandler()});
         return handlers;
+    }
+
+    /**
+     * 校验 Cookie 。
+     *
+     * @param request
+     * @param console
+     * @return
+     */
+    public static boolean checkCookie(HttpServletRequest request, Console console) {
+        // 尝试读取 Cookie
+        Cookie[] cookies = request.getCookies();
+        if (null != cookies) {
+            for (Cookie cookie : cookies) {
+                if (COOKIE_NAME_TOKEN.equalsIgnoreCase(cookie.getName())) {
+                    // 发现当前请求包含 Cookie 信息
+                    String value = cookie.getValue();
+                    return console.getUserManager().checkToken(value);
+                }
+            }
+        }
+
+        return false;
     }
 }

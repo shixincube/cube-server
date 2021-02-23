@@ -77,6 +77,23 @@ public class UserManager {
         }
     }
 
+    public boolean checkToken(String tokenString) {
+        UserToken userToken = this.tokenMap.get(tokenString);
+
+        if (null == userToken) {
+            userToken = this.storage.readToken(tokenString);
+            if (null != userToken) {
+                this.tokenMap.put(userToken.token, userToken);
+            }
+        }
+
+        if (null == userToken) {
+            return false;
+        }
+
+        return userToken.expire > System.currentTimeMillis();
+    }
+
     public UserToken signIn(String tokenString) {
         UserToken userToken = this.tokenMap.get(tokenString);
 

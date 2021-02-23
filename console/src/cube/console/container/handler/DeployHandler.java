@@ -27,7 +27,9 @@
 package cube.console.container.handler;
 
 import cube.console.Console;
+import cube.console.container.Handlers;
 import cube.util.CrossDomainHandler;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 
 import javax.servlet.ServletException;
@@ -60,7 +62,16 @@ public class DeployHandler extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+            if (!Handlers.checkCookie(request, console)) {
+                respond(response, HttpStatus.UNAUTHORIZED_401);
+                complete();
+                return;
+            }
 
+            String deployPath = request.getParameter("deployPath");
+            
+
+            complete();
         }
     }
 }

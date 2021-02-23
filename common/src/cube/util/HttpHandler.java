@@ -86,8 +86,12 @@ public abstract class HttpHandler extends AbstractHandler {
         this.respond(response, HttpStatus.OK_200, data);
     }
 
-    public void respond(HttpServletResponse response, int stateus, JSONObject data) {
-        response.setStatus(stateus);
+    public void respond(HttpServletResponse response, int status) {
+        this.respond(response, status, new JSONObject());
+    }
+
+    public void respond(HttpServletResponse response, int status, JSONObject data) {
+        response.setStatus(status);
 
         if (null != data) {
             response.setContentType("application/json");

@@ -45,7 +45,7 @@ import java.io.IOException;
  */
 public class SigninHandler extends ContextHandler {
 
-    private final static String COOKIE_NAME_TOKEN = "cube-console-token";
+    private final static String COOKIE_NAME_TOKEN = "CubeConsoleToken";
 
     private UserManager userManager;
 
