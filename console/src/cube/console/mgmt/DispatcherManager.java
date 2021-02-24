@@ -135,6 +135,7 @@ public class DispatcherManager {
     }
 
     public DispatcherServer getDispatcherServer(String tag, String deployPath) {
+
         return null;
     }
 
@@ -144,16 +145,21 @@ public class DispatcherManager {
             public void run() {
                 int status = 0;
                 ProcessBuilder pb = new ProcessBuilder(deployPath + "/start-dispatcher.sh");
+                pb.directory(new File(deployPath));
                 try {
                     String line = null;
                     Process process = pb.start();
                     BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
                     BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
                     while ((line = stdInput.readLine()) != null) {
-                        System.out.println("XJW: " + line);
+                        if (line.length() > 0) {
+                            Logger.i(DispatcherManager.class, "#startDispatcher - " + line);
+                        }
                     }
                     while ((line = stdError.readLine()) != null) {
-                        System.out.println("XJW E: " + line);
+                        if (line.length() > 0) {
+                            Logger.w(DispatcherManager.class, "#startDispatcher - " + line);
+                        }
                     }
 
                     try {

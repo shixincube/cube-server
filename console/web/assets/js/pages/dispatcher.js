@@ -154,7 +154,7 @@
                             '<button type="button" class="btn btn-primary btn-sm" onclick="javascript:dispatcher.showDetails(\'', value.tag, '\',\'', value.deployPath, '\');">',
                                 '<i class="fas fa-tasks"></i> 详情',
                             '</button>',
-                            '<button type="button" class="btn btn-danger btn-sm" onclick="javascript:;">',
+                            '<button type="button" class="btn btn-warning btn-sm" onclick="javascript:;">',
                                 '<i class="fas fa-trash"></i> 删除',
                             '</button>',
                         '</td>',
@@ -165,14 +165,23 @@
             });
         },
 
-        startDispatcher: function(tag, path, password, handler) {
-            $.post('/dispatcher/start', {
-                "tag": tag,
-                "path": path,
-                "pwd": password 
-            }, function(response, status, xhr) {
-                handler();
-            }, 'json');
+        startDispatcher: function(tag, path, password, success, error) {
+            $.ajax({
+                type: 'POST',
+                url: '/dispatcher/start',
+                data: {
+                    "tag": tag,
+                    "path": path,
+                    "pwd": password 
+                },
+                success: function(response, status, xhr) {
+                    success();
+                },
+                error: function(response) {
+                    error(response.status);
+                },
+                dataType: 'json'
+              });
         },
 
         stopDispatcher: function(tag, path, password) {
@@ -202,11 +211,33 @@
 
             el.find('#input_tag').val(dispatcher.tag);
             el.find('#input_path').val(dispatcher.deployPath);
+            el.find('#input_password').val('');
 
             el.modal('show');
+
+            el.find('.overlay').css('visibility', 'hidden');
         },
 
-        
+        onToggleConfirm: function() {
+            var el = $('#modal_toggle_server');
+            var tag = el.find('#input_tag').val();
+            var deployPath = el.find('#input_path').val();
+            var password = md5(el.find('#input_password').val());
+            if (password.length < 6) {
+                alert('请输入您的管理密码！');
+                return;
+            }
+
+            el.find('.overlay').css('visibility', 'visible');
+            el.find('#input_password').val('');
+
+            this.startDispatcher(tag, deployPath, password, function() {
+                el.modal('hide');
+            }, function(status) {
+                el.find('.overlay').css('visibility', 'hidden');
+                alert('操作失败，请检查您的管理密码是否输入正确。');
+            });
+        },
 
         showDetails: function(tag, deployPath) {
             var server = findDispatcher(tag, deployPath);

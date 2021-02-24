@@ -141,13 +141,13 @@
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a href="dispatchers.html" class="nav-link active">
+                        <a href="#" class="nav-link active">
                             <i class="nav-icon fas fa-sitemap"></i>
                             <p>调度机 <span class="right badge badge-info">0</span></p>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="services.html" class="nav-link">
+                        <a href="service.html" class="nav-link">
                             <i class="nav-icon fas fa-server"></i>
                             <p>模块服务器 <span class="right badge badge-info">0</span></p>
                         </a>
@@ -432,16 +432,16 @@
                     <div class="form-group row">
                         <label for="input_password" class="col-sm-2 col-form-label">管理密码</label>
                         <div class="col-sm-10">
-                            <input type="text" class="form-control" id="input_password" placeholder="请输入您的密码" />
+                            <input type="password" class="form-control" id="input_password" placeholder="请输入您的密码" />
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer justify-content-between">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="javascript:;">确定</button>
+                <button type="button" class="btn btn-primary" onclick="javascript:dispatcher.onToggleConfirm();">确定</button>
             </div>
-            <div class="overlay" style="display:none;"><i class="fas fa-2x fa-sync-alt fa-spin"></i></div>
+            <div class="overlay"><i class="fas fa-2x fa-sync-alt fa-spin"></i></div>
         </div>
     </div>
 </div>
@@ -453,6 +453,6 @@
 <script src="assets/js/util.js"></script>
 <script src="assets/js/console.js"></script>
 <script src="assets/js/pages/common.js"></script>
-<script src="assets/js/pages/dispatchers.js"></script>
+<script src="assets/js/pages/dispatcher.js"></script>
 </body>
 </html>
