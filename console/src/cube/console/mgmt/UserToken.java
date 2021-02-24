@@ -34,6 +34,8 @@ import org.json.JSONObject;
  */
 public class UserToken implements JSONable {
 
+    public final long userId;
+
     public final String token;
 
     public final long creation;
@@ -42,7 +44,8 @@ public class UserToken implements JSONable {
 
     public User user;
 
-    public UserToken(String token, long creation, long expire) {
+    public UserToken(long userId, String token, long creation, long expire) {
+        this.userId = userId;
         this.token = token;
         this.creation = creation;
         this.expire = expire;

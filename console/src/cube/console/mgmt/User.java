@@ -56,6 +56,10 @@ public class User implements JSONable {
         this.password = password;
     }
 
+    public boolean validatePassword(String password) {
+        return password.equalsIgnoreCase(this.password);
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

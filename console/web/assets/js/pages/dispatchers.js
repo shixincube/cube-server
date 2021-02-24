@@ -141,12 +141,15 @@
                         '</td>',
                         '<td class="server-state text-center">',
                             value.running ? 
-                                '<span class="badge badge-success">运行中</span>' : 
+                                '<span class="badge badge-success">运行中</span>' :
                                 '<span class="badge badge-danger">已关闭</span>',
                         '</td>',
                         '<td class="server-actions text-right">',
-                            '<button type="button" class="btn btn-success btn-sm" onclick="javascript:;">',
-                                '<i class="fas fa-play"></i> 启动',
+                            '<button type="button" class="btn ', value.running ? 'btn-danger' : 'btn-success',
+                                ' btn-sm" onclick="javascript:dispatcher.toggleServer(', index, ');">',
+                                value.running ? 
+                                    '<i class="fas fa-stop"></i> 停止' :
+                                    '<i class="fas fa-play"></i> 启动',
                             '</button>',
                             '<button type="button" class="btn btn-primary btn-sm" onclick="javascript:dispatcher.showDetails(\'', value.tag, '\',\'', value.deployPath, '\');">',
                                 '<i class="fas fa-tasks"></i> 详情',
@@ -161,6 +164,49 @@
                 body.append($(html.join('')));
             });
         },
+
+        startDispatcher: function(tag, path, password, handler) {
+            $.post('/dispatcher/start', {
+                "tag": tag,
+                "path": path,
+                "pwd": password 
+            }, function(response, status, xhr) {
+                handler();
+            }, 'json');
+        },
+
+        stopDispatcher: function(tag, path, password) {
+            $.post('/dispatcher/stop', {
+                "tag": tag,
+                "path": path,
+                "pwd": password
+            }, function(response, status, xhr) {
+                handler();
+            }, 'json');
+        },
+
+        toggleServer: function(index) {
+            var dispatcher = dispatcherList[index];
+
+            var el = $('#modal_toggle_server');
+
+            var tipEl = el.find('.tip-content');
+            var tip = null;
+            if (dispatcher.running) {
+                tip = '';
+            }
+            else {
+                tip = '您确定要<span class="text-danger"><b>启动</b></span>调度机服务器吗？';
+            }
+            tipEl.html(tip);
+
+            el.find('#input_tag').val(dispatcher.tag);
+            el.find('#input_path').val(dispatcher.deployPath);
+
+            el.modal('show');
+        },
+
+        
 
         showDetails: function(tag, deployPath) {
             var server = findDispatcher(tag, deployPath);

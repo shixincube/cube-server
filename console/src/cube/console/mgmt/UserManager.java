@@ -94,6 +94,26 @@ public class UserManager {
         return userToken.expire > System.currentTimeMillis();
     }
 
+    public UserToken getToken(String tokenString) {
+        UserToken userToken = this.tokenMap.get(tokenString);
+
+        if (null == userToken) {
+            userToken = this.storage.readToken(tokenString);
+            if (null != userToken) {
+                this.tokenMap.put(userToken.token, userToken);
+            }
+        }
+
+        if (null != userToken) {
+            if (null == userToken.user) {
+                User user = this.storage.readUser(userToken.userId);
+                userToken.user = user;
+            }
+        }
+
+        return userToken;
+    }
+
     public UserToken signIn(String tokenString) {
         UserToken userToken = this.tokenMap.get(tokenString);
 
@@ -122,7 +142,7 @@ public class UserManager {
         long time = System.currentTimeMillis();
         long expire = time + this.tokenAge;
 
-        UserToken token = new UserToken(tokenString, time, expire);
+        UserToken token = new UserToken(user.id, tokenString, time, expire);
         token.user = user;
 
         this.tokenMap.put(tokenString, token);

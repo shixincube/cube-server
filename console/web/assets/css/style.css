@@ -59,6 +59,18 @@ h5 {
     max-width: 1024px;
 }
 
+.modal .overlay {
+    border-radius: .25rem;
+    -ms-flex-align: center;
+    align-items: center;
+    background: rgba(255,255,255,.7);
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-pack: center;
+    justify-content: center;
+    z-index: 50;
+}
+
 .user-panel .info {
     font-size: 16px;
 }
@@ -126,6 +138,9 @@ h5 {
 .server-detail-group-append {
     display: inline-block;
     margin-left: 120px;
+}
+.tip-content {
+    font-size: 14px;
 }
 
 /** dispatchers - end */

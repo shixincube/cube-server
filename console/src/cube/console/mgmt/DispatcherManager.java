@@ -31,8 +31,10 @@ import cube.console.storage.DispatcherStorage;
 import cube.console.tool.DeployTool;
 import cube.util.ConfigUtils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -124,9 +126,44 @@ public class DispatcherManager {
         }
 
         for (DispatcherServer server : list) {
-            server.refresh();
+            if (server.tag.equals(this.tag)) {
+                server.refresh();
+            }
         }
 
         return list;
+    }
+
+    public DispatcherServer getDispatcherServer(String tag, String deployPath) {
+        return null;
+    }
+
+    public void startDispatcher(String tag, String deployPath) {
+        (new Thread() {
+            @Override
+            public void run() {
+                int status = 0;
+                ProcessBuilder pb = new ProcessBuilder(deployPath + "/start-dispatcher.sh");
+                try {
+                    String line = null;
+                    Process process = pb.start();
+                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                    while ((line = stdInput.readLine()) != null) {
+                        System.out.println("XJW: " + line);
+                    }
+                    while ((line = stdError.readLine()) != null) {
+                        System.out.println("XJW E: " + line);
+                    }
+
+                    try {
+                        status = process.waitFor();
+                    } catch (InterruptedException e) {
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 }

@@ -38,9 +38,9 @@ import java.io.File;
  */
 public class DispatcherServer implements JSONable {
 
-    private String tag;
+    public final String tag;
 
-    private String deployPath;
+    public final String deployPath;
 
     private CellConfigFile cellConfigFile;
 

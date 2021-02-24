@@ -131,7 +131,7 @@ public class UserStorage extends AbstractStorage {
 
         StorageField[] data = result.get(0);
         Map<String, StorageField> map = StorageFields.get(data);
-        UserToken userToken = new UserToken(map.get("token").getString(),
+        UserToken userToken = new UserToken(map.get("user_id").getLong(), map.get("token").getString(),
                 map.get("creation").getLong(), map.get("expire").getLong());
 
         User user = this.readUser(map.get("user_id").getLong());

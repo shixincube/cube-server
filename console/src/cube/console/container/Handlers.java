@@ -88,6 +88,7 @@ public final class Handlers {
                 new SigninHandler(console.getUserManager()),
                 new ServersHandler(console),
                 new DeployHandler(console),
+                new DispatcherHandler(console),
 
                 new ServerLogHandler(console),
                 new ServerReportHandler(console),
@@ -118,5 +119,25 @@ public final class Handlers {
         }
 
         return false;
+    }
+
+    /**
+     * 获取访问的 Token
+     *
+     * @param request
+     * @return
+     */
+    public static String getToken(HttpServletRequest request) {
+        // 尝试读取 Cookie
+        Cookie[] cookies = request.getCookies();
+        if (null != cookies) {
+            for (Cookie cookie : cookies) {
+                if (COOKIE_NAME_TOKEN.equalsIgnoreCase(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        return null;
     }
 }
