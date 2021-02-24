@@ -41,9 +41,9 @@ public class DispatcherServer implements JSONable {
 
     private String deployPath;
 
-    private String propertiesFile = "dispatcher.properties";
-
     private CellConfigFile cellConfigFile;
+
+    private DispatcherProperties propertiesFile;
 
     private boolean running = false;
 
@@ -51,16 +51,17 @@ public class DispatcherServer implements JSONable {
         this.tag = tag;
         this.deployPath = deployPath;
         this.cellConfigFile = new CellConfigFile(cellConfigFile);
-        this.propertiesFile = propertiesFile;
+        this.propertiesFile = new DispatcherProperties(propertiesFile);
     }
 
     public void refresh() {
         this.cellConfigFile.refresh();
+        this.propertiesFile.refresh();
 
         // 检查是否正在运行
         File tagFile = new File(this.deployPath + File.separator + "bin/tag_dispatcher");
         if (tagFile.exists()) {
-            // 尝试检测网络
+            // 尝试检测服务是否能连通
             AccessPoint ap = this.cellConfigFile.getAccessPoint();
             this.running = Detector.detectCellServer(ap.getHost(), ap.getPort());
         }

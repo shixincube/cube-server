@@ -50,6 +50,17 @@
     var btnNewDeploy = null;
     var tableEl = null;
 
+    function findDispatcher(tag, deployPath) {
+        for (var i = 0; i < dispatcherList.length; ++i) {
+            var value = dispatcherList[i];
+            if (value.tag == tag && value.deployPath == deployPath) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+
     g.dispatcher = {
         launch: function() {
             btnNewDeploy = $('#btn_new_deploy');
@@ -103,7 +114,7 @@
                                 '<span class="badge badge-danger">已关闭</span>',
                         '</td>',
                         '<td class="server-actions text-right">',
-                            '<button type="button" class="btn btn-primary btn-sm" onclick="javascript:dispatcher.showDetails(\'', value.deployPath, '\');">',
+                            '<button type="button" class="btn btn-primary btn-sm" onclick="javascript:dispatcher.showDetails(\'', value.tag, '\',\'', value.deployPath, '\');">',
                                 '<i class="fas fa-tasks"></i> 详情',
                             '</button>',
                             '<button type="button" class="btn btn-info btn-sm" onclick="javascript:;">',
@@ -120,9 +131,24 @@
             });
         },
 
-        showDetails: function(deployPath) {
-            var el = $('#modal_details');
+        showDetails: function(tag, deployPath) {
+            var server = findDispatcher(tag, deployPath);
+            if (null == server) {
+                return;
+            }
 
+            var el = $('#modal_details');
+            el.find('.tag').text(tag);
+            el.find('.deploy-path').text(deployPath);
+            el.find('.ap-host').text(server.server.host);
+            el.find('.ap-port').text(server.server.port);
+            el.find('.ap-maxconn').text(server.server.maxConnection);
+            el.find('.wsap-host').text(server.wsServer.host);
+            el.find('.wsap-port').text(server.wsServer.port);
+            el.find('.wsap-maxconn').text(server.wsServer.maxConnection);
+            el.find('.wssap-host').text(server.wssServer.host);
+            el.find('.wssap-port').text(server.wssServer.port);
+            el.find('.wssap-maxconn').text(server.wssServer.maxConnection);
             el.modal('show');
         },
 

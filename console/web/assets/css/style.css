@@ -93,12 +93,22 @@ h5 {
     display: inline-block;
     font-weight: bold;
     min-width: 130px;
+    color: #6c757d;
 }
 .detail-label i {
     margin-right: 8px;
 }
 .server-detail-group .detail-content {
     display: inline-block;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    color: #343a40;
+    max-width: 570px;
+    overflow: hidden;
+    -ms-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
 }
 .server-detail-group-append {
     display: inline-block;

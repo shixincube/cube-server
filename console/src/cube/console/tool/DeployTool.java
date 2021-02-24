@@ -117,6 +117,11 @@ public final class DeployTool {
             List<InterfaceAddress> addrs = iface.getInterfaceAddresses();
             for (InterfaceAddress addr : addrs) {
                 InetAddress ip = addr.getAddress();
+                if (ip.toString().indexOf("awdl") > 0 || ip.toString().indexOf("llw") > 0) {
+                    // 跳过 Apple macOS 的 Airdrop 设备
+                    continue;
+                }
+
                 NetworkInterface network = NetworkInterface.getByInetAddress(ip);
                 if (network == null) {
                     continue;
@@ -126,15 +131,17 @@ public final class DeployTool {
                     continue;
                 }
                 sb.delete(0, sb.length());
-                for (int i = 0; i < mac.length; i++) {
+                for (int i = 0; i < mac.length; ++i) {
                     sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
                 }
                 tmpMacList.add(sb.toString());
             }
         }
+
         if (tmpMacList.isEmpty()) {
             return tmpMacList;
         }
+
         // 去重
         List<String> unique = tmpMacList.stream().distinct().collect(Collectors.toList());
         return unique;

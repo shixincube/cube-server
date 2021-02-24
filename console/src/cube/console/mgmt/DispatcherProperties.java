@@ -55,8 +55,11 @@ public class DispatcherProperties {
 
     private Properties properties;
 
+    private List<DirectorProperties> directorProperties;
+
     public DispatcherProperties(String fullPath) {
         this.fullPath = fullPath;
+        this.directorProperties = new ArrayList<>();
     }
 
     public List<String> getCellets() {
@@ -73,11 +76,56 @@ public class DispatcherProperties {
         return list;
     }
 
+    public int getHttpPort() {
+        return Integer.parseInt(this.properties.getProperty(KEY_HTTP_PORT, "7010"));
+    }
+
+    public int getHttpsPort() {
+        return Integer.parseInt(this.properties.getProperty(KEY_HTTPS_PORT, "7017"));
+    }
+
+    public String getKeystore() {
+        return this.properties.getProperty(KEY_KEYSTORE);
+    }
+
+    public String getStorePassword() {
+        return this.properties.getProperty(KEY_STORE_PASSWORD);
+    }
+
+    public String getManagerPassword() {
+        return this.properties.getProperty(KEY_MANAGER_PASSWORD);
+    }
+
+    public List<DirectorProperties> getDirectorProperties() {
+        return this.directorProperties;
+    }
+
     public void refresh() {
         try {
-            this.properties = ConfigUtils.readProperties(fullPath);
+            this.properties = ConfigUtils.readProperties(this.fullPath);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+
+        for (int i = 1; i <= 50; ++i) {
+            String key = KEY_DIRECTOR_PREFIX + i + KEY_DIRECTOR_ADDRESS;
+            if (!this.properties.containsKey(key)) {
+                continue;
+            }
+
+            String address = this.properties.getProperty(key);
+            int port = Integer.parseInt(this.properties.getProperty(KEY_DIRECTOR_PREFIX + i + KEY_DIRECTOR_PORT));
+            int weight = Integer.parseInt(this.properties.getProperty(KEY_DIRECTOR_PREFIX + i + KEY_DIRECTOR_WEIGHT));
+
+            String celletsValue = this.properties.getProperty(KEY_DIRECTOR_PREFIX + i + KEY_DIRECTOR_CELLETS);
+            String[] array = celletsValue.split(",");
+            List<String> cellets = new ArrayList<>();
+            for (String cellet : array) {
+                cellets.add(cellet);
+            }
+
+            DirectorProperties dp = new DirectorProperties(address, port, cellets, weight);
+            this.directorProperties.add(dp);
         }
     }
 }
