@@ -94,6 +94,7 @@ h5 {
     font-weight: bold;
     min-width: 130px;
     color: #6c757d;
+    vertical-align: top;
 }
 .detail-label i {
     margin-right: 8px;
@@ -109,6 +110,18 @@ h5 {
     text-overflow: ellipsis;
     white-space: nowrap;
     vertical-align: bottom;
+}
+.detail-content .badge {
+    font-size: 14px;
+    margin-right: 2px;
+}
+.detail-content .custom-select {
+    font-size: 14px !important;
+    height: unset;
+    padding: .25rem .5rem;
+}
+.detail-content .director-cellets {
+    margin-top: 10px;
 }
 .server-detail-group-append {
     display: inline-block;

@@ -39,7 +39,9 @@ import java.util.Properties;
 public class DispatcherProperties {
 
     public final static String KEY_CELLETS = "cellets";
+    public final static String KEY_HTTP_HOST = "http.host";
     public final static String KEY_HTTP_PORT = "http.port";
+    public final static String KEY_HTTPS_HOST = "https.host";
     public final static String KEY_HTTPS_PORT = "https.port";
     public final static String KEY_KEYSTORE = "keystore";
     public final static String KEY_STORE_PASSWORD = "storePassword";
@@ -76,12 +78,28 @@ public class DispatcherProperties {
         return list;
     }
 
+    public String getHttpHost() {
+        return this.properties.getProperty(KEY_HTTP_HOST);
+    }
+
     public int getHttpPort() {
         return Integer.parseInt(this.properties.getProperty(KEY_HTTP_PORT, "7010"));
     }
 
+    public AccessPoint getHttpAccessPoint() {
+        return new AccessPoint(this.getHttpHost(), this.getHttpPort(), 0);
+    }
+
+    public String getHttpsHost() {
+        return this.properties.getProperty(KEY_HTTPS_HOST);
+    }
+
     public int getHttpsPort() {
         return Integer.parseInt(this.properties.getProperty(KEY_HTTPS_PORT, "7017"));
+    }
+
+    public AccessPoint getHttpsAccessPoint() {
+        return new AccessPoint(this.getHttpsHost(), this.getHttpsPort(), 0);
     }
 
     public String getKeystore() {

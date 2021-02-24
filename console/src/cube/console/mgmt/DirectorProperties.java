@@ -26,12 +26,16 @@
 
 package cube.console.mgmt;
 
+import cube.common.JSONable;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.List;
 
 /**
  * 调度机下联的业务单元属性。
  */
-public class DirectorProperties {
+public class DirectorProperties implements JSONable {
 
     public final String address;
 
@@ -46,5 +50,25 @@ public class DirectorProperties {
         this.port = port;
         this.cellets = cellets;
         this.weight = weight;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("address", this.address);
+        json.put("port", this.port);
+        json.put("weight", this.weight);
+
+        JSONArray array = new JSONArray();
+        for (String cellet : this.cellets) {
+            array.put(cellet);
+        }
+        json.put("cellets", array);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

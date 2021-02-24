@@ -60,6 +60,37 @@
         return null;
     }
 
+    function onDetailDirectorChange(index, tag, deployPath) {
+        if (typeof index !== 'number') {
+            var selected = $(this).find("option:selected");
+            var data = selected.attr('data');
+            var array = data.split('~');
+            index = parseInt(array[0]);
+            tag = array[1];
+            deployPath = array[2];
+        }
+
+        var dispatcher = findDispatcher(tag, deployPath);
+        if (null == dispatcher) {
+            return;
+        }
+
+        var el = $('#modal_details');
+        var director = dispatcher.directors[index];
+        el.find('.director-address').text(director.address);
+        el.find('.director-port').text(director.port);
+        el.find('.director-weight').text(director.weight);
+
+        var html = [];
+        director.cellets.forEach(function(value, index) {
+            html.push(['<span class="badge badge-success">', value, '</span>'].join(''));
+        });
+        if (html.length == 0) {
+            html.push('&nbsp;');
+        }
+        el.find('.director-cellets').html(html.join(''));
+    }
+
 
     g.dispatcher = {
         launch: function() {
@@ -114,14 +145,14 @@
                                 '<span class="badge badge-danger">已关闭</span>',
                         '</td>',
                         '<td class="server-actions text-right">',
+                            '<button type="button" class="btn btn-success btn-sm" onclick="javascript:;">',
+                                '<i class="fas fa-play"></i> 启动',
+                            '</button>',
                             '<button type="button" class="btn btn-primary btn-sm" onclick="javascript:dispatcher.showDetails(\'', value.tag, '\',\'', value.deployPath, '\');">',
                                 '<i class="fas fa-tasks"></i> 详情',
                             '</button>',
-                            '<button type="button" class="btn btn-info btn-sm" onclick="javascript:;">',
-                                '<i class="fas fa-cog"></i> 配置',
-                            '</button>',
-                            '<button type="button" class="btn btn-success btn-sm" onclick="javascript:;">',
-                                '<i class="fas fa-play"></i> 启动',
+                            '<button type="button" class="btn btn-danger btn-sm" onclick="javascript:;">',
+                                '<i class="fas fa-trash"></i> 删除',
                             '</button>',
                         '</td>',
                     '</tr>'
@@ -149,6 +180,28 @@
             el.find('.wssap-host').text(server.wssServer.host);
             el.find('.wssap-port').text(server.wssServer.port);
             el.find('.wssap-maxconn').text(server.wssServer.maxConnection);
+            el.find('.http-host').text(server.http.host);
+            el.find('.http-port').text(server.http.port);
+            el.find('.https-host').text(server.https.host);
+            el.find('.https-port').text(server.https.port);
+
+            var html = [];
+            server.cellets.forEach(function(value, index) {
+                html.push(['<span class="badge badge-info">', value, '</span>'].join(''));
+            });
+            el.find('.cellets').html(html.join(''));
+
+            var selEl = el.find('.director-list');
+            selEl.change(onDetailDirectorChange);
+            html = [];
+            server.directors.forEach(function(value, index) {
+                html.push(['<option data="', index, '~', tag, '~', deployPath, '">#', (index + 1),
+                    ' - ',value.address, ':', value.port, '</option>'].join(''));
+            });
+            selEl.html(html.join(''));
+
+            onDetailDirectorChange(0, tag, deployPath);
+
             el.modal('show');
         },
 

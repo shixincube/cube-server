@@ -28,6 +28,7 @@ package cube.console.mgmt;
 
 import cube.common.JSONable;
 import cube.console.tool.Detector;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -81,6 +82,20 @@ public class DispatcherServer implements JSONable {
         json.put("server", this.cellConfigFile.getAccessPoint().toJSON());
         json.put("wsServer", this.cellConfigFile.getWSAccessPoint().toJSON());
         json.put("wssServer", this.cellConfigFile.getWSSAccessPoint().toJSON());
+        json.put("http", this.propertiesFile.getHttpAccessPoint().toJSON());
+        json.put("https", this.propertiesFile.getHttpsAccessPoint().toJSON());
+
+        JSONArray cellets = new JSONArray();
+        for (String cellet : this.propertiesFile.getCellets()) {
+            cellets.put(cellet);
+        }
+        json.put("cellets", cellets);
+
+        JSONArray directors = new JSONArray();
+        for (DirectorProperties dp : this.propertiesFile.getDirectorProperties()) {
+            directors.put(dp.toJSON());
+        }
+        json.put("directors", directors);
 
         return json;
     }

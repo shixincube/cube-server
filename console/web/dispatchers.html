@@ -334,7 +334,7 @@
                         <div class="detail-content deploy-path"></div>
                     </div>
                     <div class="server-detail-group">
-                        <div class="detail-label"><i class="fas fa-server"></i> 标准访问点：</div>
+                        <div class="detail-label"><i class="fas fa-server"></i> SHM访问点：</div>
                         <div class="detail-content ap-host"></div> <b class="text-muted">@</b>
                         <div class="detail-content ap-port"></div>
                         <div class="server-detail-group-append">
@@ -358,6 +358,39 @@
                         <div class="server-detail-group-append">
                             <div class="detail-label"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
                             <div class="detail-content wssap-maxconn"></div>
+                        </div>
+                    </div>
+                    <div class="server-detail-group">
+                        <div class="detail-label"><i class="fas fa-server"></i> HTTP AP：</div>
+                        <div class="detail-content http-host"></div> <b class="text-muted">@</b>
+                        <div class="detail-content http-port"></div>
+                    </div>
+                    <div class="server-detail-group">
+                        <div class="detail-label"><i class="fas fa-server"></i> HTTPS AP：</div>
+                        <div class="detail-content https-host"></div> <b class="text-muted">@</b>
+                        <div class="detail-content https-port"></div>
+                    </div>
+                    <div class="server-detail-group">
+                        <div class="detail-label"><i class="fas fa-bookmark"></i>服务列表：</div>
+                        <div class="detail-content cellets"></div>
+                    </div>
+                    <div class="server-detail-group">
+                        <div class="detail-label"><i class="fas fa-sitemap"></i>下连节点：</div>
+                        <div class="detail-content" style="width:100%;">
+                            <div class="form-group">
+                                <select class="custom-select director-list"></select>
+                            </div>
+                            <div class="row">
+                                <div class="col-1 text-muted">地址：</div>
+                                <div class="col-3 director-address"></div>
+                                <div class="col-1 text-muted">端口：</div>
+                                <div class="col-3 director-port"></div>
+                                <div class="col-1 text-muted">权重：</div>
+                                <div class="col-3 director-weight"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 director-cellets"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
