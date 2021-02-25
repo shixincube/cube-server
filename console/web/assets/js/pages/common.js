@@ -26,7 +26,34 @@
 
 (function($, g) {
 
+    g.Toast = {
+        Success: 'success',
+        Info: 'info',
+        Error: 'error',
+        Warning: 'warning',
+        Question: 'question'
+    };
+
+    var toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 4000
+    });
+
     g.common = {
+        /**
+         * 显示吐司提示。
+         * @param {string} type 
+         * @param {string} text 
+         */
+        toast: function(type, text) {
+            toast.fire({
+                icon: type,
+                title: text
+            });
+        },
+
         updateView: function(console) {
             var userPanel = $('.user-panel');
             userPanel.find('img[data-target="avatar"]').attr('src', console.user.avatar);

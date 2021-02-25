@@ -79,7 +79,7 @@ public class DispatcherManager {
             Logger.i(this.getClass(), "Deploy source path: " + this.deploySourcePath.toString());
 
             // 检查当前库里是否有默认部署信息
-            DispatcherServer server = this.storage.readServerByDeployPath(this.tag, this.deploySourcePath.toString());
+            DispatcherServer server = this.storage.readServer(this.tag, this.deploySourcePath.toString());
             if (null == server) {
                 // 插入本地部署
                 this.storage.writeServer(this.tag, this.getDefaultDeployPath(),
@@ -126,8 +126,11 @@ public class DispatcherManager {
         }
 
         for (DispatcherServer server : list) {
-            if (server.tag.equals(this.tag)) {
+            if (this.tag.equals(server.tag)) {
                 server.refresh();
+            }
+            else {
+                // TODO
             }
         }
 
@@ -135,41 +138,136 @@ public class DispatcherManager {
     }
 
     public DispatcherServer getDispatcherServer(String tag, String deployPath) {
+        DispatcherServer server = this.storage.readServer(tag, deployPath);
+        if (null == server) {
+            return null;
+        }
 
-        return null;
+        if (this.tag.equals(server.tag)) {
+            server.refresh();
+        }
+        else {
+           // TODO
+        }
+
+        return server;
     }
 
-    public void startDispatcher(String tag, String deployPath) {
-        (new Thread() {
-            @Override
-            public void run() {
-                int status = 0;
-                ProcessBuilder pb = new ProcessBuilder(deployPath + "/start-dispatcher.sh");
-                pb.directory(new File(deployPath));
-                try {
-                    String line = null;
-                    Process process = pb.start();
-                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                    BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-                    while ((line = stdInput.readLine()) != null) {
-                        if (line.length() > 0) {
-                            Logger.i(DispatcherManager.class, "#startDispatcher - " + line);
-                        }
-                    }
-                    while ((line = stdError.readLine()) != null) {
-                        if (line.length() > 0) {
-                            Logger.w(DispatcherManager.class, "#startDispatcher - " + line);
-                        }
-                    }
+    /**
+     * 启动服务器。
+     *
+     * @param tag
+     * @param deployPath
+     * @param password
+     * @return
+     */
+    public DispatcherServer startDispatcher(String tag, String deployPath, String password) {
+        DispatcherServer server = getDispatcherServer(tag, deployPath);
+        if (null == server) {
+            return null;
+        }
 
-                    try {
-                        status = process.waitFor();
-                    } catch (InterruptedException e) {
+        // 判断运行状态
+        if (!server.isRunning()) {
+            if (this.tag.equals(server.tag)) {
+                (new Thread() {
+                    @Override
+                    public void run() {
+                        int status = 0;
+                        ProcessBuilder pb = new ProcessBuilder(deployPath + "/start-dispatcher.sh");
+                        pb.directory(new File(deployPath));
+                        try {
+                            String line = null;
+                            Process process = pb.start();
+                            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                            BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                            while ((line = stdInput.readLine()) != null) {
+                                if (line.length() > 0) {
+                                    Logger.i(DispatcherManager.class, "#startDispatcher - " + line);
+                                }
+                            }
+                            while ((line = stdError.readLine()) != null) {
+                                if (line.length() > 0) {
+                                    Logger.w(DispatcherManager.class, "#startDispatcher - " + line);
+                                }
+                            }
+
+                            try {
+                                status = process.waitFor();
+                            } catch (InterruptedException e) {
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        Logger.i(DispatcherManager.class, "Start dispatcher '" + deployPath + "' - " + status);
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                }).start();
             }
-        }).start();
+            else {
+                // TODO
+            }
+        }
+
+        return server;
+    }
+
+    /**
+     * 关停服务器。
+     *
+     * @param tag
+     * @param deployPath
+     * @param password
+     * @return
+     */
+    public DispatcherServer stopDispatcher(String tag, String deployPath, String password) {
+        DispatcherServer server = getDispatcherServer(tag, deployPath);
+        if (null == server) {
+            return null;
+        }
+
+        // 判断运行状态
+        if (server.isRunning()) {
+            if (this.tag.equals(server.tag)) {
+                (new Thread() {
+                    @Override
+                    public void run() {
+                        int status = 0;
+                        ProcessBuilder pb = new ProcessBuilder(deployPath + "/stop-dispatcher.sh");
+                        pb.directory(new File(deployPath));
+                        try {
+                            String line = null;
+                            Process process = pb.start();
+                            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                            BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                            while ((line = stdInput.readLine()) != null) {
+                                if (line.length() > 0) {
+                                    Logger.i(DispatcherManager.class, "#stopDispatcher - " + line);
+                                }
+                            }
+                            while ((line = stdError.readLine()) != null) {
+                                if (line.length() > 0) {
+                                    Logger.w(DispatcherManager.class, "#stopDispatcher - " + line);
+                                }
+                            }
+
+                            try {
+                                status = process.waitFor();
+                            } catch (InterruptedException e) {
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        Logger.i(DispatcherManager.class, "Stop dispatcher '" + deployPath + "' - " + status);
+                    }
+                }).start();
+            }
+            else {
+                // TODO
+            }
+        }
+
+        return server;
     }
 }

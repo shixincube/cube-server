@@ -112,7 +112,5 @@ public class CellConfigFile {
         port = Integer.parseInt(node.getElementsByTagName("port").item(0).getTextContent());
         maxConn = Integer.parseInt(node.getElementsByTagName("max-connection").item(0).getTextContent());
         this.wssAccessPoint = new AccessPoint(host, port, maxConn);
-
-
     }
 }

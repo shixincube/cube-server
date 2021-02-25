@@ -33,3 +33,5 @@ cube-common-3.0.jar
 cube-dispatcher-3.0.jar
 cube-service-3.0.jar
 cube-service-riskmgmt-3.0.jar
+pid
+tag_dispatcher_pid

@@ -60,6 +60,19 @@
         return null;
     }
 
+    function updateDispatcher(dispatcher) {
+        var tag = dispatcher.tag;
+        var deployPath = dispatcher.deployPath;
+
+        for (var i = 0; i < dispatcherList.length; ++i) {
+            var value = dispatcherList[i];
+            if (value.tag == tag && value.deployPath == deployPath) {
+                dispatcherList[i] = dispatcher;
+                break;
+            }
+        }
+    }
+
     function onDetailDirectorChange(index, tag, deployPath) {
         if (typeof index !== 'number') {
             var selected = $(this).find("option:selected");
@@ -165,6 +178,24 @@
             });
         },
 
+        requestDispatcherStatus: function(tag, path, success, error) {
+            $.ajax({
+                type: 'POST',
+                url: '/dispatcher/status',
+                data: {
+                    "tag": tag,
+                    "path": path
+                },
+                success: function(response, status, xhr) {
+                    success(response);
+                },
+                error: function(response) {
+                    error(response.status);
+                },
+                dataType: 'json'
+            });
+        },
+
         startDispatcher: function(tag, path, password, success, error) {
             $.ajax({
                 type: 'POST',
@@ -175,23 +206,32 @@
                     "pwd": password 
                 },
                 success: function(response, status, xhr) {
-                    success();
+                    success(response);
                 },
                 error: function(response) {
                     error(response.status);
                 },
                 dataType: 'json'
-              });
+            });
         },
 
-        stopDispatcher: function(tag, path, password) {
-            $.post('/dispatcher/stop', {
-                "tag": tag,
-                "path": path,
-                "pwd": password
-            }, function(response, status, xhr) {
-                handler();
-            }, 'json');
+        stopDispatcher: function(tag, path, password, success, error) {
+            $.ajax({
+                type: 'POST',
+                url: '/dispatcher/stop',
+                data: {
+                    "tag": tag,
+                    "path": path,
+                    "pwd": password 
+                },
+                success: function(response, status, xhr) {
+                    success(response);
+                },
+                error: function(response) {
+                    error(response.status);
+                },
+                dataType: 'json'
+            });
         },
 
         toggleServer: function(index) {
@@ -202,7 +242,7 @@
             var tipEl = el.find('.tip-content');
             var tip = null;
             if (dispatcher.running) {
-                tip = '';
+                tip = '您确定要<span class="text-danger"><b>关停</b></span>调度机服务器吗？';
             }
             else {
                 tip = '您确定要<span class="text-danger"><b>启动</b></span>调度机服务器吗？';
@@ -222,21 +262,99 @@
             var el = $('#modal_toggle_server');
             var tag = el.find('#input_tag').val();
             var deployPath = el.find('#input_path').val();
-            var password = md5(el.find('#input_password').val());
+            var password = el.find('#input_password').val();
             if (password.length < 6) {
                 alert('请输入您的管理密码！');
                 return;
             }
 
+            password = md5(password);
+            
+
             el.find('.overlay').css('visibility', 'visible');
             el.find('#input_password').val('');
 
-            this.startDispatcher(tag, deployPath, password, function() {
+            var timer = 0;
+            var complete = function() {
+                clearInterval(timer);
+                that.refreshServerTable();
                 el.modal('hide');
-            }, function(status) {
-                el.find('.overlay').css('visibility', 'hidden');
-                alert('操作失败，请检查您的管理密码是否输入正确。');
-            });
+            };
+
+            // 获取服务器
+            var dispatcher = findDispatcher(tag, deployPath);
+
+            // 通过判断状态决定操作
+            if (!dispatcher.running) {
+                // 启动
+                this.startDispatcher(tag, deployPath, password, function(dispatcher) {
+                    if (dispatcher.running) {
+                        complete();
+                        return;
+                    }
+
+                    var count = 0;
+                    timer = setInterval(function() {
+                        ++count;
+
+                        that.requestDispatcherStatus(tag, deployPath, function(server) {
+                            var cur = findDispatcher(tag, deployPath);
+                            if (!cur.running) {
+                                if (server.running) {
+                                    updateDispatcher(server);
+                                    complete();
+                                    g.common.toast(Toast.Success, '启动服务器成功');
+                                }
+                            }
+                        }, function(status) {
+                            console.log('#requestDispatcherStatus - ' + status);
+                        });
+
+                        if (count >= 5) {
+                            complete();
+                            g.common.toast(Toast.Error, '未能更新到服务器状态');
+                        }
+                    }, 2000);
+                }, function(status) {
+                    el.find('.overlay').css('visibility', 'hidden');
+                    alert('操作失败，请检查您的管理密码是否输入正确。');
+                });
+            }
+            else {
+                // 关停
+                this.stopDispatcher(tag, deployPath, password, function(dispatcher) {
+                    if (!dispatcher.running) {
+                        complete();
+                        return;
+                    }
+
+                    var count = 0;
+                    timer = setInterval(function() {
+                        ++count;
+
+                        that.requestDispatcherStatus(tag, deployPath, function(server) {
+                            var cur = findDispatcher(tag, deployPath);
+                            if (cur.running) {
+                                if (!server.running) {
+                                    updateDispatcher(server);
+                                    complete();
+                                    g.common.toast(Toast.Success, '关停服务器成功');
+                                }
+                            }
+                        }, function(status) {
+                            console.log('#requestDispatcherStatus - ' + status);
+                        });
+
+                        if (count >= 5) {
+                            complete();
+                            g.common.toast(Toast.Error, '未能更新到服务器状态');
+                        }
+                    }, 2000);
+                }, function(status) {
+                    el.find('.overlay').css('visibility', 'hidden');
+                    alert('操作失败，请检查您的管理密码是否输入正确。');
+                });
+            }
         },
 
         showDetails: function(tag, deployPath) {

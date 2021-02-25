@@ -28,6 +28,7 @@ package cube.console.container.handler;
 
 import cube.console.Console;
 import cube.console.container.Handlers;
+import cube.console.mgmt.DispatcherServer;
 import cube.console.mgmt.UserToken;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
@@ -72,7 +73,14 @@ public class DispatcherHandler extends ContextHandler {
                 String tag = request.getParameter("tag");
                 String deployPath = request.getParameter("path");
 
-                console.getDispatcherManager().getDispatcherServer(tag, deployPath);
+                DispatcherServer server = console.getDispatcherManager().getDispatcherServer(tag, deployPath);
+                if (null == server) {
+                    respond(response, HttpStatus.NOT_FOUND_404);
+                    complete();
+                    return;
+                }
+
+                respondOk(response, server.toJSON());
             }
             else if (target.equals("/start")) {
                 // 启动服务器
@@ -97,11 +105,34 @@ public class DispatcherHandler extends ContextHandler {
                 }
 
                 // 启动
-                console.getDispatcherManager().startDispatcher(tag, deployPath);
-                respond(response, HttpStatus.OK_200);
+                DispatcherServer server = console.getDispatcherManager().startDispatcher(tag, deployPath, password);
+                respondOk(response, server.toJSON());
             }
             else if (target.equals("/stop")) {
+                // 关闭服务器
+                String password = request.getParameter("pwd");
+                String tag = request.getParameter("tag");
+                String deployPath = request.getParameter("path");
 
+                if (null == password || null == tag || null == deployPath) {
+                    respond(response, HttpStatus.FORBIDDEN_403);
+                    complete();
+                    return;
+                }
+
+                String tokenString = Handlers.getToken(request);
+
+                // 校验密码
+                UserToken token = console.getUserManager().getToken(tokenString);
+                if (!token.user.validatePassword(password)) {
+                    respond(response, HttpStatus.UNAUTHORIZED_401);
+                    complete();
+                    return;
+                }
+
+                // 停止
+                DispatcherServer server = console.getDispatcherManager().stopDispatcher(tag, deployPath, password);
+                respondOk(response, server.toJSON());
             }
 
             complete();

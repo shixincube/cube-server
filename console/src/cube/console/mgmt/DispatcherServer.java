@@ -55,13 +55,17 @@ public class DispatcherServer implements JSONable {
         this.propertiesFile = new DispatcherProperties(propertiesFile);
     }
 
+    public boolean isRunning() {
+        return this.running;
+    }
+
     public void refresh() {
         this.cellConfigFile.refresh();
         this.propertiesFile.refresh();
 
         // 检查是否正在运行
         File tagFile = new File(this.deployPath + File.separator + "bin/tag_dispatcher");
-        if (tagFile.exists()) {
+        if (tagFile.exists() && tagFile.length() < 40) {
             // 尝试检测服务是否能连通
             AccessPoint ap = this.cellConfigFile.getAccessPoint();
             this.running = Detector.detectCellServer(ap.getHost(), ap.getPort());
@@ -77,7 +81,7 @@ public class DispatcherServer implements JSONable {
         json.put("tag", this.tag);
         json.put("deployPath", this.deployPath);
         json.put("cellConfigFile", this.cellConfigFile.getFullPath());
-        json.put("propertiesFile", this.propertiesFile);
+        json.put("propertiesFile", this.propertiesFile.getFullPath());
         json.put("running", this.running);
         json.put("server", this.cellConfigFile.getAccessPoint().toJSON());
         json.put("wsServer", this.cellConfigFile.getWSAccessPoint().toJSON());

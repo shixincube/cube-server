@@ -88,9 +88,11 @@ public class DispatcherStorage extends AbstractStorage {
         this.storage.executeInsert(this.dispatcherTable, fields);
     }
 
-    public DispatcherServer readServerByDeployPath(String tag, String deployPath) {
+    public DispatcherServer readServer(String tag, String deployPath) {
         List<StorageField[]> result = this.storage.executeQuery(this.dispatcherTable, this.dispatcherFields, new Conditional[] {
-                Conditional.createEqualTo("tag", LiteralBase.STRING, tag)
+                Conditional.createEqualTo("tag", LiteralBase.STRING, tag),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("deploy_path", LiteralBase.STRING, deployPath)
         });
 
         if (result.isEmpty()) {

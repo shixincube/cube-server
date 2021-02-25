@@ -64,6 +64,10 @@ public class DispatcherProperties {
         this.directorProperties = new ArrayList<>();
     }
 
+    public String getFullPath() {
+        return this.fullPath;
+    }
+
     public List<String> getCellets() {
         String value = this.properties.getProperty(KEY_CELLETS);
         if (null == value) {
