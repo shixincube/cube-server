@@ -54,10 +54,15 @@
             });
         },
 
-        updateView: function(console) {
+        updateUserPanel: function(console) {
             var userPanel = $('.user-panel');
             userPanel.find('img[data-target="avatar"]').attr('src', console.user.avatar);
             userPanel.find('a[data-target="name"]').text(console.user.displayName);
+        },
+
+        updateMainNav: function(numDispatchers, numServices) {
+            var el = $('nav .nav');
+            el.find('span[data-target="dispatcher-num"]').text(numDispatchers);
         }
     };
 

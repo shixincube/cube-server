@@ -42,7 +42,7 @@
             window.location.href = 'index.html';
         }
         else {
-            g.common.updateView(console);
+            g.common.updateUserPanel(console);
             g.dispatcher.launch();
         }
     });
@@ -124,7 +124,7 @@
                 }
             });
 
-            console.getDispatchers(function(tag, list) {
+            console.getDispatchers(function(list) {
                 dispatcherList = list;
                 that.refreshServerTable();
             });
@@ -267,9 +267,8 @@
                 alert('请输入您的管理密码！');
                 return;
             }
-
+            // 计算密码的 MD5 码
             password = md5(password);
-            
 
             el.find('.overlay').css('visibility', 'visible');
             el.find('#input_password').val('');

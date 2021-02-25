@@ -36,6 +36,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Cell 配置文件信息。
@@ -49,6 +50,8 @@ public class CellConfigFile {
     private AccessPoint wsAccessPoint;
 
     private AccessPoint wssAccessPoint;
+
+    private List<CelletConfig> celletList;
 
     public CellConfigFile(String fullPath) {
         this.fullPath = fullPath;
@@ -101,16 +104,28 @@ public class CellConfigFile {
 
         nodeList = document.getElementsByTagName("ws-server");
         node = (Element) nodeList.item(0);
-        host = node.getElementsByTagName("host").item(0).getTextContent();
-        port = Integer.parseInt(node.getElementsByTagName("port").item(0).getTextContent());
-        maxConn = Integer.parseInt(node.getElementsByTagName("max-connection").item(0).getTextContent());
-        this.wsAccessPoint = new AccessPoint(host, port, maxConn);
+        nodeList = node.getElementsByTagName("host");
+        if (null != nodeList) {
+            host = nodeList.item(0).getTextContent();
+            port = Integer.parseInt(node.getElementsByTagName("port").item(0).getTextContent());
+            maxConn = Integer.parseInt(node.getElementsByTagName("max-connection").item(0).getTextContent());
+            this.wsAccessPoint = new AccessPoint(host, port, maxConn);
+        }
 
         nodeList = document.getElementsByTagName("wss-server");
         node = (Element) nodeList.item(0);
-        host = node.getElementsByTagName("host").item(0).getTextContent();
-        port = Integer.parseInt(node.getElementsByTagName("port").item(0).getTextContent());
-        maxConn = Integer.parseInt(node.getElementsByTagName("max-connection").item(0).getTextContent());
-        this.wssAccessPoint = new AccessPoint(host, port, maxConn);
+        nodeList = node.getElementsByTagName("host");
+        if (null != nodeList) {
+            host = nodeList.item(0).getTextContent();
+            port = Integer.parseInt(node.getElementsByTagName("port").item(0).getTextContent());
+            maxConn = Integer.parseInt(node.getElementsByTagName("max-connection").item(0).getTextContent());
+            this.wssAccessPoint = new AccessPoint(host, port, maxConn);
+        }
+
+
+    }
+
+    public class CelletConfig {
+
     }
 }

@@ -24,20 +24,22 @@
  * SOFTWARE.
  */
 
-(function ($, g) {
-    'use strict'
+package cube.console.mgmt;
 
-    var console = new Console();
-    $.console = console;
+import java.nio.file.Path;
 
-    // 检查是否合法
-    console.checkUser(function(valid) {
-        if (!valid) {
-            window.location.href = 'index.html';
-        }
-        else {
-            g.common.updateUserPanel(console);
-        }
-    });
+/**
+ * 服务单元管理器。
+ */
+public class ServiceManager {
 
-})(jQuery, window);
+    private String tag;
+
+    private Path deploySourcePath;
+
+    public ServiceManager(String tag) {
+        this.tag = tag;
+    }
+
+
+}

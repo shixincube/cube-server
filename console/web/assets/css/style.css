@@ -84,6 +84,18 @@ h5 {
     display: inline-block;
 }
 
+/** dashboard - begin */
+
+.box-desc {
+    font-size: 14px;
+    position: absolute;
+    float: left;
+    left: 76px;
+    top: 16px;
+}
+
+/** dashboard - end */
+
 /** dispatchers - begin */
 
 .tag-display {

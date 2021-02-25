@@ -209,14 +209,14 @@
 	<!-- =================================================================== -->
 	<!-- Builds all projects for debug                                       -->
 	<!-- =================================================================== -->
-	<target name="build-all-debug" depends="init,build-common-debug,build-dispatcher-debug,build-service-debug,build-console-debug">
+	<target name="build-debug" depends="init,build-common-debug,build-dispatcher-debug,build-service-debug,build-console-debug">
 		<echo>Build all projects for debug.</echo>
 	</target>
 
 	<!-- =================================================================== -->
 	<!-- Builds all projects for release                                     -->
 	<!-- =================================================================== -->
-	<target name="build-all" depends="init,build-common-release,build-dispatcher-release,build-service-release,build-console-release">
+	<target name="build" depends="init,build-common-release,build-dispatcher-release,build-service-release,build-console-release">
 		<echo>Build all projects.</echo>
 	</target>
 

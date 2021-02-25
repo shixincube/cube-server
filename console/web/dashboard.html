@@ -51,7 +51,7 @@
             <li class="nav-item dropdown">
                 <a class="nav-link" data-toggle="dropdown" href="javascript:;">
                     <i class="far fa-comments"></i>
-                    <span class="badge badge-danger navbar-badge">0</span>
+                    <span class="badge badge-danger navbar-badge"></span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
                     <a href="#" class="dropdown-item">
@@ -60,7 +60,6 @@
                         <img src="assets/img/nomessage.jpg" alt="无消息" class="img-size-50 mr-3 img-circle">
                         <div class="media-body">
                         <h3 class="dropdown-item-title">
-                            无消息
                             <span class="float-right text-sm text-muted"><i class="fas fa-star"></i></span>
                         </h3>
                         <p class="text-sm">您当前没有收到新消息。</p>
@@ -77,9 +76,9 @@
             <li class="nav-item dropdown">
                 <a class="nav-link" data-toggle="dropdown" href="#">
                     <i class="far fa-bell"></i>
-                    <span class="badge badge-warning navbar-badge">1</span>
+                    <span class="badge badge-warning navbar-badge"></span>
                 </a>
-                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right" style="display:none;">
                     <span class="dropdown-header">1 条通知</span>
                     <div class="dropdown-divider"></div>
                     <a href="#" class="dropdown-item">
@@ -144,13 +143,13 @@
                     <li class="nav-item">
                         <a href="dispatcher.html" class="nav-link">
                             <i class="nav-icon fas fa-sitemap"></i>
-                            <p>调度机 <span class="right badge badge-info">0</span></p>
+                            <p>调度机 <span class="right badge badge-info" data-target="dispatcher-num">0</span></p>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="service.html" class="nav-link">
                             <i class="nav-icon fas fa-server"></i>
-                            <p>模块服务器 <span class="right badge badge-info">0</span></p>
+                            <p>模块服务器 <span class="right badge badge-info" data-target="service-num">0</span></p>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -192,6 +191,7 @@
                         <div id="dispatcher-box" class="small-box bg-info">
                             <div class="inner">
                                 <h3>0</h3>
+                                <div class="box-desc"><span class="badge badge-light"><b>0</b> - 运行中</span></div>
                                 <p>调度机</p>
                             </div>
                             <div class="icon">
@@ -205,6 +205,7 @@
                         <div id="service-box" class="small-box bg-success">
                             <div class="inner">
                                 <h3>0</h3>
+                                <div class="box-desc"><span class="badge badge-light"><b>0</b> - 运行中</span></div>
                                 <p>模块服务器</p>
                             </div>
                             <div class="icon">
@@ -218,6 +219,7 @@
                         <div class="small-box bg-warning">
                             <div class="inner">
                                 <h3>0</h3>
+                                <div class="box-desc"><span class="badge badge-light"><b>0</b> - 运行中</span></div>
                                 <p>媒体服务器</p>
                             </div>
                             <div class="icon">
@@ -231,6 +233,7 @@
                         <div class="small-box bg-danger">
                             <div class="inner">
                                 <h3>0</h3>
+                                <div class="box-desc"><span class="badge badge-light"><b>0</b> - 运行中</span></div>
                                 <p>存储节点</p>
                             </div>
                             <div class="icon">

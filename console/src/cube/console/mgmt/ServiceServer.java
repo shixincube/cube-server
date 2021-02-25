@@ -24,20 +24,57 @@
  * SOFTWARE.
  */
 
-(function ($, g) {
-    'use strict'
+package cube.console.mgmt;
 
-    var console = new Console();
-    $.console = console;
+import cube.common.JSONable;
+import org.json.JSONObject;
 
-    // 检查是否合法
-    console.checkUser(function(valid) {
-        if (!valid) {
-            window.location.href = 'index.html';
-        }
-        else {
-            g.common.updateUserPanel(console);
-        }
-    });
+import java.io.File;
 
-})(jQuery, window);
+/**
+ * 服务单元服务器。
+ */
+public class ServiceServer implements JSONable {
+
+    public final String tag;
+
+    public final String deployPath;
+
+    public final String configPath;
+
+    public final String celletsPath;
+
+    private CellConfigFile cellConfigFile;
+
+    private boolean running = false;
+
+    public ServiceServer(String tag, String deployPath, String configPath, String celletsPath) {
+        this.tag = tag;
+        this.deployPath = deployPath;
+        this.configPath = configPath;
+        this.celletsPath = celletsPath;
+    }
+
+    public boolean isRunning() {
+        return this.running;
+    }
+
+    protected void refresh() {
+        this.cellConfigFile = new CellConfigFile(this.configPath + File.separator + "service.xml");
+        this.cellConfigFile.refresh();
+
+
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("tag", this.tag);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
+}

@@ -89,7 +89,7 @@ Cube Server 目前支持的操作系统包括：**Ubuntu** 、**CentOS** 、**De
 
 从代码库下载代码之后，进入 *cube-server* 项目目录依次执行以下步骤来进行项目构建。
 
-1. 构建调度服务器和服务单元服务器，执行构建命令： `ant build-all` 。如果需要构建 Debug 版本，使用命令：`ant build-all-debug` 。
+1. 构建调度服务器和服务单元服务器，执行构建命令： `ant build` 。如果需要构建 Debug 版本，使用命令：`ant build-debug` 。
 
  执行构建命令之后，会在项目目录的 `build` 子目录下生成各工程的工程输出文件。
 

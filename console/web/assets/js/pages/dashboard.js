@@ -27,6 +27,11 @@
 (function ($, g) {
     'use strict'
 
+    var that = null;
+
+    var dispatcherList = [];
+    var serviceList = [];
+
     var console = new Console();
     $.console = console;
 
@@ -36,14 +41,37 @@
             window.location.href = 'index.html';
         }
         else {
-            g.common.updateView(console);
+            g.common.updateUserPanel(console);
             g.dashboard.launch();
         }
     });
 
     g.dashboard = {
         launch: function() {
-            
+            var dispatcherRunning = 0;
+            var serviceRunning = 0;
+
+            var gotDispatcher = false;
+            var gotService = false;
+
+            console.getDispatchers(function(list) {
+                dispatcherList = list;
+                g.common.updateMainNav(list.length, serviceList.length);
+
+                dispatcherList.forEach(function(value) {
+                    if (value.running) {
+                        ++dispatcherRunning;
+                    }
+                });
+
+                that.updateBox(list.length, dispatcherRunning);
+            });
+        },
+
+        updateBox: function(numDispatcher, numDispatcherRunning) {
+            var el = $('#dispatcher-box');
+            el.find('h3').text(numDispatcher);
+            el.find('.box-desc').find('b').text(numDispatcherRunning);
         },
 
         appendLog: function(el, line) {
@@ -176,6 +204,8 @@
             chart.update();
         }
     }
+
+    that = g.dashboard;
 
     /*
     var chartDispatcher = null;

@@ -74,7 +74,7 @@ Console.prototype.log = function(text) {
 
 Console.prototype.getDispatchers = function(handler) {
     $.get('/servers/dispatcher', function(response, status, xhr) {
-        handler(response.tag, response.list);
+        handler(response.list);
     }, 'json');
 }
 

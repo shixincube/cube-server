@@ -59,7 +59,7 @@ public class DispatcherServer implements JSONable {
         return this.running;
     }
 
-    public void refresh() {
+    protected void refresh() {
         this.cellConfigFile.refresh();
         this.propertiesFile.refresh();
 
