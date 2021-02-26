@@ -49,6 +49,8 @@ public class ServiceServer implements JSONable {
 
     public final String celletsPath;
 
+    private String name;
+
     private CellConfigFile cellConfigFile;
 
     private String storageJsonFile;
@@ -62,6 +64,10 @@ public class ServiceServer implements JSONable {
         this.celletsPath = celletsPath;
     }
 
+    public String getName() {
+        return this.name;
+    }
+
     public boolean isRunning() {
         return this.running;
     }
@@ -70,6 +76,8 @@ public class ServiceServer implements JSONable {
         try {
             this.cellConfigFile = new CellConfigFile(this.configPath + File.separator + "service.xml");
             this.cellConfigFile.refresh();
+
+            this.name = this.tag + "#service#" + this.cellConfigFile.getAccessPoint().getPort();
 
             // 检查是否正在运行
             File tagFile = new File(this.deployPath + File.separator + "bin/tag_service");
@@ -106,6 +114,7 @@ public class ServiceServer implements JSONable {
         json.put("deployPath", this.deployPath);
         json.put("configPath", this.configPath);
         json.put("celletsPath", this.celletsPath);
+        json.put("name", this.name);
 
         json.put("running", this.running);
 

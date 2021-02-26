@@ -42,6 +42,8 @@ public class DispatcherServer implements JSONable {
 
     public final String deployPath;
 
+    private String name;
+
     private CellConfigFile cellConfigFile;
 
     private DispatcherProperties propertiesFile;
@@ -55,6 +57,10 @@ public class DispatcherServer implements JSONable {
         this.propertiesFile = new DispatcherProperties(propertiesFile);
     }
 
+    public String getName() {
+        return this.name;
+    }
+
     public boolean isRunning() {
         return this.running;
     }
@@ -62,6 +68,8 @@ public class DispatcherServer implements JSONable {
     protected void refresh() {
         this.cellConfigFile.refresh();
         this.propertiesFile.refresh();
+
+        this.name = this.tag + "#dispatcher#" + this.cellConfigFile.getAccessPoint().getPort();
 
         // 检查是否正在运行
         File tagFile = new File(this.deployPath + File.separator + "bin/tag_dispatcher");
@@ -80,6 +88,7 @@ public class DispatcherServer implements JSONable {
         JSONObject json = new JSONObject();
         json.put("tag", this.tag);
         json.put("deployPath", this.deployPath);
+        json.put("name", this.name);
         json.put("cellConfigFile", this.cellConfigFile.getFullPath());
         json.put("propertiesFile", this.propertiesFile.getFullPath());
         json.put("running", this.running);

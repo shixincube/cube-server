@@ -32,6 +32,8 @@
     var dispatcherList = [];
     var serviceList = [];
 
+    var serverViewMap = {};
+
     var consoleLogTime = 0;
     var maxLogLine = 100;
 
@@ -54,6 +56,10 @@
             var dispatcherRunning = 0;
             var serviceRunning = 0;
 
+            var tabIndex = 1;
+
+            var now = Date.now();
+
             console.getDispatchers(function(list) {
                 dispatcherList = list;
 
@@ -61,6 +67,20 @@
                     if (value.running) {
                         ++dispatcherRunning;
                     }
+
+                    var elTab = $('#log-tabs-server' + tabIndex + '-tab');
+                    elTab.css('visibility', 'visible');
+                    elTab.text(value.name);
+
+                    var el = $('#log-tabs-server' + tabIndex).find('.log-view');
+
+                    serverViewMap[value.name] = {
+                        "tabEl": el,
+                        "logTime": now - 300000,    // 日志时间
+                        "logTotal": 0               // 日志总行数
+                    };
+
+                    ++tabIndex;
                 });
 
                 that.updateDispatcherBox(list.length, dispatcherRunning);
