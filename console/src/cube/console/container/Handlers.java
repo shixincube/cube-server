@@ -89,6 +89,7 @@ public final class Handlers {
                 new ServersHandler(console),
                 new DeployHandler(console),
                 new DispatcherHandler(console),
+                new ServiceHandler(console),
 
                 new ServerLogHandler(console),
                 new ServerReportHandler(console),

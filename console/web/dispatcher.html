@@ -94,8 +94,7 @@
                 </a>
             </li>
         </ul>
-    </nav>
-    <!-- /.navbar -->
+    </nav><!-- /.navbar -->
 
     <!-- Main Sidebar Container -->
     <aside class="main-sidebar sidebar-dark-primary elevation-4">
@@ -149,7 +148,7 @@
                     <li class="nav-item">
                         <a href="service.html" class="nav-link">
                             <i class="nav-icon fas fa-server"></i>
-                            <p>模块服务器 <span class="right badge badge-info" data-target="service-num"></span></p>
+                            <p>服务单元 <span class="right badge badge-info" data-target="service-num"></span></p>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -198,7 +197,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div><!-- /.row -->
                 <div class="row">
                     <div class="col-lg-12 col-12">
                         <div class="card">
@@ -211,23 +210,22 @@
                                 </div>
                             </div>
                             <div class="card-body p-0">
-                              <table id="server_table" class="table table-striped projects">
-                                  <thead>
-                                      <tr>
-                                          <th style="width: 1%">#</th>
-                                          <th>标签</th>
-                                          <th style="width: 30%">部署路径</th>
-                                          <th style="width: 20%">负载</th>
-                                          <th style="width: 8%" class="text-center">状态</th>
-                                          <th></th>
-                                      </tr>
-                                  </thead>
-                                  <tbody>
-                                  </tbody>
-                              </table>
-                            </div>
-                            <!-- /.card-body -->
-                          </div>
+                                <table id="server_table" class="table table-striped projects">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 1%">#</th>
+                                            <th>标签</th>
+                                            <th style="width: 30%">部署路径</th>
+                                            <th style="width: 20%">负载</th>
+                                            <th style="width: 8%" class="text-center">状态</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div><!-- /.card-body -->
+                        </div>
                     </div>
                 </div><!-- /.row -->
             </div><!-- /.container-fluid -->
@@ -241,8 +239,7 @@
             <h5>控制台手册</h5>
             <p>Cube Console 时信魔方控制台是监控服务器运行状态的管理程序。</p>
         </div>
-    </aside>
-    <!-- /.control-sidebar -->
+    </aside><!-- /.control-sidebar -->
 
     <!-- Main Footer -->
     <footer class="main-footer">
@@ -264,7 +261,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
-            </div>
+            </div><!-- /.modal-header -->
             <div class="modal-body">
                 <form class="form-horizontal">
                     <div class="card-body">
@@ -304,14 +301,14 @@
                         </div>
                     </div>
                 </form>
-            </div>
+            </div><!-- /.modal-body -->
             <div class="modal-footer justify-content-between">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="javascript:;">取消</button>
                 <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="javascript:;">确定</button>
-            </div>
+            </div><!-- /.modal-footer -->
         </div>
     </div>
-</div>
+</div><!-- /.modal -->
 
 <!-- Detail Modal -->
 <div id="modal_details" class="modal fade">
@@ -322,15 +319,15 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
-            </div>
+            </div><!-- /.modal-header -->
             <div class="modal-body">
                 <div class="card-body">
                     <div class="server-detail-group">
-                        <div class="detail-label"><i class="fas fa-tag"></i> 控制台标签：</div>
+                        <div class="detail-label"><i class="fas fa-cube"></i> 控制台标签：</div>
                         <div class="detail-content tag"></div>
                     </div>
                     <div class="server-detail-group">
-                        <div class="detail-label"><i class="fas fa-terminal"></i> 部署路径：</div>
+                        <div class="detail-label"><i class="fas fa-folder"></i> 部署路径：</div>
                         <div class="detail-content deploy-path"></div>
                     </div>
                     <div class="server-detail-group">
@@ -394,13 +391,13 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div><!-- /.modal-body -->
             <div class="modal-footer text-right">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
-            </div>
+            </div><!-- /.modal-footer -->
         </div>
     </div>
-</div>
+</div><!-- /.modal -->
 
 <!-- Toggle Server Modal -->
 <div id="modal_toggle_server" class="modal fade" data-backdrop="static">
@@ -411,7 +408,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
-            </div>
+            </div><!-- /.modal-header -->
             <div class="modal-body">
                 <div class="card-body">
                     <span class="tip-content"></span>
@@ -436,15 +433,15 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div><!-- /.modal-body -->
             <div class="modal-footer justify-content-between">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-primary" onclick="javascript:dispatcher.onToggleConfirm();">确定</button>
-            </div>
+            </div><!-- /.modal-footer -->
             <div class="overlay"><i class="fas fa-2x fa-sync-alt fa-spin"></i></div>
         </div>
     </div>
-</div>
+</div><!-- /.modal -->
 
 <script src="plugins/jquery/jquery.min.js"></script>
 <script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>

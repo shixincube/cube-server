@@ -32,6 +32,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -78,6 +80,19 @@ public class ServiceServer implements JSONable {
             }
             else {
                 this.running = false;
+            }
+
+            // 检查对应的 Cellet 文件
+            List<CellConfigFile.CelletConfig> celletConfigs = this.cellConfigFile.getCelletConfigList();
+            for (CellConfigFile.CelletConfig cc : celletConfigs) {
+                String jarFilePath = cc.getJarFilePath();
+                if (null != jarFilePath) {
+                    Path path = Paths.get(this.deployPath, jarFilePath);
+                    File file = path.toAbsolutePath().toFile();
+                    if (file.exists()) {
+                        cc.setJarFile(file);
+                    }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

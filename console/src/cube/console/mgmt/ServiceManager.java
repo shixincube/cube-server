@@ -31,8 +31,10 @@ import cube.console.storage.ServiceStorage;
 import cube.console.tool.DeployTool;
 import cube.util.ConfigUtils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -121,6 +123,22 @@ public class ServiceManager {
         return path.toString();
     }
 
+    public ServiceServer getServiceServer(String tag, String deployPath) {
+        ServiceServer server = this.storage.readServer(tag, deployPath);
+        if (null == server) {
+            return null;
+        }
+
+        if (this.tag.equals(server.tag)) {
+            server.refresh();
+        }
+        else {
+            // TODO
+        }
+
+        return server;
+    }
+
     public List<ServiceServer> listServiceServers() {
         if (null == this.deploySourcePath) {
             return null;
@@ -141,5 +159,123 @@ public class ServiceManager {
         }
 
         return list;
+    }
+
+    /**
+     * 启动服务器。
+     *
+     * @param tag
+     * @param deployPath
+     * @param password
+     * @return
+     */
+    public ServiceServer startService(String tag, String deployPath, String password) {
+        ServiceServer server = getServiceServer(tag, deployPath);
+        if (null == server) {
+            return null;
+        }
+
+        // 判断运行状态
+        if (!server.isRunning()) {
+            if (this.tag.equals(server.tag)) {
+                (new Thread() {
+                    @Override
+                    public void run() {
+                        int status = 0;
+                        ProcessBuilder pb = new ProcessBuilder(deployPath + "/start-service.sh");
+                        pb.directory(new File(deployPath));
+                        try {
+                            String line = null;
+                            Process process = pb.start();
+                            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                            BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                            while ((line = stdInput.readLine()) != null) {
+                                if (line.length() > 0) {
+                                    Logger.i(DispatcherManager.class, "#startService - " + line);
+                                }
+                            }
+                            while ((line = stdError.readLine()) != null) {
+                                if (line.length() > 0) {
+                                    Logger.w(DispatcherManager.class, "#startService - " + line);
+                                }
+                            }
+
+                            try {
+                                status = process.waitFor();
+                            } catch (InterruptedException e) {
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        Logger.i(DispatcherManager.class, "Start service '" + deployPath + "' - " + status);
+                    }
+                }).start();
+            }
+            else {
+                // TODO
+            }
+        }
+
+        return server;
+    }
+
+    /**
+     * 关停服务器。
+     *
+     * @param tag
+     * @param deployPath
+     * @param password
+     * @return
+     */
+    public ServiceServer stopService(String tag, String deployPath, String password) {
+        ServiceServer server = getServiceServer(tag, deployPath);
+        if (null == server) {
+            return null;
+        }
+
+        // 判断运行状态
+        if (server.isRunning()) {
+            if (this.tag.equals(server.tag)) {
+                (new Thread() {
+                    @Override
+                    public void run() {
+                        int status = 0;
+                        ProcessBuilder pb = new ProcessBuilder(deployPath + "/stop-service.sh");
+                        pb.directory(new File(deployPath));
+                        try {
+                            String line = null;
+                            Process process = pb.start();
+                            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                            BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                            while ((line = stdInput.readLine()) != null) {
+                                if (line.length() > 0) {
+                                    Logger.i(DispatcherManager.class, "#stopService - " + line);
+                                }
+                            }
+                            while ((line = stdError.readLine()) != null) {
+                                if (line.length() > 0) {
+                                    Logger.w(DispatcherManager.class, "#stopService - " + line);
+                                }
+                            }
+
+                            try {
+                                status = process.waitFor();
+                            } catch (InterruptedException e) {
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        Logger.i(DispatcherManager.class, "Stop service '" + deployPath + "' - " + status);
+                    }
+                }).start();
+            }
+            else {
+                // TODO
+            }
+        }
+
+        return server;
     }
 }

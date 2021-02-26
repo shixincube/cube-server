@@ -29,6 +29,8 @@ package cube.console.container.handler;
 import cube.console.Console;
 import cube.console.container.Handlers;
 import cube.console.mgmt.DispatcherManager;
+import cube.console.mgmt.ServiceManager;
+import cube.console.mgmt.ServiceServer;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -85,6 +87,22 @@ public class DeployHandler extends ContextHandler {
                     data.put("deployPath", deployPath);
                     data.put("cellConfigFile", cellConfigFile);
                     data.put("propertiesFile", propertiesFile);
+                }
+
+                respondOk(response, data);
+            }
+            else if (target.equals("/service")) {
+                ServiceManager manager = console.getServiceManager();
+                String tag = console.getTag();
+
+                JSONObject data = new JSONObject();
+                data.put("tag", tag);
+
+                String deployPath = manager.getDefaultDeployPath();
+                if (null != deployPath) {
+                    data.put("deployPath", deployPath);
+                    data.put("configPath", manager.getDefaultConfigPath());
+                    data.put("celletsPath", manager.getDefaultCelletsPath());
                 }
 
                 respondOk(response, data);

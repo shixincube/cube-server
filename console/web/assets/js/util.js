@@ -24,9 +24,14 @@
  * SOFTWARE.
  */
 
-(function(global) {
+(function(g) {
 
-    global.ui = {};
+    var KB = 1024;
+    var MB = 1024 * KB;
+    var GB = 1024 * MB;
+    var TB = 1024 * GB;
+
+    g.util = {};
 
     function formatNumber(num, length) {
         if (length == 2) {
@@ -56,13 +61,51 @@
 
         return '' + num;
     }
-    global.ui.formatNumber = formatNumber;
+    g.util.formatNumber = formatNumber;
 
     function formatTimeHHMM(time) {
         var date = new Date(time);
         return formatNumber(date.getHours(), 2) + ':' + formatNumber(date.getMinutes(), 2);
     }
-    global.ui.formatTimeHHMM = formatTimeHHMM;
+    g.util.formatTimeHHMM = formatTimeHHMM;
+
+    function formatFullTime(time) {
+        var date = new Date(time);
+        var format = [
+            date.getFullYear(),
+            '-',
+            formatNumber(date.getMonth() + 1, 2),
+            '-',
+            formatNumber(date.getDate(), 2),
+            ' ',
+            formatNumber(date.getHours(), 2),
+            ':',
+            formatNumber(date.getMinutes(), 2),
+            ':',
+            formatNumber(date.getSeconds(), 2)
+        ];
+        return format.join('');
+    }
+    g.util.formatFullTime = formatFullTime;
+
+    function formatSize(size) {
+        if (size < KB) {
+            return size + ' B';
+        }
+        else if (size >= KB && size < MB) {
+            return ((size / KB).toFixed(2)) + ' KB';
+        }
+        else if (size >= MB && size < GB) {
+            return ((size / MB).toFixed(2)) + ' MB';
+        }
+        else if (size >= GB && size < TB) {
+            return ((size / GB).toFixed(2)) + ' GB';
+        }
+        else {
+            return size;
+        }
+    }
+    g.util.formatSize = formatSize;
 
     function makeTimeLineArray(start, num) {
         var array = [];
@@ -74,5 +117,5 @@
         }
         return array;
     }
-    global.ui.makeTimeLineArray = makeTimeLineArray;
+    g.util.makeTimeLineArray = makeTimeLineArray;
 })(window);

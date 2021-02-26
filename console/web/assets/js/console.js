@@ -90,6 +90,12 @@ Console.prototype.getServices = function(handler) {
     }, 'json');
 }
 
+Console.prototype.getServiceDefaultDeploy = function(handler) {
+    $.get('/deploy/service', function(response, status, xhr) {
+        handler(response);
+    }, 'json');
+}
+
 Console.prototype.getServers = function(handler) {
     var that = this;
     $.get('/servers', function(response, status, xhr) {

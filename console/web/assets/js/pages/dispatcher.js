@@ -164,10 +164,10 @@
                                     '<i class="fas fa-stop"></i> 停止' :
                                     '<i class="fas fa-play"></i> 启动',
                             '</button>',
-                            '<button type="button" class="btn btn-primary btn-sm" onclick="javascript:dispatcher.showDetails(\'', value.tag, '\',\'', value.deployPath, '\');">',
+                            '<button type="button" class="btn btn-primary btn-sm" onclick="javascript:dispatcher.showDetails(', index, ');">',
                                 '<i class="fas fa-tasks"></i> 详情',
                             '</button>',
-                            '<button type="button" class="btn btn-warning btn-sm" onclick="javascript:;">',
+                            '<button type="button" class="btn btn-warning btn-sm" onclick="javascript:dispatcher.deleteServer(', index, ');">',
                                 '<i class="fas fa-trash"></i> 删除',
                             '</button>',
                         '</td>',
@@ -251,6 +251,7 @@
 
             el.find('#input_tag').val(dispatcher.tag);
             el.find('#input_path').val(dispatcher.deployPath);
+            el.find('#input_path').attr('title', dispatcher.deployPath);
             el.find('#input_password').val('');
 
             el.modal('show');
@@ -356,11 +357,14 @@
             }
         },
 
-        showDetails: function(tag, deployPath) {
-            var server = findDispatcher(tag, deployPath);
+        showDetails: function(index) {
+            var server = dispatcherList[index];
             if (null == server) {
                 return;
             }
+
+            var tag = server.tag;
+            var deployPath = server.deployPath;
 
             var el = $('#modal_details');
             el.find('.tag').text(tag);
@@ -397,6 +401,10 @@
             onDetailDirectorChange(0, tag, deployPath);
 
             el.modal('show');
+        },
+
+        deleteServer: function(index) {
+            g.common.toast(Toast.Warning, '此功能暂不可用');
         },
 
         showNewDeployDialog: function() {

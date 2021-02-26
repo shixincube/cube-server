@@ -39,6 +39,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -146,8 +147,8 @@ public class CellConfigFile {
                 }
 
                 String jarFile = celletNode.getAttribute("jar");
-                if (null != jarFile) {
-                    cc.jarFile = jarFile;
+                if (null != jarFile && jarFile.length() > 0) {
+                    cc.jarFilePath = jarFile;
                 }
 
                 NodeList classList = celletNode.getElementsByTagName("class");
@@ -167,9 +168,11 @@ public class CellConfigFile {
 
         private List<Integer> ports = new ArrayList<>();
 
-        private String jarFile = null;
-
         private List<String> classes = new ArrayList<>();
+
+        private String jarFilePath = null;
+
+        private File jarFile = null;
 
         public CelletConfig() {
         }
@@ -178,12 +181,16 @@ public class CellConfigFile {
             return this.ports;
         }
 
-        public String getJarFile() {
-            return this.jarFile;
-        }
-
         public List<String> getClasses() {
             return this.classes;
+        }
+
+        public String getJarFilePath() {
+            return this.jarFilePath;
+        }
+
+        public void setJarFile(File file) {
+            this.jarFile = file;
         }
 
         public void addPort(int port) {
@@ -212,8 +219,16 @@ public class CellConfigFile {
             }
             json.put("ports", portArray);
 
-            if (null != this.jarFile) {
-                json.put("jarFile", this.jarFile);
+            if (null != this.jarFilePath) {
+                JSONObject jarFileJson = new JSONObject();
+                jarFileJson.put("path", this.jarFilePath);
+                if (null != this.jarFile) {
+                    jarFileJson.put("name", this.jarFile.getName());
+                    jarFileJson.put("size", this.jarFile.length());
+                    jarFileJson.put("lastModified", this.jarFile.lastModified());
+                }
+
+                json.put("jar", jarFileJson);
             }
 
             JSONArray classArray = new JSONArray();

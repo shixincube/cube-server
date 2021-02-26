@@ -145,7 +145,7 @@
         },
 
         buildJVMChartDataTemplate: function() {
-            var labels = g.ui.makeTimeLineArray(Date.now(), 8);
+            var labels = g.util.makeTimeLineArray(Date.now(), 8);
             var data = {
                 labels : labels,
                 datasets: [{
