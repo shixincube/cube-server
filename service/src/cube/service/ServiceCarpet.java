@@ -68,8 +68,6 @@ public class ServiceCarpet implements CellListener {
 
         this.daemon = new Daemon(this.kernel, nucleus);
         LogManager.getInstance().addHandle(this.daemon);
-
-        this.initManagement();
     }
 
     @Override
@@ -80,6 +78,8 @@ public class ServiceCarpet implements CellListener {
 
         this.timer = new Timer();
         this.timer.schedule(daemon, 10L * 1000L, 10L * 1000L);
+
+        this.initManagement(nucleus);
     }
 
     @Override
@@ -129,18 +129,19 @@ public class ServiceCarpet implements CellListener {
         this.kernel.shutdown();
     }
 
-    private void initManagement() {
+    private void initManagement(Nucleus nucleus) {
         // 配置控制台
         try {
-            Properties properties = ConfigUtils.readConsoleFollower("config/console-follower-service.properties");
+            Properties properties = ConfigUtils.readProperties("config/console-follower-service.properties");
 
             // 设置接收报告的服务器
             ReportService.getInstance().addHost(properties.getProperty("console.host"),
                     Integer.parseInt(properties.getProperty("console.port", "7080")));
 
-            if (properties.containsKey("name")) {
-                this.kernel.setNodeName(properties.getProperty("name"));
-            }
+            String defaultName = ConfigUtils.makeUniqueStringWithMAC() + "#service#" +
+                    nucleus.getTalkService().getServers().get(0).getPort();
+            this.kernel.setNodeName(properties.getProperty("name", defaultName));
+            Logger.i(this.getClass(), "Node name: " + this.kernel.getNodeName());
         } catch (IOException e) {
             Logger.e(this.getClass(), "Read console follower config failed", e);
         }

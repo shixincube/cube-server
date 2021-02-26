@@ -33,14 +33,12 @@ import cell.util.log.Logger;
 import cube.console.mgmt.DispatcherManager;
 import cube.console.mgmt.ServiceManager;
 import cube.console.mgmt.UserManager;
-import cube.console.tool.DeployTool;
 import cube.report.JVMReport;
 import cube.report.LogLine;
 import cube.report.LogReport;
-import cube.util.FileUtils;
+import cube.util.ConfigUtils;
 import org.json.JSONArray;
 
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -109,39 +107,7 @@ public final class Console implements Runnable {
         LogManager.getInstance().addHandle(this.logHandler);
 
         // 生成服务器基于 MAC 地址信息的识别标识
-        try {
-            List<byte[]> md5Values = new ArrayList<>();
-
-            // 计算所有 MAC 的 MD5 码
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            List<String> macList = DeployTool.getMACList();
-            for (String mac : macList) {
-                md5.update(mac.getBytes());
-                md5Values.add(md5.digest());
-                md5.reset();
-            }
-
-            // 将 MD5 码对位相加
-            byte[] md5data = new byte[md5Values.get(0).length];
-            for (byte[] value : md5Values) {
-                for (int i = 0; i < md5data.length; ++i) {
-                    md5data[i] += value[i];
-                }
-            }
-
-            // 压缩编码
-            byte[] compressed = new byte[md5data.length / 2];
-            int index = 0;
-            for (int i = 0; i < md5data.length; i += 2) {
-                int temp = (md5data[i] >= 0 ? md5data[i] : 256 + md5data[i])
-                        + (md5data[i + 1] >= 0 ? md5data[i + 1] : 256 + md5data[i + 1]);
-                compressed[index] = (byte) temp;
-                ++index;
-            }
-            this.consoleTag = FileUtils.bytesToHexString(compressed);
-        } catch (Exception e) {
-            Logger.e(this.getClass(), "#launch", e);
-        }
+        this.consoleTag = ConfigUtils.makeUniqueStringWithMAC();
 
         this.userManager = new UserManager();
         this.dispatcherManager = new DispatcherManager(this.consoleTag);

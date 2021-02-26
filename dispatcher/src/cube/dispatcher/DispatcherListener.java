@@ -27,6 +27,7 @@
 package cube.dispatcher;
 
 import cell.api.Nucleus;
+import cell.api.Servable;
 import cell.carpet.CellListener;
 import cell.util.log.LogManager;
 import cell.util.log.Logger;
@@ -66,9 +67,6 @@ public class DispatcherListener implements CellListener {
 
         // 从配置文件加载配置数据
         this.config(performer);
-
-        // 配置管理信息
-        this.initManagement(performer);
     }
 
     @Override
@@ -80,6 +78,9 @@ public class DispatcherListener implements CellListener {
 
         this.timer = new Timer();
         this.timer.schedule(this.daemon, 10L * 1000L, 10L * 1000L);
+
+        // 配置管理信息
+        this.initManagement(performer, nucleus);
     }
 
     @Override
@@ -175,17 +176,25 @@ public class DispatcherListener implements CellListener {
         return config;
     }
 
-    private void initManagement(Performer performer) {
+    private void initManagement(Performer performer, Nucleus nucleus) {
         // 配置控制台
         try {
-            Properties properties = ConfigUtils.readConsoleFollower("config/console-follower-dispatcher.properties");
+            Properties properties = ConfigUtils.readProperties("config/console-follower-dispatcher.properties");
 
             // 设置接收报告的服务器
             ReportService.getInstance().addHost(properties.getProperty("console.host"),
                     Integer.parseInt(properties.getProperty("console.port", "7080")));
 
             // 设置节点名
-            performer.setNodeName(properties.getProperty("name"));
+            String defaultName = ConfigUtils.makeUniqueStringWithMAC();
+            for (Servable server : nucleus.getTalkService().getServers()) {
+                if (server.getClass().getName().equals("cell.core.talk.Server")) {
+                    defaultName += "#dispatcher#" + server.getPort();
+                    break;
+                }
+            }
+            performer.setNodeName(properties.getProperty("name", defaultName));
+            Logger.i(this.getClass(), "Node name: " + performer.getNodeName());
         } catch (IOException e) {
             Logger.e(this.getClass(), "Read console follower config failed", e);
         }

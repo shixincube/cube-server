@@ -33,10 +33,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * 配置管理数据实用函数库。
@@ -46,12 +53,94 @@ public final class ConfigUtils {
     private ConfigUtils() {
     }
 
-    public static Properties readConsoleFollower() throws IOException {
-        return ConfigUtils.readConsoleFollower("config/console-follower.properties");
+    /**
+     * 生成服务器基于 MAC 地址信息的识别标识。
+     *
+     * @return
+     */
+    public static String makeUniqueStringWithMAC() {
+        String uniqueString = null;
+
+        try {
+            List<byte[]> md5Values = new ArrayList<>();
+
+            // 计算所有 MAC 的 MD5 码
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            List<String> macList = getMACList();
+            for (String mac : macList) {
+                md5.update(mac.getBytes());
+                md5Values.add(md5.digest());
+                md5.reset();
+            }
+
+            // 将 MD5 码对位相加
+            byte[] md5data = new byte[md5Values.get(0).length];
+            for (byte[] value : md5Values) {
+                for (int i = 0; i < md5data.length; ++i) {
+                    md5data[i] += value[i];
+                }
+            }
+
+            // 压缩编码
+            byte[] compressed = new byte[md5data.length / 2];
+            int index = 0;
+            for (int i = 0; i < md5data.length; i += 2) {
+                int temp = (md5data[i] >= 0 ? md5data[i] : 256 + md5data[i])
+                        + (md5data[i + 1] >= 0 ? md5data[i + 1] : 256 + md5data[i + 1]);
+                compressed[index] = (byte) temp;
+                ++index;
+            }
+
+            uniqueString = FileUtils.bytesToHexString(compressed);
+        } catch (Exception e) {
+            Logger.e(ConfigUtils.class, "#makeUniqueStringWithMAC", e);
+        }
+
+        return uniqueString;
     }
 
-    public static Properties readConsoleFollower(String path) throws IOException {
-        return ConfigUtils.readProperties(path);
+    /**
+     * 获取本机的有效 MAC 地址。
+     * @return
+     * @throws Exception
+     */
+    private static List<String> getMACList() throws Exception {
+        java.util.Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
+        StringBuilder sb = new StringBuilder();
+        ArrayList<String> tmpMacList = new ArrayList<>();
+        while (en.hasMoreElements()) {
+            NetworkInterface iface = en.nextElement();
+            List<InterfaceAddress> addrs = iface.getInterfaceAddresses();
+            for (InterfaceAddress addr : addrs) {
+                InetAddress ip = addr.getAddress();
+                if (ip.toString().indexOf("awdl") > 0 || ip.toString().indexOf("llw") > 0) {
+                    // 跳过 Apple macOS 的 Airdrop 设备
+                    continue;
+                }
+
+                NetworkInterface network = NetworkInterface.getByInetAddress(ip);
+                if (network == null) {
+                    continue;
+                }
+                byte[] mac = network.getHardwareAddress();
+                if (mac == null) {
+                    continue;
+                }
+                sb.delete(0, sb.length());
+                for (int i = 0; i < mac.length; ++i) {
+                    sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
+                }
+                tmpMacList.add(sb.toString());
+            }
+        }
+
+        if (tmpMacList.isEmpty()) {
+            return tmpMacList;
+        }
+
+        // 去重
+        List<String> unique = tmpMacList.stream().distinct().collect(Collectors.toList());
+        return unique;
     }
 
     public static Properties readProperties(String path) throws IOException {

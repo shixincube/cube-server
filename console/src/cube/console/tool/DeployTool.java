@@ -29,13 +29,9 @@ package cube.console.tool;
 import cube.util.FileUtils;
 
 import java.io.File;
-import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 部署工具。
@@ -100,49 +96,5 @@ public final class DeployTool {
         }
 
         return Paths.get(pathString);
-    }
-
-    /**
-     * 获取本机的所有 MAC 地址。
-     * @return
-     * @throws Exception
-     */
-    public static List<String> getMACList() throws Exception {
-        java.util.Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
-        StringBuilder sb = new StringBuilder();
-        ArrayList<String> tmpMacList = new ArrayList<>();
-        while (en.hasMoreElements()) {
-            NetworkInterface iface = en.nextElement();
-            List<InterfaceAddress> addrs = iface.getInterfaceAddresses();
-            for (InterfaceAddress addr : addrs) {
-                InetAddress ip = addr.getAddress();
-                if (ip.toString().indexOf("awdl") > 0 || ip.toString().indexOf("llw") > 0) {
-                    // 跳过 Apple macOS 的 Airdrop 设备
-                    continue;
-                }
-
-                NetworkInterface network = NetworkInterface.getByInetAddress(ip);
-                if (network == null) {
-                    continue;
-                }
-                byte[] mac = network.getHardwareAddress();
-                if (mac == null) {
-                    continue;
-                }
-                sb.delete(0, sb.length());
-                for (int i = 0; i < mac.length; ++i) {
-                    sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
-                }
-                tmpMacList.add(sb.toString());
-            }
-        }
-
-        if (tmpMacList.isEmpty()) {
-            return tmpMacList;
-        }
-
-        // 去重
-        List<String> unique = tmpMacList.stream().distinct().collect(Collectors.toList());
-        return unique;
     }
 }
