@@ -51,11 +51,6 @@ public final class DeployTool {
                 "../deploy"
         };
 
-        String[] jarList = new String[] {
-                "cube-common",
-                "cube-dispatcher"
-        };
-
         File path = null;
         String pathString = null;
         for (String p : pathList) {
@@ -85,6 +80,7 @@ public final class DeployTool {
 
         boolean hasCommon = false;
         boolean hasDispatcher = false;
+        boolean hasService = false;
 
         File[] files = pathFile.listFiles();
         for (File file : files) {
@@ -94,9 +90,12 @@ public final class DeployTool {
             else if (file.getName().startsWith("cube-dispatcher")) {
                 hasDispatcher = true;
             }
+            else if (file.getName().startsWith("cube-service")) {
+                hasService = true;
+            }
         }
 
-        if (!hasCommon || !hasDispatcher) {
+        if (!hasCommon || !hasDispatcher || !hasService) {
             return null;
         }
 

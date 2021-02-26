@@ -106,11 +106,19 @@ public class DispatcherManager {
     }
 
     public String getDefaultCellConfigFile() {
+        if (null == this.deploySourcePath) {
+            return null;
+        }
+
         Path file = Paths.get(this.deploySourcePath.toString(), "config/dispatcher.xml");
         return file.toString();
     }
 
     public String getDefaultPropertiesFile() {
+        if (null == this.deploySourcePath) {
+            return null;
+        }
+
         Path file = Paths.get(this.deploySourcePath.toString(), "config/dispatcher.properties");
         return file.toString();
     }

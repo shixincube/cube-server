@@ -28,6 +28,7 @@ package cube.console.container.handler;
 
 import cube.console.Console;
 import cube.console.mgmt.DispatcherServer;
+import cube.console.mgmt.ServiceServer;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONArray;
@@ -76,7 +77,19 @@ public class ServersHandler extends ContextHandler  {
                 respondOk(response, data);
             }
             else if (target.equals("/service")) {
-                // TODO
+                JSONObject data = new JSONObject();
+                data.put("tag", console.getTag());
+
+                JSONArray array = new JSONArray();
+                List<ServiceServer> list = console.getServiceManager().listServiceServers();
+                if (null != list) {
+                    for (ServiceServer server : list) {
+                        array.put(server.toJSON());
+                    }
+                }
+                data.put("list", array);
+
+                respondOk(response, data);
             }
             else {
                 // TODO

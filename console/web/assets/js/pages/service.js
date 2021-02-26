@@ -24,47 +24,37 @@
  * SOFTWARE.
  */
 
-(function($, g) {
+(function ($, g) {
+    'use strict'
 
-    g.Toast = {
-        Success: 'success',
-        Info: 'info',
-        Error: 'error',
-        Warning: 'warning',
-        Question: 'question'
-    };
+    var that = null;
 
-    var toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 4000
+    var console = new Console();
+    $.console = console;
+
+    // 检查是否合法
+    console.checkUser(function(valid) {
+        if (!valid) {
+            window.location.href = 'index.html';
+        }
+        else {
+            g.common.updateUserPanel(console);
+            g.service.launch();
+        }
     });
 
-    g.common = {
-        /**
-         * 显示吐司提示。
-         * @param {string} type 
-         * @param {string} text 
-         */
-        toast: function(type, text) {
-            toast.fire({
-                icon: type,
-                title: text
-            });
+    g.service = {
+        launch: function() {
         },
 
-        updateUserPanel: function(console) {
-            var userPanel = $('.user-panel');
-            userPanel.find('img[data-target="avatar"]').attr('src', console.user.avatar);
-            userPanel.find('a[data-target="name"]').text(console.user.displayName);
-        },
-
-        updateMainNav: function(numDispatchers, numServices) {
-            var el = $('nav .nav');
-            el.find('span[data-target="dispatcher-num"]').text(numDispatchers);
-            el.find('span[data-target="service-num"]').text(numServices);
+        showNewDeployDialog: function() {
+            if (g.common.toast) {
+                g.common.toast(Toast.Warning, '此功能暂不可用');
+                return;
+            }
         }
     };
+
+    that = g.service;
 
 })(jQuery, window);

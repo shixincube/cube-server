@@ -31,16 +31,15 @@ import cell.util.log.LogLevel;
 import cell.util.log.LogManager;
 import cell.util.log.Logger;
 import cube.console.mgmt.DispatcherManager;
+import cube.console.mgmt.ServiceManager;
 import cube.console.mgmt.UserManager;
 import cube.console.tool.DeployTool;
 import cube.report.JVMReport;
 import cube.report.LogLine;
 import cube.report.LogReport;
-import cube.util.ConfigUtils;
 import cube.util.FileUtils;
 import org.json.JSONArray;
 
-import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,6 +81,8 @@ public final class Console implements Runnable {
 
     private DispatcherManager dispatcherManager;
 
+    private ServiceManager serviceManager;
+
     public Console() {
         this.serverLogMap = new ConcurrentHashMap<>();
         this.serverJVMMap = new ConcurrentHashMap<>();
@@ -98,6 +99,10 @@ public final class Console implements Runnable {
 
     public DispatcherManager getDispatcherManager() {
         return this.dispatcherManager;
+    }
+
+    public ServiceManager getServiceManager() {
+        return this.serviceManager;
     }
 
     public void launch() {
@@ -140,9 +145,11 @@ public final class Console implements Runnable {
 
         this.userManager = new UserManager();
         this.dispatcherManager = new DispatcherManager(this.consoleTag);
+        this.serviceManager = new ServiceManager(this.consoleTag);
 
         this.userManager.start();
         this.dispatcherManager.start();
+        this.serviceManager.start();
 
         this.timer = Executors.newScheduledThreadPool(2);
         this.timer.scheduleWithFixedDelay(this, 10L, 10L, TimeUnit.SECONDS);
@@ -151,6 +158,7 @@ public final class Console implements Runnable {
     }
 
     public void destroy() {
+        this.serviceManager.stop();
         this.dispatcherManager.stop();
         this.userManager.stop();
 

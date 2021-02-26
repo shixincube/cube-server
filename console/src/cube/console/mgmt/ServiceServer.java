@@ -27,9 +27,12 @@
 package cube.console.mgmt;
 
 import cube.common.JSONable;
+import cube.console.tool.Detector;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * 服务单元服务器。
@@ -46,6 +49,8 @@ public class ServiceServer implements JSONable {
 
     private CellConfigFile cellConfigFile;
 
+    private String storageJsonFile;
+
     private boolean running = false;
 
     public ServiceServer(String tag, String deployPath, String configPath, String celletsPath) {
@@ -60,16 +65,44 @@ public class ServiceServer implements JSONable {
     }
 
     protected void refresh() {
-        this.cellConfigFile = new CellConfigFile(this.configPath + File.separator + "service.xml");
-        this.cellConfigFile.refresh();
+        try {
+            this.cellConfigFile = new CellConfigFile(this.configPath + File.separator + "service.xml");
+            this.cellConfigFile.refresh();
 
-
+            // 检查是否正在运行
+            File tagFile = new File(this.deployPath + File.separator + "bin/tag_service");
+            if (tagFile.exists() && tagFile.length() < 40) {
+                // 尝试检测服务是否能连通
+                AccessPoint ap = this.cellConfigFile.getAccessPoint();
+                this.running = Detector.detectCellServer(ap.getHost(), ap.getPort());
+            }
+            else {
+                this.running = false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("tag", this.tag);
+        json.put("deployPath", this.deployPath);
+        json.put("configPath", this.configPath);
+        json.put("celletsPath", this.celletsPath);
+
+        json.put("running", this.running);
+
+        json.put("server", this.cellConfigFile.getAccessPoint().toJSON());
+
+        List<CellConfigFile.CelletConfig> list = this.cellConfigFile.getCelletConfigList();
+        JSONArray array = new JSONArray();
+        for (CellConfigFile.CelletConfig config : list) {
+            array.put(config.toJSON());
+        }
+        json.put("cellets", array);
+
         return json;
     }
 

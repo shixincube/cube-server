@@ -84,6 +84,12 @@ Console.prototype.getDispatcherDefaultDeploy = function(handler) {
     }, 'json');
 }
 
+Console.prototype.getServices = function(handler) {
+    $.get('/servers/service', function(response, status, xhr) {
+        handler(response.list);
+    }, 'json');
+}
+
 Console.prototype.getServers = function(handler) {
     var that = this;
     $.get('/servers', function(response, status, xhr) {

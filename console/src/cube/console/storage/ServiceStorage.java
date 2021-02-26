@@ -28,7 +28,7 @@ package cube.console.storage;
 
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
-import cube.console.mgmt.DispatcherServer;
+import cube.console.mgmt.ServiceServer;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.StorageField;
@@ -88,7 +88,7 @@ public class ServiceStorage extends AbstractStorage {
         this.storage.executeInsert(this.serviceTable, fields);
     }
 
-    public DispatcherServer readServer(String tag, String deployPath) {
+    public ServiceServer readServer(String tag, String deployPath) {
         List<StorageField[]> result = this.storage.executeQuery(this.serviceTable, this.serviceFields, new Conditional[] {
                 Conditional.createEqualTo("tag", LiteralBase.STRING, tag),
                 Conditional.createAnd(),
@@ -100,25 +100,27 @@ public class ServiceStorage extends AbstractStorage {
         }
 
         Map<String, StorageField> map = StorageFields.get(result.get(0));
-
-        return null;
+        ServiceServer server = new ServiceServer(tag, deployPath, map.get("config_path").getString(),
+                map.get("cellets_path").getString());
+        return server;
     }
 
-    public List<DispatcherServer> listServers() {
+    public List<ServiceServer> listServers() {
         List<StorageField[]> list = this.storage.executeQuery(this.serviceTable, this.serviceFields);
         if (list.isEmpty()) {
             return null;
         }
 
-//        List<DispatcherServer> result = new ArrayList<>();
-//        for (StorageField[] fields : list) {
-//            Map<String, StorageField> map = StorageFields.get(fields);
-//            DispatcherServer server = new DispatcherServer(map.get("tag").getString(),
-//                    map.get("deploy_path").getString(), map.get("config").getString(), map.get("properties").getString());
-//            result.add(server);
-//        }
+        List<ServiceServer> result = new ArrayList<>();
+        for (StorageField[] fields : list) {
+            Map<String, StorageField> map = StorageFields.get(fields);
+            ServiceServer server = new ServiceServer(map.get("tag").getString(),
+                    map.get("deploy_path").getString(), map.get("config_path").getString(),
+                    map.get("cellets_path").getString());
+            result.add(server);
+        }
 
-        return null;
+        return result;
     }
 
     private void autoCheckTable() {

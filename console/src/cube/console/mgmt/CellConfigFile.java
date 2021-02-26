@@ -27,8 +27,12 @@
 package cube.console.mgmt;
 
 import cell.util.log.Logger;
+import cube.common.JSONable;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -36,6 +40,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -73,6 +78,10 @@ public class CellConfigFile {
         return this.wssAccessPoint;
     }
 
+    public List<CelletConfig> getCelletConfigList() {
+        return this.celletList;
+    }
+
     public void refresh() {
         this.parse();
     }
@@ -105,7 +114,7 @@ public class CellConfigFile {
         nodeList = document.getElementsByTagName("ws-server");
         node = (Element) nodeList.item(0);
         nodeList = node.getElementsByTagName("host");
-        if (null != nodeList) {
+        if (null != nodeList && nodeList.getLength() > 0) {
             host = nodeList.item(0).getTextContent();
             port = Integer.parseInt(node.getElementsByTagName("port").item(0).getTextContent());
             maxConn = Integer.parseInt(node.getElementsByTagName("max-connection").item(0).getTextContent());
@@ -115,17 +124,110 @@ public class CellConfigFile {
         nodeList = document.getElementsByTagName("wss-server");
         node = (Element) nodeList.item(0);
         nodeList = node.getElementsByTagName("host");
-        if (null != nodeList) {
+        if (null != nodeList && nodeList.getLength() > 0) {
             host = nodeList.item(0).getTextContent();
             port = Integer.parseInt(node.getElementsByTagName("port").item(0).getTextContent());
             maxConn = Integer.parseInt(node.getElementsByTagName("max-connection").item(0).getTextContent());
             this.wssAccessPoint = new AccessPoint(host, port, maxConn);
         }
 
+        nodeList = document.getElementsByTagName("cellet");
+        if (nodeList.getLength() > 0) {
+            this.celletList = new ArrayList<>();
 
+            for (int i = 0; i < nodeList.getLength(); ++i) {
+                Element celletNode = (Element) nodeList.item(i);
+
+                CelletConfig cc = new CelletConfig();
+
+                String[] ports = celletNode.getAttribute("port").split(",");
+                for (String strPort : ports) {
+                    cc.addPort(Integer.parseInt(strPort));
+                }
+
+                String jarFile = celletNode.getAttribute("jar");
+                if (null != jarFile) {
+                    cc.jarFile = jarFile;
+                }
+
+                NodeList classList = celletNode.getElementsByTagName("class");
+                if (classList.getLength() > 0) {
+                    for (int n = 0; n < classList.getLength(); ++n) {
+                        Node classNode = classList.item(n);
+                        cc.addClass(classNode.getTextContent().trim());
+                    }
+                }
+
+                this.celletList.add(cc);
+            }
+        }
     }
 
-    public class CelletConfig {
+    public class CelletConfig implements JSONable {
 
+        private List<Integer> ports = new ArrayList<>();
+
+        private String jarFile = null;
+
+        private List<String> classes = new ArrayList<>();
+
+        public CelletConfig() {
+        }
+
+        public List<Integer> getPorts() {
+            return this.ports;
+        }
+
+        public String getJarFile() {
+            return this.jarFile;
+        }
+
+        public List<String> getClasses() {
+            return this.classes;
+        }
+
+        public void addPort(int port) {
+            if (this.ports.contains(port)) {
+                return;
+            }
+
+            this.ports.add(port);
+        }
+
+        public void addClass(String clazz) {
+            if (this.classes.contains(clazz)) {
+                return;
+            }
+
+            this.classes.add(clazz);
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+
+            JSONArray portArray = new JSONArray();
+            for (Integer port : this.ports) {
+                portArray.put(port.intValue());
+            }
+            json.put("ports", portArray);
+
+            if (null != this.jarFile) {
+                json.put("jarFile", this.jarFile);
+            }
+
+            JSONArray classArray = new JSONArray();
+            for (String clazz : this.classes) {
+                classArray.put(clazz);
+            }
+            json.put("classes", classArray);
+
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
+        }
     }
 }

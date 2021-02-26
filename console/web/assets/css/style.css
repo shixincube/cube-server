@@ -55,6 +55,10 @@ h5 {
     font-size: 14px;
 }
 
+.swal2-popup.swal2-toast .swal2-title {
+    margin-left: 10px;
+}
+
 .modal-huge {
     max-width: 1024px;
 }

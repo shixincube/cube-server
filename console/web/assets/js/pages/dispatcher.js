@@ -400,6 +400,11 @@
         },
 
         showNewDeployDialog: function() {
+            if (g.common.toast) {
+                g.common.toast(Toast.Warning, '此功能暂不可用');
+                return;
+            }
+
             if (null == defaultDeploy) {
                 alert('控制台没有找到部署文件');
                 return;

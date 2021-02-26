@@ -51,12 +51,8 @@
             var dispatcherRunning = 0;
             var serviceRunning = 0;
 
-            var gotDispatcher = false;
-            var gotService = false;
-
             console.getDispatchers(function(list) {
                 dispatcherList = list;
-                g.common.updateMainNav(list.length, serviceList.length);
 
                 dispatcherList.forEach(function(value) {
                     if (value.running) {
@@ -64,14 +60,32 @@
                     }
                 });
 
-                that.updateBox(list.length, dispatcherRunning);
+                that.updateDispatcherBox(list.length, dispatcherRunning);
+            });
+
+            console.getServices(function(list) {
+                serviceList = list;
+
+                serviceList.forEach(function(value) {
+                    if (value.running) {
+                        ++serviceRunning;
+                    }
+                });
+
+                that.updateServiceBox(list.length, serviceRunning);
             });
         },
 
-        updateBox: function(numDispatcher, numDispatcherRunning) {
+        updateDispatcherBox: function(num, numRunning) {
             var el = $('#dispatcher-box');
-            el.find('h3').text(numDispatcher);
-            el.find('.box-desc').find('b').text(numDispatcherRunning);
+            el.find('h3').text(num);
+            el.find('.box-desc').find('b').text(numRunning);
+        },
+
+        updateServiceBox: function(num, numRunning) {
+            var el = $('#service-box');
+            el.find('h3').text(num);
+            el.find('.box-desc').find('b').text(numRunning);
         },
 
         appendLog: function(el, line) {
