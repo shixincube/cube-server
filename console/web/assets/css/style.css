@@ -184,15 +184,20 @@ h5 {
 /** service -end */
 
 
-.h-400px {
+.h-400 {
     height: 400px;
+}
+
+.h-600 {
+    height: 600px;
 }
 
 .log-view {
     font-size: 12px;
     font-family: Menlo, "Courier New", Courier, monospace;
     overflow: auto;
-    height: 360px;
+    height: 100%;
+    padding: 4px;
 }
 
 .log-view p {

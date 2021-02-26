@@ -32,6 +32,9 @@
     var dispatcherList = [];
     var serviceList = [];
 
+    var consoleLogTime = 0;
+    var maxLogLine = 100;
+
     var console = new Console();
     $.console = console;
 
@@ -74,6 +77,9 @@
 
                 that.updateServiceBox(list.length, serviceRunning);
             });
+
+            // 启动打印控制台日志
+            that.startPrintLog();
         },
 
         updateDispatcherBox: function(num, numRunning) {
@@ -88,21 +94,55 @@
             el.find('.box-desc').find('b').text(numRunning);
         },
 
+        startPrintLog: function() {
+            var processConsole = function() {
+                console.queryConsoleLog(consoleLogTime, function(data) {
+                    if (data.lines.length == 0) {
+                        return;
+                    }
+
+                    var el = $('#log-tabs-console').find('.log-view');
+                    for (var i = 0; i < data.lines.length; ++i) {
+                        that.appendLog(el, data.lines[i]);
+                    }
+                    consoleLogTime = data.last;
+
+                    // 滚动条控制
+                    var offset = parseInt(el.prop('scrollHeight'));
+                    el.scrollTop(offset);
+
+                    // 控制总条目数
+                    var total = el.children('p').length;
+                    var d = total - maxLogLine;
+                    if (d > 0) {
+                        that.removeLog(el, d);
+                    }
+                });
+            }
+
+            // 日志定时任务
+            setInterval(function() {
+                processConsole();
+            }, 10000);
+
+            processConsole();
+        },
+
         appendLog: function(el, line) {
             var content = [];
 
             var date = new Date(line.time);
-            content.push(formatNumber(date.getMonth() + 1, 2));
+            content.push(g.util.formatNumber(date.getMonth() + 1, 2));
             content.push('-');
-            content.push(formatNumber(date.getDate(), 2));
+            content.push(g.util.formatNumber(date.getDate(), 2));
             content.push(' ');
-            content.push(formatNumber(date.getHours(), 2));
+            content.push(g.util.formatNumber(date.getHours(), 2));
             content.push(':');
-            content.push(formatNumber(date.getMinutes(), 2));
+            content.push(g.util.formatNumber(date.getMinutes(), 2));
             content.push(':');
-            content.push(formatNumber(date.getSeconds(), 2));
+            content.push(g.util.formatNumber(date.getSeconds(), 2));
             content.push('.');
-            content.push(formatNumber(date.getMilliseconds(), 3));
+            content.push(g.util.formatNumber(date.getMilliseconds(), 3));
             content.push(' ');
 
             var p = document.createElement('p');

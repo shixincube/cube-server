@@ -96,17 +96,19 @@ Console.prototype.getServiceDefaultDeploy = function(handler) {
     }, 'json');
 }
 
+Console.prototype.queryConsoleLog = function(start, handler) {
+    $.get('/log/console', { "start": start }, function(response, status, xhr) {
+        handler(response);
+    }, 'json');
+}
+
+
+
 Console.prototype.getServers = function(handler) {
     var that = this;
     $.get('/servers', function(response, status, xhr) {
         that.dispatchers = response.dispatchers;
         that.services = response.services;
-        handler(response);
-    }, 'json');
-}
-
-Console.prototype.queryConsoleLog = function(start, handler) {
-    $.get('/log/console', { "start": start }, function(response, status, xhr) {
         handler(response);
     }, 'json');
 }
