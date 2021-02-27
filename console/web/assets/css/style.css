@@ -192,14 +192,22 @@ h5 {
     height: 600px;
 }
 
+.log-container {
+    min-height: 600px;
+    font-size: 14px;
+    padding: 1rem 1rem 0.75rem 1rem;
+}
+.log-container .tab-content {
+    overflow: auto;
+    height: calc(600px - 40px);
+    margin-top: 0.5rem;
+}
 .log-view {
     font-size: 12px;
     font-family: Menlo, "Courier New", Courier, monospace;
-    overflow: auto;
     height: 100%;
     padding: 4px;
 }
-
 .log-view p {
     margin: 0;
 }

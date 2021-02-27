@@ -77,7 +77,7 @@ public class ServiceCarpet implements CellListener {
         PluginSystem.load();
 
         this.timer = new Timer();
-        this.timer.schedule(daemon, 10L * 1000L, 10L * 1000L);
+        this.timer.schedule(daemon, 30L * 1000L, 10L * 1000L);
 
         this.initManagement(nucleus);
     }

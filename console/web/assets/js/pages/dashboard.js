@@ -32,6 +32,8 @@
     var dispatcherList = [];
     var serviceList = [];
 
+    var tabContentEl = null;
+    var currentLogTabEl = null;
     var serverViewMap = {};
 
     var consoleLogTime = 0;
@@ -53,12 +55,20 @@
 
     g.dashboard = {
         launch: function() {
+            var logEl = $('.log-container');
+            currentLogTabEl = logEl.find('#log-tabs-console-tab');
+            tabContentEl = logEl.find('.tab-content');
+            logEl.find('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                currentLogTabEl = $(e.target);
+                var offset = parseInt(tabContentEl.prop('scrollHeight'));
+                tabContentEl.scrollTop(offset);
+            });
+
             var dispatcherRunning = 0;
             var serviceRunning = 0;
 
-            var tabIndex = 1;
-
-            var now = Date.now();
+            var gotDispatcher = false;
+            var gotService = false;
 
             console.getDispatchers(function(list) {
                 dispatcherList = list;
@@ -67,23 +77,14 @@
                     if (value.running) {
                         ++dispatcherRunning;
                     }
-
-                    var elTab = $('#log-tabs-server' + tabIndex + '-tab');
-                    elTab.css('visibility', 'visible');
-                    elTab.text('调度机#' + value.server.port);
-
-                    var el = $('#log-tabs-server' + tabIndex).find('.log-view');
-
-                    serverViewMap[value.name] = {
-                        "tabEl": el,
-                        "logTime": now - 300000,    // 日志时间
-                        "logTotal": 0               // 日志总行数
-                    };
-
-                    ++tabIndex;
                 });
 
                 that.updateDispatcherBox(list.length, dispatcherRunning);
+
+                gotDispatcher = true;
+                if (gotService) {
+                    that.updateLogTab();
+                }
             });
 
             console.getServices(function(list) {
@@ -96,10 +97,53 @@
                 });
 
                 that.updateServiceBox(list.length, serviceRunning);
+
+                gotService = true;
+                if (gotDispatcher) {
+                    that.updateLogTab();
+                }
             });
 
             // 启动打印控制台日志
             that.startPrintLog();
+        },
+
+        updateLogTab: function() {
+            var now = Date.now();
+
+            var tabIndex = 1;
+
+            dispatcherList.forEach(function(value) {
+                var elTab = $('#log-tabs-server' + tabIndex + '-tab');
+                elTab.css('visibility', 'visible');
+                elTab.text('调度机#' + value.server.port);
+
+                var el = $('#log-tabs-server' + tabIndex).find('.log-view');
+
+                serverViewMap[value.name] = {
+                    "tabEl": el,
+                    "logTime": now - 300000,    // 日志时间
+                    "logTotal": 0               // 日志总行数
+                };
+
+                ++tabIndex;
+            });
+
+            serviceList.forEach(function(value) {
+                var elTab = $('#log-tabs-server' + tabIndex + '-tab');
+                elTab.css('visibility', 'visible');
+                elTab.text('服务单元#' + value.server.port);
+
+                var el = $('#log-tabs-server' + tabIndex).find('.log-view');
+
+                serverViewMap[value.name] = {
+                    "tabEl": el,
+                    "logTime": now - 300000,    // 日志时间
+                    "logTotal": 0               // 日志总行数
+                };
+
+                ++tabIndex;
+            });
         },
 
         updateDispatcherBox: function(num, numRunning) {
@@ -128,8 +172,12 @@
                     consoleLogTime = data.last;
 
                     // 滚动条控制
-                    var offset = parseInt(el.prop('scrollHeight'));
-                    el.scrollTop(offset);
+                    var tabId = currentLogTabEl.attr('aria-controls');
+                    var content = tabContentEl.find('#' + tabId);
+                    if (content.css('display') == 'block') {
+                        var offset = parseInt(tabContentEl.prop('scrollHeight'));
+                        tabContentEl.scrollTop(offset);
+                    }
 
                     // 控制总条目数
                     var total = el.children('p').length;
@@ -138,6 +186,43 @@
                         that.removeLog(el, d);
                     }
                 });
+
+                var serverList = [];
+                serverList = serverList.concat(dispatcherList, serviceList);
+
+                for (var i = 0; i < serverList.length; ++i) {
+                    var svr = serverList[i];
+                    console.queryLog(svr.name, serverViewMap[svr.name].logTime, function(data) {
+                        if (data.lines.length == 0) {
+                            return;
+                        }
+
+                        var total = serverViewMap[data.name].logTotal + data.lines.length;
+
+                        for (var i = 0; i < data.lines.length; ++i) {
+                            that.appendLog(serverViewMap[data.name].tabEl, data.lines[i]);
+                        }
+                        // 更新日志时间
+                        serverViewMap[data.name].logTime = data.last;
+
+                        // 更新总数
+                        serverViewMap[data.name].logTotal = total;
+
+                        // 滚动条控制
+                        var tabId = currentLogTabEl.attr('aria-controls');
+                        var content = tabContentEl.find('#' + tabId);
+                        if (content.css('display') == 'block') {
+                            var offset = parseInt(tabContentEl.prop('scrollHeight'));
+                            tabContentEl.scrollTop(offset);
+                        }
+
+                        var d = total - maxLogLine;
+                        if (d > 0) {
+                            that.removeLog(serverViewMap[data.name].tabEl, d);
+                            serverViewMap[data.name].logTotal = total - d;
+                        }
+                    });
+                }
             }
 
             // 日志定时任务

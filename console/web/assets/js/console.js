@@ -102,6 +102,12 @@ Console.prototype.queryConsoleLog = function(start, handler) {
     }, 'json');
 }
 
+Console.prototype.queryLog = function(name, start, handler) {
+    $.get('/log/server', { "name": name, "start": start }, function(response, status, xhr) {
+        handler(response);
+    }, 'json');
+}
+
 
 
 Console.prototype.getServers = function(handler) {
@@ -113,11 +119,7 @@ Console.prototype.getServers = function(handler) {
     }, 'json');
 }
 
-Console.prototype.queryLog = function(name, start, handler) {
-    $.get('/log/server', { "name": name, "start": start }, function(response, status, xhr) {
-        handler(response);
-    }, 'json');
-}
+
 
 Console.prototype.queryJVMReport = function(name, num, handler) {
     $.get('/server-report', { "report": "JVMReport", "name": name, "num": num }, function(response, status, xhr) {
