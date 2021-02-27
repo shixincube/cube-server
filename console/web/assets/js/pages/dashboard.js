@@ -70,7 +70,7 @@
 
                     var elTab = $('#log-tabs-server' + tabIndex + '-tab');
                     elTab.css('visibility', 'visible');
-                    elTab.text(value.name);
+                    elTab.text('调度机#' + value.server.port);
 
                     var el = $('#log-tabs-server' + tabIndex).find('.log-view');
 
