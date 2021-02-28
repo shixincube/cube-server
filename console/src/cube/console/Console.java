@@ -240,33 +240,43 @@ public final class Console implements Runnable {
         }
     }
 
-    public List<JVMReport> queryJVMReport(String reporter, int num) {
+    public List<JVMReport> queryJVMReport(String reporter, int num, long time) {
         List<JVMReport> result = new ArrayList<>(num);
         List<JVMReport> list = this.serverJVMMap.get(reporter);
         if (null == list) {
-            long time = System.currentTimeMillis();
+            long reportTime = time;
             for (int i = 0; i < num; ++i) {
-                JVMReport empty = new JVMReport(reporter, time);
-                time -= 60000L;
+                JVMReport empty = new JVMReport(reporter, reportTime);
+                reportTime -= 60000L;
                 result.add(empty);
             }
             Collections.reverse(result);
             return result;
         }
 
-        for (int i = list.size() - 1; i >= 0; --i) {
-            result.add(list.get(i));
-            if (result.size() == num) {
+        long scope = 30000L;
+        int index = 0;
+
+        // 找到最近的记录
+        for (index = list.size() - 1; index >= 0; --index) {
+            JVMReport report = list.get(index);
+            if (Math.abs(time - report.getTimestamp()) < scope) {
                 break;
             }
         }
 
+        while (index >= 0) {
+            JVMReport report = list.get(index);
+            result.add(report);
+            --index;
+        }
+
         int d = num - result.size();
         if (d > 0) {
-            long time = result.get(result.size() - 1).getTimestamp();
+            long reportTime = result.isEmpty() ? time : result.get(result.size() - 1).getTimestamp();
             for (int i = 0; i < d; ++i) {
-                time -= 60000L;
-                JVMReport empty = new JVMReport(reporter, time);
+                reportTime -= 60000L;
+                JVMReport empty = new JVMReport(reporter, reportTime);
                 result.add(empty);
             }
         }

@@ -108,6 +108,11 @@
                 }
             });
 
+            // 启动 JVM 报表
+            setTimeout(function() {
+                that.startReportTask();
+            }, 10000);
+
             // 启动打印控制台日志
             that.startPrintLog();
         },
@@ -118,17 +123,29 @@
             dispatcherList.forEach(function(value) {
                 $('#dispatcher-chart-tabs-tab-' + tabIndex).text('调度机#' + value.server.port);
 
-                var tabEl = $('dispatcher-chart-tab-' + tabIndex);
+                var tabEl = $('#dispatcher-chart-tab-' + tabIndex);
+                var canvas = tabEl.find('.dispatcher-chart');
                 chartViewMap[value.name] = {
                     "tabEl": tabEl,
-                    "canvas": tabEl.find('.dispatcher-chart')
+                    "canvas": canvas,
+                    "chart": that.buildChart(canvas, that.buildJVMChartDataTemplate())
                 };
+
                 ++tabIndex;
             });
 
             tabIndex = 1;
             serviceList.forEach(function(value) {
                 $('#service-chart-tabs-tab-' + tabIndex).text('服务单元#' + value.server.port);
+
+                var tabEl = $('#service-chart-tab-' + tabIndex);
+                var canvas = tabEl.find('.service-chart');
+                chartViewMap[value.name] = {
+                    "tabEl": tabEl,
+                    "canvas": canvas,
+                    "chart": that.buildChart(canvas, that.buildJVMChartDataTemplate())
+                };
+
                 ++tabIndex;
             });
         },
@@ -181,6 +198,40 @@
             var el = $('#service-box');
             el.find('h3').text(num);
             el.find('.box-desc').find('b').text(numRunning);
+        },
+
+        startReportTask: function() {
+            var reportTask = function() {
+                var serverList = [];
+                serverList = serverList.concat(dispatcherList, serviceList);
+
+                for (var n = 0; n < serverList.length; ++n) {
+                    var server = serverList[n];
+                    var view = chartViewMap[server.name];
+                    if (undefined === view) {
+                        continue;
+                    }
+
+                    console.queryJVMReport(server.name, 8, function(data) {
+                        var labels = [];
+                        var dataset0 = [];
+                        var dataset1 = [];
+                        for (var i = 0; i < data.list.length; ++i) {
+                            var report = data.list[i];
+                            labels.push(util.formatTimeHHMM(report.timestamp));
+                            dataset0.push(report.totalMemory);
+                            dataset1.push(report.freeMemory);
+                        }
+
+                        that.updateChart(chartViewMap[data.name].chart, labels, [dataset0, dataset1]);
+                    });
+                }
+            };
+
+            // 报告定时任务
+            setInterval(function() { reportTask(); }, 60 * 1000);
+
+            reportTask();
         },
 
         startPrintLog: function() {
@@ -391,169 +442,4 @@
 
     that = g.dashboard;
 
-    /*
-    var chartDispatcher = null;
-    var chartService = null;
-
-    var consoleLogTime = 0;
-    var serverDataMap = {};
-
-    var maxLogLine = 60;
-
-    // 获取服务器信息
-    console.getServers(function(data) {
-        $('#dispatcher-box').find('h3').text(data.dispatchers.length);
-        $('#service-box').find('h3').text(data.services.length);
-
-        var now = Date.now();
-
-        // 分配标签
-        var tagIndex = 1;
-        for (var i = 0; i < data.services.length; ++i) {
-            var svr = data.services[i];
-
-            var elTab = $('#log-tabs-server' + tagIndex + '-tab');
-            elTab.css('visibility', 'visible');
-            elTab.text('服务 ' + svr.name);
-
-            var el = $('#log-tabs-server' + tagIndex).find('.log-view');
-
-            serverDataMap[svr.name] = {
-                "tabEl": el,
-                "logTime": now - 300000,    // 日志时间
-                "logTotal": 0               // 日志总行数
-            };
-
-            ++tagIndex;
-        }
-        for (var i = 0; i < data.dispatchers.length; ++i) {
-            var svr = data.dispatchers[i];
-
-            var elTab = $('#log-tabs-server' + tagIndex + '-tab');
-            elTab.css('visibility', 'visible');
-            elTab.text('调度 ' + svr.name);
-
-            var el = $('#log-tabs-server' + tagIndex).find('.log-view');
-
-            serverDataMap[svr.name] = {
-                "tabEl": el,
-                "logTime": now - 300000,    // 日志时间
-                "logTotal": 0               // 日志总行数
-            };
-
-            ++tagIndex;
-        }
-
-        // 请求报告
-        setTimeout(function() { reportTask(); }, 1000);
-    });
-
-    // 初始化 Chart
-    chartDispatcher = dashboard.buildChart($('#dispatcher-chart'), dashboard.buildJVMChartDataTemplate());
-    chartService = dashboard.buildChart($('#service-chart'), dashboard.buildJVMChartDataTemplate());
-
-    var reportTask = function() {
-        var dispatchers = console.dispatchers;
-        var svr = dispatchers[0];
-        console.queryJVMReport(svr.name, 8, function(data) {
-            var labels = [];
-            var dataset0 = [];
-            var dataset1 = [];
-            for (var i = 0; i < data.list.length; ++i) {
-                var report = data.list[i];
-                labels.push(ui.formatTimeHHMM(report.timestamp));
-                dataset0.push(report.totalMemory);
-                dataset1.push(report.freeMemory);
-            }
-
-            var t = setTimeout(function() {
-                clearTimeout(t);
-                dashboard.updateChart(chartDispatcher, labels, [dataset0, dataset1]);
-            }, 100);
-        });
-
-        var services = console.services;
-        var svr = services[0];
-        console.queryJVMReport(svr.name, 8, function(data) {
-            var labels = [];
-            var dataset0 = [];
-            var dataset1 = [];
-            for (var i = 0; i < data.list.length; ++i) {
-                var report = data.list[i];
-                labels.push(ui.formatTimeHHMM(report.timestamp));
-                dataset0.push(report.totalMemory);
-                dataset1.push(report.freeMemory);
-            }
-
-            var t = setTimeout(function() {
-                clearTimeout(t);
-                dashboard.updateChart(chartService, labels, [dataset0, dataset1]);
-            }, 100);
-        });
-    };
-
-    // 报告任务
-    setInterval(function() { reportTask(); }, 120000);
-
-    // 日志定时任务
-    setInterval(function() {
-        console.queryConsoleLog(consoleLogTime, function(data) {
-            if (data.lines.length == 0) {
-                return;
-            }
-
-            var el = $('#log-tabs-console').find('.log-view');
-            for (var i = 0; i < data.lines.length; ++i) {
-                dashboard.appendLog(el, data.lines[i]);
-            }
-            consoleLogTime = data.last;
-
-            // 滚动条控制
-            var offset = parseInt(el.prop('scrollHeight'));
-            el.scrollTop(offset);
-
-            // 控制总条目数
-            var total = el.children('p').length;
-            var d = total - maxLogLine;
-            if (d > 0) {
-                dashboard.removeLog(el, d);
-            }
-        });
-
-        if (null != console.services) {
-            var serverList = [];
-            serverList = serverList.concat(console.services, console.dispatchers);
-
-            for (var i = 0; i < serverList.length; ++i) {
-                var svr = serverList[i];
-                console.queryLog(svr.name, serverDataMap[svr.name].logTime, function(data) {
-                    if (data.lines.length == 0) {
-                        return;
-                    }
-
-                    var total = serverDataMap[data.name].logTotal + data.lines.length;
-
-                    for (var i = 0; i < data.lines.length; ++i) {
-                        dashboard.appendLog(serverDataMap[data.name].tabEl, data.lines[i]);
-                    }
-                    // 更新日志时间
-                    serverDataMap[data.name].logTime = data.last;
-
-                    // 更新总数
-                    serverDataMap[data.name].logTotal = total;
-
-                    // 滚动条控制
-                    var offset = parseInt(serverDataMap[data.name].tabEl.prop('scrollHeight'));
-                    serverDataMap[data.name].tabEl.scrollTop(offset);
-
-                    var d = total - maxLogLine;
-                    if (d > 0) {
-                        dashboard.removeLog(serverDataMap[data.name].tabEl, d);
-                        serverDataMap[data.name].logTotal = total - d;
-                    }
-                });
-            }
-        }
-    }, 10000);
-    */
 })(jQuery, window);

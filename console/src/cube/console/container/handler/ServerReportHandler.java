@@ -74,12 +74,13 @@ public class ServerReportHandler extends ContextHandler {
 
             String name = params.get("name");
             String report = params.get("report");
+            long time = Long.parseLong(params.get("time"));
 
             if (null != name && null != report) {
                 if (report.equals(JVMReport.NAME)) {
                     int num = Integer.parseInt(params.get("num"));
 
-                    List<JVMReport> list = console.queryJVMReport(name, num);
+                    List<JVMReport> list = console.queryJVMReport(name, num, time);
 
                     JSONArray result = new JSONArray();
                     for (JVMReport r : list) {

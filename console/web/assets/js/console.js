@@ -96,6 +96,17 @@ Console.prototype.getServiceDefaultDeploy = function(handler) {
     }, 'json');
 }
 
+Console.prototype.queryJVMReport = function(name, num, handler) {
+    $.get('/server-report', {
+        "report": "JVMReport",
+        "name": name,
+        "num": num,
+        "time": Date.now()
+    }, function(response, status, xhr) {
+        handler(response);
+    }, 'json');
+}
+
 Console.prototype.queryConsoleLog = function(start, handler) {
     $.get('/log/console', { "start": start }, function(response, status, xhr) {
         handler(response);
@@ -115,14 +126,6 @@ Console.prototype.getServers = function(handler) {
     $.get('/servers', function(response, status, xhr) {
         that.dispatchers = response.dispatchers;
         that.services = response.services;
-        handler(response);
-    }, 'json');
-}
-
-
-
-Console.prototype.queryJVMReport = function(name, num, handler) {
-    $.get('/server-report', { "report": "JVMReport", "name": name, "num": num }, function(response, status, xhr) {
         handler(response);
     }, 'json');
 }
