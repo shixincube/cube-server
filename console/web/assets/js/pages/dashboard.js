@@ -32,12 +32,14 @@
     var dispatcherList = [];
     var serviceList = [];
 
+    var chartViewMap = {};
+
     var tabContentEl = null;
     var currentLogTabEl = null;
-    var serverViewMap = {};
+    var serverLogViewMap = {};
 
     var consoleLogTime = 0;
-    var maxLogLine = 100;
+    var maxLogLine = 80;
 
     var console = new Console();
     $.console = console;
@@ -83,6 +85,7 @@
 
                 gotDispatcher = true;
                 if (gotService) {
+                    that.updateChartTab();
                     that.updateLogTab();
                 }
             });
@@ -100,12 +103,34 @@
 
                 gotService = true;
                 if (gotDispatcher) {
+                    that.updateChartTab();
                     that.updateLogTab();
                 }
             });
 
             // 启动打印控制台日志
             that.startPrintLog();
+        },
+
+        updateChartTab: function() {
+            var tabIndex = 1;
+
+            dispatcherList.forEach(function(value) {
+                $('#dispatcher-chart-tabs-tab-' + tabIndex).text('调度机#' + value.server.port);
+
+                var tabEl = $('dispatcher-chart-tab-' + tabIndex);
+                chartViewMap[value.name] = {
+                    "tabEl": tabEl,
+                    "canvas": tabEl.find('.dispatcher-chart')
+                };
+                ++tabIndex;
+            });
+
+            tabIndex = 1;
+            serviceList.forEach(function(value) {
+                $('#service-chart-tabs-tab-' + tabIndex).text('服务单元#' + value.server.port);
+                ++tabIndex;
+            });
         },
 
         updateLogTab: function() {
@@ -120,7 +145,7 @@
 
                 var el = $('#log-tabs-server' + tabIndex).find('.log-view');
 
-                serverViewMap[value.name] = {
+                serverLogViewMap[value.name] = {
                     "tabEl": el,
                     "logTime": now - 300000,    // 日志时间
                     "logTotal": 0               // 日志总行数
@@ -136,7 +161,7 @@
 
                 var el = $('#log-tabs-server' + tabIndex).find('.log-view');
 
-                serverViewMap[value.name] = {
+                serverLogViewMap[value.name] = {
                     "tabEl": el,
                     "logTime": now - 300000,    // 日志时间
                     "logTotal": 0               // 日志总行数
@@ -192,21 +217,21 @@
 
                 for (var i = 0; i < serverList.length; ++i) {
                     var svr = serverList[i];
-                    console.queryLog(svr.name, serverViewMap[svr.name].logTime, function(data) {
+                    console.queryLog(svr.name, serverLogViewMap[svr.name].logTime, function(data) {
                         if (data.lines.length == 0) {
                             return;
                         }
 
-                        var total = serverViewMap[data.name].logTotal + data.lines.length;
+                        var total = serverLogViewMap[data.name].logTotal + data.lines.length;
 
                         for (var i = 0; i < data.lines.length; ++i) {
-                            that.appendLog(serverViewMap[data.name].tabEl, data.lines[i]);
+                            that.appendLog(serverLogViewMap[data.name].tabEl, data.lines[i]);
                         }
                         // 更新日志时间
-                        serverViewMap[data.name].logTime = data.last;
+                        serverLogViewMap[data.name].logTime = data.last;
 
                         // 更新总数
-                        serverViewMap[data.name].logTotal = total;
+                        serverLogViewMap[data.name].logTotal = total;
 
                         // 滚动条控制
                         var tabId = currentLogTabEl.attr('aria-controls');
@@ -218,8 +243,8 @@
 
                         var d = total - maxLogLine;
                         if (d > 0) {
-                            that.removeLog(serverViewMap[data.name].tabEl, d);
-                            serverViewMap[data.name].logTotal = total - d;
+                            that.removeLog(serverLogViewMap[data.name].tabEl, d);
+                            serverLogViewMap[data.name].logTotal = total - d;
                         }
                     });
                 }

@@ -492,8 +492,13 @@ public class MySQLStorage extends AbstractStorage {
                     if (rs.next()) {
 //                        Logger.d(this.getClass(), "Connection keep alive: " + rs.getString("version()"));
                     }
+                    tmpList.add(conn);
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    Logger.d(this.getClass(), e.getMessage());
+                    try {
+                        conn.close();
+                    } catch (SQLException ex) {
+                    }
                 } finally {
                     if (null != statement) {
                         try {
@@ -502,7 +507,6 @@ public class MySQLStorage extends AbstractStorage {
                         }
                     }
                 }
-                tmpList.add(conn);
 
                 conn = this.connections.poll();
             }

@@ -92,6 +92,32 @@ h5 {
     display: inline-block;
 }
 
+.inner-card {
+    padding: 0;
+    box-shadow: unset;
+    border: unset;
+    margin-bottom: 0;
+}
+.inner-card .card-header {
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+.inner-card .card-body {
+    padding: 0;
+}
+
+.tab-card {
+    box-shadow: unset;
+    border-top-left-radius: unset;
+    border-top-right-radius: unset;
+    border-bottom-left-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+    border-left: 1px solid rgba(0,0,0,.125);
+    border-right: 1px solid rgba(0,0,0,.125);
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
 /** dashboard - begin */
 
 .box-desc {

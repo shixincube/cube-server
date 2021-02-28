@@ -237,77 +237,106 @@
                         </div>
                     </div><!-- ./col -->
                     <div class="col-lg-6 col-12">
-                        <div class="card">
-                            <div class="card-header border-0">
-                                <div class="d-flex justify-content-between">
-                                    <h3 class="card-title">调度服务器统计</h3>
-                                    <a href="javascript:void(0);">查看报告</a>
-                                </div>
+                        <div class="card card-primary card-outline card-outline-tabs">
+                            <div class="card-header p-0 border-bottom-0">
+                                <ul class="nav nav-tabs" id="dispatcher-chart-tabs" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" id="dispatcher-chart-tabs-tab-1" data-toggle="pill" href="#dispatcher-chart-tab-1" role="tab" aria-controls="dispatcher-chart-tab-1" aria-selected="true"></a>
+                                    </li>
+                                </ul>
                             </div>
                             <div class="card-body">
-                                <div class="d-flex">
-                                    <p class="d-flex flex-column">
-                                        <span class="text-bold text-lg">0</span>
-                                        <span>最大访问数</span>
-                                    </p>
-                                    <p class="ml-auto d-flex flex-column text-right">
-                                        <span class="text-secondary">
-                                            <i class="fas fa-arrow-right"></i> 0%
-                                        </span>
-                                        <span class="text-muted">同比上周</span>
-                                    </p>
-                                </div><!-- /.d-flex -->
-                                <div class="position-relative mb-4">
-                                    <canvas id="dispatcher-chart" height="200"></canvas>
-                                </div>
-                                <div class="d-flex flex-row justify-content-end">
-                                    <span class="mr-2">
-                                        <i class="fas fa-square chart-color-1"></i> 已使用内存(MB)
-                                    </span>
-                                    <span class="mr-2">
-                                        <i class="fas fa-square chart-color-2"></i> 空余内存(MB)
-                                    </span>
+                                <div class="tab-content" id="dispatcher-chart-tabs-tabContent">
+                                    <div class="tab-pane fade show active" id="dispatcher-chart-tab-1" role="tabpanel" aria-labelledby="dispatcher-chart-tab-1-tab">
+                                        <div class="card inner-card">
+                                            <div class="card-header border-0">
+                                                <div class="d-flex justify-content-between">
+                                                    <h3 class="card-title">性能概况</h3>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="d-flex">
+                                                    <p class="d-flex flex-column">
+                                                        <span class="text-bold text-lg">0</span>
+                                                        <span>最大访问数</span>
+                                                    </p>
+                                                    <p class="ml-auto d-flex flex-column text-right">
+                                                        <span class="text-secondary">
+                                                            <i class="fas fa-arrow-right"></i> 0%
+                                                        </span>
+                                                        <span class="text-muted">同比上周</span>
+                                                    </p>
+                                                </div><!-- /.d-flex -->
+                                                <div class="position-relative mb-4">
+                                                    <canvas class="dispatcher-chart" height="200"></canvas>
+                                                </div>
+                                                <div class="d-flex flex-row justify-content-end">
+                                                    <span class="mr-2">
+                                                        <i class="fas fa-square chart-color-1"></i> 已使用内存(MB)
+                                                    </span>
+                                                    <span class="mr-2">
+                                                        <i class="fas fa-square chart-color-2"></i> 空余内存(MB)
+                                                    </span>
+                                                </div>
+                                            </div><!-- /.card-body -->
+                                        </div><!-- /.card -->
+                                    </div>
                                 </div>
                             </div>
                         </div><!-- /.card -->
                     </div><!-- ./col -->
                     <div class="col-lg-6 col-12">
-                        <div class="card">
-                            <div class="card-header border-0">
-                                <div class="d-flex justify-content-between">
-                                    <h3 class="card-title">服务单元服务器统计</h3>
-                                    <a href="javascript:void(0);">查看报告</a>
-                                </div>
+                        <div class="card card-primary card-outline card-outline-tabs">
+                            <div class="card-header p-0 border-bottom-0">
+                                <ul class="nav nav-tabs" id="service-chart-tabs" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" id="service-chart-tabs-tab-1" data-toggle="pill" href="#service-chart-tab-1" role="tab" aria-controls="service-chart-tab-1" aria-selected="true"></a>
+                                    </li>
+                                </ul>
                             </div>
                             <div class="card-body">
-                                <div class="d-flex">
-                                    <p class="d-flex flex-column">
-                                        <span class="text-bold text-lg">0</span>
-                                        <span>累计执行次数</span>
-                                    </p>
-                                    <p class="ml-auto d-flex flex-column text-right">
-                                        <span class="text-secondary">
-                                            <i class="fas fa-arrow-right"></i> 0%
-                                        </span>
-                                        <span class="text-muted">同比上周</span>
-                                    </p>
-                                </div><!-- /.d-flex -->
-                                <div class="position-relative mb-4">
-                                    <canvas id="service-chart" height="200"></canvas>
-                                </div>
-                                <div class="d-flex flex-row justify-content-end">
-                                    <span class="mr-2">
-                                        <i class="fas fa-square chart-color-1"></i> 已使用内存(MB)
-                                    </span>
-                                    <span class="mr-2">
-                                        <i class="fas fa-square chart-color-2"></i> 空余内存(MB)
-                                    </span>
+                                <div class="tab-content" id="service-chart-tabs-tabContent">
+                                    <div class="tab-pane fade show active" id="service-chart-tab-1" role="tabpanel" aria-labelledby="service-chart-tab-1-tab">
+                                        <div class="card inner-card">
+                                            <div class="card-header border-0">
+                                                <div class="d-flex justify-content-between">
+                                                    <h3 class="card-title">性能概况</h3>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="d-flex">
+                                                    <p class="d-flex flex-column">
+                                                        <span class="text-bold text-lg">0</span>
+                                                        <span>累计执行次数</span>
+                                                    </p>
+                                                    <p class="ml-auto d-flex flex-column text-right">
+                                                        <span class="text-secondary">
+                                                            <i class="fas fa-arrow-right"></i> 0%
+                                                        </span>
+                                                        <span class="text-muted">同比上周</span>
+                                                    </p>
+                                                </div><!-- /.d-flex -->
+                                                <div class="position-relative mb-4">
+                                                    <canvas class="service-chart" height="200"></canvas>
+                                                </div>
+                                                <div class="d-flex flex-row justify-content-end">
+                                                    <span class="mr-2">
+                                                        <i class="fas fa-square chart-color-1"></i> 已使用内存(MB)
+                                                    </span>
+                                                    <span class="mr-2">
+                                                        <i class="fas fa-square chart-color-2"></i> 空余内存(MB)
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div><!-- /.card -->
+                                    </div>
                                 </div>
                             </div>
                         </div><!-- /.card -->
                     </div><!-- ./col -->
                 </div><!-- /.row -->
 
+                <!-- Log -->
                 <div class="row">
                     <div class="col-lg-12 col-12">
                         <div class="card card-primary card-outline">
@@ -322,7 +351,7 @@
                                     <div class="col-12 col-sm-12">
                                         <nav>
                                             <div class="nav nav-tabs" id="log-tabs-tab" role="tablist">
-                                                <a class="nav-item nav-link active" id="log-tabs-console-tab" data-toggle="tab" href="#log-tabs-console" role="tab" aria-controls="log-tabs-console" aria-selected="true">Console</a>
+                                                <a class="nav-item nav-link active" id="log-tabs-console-tab" data-toggle="tab" href="#log-tabs-console" role="tab" aria-controls="log-tabs-console" aria-selected="true">控制台</a>
                                                 <a class="nav-item nav-link" style="visibility:hidden;" id="log-tabs-server1-tab" data-toggle="tab" href="#log-tabs-server1" role="tab" aria-controls="log-tabs-server1" aria-selected="false">Server 1</a>
                                                 <a class="nav-item nav-link" style="visibility:hidden;" id="log-tabs-server2-tab" data-toggle="tab" href="#log-tabs-server2" role="tab" aria-controls="log-tabs-server2" aria-selected="false">Server 2</a>
                                                 <a class="nav-item nav-link" style="visibility:hidden;" id="log-tabs-server3-tab" data-toggle="tab" href="#log-tabs-server3" role="tab" aria-controls="log-tabs-server3" aria-selected="false">Server 3</a>
