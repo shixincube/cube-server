@@ -98,6 +98,13 @@ public class DispatcherServer implements JSONable {
         json.put("http", this.propertiesFile.getHttpAccessPoint().toJSON());
         json.put("https", this.propertiesFile.getHttpsAccessPoint().toJSON());
 
+        CellConfigFile.SSLConfig sslConfig = this.cellConfigFile.getSslConfig();
+        if (null != sslConfig) {
+            json.put("ssl", sslConfig.toJSON());
+        }
+
+        json.put("logLevel", this.cellConfigFile.getLogLevelAsString());
+
         JSONArray cellets = new JSONArray();
         for (String cellet : this.propertiesFile.getCellets()) {
             cellets.put(cellet);

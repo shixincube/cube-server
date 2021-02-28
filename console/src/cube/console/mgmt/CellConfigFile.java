@@ -26,6 +26,7 @@
 
 package cube.console.mgmt;
 
+import cell.util.log.LogLevel;
 import cell.util.log.Logger;
 import cube.common.JSONable;
 import org.json.JSONArray;
@@ -57,10 +58,15 @@ public class CellConfigFile {
 
     private AccessPoint wssAccessPoint;
 
+    private SSLConfig sslConfig;
+
+    private LogLevel logLevel;
+
     private List<CelletConfig> celletList;
 
     public CellConfigFile(String fullPath) {
         this.fullPath = fullPath;
+        this.logLevel = LogLevel.INFO;
     }
 
     public String getFullPath() {
@@ -77,6 +83,29 @@ public class CellConfigFile {
 
     public AccessPoint getWSSAccessPoint() {
         return this.wssAccessPoint;
+    }
+
+    public SSLConfig getSslConfig() {
+        return this.sslConfig;
+    }
+
+    public LogLevel getLogLevel() {
+        return this.logLevel;
+    }
+
+    public String getLogLevelAsString() {
+        switch (this.logLevel) {
+            case DEBUG:
+                return "DEBUG";
+            case INFO:
+                return "INFO";
+            case WARNING:
+                return "WARNING";
+            case ERROR:
+                return "ERROR";
+            default:
+                return "INFO";
+        }
     }
 
     public List<CelletConfig> getCelletConfigList() {
@@ -132,6 +161,34 @@ public class CellConfigFile {
             this.wssAccessPoint = new AccessPoint(host, port, maxConn);
         }
 
+        nodeList = document.getElementsByTagName("ssl");
+        if (nodeList.getLength() > 0) {
+            Element el = (Element) nodeList.item(0);
+            NodeList keystore = el.getElementsByTagName("keystore");
+            if (keystore.getLength() > 0) {
+                this.sslConfig = new SSLConfig(keystore.item(0).getTextContent().trim(),
+                        el.getElementsByTagName("store-password").item(0).getTextContent(),
+                        el.getElementsByTagName("manager-password").item(0).getTextContent());
+            }
+        }
+
+        nodeList = document.getElementsByTagName("log");
+        if (nodeList.getLength() > 0) {
+            String logLevelString = ((Element) nodeList.item(0)).getElementsByTagName("level").item(0).getTextContent();
+            if (logLevelString.equalsIgnoreCase("DEBUG")) {
+                this.logLevel = LogLevel.DEBUG;
+            }
+            else if (logLevelString.equalsIgnoreCase("INFO")) {
+                this.logLevel = LogLevel.INFO;
+            }
+            else if (logLevelString.equalsIgnoreCase("WARNING")) {
+                this.logLevel = LogLevel.WARNING;
+            }
+            else if (logLevelString.equalsIgnoreCase("ERROR")) {
+                this.logLevel = LogLevel.ERROR;
+            }
+        }
+
         nodeList = document.getElementsByTagName("cellet");
         if (nodeList.getLength() > 0) {
             this.celletList = new ArrayList<>();
@@ -161,6 +218,35 @@ public class CellConfigFile {
 
                 this.celletList.add(cc);
             }
+        }
+    }
+
+    public class SSLConfig implements JSONable {
+
+        public final String keystore;
+
+        public final String storePassword;
+
+        public final String managerPassword;
+
+        public SSLConfig(String keystore, String storePassword, String managerPassword) {
+            this.keystore = keystore;
+            this.storePassword = storePassword;
+            this.managerPassword = managerPassword;
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("keystore", this.keystore);
+            json.put("storePassword", this.storePassword);
+            json.put("managerPassword", this.managerPassword);
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return toJSON();
         }
     }
 

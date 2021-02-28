@@ -351,9 +351,9 @@
 
             content.push(line.tag);
             content.push(' - ');
-            content.push(line.text);
+            content.push(util.filterText(line.text));
 
-            p.innerText = content.join('');
+            p.innerHTML = content.join('');
             el.append(p);
         },
 

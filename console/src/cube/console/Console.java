@@ -69,7 +69,7 @@ public final class Console implements Runnable {
      */
     private ConcurrentHashMap<String, List<JVMReport>> serverJVMMap;
 
-    private int maxReportNum = 20;
+    private int maxReportNum = 30;
 
     private ScheduledExecutorService timer;
 
@@ -268,6 +268,9 @@ public final class Console implements Runnable {
         while (index >= 0) {
             JVMReport report = list.get(index);
             result.add(report);
+            if (result.size() == num) {
+                break;
+            }
             --index;
         }
 

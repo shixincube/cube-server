@@ -156,6 +156,7 @@ h5 {
 }
 .detail-label i {
     margin-right: 8px;
+    width: 14px;
 }
 .server-detail-group .detail-content {
     display: inline-block;

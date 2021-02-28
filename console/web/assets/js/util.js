@@ -107,6 +107,13 @@
     }
     g.util.formatSize = formatSize;
 
+    function filterText(text) {
+        var result = text.replace(/\n/g, '<br/>');
+        result = result.replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+        return result;
+    }
+    g.util.filterText = filterText;
+
     function makeTimeLineArray(start, num) {
         var array = [];
         var time = start;
