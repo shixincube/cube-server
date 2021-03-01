@@ -339,6 +339,7 @@
             el.find('.ap-host').text(service.server.host);
             el.find('.ap-port').text(service.server.port);
             el.find('.ap-maxconn').text(service.server.maxConnection);
+            el.find('.log-level').text(service.logLevel);
 
             var contentEl = el.find('.cellets');
 

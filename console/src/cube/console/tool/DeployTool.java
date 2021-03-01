@@ -38,6 +38,12 @@ import java.nio.file.Paths;
  */
 public final class DeployTool {
 
+    public final static String[] CONSOLE_PROP_FILES = new String[] {
+            "console.properties",
+            "config/console.properties",
+            "deploy/config/console.properties"
+    };
+
     private DeployTool() {
     }
 

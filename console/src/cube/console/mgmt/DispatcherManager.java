@@ -56,13 +56,12 @@ public class DispatcherManager {
     }
 
     public void start() {
-        String filepath = "console.properties";
-        File file = new File(filepath);
-        if (!file.exists()) {
-            filepath = "config/console.properties";
-            file = new File(filepath);
-            if (!file.exists()) {
-                return;
+        String filepath = null;
+        for (String path : DeployTool.CONSOLE_PROP_FILES) {
+            File file = new File(path);
+            if (file.exists()) {
+                filepath = path;
+                break;
             }
         }
 

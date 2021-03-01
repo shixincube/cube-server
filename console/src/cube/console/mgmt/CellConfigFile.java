@@ -174,7 +174,8 @@ public class CellConfigFile {
 
         nodeList = document.getElementsByTagName("log");
         if (nodeList.getLength() > 0) {
-            String logLevelString = ((Element) nodeList.item(0)).getElementsByTagName("level").item(0).getTextContent();
+            NodeList level = ((Element) nodeList.item(0)).getElementsByTagName("level");
+            String logLevelString = level.item(0).getTextContent();
             if (logLevelString.equalsIgnoreCase("DEBUG")) {
                 this.logLevel = LogLevel.DEBUG;
             }

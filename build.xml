@@ -4,7 +4,7 @@
 <!-- Cube Server Build File                                                  -->
 <!-- ======================================================================= -->
 
-<project name="cube-server" default="build-all" basedir=".">
+<project name="cube-server" default="build" basedir=".">
 
 	<!--property name="java.version" value="8" /-->
 

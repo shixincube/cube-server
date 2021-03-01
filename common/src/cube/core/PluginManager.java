@@ -169,7 +169,7 @@ public class PluginManager {
 
                         try {
                             Class clazz = loader.loadClass(className);
-                            Plugin plugin = (Plugin) clazz.newInstance();
+                            Plugin plugin = (Plugin) clazz.getDeclaredConstructor().newInstance();
                             this.pluginMap.put(hook, plugin);
                         } catch (ClassNotFoundException e) {
                             Logger.w(this.getClass(), "#PluginDesc", e);

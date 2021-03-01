@@ -52,8 +52,6 @@ public final class Console implements Runnable {
 
     private String consoleTag;
 
-    private Properties servers;
-
     /**
      * 日志记录。
      */
@@ -129,50 +127,6 @@ public final class Console implements Runnable {
         this.userManager.stop();
 
         this.timer.shutdown();
-    }
-
-    @Deprecated
-    public JSONArray getDispatcherServers() {
-        if (null == this.servers) {
-            return null;
-        }
-
-        JSONArray array = new JSONArray();
-
-        int num = Integer.parseInt(this.servers.getProperty("dispatcher.num"));
-        for (int i = 1; i <= num; ++i) {
-            String name = this.servers.getProperty("dispatcher." + i + ".name");
-            String listening = this.servers.getProperty("dispatcher." + i + ".listening");
-            String address = this.servers.getProperty("dispatcher." + i + ".address");
-            int port = Integer.parseInt(this.servers.getProperty("dispatcher." + i + ".port"));
-
-            Follower follower = new Follower(name, listening, address, port);
-            array.put(follower.toJSON());
-        }
-
-        return array;
-    }
-
-    @Deprecated
-    public JSONArray getServiceServers() {
-        if (null == this.servers) {
-            return null;
-        }
-
-        JSONArray array = new JSONArray();
-
-        int num = Integer.parseInt(this.servers.getProperty("service.num"));
-        for (int i = 1; i <= num; ++i) {
-            String name = this.servers.getProperty("service." + i + ".name");
-            String listening = this.servers.getProperty("service." + i + ".listening");
-            String address = this.servers.getProperty("service." + i + ".address");
-            int port = Integer.parseInt(this.servers.getProperty("service." + i + ".port"));
-
-            Follower follower = new Follower(name, listening, address, port);
-            array.put(follower.toJSON());
-        }
-
-        return array;
     }
 
     public void appendLogReport(LogReport report) {

@@ -382,6 +382,7 @@
             el.find('.http-port').text(server.http.port);
             el.find('.https-host').text(server.https.host);
             el.find('.https-port').text(server.https.port);
+            el.find('.log-level').text(server.logLevel);
 
             var html = [];
             server.cellets.forEach(function(value, index) {

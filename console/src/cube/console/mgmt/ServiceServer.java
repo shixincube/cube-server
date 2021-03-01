@@ -120,6 +120,8 @@ public class ServiceServer implements JSONable {
 
         json.put("server", this.cellConfigFile.getAccessPoint().toJSON());
 
+        json.put("logLevel", this.cellConfigFile.getLogLevelAsString());
+
         List<CellConfigFile.CelletConfig> list = this.cellConfigFile.getCelletConfigList();
         JSONArray array = new JSONArray();
         for (CellConfigFile.CelletConfig config : list) {

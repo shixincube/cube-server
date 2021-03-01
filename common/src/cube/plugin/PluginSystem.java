@@ -28,6 +28,7 @@ package cube.plugin;
 
 import cell.util.log.Logger;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
@@ -142,7 +143,7 @@ public class PluginSystem<T extends Hook> {
         ClassLoader loader = ClassLoader.getSystemClassLoader();
         try {
             Class<?> clazz = loader.loadClass(className);
-            Plugin plugin = (Plugin) clazz.newInstance();
+            Plugin plugin = (Plugin) clazz.getDeclaredConstructor().newInstance();
 
             Logger.i(this.getClass(), "New & register plugin : " + className);
 
@@ -152,6 +153,10 @@ public class PluginSystem<T extends Hook> {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
     }
