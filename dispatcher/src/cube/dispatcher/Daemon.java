@@ -181,6 +181,10 @@ public class Daemon extends TimerTask implements LogHandle {
         ReportService.getInstance().submitReport(report);
     }
 
+    private void submitPerformanceReport() {
+
+    }
+
     @Override
     public String getName() {
         return "Daemon";

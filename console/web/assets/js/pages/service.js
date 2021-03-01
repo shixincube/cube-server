@@ -136,7 +136,7 @@
                                 '<i class="fas fa-tasks"></i> 详情',
                             '</button>',
                             '<button type="button" class="btn btn-warning btn-sm" onclick="javascript:service.deleteServer(', index, ');">',
-                                '<i class="fas fa-trash"></i> 删除',
+                                '<i class="fas fa-bolt"></i> 拨测',
                             '</button>',
                         '</td>',
                     '</tr>'

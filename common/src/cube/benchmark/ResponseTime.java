@@ -24,20 +24,19 @@
  * SOFTWARE.
  */
 
-package cube.report;
+package cube.benchmark;
 
 /**
- * 性能报告。
+ * 反应时间。
  */
-public class PerformanceReport extends Report {
+public class ResponseTime {
 
-    public final static String NAME = "PerfReport";
+    public String mark;
 
+    public long beginning;
 
+    public long ending;
 
-    public PerformanceReport(String reporter) {
-        super(NAME);
-        this.setReporter(reporter);
+    public ResponseTime() {
     }
-
 }

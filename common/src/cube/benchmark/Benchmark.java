@@ -24,20 +24,25 @@
  * SOFTWARE.
  */
 
-package cube.report;
+package cube.benchmark;
+
+import java.util.LinkedHashMap;
 
 /**
- * 性能报告。
+ * 基准。
  */
-public class PerformanceReport extends Report {
+public class Benchmark {
 
-    public final static String NAME = "PerfReport";
+    private LinkedHashMap<String, Long> counterMap;
 
-
-
-    public PerformanceReport(String reporter) {
-        super(NAME);
-        this.setReporter(reporter);
+    public Benchmark() {
+        this.counterMap = new LinkedHashMap<>();
     }
 
+    public void addCounter(String name, Long counter) {
+        if (this.counterMap.containsKey(name)) {
+            this.counterMap.remove(name);
+        }
+        this.counterMap.put(name, counter);
+    }
 }

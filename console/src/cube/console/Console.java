@@ -208,7 +208,7 @@ public final class Console implements Runnable {
             return result;
         }
 
-        long scope = 30000L;
+        long scope = 60000L;
         int index = 0;
 
         // 找到最近的记录
