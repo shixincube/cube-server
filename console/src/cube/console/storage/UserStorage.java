@@ -46,20 +46,48 @@ import java.util.Properties;
 public class UserStorage extends AbstractStorage {
 
     private final StorageField[] userFields = new StorageField[] {
-            new StorageField("sn", LiteralBase.LONG),
-            new StorageField("id", LiteralBase.LONG),
-            new StorageField("name", LiteralBase.STRING),
-            new StorageField("password", LiteralBase.STRING),
-            new StorageField("avatar", LiteralBase.STRING),
-            new StorageField("display_name", LiteralBase.STRING)
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.UNIQUE, Constraint.NOT_NULL
+            }),
+            new StorageField("name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("password", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("avatar", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("display_name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("role", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("group", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
     };
 
     private final StorageField[] tokenFields = new StorageField[] {
-            new StorageField("sn", LiteralBase.LONG),
-            new StorageField("user_id", LiteralBase.LONG),
-            new StorageField("token", LiteralBase.STRING),
-            new StorageField("creation", LiteralBase.LONG),
-            new StorageField("expire", LiteralBase.LONG)
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("user_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("token", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("creation", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("expire", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
     };
 
     private final String userTable = "user";
@@ -91,7 +119,9 @@ public class UserStorage extends AbstractStorage {
         StorageField[] data = result.get(0);
         Map<String, StorageField> map = StorageFields.get(data);
         return new User(map.get("id").getLong(), map.get("name").getString(),
-                map.get("avatar").getString(), map.get("display_name").getString(), map.get("password").getString());
+                map.get("avatar").getString(), map.get("display_name").getString(),
+                map.get("role").getInt(), map.get("group").getString(),
+                map.get("password").getString());
     }
 
     public User readUser(long id) {
@@ -106,7 +136,9 @@ public class UserStorage extends AbstractStorage {
         StorageField[] data = result.get(0);
         Map<String, StorageField> map = StorageFields.get(data);
         return new User(map.get("id").getLong(), map.get("name").getString(),
-                map.get("avatar").getString(), map.get("display_name").getString(), map.get("password").getString());
+                map.get("avatar").getString(), map.get("display_name").getString(),
+                map.get("role").getInt(), map.get("group").getString(),
+                map.get("password").getString());
     }
 
     public void writeToken(UserToken token) {
@@ -139,39 +171,26 @@ public class UserStorage extends AbstractStorage {
         return userToken;
     }
 
+    public void deleteToken(String tokenString) {
+        this.storage.executeDelete(this.tokenTable, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("token", LiteralBase.STRING, tokenString))
+        });
+    }
+
     private void autoCheckTable() {
         if (!this.storage.exist(this.userTable)) {
-            StorageField[] fields = new StorageField[] {
-                    new StorageField("sn", LiteralBase.LONG, new Constraint[] {
-                            Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
-                    }),
-                    new StorageField("id", LiteralBase.LONG, new Constraint[] {
-                            Constraint.UNIQUE, Constraint.NOT_NULL
-                    }),
-                    new StorageField("name", LiteralBase.STRING, new Constraint[] {
-                            Constraint.NOT_NULL
-                    }),
-                    new StorageField("password", LiteralBase.STRING, new Constraint[] {
-                            Constraint.NOT_NULL
-                    }),
-                    new StorageField("avatar", LiteralBase.STRING, new Constraint[] {
-                            Constraint.NOT_NULL
-                    }),
-                    new StorageField("display_name", LiteralBase.STRING, new Constraint[] {
-                            Constraint.NOT_NULL
-                    })
-            };
-
-            this.storage.executeCreate(this.userTable, fields);
+            this.storage.executeCreate(this.userTable, this.userFields);
 
             // 插入默认用户
             // 密码：shixincube
-            fields = new StorageField[] {
+            StorageField[] fields = new StorageField[] {
                     new StorageField("id", LiteralBase.LONG, Utils.generateSerialNumber()),
                     new StorageField("name", LiteralBase.STRING, "cube"),
                     new StorageField("password", LiteralBase.STRING, "c7af98d321febe62e04d45e8806852e0"),
                     new StorageField("avatar", LiteralBase.STRING, "assets/img/avatar.png"),
-                    new StorageField("display_name", LiteralBase.STRING, "魔方管理员")
+                    new StorageField("display_name", LiteralBase.STRING, "魔方管理员"),
+                    new StorageField("role", LiteralBase.INT, 1),
+                    new StorageField("group", LiteralBase.STRING, "shixincube.com")
             };
             this.storage.executeInsert(this.userTable, fields);
 
@@ -179,25 +198,7 @@ public class UserStorage extends AbstractStorage {
         }
 
         if (!this.storage.exist(this.tokenTable)) {
-            StorageField[] fields = new StorageField[] {
-                    new StorageField("sn", LiteralBase.LONG, new Constraint[] {
-                            Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
-                    }),
-                    new StorageField("user_id", LiteralBase.LONG, new Constraint[] {
-                            Constraint.NOT_NULL
-                    }),
-                    new StorageField("token", LiteralBase.STRING, new Constraint[] {
-                            Constraint.NOT_NULL
-                    }),
-                    new StorageField("creation", LiteralBase.LONG, new Constraint[] {
-                            Constraint.NOT_NULL
-                    }),
-                    new StorageField("expire", LiteralBase.LONG, new Constraint[] {
-                            Constraint.NOT_NULL
-                    })
-            };
-
-            this.storage.executeCreate(this.tokenTable, fields);
+            this.storage.executeCreate(this.tokenTable, this.tokenFields);
 
             Logger.i(this.getClass(), "Create table '" + this.tokenTable + "'");
         }

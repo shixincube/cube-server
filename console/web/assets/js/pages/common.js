@@ -54,6 +54,40 @@
             });
         },
 
+        showUserProfile: function() {
+            if (null == $.console.user) {
+                return;
+            }
+
+            var user = $.console.user;
+
+            var el = $('#modal_user_profile');
+
+            var role = user.role == 1 ? '超级管理员' : '管理员';
+
+            el.find('.profile-name').text(user.displayName);
+            el.find('.user-name').text(user.name);
+            el.find('.user-role').text(role);
+            el.find('.user-group').text(user.group);
+            el.find('.avatar').attr('src', user.avatar);
+
+            el.modal('show');
+        },
+
+        signOut: function() {
+            if (confirm('您确定要退出登录吗？')) {
+                $.ajax({
+                    type: 'post',
+                    url: '/signout/'
+                }).done(function(response) {
+                    window.location.href = '/index.html';
+                }).fail(function() {
+                });
+
+                $('#modal_user_profile').modal('hide');
+            }
+        },
+
         updateUserPanel: function(console) {
             var userPanel = $('.user-panel');
             userPanel.find('img[data-target="avatar"]').attr('src', console.user.avatar);

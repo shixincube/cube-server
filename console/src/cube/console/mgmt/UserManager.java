@@ -77,6 +77,12 @@ public class UserManager {
         }
     }
 
+    /**
+     * 检查 Token 是否有效。
+     *
+     * @param tokenString
+     * @return
+     */
     public boolean checkToken(String tokenString) {
         UserToken userToken = this.tokenMap.get(tokenString);
 
@@ -94,6 +100,12 @@ public class UserManager {
         return userToken.expire > System.currentTimeMillis();
     }
 
+    /**
+     * 获取用户的 Token 。
+     *
+     * @param tokenString
+     * @return
+     */
     public UserToken getToken(String tokenString) {
         UserToken userToken = this.tokenMap.get(tokenString);
 
@@ -114,6 +126,12 @@ public class UserManager {
         return userToken;
     }
 
+    /**
+     * 用户签入。
+     *
+     * @param tokenString
+     * @return
+     */
     public UserToken signIn(String tokenString) {
         UserToken userToken = this.tokenMap.get(tokenString);
 
@@ -127,6 +145,13 @@ public class UserManager {
         return userToken;
     }
 
+    /**
+     * 用户签入。
+     *
+     * @param userName
+     * @param password
+     * @return
+     */
     public UserToken signIn(String userName, String password) {
         User user = this.storage.readUser(userName);
         if (null == user) {
@@ -151,5 +176,23 @@ public class UserManager {
         this.storage.writeToken(token);
 
         return token;
+    }
+
+    /**
+     * 用户签出。
+     *
+     * @param tokenString
+     */
+    public void signOut(String tokenString) {
+        // 从内存里删除
+        UserToken token = this.tokenMap.remove(tokenString);
+        if (null == token) {
+            token = this.storage.readToken(tokenString);
+            if (null == token) {
+                return;
+            }
+        }
+
+        this.storage.deleteToken(tokenString);
     }
 }

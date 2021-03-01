@@ -42,17 +42,23 @@ public class User implements JSONable {
 
     public final String displayName;
 
+    public final int role;
+
+    public final String group;
+
     protected String password;
 
-    public User(Long id, String name, String avatar, String displayName) {
-        this(id, name, avatar, displayName, null);
+    public User(Long id, String name, String avatar, String displayName, int role, String group) {
+        this(id, name, avatar, displayName, role, group, null);
     }
 
-    public User(Long id, String name, String avatar, String displayName, String password) {
+    public User(Long id, String name, String avatar, String displayName, int role, String group, String password) {
         this.id = id;
         this.name = name;
         this.avatar = avatar;
         this.displayName = displayName;
+        this.role = role;
+        this.group = group;
         this.password = password;
     }
 
@@ -66,6 +72,8 @@ public class User implements JSONable {
         json.put("name", this.name);
         json.put("avatar", this.avatar);
         json.put("displayName", this.displayName);
+        json.put("role", this.role);
+        json.put("group", this.group);
         return json;
     }
 

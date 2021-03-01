@@ -32,11 +32,13 @@
     usernameEl.val('');
     passwordEl.val('');
 
-    var btn = $('#signin');
-    btn.on('click', function(event) {
+    var username = null;
+    var password = null;
+
+    function submit(event) {
         var event = event || window.event;
 
-        var username = usernameEl.val();
+        username = usernameEl.val();
         if (username.length < 3) {
             $(document).Toasts('create', {
                 class: 'bg-danger',
@@ -46,10 +48,10 @@
                 body: '请输入正确的登录账号'
             });
             event.preventDefault();
-            return;
+            return false;
         }
 
-        var password = passwordEl.val();
+        password = passwordEl.val();
         if (password.length < 6) {
             $(document).Toasts('create', {
                 class: 'bg-danger',
@@ -59,12 +61,50 @@
                 body: '请输入至少6位密码'
             });
             event.preventDefault();
-            return;
+            return false;
         }
 
         // 散列密码
         var hash = md5(password);
         passwordEl.val(hash);
+        password = hash;
+        return true;
+    }
+
+    usernameEl.on('keydown', function(event) {
+        if (event.keyCode == 13) {
+            return false;
+        }
+    });
+
+    passwordEl.on('keydown', function(event) {
+        if (event.keyCode == 13) {
+            return false;
+        }
+    });
+
+    passwordEl.on('keyup', function(event) {
+        if (event.keyCode == 13) {
+            if (submit(event)) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/signin/',
+                    data: {
+                        "username": username,
+                        "password": password
+                    }
+                }).done(function(response) {
+                    window.location.href = 'dashboard.html';
+                }).fail(function() {
+                });
+            }
+            return false;
+        }
+    });
+
+    var btn = $('#signin');
+    btn.on('click', function(event) {
+        submit(event);
     });
 
     $(document).ready(function() {
@@ -86,7 +126,7 @@
         }
 
         $.ajax({
-            type: 'post',
+            type: 'POST',
             url: '/signin/'
         }).done(function(response) {
             window.location.href = 'dashboard.html';

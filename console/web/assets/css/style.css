@@ -83,6 +83,12 @@ h5 {
     font-size: 16px;
 }
 
+.profile-name {
+    font-weight: bold;
+    font-size: 20px;
+    margin-bottom: 1.2rem;
+}
+
 .main-toolbar {
     margin-bottom: 1rem;
 }

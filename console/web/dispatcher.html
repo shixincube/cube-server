@@ -106,13 +106,13 @@
 
         <!-- Sidebar -->
         <div class="sidebar">
-            <!-- Sidebar user panel (optional) -->
+            <!-- Sidebar user panel -->
             <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                 <div class="image">
                     <img src="assets/img/avatar.png" class="img-circle elevation-2" data-target="avatar" />
                 </div>
                 <div class="info">
-                    <a href="javascript:;" class="d-block" data-target="name"></a>
+                    <a href="javascript:common.showUserProfile();" class="d-block" data-target="name"></a>
                 </div>
             </div>
 
@@ -246,6 +246,39 @@
     </footer>
 </div><!-- ./wrapper -->
 
+<!-- User Profile Modal -->
+<div id="modal_user_profile" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">用户详情</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div><!-- /.modal-header -->
+            <div class="modal-body">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-7">
+                            <h5 class="profile-name"></h5>
+                            <p class="text-muted text-sm"><b><span><i class="fas fa-lg fa-user" style="width:25px;"></i></span></b> <span class="user-name"></span></p>
+                            <p class="text-muted text-sm"><b><span><i class="fas fa-lg fa-address-card" style="width:25px;"></i></span></b> <span class="user-role"></span></p>
+                            <p class="text-muted text-sm"><b><span><i class="fas fa-lg fa-users" style="width:25px;"></i></span></b> <span class="user-group"></span></p>
+                        </div>
+                        <div class="col-5 text-center">
+                            <img src="assets/img/avatar.png" alt="用户头像" class="img-circle img-fluid avatar" />
+                        </div>
+                    </div>
+                </div><!-- /.modal-body -->
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-primary" onclick="javascript:common.signOut();">退出登录</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div><!-- /.modal-footer -->
+        </div>
+    </div>
+</div><!-- /.modal -->
+
 <!-- New Deploy Modal -->
 <div id="modal_new_deploy" class="modal fade">
     <div class="modal-dialog modal-huge">
@@ -366,7 +399,7 @@
                         <div class="detail-content cellets"></div>
                     </div>
                     <div class="server-detail-group">
-                        <div class="detail-label"><i class="fas fa-book"></i>下连节点：</div>
+                        <div class="detail-label"><i class="fas fa-book"></i>上位服务单元：</div>
                         <div class="detail-content" style="width:100%;">
                             <div class="form-group">
                                 <select class="custom-select director-list"></select>
@@ -387,6 +420,7 @@
                 </div>
             </div><!-- /.modal-body -->
             <div class="modal-footer text-right">
+                <button type="button" class="btn btn-primary">编辑</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
             </div><!-- /.modal-footer -->
         </div>
