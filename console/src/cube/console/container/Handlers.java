@@ -83,7 +83,7 @@ public final class Handlers {
                 new ReportHandler(console),
 
                 // For AJAX API
-                new SignIn2Handler(console.getUserManager()),
+                new SignInHandler(console.getUserManager()),
                 new SignOutHandler(console.getUserManager()),
                 new ServersHandler(console),
                 new DeployHandler(console),
