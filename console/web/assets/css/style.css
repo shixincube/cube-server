@@ -169,7 +169,7 @@ h5 {
     font-family: Menlo, 'Courier New', Courier, monospace;
     font-weight: bold;
     color: #343a40;
-    max-width: 630px;
+    max-width: 610px;
     overflow: hidden;
     -ms-text-overflow: ellipsis;
     text-overflow: ellipsis;
@@ -250,4 +250,12 @@ h5 {
 }
 .chart-color-2 {
     color: #d2d6de !important;
+}
+
+.monitor .response-time {
+    clear: both;
+    background-color: rgba(0,0,0,.03);
+}
+.monitor .description-text {
+    text-transform: unset;
 }

@@ -41,4 +41,4 @@ done
 
 echo "$CLASSPATH"
 
-java -Xmx256m -classpath "$CLASSPATH" cube.console.container.Main start
+java -Xmx512m -classpath "$CLASSPATH" cube.console.container.Main start

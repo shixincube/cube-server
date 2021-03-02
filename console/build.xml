@@ -116,7 +116,7 @@
 	<!-- Start console                                                       -->
 	<!-- =================================================================== -->
 	<target name="start">
-		<java dir="./" classname="cube.console.container.Main" fork="true" failonerror="true" maxmemory="256m">
+		<java dir="./" classname="cube.console.container.Main" fork="true" failonerror="true" maxmemory="512m">
 			<arg value="start" />
 			<classpath>
 				<fileset dir="${lib.dir}">

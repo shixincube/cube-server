@@ -90,6 +90,7 @@ public final class Console implements Runnable {
     public Console() {
         this.serverLogMap = new ConcurrentHashMap<>();
         this.serverJVMMap = new ConcurrentHashMap<>();
+        this.serverPerfMap = new ConcurrentHashMap<>();
         this.logHandler = new ConsoleLogHandler();
     }
 
@@ -254,7 +255,25 @@ public final class Console implements Runnable {
     public void appendPerformanceReport(PerformanceReport report) {
         Logger.d(this.getClass(), "Received report from " + report.getReporter() + " (" + report.getName() + ")");
 
+        List<PerformanceReport> list = this.serverPerfMap.get(report.getReporter());
+        if (null == list) {
+            list = new Vector<>();
+            this.serverPerfMap.put(report.getReporter().toString(), list);
+        }
 
+        list.add(report);
+        if (list.size() > this.maxReportNum) {
+            list.remove(0);
+        }
+    }
+
+    public PerformanceReport queryLastPerformanceReport(String reporter) {
+        List<PerformanceReport> list = this.serverPerfMap.get(reporter);
+        if (null == list) {
+            return null;
+        }
+
+        return list.get(list.size() - 1);
     }
 
     @Override
