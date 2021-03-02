@@ -26,17 +26,20 @@
 
 package cube.benchmark;
 
-import java.util.LinkedHashMap;
+import java.util.*;
 
 /**
  * 基准。
  */
 public class Benchmark {
 
-    private LinkedHashMap<String, Long> counterMap;
+    private HashMap<String, Long> counterMap;
+
+    private HashMap<String, Queue<ResponseTime>> responseTimeMap;
 
     public Benchmark() {
-        this.counterMap = new LinkedHashMap<>();
+        this.counterMap = new HashMap<>();
+        this.responseTimeMap = new HashMap<>();
     }
 
     public void addCounter(String name, Long counter) {
@@ -44,5 +47,66 @@ public class Benchmark {
             this.counterMap.remove(name);
         }
         this.counterMap.put(name, counter);
+    }
+
+    public void addResponseTimes(String name, Queue<ResponseTime> list) {
+        Queue<ResponseTime> queue = this.responseTimeMap.get(name);
+        if (null == queue) {
+            queue = new LinkedList<>();
+            this.responseTimeMap.put(name, queue);
+        }
+        queue.addAll(list);
+    }
+
+    public Map<String, AverageValue> calcAverageResponseTime(String name) {
+        Map<String, AverageValue> result = new HashMap<>();
+
+        Queue<ResponseTime> queue = this.responseTimeMap.get(name);
+        if (null == queue) {
+            return result;
+        }
+
+        Iterator<ResponseTime> iter = queue.iterator();
+        while (iter.hasNext()) {
+            ResponseTime time = iter.next();
+            if (null == time.mark) {
+                continue;
+            }
+
+            AverageValue value = result.get(time.mark);
+            if (null == value) {
+                value = new AverageValue();
+                result.put(time.mark, value);
+            }
+            value.total += time.ending - time.beginning;
+            value.count += 1;
+        }
+
+        Iterator<AverageValue> viter = result.values().iterator();
+        while (viter.hasNext()) {
+            AverageValue value = viter.next();
+            if (value.count == 0) {
+                continue;
+            }
+
+            value.value = Math.round(value.total / value.count);
+        }
+
+        return result;
+    }
+
+    /**
+     * 平均值。
+     */
+    public class AverageValue {
+
+        protected long total = 0;
+
+        protected long count = 0;
+
+        public long value = 0;
+
+        protected AverageValue() {
+        }
     }
 }

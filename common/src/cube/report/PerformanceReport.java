@@ -26,6 +26,9 @@
 
 package cube.report;
 
+import cube.benchmark.Benchmark;
+import cube.core.AbstractCellet;
+
 /**
  * 性能报告。
  */
@@ -33,11 +36,15 @@ public class PerformanceReport extends Report {
 
     public final static String NAME = "PerfReport";
 
-
+    private Benchmark benchmark;
 
     public PerformanceReport(String reporter) {
         super(NAME);
         this.setReporter(reporter);
+        this.benchmark = new Benchmark();
     }
 
+    public void gather(AbstractCellet cellet) {
+
+    }
 }

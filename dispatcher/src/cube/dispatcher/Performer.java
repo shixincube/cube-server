@@ -57,9 +57,9 @@ public class Performer implements TalkListener {
 
     private final String directorKey = "_director";
 
-    private TalkService talkService;
+    protected TalkService talkService;
 
-    private CelletService celletService;
+    protected CelletService celletService;
 
     /**
      * 节点名称。

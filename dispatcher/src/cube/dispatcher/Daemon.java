@@ -26,6 +26,7 @@
 
 package cube.dispatcher;
 
+import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.LogHandle;
@@ -182,7 +183,9 @@ public class Daemon extends TimerTask implements LogHandle {
     }
 
     private void submitPerformanceReport() {
+        for (Cellet cellet : this.performer.celletService.getCellets()) {
 
+        }
     }
 
     @Override
