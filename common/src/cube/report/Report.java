@@ -92,13 +92,9 @@ public class Report implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("name", this.name);
-            json.put("timestamp", this.timestamp);
-            json.put("reporter", this.reporter);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        json.put("name", this.name);
+        json.put("timestamp", this.timestamp);
+        json.put("reporter", this.reporter);
         return json;
     }
 

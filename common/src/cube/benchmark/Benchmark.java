@@ -26,22 +26,54 @@
 
 package cube.benchmark;
 
+import cube.common.JSONable;
+import cube.util.JSONUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.*;
 
 /**
  * 基准。
  */
-public class Benchmark {
+public class Benchmark implements JSONable {
 
-    private HashMap<String, Long> counterMap;
+    private Map<String, Long> counterMap;
 
-    private HashMap<String, Queue<ResponseTime>> responseTimeMap;
+    private Map<String, List<JSONable>> responseTimeMap;
 
     public Benchmark() {
         this.counterMap = new HashMap<>();
         this.responseTimeMap = new HashMap<>();
     }
 
+    public Benchmark(JSONObject json) {
+        JSONObject counterMapJson = json.getJSONObject("counterMap");
+        this.counterMap = JSONUtils.toLongMap(counterMapJson);
+
+        this.responseTimeMap = new HashMap<>();
+        JSONObject responseTimeMapJson = json.getJSONObject("responseTimeMap");
+        Iterator<String> iter = responseTimeMapJson.keys();
+        while (iter.hasNext()) {
+            String name = iter.next();
+            JSONArray array = responseTimeMapJson.getJSONArray(name);
+            List<JSONable> list = new LinkedList<>();
+            for (int i = 0; i < array.length(); ++i) {
+                JSONObject timeJson = array.getJSONObject(i);
+                ResponseTime time = new ResponseTime(timeJson);
+                list.add(time);
+            }
+
+            this.responseTimeMap.put(name, list);
+        }
+    }
+
+    /**
+     * 添加指定名称的计数。
+     *
+     * @param name
+     * @param counter
+     */
     public void addCounter(String name, Long counter) {
         if (this.counterMap.containsKey(name)) {
             this.counterMap.remove(name);
@@ -49,26 +81,38 @@ public class Benchmark {
         this.counterMap.put(name, counter);
     }
 
-    public void addResponseTimes(String name, Queue<ResponseTime> list) {
-        Queue<ResponseTime> queue = this.responseTimeMap.get(name);
-        if (null == queue) {
-            queue = new LinkedList<>();
-            this.responseTimeMap.put(name, queue);
+    /**
+     * 添加应答时间。
+     *
+     * @param name
+     * @param timeList
+     */
+    public void addResponseTimes(String name, Queue<ResponseTime> timeList) {
+        List<JSONable> list = this.responseTimeMap.get(name);
+        if (null == list) {
+            list = new LinkedList<>();
+            this.responseTimeMap.put(name, list);
         }
-        queue.addAll(list);
+        list.addAll(list);
     }
 
+    /**
+     * 计算应答时间的平均值。
+     *
+     * @param name
+     * @return
+     */
     public Map<String, AverageValue> calcAverageResponseTime(String name) {
         Map<String, AverageValue> result = new HashMap<>();
 
-        Queue<ResponseTime> queue = this.responseTimeMap.get(name);
-        if (null == queue) {
+        List<JSONable> list = this.responseTimeMap.get(name);
+        if (null == list) {
             return result;
         }
 
-        Iterator<ResponseTime> iter = queue.iterator();
+        Iterator<JSONable> iter = list.iterator();
         while (iter.hasNext()) {
-            ResponseTime time = iter.next();
+            ResponseTime time = (ResponseTime) iter.next();
             if (null == time.mark) {
                 continue;
             }
@@ -93,6 +137,19 @@ public class Benchmark {
         }
 
         return result;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("counterMap", JSONUtils.toJSONObjectAsLong(this.counterMap));
+        json.put("responseTimeMap", JSONUtils.toJSONObjectAsList(this.responseTimeMap));
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 
     /**

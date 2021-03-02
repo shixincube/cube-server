@@ -26,6 +26,7 @@
 
 package cube.dispatcher;
 
+import cell.api.Servable;
 import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
@@ -36,11 +37,9 @@ import cube.common.Packet;
 import cube.common.action.ContactAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
+import cube.core.AbstractCellet;
 import cube.dispatcher.contact.ContactCellet;
-import cube.report.JVMReport;
-import cube.report.LogLine;
-import cube.report.LogReport;
-import cube.report.ReportService;
+import cube.report.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -135,8 +134,12 @@ public class Daemon extends TimerTask implements LogHandle {
             }
         }
 
-        if (now - this.lastReportTime > this.reportInterval) {
+        if (now - this.lastReportTime >= this.reportInterval) {
+            // 提交 JVM 报告
             this.submitJVMReport();
+            // 提交性能报告
+            this.submitPerformanceReport();
+            // 更新时间戳
             this.lastReportTime = now;
         }
 
@@ -183,9 +186,20 @@ public class Daemon extends TimerTask implements LogHandle {
     }
 
     private void submitPerformanceReport() {
-        for (Cellet cellet : this.performer.celletService.getCellets()) {
+        PerformanceReport report = new PerformanceReport(this.performer.getNodeName());
 
+        for (Cellet cellet : this.performer.celletService.getCellets()) {
+            if (cellet instanceof AbstractCellet) {
+                AbstractCellet absCellet = (AbstractCellet) cellet;
+                report.gather(absCellet);
+            }
         }
+
+        for (Servable server : this.performer.talkService.getServers()) {
+            report.reportConnection(server.getPort(), server.numTalkContexts(), server.getMaxConnections());
+        }
+
+        ReportService.getInstance().submitReport(report);
     }
 
     @Override

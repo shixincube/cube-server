@@ -97,8 +97,7 @@ public class AuthCellet extends AbstractCellet {
     }
 
     protected void returnTask(PassThroughTask task) {
-        task.responseTime.mark = task.getAction().getName();
-        task.responseTime.ending = System.currentTimeMillis();
+        task.markResponseTime();
 
         this.taskQueue.offer(task);
     }

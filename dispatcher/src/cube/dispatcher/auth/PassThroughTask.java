@@ -29,7 +29,6 @@ package cube.dispatcher.auth;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
@@ -41,8 +40,6 @@ import org.json.JSONObject;
 public class PassThroughTask extends DispatcherTask {
 
     private boolean waitResponse = true;
-
-    protected ResponseTime responseTime;
 
     public PassThroughTask(AuthCellet cellet, TalkContext talkContext, Primitive primitive
             , Performer performer) {

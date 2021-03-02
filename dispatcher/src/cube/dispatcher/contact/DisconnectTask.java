@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,21 +28,18 @@ package cube.dispatcher.contact;
 
 import cell.core.talk.TalkContext;
 import cube.common.Packet;
-import cube.common.Task;
 import cube.common.action.ContactAction;
 import cube.common.entity.Contact;
+import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
 
 /**
  * 终端设备断开时通知服务单元的任务。
  */
-public class DisconnectTask extends Task {
-
-    private Performer performer;
+public class DisconnectTask extends DispatcherTask {
 
     public DisconnectTask(ContactCellet cellet, TalkContext talkContext, Performer performer) {
-        super(cellet, talkContext, null);
-        this.performer = performer;
+        super(cellet, talkContext, null, performer);
     }
 
     public void reset(TalkContext talkContext) {

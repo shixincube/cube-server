@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,10 +26,10 @@
 
 package cube.dispatcher.filestorage;
 
-import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.util.CachedQueueExecutor;
+import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -40,7 +40,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * 文件存储模块的 Cellet 单元。
  */
-public class FileStorageCellet extends Cellet {
+public class FileStorageCellet extends AbstractCellet {
 
     /**
      * Cellet 名称。
@@ -104,20 +104,27 @@ public class FileStorageCellet extends Cellet {
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
+        super.onListened(talkContext, primitive);
+
         this.executor.execute(this.borrowTask(talkContext, primitive, true));
     }
 
     protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive, boolean sync) {
         PassThroughTask task = this.taskQueue.poll();
         if (null == task) {
-            return new PassThroughTask(this, talkContext, primitive, this.performer, sync);
+            task = new PassThroughTask(this, talkContext, primitive, this.performer, sync);
+            task.responseTime = this.markResponseTime();
+            return task;
         }
 
         task.reset(talkContext, primitive, sync);
+        task.responseTime = this.markResponseTime();
         return task;
     }
 
     protected void returnTask(PassThroughTask task) {
+        task.markResponseTime();
+
         this.taskQueue.offer(task);
     }
 }

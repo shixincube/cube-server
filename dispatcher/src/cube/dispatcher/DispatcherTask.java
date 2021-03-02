@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.StateCode;
 import cube.common.Task;
@@ -42,6 +43,8 @@ import org.json.JSONObject;
 public abstract class DispatcherTask extends Task {
 
     protected Performer performer;
+
+    public ResponseTime responseTime;
 
     private Packet request;
 
@@ -69,6 +72,13 @@ public abstract class DispatcherTask extends Task {
 
     public Packet getRequest() {
         return this.request;
+    }
+
+    public void markResponseTime() {
+        if (null != this.responseTime) {
+            this.responseTime.ending = System.currentTimeMillis();
+            this.responseTime.mark = this.action.getName();
+        }
     }
 
     protected ActionDialect makeResponse(ActionDialect response) {

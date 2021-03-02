@@ -36,10 +36,13 @@ import cube.console.mgmt.UserManager;
 import cube.report.JVMReport;
 import cube.report.LogLine;
 import cube.report.LogReport;
+import cube.report.PerformanceReport;
 import cube.util.ConfigUtils;
-import org.json.JSONArray;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -66,6 +69,11 @@ public final class Console implements Runnable {
      * JVM 信息记录。
      */
     private ConcurrentHashMap<String, List<JVMReport>> serverJVMMap;
+
+    /**
+     * 性能信息记录。
+     */
+    private ConcurrentHashMap<String, List<PerformanceReport>> serverPerfMap;
 
     private int maxReportNum = 30;
 
@@ -241,6 +249,12 @@ public final class Console implements Runnable {
         Collections.reverse(result);
 
         return result;
+    }
+
+    public void appendPerformanceReport(PerformanceReport report) {
+        Logger.d(this.getClass(), "Received report from " + report.getReporter() + " (" + report.getName() + ")");
+
+
     }
 
     @Override

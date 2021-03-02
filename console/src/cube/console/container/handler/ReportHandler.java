@@ -29,6 +29,7 @@ package cube.console.container.handler;
 import cube.console.Console;
 import cube.report.JVMReport;
 import cube.report.LogReport;
+import cube.report.PerformanceReport;
 import cube.report.Report;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
@@ -76,6 +77,8 @@ public class ReportHandler extends ContextHandler {
 
             try {
                 JSONObject reportJson = new JSONObject(buf.toString());
+
+                // 获取报告名
                 String name = Report.extractName(reportJson);
                 if (LogReport.NAME.equals(name)) {
                     LogReport report = new LogReport(reportJson);
@@ -84,6 +87,10 @@ public class ReportHandler extends ContextHandler {
                 else if (JVMReport.NAME.equals(name)) {
                     JVMReport report = new JVMReport(reportJson);
                     console.appendJVMReport(report);
+                }
+                else if (PerformanceReport.NAME.equals(name)) {
+                    PerformanceReport report = new PerformanceReport(reportJson);
+                    console.appendPerformanceReport(report);
                 }
 
                 httpServletResponse.setStatus(HttpStatus.OK_200);

@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.ContactAction;
+import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -42,7 +43,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * 联系人模块网关的 Cellet 服务单元。
  */
-public class ContactCellet extends Cellet {
+public class ContactCellet extends AbstractCellet {
 
     /**
      * Cellet 名称。
@@ -107,6 +108,8 @@ public class ContactCellet extends Cellet {
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
+        super.onListened(talkContext, primitive);
+
         ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = actionDialect.getName();
 
@@ -135,56 +138,76 @@ public class ContactCellet extends Cellet {
     protected SignInTask borrowSignInTask(TalkContext talkContext, Primitive primitive) {
         SignInTask task = this.signInTaskQueue.poll();
         if (null == task) {
-            return new SignInTask(this, talkContext, primitive, this.performer);
+            task = new SignInTask(this, talkContext, primitive, this.performer);
+            task.responseTime = this.markResponseTime();
+            return task;
         }
 
         task.reset(talkContext, primitive);
+        task.responseTime = this.markResponseTime();
         return task;
     }
 
     protected void returnSignInTask(SignInTask task) {
+        task.markResponseTime();
+
         this.signInTaskQueue.offer(task);
     }
 
     protected SignOutTask borrowSignOutTask(TalkContext talkContext, Primitive primitive) {
         SignOutTask task = this.signOutTaskQueue.poll();
         if (null == task) {
-            return new SignOutTask(this, talkContext, primitive, this.performer);
+            task = new SignOutTask(this, talkContext, primitive, this.performer);
+            task.responseTime = this.markResponseTime();
+            return task;
         }
 
         task.reset(talkContext, primitive);
+        task.responseTime = this.markResponseTime();
         return task;
     }
 
     protected void returnSignOutTask(SignOutTask task) {
+        task.markResponseTime();
+
         this.signOutTaskQueue.offer(task);
     }
 
     protected ComebackTask borrowComebackTask(TalkContext talkContext, Primitive primitive) {
         ComebackTask task = this.comebackTaskQueue.poll();
         if (null == task) {
-            return new ComebackTask(this, talkContext, primitive, this.performer);
+            task = new ComebackTask(this, talkContext, primitive, this.performer);
+            task.responseTime = this.markResponseTime();
+            return task;
         }
 
         task.reset(talkContext, primitive);
+        task.responseTime = this.markResponseTime();
         return task;
     }
 
     protected void returnComebackTask(ComebackTask task) {
+        task.markResponseTime();
+
         this.comebackTaskQueue.offer(task);
     }
 
     protected PassThroughTask borrowPassTask(TalkContext talkContext, Primitive primitive, boolean sync) {
         PassThroughTask task = this.passTaskQueue.poll();
         if (null == task) {
-            return new PassThroughTask(this, talkContext, primitive, this.performer, sync);
+            task = new PassThroughTask(this, talkContext, primitive, this.performer, sync);
+            task.responseTime = this.markResponseTime();
+            return task;
         }
 
         task.reset(talkContext, primitive, sync);
+        task.responseTime = this.markResponseTime();
         return task;
     }
 
     protected void returnPassTask(PassThroughTask task) {
+        task.markResponseTime();
+
         this.passTaskQueue.offer(task);
     }
 
