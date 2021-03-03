@@ -95,6 +95,22 @@ public class PerformanceReport extends Report {
         return json;
     }
 
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toJSON();
+
+        // 仅输出平均值
+        json.put("benchmark", this.benchmark.toCompactJSON());
+
+        JSONArray array = new JSONArray();
+        Iterator<ConnectionReport> iter = this.serverConnMap.values().iterator();
+        while (iter.hasNext()) {
+            array.put(iter.next().toJSON());
+        }
+        json.put("connNums", array);
+        return json;
+    }
+
 
     /**
      * 连接数据。

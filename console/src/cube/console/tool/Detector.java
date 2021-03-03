@@ -47,6 +47,7 @@ public final class Detector {
         if (host.equals("0.0.0.0")) {
             address = "127.0.0.1";
         }
+        final String serverAddress = address;
 
         AtomicBoolean connected = new AtomicBoolean(false);
 
@@ -56,50 +57,48 @@ public final class Detector {
         nucleus.getTalkService().setListener("AuthService", new TalkListener() {
             @Override
             public void onListened(Speakable speakable, String cellet, Primitive primitive) {
-
             }
 
             @Override
             public void onListened(Speakable speakable, String cellet, PrimitiveInputStream primitiveInputStream) {
-
             }
 
             @Override
             public void onSpoke(Speakable speakable, String cellet, Primitive primitive) {
-
             }
 
             @Override
             public void onAck(Speakable speakable, String cellet, Primitive primitive) {
-
             }
 
             @Override
             public void onSpeakTimeout(Speakable speakable, String cellet, Primitive primitive) {
-
             }
 
             @Override
             public void onContacted(Speakable speakable) {
+                Logger.d(Detector.class, "#onContacted - " + serverAddress);
                 connected.set(true);
 
-                synchronized (nucleus) {
-                    nucleus.notify();
+                synchronized (serverAddress) {
+                    serverAddress.notify();
                 }
             }
 
             @Override
             public void onQuitted(Speakable speakable) {
-                synchronized (nucleus) {
-                    nucleus.notify();
+                Logger.d(Detector.class, "#onQuitted - " + serverAddress);
+
+                synchronized (serverAddress) {
+                    serverAddress.notify();
                 }
             }
 
             @Override
             public void onFailed(Speakable speakable, TalkError talkError) {
-                Logger.d(Detector.class, "#detectCellServer - #onFailed " + talkError.getErrorCode());
-                synchronized (nucleus) {
-                    nucleus.notify();
+                Logger.d(Detector.class, "#detectCellServer - " + serverAddress + " - #onFailed: " + talkError.getErrorCode());
+                synchronized (serverAddress) {
+                    serverAddress.notify();
                 }
             }
         });
@@ -107,15 +106,25 @@ public final class Detector {
         // 尝试连接
         nucleus.getTalkService().call(address, port);
 
-        synchronized (nucleus) {
+        synchronized (serverAddress) {
             try {
-                nucleus.wait(10000L);
+                serverAddress.wait(10000L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
         nucleus.getTalkService().hangup(address, port, false);
+
+        synchronized (serverAddress) {
+            try {
+                serverAddress.wait(1000L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        nucleus.destroy();
 
         return connected.get();
     }

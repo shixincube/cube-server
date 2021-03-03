@@ -29,6 +29,7 @@ package cube.console.container.handler;
 import cube.console.Console;
 import cube.console.Utils;
 import cube.report.JVMReport;
+import cube.report.PerformanceReport;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -88,11 +89,22 @@ public class ServerReportHandler extends ContextHandler {
                     }
 
                     JSONObject response = new JSONObject();
-                    try {
+                    response.put("name", name);
+                    response.put("list", result);
+
+                    httpServletResponse.getWriter().write(response.toString());
+                }
+                else if (report.equals(PerformanceReport.NAME)) {
+                    PerformanceReport perfReport = console.queryLastPerformanceReport(name);
+
+                    JSONObject response = new JSONObject();
+
+                    if (null == perfReport) {
                         response.put("name", name);
-                        response.put("list", result);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                    }
+                    else {
+                        response.put("name", name);
+                        response.put("report", perfReport.toCompactJSON());
                     }
 
                     httpServletResponse.getWriter().write(response.toString());

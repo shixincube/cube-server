@@ -81,6 +81,10 @@ public class Benchmark implements JSONable {
         this.counterMap.put(name, counter);
     }
 
+    public Map<String, Long> getCounterMap() {
+        return this.counterMap;
+    }
+
     /**
      * 添加应答时间。
      *
@@ -93,7 +97,11 @@ public class Benchmark implements JSONable {
             list = new LinkedList<>();
             this.responseTimeMap.put(name, list);
         }
-        list.addAll(list);
+        list.addAll(timeList);
+    }
+
+    public Set<String> getResponseTimeKeys() {
+        return this.responseTimeMap.keySet();
     }
 
     /**
@@ -149,13 +157,27 @@ public class Benchmark implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        json.put("counterMap", JSONUtils.toJSONObjectAsLong(this.counterMap));
+
+        JSONObject responseTimeMap = new JSONObject();
+        Iterator<String> iter = this.responseTimeMap.keySet().iterator();
+        while (iter.hasNext()) {
+            String name = iter.next();
+
+            Map<String, AverageValue> value = this.calcAverageResponseTime(name);
+            JSONObject valueMap = JSONUtils.toJSONObject(value);
+            responseTimeMap.put(name, valueMap);
+        }
+        json.put("avgResponseTimeMap", responseTimeMap);
+
+        return json;
     }
 
     /**
      * 平均值。
      */
-    public class AverageValue {
+    public class AverageValue implements JSONable {
 
         protected long total = 0;
 
@@ -164,6 +186,20 @@ public class Benchmark implements JSONable {
         public long value = 0;
 
         protected AverageValue() {
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("total", this.total);
+            json.put("count", this.count);
+            json.put("value", this.value);
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
         }
     }
 }

@@ -54,16 +54,20 @@ public abstract class DispatcherTask extends Task {
         super(cellet, talkContext, primitive);
         this.performer = performer;
 
-        this.action = DialectFactory.getInstance().createActionDialect(this.primitive);
-        this.request = new Packet(this.action);
+        if (null != primitive) {
+            this.action = DialectFactory.getInstance().createActionDialect(this.primitive);
+            this.request = new Packet(this.action);
+        }
     }
 
     public void reset(TalkContext talkContext, Primitive primitive) {
         this.talkContext = talkContext;
         this.primitive = primitive;
 
-        this.action = DialectFactory.getInstance().createActionDialect(this.primitive);
-        this.request = new Packet(this.action);
+        if (null != primitive) {
+            this.action = DialectFactory.getInstance().createActionDialect(this.primitive);
+            this.request = new Packet(this.action);
+        }
     }
 
     public ActionDialect getAction() {

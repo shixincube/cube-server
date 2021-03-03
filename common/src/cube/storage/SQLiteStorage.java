@@ -156,10 +156,12 @@ public class SQLiteStorage extends AbstractStorage {
         }
 
         Constraint[] constraints = field.getConstraints();
-        for (int i = 0; i < constraints.length; ++i) {
-            Constraint constraint = constraints[i];
-            if (constraint == Constraint.AUTO_INCREMENT) {
-                constraints[i] = Constraint.AUTOINCREMENT;
+        if (null != constraints) {
+            for (int i = 0; i < constraints.length; ++i) {
+                Constraint constraint = constraints[i];
+                if (constraint == Constraint.AUTO_INCREMENT) {
+                    constraints[i] = Constraint.AUTOINCREMENT;
+                }
             }
         }
     }

@@ -96,17 +96,6 @@ Console.prototype.getServiceDefaultDeploy = function(handler) {
     }, 'json');
 }
 
-Console.prototype.queryJVMReport = function(name, num, handler) {
-    $.get('/server-report', {
-        "report": "JVMReport",
-        "name": name,
-        "num": num,
-        "time": Date.now()
-    }, function(response, status, xhr) {
-        handler(response);
-    }, 'json');
-}
-
 Console.prototype.queryConsoleLog = function(start, handler) {
     $.get('/log/console', { "start": start }, function(response, status, xhr) {
         handler(response);
@@ -119,7 +108,43 @@ Console.prototype.queryLog = function(name, start, handler) {
     }, 'json');
 }
 
+Console.prototype.queryJVMReport = function(name, num, handler) {
+    $.get('/server-report', {
+        "report": "JVMReport",
+        "name": name,
+        "num": num,
+        "time": Date.now()
+    }, function(response, status, xhr) {
+        handler(response);
+    }, 'json');
+}
 
+Console.prototype.queryPerformanceReport = function(name, handler) {
+    $.get('/server-report', {
+        "report": "PerfReport",
+        "name": name,
+        "time": Date.now()
+    }, function(response, status, xhr) {
+        handler(response);
+    }, 'json');
+}
+
+Console.prototype.calcDispatcherLoad = function(perf) {
+    var sumRealtime = 0;
+    var sumMax = 0;
+    perf.connNums.forEach(function(value) {
+        sumMax += value.max;
+        sumRealtime += value.realtime;
+    });
+
+    if (0 == sumMax) {
+        return 0;
+    }
+
+    var d = sumRealtime / perf.connNums.length;
+    var v = sumMax / perf.connNums.length;
+    return Math.floor((d / v) * 100.0);
+}
 
 Console.prototype.getServers = function(handler) {
     var that = this;

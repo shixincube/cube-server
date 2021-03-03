@@ -139,6 +139,10 @@ public class MySQLStorage extends AbstractStorage {
 
     private void fixAutoIncrement(StorageField field) {
         Constraint[] constraints = field.getConstraints();
+        if (null == constraints) {
+            return;
+        }
+        
         for (int i = 0; i < constraints.length; ++i) {
             Constraint constraint = constraints[i];
             if (constraint == Constraint.AUTOINCREMENT) {

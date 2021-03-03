@@ -111,7 +111,7 @@
             // 启动 JVM 报表
             setTimeout(function() {
                 that.startReportTask();
-            }, 10000);
+            }, 5000);
 
             // 启动打印控制台日志
             that.startPrintLog();

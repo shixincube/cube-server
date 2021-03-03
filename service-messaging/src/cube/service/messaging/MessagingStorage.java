@@ -120,11 +120,15 @@ public class MessagingStorage implements Storagable {
 
     @Override
     public void execSelfChecking(List<String> domainNameList) {
-        String table = "cube";
+        /*String table = "cube";
 
         StorageField[] fields = new StorageField[] {
-                new StorageField("item", LiteralBase.STRING),
-                new StorageField("desc", LiteralBase.STRING)
+                new StorageField("item", LiteralBase.STRING, new Constraint[] {
+                        Constraint.NOT_NULL
+                }),
+                new StorageField("desc", LiteralBase.STRING, new Constraint[] {
+                        Constraint.NOT_NULL
+                })
         };
 
         List<StorageField[]> result = this.storage.executeQuery(table, fields);
@@ -150,7 +154,7 @@ public class MessagingStorage implements Storagable {
                     Logger.i(this.getClass(), "Message storage version " + row[1].getString());
                 }
             }
-        }
+        }*/
 
         // 校验域对应的表
         for (String domain : domainNameList) {

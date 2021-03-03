@@ -73,12 +73,27 @@
         }
     }
 
+    /**
+     * 开关服务器对话框的密码输入框键盘 Key Press 事件回调。
+     * @param {*} event 
+     */
+    function onPasswordKeyPress(event) {
+        if (event.keyCode == 13) {
+            if (that.onToggleConfirm()) {
+                $(this).blur();
+            }
+        }
+    }
+
     g.service = {
         launch: function() {
             btnNewDeploy = $('#btn_new_deploy');
             btnNewDeploy.click(function() {
                 that.showNewDeployDialog();
             });
+
+            var el = $('#modal_toggle_server');
+            el.find('#input_password').on('keypress', onPasswordKeyPress);
 
             tableEl = $('#server_table');
 
@@ -234,9 +249,13 @@
             var tag = el.find('#input_tag').val();
             var deployPath = el.find('#input_path').val();
             var password = el.find('#input_password').val();
+            if (password.length == 0) {
+                return false;
+            }
+
             if (password.length < 6) {
                 alert('请输入您的管理密码！');
-                return;
+                return false;
             }
             // 计算密码的 MD5 码
             password = md5(password);
@@ -325,6 +344,8 @@
                     alert('操作失败，请检查您的管理密码是否输入正确。');
                 });
             }
+
+            return true;
         },
 
         showDetails: function(index) {

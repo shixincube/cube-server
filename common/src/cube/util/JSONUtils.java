@@ -81,6 +81,22 @@ public final class JSONUtils {
      * @param map
      * @return
      */
+    public static JSONObject toJSONObject(Map<String, ? extends JSONable> map) {
+        JSONObject json = new JSONObject();
+        Iterator<? extends Map.Entry<String, ? extends JSONable>> iter = map.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, ? extends JSONable> e = iter.next();
+            json.put(e.getKey(), e.getValue().toJSON());
+        }
+        return json;
+    }
+
+    /**
+     * Map 结构转为 JSON Object 结构。
+     *
+     * @param map
+     * @return
+     */
     public static JSONObject toJSONObjectAsList(Map<String, List<JSONable>> map) {
         JSONObject json = new JSONObject();
         Iterator<Map.Entry<String, List<JSONable>>> iter = map.entrySet().iterator();
