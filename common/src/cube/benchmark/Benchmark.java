@@ -130,7 +130,10 @@ public class Benchmark implements JSONable {
                 value = new AverageValue();
                 result.put(time.mark, value);
             }
-            value.total += time.ending - time.beginning;
+
+            long duration = time.ending - time.beginning;
+            value.durations.add(duration);
+            value.total += duration;
             value.count += 1;
         }
 
@@ -183,9 +186,20 @@ public class Benchmark implements JSONable {
 
         protected long count = 0;
 
+        protected List<Long> durations = new ArrayList<>();
+
         public long value = 0;
 
         protected AverageValue() {
+        }
+
+        private long getDelta() {
+            int size = this.durations.size();
+            if (size <= 1) {
+                return 0;
+            }
+
+            return (this.durations.get(size - 1) - this.durations.get(0));
         }
 
         @Override
@@ -194,6 +208,7 @@ public class Benchmark implements JSONable {
             json.put("total", this.total);
             json.put("count", this.count);
             json.put("value", this.value);
+            json.put("delta", this.getDelta());
             return json;
         }
 

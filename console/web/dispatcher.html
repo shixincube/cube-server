@@ -210,8 +210,8 @@
                                         <tr>
                                             <th style="width: 1%">#</th>
                                             <th>标签</th>
-                                            <th style="width: 30%">部署路径</th>
-                                            <th style="width: 20%">负载</th>
+                                            <th style="width: 40%">部署路径</th>
+                                            <th style="width: 10%">负载</th>
                                             <th style="width: 8%" class="text-center">状态</th>
                                             <th></th>
                                         </tr>
@@ -238,16 +238,29 @@
                             <div class="card-body">
                                 <div class="btn-toolbar" role="toolbar" aria-label="Monitor Toolbar">
                                     <div class="btn-group mr-2" role="group" aria-label="main">
-                                        <button type="button" class="btn btn-default"><i class="fas fa-wrench"></i> 选择调度机</button>
+                                        <button id="monitor_server" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="fas fa-server"></i> 选择调度机
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="monitor_server">
+                                        </div>
                                     </div>
+                                    <div class="input-group mr-2">
+                                        <input type="text" data-target="server-name" class="form-control" style="min-width:280px;" placeholder="请选择需要监视的服务器" aria-label="请选择需要监视的服务器" disabled />
+                                    </div>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text"><i class="fas fa-clock"></i></div>
+                                        </div>
+                                        <input type="text" data-target="perf-time" class="form-control" aria-label="数据采集时间" disabled />
+                                      </div>
                                 </div>
-                                <div class="row">
+                                <div class="row base-data">
                                     <div class="col-8">
                                         <p class="text-center">
                                             <strong>任务执行统计</strong>
                                         </p>
                                         <div class="chart">
-                                            <canvas id="salesChart" height="180" style="height: 180px;"></canvas>
+                                            <canvas id="monitor_chart" height="200" style="height:200px;"></canvas>
                                         </div><!-- /.chart -->
                                     </div><!-- /.col-8 -->
                                     <div class="col-4">
@@ -256,73 +269,73 @@
                                         </p>
                                         <div class="progress-group mb-3">
                                             <span class="progress-text">SHM 访问点负载</span>
-                                            <span class="float-right"><b>100</b>/1000</span>
+                                            <span class="float-right"><b class="shm-rt">--</b>/<span class="shm-max">--</span></span>
                                             <div class="progress progress-sm">
-                                                <div class="progress-bar bg-primary" style="width: 10%"></div>
+                                                <div class="progress-bar bg-primary shm-rate" style="width:0%"></div>
                                             </div>
                                         </div><!-- /.progress-group -->
                                         <div class="progress-group mb-3">
                                             <span class="progress-text">WS 访问点负载</span>
-                                            <span class="float-right"><b>480</b>/800</span>
+                                            <span class="float-right"><b class="ws-rt">--</b>/<span class="ws-max">--</span></span>
                                             <div class="progress progress-sm">
-                                                <div class="progress-bar bg-success" style="width: 60%"></div>
+                                                <div class="progress-bar bg-success ws-rate" style="width:0%"></div>
                                             </div>
                                         </div><!-- /.progress-group -->
                                         <div class="progress-group mb-3">
                                             <span class="progress-text">WSS 访问点负载</span>
-                                            <span class="float-right"><b>250</b>/500</span>
+                                            <span class="float-right"><b class="wss-rt">--</b>/<span class="wss-max">--</span></span>
                                             <div class="progress progress-sm">
-                                                <div class="progress-bar bg-info" style="width: 50%"></div>
+                                                <div class="progress-bar bg-info wss-rate" style="width:0%"></div>
                                             </div>
                                         </div><!-- /.progress-group -->
                                         <div class="progress-group mb-3">
                                             <span class="progress-text">综合负载</span>
-                                            <span class="float-right"><b>250</b>/500</span>
+                                            <span class="float-right"><b class="avg-load">--</b></span>
                                             <div class="progress progress-sm">
-                                                <div class="progress-bar bg-warning" style="width: 50%"></div>
+                                                <div class="progress-bar bg-warning load-rate" style="width:0%"></div>
                                             </div>
                                         </div><!-- /.progress-group -->
                                     </div><!-- /.col -->
                                 </div><!-- /.row -->
                                 <div class="row response-time">
                                     <div class="col-2">
-                                        <div class="description-block border-right">
-                                            <span class="description-percentage text-success"><i class="fas fa-caret-up"></i> 17%</span>
-                                            <h5 class="description-header">23 ms</h5>
-                                            <span class="description-text">SignIn</span>
-                                        </div><!-- /.description-block -->
-                                    </div>
-                                    <div class="col-2">
-                                        <div class="description-block border-right">
-                                            <span class="description-percentage text-success"><i class="fas fa-caret-up"></i> 17%</span>
-                                            <h5 class="description-header">23 ms</h5>
-                                            <span class="description-text">SignIn</span>
-                                        </div><!-- /.description-block -->
-                                    </div>
-                                    <div class="col-2">
-                                        <div class="description-block border-right">
-                                            <span class="description-percentage text-success"><i class="fas fa-caret-up"></i> 17%</span>
-                                            <h5 class="description-header">23 ms</h5>
-                                            <span class="description-text">SignIn</span>
-                                        </div><!-- /.description-block -->
-                                    </div>
-                                    <div class="col-2">
-                                        <div class="description-block border-right">
-                                            <span class="description-percentage text-success"><i class="fas fa-caret-up"></i> 17%</span>
+                                        <div class="description-block border-right" data-target="slot-1">
+                                            <span class="description-percentage"><span class="text-primary"><i class="fas fa-caret-left"></i> 0</span></span>
                                             <h5 class="description-header">-- ms</h5>
                                             <span class="description-text">--</span>
                                         </div><!-- /.description-block -->
                                     </div>
                                     <div class="col-2">
-                                        <div class="description-block border-right">
-                                            <span class="description-percentage text-danger"><i class="fas fa-caret-down"></i> 17%</span>
+                                        <div class="description-block border-right" data-target="slot-2">
+                                            <span class="description-percentage"><span class="text-primary"><i class="fas fa-caret-left"></i> 0</span></span>
                                             <h5 class="description-header">-- ms</h5>
                                             <span class="description-text">--</span>
                                         </div><!-- /.description-block -->
                                     </div>
                                     <div class="col-2">
-                                        <div class="description-block">
-                                            <span class="description-percentage text-primary"><i class="fas fa-caret-left"></i> 0%</span>
+                                        <div class="description-block border-right" data-target="slot-3">
+                                            <span class="description-percentage"><span class="text-primary"><i class="fas fa-caret-left"></i> 0</span></span>
+                                            <h5 class="description-header">-- ms</h5>
+                                            <span class="description-text">--</span>
+                                        </div><!-- /.description-block -->
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="description-block border-right" data-target="slot-4">
+                                            <span class="description-percentage"><span class="text-primary"><i class="fas fa-caret-left"></i> 0</span></span>
+                                            <h5 class="description-header">-- ms</h5>
+                                            <span class="description-text">--</span>
+                                        </div><!-- /.description-block -->
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="description-block border-right" data-target="slot-5">
+                                            <span class="description-percentage"><span class="text-primary"><i class="fas fa-caret-left"></i> 0</span></span>
+                                            <h5 class="description-header">-- ms</h5>
+                                            <span class="description-text">--</span>
+                                        </div><!-- /.description-block -->
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="description-block" data-target="slot-6">
+                                            <span class="description-percentage"><span class="text-primary"><i class="fas fa-caret-left"></i> 0</span></span>
                                             <h5 class="description-header">-- ms</h5>
                                             <span class="description-text">--</span>
                                         </div><!-- /.description-block -->
@@ -588,6 +601,7 @@
 <script src="plugins/jquery/jquery.min.js"></script>
 <script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="plugins/sweetalert2/sweetalert2.min.js"></script>
+<script src="plugins/chart.js/Chart.min.js"></script>
 <script src="assets/js/libs/adminlte.min.js"></script>
 <script src="assets/js/libs/md5.js"></script>
 <script src="assets/js/util.js"></script>

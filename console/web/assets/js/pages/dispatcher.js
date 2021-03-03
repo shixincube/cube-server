@@ -32,9 +32,17 @@
     var console = new Console();
     $.console = console;
 
+    var btnNewDeploy = null;
+    var tableEl = null;
+    var monitorEl = null;
+
     var defaultDeploy = null;
 
     var dispatcherList = [];
+
+    // 监视器当前服务器
+    var current = null;
+    var currentChart = null;
 
     // 检查是否合法
     console.checkUser(function(valid) {
@@ -47,13 +55,20 @@
         }
     });
 
-    var btnNewDeploy = null;
-    var tableEl = null;
-
     function findDispatcher(tag, deployPath) {
         for (var i = 0; i < dispatcherList.length; ++i) {
             var value = dispatcherList[i];
             if (value.tag == tag && value.deployPath == deployPath) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    function findDispatcherByName(name) {
+        for (var i = 0; i < dispatcherList.length; ++i) {
+            var value = dispatcherList[i];
+            if (value.name == name) {
                 return value;
             }
         }
@@ -127,7 +142,12 @@
             var el = $('#modal_toggle_server');
             el.find('#input_password').on('keypress', onPasswordKeyPress);
 
+            // 表格
             tableEl = $('#server_table');
+            // 监视器
+            monitorEl = $('.monitor');
+            monitorEl.find('input[data-target="server-name"]').val('');
+            that.fillEmptyChart();
 
             // 获取默认部署数据
             console.getDispatcherDefaultDeploy(function(data) {
@@ -149,11 +169,9 @@
             var body = tableEl.find('tbody');
             body.empty();
 
-            dispatcherList.forEach(function(value, index) {
-                if (value.running) {
-                    that.refreshPerformance(value);
-                }
+            var selectServerEl = monitorEl.find('div[aria-labelledby="monitor_server"]');
 
+            dispatcherList.forEach(function(value, index) {
                 var capacityHTML = [
                     '<div class="progress progress-sm">',
                         '<div class="progress-bar bg-green" role="progressbar" aria-volumenow="0" aria-volumemin="0" aria-volumemax="100" style="width:0%"></div>',
@@ -162,7 +180,7 @@
                 ];
 
                 var html = [
-                    '<tr>',
+                    '<tr data-target="', value.name, '">',
                         '<td>', (index + 1), '</td>',
                         '<td class="tag-display">', value.tag, '</td>',
                         '<td><span>', value.deployPath, '</span></td>',
@@ -184,7 +202,7 @@
                             '<button type="button" class="btn btn-primary btn-sm" onclick="javascript:dispatcher.showDetails(', index, ');">',
                                 '<i class="fas fa-tasks"></i> 详情',
                             '</button>',
-                            '<button type="button" class="btn btn-warning btn-sm" onclick="javascript:dispatcher.deleteServer(', index, ');">',
+                            '<button type="button" class="btn btn-warning btn-sm" onclick="javascript:dispatcher.runMockTest(', index, ');">',
                                 '<i class="fas fa-bolt"></i> 拨测',
                             '</button>',
                         '</td>',
@@ -192,6 +210,16 @@
                 ];
 
                 body.append($(html.join('')));
+
+                if (value.running) {
+                    that.refreshPerformance(value);
+                }
+
+                // 更新选择菜单
+                html = [
+                    '<a class="dropdown-item" href="javascript:dispatcher.onMonitorChange(\'', value.name, '\');">', value.name, '</a>'
+                ];
+                selectServerEl.append($(html.join('')));
             });
         },
 
@@ -199,15 +227,22 @@
             console.queryPerformanceReport(server.name, function(perf) {
                 server.perf = perf.report;
 
-                console.log(perf);
+                monitorEl.find('input[data-target="perf-time"]').val();
+
                 // 计算综合负载
                 var loadRate = console.calcDispatcherLoad(server.perf);
 
-                var el = tableEl.find('.server-capacity');
+                // 更新表格
+                var el = tableEl.find('tr[data-target="' + server.name + '"]').find('.server-capacity');
                 var bar = el.find('.progress-bar');
                 bar.attr('aria-volumenow', loadRate);
                 bar.css('width', loadRate + '%');
                 el.find('small').text(loadRate + '%');
+
+                if (current == server) {
+                    // 更新监视器
+                    that.updateMonitor(server);
+                }
             });
         },
 
@@ -443,8 +478,172 @@
             el.modal('show');
         },
 
-        deleteServer: function(index) {
+        runMockTest: function(index) {
             g.common.toast(Toast.Warning, '此功能暂不可用');
+        },
+
+        updateMonitor: function(current) {
+            // Update chart data
+            var benchmark = current.perf.benchmark;
+            var counterMap = benchmark.counterMap;
+            var labels = [];
+            var data = [];
+            for (var c in counterMap) {
+                labels.push(c);
+            }
+            labels.sort();
+            labels.forEach(function(value) {
+                data.push(counterMap[value]);
+            });
+
+            if (null == currentChart) {
+                var chartData = {
+                    labels  : labels,
+                    datasets: [
+                        {
+                            label               : '执行次数',
+                            backgroundColor     : 'rgba(60,141,188,0.9)',
+                            borderColor         : 'rgba(60,141,188,0.8)',
+                            pointRadius          : false,
+                            pointColor          : '#3b8bba',
+                            pointStrokeColor    : 'rgba(60,141,188,1)',
+                            pointHighlightFill  : '#fff',
+                            pointHighlightStroke: 'rgba(60,141,188,1)',
+                            data                : data
+                        }
+                    ]
+                }
+
+                var chartCanvas = monitorEl.find('#monitor_chart').get(0).getContext('2d');
+                var chartOptions = {
+                    responsive              : true,
+                    maintainAspectRatio     : false,
+                    datasetFill             : false,
+                    legend: {
+                        display: false
+                    }
+                };
+
+                currentChart = new Chart(chartCanvas, {
+                    type: 'bar', 
+                    data: chartData,
+                    options: chartOptions
+                });
+            }
+            else {
+                currentChart.data.labels = labels;
+                currentChart.data.datasets[0].data = data;
+                currentChart.update();
+            }
+
+            // 更新负载
+            var connNums = current.perf.connNums;
+            for (var i = 0; i < connNums.length; ++i) {
+                var value = connNums[i];
+                if (value.port == current.server.port) {
+                    monitorEl.find('.shm-rt').text(value.realtime);
+                    monitorEl.find('.shm-max').text(value.max);
+                    monitorEl.find('.shm-rate').css('width', Math.floor(value.realtime / value.max) + '%');
+                }
+                else if (value.port == current.wsServer.port) {
+                    monitorEl.find('.ws-rt').text(value.realtime);
+                    monitorEl.find('.ws-max').text(value.max);
+                    monitorEl.find('.ws-rate').css('width', Math.floor(value.realtime / value.max) + '%');
+                }
+                else if (value.port == current.wssServer.port) {
+                    monitorEl.find('.wss-rt').text(value.realtime);
+                    monitorEl.find('.wss-max').text(value.max);
+                    monitorEl.find('.wss-rate').css('width', Math.floor(value.realtime / value.max) + '%');
+                }
+            }
+            var loadRate = console.calcDispatcherLoad(current.perf) + '%';
+            monitorEl.find('.avg-load').text(loadRate);
+            monitorEl.find('.load-rate').css('width', loadRate);
+
+            var avgTimeList = console.arrangeAvgResponseTime(current.perf);
+            for (var i = 0; i < 6; ++i) {
+                var value = i < avgTimeList.length ? avgTimeList[i] : null;
+
+                var el = monitorEl.find('div[data-target="slot-' + (i + 1) + '"]');
+
+                if (null == value) {
+                    el.find('.description-header').text('-- ms');
+                    el.find('.description-text').text('--');
+                    el.find('.description-percentage').html('<span class="text-primary"><i class="fas fa-caret-left"></i> 0</span>');
+                }
+                else {
+                    el.find('.description-header').text(value.data.value + ' ms');
+                    el.find('.description-text').text(value.action);
+                    if (value.data.delta < 0) {
+                        el.find('.description-percentage').html('<span class="text-success"><i class="fas fa-caret-up"></i> '
+                            + Math.abs(value.data.delta) + '</span>');
+                    }
+                    else if (value.data.delta > 0) {
+                        el.find('.description-percentage').html('<span class="text-danger"><i class="fas fa-caret-down"></i> '
+                            + Math.abs(value.data.delta) + '</span>');
+                    }
+                    else {
+                        el.find('.description-percentage').html('<span class="text-primary"><i class="fas fa-caret-left"></i> 0</span>');
+                    }
+                }
+            }
+        },
+
+        fillEmptyChart: function() {
+            if (null != currentChart) {
+                return;
+            }
+
+            var chartData = {
+                labels  : ['', '', '', '', '', ''],
+                datasets: [
+                    {
+                        label               : '执行次数',
+                        backgroundColor     : 'rgba(60,141,188,0.9)',
+                        borderColor         : 'rgba(60,141,188,0.8)',
+                        pointRadius          : false,
+                        pointColor          : '#3b8bba',
+                        pointStrokeColor    : 'rgba(60,141,188,1)',
+                        pointHighlightFill  : '#fff',
+                        pointHighlightStroke: 'rgba(60,141,188,1)',
+                        data                : [0, 0, 0, 0, 0, 0]
+                    }
+                ]
+            }
+
+            var chartCanvas = monitorEl.find('#monitor_chart').get(0).getContext('2d');
+            var chartOptions = {
+                responsive              : true,
+                maintainAspectRatio     : false,
+                datasetFill             : false,
+                legend: {
+                    display: false
+                }
+            };
+
+            currentChart = new Chart(chartCanvas, {
+                type: 'bar', 
+                data: chartData,
+                options: chartOptions
+            });
+        },
+
+        onMonitorChange: function(name) {
+            var server = findDispatcherByName(name);
+            if (null == server) {
+                return;
+            }
+
+            if (!server.running) {
+                g.common.toast(Toast.Info, '服务器没有启动');
+                return;
+            }
+
+            // 已选择服务器
+            monitorEl.find('input[data-target="server-name"]').val(name);
+
+            current = server;
+            that.refreshPerformance(current);
         },
 
         showNewDeployDialog: function() {

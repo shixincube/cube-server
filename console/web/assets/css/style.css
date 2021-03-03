@@ -75,6 +75,13 @@ h5 {
     z-index: 50;
 }
 
+.dropdown-menu {
+    font-size: 14px;
+}
+.dropdown-item {
+    font-size: 14px;
+}
+
 .modal-content {
     background-color: #f4f6f9;
 }
@@ -252,6 +259,13 @@ h5 {
     color: #d2d6de !important;
 }
 
+.monitor .btn-toolbar {
+    margin-bottom: 1rem;
+    font-size: 12px;
+}
+.monitor .base-data {
+    margin-bottom: 1rem;
+}
 .monitor .response-time {
     clear: both;
     background-color: rgba(0,0,0,.03);

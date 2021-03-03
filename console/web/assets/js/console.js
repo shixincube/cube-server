@@ -146,6 +146,31 @@ Console.prototype.calcDispatcherLoad = function(perf) {
     return Math.floor((d / v) * 100.0);
 }
 
+Console.prototype.arrangeAvgResponseTime = function(perf) {
+    var list = [];
+    var map = perf.benchmark.avgResponseTimeMap;
+    for (var cellet in map) {
+        var timeMap = map[cellet];
+        for (var action in timeMap) {
+            var avgValue = timeMap[action];
+            var value = {
+                cellet: cellet,
+                action: action,
+                data: avgValue
+            };
+            list.push(value);
+        }
+    }
+
+    // 按照平均响应时间从大到小排序
+    function sortAvg(a, b) {
+        return b.data.value - a.data.value;
+    }
+
+    list.sort(sortAvg);
+    return list;
+}
+
 Console.prototype.getServers = function(handler) {
     var that = this;
     $.get('/servers', function(response, status, xhr) {

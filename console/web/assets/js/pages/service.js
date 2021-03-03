@@ -150,7 +150,7 @@
                             '<button type="button" class="btn btn-primary btn-sm" onclick="javascript:service.showDetails(', index, ');">',
                                 '<i class="fas fa-tasks"></i> 详情',
                             '</button>',
-                            '<button type="button" class="btn btn-warning btn-sm" onclick="javascript:service.deleteServer(', index, ');">',
+                            '<button type="button" class="btn btn-warning btn-sm" onclick="javascript:service.runMockTest(', index, ');">',
                                 '<i class="fas fa-bolt"></i> 拨测',
                             '</button>',
                         '</td>',
@@ -408,7 +408,7 @@
             el.modal('show');
         },
 
-        deleteServer: function(index) {
+        runMockTest: function(index) {
             g.common.toast(Toast.Warning, '此功能暂不可用');
         },
 
