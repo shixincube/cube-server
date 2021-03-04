@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.state.AuthStateCode;
@@ -65,10 +66,10 @@ public class ApplyTokenTask extends ServiceTask {
                 cid = data.getLong("cid");
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#run", e);
         }
 
-        AuthToken token = ((AuthService)this.kernel.getModule(AuthService.NAME)).applyToken(domain, appKey, cid);
+        AuthToken token = ((AuthService) this.kernel.getModule(AuthService.NAME)).applyToken(domain, appKey, cid);
         if (null == token) {
             // 授权失败
             this.cellet.speak(this.talkContext, this.makeResponse(action, packet, AuthStateCode.InvalidDomain.code, data));

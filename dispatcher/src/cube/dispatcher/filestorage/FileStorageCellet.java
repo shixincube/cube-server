@@ -113,12 +113,12 @@ public class FileStorageCellet extends AbstractCellet {
         PassThroughTask task = this.taskQueue.poll();
         if (null == task) {
             task = new PassThroughTask(this, talkContext, primitive, this.performer, sync);
-            task.responseTime = this.markResponseTime();
+            task.responseTime = this.markResponseTime(task.getAction().getName());
             return task;
         }
 
         task.reset(talkContext, primitive, sync);
-        task.responseTime = this.markResponseTime();
+        task.responseTime = this.markResponseTime(task.getAction().getName());
         return task;
     }
 

@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,13 +26,13 @@
 
 package cube.service.auth;
 
-import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.AuthAction;
+import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.auth.task.ApplyTokenTask;
 import cube.service.auth.task.GetTokenTask;
@@ -42,7 +42,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * 授权服务 Cellet 单元。
  */
-public class AuthServiceCellet extends Cellet {
+public class AuthServiceCellet extends AbstractCellet {
 
     private ExecutorService executor;
 
@@ -70,6 +70,8 @@ public class AuthServiceCellet extends Cellet {
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
+        super.onListened(talkContext, primitive);
+
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
 

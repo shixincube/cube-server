@@ -267,8 +267,13 @@
         },
 
         refreshPerformance: function(server) {
-            console.queryPerformanceReport(server.name, function(perf) {
-                server.perf = perf.report;
+            console.queryPerformanceReport(server.name, function(data) {
+                if (undefined === data.report) {
+                    // 没有报告数据
+                    return;
+                }
+
+                server.perf = data.report;
 
                 monitorEl.find('input[data-target="perf-time"]').val();
 

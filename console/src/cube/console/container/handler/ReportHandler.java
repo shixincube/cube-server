@@ -26,6 +26,7 @@
 
 package cube.console.container.handler;
 
+import cell.util.log.Logger;
 import cube.console.Console;
 import cube.report.JVMReport;
 import cube.report.LogReport;
@@ -89,8 +90,12 @@ public class ReportHandler extends ContextHandler {
                     console.appendJVMReport(report);
                 }
                 else if (PerformanceReport.NAME.equals(name)) {
-                    PerformanceReport report = new PerformanceReport(reportJson);
-                    console.appendPerformanceReport(report);
+                    try {
+                        PerformanceReport report = new PerformanceReport(reportJson);
+                        console.appendPerformanceReport(report);
+                    } catch (Exception e) {
+                        Logger.e(this.getClass(), "#handle", e);
+                    }
                 }
 
                 httpServletResponse.setStatus(HttpStatus.OK_200);

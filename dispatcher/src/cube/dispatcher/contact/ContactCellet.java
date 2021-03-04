@@ -139,12 +139,12 @@ public class ContactCellet extends AbstractCellet {
         SignInTask task = this.signInTaskQueue.poll();
         if (null == task) {
             task = new SignInTask(this, talkContext, primitive, this.performer);
-            task.responseTime = this.markResponseTime();
+            task.responseTime = this.markResponseTime(task.getAction().getName());
             return task;
         }
 
         task.reset(talkContext, primitive);
-        task.responseTime = this.markResponseTime();
+        task.responseTime = this.markResponseTime(task.getAction().getName());
         return task;
     }
 
@@ -158,12 +158,12 @@ public class ContactCellet extends AbstractCellet {
         SignOutTask task = this.signOutTaskQueue.poll();
         if (null == task) {
             task = new SignOutTask(this, talkContext, primitive, this.performer);
-            task.responseTime = this.markResponseTime();
+            task.responseTime = this.markResponseTime(task.getAction().getName());
             return task;
         }
 
         task.reset(talkContext, primitive);
-        task.responseTime = this.markResponseTime();
+        task.responseTime = this.markResponseTime(task.getAction().getName());
         return task;
     }
 
@@ -177,12 +177,12 @@ public class ContactCellet extends AbstractCellet {
         ComebackTask task = this.comebackTaskQueue.poll();
         if (null == task) {
             task = new ComebackTask(this, talkContext, primitive, this.performer);
-            task.responseTime = this.markResponseTime();
+            task.responseTime = this.markResponseTime(task.getAction().getName());
             return task;
         }
 
         task.reset(talkContext, primitive);
-        task.responseTime = this.markResponseTime();
+        task.responseTime = this.markResponseTime(task.getAction().getName());
         return task;
     }
 
@@ -196,12 +196,12 @@ public class ContactCellet extends AbstractCellet {
         PassThroughTask task = this.passTaskQueue.poll();
         if (null == task) {
             task = new PassThroughTask(this, talkContext, primitive, this.performer, sync);
-            task.responseTime = this.markResponseTime();
+            task.responseTime = this.markResponseTime(task.getAction().getName());
             return task;
         }
 
         task.reset(talkContext, primitive, sync);
-        task.responseTime = this.markResponseTime();
+        task.responseTime = this.markResponseTime(task.getAction().getName());
         return task;
     }
 

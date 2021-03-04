@@ -34,13 +34,14 @@ import org.json.JSONObject;
  */
 public class ResponseTime implements JSONable {
 
-    public String mark;
+    public final String mark;
 
-    public long beginning;
+    public long beginning = 0;
 
-    public long ending;
+    public long ending = 0;
 
-    public ResponseTime() {
+    public ResponseTime(String mark) {
+        this.mark = mark;
     }
 
     public ResponseTime(JSONObject json) {

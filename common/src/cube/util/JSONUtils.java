@@ -26,6 +26,7 @@
 
 package cube.util;
 
+import cube.benchmark.ResponseTime;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -97,11 +98,11 @@ public final class JSONUtils {
      * @param map
      * @return
      */
-    public static JSONObject toJSONObjectAsList(Map<String, List<JSONable>> map) {
+    public static JSONObject toJSONObjectAsList(Map<String, List<ResponseTime>> map) {
         JSONObject json = new JSONObject();
-        Iterator<Map.Entry<String, List<JSONable>>> iter = map.entrySet().iterator();
+        Iterator<Map.Entry<String, List<ResponseTime>>> iter = map.entrySet().iterator();
         while (iter.hasNext()) {
-            Map.Entry<String, List<JSONable>> e = iter.next();
+            Map.Entry<String, List<ResponseTime>> e = iter.next();
 
             JSONArray array = new JSONArray();
             for (JSONable listValue : e.getValue()) {

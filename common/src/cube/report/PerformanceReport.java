@@ -54,9 +54,10 @@ public class PerformanceReport extends Report {
         this.serverConnMap = new HashMap<>();
     }
 
-    public PerformanceReport(JSONObject json) {
+    public PerformanceReport(JSONObject json) throws Exception {
         super(json);
 
+        System.out.println(json.toString());
         this.benchmark = new Benchmark(json.getJSONObject("benchmark"));
 
         this.serverConnMap = new HashMap<>();
@@ -70,7 +71,7 @@ public class PerformanceReport extends Report {
 
     public void gather(AbstractCellet cellet) {
         this.benchmark.addCounter(cellet.getName(), cellet.getListenedCounter().get());
-        this.benchmark.addResponseTimes(cellet.getName(), cellet.getResponseTimeList());
+        this.benchmark.addResponseTimes(cellet.getName(), cellet.getResponseTimes());
     }
 
     public void reportConnection(int port, int numRealtime, int numMax) {

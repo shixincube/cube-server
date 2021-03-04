@@ -81,7 +81,6 @@ public abstract class DispatcherTask extends Task {
     public void markResponseTime() {
         if (null != this.responseTime) {
             this.responseTime.ending = System.currentTimeMillis();
-            this.responseTime.mark = this.action.getName();
         }
     }
 

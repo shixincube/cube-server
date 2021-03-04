@@ -31,8 +31,11 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cube.benchmark.ResponseTime;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -42,7 +45,7 @@ public abstract class AbstractCellet extends Cellet {
 
     protected AtomicLong listenedCounter = new AtomicLong(0L);
 
-    protected ConcurrentLinkedQueue<ResponseTime> responseTimeList = new ConcurrentLinkedQueue<>();
+    protected ConcurrentHashMap<String, List<ResponseTime>> responseTimeMap = new ConcurrentHashMap<>();
 
     protected int maxListLength = 50;
 
@@ -64,8 +67,8 @@ public abstract class AbstractCellet extends Cellet {
      *
      * @return 返回应答时间记录。
      */
-    public Queue<ResponseTime> getResponseTimeList() {
-        return this.responseTimeList;
+    public Map<String, List<ResponseTime>> getResponseTimes() {
+        return this.responseTimeMap;
     }
 
     /**
@@ -76,13 +79,18 @@ public abstract class AbstractCellet extends Cellet {
         this.listenedCounter.incrementAndGet();
     }
 
-    protected ResponseTime markResponseTime() {
-        ResponseTime time = new ResponseTime();
+    protected ResponseTime markResponseTime(String mark) {
+        ResponseTime time = new ResponseTime(mark);
         time.beginning = System.currentTimeMillis();
 
-        this.responseTimeList.add(time);
-        if (this.responseTimeList.size() > this.maxListLength) {
-            this.responseTimeList.poll();
+        List<ResponseTime> list = this.responseTimeMap.get(mark);
+        if (null == list) {
+            list = new Vector<>();
+            this.responseTimeMap.put(mark, list);
+        }
+        list.add(time);
+        if (list.size() > this.maxListLength) {
+            list.remove(0);
         }
 
         return time;

@@ -40,7 +40,7 @@ public class Benchmark implements JSONable {
 
     private Map<String, Long> counterMap;
 
-    private Map<String, List<JSONable>> responseTimeMap;
+    private Map<String, Map<String, List<ResponseTime>>> responseTimeMap;
 
     public Benchmark() {
         this.counterMap = new HashMap<>();
@@ -56,15 +56,26 @@ public class Benchmark implements JSONable {
         Iterator<String> iter = responseTimeMapJson.keys();
         while (iter.hasNext()) {
             String name = iter.next();
-            JSONArray array = responseTimeMapJson.getJSONArray(name);
-            List<JSONable> list = new LinkedList<>();
-            for (int i = 0; i < array.length(); ++i) {
-                JSONObject timeJson = array.getJSONObject(i);
-                ResponseTime time = new ResponseTime(timeJson);
-                list.add(time);
+            JSONObject map = responseTimeMapJson.getJSONObject(name);
+
+            Map<String, List<ResponseTime>> timeMap = new HashMap<>();
+
+            Iterator<String> mapiter = map.keys();
+            while (mapiter.hasNext()) {
+                String action = mapiter.next();
+                JSONArray array = map.getJSONArray(action);
+
+                List<ResponseTime> list = new LinkedList<>();
+                for (int i = 0; i < array.length(); ++i) {
+                    JSONObject timeJson = array.getJSONObject(i);
+                    ResponseTime time = new ResponseTime(timeJson);
+                    list.add(time);
+                }
+
+                timeMap.put(action, list);
             }
 
-            this.responseTimeMap.put(name, list);
+            this.responseTimeMap.put(name, timeMap);
         }
     }
 
@@ -89,15 +100,23 @@ public class Benchmark implements JSONable {
      * 添加应答时间。
      *
      * @param name
-     * @param timeList
+     * @param timeMap
      */
-    public void addResponseTimes(String name, Queue<ResponseTime> timeList) {
-        List<JSONable> list = this.responseTimeMap.get(name);
-        if (null == list) {
-            list = new LinkedList<>();
-            this.responseTimeMap.put(name, list);
+    public void addResponseTimes(String name, Map<String, List<ResponseTime>> timeMap) {
+        Map<String, List<ResponseTime>> newMap = new HashMap<>();
+
+        Iterator<Map.Entry<String, List<ResponseTime>>> iter = timeMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, List<ResponseTime>> e = iter.next();
+
+            String key = e.getKey();
+            List<ResponseTime> value = e.getValue();
+
+            List<ResponseTime> list = new ArrayList<>(value);
+            newMap.put(key, list);
         }
-        list.addAll(timeList);
+
+        this.responseTimeMap.put(name, newMap);
     }
 
     public Set<String> getResponseTimeKeys() {
@@ -113,28 +132,31 @@ public class Benchmark implements JSONable {
     public Map<String, AverageValue> calcAverageResponseTime(String name) {
         Map<String, AverageValue> result = new HashMap<>();
 
-        List<JSONable> list = this.responseTimeMap.get(name);
-        if (null == list) {
+        Map<String, List<ResponseTime>> map = this.responseTimeMap.get(name);
+        if (null == map) {
             return result;
         }
 
-        Iterator<JSONable> iter = list.iterator();
+        Iterator<Map.Entry<String, List<ResponseTime>>> iter = map.entrySet().iterator();
         while (iter.hasNext()) {
-            ResponseTime time = (ResponseTime) iter.next();
-            if (null == time.mark) {
-                continue;
-            }
+            Map.Entry<String, List<ResponseTime>> e = iter.next();
+            String action = e.getKey();
 
-            AverageValue value = result.get(time.mark);
-            if (null == value) {
-                value = new AverageValue();
-                result.put(time.mark, value);
-            }
+            AverageValue value = new AverageValue();
+            result.put(action, value);
 
-            long duration = time.ending - time.beginning;
-            value.durations.add(duration);
-            value.total += duration;
-            value.count += 1;
+            List<ResponseTime> list = e.getValue();
+
+            for (ResponseTime time : list) {
+                if (0 == time.ending) {
+                    continue;
+                }
+
+                long duration = time.ending - time.beginning;
+                value.durations.add(duration);
+                value.total += duration;
+                value.count += 1;
+            }
         }
 
         Iterator<AverageValue> viter = result.values().iterator();
@@ -154,7 +176,21 @@ public class Benchmark implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("counterMap", JSONUtils.toJSONObjectAsLong(this.counterMap));
-        json.put("responseTimeMap", JSONUtils.toJSONObjectAsList(this.responseTimeMap));
+
+        JSONObject responseTimeMap = new JSONObject();
+        Iterator<Map.Entry<String, Map<String, List<ResponseTime>>>> iter = this.responseTimeMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, Map<String, List<ResponseTime>>> e = iter.next();
+
+            String key = e.getKey();
+            Map<String, List<ResponseTime>> value = e.getValue();
+
+            JSONObject mapJson = JSONUtils.toJSONObjectAsList(value);
+
+            responseTimeMap.put(key, mapJson);
+        }
+        json.put("responseTimeMap", responseTimeMap);
+
         return json;
     }
 

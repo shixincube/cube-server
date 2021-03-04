@@ -81,18 +81,19 @@ public class AuthCellet extends AbstractCellet {
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
 
-        PassThroughTask task = this.borrowTask(talkContext, primitive);
-        task.responseTime = this.markResponseTime();
-        this.executor.execute(task);
+        this.executor.execute(this.borrowTask(talkContext, primitive));
     }
 
     protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive) {
         PassThroughTask task = this.taskQueue.poll();
         if (null == task) {
-            return new PassThroughTask(this, talkContext, primitive, this.performer);
+            task = new PassThroughTask(this, talkContext, primitive, this.performer);
+            task.responseTime = this.markResponseTime(task.getAction().getName());
+            return task;
         }
 
         task.reset(talkContext, primitive);
+        task.responseTime = this.markResponseTime(task.getAction().getName());
         return task;
     }
 
