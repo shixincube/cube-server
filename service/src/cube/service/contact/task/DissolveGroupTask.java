@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
@@ -45,8 +46,8 @@ import org.json.JSONObject;
  */
 public class DissolveGroupTask extends ServiceTask {
 
-    public DissolveGroupTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public DissolveGroupTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -57,10 +58,18 @@ public class DissolveGroupTask extends ServiceTask {
         JSONObject data = packet.data;
 
         String tokenCode = this.getTokenCode(action);
+        if (null == tokenCode) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
+        }
+
         Contact contact = ContactManager.getInstance().getContact(tokenCode);
         if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.NoSignIn.code, data));
+            markResponseTime();
             return;
         }
 
@@ -74,6 +83,7 @@ public class DissolveGroupTask extends ServiceTask {
             // 返回无效的域信息
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.InvalidDomain.code, data));
+            markResponseTime();
             return;
         }
 
@@ -83,6 +93,7 @@ public class DissolveGroupTask extends ServiceTask {
             // 解散群操作只能由群的所有者进行
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));
+            markResponseTime();
             return;
         }
 
@@ -91,11 +102,13 @@ public class DissolveGroupTask extends ServiceTask {
             // 解散失败
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
+            markResponseTime();
             return;
         }
 
         // 返回解散成功的群组
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, newGroup.toJSON()));
+        markResponseTime();
     }
 }

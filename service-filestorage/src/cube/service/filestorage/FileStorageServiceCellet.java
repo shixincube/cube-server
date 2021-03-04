@@ -26,7 +26,6 @@
 
 package cube.service.filestorage;
 
-import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkContext;
@@ -34,6 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.FileStorageAction;
+import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.filestorage.task.*;
 
@@ -42,7 +42,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * 文件存储器 Cellet 服务单元。
  */
-public class FileStorageServiceCellet extends Cellet {
+public class FileStorageServiceCellet extends AbstractCellet {
 
     private ExecutorService executor = null;
 
@@ -70,47 +70,62 @@ public class FileStorageServiceCellet extends Cellet {
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
+        super.onListened(talkContext, primitive);
+
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
 
         if (FileStorageAction.GetFile.name.equals(action)) {
-            this.executor.execute(new GetFileTask(this, talkContext, primitive));
+            this.executor.execute(new GetFileTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (FileStorageAction.PutFile.name.equals(action)) {
-            this.executor.execute(new PutFileTask(this, talkContext, primitive));
+            this.executor.execute(new PutFileTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (FileStorageAction.GetRoot.name.equals(action)) {
-            this.executor.execute(new GetRootDirectoryTask(this, talkContext, primitive));
+            this.executor.execute(new GetRootDirectoryTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (FileStorageAction.ListDirs.name.equals(action)) {
-            this.executor.execute(new ListDirectoriesTask(this, talkContext, primitive));
+            this.executor.execute(new ListDirectoriesTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (FileStorageAction.ListFiles.name.equals(action)) {
-            this.executor.execute(new ListFilesTask(this, talkContext, primitive));
+            this.executor.execute(new ListFilesTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (FileStorageAction.NewDir.name.equals(action)) {
-            this.executor.execute(new NewDirectoryTask(this, talkContext, primitive));
+            this.executor.execute(new NewDirectoryTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (FileStorageAction.DeleteDir.name.equals(action)) {
-            this.executor.execute(new DeleteDirectoryTask(this, talkContext, primitive));
+            this.executor.execute(new DeleteDirectoryTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (FileStorageAction.InsertFile.name.equals(action)) {
-            this.executor.execute(new InsertFileTask(this, talkContext, primitive));
+            this.executor.execute(new InsertFileTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (FileStorageAction.DeleteFile.name.equals(action)) {
-            this.executor.execute(new DeleteFileTask(this, talkContext, primitive));
+            this.executor.execute(new DeleteFileTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (FileStorageAction.ListTrash.name.equals(action)) {
-            this.executor.execute(new ListTrashTask(this, talkContext, primitive));
+            this.executor.execute(new ListTrashTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (FileStorageAction.EraseTrash.name.equals(action)) {
-            this.executor.execute(new EraseTrashTask(this, talkContext, primitive));
+            this.executor.execute(new EraseTrashTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (FileStorageAction.EmptyTrash.name.equals(action)) {
-            this.executor.execute(new EmptyTrashTask(this, talkContext, primitive));
+            this.executor.execute(new EmptyTrashTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (FileStorageAction.SearchFile.name.equals(action)) {
-            this.executor.execute(new SearchFileTask(this, talkContext, primitive));
+            this.executor.execute(new SearchFileTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
     }
 

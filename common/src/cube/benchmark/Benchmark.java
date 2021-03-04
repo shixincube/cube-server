@@ -112,7 +112,15 @@ public class Benchmark implements JSONable {
             String key = e.getKey();
             List<ResponseTime> value = e.getValue();
 
-            List<ResponseTime> list = new ArrayList<>(value);
+            List<ResponseTime> list = new ArrayList<>(value.size());
+            for (ResponseTime rt : value) {
+                if (rt.ending == 0) {
+                    // 跳过无效的数据
+                    continue;
+                }
+
+                list.add(rt);
+            }
             newMap.put(key, list);
         }
 

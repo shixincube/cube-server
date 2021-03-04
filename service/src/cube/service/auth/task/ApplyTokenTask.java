@@ -33,6 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AuthStateCode;
 import cube.service.ServiceTask;
@@ -45,8 +46,8 @@ import org.json.JSONObject;
  */
 public class ApplyTokenTask extends ServiceTask {
 
-    public ApplyTokenTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public ApplyTokenTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -67,16 +68,21 @@ public class ApplyTokenTask extends ServiceTask {
             }
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
+            this.cellet.speak(this.talkContext, this.makeResponse(action, packet, AuthStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
         }
 
         AuthToken token = ((AuthService) this.kernel.getModule(AuthService.NAME)).applyToken(domain, appKey, cid);
         if (null == token) {
             // 授权失败
             this.cellet.speak(this.talkContext, this.makeResponse(action, packet, AuthStateCode.InvalidDomain.code, data));
+            markResponseTime();
             return;
         }
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, AuthStateCode.Ok.code, token.toJSON()));
+        markResponseTime();
     }
 }

@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.ContactAppendix;
@@ -47,8 +48,8 @@ import org.json.JSONObject;
  */
 public class GetAppendixTask extends ServiceTask {
 
-    public GetAppendixTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public GetAppendixTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -59,10 +60,18 @@ public class GetAppendixTask extends ServiceTask {
         JSONObject data = packet.data;
 
         String tokenCode = this.getTokenCode(action);
+        if (null == tokenCode) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
+        }
+
         Contact contact = ContactManager.getInstance().getContact(tokenCode);
         if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.NoSignIn.code, data));
+            markResponseTime();
             return;
         }
 
@@ -81,6 +90,7 @@ public class GetAppendixTask extends ServiceTask {
             if (null == group) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(action, packet, ContactStateCode.NotFindGroup.code, data));
+                markResponseTime();
                 return;
             }
 
@@ -88,6 +98,7 @@ public class GetAppendixTask extends ServiceTask {
             if (!group.hasMember(contact.getId())) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));
+                markResponseTime();
                 return;
             }
 
@@ -100,5 +111,7 @@ public class GetAppendixTask extends ServiceTask {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
         }
+
+        markResponseTime();
     }
 }

@@ -30,6 +30,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
@@ -42,8 +43,9 @@ import cube.service.filestorage.FileStorageServiceCellet;
  */
 public class PutFileTask extends ServiceTask {
 
-    public PutFileTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public PutFileTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                       Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -59,13 +61,15 @@ public class PutFileTask extends ServiceTask {
         FileLabel newFileLabel = service.putFile(fileLabel);
         if (null == newFileLabel) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Failure.code, fileLabel.toCompactJSON()));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Failure.code, fileLabel.toCompactJSON()));
+            markResponseTime();
             return;
         }
 
         // 应答
-        this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, newFileLabel.toCompactJSON()));
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, newFileLabel.toCompactJSON()));
+        markResponseTime();
     }
 }

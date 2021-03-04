@@ -31,6 +31,8 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
@@ -50,8 +52,8 @@ import java.util.List;
  */
 public class PullTask extends ServiceTask {
 
-    public PullTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public PullTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -71,7 +73,8 @@ public class PullTask extends ServiceTask {
             beginning = packet.data.getLong("beginning");
             ending = packet.data.getLong("ending");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#run", e);
+            markResponseTime();
             return;
         }
 
@@ -82,6 +85,7 @@ public class PullTask extends ServiceTask {
             this.cellet.speak(this.talkContext,
                     this.makeAsynResponse(packet, id, domainName, device,
                             MessagingStateCode.NoContact.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -91,6 +95,7 @@ public class PullTask extends ServiceTask {
             this.cellet.speak(this.talkContext,
                     this.makeAsynResponse(packet, id, domainName, device,
                             MessagingStateCode.NoDevice.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -137,6 +142,8 @@ public class PullTask extends ServiceTask {
         this.cellet.speak(this.talkContext,
                 this.makeAsynResponse(packet, id, domainName, device,
                         MessagingStateCode.Ok.code, payload));
+
+        markResponseTime();
     }
 
     private JSONObject makePayload(int totalNum, long beginning, long ending, JSONArray messages) {

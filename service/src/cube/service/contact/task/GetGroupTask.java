@@ -31,6 +31,8 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Group;
 import cube.common.state.ContactStateCode;
@@ -44,8 +46,8 @@ import org.json.JSONObject;
  */
 public class GetGroupTask extends ServiceTask {
 
-    public GetGroupTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public GetGroupTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -61,17 +63,23 @@ public class GetGroupTask extends ServiceTask {
             id = data.getLong("id");
             domain = data.getString("domain");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#run", e);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
         }
 
         Group group = ContactManager.getInstance().getGroup(id, domain);
         if (null == group) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
+            markResponseTime();
             return;
         }
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, group.toJSON()));
+        markResponseTime();
     }
 }

@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
@@ -44,8 +45,8 @@ import org.json.JSONObject;
  */
 public class SignOutTask extends ServiceTask {
 
-    public SignOutTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public SignOutTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -66,11 +67,13 @@ public class SignOutTask extends ServiceTask {
         if (null == newSelf) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, packet.data));
+            markResponseTime();
             return;
         }
 
         // 应答
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, newSelf.toJSON()));
+        markResponseTime();
     }
 }

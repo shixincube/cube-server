@@ -31,6 +31,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
@@ -44,8 +45,9 @@ import cube.service.filestorage.FileStorageServiceCellet;
  */
 public class GetFileTask extends ServiceTask {
 
-    public GetFileTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public GetFileTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                       Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -55,12 +57,22 @@ public class GetFileTask extends ServiceTask {
 
         // 获取令牌码
         String tokenCode = this.getTokenCode(action);
+        if (null == tokenCode) {
+            // 发生错误
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            markResponseTime();
+            return;
+        }
+
+
         AuthService authService = (AuthService) this.kernel.getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(tokenCode);
         if (null == authToken) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -75,13 +87,15 @@ public class GetFileTask extends ServiceTask {
         FileLabel fileLabel = service.getFile(domain, fileCode);
         if (null == fileLabel) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Failure.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Failure.code, packet.data));
+            markResponseTime();
             return;
         }
 
         // 应答
-        this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, fileLabel.toJSON()));
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, fileLabel.toJSON()));
+        markResponseTime();
     }
 }

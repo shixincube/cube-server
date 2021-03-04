@@ -32,6 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
@@ -50,8 +51,8 @@ import java.util.List;
  */
 public class ListGroupsTask extends ServiceTask {
 
-    public ListGroupsTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public ListGroupsTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -65,6 +66,7 @@ public class ListGroupsTask extends ServiceTask {
         Contact contact = ContactManager.getInstance().getContact(tokenCode);
         if (null == contact) {
             Logger.w(this.getClass(), "Can NOT find contact with token: " + tokenCode);
+            markResponseTime();
             return;
         }
 
@@ -80,7 +82,7 @@ public class ListGroupsTask extends ServiceTask {
             beginning = data.getLong("beginning");
             ending = data.getLong("ending");
         } catch (JSONException e) {
-            e.printStackTrace();
+            // Nothing
         }
 
         if (ending == 0) {
@@ -92,44 +94,43 @@ public class ListGroupsTask extends ServiceTask {
         // 查询从指定活跃时间之后的该联系人所在的所有群
         List<Group> list = ContactManager.getInstance().listGroupsWithMember(domain, contact.getId(), beginning, ending);
 
-        try {
-            if (list.isEmpty()) {
-                JSONObject responseData = new JSONObject();
-                responseData.put("beginning", beginning);
-                responseData.put("ending", ending);
-                responseData.put("total", list.size());
-                responseData.put("list", new JSONArray());
-                this.cellet.speak(this.talkContext,
-                        this.makeAsynResponse(packet, contact.getId(), domain, device,
-                                ContactStateCode.Ok.code, responseData));
-                return;
-            }
-
-            int total = list.size();
-
-            while (!list.isEmpty()) {
-                JSONObject responseData = new JSONObject();
-                responseData.put("beginning", beginning);
-                responseData.put("ending", ending);
-                responseData.put("total", total);
-
-                JSONArray array = new JSONArray();
-                for (int i = 0; i < pageSize; ++i) {
-                    Group group = list.remove(0);
-                    array.put(group.toJSON());
-                    if (list.isEmpty()) {
-                        break;
-                    }
-                }
-
-                responseData.put("list", array);
-
-                this.cellet.speak(this.talkContext,
-                        this.makeAsynResponse(packet, contact.getId(), domain, device,
-                                ContactStateCode.Ok.code, responseData));
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (list.isEmpty()) {
+            JSONObject responseData = new JSONObject();
+            responseData.put("beginning", beginning);
+            responseData.put("ending", ending);
+            responseData.put("total", list.size());
+            responseData.put("list", new JSONArray());
+            this.cellet.speak(this.talkContext,
+                    this.makeAsynResponse(packet, contact.getId(), domain, device,
+                            ContactStateCode.Ok.code, responseData));
+            markResponseTime();
+            return;
         }
+
+        int total = list.size();
+
+        while (!list.isEmpty()) {
+            JSONObject responseData = new JSONObject();
+            responseData.put("beginning", beginning);
+            responseData.put("ending", ending);
+            responseData.put("total", total);
+
+            JSONArray array = new JSONArray();
+            for (int i = 0; i < pageSize; ++i) {
+                Group group = list.remove(0);
+                array.put(group.toJSON());
+                if (list.isEmpty()) {
+                    break;
+                }
+            }
+
+            responseData.put("list", array);
+
+            this.cellet.speak(this.talkContext,
+                    this.makeAsynResponse(packet, contact.getId(), domain, device,
+                            ContactStateCode.Ok.code, responseData));
+        }
+
+        markResponseTime();
     }
 }

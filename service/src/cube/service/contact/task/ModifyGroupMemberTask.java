@@ -31,6 +31,8 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
@@ -46,8 +48,8 @@ import org.json.JSONObject;
  */
 public class ModifyGroupMemberTask extends ServiceTask {
 
-    public ModifyGroupMemberTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public ModifyGroupMemberTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -62,6 +64,7 @@ public class ModifyGroupMemberTask extends ServiceTask {
         if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.NoSignIn.code, data));
+            markResponseTime();
             return;
         }
 
@@ -74,7 +77,11 @@ public class ModifyGroupMemberTask extends ServiceTask {
             groupId = data.getLong("groupId");
             member = new Contact(data.getJSONObject("member"), domain);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#run", e);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
         }
 
         // 获取群组
@@ -82,6 +89,7 @@ public class ModifyGroupMemberTask extends ServiceTask {
         if (null == group) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
+            markResponseTime();
             return;
         }
 
@@ -90,5 +98,6 @@ public class ModifyGroupMemberTask extends ServiceTask {
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, bundle.toCompactJSON()));
+        markResponseTime();
     }
 }

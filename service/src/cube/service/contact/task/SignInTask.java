@@ -31,7 +31,9 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
 import cube.auth.AuthToken;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
@@ -46,8 +48,8 @@ import org.json.JSONObject;
  */
 public class SignInTask extends ServiceTask {
 
-    public SignInTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public SignInTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -61,7 +63,11 @@ public class SignInTask extends ServiceTask {
             contactJson = packet.data.getJSONObject("self");
             authTokenJson = packet.data.getJSONObject("token");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#run", e);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, packet.data));
+            markResponseTime();
+            return;
         }
 
         // 校验 Token
@@ -71,6 +77,7 @@ public class SignInTask extends ServiceTask {
         if (!tokenCode.equals(authToken.getCode())) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.InconsistentToken.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -82,6 +89,7 @@ public class SignInTask extends ServiceTask {
         if (null == activeDevice) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -90,11 +98,13 @@ public class SignInTask extends ServiceTask {
         if (null == newContact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, packet.data));
+            markResponseTime();
             return;
         }
 
         // 应答
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, newContact.toJSON()));
+        markResponseTime();
     }
 }

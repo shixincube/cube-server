@@ -34,7 +34,6 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.entity.Contact;
-import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
 
@@ -59,7 +58,7 @@ public class DisconnectTask extends ServiceTask {
         ContactManager.getInstance().reportDisconnect(contact);
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "Report disconnect : " + contact.getId()
+            Logger.d(this.getClass(), "Disconnect : " + contact.getId()
                     + " # " + contact.getDeviceList().get(0).toString());
         }
     }

@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.auth.AuthToken;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.Task;
 import cube.common.entity.Device;
@@ -46,8 +47,23 @@ public abstract class ServiceTask extends Task {
 
     public final static long ONE_MONTH = 30L * 24L * 60L * 60L * 1000L;
 
+    protected ResponseTime responseTime;
+
     public ServiceTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
         super(cellet, talkContext, primitive);
+    }
+
+    public ServiceTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive);
+        this.responseTime = responseTime;
+    }
+
+    protected void markResponseTime() {
+        if (null == this.responseTime) {
+            return;
+        }
+
+        this.responseTime.ending = System.currentTimeMillis();
     }
 
     /**

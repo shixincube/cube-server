@@ -31,6 +31,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
@@ -45,8 +46,9 @@ import cube.service.filestorage.hierarchy.FileHierarchy;
  */
 public class GetRootDirectoryTask extends ServiceTask {
 
-    public GetRootDirectoryTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public GetRootDirectoryTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                                Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -62,6 +64,7 @@ public class GetRootDirectoryTask extends ServiceTask {
             // 发生错误
             this.cellet.speak(this.talkContext
                     , this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -71,8 +74,9 @@ public class GetRootDirectoryTask extends ServiceTask {
         // ID
         if (!packet.data.has("id")) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -86,13 +90,15 @@ public class GetRootDirectoryTask extends ServiceTask {
 
         if (null == fileHierarchy) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
             return;
         }
 
         Directory directory = fileHierarchy.getRoot();
-        this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, directory.toJSON()));
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, directory.toJSON()));
+        markResponseTime();
     }
 }

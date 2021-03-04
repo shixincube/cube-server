@@ -31,6 +31,8 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.Message;
@@ -46,8 +48,8 @@ import org.json.JSONObject;
  */
 public class ReadTask extends ServiceTask {
 
-    public ReadTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public ReadTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -62,6 +64,7 @@ public class ReadTask extends ServiceTask {
         if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.NoContact.code, data));
+            markResponseTime();
             return;
         }
 
@@ -74,12 +77,17 @@ public class ReadTask extends ServiceTask {
             contactId = data.getLong("contactId");
             messageId = data.getLong("messageId");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#run", e);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, MessagingStateCode.DataStructureError.code, data));
+            markResponseTime();
+            return;
         }
 
         if (!contact.getId().equals(contactId)) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.DataStructureError.code, data));
+            markResponseTime();
             return;
         }
 
@@ -89,10 +97,12 @@ public class ReadTask extends ServiceTask {
         if (null == message) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.Failure.code, data));
+            markResponseTime();
             return;
         }
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, MessagingStateCode.Ok.code, message.toCompactJSON()));
+        markResponseTime();
     }
 }

@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.action.MultipointCommAction;
 import cube.common.state.MultipointCommStateCode;
@@ -45,8 +46,8 @@ import cube.service.multipointcomm.signaling.Signaling;
  */
 public class ByeTask extends ServiceTask {
 
-    public ByeTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public ByeTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -65,6 +66,7 @@ public class ByeTask extends ServiceTask {
             public void on(MultipointCommStateCode stateCode, Signaling signaling) {
                 cellet.speak(talkContext,
                         makeResponse(action, packet, MultipointCommAction.ByeAck.name, stateCode.code, signaling.toJSON()));
+                markResponseTime();
             }
         });
     }

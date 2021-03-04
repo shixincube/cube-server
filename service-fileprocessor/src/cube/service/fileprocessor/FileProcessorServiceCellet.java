@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,13 +26,13 @@
 
 package cube.service.fileprocessor;
 
-import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.FileProcessorAction;
+import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.fileprocessor.task.DetectObjectTask;
 
@@ -41,7 +41,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * 文件处理服务的 Cellet 服务。
  */
-public class FileProcessorServiceCellet extends Cellet {
+public class FileProcessorServiceCellet extends AbstractCellet {
 
     private FileProcessorService service = null;
 
@@ -77,6 +77,8 @@ public class FileProcessorServiceCellet extends Cellet {
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
+        super.onListened(talkContext, primitive);
+
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
 

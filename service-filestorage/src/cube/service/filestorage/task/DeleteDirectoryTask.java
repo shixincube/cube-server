@@ -31,6 +31,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
@@ -50,8 +51,9 @@ import java.util.List;
  */
 public class DeleteDirectoryTask extends ServiceTask {
 
-    public DeleteDirectoryTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public DeleteDirectoryTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                               Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -65,8 +67,9 @@ public class DeleteDirectoryTask extends ServiceTask {
         AuthToken authToken = authService.getToken(tokenCode);
         if (null == authToken) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -77,8 +80,9 @@ public class DeleteDirectoryTask extends ServiceTask {
         if (!packet.data.has("root") || !packet.data.has("workingId")
                 || !packet.data.has("dirList") || !packet.data.has("recursive")) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -94,8 +98,9 @@ public class DeleteDirectoryTask extends ServiceTask {
         FileHierarchy fileHierarchy = service.getFileHierarchy(domain, rootId);
         if (null == fileHierarchy) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -103,8 +108,9 @@ public class DeleteDirectoryTask extends ServiceTask {
         Directory workingDir = fileHierarchy.getDirectory(workingId);
         if (null == workingDir) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -120,8 +126,9 @@ public class DeleteDirectoryTask extends ServiceTask {
 
         if (0 == directories.size()) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -129,8 +136,9 @@ public class DeleteDirectoryTask extends ServiceTask {
         List<Directory> deletedList = workingDir.deleteDirectories(directories, recursive);
         if (null == deletedList) {
             // 删除失败
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Reject.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Reject.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -144,7 +152,8 @@ public class DeleteDirectoryTask extends ServiceTask {
         result.put("deletedList", deleted);
 
         // 成功
-        this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
+        markResponseTime();
     }
 }

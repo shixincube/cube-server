@@ -31,6 +31,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
@@ -50,8 +51,9 @@ import java.util.List;
  */
 public class ListFilesTask extends ServiceTask {
 
-    public ListFilesTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public ListFilesTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                         Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -65,8 +67,9 @@ public class ListFilesTask extends ServiceTask {
         AuthToken authToken = authService.getToken(tokenCode);
         if (null == authToken) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -76,16 +79,18 @@ public class ListFilesTask extends ServiceTask {
         // 根目录 ID 和目录 ID
         if (!packet.data.has("root") || !packet.data.has("id")) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+            markResponseTime();
             return;
         }
 
         // 参数
         if (!packet.data.has("begin") || !packet.data.has("end")) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -102,8 +107,9 @@ public class ListFilesTask extends ServiceTask {
 
         if (null == fileHierarchy) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -111,8 +117,9 @@ public class ListFilesTask extends ServiceTask {
         Directory directory = fileHierarchy.getDirectory(id);
         if (null == directory) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -129,7 +136,8 @@ public class ListFilesTask extends ServiceTask {
         }
         result.put("list", array);
 
-        this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
+        markResponseTime();
     }
 }

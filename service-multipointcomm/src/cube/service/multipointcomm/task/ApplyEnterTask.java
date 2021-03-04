@@ -31,6 +31,8 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.CommField;
 import cube.common.entity.Contact;
@@ -45,8 +47,8 @@ import org.json.JSONException;
  */
 public class ApplyEnterTask extends ServiceTask {
 
-    public ApplyEnterTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public ApplyEnterTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -63,7 +65,10 @@ public class ApplyEnterTask extends ServiceTask {
             contact = new Contact(packet.data.getJSONObject("contact"), field.getDomain());
             device = new Device(packet.data.getJSONObject("device"));
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#run", e);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, MultipointCommStateCode.InvalidParameter.code, packet.data));
+            return;
         }
 
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
@@ -73,5 +78,6 @@ public class ApplyEnterTask extends ServiceTask {
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, state.code, packet.data));
+        markResponseTime();
     }
 }

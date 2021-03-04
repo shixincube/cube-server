@@ -358,6 +358,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @return
      */
     public Contact comeback(final Contact contact, final String tokenCode) {
+        if (null == tokenCode) {
+            return null;
+        }
+
         TokenDevice tokenDevice = this.tokenContactMap.get(tokenCode);
         if (null == tokenDevice) {
             return null;

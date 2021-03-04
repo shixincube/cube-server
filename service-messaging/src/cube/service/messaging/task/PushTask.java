@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Device;
 import cube.common.entity.Message;
@@ -45,8 +46,8 @@ import org.json.JSONException;
  */
 public class PushTask extends ServiceTask {
 
-    public PushTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public PushTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -61,12 +62,14 @@ public class PushTask extends ServiceTask {
         } catch (JSONException e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.DataStructureError.code, packet.data));
+            markResponseTime();
             return;
         }
 
         if (null == message.getDomain()) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.NoDomain.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -75,6 +78,7 @@ public class PushTask extends ServiceTask {
         if (null == device) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.NoDevice.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -84,11 +88,13 @@ public class PushTask extends ServiceTask {
         if (null == response) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.Failure.code, packet.data));
+            markResponseTime();
             return;
         }
 
         // 应答
         this.cellet.speak(this.talkContext
                 , this.makeResponse(action, packet, MessagingStateCode.Ok.code, response.toCompactJSON()));
+        markResponseTime();
     }
 }

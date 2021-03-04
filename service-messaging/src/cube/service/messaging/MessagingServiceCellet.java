@@ -26,13 +26,13 @@
 
 package cube.service.messaging;
 
-import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.MessagingAction;
+import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.messaging.task.*;
 
@@ -41,7 +41,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * 消息服务 Cellet 。
  */
-public class MessagingServiceCellet extends Cellet {
+public class MessagingServiceCellet extends AbstractCellet {
 
     private ExecutorService executor = null;
 
@@ -68,23 +68,25 @@ public class MessagingServiceCellet extends Cellet {
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
+        super.onListened(talkContext, primitive);
+
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
 
         if (MessagingAction.Push.name.equals(action)) {
-            this.executor.execute(new PushTask(this, talkContext, primitive));
+            this.executor.execute(new PushTask(this, talkContext, primitive, this.markResponseTime(action)));
         }
         else if (MessagingAction.Pull.name.equals(action)) {
-            this.executor.execute(new PullTask(this, talkContext, primitive));
+            this.executor.execute(new PullTask(this, talkContext, primitive, this.markResponseTime(action)));
         }
         else if (MessagingAction.Read.name.equals(action)) {
-            this.executor.execute(new ReadTask(this, talkContext, primitive));
+            this.executor.execute(new ReadTask(this, talkContext, primitive, this.markResponseTime(action)));
         }
         else if (MessagingAction.Recall.name.equals(action)) {
-            this.executor.execute(new RecallTask(this, talkContext, primitive));
+            this.executor.execute(new RecallTask(this, talkContext, primitive, this.markResponseTime(action)));
         }
         else if (MessagingAction.Delete.name.equals(action)) {
-            this.executor.execute(new DeleteTask(this, talkContext, primitive));
+            this.executor.execute(new DeleteTask(this, talkContext, primitive, this.markResponseTime(action)));
         }
     }
 }

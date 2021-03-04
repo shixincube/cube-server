@@ -37,6 +37,11 @@ public enum FileProcessorStateCode {
     Ok(0),
 
     /**
+     * 无效参数。
+     */
+    InvalidParameter(5),
+
+    /**
      * 遇到故障。
      */
     Failure(9),

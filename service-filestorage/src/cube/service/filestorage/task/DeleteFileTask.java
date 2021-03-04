@@ -31,6 +31,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
@@ -51,8 +52,9 @@ import java.util.List;
  */
 public class DeleteFileTask extends ServiceTask {
 
-    public DeleteFileTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public DeleteFileTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                          Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -66,8 +68,9 @@ public class DeleteFileTask extends ServiceTask {
         AuthToken authToken = authService.getToken(tokenCode);
         if (null == authToken) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -78,8 +81,9 @@ public class DeleteFileTask extends ServiceTask {
         if (!packet.data.has("root") || !packet.data.has("workingId")
                 || !packet.data.has("fileList")) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -94,8 +98,9 @@ public class DeleteFileTask extends ServiceTask {
         FileHierarchy fileHierarchy = service.getFileHierarchy(domain, rootId);
         if (null == fileHierarchy) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -103,8 +108,9 @@ public class DeleteFileTask extends ServiceTask {
         Directory workingDir = fileHierarchy.getDirectory(workingId);
         if (null == workingDir) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Reject.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Reject.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -127,7 +133,8 @@ public class DeleteFileTask extends ServiceTask {
         result.put("deletedList", deleted);
 
         // 成功
-        this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
+        markResponseTime();
     }
 }

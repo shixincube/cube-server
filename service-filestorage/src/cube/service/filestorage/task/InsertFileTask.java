@@ -31,6 +31,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
@@ -47,8 +48,9 @@ import org.json.JSONObject;
  */
 public class InsertFileTask extends ServiceTask {
 
-    public InsertFileTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public InsertFileTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                          Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -62,8 +64,9 @@ public class InsertFileTask extends ServiceTask {
         AuthToken authToken = authService.getToken(tokenCode);
         if (null == authToken) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -74,8 +77,9 @@ public class InsertFileTask extends ServiceTask {
         if (!packet.data.has("root") || !packet.data.has("dirId")
             || !packet.data.has("fileCode")) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -90,8 +94,9 @@ public class InsertFileTask extends ServiceTask {
         FileHierarchy fileHierarchy = service.getFileHierarchy(domain, rootId);
         if (null == fileHierarchy) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -99,8 +104,9 @@ public class InsertFileTask extends ServiceTask {
         Directory directory = fileHierarchy.getDirectory(dirId);
         if (null == directory) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -108,16 +114,18 @@ public class InsertFileTask extends ServiceTask {
         FileLabel fileLabel = service.getFile(domain, fileCode);
         if (null == fileLabel) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.FileLabelError.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.FileLabelError.code, packet.data));
+            markResponseTime();
             return;
         }
 
         // 添加文件标签
         if (!directory.addFile(fileLabel)) {
             // 文件重复
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.DuplicationOfName.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.DuplicationOfName.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -128,7 +136,8 @@ public class InsertFileTask extends ServiceTask {
         response.put("directory", directory.toCompactJSON());
         response.put("file", fileLabel.toJSON());
 
-        this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, response));
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, response));
+        markResponseTime();
     }
 }

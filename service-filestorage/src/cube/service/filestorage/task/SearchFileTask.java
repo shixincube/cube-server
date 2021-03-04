@@ -31,6 +31,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
@@ -50,8 +51,9 @@ import java.util.List;
  */
 public class SearchFileTask extends ServiceTask {
 
-    public SearchFileTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public SearchFileTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                          Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -65,8 +67,9 @@ public class SearchFileTask extends ServiceTask {
         AuthToken authToken = authService.getToken(tokenCode);
         if (null == authToken) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -76,8 +79,9 @@ public class SearchFileTask extends ServiceTask {
         // 读取参数
         if (!packet.data.has("root") || !packet.data.has("filter")) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -91,8 +95,9 @@ public class SearchFileTask extends ServiceTask {
         FileHierarchy fileHierarchy = service.getFileHierarchy(domain, rootId);
         if (null == fileHierarchy) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -102,8 +107,9 @@ public class SearchFileTask extends ServiceTask {
         List<FileSearcher.IndexingItem> result = fileHierarchy.getFileSearcher().search(searchFilter);
         if (null == result) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.SearchConditionError.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.SearchConditionError.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -119,7 +125,8 @@ public class SearchFileTask extends ServiceTask {
         response.put("result", resultArray);
 
         // 成功
-        this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, response));
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, response));
+        markResponseTime();
     }
 }

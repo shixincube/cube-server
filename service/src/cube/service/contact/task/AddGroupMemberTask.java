@@ -31,6 +31,8 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.state.ContactStateCode;
@@ -49,8 +51,8 @@ import java.util.List;
  */
 public class AddGroupMemberTask extends ServiceTask {
 
-    public AddGroupMemberTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public AddGroupMemberTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -61,10 +63,18 @@ public class AddGroupMemberTask extends ServiceTask {
         JSONObject data = packet.data;
 
         String tokenCode = this.getTokenCode(action);
+        if (null == tokenCode) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
+        }
+
         Contact contact = ContactManager.getInstance().getContact(tokenCode);
         if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.NoSignIn.code, data));
+            markResponseTime();
             return;
         }
 
@@ -100,18 +110,24 @@ public class AddGroupMemberTask extends ServiceTask {
             JSONObject operatorJson = data.getJSONObject("operator");
             operator = new Contact(operatorJson, domain);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#run", e);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
         }
 
         // 判读参数列表里的成员数组是否为空
         if (null != memberList && memberList.isEmpty()) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));
+            markResponseTime();
             return;
         }
         else if (null != memberIdList && memberIdList.isEmpty()) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));
+            markResponseTime();
             return;
         }
 
@@ -126,6 +142,7 @@ public class AddGroupMemberTask extends ServiceTask {
         if (null == bundle) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
+            markResponseTime();
             return;
         }
 
@@ -134,5 +151,6 @@ public class AddGroupMemberTask extends ServiceTask {
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, payload));
+        markResponseTime();
     }
 }

@@ -31,6 +31,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.state.FileStorageStateCode;
@@ -46,8 +47,9 @@ import cube.service.filestorage.hierarchy.FileHierarchy;
  */
 public class EmptyTrashTask extends ServiceTask {
 
-    public EmptyTrashTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public EmptyTrashTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                          Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -61,8 +63,9 @@ public class EmptyTrashTask extends ServiceTask {
         AuthToken authToken = authService.getToken(tokenCode);
         if (null == authToken) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -72,8 +75,9 @@ public class EmptyTrashTask extends ServiceTask {
         // 根目录 ID 和目录 ID
         if (!packet.data.has("root")) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -84,8 +88,9 @@ public class EmptyTrashTask extends ServiceTask {
         // 校验根目录和联系人
         if (contact.getId().longValue() != rootId.longValue()) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Reject.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Reject.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -96,15 +101,17 @@ public class EmptyTrashTask extends ServiceTask {
         FileHierarchy fileHierarchy = service.getFileHierarchy(domain, rootId);
         if (null == fileHierarchy) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
             return;
         }
 
         // 清空回收站内的垃圾文件
         service.getRecycleBin().empty(fileHierarchy.getRoot());
 
-        this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, fileHierarchy.getRoot().toCompactJSON()));
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, fileHierarchy.getRoot().toCompactJSON()));
+        markResponseTime();
     }
 }

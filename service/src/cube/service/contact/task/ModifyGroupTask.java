@@ -31,6 +31,8 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
@@ -45,8 +47,8 @@ import org.json.JSONObject;
  */
 public class ModifyGroupTask extends ServiceTask {
 
-    public ModifyGroupTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public ModifyGroupTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -61,6 +63,7 @@ public class ModifyGroupTask extends ServiceTask {
         if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.NoSignIn.code, data));
+            markResponseTime();
             return;
         }
 
@@ -83,7 +86,11 @@ public class ModifyGroupTask extends ServiceTask {
                 newContext = data.getJSONObject("context");
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#run", e);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
         }
 
         // 获取群组
@@ -91,6 +98,7 @@ public class ModifyGroupTask extends ServiceTask {
         if (null == group) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
+            markResponseTime();
             return;
         }
 
@@ -112,5 +120,6 @@ public class ModifyGroupTask extends ServiceTask {
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, result.toJSON()));
+        markResponseTime();
     }
 }

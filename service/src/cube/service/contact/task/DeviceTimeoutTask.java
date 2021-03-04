@@ -31,6 +31,8 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Device;
 import cube.service.ServiceTask;
@@ -43,8 +45,8 @@ import org.json.JSONObject;
  */
 public class DeviceTimeoutTask extends ServiceTask {
 
-    public DeviceTimeoutTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public DeviceTimeoutTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -68,10 +70,13 @@ public class DeviceTimeoutTask extends ServiceTask {
             timeout = data.getLong("timeout");
             device = new Device(deviceJson);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#run", e);
+            return;
         }
 
         // 移除联系人的设备
         ContactManager.getInstance().removeContactDevice(contactId, domainName, device);
+
+        markResponseTime();
     }
 }

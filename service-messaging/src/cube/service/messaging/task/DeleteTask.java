@@ -31,6 +31,8 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.state.MessagingStateCode;
@@ -45,8 +47,8 @@ import org.json.JSONObject;
  */
 public class DeleteTask extends ServiceTask {
 
-    public DeleteTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public DeleteTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -61,6 +63,7 @@ public class DeleteTask extends ServiceTask {
         if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.NoContact.code, data));
+            markResponseTime();
             return;
         }
 
@@ -73,12 +76,17 @@ public class DeleteTask extends ServiceTask {
             contactId = data.getLong("contactId");
             messageId = data.getLong("messageId");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#run", e);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, MessagingStateCode.DataStructureError.code, data));
+            markResponseTime();
+            return;
         }
 
         if (!contact.getId().equals(contactId)) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.DataStructureError.code, data));
+            markResponseTime();
             return;
         }
 
@@ -88,5 +96,7 @@ public class DeleteTask extends ServiceTask {
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, MessagingStateCode.Ok.code, data));
+
+        markResponseTime();
     }
 }

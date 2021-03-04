@@ -31,6 +31,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
@@ -39,18 +40,15 @@ import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchy;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.util.List;
 
 /**
  * 新建文件夹。
  */
 public class NewDirectoryTask extends ServiceTask {
 
-    public NewDirectoryTask(FileStorageServiceCellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public NewDirectoryTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                            Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -64,8 +62,9 @@ public class NewDirectoryTask extends ServiceTask {
         AuthToken authToken = authService.getToken(tokenCode);
         if (null == authToken) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -75,8 +74,9 @@ public class NewDirectoryTask extends ServiceTask {
         // 读取参数
         if (!packet.data.has("root") || !packet.data.has("workingId") || !packet.data.has("dirName")) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -91,8 +91,9 @@ public class NewDirectoryTask extends ServiceTask {
         FileHierarchy fileHierarchy = service.getFileHierarchy(domain, rootId);
         if (null == fileHierarchy) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -100,8 +101,9 @@ public class NewDirectoryTask extends ServiceTask {
         Directory directory = fileHierarchy.getDirectory(workingId);
         if (null == directory) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
             return;
         }
 
@@ -109,13 +111,15 @@ public class NewDirectoryTask extends ServiceTask {
         Directory newDir = directory.createDirectory(dirName);
         if (null == newDir) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.DuplicationOfName.code, packet.data));
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.DuplicationOfName.code, packet.data));
+            markResponseTime();
             return;
         }
 
         // 成功
-        this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, FileStorageStateCode.Ok.code, newDir.toJSON()));
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, newDir.toJSON()));
+        markResponseTime();
     }
 }

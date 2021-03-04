@@ -32,6 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
+import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
@@ -47,8 +48,8 @@ import org.json.JSONObject;
  */
 public class CreateGroupTask extends ServiceTask {
 
-    public CreateGroupTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
-        super(cellet, talkContext, primitive);
+    public CreateGroupTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
     @Override
@@ -59,49 +60,66 @@ public class CreateGroupTask extends ServiceTask {
         JSONObject data = packet.data;
 
         String tokenCode = this.getTokenCode(action);
+        if (null == tokenCode) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
+        }
+
         Contact contact = ContactManager.getInstance().getContact(tokenCode);
         if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.NoSignIn.code, data));
+            markResponseTime();
             return;
         }
 
         // 域
         String domain = contact.getDomain().getName();
 
+        JSONObject groupJson = null;
+        JSONArray members = null;
         try {
-            JSONObject groupJson = data.getJSONObject("group");
-            JSONArray members = data.getJSONArray("members");
-
-            Group group = new Group(groupJson);
-
-            // 判断域
-            if (!domain.equals(group.getDomain().getName())) {
-                // 返回无效的域信息
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(action, packet, ContactStateCode.InvalidDomain.code, data));
-                return;
-            }
-
-            for (int i = 0, size = members.length(); i < size; ++i) {
-                JSONObject memberJson = members.getJSONObject(i);
-                Contact member = new Contact(memberJson, domain);
-                group.addMember(member);
-            }
-
-            Group newGroup = ContactManager.getInstance().createGroup(group);
-            if (null == newGroup) {
-                // 创建失败
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
-                return;
-            }
-
-            // 返回创建成功的群组
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.Ok.code, newGroup.toJSON()));
+            groupJson = data.getJSONObject("group");
+            members = data.getJSONArray("members");
         } catch (JSONException e) {
-            Logger.e(this.getClass(), "", e);
+            Logger.w(this.getClass(), "#run", e);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
         }
+
+        Group group = new Group(groupJson);
+
+        // 判断域
+        if (!domain.equals(group.getDomain().getName())) {
+            // 返回无效的域信息
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.InvalidDomain.code, data));
+            markResponseTime();
+            return;
+        }
+
+        for (int i = 0, size = members.length(); i < size; ++i) {
+            JSONObject memberJson = members.getJSONObject(i);
+            Contact member = new Contact(memberJson, domain);
+            group.addMember(member);
+        }
+
+        Group newGroup = ContactManager.getInstance().createGroup(group);
+        if (null == newGroup) {
+            // 创建失败
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
+            markResponseTime();
+            return;
+        }
+
+        // 返回创建成功的群组
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, newGroup.toJSON()));
+        markResponseTime();
     }
 }
