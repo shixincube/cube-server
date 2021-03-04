@@ -273,3 +273,14 @@ h5 {
 .monitor .description-text {
     text-transform: unset;
 }
+.monitor .bootstrap-switch {
+    margin-top: 5px;
+    font-size: 12px;
+    height: 28px;
+}
+.monitor .bootstrap-switch .bootstrap-switch-handle-on {
+    font-size: 12px;
+}
+.monitor .bootstrap-switch .bootstrap-switch-handle-off {
+    font-size: 12px;
+}

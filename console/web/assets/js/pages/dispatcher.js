@@ -43,6 +43,7 @@
     // 监视器当前服务器
     var current = null;
     var currentChart = null;
+    var autoTimer = 0;      // 自动刷新数据定时器
 
     // 检查是否合法
     console.checkUser(function(valid) {
@@ -119,6 +120,20 @@
         el.find('.director-cellets').html(html.join(''));
     }
 
+    function onTogglePwdVisible() {
+        var el = $('#modal_toggle_server');
+        var inputEl = el.find('#input_password');
+        var type = inputEl.attr('type');
+        if (type == 'password') {
+            inputEl.attr('type', 'text');
+            $(this).html('<i class="fas fa-eye-slash"></i>');
+        }
+        else {
+            inputEl.attr('type', 'password');
+            $(this).html('<i class="fas fa-eye"></i>');
+        }
+    }
+
     /**
      * 开关服务器对话框的密码输入框键盘 Key Press 事件回调。
      * @param {*} event 
@@ -131,7 +146,6 @@
         }
     }
 
-
     g.dispatcher = {
         launch: function() {
             btnNewDeploy = $('#btn_new_deploy');
@@ -139,14 +153,42 @@
                 that.showNewDeployDialog();
             });
 
-            var el = $('#modal_toggle_server');
-            el.find('#input_password').on('keypress', onPasswordKeyPress);
+            var toggleModal = $('#modal_toggle_server');
+            toggleModal.find('button[data-target="toggle"]').on('click', onTogglePwdVisible);
+            toggleModal.find('#input_password').on('keypress', onPasswordKeyPress);
+
+            var switchAuto = $("input[data-bootstrap-switch]");
+            switchAuto.bootstrapSwitch({
+                onText: '自动刷新',
+                offText: '手动刷新',
+                onSwitchChange: function(event, state) {
+                    if (state) {
+                        if (null == current) {
+                            return false;
+                        }
+
+                        if (autoTimer > 0) {
+                            clearInterval(autoTimer);
+                        }
+                        autoTimer = setInterval(function() {
+                            that.refreshPerformance(current);
+                        }, 30 * 1000);
+                        that.refreshPerformance(current);
+                    }
+                    else {
+                        clearInterval(autoTimer);
+                        autoTimer = 0;
+                    }
+                }
+            });
+            switchAuto.removeAttr('checked');
 
             // 表格
             tableEl = $('#server_table');
             // 监视器
             monitorEl = $('.monitor');
             monitorEl.find('input[data-target="server-name"]').val('');
+            monitorEl.find('input[data-target="perf-time"]').val('');
             that.fillEmptyChart();
 
             // 获取默认部署数据
@@ -170,6 +212,7 @@
             body.empty();
 
             var selectServerEl = monitorEl.find('div[aria-labelledby="monitor_server"]');
+            selectServerEl.empty();
 
             dispatcherList.forEach(function(value, index) {
                 var capacityHTML = [
@@ -483,6 +526,9 @@
         },
 
         updateMonitor: function(current) {
+            // 更新时间戳
+            monitorEl.find('input[data-target="perf-time"]').val(g.util.formatFullTime(current.perf.timestamp));
+
             // Update chart data
             var benchmark = current.perf.benchmark;
             var counterMap = benchmark.counterMap;

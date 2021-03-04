@@ -73,6 +73,20 @@
         }
     }
 
+    function onTogglePwdVisible() {
+        var el = $('#modal_toggle_server');
+        var inputEl = el.find('#input_password');
+        var type = inputEl.attr('type');
+        if (type == 'password') {
+            inputEl.attr('type', 'text');
+            $(this).html('<i class="fas fa-eye-slash"></i>');
+        }
+        else {
+            inputEl.attr('type', 'password');
+            $(this).html('<i class="fas fa-eye"></i>');
+        }
+    }
+
     /**
      * 开关服务器对话框的密码输入框键盘 Key Press 事件回调。
      * @param {*} event 
@@ -92,8 +106,9 @@
                 that.showNewDeployDialog();
             });
 
-            var el = $('#modal_toggle_server');
-            el.find('#input_password').on('keypress', onPasswordKeyPress);
+            var toggleModal = $('#modal_toggle_server');
+            toggleModal.find('button[data-target="toggle"]').on('click', onTogglePwdVisible);
+            toggleModal.find('#input_password').on('keypress', onPasswordKeyPress);
 
             tableEl = $('#server_table');
 
