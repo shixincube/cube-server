@@ -1,24 +1,5 @@
 [{
     "domain": "shixincube.com",
     "appKey": "shixin-cubeteam-opensource-appkey",
-    "tokens": [
-        {
-            "code": "mcZdfXrfIFHXPCSTeOJWZhnAWuWwqSvt",
-            "expiry": 1615344399790,
-            "issues": 1614739599790,
-            "cid": 0
-        },
-        {
-            "code": "VjZPfULoAInmSvoxAUoUJWwUHGNqSfoq",
-            "expiry": 1615344457313,
-            "issues": 1614739657313,
-            "cid": 0
-        },
-        {
-            "code": "jtblKRRkeZpiXFwDfbNKwlNuIeJToPJy",
-            "expiry": 1615344413455,
-            "issues": 1614739613455,
-            "cid": 0
-        }
-    ]
+    "tokens": []
 }]
