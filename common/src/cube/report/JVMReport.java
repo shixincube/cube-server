@@ -51,18 +51,13 @@ public class JVMReport extends Report {
     /** 截止本次快照生成时内核运行的时长，单位：毫秒。 */
     public long systemDuration;
 
-    public JVMReport(String reporter) {
-        super(JVMReport.NAME);
+    public JVMReport(String reporter, long timestamp) {
+        super(JVMReport.NAME, timestamp);
         this.setReporter(reporter);
 
         this.maxMemory = Runtime.getRuntime().maxMemory();
         this.totalMemory = Runtime.getRuntime().totalMemory();
         this.freeMemory = Runtime.getRuntime().freeMemory();
-    }
-
-    public JVMReport(String reporter, long timestamp) {
-        super(JVMReport.NAME, timestamp);
-        this.setReporter(reporter);
     }
 
     public JVMReport(JSONObject json) {
@@ -77,6 +72,12 @@ public class JVMReport extends Report {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public void dump() {
+        this.maxMemory = 0;
+        this.totalMemory = 0;
+        this.freeMemory = 0;
     }
 
     public void setSystemStartTime(long startTime) {

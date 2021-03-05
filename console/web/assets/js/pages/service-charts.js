@@ -28,33 +28,75 @@
 (function ($, g) {
     'use strict';
 
-    var counterChartCanvas = null;
-    var counterChart = null;
+    var avgRespTimeChart = null;
 
-    var chartData = {
-        labels: ['', '', '', '', '', '', '', '', '', ''],
-        datasets: [{
-            type: 'line',
-            label: 'Dataset 1',
-            borderColor: g.util.chartColors.blue,
-            borderWidth: 2,
-            fill: false,
-            data: []
-        }, {
+    function build() {
+        var chartData = {
+            labels: ['', '', '', '', '', '', '', '', '', ''],
+            datasets: [{
+                type: 'line',
+                label: 'Task 1',
+                borderColor: g.util.chartColors.red,
+                borderWidth: 2,
+                fill: false,
+                data: []
+            }, {
+                type: 'line',
+                label: 'Task 2',
+                borderColor: g.util.chartColors.blue,
+                borderWidth: 2,
+                fill: false,
+                data: []
+            }, {
+                type: 'line',
+                label: 'Task 3',
+                borderColor: g.util.chartColors.green,
+                borderWidth: 2,
+                fill: false,
+                data: []
+            }]
+        };
+
+        /*
+        {
             type: 'bar',
-            label: 'Dataset 2',
-            backgroundColor: g.util.chartColors.red,
-            data: [],
+            label: 'JVM',
+            backgroundColor: g.util.chartColors.grey,
             borderColor: 'white',
-            borderWidth: 2
-        }]
-    };
+            borderWidth: 2,
+            data: []
+        }
+        */
 
-    counterChartCanvas = $('#counter_chart').get(0);
-    // counterChart = ;
+        var chartOptions = {
+            responsive: false,
+            title: {
+                display: true,
+                text: '任务平均应答时间'
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: true
+            }
+        };
+
+        var ctx = $('#avg_resp_chart').get(0).getContext('2d');
+        avgRespTimeChart = new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: chartOptions
+        });
+    }
 
     g.service.charts = {
-        
+        build: function() {
+            build();
+        },
+
+        updateChart: function(server) {
+            // server.perfCache;
+            // server.jvmCache;
+        }
     };
 
 })(jQuery, window);

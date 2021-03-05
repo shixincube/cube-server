@@ -34,6 +34,8 @@ import cell.util.log.LogLevel;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.report.*;
+import cube.service.contact.ContactManager;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,20 +109,20 @@ public class Daemon extends TimerTask implements LogHandle {
         }
 
         if (now - this.lastReportTime > this.reportInterval) {
-            this.submitJVMReport();
-            this.submitPerformanceReport();
+            this.submitJVMReport(now);
+            this.submitPerformanceReport(now);
             this.lastReportTime = now;
         }
     }
 
-    private void submitJVMReport() {
-        JVMReport report = new JVMReport(this.kernel.getNodeName());
+    private void submitJVMReport(long timestamp) {
+        JVMReport report = new JVMReport(this.kernel.getNodeName(), timestamp);
         report.setSystemStartTime(this.startTime);
         ReportService.getInstance().submitReport(report);
     }
 
-    private void submitPerformanceReport() {
-        PerformanceReport report = new PerformanceReport(this.kernel.getNodeName());
+    private void submitPerformanceReport(long timestamp) {
+        PerformanceReport report = new PerformanceReport(this.kernel.getNodeName(), timestamp);
         report.setSystemStartTime(this.startTime);
 
         for (Cellet cellet : this.nucleus.getCelletService().getCellets()) {
@@ -133,6 +135,12 @@ public class Daemon extends TimerTask implements LogHandle {
         for (Servable server : this.nucleus.getTalkService().getServers()) {
             report.reportConnection(server.getPort(), server.numTalkContexts(), server.getMaxConnections());
         }
+
+        // 填写联系人性能
+        JSONObject contactPerf = new JSONObject();
+        contactPerf.put("onlineNum", ContactManager.getInstance().numOnlineContacts());
+        contactPerf.put("maxNum", ContactManager.getInstance().getMaxContactNum());
+        report.appendItem(ContactManager.NAME, contactPerf);
 
         ReportService.getInstance().submitReport(report);
     }

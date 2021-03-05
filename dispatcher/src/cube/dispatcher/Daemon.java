@@ -136,9 +136,9 @@ public class Daemon extends TimerTask implements LogHandle {
 
         if (now - this.lastReportTime >= this.reportInterval) {
             // 提交 JVM 报告
-            this.submitJVMReport();
+            this.submitJVMReport(now);
             // 提交性能报告
-            this.submitPerformanceReport();
+            this.submitPerformanceReport(now);
             // 更新时间戳
             this.lastReportTime = now;
         }
@@ -179,14 +179,14 @@ public class Daemon extends TimerTask implements LogHandle {
         }
     }
 
-    private void submitJVMReport() {
-        JVMReport report = new JVMReport(this.performer.getNodeName());
+    private void submitJVMReport(long timestamp) {
+        JVMReport report = new JVMReport(this.performer.getNodeName(), timestamp);
         report.setSystemStartTime(this.startTime);
         ReportService.getInstance().submitReport(report);
     }
 
-    private void submitPerformanceReport() {
-        PerformanceReport report = new PerformanceReport(this.performer.getNodeName());
+    private void submitPerformanceReport(long timestamp) {
+        PerformanceReport report = new PerformanceReport(this.performer.getNodeName(), timestamp);
         report.setSystemStartTime(this.startTime);
 
         for (Cellet cellet : this.performer.celletService.getCellets()) {

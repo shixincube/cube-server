@@ -109,22 +109,22 @@ Console.prototype.queryLog = function(name, start, handler) {
     }, 'json');
 }
 
-Console.prototype.queryJVMReport = function(name, num, handler) {
+Console.prototype.queryJVMReport = function(name, num, handler, time) {
     $.get('/server-report', {
         "report": "JVMReport",
         "name": name,
         "num": num,
-        "time": Date.now()
+        "time": (undefined === time) ? Date.now() : time
     }, function(response, status, xhr) {
         handler(response);
     }, 'json');
 }
 
-Console.prototype.queryPerformanceReport = function(name, handler, detail) {
+Console.prototype.queryPerformanceReport = function(name, handler, time, detail) {
     $.get('/server-report', {
         "report": "PerfReport",
         "name": name,
-        "time": Date.now(),
+        "time": (undefined === time) ? 0 : time,
         "detail": (undefined === detail) ? false : detail
     }, function(response, status, xhr) {
         handler(response);
@@ -146,6 +146,14 @@ Console.prototype.calcDispatcherLoad = function(perf) {
     var d = sumRealtime / perf.connNums.length;
     var v = sumMax / perf.connNums.length;
     return Math.floor((d / v) * 100.0);
+}
+
+Console.prototype.calcServiceLoad = function(perf) {
+    if (undefined === perf.items.Contact) {
+        return 0;
+    }
+
+    return Math.floor((perf.items.Contact.onlineNum / perf.items.Contact.maxNum) * 100.0);
 }
 
 Console.prototype.arrangeAvgResponseTime = function(perf) {

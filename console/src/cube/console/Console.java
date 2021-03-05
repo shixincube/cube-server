@@ -211,8 +211,9 @@ public final class Console implements Runnable {
             long reportTime = time;
             for (int i = 0; i < num; ++i) {
                 JVMReport empty = new JVMReport(reporter, reportTime);
-                reportTime -= 60000L;
+                empty.dump();
                 result.add(empty);
+                reportTime -= 60000L;
             }
             Collections.reverse(result);
             return result;
@@ -244,6 +245,7 @@ public final class Console implements Runnable {
             for (int i = 0; i < d; ++i) {
                 reportTime -= 60000L;
                 JVMReport empty = new JVMReport(reporter, reportTime);
+                empty.dump();
                 result.add(empty);
             }
         }
@@ -275,6 +277,25 @@ public final class Console implements Runnable {
         }
 
         return list.get(list.size() - 1);
+    }
+
+    public PerformanceReport queryPerformanceReport(String reporter, long timestamp) {
+        List<PerformanceReport> list = this.serverPerfMap.get(reporter);
+        if (null == list) {
+            return null;
+        }
+
+        PerformanceReport report = null;
+
+        for (int i = list.size() - 1; i >= 0; --i) {
+            PerformanceReport pr = list.get(i);
+            if (Math.abs(pr.getTimestamp() - timestamp) < 5000) {
+                report = pr;
+                break;
+            }
+        }
+
+        return report;
     }
 
     @Override

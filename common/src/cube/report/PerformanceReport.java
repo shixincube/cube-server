@@ -50,13 +50,16 @@ public class PerformanceReport extends Report {
     private Map<Integer, ConnectionReport> serverConnMap;
 
     /** 内核启动时间。 */
-    public long systemStartTime;
+    private long systemStartTime;
 
     /** 截止本次快照生成时内核运行的时长，单位：毫秒。 */
-    public long systemDuration;
+    private long systemDuration;
 
-    public PerformanceReport(String reporter) {
-        super(NAME);
+    /** 其他性能项。 */
+    private Map<String, JSONObject> itemMap;
+
+    public PerformanceReport(String reporter, long timestamp) {
+        super(NAME, timestamp);
         this.setReporter(reporter);
         this.benchmark = new Benchmark();
         this.serverConnMap = new HashMap<>();
@@ -64,6 +67,9 @@ public class PerformanceReport extends Report {
 
     public PerformanceReport(JSONObject json) throws Exception {
         super(json);
+
+        this.systemStartTime = json.getLong("systemStartTime");
+        this.systemDuration = json.getLong("systemDuration");
 
         this.benchmark = new Benchmark(json.getJSONObject("benchmark"));
 
@@ -75,8 +81,14 @@ public class PerformanceReport extends Report {
             this.serverConnMap.put(cr.port, cr);
         }
 
-        this.systemStartTime = json.getLong("systemStartTime");
-        this.systemDuration = json.getLong("systemDuration");
+        this.itemMap = new HashMap<>();
+        JSONObject items = json.getJSONObject("items");
+        Iterator<String> keys = items.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            JSONObject value = items.getJSONObject(key);
+            this.itemMap.put(key, value);
+        }
     }
 
     public void setSystemStartTime(long startTime) {
@@ -97,9 +109,19 @@ public class PerformanceReport extends Report {
         return this.benchmark;
     }
 
+    public void appendItem(String name, JSONObject value) {
+        if (null == this.itemMap) {
+            this.itemMap = new HashMap<>();
+        }
+        this.itemMap.put(name, value);
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+
+        json.put("systemStartTime", this.systemStartTime);
+        json.put("systemDuration", this.systemDuration);
 
         json.put("benchmark", this.benchmark.toJSON());
 
@@ -110,14 +132,25 @@ public class PerformanceReport extends Report {
         }
         json.put("connNums", array);
 
-        json.put("systemStartTime", this.systemStartTime);
-        json.put("systemDuration", this.systemDuration);
+        JSONObject itemJson = new JSONObject();
+        if (null != this.itemMap) {
+            Iterator<String> keyIter = this.itemMap.keySet().iterator();
+            while (keyIter.hasNext()) {
+                String key = keyIter.next();
+                itemJson.put(key, this.itemMap.get(key));
+            }
+        }
+        json.put("items", itemJson);
+
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = super.toJSON();
+
+        json.put("systemStartTime", this.systemStartTime);
+        json.put("systemDuration", this.systemDuration);
 
         // 仅输出平均值
         json.put("benchmark", this.benchmark.toCompactJSON());
@@ -129,13 +162,24 @@ public class PerformanceReport extends Report {
         }
         json.put("connNums", array);
 
-        json.put("systemStartTime", this.systemStartTime);
-        json.put("systemDuration", this.systemDuration);
+        JSONObject itemJson = new JSONObject();
+        if (null != this.itemMap) {
+            Iterator<String> keyIter = this.itemMap.keySet().iterator();
+            while (keyIter.hasNext()) {
+                String key = keyIter.next();
+                itemJson.put(key, this.itemMap.get(key));
+            }
+        }
+        json.put("items", itemJson);
+
         return json;
     }
 
     public JSONObject toDetailJSON() {
         JSONObject json = super.toJSON();
+
+        json.put("systemStartTime", this.systemStartTime);
+        json.put("systemDuration", this.systemDuration);
 
         // 仅输出平均值
         json.put("benchmark", this.benchmark.toDetailJSON());
@@ -147,8 +191,16 @@ public class PerformanceReport extends Report {
         }
         json.put("connNums", array);
 
-        json.put("systemStartTime", this.systemStartTime);
-        json.put("systemDuration", this.systemDuration);
+        JSONObject itemJson = new JSONObject();
+        if (null != this.itemMap) {
+            Iterator<String> keyIter = this.itemMap.keySet().iterator();
+            while (keyIter.hasNext()) {
+                String key = keyIter.next();
+                itemJson.put(key, this.itemMap.get(key));
+            }
+        }
+        json.put("items", itemJson);
+
         return json;
     }
 

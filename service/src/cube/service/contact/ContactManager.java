@@ -93,6 +93,11 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     private DaemonTask daemon;
 
     /**
+     * 允许管理的最大在线联系人数量。
+     */
+    private int maxContactNum = 10000;
+
+    /**
      * 在线的联系人表。
      */
     protected ConcurrentHashMap<String, ContactTable> onlineTables;
@@ -245,6 +250,24 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     public void setCellet(ContactServiceCellet cellet) {
         this.cellet = cellet;
+    }
+
+    /**
+     * 返回在线联系人数量。
+     *
+     * @return 返回在线联系人数量。
+     */
+    public int numOnlineContacts() {
+        return this.onlineTables.size();
+    }
+
+    /**
+     * 返回最大在线联系人数量。
+     *
+     * @return 返回最大在线联系人数量。
+     */
+    public int getMaxContactNum() {
+        return this.maxContactNum;
     }
 
     /**

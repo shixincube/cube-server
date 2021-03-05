@@ -95,7 +95,14 @@ public class ServerReportHandler extends ContextHandler {
                     httpServletResponse.getWriter().write(response.toString());
                 }
                 else if (report.equals(PerformanceReport.NAME)) {
-                    PerformanceReport perfReport = console.queryLastPerformanceReport(name);
+                    PerformanceReport perfReport = null;
+
+                    if (time == 0) {
+                        perfReport = console.queryLastPerformanceReport(name);
+                    }
+                    else {
+                        perfReport = console.queryPerformanceReport(name, time);
+                    }
 
                     JSONObject response = new JSONObject();
 

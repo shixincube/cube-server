@@ -53,11 +53,22 @@
 
     var btnNewDeploy = null;
     var tableEl = null;
+    var monitorEl = null;
 
     function findService(tag, deployPath) {
         for (var i = 0; i < serviceList.length; ++i) {
             var value = serviceList[i];
             if (value.tag == tag && value.deployPath == deployPath) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    function findServiceByName(name) {
+        for (var i = 0; i < serviceList.length; ++i) {
+            var value = serviceList[i];
+            if (value.name == name) {
                 return value;
             }
         }
@@ -77,6 +88,9 @@
         }
     }
 
+    /**
+     * 切换密码输入框是否密码显示明文。
+     */
     function onTogglePwdVisible() {
         var el = $('#modal_toggle_server');
         var inputEl = el.find('#input_password');
@@ -105,6 +119,9 @@
 
     g.service = {
         launch: function() {
+            // 构建 Chart
+            that.charts.build();
+
             btnNewDeploy = $('#btn_new_deploy');
             btnNewDeploy.click(function() {
                 that.showNewDeployDialog();
@@ -140,7 +157,13 @@
             });
             switchAuto.removeAttr('checked');
 
+            // 表格
             tableEl = $('#server_table');
+
+            // 监视器
+            monitorEl = $('.monitor');
+            monitorEl.find('input[data-target="server-name"]').val('');
+            monitorEl.find('input[data-target="perf-time"]').val('');
 
             // 获取默认部署数据
             console.getServiceDefaultDeploy(function(data) {
@@ -161,6 +184,9 @@
         refreshServerTable: function() {
             var body = tableEl.find('tbody');
             body.empty();
+
+            var selectServerEl = monitorEl.find('div[aria-labelledby="monitor_server"]');
+            selectServerEl.empty();
 
             serviceList.forEach(function(value, index) {
                 var capacityHTML = [
@@ -206,12 +232,18 @@
                 body.append($(html.join('')));
 
                 if (value.running) {
-                    that.refreshPerformance(value);
+                    that.refreshLastPerformance(value);
                 }
+
+                // 更新选择菜单
+                html = [
+                    '<a class="dropdown-item" href="javascript:service.onMonitorChange(\'', value.name, '\');">', value.name, '</a>'
+                ];
+                selectServerEl.append($(html.join('')));
             });
         },
 
-        refreshPerformance: function(server) {
+        refreshLastPerformance: function(server) {
             console.queryPerformanceReport(server.name, function(data) {
                 if (undefined === data.report) {
                     // 没有报告数据
@@ -221,7 +253,7 @@
                 server.perf = data.report;
 
                 // 计算综合负载
-                var loadRate = console.calcDispatcherLoad(server.perf);
+                var loadRate = console.calcServiceLoad(server.perf);
 
                 // 更新表格
                 var tr = tableEl.find('tr[data-target="' + server.name + '"]');
@@ -232,11 +264,95 @@
                 el.find('small').text(loadRate + '%');
                 // 启动时间
                 tr.find('.server-starttime').html(['<span>', g.util.formatTimeMDHMS(server.perf.systemStartTime), '</span>'].join(''));
+            }, 0, true);
+        },
 
-                if (current == server) {
-                    // 更新监视器
+        refreshPerformance: function(server) {
+            if (undefined === server.perf) {
+                return;
+            }
+
+            var timestampArray = [];
+
+            if (undefined === server.perfCache) {
+                server.perfCache = [];
+                server.jvmCache = [];
+
+                for (var i = 0; i < 10; ++i) {
+                    timestampArray.push(server.perf.timestamp - (i * 60000));
                 }
-            }, true);
+                timestampArray.reverse();
+            }
+            else {
+                var last = server.perfCache[server.perfCache.length - 1];
+                timestampArray.push(last.timestamp + 60000);
+            }
+
+            this._requestPerformanceReport(server, timestampArray, function(success) {
+                // 完成
+                that.updateMonitor(server);
+            });
+        },
+
+        _requestPerformanceReport: function(server, timestampArray, completeHandler) {
+            if (timestampArray.length == 0) {
+                if (server.perfCache.length == server.jvmCache.length) {
+                    completeHandler(true);
+                }
+                else {
+                    if (undefined === server.refreshCount) {
+                        server.refreshCount = 0;
+                    }
+                    else {
+                        server.refreshCount += 1;
+                    }
+
+                    if (server.refreshCount > 6) {
+                        server.refreshCount = 0;
+                        completeHandler(false);
+                        return;
+                    }
+
+                    setTimeout(function() {
+                        that._requestPerformanceReport(server, timestampArray, completeHandler);
+                    }, 500);
+                }
+                return;
+            }
+
+            var timestamp = timestampArray.shift();
+            console.queryPerformanceReport(server.name, function(data) {
+                if (undefined === data.report) {
+                    // 没有报告数据
+                    that._requestPerformanceReport(server, timestampArray, completeHandler);
+                    return;
+                }
+
+                server.perfCache.push(data.report);
+                if (server.perfCache.length > 10) {
+                    server.perfCache.shift();
+                }
+
+                if (data.report.timestamp > server.perf.timestamp) {
+                    // 更新最近一次数据
+                    server.perf = data.report;
+                }
+
+                that._requestPerformanceReport(server, timestampArray, completeHandler);
+            }, timestamp, true);
+
+            console.queryJVMReport(server.name, 1, function(data) {
+                if (data.list.length > 0) {
+                    server.jvmCache.push(data.list[0]);
+                }
+            }, timestamp);
+        },
+
+        updateMonitor: function(current) {
+            // 更新时间戳
+            monitorEl.find('input[data-target="perf-time"]').val(g.util.formatFullTime(current.perf.timestamp));
+
+            that.charts.updateChart(current);
         },
 
         requestServiceStatus: function(tag, path, success, error) {
@@ -424,6 +540,24 @@
             }
 
             return true;
+        },
+
+        onMonitorChange: function(name) {
+            var server = findServiceByName(name);
+            if (null == server) {
+                return;
+            }
+
+            if (!server.running) {
+                g.common.toast(Toast.Info, '服务器没有启动');
+                return;
+            }
+
+            // 已选择服务器
+            monitorEl.find('input[data-target="server-name"]').val(name);
+
+            current = server;
+            that.refreshPerformance(current);
         },
 
         showDetails: function(index) {

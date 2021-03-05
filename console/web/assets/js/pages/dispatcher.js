@@ -168,6 +168,9 @@
         el.find('.director-cellets').html(html.join(''));
     }
 
+    /**
+     * 切换密码框是否显示密码原文。
+     */
     function onTogglePwdVisible() {
         var el = $('#modal_toggle_server');
         var inputEl = el.find('#input_password');
@@ -233,6 +236,7 @@
 
             // 表格
             tableEl = $('#server_table');
+            
             // 监视器
             monitorEl = $('.monitor');
             monitorEl.find('input[data-target="server-name"]').val('');
