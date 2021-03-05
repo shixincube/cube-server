@@ -103,8 +103,13 @@ public class ServerReportHandler extends ContextHandler {
                         response.put("name", name);
                     }
                     else {
+                        boolean detail = false;
+                        if (params.containsKey("detail")) {
+                            detail = params.get("detail").equalsIgnoreCase("true");
+                        }
+
                         response.put("name", name);
-                        response.put("report", perfReport.toCompactJSON());
+                        response.put("report", detail ? perfReport.toDetailJSON() : perfReport.toCompactJSON());
                     }
 
                     httpServletResponse.getWriter().write(response.toString());

@@ -1,5 +1,6 @@
 /**
  * This source file is part of Cube.
+ * https://shixincube.com
  *
  * The MIT License (MIT)
  *
@@ -35,6 +36,9 @@
     var defaultDeploy = null;
 
     var serviceList = [];
+
+    var current = null;
+    var autoTimer = 0;
 
     // 检查是否合法
     console.checkUser(function(valid) {
@@ -110,6 +114,32 @@
             toggleModal.find('button[data-target="toggle"]').on('click', onTogglePwdVisible);
             toggleModal.find('#input_password').on('keypress', onPasswordKeyPress);
 
+            var switchAuto = $("input[data-bootstrap-switch]");
+            switchAuto.bootstrapSwitch({
+                onText: '自动刷新',
+                offText: '停止刷新',
+                onSwitchChange: function(event, state) {
+                    if (state) {
+                        if (null == current) {
+                            return false;
+                        }
+
+                        if (autoTimer > 0) {
+                            clearInterval(autoTimer);
+                        }
+                        autoTimer = setInterval(function() {
+                            that.refreshPerformance(current);
+                        }, 30 * 1000);
+                        that.refreshPerformance(current);
+                    }
+                    else {
+                        clearInterval(autoTimer);
+                        autoTimer = 0;
+                    }
+                }
+            });
+            switchAuto.removeAttr('checked');
+
             tableEl = $('#server_table');
 
             // 获取默认部署数据
@@ -135,25 +165,26 @@
             serviceList.forEach(function(value, index) {
                 var capacityHTML = [
                     '<div class="progress progress-sm">',
-                        '<div class="progress-bar bg-green" role="progressbar" aria-volumenow="',
-                            value.running ? 1 : 0, '" aria-volumemin="0" aria-volumemax="100" style="width:',
-                            value.running ? 1 : 0, '%"></div>',
+                        '<div class="progress-bar bg-green" role="progressbar" aria-volumenow="0" aria-volumemin="0" aria-volumemax="100" style="width:0%"></div>',
                     '</div>',
-                    '<small>', value.running ? 1 : 0, '%</small>'
+                    '<small>0%</small>'
                 ];
 
                 var html = [
-                    '<tr>',
+                    '<tr data-target="', value.name, '">',
                         '<td>', (index + 1), '</td>',
                         '<td class="tag-display">', value.tag, '</td>',
                         '<td><span>', value.deployPath, '</span></td>',
-                        '<td class="server-capacity">',
-                            capacityHTML.join(''),
-                        '</td>',
                         '<td class="server-state text-center">',
                             value.running ? 
                                 '<span class="badge badge-success">运行中</span>' :
                                 '<span class="badge badge-danger">已关闭</span>',
+                        '</td>',
+                        '<td class="server-capacity">',
+                            capacityHTML.join(''),
+                        '</td>',
+                        '<td class="server-starttime">',
+                            '<span>--</span>',
                         '</td>',
                         '<td class="server-actions text-right">',
                             '<button type="button" class="btn ', value.running ? 'btn-danger' : 'btn-success',
@@ -173,7 +204,39 @@
                 ];
 
                 body.append($(html.join('')));
+
+                if (value.running) {
+                    that.refreshPerformance(value);
+                }
             });
+        },
+
+        refreshPerformance: function(server) {
+            console.queryPerformanceReport(server.name, function(data) {
+                if (undefined === data.report) {
+                    // 没有报告数据
+                    return;
+                }
+
+                server.perf = data.report;
+
+                // 计算综合负载
+                var loadRate = console.calcDispatcherLoad(server.perf);
+
+                // 更新表格
+                var tr = tableEl.find('tr[data-target="' + server.name + '"]');
+                var el = tr.find('.server-capacity');
+                var bar = el.find('.progress-bar');
+                bar.attr('aria-volumenow', loadRate);
+                bar.css('width', loadRate + '%');
+                el.find('small').text(loadRate + '%');
+                // 启动时间
+                tr.find('.server-starttime').html(['<span>', g.util.formatTimeMDHMS(server.perf.systemStartTime), '</span>'].join(''));
+
+                if (current == server) {
+                    // 更新监视器
+                }
+            }, true);
         },
 
         requestServiceStatus: function(tag, path, success, error) {

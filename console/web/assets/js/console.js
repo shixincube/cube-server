@@ -1,5 +1,6 @@
 /**
  * This source file is part of Cube.
+ * https://shixincube.com
  *
  * The MIT License (MIT)
  *
@@ -119,11 +120,12 @@ Console.prototype.queryJVMReport = function(name, num, handler) {
     }, 'json');
 }
 
-Console.prototype.queryPerformanceReport = function(name, handler) {
+Console.prototype.queryPerformanceReport = function(name, handler, detail) {
     $.get('/server-report', {
         "report": "PerfReport",
         "name": name,
-        "time": Date.now()
+        "time": Date.now(),
+        "detail": (undefined === detail) ? false : detail
     }, function(response, status, xhr) {
         handler(response);
     }, 'json');

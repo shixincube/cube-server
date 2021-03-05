@@ -43,9 +43,17 @@ public class PerformanceReport extends Report {
 
     public final static String NAME = "PerfReport";
 
+    /** 基准性能。 */
     private Benchmark benchmark;
 
+    /** 服务器连接数据。 */
     private Map<Integer, ConnectionReport> serverConnMap;
+
+    /** 内核启动时间。 */
+    public long systemStartTime;
+
+    /** 截止本次快照生成时内核运行的时长，单位：毫秒。 */
+    public long systemDuration;
 
     public PerformanceReport(String reporter) {
         super(NAME);
@@ -57,7 +65,6 @@ public class PerformanceReport extends Report {
     public PerformanceReport(JSONObject json) throws Exception {
         super(json);
 
-        System.out.println(json.toString());
         this.benchmark = new Benchmark(json.getJSONObject("benchmark"));
 
         this.serverConnMap = new HashMap<>();
@@ -67,6 +74,14 @@ public class PerformanceReport extends Report {
             ConnectionReport cr = new ConnectionReport(value);
             this.serverConnMap.put(cr.port, cr);
         }
+
+        this.systemStartTime = json.getLong("systemStartTime");
+        this.systemDuration = json.getLong("systemDuration");
+    }
+
+    public void setSystemStartTime(long startTime) {
+        this.systemStartTime = startTime;
+        this.systemDuration = this.getTimestamp() - startTime;
     }
 
     public void gather(AbstractCellet cellet) {
@@ -85,6 +100,7 @@ public class PerformanceReport extends Report {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+
         json.put("benchmark", this.benchmark.toJSON());
 
         JSONArray array = new JSONArray();
@@ -93,6 +109,9 @@ public class PerformanceReport extends Report {
             array.put(iter.next().toJSON());
         }
         json.put("connNums", array);
+
+        json.put("systemStartTime", this.systemStartTime);
+        json.put("systemDuration", this.systemDuration);
         return json;
     }
 
@@ -109,9 +128,29 @@ public class PerformanceReport extends Report {
             array.put(iter.next().toJSON());
         }
         json.put("connNums", array);
+
+        json.put("systemStartTime", this.systemStartTime);
+        json.put("systemDuration", this.systemDuration);
         return json;
     }
 
+    public JSONObject toDetailJSON() {
+        JSONObject json = super.toJSON();
+
+        // 仅输出平均值
+        json.put("benchmark", this.benchmark.toDetailJSON());
+
+        JSONArray array = new JSONArray();
+        Iterator<ConnectionReport> iter = this.serverConnMap.values().iterator();
+        while (iter.hasNext()) {
+            array.put(iter.next().toJSON());
+        }
+        json.put("connNums", array);
+
+        json.put("systemStartTime", this.systemStartTime);
+        json.put("systemDuration", this.systemDuration);
+        return json;
+    }
 
     /**
      * 连接数据。

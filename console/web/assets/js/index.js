@@ -1,5 +1,6 @@
 /**
  * This source file is part of Cube.
+ * https://shixincube.com
  *
  * The MIT License (MIT)
  *

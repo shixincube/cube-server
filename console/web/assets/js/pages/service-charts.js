@@ -26,19 +26,35 @@
  */
 
 (function ($, g) {
-    'use strict'
+    'use strict';
 
-    var console = new Console();
-    $.console = console;
+    var counterChartCanvas = null;
+    var counterChart = null;
 
-    // 检查是否合法
-    console.checkUser(function(valid) {
-        if (!valid) {
-            window.location.href = 'index.html';
-        }
-        else {
-            g.common.updateUserPanel(console);
-        }
-    });
+    var chartData = {
+        labels: ['', '', '', '', '', '', '', '', '', ''],
+        datasets: [{
+            type: 'line',
+            label: 'Dataset 1',
+            borderColor: g.util.chartColors.blue,
+            borderWidth: 2,
+            fill: false,
+            data: []
+        }, {
+            type: 'bar',
+            label: 'Dataset 2',
+            backgroundColor: g.util.chartColors.red,
+            data: [],
+            borderColor: 'white',
+            borderWidth: 2
+        }]
+    };
+
+    counterChartCanvas = $('#counter_chart').get(0);
+    // counterChart = ;
+
+    g.service.charts = {
+        
+    };
 
 })(jQuery, window);

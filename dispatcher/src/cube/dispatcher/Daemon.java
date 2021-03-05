@@ -181,12 +181,13 @@ public class Daemon extends TimerTask implements LogHandle {
 
     private void submitJVMReport() {
         JVMReport report = new JVMReport(this.performer.getNodeName());
-        report.setStartTime(this.startTime);
+        report.setSystemStartTime(this.startTime);
         ReportService.getInstance().submitReport(report);
     }
 
     private void submitPerformanceReport() {
         PerformanceReport report = new PerformanceReport(this.performer.getNodeName());
+        report.setSystemStartTime(this.startTime);
 
         for (Cellet cellet : this.performer.celletService.getCellets()) {
             if (cellet instanceof AbstractCellet) {

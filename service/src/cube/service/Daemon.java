@@ -27,13 +27,13 @@
 package cube.service;
 
 import cell.api.Nucleus;
+import cell.api.Servable;
+import cell.core.cellet.Cellet;
 import cell.util.log.LogHandle;
 import cell.util.log.LogLevel;
+import cube.core.AbstractCellet;
 import cube.core.Kernel;
-import cube.report.JVMReport;
-import cube.report.LogLine;
-import cube.report.LogReport;
-import cube.report.ReportService;
+import cube.report.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -108,13 +108,32 @@ public class Daemon extends TimerTask implements LogHandle {
 
         if (now - this.lastReportTime > this.reportInterval) {
             this.submitJVMReport();
+            this.submitPerformanceReport();
             this.lastReportTime = now;
         }
     }
 
     private void submitJVMReport() {
         JVMReport report = new JVMReport(this.kernel.getNodeName());
-        report.setStartTime(this.startTime);
+        report.setSystemStartTime(this.startTime);
+        ReportService.getInstance().submitReport(report);
+    }
+
+    private void submitPerformanceReport() {
+        PerformanceReport report = new PerformanceReport(this.kernel.getNodeName());
+        report.setSystemStartTime(this.startTime);
+
+        for (Cellet cellet : this.nucleus.getCelletService().getCellets()) {
+            if (cellet instanceof AbstractCellet) {
+                AbstractCellet absCellet = (AbstractCellet) cellet;
+                report.gather(absCellet);
+            }
+        }
+
+        for (Servable server : this.nucleus.getTalkService().getServers()) {
+            report.reportConnection(server.getPort(), server.numTalkContexts(), server.getMaxConnections());
+        }
+
         ReportService.getInstance().submitReport(report);
     }
 

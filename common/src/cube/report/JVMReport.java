@@ -79,7 +79,7 @@ public class JVMReport extends Report {
         }
     }
 
-    public void setStartTime(long startTime) {
+    public void setSystemStartTime(long startTime) {
         this.systemStartTime = startTime;
         this.systemDuration = this.getTimestamp() - startTime;
     }

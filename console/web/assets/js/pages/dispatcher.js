@@ -1,5 +1,6 @@
 /**
  * This source file is part of Cube.
+ * https://shixincube.com
  *
  * The MIT License (MIT)
  *
@@ -89,6 +90,53 @@
         }
     }
 
+    function buildMonitorChart(labels, data) {
+        var chartData = {
+            labels  : labels,
+            datasets: [{
+                label               : '执行计数',
+                backgroundColor     : 'rgba(60,141,188,0.9)',
+                borderColor         : 'rgba(60,141,188,0.8)',
+                pointRadius         : false,
+                pointColor          : '#3b8bba',
+                pointStrokeColor    : 'rgba(60,141,188,1)',
+                pointHighlightFill  : '#fff',
+                pointHighlightStroke: 'rgba(60,141,188,1)',
+                data                : data
+            }]
+        }
+
+        var chartCanvas = monitorEl.find('#monitor_chart').get(0).getContext('2d');
+        var chartOptions = {
+            responsive : true,
+            maintainAspectRatio : false,
+            datasetFill : false,
+            legend: {
+                display: false
+            },
+            scales: {
+                yAxes: [{
+                    stacked: true,
+                    position: 'left',
+                    gridLines: {
+                        drawBorder: false
+                    },
+                    ticks: {
+                        min: 0
+                        //maxTicksLimit: 1
+                    }
+                }]
+            }
+        };
+
+        var chart = new Chart(chartCanvas, {
+            type: 'bar', 
+            data: chartData,
+            options: chartOptions
+        });
+        return chart;
+    }
+
     function onDetailDirectorChange(index, tag, deployPath) {
         if (typeof index !== 'number') {
             var selected = $(this).find("option:selected");
@@ -160,7 +208,7 @@
             var switchAuto = $("input[data-bootstrap-switch]");
             switchAuto.bootstrapSwitch({
                 onText: '自动刷新',
-                offText: '手动刷新',
+                offText: '停止刷新',
                 onSwitchChange: function(event, state) {
                     if (state) {
                         if (null == current) {
@@ -227,13 +275,16 @@
                         '<td>', (index + 1), '</td>',
                         '<td class="tag-display">', value.tag, '</td>',
                         '<td><span>', value.deployPath, '</span></td>',
-                        '<td class="server-capacity">',
-                            capacityHTML.join(''),
-                        '</td>',
-                        '<td class="server-state text-center">',
+                        '<td class="server-state">',
                             value.running ? 
                                 '<span class="badge badge-success">运行中</span>' :
                                 '<span class="badge badge-danger">已关闭</span>',
+                        '</td>',
+                        '<td class="server-capacity">',
+                            capacityHTML.join(''),
+                        '</td>',
+                        '<td class="server-starttime">',
+                            '<span>--</span>',
                         '</td>',
                         '<td class="server-actions text-right">',
                             '<button type="button" class="btn ', value.running ? 'btn-danger' : 'btn-success',
@@ -275,17 +326,18 @@
 
                 server.perf = data.report;
 
-                monitorEl.find('input[data-target="perf-time"]').val();
-
                 // 计算综合负载
                 var loadRate = console.calcDispatcherLoad(server.perf);
 
                 // 更新表格
-                var el = tableEl.find('tr[data-target="' + server.name + '"]').find('.server-capacity');
+                var tr = tableEl.find('tr[data-target="' + server.name + '"]');
+                var el = tr.find('.server-capacity');
                 var bar = el.find('.progress-bar');
                 bar.attr('aria-volumenow', loadRate);
                 bar.css('width', loadRate + '%');
                 el.find('small').text(loadRate + '%');
+                // 启动时间
+                tr.find('.server-starttime').html(['<span>', g.util.formatTimeMDHMS(server.perf.systemStartTime), '</span>'].join(''));
 
                 if (current == server) {
                     // 更新监视器
@@ -548,38 +600,7 @@
             });
 
             if (null == currentChart) {
-                var chartData = {
-                    labels  : labels,
-                    datasets: [
-                        {
-                            label               : '执行次数',
-                            backgroundColor     : 'rgba(60,141,188,0.9)',
-                            borderColor         : 'rgba(60,141,188,0.8)',
-                            pointRadius          : false,
-                            pointColor          : '#3b8bba',
-                            pointStrokeColor    : 'rgba(60,141,188,1)',
-                            pointHighlightFill  : '#fff',
-                            pointHighlightStroke: 'rgba(60,141,188,1)',
-                            data                : data
-                        }
-                    ]
-                }
-
-                var chartCanvas = monitorEl.find('#monitor_chart').get(0).getContext('2d');
-                var chartOptions = {
-                    responsive              : true,
-                    maintainAspectRatio     : false,
-                    datasetFill             : false,
-                    legend: {
-                        display: false
-                    }
-                };
-
-                currentChart = new Chart(chartCanvas, {
-                    type: 'bar', 
-                    data: chartData,
-                    options: chartOptions
-                });
+                currentChart = buildMonitorChart(labels, data);
             }
             else {
                 currentChart.data.labels = labels;
@@ -645,38 +666,9 @@
                 return;
             }
 
-            var chartData = {
-                labels  : ['', '', '', '', '', ''],
-                datasets: [
-                    {
-                        label               : '执行次数',
-                        backgroundColor     : 'rgba(60,141,188,0.9)',
-                        borderColor         : 'rgba(60,141,188,0.8)',
-                        pointRadius          : false,
-                        pointColor          : '#3b8bba',
-                        pointStrokeColor    : 'rgba(60,141,188,1)',
-                        pointHighlightFill  : '#fff',
-                        pointHighlightStroke: 'rgba(60,141,188,1)',
-                        data                : [0, 0, 0, 0, 0, 0]
-                    }
-                ]
-            }
-
-            var chartCanvas = monitorEl.find('#monitor_chart').get(0).getContext('2d');
-            var chartOptions = {
-                responsive              : true,
-                maintainAspectRatio     : false,
-                datasetFill             : false,
-                legend: {
-                    display: false
-                }
-            };
-
-            currentChart = new Chart(chartCanvas, {
-                type: 'bar', 
-                data: chartData,
-                options: chartOptions
-            });
+            var labels = ['', '', '', '', '', ''];
+            var data = [0, 0, 0, 0, 0, 0];
+            currentChart = buildMonitorChart(labels, data);
         },
 
         onMonitorChange: function(name) {

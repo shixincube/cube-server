@@ -1,5 +1,6 @@
 /**
  * This source file is part of Cube.
+ * https://shixincube.com
  *
  * The MIT License (MIT)
  *
@@ -33,6 +34,22 @@
 
     g.util = {};
 
+    var chartColors = {
+        red: 'rgb(255, 99, 132)',
+        orange: 'rgb(255, 159, 64)',
+        yellow: 'rgb(255, 205, 86)',
+        green: 'rgb(75, 192, 192)',
+        blue: 'rgb(54, 162, 235)',
+        purple: 'rgb(153, 102, 255)',
+        grey: 'rgb(201, 203, 207)'
+    };
+    g.util.chartColors = chartColors;
+
+    /**
+     * 按指定位数格式化数字。
+     * @param {*} num 
+     * @param {*} length 
+     */
     function formatNumber(num, length) {
         if (length == 2) {
             if (num < 10) {
@@ -68,6 +85,23 @@
         return formatNumber(date.getHours(), 2) + ':' + formatNumber(date.getMinutes(), 2);
     }
     g.util.formatTimeHHMM = formatTimeHHMM;
+
+    function formatTimeMDHMS(time) {
+        var date = new Date(time);
+        var format = [
+            formatNumber(date.getMonth() + 1, 2),
+            '-',
+            formatNumber(date.getDate(), 2),
+            ' ',
+            formatNumber(date.getHours(), 2),
+            ':',
+            formatNumber(date.getMinutes(), 2),
+            ':',
+            formatNumber(date.getSeconds(), 2)
+        ];
+        return format.join('');
+    }
+    g.util.formatTimeMDHMS = formatTimeMDHMS;
 
     function formatFullTime(time) {
         var date = new Date(time);

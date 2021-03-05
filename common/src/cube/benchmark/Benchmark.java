@@ -221,6 +221,23 @@ public class Benchmark implements JSONable {
         return json;
     }
 
+    public JSONObject toDetailJSON() {
+        JSONObject json = this.toJSON();
+
+        JSONObject responseTimeMap = new JSONObject();
+        Iterator<String> iter = this.responseTimeMap.keySet().iterator();
+        while (iter.hasNext()) {
+            String name = iter.next();
+
+            Map<String, AverageValue> value = this.calcAverageResponseTime(name);
+            JSONObject valueMap = JSONUtils.toJSONObject(value);
+            responseTimeMap.put(name, valueMap);
+        }
+        json.put("avgResponseTimeMap", responseTimeMap);
+
+        return json;
+    }
+
     /**
      * 平均值。
      */
