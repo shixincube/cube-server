@@ -94,6 +94,7 @@
         },
 
         updateChart: function(server) {
+            
             // server.perfCache;
             // server.jvmCache;
         }
