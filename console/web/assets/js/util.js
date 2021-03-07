@@ -86,6 +86,19 @@
     }
     g.util.formatTimeHHMM = formatTimeHHMM;
 
+    function formatTimeHHMMSS(time) {
+        var date = new Date(time);
+        var format = [
+            formatNumber(date.getHours(), 2),
+            ':',
+            formatNumber(date.getMinutes(), 2),
+            ':',
+            formatNumber(date.getSeconds(), 2)
+        ];
+        return format.join('');
+    }
+    g.util.formatTimeHHMMSS = formatTimeHHMMSS;
+
     function formatTimeMDHMS(time) {
         var date = new Date(time);
         var format = [

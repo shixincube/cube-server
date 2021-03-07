@@ -94,6 +94,60 @@
         },
 
         updateChart: function(server) {
+            var labels = [];
+            var dataLabels = [];
+            var datasets1 = [];
+            var datasets2 = [];
+            var datasets3 = [];
+
+            // 先计算平均应答时间最高的
+            var perf = server.perf;
+            var map = perf.benchmark.avgResponseTimeMap;
+            var list = [];
+            for (var cellet in map) {
+                var celletMap = map[cellet];
+                for (var action in celletMap) {
+                    var actionAvg = celletMap[action];
+                    actionAvg.service = cellet;
+                    actionAvg.action = action;
+                    list.push(actionAvg);
+                }
+            }
+            // 从大到小倒序
+            list.sort(function(a, b) {
+                return b.value - a.value;
+            });
+
+            for (var i = 0; i < server.perfCache.length; ++i) {
+                perf = server.perfCache[i];
+                map = perf.benchmark.avgResponseTimeMap;
+
+                // Top 1
+                var avgValue = map[list[0].service][list[0].action];
+                dataLabels.push(list[0].action);
+                datasets1.push(avgValue.value);
+
+                // Top 2
+                avgValue = map[list[1].service][list[1].action];
+                dataLabels.push(list[1].action);
+                datasets2.push(avgValue.value);
+
+                // Top 3
+                avgValue = map[list[2].service][list[2].action];
+                dataLabels.push(list[2].action);
+                datasets3.push(avgValue.value);
+
+                labels.push(g.util.formatTimeHHMMSS(perf.timestamp));
+            }
+
+            avgRespTimeChart.data.labels = labels;
+            avgRespTimeChart.data.datasets[0].label = dataLabels[0];
+            avgRespTimeChart.data.datasets[0].data = datasets1;
+            avgRespTimeChart.data.datasets[1].label = dataLabels[1];
+            avgRespTimeChart.data.datasets[1].data = datasets2;
+            avgRespTimeChart.data.datasets[2].label = dataLabels[2];
+            avgRespTimeChart.data.datasets[2].data = datasets3;
+            avgRespTimeChart.update();
             
             // server.perfCache;
             // server.jvmCache;
