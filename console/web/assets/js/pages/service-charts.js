@@ -29,44 +29,49 @@
     'use strict';
 
     var avgRespTimeChart = null;
+    var jvmChart = null;
 
     function build() {
+        // 任务平均时间
         var chartData = {
             labels: ['', '', '', '', '', '', '', '', '', ''],
             datasets: [{
                 type: 'line',
-                label: 'Task 1',
+                label: '--',
                 borderColor: g.util.chartColors.red,
                 borderWidth: 2,
                 fill: false,
                 data: []
             }, {
                 type: 'line',
-                label: 'Task 2',
-                borderColor: g.util.chartColors.blue,
+                label: '--',
+                borderColor: g.util.chartColors.purple,
                 borderWidth: 2,
                 fill: false,
                 data: []
             }, {
                 type: 'line',
-                label: 'Task 3',
+                label: '--',
+                borderColor: g.util.chartColors.orange,
+                borderWidth: 2,
+                fill: false,
+                data: []
+            }, {
+                type: 'line',
+                label: '--',
+                borderColor: g.util.chartColors.yellow,
+                borderWidth: 2,
+                fill: false,
+                data: []
+            }, {
+                type: 'line',
+                label: '--',
                 borderColor: g.util.chartColors.green,
                 borderWidth: 2,
                 fill: false,
                 data: []
             }]
         };
-
-        /*
-        {
-            type: 'bar',
-            label: 'JVM',
-            backgroundColor: g.util.chartColors.grey,
-            borderColor: 'white',
-            borderWidth: 2,
-            data: []
-        }
-        */
 
         var chartOptions = {
             responsive: false,
@@ -86,6 +91,45 @@
             data: chartData,
             options: chartOptions
         });
+
+        // JVM 内存信息
+        chartData = {
+            labels: ['', '', '', '', '', '', '', '', '', ''],
+            datasets: [{
+                type: 'bar',
+                label: 'Total Memory',
+                backgroundColor: g.util.chartColors.blue,
+                borderColor: 'white',
+                borderWidth: 2,
+                data: []
+            }, {
+                type: 'bar',
+                label: 'Free Memory',
+                backgroundColor: g.util.chartColors.grey,
+                borderColor: 'white',
+                borderWidth: 2,
+                data: []
+            }]
+        };
+
+        chartOptions = {
+            responsive: false,
+            title: {
+                display: true,
+                text: 'JVM Memory'
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: true
+            }
+        };
+
+        ctx = $('#jvm_chart').get(0).getContext('2d');
+        jvmChart = new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: chartOptions
+        });
     }
 
     g.service.charts = {
@@ -96,9 +140,7 @@
         updateChart: function(server) {
             var labels = [];
             var dataLabels = [];
-            var datasets1 = [];
-            var datasets2 = [];
-            var datasets3 = [];
+            var datasetsArray = [[], [], [], [], []];
 
             // 先计算平均应答时间最高的
             var perf = server.perf;
@@ -122,35 +164,41 @@
                 perf = server.perfCache[i];
                 map = perf.benchmark.avgResponseTimeMap;
 
-                // Top 1
-                var avgValue = map[list[0].service][list[0].action];
-                dataLabels.push(list[0].action);
-                datasets1.push(avgValue.value);
+                for (var n = 0; n < list.length && n < datasetsArray.length; ++n) {
+                    var v = list[n];
+                    var avgValue = map[v.service][v.action];
+                    if (undefined === avgValue) {
+                        continue;
+                    }
 
-                // Top 2
-                avgValue = map[list[1].service][list[1].action];
-                dataLabels.push(list[1].action);
-                datasets2.push(avgValue.value);
-
-                // Top 3
-                avgValue = map[list[2].service][list[2].action];
-                dataLabels.push(list[2].action);
-                datasets3.push(avgValue.value);
+                    dataLabels.push(v.action);
+                    datasetsArray[n].push(avgValue.value);
+                }
 
                 labels.push(g.util.formatTimeHHMMSS(perf.timestamp));
             }
 
             avgRespTimeChart.data.labels = labels;
-            avgRespTimeChart.data.datasets[0].label = dataLabels[0];
-            avgRespTimeChart.data.datasets[0].data = datasets1;
-            avgRespTimeChart.data.datasets[1].label = dataLabels[1];
-            avgRespTimeChart.data.datasets[1].data = datasets2;
-            avgRespTimeChart.data.datasets[2].label = dataLabels[2];
-            avgRespTimeChart.data.datasets[2].data = datasets3;
+            for (var i = 0; i < datasetsArray.length && i < dataLabels.length; ++i) {
+                avgRespTimeChart.data.datasets[i].label = dataLabels[i];
+                avgRespTimeChart.data.datasets[i].data = datasetsArray[i];
+            }
             avgRespTimeChart.update();
-            
-            // server.perfCache;
-            // server.jvmCache;
+
+            // JVM 数据
+            labels = [];
+            var totalDataset = [];
+            var freeDataset = [];
+            for (var i = 0; i < server.jvmCache.length; ++i) {
+                var data = server.jvmCache[i];
+                labels.push(g.util.formatTimeHHMMSS(data.timestamp));
+                totalDataset.push(data.totalMemory);
+                freeDataset.push(data.freeMemory);
+            }
+            jvmChart.data.labels = labels;
+            jvmChart.data.datasets[0].data = totalDataset;
+            jvmChart.data.datasets[1].data = freeDataset;
+            jvmChart.update();
         }
     };
 

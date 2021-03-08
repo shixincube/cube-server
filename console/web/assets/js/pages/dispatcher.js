@@ -233,6 +233,7 @@
                 }
             });
             switchAuto.removeAttr('checked');
+            switchAuto.prop('checked', false);
 
             // 表格
             tableEl = $('#server_table');
@@ -453,6 +454,8 @@
             var timer = 0;
             var complete = function() {
                 clearInterval(timer);
+                clearInterval(autoTimer);
+                autoTimer = 0;
                 that.refreshServerTable();
                 el.modal('hide');
             };

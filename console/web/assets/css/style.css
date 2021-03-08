@@ -285,3 +285,7 @@ h5 {
 .monitor .bootstrap-switch .bootstrap-switch-handle-off {
     font-size: 12px;
 }
+
+.chart-view {
+    margin-bottom: 1rem;
+}

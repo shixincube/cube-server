@@ -156,6 +156,7 @@
                 }
             });
             switchAuto.removeAttr('checked');
+            switchAuto.prop('checked', false);
 
             // 表格
             tableEl = $('#server_table');
@@ -290,7 +291,12 @@
 
             this._requestPerformanceReport(server, timestampArray, function(success) {
                 // 完成
-                that.updateMonitor(server);
+                if (success) {
+                    that.updateMonitor(server);
+                }
+                else {
+                    g.common.toast(Toast.Warning, '刷新服务器性能数据错误');
+                }
             });
         },
 
@@ -460,6 +466,8 @@
             var timer = 0;
             var complete = function() {
                 clearInterval(timer);
+                clearInterval(autoTimer);
+                autoTimer = 0;
                 that.refreshServerTable();
                 el.modal('hide');
             };
