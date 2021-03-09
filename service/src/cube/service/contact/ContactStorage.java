@@ -56,12 +56,17 @@ public class ContactStorage implements Storagable {
 
     private final String contactTablePrefix = "contact_";
 
+    private final String contactZoneTablePrefix = "contact_zone_";
+
     private final String groupTablePrefix = "group_";
 
     private final String groupMemberTablePrefix = "group_member_";
 
     private final String appendixTablePrefix = "appendix_";
 
+    /**
+     * 联系人字段描述。
+     */
     private final StorageField[] contactFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG),
             new StorageField("name", LiteralBase.STRING),
@@ -69,6 +74,27 @@ public class ContactStorage implements Storagable {
             new StorageField("recent_device_name", LiteralBase.STRING),
             new StorageField("recent_device_platform", LiteralBase.STRING)
             //new StorageField("reserved", LiteralBase.STRING)
+    };
+
+    /**
+     * 联系人分区字段描述。
+     */
+    private final StorageField[] contactZoneFields = new StorageField[] {
+            new StorageField("owner", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("contact", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
     };
 
     /**
@@ -114,6 +140,7 @@ public class ContactStorage implements Storagable {
     private Storage storage;
 
     private Map<String, String> contactTableNameMap;
+    private Map<String, String> contactZoneTableNameMap;
     private Map<String, String> groupTableNameMap;
     private Map<String, String> groupMemberTableNameMap;
     private Map<String, String> appendixTableNameMap;
@@ -122,6 +149,7 @@ public class ContactStorage implements Storagable {
         this.executor = executor;
         this.storage = storage;
         this.contactTableNameMap = new HashMap<>();
+        this.contactZoneTableNameMap = new HashMap<>();
         this.groupTableNameMap = new HashMap<>();
         this.groupMemberTableNameMap = new HashMap<>();
         this.appendixTableNameMap = new HashMap<>();
@@ -131,6 +159,7 @@ public class ContactStorage implements Storagable {
         this.executor = executor;
         this.storage = StorageFactory.getInstance().createStorage(type, "ContactStorage", config);
         this.contactTableNameMap = new HashMap<>();
+        this.contactZoneTableNameMap = new HashMap<>();
         this.groupTableNameMap = new HashMap<>();
         this.groupMemberTableNameMap = new HashMap<>();
         this.appendixTableNameMap = new HashMap<>();
@@ -150,6 +179,7 @@ public class ContactStorage implements Storagable {
     public void execSelfChecking(List<String> domainNameList) {
         for (String domain : domainNameList) {
             this.checkContactTable(domain);
+            this.checkContactZoneTable(domain);
             this.checkGroupTable(domain);
             this.checkGroupMemberTable(domain);
             this.checkAppendixTable(domain);
@@ -275,6 +305,96 @@ public class ContactStorage implements Storagable {
         }
 
         return contact;
+    }
+
+    /**
+     * 增加 Zone 记录。
+     *
+     * @param domain
+     * @param owner
+     * @param name
+     * @param contactId
+     */
+    public void addContactZone(String domain, long owner, String name, Long contactId) {
+        final String table = this.contactZoneTableNameMap.get(domain);
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                List<StorageField[]> list = storage.executeQuery(table, new StorageField[] {
+                        new StorageField("contact", LiteralBase.LONG)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("owner", LiteralBase.LONG, owner),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("name", LiteralBase.STRING, name),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("contact", LiteralBase.LONG, contactId.longValue()),
+                });
+                if (!list.isEmpty()) {
+                    return;
+                }
+
+                storage.executeInsert(table, new StorageField[] {
+                        new StorageField("owner", LiteralBase.LONG, owner),
+                        new StorageField("name", LiteralBase.STRING, name),
+                        new StorageField("contact", LiteralBase.LONG, contactId.longValue()),
+                        new StorageField("state", LiteralBase.INT, 0),
+                        new StorageField("timestamp", LiteralBase.LONG, System.currentTimeMillis())
+                });
+            }
+        });
+    }
+
+    /**
+     * 移除 Zone 记录。
+     *
+     * @param domain
+     * @param owner
+     * @param name
+     * @param contactId
+     */
+    public void removeContactZone(String domain, long owner, String name, Long contactId) {
+        final String table = this.contactZoneTableNameMap.get(domain);
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                storage.executeDelete(table, new Conditional[] {
+                        Conditional.createEqualTo("owner", LiteralBase.LONG, owner),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("name", LiteralBase.STRING, name),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("contact", LiteralBase.LONG, contactId.longValue())
+                });
+            }
+        });
+    }
+
+    /**
+     * 读取 Zone 记录。
+     *
+     * @param domain
+     * @param owner
+     * @param name
+     * @return
+     */
+    public ContactZone readContactZone(String domain, long owner, String name) {
+        ContactZone zone = new ContactZone(domain, owner, name);
+
+        String table = this.contactZoneTableNameMap.get(domain);
+        List<StorageField[]> result = this.storage.executeQuery(table, this.contactZoneFields, new Conditional[] {
+                Conditional.createEqualTo("owner", LiteralBase.LONG, owner),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("name", LiteralBase.STRING, name),
+        });
+        if (result.isEmpty()) {
+            return zone;
+        }
+
+        for (StorageField[] row : result) {
+            Map<String, StorageField> map = StorageFields.get(row);
+            zone.contacts.add(map.get("contact").getLong());
+        }
+
+        return zone;
     }
 
     /**
@@ -939,6 +1059,19 @@ public class ContactStorage implements Storagable {
             };
 
             if (this.storage.executeCreate(table, fields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkContactZoneTable(String domain) {
+        String table = this.contactZoneTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.contactZoneTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            if (this.storage.executeCreate(table, this.contactZoneFields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
         }

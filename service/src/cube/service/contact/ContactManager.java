@@ -530,6 +530,17 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 获取指定联系人指定名称的 Zone 数据。
+     *
+     * @param contact
+     * @param zoneName
+     * @return
+     */
+    public ContactZone getContactZone(Contact contact, String zoneName) {
+        return this.storage.readContactZone(contact.getDomain().getName(), contact.getId(), zoneName);
+    }
+
+    /**
      * 获取指定联系人所在的所有群。
      *
      * @param domain
