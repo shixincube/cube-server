@@ -77,6 +77,21 @@ public enum ContactAction {
     GetContactList("getContactList"),
 
     /**
+     * 获取联系人分区。
+     */
+    GetContactZone("getContactZone"),
+
+    /**
+     * 添加联系人到分区。
+     */
+    AddContactToZone("addContactToZone"),
+
+    /**
+     * 从分区移除联系人。
+     */
+    RemoveContactFromZone("removeContactFromZone"),
+
+    /**
      * 获取群组信息。
      */
     GetGroup("getGroup"),

@@ -35,7 +35,6 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
-import cube.common.entity.ContactZone;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -43,11 +42,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * 获取联系人的分区分组数据任务。
+ * 从分区移除联系人任务。
  */
-public class GetContactZoneTask extends ServiceTask {
+public class RemoveContactFromZoneTask extends ServiceTask {
 
-    public GetContactZoneTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public RemoveContactFromZoneTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -75,8 +74,10 @@ public class GetContactZoneTask extends ServiceTask {
         }
 
         String zoneName = null;
+        Long contactId = null;
         try {
             zoneName = data.getString("name");
+            contactId = data.getLong("contactId");
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
@@ -85,17 +86,11 @@ public class GetContactZoneTask extends ServiceTask {
             return;
         }
 
-        // 获取分区
-        ContactZone zone = ContactManager.getInstance().getContactZone(contact, zoneName);
-        if (null == zone) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
-            markResponseTime();
-            return;
-        }
+        // 从分区移除联系人
+        ContactManager.getInstance().removeContactFromZone(contact, zoneName, contactId);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, zone.toJSON()));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, data));
         markResponseTime();
     }
 }

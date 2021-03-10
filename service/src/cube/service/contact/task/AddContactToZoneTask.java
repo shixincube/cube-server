@@ -43,11 +43,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * 获取联系人的分区分组数据任务。
+ * 添加联系人到分区任务。
  */
-public class GetContactZoneTask extends ServiceTask {
+public class AddContactToZoneTask extends ServiceTask {
 
-    public GetContactZoneTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public AddContactToZoneTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -75,8 +75,10 @@ public class GetContactZoneTask extends ServiceTask {
         }
 
         String zoneName = null;
+        Long contactId = null;
         try {
             zoneName = data.getString("name");
+            contactId = data.getLong("contactId");
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
@@ -85,17 +87,11 @@ public class GetContactZoneTask extends ServiceTask {
             return;
         }
 
-        // 获取分区
-        ContactZone zone = ContactManager.getInstance().getContactZone(contact, zoneName);
-        if (null == zone) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
-            markResponseTime();
-            return;
-        }
+        // 添加联系人到分区
+        ContactManager.getInstance().addContactToZone(contact, zoneName, contactId);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, zone.toJSON()));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, data));
         markResponseTime();
     }
 }

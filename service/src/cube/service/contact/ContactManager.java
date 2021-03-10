@@ -541,6 +541,30 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 添加联系人到指定的 Zone 。
+     *
+     * @param contact
+     * @param zoneName
+     * @param contactId
+     */
+    public void addContactToZone(Contact contact, String zoneName, Long contactId) {
+        this.storage.addContactZone(contact.getDomain().getName(), contact.getId(),
+                zoneName, contactId);
+    }
+
+    /**
+     * 从指定的 Zone 移除联系人。
+     *
+     * @param contact
+     * @param zoneName
+     * @param contactId
+     */
+    public void removeContactFromZone(Contact contact, String zoneName, Long contactId) {
+        this.storage.removeContactZone(contact.getDomain().getName(), contact.getId(),
+                zoneName, contactId);
+    }
+
+    /**
      * 获取指定联系人所在的所有群。
      *
      * @param domain
