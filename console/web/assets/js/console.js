@@ -37,13 +37,13 @@ function Console() {
 
 Console.prototype.checkUser = function(handler) {
     var token = null;
-    var val = document.cookie;
-    var array = val.split(';');
+    var cookie = document.cookie;
+    var array = cookie.split(';');
     for (var i = 0; i < array.length; ++i) {
-        val = array[i].split('=');
-        if (val.length == 2) {
-            if (val[0] == 'CubeConsoleToken') {
-                token = val[1].trim();
+        var value = array[i].trim().split('=');
+        if (value.length == 2) {
+            if (value[0] == 'CubeConsoleToken') {
+                token = value[1].trim();
                 break;
             }
         }
