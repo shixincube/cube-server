@@ -489,7 +489,7 @@
                         <div class="detail-content ap-host"></div> <b class="text-muted">@</b>
                         <div class="detail-content ap-port"></div>
                         <div class="server-detail-group-append">
-                            <div class="detail-label"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
+                            <div class="detail-label" style="width:120px;"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
                             <div class="detail-content ap-maxconn"></div>
                         </div>
                     </div>
@@ -498,7 +498,7 @@
                         <div class="detail-content wsap-host"></div> <b class="text-muted">@</b>
                         <div class="detail-content wsap-port"></div>
                         <div class="server-detail-group-append">
-                            <div class="detail-label"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
+                            <div class="detail-label" style="width:120px;"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
                             <div class="detail-content wsap-maxconn"></div>
                         </div>
                     </div>
@@ -507,7 +507,7 @@
                         <div class="detail-content wssap-host"></div> <b class="text-muted">@</b>
                         <div class="detail-content wssap-port"></div>
                         <div class="server-detail-group-append">
-                            <div class="detail-label"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
+                            <div class="detail-label" style="width:120px;"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
                             <div class="detail-content wssap-maxconn"></div>
                         </div>
                     </div>
@@ -529,19 +529,20 @@
                         <div class="detail-label"><i class="fas fa-table"></i>服务列表：</div>
                         <div class="detail-content cellets"></div>
                     </div>
+                    <hr/>
                     <div class="server-detail-group mb-0">
-                        <div class="detail-label"><i class="fas fa-book"></i>上位服务单元：</div>
+                        <div class="detail-label"><i class="fas fa-book"></i>服务单元：</div>
                         <div class="detail-content" style="width:100%;">
                             <div class="form-group">
                                 <select class="custom-select director-list"></select>
                             </div>
                             <div class="row">
-                                <div class="col-1 text-muted">地址：</div>
-                                <div class="col-3 director-address"></div>
-                                <div class="col-1 text-muted">端口：</div>
-                                <div class="col-3 director-port"></div>
-                                <div class="col-1 text-muted">权重：</div>
-                                <div class="col-3 director-weight"></div>
+                                <div class="col-1 text-muted" style="line-height:2;">地址：</div>
+                                <div class="col-5 director-address" style="line-height:2;"></div>
+                                <div class="col-1 text-muted" style="line-height:2;">端口：</div>
+                                <div class="col-2 director-port" style="line-height:2;"></div>
+                                <div class="col-1 text-muted" style="line-height:2;">权重：</div>
+                                <div class="col-2 director-weight" style="line-height:2;"></div>
                             </div>
                             <div class="row">
                                 <div class="col-12 director-cellets"></div>
@@ -551,7 +552,9 @@
                 </div>
             </div><!-- /.modal-body -->
             <div class="modal-footer text-right">
-                <button type="button" class="btn btn-primary">编辑</button>
+                <button type="button" class="btn btn-primary" data-target="submit">确认修改</button>
+                <button type="button" class="btn btn-danger" data-target="discard">放弃修改</button>
+                <button type="button" class="btn btn-primary" data-target="edit">修改配置</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
             </div><!-- /.modal-footer -->
         </div>
@@ -602,7 +605,7 @@
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-primary" onclick="javascript:dispatcher.onToggleConfirm();">确定</button>
             </div><!-- /.modal-footer -->
-            <div class="overlay"><i class="fas fa-2x fa-sync-alt fa-spin"></i></div>
+            <div class="overlay"><span><i class="fas fa-2x fa-sync-alt fa-spin"></i></span><span class="text">正在执行操作，请稍候……</span></div>
         </div>
     </div>
 </div><!-- /.modal -->

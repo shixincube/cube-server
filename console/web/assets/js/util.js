@@ -172,4 +172,34 @@
         return array;
     }
     g.util.makeTimeLineArray = makeTimeLineArray;
+
+    /**
+     * 判断是否是合法的 IPv4
+     * @param {string} ip 
+     * @returns 
+     */
+    g.util.isIPv4 = function(ip) {
+        var reg = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/;
+        return reg.test(ip);
+    }
+
+    /**
+     * 判断是否是合法的 IPv6
+     * @param {string} ip 
+     * @returns 
+     */
+    g.util.isIPv6 = function(ip) {
+        return /:/.test(ip) && ip.match(/:/g).length < 8 &&
+            /::/.test(ip) ? (ip.match(/::/g).length == 1 && /^::$|^(::)?([\da-f]{1,4}(:|::))*[\da-f]{1,4}(:|::)?$/i.test(ip))
+                : /^([\da-f]{1,4}:){7}[\da-f]{1,4}$/i.test(ip);
+    }
+
+    /**
+     * 判断是否是无符号整数。
+     * @param {string} str 
+     * @returns 
+     */
+    g.util.isUnsigned = function(str) {
+        return (/(^[1-9]\d*$)/.test(str));
+    }
 })(window);

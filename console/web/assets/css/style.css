@@ -68,12 +68,18 @@ h5 {
     border-radius: .25rem;
     -ms-flex-align: center;
     align-items: center;
-    background: rgba(255,255,255,.7);
+    background: rgba(248,249,250,1);
+    opacity: 0.8;
     display: -ms-flexbox;
     display: flex;
     -ms-flex-pack: center;
     justify-content: center;
     z-index: 50;
+}
+.overlay .text {
+    padding-left: 12px;
+    color: #343a40;
+    font-weight: 600;
 }
 
 .dropdown-menu {
@@ -166,7 +172,7 @@ h5 {
     font-weight: bold;
     min-width: 130px;
     color: #6c757d;
-    vertical-align: top;
+    vertical-align: middle;
 }
 .detail-label i {
     margin-right: 8px;
@@ -182,7 +188,10 @@ h5 {
     -ms-text-overflow: ellipsis;
     text-overflow: ellipsis;
     white-space: nowrap;
-    vertical-align: bottom;
+    vertical-align: middle;
+}
+.server-detail-group .log-level {
+    width: 120px;
 }
 .detail-content .badge {
     font-size: 14px;
@@ -195,6 +204,50 @@ h5 {
 }
 .detail-content .director-cellets {
     margin-top: 10px;
+}
+.detail-content .input-host {
+    width: 180px;
+}
+.detail-content .input-port {
+    width: 70px;
+}
+.detail-content .input-number {
+    width: 100px;
+}
+.server-detail-group .cellets {
+    text-overflow: unset;
+    white-space: unset;
+}
+.server-detail-group .cellets .input-group {
+    width: 260px;
+    margin-top: 0.3rem;
+}
+.server-detail-group .director-cellets {
+    white-space: normal;
+}
+.server-detail-group .director-cellets .input-group {
+    width: 260px;
+    margin-top: 0.3rem;
+}
+.detail-content .cellet {
+    display: inline-block;
+    margin: 0.3rem 0.5rem 0.3rem 0;
+    padding: 4px 5px 4px 8px;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    box-shadow: inset 0 0 0 transparent;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    font-weight: normal;
+}
+.detail-content .cellet a {
+    color: #ced4da;
+}
+.detail-content .cellet .badge {
+    font-size: 12px;
+    margin-left: 0.5rem;
 }
 .server-detail-group-append {
     display: inline-block;

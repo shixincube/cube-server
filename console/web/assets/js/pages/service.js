@@ -223,6 +223,9 @@
                             '<button type="button" class="btn btn-primary btn-sm" onclick="javascript:service.showDetails(', index, ');">',
                                 '<i class="fas fa-tasks"></i> 详情',
                             '</button>',
+                            '<button type="button" class="btn btn-info btn-sm" onclick="javascript:service.showConfig(', index, ');">',
+                                '<i class="fas fa-cog"></i> 配置',
+                            '</button>',
                             '<button type="button" class="btn btn-warning btn-sm" onclick="javascript:service.runMockTest(', index, ');">',
                                 '<i class="fas fa-bolt"></i> 拨测',
                             '</button>',
@@ -568,6 +571,10 @@
             that.refreshPerformance(current);
         },
 
+        /**
+         * 显示详情。
+         * @param {number} index 
+         */
         showDetails: function(index) {
             var service = serviceList[index];
 
@@ -625,6 +632,15 @@
             });
             contentEl.html(html.join(''));
 
+            el.modal('show');
+        },
+
+        /**
+         * 显示配置。
+         * @param {number} index 
+         */
+        showConfig: function(index) {
+            var el = $('#modal_config_server');
             el.modal('show');
         },
 

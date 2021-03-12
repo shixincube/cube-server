@@ -26,7 +26,7 @@
  */
 
 (function ($, g) {
-    'use strict'
+    'use strict';
 
     var that = null;
 
@@ -34,12 +34,25 @@
     $.console = console;
 
     var btnNewDeploy = null;
+
+    var modalDetails = null;
+
     var tableEl = null;
     var monitorEl = null;
 
     var defaultDeploy = null;
 
     var dispatcherList = [];
+
+    // 是否处于编辑状态
+    var editable = false;
+
+    // 当前详情的服务器
+    var currentDetailServer = null;
+    // 当前正在修改的调度机的 Cellet 列表
+    var currentDetailCellets = null;
+    // 当前选择的 Director
+    var currentDirector = null;
 
     // 监视器当前服务器
     var current = null;
@@ -137,6 +150,13 @@
         return chart;
     }
 
+    /**
+     * 详情对话框里切换 Director 的 select 改变回调。
+     * @param {number|*} index 
+     * @param {string} tag 
+     * @param {string} deployPath 
+     * @returns 
+     */
     function onDetailDirectorChange(index, tag, deployPath) {
         if (typeof index !== 'number') {
             var selected = $(this).find("option:selected");
@@ -152,19 +172,79 @@
             return;
         }
 
-        var el = $('#modal_details');
+        var el = modalDetails;
         var director = dispatcher.directors[index];
-        el.find('.director-address').text(director.address);
-        el.find('.director-port').text(director.port);
-        el.find('.director-weight').text(director.weight);
+        currentDirector = director;
 
-        var html = [];
-        director.cellets.forEach(function(value, index) {
-            html.push(['<span class="badge badge-success">', value, '</span>'].join(''));
-        });
-        if (html.length == 0) {
-            html.push('&nbsp;');
+        if (editable) {
+            el.find('.director-address').html('<input type="text" class="form-control form-control-sm input-host" value="' + director.address + '" />');
+            el.find('.director-port').html('<input type="text" class="form-control form-control-sm input-port" value="' + director.port + '" />');
+            el.find('.director-weight').html('<input type="text" class="form-control form-control-sm input-port" value="' + director.weight + '" />');
+            updateCelletsInService(director.celletCache);
         }
+        else {
+            el.find('.director-address').text(director.address);
+            el.find('.director-port').text(director.port);
+            el.find('.director-weight').text(director.weight);
+    
+            var html = [];
+            director.cellets.forEach(function(value, index) {
+                html.push(['<span class="badge badge-success">', value, '</span>'].join(''));
+            });
+            if (html.length == 0) {
+                html.push('&nbsp;');
+            }
+            el.find('.director-cellets').html(html.join(''));
+        }
+    }
+
+    /**
+     * 更新在编辑状态下的 Dispatcher 里的 Cellet 列表。
+     */
+    function updateCelletsInDispatcher() {
+        var el = modalDetails;
+        // Cellets
+        var html = [];
+        currentDetailCellets.forEach(function(value, index) {
+            html.push([
+                '<div class="cellet">',
+                    '<span>', value, '</span>',
+                    '<a href="javascript:dispatcher.onRemoveCelletFromDispatcher(\'', value, '\');"><span class="badge badge-danger">', '&times;', '</span></a>',
+                '</div>'].join(''));
+        });
+        // 添加按钮
+        html.push(
+            '<div class="input-group input-group-sm">',
+                '<input type="text" class="form-control" data-target="new-cellet">',
+                '<span class="input-group-append">',
+                    '<button type="button" class="btn btn-primary btn-flat" onclick="javascript:dispatcher.onAddCelletToDispatcher();"><i class="fas fa-edit"></i></button>',
+                '</span>',
+            '</div>');
+        el.find('.cellets').html(html.join(''));
+    }
+
+    /**
+     * 更新在编辑状态下的服务单元里的 Cellet 列表。
+     * @param {*} director 
+     */
+    function updateCelletsInService(cellets) {
+        var el = modalDetails;
+        var html = [];
+        cellets.forEach(function(value, index) {
+            html.push([
+                '<div class="cellet">',
+                    '<span>', value, '</span>',
+                    '<a href="javascript:dispatcher.onRemoveCelletFromService(\'', value, '\');"><span class="badge badge-danger">', '&times;', '</span></a>',
+                '</div>'].join(''));
+        });
+        // 添加按钮
+        html.push(
+            '<div class="input-group input-group-sm">',
+                '<input type="text" class="form-control" data-target="new-service-cellet">',
+                '<span class="input-group-append">',
+                    '<button type="button" class="btn btn-primary btn-flat" onclick="javascript:dispatcher.onAddCelletToService();"><i class="fas fa-edit"></i></button>',
+                '</span>',
+            '</div>');
         el.find('.director-cellets').html(html.join(''));
     }
 
@@ -198,11 +278,33 @@
     }
 
     g.dispatcher = {
+        /**
+         * 启动程序。
+         */
         launch: function() {
             btnNewDeploy = $('#btn_new_deploy');
             btnNewDeploy.click(function() {
                 that.showNewDeployDialog();
             });
+
+            modalDetails = $('#modal_details');
+            modalDetails.on('hidden.bs.modal', function() {
+                that.closeDetailsEditor();
+            });
+            modalDetails.btnEdit = modalDetails.find('button[data-target="edit"]');
+            modalDetails.btnEdit.on('click', function() {
+                that.openDetailsEditor();
+            });
+            modalDetails.btnSubmit = modalDetails.find('button[data-target="submit"]');
+            modalDetails.btnSubmit.on('click', function() {
+                that.submitDetails();
+            });
+            modalDetails.btnSubmit.css('display', 'none');
+            modalDetails.btnDiscard = modalDetails.find('button[data-target="discard"]');
+            modalDetails.btnDiscard.on('click', function() {
+                that.closeDetailsEditor();
+            });
+            modalDetails.btnDiscard.css('display', 'none');
 
             var toggleModal = $('#modal_toggle_server');
             toggleModal.find('button[data-target="toggle"]').on('click', onTogglePwdVisible);
@@ -260,6 +362,9 @@
             });
         },
 
+        /**
+         * 刷新服务器表格。
+         */
         refreshServerTable: function() {
             var body = tableEl.find('tbody');
             body.empty();
@@ -322,6 +427,10 @@
             });
         },
 
+        /**
+         * 从服务器刷新性能数据。
+         * @param {*} server 
+         */
         refreshPerformance: function(server) {
             console.queryPerformanceReport(server.name, function(data) {
                 if (undefined === data.report) {
@@ -407,6 +516,10 @@
             });
         },
 
+        /**
+         * 开关服务器。
+         * @param {*} index 
+         */
         toggleServer: function(index) {
             var dispatcher = dispatcherList[index];
 
@@ -538,16 +651,23 @@
             return true;
         },
 
+        /**
+         * 显示服务器详情。
+         * @param {number} index 
+         */
         showDetails: function(index) {
             var server = dispatcherList[index];
             if (null == server) {
                 return;
             }
 
+            // 设置当前详情服务器
+            currentDetailServer = server;
+
             var tag = server.tag;
             var deployPath = server.deployPath;
 
-            var el = $('#modal_details');
+            var el = modalDetails;
             el.find('.tag').text(tag);
             el.find('.deploy-path').text(deployPath);
             el.find('.ap-host').text(server.server.host);
@@ -565,16 +685,20 @@
             el.find('.https-port').text(server.https.port);
             el.find('.log-level').text(server.logLevel);
 
+            // Cellets
             var html = [];
             server.cellets.forEach(function(value, index) {
                 html.push(['<span class="badge badge-info">', value, '</span>'].join(''));
             });
             el.find('.cellets').html(html.join(''));
 
+            // 服务器单元
             var selEl = el.find('.director-list');
             selEl.change(onDetailDirectorChange);
             html = [];
             server.directors.forEach(function(value, index) {
+                // 将 Cellet 复制到修改缓存
+                value.celletCache = value.cellets.concat();
                 html.push(['<option data="', index, '~', tag, '~', deployPath, '">#', (index + 1),
                     ' - ',value.address, ':', value.port, '</option>'].join(''));
             });
@@ -585,10 +709,178 @@
             el.modal('show');
         },
 
+        /**
+         * 详解界面切换到编辑状态。
+         */
+        openDetailsEditor: function() {
+            editable = true;
+
+            var el = modalDetails;
+
+            el.btnEdit.css('display', 'none');
+            el.btnSubmit.css('display', 'block');
+            el.btnDiscard.css('display', 'block');
+            el.find('.server-detail-group-append').each(function() {
+                $(this).css('margin-left', '70px');
+            });
+
+            var server = currentDetailServer;
+
+            el.find('.ap-host').html('<input type="text" class="form-control form-control-sm input-host" value="' + server.server.host + '" />');
+            el.find('.ap-port').html('<input type="text" class="form-control form-control-sm input-port" value="' + server.server.port + '" />');
+            el.find('.ap-maxconn').html('<input type="text" class="form-control form-control-sm input-number" value="' + server.server.maxConnection + '" />');
+            el.find('.wsap-host').html('<input type="text" class="form-control form-control-sm input-host" value="' + server.wsServer.host + '" />');
+            el.find('.wsap-port').html('<input type="text" class="form-control form-control-sm input-port" value="' + server.wsServer.port + '" />');
+            el.find('.wsap-maxconn').html('<input type="text" class="form-control form-control-sm input-number" value="' + server.wsServer.maxConnection + '" />');
+            el.find('.wssap-host').html('<input type="text" class="form-control form-control-sm input-host" value="' + server.wssServer.host + '" />');
+            el.find('.wssap-port').html('<input type="text" class="form-control form-control-sm input-port" value="' + server.wssServer.port + '" />');
+            el.find('.wssap-maxconn').html('<input type="text" class="form-control form-control-sm input-number" value="' + server.wssServer.maxConnection + '" />');
+            el.find('.http-host').html('<input type="text" class="form-control form-control-sm input-host" value="' + server.http.host + '" />');
+            el.find('.http-port').html('<input type="text" class="form-control form-control-sm input-port" value="' + server.http.port + '" />');
+            el.find('.https-host').html('<input type="text" class="form-control form-control-sm input-host" value="' + server.https.host + '" />');
+            el.find('.https-port').html('<input type="text" class="form-control form-control-sm input-port" value="' + server.https.port + '" />');
+
+            var logLevelSelect = [
+                '<select class="custom-select">',
+                    '<option>', 'DEBUG', '</option>',
+                    '<option>', 'INFO', '</option>',
+                    '<option>', 'WARNING', '</option>',
+                    '<option>', 'ERROR', '</option>',
+                '</select>'
+            ];
+            el.find('.log-level').html(logLevelSelect.join(''));
+            el.find('.log-level').find('select').val(server.logLevel);
+
+            // Cellets
+            currentDetailCellets = server.cellets.concat();
+            updateCelletsInDispatcher();
+
+            // 服务单元
+            onDetailDirectorChange(0, server.tag, server.deployPath);
+        },
+
+        /**
+         * 从编辑状态退出。
+         */
+        closeDetailsEditor: function() {
+            editable = false;
+
+            var el = modalDetails;
+
+            el.btnEdit.css('display', 'block');
+            el.btnSubmit.css('display', 'none');
+            el.btnDiscard.css('display', 'none');
+            el.find('.server-detail-group-append').each(function() {
+                $(this).css('margin-left', '120px');
+            });
+
+            var server = currentDetailServer;
+
+            el.find('.ap-host').text(server.server.host);
+            el.find('.ap-port').text(server.server.port);
+            el.find('.ap-maxconn').text(server.server.maxConnection);
+            el.find('.wsap-host').text(server.wsServer.host);
+            el.find('.wsap-port').text(server.wsServer.port);
+            el.find('.wsap-maxconn').text(server.wsServer.maxConnection);
+            el.find('.wssap-host').text(server.wssServer.host);
+            el.find('.wssap-port').text(server.wssServer.port);
+            el.find('.wssap-maxconn').text(server.wssServer.maxConnection);
+            el.find('.http-host').text(server.http.host);
+            el.find('.http-port').text(server.http.port);
+            el.find('.https-host').text(server.https.host);
+            el.find('.https-port').text(server.https.port);
+            el.find('.log-level').text(server.logLevel);
+
+            // Cellets
+            var html = [];
+            server.cellets.forEach(function(value, index) {
+                html.push(['<span class="badge badge-info">', value, '</span>'].join(''));
+            });
+            el.find('.cellets').html(html.join(''));
+
+            // 服务单元
+            server.directors.forEach(function(value, index) {
+                // 将 Cellet 复制到修改缓存
+                value.celletCache = value.cellets.concat();
+            });
+            onDetailDirectorChange(0, server.tag, server.deployPath);
+        },
+
+        /**
+         * 提交详情。
+         */
+        submitDetails: function() {
+            var el = modalDetails;
+            var serverHost = el.find('.ap-host').find('input').val();
+
+        },
+
+        onRemoveCelletFromDispatcher: function(cellet) {
+            var index = currentDetailCellets.indexOf(cellet);
+            if (index >= 0) {
+                currentDetailCellets.splice(index, 1);
+                updateCelletsInDispatcher();
+            }
+        },
+
+        onAddCelletToDispatcher: function() {
+            var el = modalDetails;
+            var newCellet = el.find('input[data-target="new-cellet"]').val();
+            newCellet = newCellet.trim();
+            if (newCellet.length == 0) {
+                return;
+            }
+
+            var index = currentDetailCellets.indexOf(newCellet);
+            if (index >= 0) {
+                return;
+            }
+
+            currentDetailCellets.push(newCellet);
+
+            updateCelletsInDispatcher();
+        },
+
+        onRemoveCelletFromService: function(cellet) {
+            var cellets = currentDirector.celletCache;
+            var index = cellets.indexOf(cellet);
+            if (index >= 0) {
+                cellets.splice(index, 1);
+                updateCelletsInService(cellets);
+            }
+        },
+
+        onAddCelletToService: function(cellet) {
+            var el = modalDetails;
+            var newCellet = el.find('input[data-target="new-service-cellet"]').val();
+            newCellet = newCellet.trim();
+            if (newCellet.length == 0) {
+                return;
+            }
+
+            var cellets = currentDirector.celletCache;
+            var index = cellets.indexOf(newCellet);
+            if (index >= 0) {
+                return;
+            }
+
+            currentDirector.celletCache.push(newCellet);
+
+            updateCelletsInService(currentDirector.celletCache);
+        },
+
+        /**
+         * 执行服务验证测试。
+         * @param {number} index 
+         */
         runMockTest: function(index) {
             g.common.toast(Toast.Warning, '此功能暂不可用');
         },
 
+        /**
+         * 更新监视器界面和数据。
+         * @param {*} current 
+         */
         updateMonitor: function(current) {
             // 更新时间戳
             monitorEl.find('input[data-target="perf-time"]').val(g.util.formatFullTime(current.perf.timestamp));

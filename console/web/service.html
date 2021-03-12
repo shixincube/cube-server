@@ -333,7 +333,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">服务单元</h5>
+                <h5 class="modal-title">服务单元详情</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -370,6 +370,52 @@
                         <div class="detail-content" style="width:100%;">
                             <div class="cellets"></div>
                         </div>
+                    </div>
+                </div>
+            </div><!-- /.modal-body -->
+            <div class="modal-footer text-right">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div><!-- /.modal-footer -->
+        </div><!-- /.modal-content -->
+    </div>
+</div><!-- /.modal -->
+
+<!-- Config Modal -->
+<div id="modal_config_server" class="modal fade">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">配置</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div><!-- /.modal-header -->
+            <div class="modal-body">
+                <div class="card-body inner-card pl-2 pr-2">
+                    <div class="server-detail-group">
+                        <div class="detail-label"><i class="fas fa-cube"></i> 控制台标签：</div>
+                        <div class="detail-content tag"></div>
+                    </div>
+                    <div class="server-detail-group">
+                        <div class="detail-label"><i class="fas fa-folder"></i> 部署路径：</div>
+                        <div class="detail-content deploy-path"></div>
+                    </div>
+                    <div class="server-detail-group">
+                        <div class="detail-label"><i class="fas fa-folder"></i> 配置文件路径：</div>
+                        <div class="detail-content config-path"></div>
+                    </div>
+                    <div class="server-detail-group">
+                        <div class="detail-label"><i class="fas fa-server"></i> SHM访问点：</div>
+                        <div class="detail-content ap-host"></div> <b class="text-muted">@</b>
+                        <div class="detail-content ap-port"></div>
+                        <div class="server-detail-group-append">
+                            <div class="detail-label"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
+                            <div class="detail-content ap-maxconn"></div>
+                        </div>
+                    </div>
+                    <div class="server-detail-group">
+                        <div class="detail-label"><i class="fas fa-code"></i> 日志等级：</div>
+                        <div class="detail-content log-level"></div>
                     </div>
                 </div>
             </div><!-- /.modal-body -->
@@ -430,7 +476,7 @@
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-primary" onclick="javascript:service.onToggleConfirm();">确定</button>
             </div><!-- /.modal-footer -->
-            <div class="overlay"><i class="fas fa-2x fa-sync-alt fa-spin"></i></div>
+            <div class="overlay"><span><i class="fas fa-2x fa-sync-alt fa-spin"></i></span><span class="text">正在执行操作，请稍候……</span></div>
         </div>
     </div>
 </div><!-- /.modal -->
