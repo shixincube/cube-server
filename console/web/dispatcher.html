@@ -533,8 +533,18 @@
                     <div class="server-detail-group mb-0">
                         <div class="detail-label"><i class="fas fa-book"></i>服务单元：</div>
                         <div class="detail-content" style="width:100%;">
-                            <div class="form-group">
-                                <select class="custom-select director-list"></select>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <select class="custom-select director-list"></select>
+                                    </div>
+                                </div>
+                                <div class="col-3 text-right">
+                                    <button class="btn btn-danger btn-sm" style="font-size:12px;visibility:hidden;" data-target="remove-service"><i class="fas fa-minus"></i> 删除服务单元</button>
+                                </div>
+                                <div class="col-3">
+                                    <button class="btn btn-primary btn-sm" style="font-size:12px;visibility:hidden;" data-target="add-service"><i class="fas fa-plus"></i> 新增服务单元</button>
+                                </div>
                             </div>
                             <div class="row">
                                 <div class="col-1 text-muted" style="line-height:2;">地址：</div>

@@ -48,11 +48,15 @@
     var editable = false;
 
     // 当前详情的服务器
-    var currentDetailServer = null;
+    var currentServer = null;
     // 当前正在修改的调度机的 Cellet 列表
-    var currentDetailCellets = null;
+    var currentServerCellets = null;
     // 当前选择的 Director
     var currentDirector = null;
+    // 删除的 Director 配置
+    var removedDirectors = [];
+    // 新增的 Director 配置
+    var addedDirectors = [];
 
     // 监视器当前服务器
     var current = null;
@@ -150,6 +154,72 @@
         return chart;
     }
 
+    function isRemovedDirector(director) {
+        for (var i = 0; i < removedDirectors.length; ++i) {
+            var d = removedDirectors[i];
+            if (d.address == director.address && d.port == director.port) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function isAddedDirector(director) {
+        for (var i = 0; i < addedDirectors.length; ++i) {
+            var d = addedDirectors[i];
+            if (d.address == director.address && d.port == director.port) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function updateDirectorSelector(server) {
+        var tag = server.tag;
+        var deployPath = server.deployPath;
+        var selEl = modalDetails.find('.director-list');
+        var html = [];
+
+        var list = server.directors.concat(addedDirectors);
+        list.forEach(function(value, index) {
+            if (isRemovedDirector(value)) {
+                return;
+            }
+
+            // 将 Cellet 复制到修改缓存
+            value.celletCache = value.cellets.concat();
+            html.push(['<option data="', index, '~', tag, '~', deployPath, '">#', (index + 1),
+                ' - ', value.address, ':', value.port, '</option>'].join(''));
+        });
+        selEl.html(html.join(''));
+    }
+
+    /**
+     * 切换选择 Director 
+     * @param {*} index 
+     * @param {*} address 
+     * @param {*} port 
+     * @returns 
+     */
+    function selectDirector(index, address, port) {
+        var selEl = modalDetails.find('.director-list');
+
+        if (undefined === address) {
+            var options = selEl.find('option');
+            if (options.length == 0) {
+                return;
+            }
+
+            var value = options.eq(index).text();
+            selEl.val(value);
+        }
+        else {
+            selEl.val(['#', (index + 1), ' - ', address, ':', port].join(''));
+        }
+        
+        selEl.change();
+    }
+
     /**
      * 详情对话框里切换 Director 的 select 改变回调。
      * @param {number|*} index 
@@ -172,13 +242,33 @@
             return;
         }
 
+        // 计算有效的列表
+        var list = dispatcher.directors.concat(addedDirectors);
+        for (var i = 0; i < removedDirectors.length; ++i) {
+            var removed = removedDirectors[i];
+            for (var n = 0; n < list.length; ++n) {
+                var d = list[n];
+                if (d.address == removed.address && d.port == removed.port) {
+                    list.splice(n, 1);
+                    break;
+                }
+            }
+        }
+
         var el = modalDetails;
-        var director = dispatcher.directors[index];
+
+        if (list.length == 0) {
+            return;
+        }
+
+        var director = list[index];
         currentDirector = director;
 
         if (editable) {
-            el.find('.director-address').html('<input type="text" class="form-control form-control-sm input-host" value="' + director.address + '" />');
-            el.find('.director-port').html('<input type="text" class="form-control form-control-sm input-port" value="' + director.port + '" />');
+            el.find('.director-address').html('<input type="text" class="form-control form-control-sm input-host" value="' + director.address + '" ' + 
+                'onkeyup="javascript:dispatcher.onDirectorAddressKeyup();" />');
+            el.find('.director-port').html('<input type="text" class="form-control form-control-sm input-port" value="' + director.port + '" ' +
+                'onkeyup="javascript:dispatcher.onDirectorPortKeyup();" />');
             el.find('.director-weight').html('<input type="text" class="form-control form-control-sm input-port" value="' + director.weight + '" />');
             updateCelletsInService(director.celletCache);
         }
@@ -205,7 +295,7 @@
         var el = modalDetails;
         // Cellets
         var html = [];
-        currentDetailCellets.forEach(function(value, index) {
+        currentServerCellets.forEach(function(value, index) {
             html.push([
                 '<div class="cellet">',
                     '<span>', value, '</span>',
@@ -277,6 +367,9 @@
         }
     }
 
+    /**
+     * dispatcher
+     */
     g.dispatcher = {
         /**
          * 启动程序。
@@ -291,20 +384,35 @@
             modalDetails.on('hidden.bs.modal', function() {
                 that.closeDetailsEditor();
             });
+            // 编辑配置按钮
             modalDetails.btnEdit = modalDetails.find('button[data-target="edit"]');
             modalDetails.btnEdit.on('click', function() {
                 that.openDetailsEditor();
             });
+            // 提交配置按钮
             modalDetails.btnSubmit = modalDetails.find('button[data-target="submit"]');
             modalDetails.btnSubmit.on('click', function() {
                 that.submitDetails();
             });
             modalDetails.btnSubmit.css('display', 'none');
+            // 放弃修改按钮
             modalDetails.btnDiscard = modalDetails.find('button[data-target="discard"]');
             modalDetails.btnDiscard.on('click', function() {
                 that.closeDetailsEditor();
             });
             modalDetails.btnDiscard.css('display', 'none');
+            // 删除 Director 配置按钮
+            modalDetails.btnRemoveDirector = modalDetails.find('button[data-target="remove-service"]');
+            modalDetails.btnRemoveDirector.on('click', function() {
+                that.removeCurrentDirector();
+            });
+            // 新增 Director 配置按钮
+            modalDetails.btnAddDirector = modalDetails.find('button[data-target="add-service"]');
+            modalDetails.btnAddDirector.on('click', function() {
+                that.newDirector();
+            });
+            // 选择 Director
+            modalDetails.find('.director-list').change(onDetailDirectorChange);
 
             var toggleModal = $('#modal_toggle_server');
             toggleModal.find('button[data-target="toggle"]').on('click', onTogglePwdVisible);
@@ -662,7 +770,7 @@
             }
 
             // 设置当前详情服务器
-            currentDetailServer = server;
+            currentServer = server;
 
             var tag = server.tag;
             var deployPath = server.deployPath;
@@ -693,18 +801,8 @@
             el.find('.cellets').html(html.join(''));
 
             // 服务器单元
-            var selEl = el.find('.director-list');
-            selEl.change(onDetailDirectorChange);
-            html = [];
-            server.directors.forEach(function(value, index) {
-                // 将 Cellet 复制到修改缓存
-                value.celletCache = value.cellets.concat();
-                html.push(['<option data="', index, '~', tag, '~', deployPath, '">#', (index + 1),
-                    ' - ',value.address, ':', value.port, '</option>'].join(''));
-            });
-            selEl.html(html.join(''));
-
-            onDetailDirectorChange(0, tag, deployPath);
+            updateDirectorSelector(server);
+            selectDirector(0);
 
             el.modal('show');
         },
@@ -720,11 +818,13 @@
             el.btnEdit.css('display', 'none');
             el.btnSubmit.css('display', 'block');
             el.btnDiscard.css('display', 'block');
+            el.btnRemoveDirector.css('visibility', 'visible');
+            el.btnAddDirector.css('visibility', 'visible');
             el.find('.server-detail-group-append').each(function() {
                 $(this).css('margin-left', '70px');
             });
 
-            var server = currentDetailServer;
+            var server = currentServer;
 
             el.find('.ap-host').html('<input type="text" class="form-control form-control-sm input-host" value="' + server.server.host + '" />');
             el.find('.ap-port').html('<input type="text" class="form-control form-control-sm input-port" value="' + server.server.port + '" />');
@@ -752,11 +852,11 @@
             el.find('.log-level').find('select').val(server.logLevel);
 
             // Cellets
-            currentDetailCellets = server.cellets.concat();
+            currentServerCellets = server.cellets.concat();
             updateCelletsInDispatcher();
 
             // 服务单元
-            onDetailDirectorChange(0, server.tag, server.deployPath);
+            selectDirector(0);
         },
 
         /**
@@ -770,11 +870,13 @@
             el.btnEdit.css('display', 'block');
             el.btnSubmit.css('display', 'none');
             el.btnDiscard.css('display', 'none');
+            el.btnRemoveDirector.css('visibility', 'hidden');
+            el.btnAddDirector.css('visibility', 'hidden');
             el.find('.server-detail-group-append').each(function() {
                 $(this).css('margin-left', '120px');
             });
 
-            var server = currentDetailServer;
+            var server = currentServer;
 
             el.find('.ap-host').text(server.server.host);
             el.find('.ap-port').text(server.server.port);
@@ -798,12 +900,13 @@
             });
             el.find('.cellets').html(html.join(''));
 
+            // 重置数据
+            removedDirectors = [];
+            addedDirectors = [];
+
             // 服务单元
-            server.directors.forEach(function(value, index) {
-                // 将 Cellet 复制到修改缓存
-                value.celletCache = value.cellets.concat();
-            });
-            onDetailDirectorChange(0, server.tag, server.deployPath);
+            updateDirectorSelector(server);
+            selectDirector(0);
         },
 
         /**
@@ -815,10 +918,56 @@
 
         },
 
+        /**
+         * 删除当前 Director
+         */
+        removeCurrentDirector: function() {
+            if (null == currentDirector) {
+                return;
+            }
+
+            var selEl = modalDetails.find('.director-list');
+            if (selEl.find('option').length <= 1) {
+                g.common.toast(g.Toast.Warning, '操作无效，当前仅有一条服务单元记录');
+                return;
+            }
+
+            if (!isRemovedDirector(currentDirector)) {
+                // 记录删除的数据
+                removedDirectors.push(currentDirector);
+            }
+
+            var server = currentServer;
+
+            currentDirector = null;
+
+            updateDirectorSelector(server);
+            selectDirector(0);
+        },
+
+        /**
+         * 新建 Director 配置界面
+         */
+        newDirector: function() {
+            var director = {
+                address: '192.168.' + g.util.randomNumber(1, 254) + '.' + g.util.randomNumber(1, 254),
+                port: '6000',
+                cellets: currentDirector.cellets.concat(),
+                weight: currentDirector.weight
+            };
+
+            addedDirectors.push(director);
+
+            var selEl = modalDetails.find('.director-list');
+            var index = selEl.find('option').length;
+            updateDirectorSelector(currentServer);
+            selectDirector(index, director.address, director.port);
+        },
+
         onRemoveCelletFromDispatcher: function(cellet) {
-            var index = currentDetailCellets.indexOf(cellet);
+            var index = currentServerCellets.indexOf(cellet);
             if (index >= 0) {
-                currentDetailCellets.splice(index, 1);
+                currentServerCellets.splice(index, 1);
                 updateCelletsInDispatcher();
             }
         },
@@ -831,12 +980,12 @@
                 return;
             }
 
-            var index = currentDetailCellets.indexOf(newCellet);
+            var index = currentServerCellets.indexOf(newCellet);
             if (index >= 0) {
                 return;
             }
 
-            currentDetailCellets.push(newCellet);
+            currentServerCellets.push(newCellet);
 
             updateCelletsInDispatcher();
         },
@@ -867,6 +1016,29 @@
             currentDirector.celletCache.push(newCellet);
 
             updateCelletsInService(currentDirector.celletCache);
+        },
+
+        onDirectorAddressKeyup: function(e) {
+            var el = modalDetails.find('.director-address input');
+            var option = modalDetails.find('.director-list option:selected');
+            currentDirector.address = el.val().trim();
+
+            var array = option.text().split('-');
+            option.text(array[0] + '- ' + currentDirector.address + ':' + currentDirector.port);
+        },
+    
+        onDirectorPortKeyup: function(e) {
+            var el = modalDetails.find('.director-port input');
+            var value = el.val().trim();
+            if (!g.util.isUnsigned(value)) {
+                return;
+            }
+
+            currentDirector.port = el.val().trim();
+
+            var option = modalDetails.find('.director-list option:selected');
+            var array = option.text().split('-');
+            option.text(array[0] + '- ' + currentDirector.address + ':' + currentDirector.port);
         },
 
         /**

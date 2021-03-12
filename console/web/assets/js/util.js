@@ -202,4 +202,21 @@
     g.util.isUnsigned = function(str) {
         return (/(^[1-9]\d*$)/.test(str));
     }
+
+    /**
+     * 随机数字。
+     * @param {*} min 
+     * @param {*} max 
+     * @returns 
+     */
+    g.util.randomNumber = function(min, max) {
+        if (min === undefined) {
+            min = -32768;
+        }
+        if (max === undefined) {
+            max = 32767;
+        }
+
+        return Math.floor(Math.random() * (max - min)) + min;
+    }
 })(window);
