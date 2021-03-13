@@ -26,9 +26,11 @@
 
 package cube.console.mgmt;
 
+import cell.util.Utils;
 import cell.util.log.LogLevel;
 import cell.util.log.Logger;
 import cube.common.JSONable;
+import cube.util.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
@@ -40,9 +42,16 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.file.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -51,6 +60,8 @@ import java.util.List;
 public class CellConfigFile {
 
     private String fullPath;
+
+    private Document document;
 
     private AccessPoint accessPoint;
 
@@ -85,8 +96,16 @@ public class CellConfigFile {
         return this.wsAccessPoint;
     }
 
+    public void setWSAccessPoint(AccessPoint accessPoint) {
+        this.wsAccessPoint = accessPoint;
+    }
+
     public AccessPoint getWSSAccessPoint() {
         return this.wssAccessPoint;
+    }
+
+    public void setWSSAccessPoint(AccessPoint accessPoint) {
+        this.wssAccessPoint = accessPoint;
     }
 
     public SSLConfig getSslConfig() {
@@ -116,16 +135,11 @@ public class CellConfigFile {
         return this.celletList;
     }
 
-    public void refresh() {
-        this.parse();
-    }
-
-    private void parse() {
-        Document document = null;
+    public void load() {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
-            document = builder.parse(this.fullPath);
+            this.document = builder.parse(this.fullPath);
         } catch (ParserConfigurationException e) {
             Logger.w(this.getClass(), "#parse", e);
         } catch (SAXException e) {
@@ -134,7 +148,7 @@ public class CellConfigFile {
             Logger.w(this.getClass(), "#parse", e);
         }
 
-        if (null == document) {
+        if (null == this.document) {
             return;
         }
 
@@ -226,6 +240,48 @@ public class CellConfigFile {
         }
     }
 
+    public void save() {
+        if (null == this.document) {
+            return;
+        }
+
+        this.backup();
+
+        TransformerFactory tf = TransformerFactory.newInstance();
+        try {
+            Transformer transformer = tf.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+            StringWriter sw = new StringWriter();
+
+            StreamResult sr = new StreamResult(sw);
+            DOMSource source = new DOMSource(this.document);
+            transformer.transform(source, sr);
+        } catch (TransformerConfigurationException e) {
+            e.printStackTrace();
+        } catch (TransformerException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void backup() {
+        File file = new File(this.fullPath);
+        String filename = FileUtils.extractFileName(file.getName());
+
+        Path source = Paths.get(this.fullPath);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+        Path target = Paths.get(file.getParent(), filename + "_" + dateFormat.format(new Date()) + ".xml");
+
+        try {
+            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * SSL 配置。
+     */
     public class SSLConfig implements JSONable {
 
         public final String keystore;

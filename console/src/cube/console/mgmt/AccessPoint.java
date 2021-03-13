@@ -28,6 +28,7 @@ package cube.console.mgmt;
 
 import cell.core.net.Endpoint;
 import cube.common.JSONable;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -40,6 +41,23 @@ public class AccessPoint extends Endpoint implements JSONable {
     public AccessPoint(String host, int port, int maxConnection) {
         super(host, port);
         this.maxConnection = maxConnection;
+    }
+
+    public AccessPoint(JSONObject data) throws JSONException {
+        super(data);
+        this.maxConnection = data.getInt("maxConnection");
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof AccessPoint) {
+            AccessPoint other = (AccessPoint) object;
+            if (other.getHost().equals(this.getHost()) && other.getPort() == this.getPort() &&
+                other.maxConnection == this.maxConnection) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

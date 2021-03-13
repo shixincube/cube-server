@@ -33,11 +33,15 @@ import cube.console.mgmt.UserToken;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONObject;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 
 /**
  * 调度机相关操作。
@@ -132,6 +136,36 @@ public class DispatcherHandler extends ContextHandler {
 
                 // 停止
                 DispatcherServer server = console.getDispatcherManager().stopDispatcher(tag, deployPath, password);
+                respondOk(response, server.toJSON());
+            }
+            else if (target.equals("/config")) {
+                // 更新配置
+                String configString = null;
+                InputStream is = request.getInputStream();
+                int length = 0;
+                byte[] bytes = new byte[10 * 1024];
+                while ((length = is.read(bytes)) > 0) {
+                    configString = new String(bytes, 0, length, Charset.forName("UTF-8"));
+                }
+
+                if (null == configString) {
+                    respond(response, HttpStatus.FORBIDDEN_403);
+                    complete();
+                    return;
+                }
+
+                int index = configString.indexOf("=");
+                configString = URLDecoder.decode(configString.substring(index + 1), "UTF-8");
+
+                JSONObject serverJson = new JSONObject(configString);
+
+                DispatcherServer server = console.getDispatcherManager().updateDispatcherServer(serverJson);
+                if (null == server) {
+                    respond(response, HttpStatus.BAD_REQUEST_400);
+                    complete();
+                    return;
+                }
+
                 respondOk(response, server.toJSON());
             }
 

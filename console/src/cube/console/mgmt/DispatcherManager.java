@@ -39,8 +39,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 调度机管理器。
@@ -53,8 +56,11 @@ public class DispatcherManager {
 
     private Path deploySourcePath;
 
+    private Map<String, DispatcherServer> serverMap;
+
     public DispatcherManager(String tag) {
         this.tag = tag;
+        this.serverMap = new ConcurrentHashMap<>();
     }
 
     public void start() {
@@ -137,6 +143,7 @@ public class DispatcherManager {
         for (DispatcherServer server : list) {
             if (this.tag.equals(server.tag)) {
                 server.refresh();
+                this.serverMap.put(server.deployPath, server);
             }
             else {
                 // TODO
@@ -147,13 +154,23 @@ public class DispatcherManager {
     }
 
     public DispatcherServer getDispatcherServer(String tag, String deployPath) {
-        DispatcherServer server = this.storage.readServer(tag, deployPath);
+        DispatcherServer server = null;
+
+        if (this.tag.equals(tag)) {
+            server = this.serverMap.get(deployPath);
+            if (null != server) {
+                return server;
+            }
+        }
+
+        server = this.storage.readServer(tag, deployPath);
         if (null == server) {
             return null;
         }
 
         if (this.tag.equals(server.tag)) {
             server.refresh();
+            this.serverMap.put(deployPath, server);
         }
         else {
            // TODO
@@ -162,17 +179,23 @@ public class DispatcherManager {
         return server;
     }
 
-    public DispatcherServer updateDispatcherServer(String tag, String deployPath, JSONObject data)
+    public DispatcherServer updateDispatcherServer(JSONObject data)
         throws JSONException {
-        DispatcherServer server = this.storage.readServer(tag, deployPath);
+        String tag = data.getString("tag");
+        String deployPath = data.getString("deployPath");
+
+        DispatcherServer server = this.tag.equals(tag) ? this.serverMap.get(deployPath) : null;
         if (null == server) {
-            return null;
+            server = this.storage.readServer(tag, deployPath);
+            if (null == server) {
+                return null;
+            }
         }
 
         // 更新 Cell 配置文件
         server.updateCellConfig(data);
 
-        return null;
+        return server;
     }
 
     /**

@@ -75,7 +75,7 @@ public class ServiceServer implements JSONable {
     protected void refresh() {
         try {
             this.cellConfigFile = new CellConfigFile(this.configPath + File.separator + "service.xml");
-            this.cellConfigFile.refresh();
+            this.cellConfigFile.load();
 
             this.name = this.tag + "#service#" + this.cellConfigFile.getAccessPoint().getPort();
 

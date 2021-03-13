@@ -189,3 +189,17 @@ Console.prototype.getServers = function(handler) {
         handler(response);
     }, 'json');
 }
+
+Console.prototype.updateDisptacherConfig = function(dispatcher, handler) {
+    $.ajax({
+        type: 'post',
+        url: '/dispatcher/config',
+        data: {
+            config: JSON.stringify(dispatcher)
+        }
+    }).done(function(response) {
+        handler(response);
+    }).fail(function() {
+        handler(null);
+    });
+}

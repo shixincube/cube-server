@@ -26,6 +26,7 @@
 
 package cube.console.mgmt;
 
+import cell.util.log.Logger;
 import cube.common.JSONable;
 import cube.console.tool.Detector;
 import org.json.JSONArray;
@@ -67,22 +68,33 @@ public class DispatcherServer implements JSONable {
     }
 
     public void updateCellConfig(JSONObject data) throws JSONException {
+        boolean modified = false;
         if (data.has("server")) {
             JSONObject serverJson = data.getJSONObject("server");
-            String host = serverJson.getString("host");
-            int port = serverJson.getInt("port");
-            int maxConn = serverJson.getInt("maxConnection");
-            AccessPoint serverAP = new AccessPoint(host, port, maxConn);
-            this.cellConfigFile.setAccessPoint(serverAP);
+            AccessPoint serverAP = new AccessPoint(serverJson);
+            if (!this.cellConfigFile.getAccessPoint().equals(serverAP)) {
+                this.cellConfigFile.setAccessPoint(serverAP);
+                modified = true;
+            }
         }
 
         if (data.has("wsServer")) {
+            JSONObject serverJson = data.getJSONObject("wsServer");
+            AccessPoint serverAP = new AccessPoint(serverJson);
+            if (!this.cellConfigFile.getWSAccessPoint().equals(serverAP)) {
+                this.cellConfigFile.setWSAccessPoint(serverAP);
+                modified = true;
+            }
+        }
 
+        if (modified) {
+            Logger.i(this.getClass(), "#updateCellConfig");
+            this.cellConfigFile.save();
         }
     }
 
     protected void refresh() {
-        this.cellConfigFile.refresh();
+        this.cellConfigFile.load();
         this.propertiesFile.refresh();
 
         this.name = this.tag + "#dispatcher#" + this.cellConfigFile.getAccessPoint().getPort();

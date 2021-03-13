@@ -916,6 +916,21 @@
             var el = modalDetails;
             var serverHost = el.find('.ap-host').find('input').val();
 
+            var config = {
+                tag: currentServer.tag,
+                deployPath: currentServer.deployPath,
+                server: {
+                    host: serverHost,
+                    port: currentServer.server.port,
+                    maxConnection: currentServer.server.maxConnection
+                }
+            };
+
+            console.updateDisptacherConfig(config, function(newData) {
+                if (newData) {
+                    
+                }
+            });
         },
 
         /**
