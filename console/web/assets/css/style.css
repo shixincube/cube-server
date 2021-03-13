@@ -219,14 +219,14 @@ h5 {
     white-space: unset;
 }
 .server-detail-group .cellets .input-group {
-    width: 260px;
+    width: 320px;
     margin-top: 0.3rem;
 }
 .server-detail-group .director-cellets {
     white-space: normal;
 }
 .server-detail-group .director-cellets .input-group {
-    width: 260px;
+    width: 320px;
     margin-top: 0.3rem;
 }
 .detail-content .cellet {

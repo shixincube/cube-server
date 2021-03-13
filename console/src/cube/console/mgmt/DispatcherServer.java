@@ -29,6 +29,7 @@ package cube.console.mgmt;
 import cube.common.JSONable;
 import cube.console.tool.Detector;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -63,6 +64,21 @@ public class DispatcherServer implements JSONable {
 
     public boolean isRunning() {
         return this.running;
+    }
+
+    public void updateCellConfig(JSONObject data) throws JSONException {
+        if (data.has("server")) {
+            JSONObject serverJson = data.getJSONObject("server");
+            String host = serverJson.getString("host");
+            int port = serverJson.getInt("port");
+            int maxConn = serverJson.getInt("maxConnection");
+            AccessPoint serverAP = new AccessPoint(host, port, maxConn);
+            this.cellConfigFile.setAccessPoint(serverAP);
+        }
+
+        if (data.has("wsServer")) {
+
+        }
     }
 
     protected void refresh() {

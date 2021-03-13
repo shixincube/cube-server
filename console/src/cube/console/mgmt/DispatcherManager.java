@@ -30,6 +30,8 @@ import cell.util.log.Logger;
 import cube.console.storage.DispatcherStorage;
 import cube.console.tool.DeployTool;
 import cube.util.ConfigUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -158,6 +160,19 @@ public class DispatcherManager {
         }
 
         return server;
+    }
+
+    public DispatcherServer updateDispatcherServer(String tag, String deployPath, JSONObject data)
+        throws JSONException {
+        DispatcherServer server = this.storage.readServer(tag, deployPath);
+        if (null == server) {
+            return null;
+        }
+
+        // 更新 Cell 配置文件
+        server.updateCellConfig(data);
+
+        return null;
     }
 
     /**

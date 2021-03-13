@@ -77,6 +77,10 @@ public class CellConfigFile {
         return this.accessPoint;
     }
 
+    public void setAccessPoint(AccessPoint accessPoint) {
+        this.accessPoint = accessPoint;
+    }
+
     public AccessPoint getWSAccessPoint() {
         return this.wsAccessPoint;
     }
