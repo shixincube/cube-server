@@ -87,6 +87,17 @@ public class DispatcherServer implements JSONable {
             }
         }
 
+        if (data.has("wssServer")) {
+            JSONObject serverJson = data.getJSONObject("wssServer");
+            AccessPoint serverAP = new AccessPoint(serverJson);
+            if (!this.cellConfigFile.getWSSAccessPoint().equals(serverAP)) {
+                this.cellConfigFile.setWSSAccessPoint(serverAP);
+                modified = true;
+            }
+        }
+
+
+
         if (modified) {
             Logger.i(this.getClass(), "#updateCellConfig");
             this.cellConfigFile.save();
@@ -95,7 +106,7 @@ public class DispatcherServer implements JSONable {
 
     protected void refresh() {
         this.cellConfigFile.load();
-        this.propertiesFile.refresh();
+        this.propertiesFile.load();
 
         this.name = this.tag + "#dispatcher#" + this.cellConfigFile.getAccessPoint().getPort();
 

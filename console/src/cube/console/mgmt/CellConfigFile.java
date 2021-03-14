@@ -46,6 +46,7 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.*;
@@ -247,20 +248,30 @@ public class CellConfigFile {
 
         this.backup();
 
+        FileWriter fw = null;
         TransformerFactory tf = TransformerFactory.newInstance();
         try {
             Transformer transformer = tf.newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
-            StringWriter sw = new StringWriter();
+            fw = new FileWriter(new File(this.fullPath));
 
-            StreamResult sr = new StreamResult(sw);
+            StreamResult sr = new StreamResult(fw);
             DOMSource source = new DOMSource(this.document);
             transformer.transform(source, sr);
         } catch (TransformerConfigurationException e) {
             e.printStackTrace();
         } catch (TransformerException e) {
             e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != fw) {
+                try {
+                    fw.close();
+                } catch (IOException e) {
+                }
+            }
         }
     }
 
@@ -270,7 +281,7 @@ public class CellConfigFile {
 
         Path source = Paths.get(this.fullPath);
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
-        Path target = Paths.get(file.getParent(), filename + "_" + dateFormat.format(new Date()) + ".xml");
+        Path target = Paths.get(file.getParent(), filename + "_backup_" + dateFormat.format(new Date()) + ".xml");
 
         try {
             Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);

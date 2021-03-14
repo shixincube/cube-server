@@ -28,6 +28,8 @@ package cube.console.mgmt;
 
 import cube.util.ConfigUtils;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,24 +88,50 @@ public class DispatcherProperties {
         return this.properties.getProperty(KEY_HTTP_HOST);
     }
 
+    public void setHttpHost(String host) {
+        this.properties.setProperty(KEY_HTTP_HOST, host);
+    }
+
     public int getHttpPort() {
         return Integer.parseInt(this.properties.getProperty(KEY_HTTP_PORT, "7010"));
+    }
+
+    public void setHttpPort(int port) {
+        this.properties.setProperty(KEY_HTTP_PORT, Integer.toString(port));
     }
 
     public AccessPoint getHttpAccessPoint() {
         return new AccessPoint(this.getHttpHost(), this.getHttpPort(), 0);
     }
 
+    public void setHttpAccessPoint(AccessPoint ap) {
+        this.setHttpHost(ap.getHost());
+        this.setHttpPort(ap.getPort());
+    }
+
     public String getHttpsHost() {
         return this.properties.getProperty(KEY_HTTPS_HOST);
+    }
+
+    public void setHttpsHost(String host) {
+        this.properties.setProperty(KEY_HTTPS_HOST, host);
     }
 
     public int getHttpsPort() {
         return Integer.parseInt(this.properties.getProperty(KEY_HTTPS_PORT, "7017"));
     }
 
+    public void setHttpsPort(int port) {
+        this.properties.setProperty(KEY_HTTPS_PORT, Integer.toString(port));
+    }
+
     public AccessPoint getHttpsAccessPoint() {
         return new AccessPoint(this.getHttpsHost(), this.getHttpsPort(), 0);
+    }
+
+    public void setHttpsAccessPoint(AccessPoint ap) {
+        this.setHttpsHost(ap.getHost());
+        this.setHttpsPort(ap.getPort());
     }
 
     public String getKeystore() {
@@ -122,7 +150,7 @@ public class DispatcherProperties {
         return this.directorProperties;
     }
 
-    public void refresh() {
+    public void load() {
         try {
             this.properties = ConfigUtils.readProperties(this.fullPath);
         } catch (IOException e) {
@@ -148,6 +176,23 @@ public class DispatcherProperties {
 
             DirectorProperties dp = new DirectorProperties(address, port, cellets, weight);
             this.directorProperties.add(dp);
+        }
+    }
+
+    public void save() {
+        FileWriter fw = null;
+        try {
+            fw = new FileWriter(new File(this.fullPath));
+            this.properties.store(fw, "cube dispatcher configuration file");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != fw) {
+                try {
+                    fw.close();
+                } catch (IOException e) {
+                }
+            }
         }
     }
 }
