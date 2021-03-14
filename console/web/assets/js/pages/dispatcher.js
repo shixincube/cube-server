@@ -305,7 +305,7 @@
         // 添加按钮
         html.push(
             '<div class="input-group input-group-sm">',
-                '<input type="text" class="form-control" data-target="new-cellet">',
+                '<input type="text" class="form-control" data-target="new-cellet" placeholder="在此填写新增的服务单元名" />',
                 '<span class="input-group-append">',
                     '<button type="button" class="btn btn-primary btn-flat" onclick="javascript:dispatcher.onAddCelletToDispatcher();"><i class="fas fa-edit"></i></button>',
                 '</span>',
@@ -330,7 +330,7 @@
         // 添加按钮
         html.push(
             '<div class="input-group input-group-sm">',
-                '<input type="text" class="form-control" data-target="new-service-cellet">',
+                '<input type="text" class="form-control" data-target="new-service-cellet" placeholder="在此填写新增的服务单元名" />',
                 '<span class="input-group-append">',
                     '<button type="button" class="btn btn-primary btn-flat" onclick="javascript:dispatcher.onAddCelletToService();"><i class="fas fa-edit"></i></button>',
                 '</span>',
@@ -804,6 +804,8 @@
             updateDirectorSelector(server);
             selectDirector(0);
 
+            el.find('.overlay').css('visibility', 'hidden');
+
             el.modal('show');
         },
 
@@ -910,27 +912,176 @@
         },
 
         /**
+         * 提示输入框内数据不合法。
+         * @param {*} inputEl 
+         * @param {*} text 
+         */
+        tipInvalidInput: function(inputEl, text) {
+            inputEl.addClass('input-invalid');
+            setTimeout(function() {
+                inputEl.removeClass('input-invalid');
+            }, 3000);
+            g.common.toast(Toast.Error, text);
+        },
+
+        /**
          * 提交详情。
          */
         submitDetails: function() {
             var el = modalDetails;
-            var serverHost = el.find('.ap-host').find('input').val();
+
+            // Server
+            var inputEl = el.find('.ap-host').find('input');
+            var serverHost = inputEl.val().trim();
+            if (!g.util.isIPv4(serverHost) && !g.util.isIPv6(serverHost)) {
+                that.tipInvalidInput(inputEl, '填写的主机地址不正确');
+                return;
+            }
+
+            inputEl = el.find('.ap-port').find('input');
+            var serverPort = inputEl.val().trim();
+            if (!g.util.isUnsigned(serverPort) || parseInt(serverPort) > 65535) {
+                that.tipInvalidInput(inputEl, '填写的主机端口不正确');
+                return;
+            }
+            serverPort = parseInt(serverPort);
+
+            inputEl = el.find('.ap-maxconn').find('input');
+            var serverMaxConn = inputEl.val().trim();
+            if (!g.util.isUnsigned(serverMaxConn) || parseInt(serverMaxConn) > 65535) {
+                that.tipInvalidInput(inputEl, '填写的最大连接数不正确');
+                return;
+            }
+            serverMaxConn = parseInt(serverMaxConn);
+
+            // WS Server
+            inputEl = el.find('.wsap-host').find('input');
+            var wsHost = inputEl.val().trim();
+            if (!g.util.isIPv4(wsHost) && !g.util.isIPv6(wsHost)) {
+                that.tipInvalidInput(inputEl, '填写的主机地址不正确');
+                return;
+            }
+
+            inputEl = el.find('.wsap-port').find('input');
+            var wsPort = inputEl.val().trim();
+            if (!g.util.isUnsigned(wsPort) || parseInt(wsPort) > 65535) {
+                that.tipInvalidInput(inputEl, '填写的主机端口不正确');
+                return;
+            }
+            wsPort = parseInt(wsPort);
+
+            inputEl = el.find('.wsap-maxconn').find('input');
+            var wsMaxConn = inputEl.val().trim();
+            if (!g.util.isUnsigned(wsMaxConn) || parseInt(wsMaxConn) > 65535) {
+                that.tipInvalidInput(inputEl, '填写的最大连接数不正确');
+                return;
+            }
+            wsMaxConn = parseInt(wsMaxConn);
+
+            // WSS Server
+            inputEl = el.find('.wssap-host').find('input');
+            var wssHost = inputEl.val().trim();
+            if (!g.util.isIPv4(wssHost) && !g.util.isIPv6(wssHost)) {
+                that.tipInvalidInput(inputEl, '填写的主机地址不正确');
+                return;
+            }
+
+            inputEl = el.find('.wssap-port').find('input');
+            var wssPort = inputEl.val().trim();
+            if (!g.util.isUnsigned(wssPort) || parseInt(wssPort) > 65535) {
+                that.tipInvalidInput(inputEl, '填写的主机端口不正确');
+                return;
+            }
+            wssPort = parseInt(wssPort);
+
+            inputEl = el.find('.wssap-maxconn').find('input');
+            var wssMaxConn = inputEl.val().trim();
+            if (!g.util.isUnsigned(wssMaxConn) || parseInt(wssMaxConn) > 65535) {
+                that.tipInvalidInput(inputEl, '填写的最大连接数不正确');
+                return;
+            }
+            wssMaxConn = parseInt(wssMaxConn);
+
+            // HTTP
+            inputEl = el.find('.http-host').find('input');
+            var httpHost = inputEl.val().trim();
+            if (!g.util.isIPv4(httpHost) && !g.util.isIPv6(httpHost)) {
+                that.tipInvalidInput(inputEl, '填写的 HTTP 地址不正确');
+                return;
+            }
+
+            inputEl = el.find('.http-port').find('input');
+            var httpPort = inputEl.val().trim();
+            if (!g.util.isUnsigned(httpPort) || parseInt(httpPort) > 65535) {
+                that.tipInvalidInput(inputEl, '填写的 HTTP 端口不正确');
+                return;
+            }
+            httpPort = parseInt(httpPort);
+
+            // HTTPS
+            inputEl = el.find('.https-host').find('input');
+            var httpsHost = inputEl.val().trim();
+            if (!g.util.isIPv4(httpsHost) && !g.util.isIPv6(httpsHost)) {
+                that.tipInvalidInput(inputEl, '填写的 HTTPS 地址不正确');
+                return;
+            }
+
+            inputEl = el.find('.https-port').find('input');
+            var httpsPort = inputEl.val().trim();
+            if (!g.util.isUnsigned(httpsPort) || parseInt(httpsPort) > 65535) {
+                that.tipInvalidInput(inputEl, '填写的 HTTPS 端口不正确');
+                return;
+            }
+            httpsPort = parseInt(httpsPort);
+
+            // Log Level
+            var logLevel = el.find('.log-level').find('select').val();
+            
+            // Cellets
+            // currentServerCellets.forEach(function(value) {
+            //     console.log(value);
+            // });
+            addedDirectors.forEach(function(value) {
+                value.cellets = value.celletCache;
+            });
 
             var config = {
                 tag: currentServer.tag,
                 deployPath: currentServer.deployPath,
                 server: {
                     host: serverHost,
-                    port: currentServer.server.port,
-                    maxConnection: currentServer.server.maxConnection
-                }
+                    port: serverPort,
+                    maxConnection: serverMaxConn
+                },
+                wsServer: {
+                    host: wsHost,
+                    port: wsPort,
+                    maxConnection: wsMaxConn
+                },
+                wssServer: {
+                    host: wssHost,
+                    port: wssPort,
+                    maxConnection: wssMaxConn
+                },
+                http: {
+                    host: httpHost,
+                    port: httpPort
+                },
+                https: {
+                    host: httpsHost,
+                    port: httpsPort
+                },
+                logLevel: logLevel,
+                cellets: currentServerCellets
             };
 
-            console.updateDisptacherConfig(config, function(newData) {
-                if (newData) {
+            // console.updateDisptacherConfig(config, function(newData) {
+            //     if (newData) {
                     
-                }
-            });
+            //     }
+            // });
+
+            // el.find('.overlay').css('visibility', 'visible');
         },
 
         /**
@@ -966,7 +1117,7 @@
         newDirector: function() {
             var director = {
                 address: '192.168.' + g.util.randomNumber(1, 254) + '.' + g.util.randomNumber(1, 254),
-                port: '6000',
+                port: 6000,
                 cellets: currentDirector.cellets.concat(),
                 weight: currentDirector.weight
             };
@@ -1049,11 +1200,15 @@
                 return;
             }
 
-            currentDirector.port = el.val().trim();
+            currentDirector.port = parseInt(el.val().trim());
 
             var option = modalDetails.find('.director-list option:selected');
             var array = option.text().split('-');
             option.text(array[0] + '- ' + currentDirector.address + ':' + currentDirector.port);
+        },
+
+        onDirectorWeightKeyup: function() {
+
         },
 
         /**

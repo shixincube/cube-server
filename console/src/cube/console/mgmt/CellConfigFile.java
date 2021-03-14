@@ -91,6 +91,12 @@ public class CellConfigFile {
 
     public void setAccessPoint(AccessPoint accessPoint) {
         this.accessPoint = accessPoint;
+
+        NodeList nodeList = this.document.getElementsByTagName("server");
+        Element node = (Element) nodeList.item(0);
+        node.getElementsByTagName("host").item(0).setTextContent(accessPoint.getHost());
+        node.getElementsByTagName("port").item(0).setTextContent(Integer.toString(accessPoint.getPort()));
+        node.getElementsByTagName("max-connection").item(0).setTextContent(Integer.toString(accessPoint.maxConnection));
     }
 
     public AccessPoint getWSAccessPoint() {
@@ -99,6 +105,25 @@ public class CellConfigFile {
 
     public void setWSAccessPoint(AccessPoint accessPoint) {
         this.wsAccessPoint = accessPoint;
+
+        NodeList nodeList = this.document.getElementsByTagName("ws-server");
+        Element node = (Element) nodeList.item(0);
+        if (node.getChildNodes().getLength() > 0) {
+            node.getElementsByTagName("host").item(0).setTextContent(accessPoint.getHost());
+            node.getElementsByTagName("port").item(0).setTextContent(Integer.toString(accessPoint.getPort()));
+            node.getElementsByTagName("max-connection").item(0).setTextContent(Integer.toString(accessPoint.maxConnection));
+        }
+        else {
+            Element newNode = this.document.createElement("host");
+            newNode.setTextContent(accessPoint.getHost());
+            node.appendChild(newNode);
+            newNode = this.document.createElement("port");
+            newNode.setTextContent(Integer.toString(accessPoint.getPort()));
+            node.appendChild(newNode);
+            newNode = this.document.createElement("max-connection");
+            newNode.setTextContent(Integer.toString(accessPoint.maxConnection));
+            node.appendChild(newNode);
+        }
     }
 
     public AccessPoint getWSSAccessPoint() {
@@ -107,6 +132,25 @@ public class CellConfigFile {
 
     public void setWSSAccessPoint(AccessPoint accessPoint) {
         this.wssAccessPoint = accessPoint;
+
+        NodeList nodeList = this.document.getElementsByTagName("wss-server");
+        Element node = (Element) nodeList.item(0);
+        if (node.getChildNodes().getLength() > 0) {
+            node.getElementsByTagName("host").item(0).setTextContent(accessPoint.getHost());
+            node.getElementsByTagName("port").item(0).setTextContent(Integer.toString(accessPoint.getPort()));
+            node.getElementsByTagName("max-connection").item(0).setTextContent(Integer.toString(accessPoint.maxConnection));
+        }
+        else {
+            Element newNode = this.document.createElement("host");
+            newNode.setTextContent(accessPoint.getHost());
+            node.appendChild(newNode);
+            newNode = this.document.createElement("port");
+            newNode.setTextContent(Integer.toString(accessPoint.getPort()));
+            node.appendChild(newNode);
+            newNode = this.document.createElement("max-connection");
+            newNode.setTextContent(Integer.toString(accessPoint.maxConnection));
+            node.appendChild(newNode);
+        }
     }
 
     public SSLConfig getSslConfig() {
@@ -130,6 +174,28 @@ public class CellConfigFile {
             default:
                 return "INFO";
         }
+    }
+
+    public void setLogLevel(String logLevelString) {
+        if (logLevelString.equalsIgnoreCase("DEBUG")) {
+            this.logLevel = LogLevel.DEBUG;
+        }
+        else if (logLevelString.equalsIgnoreCase("INFO")) {
+            this.logLevel = LogLevel.INFO;
+        }
+        else if (logLevelString.equalsIgnoreCase("WARNING")) {
+            this.logLevel = LogLevel.WARNING;
+        }
+        else if (logLevelString.equalsIgnoreCase("ERROR")) {
+            this.logLevel = LogLevel.ERROR;
+        }
+        else {
+            return;
+        }
+
+        NodeList nodeList = this.document.getElementsByTagName("log");
+        NodeList level = ((Element) nodeList.item(0)).getElementsByTagName("level");
+        level.item(0).setTextContent(logLevelString);
     }
 
     public List<CelletConfig> getCelletConfigList() {

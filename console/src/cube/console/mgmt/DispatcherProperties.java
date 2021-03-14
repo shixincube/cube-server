@@ -27,11 +27,18 @@
 package cube.console.mgmt;
 
 import cube.util.ConfigUtils;
+import cube.util.FileUtils;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
@@ -180,6 +187,9 @@ public class DispatcherProperties {
     }
 
     public void save() {
+        // 先备份原数据
+        this.backup();
+
         FileWriter fw = null;
         try {
             fw = new FileWriter(new File(this.fullPath));
@@ -193,6 +203,21 @@ public class DispatcherProperties {
                 } catch (IOException e) {
                 }
             }
+        }
+    }
+
+    private void backup() {
+        File file = new File(this.fullPath);
+        String filename = FileUtils.extractFileName(file.getName());
+
+        Path source = Paths.get(this.fullPath);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+        Path target = Paths.get(file.getParent(), filename + "_backup_" + dateFormat.format(new Date()) + ".properties");
+
+        try {
+            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

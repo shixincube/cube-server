@@ -68,13 +68,15 @@ public class DispatcherServer implements JSONable {
     }
 
     public void updateCellConfig(JSONObject data) throws JSONException {
-        boolean modified = false;
+        boolean cellModified = false;
+        boolean propModified = false;
+
         if (data.has("server")) {
             JSONObject serverJson = data.getJSONObject("server");
             AccessPoint serverAP = new AccessPoint(serverJson);
             if (!this.cellConfigFile.getAccessPoint().equals(serverAP)) {
                 this.cellConfigFile.setAccessPoint(serverAP);
-                modified = true;
+                cellModified = true;
             }
         }
 
@@ -83,7 +85,7 @@ public class DispatcherServer implements JSONable {
             AccessPoint serverAP = new AccessPoint(serverJson);
             if (!this.cellConfigFile.getWSAccessPoint().equals(serverAP)) {
                 this.cellConfigFile.setWSAccessPoint(serverAP);
-                modified = true;
+                cellModified = true;
             }
         }
 
@@ -92,15 +94,43 @@ public class DispatcherServer implements JSONable {
             AccessPoint serverAP = new AccessPoint(serverJson);
             if (!this.cellConfigFile.getWSSAccessPoint().equals(serverAP)) {
                 this.cellConfigFile.setWSSAccessPoint(serverAP);
-                modified = true;
+                cellModified = true;
             }
         }
 
+        if (data.has("http")) {
+            JSONObject httpJson = data.getJSONObject("http");
+            AccessPoint httpAP = new AccessPoint(httpJson);
+            if (!this.propertiesFile.getHttpAccessPoint().equals(httpAP)) {
+                this.propertiesFile.setHttpAccessPoint(httpAP);
+                propModified = true;
+            }
+        }
 
+        if (data.has("https")) {
+            JSONObject httpsJson = data.getJSONObject("https");
+            AccessPoint httpsAP = new AccessPoint(httpsJson);
+            if (!this.propertiesFile.getHttpsAccessPoint().equals(httpsAP)) {
+                this.propertiesFile.setHttpsAccessPoint(httpsAP);
+                propModified = true;
+            }
+        }
 
-        if (modified) {
-            Logger.i(this.getClass(), "#updateCellConfig");
+        if (data.has("logLevel")) {
+            String logLevel = data.getString("logLevel");
+            if (!this.cellConfigFile.getLogLevelAsString().equalsIgnoreCase(logLevel)) {
+                this.cellConfigFile.setLogLevel(logLevel);
+                cellModified = true;
+            }
+        }
+
+        if (cellModified) {
+            Logger.i(this.getClass(), "#updateCellConfig - modify cell config: " + this.cellConfigFile.getFullPath());
             this.cellConfigFile.save();
+        }
+        if (propModified) {
+            Logger.i(this.getClass(), "#updateCellConfig - modify properties: " + this.propertiesFile.getFullPath());
+            this.propertiesFile.save();
         }
     }
 
