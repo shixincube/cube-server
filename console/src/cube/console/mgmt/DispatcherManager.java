@@ -190,6 +190,12 @@ public class DispatcherManager {
             if (null == server) {
                 return null;
             }
+            if (this.tag.equals(server.tag)) {
+                server.refresh();
+            }
+            else {
+                // TODO
+            }
         }
 
         // 更新 Cell 配置文件

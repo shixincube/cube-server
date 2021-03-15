@@ -45,7 +45,7 @@ public class AccessPoint extends Endpoint implements JSONable {
 
     public AccessPoint(JSONObject data) throws JSONException {
         super(data);
-        this.maxConnection = data.getInt("maxConnection");
+        this.maxConnection = data.has("maxConnection") ? data.getInt("maxConnection") : 0;
     }
 
     @Override

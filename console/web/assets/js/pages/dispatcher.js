@@ -269,7 +269,8 @@
                 'onkeyup="javascript:dispatcher.onDirectorAddressKeyup();" />');
             el.find('.director-port').html('<input type="text" class="form-control form-control-sm input-port" value="' + director.port + '" ' +
                 'onkeyup="javascript:dispatcher.onDirectorPortKeyup();" />');
-            el.find('.director-weight').html('<input type="text" class="form-control form-control-sm input-port" value="' + director.weight + '" />');
+            el.find('.director-weight').html('<input type="text" class="form-control form-control-sm input-port" value="' + director.weight + '" ' +
+                'onkeyup="javascript:dispatcher.onDirectorWeightKeyup();" />');
             updateCelletsInService(director.celletCache);
         }
         else {
@@ -1041,7 +1042,12 @@
             // currentServerCellets.forEach(function(value) {
             //     console.log(value);
             // });
+
+            // Director
             addedDirectors.forEach(function(value) {
+                value.cellets = value.celletCache;
+            });
+            removedDirectors.forEach(function(value) {
                 value.cellets = value.celletCache;
             });
 
@@ -1072,16 +1078,32 @@
                     port: httpsPort
                 },
                 logLevel: logLevel,
-                cellets: currentServerCellets
+                cellets: currentServerCellets,
+                addedDirectors: addedDirectors,
+                removedDirectors: removedDirectors
             };
 
-            // console.updateDisptacherConfig(config, function(newData) {
-            //     if (newData) {
-                    
-            //     }
-            // });
+            var timeoutTimer = 0;
 
-            // el.find('.overlay').css('visibility', 'visible');
+            console.updateDisptacherConfig(config, function(newData) {
+                clearTimeout(timeoutTimer);
+                el.find('.overlay').css('visibility', 'hidden');
+
+                if (newData) {
+                    updateDispatcher(newData);
+                    currentServer = newData;
+                    that.closeDetailsEditor();
+                }
+                else {
+                    g.common.toast(g.Toast.Error, '修改服务器配置失败');
+                }
+            });
+
+            el.find('.overlay').css('visibility', 'visible');
+
+            timeoutTimer = setTimeout(function() {
+                modalDetails.modal('hide');
+            }, 10 * 1000);
         },
 
         /**
@@ -1186,9 +1208,16 @@
 
         onDirectorAddressKeyup: function(e) {
             var el = modalDetails.find('.director-address input');
-            var option = modalDetails.find('.director-list option:selected');
-            currentDirector.address = el.val().trim();
+            var value = el.val().trim();
 
+            if (!g.util.isIPv4(value) && !g.util.isIPv6(value)) {
+                this.tipInvalidInput(el, '输入的 IP 地址不正确');
+                return;
+            }
+
+            currentDirector.address = value;
+
+            var option = modalDetails.find('.director-list option:selected');
             var array = option.text().split('-');
             option.text(array[0] + '- ' + currentDirector.address + ':' + currentDirector.port);
         },
@@ -1197,6 +1226,7 @@
             var el = modalDetails.find('.director-port input');
             var value = el.val().trim();
             if (!g.util.isUnsigned(value)) {
+                this.tipInvalidInput(el, '输入的端口号不正确');
                 return;
             }
 
@@ -1207,8 +1237,20 @@
             option.text(array[0] + '- ' + currentDirector.address + ':' + currentDirector.port);
         },
 
-        onDirectorWeightKeyup: function() {
+        onDirectorWeightKeyup: function(e) {
+            var el = modalDetails.find('.director-weight input');
+            var value = el.val().trim();
+            if (!g.util.isUnsigned(value)) {
+                return;
+            }
 
+            value = parseInt(value);
+            if (value > 10) {
+                this.tipInvalidInput(el, '路由权重值不能大于 10');
+                return;
+            }
+
+            currentDirector.weight = value;
         },
 
         /**

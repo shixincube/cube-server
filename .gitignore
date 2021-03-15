@@ -38,3 +38,5 @@ tag_dispatcher_pid
 tag_service_pid
 tag_service
 tag_dispatcher
+dispatcher_copy.properties
+dispatcher_copy.xml

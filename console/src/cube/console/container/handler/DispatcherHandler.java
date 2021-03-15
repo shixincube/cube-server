@@ -26,6 +26,7 @@
 
 package cube.console.container.handler;
 
+import cell.util.log.Logger;
 import cube.console.Console;
 import cube.console.container.Handlers;
 import cube.console.mgmt.DispatcherServer;
@@ -143,7 +144,7 @@ public class DispatcherHandler extends ContextHandler {
                 String configString = null;
                 InputStream is = request.getInputStream();
                 int length = 0;
-                byte[] bytes = new byte[10 * 1024];
+                byte[] bytes = new byte[30 * 1024];
                 while ((length = is.read(bytes)) > 0) {
                     configString = new String(bytes, 0, length, Charset.forName("UTF-8"));
                 }
@@ -159,7 +160,13 @@ public class DispatcherHandler extends ContextHandler {
 
                 JSONObject serverJson = new JSONObject(configString);
 
-                DispatcherServer server = console.getDispatcherManager().updateDispatcherServer(serverJson);
+                DispatcherServer server = null;
+                try {
+                    server = console.getDispatcherManager().updateDispatcherServer(serverJson);
+                } catch (Exception e) {
+                    Logger.w(DispatcherHandler.class, "/config", e);
+                }
+
                 if (null == server) {
                     respond(response, HttpStatus.BAD_REQUEST_400);
                     complete();

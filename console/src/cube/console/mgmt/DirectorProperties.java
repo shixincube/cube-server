@@ -28,8 +28,10 @@ package cube.console.mgmt;
 
 import cube.common.JSONable;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -50,6 +52,36 @@ public class DirectorProperties implements JSONable {
         this.port = port;
         this.cellets = cellets;
         this.weight = weight;
+    }
+
+    public DirectorProperties(JSONObject json) throws JSONException {
+        this.address = json.getString("address");
+        this.port = json.getInt("port");
+
+        this.cellets = new ArrayList<>();
+        JSONArray array = json.getJSONArray("cellets");
+        for (int i = 0; i < array.length(); ++i) {
+            String cellet = array.getString(i);
+            this.cellets.add(cellet);
+        }
+
+        this.weight = json.getInt("weight");
+    }
+
+    public String getCelletsAsString() {
+        StringBuilder buf = new StringBuilder();
+        return buf.toString();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof DirectorProperties) {
+            DirectorProperties other = (DirectorProperties) object;
+            if (other.address.equals(this.address) && other.port == this.port) {
+                return true;
+            }
+        }
+        return true;
     }
 
     @Override

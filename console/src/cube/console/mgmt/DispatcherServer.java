@@ -124,6 +124,28 @@ public class DispatcherServer implements JSONable {
             }
         }
 
+        if (data.has("cellets")) {
+            JSONArray array = data.getJSONArray("cellets");
+            String[] list = new String[array.length()];
+            for (int i = 0; i < array.length(); ++i) {
+                list[i] = array.getString(i);
+            }
+            if (!this.propertiesFile.equalsCellets(list)) {
+                this.propertiesFile.setCellets(list);
+                propModified = true;
+            }
+        }
+
+        if (data.has("addedDirectors")) {
+            JSONArray array = data.getJSONArray("addedDirectors");
+
+        }
+
+        if (data.has("removedDirectors")) {
+            JSONArray array = data.getJSONArray("removedDirectors");
+
+        }
+
         if (cellModified) {
             Logger.i(this.getClass(), "#updateCellConfig - modify cell config: " + this.cellConfigFile.getFullPath());
             this.cellConfigFile.save();

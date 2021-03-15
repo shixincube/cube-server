@@ -91,6 +91,30 @@ public class DispatcherProperties {
         return list;
     }
 
+    public void setCellets(String[] array) {
+        StringBuilder buf = new StringBuilder();
+        for (String cellet : array) {
+            buf.append(cellet).append(",");
+        }
+        buf.delete(buf.length() - 1, buf.length());
+        this.properties.setProperty(KEY_CELLETS, buf.toString());
+    }
+
+    public boolean equalsCellets(String[] array) {
+        List<String> cellets = this.getCellets();
+        if (cellets.size() != array.length) {
+            return false;
+        }
+
+        for (String cellet : array) {
+            if (cellets.indexOf(cellet) < 0) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public String getHttpHost() {
         return this.properties.getProperty(KEY_HTTP_HOST);
     }
@@ -157,6 +181,26 @@ public class DispatcherProperties {
         return this.directorProperties;
     }
 
+    public void addDirectorProperties(DirectorProperties properties) {
+        for (DirectorProperties dp : this.directorProperties) {
+            if (dp.equals(properties)) {
+                // 相同的目标主机，不能重复添加
+                return;
+            }
+        }
+
+        this.directorProperties.add(properties);
+    }
+
+    public void removeDirectorProperties(DirectorProperties properties) {
+        for (DirectorProperties dp : this.directorProperties) {
+            if (dp.equals(properties)) {
+                this.directorProperties.remove(dp);
+                break;
+            }
+        }
+    }
+
     public void load() {
         try {
             this.properties = ConfigUtils.readProperties(this.fullPath);
@@ -187,9 +231,26 @@ public class DispatcherProperties {
     }
 
     public void save() {
-        // 先备份原数据
+        // 备份原数据
         this.backup();
 
+        // 更新 directorProperties
+        for (int i = 1; i <= 50; ++i) {
+            String key = KEY_DIRECTOR_PREFIX + i + KEY_DIRECTOR_ADDRESS;
+            if (this.properties.containsKey(key)) {
+                this.properties.remove(key);
+                this.properties.remove(KEY_DIRECTOR_PREFIX + i + KEY_DIRECTOR_PORT);
+                this.properties.remove(KEY_DIRECTOR_PREFIX + i + KEY_DIRECTOR_CELLETS);
+                this.properties.remove(KEY_DIRECTOR_PREFIX + i + KEY_DIRECTOR_WEIGHT);
+            }
+        }
+        for (int i = 1; i <= 50 && i < this.directorProperties.size(); ++i) {
+            DirectorProperties dp = this.directorProperties.get(i);
+            this.properties.put(KEY_DIRECTOR_PREFIX + i + KEY_DIRECTOR_ADDRESS, dp.address);
+            // XJW
+        }
+
+        // 写入文件
         FileWriter fw = null;
         try {
             fw = new FileWriter(new File(this.fullPath));
