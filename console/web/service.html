@@ -381,7 +381,7 @@
 </div><!-- /.modal -->
 
 <!-- Config Modal -->
-<div id="modal_config_server" class="modal fade">
+<div id="modal_config_server" class="modal fade" data-backdrop="static">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -401,25 +401,71 @@
                         <div class="detail-content deploy-path"></div>
                     </div>
                     <div class="server-detail-group">
-                        <div class="detail-label"><i class="fas fa-folder"></i> 配置文件路径：</div>
-                        <div class="detail-content config-path"></div>
-                    </div>
-                    <div class="server-detail-group">
                         <div class="detail-label"><i class="fas fa-server"></i> SHM访问点：</div>
-                        <div class="detail-content ap-host"></div> <b class="text-muted">@</b>
-                        <div class="detail-content ap-port"></div>
-                        <div class="server-detail-group-append">
+                        <div class="detail-content ap-host"><input type="text" class="form-control form-control-sm input-host" /></div>
+                        <b class="text-muted">@</b>
+                        <div class="detail-content ap-port"><input type="text" class="form-control form-control-sm input-port" /></div>
+                        <div class="server-detail-group-append" style="margin-left:70px;">
                             <div class="detail-label"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
-                            <div class="detail-content ap-maxconn"></div>
+                            <div class="detail-content ap-maxconn"><input type="text" class="form-control form-control-sm input-number" /></div>
                         </div>
                     </div>
                     <div class="server-detail-group">
                         <div class="detail-label"><i class="fas fa-code"></i> 日志等级：</div>
-                        <div class="detail-content log-level"></div>
+                        <div class="detail-content log-level">
+                            <select class="custom-select">
+                                <option>DEBUG</option>
+                                <option>INFO</option>
+                                <option>WARNING</option>
+                                <option>ERROR</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="server-detail-group">
+                        <div class="detail-label"><i class="fas fa-database"></i> 存储器配置：</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card card-primary card-outline card-outline-tabs detail-content-tab">
+                                <div class="card-header p-0 border-bottom-0">
+                                    <ul class="nav nav-tabs" id="storage-tabs-tab" role="tablist">
+                                        <li class="nav-item">
+                                            <a class="nav-link active" id="storage-tabs-auth-tab" data-toggle="pill" href="#storage-tabs-auth" role="tab" aria-controls="storage-tabs-auth" aria-selected="true">Auth</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="storage-tabs-contact-tab" data-toggle="pill" href="#storage-tabs-contact" role="tab" aria-controls="storage-tabs-contact" aria-selected="true">Contact</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="storage-tabs-messaging-tab" data-toggle="pill" href="#storage-tabs-messaging" role="tab" aria-controls="storage-tabs-messaging" aria-selected="false">Messaging</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="storage-tabs-filestorage-tab" data-toggle="pill" href="#storage-tabs-filestorage" role="tab" aria-controls="storage-tabs-filestorage" aria-selected="false">FileStorage</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="card-body">
+                                    <div class="tab-content" id="storage-tabs-tabContent">
+                                        <div class="tab-pane fade show active" id="storage-tabs-auth" role="tabpanel" aria-labelledby="storage-tabs-auth-tab">
+                                        Auth
+                                        </div>
+                                        <div class="tab-pane fade" id="storage-tabs-contact" role="tabpanel" aria-labelledby="storage-tabs-contact-tab">
+                                        Contact
+                                        </div>
+                                        <div class="tab-pane fade" id="storage-tabs-messaging" role="tabpanel" aria-labelledby="storage-tabs-messaging-tab">
+                                        Messaging
+                                        </div>
+                                        <div class="tab-pane fade" id="storage-tabs-filestorage" role="tabpanel" aria-labelledby="storage-tabs-filestorage-tab">
+                                        File Storage
+                                        </div>
+                                    </div>
+                                </div>
+                            </div><!-- /.card -->
+                        </div>
                     </div>
                 </div>
             </div><!-- /.modal-body -->
             <div class="modal-footer text-right">
+                <button type="button" class="btn btn-primary">确认</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
             </div><!-- /.modal-footer -->
         </div><!-- /.modal-content -->

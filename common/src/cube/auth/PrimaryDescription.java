@@ -41,6 +41,11 @@ public class PrimaryDescription implements JSONable {
     private String address;
 
     /**
+     * 主机主端口。
+     */
+    private int port = 7000;
+
+    /**
      * 文件存储描述。
      */
     private JSONObject primaryContent;
@@ -64,6 +69,7 @@ public class PrimaryDescription implements JSONable {
     public PrimaryDescription(JSONObject json) {
         try {
             this.address = json.getString("address");
+            this.port = json.has("port") ? json.getInt("port") : 7000;
             this.primaryContent = json.getJSONObject("primaryContent");
         } catch (JSONException e) {
             e.printStackTrace();
@@ -96,6 +102,7 @@ public class PrimaryDescription implements JSONable {
         JSONObject json = new JSONObject();
         try {
             json.put("address", this.address);
+            json.put("port", this.port);
             json.put("primaryContent", this.primaryContent);
         } catch (JSONException e) {
             e.printStackTrace();

@@ -297,11 +297,19 @@
         // Cellets
         var html = [];
         currentServerCellets.forEach(function(value, index) {
-            html.push([
-                '<div class="cellet">',
-                    '<span>', value, '</span>',
-                    '<a href="javascript:dispatcher.onRemoveCelletFromDispatcher(\'', value, '\');"><span class="badge badge-danger">', '&times;', '</span></a>',
-                '</div>'].join(''));
+            if (value == 'Auth' || value == 'Contact') {
+                html.push([
+                    '<div class="cellet">',
+                        '<span>', value, '</span>',
+                    '</div>'].join(''));
+            }
+            else {
+                html.push([
+                    '<div class="cellet">',
+                        '<span>', value, '</span>',
+                        '<a href="javascript:dispatcher.onRemoveCelletFromDispatcher(\'', value, '\');"><span class="badge badge-danger">', '&times;', '</span></a>',
+                    '</div>'].join(''));
+            }
         });
         // 添加按钮
         html.push(
@@ -322,11 +330,20 @@
         var el = modalDetails;
         var html = [];
         cellets.forEach(function(value, index) {
-            html.push([
-                '<div class="cellet">',
-                    '<span>', value, '</span>',
-                    '<a href="javascript:dispatcher.onRemoveCelletFromService(\'', value, '\');"><span class="badge badge-danger">', '&times;', '</span></a>',
-                '</div>'].join(''));
+            if (value == 'Auth' || value == 'Contact') {
+                html.push([
+                    '<div class="cellet">',
+                        '<span>', value, '</span>',
+                    '</div>'].join(''));
+            }
+            else {
+                html.push([
+                    '<div class="cellet">',
+                        '<span>', value, '</span>',
+                        '<a href="javascript:dispatcher.onRemoveCelletFromService(\'', value, '\');"><span class="badge badge-danger">', '&times;', '</span></a>',
+                    '</div>'].join(''));
+            }
+            
         });
         // 添加按钮
         html.push(

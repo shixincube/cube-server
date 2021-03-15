@@ -42,11 +42,11 @@ import java.util.List;
  */
 public class DispatcherServer implements JSONable {
 
+    public final long timestamp = System.currentTimeMillis();
+
     public final String tag;
 
     public final String deployPath;
-
-    public final long timestamp = System.currentTimeMillis();
 
     private String name;
 

@@ -26,7 +26,9 @@
 
 package cube.service.auth;
 
+import cell.core.net.Endpoint;
 import cube.auth.AuthToken;
+import cube.auth.PrimaryDescription;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,15 +40,62 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class AuthDomain {
 
-    public String domainName;
+    public final String domainName;
 
-    public String appKey;
+    public final String appKey;
+
+    public final String appId;
+
+    public final Endpoint mainEndpoint;
+
+    public final Endpoint httpEndpoint;
+
+    public final Endpoint httpsEndpoint;
+
+    public final JSONArray iceServers;
 
     public ConcurrentHashMap<String, AuthToken> tokens;
 
+    private PrimaryDescription description;
+
+    /**
+     * 构造函数。
+     *
+     * @param domainName
+     * @param appKey
+     * @param appId
+     * @param mainEndpoint
+     * @param httpEndpoint
+     * @param httpsEndpoint
+     * @param iceServers
+     */
+    public AuthDomain(String domainName, String appKey, String appId, Endpoint mainEndpoint,
+                      Endpoint httpEndpoint, Endpoint httpsEndpoint, JSONArray iceServers) {
+        this.domainName = domainName;
+        this.appKey = appKey;
+        this.appId = appId;
+        this.mainEndpoint = mainEndpoint;
+        this.httpEndpoint = httpEndpoint;
+        this.httpsEndpoint = httpsEndpoint;
+        this.iceServers = iceServers;
+        this.tokens = null;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param domainName
+     * @param appKey
+     * @param array
+     */
     public AuthDomain(String domainName, String appKey, JSONArray array) {
         this.domainName = domainName;
         this.appKey = appKey;
+        this.appId = null;
+        this.mainEndpoint = null;
+        this.httpEndpoint = null;
+        this.httpsEndpoint = null;
+        this.iceServers = null;
         this.tokens = new ConcurrentHashMap<>();
 
         try {
@@ -63,5 +112,33 @@ public class AuthDomain {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public PrimaryDescription getPrimaryDescription() {
+        if (null != this.description) {
+            return this.description;
+        }
+
+        JSONObject content = new JSONObject();
+
+        JSONObject domainContent = new JSONObject();
+
+        // FileStorage
+        JSONObject fileStorage = new JSONObject();
+        fileStorage.put("fileURL", "http://" + this.httpEndpoint.getHost() + ":" + this.httpEndpoint.getPort()
+                + "/filestorage/file/");
+        fileStorage.put("fileSecureURL", "https://" + this.httpsEndpoint.getHost() + ":" + this.httpsEndpoint.getPort()
+                + "/filestorage/file/");
+        domainContent.put("FileStorage", fileStorage);
+
+        // MultipointComm
+        JSONObject multiComm = new JSONObject();
+        multiComm.put("iceServers", this.iceServers);
+        domainContent.put("MultipointComm", multiComm);
+
+        content.put(this.domainName, domainContent);
+
+        this.description = new PrimaryDescription(this.mainEndpoint.getHost(), content);
+        return this.description;
     }
 }

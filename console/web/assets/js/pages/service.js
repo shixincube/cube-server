@@ -55,6 +55,20 @@
     var tableEl = null;
     var monitorEl = null;
 
+    /**
+     * 提示输入框内数据不合法。
+     * @param {jQuery} inputEl 
+     * @param {string} text 
+     * @param {number} delay
+     */
+    function tipInvalidInput(inputEl, text, delay) {
+        inputEl.addClass('input-invalid');
+        setTimeout(function() {
+            inputEl.removeClass('input-invalid');
+        }, undefined === delay ? 3000 : delay);
+        g.common.toast(Toast.Error, text);
+    }
+
     function findService(tag, deployPath) {
         for (var i = 0; i < serviceList.length; ++i) {
             var value = serviceList[i];
@@ -641,6 +655,10 @@
          */
         showConfig: function(index) {
             var el = $('#modal_config_server');
+
+
+
+
             el.modal('show');
         },
 

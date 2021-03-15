@@ -1,4 +1,9 @@
 {
+	"Auth": {
+		"type": "SQLite",
+		"file": "storage/AuthService.db"
+	},
+
 	"Contact": {
 		"type": "SQLite",
 		"file": "storage/ContactService.db"

@@ -41,6 +41,8 @@ import java.util.List;
  */
 public class ServiceServer implements JSONable {
 
+    public final long timestamp = System.currentTimeMillis();
+
     public final String tag;
 
     public final String deployPath;

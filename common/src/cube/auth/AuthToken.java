@@ -144,6 +144,15 @@ public class AuthToken implements JSONable {
     }
 
     /**
+     * 获取 App Key 。
+     *
+     * @return 返回 App Key 。
+     */
+    public String getAppKey() {
+        return this.appKey;
+    }
+
+    /**
      * 获取域名称。
      *
      * @return 返回域名称。
@@ -153,12 +162,39 @@ public class AuthToken implements JSONable {
     }
 
     /**
-     * 获取超期时间。
+     * 获取过期时间。
      *
-     * @return 返回超期时间。
+     * @return 返回过期时间。
      */
     public long getExpiry() {
         return this.expiry;
+    }
+
+    /**
+     * 获取发布时间。
+     *
+     * @return 返回发布时间。
+     */
+    public long getIssues() {
+        return this.issues;
+    }
+
+    /**
+     * 获取 CID 。
+     *
+     * @return 返回 CID 。
+     */
+    public long getContactId() {
+        return this.cid;
+    }
+
+    /**
+     * 获取主内容描述。
+     *
+     * @return 返回主内容描述。
+     */
+    public PrimaryDescription getDescription() {
+        return this.description;
     }
 
     /**

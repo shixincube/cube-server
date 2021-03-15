@@ -55,7 +55,7 @@ public class DispatcherManager {
 
     private Map<String, DispatcherServer> serverMap;
 
-    private long timeout = 60L * 1000L;
+    private long timeout = 5L * 60L * 1000L;
 
     public DispatcherManager(String tag) {
         this.tag = tag;
@@ -150,10 +150,17 @@ public class DispatcherManager {
             return null;
         }
 
-        for (DispatcherServer server : list) {
+        for (int i = 0; i < list.size(); ++i) {
+            DispatcherServer server = list.get(i);
+
             if (this.tag.equals(server.tag)) {
-                server.refresh();
-                this.serverMap.put(server.deployPath, server);
+                if (!this.serverMap.containsKey(server.deployPath)) {
+                    server.refresh();
+                    this.serverMap.put(server.deployPath, server);
+                }
+                else {
+                    list.set(i, this.serverMap.get(server.deployPath));
+                }
             }
             else {
                 // TODO
@@ -200,8 +207,10 @@ public class DispatcherManager {
             if (null == server) {
                 return null;
             }
+
             if (this.tag.equals(server.tag)) {
                 server.refresh();
+                this.serverMap.put(deployPath, server);
             }
             else {
                 // TODO

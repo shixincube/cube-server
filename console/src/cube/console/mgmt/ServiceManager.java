@@ -37,8 +37,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 服务单元管理器。
@@ -51,8 +54,13 @@ public class ServiceManager {
 
     private Path deploySourcePath;
 
+    private Map<String, ServiceServer> serverMap;
+
+    private long timeout = 5L * 60L * 1000L;
+
     public ServiceManager(String tag) {
         this.tag = tag;
+        this.serverMap = new ConcurrentHashMap<>();
     }
 
     public void start() {
@@ -97,7 +105,14 @@ public class ServiceManager {
     }
 
     public void tick(long now) {
-
+        // 按照指定超时时间删除内存里的服务器数据
+        Iterator<ServiceServer> iter = this.serverMap.values().iterator();
+        while (iter.hasNext()) {
+            ServiceServer server = iter.next();
+            if (now - server.timestamp > this.timeout) {
+                iter.remove();
+            }
+        }
     }
 
     public String getDefaultDeployPath() {
@@ -126,22 +141,6 @@ public class ServiceManager {
         return path.toString();
     }
 
-    public ServiceServer getServiceServer(String tag, String deployPath) {
-        ServiceServer server = this.storage.readServer(tag, deployPath);
-        if (null == server) {
-            return null;
-        }
-
-        if (this.tag.equals(server.tag)) {
-            server.refresh();
-        }
-        else {
-            // TODO
-        }
-
-        return server;
-    }
-
     public List<ServiceServer> listServiceServers() {
         if (null == this.deploySourcePath) {
             return null;
@@ -152,9 +151,17 @@ public class ServiceManager {
             return null;
         }
 
-        for (ServiceServer server : list) {
+        for (int i = 0; i < list.size(); ++i) {
+            ServiceServer server = list.get(i);
+
             if (this.tag.equals(server.tag)) {
-                server.refresh();
+                if (!this.serverMap.containsKey(server.deployPath)) {
+                    server.refresh();
+                    this.serverMap.put(server.deployPath, server);
+                }
+                else {
+                    list.set(i, this.serverMap.get(server.deployPath));
+                }
             }
             else {
                 // TODO
@@ -162,6 +169,32 @@ public class ServiceManager {
         }
 
         return list;
+    }
+
+    public ServiceServer getServiceServer(String tag, String deployPath) {
+        ServiceServer server = null;
+
+        if (this.tag.equals(tag)) {
+            server = this.serverMap.get(deployPath);
+            if (null != server) {
+                return server;
+            }
+        }
+
+        server = this.storage.readServer(tag, deployPath);
+        if (null == server) {
+            return null;
+        }
+
+        if (this.tag.equals(server.tag)) {
+            server.refresh();
+            this.serverMap.put(deployPath, server);
+        }
+        else {
+            // TODO
+        }
+
+        return server;
     }
 
     /**
