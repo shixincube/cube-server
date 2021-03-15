@@ -96,6 +96,10 @@ public class ServiceManager {
         }
     }
 
+    public void tick(long now) {
+
+    }
+
     public String getDefaultDeployPath() {
         if (null == this.deploySourcePath) {
             return null;

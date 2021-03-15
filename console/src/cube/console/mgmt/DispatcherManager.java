@@ -39,10 +39,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -57,6 +54,8 @@ public class DispatcherManager {
     private Path deploySourcePath;
 
     private Map<String, DispatcherServer> serverMap;
+
+    private long timeout = 60L * 1000L;
 
     public DispatcherManager(String tag) {
         this.tag = tag;
@@ -101,6 +100,17 @@ public class DispatcherManager {
     public void stop() {
         if (null != this.storage) {
             this.storage.close();
+        }
+    }
+
+    public void tick(long now) {
+        // 按照指定超时时间删除内存里的服务器数据
+        Iterator<DispatcherServer> iter = this.serverMap.values().iterator();
+        while (iter.hasNext()) {
+            DispatcherServer server = iter.next();
+            if (now - server.timestamp > this.timeout) {
+                iter.remove();
+            }
         }
     }
 

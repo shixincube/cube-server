@@ -181,24 +181,32 @@ public class DispatcherProperties {
         return this.directorProperties;
     }
 
-    public void addDirectorProperties(DirectorProperties properties) {
-        for (DirectorProperties dp : this.directorProperties) {
-            if (dp.equals(properties)) {
-                // 相同的目标主机，不能重复添加
-                return;
-            }
+    public boolean updateDirectorProperties(List<DirectorProperties> directorProperties) {
+        if (this.directorProperties.size() != directorProperties.size()) {
+            this.directorProperties.clear();
+            this.directorProperties.addAll(directorProperties);
+            return true;
         }
 
-        this.directorProperties.add(properties);
-    }
+        boolean modified = false;
 
-    public void removeDirectorProperties(DirectorProperties properties) {
-        for (DirectorProperties dp : this.directorProperties) {
-            if (dp.equals(properties)) {
-                this.directorProperties.remove(dp);
-                break;
+        for (int i = 0; i < this.directorProperties.size(); ++i) {
+            DirectorProperties dp = this.directorProperties.get(i);
+            DirectorProperties newDP = directorProperties.get(i);
+            if (dp.address.equals(newDP.address) && dp.port == newDP.port && dp.weight == newDP.weight &&
+                dp.equalsCellets(newDP)) {
+                continue;
             }
+
+            modified = true;
         }
+
+        if (modified) {
+            this.directorProperties.clear();
+            this.directorProperties.addAll(directorProperties);
+        }
+
+        return modified;
     }
 
     public void load() {
@@ -244,10 +252,13 @@ public class DispatcherProperties {
                 this.properties.remove(KEY_DIRECTOR_PREFIX + i + KEY_DIRECTOR_WEIGHT);
             }
         }
-        for (int i = 1; i <= 50 && i < this.directorProperties.size(); ++i) {
+        for (int i = 0; i < 50 && i < this.directorProperties.size(); ++i) {
             DirectorProperties dp = this.directorProperties.get(i);
-            this.properties.put(KEY_DIRECTOR_PREFIX + i + KEY_DIRECTOR_ADDRESS, dp.address);
-            // XJW
+            int keyIndex = i + 1;
+            this.properties.put(KEY_DIRECTOR_PREFIX + keyIndex + KEY_DIRECTOR_ADDRESS, dp.address);
+            this.properties.put(KEY_DIRECTOR_PREFIX + keyIndex + KEY_DIRECTOR_PORT, Integer.toString(dp.port));
+            this.properties.put(KEY_DIRECTOR_PREFIX + keyIndex + KEY_DIRECTOR_CELLETS, dp.getCelletsAsString());
+            this.properties.put(KEY_DIRECTOR_PREFIX + keyIndex + KEY_DIRECTOR_WEIGHT, Integer.toString(dp.weight));
         }
 
         // 写入文件
@@ -271,9 +282,15 @@ public class DispatcherProperties {
         File file = new File(this.fullPath);
         String filename = FileUtils.extractFileName(file.getName());
 
+        String backupPath = file.getParent() + "/backup";
+        File bp = new File(backupPath);
+        if (!bp.exists()) {
+            bp.mkdirs();
+        }
+
         Path source = Paths.get(this.fullPath);
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
-        Path target = Paths.get(file.getParent(), filename + "_backup_" + dateFormat.format(new Date()) + ".properties");
+        Path target = Paths.get(backupPath, filename + "_" + dateFormat.format(new Date()) + ".properties");
 
         try {
             Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);

@@ -1044,11 +1044,23 @@
             // });
 
             // Director
-            addedDirectors.forEach(function(value) {
-                value.cellets = value.celletCache;
-            });
-            removedDirectors.forEach(function(value) {
-                value.cellets = value.celletCache;
+            // 计算有效的列表
+            var directors = currentServer.directors.concat(addedDirectors);
+            for (var i = 0; i < removedDirectors.length; ++i) {
+                var removed = removedDirectors[i];
+                for (var n = 0; n < list.length; ++n) {
+                    var d = list[n];
+                    if (d.address == removed.address && d.port == removed.port) {
+                        list.splice(n, 1);
+                        break;
+                    }
+                }
+            }
+            directors.forEach(function(value) {
+                if (undefined !== value.celletCache) {
+                    value.cellets = value.celletCache;
+                    delete value["celletCache"];
+                }
             });
 
             var config = {
@@ -1079,8 +1091,7 @@
                 },
                 logLevel: logLevel,
                 cellets: currentServerCellets,
-                addedDirectors: addedDirectors,
-                removedDirectors: removedDirectors
+                directors: directors
             };
 
             var timeoutTimer = 0;

@@ -300,7 +300,9 @@ public final class Console implements Runnable {
 
     @Override
     public void run() {
-
+        long now = System.currentTimeMillis();
+        this.dispatcherManager.tick(now);
+        this.serviceManager.tick(now);
     }
 
     protected class ConsoleLogHandler implements LogHandle {

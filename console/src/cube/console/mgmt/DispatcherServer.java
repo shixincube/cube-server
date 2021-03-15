@@ -34,6 +34,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 调度服务器描述。
@@ -43,6 +45,8 @@ public class DispatcherServer implements JSONable {
     public final String tag;
 
     public final String deployPath;
+
+    public final long timestamp = System.currentTimeMillis();
 
     private String name;
 
@@ -136,14 +140,17 @@ public class DispatcherServer implements JSONable {
             }
         }
 
-        if (data.has("addedDirectors")) {
-            JSONArray array = data.getJSONArray("addedDirectors");
+        if (data.has("directors")) {
+            JSONArray array = data.getJSONArray("directors");
+            List<DirectorProperties> list = new ArrayList<>();
+            for (int i = 0; i < array.length(); ++i) {
+                DirectorProperties dp = new DirectorProperties(array.getJSONObject(i));
+                list.add(dp);
+            }
 
-        }
-
-        if (data.has("removedDirectors")) {
-            JSONArray array = data.getJSONArray("removedDirectors");
-
+            if (this.propertiesFile.updateDirectorProperties(list)) {
+                propModified = true;
+            }
         }
 
         if (cellModified) {

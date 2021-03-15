@@ -345,9 +345,15 @@ public class CellConfigFile {
         File file = new File(this.fullPath);
         String filename = FileUtils.extractFileName(file.getName());
 
+        String backupPath = file.getParent() + "/backup";
+        File bp = new File(backupPath);
+        if (!bp.exists()) {
+            bp.mkdirs();
+        }
+
         Path source = Paths.get(this.fullPath);
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
-        Path target = Paths.get(file.getParent(), filename + "_backup_" + dateFormat.format(new Date()) + ".xml");
+        Path target = Paths.get(backupPath, filename + "_" + dateFormat.format(new Date()) + ".xml");
 
         try {
             Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);

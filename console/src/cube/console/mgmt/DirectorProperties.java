@@ -70,7 +70,25 @@ public class DirectorProperties implements JSONable {
 
     public String getCelletsAsString() {
         StringBuilder buf = new StringBuilder();
+        for (String cellet : this.cellets) {
+            buf.append(cellet).append(",");
+        }
+        buf.delete(buf.length() - 1, buf.length());
         return buf.toString();
+    }
+
+    public boolean equalsCellets(DirectorProperties other) {
+        if (this.cellets.size() != other.cellets.size()) {
+            return false;
+        }
+
+        for (String cellet : this.cellets) {
+            if (other.cellets.indexOf(cellet) < 0) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Override
