@@ -277,8 +277,17 @@ h5 {
 .detail-content-tab .nav-link {
     padding: 0.3rem 0.7rem;
 }
+.detail-content-tab .tab-content .form-group {
+    margin: 1rem 1rem 1rem 1rem;
+}
+.detail-content-tab .tab-content .custom-radio {
+    margin-bottom: 0.5rem;
+}
+.detail-content-tab .storage-tabs-content {
+    min-height: 271px;
+}
 
-/** service -end */
+/** service - end */
 
 
 .h-400 {

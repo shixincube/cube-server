@@ -32,6 +32,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -55,7 +57,9 @@ public class ServiceServer implements JSONable {
 
     private CellConfigFile cellConfigFile;
 
-    private String storageJsonFile;
+    private File storageJsonFile;
+
+    private JSONObject storageJson;
 
     private boolean running = false;
 
@@ -82,7 +86,7 @@ public class ServiceServer implements JSONable {
             this.name = this.tag + "#service#" + this.cellConfigFile.getAccessPoint().getPort();
 
             // 检查是否正在运行
-            File tagFile = new File(this.deployPath + File.separator + "bin/tag_service");
+            File tagFile = new File(this.deployPath + File.separator + "bin" + File.separator + "tag_service");
             if (tagFile.exists() && tagFile.length() < 40) {
                 // 尝试检测服务是否能连通
                 AccessPoint ap = this.cellConfigFile.getAccessPoint();
@@ -104,6 +108,11 @@ public class ServiceServer implements JSONable {
                     }
                 }
             }
+
+            // 存储配置
+            this.storageJsonFile = new File(this.configPath + File.separator + "storage.json");
+            byte[] data = Files.readAllBytes(Paths.get(this.storageJsonFile.getAbsolutePath()));
+            this.storageJson = new JSONObject(new String(data, Charset.forName("UTF-8")));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -130,6 +139,8 @@ public class ServiceServer implements JSONable {
             array.put(config.toJSON());
         }
         json.put("cellets", array);
+
+        json.put("storage", this.storageJson);
 
         return json;
     }

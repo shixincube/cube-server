@@ -385,7 +385,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">配置</h5>
+                <h5 class="modal-title">服务单元配置</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -444,9 +444,64 @@
                                     </ul>
                                 </div>
                                 <div class="card-body">
-                                    <div class="tab-content" id="storage-tabs-tabContent">
+                                    <div class="tab-content storage-tabs-content">
                                         <div class="tab-pane fade show active" id="storage-tabs-auth" role="tabpanel" aria-labelledby="storage-tabs-auth-tab">
-                                        Auth
+                                            <div class="row">
+                                                <div class="col-3">
+                                                    <div class="form-group">
+                                                        <div class="custom-control custom-radio">
+                                                            <input class="custom-control-input" type="radio" id="radio-sqlite" name="AuthStorage" />
+                                                            <label for="radio-sqlite" class="custom-control-label">SQLite</label>
+                                                        </div>
+                                                        <div class="custom-control custom-radio">
+                                                            <input class="custom-control-input" type="radio" id="radio-mysql" name="AuthStorage" />
+                                                            <label for="radio-mysql" class="custom-control-label">MySQL</label>
+                                                        </div>
+                                                        <div class="custom-control custom-radio">
+                                                            <input class="custom-control-input" type="radio" id="radio-postgresql" name="AuthStorage" disabled="" />
+                                                            <label for="radio-postgresql" class="custom-control-label">PostgreSQL</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-9">
+                                                    <div class="form-group" id="form-sqlite">
+                                                        <label>数据库文件</label>
+                                                        <input class="form-control form-control-sm file" type="text" placeholder="SQLite的数据文件" />
+                                                    </div>
+                                                    <div class="form-horizontal" id="form-mysql">
+                                                        <div class="form-group row">
+                                                            <label class="col-3 col-form-label">数据库访问地址</label>
+                                                            <div class="col-9">
+                                                                <input class="form-control form-control-sm host" type="text" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group row">
+                                                            <label class="col-3 col-form-label">数据库访问端口</label>
+                                                            <div class="col-9">
+                                                                <input class="form-control form-control-sm port" type="text" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group row">
+                                                            <label class="col-3 col-form-label">数据库 Schema</label>
+                                                            <div class="col-9">
+                                                                <input class="form-control form-control-sm schema" type="text" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group row">
+                                                            <label class="col-3 col-form-label">访问用户</label>
+                                                            <div class="col-9">
+                                                                <input class="form-control form-control-sm user" type="text" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group row">
+                                                            <label class="col-3 col-form-label">访问密码</label>
+                                                            <div class="col-9">
+                                                                <input class="form-control form-control-sm password" type="text" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="tab-pane fade" id="storage-tabs-contact" role="tabpanel" aria-labelledby="storage-tabs-contact-tab">
                                         Contact

@@ -180,6 +180,9 @@
             monitorEl.find('input[data-target="server-name"]').val('');
             monitorEl.find('input[data-target="perf-time"]').val('');
 
+            // 配置界面
+            bindStorageConfigRadioEvent();
+
             // 获取默认部署数据
             console.getServiceDefaultDeploy(function(data) {
                 if (undefined !== data.deployPath) {
@@ -654,10 +657,18 @@
          * @param {number} index 
          */
         showConfig: function(index) {
+            var service = serviceList[index];
+
             var el = $('#modal_config_server');
 
+            el.find('.tag').text(service.tag);
+            el.find('.deploy-path').text(service.deployPath);
+            el.find('.ap-host input').val(service.server.host);
+            el.find('.ap-port input').val(service.server.port);
+            el.find('.ap-maxconn input').val(service.server.maxConnection);
+            el.find('.log-level select').val(service.logLevel);
 
-
+            updateStorageConfigTab('storage-tabs-auth', service.storage["Auth"]);
 
             el.modal('show');
         },
@@ -673,6 +684,55 @@
             }
         }
     };
+
+    // 管理配置界面 - 开始
+
+    function bindStorageConfigRadioEvent() {
+        var authEl = $('#storage-tabs-auth');
+        authEl.find('input:radio[name="AuthStorage"]').change(function() {
+            if (this.id == 'radio-sqlite') {
+                selectStorageConfig(authEl, 'SQLite');
+            }
+            else if (this.id == 'radio-mysql') {
+                selectStorageConfig(authEl, 'MySQL');
+            }
+        });
+    }
+
+    function selectStorageConfig(el, value) {
+        if (value == 'SQLite') {
+            el.find('#form-sqlite').css('display', 'block');
+            el.find('#form-mysql').css('display', 'none');
+        }
+        else if (value == 'MySQL') {
+            el.find('#form-sqlite').css('display', 'none');
+            el.find('#form-mysql').css('display', 'block');
+        }
+    }
+
+    function updateStorageConfigTab(id, config) {
+        var el = $('#' + id);
+
+        if (config.type == 'SQLite') {
+            el.find('input:radio[name="AuthStorage"]')[0].checked = true;
+            el.find('#form-mysql').css('display', 'none');
+            el.find('#form-sqlite').css('display', 'block');
+            el.find('#form-sqlite .file').val(config.file);
+        }
+        else if (config.type == 'MySQL') {
+            el.find('input:radio[name="AuthStorage"]')[1].checked = true;
+            el.find('#form-sqlite').css('display', 'none');
+            var myel = el.find('#form-mysql');
+            myel.css('display', 'block');
+            myel.find('.host').val(config.host);
+            myel.find('.port').val(config.port);
+            myel.find('.schema').val(config.schema);
+            myel.find('.user').val(config.user);
+            myel.find('.password').val(config.password);
+        }
+    }
+
+    // 管理配置界面 - 结束
 
     that = g.service;
 
