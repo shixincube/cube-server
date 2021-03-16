@@ -197,7 +197,7 @@ public class DispatcherManager {
     }
 
     public DispatcherServer updateDispatcherServer(JSONObject data)
-        throws JSONException {
+            throws JSONException {
         String tag = data.getString("tag");
         String deployPath = data.getString("deployPath");
 

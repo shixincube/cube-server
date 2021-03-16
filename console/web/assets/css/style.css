@@ -193,6 +193,13 @@ h5 {
 .server-detail-group .log-level {
     width: 120px;
 }
+.detail-content-sub {
+    margin-bottom: 0.2rem;
+}
+.detail-content-sub .detail-label {
+    min-width: unset;
+    width: 100px;
+}
 .detail-content .badge {
     font-size: 14px;
     margin-right: 2px;
@@ -213,6 +220,9 @@ h5 {
 }
 .detail-content .input-number {
     width: 100px;
+}
+.detail-content .input-text {
+    width: 320px;
 }
 .server-detail-group .cellets {
     text-overflow: unset;
@@ -252,6 +262,10 @@ h5 {
 .server-detail-group-append {
     display: inline-block;
     margin-left: 120px;
+}
+.server-detail-group-append .detail-label {
+    min-width: unset;
+    width: 120px;
 }
 .tip-content {
     font-size: 14px;

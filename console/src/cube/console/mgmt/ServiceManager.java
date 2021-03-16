@@ -30,6 +30,8 @@ import cell.util.log.Logger;
 import cube.console.storage.ServiceStorage;
 import cube.console.tool.DeployTool;
 import cube.util.ConfigUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -195,6 +197,14 @@ public class ServiceManager {
         }
 
         return server;
+    }
+
+    public ServiceServer updateServiceServer(JSONObject data)
+            throws JSONException {
+        String tag = data.getString("tag");
+        String deployPath = data.getString("deployPath");
+
+        return null;
     }
 
     /**

@@ -186,7 +186,7 @@
                         <div class="btn-toolbar main-toolbar" role="toolbar" aria-label="Main Toolbar">
                             <div class="btn-group mr-2" role="group" aria-label="Toolbar">
                                 <button id="btn_new_deploy" type="button" class="btn btn-primary">
-                                    <i class="fas fa-plus"></i> 部署调度机
+                                    <i class="fas fa-plus"></i> 新增部署
                                 </button>
                             </div>
                         </div>
@@ -486,40 +486,54 @@
                     </div>
                     <div class="server-detail-group">
                         <div class="detail-label"><i class="fas fa-server"></i> SHM访问点：</div>
-                        <div class="detail-content ap-host"></div> <b class="text-muted">@</b>
+                        <div class="detail-content ap-host"></div> <b class="text-muted"> : </b>
                         <div class="detail-content ap-port"></div>
                         <div class="server-detail-group-append">
-                            <div class="detail-label" style="width:120px;"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
+                            <div class="detail-label"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
                             <div class="detail-content ap-maxconn"></div>
                         </div>
                     </div>
                     <div class="server-detail-group">
                         <div class="detail-label"><i class="fas fa-server"></i> WS访问点：</div>
-                        <div class="detail-content wsap-host"></div> <b class="text-muted">@</b>
+                        <div class="detail-content wsap-host"></div> <b class="text-muted"> : </b>
                         <div class="detail-content wsap-port"></div>
                         <div class="server-detail-group-append">
-                            <div class="detail-label" style="width:120px;"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
+                            <div class="detail-label"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
                             <div class="detail-content wsap-maxconn"></div>
                         </div>
                     </div>
                     <div class="server-detail-group">
                         <div class="detail-label"><i class="fas fa-server"></i> WSS访问点：</div>
-                        <div class="detail-content wssap-host"></div> <b class="text-muted">@</b>
+                        <div class="detail-content wssap-host"></div> <b class="text-muted"> : </b>
                         <div class="detail-content wssap-port"></div>
                         <div class="server-detail-group-append">
-                            <div class="detail-label" style="width:120px;"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
+                            <div class="detail-label"><i class="fas fa-tachometer-alt"></i> 最大连接数：</div>
                             <div class="detail-content wssap-maxconn"></div>
                         </div>
                     </div>
                     <div class="server-detail-group">
                         <div class="detail-label"><i class="fas fa-server"></i> HTTP AP：</div>
-                        <div class="detail-content http-host"></div> <b class="text-muted">@</b>
+                        <div class="detail-content http-host"></div> <b class="text-muted"> : </b>
                         <div class="detail-content http-port"></div>
                     </div>
                     <div class="server-detail-group">
                         <div class="detail-label"><i class="fas fa-server"></i> HTTPS AP：</div>
-                        <div class="detail-content https-host"></div> <b class="text-muted">@</b>
+                        <div class="detail-content https-host"></div> <b class="text-muted"> : </b>
                         <div class="detail-content https-port"></div>
+                    </div>
+                    <div class="server-detail-group">
+                        <div class="detail-label"><i class="fas fa-shield-alt"></i> SSL：</div>
+                        <div class="detail-content">
+                            <div class="detail-content-sub ssl-file mb-2"></div>
+                            <div class="detail-content-sub">
+                                <div class="detail-label"><i class="fas fa-key"></i>存储密码：</div>
+                                <div class="detail-content store-pwd"></div>
+                            </div>
+                            <div class="detail-content-sub">
+                                <div class="detail-label"><i class="fas fa-key"></i>管理密码：</div>
+                                <div class="detail-content manager-pwd"></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="server-detail-group">
                         <div class="detail-label"><i class="fas fa-code"></i> 日志等级：</div>
@@ -567,7 +581,7 @@
                 <button type="button" class="btn btn-primary" data-target="edit">修改配置</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
             </div><!-- /.modal-footer -->
-            <div class="overlay"><span><i class="fas fa-2x fa-sync-alt fa-spin"></i></span><span class="text">正在提交配置，请稍候……</span></div>
+            <div class="overlay"><span><i class="fas fa-2x fa-sync-alt fa-spin"></i></span><span class="text">正在更新配置，请稍候……</span></div>
         </div>
     </div>
 </div><!-- /.modal -->

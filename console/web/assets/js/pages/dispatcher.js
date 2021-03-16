@@ -316,7 +316,7 @@
             '<div class="input-group input-group-sm">',
                 '<input type="text" class="form-control" data-target="new-cellet" placeholder="在此填写新增的服务单元名" />',
                 '<span class="input-group-append">',
-                    '<button type="button" class="btn btn-primary btn-flat" onclick="javascript:dispatcher.onAddCelletToDispatcher();"><i class="fas fa-edit"></i></button>',
+                    '<button type="button" class="btn btn-primary btn-flat" onclick="javascript:dispatcher.onAddCelletToDispatcher();" title="添加服务单元"><i class="fas fa-edit"></i></button>',
                 '</span>',
             '</div>');
         el.find('.cellets').html(html.join(''));
@@ -350,7 +350,7 @@
             '<div class="input-group input-group-sm">',
                 '<input type="text" class="form-control" data-target="new-service-cellet" placeholder="在此填写新增的服务单元名" />',
                 '<span class="input-group-append">',
-                    '<button type="button" class="btn btn-primary btn-flat" onclick="javascript:dispatcher.onAddCelletToService();"><i class="fas fa-edit"></i></button>',
+                    '<button type="button" class="btn btn-primary btn-flat" onclick="javascript:dispatcher.onAddCelletToService();" title="添加服务单元"><i class="fas fa-edit"></i></button>',
                 '</span>',
             '</div>');
         el.find('.director-cellets').html(html.join(''));
@@ -809,6 +809,11 @@
             el.find('.http-port').text(server.http.port);
             el.find('.https-host').text(server.https.host);
             el.find('.https-port').text(server.https.port);
+
+            el.find('.ssl-file').text(server.ssl.keystore);
+            el.find('.store-pwd').text(server.ssl.storePassword);
+            el.find('.manager-pwd').text(server.ssl.managerPassword);
+
             el.find('.log-level').text(server.logLevel);
 
             // Cellets
@@ -859,6 +864,10 @@
             el.find('.http-port').html('<input type="text" class="form-control form-control-sm input-port" value="' + server.http.port + '" />');
             el.find('.https-host').html('<input type="text" class="form-control form-control-sm input-host" value="' + server.https.host + '" />');
             el.find('.https-port').html('<input type="text" class="form-control form-control-sm input-port" value="' + server.https.port + '" />');
+
+            el.find('.ssl-file').html('<input type="text" class="form-control form-control-sm input-text" value="' + server.ssl.keystore + '" />');
+            el.find('.store-pwd').html('<input type="text" class="form-control form-control-sm input-text" value="' + server.ssl.storePassword + '" />');
+            el.find('.manager-pwd').html('<input type="text" class="form-control form-control-sm input-text" value="' + server.ssl.managerPassword + '" />');
 
             var logLevelSelect = [
                 '<select class="custom-select">',
@@ -911,6 +920,11 @@
             el.find('.http-port').text(server.http.port);
             el.find('.https-host').text(server.https.host);
             el.find('.https-port').text(server.https.port);
+
+            el.find('.ssl-file').text(server.ssl.keystore);
+            el.find('.store-pwd').text(server.ssl.storePassword);
+            el.find('.manager-pwd').text(server.ssl.managerPassword);
+
             el.find('.log-level').text(server.logLevel);
 
             // Cellets
@@ -1052,6 +1066,26 @@
             }
             httpsPort = parseInt(httpsPort);
 
+            // SSL
+            inputEl = el.find('.ssl-file').find('input');
+            var sslKeystore = inputEl.val().trim();
+            if (sslKeystore.length <= 3) {
+                that.tipInvalidInput(inputEl, '填写的 SSL Keystore 不正确');
+                return;
+            }
+            inputEl = el.find('.store-pwd').find('input');
+            var sslStorePwd = inputEl.val().trim();
+            if (sslStorePwd <= 3) {
+                that.tipInvalidInput(inputEl, '填写的 SSL 存储密码不正确');
+                return;
+            }
+            inputEl = el.find('.manager-pwd').find('input');
+            var sslManagerPwd = inputEl.val().trim();
+            if (sslManagerPwd <= 3) {
+                that.tipInvalidInput(inputEl, '填写的 SSL 管理密码不正确');
+                return;
+            }
+
             // Log Level
             var logLevel = el.find('.log-level').find('select').val();
             
@@ -1105,6 +1139,11 @@
                 https: {
                     host: httpsHost,
                     port: httpsPort
+                },
+                ssl: {
+                    keystore: sslKeystore,
+                    storePassword: sslStorePwd,
+                    managerPassword: sslManagerPwd
                 },
                 logLevel: logLevel,
                 cellets: currentServerCellets,

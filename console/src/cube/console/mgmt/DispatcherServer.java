@@ -71,6 +71,12 @@ public class DispatcherServer implements JSONable {
         return this.running;
     }
 
+    /**
+     * 更新配置。
+     *
+     * @param data
+     * @throws JSONException
+     */
     public void updateCellConfig(JSONObject data) throws JSONException {
         boolean cellModified = false;
         boolean propModified = false;
@@ -116,6 +122,16 @@ public class DispatcherServer implements JSONable {
             AccessPoint httpsAP = new AccessPoint(httpsJson);
             if (!this.propertiesFile.getHttpsAccessPoint().equals(httpsAP)) {
                 this.propertiesFile.setHttpsAccessPoint(httpsAP);
+                propModified = true;
+            }
+        }
+
+        if (data.has("ssl")) {
+            JSONObject sslJson = data.getJSONObject("ssl");
+            if (this.cellConfigFile.setSSLConfig(sslJson)) {
+                this.propertiesFile.setKeystoreProperties(sslJson.getString("keystore"),
+                        sslJson.getString("storePassword"), sslJson.getString("managerPassword"));
+                cellModified = true;
                 propModified = true;
             }
         }
@@ -196,7 +212,7 @@ public class DispatcherServer implements JSONable {
         json.put("http", this.propertiesFile.getHttpAccessPoint().toJSON());
         json.put("https", this.propertiesFile.getHttpsAccessPoint().toJSON());
 
-        CellConfigFile.SSLConfig sslConfig = this.cellConfigFile.getSslConfig();
+        CellConfigFile.SSLConfig sslConfig = this.cellConfigFile.getSSLConfig();
         if (null != sslConfig) {
             json.put("ssl", sslConfig.toJSON());
         }

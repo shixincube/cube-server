@@ -26,7 +26,7 @@
 
 package cube.console.mgmt;
 
-import cell.util.Utils;
+import cell.core.net.Endpoint;
 import cell.util.log.LogLevel;
 import cell.util.log.Logger;
 import cube.common.JSONable;
@@ -48,8 +48,10 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -75,6 +77,8 @@ public class CellConfigFile {
     private LogLevel logLevel;
 
     private List<CelletConfig> celletList;
+
+    private Endpoint contactsAdapter;
 
     public CellConfigFile(String fullPath) {
         this.fullPath = fullPath;
@@ -153,8 +157,28 @@ public class CellConfigFile {
         }
     }
 
-    public SSLConfig getSslConfig() {
+    public SSLConfig getSSLConfig() {
         return this.sslConfig;
+    }
+
+    public boolean setSSLConfig(String keystore, String storePassword, String managerPassword) {
+        SSLConfig newSSLConfig = new SSLConfig(keystore, storePassword, managerPassword);
+        if (newSSLConfig.equals(this.sslConfig)) {
+            return false;
+        }
+
+        this.sslConfig = newSSLConfig;
+        return true;
+    }
+
+    public boolean setSSLConfig(JSONObject json) {
+        SSLConfig newSSLConfig = new SSLConfig(json);
+        if (newSSLConfig.equals(this.sslConfig)) {
+            return false;
+        }
+
+        this.sslConfig = newSSLConfig;
+        return true;
     }
 
     public LogLevel getLogLevel() {
@@ -200,6 +224,24 @@ public class CellConfigFile {
 
     public List<CelletConfig> getCelletConfigList() {
         return this.celletList;
+    }
+
+    public Endpoint getContactsAdapter() {
+        return this.contactsAdapter;
+    }
+
+    public void setContactsAdapter(Endpoint endpoint) {
+        this.contactsAdapter = endpoint;
+
+        NodeList nodeList = this.document.getElementsByTagName("adapter");
+        for (int i = 0; i < nodeList.getLength(); ++i) {
+            Element adapterNode = (Element) nodeList.item(i);
+            String name = adapterNode.getAttribute("name");
+            if (name.equals("Contacts")) {
+                adapterNode.setAttribute("host", endpoint.getHost());
+                adapterNode.setAttribute("port", Integer.toString(endpoint.getPort()));
+            }
+        }
     }
 
     public void load() {
@@ -305,6 +347,17 @@ public class CellConfigFile {
                 this.celletList.add(cc);
             }
         }
+
+        nodeList = document.getElementsByTagName("adapter");
+        for (int i = 0; i < nodeList.getLength(); ++i) {
+            Element adapterNode = (Element) nodeList.item(i);
+            String name = adapterNode.getAttribute("name");
+            if (name.equals("Contacts")) {
+                host = adapterNode.getAttribute("host");
+                port = Integer.parseInt(adapterNode.getAttribute("port"));
+                this.contactsAdapter = new Endpoint(host, port);
+            }
+        }
     }
 
     public void save() {
@@ -313,6 +366,22 @@ public class CellConfigFile {
         }
 
         this.backup();
+
+        // 更新 Cellet 的端口
+        NodeList nodeList = this.document.getElementsByTagName("cellet");
+        for (int i = 0; i < nodeList.getLength(); ++i) {
+            Element celletNode = (Element) nodeList.item(i);
+            // 设置端口属性
+            StringBuilder buf = new StringBuilder();
+            buf.append(this.accessPoint.getPort());
+            if (null != this.wsAccessPoint) {
+                buf.append(",").append(this.wsAccessPoint.getPort());
+            }
+            if (null != this.wssAccessPoint) {
+                buf.append(",").append(this.wssAccessPoint.getPort());
+            }
+            celletNode.setAttribute("port", buf.toString());
+        }
 
         FileWriter fw = null;
         TransformerFactory tf = TransformerFactory.newInstance();
@@ -377,6 +446,23 @@ public class CellConfigFile {
             this.keystore = keystore;
             this.storePassword = storePassword;
             this.managerPassword = managerPassword;
+        }
+
+        public SSLConfig(JSONObject json) {
+            this.keystore = json.getString("keystore");
+            this.storePassword = json.getString("storePassword");
+            this.managerPassword =json.getString("managerPassword");
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (null != object && object instanceof SSLConfig) {
+                SSLConfig other = (SSLConfig) object;
+                return other.keystore.equals(this.keystore) && other.storePassword.equals(this.storePassword)
+                        && other.managerPassword.equals(this.managerPassword);
+            }
+
+            return false;
         }
 
         @Override

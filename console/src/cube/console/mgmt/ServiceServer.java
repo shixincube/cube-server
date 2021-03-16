@@ -140,6 +140,8 @@ public class ServiceServer implements JSONable {
         }
         json.put("cellets", array);
 
+        json.put("adapter", this.cellConfigFile.getContactsAdapter().toJSON());
+
         json.put("storage", this.storageJson);
 
         return json;

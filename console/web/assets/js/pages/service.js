@@ -604,6 +604,8 @@
             el.find('.ap-host').text(service.server.host);
             el.find('.ap-port').text(service.server.port);
             el.find('.ap-maxconn').text(service.server.maxConnection);
+            el.find('.adapter-host').text(service.adapter.host);
+            el.find('.adapter-port').text(service.adapter.port);
             el.find('.log-level').text(service.logLevel);
 
             var contentEl = el.find('.cellets');
@@ -666,10 +668,16 @@
             el.find('.ap-host input').val(service.server.host);
             el.find('.ap-port input').val(service.server.port);
             el.find('.ap-maxconn input').val(service.server.maxConnection);
+            el.find('.adapter-host input').val(service.adapter.host);
+            el.find('.adapter-port input').val(service.adapter.port);
             el.find('.log-level select').val(service.logLevel);
 
-            updateStorageConfigTab('storage-tabs-auth', service.storage["Auth"]);
+            updateStorageConfigTab('storage-tabs-auth', 'AuthStorage', service.storage["Auth"]);
+            updateStorageConfigTab('storage-tabs-contact', 'ContactStorage', service.storage["Contact"]);
+            updateStorageConfigTab('storage-tabs-messaging', 'MessagingStorage', service.storage["Messaging"]);
+            updateStorageConfigTab('storage-tabs-filestorage', 'FileStorage', service.storage["FileStorage"]);
 
+            el.find('.overlay').css('visibility', 'hidden');
             el.modal('show');
         },
 
@@ -690,11 +698,41 @@
     function bindStorageConfigRadioEvent() {
         var authEl = $('#storage-tabs-auth');
         authEl.find('input:radio[name="AuthStorage"]').change(function() {
-            if (this.id == 'radio-sqlite') {
+            if (this.id.indexOf('sqlite') > 0) {
                 selectStorageConfig(authEl, 'SQLite');
             }
-            else if (this.id == 'radio-mysql') {
+            else if (this.id.indexOf('mysql') > 0) {
                 selectStorageConfig(authEl, 'MySQL');
+            }
+        });
+
+        var contactEl = $('#storage-tabs-contact');
+        contactEl.find('input:radio[name="ContactStorage"]').change(function() {
+            if (this.id.indexOf('sqlite') > 0) {
+                selectStorageConfig(contactEl, 'SQLite');
+            }
+            else if (this.id.indexOf('mysql') > 0) {
+                selectStorageConfig(contactEl, 'MySQL');
+            }
+        });
+
+        var messagingEl = $('#storage-tabs-messaging');
+        messagingEl.find('input:radio[name="MessagingStorage"]').change(function() {
+            if (this.id.indexOf('sqlite') > 0) {
+                selectStorageConfig(messagingEl, 'SQLite');
+            }
+            else if (this.id.indexOf('mysql') > 0) {
+                selectStorageConfig(messagingEl, 'MySQL');
+            }
+        });
+
+        var fileStorageEl = $('#storage-tabs-filestorage');
+        fileStorageEl.find('input:radio[name="FileStorage"]').change(function() {
+            if (this.id.indexOf('sqlite') > 0) {
+                selectStorageConfig(fileStorageEl, 'SQLite');
+            }
+            else if (this.id.indexOf('mysql') > 0) {
+                selectStorageConfig(fileStorageEl, 'MySQL');
             }
         });
     }
@@ -710,17 +748,17 @@
         }
     }
 
-    function updateStorageConfigTab(id, config) {
+    function updateStorageConfigTab(id, name, config) {
         var el = $('#' + id);
 
         if (config.type == 'SQLite') {
-            el.find('input:radio[name="AuthStorage"]')[0].checked = true;
+            el.find('input:radio[name="' + name + '"]')[0].checked = true;
             el.find('#form-mysql').css('display', 'none');
             el.find('#form-sqlite').css('display', 'block');
             el.find('#form-sqlite .file').val(config.file);
         }
         else if (config.type == 'MySQL') {
-            el.find('input:radio[name="AuthStorage"]')[1].checked = true;
+            el.find('input:radio[name="' + name + '"]')[1].checked = true;
             el.find('#form-sqlite').css('display', 'none');
             var myel = el.find('#form-mysql');
             myel.css('display', 'block');

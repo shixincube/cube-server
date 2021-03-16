@@ -177,6 +177,12 @@ public class DispatcherProperties {
         return this.properties.getProperty(KEY_MANAGER_PASSWORD);
     }
 
+    public void setKeystoreProperties(String keystore, String storePassword, String managerPassword) {
+        this.properties.setProperty(KEY_KEYSTORE, keystore);
+        this.properties.setProperty(KEY_STORE_PASSWORD, storePassword);
+        this.properties.setProperty(KEY_MANAGER_PASSWORD, managerPassword);
+    }
+
     public List<DirectorProperties> getDirectorProperties() {
         return this.directorProperties;
     }
