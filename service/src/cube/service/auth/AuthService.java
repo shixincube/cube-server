@@ -70,6 +70,7 @@ public class AuthService extends AbstractModule {
 
     @Override
     public void start() {
+        // 获取令牌池缓存器
         this.tokenCache = this.getCache("TokenPool");
 
         if (this.useFile) {

@@ -692,6 +692,46 @@
                                 </div>
                             </div><!-- /.card -->
                         </div>
+                    </div><!-- /.row -->
+                    <div class="server-detail-group">
+                        <div class="detail-label"><i class="fas fa-memory"></i> 缓存器配置：</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card card-primary card-outline card-outline-tabs detail-content-tab">
+                                <div class="card-header p-0 border-bottom-0">
+                                    <ul class="nav nav-tabs" id="cache-tabs-tab" role="tablist">
+                                        <li class="nav-item">
+                                            <a class="nav-link active" id="cache-tabs-tokenpool-tab" data-toggle="pill" href="#cache-tabs-tokenpool" role="tab" aria-controls="cache-tabs-tokenpool" aria-selected="true">令牌池</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="card-body">
+                                    <div class="tab-content cache-tabs-content">
+                                        <div class="tab-pane fade show active" id="cache-tabs-tokenpool" role="tabpanel" aria-labelledby="cache-tabs-tokenpool-tab">
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <div class="form-group row">
+                                                        <label for="token-host" class="col-2 col-form-label">Host</label>
+                                                        <div class="col-10">
+                                                            <input type="text" class="form-control form-control-sm" id="token-host" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-group row">
+                                                        <label for="token-port" class="col-2 col-form-label">Port</label>
+                                                        <div class="col-10">
+                                                            <input type="text" class="form-control form-control-sm" id="token-port" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div><!-- /.row -->
+                                        </div><!-- /.tab-pane -->
+                                    </div><!-- /.tab-content -->
+                                </div><!-- /.card-body -->
+                            </div><!-- /.card -->
+                        </div>
                     </div>
                 </div>
             </div><!-- /.modal-body -->
