@@ -710,8 +710,8 @@
                                 <div class="card-body">
                                     <div class="tab-content cache-tabs-content">
                                         <div class="tab-pane fade show active" id="cache-tabs-tokenpool" role="tabpanel" aria-labelledby="cache-tabs-tokenpool-tab">
-                                            <div class="row">
-                                                <div class="col-5 mt-2">
+                                            <div class="row mt-2">
+                                                <div class="col-5">
                                                     <div class="form-group row">
                                                         <label for="token-host" class="col-2 col-form-label">地址</label>
                                                         <div class="col-10">
@@ -719,7 +719,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-3 mt-2">
+                                                <div class="col-3">
                                                     <div class="form-group row">
                                                         <label for="token-port" class="col-4 col-form-label">端口</label>
                                                         <div class="col-8">
@@ -727,7 +727,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-4 mt-2">
+                                                <div class="col-4">
                                                     <div class="form-group row">
                                                         <label for="token-capacity" class="col-3 col-form-label">容量</label>
                                                         <div class="col-9">
@@ -757,7 +757,100 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="col-6">
+                                                    <div class="form-group row">
+                                                        <label for="token-blocking" class="col-3 col-form-label">应答超时</label>
+                                                        <div class="col-9">
+                                                            <div class="input-group">
+                                                                <input type="text" class="form-control form-control-sm" id="token-blocking" />
+                                                                <div class="input-group-append input-group-append-sm">
+                                                                    <span class="input-group-text">毫秒</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-group row">
+                                                        <label for="token-routetable" class="col-3 col-form-label">路由表名</label>
+                                                        <div class="col-9">
+                                                            <input type="text" class="form-control form-control-sm" id="token-routetable" />
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div><!-- /.row -->
+                                            <hr />
+                                            <div class="row cluster">
+                                                <div class="col-2">
+                                                    <div class="form-group">
+                                                        <label for="token-nodes" class="col-form-label pl-2 pr-2">集群节点</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-10 cluster-nodes">
+                                                    <div class="row mt-2 mr-3">
+                                                        <label class="col-1 col-form-label">地址</label>
+                                                        <div class="col-5">
+                                                            <input type="text" class="form-control form-control-sm" id="token-node-host" />
+                                                        </div>
+                                                        <label class="col-1 col-form-label">端口</label>
+                                                        <div class="col-2">
+                                                            <input type="text" class="form-control form-control-sm" id="token-node-port" />
+                                                        </div>
+                                                        <div class="col-3 text-right">
+                                                            <button id="token-new-node" type="button" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> 新增节点</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr />
+                                            <div class="row mb-3 pedestal">
+                                                <div class="col-2">
+                                                    <div class="form-group">
+                                                        <label for="token-nodes" class="col-form-label pl-2 pr-2">存储桩</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-10">
+                                                    <div class="row mt-2 mr-3">
+                                                        <label class="col-1 col-form-label">地址</label>
+                                                        <div class="col-5">
+                                                            <input type="text" class="form-control form-control-sm" id="token-pedestal-host" disabled="" />
+                                                        </div>
+                                                        <label class="col-1 col-form-label">端口</label>
+                                                        <div class="col-3">
+                                                            <input type="text" class="form-control form-control-sm" id="token-pedestal-port" disabled="" />
+                                                        </div>
+                                                        <div class="col-2 pt-1 text-right">
+                                                            <div class="custom-control custom-switch">
+                                                                <input type="checkbox" class="custom-control-input" id="token-pedestal">
+                                                                <label class="custom-control-label" for="token-pedestal">使用</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-2">
+                                                    <div class="form-group">
+                                                        <label for="token-nodes" class="col-form-label pl-2 pr-2">备份存储桩</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-10">
+                                                    <div class="row mt-2 mr-3">
+                                                        <label class="col-1 col-form-label">地址</label>
+                                                        <div class="col-5">
+                                                            <input type="text" class="form-control form-control-sm" id="token-backup-pedestal-host" disabled="" />
+                                                        </div>
+                                                        <label class="col-1 col-form-label">端口</label>
+                                                        <div class="col-3">
+                                                            <input type="text" class="form-control form-control-sm" id="token-backup-pedestal-port" disabled="" />
+                                                        </div>
+                                                        <div class="col-2 pt-1 text-right">
+                                                            <div class="custom-control custom-switch">
+                                                                <input type="checkbox" class="custom-control-input" id="token-backup-pedestal">
+                                                                <label class="custom-control-label" for="token-backup-pedestal">使用</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div><!-- /.tab-pane -->
                                     </div><!-- /.tab-content -->
                                 </div><!-- /.card-body -->

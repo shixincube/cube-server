@@ -181,8 +181,10 @@
             monitorEl.find('input[data-target="perf-time"]').val('');
 
             // 配置界面
-            bindStorageConfigRadioEvent();
-            initConfigUI();
+            setTimeout(function() {
+                bindStorageConfigRadioEvent();
+                initConfigUI();
+            }, 100);
 
             // 获取默认部署数据
             console.getServiceDefaultDeploy(function(data) {
@@ -663,6 +665,7 @@
             var service = serviceList[index];
 
             var el = $('#modal_config_server');
+            var container = null;
 
             el.find('.tag').text(service.tag);
             el.find('.deploy-path').text(service.deployPath);
@@ -673,10 +676,39 @@
             el.find('.adapter-port input').val(service.adapter.port);
             el.find('.log-level select').val(service.logLevel);
 
+            // Storage Config
             updateStorageConfigTab('storage-tabs-auth', 'AuthStorage', service.storage["Auth"]);
             updateStorageConfigTab('storage-tabs-contact', 'ContactStorage', service.storage["Contact"]);
             updateStorageConfigTab('storage-tabs-messaging', 'MessagingStorage', service.storage["Messaging"]);
             updateStorageConfigTab('storage-tabs-filestorage', 'FileStorage', service.storage["FileStorage"]);
+
+            // Token Pool
+            var tokenEl = el.find('#cache-tabs-tokenpool');
+            tokenEl.find('#token-host').val(service.tokenPool.host);
+            tokenEl.find('#token-port').val(service.tokenPool.port);
+            tokenEl.find('#token-capacity').val(service.tokenPool.capacity);
+            $('#token-expiry').data('ionRangeSlider').update({ from: g.util.convMillisToHours(service.tokenPool.expiry) });     // 毫秒换算为小时
+            $('#token-threshold').data('ionRangeSlider').update({ from: g.util.convBToMB(service.tokenPool.threshold) });       // 字节换算为兆字节
+            tokenEl.find('#token-blocking').val(service.tokenPool.blocking);
+            tokenEl.find('#token-routetable').val(service.tokenPool.routetable);
+            container = $('#cache-tabs-tokenpool .cluster-nodes');
+            service.tokenPool.clusterNodes.forEach(function(value) {
+                addClusterNode(container, value.host, value.port);
+            });
+            if (service.tokenPool.pedestal) {
+                $('#token-pedestal')[0].checked = true;
+                $('#token-pedestal-host').val(service.tokenPool.pedestal.host);
+                $('#token-pedestal-port').val(service.tokenPool.pedestal.port);
+                $('#token-pedestal-host').removeAttr('disabled');
+                $('#token-pedestal-port').removeAttr('disabled');
+            }
+            if (service.tokenPool.pedestalBackup) {
+                $('#token-backup-pedestal')[0].checked = true;
+                $('#token-backup-pedestal-host').val(service.tokenPool.pedestalBackup.host);
+                $('#token-backup-pedestal-port').val(service.tokenPool.pedestalBackup.port);
+                $('#token-backup-pedestal-host').removeAttr('disabled');
+                $('#token-backup-pedestal-port').removeAttr('disabled');
+            }
 
             el.find('.overlay').css('visibility', 'hidden');
             el.modal('show');
@@ -774,7 +806,7 @@
     function initConfigUI() {
         $('#token-expiry').ionRangeSlider({
             min     : 1,
-            max     : 72,
+            max     : 168,
             from    : 24,
             type    : 'single',
             step    : 1,
@@ -795,6 +827,117 @@
             hasGrid : true,
             skin    : 'round'
         });
+
+        var elNodeHost = $('#token-node-host');
+        var elNodePort = $('#token-node-port');
+        $('#token-new-node').on('click', function() {
+            var container = $('#cache-tabs-tokenpool .cluster-nodes');
+            addClusterNode(container, elNodeHost, elNodePort);
+        });
+
+        initConfigPedestalUI('token');
+        initConfigPedestalBackupUI('token');
+    }
+
+    function initConfigPedestalUI(prefix) {
+        $('#' + prefix + '-pedestal')[0].checked = false;
+        var elHost = $('#' + prefix + '-pedestal-host');
+        var elPort = $('#' + prefix + '-pedestal-port');
+        elHost.val('');
+        elHost.attr('disabled', 'disabled');
+        elPort.val('');
+        elPort.attr('disabled', 'disabled');
+
+        $('#' + prefix + '-pedestal').change(function() {
+            var checked = $(this)[0].checked;
+            if (checked) {
+                elHost.removeAttr('disabled');
+                elPort.removeAttr('disabled');
+            }
+            else {
+                elHost.attr('disabled', 'disabled');
+                elPort.attr('disabled', 'disabled');
+            }
+        });
+    }
+
+    function initConfigPedestalBackupUI(prefix) {
+        $('#' + prefix + '-backup-pedestal')[0].checked = false;
+        var elHost = $('#' + prefix + '-backup-pedestal-host');
+        var elPort = $('#' + prefix + '-backup-pedestal-port');
+        elHost.val('');
+        elHost.attr('disabled', 'disabled');
+        elPort.val('');
+        elPort.attr('disabled', 'disabled');
+
+        $('#' + prefix + '-backup-pedestal').change(function() {
+            var checked = $(this)[0].checked;
+            if (checked) {
+                elHost.removeAttr('disabled');
+                elPort.removeAttr('disabled');
+            }
+            else {
+                elHost.attr('disabled', 'disabled');
+                elPort.attr('disabled', 'disabled');
+            }
+        });
+    }
+
+    function addClusterNode(container, elHost, elPort) {
+        var host = null;
+        var port = null;
+
+        if (typeof elHost === 'string') {
+            host = elHost;
+            port = elPort;
+        }
+        else {
+            host = elHost.val().trim();
+            if (!g.util.isIPv4(host) && !g.util.isIPv6(host)) {
+                tipInvalidInput(elHost, '输入的节点地址不正确');
+                return;
+            }
+
+            port = elPort.val().trim();
+            if (!g.util.isUnsigned(port)) {
+                tipInvalidInput(elPort, '输入的节点端口不正确');
+                return;
+            }
+            port = parseInt(port);
+        }
+
+        var html = [
+            '<div class="row mt-2 mr-3" data-target="', host, ':', port, '">',
+                '<label class="col-1 col-form-label">地址</label>',
+                '<div class="col-5">',
+                    '<input type="text" class="form-control form-control-sm" data-target="host" value="', host, '" />',
+                '</div>',
+                '<label class="col-1 col-form-label">端口</label>',
+                '<div class="col-3">',
+                    '<input type="text" class="form-control form-control-sm" data-target="port" value="', port, '" />',
+                '</div>',
+                '<div class="col-1"></div>',
+                '<div class="col-1 text-right">',
+                    '<button type="button" class="btn btn-sm btn-danger"><i class="fas fa-trash-alt"></i></button>',
+                '</div>',
+            '</div>'
+        ];
+
+        var newNode = $(html.join(''));
+        container.append(newNode);
+
+        newNode.find('button').on('click', function() {
+            removeClusterNode(container, newNode);
+        });
+
+        if (!(typeof elHost === 'string')) {
+            elHost.val('');
+            elPort.val('');
+        }
+    }
+
+    function removeClusterNode(container, node) {
+        node.remove();
     }
 
     // 管理配置界面 - 结束

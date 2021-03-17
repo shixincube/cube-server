@@ -61,6 +61,8 @@ public class ServiceServer implements JSONable {
 
     private JSONObject storageJson;
 
+    private CacheConfigFile tokenPoolConfigFile;
+
     private boolean running = false;
 
     public ServiceServer(String tag, String deployPath, String configPath, String celletsPath) {
@@ -113,6 +115,10 @@ public class ServiceServer implements JSONable {
             this.storageJsonFile = new File(this.configPath + File.separator + "storage.json");
             byte[] data = Files.readAllBytes(Paths.get(this.storageJsonFile.getAbsolutePath()));
             this.storageJson = new JSONObject(new String(data, Charset.forName("UTF-8")));
+
+            // 令牌缓存池
+            this.tokenPoolConfigFile = new CacheConfigFile(this.configPath + File.separator + "token-pool.properties");
+            this.tokenPoolConfigFile.load();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -143,6 +149,8 @@ public class ServiceServer implements JSONable {
         json.put("adapter", this.cellConfigFile.getContactsAdapter().toJSON());
 
         json.put("storage", this.storageJson);
+
+        json.put("tokenPool", this.tokenPoolConfigFile.toJSON());
 
         return json;
     }

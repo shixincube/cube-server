@@ -135,6 +135,11 @@
     }
     g.util.formatFullTime = formatFullTime;
 
+    /**
+     * 将以字节为单元的数据转为合适的千字节或兆字节等单位。
+     * @param {number} size 
+     * @returns 
+     */
     function formatSize(size) {
         if (size < KB) {
             return size + ' B';
@@ -201,6 +206,24 @@
      */
     g.util.isUnsigned = function(str) {
         return (/(^[1-9]\d*$)/.test(str));
+    }
+
+    /**
+     * 毫秒换算为小时。
+     * @param {number} ms 
+     * @returns 
+     */
+    g.util.convMillisToHours = function(ms) {
+        return ms / 3600000;
+    }
+
+    /**
+     * 字节换算为兆字节。
+     * @param {number} bytes 
+     * @returns 
+     */
+    g.util.convBToMB = function(bytes) {
+        return bytes / MB;
     }
 
     /**

@@ -313,12 +313,17 @@ h5 {
     min-height: 271px;
 }
 .cache-tabs-content .tab-pane .form-group {
-    margin: 0.5rem 0.25rem 0.5rem 0.75rem;
+    margin: 0.5rem 0.5rem 0.5rem 0.75rem;
 }
 .storage-tabs-content input, .cache-tabs-content input {
     font-family: Menlo, 'Courier New', Courier, monospace !important;
     font-weight: normal;
     color: #343a40;
+}
+
+.cache-tabs-content hr {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .item-remark {
@@ -331,6 +336,16 @@ h5 {
 }
 
 /** service - end */
+
+.input-group-append-sm {
+    height: calc(1.8125rem + 2px);
+    font-size: .775rem;
+    line-height: 1.5;
+    border-radius: .2rem;
+}
+.input-group-append-sm .input-group-text {
+    font-size: .775rem;
+}
 
 
 .h-400 {

@@ -40,3 +40,4 @@ tag_service
 tag_dispatcher
 dispatcher_copy.properties
 dispatcher_copy.xml
+token-pool_copy.properties
