@@ -112,6 +112,7 @@ public class AuthService extends AbstractModule {
         return null;
     }
 
+
     @Override
     public void onTick(cube.core.Module module, Kernel kernel) {
 

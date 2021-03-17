@@ -8,6 +8,7 @@
     <link rel="icon" href="assets/img/favicon.png" size="192x192" type="image/png">
     <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
     <link rel="stylesheet" href="plugins/ionicons/css/ionicons.min.css">
+    <link rel="stylesheet" href="plugins/ion-rangeslider/css/ion.rangeSlider.min.css">
     <link rel="stylesheet" href="plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
     <link rel="stylesheet" href="assets/css/adminlte.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
@@ -710,19 +711,49 @@
                                     <div class="tab-content cache-tabs-content">
                                         <div class="tab-pane fade show active" id="cache-tabs-tokenpool" role="tabpanel" aria-labelledby="cache-tabs-tokenpool-tab">
                                             <div class="row">
-                                                <div class="col-6">
+                                                <div class="col-5 mt-2">
                                                     <div class="form-group row">
-                                                        <label for="token-host" class="col-2 col-form-label">Host</label>
+                                                        <label for="token-host" class="col-2 col-form-label">地址</label>
                                                         <div class="col-10">
                                                             <input type="text" class="form-control form-control-sm" id="token-host" />
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-6">
+                                                <div class="col-3 mt-2">
                                                     <div class="form-group row">
-                                                        <label for="token-port" class="col-2 col-form-label">Port</label>
-                                                        <div class="col-10">
+                                                        <label for="token-port" class="col-4 col-form-label">端口</label>
+                                                        <div class="col-8">
                                                             <input type="text" class="form-control form-control-sm" id="token-port" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4 mt-2">
+                                                    <div class="form-group row">
+                                                        <label for="token-capacity" class="col-3 col-form-label">容量</label>
+                                                        <div class="col-9">
+                                                            <input type="text" class="form-control form-control-sm" id="token-capacity" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <div class="form-group row">
+                                                        <label for="token-expiry" class="col-2 col-form-label">数据有效期</label>
+                                                        <div class="col-5">
+                                                            <input id="token-expiry" type="text" name="token-expiry" value="" />
+                                                        </div>
+                                                        <div class="col-5 item-remark">
+                                                            <p><i class="fas fa-info-circle"></i> <b>写入缓存的数据在内存里驻留的最长时间。</b><br/>当数据超出有效期时缓存标记该数据已失效，将优先从缓存里移除。如果缓存配置了存储桩，则该数据会被移动到存储桩进行存储。</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <div class="form-group row">
+                                                        <label for="token-threshold" class="col-2 col-form-label">内存上限</label>
+                                                        <div class="col-5">
+                                                            <input id="token-threshold" type="text" name="token-threshold" value="" />
+                                                        </div>
+                                                        <div class="col-5 item-remark">
+                                                            <p><i class="fas fa-info-circle"></i> <b>缓存器可使用的宿主机最大内存空间。</b><br/>当缓存器在宿主机存储的数据大于此上限值时，缓存器按照“LRU”原则将数据转储到存储桩。</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -803,6 +834,7 @@
 <script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="plugins/sweetalert2/sweetalert2.min.js"></script>
 <script src="plugins/bootstrap-switch/js/bootstrap-switch.min.js"></script>
+<script src="plugins/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
 <script src="plugins/chart.js/Chart.min.js"></script>
 <script src="assets/js/libs/adminlte.min.js"></script>
 <script src="assets/js/libs/md5.js"></script>

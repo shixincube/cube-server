@@ -60,6 +60,13 @@ h5 {
     margin-left: 10px;
 }
 
+.irs--round .irs-min, .irs--round .irs-max {
+    font-size: 12px !important;
+}
+.irs--round .irs-from, .irs--round .irs-to, .irs--round .irs-single {
+    font-size: 12px !important;
+}
+
 .modal-huge {
     max-width: 1024px;
 }
@@ -259,6 +266,11 @@ h5 {
     font-size: 12px;
     margin-left: 0.5rem;
 }
+.detail-content input {
+    font-family: Menlo, 'Courier New', Courier, monospace;
+    font-weight: normal;
+    color: #343a40;
+}
 .server-detail-group-append {
     display: inline-block;
     margin-left: 120px;
@@ -299,6 +311,23 @@ h5 {
 }
 .detail-content-tab .storage-tabs-content {
     min-height: 271px;
+}
+.cache-tabs-content .tab-pane .form-group {
+    margin: 0.5rem 0.25rem 0.5rem 0.75rem;
+}
+.storage-tabs-content input, .cache-tabs-content input {
+    font-family: Menlo, 'Courier New', Courier, monospace !important;
+    font-weight: normal;
+    color: #343a40;
+}
+
+.item-remark {
+    font-size: 11px;
+    color: #6c757d;
+    padding: 0px 12px 0px 12px;
+}
+.item-remark p {
+    margin: unset;
 }
 
 /** service - end */

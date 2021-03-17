@@ -182,6 +182,7 @@
 
             // 配置界面
             bindStorageConfigRadioEvent();
+            initConfigUI();
 
             // 获取默认部署数据
             console.getServiceDefaultDeploy(function(data) {
@@ -768,6 +769,32 @@
             myel.find('.user').val(config.user);
             myel.find('.password').val(config.password);
         }
+    }
+
+    function initConfigUI() {
+        $('#token-expiry').ionRangeSlider({
+            min     : 1,
+            max     : 72,
+            from    : 24,
+            type    : 'single',
+            step    : 1,
+            postfix : ' 小时',
+            prettify: false,
+            hasGrid : true,
+            skin    : 'round'
+        });
+
+        $('#token-threshold').ionRangeSlider({
+            min     : 100,
+            max     : 4000,
+            from    : 200,
+            type    : 'single',
+            step    : 100,
+            postfix : ' MB',
+            prettify: false,
+            hasGrid : true,
+            skin    : 'round'
+        });
     }
 
     // 管理配置界面 - 结束
