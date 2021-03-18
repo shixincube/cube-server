@@ -422,6 +422,7 @@ public class FileStorageService extends AbstractModule {
             return null;
         }
 
+        System.out.println("XJW: " + primary.toString());
         try {
             JSONObject fileStorage = primary.getJSONObject(FileStorageService.NAME);
             String[] result = new String[2];

@@ -250,7 +250,7 @@ public class AuthService extends AbstractModule {
                 }
             }
 
-            return authDomain.getPrimaryDescription().toJSON();
+            return authDomain.getPrimaryDescription().getPrimaryContent();
         }
     }
 

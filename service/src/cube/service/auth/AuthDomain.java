@@ -121,22 +121,18 @@ public class AuthDomain {
 
         JSONObject content = new JSONObject();
 
-        JSONObject domainContent = new JSONObject();
-
         // FileStorage
         JSONObject fileStorage = new JSONObject();
         fileStorage.put("fileURL", "http://" + this.httpEndpoint.getHost() + ":" + this.httpEndpoint.getPort()
                 + "/filestorage/file/");
         fileStorage.put("fileSecureURL", "https://" + this.httpsEndpoint.getHost() + ":" + this.httpsEndpoint.getPort()
                 + "/filestorage/file/");
-        domainContent.put("FileStorage", fileStorage);
+        content.put("FileStorage", fileStorage);
 
         // MultipointComm
         JSONObject multiComm = new JSONObject();
         multiComm.put("iceServers", this.iceServers);
-        domainContent.put("MultipointComm", multiComm);
-
-        content.put(this.domainName, domainContent);
+        content.put("MultipointComm", multiComm);
 
         this.description = new PrimaryDescription(this.mainEndpoint.getHost(), content);
         return this.description;

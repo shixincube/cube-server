@@ -65,7 +65,7 @@
 
 	<!-- 适配器配置 -->
 	<adapters>
-		<adapter name="Contacts" host="127.0.0.1" port="7890">
+		<adapter name="Contacts" host="127.0.0.1" port="6860">
 		</adapter>
 	</adapters>
 

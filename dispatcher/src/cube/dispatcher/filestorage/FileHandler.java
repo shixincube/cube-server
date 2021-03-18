@@ -69,7 +69,7 @@ public class FileHandler extends CrossDomainHandler {
     private int bufferSize = 5 * 1024 * 1024;
 
     /**
-     *
+     * 构造函数。
      *
      * @param fileChunkStorage
      * @param performer
