@@ -703,13 +703,17 @@
                                 <div class="card-header p-0 border-bottom-0">
                                     <ul class="nav nav-tabs" id="cache-tabs-tab" role="tablist">
                                         <li class="nav-item">
-                                            <a class="nav-link active" id="cache-tabs-tokenpool-tab" data-toggle="pill" href="#cache-tabs-tokenpool" role="tab" aria-controls="cache-tabs-tokenpool" aria-selected="true">令牌池</a>
+                                            <a class="nav-link active" id="cache-tabs-token-tab" data-toggle="pill" href="#cache-tabs-token" role="tab" aria-controls="cache-tabs-token" aria-selected="true">令牌池</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="cache-tabs-general-tab" data-toggle="pill" href="#cache-tabs-general" role="tab" aria-controls="cache-tabs-general" aria-selected="false">通用缓存器</a>
                                         </li>
                                     </ul>
                                 </div>
                                 <div class="card-body">
                                     <div class="tab-content cache-tabs-content">
-                                        <div class="tab-pane fade show active" id="cache-tabs-tokenpool" role="tabpanel" aria-labelledby="cache-tabs-tokenpool-tab">
+                                        <!-- Token Pool Cache -->
+                                        <div class="tab-pane fade show active" id="cache-tabs-token" role="tabpanel" aria-labelledby="cache-tabs-token-tab">
                                             <div class="row mt-2">
                                                 <div class="col-5">
                                                     <div class="form-group row">
@@ -852,6 +856,150 @@
                                                 </div>
                                             </div>
                                         </div><!-- /.tab-pane -->
+                                        <!-- General Cache -->
+                                        <div class="tab-pane fade" id="cache-tabs-general" role="tabpanel" aria-labelledby="cache-tabs-general-tab">
+                                            <div class="row mt-2">
+                                                <div class="col-5">
+                                                    <div class="form-group row">
+                                                        <label for="general-host" class="col-2 col-form-label">地址</label>
+                                                        <div class="col-10">
+                                                            <input type="text" class="form-control form-control-sm" id="general-host" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-3">
+                                                    <div class="form-group row">
+                                                        <label for="general-port" class="col-4 col-form-label">端口</label>
+                                                        <div class="col-8">
+                                                            <input type="text" class="form-control form-control-sm" id="general-port" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="form-group row">
+                                                        <label for="general-capacity" class="col-3 col-form-label">容量</label>
+                                                        <div class="col-9">
+                                                            <input type="text" class="form-control form-control-sm" id="general-capacity" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <div class="form-group row">
+                                                        <label for="general-expiry" class="col-2 col-form-label">数据有效期</label>
+                                                        <div class="col-5">
+                                                            <input id="general-expiry" type="text" name="general-expiry" value="" />
+                                                        </div>
+                                                        <div class="col-5 item-remark">
+                                                            <p><i class="fas fa-info-circle"></i> <b>写入缓存的数据在内存里驻留的最长时间。</b><br/>当数据超出有效期时缓存标记该数据已失效，将优先从缓存里移除。如果缓存配置了存储桩，则该数据会被移动到存储桩进行存储。</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <div class="form-group row">
+                                                        <label for="general-threshold" class="col-2 col-form-label">内存上限</label>
+                                                        <div class="col-5">
+                                                            <input id="general-threshold" type="text" name="general-threshold" value="" />
+                                                        </div>
+                                                        <div class="col-5 item-remark">
+                                                            <p><i class="fas fa-info-circle"></i> <b>缓存器可使用的宿主机最大内存空间。</b><br/>当缓存器在宿主机存储的数据大于此上限值时，缓存器按照“LRU”原则将数据转储到存储桩。</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-group row">
+                                                        <label for="general-blocking" class="col-3 col-form-label">应答超时</label>
+                                                        <div class="col-9">
+                                                            <div class="input-group">
+                                                                <input type="text" class="form-control form-control-sm" id="general-blocking" />
+                                                                <div class="input-group-append input-group-append-sm">
+                                                                    <span class="input-group-text">毫秒</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-group row">
+                                                        <label for="general-routetable" class="col-3 col-form-label">路由表名</label>
+                                                        <div class="col-9">
+                                                            <input type="text" class="form-control form-control-sm" id="general-routetable" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div><!-- /.row -->
+                                            <hr />
+                                            <div class="row cluster">
+                                                <div class="col-2">
+                                                    <div class="form-group">
+                                                        <label for="general-nodes" class="col-form-label pl-2 pr-2">集群节点</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-10 cluster-nodes">
+                                                    <div class="row mt-2 mr-3">
+                                                        <label class="col-1 col-form-label">地址</label>
+                                                        <div class="col-5">
+                                                            <input type="text" class="form-control form-control-sm" id="general-node-host" />
+                                                        </div>
+                                                        <label class="col-1 col-form-label">端口</label>
+                                                        <div class="col-2">
+                                                            <input type="text" class="form-control form-control-sm" id="general-node-port" />
+                                                        </div>
+                                                        <div class="col-3 text-right">
+                                                            <button id="general-new-node" type="button" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> 新增节点</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr />
+                                            <div class="row mb-3 pedestal">
+                                                <div class="col-2">
+                                                    <div class="form-group">
+                                                        <label for="general-nodes" class="col-form-label pl-2 pr-2">存储桩</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-10">
+                                                    <div class="row mt-2 mr-3">
+                                                        <label class="col-1 col-form-label">地址</label>
+                                                        <div class="col-5">
+                                                            <input type="text" class="form-control form-control-sm" id="general-pedestal-host" disabled="" />
+                                                        </div>
+                                                        <label class="col-1 col-form-label">端口</label>
+                                                        <div class="col-3">
+                                                            <input type="text" class="form-control form-control-sm" id="general-pedestal-port" disabled="" />
+                                                        </div>
+                                                        <div class="col-2 pt-1 text-right">
+                                                            <div class="custom-control custom-switch">
+                                                                <input type="checkbox" class="custom-control-input" id="general-pedestal">
+                                                                <label class="custom-control-label" for="general-pedestal">使用</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-2">
+                                                    <div class="form-group">
+                                                        <label for="general-nodes" class="col-form-label pl-2 pr-2">备份存储桩</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-10">
+                                                    <div class="row mt-2 mr-3">
+                                                        <label class="col-1 col-form-label">地址</label>
+                                                        <div class="col-5">
+                                                            <input type="text" class="form-control form-control-sm" id="general-backup-pedestal-host" disabled="" />
+                                                        </div>
+                                                        <label class="col-1 col-form-label">端口</label>
+                                                        <div class="col-3">
+                                                            <input type="text" class="form-control form-control-sm" id="general-backup-pedestal-port" disabled="" />
+                                                        </div>
+                                                        <div class="col-2 pt-1 text-right">
+                                                            <div class="custom-control custom-switch">
+                                                                <input type="checkbox" class="custom-control-input" id="general-backup-pedestal">
+                                                                <label class="custom-control-label" for="general-backup-pedestal">使用</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div><!-- /.tab-pane -->
                                     </div><!-- /.tab-content -->
                                 </div><!-- /.card-body -->
                             </div><!-- /.card -->
@@ -860,7 +1008,7 @@
                 </div>
             </div><!-- /.modal-body -->
             <div class="modal-footer text-right">
-                <button type="button" class="btn btn-primary">确认</button>
+                <button type="button" class="btn btn-primary" onclick="javascript:service.submitConfig();">确认</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
             </div><!-- /.modal-footer -->
             <div class="overlay"><span><i class="fas fa-2x fa-sync-alt fa-spin"></i></span><span class="text">正在更新配置，请稍候……</span></div>

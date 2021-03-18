@@ -683,35 +683,21 @@
             updateStorageConfigTab('storage-tabs-filestorage', 'FileStorage', service.storage["FileStorage"]);
 
             // Token Pool
-            var tokenEl = el.find('#cache-tabs-tokenpool');
-            tokenEl.find('#token-host').val(service.tokenPool.host);
-            tokenEl.find('#token-port').val(service.tokenPool.port);
-            tokenEl.find('#token-capacity').val(service.tokenPool.capacity);
-            $('#token-expiry').data('ionRangeSlider').update({ from: g.util.convMillisToHours(service.tokenPool.expiry) });     // 毫秒换算为小时
-            $('#token-threshold').data('ionRangeSlider').update({ from: g.util.convBToMB(service.tokenPool.threshold) });       // 字节换算为兆字节
-            tokenEl.find('#token-blocking').val(service.tokenPool.blocking);
-            tokenEl.find('#token-routetable').val(service.tokenPool.routetable);
-            container = $('#cache-tabs-tokenpool .cluster-nodes');
-            service.tokenPool.clusterNodes.forEach(function(value) {
-                addClusterNode(container, value.host, value.port);
-            });
-            if (service.tokenPool.pedestal) {
-                $('#token-pedestal')[0].checked = true;
-                $('#token-pedestal-host').val(service.tokenPool.pedestal.host);
-                $('#token-pedestal-port').val(service.tokenPool.pedestal.port);
-                $('#token-pedestal-host').removeAttr('disabled');
-                $('#token-pedestal-port').removeAttr('disabled');
-            }
-            if (service.tokenPool.pedestalBackup) {
-                $('#token-backup-pedestal')[0].checked = true;
-                $('#token-backup-pedestal-host').val(service.tokenPool.pedestalBackup.host);
-                $('#token-backup-pedestal-port').val(service.tokenPool.pedestalBackup.port);
-                $('#token-backup-pedestal-host').removeAttr('disabled');
-                $('#token-backup-pedestal-port').removeAttr('disabled');
-            }
+            updateCacheUI(el, 'token', service.tokenPool);
+
+            // General Cache
+            updateCacheUI(el, 'general', service.generalCache);
+
 
             el.find('.overlay').css('visibility', 'hidden');
             el.modal('show');
+        },
+
+        /**
+         * 提交配置。
+         */
+        submitConfig: function() {
+
         },
 
         runMockTest: function(index) {
@@ -804,7 +790,19 @@
     }
 
     function initConfigUI() {
-        $('#token-expiry').ionRangeSlider({
+        initSliderUI('token');
+        initClusterNodeUI('token');
+        initConfigPedestalUI('token');
+        initConfigPedestalBackupUI('token');
+
+        initSliderUI('general');
+        initClusterNodeUI('general');
+        initConfigPedestalUI('general');
+        initConfigPedestalBackupUI('general');
+    }
+
+    function initSliderUI(prefix) {
+        $('#' + prefix + '-expiry').ionRangeSlider({
             min     : 1,
             max     : 168,
             from    : 24,
@@ -816,7 +814,7 @@
             skin    : 'round'
         });
 
-        $('#token-threshold').ionRangeSlider({
+        $('#' + prefix + '-threshold').ionRangeSlider({
             min     : 100,
             max     : 4000,
             from    : 200,
@@ -827,16 +825,15 @@
             hasGrid : true,
             skin    : 'round'
         });
+    }
 
-        var elNodeHost = $('#token-node-host');
-        var elNodePort = $('#token-node-port');
-        $('#token-new-node').on('click', function() {
-            var container = $('#cache-tabs-tokenpool .cluster-nodes');
+    function initClusterNodeUI(prefix) {
+        var elNodeHost = $('#' + prefix + '-node-host');
+        var elNodePort = $('#' + prefix + '-node-port');
+        $('#' + prefix + '-new-node').on('click', function() {
+            var container = $('#cache-tabs-' + prefix + ' .cluster-nodes');
             addClusterNode(container, elNodeHost, elNodePort);
         });
-
-        initConfigPedestalUI('token');
-        initConfigPedestalBackupUI('token');
     }
 
     function initConfigPedestalUI(prefix) {
@@ -882,6 +879,35 @@
             }
         });
     }
+
+    function updateCacheUI(el, prefix, cache) {
+        var cacheEl = el.find('#cache-tabs-' + prefix);
+        cacheEl.find('#' + prefix + '-host').val(cache.host);
+        cacheEl.find('#' + prefix + '-port').val(cache.port);
+        cacheEl.find('#' + prefix + '-capacity').val(cache.capacity);
+        $('#' + prefix + '-expiry').data('ionRangeSlider').update({ from: g.util.convMillisToHours(cache.expiry) });     // 毫秒换算为小时
+        $('#' + prefix + '-threshold').data('ionRangeSlider').update({ from: g.util.convBToMB(cache.threshold) });       // 字节换算为兆字节
+        cacheEl.find('#' + prefix + '-blocking').val(cache.blocking);
+        cacheEl.find('#' + prefix + '-routetable').val(cache.routetable);
+        var container = $('#cache-tabs-' + prefix + ' .cluster-nodes');
+        cache.clusterNodes.forEach(function(value) {
+            addClusterNode(container, value.host, value.port);
+        });
+        if (cache.pedestal) {
+            $('#' + prefix + '-pedestal')[0].checked = true;
+            $('#' + prefix + '-pedestal-host').val(cache.pedestal.host);
+            $('#' + prefix + '-pedestal-port').val(cache.pedestal.port);
+            $('#' + prefix + '-pedestal-host').removeAttr('disabled');
+            $('#' + prefix + '-pedestal-port').removeAttr('disabled');
+        }
+        if (cache.pedestalBackup) {
+            $('#' + prefix + '-backup-pedestal')[0].checked = true;
+            $('#' + prefix + '-backup-pedestal-host').val(cache.pedestalBackup.host);
+            $('#' + prefix + '-backup-pedestal-port').val(cache.pedestalBackup.port);
+            $('#' + prefix + '-backup-pedestal-host').removeAttr('disabled');
+            $('#' + prefix + '-backup-pedestal-port').removeAttr('disabled');
+        }
+    };
 
     function addClusterNode(container, elHost, elPort) {
         var host = null;

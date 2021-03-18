@@ -63,6 +63,8 @@ public class ServiceServer implements JSONable {
 
     private CacheConfigFile tokenPoolConfigFile;
 
+    private CacheConfigFile generalCacheConfigFile;
+
     private boolean running = false;
 
     public ServiceServer(String tag, String deployPath, String configPath, String celletsPath) {
@@ -119,6 +121,10 @@ public class ServiceServer implements JSONable {
             // 令牌缓存池
             this.tokenPoolConfigFile = new CacheConfigFile(this.configPath + File.separator + "token-pool.properties");
             this.tokenPoolConfigFile.load();
+
+            // 通用缓存器
+            this.generalCacheConfigFile = new CacheConfigFile(this.configPath + File.separator + "general-cache.properties");
+            this.generalCacheConfigFile.load();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -151,6 +157,8 @@ public class ServiceServer implements JSONable {
         json.put("storage", this.storageJson);
 
         json.put("tokenPool", this.tokenPoolConfigFile.toJSON());
+
+        json.put("generalCache", this.generalCacheConfigFile.toJSON());
 
         return json;
     }
