@@ -688,6 +688,8 @@
             // General Cache
             updateCacheUI(el, 'general', service.generalCache);
 
+            // Contact Cache
+            updateCacheUI(el, 'contact', service.contactCache);
 
             el.find('.overlay').css('visibility', 'hidden');
             el.modal('show');
@@ -799,6 +801,11 @@
         initClusterNodeUI('general');
         initConfigPedestalUI('general');
         initConfigPedestalBackupUI('general');
+
+        initSliderUI('contact');
+        initClusterNodeUI('contact');
+        initConfigPedestalUI('contact');
+        initConfigPedestalBackupUI('contact');
     }
 
     function initSliderUI(prefix) {

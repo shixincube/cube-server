@@ -41,3 +41,5 @@ tag_dispatcher
 dispatcher_copy.properties
 dispatcher_copy.xml
 token-pool_copy.properties
+contact-cache_copy.properties
+general-cache_copy.properties
