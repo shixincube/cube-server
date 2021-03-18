@@ -691,6 +691,9 @@
             // Contact Cache
             updateCacheUI(el, 'contact', service.contactCache);
 
+            // File Label Cache
+            updateCacheUI(el, 'filelabel', service.fileLabelCache);
+
             el.find('.overlay').css('visibility', 'hidden');
             el.modal('show');
         },
@@ -806,32 +809,50 @@
         initClusterNodeUI('contact');
         initConfigPedestalUI('contact');
         initConfigPedestalBackupUI('contact');
+
+        initSliderUI('filelabel');
+        initClusterNodeUI('filelabel');
+        initConfigPedestalUI('filelabel');
+        initConfigPedestalBackupUI('filelabel');
+
+        initSliderUI('messaging');
+        initSliderUI('messaging-index');
+        initSliderUI('messaging-data');
+        initClusterNodeUI('messaging');
+        initConfigPedestalUI('messaging');
+        initConfigPedestalBackupUI('messaging');
     }
 
     function initSliderUI(prefix) {
-        $('#' + prefix + '-expiry').ionRangeSlider({
-            min     : 1,
-            max     : 168,
-            from    : 24,
-            type    : 'single',
-            step    : 1,
-            postfix : ' 小时',
-            prettify: false,
-            hasGrid : true,
-            skin    : 'round'
-        });
+        var el = $('#' + prefix + '-expiry');
+        if (el.length > 0) {
+            el.ionRangeSlider({
+                min     : 1,
+                max     : 168,
+                from    : 24,
+                type    : 'single',
+                step    : 1,
+                postfix : ' 小时',
+                prettify: false,
+                hasGrid : true,
+                skin    : 'round'
+            });
+        }
 
-        $('#' + prefix + '-threshold').ionRangeSlider({
-            min     : 100,
-            max     : 4000,
-            from    : 200,
-            type    : 'single',
-            step    : 100,
-            postfix : ' MB',
-            prettify: false,
-            hasGrid : true,
-            skin    : 'round'
-        });
+        el = $('#' + prefix + '-threshold');
+        if (el.length > 0) {
+            el.ionRangeSlider({
+                min     : 100,
+                max     : 4000,
+                from    : 200,
+                type    : 'single',
+                step    : 100,
+                postfix : ' MB',
+                prettify: false,
+                hasGrid : true,
+                skin    : 'round'
+            });
+        }
     }
 
     function initClusterNodeUI(prefix) {
@@ -907,10 +928,10 @@
             $('#' + prefix + '-pedestal-host').removeAttr('disabled');
             $('#' + prefix + '-pedestal-port').removeAttr('disabled');
         }
-        if (cache.pedestalBackup) {
+        if (cache.backupPedestal) {
             $('#' + prefix + '-backup-pedestal')[0].checked = true;
-            $('#' + prefix + '-backup-pedestal-host').val(cache.pedestalBackup.host);
-            $('#' + prefix + '-backup-pedestal-port').val(cache.pedestalBackup.port);
+            $('#' + prefix + '-backup-pedestal-host').val(cache.backupPedestal.host);
+            $('#' + prefix + '-backup-pedestal-port').val(cache.backupPedestal.port);
             $('#' + prefix + '-backup-pedestal-host').removeAttr('disabled');
             $('#' + prefix + '-backup-pedestal-port').removeAttr('disabled');
         }

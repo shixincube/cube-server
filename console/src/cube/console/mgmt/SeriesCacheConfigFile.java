@@ -46,15 +46,15 @@ import java.util.Date;
 import java.util.Properties;
 
 /**
- * 缓存配置文件。
+ * 时序缓存配置文件。
  */
-public class CacheConfigFile implements JSONable {
+public class SeriesCacheConfigFile implements JSONable {
 
     private String fullPath;
 
     private Properties properties;
 
-    public CacheConfigFile(String fullPath) {
+    public SeriesCacheConfigFile(String fullPath) {
         this.fullPath = fullPath;
     }
 
@@ -106,12 +106,14 @@ public class CacheConfigFile implements JSONable {
         json.put("host", this.properties.getProperty("host"));
         json.put("port", Integer.parseInt(this.properties.getProperty("port")));
         json.put("capacity", Integer.parseInt(this.properties.getProperty("capacity")));
+        json.put("segmentNum", Integer.parseInt(this.properties.getProperty("segment.num")));
+        json.put("segmentSize", Integer.parseInt(this.properties.getProperty("segment.size")));
         json.put("expiry", Long.parseLong(this.properties.getProperty("expiry")));
-        json.put("threshold", Long.parseLong(this.properties.getProperty("threshold")));
-        json.put("blocking", Integer.parseInt(this.properties.getProperty("blocking")));
+        json.put("indexThreshold", Long.parseLong(this.properties.getProperty("threshold.index")));
+        json.put("dataThreshold", Long.parseLong(this.properties.getProperty("threshold.data")));
+        json.put("timeout", Integer.parseInt(this.properties.getProperty("sync.timeout")));
 
         json.put("storage", this.properties.getProperty("storage"));
-        json.put("routetable", this.properties.getProperty("routetable"));
 
         JSONArray clusterNodes = new JSONArray();
         for (int i = 1; i <= 10; ++i) {
@@ -126,14 +128,14 @@ public class CacheConfigFile implements JSONable {
         }
         json.put("clusterNodes", clusterNodes);
 
-        if (this.properties.containsKey("pedestal.host")) {
-            json.put("pedestal", (new Endpoint(this.properties.getProperty("pedestal.host"),
-                    Integer.parseInt(this.properties.getProperty("pedestal.port")))).toJSON());
+        if (this.properties.containsKey("index.pedestal.host")) {
+            json.put("pedestal", (new Endpoint(this.properties.getProperty("index.pedestal.host"),
+                    Integer.parseInt(this.properties.getProperty("index.pedestal.port")))).toJSON());
         }
 
-        if (this.properties.containsKey("pedestal.backup.host")) {
-            json.put("backupPedestal", (new Endpoint(this.properties.getProperty("pedestal.backup.host"),
-                    Integer.parseInt(this.properties.getProperty("pedestal.backup.port")))).toJSON());
+        if (this.properties.containsKey("index.pedestal.backup.host")) {
+            json.put("backupPedestal", (new Endpoint(this.properties.getProperty("index.pedestal.backup.host"),
+                    Integer.parseInt(this.properties.getProperty("index.pedestal.backup.port")))).toJSON());
         }
 
         return json;

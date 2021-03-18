@@ -56,6 +56,10 @@ h5 {
     font-size: 14px;
 }
 
+.custom-select-sm {
+    font-size: 14px;
+}
+
 .swal2-popup.swal2-toast .swal2-title {
     margin-left: 10px;
 }
@@ -315,13 +319,17 @@ h5 {
 .cache-tabs-content .tab-pane .form-group {
     margin: 0.5rem 0.5rem 0.5rem 0.75rem;
 }
-.storage-tabs-content input, .cache-tabs-content input {
+.series-tabs-content .tab-pane .form-group {
+    margin: 0.5rem 0.5rem 0.5rem 0.75rem;
+}
+
+.storage-tabs-content input, .cache-tabs-content input, .series-tabs-content input {
     font-family: Menlo, 'Courier New', Courier, monospace !important;
     font-weight: normal;
     color: #343a40;
 }
 
-.cache-tabs-content hr {
+.cache-tabs-content hr, .series-tabs-content hr {
     margin-top: 0.5rem;
     margin-bottom: 0.5rem;
 }

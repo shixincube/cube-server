@@ -67,6 +67,10 @@ public class ServiceServer implements JSONable {
 
     private CacheConfigFile contactCacheConfigFile;
 
+    private CacheConfigFile fileLabelCacheConfigFile;
+
+    private SeriesCacheConfigFile messagingSeriesConfigFile;
+
     private boolean running = false;
 
     public ServiceServer(String tag, String deployPath, String configPath, String celletsPath) {
@@ -131,6 +135,15 @@ public class ServiceServer implements JSONable {
             // 联系人缓存器
             this.contactCacheConfigFile = new CacheConfigFile(this.configPath + File.separator + "contact-cache.properties");
             this.contactCacheConfigFile.load();
+
+            // 文件标签缓存器
+            this.fileLabelCacheConfigFile = new CacheConfigFile(this.configPath + File.separator + "filelabel-cache.properties");
+            this.fileLabelCacheConfigFile.load();
+
+            // 消息时序
+            this.messagingSeriesConfigFile = new SeriesCacheConfigFile(this.configPath
+                    + File.separator + "messaging-series-memory.properties");
+            this.messagingSeriesConfigFile.load();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -167,6 +180,10 @@ public class ServiceServer implements JSONable {
         json.put("generalCache", this.generalCacheConfigFile.toJSON());
 
         json.put("contactCache", this.contactCacheConfigFile.toJSON());
+
+        json.put("fileLabelCache", this.fileLabelCacheConfigFile.toJSON());
+
+        json.put("messagingSeries", this.messagingSeriesConfigFile.toJSON());
 
         return json;
     }
