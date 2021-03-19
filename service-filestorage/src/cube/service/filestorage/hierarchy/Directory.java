@@ -229,7 +229,23 @@ public class Directory implements JSONable {
             return null;
         }
 
-        return this.fileHierarchy.createDirectory(this, directoryName);
+        return this.fileHierarchy.createDirectory(this, directoryName, null);
+    }
+
+    /**
+     * 创建子目录。
+     *
+     * @param directoryName 指定目录名。
+     * @param directoryId 指定目录 ID 。
+     * @return 返回新创建的子目录。
+     */
+    public Directory createDirectory(String directoryName, Long directoryId) {
+        if (directoryName.equals("root")) {
+            // 不允许使用 root 作为目录名
+            return null;
+        }
+
+        return this.fileHierarchy.createDirectory(this, directoryName, directoryId);
     }
 
     /**

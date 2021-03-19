@@ -170,6 +170,7 @@ public class RecycleBin {
                 FileTrash fileTrash = new FileTrash(root, json);
                 if (restore(fileTrash)) {
                     result.successList.add(fileTrash);
+                    this.structStorage.deleteTrash(root.getDomain().getName(), root.getId(), trashId);
                 }
                 else {
                     result.failureList.add(fileTrash);
@@ -179,6 +180,7 @@ public class RecycleBin {
                 DirectoryTrash directoryTrash = new DirectoryTrash(root, json);
                 if (restore(directoryTrash)) {
                     result.successList.add(directoryTrash);
+                    this.structStorage.deleteTrash(root.getDomain().getName(), root.getId(), trashId);
                 }
                 else {
                     result.failureList.add(directoryTrash);
@@ -189,6 +191,12 @@ public class RecycleBin {
         return result;
     }
 
+    /**
+     * 恢复文件。
+     *
+     * @param fileTrash
+     * @return
+     */
     private boolean restore(FileTrash fileTrash) {
         Directory root = fileTrash.getRoot();
         Directory parent = root;
@@ -213,20 +221,27 @@ public class RecycleBin {
         return success;
     }
 
+    /**
+     * 恢复目录。
+     *
+     * @param directoryTrash
+     * @return
+     */
     private boolean restore(DirectoryTrash directoryTrash) {
         Directory root = directoryTrash.getRoot();
         RecycleChain chain = directoryTrash.getChain();
 
-        Directory parent = root;
+        Directory current = root;
         List<Directory> list = chain.getNodes();
         for (int i = 1; i < list.size(); ++i) {
             Directory dir = list.get(i);
 
-            if (!parent.existsDirectory(dir.getName())) {
-
+            if (!current.existsDirectory(dir.getName())) {
+                Directory newDir = current.createDirectory(dir.getName(), dir.getId());
+                current = newDir;
             }
             else {
-
+                current = current.getDirectory(dir.getName());
             }
 
             if (dir.getId().longValue() == directoryTrash.getOriginalId().longValue()) {
@@ -235,6 +250,16 @@ public class RecycleBin {
             }
         }
 
-        return false;
+        if (null == current) {
+            return false;
+        }
+
+        int total = directoryTrash.getDirectory().numFiles();
+        List<FileLabel> files = directoryTrash.getDirectory().listFiles(0, total);
+        for (FileLabel file : files) {
+            current.addFile(file);
+        }
+
+        return true;
     }
 }

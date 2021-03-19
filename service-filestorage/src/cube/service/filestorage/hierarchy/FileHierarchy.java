@@ -250,9 +250,10 @@ public class FileHierarchy {
      *
      * @param directory 指定工作目录。
      * @param directoryName 指定新目录名。
+     * @param directoryId 指定新目录的 ID 值。
      * @return 创建失败返回 {@code null} 值。
      */
-    protected Directory createDirectory(Directory directory, String directoryName) {
+    protected Directory createDirectory(Directory directory, String directoryName, Long directoryId) {
         if (directoryName.equals("root")) {
             // 不允许使用 root 作为目录名
             return null;
@@ -268,7 +269,8 @@ public class FileHierarchy {
         this.timestamp = now;
 
         // 创建目录
-        HierarchyNode dirNode = new HierarchyNode(directory.node);
+        HierarchyNode dirNode = (null != directoryId)
+                ?  new HierarchyNode(directoryId, directory.node) : new HierarchyNode(directory.node);
         try {
             JSONObject context = dirNode.getContext();
             context.put(KEY_DIR_NAME, directoryName);

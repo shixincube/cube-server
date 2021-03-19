@@ -95,6 +95,20 @@ public class HierarchyNode extends Entity {
     /**
      * 构造函数。
      *
+     * @param id 节点 ID 值。
+     * @param parent 父节点。
+     */
+    public HierarchyNode(Long id, HierarchyNode parent) {
+        super(id, parent.domain);
+        this.parent = parent;
+        this.children = new ArrayList<>();
+        this.relatedKeys = new ArrayList<>();
+        this.context = new JSONObject();
+    }
+
+    /**
+     * 构造函数。
+     *
      * @param json 层级节点结构的 JSON 对象。
      */
     public HierarchyNode(JSONObject json) {
