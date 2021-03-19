@@ -61,6 +61,9 @@
 		<cellet port="6000" jar="cellets/cube-service-multipointcomm-3.0.jar">
 			<class>cube.service.multipointcomm.MultipointCommServiceCellet</class>
 		</cellet>
+		<cellet port="6000" jar="cellets/cube-service-conference-3.0.jar">
+			<class>cube.service.conference.ConferenceServiceCellet</class>
+		</cellet>
 	</cellets>
 
 	<!-- 适配器配置 -->

@@ -139,7 +139,6 @@ public class AuthStorage implements Storagable {
     @Override
     public void open() {
         this.storage.open();
-        this.execSelfChecking(null);
     }
 
     @Override

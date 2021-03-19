@@ -96,7 +96,9 @@ public class AuthService extends AbstractModule {
                 config.put("file", "storage/AuthService.db");
                 this.authStorage = new AuthStorage(StorageType.SQLite, config);
             }
+            // 开启存储
             this.authStorage.open();
+            this.authStorage.execSelfChecking(null);
         }
     }
 

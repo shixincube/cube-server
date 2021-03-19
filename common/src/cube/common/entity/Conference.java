@@ -45,6 +45,11 @@ public class Conference extends Entity {
     private String subject;
 
     /**
+     * 会议密码。
+     */
+    private String password = "";
+
+    /**
      * 会议摘要。
      */
     private String summary = "";
@@ -75,14 +80,14 @@ public class Conference extends Entity {
     private Group participantGroup;
 
     /**
+     * 最大允许参与人数。
+     */
+    private int maxParticipants = 50;
+
+    /**
      * 通信场域。
      */
     private CommField commField;
-
-    /**
-     * 会议密码。
-     */
-    private String password = "";
 
     /**
      * 是否已取消。
@@ -100,17 +105,66 @@ public class Conference extends Entity {
         this.code = Utils.randomNumberString(8);
     }
 
+    public String getCode() {
+        return this.code;
+    }
+
     public void setSubject(String subject) {
         this.subject = subject;
     }
 
+    public String getSubject() {
+        return this.subject;
+    }
+
+    public String getPassword() {
+        return this.password;
+    }
+
+    public String getSummary() {
+        return this.summary;
+    }
+
+    public Contact getFounder() {
+        return this.founder;
+    }
+
+    public long getCreation() {
+        return this.creation;
+    }
+
+    public long getScheduleTime() {
+        return this.scheduleTime;
+    }
+
+    public long getExpireTime() {
+        return this.expireTime;
+    }
+
+    public int getMaxParticipants() {
+        return this.maxParticipants;
+    }
+
+    public Group getParticipantGroup() {
+        return this.participantGroup;
+    }
+
+    public CommField getCommField() {
+        return this.commField;
+    }
+
+    public boolean isCancelled() {
+        return this.cancelled;
+    }
+
     @Override
     public JSONObject toJSON() {
-        return null;
+        JSONObject json = new JSONObject();
+        return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return null;
+        return this.toJSON();
     }
 }

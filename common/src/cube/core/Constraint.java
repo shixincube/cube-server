@@ -67,6 +67,11 @@ public enum Constraint {
     DEFAULT_0("DEFAULT 0"),
 
     /**
+     * 对应 DEFAULT 1 。
+     */
+    DEFAULT_1("DEFAULT 1"),
+
+    /**
      * 对应 DEFAULT NULL 。
      */
     DEFAULT_NULL("DEFAULT NULL"),
