@@ -26,7 +26,9 @@
 
 package cube.service.filestorage.recycle;
 
+import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
+import cube.service.Director;
 import cube.service.filestorage.FileStructStorage;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchyTool;
@@ -147,7 +149,92 @@ public class RecycleBin {
         this.structStorage.emptyTrash(root.getDomain().getName(), root.getId());
     }
 
-    public void recover(Directory root, Long directoryId) {
+    /**
+     * 恢复文件或文件夹
+     *
+     * @param root
+     * @param trashIdList
+     * @return
+     */
+    public RestoreResult restore(Directory root, List<Long> trashIdList) {
+        RestoreResult result = new RestoreResult();
 
+        for (Long trashId : trashIdList) {
+            JSONObject json = this.structStorage.readTrash(root.getDomain().getName(), root.getId(), trashId);
+            if (null == json) {
+                Logger.w(this.getClass(), "Can NOT find trash data: " + trashId);
+                continue;
+            }
+
+            if (json.has("file")) {
+                FileTrash fileTrash = new FileTrash(root, json);
+                if (restore(fileTrash)) {
+                    result.successList.add(fileTrash);
+                }
+                else {
+                    result.failureList.add(fileTrash);
+                }
+            }
+            else if (json.has("directory")) {
+                DirectoryTrash directoryTrash = new DirectoryTrash(root, json);
+                if (restore(directoryTrash)) {
+                    result.successList.add(directoryTrash);
+                }
+                else {
+                    result.failureList.add(directoryTrash);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private boolean restore(FileTrash fileTrash) {
+        Directory root = fileTrash.getRoot();
+        Directory parent = root;
+
+        RecycleChain chain = fileTrash.getChain();
+        for (Directory dir : chain.getNodes()) {
+            if (dir.getName().equals("root")) {
+                continue;
+            }
+
+            if (!parent.existsDirectory(dir.getName())) {
+                Directory newDir = parent.createDirectory(dir.getName());
+                parent = newDir;
+            }
+            else {
+                parent = parent.getDirectory(dir.getName());
+            }
+        }
+
+        // 恢复文件到目录
+        boolean success = parent.addFile(fileTrash.getFileLabel());
+        return success;
+    }
+
+    private boolean restore(DirectoryTrash directoryTrash) {
+        Directory root = directoryTrash.getRoot();
+        RecycleChain chain = directoryTrash.getChain();
+
+        Directory parent = root;
+        List<Directory> list = chain.getNodes();
+        for (int i = 1; i < list.size(); ++i) {
+            Directory dir = list.get(i);
+
+            if (!parent.existsDirectory(dir.getName())) {
+
+            }
+            else {
+
+            }
+
+            if (dir.getId().longValue() == directoryTrash.getOriginalId().longValue()) {
+                // 遍历到自己，结束
+                break;
+            }
+        }
+
+        return false;
     }
 }

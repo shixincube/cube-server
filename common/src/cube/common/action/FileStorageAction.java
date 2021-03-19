@@ -94,6 +94,11 @@ public enum FileStorageAction {
     EmptyTrash("emptyTrash"),
 
     /**
+     * 从回收站恢复废弃数据。
+     */
+    RestoreTrash("restoreTrash"),
+
+    /**
      * 检索文件。
      */
     SearchFile("searchFile"),

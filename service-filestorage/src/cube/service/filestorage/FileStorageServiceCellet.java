@@ -123,6 +123,10 @@ public class FileStorageServiceCellet extends AbstractCellet {
             this.executor.execute(new EmptyTrashTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (FileStorageAction.RestoreTrash.name.equals(action)) {
+            this.executor.execute(new RestoreTrashTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (FileStorageAction.SearchFile.name.equals(action)) {
             this.executor.execute(new SearchFileTask(this, talkContext, primitive,
                     this.markResponseTime(action)));

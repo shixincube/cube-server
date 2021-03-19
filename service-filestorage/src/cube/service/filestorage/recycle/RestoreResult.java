@@ -26,48 +26,47 @@
 
 package cube.service.filestorage.recycle;
 
-import cube.common.entity.FileLabel;
-import cube.service.filestorage.hierarchy.Directory;
+import cube.common.JSONable;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * 垃圾文件。
+ * 恢复数据的结果。
  */
-public class FileTrash extends Trash {
+public class RestoreResult implements JSONable {
 
-    private Directory parent;
+    public final List<Trash> successList;
 
-    private FileLabel fileLabel;
+    public final List<Trash> failureList;
 
-    public FileTrash(Directory root, RecycleChain chain, FileLabel fileLabel) {
-        super(root, chain, fileLabel.getId());
-        this.fileLabel = fileLabel;
-        this.parent = chain.getLast();
-    }
-
-    public FileTrash(Directory root, JSONObject json) {
-        super(root, json);
-        this.parent = getChain().getLast();
-        this.fileLabel = new FileLabel(json.getJSONObject("file"));
-    }
-
-    @Override
-    public Directory getParent() {
-        return this.parent;
-    }
-
-    public String getFileCode() {
-        return this.fileLabel.getFileCode();
-    }
-
-    public FileLabel getFileLabel() {
-        return this.fileLabel;
+    public RestoreResult() {
+        this.successList = new ArrayList<>();
+        this.failureList = new ArrayList<>();
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = super.toJSON();
-        json.put("file", this.fileLabel.toCompactJSON());
+        JSONObject json = new JSONObject();
+        JSONArray array = new JSONArray();
+        for (Trash trash : this.successList) {
+            array.put(trash.toJSON());
+        }
+        json.put("successList", array);
+
+        array = new JSONArray();
+        for (Trash trash : this.failureList) {
+            array.put(trash.toJSON());
+        }
+        json.put("failureList", array);
+
         return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

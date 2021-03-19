@@ -253,6 +253,11 @@ public class FileHierarchy {
      * @return 创建失败返回 {@code null} 值。
      */
     protected Directory createDirectory(Directory directory, String directoryName) {
+        if (directoryName.equals("root")) {
+            // 不允许使用 root 作为目录名
+            return null;
+        }
+
         if (this.existsDirectory(directory, directoryName)) {
             // 目录重名，不允许创建
             return null;
