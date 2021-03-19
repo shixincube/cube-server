@@ -26,24 +26,52 @@
 
 package cube.service.conference;
 
-import cube.core.AbstractCellet;
+import cube.common.entity.Conference;
+import cube.common.entity.Contact;
+import cube.core.AbstractModule;
+import cube.core.Kernel;
+import cube.core.Module;
+import cube.plugin.PluginSystem;
+
+import java.util.List;
 
 /**
- * 会议服务的 Cellet 。
+ * 会议服务。
  */
-public class ConferenceServiceCellet extends AbstractCellet {
+public class ConferenceService extends AbstractModule {
 
-    public ConferenceServiceCellet() {
-        super(ConferenceService.NAME);
+    public static String NAME = "Conference";
+
+    public ConferenceService() {
+
     }
 
     @Override
-    public boolean install() {
-        return true;
+    public void start() {
+
     }
 
     @Override
-    public void uninstall() {
+    public void stop() {
+
+    }
+
+    public Conference createConference(Contact founder, String subject) {
+
+        return null;
+    }
+
+    public List<Conference> listConference(long beginning, long ending) {
+        return null;
+    }
+
+    @Override
+    public PluginSystem<?> getPluginSystem() {
+        return null;
+    }
+
+    @Override
+    public void onTick(Module module, Kernel kernel) {
 
     }
 }

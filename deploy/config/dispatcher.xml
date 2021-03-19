@@ -70,6 +70,7 @@
 			<class>cube.dispatcher.fileprocessor.FileProcessorCellet</class>
 			<class>cube.dispatcher.messaging.MessagingCellet</class>
 			<class>cube.dispatcher.multipointcomm.MultipointCommCellet</class>
+			<class>cube.dispatcher.conference.ConferenceCellet</class>
 		</cellet>
 	</cellets>
 
