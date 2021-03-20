@@ -30,6 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
 import cube.common.entity.Conference;
+import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
@@ -130,7 +131,11 @@ public class ConferenceStorage implements Storagable {
         this.storage.executeInsert(table, fields);
     }
 
-    public Conference readConference(String code) {
+    public Conference readConference(String domain, String code) {
+        String table = SQLUtils.correctTableName(this.conferenceTablePrefix + domain);
+        List<StorageField[]> result = this.storage.executeQuery(table, this.conferenceFields, new Conditional[] {
+                Conditional.createEqualTo("code", LiteralBase.STRING, code)
+        });
         return null;
     }
 
