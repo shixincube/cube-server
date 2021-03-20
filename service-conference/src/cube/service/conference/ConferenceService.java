@@ -26,12 +26,19 @@
 
 package cube.service.conference;
 
+import cell.util.Utils;
 import cube.common.entity.Conference;
 import cube.common.entity.Contact;
+import cube.common.entity.Group;
 import cube.core.AbstractModule;
+import cube.core.Cache;
 import cube.core.Kernel;
-import cube.core.Module;
 import cube.plugin.PluginSystem;
+import cube.service.auth.AuthService;
+import cube.service.contact.ContactManager;
+import cube.storage.StorageType;
+import cube.util.ConfigUtils;
+import org.json.JSONObject;
 
 import java.util.List;
 
@@ -42,21 +49,55 @@ public class ConferenceService extends AbstractModule {
 
     public static String NAME = "Conference";
 
-    public ConferenceService() {
+    private ConferenceStorage storage;
 
+    private Cache conferenceCache;
+
+    public ConferenceService() {
     }
 
     @Override
     public void start() {
+        // 获取通用缓存器
+        this.conferenceCache = this.getKernel().getCache("General");
 
+        // 读取存储配置
+        JSONObject config = ConfigUtils.readStorageConfig();
+        if (config.has(ConferenceService.NAME)) {
+            config = config.getJSONObject(ConferenceService.NAME);
+            if (config.getString("type").equalsIgnoreCase("SQLite")) {
+                this.storage = new ConferenceStorage(StorageType.SQLite, config);
+            }
+            else {
+                this.storage = new ConferenceStorage(StorageType.MySQL, config);
+            }
+        }
+        else {
+            config.put("file", "storage/ConferenceService.db");
+            this.storage = new ConferenceStorage(StorageType.SQLite, config);
+        }
+        // 开启存储
+        this.storage.open();
+
+        AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
+        this.storage.execSelfChecking(authService.getDomainList());
     }
 
     @Override
     public void stop() {
-
+        this.storage.close();
     }
 
-    public Conference createConference(Contact founder, String subject) {
+    public Conference createConference(Contact founder, String subject, String password, String summary,
+            long scheduleTime, long expireTime) {
+        Conference conference = new Conference(Utils.generateSerialNumber(), founder.getDomain().getName());
+
+        Group group = new Group(conference.getId(), founder.getDomain().getName(),
+                conference.getCode(), founder, conference.getCreation());
+        group = ContactManager.getInstance().createGroup(group);
+        conference.setParticipantGroup(group);
+
+
 
         return null;
     }
@@ -65,13 +106,17 @@ public class ConferenceService extends AbstractModule {
         return null;
     }
 
+    public void updateConference(Conference conference) {
+
+    }
+
     @Override
     public PluginSystem<?> getPluginSystem() {
         return null;
     }
 
     @Override
-    public void onTick(Module module, Kernel kernel) {
+    public void onTick(cube.core.Module module, Kernel kernel) {
 
     }
 }

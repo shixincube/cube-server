@@ -60,6 +60,11 @@ public class Conference extends Entity {
     private Contact founder;
 
     /**
+     * 创建人 ID 。
+     */
+    private Long founderId;
+
+    /**
      * 创建时间。
      */
     private long creation;
@@ -80,6 +85,11 @@ public class Conference extends Entity {
     private Group participantGroup;
 
     /**
+     * 参与者群组 ID 。
+     */
+    private Long participantGroupId;
+
+    /**
      * 最大允许参与人数。
      */
     private int maxParticipants = 50;
@@ -88,6 +98,11 @@ public class Conference extends Entity {
      * 通信场域。
      */
     private CommField commField;
+
+    /**
+     * 通信场域 ID 。
+     */
+    private Long commFieldId;
 
     /**
      * 是否已取消。
@@ -103,6 +118,37 @@ public class Conference extends Entity {
     public Conference(Long id, String domainName) {
         super(id, domainName);
         this.code = Utils.randomNumberString(8);
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param id
+     * @param domainName
+     * @param code
+     * @param subject
+     * @param password
+     * @param summary
+     * @param founderId
+     * @param creation
+     * @param scheduleTime
+     * @param expireTime
+     * @param participantGroupId
+     * @param commFieldId
+     */
+    public Conference(Long id, String domainName, String code, String subject, String password, String summary,
+        Long founderId, long creation, long scheduleTime, long expireTime, Long participantGroupId, Long commFieldId) {
+        super(id, domainName);
+        this.code = code;
+        this.subject = subject;
+        this.password = password;
+        this.summary = summary;
+        this.founderId = founderId;
+        this.creation = creation;
+        this.scheduleTime = scheduleTime;
+        this.expireTime = expireTime;
+        this.participantGroupId = participantGroupId;
+        this.commFieldId = commFieldId;
     }
 
     public String getCode() {
@@ -147,6 +193,10 @@ public class Conference extends Entity {
 
     public Group getParticipantGroup() {
         return this.participantGroup;
+    }
+
+    public void setParticipantGroup(Group group) {
+        this.participantGroup = group;
     }
 
     public CommField getCommField() {

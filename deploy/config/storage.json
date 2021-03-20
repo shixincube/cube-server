@@ -17,5 +17,10 @@
 	"FileStorage": {
 		"type": "SQLite",
 		"file": "storage/FileStorageService.db"
+	},
+
+	"Conference": {
+		"type": "SQLite",
+		"file": "storage/ConferenceService.db"
 	}
 }

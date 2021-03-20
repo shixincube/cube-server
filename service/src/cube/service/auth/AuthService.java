@@ -31,7 +31,6 @@ import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
 import cube.core.*;
 import cube.plugin.PluginSystem;
-import cube.service.contact.ContactManager;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONException;
@@ -84,7 +83,7 @@ public class AuthService extends AbstractModule {
             // 读取存储配置
             JSONObject config = ConfigUtils.readStorageConfig();
             if (config.has(AuthService.NAME)) {
-                config = config.getJSONObject(ContactManager.NAME);
+                config = config.getJSONObject(AuthService.NAME);
                 if (config.getString("type").equalsIgnoreCase("SQLite")) {
                     this.authStorage = new AuthStorage(StorageType.SQLite, config);
                 }

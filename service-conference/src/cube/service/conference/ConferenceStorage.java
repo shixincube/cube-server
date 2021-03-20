@@ -35,11 +35,13 @@ import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
 import cube.storage.StorageFactory;
+import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.SQLUtils;
 import org.json.JSONObject;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 会议数据存储器。
@@ -136,6 +138,14 @@ public class ConferenceStorage implements Storagable {
         List<StorageField[]> result = this.storage.executeQuery(table, this.conferenceFields, new Conditional[] {
                 Conditional.createEqualTo("code", LiteralBase.STRING, code)
         });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+
+        Conference conference = new Conference(map.get("id").getLong(), domain, code);
         return null;
     }
 
