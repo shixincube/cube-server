@@ -35,11 +35,6 @@ import org.json.JSONObject;
 public class Conference extends Entity {
 
     /**
-     * 会议号。
-     */
-    private String code;
-
-    /**
      * 会议主题。
      */
     private String subject;
@@ -115,9 +110,11 @@ public class Conference extends Entity {
      * @param id
      * @param domainName
      */
-    public Conference(Long id, String domainName) {
+    public Conference(Long id, String domainName, Contact founder) {
         super(id, domainName);
-        this.code = Utils.randomNumberString(8);
+        this.uniqueKey = Utils.randomNumberString(8);
+        this.founder = founder;
+        this.founderId = founder.getId();
     }
 
     /**
@@ -139,7 +136,7 @@ public class Conference extends Entity {
     public Conference(Long id, String domainName, String code, String subject, String password, String summary,
         Long founderId, long creation, long scheduleTime, long expireTime, Long participantGroupId, Long commFieldId) {
         super(id, domainName);
-        this.code = code;
+        this.uniqueKey = code;
         this.subject = subject;
         this.password = password;
         this.summary = summary;
@@ -151,8 +148,17 @@ public class Conference extends Entity {
         this.commFieldId = commFieldId;
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param json
+     */
+    public Conference(JSONObject json) {
+        super(json.getLong("id"), json.getString("domain"));
+    }
+
     public String getCode() {
-        return this.code;
+        return this.uniqueKey;
     }
 
     public void setSubject(String subject) {
@@ -167,8 +173,16 @@ public class Conference extends Entity {
         return this.password;
     }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public String getSummary() {
         return this.summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
     }
 
     public Contact getFounder() {
@@ -183,12 +197,24 @@ public class Conference extends Entity {
         return this.scheduleTime;
     }
 
+    public void setScheduleTime(long time) {
+        this.scheduleTime = time;
+    }
+
     public long getExpireTime() {
         return this.expireTime;
     }
 
+    public void setExpireTime(long time) {
+        this.expireTime = time;
+    }
+
     public int getMaxParticipants() {
         return this.maxParticipants;
+    }
+
+    public void setMaxParticipants(int max) {
+        this.maxParticipants = max;
     }
 
     public Group getParticipantGroup() {
@@ -207,9 +233,27 @@ public class Conference extends Entity {
         return this.cancelled;
     }
 
+    public void setCancelled(boolean value) {
+        this.cancelled = value;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("id", this.id.longValue());
+        json.put("domain", this.domain.getName());
+        json.put("code", this.uniqueKey);
+        json.put("subject", this.subject);
+        json.put("password", this.password);
+        json.put("summary", this.summary);
+        json.put("founder", this.founder.toCompactJSON());
+        json.put("creation", this.creation);
+        json.put("scheduleTime", this.scheduleTime);
+        json.put("expireTime", this.expireTime);
+        json.put("participantGroup", this.participantGroup.toJSON());
+        if (null != this.commField) {
+            json.put("commField", this.commField.toJSON());
+        }
         return json;
     }
 

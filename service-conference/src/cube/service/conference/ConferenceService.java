@@ -30,9 +30,7 @@ import cell.util.Utils;
 import cube.common.entity.Conference;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
-import cube.core.AbstractModule;
-import cube.core.Cache;
-import cube.core.Kernel;
+import cube.core.*;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
@@ -90,16 +88,36 @@ public class ConferenceService extends AbstractModule {
 
     public Conference createConference(Contact founder, String subject, String password, String summary,
             long scheduleTime, long expireTime) {
-        Conference conference = new Conference(Utils.generateSerialNumber(), founder.getDomain().getName());
+        // 创建实例
+        Conference conference = new Conference(Utils.generateSerialNumber(),
+                founder.getDomain().getName(), founder);
 
+        // 创建会议管理联系人
+        ConferenceAdministrator ca = new ConferenceAdministrator(conference.getId(), founder.getDomain().getName(),
+                founder.getName());
+        // 创建群组
         Group group = new Group(conference.getId(), founder.getDomain().getName(),
-                conference.getCode(), founder, conference.getCreation());
+                conference.getCode(), ca, conference.getCreation());
         group = ContactManager.getInstance().createGroup(group);
+        // 设置群组
         conference.setParticipantGroup(group);
 
+        // 设置属性
+        conference.setSubject(subject);
+        if (null != password)
+            conference.setPassword(password);
+        if (null != summary)
+            conference.setSummary(summary);
+        conference.setScheduleTime(scheduleTime);
+        conference.setExpireTime(expireTime);
 
+        // 写入缓存
+        this.conferenceCache.put(new CacheKey(conference.getCode()), new CacheValue(conference.toJSON()));
 
-        return null;
+        // 将会议写入存储
+        this.storage.writeConference(conference);
+
+        return conference;
     }
 
     public List<Conference> listConference(long beginning, long ending) {

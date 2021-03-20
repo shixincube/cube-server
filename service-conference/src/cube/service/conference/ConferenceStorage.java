@@ -145,8 +145,13 @@ public class ConferenceStorage implements Storagable {
 
         Map<String, StorageField> map = StorageFields.get(result.get(0));
 
-        Conference conference = new Conference(map.get("id").getLong(), domain, code);
-        return null;
+        Conference conference = new Conference(map.get("id").getLong(), domain, code, map.get("subject").getString(),
+                map.get("password").getString(), map.get("summary").getString(), map.get("founder_id").getLong(),
+                map.get("creation").getLong(), map.get("schedule_time").getLong(), map.get("expire_time").getLong(),
+                map.get("group_id").getLong(), map.get("comm_field_id").getLong());
+        conference.setMaxParticipants(map.get("max_participants").getInt());
+        conference.setCancelled(map.get("cancelled").getInt() == 1);
+        return conference;
     }
 
     @Override
