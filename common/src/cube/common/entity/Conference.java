@@ -155,6 +155,20 @@ public class Conference extends Entity {
      */
     public Conference(JSONObject json) {
         super(json.getLong("id"), json.getString("domain"));
+        this.uniqueKey = json.getString("code");
+        this.subject = json.getString("subject");
+        this.password = json.getString("password");
+        this.summary = json.getString("summary");
+        this.founder = new Contact(json.getJSONObject("founder"));
+        this.founderId = this.founder.getId();
+        this.creation = json.getLong("creation");
+        this.scheduleTime = json.getLong("scheduleTime");
+        this.expireTime = json.getLong("expireTime");
+        this.participantGroup = new Group(json.getJSONObject("participantGroup"));
+        this.participantGroupId = this.participantGroup.getId();
+        if (json.has("commField")) {
+            this.commField = new CommField(json.getJSONObject("commField"));
+        }
     }
 
     public String getCode() {
