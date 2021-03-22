@@ -87,7 +87,7 @@ public class ConferenceService extends AbstractModule {
     }
 
     public Conference createConference(Contact founder, String subject, String password, String summary,
-            long scheduleTime, long expireTime) {
+            long scheduleTime, long expireTime, Group pregroup) {
         // 创建实例
         Conference conference = new Conference(Utils.generateSerialNumber(),
                 founder.getDomain().getName(), founder);
@@ -98,6 +98,9 @@ public class ConferenceService extends AbstractModule {
         // 创建群组
         Group group = new Group(conference.getId(), founder.getDomain().getName(),
                 conference.getCode(), ca, conference.getCreation());
+        for (Contact member : pregroup.getMembers()) {
+            group.addMember(member);
+        }
         group = ContactManager.getInstance().createGroup(group);
         // 设置群组
         conference.setParticipantGroup(group);
@@ -110,6 +113,16 @@ public class ConferenceService extends AbstractModule {
             conference.setSummary(summary);
         conference.setScheduleTime(scheduleTime);
         conference.setExpireTime(expireTime);
+
+        // 更新邀请参与人数据
+        for (Contact member : group.getMembers()) {
+            if (member.getId().equals(founder.getId())) {
+                continue;
+            }
+
+            this.storage.writeParticipant(founder.getDomain().getName(), conference.getId(),
+                    member.getId(), "messaging");
+        }
 
         // 写入缓存
         this.conferenceCache.put(new CacheKey(conference.getCode()), new CacheValue(conference.toJSON()));

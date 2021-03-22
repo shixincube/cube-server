@@ -51,6 +51,8 @@ public class ConferenceStorage implements Storagable {
 
     private final String conferenceTablePrefix = "conference_";
 
+    private final String participantTablePrefix = "participant_";
+
     /**
      * 会议数据字段。
      */
@@ -103,9 +105,18 @@ public class ConferenceStorage implements Storagable {
      * 会议参与者字段。
      */
     private final StorageField[] participantFields = new StorageField[] {
-            new StorageField("conf_id", LiteralBase.LONG, new Constraint[] {
+            new StorageField("conference_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("participant_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("invitation", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("accepted", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
+            })
     };
 
     private Storage storage;
@@ -124,6 +135,10 @@ public class ConferenceStorage implements Storagable {
         this.storage.close();
     }
 
+    /**
+     *
+     * @param conference
+     */
     public void writeConference(Conference conference) {
         StorageField[] fields = new StorageField[] {
                 new StorageField("id", LiteralBase.LONG, conference.getId().longValue()),
@@ -146,6 +161,12 @@ public class ConferenceStorage implements Storagable {
         this.storage.executeInsert(table, fields);
     }
 
+    /**
+     *
+     * @param domain
+     * @param founderId
+     * @return
+     */
     public List<Conference> readConferences(String domain, Long founderId) {
         String table = SQLUtils.correctTableName(this.conferenceTablePrefix + domain);
         List<StorageField[]> result = this.storage.executeQuery(table, this.conferenceFields, new Conditional[] {
@@ -173,6 +194,12 @@ public class ConferenceStorage implements Storagable {
         return list;
     }
 
+    /**
+     *
+     * @param domain
+     * @param code
+     * @return
+     */
     public Conference readConference(String domain, String code) {
         String table = SQLUtils.correctTableName(this.conferenceTablePrefix + domain);
         List<StorageField[]> result = this.storage.executeQuery(table, this.conferenceFields, new Conditional[] {
@@ -194,10 +221,33 @@ public class ConferenceStorage implements Storagable {
         return conference;
     }
 
+    public void updateParticipant(String domain, Long conferenceId, Long contactId, String invitation) {
+        String table = SQLUtils.correctTableName(this.participantTablePrefix + domain);
+
+        StorageField[] participant = new StorageField[] {
+                new StorageField("conference_id", LiteralBase.LONG, conferenceId),
+                new StorageField("participant_id", LiteralBase.LONG, contactId),
+                new StorageField("invitation", LiteralBase.STRING, invitation)
+        };
+        this.storage.executeInsert(table, participant);
+    }
+
+    public void writeParticipant(String domain, Long conferenceId, Long contactId, String invitation) {
+        String table = SQLUtils.correctTableName(this.participantTablePrefix + domain);
+
+        StorageField[] participant = new StorageField[] {
+                new StorageField("conference_id", LiteralBase.LONG, conferenceId),
+                new StorageField("participant_id", LiteralBase.LONG, contactId),
+                new StorageField("invitation", LiteralBase.STRING, invitation)
+        };
+        this.storage.executeInsert(table, participant);
+    }
+
     @Override
     public void execSelfChecking(List<String> domainNameList) {
         for (String domain : domainNameList) {
             this.checkConferenceTable(domain);
+            this.checkParticipantTable(domain);
         }
     }
 
@@ -207,6 +257,17 @@ public class ConferenceStorage implements Storagable {
         if (!this.storage.exist(table)) {
             // 表不存在，建表
             if (this.storage.executeCreate(table, this.conferenceFields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkParticipantTable(String domain) {
+        String table = SQLUtils.correctTableName(this.participantTablePrefix + domain);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，键表
+            if (this.storage.executeCreate(table, this.participantFields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
         }
