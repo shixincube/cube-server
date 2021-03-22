@@ -120,6 +120,21 @@ public class ConferenceService extends AbstractModule {
         return conference;
     }
 
+    public List<Conference> getConference(Contact founder) {
+        // 从存储器里读取数据
+        List<Conference> list = this.storage.readConferences(founder.getDomain().getName(), founder.getId());
+        if (null == list) {
+            return null;
+        }
+
+        for (Conference conference : list) {
+            conference.setFounder(founder);
+            fillConference(conference);
+        }
+
+        return list;
+    }
+
     public List<Conference> listConference(long beginning, long ending) {
         return null;
     }
@@ -136,5 +151,20 @@ public class ConferenceService extends AbstractModule {
     @Override
     public void onTick(cube.core.Module module, Kernel kernel) {
 
+    }
+
+    private Conference fillConference(Conference conference) {
+        if (null != conference.getFounder()) {
+            Contact contact = ContactManager.getInstance().getContact(conference.getDomain().getName(),
+                    conference.getFounderId());
+            conference.setFounder(contact);
+        }
+
+        // 填写群组数据
+        Group group = ContactManager.getInstance().getGroup(conference.getParticipantGroupId(),
+                conference.getDomain().getName());
+        conference.setParticipantGroup(group);
+
+        return conference;
     }
 }

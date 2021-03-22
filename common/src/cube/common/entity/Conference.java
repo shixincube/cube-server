@@ -203,6 +203,14 @@ public class Conference extends Entity {
         return this.founder;
     }
 
+    public void setFounder(Contact founder) {
+        this.founder = founder;
+    }
+
+    public Long getFounderId() {
+        return this.founderId;
+    }
+
     public long getCreation() {
         return this.creation;
     }
@@ -237,6 +245,10 @@ public class Conference extends Entity {
 
     public void setParticipantGroup(Group group) {
         this.participantGroup = group;
+    }
+
+    public Long getParticipantGroupId() {
+        return this.participantGroupId;
     }
 
     public CommField getCommField() {

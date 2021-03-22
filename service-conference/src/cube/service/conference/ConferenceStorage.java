@@ -40,6 +40,7 @@ import cube.storage.StorageType;
 import cube.util.SQLUtils;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -50,6 +51,9 @@ public class ConferenceStorage implements Storagable {
 
     private final String conferenceTablePrefix = "conference_";
 
+    /**
+     * 会议数据字段。
+     */
     private final StorageField[] conferenceFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
@@ -95,6 +99,15 @@ public class ConferenceStorage implements Storagable {
             })
     };
 
+    /**
+     * 会议参与者字段。
+     */
+    private final StorageField[] participantFields = new StorageField[] {
+            new StorageField("conf_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+    };
+
     private Storage storage;
 
     public ConferenceStorage(StorageType type, JSONObject config) {
@@ -131,6 +144,33 @@ public class ConferenceStorage implements Storagable {
 
         String table = SQLUtils.correctTableName(this.conferenceTablePrefix + conference.getDomain().getName());
         this.storage.executeInsert(table, fields);
+    }
+
+    public List<Conference> readConferences(String domain, Long founderId) {
+        String table = SQLUtils.correctTableName(this.conferenceTablePrefix + domain);
+        List<StorageField[]> result = this.storage.executeQuery(table, this.conferenceFields, new Conditional[] {
+                Conditional.createEqualTo("founder_id", LiteralBase.LONG, founderId)
+        });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        List<Conference> list = new ArrayList<>(result.size());
+
+        for (StorageField[] row : result) {
+            Map<String, StorageField> map = StorageFields.get(row);
+            Conference conference = new Conference(map.get("id").getLong(), domain, map.get("code").getString(),
+                    map.get("subject").getString(),
+                    map.get("password").getString(), map.get("summary").getString(), map.get("founder_id").getLong(),
+                    map.get("creation").getLong(), map.get("schedule_time").getLong(), map.get("expire_time").getLong(),
+                    map.get("group_id").getLong(), map.get("comm_field_id").getLong());
+            conference.setMaxParticipants(map.get("max_participants").getInt());
+            conference.setCancelled(map.get("cancelled").getInt() == 1);
+            list.add(conference);
+        }
+
+        return list;
     }
 
     public Conference readConference(String domain, String code) {
