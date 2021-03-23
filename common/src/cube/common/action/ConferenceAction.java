@@ -27,19 +27,14 @@
 package cube.common.action;
 
 /**
- * 授权服务动作。
+ * 会议服务动作。
  */
-public enum AuthAction {
+public enum ConferenceAction {
 
     /**
-     * 申请令牌。
+     * 创建会议。
      */
-    ApplyToken("applyToken"),
-
-    /**
-     * 获取指定 Code 的令牌。
-     */
-    GetToken("getToken"),
+    CreateConference("createConference"),
 
     /**
      * 未知动作。
@@ -50,7 +45,7 @@ public enum AuthAction {
 
     public final String name;
 
-    AuthAction(String name) {
+    ConferenceAction(String name) {
         this.name = name;
     }
 }

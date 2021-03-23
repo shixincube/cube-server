@@ -103,7 +103,7 @@ public class ConferenceService extends AbstractModule {
         }
         group = ContactManager.getInstance().createGroup(group);
         // 设置群组
-        conference.setParticipantGroup(group);
+        conference.getRoom().setParticipantGroup(group);
 
         // 设置属性
         conference.setSubject(subject);
@@ -174,9 +174,9 @@ public class ConferenceService extends AbstractModule {
         }
 
         // 填写群组数据
-        Group group = ContactManager.getInstance().getGroup(conference.getParticipantGroupId(),
+        Group group = ContactManager.getInstance().getGroup(conference.getRoom().getParticipantGroupId(),
                 conference.getDomain().getName());
-        conference.setParticipantGroup(group);
+        conference.getRoom().setParticipantGroup(group);
 
         return conference;
     }

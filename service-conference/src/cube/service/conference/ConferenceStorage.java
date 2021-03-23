@@ -150,10 +150,9 @@ public class ConferenceStorage implements Storagable {
                 new StorageField("creation", LiteralBase.LONG, conference.getCreation()),
                 new StorageField("schedule_time", LiteralBase.LONG, conference.getScheduleTime()),
                 new StorageField("expire_time", LiteralBase.LONG, conference.getExpireTime()),
-                new StorageField("max_participants", LiteralBase.INT, conference.getMaxParticipants()),
-                new StorageField("group_id", LiteralBase.LONG, conference.getParticipantGroup().getId().longValue()),
-                new StorageField("comm_field_id", LiteralBase.LONG, (null != conference.getCommField()) ?
-                        conference.getCommField().getId().longValue() : 0L),
+                new StorageField("max_participants", LiteralBase.INT, conference.getRoom().getMaxParticipants()),
+                new StorageField("group_id", LiteralBase.LONG, conference.getRoom().getParticipantGroupId().longValue()),
+                new StorageField("comm_field_id", LiteralBase.LONG, conference.getRoom().getCommFieldId().longValue()),
                 new StorageField("cancelled", LiteralBase.INT, conference.isCancelled() ? 1 : 0)
         };
 
@@ -186,7 +185,7 @@ public class ConferenceStorage implements Storagable {
                     map.get("password").getString(), map.get("summary").getString(), map.get("founder_id").getLong(),
                     map.get("creation").getLong(), map.get("schedule_time").getLong(), map.get("expire_time").getLong(),
                     map.get("group_id").getLong(), map.get("comm_field_id").getLong());
-            conference.setMaxParticipants(map.get("max_participants").getInt());
+            conference.getRoom().setMaxParticipants(map.get("max_participants").getInt());
             conference.setCancelled(map.get("cancelled").getInt() == 1);
             list.add(conference);
         }
@@ -216,7 +215,7 @@ public class ConferenceStorage implements Storagable {
                 map.get("password").getString(), map.get("summary").getString(), map.get("founder_id").getLong(),
                 map.get("creation").getLong(), map.get("schedule_time").getLong(), map.get("expire_time").getLong(),
                 map.get("group_id").getLong(), map.get("comm_field_id").getLong());
-        conference.setMaxParticipants(map.get("max_participants").getInt());
+        conference.getRoom().setMaxParticipants(map.get("max_participants").getInt());
         conference.setCancelled(map.get("cancelled").getInt() == 1);
         return conference;
     }

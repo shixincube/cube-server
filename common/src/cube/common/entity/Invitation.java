@@ -24,33 +24,63 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.common.entity;
+
+import cube.common.JSONable;
+import org.json.JSONObject;
 
 /**
- * 授权服务动作。
+ * 会议邀请信息。
  */
-public enum AuthAction {
+public class Invitation implements JSONable {
 
     /**
-     * 申请令牌。
+     * 被邀请人。
      */
-    ApplyToken("applyToken"),
+    protected String invitee;
 
     /**
-     * 获取指定 Code 的令牌。
+     * 被邀请人显示的名称。
      */
-    GetToken("getToken"),
+    protected String displayName;
 
     /**
-     * 未知动作。
+     * 是否接受邀请。
      */
-    Unknown("")
+    protected boolean accepted = false;
 
-    ;
+    /**
+     * 接受邀请时间。
+     */
+    protected boolean acceptionTime;
 
-    public final String name;
+    /**
+     * 构造函数。
+     *
+     * @param invitee
+     * @param displayName
+     */
+    public Invitation(String invitee, String displayName) {
+        this.invitee = invitee;
+        this.displayName = displayName;
+    }
 
-    AuthAction(String name) {
-        this.name = name;
+    public Invitation(JSONObject json) {
+
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("invitee", this.invitee);
+        json.put("displayName", this.displayName);
+        json.put("accepted", this.accepted);
+        json.put("acceptionTime", this.acceptionTime);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

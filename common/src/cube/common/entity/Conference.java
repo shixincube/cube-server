@@ -29,6 +29,9 @@ package cube.common.entity;
 import cell.util.Utils;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 会议实体。
  */
@@ -60,6 +63,16 @@ public class Conference extends Entity {
     private Long founderId;
 
     /**
+     * 主持人。
+     */
+    private Contact presenter;
+
+    /**
+     * 主持人 ID 。
+     */
+    private Long presenterId;
+
+    /**
      * 创建时间。
      */
     private long creation;
@@ -75,29 +88,14 @@ public class Conference extends Entity {
     private long expireTime;
 
     /**
-     * 参与者群组。
+     * 邀请列表。
      */
-    private Group participantGroup;
+    private List<Invitation> invitees;
 
     /**
-     * 参与者群组 ID 。
+     * 会议房间。
      */
-    private Long participantGroupId;
-
-    /**
-     * 最大允许参与人数。
-     */
-    private int maxParticipants = 50;
-
-    /**
-     * 通信场域。
-     */
-    private CommField commField;
-
-    /**
-     * 通信场域 ID 。
-     */
-    private Long commFieldId;
+    private Room room;
 
     /**
      * 是否已取消。
@@ -115,6 +113,7 @@ public class Conference extends Entity {
         this.uniqueKey = Utils.randomNumberString(8);
         this.founder = founder;
         this.founderId = founder.getId();
+        this.invitees = new ArrayList<>();
     }
 
     /**
@@ -141,11 +140,11 @@ public class Conference extends Entity {
         this.password = password;
         this.summary = summary;
         this.founderId = founderId;
+        this.presenterId = founderId;
         this.creation = creation;
         this.scheduleTime = scheduleTime;
         this.expireTime = expireTime;
-        this.participantGroupId = participantGroupId;
-        this.commFieldId = commFieldId;
+        this.room = new Room(participantGroupId, commFieldId);
     }
 
     /**
@@ -164,11 +163,11 @@ public class Conference extends Entity {
         this.creation = json.getLong("creation");
         this.scheduleTime = json.getLong("scheduleTime");
         this.expireTime = json.getLong("expireTime");
-        this.participantGroup = new Group(json.getJSONObject("participantGroup"));
-        this.participantGroupId = this.participantGroup.getId();
-        if (json.has("commField")) {
-            this.commField = new CommField(json.getJSONObject("commField"));
-        }
+//        this.participantGroup = new Group(json.getJSONObject("participantGroup"));
+//        this.participantGroupId = this.participantGroup.getId();
+//        if (json.has("commField")) {
+//            this.commField = new CommField(json.getJSONObject("commField"));
+//        }
     }
 
     public String getCode() {
@@ -231,28 +230,8 @@ public class Conference extends Entity {
         this.expireTime = time;
     }
 
-    public int getMaxParticipants() {
-        return this.maxParticipants;
-    }
-
-    public void setMaxParticipants(int max) {
-        this.maxParticipants = max;
-    }
-
-    public Group getParticipantGroup() {
-        return this.participantGroup;
-    }
-
-    public void setParticipantGroup(Group group) {
-        this.participantGroup = group;
-    }
-
-    public Long getParticipantGroupId() {
-        return this.participantGroupId;
-    }
-
-    public CommField getCommField() {
-        return this.commField;
+    public Room getRoom() {
+        return this.room;
     }
 
     public boolean isCancelled() {
@@ -276,10 +255,7 @@ public class Conference extends Entity {
         json.put("creation", this.creation);
         json.put("scheduleTime", this.scheduleTime);
         json.put("expireTime", this.expireTime);
-        json.put("participantGroup", this.participantGroup.toJSON());
-        if (null != this.commField) {
-            json.put("commField", this.commField.toJSON());
-        }
+        json.put("room", this.room.toJSON());
         return json;
     }
 

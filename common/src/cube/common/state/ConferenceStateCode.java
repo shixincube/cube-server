@@ -24,33 +24,43 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.common.state;
 
 /**
- * 授权服务动作。
+ * 授权模块状态码。
  */
-public enum AuthAction {
+public enum ConferenceStateCode {
 
     /**
-     * 申请令牌。
+     * 成功。
      */
-    ApplyToken("applyToken"),
+    Ok(0),
 
     /**
-     * 获取指定 Code 的令牌。
+     * 无效参数。
      */
-    GetToken("getToken"),
+    InvalidParameter(5),
 
     /**
-     * 未知动作。
+     * 遇到故障。
      */
-    Unknown("")
+    Failure(9),
+
+    /**
+     * 无效域信息。
+     */
+    InvalidDomain(11),
+
+    /**
+     * 未知的状态。
+     */
+    Unknown(99)
 
     ;
 
-    public final String name;
+    public final int code;
 
-    AuthAction(String name) {
-        this.name = name;
+    ConferenceStateCode(int code) {
+        this.code = code;
     }
 }
