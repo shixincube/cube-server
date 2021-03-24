@@ -32,6 +32,11 @@ package cube.common.action;
 public enum ConferenceAction {
 
     /**
+     * 查询指定条件的会议。
+     */
+    ListConferences("listConferences"),
+
+    /**
      * 创建会议。
      */
     CreateConference("createConference"),

@@ -27,6 +27,7 @@
 package cube.common.entity;
 
 import cell.util.Utils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -36,6 +37,11 @@ import java.util.List;
  * 会议实体。
  */
 public class Conference extends Entity {
+
+    /**
+     * 会议码。
+     */
+    private String code;
 
     /**
      * 会议主题。
@@ -110,10 +116,13 @@ public class Conference extends Entity {
      */
     public Conference(Long id, String domainName, Contact founder) {
         super(id, domainName);
-        this.uniqueKey = Utils.randomNumberString(8);
+        this.code = Utils.randomNumberString(8);
         this.founder = founder;
         this.founderId = founder.getId();
+        this.presenter = founder;
+        this.presenterId = this.presenter.getId();
         this.invitees = new ArrayList<>();
+        this.room = new Room(id, 0L);
     }
 
     /**
@@ -126,6 +135,7 @@ public class Conference extends Entity {
      * @param password
      * @param summary
      * @param founderId
+     * @param presenterId
      * @param creation
      * @param scheduleTime
      * @param expireTime
@@ -133,17 +143,19 @@ public class Conference extends Entity {
      * @param commFieldId
      */
     public Conference(Long id, String domainName, String code, String subject, String password, String summary,
-        Long founderId, long creation, long scheduleTime, long expireTime, Long participantGroupId, Long commFieldId) {
+        Long founderId, Long presenterId, long creation, long scheduleTime, long expireTime,
+        Long participantGroupId, Long commFieldId) {
         super(id, domainName);
-        this.uniqueKey = code;
+        this.code = code;
         this.subject = subject;
         this.password = password;
         this.summary = summary;
         this.founderId = founderId;
-        this.presenterId = founderId;
+        this.presenterId = presenterId;
         this.creation = creation;
         this.scheduleTime = scheduleTime;
         this.expireTime = expireTime;
+        this.invitees = new ArrayList<>();
         this.room = new Room(participantGroupId, commFieldId);
     }
 
@@ -154,24 +166,31 @@ public class Conference extends Entity {
      */
     public Conference(JSONObject json) {
         super(json.getLong("id"), json.getString("domain"));
-        this.uniqueKey = json.getString("code");
+        this.code = json.getString("code");
         this.subject = json.getString("subject");
         this.password = json.getString("password");
         this.summary = json.getString("summary");
         this.founder = new Contact(json.getJSONObject("founder"));
         this.founderId = this.founder.getId();
+        this.presenter = new Contact(json.getJSONObject("presenter"));
+        this.presenterId = this.presenter.getId();
         this.creation = json.getLong("creation");
         this.scheduleTime = json.getLong("scheduleTime");
         this.expireTime = json.getLong("expireTime");
-//        this.participantGroup = new Group(json.getJSONObject("participantGroup"));
-//        this.participantGroupId = this.participantGroup.getId();
-//        if (json.has("commField")) {
-//            this.commField = new CommField(json.getJSONObject("commField"));
-//        }
+
+        this.invitees = new ArrayList<>();
+        JSONArray array = json.getJSONArray("invitees");
+        for (int i = 0; i < array.length(); ++i) {
+            JSONObject data = array.getJSONObject(i);
+            Invitation invitation = new Invitation(data);
+            this.invitees.add(invitation);
+        }
+
+        this.room = new Room(json.getJSONObject("room"));
     }
 
     public String getCode() {
-        return this.uniqueKey;
+        return this.code;
     }
 
     public void setSubject(String subject) {
@@ -204,10 +223,24 @@ public class Conference extends Entity {
 
     public void setFounder(Contact founder) {
         this.founder = founder;
+        this.founderId = founder.getId();
     }
 
     public Long getFounderId() {
         return this.founderId;
+    }
+
+    public Contact getPresenter() {
+        return this.presenter;
+    }
+
+    public void setPresenter(Contact contact) {
+        this.presenter = contact;
+        this.presenterId = contact.getId();
+    }
+
+    public Long getPresenterId() {
+        return this.presenterId;
     }
 
     public long getCreation() {
@@ -230,6 +263,18 @@ public class Conference extends Entity {
         this.expireTime = time;
     }
 
+    public List<Invitation> getInvitees() {
+        return this.invitees;
+    }
+
+    public void setInvitees(List<Invitation> list) {
+        this.invitees = list;
+    }
+
+    public void addInvitee(Invitation invitation) {
+        this.invitees.add(invitation);
+    }
+
     public Room getRoom() {
         return this.room;
     }
@@ -247,14 +292,22 @@ public class Conference extends Entity {
         JSONObject json = new JSONObject();
         json.put("id", this.id.longValue());
         json.put("domain", this.domain.getName());
-        json.put("code", this.uniqueKey);
+        json.put("code", this.code);
         json.put("subject", this.subject);
         json.put("password", this.password);
         json.put("summary", this.summary);
         json.put("founder", this.founder.toCompactJSON());
+        json.put("presenter", this.presenter.toCompactJSON());
         json.put("creation", this.creation);
         json.put("scheduleTime", this.scheduleTime);
         json.put("expireTime", this.expireTime);
+
+        JSONArray array = new JSONArray();
+        for (Invitation invitation : this.invitees) {
+            array.put(invitation.toJSON());
+        }
+        json.put("invitees", array);
+
         json.put("room", this.room.toJSON());
         return json;
     }

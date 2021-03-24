@@ -59,12 +59,27 @@ public class Room implements JSONable {
      */
     protected Long commFieldId = 0L;
 
+
     /**
      * 构造函数。
+     *
+     * @param participantGroupId
+     * @param commFieldId
      */
     public Room(Long participantGroupId, Long commFieldId) {
         this.participantGroupId = participantGroupId;
         this.commFieldId = commFieldId;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param json
+     */
+    public Room(JSONObject json) {
+        this.maxParticipants = json.getInt("maxParticipants");
+        this.participantGroupId = json.getLong("participantGroupId");
+        this.commFieldId = json.getLong("commFieldId");
     }
 
     public int getMaxParticipants() {
@@ -81,10 +96,24 @@ public class Room implements JSONable {
 
     public void setParticipantGroup(Group group) {
         this.participantGroup = group;
+        this.participantGroupId = group.getId();
+    }
+
+    public Group getParticipantGroup() {
+        return this.participantGroup;
     }
 
     public Long getCommFieldId() {
         return this.commFieldId;
+    }
+
+    public void setCommField(CommField commField) {
+        this.commField = commField;
+        this.commFieldId = commField.getId();
+    }
+
+    public CommField getCommField() {
+        return this.commField;
     }
 
     @Override

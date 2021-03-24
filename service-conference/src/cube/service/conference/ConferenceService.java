@@ -27,9 +27,12 @@
 package cube.service.conference;
 
 import cell.util.Utils;
+import cell.util.log.Logger;
+import cube.common.UniqueKey;
 import cube.common.entity.Conference;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
+import cube.common.entity.Invitation;
 import cube.core.*;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
@@ -38,6 +41,8 @@ import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -86,24 +91,23 @@ public class ConferenceService extends AbstractModule {
         this.storage.close();
     }
 
+    /**
+     * 创建会议。
+     *
+     * @param founder
+     * @param subject
+     * @param password
+     * @param summary
+     * @param scheduleTime
+     * @param expireTime
+     * @param invitees
+     * @return
+     */
     public Conference createConference(Contact founder, String subject, String password, String summary,
-            long scheduleTime, long expireTime, Group pregroup) {
-        // 创建实例
+                                       long scheduleTime, long expireTime, List<Invitation> invitees) {
+        // 创建会议
         Conference conference = new Conference(Utils.generateSerialNumber(),
                 founder.getDomain().getName(), founder);
-
-        // 创建会议管理联系人
-        ConferenceAdministrator ca = new ConferenceAdministrator(conference.getId(), founder.getDomain().getName(),
-                founder.getName());
-        // 创建群组
-        Group group = new Group(conference.getId(), founder.getDomain().getName(),
-                conference.getCode(), ca, conference.getCreation());
-        for (Contact member : pregroup.getMembers()) {
-            group.addMember(member);
-        }
-        group = ContactManager.getInstance().createGroup(group);
-        // 设置群组
-        conference.getRoom().setParticipantGroup(group);
 
         // 设置属性
         conference.setSubject(subject);
@@ -114,18 +118,25 @@ public class ConferenceService extends AbstractModule {
         conference.setScheduleTime(scheduleTime);
         conference.setExpireTime(expireTime);
 
-        // 更新邀请参与人数据
-        for (Contact member : group.getMembers()) {
-            if (member.getId().equals(founder.getId())) {
-                continue;
+        // 设置邀请人
+        if (null != invitees) {
+            for (Invitation invitation : invitees) {
+                conference.addInvitee(invitation);
             }
-
-            this.storage.writeParticipant(founder.getDomain().getName(), conference.getId(),
-                    member.getId(), "messaging");
         }
 
+        // 创建会议管理联系人
+        ConferenceAdministrator ca = new ConferenceAdministrator(conference.getId(), founder.getDomain().getName(),
+                founder.getName());
+        // 创建群组
+        Group group = new Group(conference.getId(), founder.getDomain().getName(),
+                conference.getCode(), ca, conference.getCreation());
+        group = ContactManager.getInstance().createGroup(group);
+        // 设置群组
+        conference.getRoom().setParticipantGroup(group);
+
         // 写入缓存
-        this.conferenceCache.put(new CacheKey(conference.getCode()), new CacheValue(conference.toJSON()));
+        this.conferenceCache.put(new CacheKey(conference.getUniqueKey()), new CacheValue(conference.toJSON()));
 
         // 将会议写入存储
         this.storage.writeConference(conference);
@@ -133,23 +144,56 @@ public class ConferenceService extends AbstractModule {
         return conference;
     }
 
-    public List<Conference> getConference(Contact founder) {
-        // 从存储器里读取数据
-        List<Conference> list = this.storage.readConferences(founder.getDomain().getName(), founder.getId());
-        if (null == list) {
-            return null;
+    /**
+     * 查询指定联系人参与或者创建的会议。
+     *
+     * @param contact
+     * @param beginning
+     * @param ending
+     * @return
+     */
+    public List<Conference> listConferences(Contact contact, long beginning, long ending) {
+        List<Conference> result = new ArrayList<>();
+
+        String domain = contact.getDomain().getName();
+        // 从存储里读取 ID
+        List<Long> confIdList = this.storage.listConferenceId(domain, contact.getId(),
+                beginning, ending);
+
+        if (null == confIdList || confIdList.isEmpty()) {
+            return result;
         }
 
-        for (Conference conference : list) {
-            conference.setFounder(founder);
-            fillConference(conference);
+        for (Long confId : confIdList) {
+            Conference conference = null;
+
+            CacheValue cv = this.conferenceCache.get(new CacheKey(UniqueKey.make(confId, domain)));
+            if (null != cv) {
+                conference = new Conference(cv.get());
+            }
+            else {
+                conference = this.storage.readConference(domain, confId);
+            }
+
+            if (null != conference) {
+                // 填充数据
+                fillConference(conference);
+                result.add(conference);
+            }
+            else {
+                Logger.e(this.getClass(), "#listConference - Can NOT find conference : " + confId);
+            }
         }
 
-        return list;
-    }
+        // 排序
+        result.sort(new Comparator<Conference>() {
+            @Override
+            public int compare(Conference c1, Conference c2) {
+                return (int)(c1.getCreation() - c2.getCreation());
+            }
+        });
 
-    public List<Conference> listConference(long beginning, long ending) {
-        return null;
+        return result;
     }
 
     public void updateConference(Conference conference) {
@@ -167,15 +211,20 @@ public class ConferenceService extends AbstractModule {
     }
 
     private Conference fillConference(Conference conference) {
-        if (null != conference.getFounder()) {
-            Contact contact = ContactManager.getInstance().getContact(conference.getDomain().getName(),
-                    conference.getFounderId());
+        String domain = conference.getDomain().getName();
+        if (null == conference.getFounder()) {
+            Contact contact = ContactManager.getInstance().getContact(domain, conference.getFounderId());
             conference.setFounder(contact);
+        }
+
+        if (null == conference.getPresenter()) {
+            Contact contact = ContactManager.getInstance().getContact(domain, conference.getPresenterId());
+            conference.setPresenter(contact);
         }
 
         // 填写群组数据
         Group group = ContactManager.getInstance().getGroup(conference.getRoom().getParticipantGroupId(),
-                conference.getDomain().getName());
+                domain);
         conference.getRoom().setParticipantGroup(group);
 
         return conference;

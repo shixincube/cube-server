@@ -52,6 +52,16 @@ public enum ConferenceStateCode {
     InvalidDomain(11),
 
     /**
+     * 未签入联系人。
+     */
+    NoSignIn(12),
+
+    /**
+     * 搜索条件错误。
+     */
+    SearchConditionError(25),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)
