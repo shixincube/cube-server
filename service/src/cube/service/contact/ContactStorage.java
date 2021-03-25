@@ -103,6 +103,7 @@ public class ContactStorage implements Storagable {
     private final StorageField[] groupFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG),
             new StorageField("name", LiteralBase.STRING),
+            new StorageField("tag", LiteralBase.STRING),
             new StorageField("owner", LiteralBase.LONG),
             new StorageField("creation_time", LiteralBase.LONG),
             new StorageField("last_active", LiteralBase.LONG),
@@ -444,6 +445,7 @@ public class ContactStorage implements Storagable {
                         boolean successful = storage.executeInsert(groupTable, new StorageField[] {
                                 new StorageField("id", LiteralBase.LONG, groupId),
                                 new StorageField("name", LiteralBase.STRING, group.getName()),
+                                new StorageField("tag", LiteralBase.STRING, group.getTag()),
                                 new StorageField("owner", LiteralBase.LONG, group.getOwner().getId()),
                                 new StorageField("creation_time", LiteralBase.LONG, group.getCreationTime()),
                                 new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
@@ -584,14 +586,16 @@ public class ContactStorage implements Storagable {
 
         try {
             StorageField[] groupFields = groupResult.get(0);
-            Long ownerId = groupFields[2].getLong();
+            Map<String, StorageField> groupMap = StorageFields.get(groupFields);
+            Long ownerId = groupMap.get("owner").getLong();
             Contact owner = null;
 
             ArrayList<Contact> members = new ArrayList<>(groupMemberResult.size());
             for (StorageField[] fields : groupMemberResult) {
-                Long id = fields[1].getLong();
-                String name = fields[2].getString();
-                String context = fields[3].isNullValue() ? null : fields[3].getString();
+                Map<String, StorageField> map = StorageFields.get(fields);
+                Long id = map.get("contact_id").getLong();
+                String name = map.get("contact_name").getString();
+                String context = map.get("contact_context").isNullValue() ? null : map.get("contact_context").getString();
 
                 Contact contact = new Contact(id, domain, name);
                 if (null != context) {
@@ -604,9 +608,11 @@ public class ContactStorage implements Storagable {
                 }
             }
 
-            group = new Group(groupFields[0].getLong(), domain, groupFields[1].getString(), owner, groupFields[3].getLong());
-            group.setLastActiveTime(groupFields[4].getLong());
-            group.setState(GroupState.parse(groupFields[5].getInt()));
+            group = new Group(groupMap.get("id").getLong(), domain, groupMap.get("name").getString(),
+                    owner, groupMap.get("creation_time").getLong());
+            group.setTag(groupMap.get("tag").getString());
+            group.setLastActiveTime(groupMap.get("last_active").getLong());
+            group.setState(GroupState.parse(groupMap.get("state").getInt()));
 
             // 添加成员
             for (Contact member : members) {
@@ -614,8 +620,8 @@ public class ContactStorage implements Storagable {
             }
 
             // 是否有上下文数据
-            if (!groupFields[6].isNullValue()) {
-                JSONObject context = new JSONObject(groupFields[6].getString());
+            if (!groupMap.get("context").isNullValue()) {
+                JSONObject context = new JSONObject(groupMap.get("context").getString());
                 group.setContext(context);
             }
         } catch (JSONException e) {
@@ -702,6 +708,7 @@ public class ContactStorage implements Storagable {
                 synchronized (storage) {
                     storage.executeUpdate(groupTable, new StorageField[] {
                             new StorageField("name", LiteralBase.STRING, group.getName()),
+                            new StorageField("tag", LiteralBase.STRING, group.getTag()),
                             new StorageField("owner", LiteralBase.LONG, group.getOwner().getId()),
                             new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
                             new StorageField("state", LiteralBase.INT, group.getState().getCode()),
@@ -1093,6 +1100,9 @@ public class ContactStorage implements Storagable {
                             Constraint.UNIQUE, Constraint.NOT_NULL
                     }),
                     new StorageField("name", LiteralBase.STRING, new Constraint[] {
+                            Constraint.NOT_NULL
+                    }),
+                    new StorageField("tag", LiteralBase.STRING, new Constraint[] {
                             Constraint.NOT_NULL
                     }),
                     new StorageField("owner", LiteralBase.LONG, new Constraint[] {

@@ -59,6 +59,11 @@ public class Group extends Contact implements Comparable<Group> {
     private Vector<Contact> members;
 
     /**
+     * 群组的标签。
+     */
+    private String tag = "public";
+
+    /**
      * 群组状态。
      */
     private GroupState state;
@@ -90,6 +95,8 @@ public class Group extends Contact implements Comparable<Group> {
         super(json);
         this.members = new Vector<>();
 
+        this.tag = json.getString("tag");
+
         JSONObject ownerJson = json.getJSONObject("owner");
         this.owner = new Contact(ownerJson, this.domain.getName());
         this.members.add(this.owner);
@@ -106,6 +113,24 @@ public class Group extends Contact implements Comparable<Group> {
                 this.addMember(contact);
             }
         }
+    }
+
+    /**
+     * 返回群的标签。
+     *
+     * @return 返回群的标签。
+     */
+    public String getTag() {
+        return this.tag;
+    }
+
+    /**
+     * 设置群的标签。
+     *
+     * @param tag 指定新标签。
+     */
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     /**
@@ -355,6 +380,7 @@ public class Group extends Contact implements Comparable<Group> {
         }
         json.put("members", array);
 
+        json.put("tag", this.tag);
         json.put("owner", this.owner.toCompactJSON());
         json.put("creation", this.creationTime);
         json.put("lastActive", this.lastActiveTime);
@@ -368,6 +394,7 @@ public class Group extends Contact implements Comparable<Group> {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = super.toCompactJSON();
+        json.put("tag", this.tag);
         json.put("owner", this.owner.toCompactJSON());
         json.put("creation", this.creationTime);
         json.put("lastActive", this.lastActiveTime);

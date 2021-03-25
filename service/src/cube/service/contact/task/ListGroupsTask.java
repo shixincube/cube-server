@@ -44,6 +44,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -93,6 +94,15 @@ public class ListGroupsTask extends ServiceTask {
 
         // 查询从指定活跃时间之后的该联系人所在的所有群
         List<Group> list = ContactManager.getInstance().listGroupsWithMember(domain, contact.getId(), beginning, ending);
+
+        // 排除标签
+        Iterator<Group> iter = list.iterator();
+        while (iter.hasNext()) {
+            Group group = iter.next();
+            if (!group.getTag().equals("public")) {
+                iter.remove();
+            }
+        }
 
         if (list.isEmpty()) {
             JSONObject responseData = new JSONObject();

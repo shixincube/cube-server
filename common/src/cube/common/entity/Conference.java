@@ -121,6 +121,7 @@ public class Conference extends Entity {
         this.founderId = founder.getId();
         this.presenter = founder;
         this.presenterId = this.presenter.getId();
+        this.creation = this.getTimestamp();
         this.invitees = new ArrayList<>();
         this.room = new Room(id, 0L);
     }
@@ -315,7 +316,7 @@ public class Conference extends Entity {
         json.put("room", this.room.toJSON());
 
         json.put("cancelled", this.cancelled);
-        
+
         return json;
     }
 

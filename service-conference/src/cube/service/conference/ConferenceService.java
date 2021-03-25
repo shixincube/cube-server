@@ -131,6 +131,8 @@ public class ConferenceService extends AbstractModule {
         // 创建群组
         Group group = new Group(conference.getId(), founder.getDomain().getName(),
                 conference.getCode(), ca, conference.getCreation());
+        // 设置群组的标签为 conference
+        group.setTag("conference");
         group = ContactManager.getInstance().createGroup(group);
         // 设置群组
         conference.getRoom().setParticipantGroup(group);
