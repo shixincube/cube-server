@@ -209,6 +209,10 @@ public class Conference extends Entity {
         this.password = password;
     }
 
+    public boolean hasPassword() {
+        return (null != this.password && this.password.length() > 0);
+    }
+
     public String getSummary() {
         return this.summary;
     }
@@ -309,11 +313,17 @@ public class Conference extends Entity {
         json.put("invitees", array);
 
         json.put("room", this.room.toJSON());
+
+        json.put("cancelled", this.cancelled);
+        
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = this.toJSON();
+        json.remove("password");
+        json.put("existingPwd", this.hasPassword());
+        return json;
     }
 }

@@ -376,6 +376,7 @@ public class Contact extends Entity {
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
         json.put("id", this.id);
+        json.put("domain", this.domain.getName());
         json.put("name", this.name);
         if (null != this.context) {
             json.put("context", this.context);

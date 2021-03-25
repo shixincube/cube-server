@@ -105,7 +105,7 @@ public class ListConferencesTask extends ServiceTask {
 
         JSONArray list = new JSONArray();
         for (Conference conference : conferences) {
-            list.put(conference.toJSON());
+            list.put(conference.toCompactJSON());
         }
         result.put("list", list);
 
