@@ -599,7 +599,7 @@ public class FileStructStorage implements Storagable {
                             Constraint.UNIQUE
                     }),
                     new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
-                            Constraint.UNIQUE
+                            Constraint.NOT_NULL
                     }),
                     new StorageField("owner_id", LiteralBase.LONG, new Constraint[] {
                             Constraint.NOT_NULL
@@ -661,7 +661,7 @@ public class FileStructStorage implements Storagable {
                             Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
                     }),
                     new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
-                            Constraint.UNIQUE
+                            Constraint.NOT_NULL
                     }),
                     new StorageField("system", LiteralBase.STRING, new Constraint[] {
                             Constraint.NOT_NULL

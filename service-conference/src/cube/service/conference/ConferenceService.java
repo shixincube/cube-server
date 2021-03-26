@@ -191,7 +191,7 @@ public class ConferenceService extends AbstractModule {
         result.sort(new Comparator<Conference>() {
             @Override
             public int compare(Conference c1, Conference c2) {
-                return (int)(c1.getCreation() - c2.getCreation());
+                return (int)(c2.getScheduleTime() - c1.getScheduleTime());
             }
         });
 
