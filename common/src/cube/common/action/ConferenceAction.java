@@ -42,6 +42,16 @@ public enum ConferenceAction {
     CreateConference("createConference"),
 
     /**
+     * 接受会议邀请。
+     */
+    AcceptInvitation("acceptInvitation"),
+
+    /**
+     * 拒绝会议邀请。
+     */
+    DeclineInvitation("declineInvitation"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

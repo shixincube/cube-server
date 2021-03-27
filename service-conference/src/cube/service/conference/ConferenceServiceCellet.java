@@ -34,7 +34,9 @@ import cell.util.CachedQueueExecutor;
 import cube.common.action.ConferenceAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.service.conference.task.AcceptInvitationTask;
 import cube.service.conference.task.CreateConferenceTask;
+import cube.service.conference.task.DeclineInvitationTask;
 import cube.service.conference.task.ListConferencesTask;
 
 import java.util.concurrent.ExecutorService;
@@ -81,6 +83,14 @@ public class ConferenceServiceCellet extends AbstractCellet {
         }
         else if (ConferenceAction.CreateConference.name.equals(action)) {
             this.executor.execute(new CreateConferenceTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (ConferenceAction.AcceptInvitation.name.equals(action)) {
+            this.executor.execute(new AcceptInvitationTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (ConferenceAction.DeclineInvitation.name.equals(action)) {
+            this.executor.execute(new DeclineInvitationTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
     }
