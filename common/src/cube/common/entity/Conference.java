@@ -268,6 +268,15 @@ public class Conference extends Entity {
         this.expireTime = time;
     }
 
+    public Invitation getInvitee(Long id) {
+        for (Invitation invitation : this.invitees) {
+            if (invitation.id.longValue() == id.longValue()) {
+                return invitation;
+            }
+        }
+        return null;
+    }
+
     public List<Invitation> getInvitees() {
         return this.invitees;
     }

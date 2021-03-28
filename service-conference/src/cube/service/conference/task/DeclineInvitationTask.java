@@ -33,6 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.Conference;
 import cube.common.entity.Contact;
 import cube.common.state.ConferenceStateCode;
 import cube.service.ServiceTask;
@@ -72,10 +73,23 @@ public class DeclineInvitationTask extends ServiceTask {
             return;
         }
 
-        ConferenceService service = (ConferenceService) this.kernel.getModule(ConferenceService.NAME);
+        // 会议 ID
+        Long conferenceId = data.getLong("conferenceId");
 
-//        this.cellet.speak(this.talkContext,
-//                this.makeResponse(action, packet, ConferenceStateCode.Ok.code, result));
+        // 拒绝邀请
+        ConferenceService service = (ConferenceService) this.kernel.getModule(ConferenceService.NAME);
+        Conference conference = service.declineInvitation(conferenceId, contact);
+
+        if (null == conference) {
+            // 未正确操作
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ConferenceStateCode.Failure.code, data));
+            markResponseTime();
+            return;
+        }
+
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, ConferenceStateCode.Ok.code, conference.toCompactJSON()));
         markResponseTime();
     }
 }

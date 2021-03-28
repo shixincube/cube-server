@@ -198,8 +198,78 @@ public class ConferenceService extends AbstractModule {
         return result;
     }
 
-    public void updateConference(Conference conference) {
+    /**
+     * 获取指定 ID 的会议。
+     *
+     * @param domain
+     * @param conferenceId
+     * @return
+     */
+    public Conference getConference(String domain, Long conferenceId) {
+        CacheValue cv = this.conferenceCache.get(new CacheKey(UniqueKey.make(conferenceId, domain)));
+        if (null != cv) {
+            Conference conference = new Conference(cv.get());
+            this.fillConference(conference);
+            return conference;
+        }
 
+        Conference conference = this.storage.readConference(domain, conferenceId);
+        this.fillConference(conference);
+        return conference;
+    }
+
+    /**
+     * 接受会议邀请。
+     *
+     * @param conferenceId
+     * @param invitee
+     * @return
+     */
+    public Conference acceptInvitation(Long conferenceId, Contact invitee) {
+        Conference conference = this.getConference(invitee.getDomain().getName(), conferenceId);
+        if (null == conference) {
+            return null;
+        }
+
+        Invitation invitation = conference.getInvitee(invitee.getId());
+        if (null != invitation) {
+            invitation.setAccepted(true);
+
+            // 更新缓存
+            this.conferenceCache.put(new CacheKey(conference.getUniqueKey()), new CacheValue(conference.toJSON()));
+
+            // 更新存储
+            this.storage.writeParticipant(invitee.getDomain().getName(), conferenceId, invitation);
+        }
+
+        return conference;
+    }
+
+    /**
+     * 拒绝会议邀请。
+     *
+     * @param conferenceId
+     * @param invitee
+     * @return
+     */
+    public Conference declineInvitation(Long conferenceId, Contact invitee) {
+        Conference conference = this.getConference(invitee.getDomain().getName(), conferenceId);
+        if (null == conference) {
+            return null;
+        }
+
+        Invitation invitation = conference.getInvitee(invitee.getId());
+        if (null != invitation) {
+            invitation.setAccepted(false);
+
+            // 更新缓存
+            this.conferenceCache.put(new CacheKey(conference.getUniqueKey()), new CacheValue(conference.toJSON()));
+
+            // 更新存储
+            this.storage.writeParticipant(invitee.getDomain().getName(), conferenceId, invitation);
+        }
+
+        return conference;
     }
 
     @Override

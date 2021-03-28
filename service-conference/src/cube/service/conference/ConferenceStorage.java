@@ -257,12 +257,44 @@ public class ConferenceStorage implements Storagable {
 
     /**
      *
+     *
+     * @param domain
+     * @param conferenceId
+     * @param invitation
+     */
+    public void writeParticipant(String domain, Long conferenceId, Invitation invitation) {
+        String table = SQLUtils.correctTableName(this.participantTablePrefix + domain);
+
+        StorageField[] participant = new StorageField[] {
+                new StorageField("invitee", LiteralBase.STRING, invitation.getInvitee()),
+                new StorageField("display_name", LiteralBase.STRING, invitation.getDisplayName()),
+                new StorageField("accepted", LiteralBase.INT, (invitation.getAccepted() ? 1 : 0)),
+                new StorageField("acception_time", LiteralBase.LONG, invitation.getAcceptionTime())
+        };
+
+        this.storage.executeUpdate(table, participant, new Conditional[] {
+                Conditional.createEqualTo("conference_id", LiteralBase.LONG, conferenceId.longValue()),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("participant_id", LiteralBase.LONG, invitation.getId().longValue())
+        });
+    }
+
+    /**
+     *
      * @param domain
      * @param conferenceId
      * @param invitation
      */
     public void writeParticipant(String domain, Long conferenceId, long timestamp, Invitation invitation) {
         String table = SQLUtils.correctTableName(this.participantTablePrefix + domain);
+
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+            new StorageField("timestamp", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("conference_id", LiteralBase.LONG, conferenceId.longValue()),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("participant_id", LiteralBase.LONG, invitation.getId().longValue())
+        });
 
         StorageField[] participant = new StorageField[] {
                 new StorageField("conference_id", LiteralBase.LONG, conferenceId.longValue()),
@@ -273,7 +305,19 @@ public class ConferenceStorage implements Storagable {
                 new StorageField("accepted", LiteralBase.INT, (invitation.getAccepted() ? 1 : 0)),
                 new StorageField("acception_time", LiteralBase.LONG, invitation.getAcceptionTime())
         };
-        this.storage.executeInsert(table, participant);
+
+        if (result.isEmpty()) {
+            // 没有记录，插入数据
+            this.storage.executeInsert(table, participant);
+        }
+        else {
+            // 有记录，更新数据
+            this.storage.executeUpdate(table, participant, new Conditional[] {
+                    Conditional.createEqualTo("conference_id", LiteralBase.LONG, conferenceId.longValue()),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("participant_id", LiteralBase.LONG, invitation.getId().longValue())
+            });
+        }
     }
 
     /**
