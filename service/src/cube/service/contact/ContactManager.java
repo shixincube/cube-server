@@ -37,6 +37,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.CachedQueueExecutor;
+import cell.util.Clock;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
@@ -53,15 +54,11 @@ import cube.plugin.PluginSystem;
 import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.service.contact.plugin.FilterContactNamePlugin;
-import cube.storage.StorageFactory;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -147,9 +144,19 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     protected ContactPluginSystem pluginSystem;
 
+    /**
+     * 搜索结果映射。
+     */
+    protected ConcurrentHashMap<String, ContactSearchResult> searchMap;
+
     private ContactManager() {
     }
 
+    /**
+     * 获取管理器实例。
+     *
+     * @return 返回联系人服务实例。
+     */
     public final static ContactManager getInstance() {
         return ContactManager.instance;
     }
@@ -181,6 +188,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         this.pluginSystem = new ContactPluginSystem();
         // 内置插件
         this.buildInPlugins();
+
+        this.searchMap = new ConcurrentHashMap<>();
 
         // 异步初始化缓存和存储
         (new Thread() {
@@ -224,6 +233,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         this.contactCache.stop();
         this.groupCache.stop();
+
+        this.searchMap.clear();
 
         this.executor.shutdown();
     }
@@ -932,6 +943,44 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     public void updateAppendix(GroupAppendix appendix) {
         this.groupCache.applyPut(appendix.getUniqueKey(), appendix.toJSON());
         this.storage.writeAppendix(appendix);
+    }
+
+    /**
+     * 对指定关键字进行模糊检索。
+     *
+     * @param domain
+     * @param keyword
+     * @return
+     */
+    public ContactSearchResult searchWithFuzzyRule(String domain, String keyword) {
+        ContactSearchResult result = this.searchMap.get(keyword);
+
+        if (null != result) {
+            // 检查是否超过5分钟
+            if (Clock.currentTimeMillis() - result.getTimestamp() < 300000L) {
+                return result;
+            }
+        }
+
+        result = new ContactSearchResult(keyword);
+
+        List<Contact> contacts = this.storage.searchContacts(domain, keyword);
+        if (null != contacts) {
+            for (Contact contact : contacts) {
+                result.addContact(contact);
+            }
+        }
+
+        List<Group> groups = this.storage.searchGroups(domain, keyword);
+        if (null != groups) {
+            for (Group group : groups) {
+                result.addGroup(group);
+            }
+        }
+
+        this.searchMap.put(keyword, result);
+
+        return result;
     }
 
     /**

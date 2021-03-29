@@ -1033,6 +1033,94 @@ public class ContactStorage implements Storagable {
         return new GroupAppendix(group, new JSONObject(appendixContent));
     }
 
+    /**
+     * 搜索包含指定关键字的联系人。
+     *
+     * @param domain
+     * @param keyword
+     * @return 如果没有匹配的数据返回 {@code null} 值。
+     */
+    public List<Contact> searchContacts(String domain, String keyword) {
+        List<Contact> result = null;
+        String table = this.contactTableNameMap.get(domain);
+
+        List<StorageField[]> list = this.storage.executeQuery(table, new StorageField[] {
+                    new StorageField("id", LiteralBase.LONG),
+                    new StorageField("name", LiteralBase.STRING),
+                    new StorageField("context", LiteralBase.STRING)
+            }, new Conditional[] {
+                    Conditional.createLike("id", keyword),
+                    Conditional.createOr(),
+                    Conditional.createLike("name", keyword)
+            });
+
+        if (list.isEmpty()) {
+            return null;
+        }
+
+        result = new ArrayList<>(list.size());
+
+        for (StorageField[] field : list) {
+            Contact contact = new Contact(field[0].getLong(), domain, field[1].getString());
+            if (!field[2].isNullValue()) {
+                contact.setContext(new JSONObject(field[2].getString()));
+            }
+            result.add(contact);
+        }
+
+        return result;
+    }
+
+    /**
+     * 搜索包含指定关键字的群组。
+     *
+     * @param domain
+     * @param keyword
+     * @return 如果没有匹配的数据返回 {@code null} 值。
+     */
+    public List<Group> searchGroups(String domain, String keyword) {
+        List<Group> result = null;
+        String table = this.groupTableNameMap.get(domain);
+
+        List<StorageField[]> list = this.storage.executeQuery(table, this.groupFields, new Conditional[] {
+                    Conditional.createBracket(new Conditional[] {
+                            Conditional.createEqualTo("state", LiteralBase.INT, GroupState.Normal),
+                            Conditional.createAnd(),
+                            Conditional.createEqualTo("tag", LiteralBase.STRING, "public")
+                    }),
+                    Conditional.createAnd(),
+                    Conditional.createBracket(new Conditional[] {
+                            Conditional.createLike("id", keyword),
+                            Conditional.createOr(),
+                            Conditional.createLike("name", keyword)
+                    })
+            }
+        );
+
+        if (list.isEmpty()) {
+            return null;
+        }
+
+        result = new ArrayList<>(list.size());
+
+        for (StorageField[] data : list) {
+            Map<String, StorageField> map = StorageFields.get(data);
+            Contact owner = this.readContact(domain, map.get("owner").getLong());
+            Group group = new Group(map.get("id").getLong(), domain, map.get("name").getString(), owner,
+                    map.get("creation_time").getLong());
+            group.setTag(map.get("tag").getString());
+            group.setLastActiveTime(map.get("last_active").getLong());
+            String strContext = map.get("context").isNullValue() ? null : map.get("context").getString();
+            if (null != strContext) {
+                group.setContext(new JSONObject(strContext));
+            }
+
+            result.add(group);
+        }
+
+        return result;
+    }
+
     private void checkContactTable(String domain) {
         String table = this.contactTablePrefix + domain;
 

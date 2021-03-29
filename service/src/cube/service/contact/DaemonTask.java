@@ -26,10 +26,7 @@
 
 package cube.service.contact;
 
-import cube.common.entity.Contact;
-import cube.common.entity.ContactAppendix;
-import cube.common.entity.Device;
-import cube.common.entity.GroupAppendix;
+import cube.common.entity.*;
 
 import java.util.Iterator;
 import java.util.List;
@@ -83,6 +80,8 @@ public class DaemonTask implements Runnable {
             this.groupTickCount = 0;
             this.processGroups();
         }
+
+        this.processSearchResult();
     }
 
     private void processContacts() {
@@ -142,6 +141,18 @@ public class DaemonTask implements Runnable {
             Map.Entry<String, ContactAppendix> entry = caiter.next();
             if (now - entry.getValue().getTimestamp() > this.appendixIdle) {
                 caiter.remove();
+            }
+        }
+    }
+
+    private void processSearchResult() {
+        long now = System.currentTimeMillis();
+
+        Iterator<ContactSearchResult> iter = this.manager.searchMap.values().iterator();
+        while (iter.hasNext()) {
+            ContactSearchResult result = iter.next();
+            if (now - result.getTimestamp() > 5L * 60L * 1000L) {
+                iter.remove();
             }
         }
     }

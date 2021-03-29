@@ -238,4 +238,17 @@ public class Conditional {
         buf.append(")");
         return new Conditional(buf.toString());
     }
+
+    /**
+     * 创建 LIKE %value% 条件。
+     *
+     * @param fieldName 字段名。
+     * @param keyword 匹配关键字。
+     * @return 返回条件句式实例。
+     */
+    public static Conditional createLike(String fieldName, String keyword) {
+        StringBuilder buf = new StringBuilder();
+        buf.append(Quote).append(fieldName).append(Quote).append(" LIKE '%").append(keyword).append("%'");
+        return new Conditional(buf.toString());
+    }
 }

@@ -384,6 +384,11 @@ public class Contact extends Entity {
         return json;
     }
 
+    /**
+     * 仅返回包含 ID 和名称的 JSON 。
+     *
+     * @return 仅返回包含 ID 和名称的 JSON 。
+     */
     public JSONObject toBasicJSON() {
         JSONObject json = new JSONObject();
         json.put("id", this.id);

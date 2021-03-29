@@ -101,6 +101,10 @@ public class ContactServiceCellet extends AbstractCellet {
             this.executor.execute(new RemoveContactFromZoneTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (ContactAction.Search.name.equals(action)) {
+            this.executor.execute(new SearchTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (ContactAction.GetGroup.name.equals(action)) {
             this.executor.execute(new GetGroupTask(this, talkContext, primitive,
                     this.markResponseTime(action)));

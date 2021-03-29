@@ -142,6 +142,11 @@ public enum ContactAction {
     UpdateAppendix("updateAppendix"),
 
     /**
+     * 搜索联系人或群组。
+     */
+    Search("search"),
+
+    /**
      * 未知动作。
      */
     Unknown("")
