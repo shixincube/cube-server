@@ -54,29 +54,56 @@ public class ContactZone implements JSONable {
     public final String name;
 
     /**
+     * 是否待处理。
+     */
+    public boolean pending = false;
+
+    /**
      * 分区的联系人列表。
      */
-    public final List<Long> contacts;
+    private final List<Long> contacts;
+
+    /**
+     * 添加时的附言。
+     */
+    private final List<String> postscripts;
 
     public ContactZone(String domain, long owner, String name) {
         this.domain = domain;
         this.owner = owner;
         this.name = name;
         this.contacts = new ArrayList<>();
+        this.postscripts = new ArrayList<>();
     }
 
+    public void addContact(Long id, String postscript) {
+        if (this.contacts.contains(id)) {
+            return;
+        }
+
+        this.contacts.add(id);
+        this.postscripts.add(null == postscript ? "" : postscript);
+    }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("owner", this.owner);
         json.put("name", this.name);
+        json.put("pending", this.pending);
 
         JSONArray array = new JSONArray();
         for (Long id : this.contacts) {
             array.put(id.longValue());
         }
         json.put("contacts", array);
+
+        array = new JSONArray();
+        for (String ps : this.postscripts) {
+            array.put(ps);
+        }
+        json.put("postscripts", array);
+
         return json;
     }
 

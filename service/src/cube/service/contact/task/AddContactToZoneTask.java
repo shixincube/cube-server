@@ -76,9 +76,13 @@ public class AddContactToZoneTask extends ServiceTask {
 
         String zoneName = null;
         Long contactId = null;
+        String postscript = null;
         try {
             zoneName = data.getString("name");
             contactId = data.getLong("contactId");
+            if (data.has("postscript")) {
+                postscript = data.getString("postscript");
+            }
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
@@ -88,7 +92,7 @@ public class AddContactToZoneTask extends ServiceTask {
         }
 
         // 添加联系人到分区
-        ContactManager.getInstance().addContactToZone(contact, zoneName, contactId);
+        ContactManager.getInstance().addContactToZone(contact, zoneName, contactId, postscript);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, data));

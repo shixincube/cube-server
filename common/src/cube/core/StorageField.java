@@ -221,6 +221,10 @@ public class StorageField {
      * @return 返回 String 类型值。
      */
     public String getString() {
+        if (null == this.value) {
+            return null;
+        }
+
         if (this.value instanceof String) {
             return ((String)this.value);
         }

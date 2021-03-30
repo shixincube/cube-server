@@ -94,6 +94,9 @@ public class ContactStorage implements Storagable {
             }),
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("postscript", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 
@@ -315,8 +318,9 @@ public class ContactStorage implements Storagable {
      * @param owner
      * @param name
      * @param contactId
+     * @param postscript
      */
-    public void addContactZone(String domain, long owner, String name, Long contactId) {
+    public void addContactZone(String domain, long owner, String name, Long contactId, String postscript) {
         final String table = this.contactZoneTableNameMap.get(domain);
         this.executor.execute(new Runnable() {
             @Override
@@ -339,7 +343,8 @@ public class ContactStorage implements Storagable {
                         new StorageField("name", LiteralBase.STRING, name),
                         new StorageField("contact", LiteralBase.LONG, contactId.longValue()),
                         new StorageField("state", LiteralBase.INT, 0),
-                        new StorageField("timestamp", LiteralBase.LONG, System.currentTimeMillis())
+                        new StorageField("timestamp", LiteralBase.LONG, System.currentTimeMillis()),
+                        new StorageField("postscript", LiteralBase.STRING, (null != postscript) ? postscript : "")
                 });
             }
         });
@@ -415,7 +420,41 @@ public class ContactStorage implements Storagable {
 
         for (StorageField[] row : result) {
             Map<String, StorageField> map = StorageFields.get(row);
-            zone.contacts.add(map.get("contact").getLong());
+            zone.addContact(map.get("contact").getLong(), map.get("postscript").getString());
+        }
+
+        return zone;
+    }
+
+    /**
+     * 读取未处理的联系人分区。
+     *
+     * @param domain
+     * @param owner
+     * @param name
+     * @return
+     */
+    public ContactZone readPendingContactZone(String domain, Long owner, String name) {
+        ContactZone zone = new ContactZone(domain, owner, name);
+        zone.pending = true;
+
+        String table = this.contactZoneTableNameMap.get(domain);
+
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+                new StorageField("owner", LiteralBase.LONG),
+                new StorageField("postscript", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo("name", LiteralBase.STRING, name),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("contact", LiteralBase.LONG, owner.longValue())
+        });
+
+        for (StorageField[] data : result) {
+            Long contactId = data[0].getLong();
+            if (!this.hasContactInZone(domain, owner, name, contactId)) {
+                // 未处理
+                zone.addContact(contactId, data[1].getString());
+            }
         }
 
         return zone;
