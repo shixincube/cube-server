@@ -1156,6 +1156,12 @@ public class ContactStorage implements Storagable {
             if (this.storage.executeCreate(table, fields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
+
+            // 插入内建数据
+            List<StorageField[]> data = this.buildinData();
+            for (StorageField[] dataFields : data) {
+                this.storage.executeInsert(table, dataFields);
+            }
         }
     }
 
@@ -1299,5 +1305,96 @@ public class ContactStorage implements Storagable {
             result[i] = new StorageField(table, src.getName(), src.getLiteralBase());
         }
         return result;
+    }
+
+    private List<StorageField[]> buildinData() {
+        List<StorageField[]> list = new ArrayList<>();
+
+        JSONObject context = new JSONObject("{" +
+                "\"id\": 50001001," +
+                "\"account\": \"cube1\"," +
+                "\"name\": \"李国诚\"," +
+                "\"avatar\": \"avatar01.png\"," +
+                "\"state\": 0," +
+                "\"region\": \"北京\"," +
+                "\"department\": \"产品中心\"," +
+                "\"last\": 0" +
+                "}");
+        StorageField[] fields = new StorageField[] {
+                new StorageField("id", LiteralBase.LONG, context.getLong("id")),
+                new StorageField("name", LiteralBase.STRING, context.getString("name")),
+                new StorageField("context", LiteralBase.STRING, context.toString())
+        };
+        list.add(fields);
+
+        context = new JSONObject("{" +
+                "\"id\": 50001002," +
+                "\"account\": \"cube2\"," +
+                "\"name\": \"王沛珊\"," +
+                "\"avatar\": \"avatar13.png\"," +
+                "\"state\": 0," +
+                "\"region\": \"武汉\"," +
+                "\"department\": \"媒介部\"," +
+                "\"last\": 0" +
+                "}");
+        fields = new StorageField[] {
+                new StorageField("id", LiteralBase.LONG, context.getLong("id")),
+                new StorageField("name", LiteralBase.STRING, context.getString("name")),
+                new StorageField("context", LiteralBase.STRING, context.toString())
+        };
+        list.add(fields);
+
+        context = new JSONObject("{" +
+                "\"id\": 50001003," +
+                "\"account\": \"cube3\"," +
+                "\"name\": \"郝思雁\"," +
+                "\"avatar\": \"avatar15.png\"," +
+                "\"state\": 0," +
+                "\"region\": \"上海\"," +
+                "\"department\": \"公关部\"," +
+                "\"last\": 0" +
+                "}");
+        fields = new StorageField[] {
+                new StorageField("id", LiteralBase.LONG, context.getLong("id")),
+                new StorageField("name", LiteralBase.STRING, context.getString("name")),
+                new StorageField("context", LiteralBase.STRING, context.toString())
+        };
+        list.add(fields);
+
+        context = new JSONObject("{" +
+                "\"id\": 50001004," +
+                "\"account\": \"cube4\"," +
+                "\"name\": \"高海光\"," +
+                "\"avatar\": \"avatar09.png\"," +
+                "\"state\": 0," +
+                "\"region\": \"成都\"," +
+                "\"department\": \"技术部\"," +
+                "\"last\": 0" +
+                "}");
+        fields = new StorageField[] {
+                new StorageField("id", LiteralBase.LONG, context.getLong("id")),
+                new StorageField("name", LiteralBase.STRING, context.getString("name")),
+                new StorageField("context", LiteralBase.STRING, context.toString())
+        };
+        list.add(fields);
+
+        context = new JSONObject("{" +
+                "\"id\": 50001005," +
+                "\"account\": \"cube5\"," +
+                "\"name\": \"张明宇\"," +
+                "\"avatar\": \"avatar12.png\"," +
+                "\"state\": 0," +
+                "\"region\": \"广州\"," +
+                "\"department\": \"设计部\"," +
+                "\"last\": 0" +
+                "}");
+        fields = new StorageField[] {
+                new StorageField("id", LiteralBase.LONG, context.getLong("id")),
+                new StorageField("name", LiteralBase.STRING, context.getString("name")),
+                new StorageField("context", LiteralBase.STRING, context.toString())
+        };
+        list.add(fields);
+
+        return list;
     }
 }
