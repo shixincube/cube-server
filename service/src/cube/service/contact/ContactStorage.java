@@ -370,6 +370,29 @@ public class ContactStorage implements Storagable {
     }
 
     /**
+     * 指定分区是否包含指定的联系人。
+     *
+     * @param domain
+     * @param owner
+     * @param name
+     * @param contactId
+     * @return
+     */
+    public boolean hasContactInZone(String domain, long owner, String name, Long contactId) {
+        String table = this.contactZoneTableNameMap.get(domain);
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+                new StorageField("timestamp", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("owner", LiteralBase.LONG, owner),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("name", LiteralBase.STRING, name),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("contact", LiteralBase.LONG, contactId.longValue())
+        });
+        return (!result.isEmpty());
+    }
+
+    /**
      * 读取 Zone 记录。
      *
      * @param domain

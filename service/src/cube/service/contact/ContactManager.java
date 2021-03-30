@@ -552,6 +552,18 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 指定分区是否包含指定联系人。
+     *
+     * @param contact
+     * @param zoneName
+     * @param contactId
+     * @return
+     */
+    public boolean containsContactInZone(Contact contact, String zoneName, Long contactId) {
+        return this.storage.hasContactInZone(contact.getDomain().getName(), contact.getId(), zoneName, contactId);
+    }
+
+    /**
      * 添加联系人到指定的 Zone 。
      *
      * @param contact

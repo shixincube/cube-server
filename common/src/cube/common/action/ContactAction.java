@@ -82,6 +82,11 @@ public enum ContactAction {
     GetContactZone("getContactZone"),
 
     /**
+     * 指定分区是否包含指定联系人。
+     */
+    ContainsContactInZone("containsContactInZone"),
+
+    /**
      * 添加联系人到分区。
      */
     AddContactToZone("addContactToZone"),
