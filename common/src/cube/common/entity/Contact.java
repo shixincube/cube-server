@@ -191,8 +191,13 @@ public class Contact extends Entity {
      *
      * @param name 联系人名称。
      */
-    public void setName(String name) {
+    public boolean setName(String name) {
+        if (this.name.equals(name)) {
+            return false;
+        }
+
         this.name = name;
+        return true;
     }
 
     /**

@@ -529,15 +529,40 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
-     * 获取列表里联系人。
+     * 更新联系人数据。
      *
      * @param domain
-     * @param idList
+     * @param contactId
+     * @param name
+     * @param context
      * @return
      */
-    public List<Contact> getContactList(String domain, List<Long> idList) {
-        List<Contact> result = new ArrayList<>(idList.size());
-        return result;
+    public Contact modifyContact(String domain, Long contactId, String name, JSONObject context) {
+        Contact contact = this.getContact(domain, contactId);
+        if (null == contact) {
+            return null;
+        }
+
+        boolean modified = false;
+
+        if (null != name) {
+            modified = contact.setName(name);
+        }
+
+        if (null != context) {
+            contact.setContext(context);
+            modified = true;
+        }
+
+        if (modified) {
+            // 更新存储
+            this.storage.writeContact(contact);
+
+            // 更新缓存
+            this.contactCache.applyPut(contact.getUniqueKey(), contact.toJSON());
+        }
+
+        return contact;
     }
 
     /**

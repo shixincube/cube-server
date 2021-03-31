@@ -72,11 +72,6 @@ public enum ContactAction {
     ModifyContact("modifyContact"),
 
     /**
-     * 获取联系人列表。
-     */
-    GetContactList("getContactList"),
-
-    /**
      * 获取联系人分区。
      */
     GetContactZone("getContactZone"),

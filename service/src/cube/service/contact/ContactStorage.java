@@ -246,17 +246,26 @@ public class ContactStorage implements Storagable {
                     }
                     else {
                         // 更新数据
-                        storage.executeUpdate(table, new StorageField[] {
-                                new StorageField("name", LiteralBase.STRING, contact.getName()),
-                                new StorageField("context", LiteralBase.STRING,
-                                        (null != contact.getContext()) ? contact.getContext().toString() : null),
-                                new StorageField("recent_device_name", LiteralBase.STRING,
-                                        (null != device) ? device.getName() : null),
-                                new StorageField("recent_device_platform", LiteralBase.STRING,
-                                        (null != device) ? device.getPlatform() : null)
-                        }, new Conditional[] {
-                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
-                        });
+                        if (null != device) {
+                            storage.executeUpdate(table, new StorageField[] {
+                                    new StorageField("name", LiteralBase.STRING, contact.getName()),
+                                    new StorageField("context", LiteralBase.STRING,
+                                            (null != contact.getContext()) ? contact.getContext().toString() : null),
+                                    new StorageField("recent_device_name", LiteralBase.STRING, device.getName()),
+                                    new StorageField("recent_device_platform", LiteralBase.STRING, device.getPlatform())
+                            }, new Conditional[] {
+                                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
+                            });
+                        }
+                        else {
+                            storage.executeUpdate(table, new StorageField[] {
+                                    new StorageField("name", LiteralBase.STRING, contact.getName()),
+                                    new StorageField("context", LiteralBase.STRING,
+                                            (null != contact.getContext()) ? contact.getContext().toString() : null)
+                            }, new Conditional[] {
+                                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
+                            });
+                        }
                     }
                 }
 
@@ -452,7 +461,7 @@ public class ContactStorage implements Storagable {
         for (StorageField[] data : result) {
             Long contactId = data[0].getLong();
             if (!this.hasContactInZone(domain, owner, name, contactId)) {
-                // 未处理
+                // 添加"未处理"的数据
                 zone.addContact(contactId, data[1].getString());
             }
         }
