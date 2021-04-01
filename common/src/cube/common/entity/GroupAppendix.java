@@ -29,9 +29,7 @@ package cube.common.entity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 群组的附录。
@@ -47,6 +45,11 @@ public class GroupAppendix extends Entity {
     private HashMap<Long, String> memberRemarks;
 
     /**
+     * 入群申请人列表。
+     */
+    private List<JSONObject> applicants;
+
+    /**
      * 构造函数。
      *
      * @param owner
@@ -57,6 +60,7 @@ public class GroupAppendix extends Entity {
         this.owner = owner;
         this.remarkContents = new HashMap<>();
         this.memberRemarks = new HashMap<>();
+        this.applicants = new ArrayList<>();
     }
 
     /**
@@ -71,6 +75,7 @@ public class GroupAppendix extends Entity {
         this.owner = owner;
         this.remarkContents = new HashMap<>();
         this.memberRemarks = new HashMap<>();
+        this.applicants = new ArrayList<>();
 
         JSONArray remarkNamesArray = json.getJSONArray("remarkContents");
         for (int i = 0; i < remarkNamesArray.length(); ++i) {
@@ -91,6 +96,13 @@ public class GroupAppendix extends Entity {
                 Long id = item.getLong("id");
                 String remark = item.getString("remark");
                 this.memberRemarks.put(id, remark);
+            }
+        }
+
+        if (json.has("applicants")) {
+            JSONArray array = json.getJSONArray("applicants");
+            for (int i = 0; i < array.length(); ++i) {
+                this.applicants.add(array.getJSONObject(i));
             }
         }
     }
@@ -156,6 +168,44 @@ public class GroupAppendix extends Entity {
         this.memberRemarks.put(memberId, remark);
     }
 
+    public void addApplicant(long contactId, String postscript) {
+        for (JSONObject data : this.applicants) {
+            long id = data.getLong("id");
+            if (id == contactId) {
+                // 已经有记录
+                data.put("time", System.currentTimeMillis());
+                data.put("postscript", postscript);
+                return;
+            }
+        }
+
+        JSONObject data = new JSONObject();
+        data.put("id", contactId);
+        data.put("time", System.currentTimeMillis());
+        data.put("postscript", postscript);
+        data.put("agreed", false);
+        data.put("agreedTime", 0);
+        this.applicants.add(data);
+    }
+
+    public void updateApplicant(long contactId, boolean agreed) {
+        for (JSONObject data : this.applicants) {
+            long id = data.getLong("id");
+            if (id == contactId) {
+                // 找到记录
+                data.put("agreed", agreed);
+                data.put("agreedTime", System.currentTimeMillis());
+                break;
+            }
+        }
+    }
+
+    /**
+     * 按照指定成员类型返回数据。
+     *
+     * @param member
+     * @return
+     */
     public JSONObject packJSON(Contact member) {
         JSONObject json = new JSONObject();
         json.put("owner", this.owner.toCompactJSON());
@@ -174,6 +224,16 @@ public class GroupAppendix extends Entity {
             memberRemarkArray.put(mr);
         }
         json.put("memberRemarks", memberRemarkArray);
+
+        if (this.owner.getOwner().equals(member)) {
+            JSONArray array = new JSONArray();
+            ArrayList<JSONObject> applicants = new ArrayList<>(this.applicants);
+            Collections.reverse(applicants);
+            for (JSONObject applicantJson : applicants) {
+                array.put(applicantJson);
+            }
+            json.put("applicants", array);
+        }
 
         return json;
     }
@@ -204,6 +264,12 @@ public class GroupAppendix extends Entity {
             memberRemarkArray.put(mr);
         }
         json.put("memberRemarks", memberRemarkArray);
+
+        JSONArray applicantArray = new JSONArray();
+        for (JSONObject applicantJson : this.applicants) {
+            applicantArray.put(applicantJson);
+        }
+        json.put("applicants", applicantArray);
 
         return json;
     }
