@@ -1153,9 +1153,9 @@ public class ContactStorage implements Storagable {
         List<Group> result = null;
         String table = this.groupTableNameMap.get(domain);
 
-        List<StorageField[]> list = this.storage.executeQuery(table, this.groupFields, new Conditional[] {
+        List<StorageField[]> list = this.storage.executeQuery(table, null, new Conditional[] {
                     Conditional.createBracket(new Conditional[] {
-                            Conditional.createEqualTo("state", LiteralBase.INT, GroupState.Normal),
+                            Conditional.createEqualTo("state", LiteralBase.INT, GroupState.Normal.getCode()),
                             Conditional.createAnd(),
                             Conditional.createEqualTo("tag", LiteralBase.STRING, "public")
                     }),

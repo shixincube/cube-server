@@ -198,6 +198,9 @@ public class StorageField {
         else if (this.value instanceof Long) {
             return ((Long)this.value).intValue();
         }
+        else if (this.value instanceof String) {
+            return Integer.parseInt((String) this.value);
+        }
         else {
             return 0;
         }
@@ -212,7 +215,15 @@ public class StorageField {
         if (this.value instanceof Long) {
             return ((Long)this.value).longValue();
         }
-        return 0;
+        else if (this.value instanceof Integer) {
+            return ((Integer)this.value).longValue();
+        }
+        else if (this.value instanceof String) {
+            return Long.parseLong((String) this.value);
+        }
+        else {
+            return 0;
+        }
     }
 
     /**

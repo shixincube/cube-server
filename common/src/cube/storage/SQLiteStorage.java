@@ -294,28 +294,35 @@ public class SQLiteStorage extends AbstractStorage {
             try {
                 statement = this.connection.createStatement();
                 ResultSet rs = statement.executeQuery(sql);
+
                 while (rs.next()) {
-                    StorageField[] row = new StorageField[fields.length];
-
-                    for (int i = 0; i < fields.length; ++i) {
-                        StorageField sf = fields[i];
-                        LiteralBase literal = sf.getLiteralBase();
-                        if (literal == LiteralBase.STRING) {
-                            String value = rs.getString(sf.getName());
-                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                        } else if (literal == LiteralBase.LONG) {
-                            long value = rs.getLong(sf.getName());
-                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                        } else if (literal == LiteralBase.INT) {
-                            int value = rs.getInt(sf.getName());
-                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                        } else if (literal == LiteralBase.BOOL) {
-                            boolean value = rs.getBoolean(sf.getName());
-                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                        }
+                    if (null == fields) {
+                        StorageField[] row = StorageFields.scanResultSet(rs);
+                        result.add(row);
                     }
+                    else {
+                        StorageField[] row = new StorageField[fields.length];
 
-                    result.add(row);
+                        for (int i = 0; i < fields.length; ++i) {
+                            StorageField sf = fields[i];
+                            LiteralBase literal = sf.getLiteralBase();
+                            if (literal == LiteralBase.STRING) {
+                                String value = rs.getString(sf.getName());
+                                row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                            } else if (literal == LiteralBase.LONG) {
+                                long value = rs.getLong(sf.getName());
+                                row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                            } else if (literal == LiteralBase.INT) {
+                                int value = rs.getInt(sf.getName());
+                                row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                            } else if (literal == LiteralBase.BOOL) {
+                                boolean value = rs.getBoolean(sf.getName());
+                                row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                            }
+                        }
+
+                        result.add(row);
+                    }
                 }
             } catch (SQLException e) {
                 Logger.d(this.getClass(), e.getMessage());
@@ -346,28 +353,34 @@ public class SQLiteStorage extends AbstractStorage {
                 statement = this.connection.createStatement();
                 ResultSet rs = statement.executeQuery(sql);
                 while (rs.next()) {
-                    StorageField[] row = new StorageField[fields.length];
-
-                    for (int i = 0; i < fields.length; ++i) {
-                        StorageField sf = fields[i];
-                        LiteralBase literal = sf.getLiteralBase();
-
-                        if (literal == LiteralBase.STRING) {
-                            String value = rs.getString(sf.getName());
-                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                        } else if (literal == LiteralBase.LONG) {
-                            long value = rs.getLong(sf.getName());
-                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                        } else if (literal == LiteralBase.INT) {
-                            int value = rs.getInt(sf.getName());
-                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                        } else if (literal == LiteralBase.BOOL) {
-                            boolean value = rs.getBoolean(sf.getName());
-                            row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
-                        }
+                    if (null == fields) {
+                        StorageField[] row = StorageFields.scanResultSet(rs);
+                        result.add(row);
                     }
+                    else {
+                        StorageField[] row = new StorageField[fields.length];
 
-                    result.add(row);
+                        for (int i = 0; i < fields.length; ++i) {
+                            StorageField sf = fields[i];
+                            LiteralBase literal = sf.getLiteralBase();
+
+                            if (literal == LiteralBase.STRING) {
+                                String value = rs.getString(sf.getName());
+                                row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                            } else if (literal == LiteralBase.LONG) {
+                                long value = rs.getLong(sf.getName());
+                                row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                            } else if (literal == LiteralBase.INT) {
+                                int value = rs.getInt(sf.getName());
+                                row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                            } else if (literal == LiteralBase.BOOL) {
+                                boolean value = rs.getBoolean(sf.getName());
+                                row[i] = new StorageField(sf.getName(), sf.getLiteralBase(), value);
+                            }
+                        }
+
+                        result.add(row);
+                    }
                 }
             } catch (SQLException e) {
                 Logger.d(this.getClass(), e.getMessage());
