@@ -38,11 +38,22 @@ public class GroupAppendix extends Entity {
 
     private Group owner;
 
-    private HashMap<Long, String> remarkContents;
-
     private String notice;
 
+    /**
+     * 每个成员的备注名。公开信息。
+     */
     private HashMap<Long, String> memberRemarks;
+
+    /**
+     * 成员对该群的备注内容。私有信息。
+     */
+    private HashMap<Long, String> remarks;
+
+    /**
+     * 成员的上下文。私有信息。
+     */
+    private HashMap<Long, JSONObject> contexts;
 
     /**
      * 入群申请人列表。
@@ -58,8 +69,10 @@ public class GroupAppendix extends Entity {
         super();
         this.uniqueKey = owner.getUniqueKey() + "_appendix";
         this.owner = owner;
-        this.remarkContents = new HashMap<>();
         this.memberRemarks = new HashMap<>();
+
+        this.remarks = new HashMap<>();
+        this.contexts = new HashMap<>();
         this.applicants = new ArrayList<>();
     }
 
@@ -73,17 +86,11 @@ public class GroupAppendix extends Entity {
         super();
         this.uniqueKey = owner.getUniqueKey() + "_appendix";
         this.owner = owner;
-        this.remarkContents = new HashMap<>();
         this.memberRemarks = new HashMap<>();
-        this.applicants = new ArrayList<>();
 
-        JSONArray remarkNamesArray = json.getJSONArray("remarkContents");
-        for (int i = 0; i < remarkNamesArray.length(); ++i) {
-            JSONObject item = remarkNamesArray.getJSONObject(i);
-            Long id = item.getLong("id");
-            String content = item.getString("content");
-            this.remarkContents.put(id, content);
-        }
+        this.remarks = new HashMap<>();
+        this.contexts = new HashMap<>();
+        this.applicants = new ArrayList<>();
 
         if (json.has("notice")) {
             this.notice = json.getString("notice");
@@ -94,8 +101,28 @@ public class GroupAppendix extends Entity {
             for (int i = 0; i < array.length(); ++i) {
                 JSONObject item = array.getJSONObject(i);
                 Long id = item.getLong("id");
+                String name = item.getString("name");
+                this.memberRemarks.put(id, name);
+            }
+        }
+
+        if (json.has("remarks")) {
+            JSONArray array = json.getJSONArray("remarks");
+            for (int i = 0; i < array.length(); ++i) {
+                JSONObject item = array.getJSONObject(i);
+                Long id = item.getLong("id");
                 String remark = item.getString("remark");
-                this.memberRemarks.put(id, remark);
+                this.remarks.put(id, remark);
+            }
+        }
+
+        if (json.has("contexts")) {
+            JSONArray array = json.getJSONArray("contexts");
+            for (int i = 0; i < array.length(); ++i) {
+                JSONObject item = array.getJSONObject(i);
+                Long id = item.getLong("id");
+                JSONObject context = item.getJSONObject("context");
+                this.contexts.put(id, context);
             }
         }
 
@@ -117,28 +144,6 @@ public class GroupAppendix extends Entity {
     }
 
     /**
-     * 指定成员备注该群组的信息。
-     *
-     * @param member
-     * @param content
-     */
-    public void remark(Contact member, String content) {
-        this.remarkContents.put(member.getId(), content);
-        this.resetTimestamp();
-    }
-
-    /**
-     * 获取指定成员对该群组的备注信息。
-     *
-     * @param member
-     * @return
-     */
-    public String getRemark(Contact member) {
-        this.resetTimestamp();
-        return this.remarkContents.get(member.getId());
-    }
-
-    /**
      * 设置群组公告。
      *
      * @param notice
@@ -154,7 +159,7 @@ public class GroupAppendix extends Entity {
      * @param memberId
      * @return
      */
-    public String getMemberRemark(Long memberId) {
+    public String getMemberRemarkName(Long memberId) {
         return this.memberRemarks.get(memberId);
     }
 
@@ -162,12 +167,40 @@ public class GroupAppendix extends Entity {
      * 设置成员的备注。
      *
      * @param memberId
-     * @param remark
+     * @param name
      */
-    public void setMemberRemark(Long memberId, String remark) {
-        this.memberRemarks.put(memberId, remark);
+    public void setMemberRemarkName(Long memberId, String name) {
+        this.memberRemarks.put(memberId, name);
     }
 
+    /**
+     * 指定成员备注该群组的信息。
+     *
+     * @param member
+     * @param content
+     */
+    public void remark(Contact member, String content) {
+        this.remarks.put(member.getId(), content);
+        this.resetTimestamp();
+    }
+
+    /**
+     * 获取指定成员对该群组的备注信息。
+     *
+     * @param member
+     * @return
+     */
+    public String getRemark(Contact member) {
+        this.resetTimestamp();
+        return this.remarks.get(member.getId());
+    }
+
+    /**
+     * 添加申请人。
+     *
+     * @param contactId
+     * @param postscript
+     */
     public void addApplicant(long contactId, String postscript) {
         for (JSONObject data : this.applicants) {
             long id = data.getLong("id");
@@ -188,6 +221,12 @@ public class GroupAppendix extends Entity {
         this.applicants.add(data);
     }
 
+    /**
+     * 更新申请人。
+     *
+     * @param contactId
+     * @param agreed
+     */
     public void updateApplicant(long contactId, boolean agreed) {
         for (JSONObject data : this.applicants) {
             long id = data.getLong("id");
@@ -209,21 +248,28 @@ public class GroupAppendix extends Entity {
     public JSONObject packJSON(Contact member) {
         JSONObject json = new JSONObject();
         json.put("owner", this.owner.toCompactJSON());
-        String remarkContent = this.remarkContents.get(member.getId());
-        if (null == remarkContent) {
-            remarkContent = "";
-        }
-        json.put("remark", remarkContent);
+
         json.put("notice", (null == this.notice) ? "" : this.notice);
 
         JSONArray memberRemarkArray = new JSONArray();
         for (Map.Entry<Long, String> e : this.memberRemarks.entrySet()) {
             JSONObject mr = new JSONObject();
             mr.put("id", e.getKey().longValue());
-            mr.put("remark", e.getValue());
+            mr.put("name", e.getValue());
             memberRemarkArray.put(mr);
         }
         json.put("memberRemarks", memberRemarkArray);
+
+        String remarkContent = this.remarks.get(member.getId());
+        if (null == remarkContent) {
+            remarkContent = "";
+        }
+        json.put("remark", remarkContent);
+
+        JSONObject context = this.contexts.get(member.getId());
+        if (null != context) {
+            json.put("context", context);
+        }
 
         if (this.owner.getOwner().equals(member)) {
             JSONArray array = new JSONArray();
@@ -243,27 +289,34 @@ public class GroupAppendix extends Entity {
         JSONObject json = new JSONObject();
         json.put("ownerId", this.owner.getId());
 
-        JSONArray remarkContentsArray = new JSONArray();
-        Iterator<Map.Entry<Long, String>> iter = this.remarkContents.entrySet().iterator();
-        while (iter.hasNext()) {
-            Map.Entry<Long, String> e = iter.next();
-            JSONObject item = new JSONObject();
-            item.put("id", e.getKey().longValue());
-            item.put("content", e.getValue());
-            remarkContentsArray.put(item);
-        }
-        json.put("remarkContents", remarkContentsArray);
-
         json.put("notice", (null == this.notice) ? "" : this.notice);
 
         JSONArray memberRemarkArray = new JSONArray();
         for (Map.Entry<Long, String> e : this.memberRemarks.entrySet()) {
             JSONObject mr = new JSONObject();
             mr.put("id", e.getKey().longValue());
-            mr.put("remark", e.getValue());
+            mr.put("name", e.getValue());
             memberRemarkArray.put(mr);
         }
         json.put("memberRemarks", memberRemarkArray);
+
+        JSONArray remarksArray = new JSONArray();
+        for (Map.Entry<Long, String> e : this.remarks.entrySet()) {
+            JSONObject item = new JSONObject();
+            item.put("id", e.getKey().longValue());
+            item.put("remark", e.getValue());
+            remarksArray.put(item);
+        }
+        json.put("remarks", remarksArray);
+
+        JSONArray contextsArray = new JSONArray();
+        for (Map.Entry<Long, JSONObject> e : this.contexts.entrySet()) {
+            JSONObject item = new JSONObject();
+            item.put("id", e.getKey().longValue());
+            item.put("context", e.getValue());
+            contextsArray.put(item);
+        }
+        json.put("contexts", contextsArray);
 
         JSONArray applicantArray = new JSONArray();
         for (JSONObject applicantJson : this.applicants) {
