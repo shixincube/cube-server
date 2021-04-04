@@ -998,9 +998,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      *
      * @param contact
      * @param topId
+     * @param type
      */
-    public void addTopList(Contact contact, Long topId) {
-        this.storage.writeTopList(contact.getDomain().getName(), contact.getId(), topId);
+    public void addTopList(Contact contact, Long topId, String type) {
+        this.storage.writeTopList(contact.getDomain().getName(), contact.getId(), topId, type);
     }
 
     /**
@@ -1019,7 +1020,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contact
      * @return
      */
-    public List<Long> getTopList(Contact contact) {
+    public List<JSONObject> getTopList(Contact contact) {
         return this.storage.readTopList(contact.getDomain().getName(), contact.getId());
     }
 

@@ -78,10 +78,14 @@ public class TopListTask extends ServiceTask {
 
         String topAction = null;
         Long topId = null;
+        String type = null;
         try {
             topAction = data.getString("action");
             if (data.has("topId")) {
                 topId = data.getLong("topId");
+            }
+            if (data.has("type")) {
+                type = data.getString("type");
             }
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
@@ -93,11 +97,11 @@ public class TopListTask extends ServiceTask {
 
         if (topAction.equals("get")) {
             // 获取置顶列表
-            List<Long> list = ContactManager.getInstance().getTopList(contact);
+            List<JSONObject> list = ContactManager.getInstance().getTopList(contact);
 
             JSONArray array = new JSONArray();
-            for (Long id : list) {
-                array.put(id.longValue());
+            for (JSONObject json : list) {
+                array.put(json);
             }
 
             JSONObject json = new JSONObject();
@@ -109,7 +113,7 @@ public class TopListTask extends ServiceTask {
         }
         else if (topAction.equals("add")) {
             // 添加置顶 ID
-            ContactManager.getInstance().addTopList(contact, topId);
+            ContactManager.getInstance().addTopList(contact, topId, type);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Ok.code, data));
         }

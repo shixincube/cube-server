@@ -153,6 +153,9 @@ public class ContactStorage implements Storagable {
             }),
             new StorageField("top_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("type", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 
@@ -1123,38 +1126,45 @@ public class ContactStorage implements Storagable {
     }
 
     /**
+     * 读取置顶列表。
      *
      * @param domain
      * @param contactId
      * @return
      */
-    public List<Long> readTopList(String domain, Long contactId) {
+    public List<JSONObject> readTopList(String domain, Long contactId) {
         String table = this.topListTablePrefix + domain;
         table = SQLUtils.correctTableName(table);
 
-        List<Long> list = new ArrayList<>();
+        List<JSONObject> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
-                        new StorageField("top_id", LiteralBase.LONG)
+                        new StorageField("top_id", LiteralBase.LONG),
+                        new StorageField("type", LiteralBase.STRING)
                 },
                 new Conditional[] {
                         Conditional.createEqualTo("contact_id", LiteralBase.LONG, contactId)
                 });
 
         for (StorageField[] data : result) {
-            list.add(data[0].getLong());
+            JSONObject json = new JSONObject();
+            json.put("id", data[0].getLong());
+            json.put("type", data[1].getString());
+            list.add(json);
         }
 
         return list;
     }
 
     /**
+     * 写入置顶数据。
      *
      * @param domain
      * @param contactId
      * @param topId
+     * @param type
      */
-    public void writeTopList(String domain, Long contactId, Long topId) {
+    public void writeTopList(String domain, Long contactId, Long topId, String type) {
         String table = this.topListTablePrefix + domain;
         table = SQLUtils.correctTableName(table);
 
@@ -1170,11 +1180,13 @@ public class ContactStorage implements Storagable {
 
         this.storage.executeInsert(table, new StorageField[] {
                 new StorageField("contact_id", LiteralBase.LONG, contactId),
-                new StorageField("top_id", LiteralBase.LONG, topId)
+                new StorageField("top_id", LiteralBase.LONG, topId),
+                new StorageField("type", LiteralBase.STRING, type)
         });
     }
 
     /**
+     * 删除置顶列表里的数据。
      *
      * @param domain
      * @param contactId
