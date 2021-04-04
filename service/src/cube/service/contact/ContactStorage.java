@@ -64,6 +64,8 @@ public class ContactStorage implements Storagable {
 
     private final String appendixTablePrefix = "appendix_";
 
+    private final String topListTablePrefix = "contact_top_";
+
     /**
      * 联系人字段描述。
      */
@@ -139,6 +141,21 @@ public class ContactStorage implements Storagable {
             //new StorageField("reserved", LiteralBase.STRING)
     };
 
+    /**
+     * 置顶列表。
+     */
+    private final StorageField[] topListFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("top_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
     private ExecutorService executor;
 
     private Storage storage;
@@ -187,6 +204,7 @@ public class ContactStorage implements Storagable {
             this.checkGroupTable(domain);
             this.checkGroupMemberTable(domain);
             this.checkAppendixTable(domain);
+            this.checkTopListTable(domain);
         }
     }
 
@@ -1105,6 +1123,75 @@ public class ContactStorage implements Storagable {
     }
 
     /**
+     *
+     * @param domain
+     * @param contactId
+     * @return
+     */
+    public List<Long> readTopList(String domain, Long contactId) {
+        String table = this.topListTablePrefix + domain;
+        table = SQLUtils.correctTableName(table);
+
+        List<Long> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+                        new StorageField("top_id", LiteralBase.LONG)
+                },
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", LiteralBase.LONG, contactId)
+                });
+
+        for (StorageField[] data : result) {
+            list.add(data[0].getLong());
+        }
+
+        return list;
+    }
+
+    /**
+     *
+     * @param domain
+     * @param contactId
+     * @param topId
+     */
+    public void writeTopList(String domain, Long contactId, Long topId) {
+        String table = this.topListTablePrefix + domain;
+        table = SQLUtils.correctTableName(table);
+
+        List<StorageField[]> result = this.storage.executeQuery(table, this.topListFields, new Conditional[] {
+                Conditional.createEqualTo("contact_id", LiteralBase.LONG, contactId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("top_id", LiteralBase.LONG, topId)
+        });
+
+        if (!result.isEmpty()) {
+            return;
+        }
+
+        this.storage.executeInsert(table, new StorageField[] {
+                new StorageField("contact_id", LiteralBase.LONG, contactId),
+                new StorageField("top_id", LiteralBase.LONG, topId)
+        });
+    }
+
+    /**
+     *
+     * @param domain
+     * @param contactId
+     * @param topId
+     */
+    public void deleteTopList(String domain, Long contactId, Long topId) {
+        String table = this.topListTablePrefix + domain;
+        table = SQLUtils.correctTableName(table);
+
+        this.storage.executeDelete(table, new Conditional[] {
+                Conditional.createEqualTo("contact_id", LiteralBase.LONG, contactId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("top_id", LiteralBase.LONG, topId)
+        });
+    }
+
+    /**
      * 搜索包含指定关键字的联系人。
      *
      * @param domain
@@ -1364,6 +1451,19 @@ public class ContactStorage implements Storagable {
             };
 
             if (this.storage.executeCreate(table, fields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkTopListTable(String domain) {
+        String table = this.topListTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.topListFields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
         }

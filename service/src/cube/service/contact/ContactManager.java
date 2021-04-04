@@ -994,6 +994,36 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 添加联系人的置顶列表。
+     *
+     * @param contact
+     * @param topId
+     */
+    public void addTopList(Contact contact, Long topId) {
+        this.storage.writeTopList(contact.getDomain().getName(), contact.getId(), topId);
+    }
+
+    /**
+     * 移除联系人的置顶列表。
+     *
+     * @param contact
+     * @param topId
+     */
+    public void removeTopList(Contact contact, Long topId) {
+        this.storage.deleteTopList(contact.getDomain().getName(), contact.getId(), topId);
+    }
+
+    /**
+     * 获取指定联系人的置顶列表。
+     *
+     * @param contact
+     * @return
+     */
+    public List<Long> getTopList(Contact contact) {
+        return this.storage.readTopList(contact.getDomain().getName(), contact.getId());
+    }
+
+    /**
      * 对指定关键字进行模糊检索。
      *
      * @param domain
