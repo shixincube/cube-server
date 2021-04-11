@@ -29,6 +29,7 @@ package cube.service.test;
 import cell.util.CachedQueueExecutor;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
+import cube.common.entity.GroupState;
 import cube.service.contact.ContactStorage;
 import cube.storage.StorageType;
 import org.json.JSONException;
@@ -65,7 +66,7 @@ public class ContactStorageTool {
         long now = System.currentTimeMillis();
         long beginning = now - 7 * 24 * 60 * 60 * 1000L;
 
-        List<Group> list = this.storage.readGroupsWithMember(domainName, memberId, beginning, now);
+        List<Group> list = this.storage.readGroupsWithMember(domainName, memberId, beginning, now, GroupState.Normal.getCode());
         for (Group group : list) {
             buf.append(group.toCompactJSON());
             buf.append("\n");

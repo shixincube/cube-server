@@ -731,9 +731,12 @@ public class ContactStorage implements Storagable {
      * @param memberId
      * @param beginningLastActive
      * @param endingLastActive
+     * @param groupState
      * @return
      */
-    public List<Group> readGroupsWithMember(String domain, Long memberId, long beginningLastActive, long endingLastActive) {
+    public List<Group> readGroupsWithMember(String domain, Long memberId,
+                                            long beginningLastActive, long endingLastActive,
+                                            int groupState) {
         List<Group> result = new ArrayList<>();
 
         String groupTable = this.groupTableNameMap.get(domain);
@@ -760,7 +763,10 @@ public class ContactStorage implements Storagable {
                         Conditional.createGreaterThanEqual(new StorageField(groupTable, "last_active", LiteralBase.LONG, beginningLastActive)),
                         Conditional.createAnd(),
                         // 活跃时间戳小于
-                        Conditional.createLessThan(new StorageField(groupTable, "last_active", LiteralBase.LONG, endingLastActive))
+                        Conditional.createLessThan(new StorageField(groupTable, "last_active", LiteralBase.LONG, endingLastActive)),
+                        Conditional.createAnd(),
+                        // 群组的状态
+                        Conditional.createEqualTo(new StorageField(groupTable, "state", LiteralBase.INT, groupState))
                 });
 
         ArrayList<Long> ids = new ArrayList<>(groupsResult.size());

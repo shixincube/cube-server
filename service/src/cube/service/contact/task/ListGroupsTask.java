@@ -37,6 +37,7 @@ import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Group;
+import cube.common.entity.GroupState;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -79,9 +80,15 @@ public class ListGroupsTask extends ServiceTask {
         // 获取查询起始时间
         long beginning = 0;
         long ending = 0;
+        GroupState groupState = GroupState.Normal;
         try {
             beginning = data.getLong("beginning");
             ending = data.getLong("ending");
+
+            // 指定群组状态
+            if (data.has("state")) {
+                groupState = GroupState.parse(data.getInt("state"));
+            }
         } catch (JSONException e) {
             // Nothing
         }
@@ -93,7 +100,8 @@ public class ListGroupsTask extends ServiceTask {
         int pageSize = 4;
 
         // 查询从指定活跃时间之后的该联系人所在的所有群
-        List<Group> list = ContactManager.getInstance().listGroupsWithMember(domain, contact.getId(), beginning, ending);
+        List<Group> list = ContactManager.getInstance().listGroupsWithMember(domain,
+                contact.getId(), beginning, ending, groupState);
 
         // 排除标签
         Iterator<Group> iter = list.iterator();

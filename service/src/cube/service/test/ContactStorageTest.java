@@ -30,6 +30,7 @@ import cell.util.CachedQueueExecutor;
 import cell.util.Utils;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
+import cube.common.entity.GroupState;
 import cube.service.contact.ContactStorage;
 import cube.storage.StorageType;
 import org.json.JSONException;
@@ -226,7 +227,7 @@ public class ContactStorageTest {
         System.out.println(this.getClass().getName() + " testReadGroupList");
 
         List<Group> list = this.storage.readGroupsWithMember(this.group.getDomain().getName(),
-                this.member.getId(), 0L, System.currentTimeMillis());
+                this.member.getId(), 0L, System.currentTimeMillis(), GroupState.Normal.getCode());
         if (!list.get(0).equals(this.group)) {
             System.err.println("List groups error : \n" + this.group.toJSON().toString());
             return;

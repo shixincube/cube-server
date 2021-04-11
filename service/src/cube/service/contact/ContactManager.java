@@ -630,10 +630,14 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param memberId
      * @param beginningLastActive
      * @param endingLastActive
+     * @param groupState
      * @return
      */
-    public List<Group> listGroupsWithMember(String domain, Long memberId, long beginningLastActive, long endingLastActive) {
-        List<Group> result = this.storage.readGroupsWithMember(domain, memberId, beginningLastActive, endingLastActive);
+    public List<Group> listGroupsWithMember(String domain, Long memberId,
+                                            long beginningLastActive, long endingLastActive,
+                                            GroupState groupState) {
+        List<Group> result = this.storage.readGroupsWithMember(domain, memberId,
+                beginningLastActive, endingLastActive, groupState.getCode());
         Collections.sort(result);
         return result;
     }
