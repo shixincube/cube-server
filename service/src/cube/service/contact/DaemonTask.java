@@ -92,15 +92,14 @@ public class DaemonTask implements Runnable {
             Map.Entry<String, ContactTable> entry = ctiter.next();
             ContactTable table = entry.getValue();
 
-            Iterator<Contact> citer = table.onlineContacts.values().iterator();
-            while (citer.hasNext()) {
-                Contact contact = citer.next();
+            // 遍历所有在线联系人
+            for (Contact contact : table.getOnlineContacts()) {
 
                 List<Device> list = contact.getDeviceList();
                 if (list.isEmpty()) {
                     if (now - contact.getTimestamp() > this.contactIdle) {
                         // 联系人已经没有设备，移除联系人
-                        citer.remove();
+                        table.remove(contact);
                     }
 
                     continue;
@@ -117,7 +116,7 @@ public class DaemonTask implements Runnable {
 
                 if (0 == contact.numDevices()) {
                     if (now - contact.getTimestamp() > this.contactIdle) {
-                        citer.remove();
+                        table.remove(contact);
                     }
                 }
             }

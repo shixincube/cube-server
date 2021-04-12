@@ -998,6 +998,79 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 添加阻止的联系人 ID 。
+     *
+     * @param contact
+     * @param blockId
+     */
+    public void addBlockList(Contact contact, Long blockId) {
+        ContactTable contactTable = this.onlineTables.get(contact.getDomain().getName());
+        if (null != contactTable) {
+            contactTable.addBlockList(contact, blockId);
+        }
+
+        this.storage.writeBlockList(contact.getDomain().getName(), contact.getId(), blockId);
+    }
+
+    /**
+     * 移除被阻止的联系人 ID 。
+     *
+     * @param contact
+     * @param blockId
+     */
+    public void removeBlockList(Contact contact, Long blockId) {
+        ContactTable contactTable = this.onlineTables.get(contact.getDomain().getName());
+        if (null != contactTable) {
+            contactTable.removeBlockList(contact, blockId);
+        }
+
+        this.storage.deleteBlockList(contact.getDomain().getName(), contact.getId(), blockId);
+    }
+
+    /**
+     * 获取指定联系人的阻止列表。
+     *
+     * @param contact
+     * @return 返回指定联系人的阻止列表。
+     */
+    public List<Long> getBlockList(Contact contact) {
+        ContactTable contactTable = this.onlineTables.get(contact.getDomain().getName());
+        if (null != contactTable) {
+            List<Long> list = contactTable.getBlockList(contact);
+            if (null == list) {
+                list = this.storage.readBlockList(contact.getDomain().getName(), contact.getId());
+                contactTable.setBlockList(contact, list);
+            }
+            return list;
+        }
+
+        return this.storage.readBlockList(contact.getDomain().getName(), contact.getId());
+    }
+
+    /**
+     * 判读指定联系人是是否阻止了目标联系人。
+     *
+     * @param domain
+     * @param contactId
+     * @param targetContactId
+     * @return
+     */
+    public boolean hasBlocked(String domain, Long contactId, Long targetContactId) {
+        ContactTable contactTable = this.onlineTables.get(domain);
+        if (null == contactTable) {
+            return this.storage.hasBlocked(domain, contactId, targetContactId);
+        }
+
+        List<Long> list = contactTable.getBlockList(contactId);
+        if (null == list) {
+            list = this.storage.readBlockList(domain, contactId);
+            contactTable.setBlockList(contactId, list);
+        }
+
+        return list.contains(targetContactId);
+    }
+
+    /**
      * 添加联系人的置顶列表。
      *
      * @param contact

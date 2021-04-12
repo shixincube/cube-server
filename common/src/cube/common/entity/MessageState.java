@@ -62,6 +62,11 @@ public enum MessageState {
     Deleted(40),
 
     /**
+     * 被阻止。
+     */
+    Blocked(50),
+
+    /**
      * 消息处理失败。
      */
     Fault(1),

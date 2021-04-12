@@ -31,6 +31,8 @@ import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -40,11 +42,17 @@ public class ContactTable {
 
     private Domain domain;
 
-    protected ConcurrentHashMap<Long, Contact> onlineContacts;
+    private ConcurrentHashMap<Long, Contact> onlineContacts;
+
+    /**
+     * 联系人的阻止列表。
+     */
+    private ConcurrentHashMap<Long, List<Long>> contactBlockLists;
 
     public ContactTable(Domain domain) {
         this.domain = domain;
         this.onlineContacts = new ConcurrentHashMap<>();
+        this.contactBlockLists = new ConcurrentHashMap<>();
     }
 
     public Domain getDomain() {
@@ -105,11 +113,51 @@ public class ContactTable {
     }
 
     /**
+     * 获取在线联系人列表。
+     *
+     * @return
+     */
+    public List<Contact> getOnlineContacts() {
+        return new ArrayList<>(this.onlineContacts.values());
+    }
+
+    /**
      * 移除联系人。
      *
      * @param contact
      */
     public void remove(Contact contact) {
         this.onlineContacts.remove(contact.getId());
+        this.contactBlockLists.remove(contact.getId());
+    }
+
+    public List<Long> getBlockList(Contact contact) {
+        return this.contactBlockLists.get(contact.getId());
+    }
+
+    public List<Long> getBlockList(Long contactId) {
+        return this.contactBlockLists.get(contactId);
+    }
+
+    public void setBlockList(Contact contact, List<Long> blockList) {
+        this.contactBlockLists.put(contact.getId(), blockList);
+    }
+
+    public void setBlockList(Long contactId, List<Long> blockList) {
+        this.contactBlockLists.put(contactId, blockList);
+    }
+
+    public void addBlockList(Contact contact, Long blockId) {
+        List<Long> list = this.contactBlockLists.get(contact.getId());
+        if (null != list) {
+            list.add(blockId);
+        }
+    }
+
+    public void removeBlockList(Contact contact, Long blockId) {
+        List<Long> list = this.contactBlockLists.get(contact.getId());
+        if (null != list) {
+            list.remove(blockId);
+        }
     }
 }

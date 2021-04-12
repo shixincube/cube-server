@@ -157,6 +157,10 @@ public class ContactServiceCellet extends AbstractCellet {
             this.executor.execute(new TopListTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (ContactAction.BlockList.name.equals(action)) {
+            this.executor.execute(new BlockListTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (ContactAction.DeviceTimeout.name.equals(action)) {
             this.executor.execute(new DeviceTimeoutTask(this, talkContext, primitive,
                     this.markResponseTime(action)));

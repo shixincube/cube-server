@@ -67,6 +67,11 @@ public enum MessagingStateCode {
     NoContact(16),
 
     /**
+     * 被对方阻止。
+     */
+    BeBlocked(18),
+
+    /**
      * 数据结构错误。
      */
     DataStructureError(20),

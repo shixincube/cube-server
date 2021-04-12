@@ -260,37 +260,69 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         hook.apply(new MessagingPluginContext(message));
 
         if (message.getTo().longValue() > 0) {
-            String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
-            String toKey = UniqueKey.make(message.getTo(), message.getDomain());
+            // 检查是否被 To 阻止
+            boolean blocked = ContactManager.getInstance().hasBlocked(message.getDomain().getName(), message.getTo(), message.getFrom());
 
-            // 创建副本
-            Message[] copies = this.makeMessageCopies(message);
-            Message fromCopy = copies[0];
-            Message toCopy = copies[1];
+            if (!blocked) {
+                // 没有被阻止
 
-            // 将消息写入 TO 缓存
-            this.messageCache.add(toKey, toCopy.toJSON(), toCopy.getRemoteTimestamp());
-            // 将消息写入 FROM 缓存
-            this.messageCache.add(fromKey, fromCopy.toJSON(), fromCopy.getRemoteTimestamp());
+                String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
+                String toKey = UniqueKey.make(message.getTo(), message.getDomain());
 
-            // 发布消息事件给 TO
-            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, toCopy.toJSON());
-            this.contactsAdapter.publish(toKey, event.toJSON());
+                // 创建副本
+                Message[] copies = this.makeMessageCopies(message);
+                Message fromCopy = copies[0];
+                Message toCopy = copies[1];
 
-            // 发布消息事件给 FROM
-            event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, fromCopy.toJSON());
-            this.contactsAdapter.publish(fromKey, event.toJSON());
+                // 将消息写入 TO 缓存
+                this.messageCache.add(toKey, toCopy.toJSON(), toCopy.getRemoteTimestamp());
+                // 将消息写入 FROM 缓存
+                this.messageCache.add(fromKey, fromCopy.toJSON(), fromCopy.getRemoteTimestamp());
 
-            // TO 副本写入存储
-            this.storage.write(toCopy);
-            // FROM 副本写入存储
-            this.storage.write(fromCopy);
+                // 发布消息事件给 TO
+                ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, toCopy.toJSON());
+                this.contactsAdapter.publish(toKey, event.toJSON());
 
-            // 在内存里记录状态
-            this.messageStateMap.put(new MessageKey(toCopy.getOwner(), toCopy.getId()),
-                    new MessageStateBundle(toCopy.getId(), toCopy.getOwner(), MessageState.Sent));
-            this.messageStateMap.put(new MessageKey(fromCopy.getOwner(), fromCopy.getId()),
-                    new MessageStateBundle(fromCopy.getId(), fromCopy.getOwner(), MessageState.Sent));
+                // 发布消息事件给 FROM
+                event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, fromCopy.toJSON());
+                this.contactsAdapter.publish(fromKey, event.toJSON());
+
+                // TO 副本写入存储
+                this.storage.write(toCopy);
+                // FROM 副本写入存储
+                this.storage.write(fromCopy);
+
+                // 在内存里记录状态
+                this.messageStateMap.put(new MessageKey(toCopy.getOwner(), toCopy.getId()),
+                        new MessageStateBundle(toCopy.getId(), toCopy.getOwner(), MessageState.Sent));
+                this.messageStateMap.put(new MessageKey(fromCopy.getOwner(), fromCopy.getId()),
+                        new MessageStateBundle(fromCopy.getId(), fromCopy.getOwner(), MessageState.Sent));
+            }
+            else {
+                // 被阻止
+
+                // 设置状态
+                message.setState(MessageState.Blocked);
+
+                String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
+
+                // 创建副本
+                Message[] copies = this.makeMessageCopies(message);
+                Message fromCopy = copies[0];
+
+                // 将消息写入 FROM 缓存
+                this.messageCache.add(fromKey, fromCopy.toJSON(), fromCopy.getRemoteTimestamp());
+
+                // 发布消息事件给 FROM
+                ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, fromCopy.toJSON());
+                this.contactsAdapter.publish(fromKey, event.toJSON());
+
+                // FROM 副本写入存储
+                this.storage.write(fromCopy);
+
+                this.messageStateMap.put(new MessageKey(fromCopy.getOwner(), fromCopy.getId()),
+                        new MessageStateBundle(fromCopy.getId(), fromCopy.getOwner(), MessageState.Blocked));
+            }
         }
         else if (message.getSource().longValue() > 0) {
             // 进行消息的群组管理

@@ -147,6 +147,11 @@ public enum ContactAction {
     TopList("topList"),
 
     /**
+     * 阻止清单操作。
+     */
+    BlockList("blockList"),
+
+    /**
      * 搜索联系人或群组。
      */
     Search("search"),

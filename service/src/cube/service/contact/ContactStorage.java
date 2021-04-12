@@ -66,6 +66,8 @@ public class ContactStorage implements Storagable {
 
     private final String topListTablePrefix = "contact_top_";
 
+    private final String blockListTablePrefix = "contact_block_list_";
+
     /**
      * 联系人字段描述。
      */
@@ -159,6 +161,24 @@ public class ContactStorage implements Storagable {
             })
     };
 
+    /**
+     * 阻止列表。
+     */
+    private final StorageField[] blockListFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("block_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("time", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
     private ExecutorService executor;
 
     private Storage storage;
@@ -208,6 +228,7 @@ public class ContactStorage implements Storagable {
             this.checkGroupMemberTable(domain);
             this.checkAppendixTable(domain);
             this.checkTopListTable(domain);
+            this.checkBlockListTable(domain);
         }
     }
 
@@ -1210,6 +1231,109 @@ public class ContactStorage implements Storagable {
     }
 
     /**
+     * 判断是否被指定联系人阻止。
+     *
+     * @param domain
+     * @param contactId
+     * @param blockId
+     * @return
+     */
+    public boolean hasBlocked(String domain, Long contactId, Long blockId) {
+        String table = this.blockListTablePrefix + domain;
+        table = SQLUtils.correctTableName(table);
+
+        List<StorageField[]> list = this.storage.executeQuery(table, this.blockListFields, new Conditional[] {
+                Conditional.createEqualTo("contact_id", LiteralBase.LONG, contactId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("block_id", LiteralBase.LONG, blockId)
+        });
+
+        return !list.isEmpty();
+    }
+
+    /**
+     * 读取指定联系人的阻止列表。
+     *
+     * @param domain
+     * @param contactId
+     * @return
+     */
+    public List<Long> readBlockList(String domain, Long contactId) {
+        List<Long> list = new ArrayList<>();
+
+        String table = this.blockListTablePrefix + domain;
+        table = SQLUtils.correctTableName(table);
+
+        List<StorageField[]> result = this.storage.executeQuery(table, this.blockListFields, new Conditional[] {
+                Conditional.createEqualTo("contact_id", LiteralBase.LONG, contactId)
+        });
+
+        for (StorageField[] data : result) {
+            Map<String, StorageField> map = StorageFields.get(data);
+            Long id = map.get("block_id").getLong();
+            list.add(id);
+        }
+
+        return list;
+    }
+
+    /**
+     * 写入新的阻止 ID 。
+     *
+     * @param domain
+     * @param contactId
+     * @param blockId
+     */
+    public void writeBlockList(String domain, Long contactId, Long blockId) {
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                String table = blockListTablePrefix + domain;
+                table = SQLUtils.correctTableName(table);
+
+                List<StorageField[]> result = storage.executeQuery(table, blockListFields, new Conditional[] {
+                        Conditional.createEqualTo("contact_id", LiteralBase.LONG, contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("block_id", LiteralBase.LONG, blockId)
+                });
+
+                if (!result.isEmpty()) {
+                    return;
+                }
+
+                storage.executeInsert(table, new StorageField[] {
+                        new StorageField("contact_id", LiteralBase.LONG, contactId),
+                        new StorageField("block_id", LiteralBase.LONG, blockId),
+                        new StorageField("time", LiteralBase.LONG, System.currentTimeMillis())
+                });
+            }
+        });
+    }
+
+    /**
+     * 删除指定的阻止 ID 。
+     *
+     * @param domain
+     * @param contactId
+     * @param blockId
+     */
+    public void deleteBlockList(String domain, Long contactId, Long blockId) {
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                String table = blockListTablePrefix + domain;
+                table = SQLUtils.correctTableName(table);
+
+                storage.executeDelete(table, new Conditional[] {
+                        Conditional.createEqualTo("contact_id", LiteralBase.LONG, contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("block_id", LiteralBase.LONG, blockId)
+                });
+            }
+        });
+    }
+
+    /**
      * 搜索包含指定关键字的联系人。
      *
      * @param domain
@@ -1482,6 +1606,19 @@ public class ContactStorage implements Storagable {
         if (!this.storage.exist(table)) {
             // 表不存在，建表
             if (this.storage.executeCreate(table, this.topListFields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkBlockListTable(String domain) {
+        String table = this.blockListTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.blockListFields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
         }
