@@ -91,34 +91,41 @@ public class BlockListTask extends ServiceTask {
             return;
         }
 
+        List<Long> list = null;
+
         if (blockAction.equals("get")) {
             // 获取阻止列表
-            List<Long> list = ContactManager.getInstance().getBlockList(contact);
-
-            JSONArray array = new JSONArray();
-            for (Long id : list) {
-                array.put(id);
-            }
-
-            JSONObject json = new JSONObject();
-            json.put("action", blockAction);
-            json.put("list", array);
-
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.Ok.code, json));
+            list = ContactManager.getInstance().getBlockList(contact);
         }
         else if (blockAction.equals("add")) {
             // 添加被阻止的联系人 ID
-            ContactManager.getInstance().addBlockList(contact, blockId);
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.Ok.code, data));
+            list = ContactManager.getInstance().addBlockList(contact, blockId);
         }
         else if (blockAction.equals("remove")) {
             // 移除被阻止的联系人 ID
-            ContactManager.getInstance().removeBlockList(contact, blockId);
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.Ok.code, data));
+            list = ContactManager.getInstance().removeBlockList(contact, blockId);
         }
+        else {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
+        }
+
+        JSONArray array = new JSONArray();
+        for (Long id : list) {
+            array.put(id.longValue());
+        }
+
+        JSONObject json = new JSONObject();
+        json.put("action", blockAction);
+        json.put("list", array);
+        if (null != blockId) {
+            json.put("blockId", blockId.longValue());
+        }
+
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, json));
 
         markResponseTime();
     }

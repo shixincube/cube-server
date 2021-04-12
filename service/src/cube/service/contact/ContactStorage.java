@@ -371,7 +371,7 @@ public class ContactStorage implements Storagable {
      * @param contactId
      * @param postscript
      */
-    public void addContactZone(String domain, long owner, String name, Long contactId, String postscript) {
+    public void addZoneContact(String domain, long owner, String name, Long contactId, String postscript) {
         final String table = this.contactZoneTableNameMap.get(domain);
         this.executor.execute(new Runnable() {
             @Override
@@ -409,7 +409,7 @@ public class ContactStorage implements Storagable {
      * @param name
      * @param contactId
      */
-    public void removeContactZone(String domain, long owner, String name, Long contactId) {
+    public void removeZoneContact(String domain, long owner, String name, Long contactId) {
         final String table = this.contactZoneTableNameMap.get(domain);
         this.executor.execute(new Runnable() {
             @Override
@@ -418,6 +418,27 @@ public class ContactStorage implements Storagable {
                         Conditional.createEqualTo("owner", LiteralBase.LONG, owner),
                         Conditional.createAnd(),
                         Conditional.createEqualTo("name", LiteralBase.STRING, name),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("contact", LiteralBase.LONG, contactId.longValue())
+                });
+            }
+        });
+    }
+
+    /**
+     * 删除指定联系人的所有 Zone 里的记录。
+     *
+     * @param domain
+     * @param owner
+     * @param contactId
+     */
+    public void removeZoneContact(String domain, long owner, Long contactId) {
+        final String table = this.contactZoneTableNameMap.get(domain);
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                storage.executeDelete(table, new Conditional[] {
+                        Conditional.createEqualTo("owner", LiteralBase.LONG, owner),
                         Conditional.createAnd(),
                         Conditional.createEqualTo("contact", LiteralBase.LONG, contactId.longValue())
                 });
@@ -1285,28 +1306,23 @@ public class ContactStorage implements Storagable {
      * @param blockId
      */
     public void writeBlockList(String domain, Long contactId, Long blockId) {
-        this.executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                String table = blockListTablePrefix + domain;
-                table = SQLUtils.correctTableName(table);
+        String table = this.blockListTablePrefix + domain;
+        table = SQLUtils.correctTableName(table);
 
-                List<StorageField[]> result = storage.executeQuery(table, blockListFields, new Conditional[] {
-                        Conditional.createEqualTo("contact_id", LiteralBase.LONG, contactId),
-                        Conditional.createAnd(),
-                        Conditional.createEqualTo("block_id", LiteralBase.LONG, blockId)
-                });
+        List<StorageField[]> result = this.storage.executeQuery(table, this.blockListFields, new Conditional[] {
+                Conditional.createEqualTo("contact_id", LiteralBase.LONG, contactId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("block_id", LiteralBase.LONG, blockId)
+        });
 
-                if (!result.isEmpty()) {
-                    return;
-                }
+        if (!result.isEmpty()) {
+            return;
+        }
 
-                storage.executeInsert(table, new StorageField[] {
-                        new StorageField("contact_id", LiteralBase.LONG, contactId),
-                        new StorageField("block_id", LiteralBase.LONG, blockId),
-                        new StorageField("time", LiteralBase.LONG, System.currentTimeMillis())
-                });
-            }
+        this.storage.executeInsert(table, new StorageField[] {
+                new StorageField("contact_id", LiteralBase.LONG, contactId),
+                new StorageField("block_id", LiteralBase.LONG, blockId),
+                new StorageField("time", LiteralBase.LONG, System.currentTimeMillis())
         });
     }
 
@@ -1318,18 +1334,13 @@ public class ContactStorage implements Storagable {
      * @param blockId
      */
     public void deleteBlockList(String domain, Long contactId, Long blockId) {
-        this.executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                String table = blockListTablePrefix + domain;
-                table = SQLUtils.correctTableName(table);
+        String table = this.blockListTablePrefix + domain;
+        table = SQLUtils.correctTableName(table);
 
-                storage.executeDelete(table, new Conditional[] {
-                        Conditional.createEqualTo("contact_id", LiteralBase.LONG, contactId),
-                        Conditional.createAnd(),
-                        Conditional.createEqualTo("block_id", LiteralBase.LONG, blockId)
-                });
-            }
+        this.storage.executeDelete(table, new Conditional[] {
+                Conditional.createEqualTo("contact_id", LiteralBase.LONG, contactId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("block_id", LiteralBase.LONG, blockId)
         });
     }
 

@@ -607,7 +607,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contactId
      */
     public void addContactToZone(Contact contact, String zoneName, Long contactId, String postscript) {
-        this.storage.addContactZone(contact.getDomain().getName(), contact.getId(),
+        this.storage.addZoneContact(contact.getDomain().getName(), contact.getId(),
                 zoneName, contactId, postscript);
     }
 
@@ -619,7 +619,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contactId
      */
     public void removeContactFromZone(Contact contact, String zoneName, Long contactId) {
-        this.storage.removeContactZone(contact.getDomain().getName(), contact.getId(),
+        this.storage.removeZoneContact(contact.getDomain().getName(), contact.getId(),
                 zoneName, contactId);
     }
 
@@ -1003,13 +1003,18 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contact
      * @param blockId
      */
-    public void addBlockList(Contact contact, Long blockId) {
+    public List<Long> addBlockList(Contact contact, Long blockId) {
         ContactTable contactTable = this.onlineTables.get(contact.getDomain().getName());
         if (null != contactTable) {
             contactTable.addBlockList(contact, blockId);
         }
 
         this.storage.writeBlockList(contact.getDomain().getName(), contact.getId(), blockId);
+
+        // 将阻止的联系人从 Zone 里删除
+        this.storage.removeZoneContact(contact.getDomain().getName(), contact.getId(), blockId);
+
+        return this.storage.readBlockList(contact.getDomain().getName(), contact.getId());
     }
 
     /**
@@ -1018,13 +1023,14 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contact
      * @param blockId
      */
-    public void removeBlockList(Contact contact, Long blockId) {
+    public List<Long> removeBlockList(Contact contact, Long blockId) {
         ContactTable contactTable = this.onlineTables.get(contact.getDomain().getName());
         if (null != contactTable) {
             contactTable.removeBlockList(contact, blockId);
         }
 
         this.storage.deleteBlockList(contact.getDomain().getName(), contact.getId(), blockId);
+        return this.storage.readBlockList(contact.getDomain().getName(), contact.getId());
     }
 
     /**
