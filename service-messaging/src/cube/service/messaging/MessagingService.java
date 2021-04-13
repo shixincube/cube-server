@@ -252,180 +252,190 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             return new PushResult(message, MessagingStateCode.AttachmentError);
         }
 
-        if (message.getTo().longValue() > 0) {
-            // 检查发送目标是否被发件人阻止
-            boolean blocked = ContactManager.getInstance().hasBlocked(message.getDomain().getName(), message.getFrom(), message.getTo());
-            if (blocked) {
-                // 发件人阻止了目标联系人
-                message.setState(MessageState.SendBlocked);
-                return new PushResult(message, MessagingStateCode.BeBlocked);
-            }
+        // 依照作用域进行投送
+        if (message.getScope() == 0) {
+            // 一般作用域
 
-            // 检查是否被 To 阻止
-            blocked = ContactManager.getInstance().hasBlocked(message.getDomain().getName(), message.getTo(), message.getFrom());
-            if (blocked) {
-                // 设置状态
-                message.setState(MessageState.ReceiveBlocked);
+            if (message.getTo().longValue() > 0) {
+                // 检查发送目标是否被发件人阻止
+                boolean blocked = ContactManager.getInstance().hasBlocked(message.getDomain().getName(), message.getFrom(), message.getTo());
+                if (blocked) {
+                    // 发件人阻止了目标联系人
+                    message.setState(MessageState.SendBlocked);
+                    return new PushResult(message, MessagingStateCode.BeBlocked);
+                }
 
-                /*
+                // 检查是否被 To 阻止
+                blocked = ContactManager.getInstance().hasBlocked(message.getDomain().getName(), message.getTo(), message.getFrom());
+                if (blocked) {
+                    // 设置状态
+                    message.setState(MessageState.ReceiveBlocked);
+                    return new PushResult(message, MessagingStateCode.BeBlocked);
+                }
+
+                // 更新状态
+                message.setState(MessageState.Sent);
+
+                // Hook PrePush
+                MessagingHook hook = this.pluginSystem.getPrePushHook();
+                hook.apply(new MessagingPluginContext(message));
+
                 String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
+                String toKey = UniqueKey.make(message.getTo(), message.getDomain());
 
                 // 创建副本
                 Message[] copies = this.makeMessageCopies(message);
                 Message fromCopy = copies[0];
+                Message toCopy = copies[1];
 
+                // 将消息写入 TO 缓存
+                this.messageCache.add(toKey, toCopy.toJSON(), toCopy.getRemoteTimestamp());
                 // 将消息写入 FROM 缓存
                 this.messageCache.add(fromKey, fromCopy.toJSON(), fromCopy.getRemoteTimestamp());
 
+                // 发布消息事件给 TO
+                ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, toCopy.toJSON());
+                this.contactsAdapter.publish(toKey, event.toJSON());
+
                 // 发布消息事件给 FROM
-                ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, fromCopy.toJSON());
+                event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, fromCopy.toJSON());
                 this.contactsAdapter.publish(fromKey, event.toJSON());
 
+                // TO 副本写入存储
+                this.storage.write(toCopy);
                 // FROM 副本写入存储
                 this.storage.write(fromCopy);
 
+                // 在内存里记录状态
+                this.messageStateMap.put(new MessageKey(toCopy.getOwner(), toCopy.getId()),
+                        new MessageStateBundle(toCopy.getId(), toCopy.getOwner(), MessageState.Sent));
                 this.messageStateMap.put(new MessageKey(fromCopy.getOwner(), fromCopy.getId()),
-                        new MessageStateBundle(fromCopy.getId(), fromCopy.getOwner(), MessageState.Blocked));
-                */
+                        new MessageStateBundle(fromCopy.getId(), fromCopy.getOwner(), MessageState.Sent));
 
-                return new PushResult(message, MessagingStateCode.BeBlocked);
+                // Hook PostPush
+                hook = this.pluginSystem.getPostPushHook();
+                hook.apply(new MessagingPluginContext(message));
+
+                return new PushResult(message, MessagingStateCode.Ok);
             }
+            else if (message.getSource().longValue() > 0) {
+                // 进行消息的群组管理
+                Group group = ContactManager.getInstance().getGroup(message.getSource(), message.getDomain().getName());
+                if (null != group) {
+                    if (group.getState() == GroupState.Normal) {
+                        // 群组状态正常
 
-            // 更新状态
-            message.setState(MessageState.Sent);
+                        // 更新状态
+                        message.setState(MessageState.Sent);
 
-            // Hook PrePush
-            MessagingHook hook = this.pluginSystem.getPrePushHook();
-            hook.apply(new MessagingPluginContext(message));
+                        // Hook PrePush
+                        MessagingHook hook = this.pluginSystem.getPrePushHook();
+                        hook.apply(new MessagingPluginContext(message));
 
-            String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
-            String toKey = UniqueKey.make(message.getTo(), message.getDomain());
+                        Long senderId = message.getFrom();
+                        List<Contact> list = group.getMembers();
+                        for (Contact contact : list) {
+                            if (contact.getId().longValue() == senderId.longValue()) {
+                                // 跳过发件人
+                                continue;
+                            }
 
-            // 创建副本
-            Message[] copies = this.makeMessageCopies(message);
-            Message fromCopy = copies[0];
-            Message toCopy = copies[1];
+                            // 创建 TO 副本
+                            Message copy = new Message(message);
+                            // 更新 To 数据
+                            copy.setTo(contact.getId());
+                            // 设置 Owner
+                            copy.setOwner(contact.getId());
 
-            // 将消息写入 TO 缓存
-            this.messageCache.add(toKey, toCopy.toJSON(), toCopy.getRemoteTimestamp());
-            // 将消息写入 FROM 缓存
-            this.messageCache.add(fromKey, fromCopy.toJSON(), fromCopy.getRemoteTimestamp());
+                            // 将消息写入缓存
+                            // 写入 TO
+                            String toKey = UniqueKey.make(contact.getId(), contact.getDomain());
+                            this.messageCache.add(toKey, copy.toJSON(), copy.getRemoteTimestamp());
 
-            // 发布消息事件给 TO
-            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, toCopy.toJSON());
-            this.contactsAdapter.publish(toKey, event.toJSON());
+                            // 发布给 TO
+                            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, copy.toJSON());
+                            this.contactsAdapter.publish(toKey, event.toJSON());
 
-            // 发布消息事件给 FROM
-            event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, fromCopy.toJSON());
-            this.contactsAdapter.publish(fromKey, event.toJSON());
+                            // 写入存储
+                            this.storage.write(copy);
 
-            // TO 副本写入存储
-            this.storage.write(toCopy);
-            // FROM 副本写入存储
-            this.storage.write(fromCopy);
-
-            // 在内存里记录状态
-            this.messageStateMap.put(new MessageKey(toCopy.getOwner(), toCopy.getId()),
-                    new MessageStateBundle(toCopy.getId(), toCopy.getOwner(), MessageState.Sent));
-            this.messageStateMap.put(new MessageKey(fromCopy.getOwner(), fromCopy.getId()),
-                    new MessageStateBundle(fromCopy.getId(), fromCopy.getOwner(), MessageState.Sent));
-
-            // Hook PostPush
-            hook = this.pluginSystem.getPostPushHook();
-            hook.apply(new MessagingPluginContext(message));
-
-            return new PushResult(message, MessagingStateCode.Ok);
-        }
-        else if (message.getSource().longValue() > 0) {
-            // 进行消息的群组管理
-            Group group = ContactManager.getInstance().getGroup(message.getSource(), message.getDomain().getName());
-            if (null != group) {
-                if (group.getState() == GroupState.Normal) {
-                    // 群组状态正常
-
-                    // 更新状态
-                    message.setState(MessageState.Sent);
-
-                    // Hook PrePush
-                    MessagingHook hook = this.pluginSystem.getPrePushHook();
-                    hook.apply(new MessagingPluginContext(message));
-
-                    Long senderId = message.getFrom();
-                    List<Contact> list = group.getMembers();
-                    for (Contact contact : list) {
-                        if (contact.getId().longValue() == senderId.longValue()) {
-                            // 跳过发件人
-                            continue;
+                            // 在内存里记录状态
+                            this.messageStateMap.put(new MessageKey(contact.getId(), copy.getId()),
+                                    new MessageStateBundle(copy.getId(), contact.getId(), MessageState.Sent));
                         }
 
-                        // 创建 TO 副本
+                        // 创建 FROM 副本
                         Message copy = new Message(message);
-                        // 更新 To 数据
-                        copy.setTo(contact.getId());
-                        // 设置 Owner
-                        copy.setOwner(contact.getId());
+                        copy.setOwner(message.getFrom());
 
-                        // 将消息写入缓存
-                        // 写入 TO
-                        String toKey = UniqueKey.make(contact.getId(), contact.getDomain());
-                        this.messageCache.add(toKey, copy.toJSON(), copy.getRemoteTimestamp());
+                        // 写入 FROM
+                        String fromKey = UniqueKey.make(copy.getFrom(), message.getDomain());
+                        this.messageCache.add(fromKey, copy.toJSON(), copy.getRemoteTimestamp());
 
-                        // 发布给 TO
+                        // 发布给 FROM
                         ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, copy.toJSON());
-                        this.contactsAdapter.publish(toKey, event.toJSON());
+                        this.contactsAdapter.publish(fromKey, event.toJSON());
 
                         // 写入存储
                         this.storage.write(copy);
 
                         // 在内存里记录状态
-                        this.messageStateMap.put(new MessageKey(contact.getId(), copy.getId()),
-                                new MessageStateBundle(copy.getId(), contact.getId(), MessageState.Sent));
+                        this.messageStateMap.put(new MessageKey(copy.getOwner(), copy.getId()),
+                                new MessageStateBundle(copy.getId(), copy.getOwner(), MessageState.Sent));
+
+                        // 更新群组活跃时间
+                        ContactManager.getInstance().updateGroupActiveTime(group, message.getRemoteTimestamp());
+
+                        // Hook PostPush
+                        hook = this.pluginSystem.getPostPushHook();
+                        hook.apply(new MessagingPluginContext(message));
+
+                        return new PushResult(message, MessagingStateCode.Ok);
                     }
-
-                    // 创建 FROM 副本
-                    Message copy = new Message(message);
-                    copy.setOwner(message.getFrom());
-
-                    // 写入 FROM
-                    String fromKey = UniqueKey.make(copy.getFrom(), message.getDomain());
-                    this.messageCache.add(fromKey, copy.toJSON(), copy.getRemoteTimestamp());
-
-                    // 发布给 FROM
-                    ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, copy.toJSON());
-                    this.contactsAdapter.publish(fromKey, event.toJSON());
-
-                    // 写入存储
-                    this.storage.write(copy);
-
-                    // 在内存里记录状态
-                    this.messageStateMap.put(new MessageKey(copy.getOwner(), copy.getId()),
-                            new MessageStateBundle(copy.getId(), copy.getOwner(), MessageState.Sent));
-
-                    // 更新群组活跃时间
-                    ContactManager.getInstance().updateGroupActiveTime(group, message.getRemoteTimestamp());
-
-                    // Hook PostPush
-                    hook = this.pluginSystem.getPostPushHook();
-                    hook.apply(new MessagingPluginContext(message));
-
-                    return new PushResult(message, MessagingStateCode.Ok);
+                    else {
+                        // 群组状态不正常，设置为故障状态
+                        message.setState(MessageState.Fault);
+                        return new PushResult(message, MessagingStateCode.GroupError);
+                    }
                 }
                 else {
-                    // 群组状态不正常，设置为故障状态
+                    // 找不到群组，设置为故障状态
                     message.setState(MessageState.Fault);
-                    return new PushResult(message, MessagingStateCode.GroupError);
+                    return new PushResult(message, MessagingStateCode.NoGroup);
                 }
             }
             else {
-                // 找不到群组，设置为故障状态
+                // 设置为故障状态
                 message.setState(MessageState.Fault);
-                return new PushResult(message, MessagingStateCode.NoGroup);
+                return new PushResult(message, MessagingStateCode.DataStructureError);
             }
         }
         else {
-            // 设置为故障状态
-            message.setState(MessageState.Fault);
-            return new PushResult(message, MessagingStateCode.DataStructureError);
+            // 仅自己可见
+
+            // 更新状态
+            message.setState(MessageState.Sent);
+
+            String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
+
+            // 创建副本
+            Message[] copies = this.makeMessageCopies(message);
+            Message fromCopy = copies[0];
+
+            // 将消息写入 FROM 缓存
+            this.messageCache.add(fromKey, fromCopy.toJSON(), fromCopy.getRemoteTimestamp());
+
+            // 发布消息事件给 FROM
+            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Push.name, fromCopy.toJSON());
+            this.contactsAdapter.publish(fromKey, event.toJSON());
+
+            // FROM 副本写入存储
+            this.storage.write(fromCopy);
+
+            this.messageStateMap.put(new MessageKey(fromCopy.getOwner(), fromCopy.getId()),
+                    new MessageStateBundle(fromCopy.getId(), fromCopy.getOwner(), MessageState.Sent));
+
+            return new PushResult(message, MessagingStateCode.Ok);
         }
     }
 

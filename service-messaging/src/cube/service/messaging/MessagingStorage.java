@@ -71,6 +71,7 @@ public class MessagingStorage implements Storagable {
             new StorageField("lts", LiteralBase.LONG),
             new StorageField("rts", LiteralBase.LONG),
             new StorageField("state", LiteralBase.INT),
+            new StorageField("scope", LiteralBase.INT),
             new StorageField("device", LiteralBase.STRING),
             new StorageField("payload", LiteralBase.STRING),
             new StorageField("attachment", LiteralBase.STRING)
@@ -201,6 +202,7 @@ public class MessagingStorage implements Storagable {
                         new StorageField("lts", LiteralBase.LONG, message.getLocalTimestamp()),
                         new StorageField("rts", LiteralBase.LONG, message.getRemoteTimestamp()),
                         new StorageField("state", LiteralBase.INT, message.getState().getCode()),
+                        new StorageField("scope", LiteralBase.INT, message.getScope()),
                         new StorageField("device", LiteralBase.STRING, message.getSourceDevice().toJSON().toString()),
                         new StorageField("payload", LiteralBase.STRING, message.getPayload().toString()),
                         new StorageField("attachment", LiteralBase.STRING,
@@ -258,6 +260,7 @@ public class MessagingStorage implements Storagable {
         Message message = new Message(domain, map.get("id").getLong(), map.get("from").getLong(),
                 map.get("to").getLong(), map.get("source").getLong(), map.get("owner").getLong(),
                 map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
+                map.get("scope").getInt(),
                 device, payload, attachment);
         return message;
     }
@@ -297,6 +300,7 @@ public class MessagingStorage implements Storagable {
             Message message = new Message(domain, map.get("id").getLong(), map.get("from").getLong(),
                     map.get("to").getLong(), map.get("source").getLong(), map.get("owner").getLong(),
                     map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
+                    map.get("scope").getInt(),
                     device, payload, attachment);
 
             result.add(message);
@@ -348,6 +352,7 @@ public class MessagingStorage implements Storagable {
             Message message = new Message(domain, map.get("id").getLong(), map.get("from").getLong(),
                     map.get("to").getLong(), map.get("source").getLong(), map.get("owner").getLong(),
                     map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
+                    map.get("scope").getInt(),
                     device, payload, attachment);
 
             if (message.getOwner().longValue() == contactId.longValue()) {
@@ -402,6 +407,7 @@ public class MessagingStorage implements Storagable {
             Message message = new Message(domain, map.get("id").getLong(), map.get("from").getLong(),
                     map.get("to").getLong(), map.get("source").getLong(), map.get("owner").getLong(),
                     map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
+                    map.get("scope").getInt(),
                     device, payload, attachment);
 
             if (message.getState() == MessageState.Read || message.getState() == MessageState.Sent) {
@@ -529,6 +535,9 @@ public class MessagingStorage implements Storagable {
                             Constraint.NOT_NULL, Constraint.DEFAULT_0
                     }),
                     new StorageField("state", LiteralBase.INT, new Constraint[] {
+                            Constraint.NOT_NULL, Constraint.DEFAULT_0
+                    }),
+                    new StorageField("scope", LiteralBase.INT, new Constraint[] {
                             Constraint.NOT_NULL, Constraint.DEFAULT_0
                     }),
                     new StorageField("device", LiteralBase.STRING, new Constraint[] {

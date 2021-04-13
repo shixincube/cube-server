@@ -33,6 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Message;
 import cube.common.state.MessagingStateCode;
@@ -79,6 +80,23 @@ public class PushTask extends ServiceTask {
         if (null == device) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.NoDevice.code, packet.data));
+            markResponseTime();
+            return;
+        }
+
+        // 校验发件人是否与令牌一致
+        Contact contact = ContactManager.getInstance().getContact(tokenCode);
+        if (null == contact) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, MessagingStateCode.NoContact.code, packet.data));
+            markResponseTime();
+            return;
+        }
+
+        if (contact.getId().longValue() != message.getFrom().longValue()) {
+            // 联系人身份信息不一致
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, MessagingStateCode.InvalidParameter.code, packet.data));
             markResponseTime();
             return;
         }

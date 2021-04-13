@@ -63,6 +63,13 @@ public class Message extends Entity implements Comparable<Message> {
     private Long owner = 0L;
 
     /**
+     * 消息作用域。
+     * 0 - 无限制
+     * 1 - 仅自己可见
+     */
+    private int scope = 0;
+
+    /**
      * 消息生成时的源时间戳。
      */
     private long localTimestamp;
@@ -106,6 +113,8 @@ public class Message extends Entity implements Comparable<Message> {
         this.remoteTimestamp = packet.data.getLong("rts");
         this.state = MessageState.parse(packet.data.getInt("state"));
 
+        this.scope = packet.data.has("scope") ? packet.data.getInt("scope") : 0;
+
         this.payload = packet.data.getJSONObject("payload");
 
         if (packet.data.has("attachment")) {
@@ -135,6 +144,10 @@ public class Message extends Entity implements Comparable<Message> {
             this.localTimestamp = json.getLong("lts");
             this.remoteTimestamp = json.getLong("rts");
             this.state = MessageState.parse(json.getInt("state"));
+
+            if (json.has("scope")) {
+                this.scope = json.getInt("scope");
+            }
 
             if (json.has("owner")) {
                 this.owner = json.getLong("owner");
@@ -174,6 +187,7 @@ public class Message extends Entity implements Comparable<Message> {
         this.localTimestamp = src.localTimestamp;
         this.remoteTimestamp = src.remoteTimestamp;
         this.state = src.state;
+        this.scope = src.scope;
         this.payload = src.payload;
         this.attachment = src.attachment;
         this.sourceDevice = src.sourceDevice;
@@ -198,7 +212,7 @@ public class Message extends Entity implements Comparable<Message> {
      * @param attachment 指定消息附件。
      */
     public Message(String domain, Long id, Long from, Long to, Long source, Long owner,
-                   Long localTimestamp, Long remoteTimestamp, int state,
+                   Long localTimestamp, Long remoteTimestamp, int state, int scope,
                    JSONObject sourceDevice, JSONObject payload, JSONObject attachment) {
         super(id, domain);
         this.from = from;
@@ -208,6 +222,7 @@ public class Message extends Entity implements Comparable<Message> {
         this.localTimestamp = localTimestamp;
         this.remoteTimestamp = remoteTimestamp;
         this.state = MessageState.parse(state);
+        this.scope = scope;
         this.sourceDevice = new Device(sourceDevice);
 
         this.payload = payload;
@@ -353,6 +368,15 @@ public class Message extends Entity implements Comparable<Message> {
     }
 
     /**
+     * 获取消息作用域。
+     *
+     * @return 返回消息作用域。
+     */
+    public int getScope() {
+        return this.scope;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -374,30 +398,27 @@ public class Message extends Entity implements Comparable<Message> {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("domain", this.domain.getName());
-            json.put("id", this.id.longValue());
-            json.put("from", this.from.longValue());
-            json.put("to", this.to.longValue());
-            json.put("source", this.source.longValue());
-            json.put("owner", this.owner.longValue());
-            json.put("lts", this.localTimestamp);
-            json.put("rts", this.remoteTimestamp);
-            json.put("state", this.state.getCode());
+        json.put("domain", this.domain.getName());
+        json.put("id", this.id.longValue());
+        json.put("from", this.from.longValue());
+        json.put("to", this.to.longValue());
+        json.put("source", this.source.longValue());
+        json.put("owner", this.owner.longValue());
+        json.put("lts", this.localTimestamp);
+        json.put("rts", this.remoteTimestamp);
+        json.put("state", this.state.getCode());
+        json.put("scope", this.scope);
 
-            if (null != this.payload) {
-                json.put("payload", this.payload);
-            }
+        if (null != this.payload) {
+            json.put("payload", this.payload);
+        }
 
-            if (null != this.attachment) {
-                json.put("attachment", this.attachment.toJSON());
-            }
+        if (null != this.attachment) {
+            json.put("attachment", this.attachment.toJSON());
+        }
 
-            if (null != this.sourceDevice) {
-                json.put("device", this.sourceDevice.toCompactJSON());
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (null != this.sourceDevice) {
+            json.put("device", this.sourceDevice.toCompactJSON());
         }
         return json;
     }
