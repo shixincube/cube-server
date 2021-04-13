@@ -39,6 +39,7 @@ import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
 import cube.service.messaging.MessagingService;
+import cube.service.messaging.PushResult;
 import org.json.JSONException;
 
 /**
@@ -84,17 +85,12 @@ public class PushTask extends ServiceTask {
 
         // 将消息推送到消息中心
         MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingService.NAME);
-        Message response = messagingService.pushMessage(message, device);
-        if (null == response) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, MessagingStateCode.Failure.code, packet.data));
-            markResponseTime();
-            return;
-        }
+        PushResult result = messagingService.pushMessage(message, device);
+        Message response = result.message;
 
         // 应答
         this.cellet.speak(this.talkContext
-                , this.makeResponse(action, packet, MessagingStateCode.Ok.code, response.toCompactJSON()));
+                , this.makeResponse(action, packet, result.stateCode.code, response.toCompactJSON()));
         markResponseTime();
     }
 }

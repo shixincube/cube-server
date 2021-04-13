@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -62,9 +62,14 @@ public enum MessageState {
     Deleted(40),
 
     /**
-     * 被阻止。
+     * 被阻止发送。
      */
-    Blocked(50),
+    SendBlocked(51),
+
+    /**
+     * 被阻止接收。
+     */
+    ReceiveBlocked(52),
 
     /**
      * 消息处理失败。
@@ -100,6 +105,10 @@ public enum MessageState {
                 return Recalled;
             case 40:
                 return Deleted;
+            case 51:
+                return SendBlocked;
+            case 52:
+                return ReceiveBlocked;
             case 1:
                 return Fault;
             default:

@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,83 +24,22 @@
  * SOFTWARE.
  */
 
-package cube.common.state;
+package cube.service.messaging;
+
+import cube.common.entity.Message;
+import cube.common.state.MessagingStateCode;
 
 /**
- * 消息模块状态码。
+ * 推送消息的结果记录。
  */
-public enum MessagingStateCode {
+public class PushResult {
 
-    /**
-     * 成功。
-     */
-    Ok(0),
+    public final Message message;
 
-    /**
-     * 无效参数。
-     */
-    InvalidParameter(5),
+    public final MessagingStateCode stateCode;
 
-    /**
-     * 遇到故障。
-     */
-    Failure(9),
-
-    /**
-     * 无效域信息。
-     */
-    InvalidDomain(11),
-
-    /**
-     * 数据结构错误。
-     */
-    DataStructureError(12),
-
-    /**
-     * 没有域信息。
-     */
-    NoDomain(13),
-
-    /**
-     * 没有设备信息。
-     */
-    NoDevice(14),
-
-    /**
-     * 没有找到联系人。
-     */
-    NoContact(15),
-
-    /**
-     * 没有找到群组。
-     */
-    NoGroup(16),
-
-    /**
-     * 附件错误。
-     */
-    AttachmentError(17),
-
-    /**
-     * 群组错误。
-     */
-    GroupError(18),
-
-    /**
-     * 被对方阻止。
-     */
-    BeBlocked(30),
-
-    /**
-     * 未知的状态。
-     */
-    Unknown(99)
-
-    ;
-
-    public final int code;
-
-    MessagingStateCode(int code) {
-        this.code = code;
+    public PushResult(Message message, MessagingStateCode stateCode) {
+        this.message = message;
+        this.stateCode = stateCode;
     }
 }
