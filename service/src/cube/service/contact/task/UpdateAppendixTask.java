@@ -82,8 +82,19 @@ public class UpdateAppendixTask extends ServiceTask {
             ContactAppendix appendix = ContactManager.getInstance().getAppendix(target);
 
             // 更新备注名
-            String remarkName = data.getString("remarkName");
-            appendix.remarkName(contact, remarkName);
+            if (data.has("remarkName")) {
+                String remarkName = data.getString("remarkName");
+                appendix.remarkName(contact, remarkName);
+            }
+
+            if (id.longValue() == contact.getId().longValue()) {
+                if (data.has("assignedData")) {
+                    JSONObject map = data.getJSONObject("assignedData");
+                    for (String key : map.keySet()) {
+                        appendix.setAssignedData(key, map.getJSONObject(key));
+                    }
+                }
+            }
 
             ContactManager.getInstance().updateAppendix(appendix);
 

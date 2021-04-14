@@ -442,6 +442,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     /**
      * 拉取指定时间戳到当前时间段的所有消息内容。
      *
+     * @param domain
      * @param contactId
      * @param beginningTime
      * @param endingTime
