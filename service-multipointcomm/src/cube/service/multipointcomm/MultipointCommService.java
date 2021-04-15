@@ -273,6 +273,20 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
         if (current.isPrivate()) {
             // 私域
+
+            // 判断是否被联系人阻止
+            boolean blocked = ContactManager.getInstance().hasBlocked(proposer.getDomain().getName(), proposer.getId(), target.getId());
+            if (blocked) {
+                // 主叫端阻止了被叫端
+                return MultipointCommStateCode.BeCallerBlocked;
+            }
+
+            blocked = ContactManager.getInstance().hasBlocked(proposer.getDomain().getName(), target.getId(), proposer.getId());
+            if (blocked) {
+                // 被叫端阻止了主叫端
+                return MultipointCommStateCode.BeCalleeBlocked;
+            }
+
             if (current.isCalling(proposer)) {
                 // 主叫忙
                 return MultipointCommStateCode.CallerBusy;

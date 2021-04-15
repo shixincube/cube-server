@@ -122,6 +122,16 @@ public enum MultipointCommStateCode {
     CallBye(33),
 
     /**
+     * 被主叫阻止。
+     */
+    BeCallerBlocked(41),
+
+    /**
+     * 被被叫阻止。
+     */
+    BeCalleeBlocked(42),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)
