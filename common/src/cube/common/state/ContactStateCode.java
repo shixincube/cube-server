@@ -42,6 +42,11 @@ public enum ContactStateCode {
     InvalidParameter(5),
 
     /**
+     * 数据结构错误。
+     */
+    DataStructureError(8),
+
+    /**
      * 遇到故障。
      */
     Failure(9),

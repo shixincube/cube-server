@@ -40,6 +40,7 @@ import cube.common.entity.GroupAppendix;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -92,6 +93,18 @@ public class UpdateAppendixTask extends ServiceTask {
                     JSONObject map = data.getJSONObject("assignedData");
                     for (String key : map.keySet()) {
                         appendix.setAssignedData(key, map.getJSONObject(key));
+                    }
+                }
+                else if (data.has("assignedKey") && data.has("assignedValue")) {
+                    try {
+                        String key = data.getString("assignedKey");
+                        JSONObject value = data.getJSONObject("assignedValue");
+                        appendix.setAssignedData(key, value);
+                    } catch (JSONException e) {
+                        this.cellet.speak(this.talkContext,
+                                this.makeResponse(action, packet, ContactStateCode.DataStructureError.code, data));
+                        markResponseTime();
+                        return;
                     }
                 }
             }
