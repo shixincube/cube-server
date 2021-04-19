@@ -217,7 +217,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
      * @param device
      * @return
      */
-    public MultipointCommStateCode applyEnter(CommField commField, Contact contact, Device device) {
+    public MultipointCommStateCode applyJoin(CommField commField, Contact contact, Device device) {
         CommField current = null;
         if (commField.isPrivate()) {
             current = this.commFieldMap.get(commField.getId());
@@ -238,7 +238,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             CommFieldEndpoint endpoint = new CommFieldEndpoint(endpointId, contact, device);
             current.addEndpoint(endpoint);
 
-            Logger.i(this.getClass(), "#applyEnter() - " + contact.getId() + " - " + device.toString());
+            Logger.i(this.getClass(), "#applyJoin() - " + contact.getId() + " - " + device.toString());
         }
         else {
             // TODO
@@ -893,7 +893,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             CommFieldUpdate update = new CommFieldUpdate(commField, endpoint);
             ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
-                    MultipointCommAction.Entered.name,
+                    MultipointCommAction.Arrived.name,
                     update.toJSON());
             event.setContext((new TargetContext(target.getContact(), target.getDevice())).toJSON());
             this.contactsAdapter.publish(target.getContact().getUniqueKey(), event.toJSON());
@@ -1078,7 +1078,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                     }
                 }
             }
-            else if (MultipointCommAction.Entered.name.equals(eventName) ||
+            else if (MultipointCommAction.Arrived.name.equals(eventName) ||
                     MultipointCommAction.Left.name.equals(eventName)) {
                 JSONObject context = event.getContext();
                 TargetContext target = new TargetContext(context);

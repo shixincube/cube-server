@@ -87,9 +87,9 @@ public enum MultipointCommAction {
     ApplyCall("applyCall"),
 
     /**
-     * 申请进入场域。
+     * 申请加入场域。
      */
-    ApplyEnter("applyEnter"),
+    ApplyJoin("applyJoin"),
 
     /**
      * 执行申请终止。
@@ -99,7 +99,7 @@ public enum MultipointCommAction {
     /**
      * 终端节点进入。
      */
-    Entered("entered"),
+    Arrived("arrived"),
 
     /**
      * 终端节点退出。

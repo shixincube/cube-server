@@ -98,8 +98,8 @@ public class MultipointCommServiceCellet extends AbstractCellet {
             this.executor.execute(new ApplyCallTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (MultipointCommAction.ApplyEnter.name.equals(action)) {
-            this.executor.execute(new ApplyEnterTask(this, talkContext, primitive,
+        else if (MultipointCommAction.ApplyJoin.name.equals(action)) {
+            this.executor.execute(new ApplyJoinTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (MultipointCommAction.ApplyTerminate.name.equals(action)) {
