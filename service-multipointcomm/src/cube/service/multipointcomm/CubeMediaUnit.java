@@ -28,11 +28,13 @@ package cube.service.multipointcomm;
 
 import cell.api.Speakable;
 import cell.api.TalkListener;
+import cell.api.TalkService;
 import cell.core.talk.Primitive;
 import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkError;
 import cell.util.log.Logger;
 import cube.common.Packet;
+import cube.common.entity.CommField;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.multipointcomm.signaling.Signaling;
 import cube.service.multipointcomm.signaling.SignalingFactory;
@@ -48,6 +50,8 @@ public class CubeMediaUnit extends AbstractMediaUnit implements TalkListener {
 
     protected final static String CELLET_NAME = "MediaUnit";
 
+    private TalkService talkService;
+
     protected String address;
 
     protected int port;
@@ -58,9 +62,6 @@ public class CubeMediaUnit extends AbstractMediaUnit implements TalkListener {
 
     private ConcurrentHashMap<Long, SignalingBundle> sentSignalings;
 
-    public CubeMediaUnit(String wsUrl) {
-
-    }
 
     /**
      * 构造函数。
@@ -73,6 +74,21 @@ public class CubeMediaUnit extends AbstractMediaUnit implements TalkListener {
         this.port = port;
         this.listener = listener;
         this.sentSignalings = new ConcurrentHashMap<>();
+
+//        this.talkService = talkService;
+//        this.talkService.setListener(MediaUnit.CELLET_NAME, this);
+
+//        this.contactsAdapter = contactsAdapter;
+
+//        for (MediaUnit mediaUnit : this.mediaUnitList) {
+//            mediaUnit.speaker = this.talkService.call(mediaUnit.address, mediaUnit.port);
+//            this.speakableMap.put(mediaUnit.speaker, mediaUnit);
+//        }
+    }
+
+    @Override
+    public void preparePipeline(CommField commField) {
+
     }
 
     @Override

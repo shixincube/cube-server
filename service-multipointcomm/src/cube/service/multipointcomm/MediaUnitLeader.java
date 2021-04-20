@@ -26,7 +26,6 @@
 
 package cube.service.multipointcomm;
 
-import cell.api.TalkService;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.entity.CommField;
@@ -42,15 +41,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MediaUnitLeader implements MediaUnitListener {
 
-    private TalkService talkService;
-
     private List<AbstractMediaUnit> mediaUnitList;
 
     private ConcurrentHashMap<Long, MediaUnitBundle> bundles;
 
-//    private HashMap<Speakable, MediaUnit> speakableMap;
-
-//    private ConcurrentHashMap<Long, MediaUnit> processingMap;
 
     /**
      * 构造函数。
@@ -58,10 +52,6 @@ public class MediaUnitLeader implements MediaUnitListener {
     public MediaUnitLeader() {
         this.mediaUnitList = new ArrayList<>();
         this.bundles = new ConcurrentHashMap<>();
-
-//        this.speakableMap = new HashMap<>();
-
-//        this.processingMap = new ConcurrentHashMap<>();
     }
 
     /**
@@ -70,17 +60,6 @@ public class MediaUnitLeader implements MediaUnitListener {
     public void start(Properties properties) {
         // 读取配置
         this.readConfig(properties);
-
-
-//        this.talkService = talkService;
-//        this.talkService.setListener(MediaUnit.CELLET_NAME, this);
-
-//        this.contactsAdapter = contactsAdapter;
-
-//        for (MediaUnit mediaUnit : this.mediaUnitList) {
-//            mediaUnit.speaker = this.talkService.call(mediaUnit.address, mediaUnit.port);
-//            this.speakableMap.put(mediaUnit.speaker, mediaUnit);
-//        }
     }
 
     /**
@@ -96,12 +75,17 @@ public class MediaUnitLeader implements MediaUnitListener {
         }
 
         this.mediaUnitList.clear();
+    }
 
-//        this.talkService.removeListener(CELLET_NAME);
-
-//        for (MediaUnit mediaUnit : this.mediaUnitList) {
-//            this.talkService.hangup(mediaUnit.address, mediaUnit.port, false);
-//        }
+    /**
+     * 分配媒体单元。
+     *
+     * @param commField
+     * @return
+     */
+    public AbstractMediaUnit assign(CommField commField) {
+        AbstractMediaUnit mediaUnit = this.selectMediaUnit(commField);
+        return mediaUnit;
     }
 
     /**
@@ -131,6 +115,7 @@ public class MediaUnitLeader implements MediaUnitListener {
      */
     private AbstractMediaUnit selectMediaUnit(CommField commField) {
         MediaUnitBundle bundle = this.bundles.get(commField.getId());
+
         if (null == bundle) {
             // 随机媒体单元，需要通过服务能力进行选择
             int index = Utils.randomInt(0, this.mediaUnitList.size() - 1);
@@ -174,5 +159,11 @@ public class MediaUnitLeader implements MediaUnitListener {
 //        this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());
 
         return signaling;
+    }
+
+    public void onTick(long now) {
+        for (AbstractMediaUnit mediaUnit : this.mediaUnitList) {
+            mediaUnit.onTick(now);
+        }
     }
 }

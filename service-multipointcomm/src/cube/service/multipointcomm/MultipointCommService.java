@@ -165,6 +165,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 fiter.remove();
             }
         }
+
+        this.mediaUnitLeader.onTick(now);
     }
 
     private Properties loadConfig() {
@@ -262,19 +264,14 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         return MultipointCommStateCode.Ok;
     }
 
-    public MultipointCommStateCode applyCall(CommField commField, Contact proposer, List<Contact> targetList) {
-        return MultipointCommStateCode.Ok;
-    }
-
     /**
      * 申请呼叫。
      *
      * @param commField
      * @param proposer
-     * @param target
      * @return
      */
-    public MultipointCommStateCode applyCall(CommField commField, Contact proposer, Contact target) {
+    public MultipointCommStateCode applyCall(CommField commField, Contact proposer) {
         CommField current = null;
         if (commField.isPrivate()) {
             current = this.commFieldMap.get(commField.getId());
@@ -292,6 +289,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
         if (current.isPrivate()) {
             // 私域
+
+            Contact target = commField.getCallee();
 
             // 判断是否被联系人阻止
             boolean blocked = ContactManager.getInstance().hasBlocked(proposer.getDomain().getName(), proposer.getId(), target.getId());
@@ -340,10 +339,14 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             return MultipointCommStateCode.Ok;
         }
         else {
-            // TODO
-        }
+            // 分配媒体单元
+            AbstractMediaUnit mediaUnit = this.mediaUnitLeader.assign(commField);
 
-        return MultipointCommStateCode.Ok;
+            // 准备通道
+            mediaUnit.preparePipeline(commField);
+
+            return MultipointCommStateCode.Ok;
+        }
     }
 
     /**

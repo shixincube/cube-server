@@ -77,9 +77,9 @@ public class CommField extends Entity {
     private ConcurrentHashMap<Long, ScheduledFuture<?>> timeoutFutureMap;
 
     /**
-     * 当前场域内的通话关系清单。
+     * 当前场域内的通话关系。
      */
-    private List<BoundCalling> boundCallingList;
+    private BoundCalling boundCalling;
 
     /**
      * 构造函数。
@@ -96,7 +96,6 @@ public class CommField extends Entity {
         this.invitees = new Vector<>();
 
         this.fieldEndpoints = new ConcurrentHashMap<>();
-        this.boundCallingList = new Vector<>();
     }
 
     /**
@@ -110,11 +109,14 @@ public class CommField extends Entity {
         this.invitees = new Vector<>();
 
         this.fieldEndpoints = new ConcurrentHashMap<>();
-        this.boundCallingList = new Vector<>();
 
         this.id = json.getLong("id");
         this.domain = new Domain(json.getString("domain"));
         this.founder = new Contact(json.getJSONObject("founder"), this.domain);
+
+        if (json.has("callee")) {
+            this.boundCalling = new BoundCalling(this.founder, new Contact(json.getJSONObject("callee"), this.domain));
+        }
 
         if (json.has("invitees")) {
             JSONArray array = json.getJSONArray("invitees");
@@ -161,10 +163,8 @@ public class CommField extends Entity {
      * @return
      */
     public boolean isCaller(Contact contact) {
-        for (BoundCalling calling : this.boundCallingList) {
-            if (calling.caller.equals(contact)) {
-                return true;
-            }
+        if (null != this.boundCalling) {
+            return this.boundCalling.caller.equals(contact);
         }
 
         return false;
@@ -177,10 +177,8 @@ public class CommField extends Entity {
      * @return
      */
     public boolean isCallee(Contact contact) {
-        for (BoundCalling calling : this.boundCallingList) {
-            if (calling.callee.equals(contact)) {
-                return true;
-            }
+        if (null != this.boundCalling) {
+            return this.boundCalling.callee.equals(contact);
         }
 
         return false;
@@ -193,10 +191,7 @@ public class CommField extends Entity {
      * @param callee
      */
     public void markSingleCalling(Contact caller, Contact callee) {
-        this.boundCallingList.clear();
-
-        BoundCalling calling = new BoundCalling(caller, callee);
-        this.boundCallingList.add(calling);
+        this.boundCalling = new BoundCalling(caller, callee);
     }
 
     /**
@@ -206,28 +201,29 @@ public class CommField extends Entity {
      * @return
      */
     public boolean isCalling(Contact contact) {
-        long now = System.currentTimeMillis();
-        for (BoundCalling calling : this.boundCallingList) {
-            if (now - calling.timestamp > this.defaultTimeout) {
-                continue;
-            }
+        if (null == this.boundCalling) {
+            return false;
+        }
 
-            if (calling.caller.equals(contact)) {
-                if (calling.callerState == MultipointCommStateCode.CallBye) {
-                    continue;
-                }
-                else {
-                    return true;
-                }
-            }
+//        long now = System.currentTimeMillis();
+//        if (now - this.boundCalling.timestamp > this.defaultTimeout) {
+//            return false;
+//        }
 
-            if (calling.callee.equals(contact)) {
-                if (calling.calleeState == MultipointCommStateCode.CallBye) {
-                    continue;
-                }
-                else {
-                    return true;
-                }
+        if (this.boundCalling.caller.equals(contact)) {
+            if (this.boundCalling.callerState == MultipointCommStateCode.CallBye) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+        else if (this.boundCalling.callee.equals(contact)) {
+            if (this.boundCalling.calleeState == MultipointCommStateCode.CallBye) {
+                return false;
+            }
+            else {
+                return true;
             }
         }
 
@@ -241,11 +237,7 @@ public class CommField extends Entity {
      * @return
      */
     public Contact getCaller() {
-        if (this.boundCallingList.isEmpty()) {
-            return null;
-        }
-
-        return this.boundCallingList.get(0).caller;
+        return (null != this.boundCalling) ? this.boundCalling.caller : null;
     }
 
     /**
@@ -255,11 +247,7 @@ public class CommField extends Entity {
      * @return
      */
     public MultipointCommStateCode getCallerState() {
-        if (this.boundCallingList.isEmpty()) {
-            return MultipointCommStateCode.Unknown;
-        }
-
-        return this.boundCallingList.get(0).callerState;
+        return (null != this.boundCalling) ? this.boundCalling.callerState : MultipointCommStateCode.Unknown;
     }
 
     /**
@@ -269,11 +257,9 @@ public class CommField extends Entity {
      * @param state
      */
     public void updateCallerState(MultipointCommStateCode state) {
-        if (this.boundCallingList.isEmpty()) {
-            return;
+        if (null != this.boundCalling) {
+            this.boundCalling.callerState = state;
         }
-
-        this.boundCallingList.get(0).callerState = state;
     }
 
     /**
@@ -283,11 +269,7 @@ public class CommField extends Entity {
      * @return
      */
     public Contact getCallee() {
-        if (this.boundCallingList.isEmpty()) {
-            return null;
-        }
-
-        return this.boundCallingList.get(0).callee;
+        return (null != this.boundCalling) ? this.boundCalling.callee : null;
     }
 
     /**
@@ -297,11 +279,7 @@ public class CommField extends Entity {
      * @return
      */
     public MultipointCommStateCode getCalleeState() {
-        if (this.boundCallingList.isEmpty()) {
-            return MultipointCommStateCode.Unknown;
-        }
-
-        return this.boundCallingList.get(0).calleeState;
+        return (null != this.boundCalling) ? this.boundCalling.calleeState : MultipointCommStateCode.Unknown;
     }
 
     /**
@@ -311,18 +289,16 @@ public class CommField extends Entity {
      * @param state
      */
     public void updateCalleeState(MultipointCommStateCode state) {
-        if (this.boundCallingList.isEmpty()) {
-            return;
+        if (null != this.boundCalling) {
+            this.boundCalling.calleeState = state;
         }
-
-        this.boundCallingList.get(0).calleeState = state;
     }
 
     /**
      * 清空所有呼叫状态。
      */
     public void clearCalling() {
-        this.boundCallingList.clear();
+        this.boundCalling = null;
     }
 
     /**
@@ -358,13 +334,13 @@ public class CommField extends Entity {
     public void clearEndpoint(CommFieldEndpoint endpoint) {
         Contact contact = endpoint.getContact();
 
-        Iterator<BoundCalling> iter = this.boundCallingList.iterator();
-        while (iter.hasNext()) {
-            BoundCalling calling = iter.next();
-            if (calling.caller.equals(contact) || calling.callee.equals(contact)) {
-                iter.remove();
-            }
-        }
+//        Iterator<BoundCalling> iter = this.boundCallingList.iterator();
+//        while (iter.hasNext()) {
+//            BoundCalling calling = iter.next();
+//            if (calling.caller.equals(contact) || calling.callee.equals(contact)) {
+//                iter.remove();
+//            }
+//        }
 
         this.fieldEndpoints.remove(endpoint.getId());
     }

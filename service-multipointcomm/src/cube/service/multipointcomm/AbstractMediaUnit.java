@@ -26,6 +26,8 @@
 
 package cube.service.multipointcomm;
 
+import cube.common.entity.CommField;
+
 /**
  * 抽象的媒体单元。
  */
@@ -34,5 +36,11 @@ public abstract class AbstractMediaUnit {
     public AbstractMediaUnit() {
     }
 
+    public abstract void preparePipeline(CommField commField);
+
     public abstract void destroy();
+
+    public void onTick(long now) {
+
+    }
 }
