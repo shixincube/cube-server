@@ -35,18 +35,16 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.CommField;
-import cube.common.entity.Contact;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.ServiceTask;
 import cube.service.multipointcomm.MultipointCommService;
-import org.json.JSONException;
 
 /**
- * Apply Call 任务。
+ * 创建 CommField 任务。
  */
-public class ApplyCallTask extends ServiceTask {
+public class CreateFieldTask extends ServiceTask {
 
-    public ApplyCallTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public CreateFieldTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -56,14 +54,10 @@ public class ApplyCallTask extends ServiceTask {
         Packet packet = new Packet(action);
 
         CommField field = null;
-        Contact proposer = null;
-        Contact target = null;
 
         try {
-            field = new CommField(packet.data.getJSONObject("field"));
-            proposer = new Contact(packet.data.getJSONObject("proposer"), field.getDomain());
-            target = new Contact(packet.data.getJSONObject("target"), field.getDomain());
-        } catch (JSONException e) {
+            field = new CommField(packet.data);
+        } catch (Exception e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MultipointCommStateCode.InvalidParameter.code, packet.data));
@@ -73,11 +67,11 @@ public class ApplyCallTask extends ServiceTask {
 
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
 
-        // 申请对指定目标进行外呼
-        MultipointCommStateCode state = service.applyCall(field, proposer, target);
+        // 创建场域
+        CommField commField = service.createCommField(field);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, state.code, packet.data));
+                this.makeResponse(action, packet, MultipointCommStateCode.Ok.code, commField.toJSON()));
         markResponseTime();
     }
 }

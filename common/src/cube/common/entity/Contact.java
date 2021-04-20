@@ -28,7 +28,6 @@ package cube.common.entity;
 
 import cell.core.talk.TalkContext;
 import cube.common.Domain;
-import cube.common.UniqueKey;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -38,17 +37,7 @@ import java.util.List;
 /**
  * 联系人实体。
  */
-public class Contact extends Entity {
-
-    /**
-     * 联系人显示名。
-     */
-    private String name;
-
-    /**
-     * 联系携带的上下文 JSON 数据。
-     */
-    private JSONObject context;
+public class Contact extends AbstractContact {
 
     /**
      * 联系人的设备列表。
@@ -63,8 +52,7 @@ public class Contact extends Entity {
      * @param name 显示名。
      */
     public Contact(Long id, String domainName, String name) {
-        super(id, domainName);
-        this.name = name;
+        super(id, domainName, name);
         this.deviceList = new ArrayList<>(1);
     }
 
@@ -76,8 +64,7 @@ public class Contact extends Entity {
      * @param name 显示名。
      */
     public Contact(Long id, Domain domain, String name) {
-        super(id, domain);
-        this.name = name;
+        super(id, domain, name);
         this.deviceList = new ArrayList<>(1);
     }
 
@@ -107,14 +94,9 @@ public class Contact extends Entity {
      * @param domain 指定的域。
      */
     public Contact(JSONObject json, String domain) {
-        super();
+        super(json, domain);
 
         this.deviceList = new ArrayList<>(1);
-
-        this.id = json.getLong("id");
-        this.domain = (null != domain && domain.length() > 1) ? new Domain(domain) : new Domain(json.getString("domain"));
-        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
-        this.name = json.getString("name");
 
         if (json.has("devices")) {
             JSONArray array = json.getJSONArray("devices");
@@ -123,10 +105,6 @@ public class Contact extends Entity {
                 Device device = new Device(devJson);
                 this.addDevice(device);
             }
-        }
-
-        if (json.has("context")) {
-            this.context = json.getJSONObject("context");
         }
     }
 
@@ -137,14 +115,9 @@ public class Contact extends Entity {
      * @param talkContext 关联的 Talk Context 。
      */
     public Contact(JSONObject json, TalkContext talkContext) {
-        super();
+        super(json, null);
 
         this.deviceList = new ArrayList<>(1);
-
-        this.id = json.getLong("id");
-        this.domain = new Domain(json.getString("domain"));
-        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
-        this.name = json.getString("name");
 
         if (json.has("devices")) {
             JSONArray array = json.getJSONArray("devices");
@@ -155,67 +128,12 @@ public class Contact extends Entity {
             }
         }
 
-        if (json.has("context")) {
-            this.context = json.getJSONObject("context");
-        }
-
         // 绑定设备到上下文
         if (json.has("device")) {
             JSONObject deviceJson = json.getJSONObject("device");
             Device device = new Device(deviceJson, talkContext);
             this.addDevice(device);
         }
-    }
-
-    /**
-     * 重置 ID 。
-     *
-     * @param newId
-     */
-    public void resetId(Long newId) {
-        this.id = newId;
-        this.uniqueKey = UniqueKey.make(newId, this.domain);
-    }
-
-    /**
-     * 获取联系人名称。
-     *
-     * @return 返回联系人名称。
-     */
-    public String getName() {
-        return this.name;
-    }
-
-    /**
-     * 设置联系人名称。
-     *
-     * @param name 联系人名称。
-     */
-    public boolean setName(String name) {
-        if (this.name.equals(name)) {
-            return false;
-        }
-
-        this.name = name;
-        return true;
-    }
-
-    /**
-     * 获取联系人上下文数据。
-     *
-     * @return 返回联系人上下文数据。
-     */
-    public JSONObject getContext() {
-        return this.context;
-    }
-
-    /**
-     * 设置联系人上下文数据。
-     *
-     * @param context 联系人上下文数据。
-     */
-    public void setContext(JSONObject context) {
-        this.context = context;
     }
 
     /**
@@ -355,10 +273,7 @@ public class Contact extends Entity {
      */
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id);
-        json.put("domain", this.domain.getName());
-        json.put("name", this.name);
+        JSONObject json = super.toJSON();
 
         if (!this.deviceList.isEmpty()) {
             JSONArray array = new JSONArray();
@@ -369,9 +284,6 @@ public class Contact extends Entity {
             json.put("devices", array);
         }
 
-        if (null != this.context) {
-            json.put("context", this.context);
-        }
         return json;
     }
 
@@ -379,26 +291,6 @@ public class Contact extends Entity {
      * {@inheritDoc}
      */
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id);
-        json.put("domain", this.domain.getName());
-        json.put("name", this.name);
-        if (null != this.context) {
-            json.put("context", this.context);
-        }
-        return json;
-    }
-
-    /**
-     * 仅返回包含 ID 和名称的 JSON 。
-     *
-     * @return 仅返回包含 ID 和名称的 JSON 。
-     */
-    public JSONObject toBasicJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id);
-        json.put("domain", this.domain.getName());
-        json.put("name", this.name);
-        return json;
+        return super.toCompactJSON();
     }
 }

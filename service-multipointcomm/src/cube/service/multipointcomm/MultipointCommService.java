@@ -210,6 +210,18 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     }
 
     /**
+     * 创建场域。
+     *
+     * @param commField
+     * @return
+     */
+    public CommField createCommField(CommField commField) {
+        this.commFieldMap.put(commField.getId(), commField);
+        this.cache.put(new CacheKey(commField.getId()), new CacheValue(commField.toJSON()));
+        return commField;
+    }
+
+    /**
      * 申请终端进入场域。
      *
      * @param commField
@@ -247,8 +259,12 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         return MultipointCommStateCode.Ok;
     }
 
+    public MultipointCommStateCode applyCall(CommField commField, Contact proposer, List<Contact> targetList) {
+        return MultipointCommStateCode.Ok;
+    }
+
     /**
-     * 申请记录呼叫。
+     * 申请呼叫。
      *
      * @param commField
      * @param proposer

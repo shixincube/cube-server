@@ -82,6 +82,11 @@ public enum MultipointCommAction {
     BusyAck("busyAck"),
 
     /**
+     * 创建通讯场域。
+     */
+    CreateField("createField"),
+
+    /**
      * 执行申请主叫。
      */
     ApplyCall("applyCall"),

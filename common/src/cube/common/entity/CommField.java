@@ -30,7 +30,6 @@ import cube.common.Domain;
 import cube.common.UniqueKey;
 import cube.common.state.MultipointCommStateCode;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -63,6 +62,11 @@ public class CommField extends Entity {
     private Contact founder;
 
     /**
+     * 被邀请进行通话的联系人列表。
+     */
+    private List<Contact> invitees;
+
+    /**
      * 场域包含的终端节点。
      */
     private ConcurrentHashMap<Long, CommFieldEndpoint> fieldEndpoints;
@@ -89,6 +93,8 @@ public class CommField extends Entity {
 
         this.founder = founder;
 
+        this.invitees = new Vector<>();
+
         this.fieldEndpoints = new ConcurrentHashMap<>();
         this.boundCallingList = new Vector<>();
     }
@@ -101,25 +107,30 @@ public class CommField extends Entity {
     public CommField(JSONObject json) {
         super();
 
+        this.invitees = new Vector<>();
+
         this.fieldEndpoints = new ConcurrentHashMap<>();
         this.boundCallingList = new Vector<>();
 
-        try {
-            this.id = json.getLong("id");
-            this.domain = new Domain(json.getString("domain"));
-            this.founder = new Contact(json.getJSONObject("founder"), this.domain);
+        this.id = json.getLong("id");
+        this.domain = new Domain(json.getString("domain"));
+        this.founder = new Contact(json.getJSONObject("founder"), this.domain);
 
-            if (json.has("endpoints")) {
-                JSONArray endpoints = json.getJSONArray("endpoints");
-
-                for (int i = 0, size = endpoints.length(); i < size; ++i) {
-                    JSONObject cfeJson = endpoints.getJSONObject(i);
-                    CommFieldEndpoint cfe = new CommFieldEndpoint(cfeJson);
-                    this.fieldEndpoints.put(cfe.getId(), cfe);
-                }
+        if (json.has("invitees")) {
+            JSONArray array = json.getJSONArray("invitees");
+            for (int i = 0; i < array.length(); ++i) {
+                this.invitees.add(new Contact(array.getJSONObject(i)));
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        }
+
+        if (json.has("endpoints")) {
+            JSONArray endpoints = json.getJSONArray("endpoints");
+
+            for (int i = 0, size = endpoints.length(); i < size; ++i) {
+                JSONObject cfeJson = endpoints.getJSONObject(i);
+                CommFieldEndpoint cfe = new CommFieldEndpoint(cfeJson);
+                this.fieldEndpoints.put(cfe.getId(), cfe);
+            }
         }
 
         this.uniqueKey = UniqueKey.make(this.id, this.domain);
@@ -477,32 +488,31 @@ public class CommField extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("id", this.id);
-            json.put("domain", this.domain.getName());
-            json.put("founder", this.founder.toBasicJSON());
+        json.put("id", this.id);
+        json.put("domain", this.domain.getName());
+        json.put("founder", this.founder.toCompactJSON());
 
-            JSONArray array = new JSONArray();
-            for (CommFieldEndpoint cfe : this.fieldEndpoints.values()) {
-                array.put(cfe.toJSON());
-            }
-            json.put("endpoints", array);
-        } catch (JSONException e) {
-            e.printStackTrace();
+        JSONArray array = new JSONArray();
+        for (CommFieldEndpoint cfe : this.fieldEndpoints.values()) {
+            array.put(cfe.toJSON());
         }
+        json.put("endpoints", array);
+
+        array = new JSONArray();
+        for (Contact contact : this.invitees) {
+            array.put(contact.toCompactJSON());
+        }
+        json.put("invitees", array);
+
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("id", this.id);
-            json.put("domain", this.domain.getName());
-            json.put("founder", this.founder.toBasicJSON());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        json.put("id", this.id);
+        json.put("domain", this.domain.getName());
+        json.put("founder", this.founder.toBasicJSON());
         return json;
     }
 

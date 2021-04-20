@@ -56,6 +56,11 @@ public class GroupAppendix extends Entity {
     private HashMap<Long, JSONObject> contexts;
 
     /**
+     * 当前有效的通讯 ID 。
+     */
+    private Long commId;
+
+    /**
      * 入群申请人列表。
      */
     private List<JSONObject> applicants;
@@ -74,6 +79,8 @@ public class GroupAppendix extends Entity {
         this.remarks = new HashMap<>();
         this.contexts = new HashMap<>();
         this.applicants = new ArrayList<>();
+
+        this.commId = 0L;
     }
 
     /**
@@ -91,6 +98,8 @@ public class GroupAppendix extends Entity {
         this.remarks = new HashMap<>();
         this.contexts = new HashMap<>();
         this.applicants = new ArrayList<>();
+
+        this.commId = 0L;
 
         if (json.has("notice")) {
             this.notice = json.getString("notice");
@@ -131,6 +140,10 @@ public class GroupAppendix extends Entity {
             for (int i = 0; i < array.length(); ++i) {
                 this.applicants.add(array.getJSONObject(i));
             }
+        }
+
+        if (json.has("commId")) {
+            this.commId = json.getLong("commId");
         }
     }
 
@@ -281,6 +294,8 @@ public class GroupAppendix extends Entity {
             json.put("applicants", array);
         }
 
+        json.put("commId", this.commId.longValue());
+
         return json;
     }
 
@@ -323,6 +338,8 @@ public class GroupAppendix extends Entity {
             applicantArray.put(applicantJson);
         }
         json.put("applicants", applicantArray);
+
+        json.put("commId", this.commId.longValue());
 
         return json;
     }

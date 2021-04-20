@@ -36,7 +36,7 @@ import java.util.Vector;
 /**
  * 群组实体。
  */
-public class Group extends Contact implements Comparable<Group> {
+public class Group extends AbstractContact implements Comparable<Group> {
 
     /**
      * 群的群组。
@@ -92,7 +92,7 @@ public class Group extends Contact implements Comparable<Group> {
      * @param json JSON 形式的群组数据。
      */
     public Group(JSONObject json) {
-        super(json);
+        super(json, null);
         this.members = new Vector<>();
 
         this.tag = json.getString("tag");
@@ -370,9 +370,6 @@ public class Group extends Contact implements Comparable<Group> {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        if (json.has("devices")) {
-            json.remove("devices");
-        }
 
         JSONArray array = new JSONArray();
         for (Contact contact : this.members) {
