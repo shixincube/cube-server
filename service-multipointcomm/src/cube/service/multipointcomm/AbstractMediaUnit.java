@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,19 +26,13 @@
 
 package cube.service.multipointcomm;
 
-import cube.common.entity.CommField;
-
 /**
- * 媒体单元对应关系。
+ * 抽象的媒体单元。
  */
-public class MediaUnitBundle {
+public abstract class AbstractMediaUnit {
 
-    protected AbstractMediaUnit mediaUnit;
-
-    protected CommField commField;
-
-    public MediaUnitBundle(AbstractMediaUnit mediaUnit, CommField commField) {
-        this.mediaUnit = mediaUnit;
-        this.commField = commField;
+    public AbstractMediaUnit() {
     }
+
+    public abstract void destroy();
 }

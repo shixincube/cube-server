@@ -26,25 +26,12 @@
 
 package cube.service.multipointcomm;
 
-import cell.adapter.CelletAdapter;
-import cell.api.Speakable;
-import cell.api.TalkListener;
 import cell.api.TalkService;
-import cell.core.talk.Primitive;
-import cell.core.talk.PrimitiveInputStream;
-import cell.core.talk.TalkError;
-import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
-import cell.util.log.Logger;
-import cube.common.ModuleEvent;
-import cube.common.Packet;
 import cube.common.entity.CommField;
-import cube.common.entity.Contact;
-import cube.common.entity.Device;
 import cube.service.multipointcomm.signaling.Signaling;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,58 +39,64 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 媒体单元的主机。
  */
-public class MediaUnitLeader implements TalkListener, MediaUnitListener {
-
-    private final static String CELLET_NAME = "MediaUnit";
+public class MediaUnitLeader implements MediaUnitListener {
 
     private TalkService talkService;
 
-    private CelletAdapter contactsAdapter;
-
-    private List<MediaUnit> mediaUnitList;
-
-    private HashMap<Speakable, MediaUnit> speakableMap;
+    private List<AbstractMediaUnit> mediaUnitList;
 
     private ConcurrentHashMap<Long, MediaUnitBundle> bundles;
 
-    private ConcurrentHashMap<Long, MediaUnit> processingMap;
+//    private HashMap<Speakable, MediaUnit> speakableMap;
+
+//    private ConcurrentHashMap<Long, MediaUnit> processingMap;
 
     /**
      * 构造函数。
      */
     public MediaUnitLeader() {
         this.mediaUnitList = new ArrayList<>();
-        this.speakableMap = new HashMap<>();
         this.bundles = new ConcurrentHashMap<>();
-        this.processingMap = new ConcurrentHashMap<>();
+
+//        this.speakableMap = new HashMap<>();
+
+//        this.processingMap = new ConcurrentHashMap<>();
     }
 
     /**
      * 启动。
-     *
-     * @param talkService
      */
-    public void start(TalkService talkService, CelletAdapter contactsAdapter) {
-        this.talkService = talkService;
-        this.talkService.setListener(CELLET_NAME, this);
+    public void start(Properties properties) {
+        // 读取配置
+        this.readConfig(properties);
 
-        this.contactsAdapter = contactsAdapter;
 
-        for (MediaUnit mediaUnit : this.mediaUnitList) {
-            mediaUnit.speaker = this.talkService.call(mediaUnit.address, mediaUnit.port);
-            this.speakableMap.put(mediaUnit.speaker, mediaUnit);
-        }
+//        this.talkService = talkService;
+//        this.talkService.setListener(MediaUnit.CELLET_NAME, this);
+
+//        this.contactsAdapter = contactsAdapter;
+
+//        for (MediaUnit mediaUnit : this.mediaUnitList) {
+//            mediaUnit.speaker = this.talkService.call(mediaUnit.address, mediaUnit.port);
+//            this.speakableMap.put(mediaUnit.speaker, mediaUnit);
+//        }
     }
 
     /**
      * 停止。
      */
     public void stop() {
-        this.talkService.removeListener(CELLET_NAME);
-
-        for (MediaUnit mediaUnit : this.mediaUnitList) {
-            this.talkService.hangup(mediaUnit.address, mediaUnit.port, false);
+        for (AbstractMediaUnit mu : this.mediaUnitList) {
+            mu.destroy();
         }
+
+        this.mediaUnitList.clear();
+
+//        this.talkService.removeListener(CELLET_NAME);
+
+//        for (MediaUnit mediaUnit : this.mediaUnitList) {
+//            this.talkService.hangup(mediaUnit.address, mediaUnit.port, false);
+//        }
     }
 
     /**
@@ -113,7 +106,6 @@ public class MediaUnitLeader implements TalkListener, MediaUnitListener {
      * @param signaling
      */
     public void dispatch(CommField commField, Signaling signaling) {
-        this.dispatch(commField, signaling, null);
     }
 
     /**
@@ -124,11 +116,6 @@ public class MediaUnitLeader implements TalkListener, MediaUnitListener {
      * @param signalingCallback
      */
     public void dispatch(CommField commField, Signaling signaling, SignalingCallback signalingCallback) {
-        // 选择媒体单元
-        MediaUnit mediaUnit = this.selectMediaUnit(commField);
-
-        // 向媒体单元发送信令
-        this.sendSignaling(mediaUnit, signaling, signalingCallback);
     }
 
     /**
@@ -137,12 +124,12 @@ public class MediaUnitLeader implements TalkListener, MediaUnitListener {
      * @param commField
      * @return
      */
-    private MediaUnit selectMediaUnit(CommField commField) {
+    private AbstractMediaUnit selectMediaUnit(CommField commField) {
         MediaUnitBundle bundle = this.bundles.get(commField.getId());
         if (null == bundle) {
             // 随机媒体单元，需要通过服务能力进行选择
             int index = Utils.randomInt(0, this.mediaUnitList.size() - 1);
-            MediaUnit mediaUnit = this.mediaUnitList.get(index);
+            AbstractMediaUnit mediaUnit = this.mediaUnitList.get(index);
             bundle = new MediaUnitBundle(mediaUnit, commField);
             this.bundles.put(commField.getId(), bundle);
         }
@@ -153,93 +140,34 @@ public class MediaUnitLeader implements TalkListener, MediaUnitListener {
     /**
      * 发送信令给媒体单元。
      *
-     * @param mediaUnit
-     * @param signaling
-     * @param signalingCallback
      */
-    private void sendSignaling(MediaUnit mediaUnit, Signaling signaling, SignalingCallback signalingCallback) {
-        Packet packet = new Packet(MediaUnitAction.Signaling.name, signaling.toJSON());
-        if (mediaUnit.transmit(packet, signaling, signalingCallback)) {
-            this.processingMap.put(packet.sn, mediaUnit);
-        }
-    }
+//    private void sendSignaling(MediaUnit mediaUnit, Signaling signaling, SignalingCallback signalingCallback) {
+//        Packet packet = new Packet(MediaUnitAction.Signaling.name, signaling.toJSON());
+//        if (mediaUnit.transmit(packet, signaling, signalingCallback)) {
+//            this.processingMap.put(packet.sn, mediaUnit);
+//        }
+//    }
 
-    protected void readConfig(Properties properties) {
+    private void readConfig(Properties properties) {
         // 读取 Unit 配置
         for (int i = 1; i <= 50; ++i) {
-            String keyAddress = "unit." + i + ".address";
-            if (properties.containsKey(keyAddress)) {
-                String keyPort = "unit." + i + ".port";
-                String address = properties.getProperty(keyAddress);
-                int port = Integer.parseInt(properties.getProperty(keyPort, "7777"));
-
-                MediaUnit unit = new MediaUnit(address, port, this);
-                this.mediaUnitList.add(unit);
+            String keyUrl = "unit." + i + ".kms.url";
+            if (properties.containsKey(keyUrl)) {
+                KurentoMediaUnit kurentoMediaUnit = new KurentoMediaUnit(properties.getProperty(keyUrl));
+                this.mediaUnitList.add(kurentoMediaUnit);
             }
         }
     }
 
     @Override
     public Signaling onSignaling(Signaling signaling) {
-        Contact contact = signaling.getContact();
-
-        // 将信令推送到集群
-        ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
-                signaling.getName(), signaling.toJSON());
-        this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());
+//        Contact contact = signaling.getContact();
+//
+//        // 将信令推送到集群
+//        ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
+//                signaling.getName(), signaling.toJSON());
+//        this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());
 
         return signaling;
-    }
-
-    @Override
-    public void onListened(Speakable speaker, String cellet, Primitive primitive) {
-        ActionDialect actionDialect = new ActionDialect(primitive);
-        Packet packet = new Packet(actionDialect);
-        MediaUnit unit = this.processingMap.remove(packet.sn);
-        if (null == unit) {
-            unit = this.speakableMap.get(speaker);
-        }
-
-        if (null != unit) {
-            unit.receive(packet);
-        }
-        else {
-            Logger.e(this.getClass(), "Can NOT find media unit: " + speaker.getRemoteAddress().getHostString());
-        }
-    }
-
-    @Override
-    public void onListened(Speakable speaker, String cellet, PrimitiveInputStream primitiveInputStream) {
-        // Nothing
-    }
-
-    @Override
-    public void onSpoke(Speakable speaker, String cellet, Primitive primitive) {
-        // Nothing
-    }
-
-    @Override
-    public void onAck(Speakable speaker, String cellet, Primitive primitive) {
-        // Nothing
-    }
-
-    @Override
-    public void onSpeakTimeout(Speakable speaker, String cellet, Primitive primitive) {
-        // Nothing
-    }
-
-    @Override
-    public void onContacted(Speakable speaker) {
-        // Nothing
-    }
-
-    @Override
-    public void onQuitted(Speakable speaker) {
-        // Nothing
-    }
-
-    @Override
-    public void onFailed(Speakable speaker, TalkError talkError) {
-        // Nothing
     }
 }

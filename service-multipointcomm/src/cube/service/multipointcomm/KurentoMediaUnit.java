@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,19 +26,27 @@
 
 package cube.service.multipointcomm;
 
-import cube.common.entity.CommField;
+import cell.util.log.Logger;
+import org.kurento.client.KurentoClient;
 
 /**
- * 媒体单元对应关系。
+ * Kurento 单元。
  */
-public class MediaUnitBundle {
+public final class KurentoMediaUnit extends AbstractMediaUnit {
 
-    protected AbstractMediaUnit mediaUnit;
+    private KurentoClient kurentoClient;
 
-    protected CommField commField;
+    public KurentoMediaUnit(String url) {
+        try {
+            this.kurentoClient = KurentoClient.create(url);
+        }
+        catch (Exception e) {
+            Logger.e(this.getClass(), "", e);
+        }
+    }
 
-    public MediaUnitBundle(AbstractMediaUnit mediaUnit, CommField commField) {
-        this.mediaUnit = mediaUnit;
-        this.commField = commField;
+    @Override
+    public void destroy() {
+        this.kurentoClient.destroy();
     }
 }

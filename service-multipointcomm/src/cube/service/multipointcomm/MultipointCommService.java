@@ -128,9 +128,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
         // 读取 Media Unit 配置
         Properties properties = this.loadConfig();
-        this.mediaUnitLeader.readConfig(properties);
-
-        this.mediaUnitLeader.start(this.getKernel().getNucleus().getTalkService(), this.contactsAdapter);
+        this.mediaUnitLeader.start(properties);
     }
 
     @Override
