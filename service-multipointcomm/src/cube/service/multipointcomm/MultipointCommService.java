@@ -126,9 +126,14 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
         this.cache = this.getKernel().getCache("General");
 
-        // 读取 Media Unit 配置
-        Properties properties = this.loadConfig();
-        this.mediaUnitLeader.start(properties);
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                // 读取 Media Unit 配置
+                Properties properties = loadConfig();
+                mediaUnitLeader.start(properties);
+            }
+        });
     }
 
     @Override
@@ -137,11 +142,11 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             this.contactsAdapter.removeListener(this);
         }
 
-        this.mediaUnitLeader.stop();
-
         this.scheduledExecutor.shutdown();
 
         this.executor.shutdown();
+
+        this.mediaUnitLeader.stop();
     }
 
     @Override

@@ -28,6 +28,7 @@ package cube.service.multipointcomm;
 
 import cell.api.TalkService;
 import cell.util.Utils;
+import cell.util.log.Logger;
 import cube.common.entity.CommField;
 import cube.service.multipointcomm.signaling.Signaling;
 
@@ -87,7 +88,11 @@ public class MediaUnitLeader implements MediaUnitListener {
      */
     public void stop() {
         for (AbstractMediaUnit mu : this.mediaUnitList) {
-            mu.destroy();
+            try {
+                mu.destroy();
+            } catch (Throwable e) {
+                Logger.w(this.getClass(), "stop", e);
+            }
         }
 
         this.mediaUnitList.clear();

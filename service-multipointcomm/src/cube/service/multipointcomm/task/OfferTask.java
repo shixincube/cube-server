@@ -61,6 +61,7 @@ public class OfferTask extends ServiceTask {
         if (null == offer.getSessionDescription()) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MultipointCommStateCode.DataStructureError.code, packet.data));
+            markResponseTime();
             return;
         }
 

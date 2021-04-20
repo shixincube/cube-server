@@ -68,6 +68,7 @@ public class ApplyJoinTask extends ServiceTask {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MultipointCommStateCode.InvalidParameter.code, packet.data));
+            markResponseTime();
             return;
         }
 

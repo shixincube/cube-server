@@ -39,8 +39,7 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
     public KurentoMediaUnit(String url) {
         try {
             this.kurentoClient = KurentoClient.create(url);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Logger.e(this.getClass(), "", e);
         }
     }

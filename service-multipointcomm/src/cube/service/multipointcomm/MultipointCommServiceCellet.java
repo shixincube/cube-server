@@ -94,6 +94,10 @@ public class MultipointCommServiceCellet extends AbstractCellet {
             this.executor.execute(new BusyTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (MultipointCommAction.CreateField.name.equals(action)) {
+            this.executor.execute(new CreateFieldTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (MultipointCommAction.ApplyCall.name.equals(action)) {
             this.executor.execute(new ApplyCallTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
