@@ -35,6 +35,7 @@ import cell.core.talk.TalkError;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.entity.CommField;
+import cube.common.entity.CommFieldEndpoint;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.multipointcomm.signaling.Signaling;
 import cube.service.multipointcomm.signaling.SignalingFactory;
@@ -87,7 +88,12 @@ public class CubeMediaUnit extends AbstractMediaUnit implements TalkListener {
     }
 
     @Override
-    public void preparePipeline(CommField commField) {
+    public void preparePipeline(CommField commField, CommFieldEndpoint endpoint) {
+
+    }
+
+    @Override
+    public void receiveFrom(CommField commField, CommFieldEndpoint endpoint) {
 
     }
 

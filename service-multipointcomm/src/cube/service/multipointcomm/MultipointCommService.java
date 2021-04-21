@@ -131,7 +131,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             public void run() {
                 // 读取 Media Unit 配置
                 Properties properties = loadConfig();
-                mediaUnitLeader.start(properties);
+                mediaUnitLeader.start(MultipointCommService.this, properties);
             }
         });
     }
@@ -314,11 +314,20 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             return MultipointCommStateCode.Ok;
         }
         else {
+            // 更新终端
+            CommFieldEndpoint endpoint = current.getEndpoint(proposer, device);
+            if (null == endpoint) {
+                Long endpointId = this.makeCommFieldEndpointId(proposer, device);
+                endpoint = new CommFieldEndpoint(endpointId, proposer, device);
+                // 添加主叫终端
+                current.addEndpoint(endpoint);
+            }
+
             // 分配媒体单元
             AbstractMediaUnit mediaUnit = this.mediaUnitLeader.assign(commField);
 
             // 准备通道
-            mediaUnit.preparePipeline(commField);
+            mediaUnit.preparePipeline(commField, endpoint);
 
             return MultipointCommStateCode.Ok;
         }
@@ -514,9 +523,6 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         else {
             Logger.i(this.getClass(), "Offer: " + current.getId() + " - " + signaling.getContact().getId());
 
-            // 更新缓存
-            this.cache.put(new CacheKey(current.getId()), new CacheValue(current.toJSON()));
-
             SignalingCallback processCallback = new SignalingCallback() {
                 @Override
                 public void on(MultipointCommStateCode stateCode, Signaling responseSignaling) {
@@ -529,12 +535,12 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                     callback.on(stateCode, responseSignaling);
 
                     // 向场域里的其他终端发送事件
-                    broadcastEnteredEvent(current, current.getEndpoint(signaling.getContact(), signaling.getDevice()));
+//                    broadcastEnteredEvent(current, current.getEndpoint(signaling.getContact(), signaling.getDevice()));
                 }
             };
 
             // 由 Leader 派发信令
-            this.mediaUnitLeader.dispatch(current, signaling, processCallback);
+            this.mediaUnitLeader.dispatch(current, endpoint, signaling, processCallback);
         }
     }
 
@@ -645,7 +651,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             // 更新缓存
             this.cache.put(new CacheKey(current.getId()), new CacheValue(current.toJSON()));
 
-            this.mediaUnitLeader.dispatch(current, signaling, callback);
+            this.mediaUnitLeader.dispatch(current, endpoint, signaling, callback);
         }
     }
 
@@ -703,7 +709,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             }
         }
         else {
-            this.mediaUnitLeader.dispatch(current, signaling);
+            this.mediaUnitLeader.dispatch(current, endpoint, signaling, null);
         }
 
         return MultipointCommStateCode.Ok;
@@ -836,7 +842,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 }
             };
 
-            this.mediaUnitLeader.dispatch(current, signaling, processCallback);
+            this.mediaUnitLeader.dispatch(current, endpoint, signaling, processCallback);
         }
     }
 
@@ -896,7 +902,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             }
         }
         else {
-            this.mediaUnitLeader.dispatch(current, signaling);
+            // TODO
         }
 
         return MultipointCommStateCode.Ok;
@@ -922,6 +928,11 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         else {
             // TODO
         }
+    }
+
+    protected void pushSignaling(CommFieldEndpoint endpoint, Signaling signaling) {
+        ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, signaling.getName(), signaling.toJSON());
+        this.contactsAdapter.publish(endpoint.getContact().getUniqueKey(), event.toJSON());
     }
 
     private void broadcastEnteredEvent(CommField commField, CommFieldEndpoint endpoint) {

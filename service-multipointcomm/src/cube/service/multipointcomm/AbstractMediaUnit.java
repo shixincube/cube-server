@@ -27,6 +27,7 @@
 package cube.service.multipointcomm;
 
 import cube.common.entity.CommField;
+import cube.common.entity.CommFieldEndpoint;
 
 /**
  * 抽象的媒体单元。
@@ -36,7 +37,9 @@ public abstract class AbstractMediaUnit {
     public AbstractMediaUnit() {
     }
 
-    public abstract void preparePipeline(CommField commField);
+    public abstract void preparePipeline(CommField commField, CommFieldEndpoint endpoint);
+
+    public abstract void receiveFrom(CommField commField, CommFieldEndpoint endpoint);
 
     public abstract void destroy();
 

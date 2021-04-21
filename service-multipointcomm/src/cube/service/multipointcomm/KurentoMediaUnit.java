@@ -28,9 +28,8 @@ package cube.service.multipointcomm;
 
 import cell.util.log.Logger;
 import cube.common.entity.CommField;
-import org.kurento.client.Continuation;
-import org.kurento.client.KurentoClient;
-import org.kurento.client.MediaPipeline;
+import cube.common.entity.CommFieldEndpoint;
+import org.kurento.client.*;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,15 +39,26 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class KurentoMediaUnit extends AbstractMediaUnit {
 
-    private long timeout = 60L * 1000L;
+    private final long timeout = 60L * 1000L;
 
-    private String url;
+    private final Portal portal;
+
+    private final String url;
 
     private KurentoClient kurentoClient;
 
-    private ConcurrentHashMap<Long, MediaPipelineWrapper> pipelineMap;
+    /**
+     * Comm Field 对应的 Media Pipeline 。
+     */
+    private final ConcurrentHashMap<Long, MediaPipelineWrapper> pipelineMap;
 
-    public KurentoMediaUnit(String url) {
+    /**
+     * Comm Field Endpoint 对应的 Session
+     */
+    private final ConcurrentHashMap<Long, KurentoSession> endpointSessionMap;
+
+    public KurentoMediaUnit(Portal portal, String url) {
+        this.portal = portal;
         this.url = url;
 
         try {
@@ -58,17 +68,49 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
         }
 
         this.pipelineMap = new ConcurrentHashMap<>();
+        this.endpointSessionMap = new ConcurrentHashMap<>();
     }
 
     @Override
-    public void preparePipeline(CommField commField) {
+    public void preparePipeline(CommField commField, CommFieldEndpoint endpoint) {
         if (null == this.kurentoClient) {
             return;
         }
 
         Logger.i(this.getClass(), "Prepare media pipeline: " + commField.getId() + " - " + commField.getFounder().getId());
-        this.pipelineMap.put(commField.getId(),
-                new MediaPipelineWrapper(commField.getId(), this.kurentoClient.createMediaPipeline()));
+
+        MediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
+        if (null == wrapper) {
+            wrapper = new MediaPipelineWrapper(commField.getId(), this.kurentoClient.createMediaPipeline());
+            this.pipelineMap.put(commField.getId(), wrapper);
+        }
+
+        KurentoSession session = this.endpointSessionMap.get(endpoint.getId());
+        if (null == session) {
+            session = new KurentoSession(this.portal, commField, endpoint, wrapper.pipeline);
+            this.endpointSessionMap.put(endpoint.getId(), session);
+        }
+    }
+
+    @Override
+    public void receiveFrom(CommField commField, CommFieldEndpoint endpoint) {
+        MediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
+        if (null == wrapper) {
+            return;
+        }
+
+//        WebRtcEndpoint rtcEndpoint = this.commEndpointMap.get(endpoint.getId());
+//        if (null == rtcEndpoint) {
+//            rtcEndpoint = new WebRtcEndpoint.Builder(wrapper.pipeline).build();
+//            rtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
+//                @Override
+//                public void onEvent(IceCandidateFoundEvent event) {
+//
+//                }
+//            });
+//
+//            this.commEndpointMap.put(endpoint.getId(), rtcEndpoint);
+//        }
     }
 
     @Override
@@ -86,11 +128,20 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
 
         if (null != this.kurentoClient) {
             this.kurentoClient.destroy();
+            this.kurentoClient = null;
         }
     }
 
     @Override
     public void onTick(long now) {
+        if (null == this.kurentoClient) {
+            try {
+                this.kurentoClient = KurentoClient.create(this.url);
+            } catch (Throwable e) {
+                Logger.w(this.getClass(), "", e);
+            }
+        }
+
         // 删除超时的管道
         Iterator<MediaPipelineWrapper> iter = this.pipelineMap.values().iterator();
         while (iter.hasNext()) {

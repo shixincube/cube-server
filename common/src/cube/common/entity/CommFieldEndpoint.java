@@ -29,7 +29,6 @@ package cube.common.entity;
 import cube.common.Domain;
 import cube.common.UniqueKey;
 import cube.common.state.MultipointCommStateCode;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -136,32 +135,28 @@ public class CommFieldEndpoint extends Entity {
     public CommFieldEndpoint(JSONObject json) {
         super();
 
-        try {
-            this.id = json.getLong("id");
-            this.domain = new Domain(json.getString("domain"));
-            this.contact = new Contact(json.getJSONObject("contact"), this.domain);
-            this.device = new Device(json.getJSONObject("device"));
-            this.name = json.getString("name");
-            this.state = MultipointCommStateCode.match(json.getInt("state"));
+        this.id = json.getLong("id");
+        this.domain = new Domain(json.getString("domain"));
+        this.contact = new Contact(json.getJSONObject("contact"), this.domain);
+        this.device = new Device(json.getJSONObject("device"));
+        this.name = json.getString("name");
+        this.state = MultipointCommStateCode.match(json.getInt("state"));
 
-            if (json.has("description")) {
-                this.sessionDescription = json.getJSONObject("description");
-            }
-
-            if (json.has("constraint")) {
-                this.mediaConstraint = json.getJSONObject("constraint");
-            }
-
-            JSONObject video = json.getJSONObject("video");
-            this.videoEnabled = video.getBoolean("enabled");
-            this.videoStreamEnabled = video.getBoolean("streamEnabled");
-
-            JSONObject audio = json.getJSONObject("audio");
-            this.audioEnabled = audio.getBoolean("enabled");
-            this.audioStreamEnabled = audio.getBoolean("streamEnabled");
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (json.has("description")) {
+            this.sessionDescription = json.getJSONObject("description");
         }
+
+        if (json.has("constraint")) {
+            this.mediaConstraint = json.getJSONObject("constraint");
+        }
+
+        JSONObject video = json.getJSONObject("video");
+        this.videoEnabled = video.getBoolean("enabled");
+        this.videoStreamEnabled = video.getBoolean("streamEnabled");
+
+        JSONObject audio = json.getJSONObject("audio");
+        this.audioEnabled = audio.getBoolean("enabled");
+        this.audioStreamEnabled = audio.getBoolean("streamEnabled");
 
         this.uniqueKey = UniqueKey.make(this.id, this.domain);
     }
@@ -297,60 +292,52 @@ public class CommFieldEndpoint extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("id", this.id.longValue());
-            json.put("domain", this.domain.getName());
-            json.put("contact", this.contact.toBasicJSON());
-            json.put("device", this.device.toCompactJSON());
-            json.put("name", this.name);
-            json.put("state", this.state.code);
+        json.put("id", this.id.longValue());
+        json.put("domain", this.domain.getName());
+        json.put("contact", this.contact.toBasicJSON());
+        json.put("device", this.device.toCompactJSON());
+        json.put("name", this.name);
+        json.put("state", this.state.code);
 
-            if (null != this.sessionDescription) {
-                json.put("description", this.sessionDescription);
-            }
-
-            if (null != this.mediaConstraint) {
-                json.put("constraint", this.mediaConstraint);
-            }
-
-            JSONObject video = new JSONObject();
-            video.put("enabled", this.videoEnabled);
-            video.put("streamEnabled", this.videoStreamEnabled);
-            json.put("video", video);
-
-            JSONObject audio = new JSONObject();
-            audio.put("enabled", this.audioEnabled);
-            audio.put("streamEnabled", this.audioStreamEnabled);
-            json.put("audio", audio);
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (null != this.sessionDescription) {
+            json.put("description", this.sessionDescription);
         }
+
+        if (null != this.mediaConstraint) {
+            json.put("constraint", this.mediaConstraint);
+        }
+
+        JSONObject video = new JSONObject();
+        video.put("enabled", this.videoEnabled);
+        video.put("streamEnabled", this.videoStreamEnabled);
+        json.put("video", video);
+
+        JSONObject audio = new JSONObject();
+        audio.put("enabled", this.audioEnabled);
+        audio.put("streamEnabled", this.audioStreamEnabled);
+        json.put("audio", audio);
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("id", this.id.longValue());
-            json.put("domain", this.domain.getName());
-            json.put("contact", this.contact.toBasicJSON());
-            json.put("device", this.device.toCompactJSON());
-            json.put("name", this.name);
-            json.put("state", this.state.code);
+        json.put("id", this.id.longValue());
+        json.put("domain", this.domain.getName());
+        json.put("contact", this.contact.toBasicJSON());
+        json.put("device", this.device.toCompactJSON());
+        json.put("name", this.name);
+        json.put("state", this.state.code);
 
-            JSONObject video = new JSONObject();
-            video.put("enabled", this.videoEnabled);
-            video.put("streamEnabled", this.videoStreamEnabled);
-            json.put("video", video);
+        JSONObject video = new JSONObject();
+        video.put("enabled", this.videoEnabled);
+        video.put("streamEnabled", this.videoStreamEnabled);
+        json.put("video", video);
 
-            JSONObject audio = new JSONObject();
-            audio.put("enabled", this.audioEnabled);
-            audio.put("streamEnabled", this.audioStreamEnabled);
-            json.put("audio", audio);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        JSONObject audio = new JSONObject();
+        audio.put("enabled", this.audioEnabled);
+        audio.put("streamEnabled", this.audioStreamEnabled);
+        json.put("audio", audio);
         return json;
     }
 }

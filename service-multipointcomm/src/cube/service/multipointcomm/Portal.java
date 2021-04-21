@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,17 +26,14 @@
 
 package cube.service.multipointcomm;
 
+import cube.common.entity.CommFieldEndpoint;
+import cube.service.multipointcomm.signaling.Signaling;
+
 /**
- * 多点通讯的守护任务。
+ *
  */
-public class DaemonTask implements Runnable {
+public interface Portal {
 
-    public DaemonTask() {
+    public void emit(CommFieldEndpoint endpoint, Signaling signaling);
 
-    }
-
-    @Override
-    public void run() {
-
-    }
 }

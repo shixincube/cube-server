@@ -29,6 +29,8 @@ package cube.service.multipointcomm;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.entity.CommField;
+import cube.common.entity.CommFieldEndpoint;
+import cube.common.state.MultipointCommStateCode;
 import cube.service.multipointcomm.signaling.Signaling;
 
 import java.util.ArrayList;
@@ -45,7 +47,6 @@ public class MediaUnitLeader implements MediaUnitListener {
 
     private ConcurrentHashMap<Long, MediaUnitBundle> bundles;
 
-
     /**
      * 构造函数。
      */
@@ -57,9 +58,9 @@ public class MediaUnitLeader implements MediaUnitListener {
     /**
      * 启动。
      */
-    public void start(Properties properties) {
+    public void start(MultipointCommService service, Properties properties) {
         // 读取配置
-        this.readConfig(properties);
+        this.readConfig(properties, service);
     }
 
     /**
@@ -93,18 +94,16 @@ public class MediaUnitLeader implements MediaUnitListener {
      *
      * @param commField
      * @param signaling
-     */
-    public void dispatch(CommField commField, Signaling signaling) {
-    }
-
-    /**
-     * 向 Media Unit 分发信令。
-     *
-     * @param commField
-     * @param signaling
      * @param signalingCallback
      */
-    public void dispatch(CommField commField, Signaling signaling, SignalingCallback signalingCallback) {
+    public void dispatch(CommField commField, CommFieldEndpoint endpoint, Signaling signaling, SignalingCallback signalingCallback) {
+        AbstractMediaUnit mediaUnit = this.queryMediaUnit(commField);
+        if (null == mediaUnit) {
+            signalingCallback.on(MultipointCommStateCode.NoMediaUnit, signaling);
+            return;
+        }
+
+
     }
 
     /**
@@ -128,6 +127,21 @@ public class MediaUnitLeader implements MediaUnitListener {
     }
 
     /**
+     * 查找已分配的媒体单元。
+     *
+     * @param commField
+     * @return
+     */
+    private AbstractMediaUnit queryMediaUnit(CommField commField) {
+        MediaUnitBundle bundle = this.bundles.get(commField.getId());
+        if (null == bundle) {
+            return null;
+        }
+
+        return bundle.mediaUnit;
+    }
+
+    /**
      * 发送信令给媒体单元。
      *
      */
@@ -138,12 +152,17 @@ public class MediaUnitLeader implements MediaUnitListener {
 //        }
 //    }
 
-    private void readConfig(Properties properties) {
+    private void readConfig(Properties properties, MultipointCommService service) {
         // 读取 Unit 配置
         for (int i = 1; i <= 50; ++i) {
             String keyUrl = "unit." + i + ".kms.url";
             if (properties.containsKey(keyUrl)) {
-                KurentoMediaUnit kurentoMediaUnit = new KurentoMediaUnit(properties.getProperty(keyUrl));
+                KurentoMediaUnit kurentoMediaUnit = new KurentoMediaUnit(new Portal() {
+                    @Override
+                    public void emit(CommFieldEndpoint endpoint, Signaling signaling) {
+                        service.pushSignaling(endpoint, signaling);
+                    }
+                }, properties.getProperty(keyUrl));
                 this.mediaUnitList.add(kurentoMediaUnit);
             }
         }

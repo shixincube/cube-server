@@ -59,17 +59,22 @@ public enum MultipointCommStateCode {
     /**
      * 没有设备信息。
      */
-    NoDevice(15),
+    NoDevice(13),
 
     /**
      * 没有找到联系人。
      */
-    NoContact(16),
+    NoContact(14),
 
     /**
      * 没有找到通讯场域。
      */
-    NoCommField(17),
+    NoCommField(15),
+
+    /**
+     * 没有找到媒体单元。
+     */
+    NoMediaUnit(16),
 
     /**
      * 没有找到 Endpoint 。
