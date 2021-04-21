@@ -103,7 +103,7 @@ public class MediaUnitLeader implements MediaUnitListener {
             return;
         }
 
-
+        mediaUnit.receiveFrom(commField, endpoint);
     }
 
     /**

@@ -76,9 +76,18 @@ public class ApplyCallTask extends ServiceTask {
 
         // 申请进行通话
         MultipointCommStateCode state = service.applyCall(field, proposer, device);
+        if (state != MultipointCommStateCode.Ok) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, state.code, packet.data));
+            markResponseTime();
+            return;
+        }
+
+        // 向客户端更新数据
+        CommField current = service.getCommField(field.getId());
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, state.code, packet.data));
+                this.makeResponse(action, packet, state.code, current.toJSON()));
         markResponseTime();
     }
 }

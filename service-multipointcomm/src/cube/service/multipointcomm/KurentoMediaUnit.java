@@ -93,11 +93,16 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
     }
 
     @Override
-    public void receiveFrom(CommField commField, CommFieldEndpoint endpoint) {
+    public void receiveFrom(CommField commField, CommFieldEndpoint sender) {
         MediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
             return;
         }
+
+//        KurentoSession session = this.endpointSessionMap.get(sender.getId());
+//        if (null == session) {
+//            return;
+//        }
 
 //        WebRtcEndpoint rtcEndpoint = this.commEndpointMap.get(endpoint.getId());
 //        if (null == rtcEndpoint) {

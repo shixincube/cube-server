@@ -329,6 +329,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             // 准备通道
             mediaUnit.preparePipeline(commField, endpoint);
 
+            // 向所有终端广播有新人加入
+
+
             return MultipointCommStateCode.Ok;
         }
     }
