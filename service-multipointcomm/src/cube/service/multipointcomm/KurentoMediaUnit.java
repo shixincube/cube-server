@@ -42,11 +42,15 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
 
     private long timeout = 60L * 1000L;
 
+    private String url;
+
     private KurentoClient kurentoClient;
 
     private ConcurrentHashMap<Long, MediaPipelineWrapper> pipelineMap;
 
     public KurentoMediaUnit(String url) {
+        this.url = url;
+
         try {
             this.kurentoClient = KurentoClient.create(url);
         } catch (Throwable e) {
@@ -75,7 +79,9 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
             e.printStackTrace();
         }
 
-        this.kurentoClient.destroy();
+        if (null != this.kurentoClient) {
+            this.kurentoClient.destroy();
+        }
     }
 
     @Override

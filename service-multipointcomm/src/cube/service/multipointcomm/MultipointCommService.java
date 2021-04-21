@@ -282,7 +282,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 return MultipointCommStateCode.BeCalleeBlocked;
             }
 
-            if (current.isSingleCalling(proposer)) {
+            CommFieldEndpoint ep = current.getEndpoint(proposer);
+            if (null != ep && ep.getState() != MultipointCommStateCode.CallBye) {
                 // 主叫忙
                 return MultipointCommStateCode.CallerBusy;
             }
@@ -875,17 +876,18 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             // 对方的通信场域
             CommField targetField = this.getCommField(target.getId());
+            if (null != targetField) {
+                CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
+                if (null != targetEndpoint) {
+                    targetEndpoint.setState(MultipointCommStateCode.Busy);
 
-            CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
-            if (null != targetEndpoint) {
-                targetEndpoint.setState(MultipointCommStateCode.Busy);
-
-                // 被叫忙
-                BusySignaling toTarget = new BusySignaling(targetField,
-                        targetEndpoint.getContact(), targetEndpoint.getDevice(), signaling.getRTCSerialNumber());
-                toTarget.copy(signaling);
-                ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, toTarget.getName(), toTarget.toJSON());
-                this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
+                    // 被叫忙
+                    BusySignaling toTarget = new BusySignaling(targetField,
+                            targetEndpoint.getContact(), targetEndpoint.getDevice(), signaling.getRTCSerialNumber());
+                    toTarget.copy(signaling);
+                    ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, toTarget.getName(), toTarget.toJSON());
+                    this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
+                }
             }
         }
         else {

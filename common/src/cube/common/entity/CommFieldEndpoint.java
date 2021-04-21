@@ -122,7 +122,7 @@ public class CommFieldEndpoint extends Entity {
 
         this.contact = contact;
         this.device = device;
-        this.state = MultipointCommStateCode.Ok;
+        this.state = MultipointCommStateCode.CallBye;
         this.lastModified = System.currentTimeMillis();
 
         this.name = contact.getUniqueKey() + "_" + device.getName() + "_" + device.getPlatform();
