@@ -204,14 +204,27 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         CommField field = this.commFieldMap.get(commFieldId);
         if (null == field) {
             CacheValue value = this.cache.get(new CacheKey(commFieldId));
-            if (null != value) {
+            if (null == value) {
+                return null;
+            }
+            else {
                 JSONObject json = value.get();
                 field = new CommField(json);
                 this.commFieldMap.put(field.getId(), field);
+                return field;
             }
         }
+        else {
+            return field;
+        }
+    }
 
-        return field;
+    public void updateCommField(CommField commField, boolean onlyCache) {
+        if (!onlyCache) {
+            this.commFieldMap.put(commField.getId(), commField);
+        }
+
+        this.cache.put(new CacheKey(commField.getId()), new CacheValue(commField.toJSON()));
     }
 
     /**
@@ -227,57 +240,20 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     }
 
     /**
-     * 申请终端进入场域。
-     *
-     * @param commField
-     * @param contact
-     * @param device
-     * @return
-     */
-    public MultipointCommStateCode applyJoin(CommField commField, Contact contact, Device device) {
-        CommField current = null;
-        if (commField.isPrivate()) {
-            current = this.commFieldMap.get(commField.getId());
-            if (null == current) {
-                current = commField;
-                this.commFieldMap.put(current.getId(), current);
-            }
-        }
-        else {
-            current = this.getCommField(commField.getId());
-            if (null == current) {
-                return MultipointCommStateCode.NoCommField;
-            }
-        }
-
-        if (current.isPrivate()) {
-            Long endpointId = this.makeCommFieldEndpointId(contact, device);
-            CommFieldEndpoint endpoint = new CommFieldEndpoint(endpointId, contact, device);
-            current.addEndpoint(endpoint);
-
-            Logger.i(this.getClass(), "#applyJoin() - " + contact.getId() + " - " + device.toString());
-        }
-        else {
-            // TODO
-        }
-
-        return MultipointCommStateCode.Ok;
-    }
-
-    /**
      * 申请呼叫。
      *
      * @param commField
      * @param proposer
+     * @param device
      * @return
      */
-    public MultipointCommStateCode applyCall(CommField commField, Contact proposer) {
+    public MultipointCommStateCode applyCall(CommField commField, Contact proposer, Device device) {
         CommField current = null;
         if (commField.isPrivate()) {
-            current = this.commFieldMap.get(commField.getId());
+            current = this.getCommField(commField.getId());
             if (null == current) {
                 current = commField;
-                this.commFieldMap.put(current.getId(), current);
+                this.updateCommField(current, false);
             }
         }
         else {
@@ -290,6 +266,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         if (current.isPrivate()) {
             // 私域
 
+            // 目标
             Contact target = commField.getCallee();
 
             // 判断是否被联系人阻止
@@ -305,34 +282,31 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 return MultipointCommStateCode.BeCalleeBlocked;
             }
 
-            if (current.isCalling(proposer)) {
+            if (current.isSingleCalling(proposer)) {
                 // 主叫忙
                 return MultipointCommStateCode.CallerBusy;
             }
 
             // 为被叫准备 CommField
-            CommField calleeField = this.commFieldMap.get(target.getId());
+            CommField calleeField = this.getCommField(target.getId());
             if (null == calleeField) {
-                calleeField = new CommField(target.getId(), current.getDomain().getName(), target);
-                this.commFieldMap.put(calleeField.getId(), calleeField);
+                calleeField = new CommField(target.getId(), current.getDomain().getName(),
+                        ContactManager.getInstance().getContact(current.getDomain().getName(), target.getId()));
+                this.updateCommField(calleeField, false);
             }
 
-            if (calleeField.isCalling(target)) {
-                if (calleeField.isCaller(proposer) && calleeField.getCallerState() == MultipointCommStateCode.CallBye) {
-                    // 主叫状态为 Bye 说明通话结束
-                    calleeField.clearCalling();
-                }
-                else {
-                    // 被叫忙
-                    return MultipointCommStateCode.CalleeBusy;
-                }
+            if (calleeField.isSingleCalling(target)) {
+                // 被叫忙
+                return MultipointCommStateCode.CalleeBusy;
             }
 
-            // 标记 Call
-            current.markSingleCalling(proposer, target);
+            // 标记 Call ，复制主被叫信息
+            current.markSingleCalling(commField);
+            this.updateCommField(current, true);
 
-            // 标记 Call
-            calleeField.markSingleCalling(proposer, target);
+            // 标记 Call ，复制主被叫信息
+            calleeField.markSingleCalling(commField);
+            this.updateCommField(calleeField, true);
 
             Logger.i(this.getClass(), "#applyCall() - " + proposer.getId() + " -> " + target.getId());
 
@@ -350,20 +324,60 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     }
 
     /**
+     * 申请终端进入场域。
+     *
+     * @param commField
+     * @param contact
+     * @param device
+     * @return
+     */
+    public MultipointCommStateCode applyJoin(CommField commField, Contact contact, Device device) {
+        CommField current = null;
+        if (commField.isPrivate()) {
+            current = this.getCommField(commField.getId());
+            if (null == current) {
+                current = commField;
+                this.updateCommField(current, false);
+            }
+        }
+        else {
+            current = this.getCommField(commField.getId());
+            if (null == current) {
+                return MultipointCommStateCode.NoCommField;
+            }
+        }
+
+        if (current.isPrivate()) {
+            // 校验
+            // 自己是否是被叫
+            if (!current.isCallee(contact)) {
+                return MultipointCommStateCode.CommFieldStateError;
+            }
+
+            Logger.i(this.getClass(), "#applyJoin() - " + contact.getId() + " (" + device.toString() + ")");
+        }
+        else {
+            // TODO
+        }
+
+        return MultipointCommStateCode.Ok;
+    }
+
+    /**
      * 申请终止呼叫记录。
      *
      * @param commField
      * @param proposer
-     * @param target
+     * @param device
      * @return
      */
-    public MultipointCommStateCode applyTerminate(CommField commField, Contact proposer, Contact target) {
+    public MultipointCommStateCode applyTerminate(CommField commField, Contact proposer, Device device) {
         CommField current = null;
         if (commField.isPrivate()) {
-            current = this.commFieldMap.get(commField.getId());
+            current = this.getCommField(commField.getId());
             if (null == current) {
                 current = commField;
-                this.commFieldMap.put(current.getId(), current);
+                this.updateCommField(current, false);
             }
         }
         else {
@@ -388,35 +402,37 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             if (caller.equals(proposer)) {
                 // 申请人是主叫，则校验被叫的状态
                 // 为被叫准备 CommField
-                CommField calleeField = this.commFieldMap.get(target.getId());
+                CommField calleeField = this.getCommField(callee.getId());
                 if (null != calleeField) {
                     Contact callerInCallee = calleeField.getCaller();
                     if (callerInCallee.equals(caller)) {
                         // 被叫记录的主叫信息一致
-                        calleeField.clearCalling();
-                        calleeField.clearEndpoints();
+                        calleeField.clearAll();
 
-                        Logger.i(this.getClass(), "#applyTerminate() [caller] " + proposer.getId() + " - " + target.getId());
+                        this.updateCommField(calleeField, true);
+
+                        Logger.i(this.getClass(), "#applyTerminate() [caller] " + proposer.getId() + " (" + device.toString() + ")");
                     }
                 }
             }
             else if (callee.equals(proposer)) {
                 // 申请人是被叫，则校验主叫的状态
-                CommField callerField = this.commFieldMap.get(target.getId());
+                CommField callerField = this.getCommField(caller.getId());
                 if (null != callerField) {
                     Contact calleeInCaller = callerField.getCallee();
                     if (calleeInCaller.equals(callee)) {
                         // 主叫记录的被叫信息一致
-                        callerField.clearCalling();
-                        callerField.clearEndpoints();
+                        callerField.clearAll();
 
-                        Logger.i(this.getClass(), "#applyTerminate() [callee] " + proposer.getId() + " - " + target.getId());
+                        this.updateCommField(callerField, true);
+
+                        Logger.i(this.getClass(), "#applyTerminate() [callee] " + proposer.getId() + " (" + device.toString() + ")");
                     }
                 }
             }
 
-            current.clearCalling();
-            current.clearEndpoints();
+            current.clearAll();
+            this.updateCommField(current, true);
         }
         else {
             // TODO
@@ -443,22 +459,24 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         if (null == endpoint) {
             Long endpointId = this.makeCommFieldEndpointId(signaling.getContact(), signaling.getDevice());
             endpoint = new CommFieldEndpoint(endpointId, signaling.getContact(), signaling.getDevice());
+            // 添加主叫终端
             current.addEndpoint(endpoint);
         }
+
         endpoint.setRTCSerialNumber(signaling.getRTCSerialNumber());
         endpoint.setSessionDescription(signaling.getSessionDescription());
         endpoint.setMediaConstraint(signaling.getMediaConstraint());
-        endpoint.setState(MultipointCommStateCode.Calling);
 
         // 更新信令的 Field
         signaling.setField(current);
 
         if (current.isPrivate()) {
-            if (!current.isCalling(signaling.getContact())) {
-                endpoint.setState(MultipointCommStateCode.Ok);
+            if (!current.isSingleCalling(signaling.getContact())) {
                 callback.on(MultipointCommStateCode.CommFieldStateError, signaling);
                 return;
             }
+
+            endpoint.setState(MultipointCommStateCode.Calling);
 
             Logger.i(this.getClass(), "Offer: " + current.getCaller().getId() + " -> " + current.getCallee().getId());
 
@@ -469,14 +487,16 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             signaling.setCallee(current.getCallee());
 
             // 被叫的域
-            CommField calleeField = this.commFieldMap.get(current.getCallee().getId());
+            CommField calleeField = this.getCommField(current.getCallee().getId());
 
             // 推送信令
             OfferSignaling toCallee = new OfferSignaling(calleeField, calleeField.getFounder(), Device.createDevice(),
                     signaling.getRTCSerialNumber());
             toCallee.copy(signaling);
+            // 信令事件
             ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
                     MultipointCommAction.Offer.name, toCallee.toJSON());
+            // 向联系人推送信令
             this.contactsAdapter.publish(current.getCallee().getUniqueKey(), event.toJSON());
 
             final CommFieldEndpoint offerEndpoint = endpoint;
@@ -533,8 +553,10 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         // 更新终端
         CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
         if (null == endpoint) {
-            callback.on(MultipointCommStateCode.NoCommFieldEndpoint, signaling);
-            return;
+            Long endpointId = this.makeCommFieldEndpointId(signaling.getContact(), signaling.getDevice());
+            endpoint = new CommFieldEndpoint(endpointId, signaling.getContact(), signaling.getDevice());
+            // 添加被叫终端
+            current.addEndpoint(endpoint);
         }
 
         endpoint.setRTCSerialNumber(signaling.getRTCSerialNumber());
@@ -545,9 +567,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         signaling.setField(current);
 
         if (current.isPrivate()) {
-            if (!current.isCalling(signaling.getContact())) {
+            if (!current.isSingleCalling(signaling.getContact())) {
                 // 没有呼叫信息
-                endpoint.setState(MultipointCommStateCode.Ok);
                 callback.on(MultipointCommStateCode.CommFieldStateError, signaling);
                 return;
             }
@@ -560,9 +581,6 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             Logger.i(this.getClass(), "Answer: " + current.getCallee().getId() + " -> " + current.getCaller().getId());
 
-            current.updateCallerState(MultipointCommStateCode.CallConnected);
-            current.updateCalleeState(MultipointCommStateCode.CallConnected);
-
             Contact caller = current.getCaller();
             // 设置主叫
             signaling.setCaller(caller);
@@ -571,9 +589,6 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             // 获取主叫的 Comm Field
             CommField callerField = this.commFieldMap.get(caller.getId());
-            callerField.updateCallerState(MultipointCommStateCode.CallConnected);
-            callerField.updateCalleeState(MultipointCommStateCode.CallConnected);
-
             CommFieldEndpoint callerEndpoint = callerField.getEndpoint(caller);
             // 停止超时追踪
             callerField.stopTrace(callerEndpoint);
@@ -584,8 +599,10 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             AnswerSignaling toCaller = new AnswerSignaling(callerField,
                     callerEndpoint.getContact(), callerEndpoint.getDevice(), callerEndpoint.getRTCSerialNumber());
             toCaller.copy(signaling);
+            // 事件
             ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
                     MultipointCommAction.Answer.name, toCaller.toJSON());
+            // 推送给联系人
             this.contactsAdapter.publish(caller.getUniqueKey(), event.toJSON());
 
             // 向主叫推送 Candidate
@@ -731,9 +748,6 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             endpoint.readyTimestamp = 0L;
             endpoint.clearCandidates();
 
-            current.updateCallerState(MultipointCommStateCode.CallBye);
-            current.updateCalleeState(MultipointCommStateCode.CallBye);
-
             // 停止追踪
             current.stopTrace(endpoint);
 
@@ -756,13 +770,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             signaling.setCallee(callee);
 
             // 对方的通信场域
-            CommField targetField = this.commFieldMap.get(target.getId());
+            CommField targetField = this.getCommField(target.getId());
             // 对方通信场域是否正在和当前场域通信
             if (targetField.getCaller().equals(caller) || targetField.getCallee().equals(callee)) {
-                // 更新状态
-                targetField.updateCallerState(MultipointCommStateCode.CallBye);
-                targetField.updateCalleeState(MultipointCommStateCode.CallBye);
-
                 CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
                 if (null != targetEndpoint) {
                     targetEndpoint.setState(MultipointCommStateCode.CallBye);
@@ -771,6 +781,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
                     targetField.stopTrace(targetEndpoint);
 
+                    // 推送 Bye 信令给对方
                     ByeSignaling toTarget = new ByeSignaling(targetField,
                             targetEndpoint.getContact(), targetEndpoint.getDevice(), signaling.getRTCSerialNumber());
                     toTarget.copy(signaling);
@@ -853,24 +864,23 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
             if (null != endpoint) {
                 // 更新状态
-                endpoint.setState(MultipointCommStateCode.CalleeBusy);
+                endpoint.setState(MultipointCommStateCode.Busy);
                 endpoint.clearCandidates();
 
                 // 停止追踪
                 current.stopTrace(endpoint);
-
-                current.updateCalleeState(MultipointCommStateCode.CalleeBusy);
 
                 current.clearCalling();
             }
 
             // 对方的通信场域
             CommField targetField = this.getCommField(target.getId());
-            // 更新状态
-            targetField.updateCalleeState(MultipointCommStateCode.CalleeBusy);
 
             CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
             if (null != targetEndpoint) {
+                targetEndpoint.setState(MultipointCommStateCode.Busy);
+
+                // 被叫忙
                 BusySignaling toTarget = new BusySignaling(targetField,
                         targetEndpoint.getContact(), targetEndpoint.getDevice(), signaling.getRTCSerialNumber());
                 toTarget.copy(signaling);

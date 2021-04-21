@@ -108,19 +108,15 @@ public class Device implements JSONable {
      * @param deviceJson 指定符合格式的 JSON 数据。
      */
     public Device(JSONObject deviceJson) {
-        try {
-            this.name = deviceJson.getString("name");
-            this.platform = deviceJson.getString("platform");
+        this.name = deviceJson.getString("name");
+        this.platform = deviceJson.getString("platform");
 
-            if (deviceJson.has("address")) {
-                this.address = deviceJson.getString("address");
-            }
+        if (deviceJson.has("address")) {
+            this.address = deviceJson.getString("address");
+        }
 
-            if (deviceJson.has("port")) {
-                this.port = deviceJson.getInt("port");
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (deviceJson.has("port")) {
+            this.port = deviceJson.getInt("port");
         }
     }
 

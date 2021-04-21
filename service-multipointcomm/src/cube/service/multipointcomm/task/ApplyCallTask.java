@@ -36,6 +36,7 @@ import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.CommField;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.ServiceTask;
 import cube.service.multipointcomm.MultipointCommService;
@@ -57,11 +58,12 @@ public class ApplyCallTask extends ServiceTask {
 
         CommField field = null;
         Contact proposer = null;
+        Device device = null;
 
         try {
             field = new CommField(packet.data.getJSONObject("field"));
-            proposer = new Contact(packet.data.getJSONObject("proposer"), field.getDomain());
-
+            proposer = new Contact(packet.data.getJSONObject("proposer"));
+            device = new Device(packet.data.getJSONObject("device"));
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
@@ -73,7 +75,7 @@ public class ApplyCallTask extends ServiceTask {
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
 
         // 申请进行通话
-        MultipointCommStateCode state = service.applyCall(field, proposer);
+        MultipointCommStateCode state = service.applyCall(field, proposer, device);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, state.code, packet.data));

@@ -28,7 +28,6 @@ package cube.common.entity;
 
 import cube.common.Domain;
 import cube.common.UniqueKey;
-import cube.common.state.MultipointCommStateCode;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -77,7 +76,7 @@ public class CommField extends Entity {
     private ConcurrentHashMap<Long, ScheduledFuture<?>> timeoutFutureMap;
 
     /**
-     * 当前场域内的通话关系。
+     * 当前场域内的通话关系。仅用于私域。
      */
     private BoundCalling boundCalling;
 
@@ -112,10 +111,11 @@ public class CommField extends Entity {
 
         this.id = json.getLong("id");
         this.domain = new Domain(json.getString("domain"));
-        this.founder = new Contact(json.getJSONObject("founder"), this.domain);
+        this.founder = new Contact(json.getJSONObject("founder"));
 
-        if (json.has("callee")) {
-            this.boundCalling = new BoundCalling(this.founder, new Contact(json.getJSONObject("callee"), this.domain));
+        if (json.has("caller") && json.has("callee")) {
+            this.boundCalling = new BoundCalling(new Contact(json.getJSONObject("caller")),
+                    new Contact(json.getJSONObject("callee")));
         }
 
         if (json.has("invitees")) {
@@ -185,13 +185,12 @@ public class CommField extends Entity {
     }
 
     /**
-     * 标记为单一 Calling 记录。
+     * 复制私域数据。
      *
-     * @param caller
-     * @param callee
+     * @param source
      */
-    public void markSingleCalling(Contact caller, Contact callee) {
-        this.boundCalling = new BoundCalling(caller, callee);
+    public void markSingleCalling(CommField source) {
+        this.boundCalling = new BoundCalling(source.getCaller(), source.getCallee());
     }
 
     /**
@@ -200,31 +199,16 @@ public class CommField extends Entity {
      * @param contact
      * @return
      */
-    public boolean isCalling(Contact contact) {
+    public boolean isSingleCalling(Contact contact) {
         if (null == this.boundCalling) {
             return false;
         }
 
-//        long now = System.currentTimeMillis();
-//        if (now - this.boundCalling.timestamp > this.defaultTimeout) {
-//            return false;
-//        }
-
         if (this.boundCalling.caller.equals(contact)) {
-            if (this.boundCalling.callerState == MultipointCommStateCode.CallBye) {
-                return false;
-            }
-            else {
-                return true;
-            }
+            return true;
         }
         else if (this.boundCalling.callee.equals(contact)) {
-            if (this.boundCalling.calleeState == MultipointCommStateCode.CallBye) {
-                return false;
-            }
-            else {
-                return true;
-            }
+            return true;
         }
 
         return false;
@@ -240,27 +224,6 @@ public class CommField extends Entity {
         return (null != this.boundCalling) ? this.boundCalling.caller : null;
     }
 
-    /**
-     * 获取被叫。
-     * 仅用于私域下。
-     *
-     * @return
-     */
-    public MultipointCommStateCode getCallerState() {
-        return (null != this.boundCalling) ? this.boundCalling.callerState : MultipointCommStateCode.Unknown;
-    }
-
-    /**
-     * 更新主叫状态。
-     * 仅用于私域下。
-     *
-     * @param state
-     */
-    public void updateCallerState(MultipointCommStateCode state) {
-        if (null != this.boundCalling) {
-            this.boundCalling.callerState = state;
-        }
-    }
 
     /**
      * 获取被叫。
@@ -270,28 +233,6 @@ public class CommField extends Entity {
      */
     public Contact getCallee() {
         return (null != this.boundCalling) ? this.boundCalling.callee : null;
-    }
-
-    /**
-     * 获取被叫状态。
-     * 仅用于私域下。
-     *
-     * @return
-     */
-    public MultipointCommStateCode getCalleeState() {
-        return (null != this.boundCalling) ? this.boundCalling.calleeState : MultipointCommStateCode.Unknown;
-    }
-
-    /**
-     * 更新被叫状态。
-     * 仅用于私域下。
-     *
-     * @param state
-     */
-    public void updateCalleeState(MultipointCommStateCode state) {
-        if (null != this.boundCalling) {
-            this.boundCalling.calleeState = state;
-        }
     }
 
     /**
@@ -332,8 +273,7 @@ public class CommField extends Entity {
      * @param endpoint
      */
     public void clearEndpoint(CommFieldEndpoint endpoint) {
-        Contact contact = endpoint.getContact();
-
+//        Contact contact = endpoint.getContact();
 //        Iterator<BoundCalling> iter = this.boundCallingList.iterator();
 //        while (iter.hasNext()) {
 //            BoundCalling calling = iter.next();
@@ -480,6 +420,11 @@ public class CommField extends Entity {
         }
         json.put("invitees", array);
 
+        if (null != this.boundCalling) {
+            json.put("caller", this.boundCalling.caller.toBasicJSON());
+            json.put("callee", this.boundCalling.callee.toBasicJSON());
+        }
+
         return json;
     }
 
@@ -489,6 +434,12 @@ public class CommField extends Entity {
         json.put("id", this.id);
         json.put("domain", this.domain.getName());
         json.put("founder", this.founder.toBasicJSON());
+
+        if (null != this.boundCalling) {
+            json.put("caller", this.boundCalling.caller.toBasicJSON());
+            json.put("callee", this.boundCalling.callee.toBasicJSON());
+        }
+
         return json;
     }
 
@@ -500,11 +451,7 @@ public class CommField extends Entity {
 
         protected Contact caller;
 
-        protected MultipointCommStateCode callerState = MultipointCommStateCode.Ok;
-
         protected Contact callee;
-
-        protected MultipointCommStateCode calleeState = MultipointCommStateCode.Ok;
 
         protected long timestamp;
 

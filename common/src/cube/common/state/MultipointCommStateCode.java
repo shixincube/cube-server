@@ -99,37 +99,42 @@ public enum MultipointCommStateCode {
     /**
      * 正在建立通话。
      */
-    Calling(27),
+    Calling(30),
 
     /**
-     * 主叫忙。
+     * 当前线路忙。
      */
-    CallerBusy(28),
-
-    /**
-     * 被叫忙。
-     */
-    CalleeBusy(29),
+    Busy(31),
 
     /**
      * 通话已接通。
      */
-    CallConnected(30),
+    CallConnected(33),
 
     /**
      * 通话结束。
      */
-    CallBye(33),
+    CallBye(35),
+
+    /**
+     * 主叫忙。
+     */
+    CallerBusy(41),
+
+    /**
+     * 被叫忙。
+     */
+    CalleeBusy(42),
 
     /**
      * 被主叫阻止。
      */
-    BeCallerBlocked(41),
+    BeCallerBlocked(45),
 
     /**
      * 被被叫阻止。
      */
-    BeCalleeBlocked(42),
+    BeCalleeBlocked(46),
 
     /**
      * 未知的状态。
