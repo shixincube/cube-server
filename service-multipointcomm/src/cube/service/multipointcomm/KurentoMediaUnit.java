@@ -62,6 +62,11 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
 
     @Override
     public void preparePipeline(CommField commField) {
+        if (null == this.kurentoClient) {
+            return;
+        }
+
+        Logger.i(this.getClass(), "Prepare media pipeline: " + commField.getId() + " - " + commField.getFounder().getId());
         this.pipelineMap.put(commField.getId(),
                 new MediaPipelineWrapper(commField.getId(), this.kurentoClient.createMediaPipeline()));
     }
@@ -91,6 +96,7 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
         while (iter.hasNext()) {
             MediaPipelineWrapper wrapper = iter.next();
             if (now - wrapper.timestamp > this.timeout) {
+                Logger.w(this.getClass(), "Media pipeline timeout: " + wrapper.id);
                 wrapper.closePipeline();
                 iter.remove();
             }

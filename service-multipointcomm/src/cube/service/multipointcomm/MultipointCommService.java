@@ -741,6 +741,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 // 接收方收到 Bye，回复到服务器，删除对应的信息
                 current.clearAll();
                 current.clearTrace();
+
+                this.updateCommField(current, true);
+
                 return;
             }
 
@@ -773,7 +776,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             // 对方的通信场域
             CommField targetField = this.getCommField(target.getId());
             // 对方通信场域是否正在和当前场域通信
-            if (targetField.getCaller().equals(caller) || targetField.getCallee().equals(callee)) {
+            if (null != targetField && (targetField.getCaller().equals(caller) || targetField.getCallee().equals(callee))) {
                 CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
                 if (null != targetEndpoint) {
                     targetEndpoint.setState(MultipointCommStateCode.CallBye);
@@ -793,6 +796,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 // 清空 Calling 信息
                 current.clearAll();
                 current.clearTrace();
+
+                this.updateCommField(current, true);
 
                 // 回调
                 callback.on(MultipointCommStateCode.Ok, signaling);
