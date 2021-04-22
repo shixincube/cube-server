@@ -58,7 +58,10 @@ public class AnswerSignaling extends Signaling {
         super(json);
 
         this.sessionDescription = json.getJSONObject("description");
-        this.mediaConstraint = json.getJSONObject("constraint");
+
+        if (json.has("constraint")) {
+            this.mediaConstraint = json.getJSONObject("constraint");
+        }
 
         if (json.has("caller")) {
             this.caller = new Contact(json.getJSONObject("caller"));
@@ -107,11 +110,22 @@ public class AnswerSignaling extends Signaling {
         return this.sessionDescription.getString("sdp");
     }
 
+    public void setSDP(String sdp) {
+        this.sessionDescription = new JSONObject();
+        this.sessionDescription.put("type", "answer");
+        this.sessionDescription.put("sdp", sdp);
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+
         json.put("description", this.sessionDescription);
-        json.put("constraint", this.mediaConstraint);
+
+        if (null != this.mediaConstraint) {
+            json.put("constraint", this.mediaConstraint);
+        }
+
         if (null != this.caller) {
             json.put("caller", this.caller.toBasicJSON());
         }

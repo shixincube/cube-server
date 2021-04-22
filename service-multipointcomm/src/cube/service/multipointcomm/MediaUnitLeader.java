@@ -152,17 +152,6 @@ public class MediaUnitLeader implements MediaUnitListener {
         return bundle.mediaUnit;
     }
 
-    /**
-     * 发送信令给媒体单元。
-     *
-     */
-//    private void sendSignaling(MediaUnit mediaUnit, Signaling signaling, SignalingCallback signalingCallback) {
-//        Packet packet = new Packet(MediaUnitAction.Signaling.name, signaling.toJSON());
-//        if (mediaUnit.transmit(packet, signaling, signalingCallback)) {
-//            this.processingMap.put(packet.sn, mediaUnit);
-//        }
-//    }
-
     private void readConfig(Properties properties, MultipointCommService service) {
         // 读取 Unit 配置
         for (int i = 1; i <= 50; ++i) {
@@ -181,12 +170,6 @@ public class MediaUnitLeader implements MediaUnitListener {
 
     @Override
     public Signaling onSignaling(Signaling signaling) {
-//        Contact contact = signaling.getContact();
-//
-//        // 将信令推送到集群
-//        ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
-//                signaling.getName(), signaling.toJSON());
-//        this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());
 
         return signaling;
     }

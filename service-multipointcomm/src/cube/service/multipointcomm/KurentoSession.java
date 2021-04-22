@@ -31,6 +31,7 @@ import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
 import cube.service.multipointcomm.signaling.AnswerSignaling;
 import cube.service.multipointcomm.signaling.CandidateSignaling;
+import cube.service.multipointcomm.signaling.Signaling;
 import org.kurento.client.*;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -90,11 +91,17 @@ public class KurentoSession {
                 + session.getName() + "\" in field " + this.commField.getName());
 
         // 生成应答的 SDP
-        final String sdpAnswer = getEndpointForSession(session).processOffer(sdpOffer);
-System.out.println("XJW: " + sdpAnswer);
-        // 将应答发送回对端
-//        AnswerSignaling answerSignaling = new AnswerSignaling(this.commField, session.getCommFieldEndpoint());
+        final String sdpAnswer = this.getEndpointForSession(session).processOffer(sdpOffer);
 
+        Logger.d(this.getClass(), "Session \"" + this.getName() + "\" : Sdp Answer for \"" + session.getName() + "\"");
+
+        // 将应答发送回对端
+        AnswerSignaling answerSignaling = new AnswerSignaling(this.commField, session.getCommFieldEndpoint());
+        answerSignaling.setSDP(sdpAnswer);
+        this.sendSignaling(answerSignaling);
+
+        Logger.d(this.getClass(), "Gather Candidates : \"" + session.getName() + "\"");
+//        this.getEndpointForSession(session).gatherCandidates();
     }
 
     public CommFieldEndpoint getCommFieldEndpoint() {
@@ -134,5 +141,9 @@ System.out.println("XJW: " + sdpAnswer);
         session.getOutgoingWebRtcPeer().connect(incoming);
 
         return incoming;
+    }
+
+    protected void sendSignaling(Signaling signaling) {
+        this.portal.emit(this.commFieldEndpoint, signaling);
     }
 }
