@@ -28,9 +28,11 @@ package cube.service.multipointcomm;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.common.action.MultipointCommAction;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
 import cube.common.state.MultipointCommStateCode;
+import cube.service.multipointcomm.signaling.OfferSignaling;
 import cube.service.multipointcomm.signaling.Signaling;
 
 import java.util.ArrayList;
@@ -93,6 +95,7 @@ public class MediaUnitLeader implements MediaUnitListener {
      * 向 Media Unit 分发信令。
      *
      * @param commField
+     * @param endpoint
      * @param signaling
      * @param signalingCallback
      */
@@ -103,7 +106,15 @@ public class MediaUnitLeader implements MediaUnitListener {
             return;
         }
 
-        mediaUnit.receiveFrom(commField, endpoint);
+        if (signaling.getName().equals(MultipointCommAction.Offer.name)) {
+            // 从媒体单元接收数据
+            MultipointCommStateCode stateCode = mediaUnit.receiveFrom(commField, endpoint, signaling);
+            // 回调
+            signalingCallback.on(stateCode, signaling);
+        }
+        else {
+            signalingCallback.on(MultipointCommStateCode.UnsupportedSignaling, signaling);
+        }
     }
 
     /**

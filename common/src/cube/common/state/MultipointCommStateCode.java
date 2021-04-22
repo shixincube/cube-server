@@ -77,6 +77,11 @@ public enum MultipointCommStateCode {
     NoMediaUnit(16),
 
     /**
+     * 没有找到与媒体单元的数据通道。
+     */
+    NoPipeline(17),
+
+    /**
      * 没有找到 Endpoint 。
      */
     NoCommFieldEndpoint(18),
@@ -100,6 +105,11 @@ public enum MultipointCommStateCode {
      * 媒体单元故障。
      */
     MediaUnitField(23),
+
+    /**
+     * 不被支持的信令。
+     */
+    UnsupportedSignaling(24),
 
     /**
      * 正在建立通话。

@@ -524,7 +524,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             callback.on(MultipointCommStateCode.Ok, signaling);
         }
         else {
-            Logger.i(this.getClass(), "Offer: " + current.getId() + " - " + signaling.getContact().getId());
+            Logger.i(this.getClass(), "Offer: " + current.getId() + " from " + signaling.getContact().getId());
 
             SignalingCallback processCallback = new SignalingCallback() {
                 @Override

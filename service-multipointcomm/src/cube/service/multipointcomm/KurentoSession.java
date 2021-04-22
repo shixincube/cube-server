@@ -26,6 +26,7 @@
 
 package cube.service.multipointcomm;
 
+import cell.util.log.Logger;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
 import cube.service.multipointcomm.signaling.CandidateSignaling;
@@ -68,7 +69,34 @@ public class KurentoSession {
         this.incomingMedia = new ConcurrentHashMap<>();
     }
 
-    public void receiveFrom() {
+    public String getName() {
+        return this.commFieldEndpoint.getName();
+    }
 
+    public Long getId() {
+        return this.commFieldEndpoint.getId();
+    }
+
+    public void receiveFrom(KurentoSession session) {
+        Logger.i(this.getClass(), "Session \"" + this.getName() + "\" : connecting with \""
+                + session.getName() + "\" in field " + this.commField.getName());
+
+        getEndpointForSession(session);
+//        final String sdpAnswer = getEndpointForSession(session);
+    }
+
+    public CommFieldEndpoint getCommFieldEndpoint() {
+        return this.commFieldEndpoint;
+    }
+
+    private WebRtcEndpoint getEndpointForSession(KurentoSession session) {
+        if (session.getId().equals(this.getId())) {
+            Logger.d(this.getClass(), "Endpoint \"" + session.getName() + "\" configuring loopback");
+            return this.outgoingMedia;
+        }
+
+        Logger.d(this.getClass(), "Endpoint \"" + this.getName() + "\" : receiving from \"" + session.getName() + "\"");
+
+        return null;
     }
 }

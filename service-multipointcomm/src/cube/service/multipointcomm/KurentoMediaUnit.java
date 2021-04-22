@@ -29,7 +29,11 @@ package cube.service.multipointcomm;
 import cell.util.log.Logger;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
-import org.kurento.client.*;
+import cube.common.state.MultipointCommStateCode;
+import cube.service.multipointcomm.signaling.Signaling;
+import org.kurento.client.Continuation;
+import org.kurento.client.KurentoClient;
+import org.kurento.client.MediaPipeline;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,11 +56,6 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
      */
     private final ConcurrentHashMap<Long, MediaPipelineWrapper> pipelineMap;
 
-    /**
-     * Comm Field Endpoint 对应的 Session
-     */
-    private final ConcurrentHashMap<Long, KurentoSession> endpointSessionMap;
-
     public KurentoMediaUnit(Portal portal, String url) {
         this.portal = portal;
         this.url = url;
@@ -68,7 +67,6 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
         }
 
         this.pipelineMap = new ConcurrentHashMap<>();
-        this.endpointSessionMap = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -77,7 +75,7 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
             return;
         }
 
-        Logger.i(this.getClass(), "Prepare media pipeline: " + commField.getId() + " - " + commField.getFounder().getId());
+        Logger.i(this.getClass(), "Prepare media pipeline: \"" + commField.getName() + "\" - " + commField.getId());
 
         MediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
@@ -85,24 +83,32 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
             this.pipelineMap.put(commField.getId(), wrapper);
         }
 
-        KurentoSession session = this.endpointSessionMap.get(endpoint.getId());
+        KurentoSession session = wrapper.getSession(endpoint.getId());
         if (null == session) {
             session = new KurentoSession(this.portal, commField, endpoint, wrapper.pipeline);
-            this.endpointSessionMap.put(endpoint.getId(), session);
+            wrapper.addSession(endpoint.getId(), session);
         }
     }
 
     @Override
-    public void receiveFrom(CommField commField, CommFieldEndpoint sender) {
+    public MultipointCommStateCode receiveFrom(CommField commField, CommFieldEndpoint endpoint, Signaling signaling) {
         MediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
-            return;
+            return MultipointCommStateCode.NoPipeline;
         }
 
-//        KurentoSession session = this.endpointSessionMap.get(sender.getId());
-//        if (null == session) {
-//            return;
-//        }
+        KurentoSession session = wrapper.getSession(endpoint.getId());
+        if (null == session) {
+            return MultipointCommStateCode.NoCommFieldEndpoint;
+        }
+
+        CommFieldEndpoint target = signaling.getTarget();
+        KurentoSession sender = wrapper.getSession(target.getId());
+
+        // 接收数据
+        session.receiveFrom(sender);
+
+        return MultipointCommStateCode.Ok;
 
 //        WebRtcEndpoint rtcEndpoint = this.commEndpointMap.get(endpoint.getId());
 //        if (null == rtcEndpoint) {
@@ -159,18 +165,35 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
         }
     }
 
+    /**
+     * 可以视为 ROOM 结构。
+     */
     protected class MediaPipelineWrapper {
 
-        protected Long id;
+        protected final Long id;
 
-        protected MediaPipeline pipeline;
+        protected final MediaPipeline pipeline;
+
+        /**
+         * Comm Field Endpoint 对应的 Session
+         */
+        private final ConcurrentHashMap<Long, KurentoSession> endpointSessionMap;
 
         protected long timestamp;
 
         protected MediaPipelineWrapper(Long id, MediaPipeline pipeline) {
+            this.timestamp = System.currentTimeMillis();
             this.id = id;
             this.pipeline = pipeline;
-            this.timestamp = System.currentTimeMillis();
+            this.endpointSessionMap = new ConcurrentHashMap<>();
+        }
+
+        public KurentoSession getSession(Long id) {
+            return this.endpointSessionMap.get(id);
+        }
+
+        public void addSession(Long id, KurentoSession session) {
+            this.endpointSessionMap.put(id, session);
         }
 
         protected void closePipeline() {

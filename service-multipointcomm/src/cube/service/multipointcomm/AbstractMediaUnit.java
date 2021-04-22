@@ -28,6 +28,8 @@ package cube.service.multipointcomm;
 
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
+import cube.common.state.MultipointCommStateCode;
+import cube.service.multipointcomm.signaling.Signaling;
 
 /**
  * 抽象的媒体单元。
@@ -39,7 +41,7 @@ public abstract class AbstractMediaUnit {
 
     public abstract void preparePipeline(CommField commField, CommFieldEndpoint endpoint);
 
-    public abstract void receiveFrom(CommField commField, CommFieldEndpoint endpoint);
+    public abstract MultipointCommStateCode receiveFrom(CommField commField, CommFieldEndpoint endpoint, Signaling signaling);
 
     public abstract void destroy();
 

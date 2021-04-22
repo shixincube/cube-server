@@ -28,9 +28,9 @@ package cube.service.multipointcomm.signaling;
 
 import cube.common.JSONable;
 import cube.common.entity.CommField;
+import cube.common.entity.CommFieldEndpoint;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -64,6 +64,11 @@ public abstract class Signaling implements JSONable {
     protected Long rtcSN;
 
     /**
+     * 目标。
+     */
+    protected CommFieldEndpoint target;
+
+    /**
      * 构造函数。
      *
      * @param name
@@ -86,14 +91,14 @@ public abstract class Signaling implements JSONable {
      * @param json
      */
     public Signaling(JSONObject json) {
-        try {
-            this.name = json.getString("name");
-            this.field = new CommField(json.getJSONObject("field"));
-            this.contact = new Contact(json.getJSONObject("contact"), this.field.getDomain());
-            this.device = new Device(json.getJSONObject("device"));
-            this.rtcSN = json.getLong("rtcSN");
-        } catch (JSONException e) {
-            e.printStackTrace();
+        this.name = json.getString("name");
+        this.field = new CommField(json.getJSONObject("field"));
+        this.contact = new Contact(json.getJSONObject("contact"));
+        this.device = new Device(json.getJSONObject("device"));
+        this.rtcSN = json.getLong("rtcSN");
+
+        if (json.has("target")) {
+            this.target = new CommFieldEndpoint(json.getJSONObject("target"));
         }
     }
 
@@ -121,18 +126,23 @@ public abstract class Signaling implements JSONable {
         return this.rtcSN;
     }
 
+    public CommFieldEndpoint getTarget() {
+        return this.target;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("name", this.name);
-            json.put("field", this.field.toCompactJSON());
-            json.put("contact", this.contact.toBasicJSON());
-            json.put("device", this.device.toCompactJSON());
-            json.put("rtcSN", this.rtcSN.longValue());
-        } catch (JSONException e) {
-            e.printStackTrace();
+        json.put("name", this.name);
+        json.put("field", this.field.toCompactJSON());
+        json.put("contact", this.contact.toBasicJSON());
+        json.put("device", this.device.toCompactJSON());
+        json.put("rtcSN", this.rtcSN.longValue());
+
+        if (null != this.target) {
+            json.put("target", this.target.toCompactJSON());
         }
+
         return json;
     }
 

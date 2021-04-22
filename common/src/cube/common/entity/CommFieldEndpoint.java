@@ -162,6 +162,15 @@ public class CommFieldEndpoint extends Entity {
     }
 
     /**
+     * 获取终端名称。
+     *
+     * @return
+     */
+    public String getName() {
+        return this.name;
+    }
+
+    /**
      * 获取联系人实例。
      *
      * @return

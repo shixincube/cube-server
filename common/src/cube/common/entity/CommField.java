@@ -56,6 +56,11 @@ public class CommField extends Entity {
     private long timerTimeout = 45L * 1000L;
 
     /**
+     * 名称，便于调试。
+     */
+    private final String name;
+
+    /**
      * 创建人。
      */
     private Contact founder;
@@ -90,10 +95,9 @@ public class CommField extends Entity {
     public CommField(Long id, String domainName, Contact founder) {
         super(id, domainName);
 
+        this.name = founder.getName() + "#" + id;
         this.founder = founder;
-
         this.invitees = new Vector<>();
-
         this.fieldEndpoints = new ConcurrentHashMap<>();
     }
 
@@ -106,11 +110,11 @@ public class CommField extends Entity {
         super();
 
         this.invitees = new Vector<>();
-
         this.fieldEndpoints = new ConcurrentHashMap<>();
 
         this.id = json.getLong("id");
         this.domain = new Domain(json.getString("domain"));
+        this.name = json.getString("name");
         this.founder = new Contact(json.getJSONObject("founder"));
 
         if (json.has("caller") && json.has("callee")) {
@@ -136,6 +140,15 @@ public class CommField extends Entity {
         }
 
         this.uniqueKey = UniqueKey.make(this.id, this.domain);
+    }
+
+    /**
+     * 获取名称。
+     *
+     * @return
+     */
+    public String getName() {
+        return this.name;
     }
 
     /**
@@ -406,6 +419,7 @@ public class CommField extends Entity {
         JSONObject json = new JSONObject();
         json.put("id", this.id);
         json.put("domain", this.domain.getName());
+        json.put("name", this.name);
         json.put("founder", this.founder.toCompactJSON());
 
         JSONArray array = new JSONArray();
@@ -433,6 +447,7 @@ public class CommField extends Entity {
         JSONObject json = new JSONObject();
         json.put("id", this.id);
         json.put("domain", this.domain.getName());
+        json.put("name", this.name);
         json.put("founder", this.founder.toBasicJSON());
 
         if (null != this.boundCalling) {
