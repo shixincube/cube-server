@@ -108,7 +108,7 @@ public class MediaUnitLeader implements MediaUnitListener {
 
         if (signaling.getName().equals(MultipointCommAction.Offer.name)) {
             // 从媒体单元接收数据
-            MultipointCommStateCode stateCode = mediaUnit.receiveFrom(commField, endpoint, signaling);
+            MultipointCommStateCode stateCode = mediaUnit.receiveFrom(commField, endpoint, (OfferSignaling) signaling);
             // 回调
             signalingCallback.on(stateCode, signaling);
         }

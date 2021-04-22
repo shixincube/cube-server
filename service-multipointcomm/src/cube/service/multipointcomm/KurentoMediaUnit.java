@@ -30,6 +30,7 @@ import cell.util.log.Logger;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
 import cube.common.state.MultipointCommStateCode;
+import cube.service.multipointcomm.signaling.OfferSignaling;
 import cube.service.multipointcomm.signaling.Signaling;
 import org.kurento.client.Continuation;
 import org.kurento.client.KurentoClient;
@@ -91,7 +92,7 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
     }
 
     @Override
-    public MultipointCommStateCode receiveFrom(CommField commField, CommFieldEndpoint endpoint, Signaling signaling) {
+    public MultipointCommStateCode receiveFrom(CommField commField, CommFieldEndpoint endpoint, OfferSignaling signaling) {
         MediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
             return MultipointCommStateCode.NoPipeline;
@@ -109,22 +110,9 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
         }
 
         // 接收数据
-        session.receiveFrom(sender);
+        session.receiveFrom(sender, signaling.getSDP());
 
         return MultipointCommStateCode.Ok;
-
-//        WebRtcEndpoint rtcEndpoint = this.commEndpointMap.get(endpoint.getId());
-//        if (null == rtcEndpoint) {
-//            rtcEndpoint = new WebRtcEndpoint.Builder(wrapper.pipeline).build();
-//            rtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-//                @Override
-//                public void onEvent(IceCandidateFoundEvent event) {
-//
-//                }
-//            });
-//
-//            this.commEndpointMap.put(endpoint.getId(), rtcEndpoint);
-//        }
     }
 
     @Override

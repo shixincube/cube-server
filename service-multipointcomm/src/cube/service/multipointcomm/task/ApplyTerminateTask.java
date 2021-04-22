@@ -57,12 +57,12 @@ public class ApplyTerminateTask extends ServiceTask {
         Packet packet = new Packet(action);
 
         CommField field = null;
-        Contact proposer = null;
+        Contact participant = null;
         Device device = null;
 
         try {
             field = new CommField(packet.data.getJSONObject("field"));
-            proposer = new Contact(packet.data.getJSONObject("proposer"));
+            participant = new Contact(packet.data.getJSONObject("participant"));
             device = new Device(packet.data.getJSONObject("device"));
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
@@ -75,7 +75,7 @@ public class ApplyTerminateTask extends ServiceTask {
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
 
         // 申请对指定目标进行外呼
-        MultipointCommStateCode state = service.applyTerminate(field, proposer, device);
+        MultipointCommStateCode state = service.applyTerminate(field, participant, device);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, state.code, packet.data));

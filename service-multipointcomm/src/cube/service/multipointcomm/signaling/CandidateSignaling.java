@@ -28,10 +28,10 @@ package cube.service.multipointcomm.signaling;
 
 import cube.common.action.MultipointCommAction;
 import cube.common.entity.CommField;
+import cube.common.entity.CommFieldEndpoint;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -46,28 +46,28 @@ public class CandidateSignaling extends Signaling {
 
     private List<JSONObject> candidateList;
 
-    public CandidateSignaling(CommField field, Contact contact, Device device, Long rtcSN) {
-        super(MultipointCommAction.Candidate.name, field, contact, device, rtcSN);
+    public CandidateSignaling(CommField field, CommFieldEndpoint endpoint) {
+        super(MultipointCommAction.Candidate.name, field, endpoint.getContact(), endpoint.getDevice());
+    }
+
+    public CandidateSignaling(CommField field, Contact contact, Device device) {
+        super(MultipointCommAction.Candidate.name, field, contact, device);
     }
 
     public CandidateSignaling(JSONObject json) {
         super(json);
 
-        try {
-            if (json.has("candidate")) {
-                this.candidate = json.getJSONObject("candidate");
-            }
+        if (json.has("candidate")) {
+            this.candidate = json.getJSONObject("candidate");
+        }
 
-            if (json.has("candidates")) {
-                JSONArray array = json.getJSONArray("candidates");
-                this.candidateList = new ArrayList<>(array.length());
-                for (int i = 0; i < array.length(); ++i) {
-                    JSONObject candidate = array.getJSONObject(i);
-                    this.candidateList.add(candidate);
-                }
+        if (json.has("candidates")) {
+            JSONArray array = json.getJSONArray("candidates");
+            this.candidateList = new ArrayList<>(array.length());
+            for (int i = 0; i < array.length(); ++i) {
+                JSONObject candidate = array.getJSONObject(i);
+                this.candidateList.add(candidate);
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
     }
 
@@ -99,21 +99,17 @@ public class CandidateSignaling extends Signaling {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        try {
-            if (null != this.candidate) {
-                json.put("candidate", this.candidate);
+        if (null != this.candidate) {
+            json.put("candidate", this.candidate);
+        }
+
+        if (null != this.candidateList) {
+            JSONArray array = new JSONArray();
+            for (JSONObject candidate : this.candidateList) {
+                array.put(candidate);
             }
 
-            if (null != this.candidateList) {
-                JSONArray array = new JSONArray();
-                for (JSONObject candidate : this.candidateList) {
-                    array.put(candidate);
-                }
-
-                json.put("candidates", array);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+            json.put("candidates", array);
         }
         return json;
     }

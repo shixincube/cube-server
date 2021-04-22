@@ -55,11 +55,6 @@ public class CommFieldEndpoint extends Entity {
     private Device device;
 
     /**
-     * RTC 设备序号。
-     */
-    private Long rtcSN;
-
-    /**
      * 当前节点的状态。
      */
     private MultipointCommStateCode state;
@@ -190,24 +185,6 @@ public class CommFieldEndpoint extends Entity {
      */
     public Device getDevice() {
         return this.device;
-    }
-
-    /**
-     * 设置 RTC 设备的序号。
-     *
-     * @param rtcSN
-     */
-    public void setRTCSerialNumber(Long rtcSN) {
-        this.rtcSN = rtcSN;
-    }
-
-    /**
-     * 获取 RTC 设备的序号。
-     *
-     * @return
-     */
-    public Long getRTCSerialNumber() {
-        return this.rtcSN;
     }
 
     /**

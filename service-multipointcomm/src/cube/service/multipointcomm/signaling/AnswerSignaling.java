@@ -28,9 +28,9 @@ package cube.service.multipointcomm.signaling;
 
 import cube.common.action.MultipointCommAction;
 import cube.common.entity.CommField;
+import cube.common.entity.CommFieldEndpoint;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -46,25 +46,25 @@ public class AnswerSignaling extends Signaling {
 
     private Contact callee;
 
-    public AnswerSignaling(CommField field, Contact contact, Device device, Long rtcSN) {
-        super(MultipointCommAction.Answer.name, field, contact, device, rtcSN);
+    public AnswerSignaling(CommField field, CommFieldEndpoint endpoint) {
+        super(MultipointCommAction.Answer.name, field, endpoint.getContact(), endpoint.getDevice());
+    }
+
+    public AnswerSignaling(CommField field, Contact contact, Device device) {
+        super(MultipointCommAction.Answer.name, field, contact, device);
     }
 
     public AnswerSignaling(JSONObject json) {
         super(json);
 
-        try {
-            this.sessionDescription = json.getJSONObject("description");
-            this.mediaConstraint = json.getJSONObject("constraint");
+        this.sessionDescription = json.getJSONObject("description");
+        this.mediaConstraint = json.getJSONObject("constraint");
 
-            if (json.has("caller")) {
-                this.caller = new Contact(json.getJSONObject("caller"));
-            }
-            if (json.has("callee")) {
-                this.caller = new Contact(json.getJSONObject("callee"));
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (json.has("caller")) {
+            this.caller = new Contact(json.getJSONObject("caller"));
+        }
+        if (json.has("callee")) {
+            this.caller = new Contact(json.getJSONObject("callee"));
         }
     }
 
@@ -100,39 +100,23 @@ public class AnswerSignaling extends Signaling {
     }
 
     public String getType() {
-        try {
-            return this.sessionDescription.getString("type");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return null;
+        return this.sessionDescription.getString("type");
     }
 
     public String getSDP() {
-        try {
-            return this.sessionDescription.getString("sdp");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return null;
+        return this.sessionDescription.getString("sdp");
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        try {
-            json.put("description", this.sessionDescription);
-            json.put("constraint", this.mediaConstraint);
-            if (null != this.caller) {
-                json.put("caller", this.caller.toBasicJSON());
-            }
-            if (null != this.callee) {
-                json.put("callee", this.callee.toBasicJSON());
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        json.put("description", this.sessionDescription);
+        json.put("constraint", this.mediaConstraint);
+        if (null != this.caller) {
+            json.put("caller", this.caller.toBasicJSON());
+        }
+        if (null != this.callee) {
+            json.put("callee", this.callee.toBasicJSON());
         }
         return json;
     }

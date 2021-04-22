@@ -30,7 +30,6 @@ import cube.common.action.MultipointCommAction;
 import cube.common.entity.CommField;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -42,22 +41,18 @@ public class ByeSignaling extends Signaling {
 
     private Contact callee;
 
-    public ByeSignaling(CommField commField, Contact contact, Device device, Long rtcSN) {
-        super(MultipointCommAction.Bye.name, commField, contact, device, rtcSN);
+    public ByeSignaling(CommField commField, Contact contact, Device device) {
+        super(MultipointCommAction.Bye.name, commField, contact, device);
     }
 
     public ByeSignaling(JSONObject json) {
         super(json);
 
-        try {
-            if (json.has("caller")) {
-                this.caller = new Contact(json.getJSONObject("caller"));
-            }
-            if (json.has("callee")) {
-                this.callee = new Contact(json.getJSONObject("callee"));
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (json.has("caller")) {
+            this.caller = new Contact(json.getJSONObject("caller"));
+        }
+        if (json.has("callee")) {
+            this.callee = new Contact(json.getJSONObject("callee"));
         }
     }
 
@@ -85,15 +80,11 @@ public class ByeSignaling extends Signaling {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        try {
-            if (null != this.caller) {
-                json.put("caller", this.caller.toBasicJSON());
-            }
-            if (null != this.callee) {
-                json.put("callee", this.callee.toBasicJSON());
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (null != this.caller) {
+            json.put("caller", this.caller.toBasicJSON());
+        }
+        if (null != this.callee) {
+            json.put("callee", this.callee.toBasicJSON());
         }
         return json;
     }

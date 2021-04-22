@@ -40,7 +40,7 @@ public final class SignalingTool {
     }
 
     public static ByeSignaling createByeSignaling(Contact contact, Device device, CommField commField) {
-        ByeSignaling signaling = new ByeSignaling(commField, contact, device, 0L);
+        ByeSignaling signaling = new ByeSignaling(commField, contact, device);
         return signaling;
     }
 }

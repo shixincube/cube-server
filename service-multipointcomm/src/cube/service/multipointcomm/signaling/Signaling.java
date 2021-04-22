@@ -59,11 +59,6 @@ public abstract class Signaling implements JSONable {
     protected Device device;
 
     /**
-     * 客户端 RTC 设备的 SN 。
-     */
-    protected Long rtcSN;
-
-    /**
      * 目标。
      */
     protected CommFieldEndpoint target;
@@ -75,14 +70,12 @@ public abstract class Signaling implements JSONable {
      * @param field
      * @param contact
      * @param device
-     * @param rtcSN
      */
-    public Signaling(String name, CommField field, Contact contact, Device device, Long rtcSN) {
+    public Signaling(String name, CommField field, Contact contact, Device device) {
         this.name = name;
         this.field = field;
         this.contact = contact;
         this.device = device;
-        this.rtcSN = rtcSN;
     }
 
     /**
@@ -95,7 +88,6 @@ public abstract class Signaling implements JSONable {
         this.field = new CommField(json.getJSONObject("field"));
         this.contact = new Contact(json.getJSONObject("contact"));
         this.device = new Device(json.getJSONObject("device"));
-        this.rtcSN = json.getLong("rtcSN");
 
         if (json.has("target")) {
             this.target = new CommFieldEndpoint(json.getJSONObject("target"));
@@ -122,10 +114,6 @@ public abstract class Signaling implements JSONable {
         return this.device;
     }
 
-    public Long getRTCSerialNumber() {
-        return this.rtcSN;
-    }
-
     public CommFieldEndpoint getTarget() {
         return this.target;
     }
@@ -137,7 +125,6 @@ public abstract class Signaling implements JSONable {
         json.put("field", this.field.toCompactJSON());
         json.put("contact", this.contact.toBasicJSON());
         json.put("device", this.device.toCompactJSON());
-        json.put("rtcSN", this.rtcSN.longValue());
 
         if (null != this.target) {
             json.put("target", this.target.toCompactJSON());

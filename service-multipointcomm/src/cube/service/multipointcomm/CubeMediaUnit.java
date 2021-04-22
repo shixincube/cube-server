@@ -37,6 +37,7 @@ import cube.common.Packet;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
 import cube.common.state.MultipointCommStateCode;
+import cube.service.multipointcomm.signaling.OfferSignaling;
 import cube.service.multipointcomm.signaling.Signaling;
 import cube.service.multipointcomm.signaling.SignalingFactory;
 import org.json.JSONException;
@@ -93,7 +94,7 @@ public class CubeMediaUnit extends AbstractMediaUnit implements TalkListener {
     }
 
     @Override
-    public MultipointCommStateCode receiveFrom(CommField commField, CommFieldEndpoint endpoint, Signaling signaling) {
+    public MultipointCommStateCode receiveFrom(CommField commField, CommFieldEndpoint endpoint, OfferSignaling signaling) {
         return MultipointCommStateCode.Unknown;
     }
 

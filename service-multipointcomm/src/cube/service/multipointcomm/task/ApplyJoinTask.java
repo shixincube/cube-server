@@ -57,12 +57,12 @@ public class ApplyJoinTask extends ServiceTask {
         Packet packet = new Packet(action);
 
         CommField field = null;
-        Contact contact = null;
+        Contact participant = null;
         Device device = null;
 
         try {
             field = new CommField(packet.data.getJSONObject("field"));
-            contact = new Contact(packet.data.getJSONObject("contact"));
+            participant = new Contact(packet.data.getJSONObject("participant"));
             device = new Device(packet.data.getJSONObject("device"));
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
@@ -75,7 +75,7 @@ public class ApplyJoinTask extends ServiceTask {
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
 
         // 申请进入 Comm Field
-        MultipointCommStateCode state = service.applyJoin(field, contact, device);
+        MultipointCommStateCode state = service.applyJoin(field, participant, device);
         if (state != MultipointCommStateCode.Ok) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, state.code, packet.data));

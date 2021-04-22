@@ -29,6 +29,7 @@ package cube.service.multipointcomm;
 import cell.util.log.Logger;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
+import cube.service.multipointcomm.signaling.AnswerSignaling;
 import cube.service.multipointcomm.signaling.CandidateSignaling;
 import org.kurento.client.*;
 
@@ -46,6 +47,8 @@ public class KurentoSession {
 
     private final CommFieldEndpoint commFieldEndpoint;
 
+    private final MediaPipeline pipeline;
+
     private final WebRtcEndpoint outgoingMedia;
 
     private final ConcurrentMap<Long, WebRtcEndpoint> incomingMedia;
@@ -54,20 +57,20 @@ public class KurentoSession {
         this.portal = portal;
         this.commField = commField;
         this.commFieldEndpoint = endpoint;
+        this.pipeline = pipeline;
+        this.incomingMedia = new ConcurrentHashMap<>();
 
         this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline).build();
         this.outgoingMedia.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
             @Override
             public void onEvent(IceCandidateFoundEvent event) {
                 IceCandidate iceCandidate = event.getCandidate();
-                System.out.println("XJW#outgoingMedia#addIceCandidateFoundListener: " + iceCandidate.getCandidate());
+
 //                CandidateSignaling signaling = new CandidateSignaling(commField,
 //                        endpoint.getContact(), endpoint.getDevice(), 0L);
 //                portal.emit(endpoint, signaling);
             }
         });
-
-        this.incomingMedia = new ConcurrentHashMap<>();
     }
 
     public String getName() {
@@ -78,19 +81,27 @@ public class KurentoSession {
         return this.commFieldEndpoint.getId();
     }
 
-    public void receiveFrom(KurentoSession session) {
+    protected WebRtcEndpoint getOutgoingWebRtcPeer() {
+        return this.outgoingMedia;
+    }
+
+    public void receiveFrom(KurentoSession session, String sdpOffer) {
         Logger.i(this.getClass(), "Session \"" + this.getName() + "\" : connecting with \""
                 + session.getName() + "\" in field " + this.commField.getName());
 
-        getEndpointForSession(session);
-//        final String sdpAnswer = getEndpointForSession(session);
+        // 生成应答的 SDP
+        final String sdpAnswer = getEndpointForSession(session).processOffer(sdpOffer);
+System.out.println("XJW: " + sdpAnswer);
+        // 将应答发送回对端
+//        AnswerSignaling answerSignaling = new AnswerSignaling(this.commField, session.getCommFieldEndpoint());
+
     }
 
     public CommFieldEndpoint getCommFieldEndpoint() {
         return this.commFieldEndpoint;
     }
 
-    private WebRtcEndpoint getEndpointForSession(KurentoSession session) {
+    private WebRtcEndpoint getEndpointForSession(final KurentoSession session) {
         if (session.getId().equals(this.getId())) {
             Logger.d(this.getClass(), "Endpoint \"" + session.getName() + "\" configuring loopback");
             return this.outgoingMedia;
@@ -98,6 +109,30 @@ public class KurentoSession {
 
         Logger.d(this.getClass(), "Endpoint \"" + this.getName() + "\" : receiving from \"" + session.getName() + "\"");
 
-        return null;
+        WebRtcEndpoint incoming = this.incomingMedia.get(session.getId());
+
+        if (null == incoming) {
+            Logger.d(this.getClass(), "Endpoint \"" + this.getName() + "\" : creating new endpoint for \"" +
+                    session.getName() + "\"");
+
+            incoming = new WebRtcEndpoint.Builder(this.pipeline).build();
+
+            incoming.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
+                @Override
+                public void onEvent(IceCandidateFoundEvent event) {
+                    // TODO
+                    CandidateSignaling signaling = new CandidateSignaling(commField, session.getCommFieldEndpoint());
+//                    portal.emit(commFieldEndpoint, signaling);
+                }
+            });
+
+            this.incomingMedia.put(session.getId(), incoming);
+        }
+
+        Logger.d(getClass(), "Endpoint \"" + this.getName() + "\" obtained endpoint for \"" + session.getName() + "\"");
+
+        session.getOutgoingWebRtcPeer().connect(incoming);
+
+        return incoming;
     }
 }
