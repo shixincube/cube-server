@@ -137,7 +137,7 @@ public class CommFieldEndpoint extends Entity {
 
         this.id = json.getLong("id");
         this.domain = new Domain(json.getString("domain"));
-        this.contact = new Contact(json.getJSONObject("contact"), this.domain);
+        this.contact = new Contact(json.getJSONObject("contact"));
         this.device = new Device(json.getJSONObject("device"));
         this.name = json.getString("name");
         this.state = MultipointCommStateCode.match(json.getInt("state"));
@@ -150,13 +150,17 @@ public class CommFieldEndpoint extends Entity {
             this.mediaConstraint = json.getJSONObject("constraint");
         }
 
-        JSONObject video = json.getJSONObject("video");
-        this.videoEnabled = video.getBoolean("enabled");
-        this.videoStreamEnabled = video.getBoolean("streamEnabled");
+        if (json.has("video")) {
+            JSONObject video = json.getJSONObject("video");
+            this.videoEnabled = video.getBoolean("enabled");
+            this.videoStreamEnabled = video.getBoolean("streamEnabled");
+        }
 
-        JSONObject audio = json.getJSONObject("audio");
-        this.audioEnabled = audio.getBoolean("enabled");
-        this.audioStreamEnabled = audio.getBoolean("streamEnabled");
+        if (json.has("audio")) {
+            JSONObject audio = json.getJSONObject("audio");
+            this.audioEnabled = audio.getBoolean("enabled");
+            this.audioStreamEnabled = audio.getBoolean("streamEnabled");
+        }
 
         this.uniqueKey = UniqueKey.make(this.id, this.domain);
     }

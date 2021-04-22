@@ -321,6 +321,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 endpoint = new CommFieldEndpoint(endpointId, proposer, device);
                 // 添加主叫终端
                 current.addEndpoint(endpoint);
+
+                this.updateCommField(current, true);
             }
 
             // 分配媒体单元
@@ -474,6 +476,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             endpoint = new CommFieldEndpoint(endpointId, signaling.getContact(), signaling.getDevice());
             // 添加主叫终端
             current.addEndpoint(endpoint);
+            this.updateCommField(current, true);
         }
 
         endpoint.setRTCSerialNumber(signaling.getRTCSerialNumber());
@@ -651,10 +654,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         else {
             Logger.i(this.getClass(), "Answer: " + current.getId() + " - " + signaling.getContact().getId());
 
-            // 更新缓存
-            this.cache.put(new CacheKey(current.getId()), new CacheValue(current.toJSON()));
-
-            this.mediaUnitLeader.dispatch(current, endpoint, signaling, callback);
+//            this.mediaUnitLeader.dispatch(current, endpoint, signaling, callback);
         }
     }
 
@@ -712,7 +712,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             }
         }
         else {
-            this.mediaUnitLeader.dispatch(current, endpoint, signaling, null);
+//            this.mediaUnitLeader.dispatch(current, endpoint, signaling, null);
         }
 
         return MultipointCommStateCode.Ok;
@@ -1013,7 +1013,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             int c = string.codePointAt(i);
             id += c * 3 + id * 3;
         }
-        return Math.abs(id);
+        return Math.abs(Long.valueOf(id & 0x7fffffffffffffffL).intValue());
     }
 
     private CommField queryCommField(Contact contact, Device device) {

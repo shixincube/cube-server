@@ -60,9 +60,10 @@ public class KurentoSession {
             @Override
             public void onEvent(IceCandidateFoundEvent event) {
                 IceCandidate iceCandidate = event.getCandidate();
-                CandidateSignaling signaling = new CandidateSignaling(commField,
-                        endpoint.getContact(), endpoint.getDevice(), 0L);
-                portal.emit(endpoint, signaling);
+                System.out.println("XJW#outgoingMedia#addIceCandidateFoundListener: " + iceCandidate.getCandidate());
+//                CandidateSignaling signaling = new CandidateSignaling(commField,
+//                        endpoint.getContact(), endpoint.getDevice(), 0L);
+//                portal.emit(endpoint, signaling);
             }
         });
 

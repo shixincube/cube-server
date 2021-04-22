@@ -104,6 +104,9 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
 
         CommFieldEndpoint target = signaling.getTarget();
         KurentoSession sender = wrapper.getSession(target.getId());
+        if (null == sender) {
+            return MultipointCommStateCode.NoCommFieldEndpoint;
+        }
 
         // 接收数据
         session.receiveFrom(sender);
@@ -194,6 +197,7 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
 
         public void addSession(Long id, KurentoSession session) {
             this.endpointSessionMap.put(id, session);
+            this.timestamp = System.currentTimeMillis();
         }
 
         protected void closePipeline() {
