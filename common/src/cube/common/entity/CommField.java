@@ -256,6 +256,14 @@ public class CommField extends Entity {
     }
 
     /**
+     *
+     * @return
+     */
+    public int numEndpoints() {
+        return this.fieldEndpoints.size();
+    }
+
+    /**
      * 添加终端节点。
      *
      * @param endpoint
@@ -278,24 +286,6 @@ public class CommField extends Entity {
      */
     public void clearEndpoints() {
         this.fieldEndpoints.clear();
-    }
-
-    /**
-     * 清理指定终端节点。
-     *
-     * @param endpoint
-     */
-    public void clearEndpoint(CommFieldEndpoint endpoint) {
-//        Contact contact = endpoint.getContact();
-//        Iterator<BoundCalling> iter = this.boundCallingList.iterator();
-//        while (iter.hasNext()) {
-//            BoundCalling calling = iter.next();
-//            if (calling.caller.equals(contact) || calling.callee.equals(contact)) {
-//                iter.remove();
-//            }
-//        }
-
-        this.fieldEndpoints.remove(endpoint.getId());
     }
 
     /**

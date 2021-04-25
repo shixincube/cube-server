@@ -156,13 +156,15 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
      * @param endpoint
      * @return
      */
+    @Override
     public MultipointCommStateCode removeEndpoint(CommField commField, CommFieldEndpoint endpoint) {
         MediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
             return MultipointCommStateCode.NoPipeline;
         }
 
-        KurentoSession session = wrapper.getSession(endpoint.getId());
+        // 删除会话
+        KurentoSession session = wrapper.removeSession(endpoint.getId());
         if (null == session) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
@@ -172,7 +174,7 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
                 continue;
             }
 
-            // 让其他参与者取消离开终端的流接收
+            // 让其他参与者取消接收流
             KurentoSession participantSession = wrapper.getSession(participant.getId());
             participantSession.cancelFrom(session);
         }
@@ -181,6 +183,16 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
             session.close();
         } catch (IOException e) {
             Logger.e(this.getClass(), "", e);
+        }
+
+        // 删除终端
+        commField.removeEndpoint(endpoint);
+
+        if (commField.numEndpoints() == 0) {
+            Logger.d(this.getClass(), "Comm field \"" + commField.getName() + "\" empty.");
+            // 已经没有终端在场域里，删除场域
+            this.pipelineMap.remove(commField.getId());
+            wrapper.closePipeline();
         }
 
         return MultipointCommStateCode.Ok;
@@ -251,12 +263,18 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
         }
 
         public KurentoSession getSession(Long id) {
+            this.timestamp = System.currentTimeMillis();
             return this.endpointSessionMap.get(id);
         }
 
         public void addSession(Long id, KurentoSession session) {
             this.endpointSessionMap.put(id, session);
             this.timestamp = System.currentTimeMillis();
+        }
+
+        public KurentoSession removeSession(Long id) {
+            this.timestamp = System.currentTimeMillis();
+            return this.endpointSessionMap.remove(id);
         }
 
         protected void closePipeline() {

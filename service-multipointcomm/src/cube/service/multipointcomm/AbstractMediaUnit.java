@@ -48,6 +48,8 @@ public abstract class AbstractMediaUnit {
     public abstract MultipointCommStateCode addCandidate(CommField commField,
                                                          CommFieldEndpoint endpoint, CandidateSignaling signaling);
 
+    public abstract MultipointCommStateCode removeEndpoint(CommField commField, CommFieldEndpoint endpoint);
+
     public abstract void destroy();
 
     public void onTick(long now) {

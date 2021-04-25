@@ -122,7 +122,9 @@ public class MediaUnitLeader implements MediaUnitListener {
         }
         else if (MultipointCommAction.Bye.name.equals(signaling.getName())) {
             // 关闭指定的终端媒体
-//            mediaUnit
+            MultipointCommStateCode stateCode = mediaUnit.removeEndpoint(commField, endpoint);
+            // 回调
+            signalingCallback.on(stateCode, signaling);
         }
         else {
             signalingCallback.on(MultipointCommStateCode.UnsupportedSignaling, signaling);

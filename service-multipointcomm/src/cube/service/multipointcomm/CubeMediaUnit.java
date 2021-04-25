@@ -107,6 +107,11 @@ public class CubeMediaUnit extends AbstractMediaUnit implements TalkListener {
     }
 
     @Override
+    public MultipointCommStateCode removeEndpoint(CommField commField, CommFieldEndpoint endpoint) {
+        return MultipointCommStateCode.Unknown;
+    }
+
+    @Override
     public void destroy() {
 
     }
