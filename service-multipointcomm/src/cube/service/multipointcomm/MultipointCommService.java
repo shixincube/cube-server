@@ -332,9 +332,6 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             // 准备通道
             mediaUnit.preparePipeline(commField, endpoint);
 
-            // 向所有终端广播有新人加入
-            // TODO
-
             return MultipointCommStateCode.Ok;
         }
     }
@@ -462,7 +459,12 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             this.updateCommField(current, true);
         }
         else {
-            // TODO
+            CommFieldEndpoint endpoint = current.getEndpoint(participant, device);
+            if (null != endpoint) {
+                current.removeEndpoint(endpoint);
+
+                this.updateCommField(current, true);
+            }
         }
 
         return MultipointCommStateCode.Ok;
@@ -539,6 +541,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         else {
             Logger.i(this.getClass(), "Offer: " + current.getId() + " from " + signaling.getContact().getId());
 
+            final CommFieldEndpoint currentEndpoint = endpoint;
+
             SignalingCallback processCallback = new SignalingCallback() {
                 @Override
                 public void on(MultipointCommStateCode stateCode, Signaling responseSignaling) {
@@ -550,13 +554,13 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                     // 回调
                     callback.on(stateCode, responseSignaling);
 
-                    // 向场域里的其他终端发送事件
-//                    broadcastEnteredEvent(current, current.getEndpoint(signaling.getContact(), signaling.getDevice()));
+                    // 广播
+                    broadcastArrivedEvent(current, currentEndpoint);
                 }
             };
 
             // 由 Leader 派发信令
-            this.mediaUnitLeader.dispatch(current, endpoint, signaling, processCallback);
+            this.mediaUnitLeader.dispatch(current, currentEndpoint, signaling, processCallback);
         }
     }
 
@@ -721,7 +725,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             }
         }
         else {
-//            this.mediaUnitLeader.dispatch(current, endpoint, signaling, null);
+            // 将信令转到媒体单元
+            this.mediaUnitLeader.dispatch(current, endpoint, signaling, null);
         }
 
         return MultipointCommStateCode.Ok;
@@ -828,6 +833,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         else {
             Logger.i(this.getClass(), "Bye: " + signaling.getContact().getId());
 
+            final CommFieldEndpoint currentEndpoint = endpoint;
+
             SignalingCallback processCallback = new SignalingCallback() {
                 @Override
                 public void on(MultipointCommStateCode stateCode, Signaling responseSignaling) {
@@ -844,17 +851,17 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                     current.removeEndpoint(endpoint);
 
                     // 更新缓存
-                    cache.put(new CacheKey(current.getId()), new CacheValue(current.toJSON()));
+                    updateCommField(current, true);
 
                     // 回调
                     callback.on(stateCode, responseSignaling);
 
                     // 向场域里的其他终端发送事件
-                    broadcastLeftEvent(current, endpoint);
+                    broadcastLeftEvent(current, currentEndpoint);
                 }
             };
 
-            this.mediaUnitLeader.dispatch(current, endpoint, signaling, processCallback);
+            this.mediaUnitLeader.dispatch(current, currentEndpoint, signaling, processCallback);
         }
     }
 
@@ -947,7 +954,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         this.contactsAdapter.publish(endpoint.getContact().getUniqueKey(), event.toJSON());
     }
 
-    private void broadcastEnteredEvent(CommField commField, CommFieldEndpoint endpoint) {
+    private void broadcastArrivedEvent(CommField commField, CommFieldEndpoint endpoint) {
         for (CommFieldEndpoint target : commField.getEndpoints()) {
             if (target.equals(endpoint)) {
                 continue;

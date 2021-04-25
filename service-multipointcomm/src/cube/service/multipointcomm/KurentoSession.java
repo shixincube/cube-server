@@ -32,15 +32,20 @@ import cube.common.entity.CommFieldEndpoint;
 import cube.service.multipointcomm.signaling.AnswerSignaling;
 import cube.service.multipointcomm.signaling.CandidateSignaling;
 import cube.service.multipointcomm.signaling.Signaling;
+import cube.service.multipointcomm.signaling.Signalings;
+import org.json.JSONObject;
 import org.kurento.client.*;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * Kurento 单元的用户会话。
  */
-public class KurentoSession {
+public class KurentoSession implements Closeable {
 
     private final Portal portal;
 
@@ -52,24 +57,25 @@ public class KurentoSession {
 
     private final WebRtcEndpoint outgoingMedia;
 
-    private final ConcurrentMap<Long, WebRtcEndpoint> incomingMedia;
+    private final ConcurrentMap<Long, WebRtcEndpoint> incomingMedias;
 
     public KurentoSession(Portal portal, CommField commField, CommFieldEndpoint endpoint, MediaPipeline pipeline) {
         this.portal = portal;
         this.commField = commField;
         this.commFieldEndpoint = endpoint;
         this.pipeline = pipeline;
-        this.incomingMedia = new ConcurrentHashMap<>();
+        this.incomingMedias = new ConcurrentHashMap<>();
 
         this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline).build();
         this.outgoingMedia.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
             @Override
             public void onEvent(IceCandidateFoundEvent event) {
                 IceCandidate iceCandidate = event.getCandidate();
+                JSONObject candidate = Signalings.toJSON(iceCandidate);
 
-//                CandidateSignaling signaling = new CandidateSignaling(commField,
-//                        endpoint.getContact(), endpoint.getDevice(), 0L);
-//                portal.emit(endpoint, signaling);
+                CandidateSignaling signaling = new CandidateSignaling(commField, commFieldEndpoint);
+                signaling.setCandidate(candidate);
+                sendSignaling(signaling);
             }
         });
     }
@@ -82,10 +88,19 @@ public class KurentoSession {
         return this.commFieldEndpoint.getId();
     }
 
+    public CommFieldEndpoint getCommFieldEndpoint() {
+        return this.commFieldEndpoint;
+    }
+
     protected WebRtcEndpoint getOutgoingWebRtcPeer() {
         return this.outgoingMedia;
     }
 
+    /**
+     *
+     * @param session
+     * @param sdpOffer
+     */
     public void receiveFrom(KurentoSession session, String sdpOffer) {
         Logger.i(this.getClass(), "Session \"" + this.getName() + "\" : connecting with \""
                 + session.getName() + "\" in field " + this.commField.getName());
@@ -101,13 +116,99 @@ public class KurentoSession {
         this.sendSignaling(answerSignaling);
 
         Logger.d(this.getClass(), "Gather Candidates : \"" + session.getName() + "\"");
-//        this.getEndpointForSession(session).gatherCandidates();
+        this.getEndpointForSession(session).gatherCandidates();
     }
 
-    public CommFieldEndpoint getCommFieldEndpoint() {
-        return this.commFieldEndpoint;
+    /**
+     *
+     * @param candidate
+     * @param target
+     */
+    public void addCandidate(IceCandidate candidate, KurentoSession target) {
+        if (target.getId().longValue() == this.getId().longValue()) {
+            this.outgoingMedia.addIceCandidate(candidate);
+        }
+        else {
+            WebRtcEndpoint peer = this.getEndpointForSession(target);
+            if (null != peer) {
+                peer.addIceCandidate(candidate);
+            }
+        }
     }
 
+    /**
+     *
+     * @param session
+     */
+    public void cancelFrom(KurentoSession session) {
+        Logger.d(this.getClass(), "Session \"" + this.getName() + "\" : canceling reception from \"" + session.getName() + "\"");
+        final WebRtcEndpoint incoming = this.incomingMedias.remove(session.getId());
+
+        if (null == incoming) {
+            return;
+        }
+
+        Logger.d(this.getClass(), "Session \"" + this.getName() + "\" : removing endpoint for \"" + session.getName() + "\"");
+        incoming.release(new Continuation<Void>() {
+            @Override
+            public void onSuccess(Void result) throws Exception {
+                Logger.d(KurentoSession.class, "Session \"" + getName() +
+                        "\" : Released successfully incoming EP for \"" + session.getName() + "\"");
+            }
+
+            @Override
+            public void onError(Throwable cause) throws Exception {
+                Logger.w(KurentoSession.class, "Session \"" + getName() + "\" : Could not release incoming EP for \""
+                        + session.getName() + "\"");
+            }
+        });
+    }
+
+    /**
+     *
+     */
+    @Override
+    public void close() throws IOException {
+        Logger.d(this.getClass(), "Session \"" + this.getName() + "\" : Releasing resources");
+
+        for (final Map.Entry<Long, WebRtcEndpoint> entry : this.incomingMedias.entrySet()) {
+            final Long remoteId = entry.getKey();
+            Logger.d(this.getClass(), "Session \"" + this.getName() + "\" : Releasing incoming EP for " + remoteId);
+
+            final WebRtcEndpoint ep = entry.getValue();
+
+            ep.release(new Continuation<Void>() {
+                @Override
+                public void onSuccess(Void result) throws Exception {
+                    Logger.d(KurentoSession.class, "Session \"" + getName() + "\" : Released successfully incoming EP for " + remoteId);
+                }
+
+                @Override
+                public void onError(Throwable cause) throws Exception {
+                    Logger.w(KurentoSession.class, "Session \"" + getName() + "\" : Could not release incoming EP for " + remoteId);
+                }
+            });
+        }
+
+        this.outgoingMedia.release(new Continuation<Void>() {
+            @Override
+            public void onSuccess(Void result) throws Exception {
+                Logger.d(KurentoSession.class, "Session \"" + getName() + "\" : Released outgoing EP");
+            }
+
+            @Override
+            public void onError(Throwable cause) throws Exception {
+                Logger.w(KurentoSession.class, "Session \"" + getName() + "\" : Could not release outgoing EP");
+            }
+        });
+    }
+
+    /**
+     * 获取指定会话的 WebRTC 终端。
+     *
+     * @param session
+     * @return
+     */
     private WebRtcEndpoint getEndpointForSession(final KurentoSession session) {
         if (session.getId().equals(this.getId())) {
             Logger.d(this.getClass(), "Endpoint \"" + session.getName() + "\" configuring loopback");
@@ -116,7 +217,7 @@ public class KurentoSession {
 
         Logger.d(this.getClass(), "Endpoint \"" + this.getName() + "\" : receiving from \"" + session.getName() + "\"");
 
-        WebRtcEndpoint incoming = this.incomingMedia.get(session.getId());
+        WebRtcEndpoint incoming = this.incomingMedias.get(session.getId());
 
         if (null == incoming) {
             Logger.d(this.getClass(), "Endpoint \"" + this.getName() + "\" : creating new endpoint for \"" +
@@ -127,13 +228,13 @@ public class KurentoSession {
             incoming.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
                 @Override
                 public void onEvent(IceCandidateFoundEvent event) {
-                    // TODO
                     CandidateSignaling signaling = new CandidateSignaling(commField, session.getCommFieldEndpoint());
-//                    portal.emit(commFieldEndpoint, signaling);
+                    signaling.setCandidate(Signalings.toJSON(event.getCandidate()));
+                    sendSignaling(signaling);
                 }
             });
 
-            this.incomingMedia.put(session.getId(), incoming);
+            this.incomingMedias.put(session.getId(), incoming);
         }
 
         Logger.d(getClass(), "Endpoint \"" + this.getName() + "\" obtained endpoint for \"" + session.getName() + "\"");

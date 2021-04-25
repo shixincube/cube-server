@@ -57,6 +57,16 @@ public enum MultipointCommAction {
     Candidate("candidate"),
 
     /**
+     * 终端节点进入。
+     */
+    Arrived("arrived"),
+
+    /**
+     * 终端节点退出。
+     */
+    Left("left"),
+
+    /**
      * 应答 Offer
      */
     OfferAck("offerAck"),
@@ -100,20 +110,6 @@ public enum MultipointCommAction {
      * 执行申请终止。
      */
     ApplyTerminate("applyTerminate"),
-
-    /**
-     * 终端节点进入。
-     */
-    Arrived("arrived"),
-
-    /**
-     * 终端节点退出。
-     */
-    Left("left"),
-
-    OpenField("open"),
-
-    CloseField("close"),
 
     /**
      * 未知动作。

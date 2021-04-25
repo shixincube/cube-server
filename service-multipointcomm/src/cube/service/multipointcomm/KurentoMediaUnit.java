@@ -30,12 +30,16 @@ import cell.util.log.Logger;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
 import cube.common.state.MultipointCommStateCode;
+import cube.service.multipointcomm.signaling.CandidateSignaling;
 import cube.service.multipointcomm.signaling.OfferSignaling;
 import cube.service.multipointcomm.signaling.Signaling;
+import org.json.JSONObject;
 import org.kurento.client.Continuation;
+import org.kurento.client.IceCandidate;
 import org.kurento.client.KurentoClient;
 import org.kurento.client.MediaPipeline;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -111,6 +115,73 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
 
         // 接收数据
         session.receiveFrom(sender, signaling.getSDP());
+
+        return MultipointCommStateCode.Ok;
+    }
+
+    @Override
+    public MultipointCommStateCode addCandidate(CommField commField,
+                                                CommFieldEndpoint endpoint, CandidateSignaling signaling) {
+        MediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
+        if (null == wrapper) {
+            return MultipointCommStateCode.NoPipeline;
+        }
+
+        KurentoSession session = wrapper.getSession(endpoint.getId());
+        if (null == session) {
+            return MultipointCommStateCode.NoCommFieldEndpoint;
+        }
+
+        CommFieldEndpoint target = signaling.getTarget();
+        if (null == target) {
+            return MultipointCommStateCode.DataStructureError;
+        }
+        KurentoSession targetSession = wrapper.getSession(target.getId());
+        if (null == targetSession) {
+            return MultipointCommStateCode.NoCommFieldEndpoint;
+        }
+
+        // 添加 Candidate
+        JSONObject json = signaling.getCandidate();
+        IceCandidate candidate = new IceCandidate(json.getString("candidate"),
+                json.getString("sdpMid"), json.getInt("sdpMLineIndex"));
+        session.addCandidate(candidate, targetSession);
+
+        return MultipointCommStateCode.Ok;
+    }
+
+    /**
+     *
+     * @param commField
+     * @param endpoint
+     * @return
+     */
+    public MultipointCommStateCode removeEndpoint(CommField commField, CommFieldEndpoint endpoint) {
+        MediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
+        if (null == wrapper) {
+            return MultipointCommStateCode.NoPipeline;
+        }
+
+        KurentoSession session = wrapper.getSession(endpoint.getId());
+        if (null == session) {
+            return MultipointCommStateCode.NoCommFieldEndpoint;
+        }
+
+        for (CommFieldEndpoint participant : commField.getEndpoints()) {
+            if (participant.equals(endpoint)) {
+                continue;
+            }
+
+            // 让其他参与者取消离开终端的流接收
+            KurentoSession participantSession = wrapper.getSession(participant.getId());
+            participantSession.cancelFrom(session);
+        }
+
+        try {
+            session.close();
+        } catch (IOException e) {
+            Logger.e(this.getClass(), "", e);
+        }
 
         return MultipointCommStateCode.Ok;
     }

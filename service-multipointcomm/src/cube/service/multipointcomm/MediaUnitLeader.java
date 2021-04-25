@@ -32,6 +32,7 @@ import cube.common.action.MultipointCommAction;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
 import cube.common.state.MultipointCommStateCode;
+import cube.service.multipointcomm.signaling.CandidateSignaling;
 import cube.service.multipointcomm.signaling.OfferSignaling;
 import cube.service.multipointcomm.signaling.Signaling;
 
@@ -106,11 +107,22 @@ public class MediaUnitLeader implements MediaUnitListener {
             return;
         }
 
-        if (signaling.getName().equals(MultipointCommAction.Offer.name)) {
+        if (MultipointCommAction.Offer.name.equals(signaling.getName())) {
             // 从媒体单元接收数据
             MultipointCommStateCode stateCode = mediaUnit.receiveFrom(commField, endpoint, (OfferSignaling) signaling);
             // 回调
             signalingCallback.on(stateCode, signaling);
+        }
+        else if (MultipointCommAction.Candidate.name.equals(signaling.getName())) {
+            // 处理 ICE Candidate
+            MultipointCommStateCode stateCode = mediaUnit.addCandidate(commField, endpoint, (CandidateSignaling) signaling);
+            if (stateCode != MultipointCommStateCode.Ok) {
+                Logger.w(this.getClass(), "Endpoint \"" + endpoint.getName() + "\" add addCandidate failed");
+            }
+        }
+        else if (MultipointCommAction.Bye.name.equals(signaling.getName())) {
+            // 关闭指定的终端媒体
+//            mediaUnit
         }
         else {
             signalingCallback.on(MultipointCommStateCode.UnsupportedSignaling, signaling);

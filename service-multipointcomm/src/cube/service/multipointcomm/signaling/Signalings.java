@@ -24,33 +24,29 @@
  * SOFTWARE.
  */
 
-package cube.service.multipointcomm;
+package cube.service.multipointcomm.signaling;
 
-import cube.common.entity.CommField;
-import cube.common.entity.CommFieldEndpoint;
-import cube.common.state.MultipointCommStateCode;
-import cube.service.multipointcomm.signaling.CandidateSignaling;
-import cube.service.multipointcomm.signaling.OfferSignaling;
+import org.json.JSONObject;
+import org.kurento.client.IceCandidate;
 
 /**
- * 抽象的媒体单元。
+ * 信令操作辅助函数库。
  */
-public abstract class AbstractMediaUnit {
+public final class Signalings {
 
-    public AbstractMediaUnit() {
+    private Signalings() {
     }
 
-    public abstract void preparePipeline(CommField commField, CommFieldEndpoint endpoint);
-
-    public abstract MultipointCommStateCode receiveFrom(CommField commField,
-                                                        CommFieldEndpoint endpoint, OfferSignaling signaling);
-
-    public abstract MultipointCommStateCode addCandidate(CommField commField,
-                                                         CommFieldEndpoint endpoint, CandidateSignaling signaling);
-
-    public abstract void destroy();
-
-    public void onTick(long now) {
-
+    /**
+     *
+     * @param iceCandidate
+     * @return
+     */
+    public static JSONObject toJSON(IceCandidate iceCandidate) {
+        JSONObject json = new JSONObject();
+        json.put("candidate", iceCandidate.getCandidate());
+        json.put("sdpMid", iceCandidate.getSdpMid());
+        json.put("sdpMLineIndex", iceCandidate.getSdpMLineIndex());
+        return json;
     }
 }

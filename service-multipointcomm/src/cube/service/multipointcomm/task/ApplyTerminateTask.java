@@ -74,7 +74,7 @@ public class ApplyTerminateTask extends ServiceTask {
 
         MultipointCommService service = (MultipointCommService) this.kernel.getModule(MultipointCommService.NAME);
 
-        // 申请对指定目标进行外呼
+        // 申请终止呼叫
         MultipointCommStateCode state = service.applyTerminate(field, participant, device);
 
         this.cellet.speak(this.talkContext,
