@@ -266,6 +266,15 @@ public class GroupAppendix extends Entity {
     }
 
     /**
+     * 返回通讯 ID 。
+     *
+     * @return
+     */
+    public Long getCommId() {
+        return this.commId;
+    }
+
+    /**
      * 按照指定成员类型返回数据。
      *
      * @param member

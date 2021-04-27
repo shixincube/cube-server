@@ -104,8 +104,18 @@ public class GetAppendixTask extends ServiceTask {
 
             GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
 
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.Ok.code, appendix.packJSON(contact)));
+            // 是否是仅获取部分数据
+            if (data.has("commId")) {
+                JSONObject result = new JSONObject();
+                result.put("commId", appendix.getCommId());
+
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, ContactStateCode.Ok.code, result));
+            }
+            else {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, ContactStateCode.Ok.code, appendix.packJSON(contact)));
+            }
         }
         else {
             this.cellet.speak(this.talkContext,
