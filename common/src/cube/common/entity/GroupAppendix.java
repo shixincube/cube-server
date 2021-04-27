@@ -38,6 +38,9 @@ public class GroupAppendix extends Entity {
 
     private Group owner;
 
+    /**
+     * 群组公告。
+     */
     private String notice;
 
     /**
@@ -250,6 +253,16 @@ public class GroupAppendix extends Entity {
                 break;
             }
         }
+    }
+
+    /**
+     * 设置通讯 ID 。
+     *
+     * @param commId
+     */
+    public void setCommId(Long commId) {
+        this.commId = commId;
+        this.resetTimestamp();
     }
 
     /**

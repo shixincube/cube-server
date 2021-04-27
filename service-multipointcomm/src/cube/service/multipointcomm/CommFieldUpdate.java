@@ -29,7 +29,6 @@ package cube.service.multipointcomm;
 import cube.common.JSONable;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -49,12 +48,8 @@ public class CommFieldUpdate implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("field", this.field.toJSON());
-            json.put("endpoint", this.endpoint.toCompactJSON());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        json.put("field", this.field.toJSON());
+        json.put("endpoint", this.endpoint.toCompactJSON());
         return json;
     }
 

@@ -166,8 +166,14 @@ public class UpdateAppendixTask extends ServiceTask {
                 appendix.setNotice(data.getString("notice"));
             }
             else if (data.has("memberRemark")) {
+                // 更新群成员备注名
                 JSONObject remark = data.getJSONObject("memberRemark");
                 appendix.setMemberRemarkName(remark.getLong("id"), remark.getString("name"));
+            }
+            else if (data.has("commId")) {
+                // 更新群组当前的通讯 ID
+                Long commId = data.getLong("commId");
+                appendix.setCommId(commId);
             }
 
             ContactManager.getInstance().updateAppendix(appendix);
