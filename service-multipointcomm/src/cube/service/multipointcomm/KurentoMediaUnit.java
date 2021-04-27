@@ -32,12 +32,8 @@ import cube.common.entity.CommFieldEndpoint;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.multipointcomm.signaling.CandidateSignaling;
 import cube.service.multipointcomm.signaling.OfferSignaling;
-import cube.service.multipointcomm.signaling.Signaling;
 import org.json.JSONObject;
-import org.kurento.client.Continuation;
-import org.kurento.client.IceCandidate;
-import org.kurento.client.KurentoClient;
-import org.kurento.client.MediaPipeline;
+import org.kurento.client.*;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -59,7 +55,7 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
     /**
      * Comm Field 对应的 Media Pipeline 。
      */
-    private final ConcurrentHashMap<Long, MediaPipelineWrapper> pipelineMap;
+    private final ConcurrentHashMap<Long, KurentoMediaPipelineWrapper> pipelineMap;
 
     public KurentoMediaUnit(Portal portal, String url) {
         this.portal = portal;
@@ -82,9 +78,9 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
 
         Logger.i(this.getClass(), "Prepare media pipeline: \"" + commField.getName() + "\" - " + commField.getId());
 
-        MediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
+        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
-            wrapper = new MediaPipelineWrapper(commField.getId(), this.kurentoClient.createMediaPipeline());
+            wrapper = new KurentoMediaPipelineWrapper(commField.getId(), commField, this.kurentoClient.createMediaPipeline());
             this.pipelineMap.put(commField.getId(), wrapper);
         }
 
@@ -97,7 +93,7 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
 
     @Override
     public MultipointCommStateCode receiveFrom(CommField commField, CommFieldEndpoint endpoint, OfferSignaling signaling) {
-        MediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
+        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
             return MultipointCommStateCode.NoPipeline;
         }
@@ -122,7 +118,7 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
     @Override
     public MultipointCommStateCode addCandidate(CommField commField,
                                                 CommFieldEndpoint endpoint, CandidateSignaling signaling) {
-        MediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
+        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
             return MultipointCommStateCode.NoPipeline;
         }
@@ -158,7 +154,7 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
      */
     @Override
     public MultipointCommStateCode removeEndpoint(CommField commField, CommFieldEndpoint endpoint) {
-        MediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
+        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
             return MultipointCommStateCode.NoPipeline;
         }
@@ -199,8 +195,30 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
     }
 
     @Override
+    public MultipointCommStateCode release(CommField commField) {
+        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.remove(commField.getId());
+        if (null == wrapper) {
+            return MultipointCommStateCode.NoPipeline;
+        }
+
+        // 关闭所有会话
+        for (KurentoSession session : wrapper.getSessions()) {
+            try {
+                session.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // 关闭通道
+        wrapper.closePipeline();
+
+        return MultipointCommStateCode.Ok;
+    }
+
+    @Override
     public void destroy() {
-        for (MediaPipelineWrapper wrapper : this.pipelineMap.values()) {
+        for (KurentoMediaPipelineWrapper wrapper : this.pipelineMap.values()) {
             wrapper.closePipeline();
         }
         this.pipelineMap.clear();
@@ -228,67 +246,14 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
         }
 
         // 删除超时的管道
-        Iterator<MediaPipelineWrapper> iter = this.pipelineMap.values().iterator();
+        Iterator<KurentoMediaPipelineWrapper> iter = this.pipelineMap.values().iterator();
         while (iter.hasNext()) {
-            MediaPipelineWrapper wrapper = iter.next();
-            if (now - wrapper.timestamp > this.timeout) {
+            KurentoMediaPipelineWrapper wrapper = iter.next();
+            if (wrapper.commField.numEndpoints() == 0 && now - wrapper.timestamp > this.timeout) {
                 Logger.w(this.getClass(), "Media pipeline timeout: " + wrapper.id);
                 wrapper.closePipeline();
                 iter.remove();
             }
-        }
-    }
-
-    /**
-     * 可以视为 ROOM 结构。
-     */
-    protected class MediaPipelineWrapper {
-
-        protected final Long id;
-
-        protected final MediaPipeline pipeline;
-
-        /**
-         * Comm Field Endpoint 对应的 Session
-         */
-        private final ConcurrentHashMap<Long, KurentoSession> endpointSessionMap;
-
-        protected long timestamp;
-
-        protected MediaPipelineWrapper(Long id, MediaPipeline pipeline) {
-            this.timestamp = System.currentTimeMillis();
-            this.id = id;
-            this.pipeline = pipeline;
-            this.endpointSessionMap = new ConcurrentHashMap<>();
-        }
-
-        public KurentoSession getSession(Long id) {
-            this.timestamp = System.currentTimeMillis();
-            return this.endpointSessionMap.get(id);
-        }
-
-        public void addSession(Long id, KurentoSession session) {
-            this.endpointSessionMap.put(id, session);
-            this.timestamp = System.currentTimeMillis();
-        }
-
-        public KurentoSession removeSession(Long id) {
-            this.timestamp = System.currentTimeMillis();
-            return this.endpointSessionMap.remove(id);
-        }
-
-        protected void closePipeline() {
-            pipeline.release(new Continuation<Void>() {
-                @Override
-                public void onSuccess(Void result) throws Exception {
-                    Logger.d(KurentoMediaUnit.class, "Released Pipeline : " + id);
-                }
-
-                @Override
-                public void onError(Throwable cause) throws Exception {
-                    Logger.d(KurentoMediaUnit.class, "Could not release Pipeline : " + id);
-                }
-            });
         }
     }
 }

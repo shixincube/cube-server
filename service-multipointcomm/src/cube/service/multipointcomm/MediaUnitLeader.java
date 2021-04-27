@@ -132,6 +132,23 @@ public class MediaUnitLeader implements MediaUnitListener {
     }
 
     /**
+     * 释放指定的场域。
+     *
+     * @param commField
+     * @return
+     */
+    public boolean release(CommField commField) {
+        AbstractMediaUnit mediaUnit = this.queryMediaUnit(commField);
+        if (null == mediaUnit) {
+            return false;
+        }
+
+        // 释放当前场域上的所有终端资源
+        MultipointCommStateCode stateCode = mediaUnit.release(commField);
+        return stateCode == MultipointCommStateCode.Ok;
+    }
+
+    /**
      * 选择媒体单元节点。
      *
      * @param commField

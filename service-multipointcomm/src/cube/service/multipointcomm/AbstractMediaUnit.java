@@ -40,18 +40,56 @@ public abstract class AbstractMediaUnit {
     public AbstractMediaUnit() {
     }
 
+    /**
+     *
+     * @param commField
+     * @param endpoint
+     */
     public abstract void preparePipeline(CommField commField, CommFieldEndpoint endpoint);
 
+    /**
+     *
+     * @param commField
+     * @param endpoint
+     * @param signaling
+     * @return
+     */
     public abstract MultipointCommStateCode receiveFrom(CommField commField,
                                                         CommFieldEndpoint endpoint, OfferSignaling signaling);
 
+    /**
+     *
+     * @param commField
+     * @param endpoint
+     * @param signaling
+     * @return
+     */
     public abstract MultipointCommStateCode addCandidate(CommField commField,
                                                          CommFieldEndpoint endpoint, CandidateSignaling signaling);
 
+    /**
+     *
+     * @param commField
+     * @param endpoint
+     * @return
+     */
     public abstract MultipointCommStateCode removeEndpoint(CommField commField, CommFieldEndpoint endpoint);
 
+    /**
+     *
+     * @param commField
+     */
+    public abstract MultipointCommStateCode release(CommField commField);
+
+    /**
+     *
+     */
     public abstract void destroy();
 
+
+    /**
+     * {@inheritDoc}
+     */
     public void onTick(long now) {
 
     }

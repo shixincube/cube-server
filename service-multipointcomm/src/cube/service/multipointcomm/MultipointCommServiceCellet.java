@@ -94,10 +94,6 @@ public class MultipointCommServiceCellet extends AbstractCellet {
             this.executor.execute(new BusyTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (MultipointCommAction.CreateField.name.equals(action)) {
-            this.executor.execute(new CreateFieldTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
         else if (MultipointCommAction.ApplyCall.name.equals(action)) {
             this.executor.execute(new ApplyCallTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
@@ -108,6 +104,18 @@ public class MultipointCommServiceCellet extends AbstractCellet {
         }
         else if (MultipointCommAction.ApplyTerminate.name.equals(action)) {
             this.executor.execute(new ApplyTerminateTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (MultipointCommAction.GetField.name.equals(action)) {
+            this.executor.execute(new GetFieldTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (MultipointCommAction.CreateField.name.equals(action)) {
+            this.executor.execute(new CreateFieldTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (MultipointCommAction.DestroyField.name.equals(action)) {
+            this.executor.execute(new DestroyFieldTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else {

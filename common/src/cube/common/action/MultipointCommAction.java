@@ -92,9 +92,19 @@ public enum MultipointCommAction {
     BusyAck("busyAck"),
 
     /**
+     * 获取指定通讯场域。
+     */
+    GetField("getField"),
+
+    /**
      * 创建通讯场域。
      */
     CreateField("createField"),
+
+    /**
+     * 销毁通讯场域。
+     */
+    DestroyField("destroyField"),
 
     /**
      * 执行申请主叫。

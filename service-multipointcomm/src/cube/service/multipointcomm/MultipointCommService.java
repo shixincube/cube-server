@@ -219,14 +219,6 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         }
     }
 
-    public void updateCommField(CommField commField, boolean onlyCache) {
-        if (!onlyCache) {
-            this.commFieldMap.put(commField.getId(), commField);
-        }
-
-        this.cache.put(new CacheKey(commField.getId()), new CacheValue(commField.toJSON()));
-    }
-
     /**
      * 创建场域。
      *
@@ -237,6 +229,34 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         this.commFieldMap.put(commField.getId(), commField);
         this.cache.put(new CacheKey(commField.getId()), new CacheValue(commField.toJSON()));
         return commField;
+    }
+
+    /**
+     * 销毁场域。
+     *
+     * @param commFieldId
+     * @return
+     */
+    public CommField destroyCommField(Long commFieldId) {
+        CommField commField = this.getCommField(commFieldId);
+        if (null != commField) {
+            // 释放资源
+            if (this.mediaUnitLeader.release(commField)) {
+                Logger.i(this.getClass(), "Destroy comm field : " + commField.getName());
+            }
+
+            this.commFieldMap.remove(commFieldId);
+            this.cache.remove(new CacheKey(commFieldId));
+        }
+        return commField;
+    }
+
+    protected void updateCommField(CommField commField, boolean onlyCache) {
+        if (!onlyCache) {
+            this.commFieldMap.put(commField.getId(), commField);
+        }
+
+        this.cache.put(new CacheKey(commField.getId()), new CacheValue(commField.toJSON()));
     }
 
     /**
@@ -763,7 +783,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
                 // 接收方收到 Bye，回复到服务器，删除对应的信息
                 current.clearAll();
-                current.clearTrace();
+                current.clearTraces();
 
                 this.updateCommField(current, true);
 
@@ -818,7 +838,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
                 // 清空 Calling 信息
                 current.clearAll();
-                current.clearTrace();
+                current.clearTraces();
 
                 this.updateCommField(current, true);
 

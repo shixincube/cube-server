@@ -91,7 +91,6 @@ public class CubeMediaUnit extends AbstractMediaUnit implements TalkListener {
 
     @Override
     public void preparePipeline(CommField commField, CommFieldEndpoint endpoint) {
-
     }
 
     @Override
@@ -112,8 +111,12 @@ public class CubeMediaUnit extends AbstractMediaUnit implements TalkListener {
     }
 
     @Override
-    public void destroy() {
+    public MultipointCommStateCode release(CommField commField) {
+        return MultipointCommStateCode.Unknown;
+    }
 
+    @Override
+    public void destroy() {
     }
 
     /**

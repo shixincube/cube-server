@@ -73,7 +73,7 @@ public class CommField extends Entity {
     /**
      * 场域包含的终端节点。
      */
-    private ConcurrentHashMap<Long, CommFieldEndpoint> fieldEndpoints;
+    private ConcurrentHashMap<Long, CommFieldEndpoint> endpoints;
 
     /**
      * 超时任务的 ScheduledFuture 映射。
@@ -98,7 +98,7 @@ public class CommField extends Entity {
         this.name = founder.getName() + "#" + id;
         this.founder = founder;
         this.invitees = new Vector<>();
-        this.fieldEndpoints = new ConcurrentHashMap<>();
+        this.endpoints = new ConcurrentHashMap<>();
     }
 
     /**
@@ -110,7 +110,7 @@ public class CommField extends Entity {
         super();
 
         this.invitees = new Vector<>();
-        this.fieldEndpoints = new ConcurrentHashMap<>();
+        this.endpoints = new ConcurrentHashMap<>();
 
         this.id = json.getLong("id");
         this.domain = new Domain(json.getString("domain"));
@@ -135,7 +135,7 @@ public class CommField extends Entity {
             for (int i = 0, size = endpoints.length(); i < size; ++i) {
                 JSONObject cfeJson = endpoints.getJSONObject(i);
                 CommFieldEndpoint cfe = new CommFieldEndpoint(cfeJson);
-                this.fieldEndpoints.put(cfe.getId(), cfe);
+                this.endpoints.put(cfe.getId(), cfe);
             }
         }
 
@@ -260,7 +260,7 @@ public class CommField extends Entity {
      * @return
      */
     public int numEndpoints() {
-        return this.fieldEndpoints.size();
+        return this.endpoints.size();
     }
 
     /**
@@ -269,7 +269,7 @@ public class CommField extends Entity {
      * @param endpoint
      */
     public void addEndpoint(CommFieldEndpoint endpoint) {
-        this.fieldEndpoints.put(endpoint.getId(), endpoint);
+        this.endpoints.put(endpoint.getId(), endpoint);
     }
 
     /**
@@ -278,14 +278,14 @@ public class CommField extends Entity {
      * @param endpoint
      */
     public void removeEndpoint(CommFieldEndpoint endpoint) {
-        this.fieldEndpoints.remove(endpoint.getId());
+        this.endpoints.remove(endpoint.getId());
     }
 
     /**
      * 清空所有终端节点。
      */
     public void clearEndpoints() {
-        this.fieldEndpoints.clear();
+        this.endpoints.clear();
     }
 
     /**
@@ -294,7 +294,7 @@ public class CommField extends Entity {
      * @return
      */
     public List<CommFieldEndpoint> getEndpoints() {
-        return new ArrayList<>(this.fieldEndpoints.values());
+        return new ArrayList<>(this.endpoints.values());
     }
 
     /**
@@ -305,7 +305,7 @@ public class CommField extends Entity {
      * @return
      */
     public CommFieldEndpoint getEndpoint(Contact contact) {
-        for (CommFieldEndpoint endpoint : this.fieldEndpoints.values()) {
+        for (CommFieldEndpoint endpoint : this.endpoints.values()) {
             if (endpoint.getContact().equals(contact)) {
                 return endpoint;
             }
@@ -322,7 +322,7 @@ public class CommField extends Entity {
      * @return
      */
     public CommFieldEndpoint getEndpoint(Contact contact, Device device) {
-        for (CommFieldEndpoint endpoint : this.fieldEndpoints.values()) {
+        for (CommFieldEndpoint endpoint : this.endpoints.values()) {
             if (endpoint.getContact().equals(contact) && endpoint.getDevice().equals(device)) {
                 return endpoint;
             }
@@ -371,7 +371,7 @@ public class CommField extends Entity {
         }
     }
 
-    public void clearTrace() {
+    public void clearTraces() {
         Iterator<ScheduledFuture<?>> iter = this.timeoutFutureMap.values().iterator();
         while (iter.hasNext()) {
             iter.next().cancel(true);
@@ -413,7 +413,7 @@ public class CommField extends Entity {
         json.put("founder", this.founder.toCompactJSON());
 
         JSONArray array = new JSONArray();
-        for (CommFieldEndpoint cfe : this.fieldEndpoints.values()) {
+        for (CommFieldEndpoint cfe : this.endpoints.values()) {
             array.put(cfe.toJSON());
         }
         json.put("endpoints", array);
