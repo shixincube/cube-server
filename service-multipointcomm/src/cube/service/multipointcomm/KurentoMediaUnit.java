@@ -38,6 +38,7 @@ import org.kurento.client.*;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Kurento 单元。
@@ -50,6 +51,8 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
 
     private final String url;
 
+    private final ExecutorService executor;
+
     private KurentoClient kurentoClient;
 
     /**
@@ -57,9 +60,10 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
      */
     private final ConcurrentHashMap<Long, KurentoMediaPipelineWrapper> pipelineMap;
 
-    public KurentoMediaUnit(Portal portal, String url) {
+    public KurentoMediaUnit(Portal portal, String url, ExecutorService executor) {
         this.portal = portal;
         this.url = url;
+        this.executor = executor;
 
         try {
             this.kurentoClient = KurentoClient.create(url);
@@ -110,7 +114,12 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
         }
 
         // 接收数据
-        session.receiveFrom(sender, signaling.getSDP());
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                session.receiveFrom(sender, signaling.getSDP());
+            }
+        });
 
         return MultipointCommStateCode.Ok;
     }
@@ -249,10 +258,11 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
         Iterator<KurentoMediaPipelineWrapper> iter = this.pipelineMap.values().iterator();
         while (iter.hasNext()) {
             KurentoMediaPipelineWrapper wrapper = iter.next();
-            if (wrapper.commField.numEndpoints() == 0 && now - wrapper.timestamp > this.timeout) {
-                Logger.w(this.getClass(), "Media pipeline timeout: " + wrapper.id);
-                wrapper.closePipeline();
-                iter.remove();
+            if (wrapper.commField.numEndpoints() == 0) {
+                Logger.e(this.getClass(), "CommField : " + wrapper.commField.getName() + " no endpoint");
+//                Logger.w(this.getClass(), "Media pipeline closed : " + wrapper.id);
+//                wrapper.closePipeline();
+//                iter.remove();
             }
         }
     }

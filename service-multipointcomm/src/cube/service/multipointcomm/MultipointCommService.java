@@ -849,7 +849,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
                 this.updateCommField(current, true);
 
-                // 回调
+                // 回调，向自己回送 Bye
                 callback.on(MultipointCommStateCode.Ok, signaling);
             }
             else {
@@ -888,6 +888,15 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
                     // 向场域里的其他终端发送事件
                     broadcastLeftEvent(current, currentEndpoint);
+
+                    // 如果域里没有终端，则重置群组的数据
+                    if (current.numEndpoints() == 0 && null != current.getGroup()) {
+                        Group group = current.getGroup();
+                        group = ContactManager.getInstance().getGroup(group.getId(), group.getDomain().getName());
+                        GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
+                        appendix.setCommId(0L);
+                        ContactManager.getInstance().updateAppendix(appendix);
+                    }
                 }
             };
 

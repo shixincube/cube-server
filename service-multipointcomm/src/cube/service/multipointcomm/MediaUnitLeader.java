@@ -26,6 +26,7 @@
 
 package cube.service.multipointcomm;
 
+import cell.util.CachedQueueExecutor;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.action.MultipointCommAction;
@@ -40,11 +41,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 媒体单元的主机。
  */
 public class MediaUnitLeader implements MediaUnitListener {
+
+    private ExecutorService executor;
 
     private List<AbstractMediaUnit> mediaUnitList;
 
@@ -62,8 +66,10 @@ public class MediaUnitLeader implements MediaUnitListener {
      * 启动。
      */
     public void start(MultipointCommService service, Properties properties) {
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(10);
+
         // 读取配置
-        this.readConfig(properties, service);
+        this.loadMediaUnit(properties, service);
     }
 
     /**
@@ -79,6 +85,8 @@ public class MediaUnitLeader implements MediaUnitListener {
         }
 
         this.mediaUnitList.clear();
+
+        this.executor.shutdown();
     }
 
     /**
@@ -107,18 +115,18 @@ public class MediaUnitLeader implements MediaUnitListener {
             return;
         }
 
-        if (MultipointCommAction.Offer.name.equals(signaling.getName())) {
-            // 从媒体单元接收数据
-            MultipointCommStateCode stateCode = mediaUnit.receiveFrom(commField, endpoint, (OfferSignaling) signaling);
-            // 回调
-            signalingCallback.on(stateCode, signaling);
-        }
-        else if (MultipointCommAction.Candidate.name.equals(signaling.getName())) {
+        if (MultipointCommAction.Candidate.name.equals(signaling.getName())) {
             // 处理 ICE Candidate
             MultipointCommStateCode stateCode = mediaUnit.addCandidate(commField, endpoint, (CandidateSignaling) signaling);
             if (stateCode != MultipointCommStateCode.Ok) {
                 Logger.w(this.getClass(), "Endpoint \"" + endpoint.getName() + "\" add addCandidate failed");
             }
+        }
+        else if (MultipointCommAction.Offer.name.equals(signaling.getName())) {
+            // 从媒体单元接收数据
+            MultipointCommStateCode stateCode = mediaUnit.receiveFrom(commField, endpoint, (OfferSignaling) signaling);
+            // 回调
+            signalingCallback.on(stateCode, signaling);
         }
         else if (MultipointCommAction.Bye.name.equals(signaling.getName())) {
             // 关闭指定的终端媒体
@@ -183,7 +191,7 @@ public class MediaUnitLeader implements MediaUnitListener {
         return bundle.mediaUnit;
     }
 
-    private void readConfig(Properties properties, MultipointCommService service) {
+    private void loadMediaUnit(Properties properties, MultipointCommService service) {
         // 读取 Unit 配置
         for (int i = 1; i <= 50; ++i) {
             String keyUrl = "unit." + i + ".kms.url";
@@ -193,7 +201,7 @@ public class MediaUnitLeader implements MediaUnitListener {
                     public void emit(CommFieldEndpoint endpoint, Signaling signaling) {
                         service.pushSignaling(endpoint, signaling);
                     }
-                }, properties.getProperty(keyUrl));
+                }, properties.getProperty(keyUrl), this.executor);
                 this.mediaUnitList.add(kurentoMediaUnit);
             }
         }

@@ -81,6 +81,11 @@ public class CommField extends Entity {
     private ConcurrentHashMap<Long, ScheduledFuture<?>> timeoutFutureMap;
 
     /**
+     * 关联的群组。
+     */
+    private Group group;
+
+    /**
      * 当前场域内的通话关系。仅用于私域。
      */
     private BoundCalling boundCalling;
@@ -117,11 +122,6 @@ public class CommField extends Entity {
         this.name = json.getString("name");
         this.founder = new Contact(json.getJSONObject("founder"));
 
-        if (json.has("caller") && json.has("callee")) {
-            this.boundCalling = new BoundCalling(new Contact(json.getJSONObject("caller")),
-                    new Contact(json.getJSONObject("callee")));
-        }
-
         if (json.has("invitees")) {
             JSONArray array = json.getJSONArray("invitees");
             for (int i = 0; i < array.length(); ++i) {
@@ -137,6 +137,15 @@ public class CommField extends Entity {
                 CommFieldEndpoint cfe = new CommFieldEndpoint(cfeJson);
                 this.endpoints.put(cfe.getId(), cfe);
             }
+        }
+
+        if (json.has("group")) {
+            this.group = new Group(json.getJSONObject("group"));
+        }
+
+        if (json.has("caller") && json.has("callee")) {
+            this.boundCalling = new BoundCalling(new Contact(json.getJSONObject("caller")),
+                    new Contact(json.getJSONObject("callee")));
         }
 
         this.uniqueKey = UniqueKey.make(this.id, this.domain);
@@ -253,6 +262,15 @@ public class CommField extends Entity {
      */
     public void clearCalling() {
         this.boundCalling = null;
+    }
+
+    /**
+     * 获取群组。
+     *
+     * @return
+     */
+    public Group getGroup() {
+        return this.group;
     }
 
     /**
@@ -424,6 +442,10 @@ public class CommField extends Entity {
         }
         json.put("invitees", array);
 
+        if (null != this.group) {
+            json.put("group", this.group.toCompactJSON());
+        }
+
         if (null != this.boundCalling) {
             json.put("caller", this.boundCalling.caller.toBasicJSON());
             json.put("callee", this.boundCalling.callee.toBasicJSON());
@@ -440,6 +462,10 @@ public class CommField extends Entity {
         json.put("name", this.name);
         json.put("founder", this.founder.toBasicJSON());
 
+        if (null != this.group) {
+            json.put("group", this.group.toCompactJSON());
+        }
+
         if (null != this.boundCalling) {
             json.put("caller", this.boundCalling.caller.toBasicJSON());
             json.put("callee", this.boundCalling.callee.toBasicJSON());
@@ -454,8 +480,14 @@ public class CommField extends Entity {
      */
     protected class BoundCalling {
 
+        /**
+         * 主叫，用于 One 2 One
+         */
         protected Contact caller;
 
+        /**
+         * 被叫，用于 One 2 One
+         */
         protected Contact callee;
 
         protected long timestamp;
