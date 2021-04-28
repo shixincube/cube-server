@@ -401,7 +401,11 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             Logger.i(this.getClass(), "#applyJoin() - " + participant.getId() + " (" + device.toString() + ")");
         }
         else {
-            // TODO
+            // 分配媒体单元
+            AbstractMediaUnit mediaUnit = this.mediaUnitLeader.assign(commField);
+
+            // 准备通道
+            mediaUnit.preparePipeline(commField, endpoint);
         }
 
         return MultipointCommStateCode.Ok;
@@ -570,6 +574,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                         callback.on(MultipointCommStateCode.MediaUnitField, signaling);
                         return;
                     }
+
+                    // 设置 CommField
+                    responseSignaling.setField(current);
 
                     // 回调
                     callback.on(stateCode, responseSignaling);
@@ -872,6 +879,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
                     // 更新缓存
                     updateCommField(current, true);
+
+                    // 设置 CommField
+                    responseSignaling.setField(current);
 
                     // 回调
                     callback.on(stateCode, responseSignaling);
