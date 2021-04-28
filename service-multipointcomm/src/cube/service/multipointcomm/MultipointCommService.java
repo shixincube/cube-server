@@ -967,6 +967,21 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     }
 
     /**
+     *
+     * @param signaling
+     * @param callback
+     */
+    public void processInvite(InviteSignaling signaling, SignalingCallback callback) {
+        CommField commField = this.getCommField(signaling.getField().getId());
+        if (null == commField) {
+            callback.on(MultipointCommStateCode.NoCommField, signaling);
+            return;
+        }
+
+//        signaling.getField().getI
+    }
+
+    /**
      * 触发 Offer 超时。
      *
      * @param field

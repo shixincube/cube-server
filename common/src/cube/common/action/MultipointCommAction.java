@@ -57,6 +57,11 @@ public enum MultipointCommAction {
     Candidate("candidate"),
 
     /**
+     * 邀请进入。
+     */
+    Invite("invite"),
+
+    /**
      * 终端节点进入。
      */
     Arrived("arrived"),
@@ -90,6 +95,11 @@ public enum MultipointCommAction {
      * 应答 Busys
      */
     BusyAck("busyAck"),
+
+    /**
+     * 邀请应答。
+     */
+    InviteAck("inviteAck"),
 
     /**
      * 获取指定通讯场域。

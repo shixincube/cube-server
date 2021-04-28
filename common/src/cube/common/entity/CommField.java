@@ -68,7 +68,7 @@ public class CommField extends Entity {
     /**
      * 被邀请进行通话的联系人列表。
      */
-    private List<Contact> invitees;
+    private List<Long> invitees;
 
     /**
      * 场域包含的终端节点。
@@ -125,7 +125,7 @@ public class CommField extends Entity {
         if (json.has("invitees")) {
             JSONArray array = json.getJSONArray("invitees");
             for (int i = 0; i < array.length(); ++i) {
-                this.invitees.add(new Contact(array.getJSONObject(i)));
+                this.invitees.add(array.getLong(i));
             }
         }
 
@@ -176,6 +176,15 @@ public class CommField extends Entity {
      */
     public Contact getFounder() {
         return this.founder;
+    }
+
+    /**
+     * 被邀请列表。
+     *
+     * @return
+     */
+    public List<Long> getInvitees() {
+        return this.invitees;
     }
 
     /**
@@ -245,7 +254,6 @@ public class CommField extends Entity {
     public Contact getCaller() {
         return (null != this.boundCalling) ? this.boundCalling.caller : null;
     }
-
 
     /**
      * 获取被叫。
@@ -389,6 +397,10 @@ public class CommField extends Entity {
         }
     }
 
+    public void startTrace(ScheduledExecutorService scheduledExecutor, Contact contact) {
+
+    }
+
     public void clearTraces() {
         Iterator<ScheduledFuture<?>> iter = this.timeoutFutureMap.values().iterator();
         while (iter.hasNext()) {
@@ -436,11 +448,13 @@ public class CommField extends Entity {
         }
         json.put("endpoints", array);
 
-        array = new JSONArray();
-        for (Contact contact : this.invitees) {
-            array.put(contact.toCompactJSON());
+        if (!this.invitees.isEmpty()) {
+            array = new JSONArray();
+            for (Long contactId : this.invitees) {
+                array.put(contactId.longValue());
+            }
+            json.put("invitees", array);
         }
-        json.put("invitees", array);
 
         if (null != this.group) {
             json.put("group", this.group.toCompactJSON());
