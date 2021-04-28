@@ -196,10 +196,15 @@ public class MediaUnitLeader implements MediaUnitListener {
         for (int i = 1; i <= 50; ++i) {
             String keyUrl = "unit." + i + ".kms.url";
             if (properties.containsKey(keyUrl)) {
-                KurentoMediaUnit kurentoMediaUnit = new KurentoMediaUnit(new Portal() {
+                KurentoMediaUnit kurentoMediaUnit = new KurentoMediaUnit(service, new Portal() {
                     @Override
                     public void emit(CommFieldEndpoint endpoint, Signaling signaling) {
                         service.pushSignaling(endpoint, signaling);
+                    }
+
+                    @Override
+                    public CommField getCommField(Long commFieldId) {
+                        return service.getCommField(commFieldId);
                     }
                 }, properties.getProperty(keyUrl), this.executor);
                 this.mediaUnitList.add(kurentoMediaUnit);

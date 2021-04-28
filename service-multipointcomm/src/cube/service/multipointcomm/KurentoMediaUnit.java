@@ -47,6 +47,8 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
 
     private final long timeout = 60L * 1000L;
 
+    private final MultipointCommService service;
+
     private final Portal portal;
 
     private final String url;
@@ -60,7 +62,8 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
      */
     private final ConcurrentHashMap<Long, KurentoMediaPipelineWrapper> pipelineMap;
 
-    public KurentoMediaUnit(Portal portal, String url, ExecutorService executor) {
+    public KurentoMediaUnit(MultipointCommService service, Portal portal, String url, ExecutorService executor) {
+        this.service = service;
         this.portal = portal;
         this.url = url;
         this.executor = executor;
@@ -84,13 +87,13 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
 
         KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
-            wrapper = new KurentoMediaPipelineWrapper(commField.getId(), commField, this.kurentoClient.createMediaPipeline());
+            wrapper = new KurentoMediaPipelineWrapper(commField.getId(), this.kurentoClient.createMediaPipeline());
             this.pipelineMap.put(commField.getId(), wrapper);
         }
 
         KurentoSession session = wrapper.getSession(endpoint.getId());
         if (null == session) {
-            session = new KurentoSession(this.portal, commField, endpoint, wrapper.pipeline);
+            session = new KurentoSession(this.portal, commField.getId(), endpoint, wrapper.pipeline);
             wrapper.addSession(endpoint.getId(), session);
         }
     }
@@ -258,11 +261,23 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
         Iterator<KurentoMediaPipelineWrapper> iter = this.pipelineMap.values().iterator();
         while (iter.hasNext()) {
             KurentoMediaPipelineWrapper wrapper = iter.next();
-            if (wrapper.commField.numEndpoints() == 0) {
-                Logger.e(this.getClass(), "CommField : " + wrapper.commField.getName() + " no endpoint");
-//                Logger.w(this.getClass(), "Media pipeline closed : " + wrapper.id);
-//                wrapper.closePipeline();
-//                iter.remove();
+            CommField commField = this.service.getCommField(wrapper.commFieldId);
+            if (null != commField) {
+                if (commField.numEndpoints() == 0) {
+//                    Logger.d(this.getClass(), "CommField \"" + commField.getName() + "\" : no endpoint");
+                    Logger.i(this.getClass(), "Media pipeline closed : " + commField.getName());
+                    wrapper.closePipeline();
+                    iter.remove();
+                }
+                else {
+                    Logger.d(this.getClass(), "CommField \"" + commField.getName() + "\" : " + commField.numEndpoints() + " endpoints");
+                }
+            }
+            else {
+//                Logger.e(this.getClass(), "CommField : " + wrapper.commFieldId + " removed");
+                Logger.w(this.getClass(), "Media pipeline closed : " + wrapper.commFieldId);
+                wrapper.closePipeline();
+                iter.remove();
             }
         }
     }

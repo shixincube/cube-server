@@ -49,7 +49,7 @@ public class KurentoSession implements Closeable {
 
     private final Portal portal;
 
-    private final CommField commField;
+    private final Long commFieldId;
 
     private final CommFieldEndpoint commFieldEndpoint;
 
@@ -59,9 +59,9 @@ public class KurentoSession implements Closeable {
 
     private final ConcurrentMap<Long, WebRtcEndpoint> incomingMedias;
 
-    public KurentoSession(Portal portal, CommField commField, CommFieldEndpoint endpoint, MediaPipeline pipeline) {
+    public KurentoSession(Portal portal, Long commFieldId, CommFieldEndpoint endpoint, MediaPipeline pipeline) {
         this.portal = portal;
-        this.commField = commField;
+        this.commFieldId = commFieldId;
         this.commFieldEndpoint = endpoint;
         this.pipeline = pipeline;
         this.incomingMedias = new ConcurrentHashMap<>();
@@ -73,7 +73,7 @@ public class KurentoSession implements Closeable {
                 IceCandidate iceCandidate = event.getCandidate();
                 JSONObject candidate = Signalings.toJSON(iceCandidate);
 
-                CandidateSignaling signaling = new CandidateSignaling(commField, commFieldEndpoint);
+                CandidateSignaling signaling = new CandidateSignaling(portal.getCommField(commFieldId), commFieldEndpoint);
                 signaling.setCandidate(candidate);
                 sendSignaling(signaling);
             }
@@ -103,7 +103,7 @@ public class KurentoSession implements Closeable {
      */
     public void receiveFrom(KurentoSession session, String sdpOffer) {
         Logger.i(this.getClass(), "Session \"" + this.getName() + "\" : connecting with \""
-                + session.getName() + "\" in field " + this.commField.getName());
+                + session.getName() + "\" in field " + this.portal.getCommField(commFieldId).getName());
 
         // 生成应答的 SDP
         final String sdpAnswer = this.getEndpointForSession(session).processOffer(sdpOffer);
@@ -111,7 +111,7 @@ public class KurentoSession implements Closeable {
         Logger.d(this.getClass(), "Session \"" + this.getName() + "\" : Sdp Answer for \"" + session.getName() + "\"");
 
         // 将应答发送回对端
-        AnswerSignaling answerSignaling = new AnswerSignaling(this.commField, session.getCommFieldEndpoint());
+        AnswerSignaling answerSignaling = new AnswerSignaling(this.portal.getCommField(commFieldId), session.getCommFieldEndpoint());
         answerSignaling.setSDP(sdpAnswer);
         this.sendSignaling(answerSignaling);
 
@@ -228,7 +228,7 @@ public class KurentoSession implements Closeable {
             incoming.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
                 @Override
                 public void onEvent(IceCandidateFoundEvent event) {
-                    CandidateSignaling signaling = new CandidateSignaling(commField, session.getCommFieldEndpoint());
+                    CandidateSignaling signaling = new CandidateSignaling(portal.getCommField(commFieldId), session.getCommFieldEndpoint());
                     signaling.setCandidate(Signalings.toJSON(event.getCandidate()));
                     sendSignaling(signaling);
                 }

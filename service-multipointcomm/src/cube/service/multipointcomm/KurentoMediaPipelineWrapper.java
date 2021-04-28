@@ -27,7 +27,6 @@
 package cube.service.multipointcomm;
 
 import cell.util.log.Logger;
-import cube.common.entity.CommField;
 import org.kurento.client.Composite;
 import org.kurento.client.Continuation;
 import org.kurento.client.MediaPipeline;
@@ -40,9 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class KurentoMediaPipelineWrapper {
 
-    protected final Long id;
-
-    protected final CommField commField;
+    protected final Long commFieldId;
 
     protected final MediaPipeline pipeline;
 
@@ -55,10 +52,9 @@ public class KurentoMediaPipelineWrapper {
 
     protected long timestamp;
 
-    protected KurentoMediaPipelineWrapper(Long id, CommField commField, MediaPipeline pipeline) {
+    protected KurentoMediaPipelineWrapper(Long commFieldId, MediaPipeline pipeline) {
         this.timestamp = System.currentTimeMillis();
-        this.id = id;
-        this.commField = commField;
+        this.commFieldId = commFieldId;
         this.pipeline = pipeline;
         this.endpointSessionMap = new ConcurrentHashMap<>();
     }
@@ -86,12 +82,12 @@ public class KurentoMediaPipelineWrapper {
         this.pipeline.release(new Continuation<Void>() {
             @Override
             public void onSuccess(Void result) throws Exception {
-                Logger.d(KurentoMediaUnit.class, "Released Pipeline : " + id);
+                Logger.d(KurentoMediaUnit.class, "Released Pipeline : " + commFieldId);
             }
 
             @Override
             public void onError(Throwable cause) throws Exception {
-                Logger.d(KurentoMediaUnit.class, "Could not release Pipeline : " + id);
+                Logger.d(KurentoMediaUnit.class, "Could not release Pipeline : " + commFieldId);
             }
         });
     }
