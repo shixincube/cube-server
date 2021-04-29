@@ -992,9 +992,18 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      *
      * @param appendix
      */
-    public void updateAppendix(GroupAppendix appendix) {
+    public void updateAppendix(GroupAppendix appendix, boolean broadcast) {
         this.groupCache.applyPut(appendix.getUniqueKey(), appendix.toJSON());
         this.storage.writeAppendix(appendix);
+
+        if (broadcast) {
+            // 向群组内所有成员广播
+            Group group = this.getGroup(appendix.getOwner().getId(), appendix.getDomain().getName());
+            for (Contact contact : group.getMembers()) {
+                ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.GroupAppendixUpdated.name, appendix.packJSON(contact));
+                this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());
+            }
+        }
     }
 
     /**
@@ -1267,6 +1276,16 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 }
 
                 // 推送动作给终端设备
+                this.pushAction(eventName, contact, event.getData());
+            }
+            else if (ContactAction.GroupAppendixUpdated.name.equals(eventName)) {
+                Contact contact = this.getOnlineContact(domain, id);
+                if (null == contact) {
+                    // 联系人不在线
+                    return;
+                }
+
+                // 推送数据
                 this.pushAction(eventName, contact, event.getData());
             }
         }

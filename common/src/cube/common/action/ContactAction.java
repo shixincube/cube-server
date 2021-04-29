@@ -142,6 +142,11 @@ public enum ContactAction {
     UpdateAppendix("updateAppendix"),
 
     /**
+     * 群组的附录已更新。
+     */
+    GroupAppendixUpdated("groupAppendixUpdated"),
+
+    /**
      * 置顶操作。
      */
     TopList("topList"),

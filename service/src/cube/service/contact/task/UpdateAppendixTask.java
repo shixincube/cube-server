@@ -157,6 +157,8 @@ public class UpdateAppendixTask extends ServiceTask {
             // 获取附录
             GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
 
+            boolean broadcast = false;
+
             if (data.has("remark")) {
                 // 更新备注
                 appendix.remark(contact, data.getString("remark"));
@@ -173,10 +175,15 @@ public class UpdateAppendixTask extends ServiceTask {
             else if (data.has("commId")) {
                 // 更新群组当前的通讯 ID
                 Long commId = data.getLong("commId");
-                appendix.setCommId(commId);
+                // 判断 Comm ID 是否改变，如果改变需要进行广播
+                Long cur = appendix.getCommId();
+                if (cur.longValue() != commId.longValue()) {
+                    appendix.setCommId(commId);
+                    broadcast = true;
+                }
             }
 
-            ContactManager.getInstance().updateAppendix(appendix);
+            ContactManager.getInstance().updateAppendix(appendix, broadcast);
 
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Ok.code, appendix.packJSON(contact)));

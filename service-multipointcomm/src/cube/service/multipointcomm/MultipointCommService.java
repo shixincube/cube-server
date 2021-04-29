@@ -895,7 +895,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                         group = ContactManager.getInstance().getGroup(group.getId(), group.getDomain().getName());
                         GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
                         appendix.setCommId(0L);
-                        ContactManager.getInstance().updateAppendix(appendix);
+                        ContactManager.getInstance().updateAppendix(appendix, true);
                     }
                 }
             };
