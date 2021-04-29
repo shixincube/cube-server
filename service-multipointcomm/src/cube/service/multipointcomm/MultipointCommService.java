@@ -978,7 +978,24 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             return;
         }
 
-//        signaling.getField().getI
+        List<Long> idList = signaling.getInvitees();
+        if (null == idList) {
+            callback.on(MultipointCommStateCode.InvalidParameter, signaling);
+            return;
+        }
+
+        for (Long contactId : idList) {
+            Contact target = ContactManager.getInstance().getContact(commField.getDomain().getName(), contactId);
+            InviteSignaling inviteSignaling = new InviteSignaling(commField, signaling.getContact(), signaling.getDevice());
+            // 设置被邀请人
+            inviteSignaling.setInvitee(target);
+
+            ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, MultipointCommAction.Invite.name,
+                    inviteSignaling.toJSON());
+            this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
+        }
+
+        callback.on(MultipointCommStateCode.Ok, signaling);
     }
 
     /**
@@ -1198,6 +1215,23 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                     else {
                         Logger.e(this.getClass(), "Push signaling failed: " + signaling.getName()
                                 + "' to '" + contact.getId() + "' : " + signaling.numCandidates());
+                    }
+                }
+            }
+            else if (MultipointCommAction.Invite.name.equals(eventName)) {
+                InviteSignaling signaling = new InviteSignaling(event.getData());
+                Contact invitee = signaling.getInvitee();
+                // 被邀人
+                Contact contact = ContactManager.getInstance()
+                        .getOnlineContact(invitee.getDomain().getName(), invitee.getId());
+                if (null != contact) {
+                    // 向联系人的所有设备推送
+                    for (Device device : contact.getDeviceList()) {
+                        if (pushPacket(device.getTalkContext(), contact, device,
+                                signaling.getName(), signaling.toJSON())) {
+                            Logger.d(this.getClass(), "Push signaling '" + signaling.getName()
+                                    + "' to '" + contact.getId() + "'");
+                        }
                     }
                 }
             }

@@ -66,9 +66,9 @@ public class CommField extends Entity {
     private Contact founder;
 
     /**
-     * 被邀请进行通话的联系人列表。
+     * 媒体约束。
      */
-    private List<Long> invitees;
+    private MediaConstraint mediaConstraint;
 
     /**
      * 场域包含的终端节点。
@@ -102,7 +102,7 @@ public class CommField extends Entity {
 
         this.name = founder.getName() + "#" + id;
         this.founder = founder;
-        this.invitees = new Vector<>();
+        this.mediaConstraint = new MediaConstraint();
         this.endpoints = new ConcurrentHashMap<>();
     }
 
@@ -114,20 +114,13 @@ public class CommField extends Entity {
     public CommField(JSONObject json) {
         super();
 
-        this.invitees = new Vector<>();
         this.endpoints = new ConcurrentHashMap<>();
 
         this.id = json.getLong("id");
         this.domain = new Domain(json.getString("domain"));
         this.name = json.getString("name");
         this.founder = new Contact(json.getJSONObject("founder"));
-
-        if (json.has("invitees")) {
-            JSONArray array = json.getJSONArray("invitees");
-            for (int i = 0; i < array.length(); ++i) {
-                this.invitees.add(array.getLong(i));
-            }
-        }
+        this.mediaConstraint = new MediaConstraint((json.getJSONObject("mediaConstraint")));
 
         if (json.has("endpoints")) {
             JSONArray endpoints = json.getJSONArray("endpoints");
@@ -176,15 +169,6 @@ public class CommField extends Entity {
      */
     public Contact getFounder() {
         return this.founder;
-    }
-
-    /**
-     * 被邀请列表。
-     *
-     * @return
-     */
-    public List<Long> getInvitees() {
-        return this.invitees;
     }
 
     /**
@@ -397,10 +381,6 @@ public class CommField extends Entity {
         }
     }
 
-    public void startTrace(ScheduledExecutorService scheduledExecutor, Contact contact) {
-
-    }
-
     public void clearTraces() {
         Iterator<ScheduledFuture<?>> iter = this.timeoutFutureMap.values().iterator();
         while (iter.hasNext()) {
@@ -441,20 +421,13 @@ public class CommField extends Entity {
         json.put("domain", this.domain.getName());
         json.put("name", this.name);
         json.put("founder", this.founder.toCompactJSON());
+        json.put("mediaConstraint", this.mediaConstraint.toJSON());
 
         JSONArray array = new JSONArray();
         for (CommFieldEndpoint cfe : this.endpoints.values()) {
             array.put(cfe.toJSON());
         }
         json.put("endpoints", array);
-
-        if (!this.invitees.isEmpty()) {
-            array = new JSONArray();
-            for (Long contactId : this.invitees) {
-                array.put(contactId.longValue());
-            }
-            json.put("invitees", array);
-        }
 
         if (null != this.group) {
             json.put("group", this.group.toCompactJSON());
@@ -475,6 +448,7 @@ public class CommField extends Entity {
         json.put("domain", this.domain.getName());
         json.put("name", this.name);
         json.put("founder", this.founder.toBasicJSON());
+        json.put("mediaConstraint", this.mediaConstraint.toJSON());
 
         if (null != this.group) {
             json.put("group", this.group.toCompactJSON());
