@@ -575,6 +575,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                         return;
                     }
 
+                    // 尝试开始计时
+                    current.tryTiming();
+
                     // 设置 CommField
                     responseSignaling.setField(current);
 
@@ -891,6 +894,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
                     // 如果域里没有终端，则重置群组的数据
                     if (current.numEndpoints() == 0 && null != current.getGroup()) {
+                        // 记录结束时间
+                        current.stopTiming();
+
                         Group group = current.getGroup();
                         group = ContactManager.getInstance().getGroup(group.getId(), group.getDomain().getName());
                         GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);

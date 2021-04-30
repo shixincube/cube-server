@@ -71,6 +71,16 @@ public class CommField extends Entity {
     private MediaConstraint mediaConstraint;
 
     /**
+     * 开始时间。
+     */
+    private long startTime = 0;
+
+    /**
+     * 结束时间。
+     */
+    private long endTime = 0;
+
+    /**
      * 场域包含的终端节点。
      */
     private ConcurrentHashMap<Long, CommFieldEndpoint> endpoints;
@@ -169,6 +179,22 @@ public class CommField extends Entity {
      */
     public Contact getFounder() {
         return this.founder;
+    }
+
+    /**
+     * 尝试开始计时。
+     */
+    public void tryTiming() {
+        if (0 == this.startTime) {
+            this.startTime = System.currentTimeMillis();
+        }
+    }
+
+    /**
+     * 结束计时。
+     */
+    public void stopTiming() {
+        this.endTime = System.currentTimeMillis();
     }
 
     /**
@@ -423,6 +449,9 @@ public class CommField extends Entity {
         json.put("founder", this.founder.toCompactJSON());
         json.put("mediaConstraint", this.mediaConstraint.toJSON());
 
+        json.put("startTime", this.startTime);
+        json.put("endTime", this.endTime);
+
         JSONArray array = new JSONArray();
         for (CommFieldEndpoint cfe : this.endpoints.values()) {
             array.put(cfe.toJSON());
@@ -449,6 +478,9 @@ public class CommField extends Entity {
         json.put("name", this.name);
         json.put("founder", this.founder.toBasicJSON());
         json.put("mediaConstraint", this.mediaConstraint.toJSON());
+
+        json.put("startTime", this.startTime);
+        json.put("endTime", this.endTime);
 
         if (null != this.group) {
             json.put("group", this.group.toCompactJSON());
