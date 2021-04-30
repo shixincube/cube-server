@@ -998,7 +998,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         if (broadcast) {
             // 向群组内所有成员广播
-            Group group = this.getGroup(appendix.getOwner().getId(), appendix.getDomain().getName());
+            Group group = this.getGroup(appendix.getOwner().getId(), appendix.getOwner().getDomain().getName());
             for (Contact contact : group.getMembers()) {
                 ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.GroupAppendixUpdated.name, appendix.packJSON(contact));
                 this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());

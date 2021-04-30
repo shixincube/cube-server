@@ -77,6 +77,7 @@ public class GroupAppendix extends Entity {
         super();
         this.uniqueKey = owner.getUniqueKey() + "_appendix";
         this.owner = owner;
+        this.domain = owner.getDomain();
         this.memberRemarks = new HashMap<>();
 
         this.remarks = new HashMap<>();
@@ -96,6 +97,7 @@ public class GroupAppendix extends Entity {
         super();
         this.uniqueKey = owner.getUniqueKey() + "_appendix";
         this.owner = owner;
+        this.domain = owner.getDomain();
         this.memberRemarks = new HashMap<>();
 
         this.remarks = new HashMap<>();
