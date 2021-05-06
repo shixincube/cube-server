@@ -51,6 +51,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -158,12 +159,34 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     public void onTick(cube.core.Module module, Kernel kernel) {
         long now = System.currentTimeMillis();
 
+        ArrayList<CommField> commFields = new ArrayList<>();
         Iterator<CommField> fiter = this.commFieldMap.values().iterator();
         while (fiter.hasNext()) {
             CommField field = fiter.next();
-            if (now - field.getTimestamp() > this.fieldLifespan) {
+            if ((field.numEndpoints() == 0 && now - field.getTimestamp() > 5000) || now - field.getTimestamp() > this.fieldLifespan) {
+                commFields.add(field);
                 fiter.remove();
             }
+        }
+
+        for (CommField commField : commFields) {
+            this.cache.remove(new CacheKey(commField.getId()));
+
+            // 如果域里没有终端，则重置群组的数据
+            if (null != commField.getGroup()) {
+                // 记录结束时间
+                commField.stopTiming();
+
+                Group group = commField.getGroup();
+                group = ContactManager.getInstance().getGroup(group.getId(), group.getDomain().getName());
+                GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
+                appendix.setCommId(0L);
+                ContactManager.getInstance().updateAppendix(appendix, true);
+            }
+
+            this.mediaUnitLeader.release(commField);
+
+            commField.clearTraces();
         }
 
         this.mediaUnitLeader.onTick(now);

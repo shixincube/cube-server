@@ -408,6 +408,10 @@ public class CommField extends Entity {
     }
 
     public void clearTraces() {
+        if (null == this.timeoutFutureMap) {
+            return;
+        }
+
         Iterator<ScheduledFuture<?>> iter = this.timeoutFutureMap.values().iterator();
         while (iter.hasNext()) {
             iter.next().cancel(true);
