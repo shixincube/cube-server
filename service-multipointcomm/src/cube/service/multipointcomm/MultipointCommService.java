@@ -523,7 +523,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
      * @param signaling
      * @param callback
      */
-    public void processOffer(OfferSignaling signaling, SignalingCallback callback) {
+    public synchronized void processOffer(OfferSignaling signaling, SignalingCallback callback) {
         CommField current = this.getCommField(signaling.getField().getId());
         if (null == current) {
             callback.on(MultipointCommStateCode.NoCommField, signaling);
@@ -586,7 +586,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             callback.on(MultipointCommStateCode.Ok, signaling);
         }
         else {
-            Logger.i(this.getClass(), "Offer: " + current.getId() + " from " + signaling.getContact().getId());
+            Logger.i(this.getClass(), "Offer: " + current.getId() + " from " + endpoint.getContact().getId());
 
             final CommFieldEndpoint currentEndpoint = endpoint;
 
@@ -601,19 +601,23 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                     // 尝试开始计时
                     current.tryTiming();
 
-                    // 设置 CommField
-                    responseSignaling.setField(current);
-
                     // 回调
                     callback.on(stateCode, responseSignaling);
+                }
+            };
 
+            MediaUnitCallback completeCallback = new MediaUnitCallback() {
+                @Override
+                public void on(CommField commField, CommFieldEndpoint endpoint) {
                     // 广播
-                    broadcastArrivedEvent(current, currentEndpoint);
+                    if (signaling.getTarget().getContact().getId().longValue() == signaling.getContact().getId().longValue()) {
+                        broadcastArrivedEvent(current, currentEndpoint);
+                    }
                 }
             };
 
             // 由 Leader 派发信令
-            this.mediaUnitLeader.dispatch(current, currentEndpoint, signaling, processCallback);
+            this.mediaUnitLeader.dispatch(current, currentEndpoint, signaling, processCallback, completeCallback);
         }
     }
 
@@ -779,7 +783,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         }
         else {
             // 将信令转到媒体单元
-            this.mediaUnitLeader.dispatch(current, endpoint, signaling, null);
+            this.mediaUnitLeader.dispatch(current, endpoint, signaling, null, null);
         }
 
         return MultipointCommStateCode.Ok;
@@ -929,7 +933,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 }
             };
 
-            this.mediaUnitLeader.dispatch(current, currentEndpoint, signaling, processCallback);
+            this.mediaUnitLeader.dispatch(current, currentEndpoint, signaling, processCallback, null);
         }
     }
 

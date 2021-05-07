@@ -99,19 +99,20 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
     }
 
     @Override
-    public MultipointCommStateCode receiveFrom(CommField commField, CommFieldEndpoint endpoint, OfferSignaling signaling) {
+    public MultipointCommStateCode receiveFrom(CommField commField, CommFieldEndpoint endpoint, OfferSignaling signaling,
+                                               MediaUnitCallback callback) {
         KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
             return MultipointCommStateCode.NoPipeline;
         }
 
-        KurentoSession session = wrapper.getSession(endpoint.getId());
+        final KurentoSession session = wrapper.getSession(endpoint.getId());
         if (null == session) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
 
         CommFieldEndpoint target = signaling.getTarget();
-        KurentoSession sender = wrapper.getSession(target.getId());
+        final KurentoSession sender = wrapper.getSession(target.getId());
         if (null == sender) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
@@ -120,7 +121,17 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
+                System.out.println("XJW " + endpoint.getContact().getId() + " -> " +
+                        target.getContact().getId());
+
+//                if (endpoint.getContact().getId().longValue() == 1615268975051L && target.getContact().getId().longValue() == 63045555L) {
+//                    System.out.println("XJW receive : " + signaling.getName());
+//                    callback.on(commField, endpoint);
+//                    return;
+//                }
+
                 session.receiveFrom(sender, signaling.getSDP());
+                callback.on(commField, endpoint);
             }
         });
 

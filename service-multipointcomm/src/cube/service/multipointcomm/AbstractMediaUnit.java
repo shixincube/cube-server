@@ -52,10 +52,13 @@ public abstract class AbstractMediaUnit {
      * @param commField
      * @param endpoint
      * @param signaling
+     * @param callback
      * @return
      */
     public abstract MultipointCommStateCode receiveFrom(CommField commField,
-                                                        CommFieldEndpoint endpoint, OfferSignaling signaling);
+                                                        CommFieldEndpoint endpoint,
+                                                        OfferSignaling signaling,
+                                                        MediaUnitCallback callback);
 
     /**
      *

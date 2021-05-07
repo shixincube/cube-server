@@ -106,12 +106,14 @@ public class MediaUnitLeader implements MediaUnitListener {
      * @param commField
      * @param endpoint
      * @param signaling
-     * @param signalingCallback
+     * @param processCallback
+     * @param completeCallback
      */
-    public void dispatch(CommField commField, CommFieldEndpoint endpoint, Signaling signaling, SignalingCallback signalingCallback) {
+    public void dispatch(CommField commField, CommFieldEndpoint endpoint, Signaling signaling,
+                         SignalingCallback processCallback, MediaUnitCallback completeCallback) {
         AbstractMediaUnit mediaUnit = this.queryMediaUnit(commField);
         if (null == mediaUnit) {
-            signalingCallback.on(MultipointCommStateCode.NoMediaUnit, signaling);
+            processCallback.on(MultipointCommStateCode.NoMediaUnit, signaling);
             return;
         }
 
@@ -124,18 +126,21 @@ public class MediaUnitLeader implements MediaUnitListener {
         }
         else if (MultipointCommAction.Offer.name.equals(signaling.getName())) {
             // 从媒体单元接收数据
-            MultipointCommStateCode stateCode = mediaUnit.receiveFrom(commField, endpoint, (OfferSignaling) signaling);
-            // 回调
-            signalingCallback.on(stateCode, signaling);
+            MultipointCommStateCode stateCode = mediaUnit.receiveFrom(commField, endpoint,
+                    (OfferSignaling) signaling, completeCallback);
+            // 回调进行应答
+            OfferSignaling ackSignaling = new OfferSignaling(commField, endpoint.getContact(), endpoint.getDevice());
+            processCallback.on(stateCode, ackSignaling);
         }
         else if (MultipointCommAction.Bye.name.equals(signaling.getName())) {
             // 关闭指定的终端媒体
             MultipointCommStateCode stateCode = mediaUnit.removeEndpoint(commField, endpoint);
             // 回调
-            signalingCallback.on(stateCode, signaling);
+            processCallback.on(stateCode, signaling);
         }
         else {
-            signalingCallback.on(MultipointCommStateCode.UnsupportedSignaling, signaling);
+            // 回调
+            processCallback.on(MultipointCommStateCode.UnsupportedSignaling, signaling);
         }
     }
 

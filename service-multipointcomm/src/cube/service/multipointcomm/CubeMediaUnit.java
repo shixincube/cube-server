@@ -95,7 +95,7 @@ public class CubeMediaUnit extends AbstractMediaUnit implements TalkListener {
 
     @Override
     public MultipointCommStateCode receiveFrom(CommField commField, CommFieldEndpoint endpoint,
-                                               OfferSignaling signaling) {
+                                               OfferSignaling signaling, MediaUnitCallback callback) {
         return MultipointCommStateCode.Unknown;
     }
 

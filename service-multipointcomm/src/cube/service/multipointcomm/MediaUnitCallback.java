@@ -26,19 +26,13 @@
 
 package cube.service.multipointcomm;
 
-import cube.common.state.MultipointCommStateCode;
-import cube.service.multipointcomm.signaling.Signaling;
+import cube.common.entity.CommField;
+import cube.common.entity.CommFieldEndpoint;
 
 /**
- * 一般函数回调接口。
+ * 媒体单元处理回调。
  */
-public interface SignalingCallback {
-    
-    /**
-     * 回调时被调用。
-     *
-     * @param stateCode
-     * @param signaling
-     */
-    public void on(MultipointCommStateCode stateCode, Signaling signaling);
+public interface MediaUnitCallback {
+
+    public void on(CommField commField, CommFieldEndpoint endpoint);
 }

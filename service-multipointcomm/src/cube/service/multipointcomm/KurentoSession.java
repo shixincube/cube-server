@@ -129,7 +129,7 @@ public class KurentoSession implements Closeable {
             this.outgoingMedia.addIceCandidate(candidate);
         }
         else {
-            WebRtcEndpoint peer = this.getEndpointForSession(target);
+            WebRtcEndpoint peer = this.incomingMedias.get(target.getId());
             if (null != peer) {
                 peer.addIceCandidate(candidate);
             }
@@ -224,7 +224,6 @@ public class KurentoSession implements Closeable {
                     session.getName() + "\"");
 
             incoming = new WebRtcEndpoint.Builder(this.pipeline).build();
-
             incoming.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
                 @Override
                 public void onEvent(IceCandidateFoundEvent event) {

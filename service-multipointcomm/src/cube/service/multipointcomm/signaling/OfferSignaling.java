@@ -106,8 +106,15 @@ public class OfferSignaling extends Signaling {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("description", this.sessionDescription);
-        json.put("constraint", this.mediaConstraint);
+
+        if (null != this.sessionDescription) {
+            json.put("description", this.sessionDescription);
+        }
+
+        if (null != this.mediaConstraint) {
+            json.put("constraint", this.mediaConstraint);
+        }
+
         if (null != this.caller) {
             json.put("caller", this.caller.toBasicJSON());
         }
