@@ -118,6 +118,10 @@ public abstract class Signaling implements JSONable {
         return this.target;
     }
 
+    public void setTarget(CommFieldEndpoint endpoint) {
+        this.target = endpoint;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

@@ -1054,6 +1054,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     }
 
     protected void pushSignaling(CommFieldEndpoint endpoint, Signaling signaling) {
+        // 设置接收信令的目标
+        signaling.setTarget(endpoint);
+
         ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, signaling.getName(), signaling.toJSON());
         this.contactsAdapter.publish(endpoint.getContact().getUniqueKey(), event.toJSON());
     }
@@ -1182,12 +1185,23 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 // 处理 Answer 信令
                 AnswerSignaling signaling = new AnswerSignaling(event.getData());
                 // 目标
-                Contact target = signaling.getContact();
+                Contact targetContact = null;
+                Device targetDevice = null;
+                CommFieldEndpoint target = signaling.getTarget();
+                if (null == target) {
+                    targetContact = signaling.getContact();
+                    targetDevice = signaling.getDevice();
+                }
+                else {
+                    targetContact = target.getContact();
+                    targetDevice = target.getDevice();
+                }
+
                 // 获取联系人
                 Contact contact = ContactManager.getInstance()
-                        .getOnlineContact(target.getDomain().getName(), target.getId());
+                        .getOnlineContact(targetContact.getDomain().getName(), targetContact.getId());
                 if (null != contact) {
-                    Device device = contact.getDevice(signaling.getDevice());
+                    Device device = contact.getDevice(targetDevice);
                     if (null != device) {
                         if (pushPacket(device.getTalkContext(), contact, device, signaling.getName(), signaling.toJSON())) {
                             Logger.i(this.getClass(), "Push signaling '" + signaling.getName()
@@ -1199,12 +1213,24 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             else if (MultipointCommAction.Bye.name.equals(eventName)) {
                 // 处理 Bye 信令
                 ByeSignaling signaling = new ByeSignaling(event.getData());
-                Contact target = signaling.getContact();
+                // 目标
+                Contact targetContact = null;
+                Device targetDevice = null;
+                CommFieldEndpoint target = signaling.getTarget();
+                if (null == target) {
+                    targetContact = signaling.getContact();
+                    targetDevice = signaling.getDevice();
+                }
+                else {
+                    targetContact = target.getContact();
+                    targetDevice = target.getDevice();
+                }
+
                 // 获取联系人
                 Contact contact = ContactManager.getInstance()
-                        .getOnlineContact(target.getDomain().getName(), target.getId());
+                        .getOnlineContact(targetContact.getDomain().getName(), targetContact.getId());
                 if (null != contact) {
-                    Device device = contact.getDevice(signaling.getDevice());
+                    Device device = contact.getDevice(targetDevice);
                     if (null != device) {
                         if (pushPacket(device.getTalkContext(), contact, device,
                                 signaling.getName(), signaling.toJSON())) {
@@ -1235,11 +1261,24 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             else if (MultipointCommAction.Candidate.name.equals(eventName)) {
                 // 处理 Candidate
                 CandidateSignaling signaling = new CandidateSignaling(event.getData());
+                // 目标
+                Contact targetContact = null;
+                Device targetDevice = null;
+                CommFieldEndpoint target = signaling.getTarget();
+                if (null == target) {
+                    targetContact = signaling.getContact();
+                    targetDevice = signaling.getDevice();
+                }
+                else {
+                    targetContact = target.getContact();
+                    targetDevice = target.getDevice();
+                }
+
                 Contact contact = ContactManager.getInstance()
-                        .getOnlineContact(signaling.getContact().getDomain().getName(), signaling.getContact().getId());
+                        .getOnlineContact(targetContact.getDomain().getName(), targetContact.getId());
                 if (null != contact) {
                     // 发送给指定设备
-                    Device device = contact.getDevice(signaling.getDevice());
+                    Device device = contact.getDevice(targetDevice);
                     if (null != device && pushPacket(device.getTalkContext(), contact, device,
                             signaling.getName(), signaling.toJSON())) {
                         Logger.d(this.getClass(), "Push signaling '" + signaling.getName()
