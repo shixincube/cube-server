@@ -100,6 +100,11 @@ public class CommField extends Entity {
     private BoundCalling boundCalling;
 
     /**
+     * 是否启用音频通道混合。
+     */
+    private boolean compositeAudio = false;
+
+    /**
      * 构造函数。
      *
      * @param id

@@ -96,6 +96,7 @@ public class KurentoSession implements Closeable {
     }
 
     /**
+     * 接收指定会话的音视频数据。
      *
      * @param session
      * @param sdpOffer
@@ -119,6 +120,7 @@ public class KurentoSession implements Closeable {
     }
 
     /**
+     * 添加 ICE Candidate 到目标 Peer 。
      *
      * @param candidate
      * @param target
@@ -136,6 +138,7 @@ public class KurentoSession implements Closeable {
     }
 
     /**
+     * 取消置顶会话上的数据接收连接。
      *
      * @param session
      */
@@ -164,7 +167,7 @@ public class KurentoSession implements Closeable {
     }
 
     /**
-     *
+     * 关闭当前会话的所有连接。
      */
     @Override
     public void close() throws IOException {
