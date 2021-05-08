@@ -33,7 +33,8 @@ import cube.common.state.MultipointCommStateCode;
 import cube.service.multipointcomm.signaling.CandidateSignaling;
 import cube.service.multipointcomm.signaling.OfferSignaling;
 import org.json.JSONObject;
-import org.kurento.client.*;
+import org.kurento.client.IceCandidate;
+import org.kurento.client.KurentoClient;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -121,16 +122,38 @@ public final class KurentoMediaUnit extends AbstractMediaUnit {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                System.out.println("XJW " + endpoint.getContact().getId() + " -> " +
-                        target.getContact().getId());
-
-//                if (endpoint.getContact().getId().longValue() == 1615268975051L && target.getContact().getId().longValue() == 63045555L) {
-//                    System.out.println("XJW receive : " + signaling.getName());
-//                    callback.on(commField, endpoint);
-//                    return;
-//                }
-
                 session.receiveFrom(sender, signaling.getSDP());
+                callback.on(commField, endpoint);
+            }
+        });
+
+        return MultipointCommStateCode.Ok;
+    }
+
+    @Override
+    public MultipointCommStateCode cancelFrom(CommField commField, CommFieldEndpoint endpoint, CommFieldEndpoint target,
+                                              MediaUnitCallback callback) {
+        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
+        if (null == wrapper) {
+            return MultipointCommStateCode.NoPipeline;
+        }
+
+        final KurentoSession session = wrapper.getSession(endpoint.getId());
+        if (null == session) {
+            return MultipointCommStateCode.NoCommFieldEndpoint;
+        }
+
+        final KurentoSession sender = wrapper.getSession(target.getId());
+        if (null == sender) {
+            // 没有找到目标会话
+            return MultipointCommStateCode.Ok;
+        }
+
+        // 取消接收数据
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                session.cancelFrom(sender);
                 callback.on(commField, endpoint);
             }
         });

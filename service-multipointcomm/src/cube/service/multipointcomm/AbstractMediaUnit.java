@@ -64,6 +64,19 @@ public abstract class AbstractMediaUnit {
      *
      * @param commField
      * @param endpoint
+     * @param target
+     * @param callback
+     * @return
+     */
+    public abstract MultipointCommStateCode cancelFrom(CommField commField,
+                                                       CommFieldEndpoint endpoint,
+                                                       CommFieldEndpoint target,
+                                                       MediaUnitCallback callback);
+
+    /**
+     *
+     * @param commField
+     * @param endpoint
      * @param signaling
      * @return
      */

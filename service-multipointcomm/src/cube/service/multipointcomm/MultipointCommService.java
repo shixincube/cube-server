@@ -900,40 +900,51 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                         return;
                     }
 
-                    // 更新状态
-                    endpoint.setState(MultipointCommStateCode.CallBye);
-                    endpoint.clearCandidates();
+                    if (null == signaling.getTarget()) {
+                        // 更新状态
+                        endpoint.setState(MultipointCommStateCode.CallBye);
+                        endpoint.clearCandidates();
 
-                    // 移除
-                    current.removeEndpoint(endpoint);
+                        // 移除
+                        current.removeEndpoint(endpoint);
 
-                    // 更新缓存
-                    updateCommField(current, true);
-
-                    // 设置 CommField
-                    responseSignaling.setField(current);
+                        // 更新缓存
+                        updateCommField(current, true);
+                    }
 
                     // 回调
                     callback.on(stateCode, responseSignaling);
+                }
+            };
 
-                    // 向场域里的其他终端发送事件
-                    broadcastLeftEvent(current, currentEndpoint);
-
+            MediaUnitCallback completeCallback = new MediaUnitCallback() {
+                @Override
+                public void on(CommField commField, CommFieldEndpoint endpoint) {
                     // 如果域里没有终端，则重置群组的数据
-                    if (current.numEndpoints() == 0 && null != current.getGroup()) {
+                    if (current.numEndpoints() == 0) {
                         // 记录结束时间
                         current.stopTiming();
 
                         Group group = current.getGroup();
-                        group = ContactManager.getInstance().getGroup(group.getId(), group.getDomain().getName());
-                        GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
-                        appendix.setCommId(0L);
-                        ContactManager.getInstance().updateAppendix(appendix, true);
+                        if (null != group) {
+                            group = ContactManager.getInstance().getGroup(group.getId(), group.getDomain().getName());
+                            GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
+                            appendix.setCommId(0L);
+                            ContactManager.getInstance().updateAppendix(appendix, true);
+                        }
+
+                        // 更新缓存
+                        updateCommField(current, true);
+                    }
+
+                    if (null == signaling.getTarget()) {
+                        // 向场域里的其他终端发送事件
+                        broadcastLeftEvent(current, currentEndpoint);
                     }
                 }
             };
 
-            this.mediaUnitLeader.dispatch(current, currentEndpoint, signaling, processCallback, null);
+            this.mediaUnitLeader.dispatch(current, currentEndpoint, signaling, processCallback, completeCallback);
         }
     }
 

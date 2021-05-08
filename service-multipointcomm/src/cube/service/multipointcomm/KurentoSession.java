@@ -27,7 +27,6 @@
 package cube.service.multipointcomm;
 
 import cell.util.log.Logger;
-import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
 import cube.service.multipointcomm.signaling.AnswerSignaling;
 import cube.service.multipointcomm.signaling.CandidateSignaling;

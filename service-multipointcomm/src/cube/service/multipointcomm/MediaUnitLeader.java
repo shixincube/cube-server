@@ -33,6 +33,7 @@ import cube.common.action.MultipointCommAction;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
 import cube.common.state.MultipointCommStateCode;
+import cube.service.multipointcomm.signaling.ByeSignaling;
 import cube.service.multipointcomm.signaling.CandidateSignaling;
 import cube.service.multipointcomm.signaling.OfferSignaling;
 import cube.service.multipointcomm.signaling.Signaling;
@@ -133,10 +134,32 @@ public class MediaUnitLeader implements MediaUnitListener {
             processCallback.on(stateCode, ackSignaling);
         }
         else if (MultipointCommAction.Bye.name.equals(signaling.getName())) {
-            // 关闭指定的终端媒体
-            MultipointCommStateCode stateCode = mediaUnit.removeEndpoint(commField, endpoint);
-            // 回调
-            processCallback.on(stateCode, signaling);
+            ByeSignaling byeSignaling = (ByeSignaling) signaling;
+
+            CommFieldEndpoint target = byeSignaling.getTarget();
+
+            ByeSignaling ackSignaling = new ByeSignaling(commField, endpoint.getContact(), endpoint.getDevice());
+            ackSignaling.setTarget(target);
+
+            if (null == target) {
+                // 关闭指定的终端媒体
+                MultipointCommStateCode stateCode = mediaUnit.removeEndpoint(commField, endpoint);
+                // 回调
+                processCallback.on(stateCode, ackSignaling);
+                this.executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        completeCallback.on(commField, endpoint);
+                    }
+                });
+            }
+            else {
+                // 取消对指定终端的数据接收
+                MultipointCommStateCode stateCode = mediaUnit.cancelFrom(commField, endpoint,
+                        target, completeCallback);
+                // 回调
+                processCallback.on(stateCode, ackSignaling);
+            }
         }
         else {
             // 回调
