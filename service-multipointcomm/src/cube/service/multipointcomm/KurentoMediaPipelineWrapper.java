@@ -46,7 +46,7 @@ public class KurentoMediaPipelineWrapper {
     /**
      * Comm Field Endpoint 对应的 Session
      */
-    private final ConcurrentHashMap<Long, KurentoSession> endpointSessionMap;
+    private final ConcurrentHashMap<Long, KurentoForwardingSession> endpointSessionMap;
 
     private Composite composite;
 
@@ -59,22 +59,22 @@ public class KurentoMediaPipelineWrapper {
         this.endpointSessionMap = new ConcurrentHashMap<>();
     }
 
-    public KurentoSession getSession(Long id) {
+    public KurentoForwardingSession getSession(Long id) {
         this.timestamp = System.currentTimeMillis();
         return this.endpointSessionMap.get(id);
     }
 
-    public void addSession(Long id, KurentoSession session) {
+    public void addSession(Long id, KurentoForwardingSession session) {
         this.endpointSessionMap.put(id, session);
         this.timestamp = System.currentTimeMillis();
     }
 
-    public KurentoSession removeSession(Long id) {
+    public KurentoForwardingSession removeSession(Long id) {
         this.timestamp = System.currentTimeMillis();
         return this.endpointSessionMap.remove(id);
     }
 
-    public Collection<KurentoSession> getSessions() {
+    public Collection<KurentoForwardingSession> getSessions() {
         return this.endpointSessionMap.values();
     }
 
@@ -82,12 +82,12 @@ public class KurentoMediaPipelineWrapper {
         this.pipeline.release(new Continuation<Void>() {
             @Override
             public void onSuccess(Void result) throws Exception {
-                Logger.d(KurentoMediaUnit.class, "Released Pipeline : " + commFieldId);
+                Logger.d(KurentoForwardingMediaUnit.class, "Released Pipeline : " + commFieldId);
             }
 
             @Override
             public void onError(Throwable cause) throws Exception {
-                Logger.d(KurentoMediaUnit.class, "Could not release Pipeline : " + commFieldId);
+                Logger.d(KurentoForwardingMediaUnit.class, "Could not release Pipeline : " + commFieldId);
             }
         });
     }

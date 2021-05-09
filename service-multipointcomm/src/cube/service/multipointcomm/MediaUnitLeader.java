@@ -51,7 +51,9 @@ public class MediaUnitLeader implements MediaUnitListener {
 
     private ExecutorService executor;
 
-    private List<AbstractMediaUnit> mediaUnitList;
+    private List<AbstractForwardingMediaUnit> mediaUnitList;
+
+    private List<AbstractCompositeMediaUnit> compositeMediaUnitList;
 
     private ConcurrentHashMap<Long, MediaUnitBundle> bundles;
 
@@ -60,6 +62,7 @@ public class MediaUnitLeader implements MediaUnitListener {
      */
     public MediaUnitLeader() {
         this.mediaUnitList = new ArrayList<>();
+        this.compositeMediaUnitList = new ArrayList<>();
         this.bundles = new ConcurrentHashMap<>();
     }
 
@@ -77,7 +80,7 @@ public class MediaUnitLeader implements MediaUnitListener {
      * 停止。
      */
     public void stop() {
-        for (AbstractMediaUnit mu : this.mediaUnitList) {
+        for (AbstractForwardingMediaUnit mu : this.mediaUnitList) {
             try {
                 mu.destroy();
             } catch (Throwable e) {
@@ -85,7 +88,16 @@ public class MediaUnitLeader implements MediaUnitListener {
             }
         }
 
+        for (AbstractCompositeMediaUnit cmu : this.compositeMediaUnitList) {
+            try {
+                cmu.destroy();
+            } catch (Throwable e) {
+                Logger.w(this.getClass(), "stop", e);
+            }
+        }
+
         this.mediaUnitList.clear();
+        this.compositeMediaUnitList.clear();
 
         this.executor.shutdown();
     }
@@ -96,8 +108,8 @@ public class MediaUnitLeader implements MediaUnitListener {
      * @param commField
      * @return
      */
-    public AbstractMediaUnit assign(CommField commField) {
-        AbstractMediaUnit mediaUnit = this.selectMediaUnit(commField);
+    public AbstractForwardingMediaUnit assign(CommField commField) {
+        AbstractForwardingMediaUnit mediaUnit = this.selectMediaUnit(commField);
         return mediaUnit;
     }
 
@@ -112,7 +124,7 @@ public class MediaUnitLeader implements MediaUnitListener {
      */
     public void dispatch(CommField commField, CommFieldEndpoint endpoint, Signaling signaling,
                          SignalingCallback processCallback, MediaUnitCallback completeCallback) {
-        AbstractMediaUnit mediaUnit = this.queryMediaUnit(commField);
+        AbstractForwardingMediaUnit mediaUnit = this.queryMediaUnit(commField);
         if (null == mediaUnit) {
             processCallback.on(MultipointCommStateCode.NoMediaUnit, signaling);
             return;
@@ -174,7 +186,7 @@ public class MediaUnitLeader implements MediaUnitListener {
      * @return
      */
     public boolean release(CommField commField) {
-        AbstractMediaUnit mediaUnit = this.queryMediaUnit(commField);
+        AbstractForwardingMediaUnit mediaUnit = this.queryMediaUnit(commField);
         if (null == mediaUnit) {
             return false;
         }
@@ -190,13 +202,13 @@ public class MediaUnitLeader implements MediaUnitListener {
      * @param commField
      * @return
      */
-    private AbstractMediaUnit selectMediaUnit(CommField commField) {
+    private AbstractForwardingMediaUnit selectMediaUnit(CommField commField) {
         MediaUnitBundle bundle = this.bundles.get(commField.getId());
 
         if (null == bundle) {
             // 随机媒体单元，需要通过服务能力进行选择
             int index = Utils.randomInt(0, this.mediaUnitList.size() - 1);
-            AbstractMediaUnit mediaUnit = this.mediaUnitList.get(index);
+            AbstractForwardingMediaUnit mediaUnit = this.mediaUnitList.get(index);
             bundle = new MediaUnitBundle(mediaUnit, commField);
             this.bundles.put(commField.getId(), bundle);
         }
@@ -210,7 +222,7 @@ public class MediaUnitLeader implements MediaUnitListener {
      * @param commField
      * @return
      */
-    private AbstractMediaUnit queryMediaUnit(CommField commField) {
+    private AbstractForwardingMediaUnit queryMediaUnit(CommField commField) {
         MediaUnitBundle bundle = this.bundles.get(commField.getId());
         if (null == bundle) {
             return null;
@@ -224,7 +236,7 @@ public class MediaUnitLeader implements MediaUnitListener {
         for (int i = 1; i <= 50; ++i) {
             String keyUrl = "unit." + i + ".kms.url";
             if (properties.containsKey(keyUrl)) {
-                KurentoMediaUnit kurentoMediaUnit = new KurentoMediaUnit(service, new Portal() {
+                KurentoForwardingMediaUnit kurentoMediaUnit = new KurentoForwardingMediaUnit(service, new Portal() {
                     @Override
                     public void emit(CommFieldEndpoint endpoint, Signaling signaling) {
                         service.pushSignaling(endpoint, signaling);
@@ -247,7 +259,7 @@ public class MediaUnitLeader implements MediaUnitListener {
     }
 
     public void onTick(long now) {
-        for (AbstractMediaUnit mediaUnit : this.mediaUnitList) {
+        for (AbstractForwardingMediaUnit mediaUnit : this.mediaUnitList) {
             mediaUnit.onTick(now);
         }
     }

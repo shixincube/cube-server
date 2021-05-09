@@ -33,12 +33,21 @@ import cube.common.entity.CommField;
  */
 public class MediaUnitBundle {
 
-    protected AbstractMediaUnit mediaUnit;
+    protected final AbstractForwardingMediaUnit mediaUnit;
 
-    protected CommField commField;
+    protected final AbstractCompositeMediaUnit compositeMediaUnit;
 
-    public MediaUnitBundle(AbstractMediaUnit mediaUnit, CommField commField) {
+    protected final CommField commField;
+
+    public MediaUnitBundle(AbstractForwardingMediaUnit mediaUnit, CommField commField) {
         this.mediaUnit = mediaUnit;
         this.commField = commField;
+        this.compositeMediaUnit = null;
+    }
+
+    public MediaUnitBundle(AbstractCompositeMediaUnit mediaUnit, CommField commField) {
+        this.compositeMediaUnit = mediaUnit;
+        this.commField = commField;
+        this.mediaUnit = null;
     }
 }

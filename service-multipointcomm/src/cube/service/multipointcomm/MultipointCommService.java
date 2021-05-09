@@ -370,7 +370,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         }
         else {
             // 分配媒体单元
-            AbstractMediaUnit mediaUnit = this.mediaUnitLeader.assign(commField);
+            AbstractForwardingMediaUnit mediaUnit = this.mediaUnitLeader.assign(commField);
 
             // 准备通道
             mediaUnit.preparePipeline(commField, endpoint);
@@ -425,7 +425,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         }
         else {
             // 分配媒体单元
-            AbstractMediaUnit mediaUnit = this.mediaUnitLeader.assign(commField);
+            AbstractForwardingMediaUnit mediaUnit = this.mediaUnitLeader.assign(commField);
 
             // 准备通道
             mediaUnit.preparePipeline(commField, endpoint);

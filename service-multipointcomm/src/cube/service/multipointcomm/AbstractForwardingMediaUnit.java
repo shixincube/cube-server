@@ -33,9 +33,12 @@ import cube.service.multipointcomm.signaling.CandidateSignaling;
 import cube.service.multipointcomm.signaling.OfferSignaling;
 
 /**
- * 抽象融合媒体单元。
+ * 抽象的媒体单元。
  */
-public abstract class AbstractCompositeMediaUnit {
+public abstract class AbstractForwardingMediaUnit {
+
+    public AbstractForwardingMediaUnit() {
+    }
 
     /**
      * 准备数据通道。
@@ -58,6 +61,20 @@ public abstract class AbstractCompositeMediaUnit {
                                                         CommFieldEndpoint endpoint,
                                                         OfferSignaling signaling,
                                                         MediaUnitCallback callback);
+
+    /**
+     * 取消指定目标的数据接收。
+     *
+     * @param commField
+     * @param endpoint
+     * @param target
+     * @param callback
+     * @return
+     */
+    public abstract MultipointCommStateCode cancelFrom(CommField commField,
+                                                       CommFieldEndpoint endpoint,
+                                                       CommFieldEndpoint target,
+                                                       MediaUnitCallback callback);
 
     /**
      * 添加 ICE Candidate 到指定终端。
