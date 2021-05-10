@@ -26,32 +26,19 @@
 
 package cube.service.multipointcomm;
 
-import cube.common.entity.CommField;
-
 /**
- * 媒体单元对应关系。
+ * 媒体单元类型。
  */
-public class MediaUnitBundle {
+public enum MediaUnitType {
 
-    protected final AbstractForwardingMediaUnit forwardingMediaUnit;
+    /**
+     * 进行混合流的媒体单元。
+     */
+    Composite,
 
-    protected final AbstractCompositeMediaUnit compositeMediaUnit;
+    /**
+     * 进行选择性转发的媒体单元。
+     */
+    Forwarding
 
-    protected final CommField commField;
-
-    public MediaUnitBundle(AbstractForwardingMediaUnit mediaUnit, CommField commField) {
-        this.forwardingMediaUnit = mediaUnit;
-        this.commField = commField;
-        this.compositeMediaUnit = null;
-    }
-
-    public MediaUnitBundle(AbstractCompositeMediaUnit mediaUnit, CommField commField) {
-        this.compositeMediaUnit = mediaUnit;
-        this.commField = commField;
-        this.forwardingMediaUnit = null;
-    }
-
-    public MediaUnit getMediaUnit() {
-        return (null != this.forwardingMediaUnit) ? this.forwardingMediaUnit : this.compositeMediaUnit;
-    }
 }

@@ -30,8 +30,6 @@ import cell.util.log.Logger;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
 import cube.common.state.MultipointCommStateCode;
-import cube.service.multipointcomm.signaling.CandidateSignaling;
-import cube.service.multipointcomm.signaling.OfferSignaling;
 import org.json.JSONObject;
 import org.kurento.client.IceCandidate;
 import org.kurento.client.KurentoClient;
@@ -78,6 +76,9 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         this.pipelineMap = new ConcurrentHashMap<>();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void preparePipeline(CommField commField, CommFieldEndpoint endpoint) {
         if (null == this.kurentoClient) {
@@ -99,9 +100,13 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public MultipointCommStateCode receiveFrom(CommField commField, CommFieldEndpoint endpoint, OfferSignaling signaling,
-                                               MediaUnitCallback callback) {
+    public MultipointCommStateCode subscribe(CommField commField, CommFieldEndpoint endpoint,
+                                             CommFieldEndpoint target, String offerSDP,
+                                             MediaUnitCallback callback) {
         KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
             return MultipointCommStateCode.NoPipeline;
@@ -112,7 +117,6 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
 
-        CommFieldEndpoint target = signaling.getTarget();
         final KurentoForwardingSession sender = wrapper.getSession(target.getId());
         if (null == sender) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
@@ -122,7 +126,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                session.receiveFrom(sender, signaling.getSDP());
+                session.receiveFrom(sender, offerSDP);
                 callback.on(commField, endpoint);
             }
         });
@@ -130,8 +134,11 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         return MultipointCommStateCode.Ok;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public MultipointCommStateCode cancelFrom(CommField commField, CommFieldEndpoint endpoint, CommFieldEndpoint target,
+    public MultipointCommStateCode unsubscribe(CommField commField, CommFieldEndpoint endpoint, CommFieldEndpoint target,
                                               MediaUnitCallback callback) {
         KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
@@ -161,9 +168,12 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         return MultipointCommStateCode.Ok;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public MultipointCommStateCode addCandidate(CommField commField,
-                                                CommFieldEndpoint endpoint, CandidateSignaling signaling) {
+    public MultipointCommStateCode addCandidate(CommField commField, CommFieldEndpoint endpoint,
+                                                CommFieldEndpoint target, JSONObject candidateJson) {
         KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
             return MultipointCommStateCode.NoPipeline;
@@ -174,29 +184,25 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
 
-        CommFieldEndpoint target = signaling.getTarget();
         if (null == target) {
             return MultipointCommStateCode.DataStructureError;
         }
+
         KurentoForwardingSession targetSession = wrapper.getSession(target.getId());
         if (null == targetSession) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
 
         // 添加 Candidate
-        JSONObject json = signaling.getCandidate();
-        IceCandidate candidate = new IceCandidate(json.getString("candidate"),
-                json.getString("sdpMid"), json.getInt("sdpMLineIndex"));
+        IceCandidate candidate = new IceCandidate(candidateJson.getString("candidate"),
+                candidateJson.getString("sdpMid"), candidateJson.getInt("sdpMLineIndex"));
         session.addCandidate(candidate, targetSession);
 
         return MultipointCommStateCode.Ok;
     }
 
     /**
-     *
-     * @param commField
-     * @param endpoint
-     * @return
+     * {@inheritDoc}
      */
     @Override
     public MultipointCommStateCode removeEndpoint(CommField commField, CommFieldEndpoint endpoint) {
@@ -240,6 +246,9 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         return MultipointCommStateCode.Ok;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public MultipointCommStateCode release(CommField commField) {
         KurentoMediaPipelineWrapper wrapper = this.pipelineMap.remove(commField.getId());
@@ -262,6 +271,9 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         return MultipointCommStateCode.Ok;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void destroy() {
         for (KurentoMediaPipelineWrapper wrapper : this.pipelineMap.values()) {

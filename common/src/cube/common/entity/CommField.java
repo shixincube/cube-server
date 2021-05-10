@@ -186,6 +186,15 @@ public class CommField extends Entity {
     }
 
     /**
+     * 获取媒体约束。
+     *
+     * @return
+     */
+    public MediaConstraint getMediaConstraint() {
+        return this.mediaConstraint;
+    }
+
+    /**
      * 尝试开始计时。
      */
     public void tryTiming() {

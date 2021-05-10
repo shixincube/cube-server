@@ -51,7 +51,7 @@ public class MediaUnitLeader implements MediaUnitListener {
 
     private ExecutorService executor;
 
-    private List<AbstractForwardingMediaUnit> mediaUnitList;
+    private List<AbstractForwardingMediaUnit> forwardingMediaUnitList;
 
     private List<AbstractCompositeMediaUnit> compositeMediaUnitList;
 
@@ -61,7 +61,7 @@ public class MediaUnitLeader implements MediaUnitListener {
      * 构造函数。
      */
     public MediaUnitLeader() {
-        this.mediaUnitList = new ArrayList<>();
+        this.forwardingMediaUnitList = new ArrayList<>();
         this.compositeMediaUnitList = new ArrayList<>();
         this.bundles = new ConcurrentHashMap<>();
     }
@@ -80,7 +80,7 @@ public class MediaUnitLeader implements MediaUnitListener {
      * 停止。
      */
     public void stop() {
-        for (AbstractForwardingMediaUnit mu : this.mediaUnitList) {
+        for (AbstractForwardingMediaUnit mu : this.forwardingMediaUnitList) {
             try {
                 mu.destroy();
             } catch (Throwable e) {
@@ -96,7 +96,7 @@ public class MediaUnitLeader implements MediaUnitListener {
             }
         }
 
-        this.mediaUnitList.clear();
+        this.forwardingMediaUnitList.clear();
         this.compositeMediaUnitList.clear();
 
         this.executor.shutdown();
@@ -108,8 +108,19 @@ public class MediaUnitLeader implements MediaUnitListener {
      * @param commField
      * @return
      */
-    public AbstractForwardingMediaUnit assign(CommField commField) {
-        AbstractForwardingMediaUnit mediaUnit = this.selectMediaUnit(commField);
+    public AbstractForwardingMediaUnit assignForwardingUnit(CommField commField) {
+        AbstractForwardingMediaUnit mediaUnit = (AbstractForwardingMediaUnit) this.selectMediaUnit(commField, MediaUnitType.Forwarding);
+        return mediaUnit;
+    }
+
+    /**
+     * 分配媒体单元。
+     *
+     * @param commField
+     * @return
+     */
+    public AbstractCompositeMediaUnit assignCompositeUnit(CommField commField) {
+        AbstractCompositeMediaUnit mediaUnit = (AbstractCompositeMediaUnit) this.selectMediaUnit(commField, MediaUnitType.Composite);
         return mediaUnit;
     }
 
@@ -124,7 +135,7 @@ public class MediaUnitLeader implements MediaUnitListener {
      */
     public void dispatch(CommField commField, CommFieldEndpoint endpoint, Signaling signaling,
                          SignalingCallback processCallback, MediaUnitCallback completeCallback) {
-        AbstractForwardingMediaUnit mediaUnit = this.queryMediaUnit(commField);
+        MediaUnit mediaUnit = this.queryMediaUnit(commField);
         if (null == mediaUnit) {
             processCallback.on(MultipointCommStateCode.NoMediaUnit, signaling);
             return;
@@ -132,15 +143,18 @@ public class MediaUnitLeader implements MediaUnitListener {
 
         if (MultipointCommAction.Candidate.name.equals(signaling.getName())) {
             // 处理 ICE Candidate
-            MultipointCommStateCode stateCode = mediaUnit.addCandidate(commField, endpoint, (CandidateSignaling) signaling);
+            CandidateSignaling candidateSignaling = (CandidateSignaling) signaling;
+            MultipointCommStateCode stateCode = mediaUnit.addCandidate(commField, endpoint, candidateSignaling.getTarget(),
+                    candidateSignaling.getCandidate());
             if (stateCode != MultipointCommStateCode.Ok) {
                 Logger.w(this.getClass(), "Endpoint \"" + endpoint.getName() + "\" add addCandidate failed");
             }
         }
         else if (MultipointCommAction.Offer.name.equals(signaling.getName())) {
+            OfferSignaling offerSignaling = (OfferSignaling) signaling;
             // 从媒体单元接收数据
-            MultipointCommStateCode stateCode = mediaUnit.receiveFrom(commField, endpoint,
-                    (OfferSignaling) signaling, completeCallback);
+            MultipointCommStateCode stateCode = mediaUnit.subscribe(commField, endpoint,
+                    offerSignaling.getTarget(), offerSignaling.getSDP(), completeCallback);
             // 回调进行应答
             OfferSignaling ackSignaling = new OfferSignaling(commField, endpoint.getContact(), endpoint.getDevice());
             processCallback.on(stateCode, ackSignaling);
@@ -167,7 +181,7 @@ public class MediaUnitLeader implements MediaUnitListener {
             }
             else {
                 // 取消对指定终端的数据接收
-                MultipointCommStateCode stateCode = mediaUnit.cancelFrom(commField, endpoint,
+                MultipointCommStateCode stateCode = mediaUnit.unsubscribe(commField, endpoint,
                         target, completeCallback);
                 // 回调
                 processCallback.on(stateCode, ackSignaling);
@@ -186,7 +200,7 @@ public class MediaUnitLeader implements MediaUnitListener {
      * @return
      */
     public boolean release(CommField commField) {
-        AbstractForwardingMediaUnit mediaUnit = this.queryMediaUnit(commField);
+        MediaUnit mediaUnit = this.queryMediaUnit(commField);
         if (null == mediaUnit) {
             return false;
         }
@@ -202,18 +216,39 @@ public class MediaUnitLeader implements MediaUnitListener {
      * @param commField
      * @return
      */
-    private AbstractForwardingMediaUnit selectMediaUnit(CommField commField) {
+    private MediaUnit selectMediaUnit(CommField commField, MediaUnitType type) {
         MediaUnitBundle bundle = this.bundles.get(commField.getId());
 
         if (null == bundle) {
-            // 随机媒体单元，需要通过服务能力进行选择
-            int index = Utils.randomInt(0, this.mediaUnitList.size() - 1);
-            AbstractForwardingMediaUnit mediaUnit = this.mediaUnitList.get(index);
-            bundle = new MediaUnitBundle(mediaUnit, commField);
-            this.bundles.put(commField.getId(), bundle);
+            if (MediaUnitType.Forwarding == type) {
+                // 随机媒体单元，需要通过服务能力进行选择
+                int index = Utils.randomInt(0, this.forwardingMediaUnitList.size() - 1);
+                AbstractForwardingMediaUnit mediaUnit = this.forwardingMediaUnitList.get(index);
+                bundle = new MediaUnitBundle(mediaUnit, commField);
+                this.bundles.put(commField.getId(), bundle);
+
+                return bundle.forwardingMediaUnit;
+            }
+            else if (MediaUnitType.Composite == type) {
+                // 随机媒体单元，需要通过服务能力进行选择
+                int index = Utils.randomInt(0, this.compositeMediaUnitList.size() - 1);
+                AbstractCompositeMediaUnit mediaUnit = this.compositeMediaUnitList.get(index);
+                bundle = new MediaUnitBundle(mediaUnit, commField);
+                this.bundles.put(commField.getId(), bundle);
+
+                return bundle.compositeMediaUnit;
+            }
+        }
+        else {
+            if (MediaUnitType.Forwarding == type) {
+                return bundle.forwardingMediaUnit;
+            }
+            else if (MediaUnitType.Composite == type) {
+                return bundle.compositeMediaUnit;
+            }
         }
 
-        return bundle.mediaUnit;
+        return null;
     }
 
     /**
@@ -222,44 +257,61 @@ public class MediaUnitLeader implements MediaUnitListener {
      * @param commField
      * @return
      */
-    private AbstractForwardingMediaUnit queryMediaUnit(CommField commField) {
+    private MediaUnit queryMediaUnit(CommField commField) {
         MediaUnitBundle bundle = this.bundles.get(commField.getId());
         if (null == bundle) {
             return null;
         }
 
-        return bundle.mediaUnit;
+        if (null != bundle.forwardingMediaUnit) {
+            return bundle.forwardingMediaUnit;
+        }
+        else {
+            return bundle.compositeMediaUnit;
+        }
     }
 
     private void loadMediaUnit(Properties properties, MultipointCommService service) {
+        Portal portal = new Portal() {
+            @Override
+            public void emit(CommFieldEndpoint endpoint, Signaling signaling) {
+                service.pushSignaling(endpoint, signaling);
+            }
+
+            @Override
+            public CommField getCommField(Long commFieldId) {
+                return service.getCommField(commFieldId);
+            }
+        };
+
         // 读取 Unit 配置
         for (int i = 1; i <= 50; ++i) {
             String keyUrl = "unit." + i + ".kms.url";
             if (properties.containsKey(keyUrl)) {
-                KurentoForwardingMediaUnit kurentoMediaUnit = new KurentoForwardingMediaUnit(service, new Portal() {
-                    @Override
-                    public void emit(CommFieldEndpoint endpoint, Signaling signaling) {
-                        service.pushSignaling(endpoint, signaling);
-                    }
+                // Forwarding Media Unit
+                KurentoForwardingMediaUnit forwardingMediaUnit = new KurentoForwardingMediaUnit(service, portal,
+                        properties.getProperty(keyUrl), this.executor);
+                this.forwardingMediaUnitList.add(forwardingMediaUnit);
 
-                    @Override
-                    public CommField getCommField(Long commFieldId) {
-                        return service.getCommField(commFieldId);
-                    }
-                }, properties.getProperty(keyUrl), this.executor);
-                this.mediaUnitList.add(kurentoMediaUnit);
+                // Composite Media Unit
+                KurentoCompositeMediaUnit compositeMediaUnit = new KurentoCompositeMediaUnit(service, portal,
+                        properties.getProperty(keyUrl), this.executor);
+                this.compositeMediaUnitList.add(compositeMediaUnit);
             }
         }
     }
 
     @Override
     public Signaling onSignaling(Signaling signaling) {
-
         return signaling;
     }
 
     public void onTick(long now) {
-        for (AbstractForwardingMediaUnit mediaUnit : this.mediaUnitList) {
+        for (AbstractForwardingMediaUnit mediaUnit : this.forwardingMediaUnitList) {
+            mediaUnit.onTick(now);
+        }
+
+        for (AbstractCompositeMediaUnit mediaUnit : this.compositeMediaUnitList) {
             mediaUnit.onTick(now);
         }
     }

@@ -55,6 +55,14 @@ public class MediaConstraint implements JSONable {
         this.dimension = json.getJSONObject("dimension");
     }
 
+    public boolean videoEnabled() {
+        return this.video;
+    }
+
+    public boolean audioEnabled() {
+        return this.audio;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

@@ -370,10 +370,19 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         }
         else {
             // 分配媒体单元
-            AbstractForwardingMediaUnit mediaUnit = this.mediaUnitLeader.assign(commField);
+            MediaConstraint mediaConstraint = current.getMediaConstraint();
+            if (mediaConstraint.videoEnabled()) {
+                AbstractForwardingMediaUnit mediaUnit = this.mediaUnitLeader.assignForwardingUnit(commField);
 
-            // 准备通道
-            mediaUnit.preparePipeline(commField, endpoint);
+                // 准备通道
+                mediaUnit.preparePipeline(commField, endpoint);
+            }
+            else {
+                AbstractCompositeMediaUnit mediaUnit = this.mediaUnitLeader.assignCompositeUnit(commField);
+
+                // 准备通道
+                mediaUnit.preparePipeline(commField, endpoint);
+            }
 
             return MultipointCommStateCode.Ok;
         }
@@ -425,10 +434,21 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         }
         else {
             // 分配媒体单元
-            AbstractForwardingMediaUnit mediaUnit = this.mediaUnitLeader.assign(commField);
+            MediaConstraint mediaConstraint = current.getMediaConstraint();
+            if (mediaConstraint.videoEnabled()) {
+                AbstractForwardingMediaUnit mediaUnit = this.mediaUnitLeader.assignForwardingUnit(commField);
 
-            // 准备通道
-            mediaUnit.preparePipeline(commField, endpoint);
+                // 准备通道
+                mediaUnit.preparePipeline(commField, endpoint);
+            }
+            else {
+                AbstractCompositeMediaUnit mediaUnit = this.mediaUnitLeader.assignCompositeUnit(commField);
+
+                // 准备通道
+                mediaUnit.preparePipeline(commField, endpoint);
+            }
+
+            return MultipointCommStateCode.Ok;
         }
 
         return MultipointCommStateCode.Ok;
