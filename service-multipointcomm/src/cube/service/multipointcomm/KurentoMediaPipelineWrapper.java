@@ -33,6 +33,7 @@ import org.kurento.client.MediaPipeline;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * 被管理的每一个媒体管道上的数据封装。
@@ -46,9 +47,9 @@ public class KurentoMediaPipelineWrapper {
     /**
      * Comm Field Endpoint 对应的 Session
      */
-    private final ConcurrentHashMap<Long, KurentoForwardingSession> endpointSessionMap;
+    private final ConcurrentMap<Long, KurentoSession> endpointSessionMap;
 
-    private Composite composite;
+    protected Composite composite;
 
     protected long timestamp;
 
@@ -59,23 +60,30 @@ public class KurentoMediaPipelineWrapper {
         this.endpointSessionMap = new ConcurrentHashMap<>();
     }
 
-    public KurentoForwardingSession getSession(Long id) {
+    public KurentoSession getSession(Long id) {
         this.timestamp = System.currentTimeMillis();
         return this.endpointSessionMap.get(id);
     }
 
-    public void addSession(Long id, KurentoForwardingSession session) {
+    public void addSession(Long id, KurentoSession session) {
         this.endpointSessionMap.put(id, session);
         this.timestamp = System.currentTimeMillis();
     }
 
-    public KurentoForwardingSession removeSession(Long id) {
+    public KurentoSession removeSession(Long id) {
         this.timestamp = System.currentTimeMillis();
         return this.endpointSessionMap.remove(id);
     }
 
-    public Collection<KurentoForwardingSession> getSessions() {
+    public Collection<KurentoSession> getSessions() {
         return this.endpointSessionMap.values();
+    }
+
+    public Composite getComposite() {
+        if (null == this.composite) {
+            this.composite = new Composite.Builder(this.pipeline).build();
+        }
+        return this.composite;
     }
 
     protected void closePipeline() {

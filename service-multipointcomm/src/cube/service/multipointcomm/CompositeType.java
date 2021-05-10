@@ -26,18 +26,23 @@
 
 package cube.service.multipointcomm;
 
-import java.io.Closeable;
-import java.io.IOException;
-
 /**
- *
+ * 混合流类型。
  */
-public final class KurentoCompositeSession implements Closeable {
+public enum CompositeType {
 
+    /**
+     * 仅 Audio 通道。
+     */
+    Audio,
 
+    /**
+     * 仅 Video 通道。
+     */
+    Video,
 
-    @Override
-    public void close() throws IOException {
-
-    }
+    /**
+     * 两个通道同时。
+     */
+    Both
 }

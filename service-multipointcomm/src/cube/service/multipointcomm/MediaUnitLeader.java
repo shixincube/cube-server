@@ -109,7 +109,8 @@ public class MediaUnitLeader implements MediaUnitListener {
      * @return
      */
     public AbstractForwardingMediaUnit assignForwardingUnit(CommField commField) {
-        AbstractForwardingMediaUnit mediaUnit = (AbstractForwardingMediaUnit) this.selectMediaUnit(commField, MediaUnitType.Forwarding);
+        AbstractForwardingMediaUnit mediaUnit = (AbstractForwardingMediaUnit)
+                this.selectMediaUnit(commField, MediaUnitType.Forwarding);
         return mediaUnit;
     }
 
@@ -120,7 +121,8 @@ public class MediaUnitLeader implements MediaUnitListener {
      * @return
      */
     public AbstractCompositeMediaUnit assignCompositeUnit(CommField commField) {
-        AbstractCompositeMediaUnit mediaUnit = (AbstractCompositeMediaUnit) this.selectMediaUnit(commField, MediaUnitType.Composite);
+        AbstractCompositeMediaUnit mediaUnit = (AbstractCompositeMediaUnit)
+                this.selectMediaUnit(commField, MediaUnitType.Composite);
         return mediaUnit;
     }
 

@@ -80,7 +80,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
      * {@inheritDoc}
      */
     @Override
-    public void preparePipeline(CommField commField, CommFieldEndpoint endpoint) {
+    public synchronized void preparePipeline(CommField commField, CommFieldEndpoint endpoint) {
         if (null == this.kurentoClient) {
             return;
         }
@@ -93,9 +93,9 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
             this.pipelineMap.put(commField.getId(), wrapper);
         }
 
-        KurentoForwardingSession session = wrapper.getSession(endpoint.getId());
+        KurentoSession session = wrapper.getSession(endpoint.getId());
         if (null == session) {
-            session = new KurentoForwardingSession(this.portal, commField.getId(), endpoint, wrapper.pipeline);
+            session = new KurentoSession(this.portal, commField.getId(), endpoint, wrapper.pipeline);
             wrapper.addSession(endpoint.getId(), session);
         }
     }
@@ -112,12 +112,12 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
             return MultipointCommStateCode.NoPipeline;
         }
 
-        final KurentoForwardingSession session = wrapper.getSession(endpoint.getId());
+        final KurentoSession session = wrapper.getSession(endpoint.getId());
         if (null == session) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
 
-        final KurentoForwardingSession sender = wrapper.getSession(target.getId());
+        final KurentoSession sender = wrapper.getSession(target.getId());
         if (null == sender) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
@@ -145,12 +145,12 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
             return MultipointCommStateCode.NoPipeline;
         }
 
-        final KurentoForwardingSession session = wrapper.getSession(endpoint.getId());
+        final KurentoSession session = wrapper.getSession(endpoint.getId());
         if (null == session) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
 
-        final KurentoForwardingSession sender = wrapper.getSession(target.getId());
+        final KurentoSession sender = wrapper.getSession(target.getId());
         if (null == sender) {
             // 没有找到目标会话
             return MultipointCommStateCode.Ok;
@@ -179,7 +179,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
             return MultipointCommStateCode.NoPipeline;
         }
 
-        KurentoForwardingSession session = wrapper.getSession(endpoint.getId());
+        KurentoSession session = wrapper.getSession(endpoint.getId());
         if (null == session) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
@@ -188,7 +188,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
             return MultipointCommStateCode.DataStructureError;
         }
 
-        KurentoForwardingSession targetSession = wrapper.getSession(target.getId());
+        KurentoSession targetSession = wrapper.getSession(target.getId());
         if (null == targetSession) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
@@ -212,7 +212,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         }
 
         // 删除会话
-        KurentoForwardingSession session = wrapper.removeSession(endpoint.getId());
+        KurentoSession session = wrapper.removeSession(endpoint.getId());
         if (null == session) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
@@ -223,7 +223,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
             }
 
             // 让其他参与者取消接收流
-            KurentoForwardingSession participantSession = wrapper.getSession(participant.getId());
+            KurentoSession participantSession = wrapper.getSession(participant.getId());
             participantSession.cancelFrom(session);
         }
 
@@ -257,7 +257,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         }
 
         // 关闭所有会话
-        for (KurentoForwardingSession session : wrapper.getSessions()) {
+        for (KurentoSession session : wrapper.getSessions()) {
             try {
                 session.close();
             } catch (IOException e) {
