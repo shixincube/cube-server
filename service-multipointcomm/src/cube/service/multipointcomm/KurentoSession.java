@@ -58,7 +58,7 @@ public class KurentoSession implements Closeable {
 
     private final ConcurrentMap<Long, WebRtcEndpoint> incomingMedias;
 
-    private CompositeExtension compositeExtension;
+    private CompositeSetting compositeSetting;
 
     public KurentoSession(Portal portal, Long commFieldId, CommFieldEndpoint endpoint, MediaPipeline pipeline) {
         this.portal = portal;
@@ -97,12 +97,10 @@ public class KurentoSession implements Closeable {
         return this.outgoingMedia;
     }
 
-    public synchronized void activeOutgoingPort(Composite composite, CompositeType type) {
-        if (null == this.compositeExtension) {
-            this.compositeExtension = new CompositeExtension();
+    public void activeComposite(Composite composite, CompositeType type) {
+        if (null == this.compositeSetting) {
+            this.compositeSetting = new CompositeSetting(type, composite);
         }
-        this.compositeExtension.outgoingPort = new HubPort.Builder(composite).build();
-        this.compositeExtension.outgoingPortType = type;
     }
 
     /**
@@ -224,11 +222,6 @@ public class KurentoSession implements Closeable {
     private WebRtcEndpoint getEndpointForSession(final KurentoSession session) {
         if (session.getId().equals(this.getId())) {
             Logger.d(this.getClass(), "Endpoint \"" + session.getName() + "\" configuring loopback");
-
-            if (null != this.compositeExtension) {
-                this.compositeExtension.connectOutgoing(this.outgoingMedia);
-            }
-
             return this.outgoingMedia;
         }
 
@@ -255,7 +248,12 @@ public class KurentoSession implements Closeable {
 
         Logger.d(getClass(), "Endpoint \"" + this.getName() + "\" obtained endpoint for \"" + session.getName() + "\"");
 
-        session.getOutgoingWebRtcPeer().connect(incoming);
+        if (null != this.compositeSetting) {
+            this.compositeSetting.compositeInputHubPort.connect(incoming);
+        }
+        else {
+            session.getOutgoingWebRtcPeer().connect(incoming);
+        }
 
         return incoming;
     }
@@ -266,33 +264,33 @@ public class KurentoSession implements Closeable {
 
 
     /**
-     * 混合流扩展。
+     * 混合流的数据设置。
      */
-    protected class CompositeExtension {
+    protected class CompositeSetting {
 
-        protected HubPort outgoingPort = null;
+        protected final CompositeType compositeType;
 
-        protected CompositeType outgoingPortType = null;
+        protected HubPort compositeInputHubPort;
 
-        protected boolean outgoingConnected = false;
+        private CompositeSetting(CompositeType compositeType, Composite composite) {
+            this.compositeType = compositeType;
 
-        private CompositeExtension() {
-        }
+            MediaType mediaType = null;
+            if (compositeType == CompositeType.Audio) {
+                mediaType = MediaType.AUDIO;
+            }
+            else if (compositeType == CompositeType.Video) {
+                mediaType = MediaType.VIDEO;
+            }
 
-        protected void connectOutgoing(WebRtcEndpoint outgoingMedia) {
-            if (null != this.outgoingPort && !this.outgoingConnected) {
-
-                if (this.outgoingPortType == CompositeType.Audio) {
-                    outgoingMedia.connect(this.outgoingPort, MediaType.AUDIO);
-                }
-                else if (this.outgoingPortType == CompositeType.Video) {
-                    outgoingMedia.connect(this.outgoingPort, MediaType.VIDEO);
-                }
-                else {
-                    outgoingMedia.connect(this.outgoingPort);
-                }
-
-                this.outgoingConnected = true;
+            this.compositeInputHubPort = new HubPort.Builder(composite).build();
+            if (null != mediaType) {
+                this.compositeInputHubPort.connect(outgoingMedia, mediaType);
+                outgoingMedia.connect(this.compositeInputHubPort, mediaType);
+            }
+            else {
+                this.compositeInputHubPort.connect(outgoingMedia);
+                outgoingMedia.connect(this.compositeInputHubPort);
             }
         }
     }

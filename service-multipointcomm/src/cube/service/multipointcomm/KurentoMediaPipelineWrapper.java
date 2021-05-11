@@ -29,6 +29,7 @@ package cube.service.multipointcomm;
 import cell.util.log.Logger;
 import org.kurento.client.Composite;
 import org.kurento.client.Continuation;
+import org.kurento.client.HubPort;
 import org.kurento.client.MediaPipeline;
 
 import java.util.Collection;
@@ -50,6 +51,8 @@ public class KurentoMediaPipelineWrapper {
     private final ConcurrentMap<Long, KurentoSession> endpointSessionMap;
 
     protected Composite composite;
+
+    protected HubPort compositeOutputHubPort;
 
     protected long timestamp;
 
@@ -77,13 +80,6 @@ public class KurentoMediaPipelineWrapper {
 
     public Collection<KurentoSession> getSessions() {
         return this.endpointSessionMap.values();
-    }
-
-    public Composite getComposite() {
-        if (null == this.composite) {
-            this.composite = new Composite.Builder(this.pipeline).build();
-        }
-        return this.composite;
     }
 
     protected void closePipeline() {

@@ -29,6 +29,7 @@ package cube.service.multipointcomm;
 import cell.util.log.Logger;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
+import cube.common.entity.MediaConstraint;
 import cube.common.state.MultipointCommStateCode;
 import org.json.JSONObject;
 import org.kurento.client.Composite;
@@ -100,6 +101,20 @@ public class KurentoCompositeMediaUnit extends AbstractCompositeMediaUnit {
         KurentoSession session = wrapper.getSession(endpoint.getId());
         if (null == session) {
             session = new KurentoSession(this.portal, commField.getId(), endpoint, wrapper.pipeline);
+
+            // 根据媒体约束决定混合的流
+            MediaConstraint constraint = commField.getMediaConstraint();
+            CompositeType type = CompositeType.Both;
+            if (constraint.audioEnabled() && !constraint.videoEnabled()) {
+                type = CompositeType.Audio;
+            }
+            else if (constraint.videoEnabled() && !constraint.audioEnabled()) {
+                type = CompositeType.Video;
+            }
+
+            // 激活混码集线器
+            session.activeComposite(wrapper.composite, type);
+
             wrapper.addSession(endpoint.getId(), session);
         }
     }
