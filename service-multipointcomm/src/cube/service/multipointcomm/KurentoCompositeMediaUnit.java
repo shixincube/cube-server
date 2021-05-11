@@ -31,10 +31,11 @@ import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
 import cube.common.entity.MediaConstraint;
 import cube.common.state.MultipointCommStateCode;
+import cube.service.multipointcomm.signaling.AnswerSignaling;
+import cube.service.multipointcomm.signaling.CandidateSignaling;
+import cube.service.multipointcomm.signaling.Signalings;
 import org.json.JSONObject;
-import org.kurento.client.Composite;
-import org.kurento.client.IceCandidate;
-import org.kurento.client.KurentoClient;
+import org.kurento.client.*;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -92,8 +93,9 @@ public class KurentoCompositeMediaUnit extends AbstractCompositeMediaUnit {
         if (null == wrapper) {
             wrapper = new KurentoMediaPipelineWrapper(commField.getId(), this.kurentoClient.createMediaPipeline());
 
-            // 创建混合集线器
-            wrapper.composite = new Composite.Builder(wrapper.pipeline).build();
+            // 启用 Composite
+            Logger.d(this.getClass(), "Enable composite: \"" + commField.getName() + "\"");
+            wrapper.enableComposite();
 
             this.pipelineMap.put(commField.getId(), wrapper);
         }
@@ -117,6 +119,32 @@ public class KurentoCompositeMediaUnit extends AbstractCompositeMediaUnit {
 
             wrapper.addSession(endpoint.getId(), session);
         }
+    }
+
+    @Override
+    public MultipointCommStateCode subscribe(CommField commField, CommFieldEndpoint endpoint,
+                                             String sdpOffer, MediaUnitCallback callback) {
+        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
+        if (null == wrapper) {
+            return MultipointCommStateCode.NoPipeline;
+        }
+
+        final KurentoSession session = wrapper.getSession(endpoint.getId());
+        if (null == session) {
+            return MultipointCommStateCode.NoCommFieldEndpoint;
+        }
+
+        // 获取来自混码器输出端口上的会话
+        KurentoIncomingSession incomingSession = wrapper.getIncomingSession(endpoint.getId());
+        if (null == incomingSession) {
+            incomingSession = new KurentoIncomingSession(this.portal, commField.getId(), endpoint,
+                    wrapper.pipeline, wrapper.compositeOutputHubPort);
+            wrapper.addIncomingSession(endpoint.getId(), incomingSession);
+        }
+
+        incomingSession.receive(sdpOffer);
+
+        return MultipointCommStateCode.Ok;
     }
 
     /**

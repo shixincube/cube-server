@@ -62,6 +62,18 @@ public interface MediaUnit {
             CommFieldEndpoint target, MediaUnitCallback callback);
 
     /**
+     * 订阅指定场域上的输出端口的数据流。
+     *
+     * @param commField
+     * @param endpoint
+     * @param offerSDP
+     * @param callback
+     * @return
+     */
+    public MultipointCommStateCode subscribe(CommField commField, CommFieldEndpoint endpoint,
+            String offerSDP, MediaUnitCallback callback);
+
+    /**
      * 向指定目标添加 ICE candidate 数据。
      *
      * @param commField

@@ -112,6 +112,11 @@ public enum MultipointCommStateCode {
     UnsupportedSignaling(24),
 
     /**
+     * 不支持的操作。
+     */
+    UnsupportedOperation(25),
+
+    /**
      * 正在建立通话。
      */
     Calling(30),

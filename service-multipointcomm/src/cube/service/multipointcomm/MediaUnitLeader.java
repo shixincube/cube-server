@@ -153,10 +153,20 @@ public class MediaUnitLeader implements MediaUnitListener {
             }
         }
         else if (MultipointCommAction.Offer.name.equals(signaling.getName())) {
+            MultipointCommStateCode stateCode = null;
+
             OfferSignaling offerSignaling = (OfferSignaling) signaling;
-            // 从媒体单元接收数据
-            MultipointCommStateCode stateCode = mediaUnit.subscribe(commField, endpoint,
-                    offerSignaling.getTarget(), offerSignaling.getSDP(), completeCallback);
+            CommFieldEndpoint target = offerSignaling.getTarget();
+            if (null != target) {
+                // 从媒体单元接收数据
+                stateCode = mediaUnit.subscribe(commField, endpoint,
+                        target, offerSignaling.getSDP(), completeCallback);
+            }
+            else {
+                // 从媒体单元接收数据
+                stateCode = mediaUnit.subscribe(commField, endpoint, offerSignaling.getSDP(), completeCallback);
+            }
+
             // 回调进行应答
             OfferSignaling ackSignaling = new OfferSignaling(commField, endpoint.getContact(), endpoint.getDevice());
             processCallback.on(stateCode, ackSignaling);

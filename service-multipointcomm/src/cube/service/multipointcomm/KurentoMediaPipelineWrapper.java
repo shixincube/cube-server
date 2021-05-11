@@ -54,6 +54,11 @@ public class KurentoMediaPipelineWrapper {
 
     protected HubPort compositeOutputHubPort;
 
+    /**
+     * 每个终端在接收混码流时，对应的 Incoming 会话
+     */
+    protected ConcurrentMap<Long, KurentoIncomingSession> incomingSessionMap;
+
     protected long timestamp;
 
     protected KurentoMediaPipelineWrapper(Long commFieldId, MediaPipeline pipeline) {
@@ -80,6 +85,27 @@ public class KurentoMediaPipelineWrapper {
 
     public Collection<KurentoSession> getSessions() {
         return this.endpointSessionMap.values();
+    }
+
+    public void enableComposite() {
+        // 创建混合集线器
+        this.composite = new Composite.Builder(this.pipeline).build();
+        // 创建输出端口
+        this.compositeOutputHubPort = new HubPort.Builder(this.composite).build();
+        // 创建 Map
+        this.incomingSessionMap = new ConcurrentHashMap<>();
+    }
+
+    public KurentoIncomingSession getIncomingSession(Long id) {
+        return this.incomingSessionMap.get(id);
+    }
+
+    public void addIncomingSession(Long id, KurentoIncomingSession session) {
+        this.incomingSessionMap.put(id, session);
+    }
+
+    public void removeIncomingSession(Long id) {
+        this.incomingSessionMap.remove(id);
     }
 
     protected void closePipeline() {
