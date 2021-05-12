@@ -110,6 +110,16 @@ public class KurentoIncomingSession implements Closeable {
 
     @Override
     public void close() throws IOException {
+        this.outgoingMedia.release(new Continuation<Void>() {
+            @Override
+            public void onSuccess(Void result) throws Exception {
+                Logger.d(KurentoSession.class, "Incoming session \"" + commFieldEndpoint.getName() + "\" : Released outgoing EP");
+            }
 
+            @Override
+            public void onError(Throwable cause) throws Exception {
+                Logger.w(KurentoSession.class, "Incoming session \"" + commFieldEndpoint.getName() + "\" : Could not release outgoing EP");
+            }
+        });
     }
 }

@@ -104,8 +104,8 @@ public class KurentoMediaPipelineWrapper {
         this.incomingSessionMap.put(id, session);
     }
 
-    public void removeIncomingSession(Long id) {
-        this.incomingSessionMap.remove(id);
+    public KurentoIncomingSession removeIncomingSession(Long id) {
+        return this.incomingSessionMap.remove(id);
     }
 
     protected void closePipeline() {

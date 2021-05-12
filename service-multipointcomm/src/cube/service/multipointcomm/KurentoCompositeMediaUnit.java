@@ -303,6 +303,13 @@ public class KurentoCompositeMediaUnit extends AbstractCompositeMediaUnit {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
 
+        KurentoIncomingSession incomingSession = wrapper.removeIncomingSession(endpoint.getId());
+        try {
+            incomingSession.close();
+        } catch (Exception e) {
+            // Nothing
+        }
+
         for (CommFieldEndpoint participant : commField.getEndpoints()) {
             if (participant.equals(endpoint)) {
                 continue;
