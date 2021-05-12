@@ -214,6 +214,15 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
      * {@inheritDoc}
      */
     @Override
+    public MultipointCommStateCode addCandidate(Long sn, CommField commField, CommFieldEndpoint endpoint,
+                                                JSONObject candidate) {
+        return MultipointCommStateCode.UnsupportedOperation;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public MultipointCommStateCode removeEndpoint(CommField commField, CommFieldEndpoint endpoint) {
         KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {

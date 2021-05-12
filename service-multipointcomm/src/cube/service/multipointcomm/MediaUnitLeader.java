@@ -146,8 +146,19 @@ public class MediaUnitLeader implements MediaUnitListener {
         if (MultipointCommAction.Candidate.name.equals(signaling.getName())) {
             // 处理 ICE Candidate
             CandidateSignaling candidateSignaling = (CandidateSignaling) signaling;
-            MultipointCommStateCode stateCode = mediaUnit.addCandidate(commField, endpoint, candidateSignaling.getTarget(),
-                    candidateSignaling.getCandidate());
+
+            MultipointCommStateCode stateCode = null;
+            CommFieldEndpoint target = candidateSignaling.getTarget();
+
+            if (null != target) {
+                stateCode = mediaUnit.addCandidate(commField, endpoint, target,
+                        candidateSignaling.getCandidate());
+            }
+            else {
+                stateCode = mediaUnit.addCandidate(candidateSignaling.getSN(), commField, endpoint,
+                        candidateSignaling.getCandidate());
+            }
+
             if (stateCode != MultipointCommStateCode.Ok) {
                 Logger.w(this.getClass(), "Endpoint \"" + endpoint.getName() + "\" add addCandidate failed");
             }

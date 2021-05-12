@@ -259,6 +259,38 @@ public class KurentoCompositeMediaUnit extends AbstractCompositeMediaUnit {
      * {@inheritDoc}
      */
     @Override
+    public MultipointCommStateCode addCandidate(Long sn, CommField commField, CommFieldEndpoint endpoint,
+                                                JSONObject candidateJson) {
+        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
+        if (null == wrapper) {
+            return MultipointCommStateCode.NoPipeline;
+        }
+
+        KurentoSession session = wrapper.getSession(endpoint.getId());
+        if (null == session) {
+            return MultipointCommStateCode.NoCommFieldEndpoint;
+        }
+
+        KurentoIncomingSession incomingSession = wrapper.getIncomingSession(endpoint.getId());
+        if (incomingSession.getSN().longValue() == sn.longValue()) {
+            // 添加 Candidate
+            IceCandidate candidate = new IceCandidate(candidateJson.getString("candidate"),
+                    candidateJson.getString("sdpMid"), candidateJson.getInt("sdpMLineIndex"));
+            incomingSession.addCandidate(candidate);
+
+            return MultipointCommStateCode.Ok;
+        }
+        else {
+            Logger.e(this.getClass(), "Can NOT find incoming session: " + endpoint.getName());
+
+            return MultipointCommStateCode.NoPeerEndpoint;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public MultipointCommStateCode removeEndpoint(CommField commField, CommFieldEndpoint endpoint) {
         KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {

@@ -629,9 +629,12 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             MediaUnitCallback completeCallback = new MediaUnitCallback() {
                 @Override
                 public void on(CommField commField, CommFieldEndpoint endpoint) {
-                    // 广播
-                    if (signaling.getTarget().getContact().getId().longValue() == signaling.getContact().getId().longValue()) {
-                        broadcastArrivedEvent(current, currentEndpoint);
+                    CommFieldEndpoint target = signaling.getTarget();
+                    if (null != target) {
+                        // 广播
+                        if (target.getContact().getId().longValue() == signaling.getContact().getId().longValue()) {
+                            broadcastArrivedEvent(current, currentEndpoint);
+                        }
                     }
                 }
             };

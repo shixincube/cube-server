@@ -81,6 +81,10 @@ public class KurentoIncomingSession implements Closeable {
         outputHubPort.connect(this.outgoingMedia);
     }
 
+    public Long getSN() {
+        return this.sn;
+    }
+
     public void receive(String sdpOffer) {
         // 生成应答的 SDP
         final String sdpAnswer = this.outgoingMedia.processOffer(sdpOffer);
@@ -94,6 +98,10 @@ public class KurentoIncomingSession implements Closeable {
 
         Logger.d(this.getClass(), "Gather Candidates : \"" + this.commFieldEndpoint.getName() + "\"");
         this.outgoingMedia.gatherCandidates();
+    }
+
+    public void addCandidate(IceCandidate candidate) {
+        this.outgoingMedia.addIceCandidate(candidate);
     }
 
     protected void sendSignaling(Signaling signaling) {

@@ -88,6 +88,18 @@ public interface MediaUnit {
             CommFieldEndpoint target, JSONObject candidate);
 
     /**
+     * 向指定 SN 标记的会话添加 ICE candidate 数据。
+     *
+     * @param sn
+     * @param commField
+     * @param endpoint
+     * @param candidate
+     * @return
+     */
+    public MultipointCommStateCode addCandidate(Long sn, CommField commField, CommFieldEndpoint endpoint,
+            JSONObject candidate);
+
+    /**
      * 移除指定的终端的所有数据流。
      *
      * @param commField
