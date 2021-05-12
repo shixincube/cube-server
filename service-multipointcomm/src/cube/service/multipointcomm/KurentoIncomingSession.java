@@ -45,6 +45,8 @@ public class KurentoIncomingSession implements Closeable {
 
     private final Portal portal;
 
+    private final Long sn;
+
     private final Long commFieldId;
 
     private final CommFieldEndpoint commFieldEndpoint;
@@ -53,9 +55,10 @@ public class KurentoIncomingSession implements Closeable {
 
     private final WebRtcEndpoint outgoingMedia;
 
-    public KurentoIncomingSession(Portal portal, Long commFieldId, CommFieldEndpoint commFieldEndpoint,
+    public KurentoIncomingSession(Portal portal, Long sn, Long commFieldId, CommFieldEndpoint commFieldEndpoint,
                                   MediaPipeline pipeline, HubPort outputHubPort) {
         this.portal = portal;
+        this.sn = sn;
         this.commFieldId = commFieldId;
         this.commFieldEndpoint = commFieldEndpoint;
         this.pipeline = pipeline;
@@ -68,6 +71,7 @@ public class KurentoIncomingSession implements Closeable {
                 JSONObject candidate = Signalings.toJSON(iceCandidate);
 
                 CandidateSignaling signaling = new CandidateSignaling(portal.getCommField(commFieldId), commFieldEndpoint);
+                signaling.setSN(sn);
                 signaling.setCandidate(candidate);
                 sendSignaling(signaling);
             }
@@ -84,7 +88,7 @@ public class KurentoIncomingSession implements Closeable {
         Logger.d(this.getClass(), "Incoming session : Sdp Answer for \"" + this.commFieldEndpoint.getName() + "\"");
 
         // 将应答发送回对端
-        AnswerSignaling answerSignaling = new AnswerSignaling(this.portal.getCommField(commFieldId), this.commFieldEndpoint);
+        AnswerSignaling answerSignaling = new AnswerSignaling(this.sn, this.portal.getCommField(commFieldId), this.commFieldEndpoint);
         answerSignaling.setSDP(sdpAnswer);
         this.sendSignaling(answerSignaling);
 

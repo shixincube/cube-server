@@ -109,7 +109,7 @@ public class KurentoSession implements Closeable {
      * @param session
      * @param sdpOffer
      */
-    public void receiveFrom(KurentoSession session, String sdpOffer) {
+    public void receiveFrom(KurentoSession session, String sdpOffer, Long sn) {
         Logger.i(this.getClass(), "Session \"" + this.getName() + "\" : connecting with \""
                 + session.getName() + "\" in field " + this.portal.getCommField(commFieldId).getName());
 
@@ -119,7 +119,7 @@ public class KurentoSession implements Closeable {
         Logger.d(this.getClass(), "Session \"" + this.getName() + "\" : Sdp Answer for \"" + session.getName() + "\"");
 
         // 将应答发送回对端
-        AnswerSignaling answerSignaling = new AnswerSignaling(this.portal.getCommField(commFieldId), session.getCommFieldEndpoint());
+        AnswerSignaling answerSignaling = new AnswerSignaling(sn, this.portal.getCommField(commFieldId), session.getCommFieldEndpoint());
         answerSignaling.setSDP(sdpAnswer);
         this.sendSignaling(answerSignaling);
 

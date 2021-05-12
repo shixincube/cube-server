@@ -104,7 +104,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
      * {@inheritDoc}
      */
     @Override
-    public MultipointCommStateCode subscribe(CommField commField, CommFieldEndpoint endpoint,
+    public MultipointCommStateCode subscribe(Long sn, CommField commField, CommFieldEndpoint endpoint,
                                              CommFieldEndpoint target, String offerSDP,
                                              MediaUnitCallback callback) {
         KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
@@ -126,7 +126,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                session.receiveFrom(sender, offerSDP);
+                session.receiveFrom(sender, offerSDP, sn);
                 callback.on(commField, endpoint);
             }
         });
@@ -172,7 +172,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
      * {@inheritDoc}
      */
     @Override
-    public MultipointCommStateCode subscribe(CommField commField, CommFieldEndpoint endpoint,
+    public MultipointCommStateCode subscribe(Long sn, CommField commField, CommFieldEndpoint endpoint,
                                              String offerSDP, MediaUnitCallback callback) {
         return MultipointCommStateCode.UnsupportedOperation;
     }

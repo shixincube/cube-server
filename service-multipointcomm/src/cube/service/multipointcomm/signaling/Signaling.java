@@ -39,9 +39,14 @@ import org.json.JSONObject;
 public abstract class Signaling implements JSONable {
 
     /**
+     * 信令序号。
+     */
+    protected Long sn;
+
+    /**
      * 信令名。
      */
-    protected String name;
+    protected final String name;
 
     /**
      * 信令的场域。
@@ -72,6 +77,20 @@ public abstract class Signaling implements JSONable {
      * @param device
      */
     public Signaling(String name, CommField field, Contact contact, Device device) {
+        this(0L, name, field, contact, device);
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param sn
+     * @param name
+     * @param field
+     * @param contact
+     * @param device
+     */
+    public Signaling(Long sn, String name, CommField field, Contact contact, Device device) {
+        this.sn = sn;
         this.name = name;
         this.field = field;
         this.contact = contact;
@@ -84,6 +103,7 @@ public abstract class Signaling implements JSONable {
      * @param json
      */
     public Signaling(JSONObject json) {
+        this.sn = json.getLong("sn");
         this.name = json.getString("name");
         this.field = new CommField(json.getJSONObject("field"));
         this.contact = new Contact(json.getJSONObject("contact"));
@@ -92,6 +112,14 @@ public abstract class Signaling implements JSONable {
         if (json.has("target")) {
             this.target = new CommFieldEndpoint(json.getJSONObject("target"));
         }
+    }
+
+    public Long getSN() {
+        return this.sn;
+    }
+
+    public void setSN(Long sn) {
+        this.sn = sn;
     }
 
     public String getName() {
@@ -125,6 +153,7 @@ public abstract class Signaling implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("sn", this.sn.longValue());
         json.put("name", this.name);
         json.put("field", this.field.toJSON());
         json.put("contact", this.contact.toBasicJSON());

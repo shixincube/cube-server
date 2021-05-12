@@ -122,7 +122,7 @@ public class KurentoCompositeMediaUnit extends AbstractCompositeMediaUnit {
     }
 
     @Override
-    public MultipointCommStateCode subscribe(CommField commField, CommFieldEndpoint endpoint,
+    public MultipointCommStateCode subscribe(Long sn, CommField commField, CommFieldEndpoint endpoint,
                                              String sdpOffer, MediaUnitCallback callback) {
         KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
         if (null == wrapper) {
@@ -137,12 +137,19 @@ public class KurentoCompositeMediaUnit extends AbstractCompositeMediaUnit {
         // 获取来自混码器输出端口上的会话
         KurentoIncomingSession incomingSession = wrapper.getIncomingSession(endpoint.getId());
         if (null == incomingSession) {
-            incomingSession = new KurentoIncomingSession(this.portal, commField.getId(), endpoint,
+            incomingSession = new KurentoIncomingSession(this.portal, sn, commField.getId(), endpoint,
                     wrapper.pipeline, wrapper.compositeOutputHubPort);
             wrapper.addIncomingSession(endpoint.getId(), incomingSession);
         }
 
-        incomingSession.receive(sdpOffer);
+        final KurentoIncomingSession incoming = incomingSession;
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                incoming.receive(sdpOffer);
+                callback.on(commField, endpoint);
+            }
+        });
 
         return MultipointCommStateCode.Ok;
     }
@@ -151,7 +158,7 @@ public class KurentoCompositeMediaUnit extends AbstractCompositeMediaUnit {
      * {@inheritDoc}
      */
     @Override
-    public MultipointCommStateCode subscribe(CommField commField, CommFieldEndpoint endpoint,
+    public MultipointCommStateCode subscribe(Long sn, CommField commField, CommFieldEndpoint endpoint,
                                              CommFieldEndpoint target, String offerSDP,
                                              MediaUnitCallback callback) {
         KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
@@ -173,7 +180,7 @@ public class KurentoCompositeMediaUnit extends AbstractCompositeMediaUnit {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                session.receiveFrom(sender, offerSDP);
+                session.receiveFrom(sender, offerSDP, sn);
                 callback.on(commField, endpoint);
             }
         });

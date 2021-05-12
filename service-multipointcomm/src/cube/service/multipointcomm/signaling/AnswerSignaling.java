@@ -46,8 +46,8 @@ public class AnswerSignaling extends Signaling {
 
     private Contact callee;
 
-    public AnswerSignaling(CommField field, CommFieldEndpoint endpoint) {
-        super(MultipointCommAction.Answer.name, field, endpoint.getContact(), endpoint.getDevice());
+    public AnswerSignaling(Long sn, CommField field, CommFieldEndpoint endpoint) {
+        super(sn, MultipointCommAction.Answer.name, field, endpoint.getContact(), endpoint.getDevice());
     }
 
     public AnswerSignaling(CommField field, Contact contact, Device device) {

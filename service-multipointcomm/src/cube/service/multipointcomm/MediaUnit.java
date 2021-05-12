@@ -39,6 +39,7 @@ public interface MediaUnit {
     /**
      * 订阅指定目标的数据流。
      *
+     * @param sn
      * @param commField
      * @param endpoint
      * @param target
@@ -46,7 +47,7 @@ public interface MediaUnit {
      * @param callback
      * @return
      */
-    public MultipointCommStateCode subscribe(CommField commField, CommFieldEndpoint endpoint,
+    public MultipointCommStateCode subscribe(Long sn, CommField commField, CommFieldEndpoint endpoint,
             CommFieldEndpoint target, String offerSDP, MediaUnitCallback callback);
 
     /**
@@ -64,13 +65,14 @@ public interface MediaUnit {
     /**
      * 订阅指定场域上的输出端口的数据流。
      *
+     * @param sn
      * @param commField
      * @param endpoint
      * @param offerSDP
      * @param callback
      * @return
      */
-    public MultipointCommStateCode subscribe(CommField commField, CommFieldEndpoint endpoint,
+    public MultipointCommStateCode subscribe(Long sn, CommField commField, CommFieldEndpoint endpoint,
             String offerSDP, MediaUnitCallback callback);
 
     /**
