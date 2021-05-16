@@ -50,7 +50,8 @@ public final class DeployTool {
     public static Path searchDeploySource() {
         String[] pathList = new String[] {
                 "deploy",
-                "../deploy"
+                "../deploy",
+                "../server"
         };
 
         File path = null;
