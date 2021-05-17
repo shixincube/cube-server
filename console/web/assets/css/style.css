@@ -214,6 +214,7 @@ h5 {
 .detail-content .badge {
     font-size: 14px;
     margin-right: 2px;
+    margin-bottom: 2px;
 }
 .detail-content .custom-select {
     font-size: 14px !important;

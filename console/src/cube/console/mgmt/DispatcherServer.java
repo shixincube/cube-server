@@ -186,7 +186,7 @@ public class DispatcherServer implements JSONable {
         this.name = this.tag + "#dispatcher#" + this.cellConfigFile.getAccessPoint().getPort();
 
         // 检查是否正在运行
-        File tagFile = new File(this.deployPath + File.separator + "bin/tag_dispatcher");
+        File tagFile = new File(this.deployPath + File.separator + "bin" + File.separator + "tag_dispatcher");
         if (tagFile.exists() && tagFile.length() < 40) {
             // 尝试检测服务是否能连通
             AccessPoint ap = this.cellConfigFile.getAccessPoint();

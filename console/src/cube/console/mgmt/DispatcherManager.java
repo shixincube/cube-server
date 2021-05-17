@@ -41,6 +41,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 调度机管理器。
@@ -231,7 +232,7 @@ public class DispatcherManager {
      * @param password
      * @return
      */
-    public DispatcherServer startDispatcher(String tag, String deployPath, String password) {
+    public DispatcherServer startDispatcher(final String tag, final String deployPath, final String password) {
         DispatcherServer server = getDispatcherServer(tag, deployPath);
         if (null == server) {
             return null;
@@ -271,6 +272,28 @@ public class DispatcherManager {
                         }
 
                         Logger.i(DispatcherManager.class, "Start dispatcher '" + deployPath + "' - " + status);
+
+                        // 2秒后刷新状态
+                        AtomicInteger count = new AtomicInteger(3);
+                        Timer timer = new Timer();
+                        TimerTask task = new TimerTask() {
+                            @Override
+                            public void run() {
+                                DispatcherServer server = getDispatcherServer(tag, deployPath);
+                                // 刷新数据
+                                server.refresh();
+
+                                if (server.isRunning()) {
+                                    timer.cancel();
+                                    return;
+                                }
+
+                                if (count.decrementAndGet() == 0) {
+                                    timer.cancel();
+                                }
+                            }
+                        };
+                        timer.schedule(task, 2000, 2000);
                     }
                 }).start();
             }
@@ -290,7 +313,7 @@ public class DispatcherManager {
      * @param password
      * @return
      */
-    public DispatcherServer stopDispatcher(String tag, String deployPath, String password) {
+    public DispatcherServer stopDispatcher(final String tag, final String deployPath, final String password) {
         DispatcherServer server = getDispatcherServer(tag, deployPath);
         if (null == server) {
             return null;
@@ -330,6 +353,28 @@ public class DispatcherManager {
                         }
 
                         Logger.i(DispatcherManager.class, "Stop dispatcher '" + deployPath + "' - " + status);
+
+                        // 2秒后刷新状态
+                        AtomicInteger count = new AtomicInteger(3);
+                        Timer timer = new Timer();
+                        TimerTask task = new TimerTask() {
+                            @Override
+                            public void run() {
+                                DispatcherServer server = getDispatcherServer(tag, deployPath);
+                                // 刷新数据
+                                server.refresh();
+
+                                if (!server.isRunning()) {
+                                    timer.cancel();
+                                    return;
+                                }
+
+                                if (count.decrementAndGet() == 0) {
+                                    timer.cancel();
+                                }
+                            }
+                        };
+                        timer.schedule(task, 2000, 2000);
                     }
                 }).start();
             }

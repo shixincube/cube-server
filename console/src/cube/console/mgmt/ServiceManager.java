@@ -39,11 +39,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 服务单元管理器。
@@ -215,7 +213,7 @@ public class ServiceManager {
      * @param password
      * @return
      */
-    public ServiceServer startService(String tag, String deployPath, String password) {
+    public ServiceServer startService(final String tag, final String deployPath, final String password) {
         ServiceServer server = getServiceServer(tag, deployPath);
         if (null == server) {
             return null;
@@ -255,6 +253,28 @@ public class ServiceManager {
                         }
 
                         Logger.i(DispatcherManager.class, "Start service '" + deployPath + "' - " + status);
+
+                        // 5秒后刷新状态
+                        AtomicInteger count = new AtomicInteger(8);
+                        Timer timer = new Timer();
+                        TimerTask task = new TimerTask() {
+                            @Override
+                            public void run() {
+                                ServiceServer server = getServiceServer(tag, deployPath);
+                                // 刷新数据
+                                server.refresh();
+
+                                if (server.isRunning()) {
+                                    timer.cancel();
+                                    return;
+                                }
+
+                                if (count.decrementAndGet() == 0) {
+                                    timer.cancel();
+                                }
+                            }
+                        };
+                        timer.schedule(task, 5000, 3000);
                     }
                 }).start();
             }
@@ -314,6 +334,28 @@ public class ServiceManager {
                         }
 
                         Logger.i(DispatcherManager.class, "Stop service '" + deployPath + "' - " + status);
+
+                        // 5秒后刷新状态
+                        AtomicInteger count = new AtomicInteger(8);
+                        Timer timer = new Timer();
+                        TimerTask task = new TimerTask() {
+                            @Override
+                            public void run() {
+                                ServiceServer server = getServiceServer(tag, deployPath);
+                                // 刷新数据
+                                server.refresh();
+
+                                if (!server.isRunning()) {
+                                    timer.cancel();
+                                    return;
+                                }
+
+                                if (count.decrementAndGet() == 0) {
+                                    timer.cancel();
+                                }
+                            }
+                        };
+                        timer.schedule(task, 5000, 2000);
                     }
                 }).start();
             }
