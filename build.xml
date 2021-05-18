@@ -221,6 +221,27 @@
 	</target>
 
 	<!-- =================================================================== -->
+	<!-- Clean all deploy files                                              -->
+	<!-- =================================================================== -->
+	<target name="clean" depends="clean-deploy">
+		<echo>Clean all deploy files</echo>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Install project files                                               -->
+	<!-- =================================================================== -->
+	<target name="install" depends="deploy">
+		<echo>Install all deploy files</echo>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Build all projects                                                  -->
+	<!-- =================================================================== -->
+	<target name="all" depends="build">
+		<echo>Build all projects</echo>
+	</target>
+
+	<!-- =================================================================== -->
 	<!-- Builds all projects for debug                                       -->
 	<!-- =================================================================== -->
 	<target name="build-debug" depends="init,build-common-debug,build-dispatcher-debug,build-service-debug,build-console-debug">
@@ -232,6 +253,20 @@
 	<!-- =================================================================== -->
 	<target name="build" depends="init,build-common-release,build-dispatcher-release,build-service-release,build-console-release">
 		<echo>Build all projects.</echo>
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Help                                                                -->
+	<!-- =================================================================== -->
+	<target name="help">
+		<echo>Cube server 3.0</echo>
+		<echo>Please use `make target`, where 'target' is one of</echo>
+		<echo>    build       - to compile and build release project</echo>
+		<echo>    build-debug - to compile and build debug project</echo>
+		<echo>    deploy      - to install project files to deploy directory</echo>
+		<echo>    all         - to compile and build release project</echo>
+		<echo>    install     - to install project files to deploy directory</echo>
+		<echo>    clean       - to clean all deploy files</echo>
 	</target>
 
 </project>
