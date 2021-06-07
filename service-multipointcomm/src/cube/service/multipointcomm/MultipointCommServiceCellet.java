@@ -86,6 +86,10 @@ public class MultipointCommServiceCellet extends AbstractCellet {
             this.executor.execute(new CandidateTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (MultipointCommAction.Broadcast.name.equals(action)) {
+            this.executor.execute(new BroadcastTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (MultipointCommAction.Bye.name.equals(action)) {
             this.executor.execute(new ByeTask(this, talkContext, primitive,
                     this.markResponseTime(action)));

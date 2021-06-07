@@ -132,6 +132,11 @@ public enum MultipointCommAction {
     ApplyTerminate("applyTerminate"),
 
     /**
+     * 客户端请求对当期场域进行数据广播。
+     */
+    Broadcast("broadcast"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

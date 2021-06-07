@@ -1066,6 +1066,39 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     }
 
     /**
+     * 处理客户端的广播请求。
+     *
+     * @param endpoint
+     * @param data
+     * @return
+     */
+    public MultipointCommStateCode processBroadcast(CommFieldEndpoint endpoint, JSONObject data) {
+        CommField commField = queryCommField(endpoint.getContact(), endpoint.getDevice());
+        if (null == commField) {
+            return MultipointCommStateCode.NoCommField;
+        }
+
+        List<CommFieldEndpoint> list = commField.getEndpoints();
+        for (int i = 0; i < list.size(); ++i) {
+            CommFieldEndpoint ep = list.get(i);
+            if (ep.equals(endpoint)) {
+                // 跳过自己
+                continue;
+            }
+
+            // 创建广播数据
+            Broadcast broadcast = new Broadcast(commField, endpoint, ep, data);
+
+            ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,
+                    MultipointCommAction.Broadcast.name, broadcast.toJSON());
+
+            this.contactsAdapter.publish(ep.getContact().getUniqueKey(), event.toJSON());
+        }
+
+        return MultipointCommStateCode.Ok;
+    }
+
+    /**
      * 触发 Offer 超时。
      *
      * @param field
@@ -1321,6 +1354,23 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                     else {
                         Logger.e(this.getClass(), "Push signaling failed: " + signaling.getName()
                                 + "' to '" + contact.getId() + "' : " + signaling.numCandidates());
+                    }
+                }
+            }
+            else if (MultipointCommAction.Broadcast.name.equals(eventName)) {
+                // 收到广播
+                Broadcast broadcast = new Broadcast(event.getData());
+
+                CommFieldEndpoint target = broadcast.getTarget();
+
+                Contact contact = ContactManager.getInstance().getOnlineContact(target.getDomain().getName(),
+                        target.getContact().getId());
+                if (null != contact) {
+                    // 发送给指定设备
+                    Device device = contact.getDevice(target.getDevice());
+                    if (null != device) {
+                        pushPacket(device.getTalkContext(), contact, device, MultipointCommAction.Broadcast.name,
+                                broadcast.toJSON());
                     }
                 }
             }
