@@ -137,6 +137,11 @@ public enum MultipointCommAction {
     Broadcast("broadcast"),
 
     /**
+     * 申请广播数据的服务器应答。
+     */
+    BroadcastAck("broadcastAck"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

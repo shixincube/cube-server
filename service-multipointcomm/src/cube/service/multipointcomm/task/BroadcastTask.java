@@ -33,6 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.action.MultipointCommAction;
 import cube.common.entity.CommFieldEndpoint;
 import cube.common.state.MultipointCommStateCode;
 import cube.service.ServiceTask;
@@ -61,7 +62,7 @@ public class BroadcastTask extends ServiceTask {
         MultipointCommStateCode state = service.processBroadcast(source, data);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, state.code, data));
+                this.makeResponse(action, packet, MultipointCommAction.BroadcastAck.name, state.code, data));
         markResponseTime();
     }
 }
