@@ -100,6 +100,11 @@ public class CommFieldEndpoint extends Entity {
     private boolean audioStreamEnabled = true;
 
     /**
+     *
+     */
+    public int volume = 0;
+
+    /**
      * 节点就绪时间戳。
      */
     public long readyTimestamp = 0L;

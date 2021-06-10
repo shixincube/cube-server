@@ -29,6 +29,7 @@ package cube.service.multipointcomm;
 import cube.common.JSONable;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
+import cube.service.multipointcomm.event.MicrophoneVolume;
 import org.json.JSONObject;
 
 /**
@@ -66,6 +67,22 @@ public class Broadcast implements JSONable {
         return this.target;
     }
 
+    public boolean isMicrophoneVolume() {
+        if (!this.data.has("event")) {
+            return false;
+        }
+
+        return this.data.getString("event").equals(MicrophoneVolume.NAME);
+    }
+
+    public MicrophoneVolume extractMicrophoneVolume() {
+        if (this.isMicrophoneVolume()) {
+            return new MicrophoneVolume(this.data);
+        }
+
+        return null;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -79,5 +96,10 @@ public class Broadcast implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         return toJSON();
+    }
+
+
+    public static boolean isMicrophoneVolume(JSONObject data) {
+        return false;
     }
 }

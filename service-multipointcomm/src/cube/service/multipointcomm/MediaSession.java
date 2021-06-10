@@ -26,18 +26,19 @@
 
 package cube.service.multipointcomm;
 
-import java.util.Collection;
+import org.kurento.client.WebRtcEndpoint;
+
+import java.io.Closeable;
 
 /**
- * 描述一个媒体通道上的所有关联对象及其数据。
+ * 描述每个终端连接会话。
  */
-public interface MediaLobby {
+public interface MediaSession extends Closeable {
 
     /**
-     * 获取所有的会话。
+     * 获取会话端的出站 Peer 。
      *
      * @return
      */
-    public Collection<? extends MediaSession> getSessions();
-
+    public WebRtcEndpoint getOutgoingPeer();
 }

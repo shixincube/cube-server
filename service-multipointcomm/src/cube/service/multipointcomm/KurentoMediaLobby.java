@@ -83,7 +83,8 @@ public class KurentoMediaLobby implements MediaLobby {
         return this.endpointSessionMap.remove(id);
     }
 
-    public Collection<KurentoSession> getSessions() {
+    @Override
+    public Collection<? extends MediaSession> getSessions() {
         return this.endpointSessionMap.values();
     }
 

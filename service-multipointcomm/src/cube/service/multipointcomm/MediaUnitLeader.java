@@ -79,7 +79,7 @@ public class MediaUnitLeader implements MediaUnitListener {
 
         ArrayList<MediaUnit> list = new ArrayList<>(this.compositeMediaUnitList);
         list.addAll(this.forwardingMediaUnitList);
-        this.snapshotDaemon = new SnapshotDaemon(list);
+        this.snapshotDaemon = new SnapshotDaemon(this.executor, list);
         this.snapshotDaemon.start();
     }
 

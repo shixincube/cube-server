@@ -26,20 +26,24 @@
 
 package cube.service.multipointcomm;
 
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import org.kurento.client.Stats;
+
+import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 媒体会话的快照任务。
  */
 public final class SnapshotDaemon implements Runnable {
 
+    private ExecutorService executor;
+
     private List<MediaUnit> mediaUnits;
 
     private Timer timer;
 
-    public SnapshotDaemon(List<MediaUnit> mediaUnits) {
+    public SnapshotDaemon(ExecutorService executor, List<MediaUnit> mediaUnits) {
+        this.executor = executor;
         this.mediaUnits = mediaUnits;
     }
 
@@ -66,7 +70,24 @@ public final class SnapshotDaemon implements Runnable {
     public void run() {
         for (int i = 0; i < this.mediaUnits.size(); ++i) {
             MediaUnit mediaUnit = this.mediaUnits.get(i);
+            Collection<? extends MediaLobby> lobbies = mediaUnit.getAllLobbies();
+            if (lobbies.isEmpty()) {
+                continue;
+            }
 
+            Iterator<? extends MediaLobby> iter = lobbies.iterator();
+            while (iter.hasNext()) {
+                MediaLobby lobby = iter.next();
+                Collection<? extends MediaSession> sessions = lobby.getSessions();
+
+                Iterator<? extends MediaSession> msiter = sessions.iterator();
+                while (msiter.hasNext()) {
+                    MediaSession session = msiter.next();
+
+                    Map<String, Stats> stats = session.getOutgoingPeer().getStats();
+
+                }
+            }
         }
     }
 }

@@ -24,20 +24,38 @@
  * SOFTWARE.
  */
 
-package cube.service.multipointcomm;
+package cube.service.multipointcomm.event;
 
-import java.util.Collection;
+import cube.common.JSONable;
+import cube.common.entity.CommField;
+import cube.common.entity.CommFieldEndpoint;
+import org.json.JSONObject;
 
 /**
- * 描述一个媒体通道上的所有关联对象及其数据。
+ * 场域的更新信息。
  */
-public interface MediaLobby {
+public class CommFieldUpdate implements JSONable {
 
-    /**
-     * 获取所有的会话。
-     *
-     * @return
-     */
-    public Collection<? extends MediaSession> getSessions();
+    protected CommField field;
+
+    protected CommFieldEndpoint endpoint;
+
+    public CommFieldUpdate(CommField field, CommFieldEndpoint endpoint) {
+        this.field = field;
+        this.endpoint = endpoint;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("field", this.field.toJSON());
+        json.put("endpoint", this.endpoint.toCompactJSON());
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
 
 }

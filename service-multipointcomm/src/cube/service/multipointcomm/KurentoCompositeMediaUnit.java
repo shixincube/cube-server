@@ -360,7 +360,9 @@ public class KurentoCompositeMediaUnit extends AbstractCompositeMediaUnit {
         }
 
         // 关闭所有会话
-        for (KurentoSession session : lobby.getSessions()) {
+        Iterator<? extends MediaSession> iter = lobby.getSessions().iterator();
+        while (iter.hasNext()) {
+            KurentoSession session = (KurentoSession) iter.next();
             try {
                 session.close();
             } catch (IOException e) {

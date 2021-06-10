@@ -35,7 +35,6 @@ import cube.service.multipointcomm.signaling.Signalings;
 import org.json.JSONObject;
 import org.kurento.client.*;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,7 +43,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Kurento 单元的用户会话。
  */
-public class KurentoSession implements Closeable {
+public class KurentoSession implements MediaSession {
 
     private final Portal portal;
 
@@ -93,7 +92,8 @@ public class KurentoSession implements Closeable {
         return this.commFieldEndpoint;
     }
 
-    protected WebRtcEndpoint getOutgoingWebRtcPeer() {
+    @Override
+    public WebRtcEndpoint getOutgoingPeer() {
         return this.outgoingMedia;
     }
 
@@ -252,7 +252,7 @@ public class KurentoSession implements Closeable {
             this.compositeSetting.compositeInputHubPort.connect(incoming);
         }
         else {
-            session.getOutgoingWebRtcPeer().connect(incoming);
+            session.getOutgoingPeer().connect(incoming);
         }
 
         return incoming;

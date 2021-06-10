@@ -44,6 +44,7 @@ import cube.core.*;
 import cube.plugin.PluginSystem;
 import cube.service.Director;
 import cube.service.contact.ContactManager;
+import cube.service.multipointcomm.event.CommFieldUpdate;
 import cube.service.multipointcomm.signaling.*;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -1082,6 +1083,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         for (int i = 0; i < list.size(); ++i) {
             CommFieldEndpoint ep = list.get(i);
             if (ep.equals(endpoint)) {
+
+
                 // 跳过自己
                 continue;
             }

@@ -24,20 +24,39 @@
  * SOFTWARE.
  */
 
-package cube.service.multipointcomm;
+package cube.service.multipointcomm.event;
 
-import java.util.Collection;
+import cube.common.JSONable;
+import org.json.JSONObject;
 
 /**
- * 描述一个媒体通道上的所有关联对象及其数据。
+ * 麦克风音量。
  */
-public interface MediaLobby {
+public class MicrophoneVolume implements JSONable {
 
-    /**
-     * 获取所有的会话。
-     *
-     * @return
-     */
-    public Collection<? extends MediaSession> getSessions();
+    public final static String NAME = "MicrophoneVolume";
 
+    private JSONObject data;
+
+    public MicrophoneVolume(JSONObject data) {
+        this.data = data;
+    }
+
+    public int getVolume() {
+        return this.data.getInt("value");
+    }
+
+    public long getTimestamp() {
+        return this.data.getLong("timestamp");
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        return this.data;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.data;
+    }
 }
