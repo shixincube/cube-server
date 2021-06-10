@@ -31,6 +31,8 @@ import cube.common.entity.CommFieldEndpoint;
 import cube.common.state.MultipointCommStateCode;
 import org.json.JSONObject;
 
+import java.util.Collection;
+
 /**
  * 媒体单元。
  */
@@ -120,4 +122,11 @@ public interface MediaUnit {
      * 销毁当前媒体单元。
      */
     public void destroy();
+
+    /**
+     * 返回所有 MediaLobby 实例。
+     *
+     * @return
+     */
+    public Collection<? extends MediaLobby> getAllLobbies();
 }

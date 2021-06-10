@@ -35,6 +35,7 @@ import org.kurento.client.IceCandidate;
 import org.kurento.client.KurentoClient;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -57,9 +58,9 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
     private KurentoClient kurentoClient;
 
     /**
-     * Comm Field 对应的 Media Pipeline 。
+     * Comm Field 对应的 Media Lobby 。
      */
-    private final ConcurrentHashMap<Long, KurentoMediaPipelineWrapper> pipelineMap;
+    private final ConcurrentHashMap<Long, KurentoMediaLobby> lobbyMap;
 
     public KurentoForwardingMediaUnit(MultipointCommService service, Portal portal, String url, ExecutorService executor) {
         this.service = service;
@@ -73,7 +74,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
             Logger.e(this.getClass(), "", e);
         }
 
-        this.pipelineMap = new ConcurrentHashMap<>();
+        this.lobbyMap = new ConcurrentHashMap<>();
     }
 
     /**
@@ -87,16 +88,16 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
 
         Logger.i(this.getClass(), "Prepare media pipeline: \"" + commField.getName() + "\" - " + commField.getId());
 
-        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
-        if (null == wrapper) {
-            wrapper = new KurentoMediaPipelineWrapper(commField.getId(), this.kurentoClient.createMediaPipeline());
-            this.pipelineMap.put(commField.getId(), wrapper);
+        KurentoMediaLobby lobby = this.lobbyMap.get(commField.getId());
+        if (null == lobby) {
+            lobby = new KurentoMediaLobby(commField.getId(), this.kurentoClient.createMediaPipeline());
+            this.lobbyMap.put(commField.getId(), lobby);
         }
 
-        KurentoSession session = wrapper.getSession(endpoint.getId());
+        KurentoSession session = lobby.getSession(endpoint.getId());
         if (null == session) {
-            session = new KurentoSession(this.portal, commField.getId(), endpoint, wrapper.pipeline);
-            wrapper.addSession(endpoint.getId(), session);
+            session = new KurentoSession(this.portal, commField.getId(), endpoint, lobby.pipeline);
+            lobby.addSession(endpoint.getId(), session);
         }
     }
 
@@ -107,17 +108,17 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
     public MultipointCommStateCode subscribe(Long sn, CommField commField, CommFieldEndpoint endpoint,
                                              CommFieldEndpoint target, String offerSDP,
                                              MediaUnitCallback callback) {
-        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
-        if (null == wrapper) {
+        KurentoMediaLobby lobby = this.lobbyMap.get(commField.getId());
+        if (null == lobby) {
             return MultipointCommStateCode.NoPipeline;
         }
 
-        final KurentoSession session = wrapper.getSession(endpoint.getId());
+        final KurentoSession session = lobby.getSession(endpoint.getId());
         if (null == session) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
 
-        final KurentoSession sender = wrapper.getSession(target.getId());
+        final KurentoSession sender = lobby.getSession(target.getId());
         if (null == sender) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
@@ -140,17 +141,17 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
     @Override
     public MultipointCommStateCode unsubscribe(CommField commField, CommFieldEndpoint endpoint, CommFieldEndpoint target,
                                               MediaUnitCallback callback) {
-        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
-        if (null == wrapper) {
+        KurentoMediaLobby lobby = this.lobbyMap.get(commField.getId());
+        if (null == lobby) {
             return MultipointCommStateCode.NoPipeline;
         }
 
-        final KurentoSession session = wrapper.getSession(endpoint.getId());
+        final KurentoSession session = lobby.getSession(endpoint.getId());
         if (null == session) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
 
-        final KurentoSession sender = wrapper.getSession(target.getId());
+        final KurentoSession sender = lobby.getSession(target.getId());
         if (null == sender) {
             // 没有找到目标会话
             return MultipointCommStateCode.Ok;
@@ -183,12 +184,12 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
     @Override
     public MultipointCommStateCode addCandidate(CommField commField, CommFieldEndpoint endpoint,
                                                 CommFieldEndpoint target, JSONObject candidateJson) {
-        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
-        if (null == wrapper) {
+        KurentoMediaLobby lobby = this.lobbyMap.get(commField.getId());
+        if (null == lobby) {
             return MultipointCommStateCode.NoPipeline;
         }
 
-        KurentoSession session = wrapper.getSession(endpoint.getId());
+        KurentoSession session = lobby.getSession(endpoint.getId());
         if (null == session) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
@@ -197,7 +198,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
             return MultipointCommStateCode.DataStructureError;
         }
 
-        KurentoSession targetSession = wrapper.getSession(target.getId());
+        KurentoSession targetSession = lobby.getSession(target.getId());
         if (null == targetSession) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
@@ -224,13 +225,13 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
      */
     @Override
     public MultipointCommStateCode removeEndpoint(CommField commField, CommFieldEndpoint endpoint) {
-        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.get(commField.getId());
-        if (null == wrapper) {
+        KurentoMediaLobby lobby = this.lobbyMap.get(commField.getId());
+        if (null == lobby) {
             return MultipointCommStateCode.NoPipeline;
         }
 
         // 删除会话
-        KurentoSession session = wrapper.removeSession(endpoint.getId());
+        KurentoSession session = lobby.removeSession(endpoint.getId());
         if (null == session) {
             return MultipointCommStateCode.NoCommFieldEndpoint;
         }
@@ -241,7 +242,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
             }
 
             // 让其他参与者取消接收流
-            KurentoSession participantSession = wrapper.getSession(participant.getId());
+            KurentoSession participantSession = lobby.getSession(participant.getId());
             participantSession.cancelFrom(session);
         }
 
@@ -257,8 +258,8 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         if (commField.numEndpoints() == 0) {
             Logger.d(this.getClass(), "Comm field \"" + commField.getName() + "\" empty.");
             // 已经没有终端在场域里，删除场域
-            this.pipelineMap.remove(commField.getId());
-            wrapper.closePipeline();
+            this.lobbyMap.remove(commField.getId());
+            lobby.closePipeline();
         }
 
         return MultipointCommStateCode.Ok;
@@ -269,13 +270,13 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
      */
     @Override
     public MultipointCommStateCode release(CommField commField) {
-        KurentoMediaPipelineWrapper wrapper = this.pipelineMap.remove(commField.getId());
-        if (null == wrapper) {
+        KurentoMediaLobby lobby = this.lobbyMap.remove(commField.getId());
+        if (null == lobby) {
             return MultipointCommStateCode.NoPipeline;
         }
 
         // 关闭所有会话
-        for (KurentoSession session : wrapper.getSessions()) {
+        for (KurentoSession session : lobby.getSessions()) {
             try {
                 session.close();
             } catch (IOException e) {
@@ -284,7 +285,7 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         }
 
         // 关闭通道
-        wrapper.closePipeline();
+        lobby.closePipeline();
 
         return MultipointCommStateCode.Ok;
     }
@@ -294,10 +295,10 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
      */
     @Override
     public void destroy() {
-        for (KurentoMediaPipelineWrapper wrapper : this.pipelineMap.values()) {
-            wrapper.closePipeline();
+        for (KurentoMediaLobby lobby : this.lobbyMap.values()) {
+            lobby.closePipeline();
         }
-        this.pipelineMap.clear();
+        this.lobbyMap.clear();
 
         try {
             Thread.sleep(1000L);
@@ -311,6 +312,14 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Collection<? extends MediaLobby> getAllLobbies() {
+        return this.lobbyMap.values();
+    }
+
     @Override
     public void onTick(long now) {
         if (null == this.kurentoClient) {
@@ -322,15 +331,15 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
         }
 
         // 删除超时的管道
-        Iterator<KurentoMediaPipelineWrapper> iter = this.pipelineMap.values().iterator();
+        Iterator<KurentoMediaLobby> iter = this.lobbyMap.values().iterator();
         while (iter.hasNext()) {
-            KurentoMediaPipelineWrapper wrapper = iter.next();
-            CommField commField = this.service.getCommField(wrapper.commFieldId);
+            KurentoMediaLobby lobby = iter.next();
+            CommField commField = this.service.getCommField(lobby.commFieldId);
             if (null != commField) {
                 if (commField.numEndpoints() == 0) {
 //                    Logger.d(this.getClass(), "CommField \"" + commField.getName() + "\" : no endpoint");
                     Logger.i(this.getClass(), "Media pipeline closed : " + commField.getName());
-                    wrapper.closePipeline();
+                    lobby.closePipeline();
                     iter.remove();
                 }
                 else {
@@ -338,9 +347,9 @@ public final class KurentoForwardingMediaUnit extends AbstractForwardingMediaUni
                 }
             }
             else {
-//                Logger.e(this.getClass(), "CommField : " + wrapper.commFieldId + " removed");
-                Logger.w(this.getClass(), "Media pipeline closed : " + wrapper.commFieldId);
-                wrapper.closePipeline();
+//                Logger.e(this.getClass(), "CommField : " + lobby.commFieldId + " removed");
+                Logger.w(this.getClass(), "Media pipeline closed : " + lobby.commFieldId);
+                lobby.closePipeline();
                 iter.remove();
             }
         }

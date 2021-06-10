@@ -26,26 +26,10 @@
 
 package cube.service.multipointcomm;
 
-import cube.common.entity.CommField;
-import cube.common.entity.CommFieldEndpoint;
-
 /**
- * 抽象融合媒体单元。
+ * 描述一个媒体通道上的所有关联对象及其数据。
  */
-public abstract class AbstractCompositeMediaUnit implements MediaUnit {
+public interface MediaLobby {
 
-    /**
-     * 准备数据通道。
-     *
-     * @param commField
-     * @param endpoint
-     */
-    public abstract void preparePipeline(CommField commField, CommFieldEndpoint endpoint);
 
-    /**
-     * {@inheritDoc}
-     */
-    public void onTick(long now) {
-        // Nothing
-    }
 }

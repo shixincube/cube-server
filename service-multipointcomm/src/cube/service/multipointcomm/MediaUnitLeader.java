@@ -57,6 +57,8 @@ public class MediaUnitLeader implements MediaUnitListener {
 
     private ConcurrentHashMap<Long, MediaUnitBundle> bundles;
 
+    private SnapshotDaemon snapshotDaemon;
+
     /**
      * 构造函数。
      */
@@ -74,6 +76,11 @@ public class MediaUnitLeader implements MediaUnitListener {
 
         // 读取配置
         this.loadMediaUnit(properties, service);
+
+        ArrayList<MediaUnit> list = new ArrayList<>(this.compositeMediaUnitList);
+        list.addAll(this.forwardingMediaUnitList);
+        this.snapshotDaemon = new SnapshotDaemon(list);
+        this.snapshotDaemon.start();
     }
 
     /**
@@ -100,6 +107,11 @@ public class MediaUnitLeader implements MediaUnitListener {
         this.compositeMediaUnitList.clear();
 
         this.executor.shutdown();
+
+        if (null != this.snapshotDaemon) {
+            this.snapshotDaemon.stop();
+            this.snapshotDaemon = null;
+        }
     }
 
     /**
@@ -328,8 +340,13 @@ public class MediaUnitLeader implements MediaUnitListener {
     }
 
     @Override
-    public Signaling onSignaling(Signaling signaling) {
-        return signaling;
+    public void onPipelineCreated(CommField field) {
+        // Nothing
+    }
+
+    @Override
+    public void onPipelineReleased(CommField field) {
+        // Nothing
     }
 
     public void onTick(long now) {

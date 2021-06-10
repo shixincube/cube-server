@@ -49,6 +49,6 @@ public abstract class AbstractForwardingMediaUnit implements MediaUnit {
      * {@inheritDoc}
      */
     public void onTick(long now) {
-
+        // Nothing
     }
 }

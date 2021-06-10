@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 
 package cube.service.multipointcomm;
 
-import cube.service.multipointcomm.signaling.Signaling;
+import cube.common.entity.CommField;
 
 /**
  * 媒体单元监听器。
@@ -34,10 +34,14 @@ import cube.service.multipointcomm.signaling.Signaling;
 public interface MediaUnitListener {
 
     /**
-     * 当接收到信令时回调。
      *
-     * @param signaling
-     * @return 返回应答。
+     * @param field
      */
-    public Signaling onSignaling(Signaling signaling);
+    public void onPipelineCreated(CommField field);
+
+    /**
+     *
+     * @param field
+     */
+    public void onPipelineReleased(CommField field);
 }

@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2021 Shixin Cube Team.
+ * Copyright (c) 2020 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,26 +26,47 @@
 
 package cube.service.multipointcomm;
 
-import cube.common.entity.CommField;
-import cube.common.entity.CommFieldEndpoint;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
- * 抽象融合媒体单元。
+ * 媒体会话的快照任务。
  */
-public abstract class AbstractCompositeMediaUnit implements MediaUnit {
+public final class SnapshotDaemon implements Runnable {
 
-    /**
-     * 准备数据通道。
-     *
-     * @param commField
-     * @param endpoint
-     */
-    public abstract void preparePipeline(CommField commField, CommFieldEndpoint endpoint);
+    private List<MediaUnit> mediaUnits;
 
-    /**
-     * {@inheritDoc}
-     */
-    public void onTick(long now) {
-        // Nothing
+    private Timer timer;
+
+    public SnapshotDaemon(List<MediaUnit> mediaUnits) {
+        this.mediaUnits = mediaUnits;
+    }
+
+    public void start() {
+        if (null == this.timer) {
+            this.timer = new Timer();
+            this.timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    SnapshotDaemon.this.run();
+                }
+            }, 30000, 1000);
+        }
+    }
+
+    public void stop() {
+        if (null != this.timer) {
+            this.timer.cancel();
+            this.timer = null;
+        }
+    }
+
+    @Override
+    public void run() {
+        for (int i = 0; i < this.mediaUnits.size(); ++i) {
+            MediaUnit mediaUnit = this.mediaUnits.get(i);
+
+        }
     }
 }
