@@ -59,4 +59,14 @@ public class MicrophoneVolume implements JSONable {
     public JSONObject toCompactJSON() {
         return this.data;
     }
+
+    /**
+     * 获取事件数据里的音量值。
+     *
+     * @param data
+     * @return
+     */
+    public static int getVolume(JSONObject data) {
+        return data.getInt("value");
+    }
 }

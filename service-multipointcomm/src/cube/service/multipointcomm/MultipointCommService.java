@@ -45,6 +45,7 @@ import cube.plugin.PluginSystem;
 import cube.service.Director;
 import cube.service.contact.ContactManager;
 import cube.service.multipointcomm.event.CommFieldUpdate;
+import cube.service.multipointcomm.event.MicrophoneVolume;
 import cube.service.multipointcomm.signaling.*;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -1084,6 +1085,10 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             CommFieldEndpoint ep = list.get(i);
             if (ep.equals(endpoint)) {
 
+                // 事件判断
+                if (Broadcast.isMicrophoneVolume(data)) {
+                    ep.microphoneVolume = MicrophoneVolume.getVolume(data);
+                }
 
                 // 跳过自己
                 continue;

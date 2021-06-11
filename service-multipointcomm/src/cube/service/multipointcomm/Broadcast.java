@@ -98,8 +98,18 @@ public class Broadcast implements JSONable {
         return toJSON();
     }
 
-
+    /**
+     *
+     * @param data
+     * @return
+     */
     public static boolean isMicrophoneVolume(JSONObject data) {
+        if (data.has("event") && data.getString("event").equals(MicrophoneVolume.NAME)) {
+            return true;
+        }
+
         return false;
     }
+
+
 }

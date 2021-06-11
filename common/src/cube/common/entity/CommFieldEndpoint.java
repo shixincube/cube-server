@@ -100,9 +100,9 @@ public class CommFieldEndpoint extends Entity {
     private boolean audioStreamEnabled = true;
 
     /**
-     *
+     * 麦克风音量。
      */
-    public int volume = 0;
+    public int microphoneVolume = 0;
 
     /**
      * 节点就绪时间戳。
