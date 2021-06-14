@@ -92,12 +92,12 @@ public class CommFieldEndpoint extends Entity {
     /**
      * 音频是否启用。
      */
-    private boolean audioEnabled = true;
+    public boolean audioEnabled = true;
 
     /**
      * 音频流是否开启。
      */
-    private boolean audioStreamEnabled = true;
+    public boolean audioStreamEnabled = true;
 
     /**
      * 麦克风音量。

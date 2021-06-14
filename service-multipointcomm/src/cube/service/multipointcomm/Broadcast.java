@@ -29,6 +29,7 @@ package cube.service.multipointcomm;
 import cube.common.JSONable;
 import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
+import cube.service.multipointcomm.event.AudioMuted;
 import cube.service.multipointcomm.event.MicrophoneVolume;
 import org.json.JSONObject;
 
@@ -99,6 +100,7 @@ public class Broadcast implements JSONable {
     }
 
     /**
+     * 指定的数据格式时候是麦克风音量事件。
      *
      * @param data
      * @return
@@ -111,5 +113,17 @@ public class Broadcast implements JSONable {
         return false;
     }
 
+    /**
+     * 指定的数据格式是否是音频静音事件。
+     *
+     * @param data
+     * @return
+     */
+    public static boolean isAudioMuted(JSONObject data) {
+        if (data.has("event") && data.getString("event").equals(AudioMuted.NAME)) {
+            return true;
+        }
 
+        return false;
+    }
 }
