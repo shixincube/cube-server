@@ -35,7 +35,9 @@ public enum Actions {
 
     LOGOUT("Logout"),
 
-    REG_LISTENER("RegisterListener")
+    ListenEvent("ListenEvent"),
+
+    NotifyEvent("NotifyEvent")
 
     ;
 

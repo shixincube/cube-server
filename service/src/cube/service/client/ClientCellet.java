@@ -53,7 +53,7 @@ public class ClientCellet extends AbstractCellet {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(4);
 
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
-        ClientManager.getInstance().start(kernel);
+        ClientManager.getInstance().start(this, kernel);
 
         return true;
     }
@@ -75,6 +75,15 @@ public class ClientCellet extends AbstractCellet {
                 @Override
                 public void run() {
                     ClientManager.getInstance().login(actionDialect.getParamAsLong("id"), talkContext);
+                }
+            });
+        }
+        else if (Actions.ListenEvent.name.equals(action)) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ClientManager.getInstance().listenEvent(actionDialect.getParamAsLong("id"),
+                            actionDialect.getParamAsString("event"));
                 }
             });
         }

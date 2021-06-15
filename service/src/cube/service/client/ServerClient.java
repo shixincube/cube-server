@@ -26,9 +26,14 @@
 
 package cube.service.client;
 
+import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
 import cube.common.entity.Entity;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 客户端管理实体。
@@ -37,11 +42,17 @@ public class ServerClient extends Entity {
 
     private Long id;
 
+    private Cellet cellet;
+
     protected TalkContext talkContext;
 
-    public ServerClient(Long id, TalkContext talkContext) {
+    protected List<String> events;
+
+    public ServerClient(Long id, Cellet cellet, TalkContext talkContext) {
         this.id = id;
+        this.cellet = cellet;
         this.talkContext = talkContext;
+        this.events = new ArrayList<>();
     }
 
     public void setTalkContext(TalkContext talkContext) {
@@ -52,8 +63,36 @@ public class ServerClient extends Entity {
         return this.talkContext;
     }
 
-    public void disable() {
+    protected void disable() {
+        this.talkContext = null;
+        this.events.clear();
+    }
 
+    public void addEvent(String event) {
+        if (this.events.contains(event)) {
+            return;
+        }
+
+        this.events.add(event);
+    }
+
+    public void removeEvent(String event) {
+        this.events.remove(event);
+    }
+
+    public boolean hasEvent(String event) {
+        return this.events.contains(event);
+    }
+
+    public void sentEvent(String eventName, JSONObject data) {
+        if (null == this.talkContext) {
+            return;
+        }
+
+        ActionDialect actionDialect = new ActionDialect(Actions.NotifyEvent.name);
+        actionDialect.addParam("event", eventName);
+        actionDialect.addParam("data", data);
+        this.cellet.speak(this.talkContext, actionDialect);
     }
 
     @Override

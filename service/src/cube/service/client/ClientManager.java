@@ -26,6 +26,7 @@
 
 package cube.service.client;
 
+import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
 import cube.core.Kernel;
 import cube.plugin.Plugin;
@@ -33,7 +34,6 @@ import cube.plugin.PluginContext;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.contact.ContactPluginContext;
-import cube.service.contact.ContactServiceCellet;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -45,6 +45,11 @@ public final class ClientManager {
 
     private final static ClientManager instance = new ClientManager();
 
+    private Cellet cellet;
+
+    /**
+     * 存储所有在线的客户端。
+     */
     private ConcurrentMap<Long, ServerClient> clientMap;
 
     private ConcurrentMap<Long, ServerClient> talkContextIndex;
@@ -58,7 +63,9 @@ public final class ClientManager {
         return ClientManager.instance;
     }
 
-    public void start(Kernel kernel) {
+    public void start(Cellet cellet, Kernel kernel) {
+        this.cellet = cellet;
+
         (new Thread() {
             @Override
             public void run() {
@@ -83,7 +90,7 @@ public final class ClientManager {
     public void login(Long id, TalkContext talkContext) {
         ServerClient client = this.clientMap.get(id);
         if (null == client) {
-            client = new ServerClient(id, talkContext);
+            client = new ServerClient(id, this.cellet, talkContext);
             this.clientMap.put(id, client);
         }
         else {
@@ -100,7 +107,22 @@ public final class ClientManager {
         }
     }
 
+    public void listenEvent(Long id, String eventName) {
+        ServerClient serverClient = this.clientMap.get(id);
+        if (null == serverClient) {
+            return;
+        }
+
+        serverClient.addEvent(eventName);
+    }
+
     private void onSignIn(PluginContext pluginContext) {
         ContactPluginContext context = (ContactPluginContext) pluginContext;
+
+        for (ServerClient client : this.clientMap.values()) {
+            if (client.hasEvent(ContactHook.SignIn)) {
+                client.sentEvent(ContactHook.SignIn, context.getContact().toJSON());
+            }
+        }
     }
 }
