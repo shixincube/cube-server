@@ -47,6 +47,7 @@ import cube.service.contact.ContactManager;
 import cube.service.multipointcomm.event.AudioMuted;
 import cube.service.multipointcomm.event.CommFieldUpdate;
 import cube.service.multipointcomm.event.MicrophoneVolume;
+import cube.service.multipointcomm.event.VideoMuted;
 import cube.service.multipointcomm.signaling.*;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -1092,6 +1093,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 }
                 else if (Broadcast.isAudioMuted(data)) {
                     ep.audioStreamEnabled = !AudioMuted.isMuted(data);
+                }
+                else if (Broadcast.isVideoMuted(data)) {
+                    ep.videoStreamEnabled = !VideoMuted.isMuted(data);
                 }
 
                 // 跳过自己

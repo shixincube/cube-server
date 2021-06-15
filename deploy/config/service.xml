@@ -44,6 +44,9 @@
 	<!-- Cellet 配置 -->
 	<cellets>
 		<cellet port="6000">
+			<class>cube.service.client.ClientCellet</class>
+		</cellet>
+		<cellet port="6000">
 			<class>cube.service.auth.AuthServiceCellet</class>
 		</cellet>
 		<cellet port="6000">
