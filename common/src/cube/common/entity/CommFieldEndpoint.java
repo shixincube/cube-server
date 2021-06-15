@@ -82,12 +82,12 @@ public class CommFieldEndpoint extends Entity {
     /**
      * 视频是否启用。
      */
-    private boolean videoEnabled = true;
+    public boolean videoEnabled = true;
 
     /**
      * 视频流是否开启。
      */
-    private boolean videoStreamEnabled = true;
+    public boolean videoStreamEnabled = true;
 
     /**
      * 音频是否启用。

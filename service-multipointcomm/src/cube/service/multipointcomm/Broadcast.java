@@ -31,6 +31,7 @@ import cube.common.entity.CommField;
 import cube.common.entity.CommFieldEndpoint;
 import cube.service.multipointcomm.event.AudioMuted;
 import cube.service.multipointcomm.event.MicrophoneVolume;
+import cube.service.multipointcomm.event.VideoMuted;
 import org.json.JSONObject;
 
 /**
@@ -121,6 +122,20 @@ public class Broadcast implements JSONable {
      */
     public static boolean isAudioMuted(JSONObject data) {
         if (data.has("event") && data.getString("event").equals(AudioMuted.NAME)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 指定的数据格式是否是视频静音事件。
+     *
+     * @param data
+     * @return
+     */
+    public static boolean isVideoMuted(JSONObject data) {
+        if (data.has("event") && data.getString("event").equals(VideoMuted.NAME)) {
             return true;
         }
 
