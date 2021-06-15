@@ -26,14 +26,23 @@
 
 package cube.service.client;
 
+import cell.api.Servable;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
+import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
+import cube.core.Kernel;
+
+import java.util.concurrent.ExecutorService;
 
 /**
  * 服务器客户端的 Cellet 单元。
  */
 public class ClientCellet extends AbstractCellet {
+
+    private ExecutorService executor;
 
     public ClientCellet() {
         super("Client");
@@ -41,16 +50,40 @@ public class ClientCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(4);
+
+        Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
+        ClientManager.getInstance().start(kernel);
+
         return true;
     }
 
     @Override
     public void uninstall() {
-
+        this.executor.shutdown();
     }
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
+
+        ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
+        String action = actionDialect.getName();
+
+        if (Actions.LOGIN.name.equals(action)) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ClientManager.getInstance().login(actionDialect.getParamAsLong("id"), talkContext);
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onQuitted(TalkContext talkContext, Servable servable) {
+        super.onQuitted(talkContext, servable);
+
+        ClientManager.getInstance().quit(talkContext);
     }
 }
