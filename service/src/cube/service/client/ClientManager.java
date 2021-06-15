@@ -121,7 +121,7 @@ public final class ClientManager {
 
         for (ServerClient client : this.clientMap.values()) {
             if (client.hasEvent(ContactHook.SignIn)) {
-                client.sentEvent(ContactHook.SignIn, context.getContact().toJSON());
+                client.sentEvent(ContactHook.SignIn, context.toJSON());
             }
         }
     }

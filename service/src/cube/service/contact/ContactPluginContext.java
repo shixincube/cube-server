@@ -27,7 +27,9 @@
 package cube.service.contact;
 
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.plugin.PluginContext;
+import org.json.JSONObject;
 
 /**
  * 联系人模块插件上下文。
@@ -36,12 +38,26 @@ public class ContactPluginContext extends PluginContext {
 
     private Contact contact;
 
-    public ContactPluginContext(Contact contact) {
+    private Device device;
+
+    public ContactPluginContext(Contact contact, Device device) {
         super();
         this.contact = contact;
+        this.device = device;
     }
 
     public Contact getContact() {
         return this.contact;
+    }
+
+    public Device getDevice() {
+        return this.device;
+    }
+
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("contact", this.contact.toJSON());
+        json.put("device", this.device.toJSON());
+        return json;
     }
 }

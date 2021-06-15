@@ -41,6 +41,10 @@ public class ContactPluginSystem extends PluginSystem<ContactHook> {
         return this.getHook(ContactHook.SignIn);
     }
 
+    public ContactHook getDeviceTimeoutHook() {
+        return this.getHook(ContactHook.DeviceTimeout);
+    }
+
     private void build() {
         ContactHook hook = new ContactHook(ContactHook.SignIn);
         this.addHook(hook);

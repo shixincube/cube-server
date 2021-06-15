@@ -300,7 +300,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         // Hook sign-in
         ContactHook hook = this.pluginSystem.getSignInHook();
-        hook.apply(new ContactPluginContext(contact));
+        hook.apply(new ContactPluginContext(contact, activeDevice));
 
         this.contactCache.apply(contact.getUniqueKey(), new LockFuture() {
             @Override
@@ -507,15 +507,15 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         this.contactCache.apply(key, new LockFuture() {
             @Override
             public void acquired(String key) {
-                JSONObject data = get();
-                if (null == data) {
-                    return;
-                }
+            JSONObject data = get();
+            if (null == data) {
+                return;
+            }
 
-                Contact contact = new Contact(data);
-                contact.removeDevice(device);
+            Contact contact = new Contact(data);
+            contact.removeDevice(device);
 
-                put(contact.toJSON());
+            put(contact.toJSON());
             }
         });
 
@@ -524,6 +524,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             Contact contact = table.get(contactId);
             if (null != contact) {
                 contact.removeDevice(device);
+
+                // 调用插件 Hook
+                ContactHook hook = this.pluginSystem.getDeviceTimeoutHook();
+                hook.apply(new ContactPluginContext(contact, device));
             }
         }
     }
