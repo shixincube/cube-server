@@ -37,6 +37,8 @@ public class ContactHook extends Hook {
 
     public final static String DeviceTimeout = "DeviceTimeout";
 
+    public final static String SignOut = "SignOut";
+
     public ContactHook(String key) {
         super(key);
     }

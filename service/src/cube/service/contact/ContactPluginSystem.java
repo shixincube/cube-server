@@ -45,11 +45,18 @@ public class ContactPluginSystem extends PluginSystem<ContactHook> {
         return this.getHook(ContactHook.DeviceTimeout);
     }
 
+    public ContactHook getSignOutHook() {
+        return this.getHook(ContactHook.SignOut);
+    }
+
     private void build() {
         ContactHook hook = new ContactHook(ContactHook.SignIn);
         this.addHook(hook);
 
         hook = new ContactHook(ContactHook.DeviceTimeout);
+        this.addHook(hook);
+
+        hook = new ContactHook(ContactHook.SignOut);
         this.addHook(hook);
     }
 }

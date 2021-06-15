@@ -339,6 +339,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @return
      */
     public Contact signOut(final Contact contact, String tokenCode, Device activeDevice) {
+        // Hook 调用插件
+        ContactHook hook = this.pluginSystem.getSignOutHook();
+        hook.apply(new ContactPluginContext(contact, activeDevice));
+
         final Object mutex = new Object();
         LockFuture future = this.contactCache.apply(contact.getUniqueKey(), new LockFuture() {
             @Override
@@ -380,7 +384,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             }
         }
 
+        // 放弃管理
         this.repeal(contact, tokenCode, activeDevice);
+
         return contact;
     }
 
