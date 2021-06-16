@@ -83,6 +83,18 @@ public final class ClientManager {
                         onSignIn(context);
                     }
                 });
+                ContactManager.getInstance().getPluginSystem().register(ContactHook.SignOut, new Plugin() {
+                    @Override
+                    public void onAction(PluginContext context) {
+                        onSignOut(context);
+                    }
+                });
+                ContactManager.getInstance().getPluginSystem().register(ContactHook.DeviceTimeout, new Plugin() {
+                    @Override
+                    public void onAction(PluginContext context) {
+                        onDeviceTimeout(context);
+                    }
+                });
             }
         }).start();
     }
@@ -107,6 +119,12 @@ public final class ClientManager {
         }
     }
 
+    /**
+     * 指定客户端申请监听事件。
+     *
+     * @param id
+     * @param eventName
+     */
     public void listenEvent(Long id, String eventName) {
         ServerClient serverClient = this.clientMap.get(id);
         if (null == serverClient) {
@@ -121,7 +139,27 @@ public final class ClientManager {
 
         for (ServerClient client : this.clientMap.values()) {
             if (client.hasEvent(ContactHook.SignIn)) {
-                client.sentEvent(ContactHook.SignIn, context.toJSON());
+                client.sendEvent(ContactHook.SignIn, context.toJSON());
+            }
+        }
+    }
+
+    private void onSignOut(PluginContext pluginContext) {
+        ContactPluginContext context = (ContactPluginContext) pluginContext;
+
+        for (ServerClient client : this.clientMap.values()) {
+            if (client.hasEvent(ContactHook.SignOut)) {
+                client.sendEvent(ContactHook.SignOut, context.toJSON());
+            }
+        }
+    }
+
+    private void onDeviceTimeout(PluginContext pluginContext) {
+        ContactPluginContext context = (ContactPluginContext) pluginContext;
+
+        for (ServerClient client : this.clientMap.values()) {
+            if (client.hasEvent(ContactHook.DeviceTimeout)) {
+                client.sendEvent(ContactHook.DeviceTimeout, context.toJSON());
             }
         }
     }

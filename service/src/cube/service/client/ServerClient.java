@@ -84,7 +84,7 @@ public class ServerClient extends Entity {
         return this.events.contains(event);
     }
 
-    public void sentEvent(String eventName, JSONObject data) {
+    public void sendEvent(String eventName, JSONObject data) {
         if (null == this.talkContext) {
             return;
         }
