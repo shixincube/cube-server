@@ -34,6 +34,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.service.client.task.ListOnlineContactsTask;
 
 import java.util.concurrent.ExecutorService;
 
@@ -84,6 +85,15 @@ public class ClientCellet extends AbstractCellet {
                 public void run() {
                     ClientManager.getInstance().listenEvent(actionDialect.getParamAsLong("id"),
                             actionDialect.getParamAsString("event"));
+                }
+            });
+        }
+        else if (Actions.ListOnlineContacts.name.equals(action)) {
+            ListOnlineContactsTask task = new ListOnlineContactsTask(this, talkContext, actionDialect);
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    task.run();
                 }
             });
         }

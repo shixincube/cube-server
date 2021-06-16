@@ -502,6 +502,21 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 获取所有的在线联系人。
+     *
+     * @return 返回所有的在线联系人。
+     */
+    public List<Contact> getAllOnlineContacts() {
+        ArrayList<Contact> contacts = new ArrayList<>();
+
+        for (ContactTable table : this.onlineTables.values()) {
+            contacts.addAll(table.getOnlineContacts());
+        }
+
+        return contacts;
+    }
+
+    /**
      * 移除指定联系人的设备。
      *
      * @param contactId

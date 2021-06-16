@@ -24,28 +24,51 @@
  * SOFTWARE.
  */
 
-package cube.service.client;
+package cube.service.client.task;
+
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cube.service.client.ClientCellet;
+import org.json.JSONObject;
 
 /**
- * 客户端相关操作动作描述。
+ *
  */
-public enum Actions {
+public abstract class ClientTask {
 
-    LOGIN("Login"),
+    protected final ClientCellet cellet;
 
-    LOGOUT("Logout"),
+    protected final TalkContext talkContext;
 
-    ListenEvent("ListenEvent"),
+    protected final ActionDialect actionDialect;
 
-    NotifyEvent("NotifyEvent"),
-
-    ListOnlineContacts("ListOnlineContacts")
-
-    ;
-
-    public final String name;
-
-    Actions(String name) {
-        this.name = name;
+    /**
+     * 构造函数。
+     *
+     * @param cellet
+     * @param talkContext
+     * @param actionDialect
+     */
+    public ClientTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
+        this.cellet = cellet;
+        this.talkContext = talkContext;
+        this.actionDialect = actionDialect;
     }
+
+    protected JSONObject extractNotifier() {
+        if (actionDialect.containsParam("_notifier")) {
+            return actionDialect.getParamAsJson("_notifier");
+        }
+
+        return null;
+    }
+
+    protected void copyNotifier(ActionDialect destination) {
+        if (actionDialect.containsParam("_notifier")) {
+            destination.addParam("_notifier", actionDialect.getParamAsJson("_notifier"));
+        }
+    }
+
+    public abstract void run();
+
 }
