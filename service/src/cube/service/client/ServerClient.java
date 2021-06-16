@@ -34,13 +34,13 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * 客户端管理实体。
  */
 public class ServerClient extends Entity {
-
-    private Long id;
 
     private Cellet cellet;
 
@@ -48,24 +48,40 @@ public class ServerClient extends Entity {
 
     protected List<String> events;
 
+    private Timer disableTimer;
+
     public ServerClient(Long id, Cellet cellet, TalkContext talkContext) {
-        this.id = id;
+        super(id);
         this.cellet = cellet;
         this.talkContext = talkContext;
         this.events = new ArrayList<>();
     }
 
-    public void setTalkContext(TalkContext talkContext) {
+    public void resetTalkContext(TalkContext talkContext) {
         this.talkContext = talkContext;
+
+        if (null != this.disableTimer) {
+            this.disableTimer.cancel();
+            this.disableTimer = null;
+        }
     }
 
     public TalkContext getTalkContext() {
         return this.talkContext;
     }
 
-    protected void disable() {
+    protected void disable(final TimeoutCallback callback) {
         this.talkContext = null;
-        this.events.clear();
+
+        if (null == this.disableTimer) {
+            this.disableTimer = new Timer();
+            this.disableTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    callback.on(ServerClient.this);
+                }
+            }, 60 * 1000);
+        }
     }
 
     public void addEvent(String event) {

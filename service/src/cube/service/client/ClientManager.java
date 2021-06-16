@@ -28,6 +28,7 @@ package cube.service.client;
 
 import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
+import cell.util.log.Logger;
 import cube.core.Kernel;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
@@ -106,7 +107,7 @@ public final class ClientManager {
             this.clientMap.put(id, client);
         }
         else {
-            client.setTalkContext(talkContext);
+            client.resetTalkContext(talkContext);
         }
 
         this.talkContextIndex.put(talkContext.getSessionId(), client);
@@ -115,7 +116,13 @@ public final class ClientManager {
     public void quit(TalkContext talkContext) {
         ServerClient client = this.talkContextIndex.remove(talkContext.getSessionId());
         if (null != client) {
-            client.disable();
+            client.disable(new TimeoutCallback() {
+                @Override
+                public void on(ServerClient client) {
+                    clientMap.remove(client.getId());
+                    Logger.i(ClientManager.class, "Server client \"" + client.getId() + "\" timeout quit.");
+                }
+            });
         }
     }
 
