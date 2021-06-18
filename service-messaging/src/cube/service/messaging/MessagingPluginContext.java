@@ -27,6 +27,7 @@
 package cube.service.messaging;
 
 import cube.common.entity.Message;
+import cube.common.state.MessagingStateCode;
 import cube.plugin.PluginContext;
 
 /**
@@ -36,12 +37,23 @@ public class MessagingPluginContext extends PluginContext {
 
     private Message message;
 
+    private MessagingStateCode stateCode;
+
     public MessagingPluginContext(Message message) {
         super();
         this.message = message;
+        this.stateCode = MessagingStateCode.Ok;
     }
 
     public Message getMessage() {
         return this.message;
+    }
+
+    public MessagingStateCode getStateCode() {
+        return this.stateCode;
+    }
+
+    public void setStateCode(MessagingStateCode stateCode) {
+        this.stateCode = stateCode;
     }
 }

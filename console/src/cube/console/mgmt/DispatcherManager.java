@@ -157,7 +157,10 @@ public class DispatcherManager {
             if (this.tag.equals(server.tag)) {
                 if (!this.serverMap.containsKey(server.deployPath)) {
                     server.refresh();
-                    this.serverMap.put(server.deployPath, server);
+
+                    if (server.isLocal()) {
+                        this.serverMap.put(server.deployPath, server);
+                    }
                 }
                 else {
                     list.set(i, this.serverMap.get(server.deployPath));
@@ -168,7 +171,7 @@ public class DispatcherManager {
             }
         }
 
-        return list;
+        return new ArrayList<>(this.serverMap.values());
     }
 
     public DispatcherServer getDispatcherServer(String tag, String deployPath) {
@@ -188,7 +191,10 @@ public class DispatcherManager {
 
         if (this.tag.equals(server.tag)) {
             server.refresh();
-            this.serverMap.put(deployPath, server);
+
+            if (server.isLocal()) {
+                this.serverMap.put(deployPath, server);
+            }
         }
         else {
            // TODO

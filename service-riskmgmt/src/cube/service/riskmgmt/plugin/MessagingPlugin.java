@@ -39,6 +39,16 @@ public class MessagingPlugin implements Plugin {
     }
 
     @Override
+    public void setup() {
+
+    }
+
+    @Override
+    public void teardown() {
+
+    }
+
+    @Override
     public void onAction(PluginContext context) {
         MessagingPluginContext ctx = (MessagingPluginContext) context;
     }

@@ -97,7 +97,18 @@ public class PluginManager {
     }
 
     public void stop() {
+        for (AbstractModule module : this.kernel.getModules()) {
+            PluginSystem<?> pluginSystem = module.getPluginSystem();
+            if (null == pluginSystem) {
+                // 跳过没有插件系统的模块
+                continue;
+            }
 
+            List<Plugin> plugins = pluginSystem.getPlugins();
+            for (Plugin plugin : plugins) {
+                plugin.teardown();
+            }
+        }
     }
 
     private JSONObject readConfig() {

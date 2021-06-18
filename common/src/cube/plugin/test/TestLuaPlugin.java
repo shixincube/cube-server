@@ -84,6 +84,16 @@ public class TestLuaPlugin {
         }
 
         @Override
+        public void setup() {
+            // Nothing
+        }
+
+        @Override
+        public void teardown() {
+            // Nothing
+        }
+
+        @Override
         public void onAction(PluginContext context) {
             try {
                 this.call(context);

@@ -157,7 +157,10 @@ public class ServiceManager {
             if (this.tag.equals(server.tag)) {
                 if (!this.serverMap.containsKey(server.deployPath)) {
                     server.refresh();
-                    this.serverMap.put(server.deployPath, server);
+
+                    if (server.isLocal()) {
+                        this.serverMap.put(server.deployPath, server);
+                    }
                 }
                 else {
                     list.set(i, this.serverMap.get(server.deployPath));
@@ -168,7 +171,7 @@ public class ServiceManager {
             }
         }
 
-        return list;
+        return new ArrayList<>(this.serverMap.values());
     }
 
     public ServiceServer getServiceServer(String tag, String deployPath) {
@@ -188,7 +191,10 @@ public class ServiceManager {
 
         if (this.tag.equals(server.tag)) {
             server.refresh();
-            this.serverMap.put(deployPath, server);
+
+            if (server.isLocal()) {
+                this.serverMap.put(deployPath, server);
+            }
         }
         else {
             // TODO

@@ -244,7 +244,7 @@ public class CellConfigFile {
         }
     }
 
-    public void load() {
+    public boolean load() {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -258,7 +258,7 @@ public class CellConfigFile {
         }
 
         if (null == this.document) {
-            return;
+            return false;
         }
 
         NodeList nodeList = document.getElementsByTagName("server");
@@ -358,6 +358,8 @@ public class CellConfigFile {
                 this.contactsAdapter = new Endpoint(host, port);
             }
         }
+
+        return true;
     }
 
     public void save() {

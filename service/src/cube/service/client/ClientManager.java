@@ -83,17 +83,44 @@ public final class ClientManager {
                     public void onAction(PluginContext context) {
                         onSignIn(context);
                     }
+
+                    @Override
+                    public void setup() {
+                        // Nothing
+                    }
+                    @Override
+                    public void teardown() {
+                        // Nothing
+                    }
                 });
                 ContactManager.getInstance().getPluginSystem().register(ContactHook.SignOut, new Plugin() {
                     @Override
                     public void onAction(PluginContext context) {
                         onSignOut(context);
                     }
+
+                    @Override
+                    public void setup() {
+                        // Nothing
+                    }
+                    @Override
+                    public void teardown() {
+                        // Nothing
+                    }
                 });
                 ContactManager.getInstance().getPluginSystem().register(ContactHook.DeviceTimeout, new Plugin() {
                     @Override
                     public void onAction(PluginContext context) {
                         onDeviceTimeout(context);
+                    }
+
+                    @Override
+                    public void setup() {
+                        // Nothing
+                    }
+                    @Override
+                    public void teardown() {
+                        // Nothing
                     }
                 });
             }

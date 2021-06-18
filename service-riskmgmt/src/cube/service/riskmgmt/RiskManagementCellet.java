@@ -24,28 +24,26 @@
  * SOFTWARE.
  */
 
-package cube.plugin;
+package cube.service.riskmgmt;
+
+import cube.core.AbstractCellet;
 
 /**
- * 插件接口。
+ *
  */
-public interface Plugin {
+public class RiskManagementCellet extends AbstractCellet {
 
-    /**
-     * 在插件注册之前的操作。
-     */
-    void setup();
+    public RiskManagementCellet() {
+        super(RiskManagement.NAME);
+    }
 
-    /**
-     * 插件需要被销毁时调用。
-     */
-    void teardown();
+    @Override
+    public boolean install() {
+        return true;
+    }
 
-    /**
-     * 当对应关键字的钩子被触发时回调该函数。
-     *
-     * @param context
-     */
-    void onAction(PluginContext context);
+    @Override
+    public void uninstall() {
 
+    }
 }

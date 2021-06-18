@@ -43,6 +43,22 @@ public class FilterContactNamePlugin implements Plugin {
      * {@inheritDoc}
      */
     @Override
+    public void setup() {
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void teardown() {
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void onAction(PluginContext context) {
         ContactPluginContext ctx = (ContactPluginContext) context;
         Contact contact = ctx.getContact();

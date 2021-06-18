@@ -1,20 +1,20 @@
 /**
  * This source file is part of Cube.
- *
+ * <p>
  * The MIT License (MIT)
- *
+ * <p>
  * Copyright (c) 2020-2021 Shixin Cube Team.
- *
+ * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * <p>
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *
+ * <p>
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -159,12 +159,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             config = config.getJSONObject(MessagingService.NAME);
             if (config.getString("type").equalsIgnoreCase("SQLite")) {
                 this.storage = new MessagingStorage(this.executor, StorageType.SQLite, config);
-            }
-            else {
+            } else {
                 this.storage = new MessagingStorage(this.executor, StorageType.MySQL, config);
             }
-        }
-        else {
+        } else {
             config.put("file", "storage/MessagingService.db");
             this.storage = new MessagingStorage(this.executor, StorageType.SQLite, config);
         }
@@ -233,7 +231,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
     /**
      * 将指定消息实体进行推送处理。
-     * 
+     *
      * @param message
      * @param sourceDevice
      * @return
@@ -317,8 +315,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 hook.apply(new MessagingPluginContext(message));
 
                 return new PushResult(message, MessagingStateCode.Ok);
-            }
-            else if (message.getSource().longValue() > 0) {
+            } else if (message.getSource().longValue() > 0) {
                 // 进行消息的群组管理
                 Group group = ContactManager.getInstance().getGroup(message.getSource(), message.getDomain().getName());
                 if (null != group) {
@@ -391,26 +388,22 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                         hook.apply(new MessagingPluginContext(message));
 
                         return new PushResult(message, MessagingStateCode.Ok);
-                    }
-                    else {
+                    } else {
                         // 群组状态不正常，设置为故障状态
                         message.setState(MessageState.Fault);
                         return new PushResult(message, MessagingStateCode.GroupError);
                     }
-                }
-                else {
+                } else {
                     // 找不到群组，设置为故障状态
                     message.setState(MessageState.Fault);
                     return new PushResult(message, MessagingStateCode.NoGroup);
                 }
-            }
-            else {
+            } else {
                 // 设置为故障状态
                 message.setState(MessageState.Fault);
                 return new PushResult(message, MessagingStateCode.DataStructureError);
             }
-        }
-        else {
+        } else {
             // 仅自己可见
 
             // 更新状态
@@ -464,8 +457,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             MessageStateBundle msb = this.messageStateMap.get(messageKey);
             if (null != msb) {
                 state = msb.state;
-            }
-            else {
+            } else {
                 MessageState ms = this.storage.readMessageState(domain, contactId, message.getId());
                 if (null != ms) {
                     this.messageStateMap.put(messageKey, new MessageStateBundle(message.getId(), contactId, ms));
@@ -703,15 +695,13 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             if (!root.existsDirectory(HIDDEN_DIR)) {
                 dir = root.createDirectory(HIDDEN_DIR);
                 dir.setHidden(true);
-            }
-            else {
+            } else {
                 dir = root.getDirectory(HIDDEN_DIR);
             }
 
             // 添加文件
             dir.addFile(fileLabel);
-        }
-        else {
+        } else {
             // 存入发件人的隐藏目录里
 
             fileHierarchy = fileStorageService.getFileHierarchy(domainName, message.getFrom());
@@ -782,15 +772,13 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                             if (notifyMessage(MessagingAction.Notify, talkContext, ownerId, message)) {
                                 Logger.d(this.getClass(), "Notify message: '" + message.getFrom()
                                         + "' -> '" + message.getTo() + "'");
-                            }
-                            else {
+                            } else {
                                 Logger.w(this.getClass(), "Notify message error: '" + message.getFrom()
                                         + "' -> '" + message.getTo() + "'");
                             }
                         }
                     }
-                }
-                else if (ownerId.longValue() == message.getFrom().longValue()) {
+                } else if (ownerId.longValue() == message.getFrom().longValue()) {
                     // 将消息发送给源联系人的其他设备
                     Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(),
                             message.getFrom());
@@ -809,8 +797,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                         }
                     }
                 }
-            }
-            else if (event.getEventName().equals(MessagingAction.Read.name)) {
+            } else if (event.getEventName().equals(MessagingAction.Read.name)) {
                 Message message = new Message(event.getData());
 
                 Long fromId = message.getId();
@@ -823,8 +810,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                         }
                     }
                 }
-            }
-            else if (event.getEventName().equals(MessagingAction.Recall.name)) {
+            } else if (event.getEventName().equals(MessagingAction.Recall.name)) {
                 Message message = new Message(event.getData());
 
                 Long ownerId = message.getOwner();

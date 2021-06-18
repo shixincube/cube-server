@@ -48,6 +48,8 @@ public class DispatcherServer implements JSONable {
 
     public final String deployPath;
 
+    private boolean local = false;
+
     private String name;
 
     private CellConfigFile cellConfigFile;
@@ -61,6 +63,10 @@ public class DispatcherServer implements JSONable {
         this.deployPath = deployPath;
         this.cellConfigFile = new CellConfigFile(cellConfigFile);
         this.propertiesFile = new DispatcherProperties(propertiesFile);
+    }
+
+    public boolean isLocal() {
+        return this.local;
     }
 
     public String getName() {
@@ -180,7 +186,13 @@ public class DispatcherServer implements JSONable {
     }
 
     protected void refresh() {
-        this.cellConfigFile.load();
+        this.local = this.cellConfigFile.load();
+
+        if (!this.local) {
+            this.name = this.tag + "#dispatcher#" + this.deployPath;
+            return;
+        }
+
         this.propertiesFile.load();
 
         this.name = this.tag + "#dispatcher#" + this.cellConfigFile.getAccessPoint().getPort();

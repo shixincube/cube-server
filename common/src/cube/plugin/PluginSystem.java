@@ -29,6 +29,7 @@ package cube.plugin;
 import cell.util.log.Logger;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
@@ -130,6 +131,14 @@ public class PluginSystem<T extends Hook> {
             return;
         }
 
+        (new Thread() {
+            @Override
+            public void run() {
+                // 调用 setup 进行准备
+                plugin.setup();
+            }
+        }).start();
+
         list.add(plugin);
     }
 
@@ -170,6 +179,14 @@ public class PluginSystem<T extends Hook> {
         for (Plugin plugin : list) {
             plugin.onAction(context);
         }
+    }
+
+    public List<Plugin> getPlugins() {
+        List<Plugin> list = new ArrayList<>();
+        for (List<Plugin> plugins : this.plugins.values()) {
+            list.addAll(plugins);
+        }
+        return list;
     }
 
     /**

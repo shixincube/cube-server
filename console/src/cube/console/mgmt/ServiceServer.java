@@ -53,6 +53,8 @@ public class ServiceServer implements JSONable {
 
     public final String celletsPath;
 
+    private boolean local = false;
+
     private String name;
 
     private CellConfigFile cellConfigFile;
@@ -80,6 +82,10 @@ public class ServiceServer implements JSONable {
         this.celletsPath = celletsPath;
     }
 
+    public boolean isLocal() {
+        return this.local;
+    }
+
     public String getName() {
         return this.name;
     }
@@ -91,7 +97,13 @@ public class ServiceServer implements JSONable {
     protected void refresh() {
         try {
             this.cellConfigFile = new CellConfigFile(this.configPath + File.separator + "service.xml");
-            this.cellConfigFile.load();
+            // 是否在本地
+            this.local = this.cellConfigFile.load();
+
+            if (!this.local) {
+                this.name = this.tag + "#service#" + this.configPath;
+                return;
+            }
 
             this.name = this.tag + "#service#" + this.cellConfigFile.getAccessPoint().getPort();
 
