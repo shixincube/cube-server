@@ -39,7 +39,9 @@ public enum Actions {
 
     NotifyEvent("NotifyEvent"),
 
-    ListOnlineContacts("ListOnlineContacts")
+    ListOnlineContacts("ListOnlineContacts"),
+
+    PushMessage("PushMessage")
 
     ;
 

@@ -28,52 +28,44 @@ package cube.service.client.task;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.common.action.MessagingAction;
 import cube.core.AbstractModule;
+import cube.service.client.Actions;
 import cube.service.client.ClientCellet;
 import org.json.JSONObject;
 
 /**
- *
+ * 推送消息任务。
  */
-public abstract class ClientTask {
+public class PushMessageTask extends ClientTask {
 
-    protected final ClientCellet cellet;
-
-    protected final TalkContext talkContext;
-
-    protected final ActionDialect actionDialect;
-
-    /**
-     * 构造函数。
-     *
-     * @param cellet
-     * @param talkContext
-     * @param actionDialect
-     */
-    public ClientTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
-        this.cellet = cellet;
-        this.talkContext = talkContext;
-        this.actionDialect = actionDialect;
+    public PushMessageTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
+        super(cellet, talkContext, actionDialect);
     }
 
-    protected JSONObject extractNotifier() {
-        if (actionDialect.containsParam("_notifier")) {
-            return actionDialect.getParamAsJson("_notifier");
+    @Override
+    public void run() {
+        AbstractModule module = this.getMessagingModule();
+        if (null == module) {
+            return;
         }
 
-        return null;
+        JSONObject message = actionDialect.getParamAsJson("message");
+        JSONObject pretender = actionDialect.getParamAsJson("pretender");
+        JSONObject device = actionDialect.getParamAsJson("device");
+
+        JSONObject notification = new JSONObject();
+        notification.put("action", MessagingAction.Push.name);
+        notification.put("message", message);
+        notification.put("pretender", pretender);
+        notification.put("device", device);
+
+        JSONObject result = module.notify(notification);
+
+        ActionDialect response = new ActionDialect(Actions.PushMessage.name);
+        copyNotifier(response);
+        response.addParam("result", result);
+
+        cellet.speak(talkContext, response);
     }
-
-    protected void copyNotifier(ActionDialect destination) {
-        if (actionDialect.containsParam("_notifier")) {
-            destination.addParam("_notifier", actionDialect.getParamAsJson("_notifier"));
-        }
-    }
-
-    protected AbstractModule getMessagingModule() {
-        return cellet.getKernel().getModule("Messaging");
-    }
-
-    public abstract void run();
-
 }

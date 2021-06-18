@@ -229,6 +229,21 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         }
     }
 
+    @Override
+    public JSONObject notify(JSONObject data) {
+        if (data.has("action")) {
+            String action = data.getString("action");
+            if (MessagingAction.Push.name.equals(action)) {
+                Message message = new Message(data.getJSONObject("message"));
+                Device device = new Device(data.getJSONObject("device"));
+                PushResult result = this.pushMessage(message, device);
+                return result.toJSON();
+            }
+        }
+
+        return data;
+    }
+
     /**
      * 将指定消息实体进行推送处理。
      *

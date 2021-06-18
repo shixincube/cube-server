@@ -291,16 +291,6 @@ public final class Kernel {
     }
 
     /**
-     * 获取指定名称时序缓存器。
-     *
-     * @param name 指定缓存器名称。
-     * @return 返回时序缓存器实例。
-     */
-    public TimeSeriesCache getTimeSeriesCache(String name) {
-        return null;
-    }
-
-    /**
      * 安装消息队列。
      *
      * @param name 指定消息队列名称。
@@ -350,5 +340,16 @@ public final class Kernel {
      */
     public AbstractMQ getMQ(String name) {
         return this.mqMap.get(name);
+    }
+
+    /**
+     *
+     * @param moduleName
+     * @param data
+     * @return
+     */
+    public JSONObject notifyModule(String moduleName, JSONObject data) {
+        AbstractModule module = this.getModule(moduleName);
+        return module.notify(data);
     }
 }

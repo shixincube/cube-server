@@ -48,6 +48,7 @@ public class ListOnlineContactsTask extends ClientTask {
 
     @Override
     public void run() {
+        // 从联系人模块获取所有在线联系人
         List<Contact> contactList = ContactManager.getInstance().getAllOnlineContacts();
 
         JSONArray contacts = new JSONArray();

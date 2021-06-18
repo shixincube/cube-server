@@ -24,37 +24,33 @@
  * SOFTWARE.
  */
 
-package cube.service.messaging;
+package cube.service.riskmgmt;
 
-import cube.common.JSONable;
-import cube.common.entity.Message;
-import cube.common.state.MessagingStateCode;
-import org.json.JSONObject;
+import cube.common.Storagable;
+
+import java.util.List;
 
 /**
- * 推送消息的结果记录。
+ * 数据存储器。
  */
-public class PushResult implements JSONable {
+public class DataStorage implements Storagable {
 
-    public final Message message;
+    public DataStorage() {
 
-    public final MessagingStateCode stateCode;
-
-    public PushResult(Message message, MessagingStateCode stateCode) {
-        this.message = message;
-        this.stateCode = stateCode;
     }
 
     @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("message", this.message.toCompactJSON());
-        json.put("state", this.stateCode.code);
-        return json;
+    public void open() {
+
     }
 
     @Override
-    public JSONObject toCompactJSON() {
-        return toJSON();
+    public void close() {
+
+    }
+
+    @Override
+    public void execSelfChecking(List<String> domainNameList) {
+
     }
 }

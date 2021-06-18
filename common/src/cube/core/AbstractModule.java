@@ -26,6 +26,8 @@
 
 package cube.core;
 
+import org.json.JSONObject;
+
 /**
  * 模块抽象层。
  */
@@ -86,15 +88,17 @@ public abstract class AbstractModule implements Module {
      * {@inheritDoc}
      */
     @Override
-    public TimeSeriesCache getTimeSeriesCache(String name) {
-        return this.kernel.getTimeSeriesCache(name);
+    public MessageQueue getMQ(String name) {
+        return this.kernel.getMQ(name);
     }
 
     /**
-     * {@inheritDoc}
+     * 向模块送达数据并返回结果。
+     *
+     * @param data
+     * @return
      */
-    @Override
-    public MessageQueue getMQ(String name) {
-        return this.kernel.getMQ(name);
+    public JSONObject notify(JSONObject data) {
+        return data;
     }
 }

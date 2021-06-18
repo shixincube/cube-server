@@ -35,6 +35,7 @@ import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.client.task.ListOnlineContactsTask;
+import cube.service.client.task.PushMessageTask;
 
 import java.util.concurrent.ExecutorService;
 
@@ -44,6 +45,8 @@ import java.util.concurrent.ExecutorService;
 public class ClientCellet extends AbstractCellet {
 
     private ExecutorService executor;
+
+    private Kernel kernel;
 
     public ClientCellet() {
         super("Client");
@@ -56,12 +59,18 @@ public class ClientCellet extends AbstractCellet {
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         ClientManager.getInstance().start(this, kernel);
 
+        this.kernel = kernel;
+
         return true;
     }
 
     @Override
     public void uninstall() {
         this.executor.shutdown();
+    }
+
+    public Kernel getKernel() {
+        return this.kernel;
     }
 
     @Override
@@ -85,6 +94,15 @@ public class ClientCellet extends AbstractCellet {
                 public void run() {
                     ClientManager.getInstance().listenEvent(actionDialect.getParamAsLong("id"),
                             actionDialect.getParamAsString("event"));
+                }
+            });
+        }
+        else if (Actions.PushMessage.name.equals(action)) {
+            PushMessageTask task = new PushMessageTask(this, talkContext, actionDialect);
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    task.run();
                 }
             });
         }
