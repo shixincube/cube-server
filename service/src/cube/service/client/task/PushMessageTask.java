@@ -60,11 +60,14 @@ public class PushMessageTask extends ClientTask {
         notification.put("pretender", pretender);
         notification.put("device", device);
 
-        JSONObject result = module.notify(notification);
-
         ActionDialect response = new ActionDialect(Actions.PushMessage.name);
         copyNotifier(response);
-        response.addParam("result", result);
+
+        // 使用 notify 通知模块
+        JSONObject result = module.notify(notification);
+        if (null != result) {
+            response.addParam("result", result);
+        }
 
         cellet.speak(talkContext, response);
     }

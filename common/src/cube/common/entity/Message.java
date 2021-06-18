@@ -207,6 +207,7 @@ public class Message extends Entity implements Comparable<Message> {
      * @param localTimestamp 指定消息生成时的本地时间戳。
      * @param remoteTimestamp 指定消息在服务器上被处理的时间戳。
      * @param state 指定消息状态。
+     * @param scope 指定消息的作用域。
      * @param sourceDevice 指定源设备。
      * @param payload 指定消息负载数据。
      * @param attachment 指定消息附件。

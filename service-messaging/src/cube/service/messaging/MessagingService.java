@@ -241,7 +241,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             }
         }
 
-        return data;
+        return null;
     }
 
     /**
