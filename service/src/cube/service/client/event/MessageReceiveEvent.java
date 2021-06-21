@@ -24,22 +24,28 @@
  * SOFTWARE.
  */
 
-package cube.service.messaging;
+package cube.service.client.event;
 
-import cube.plugin.Hook;
+import cube.common.entity.Contact;
+import cube.common.entity.Group;
+import cube.service.client.Events;
 
 /**
- * 消息模块钩子。
+ * 接收指定消息事件。
  */
-public class MessagingHook extends Hook {
+public class MessageReceiveEvent {
 
-    public final static String PrePush = "PrePush";
+    public final static String NAME = Events.ReceiveMessage;
 
-    public final static String PostPush = "PostPush";
+    private Contact contact;
 
-    public final static String Notify = "Notify";
+    private Group group;
 
-    public MessagingHook(String key) {
-        super(key);
+    public MessageReceiveEvent(Contact contact) {
+        this.contact = contact;
+    }
+
+    public MessageReceiveEvent(Group group) {
+        this.group = group;
     }
 }

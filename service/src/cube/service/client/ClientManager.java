@@ -35,6 +35,7 @@ import cube.plugin.PluginContext;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.contact.ContactPluginContext;
+import org.json.JSONObject;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -158,14 +159,23 @@ public final class ClientManager {
      *
      * @param id
      * @param eventName
+     * @param eventParam
      */
-    public void listenEvent(Long id, String eventName) {
+    public void listenEvent(Long id, String eventName, JSONObject eventParam) {
         ServerClient serverClient = this.clientMap.get(id);
         if (null == serverClient) {
             return;
         }
 
-        serverClient.addEvent(eventName);
+        if (null == eventParam) {
+            serverClient.addEvent(eventName);
+            return;
+        }
+
+        // 解析事件
+        if (Events.ReceiveMessage.equals(eventName)) {
+
+        }
     }
 
     private void onSignIn(PluginContext pluginContext) {

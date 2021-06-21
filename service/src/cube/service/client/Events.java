@@ -24,22 +24,15 @@
  * SOFTWARE.
  */
 
-package cube.service.messaging;
-
-import cube.plugin.Hook;
+package cube.service.client;
 
 /**
- * 消息模块钩子。
+ * 事件。
  */
-public class MessagingHook extends Hook {
+public final class Events {
 
-    public final static String PrePush = "PrePush";
+    public final static String ReceiveMessage = "ReceiveMessage";
 
-    public final static String PostPush = "PostPush";
-
-    public final static String Notify = "Notify";
-
-    public MessagingHook(String key) {
-        super(key);
+    private Events() {
     }
 }

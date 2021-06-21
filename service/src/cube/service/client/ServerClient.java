@@ -30,12 +30,10 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.common.entity.Entity;
+import cube.service.client.event.MessageReceiveEvent;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * 客户端管理实体。
@@ -48,6 +46,8 @@ public class ServerClient extends Entity {
 
     protected List<String> events;
 
+    protected List<MessageReceiveEvent> messageReceiveEvents;
+
     private Timer disableTimer;
 
     public ServerClient(Long id, Cellet cellet, TalkContext talkContext) {
@@ -55,6 +55,7 @@ public class ServerClient extends Entity {
         this.cellet = cellet;
         this.talkContext = talkContext;
         this.events = new ArrayList<>();
+        this.messageReceiveEvents = new Vector<>();
     }
 
     public void resetTalkContext(TalkContext talkContext) {
@@ -85,11 +86,15 @@ public class ServerClient extends Entity {
     }
 
     public void addEvent(String event) {
-        if (this.events.contains(event)) {
-            return;
+        if (!this.events.contains(event)) {
+            this.events.add(event);
         }
+    }
 
-        this.events.add(event);
+    public void addEvent(MessageReceiveEvent event) {
+        this.addEvent(MessageReceiveEvent.NAME);
+
+
     }
 
     public void removeEvent(String event) {

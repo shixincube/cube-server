@@ -95,7 +95,8 @@ public class ClientCellet extends AbstractCellet {
                 @Override
                 public void run() {
                     ClientManager.getInstance().listenEvent(actionDialect.getParamAsLong("id"),
-                            actionDialect.getParamAsString("event"));
+                            actionDialect.getParamAsString("event"),
+                            actionDialect.containsParam("param") ? actionDialect.getParamAsJson("param") : null);
                 }
             });
         }
