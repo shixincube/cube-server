@@ -24,34 +24,40 @@
  * SOFTWARE.
  */
 
-package cube.service.client;
+package cube.service.client.task;
+
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cube.common.entity.Contact;
+import cube.common.entity.Group;
+import cube.service.client.Actions;
+import cube.service.client.ClientCellet;
+import cube.service.contact.ContactManager;
 
 /**
- * 客户端相关操作动作描述。
+ * 获取群组任务。
  */
-public enum Actions {
+public class GetGroupTask extends ClientTask {
 
-    LOGIN("Login"),
+    public GetGroupTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
+        super(cellet, talkContext, actionDialect);
+    }
 
-    LOGOUT("Logout"),
+    @Override
+    public void run() {
+        String domain = actionDialect.getParamAsString("domain");
+        Long groupId = actionDialect.getParamAsLong("groupId");
 
-    ListenEvent("ListenEvent"),
+        // 获取联系人
+        Group group = ContactManager.getInstance().getGroup(groupId, domain);
 
-    NotifyEvent("NotifyEvent"),
+        ActionDialect result = new ActionDialect(Actions.GetGroup.name);
+        copyNotifier(result);
 
-    ListOnlineContacts("ListOnlineContacts"),
+        if (null != group) {
+            result.addParam("group", group.toJSON());
+        }
 
-    GetContact("GetContact"),
-
-    GetGroup("GetGroup"),
-
-    PushMessage("PushMessage")
-
-    ;
-
-    public final String name;
-
-    Actions(String name) {
-        this.name = name;
+        cellet.speak(talkContext, result);
     }
 }

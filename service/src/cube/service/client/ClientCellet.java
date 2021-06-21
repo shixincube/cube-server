@@ -35,6 +35,7 @@ import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.client.task.GetContactTask;
+import cube.service.client.task.GetGroupTask;
 import cube.service.client.task.ListOnlineContactsTask;
 import cube.service.client.task.PushMessageTask;
 
@@ -109,6 +110,15 @@ public class ClientCellet extends AbstractCellet {
         }
         else if (Actions.GetContact.name.equals(action)) {
             GetContactTask task = new GetContactTask(this, talkContext, actionDialect);
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    task.run();
+                }
+            });
+        }
+        else if (Actions.GetGroup.name.equals(action)) {
+            GetGroupTask task = new GetGroupTask(this, talkContext, actionDialect);
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
