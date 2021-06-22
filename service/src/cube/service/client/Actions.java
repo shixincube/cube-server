@@ -35,7 +35,9 @@ public enum Actions {
 
     LOGOUT("Logout"),
 
-    ListenEvent("ListenEvent"),
+    AddEventListener("AddEventListener"),
+
+    RemoveEventListener("RemoveEventListener"),
 
     NotifyEvent("NotifyEvent"),
 

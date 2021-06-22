@@ -90,7 +90,7 @@ public class ClientCellet extends AbstractCellet {
                 }
             });
         }
-        else if (Actions.ListenEvent.name.equals(action)) {
+        else if (Actions.AddEventListener.name.equals(action)) {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
