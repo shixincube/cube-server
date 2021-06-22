@@ -113,5 +113,10 @@ public class TestLuaPlugin {
             super();
             this.text = text;
         }
+
+        @Override
+        public Object get(String name) {
+            return null;
+        }
     }
 }

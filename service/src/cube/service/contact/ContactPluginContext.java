@@ -54,6 +54,19 @@ public class ContactPluginContext extends PluginContext {
         return this.device;
     }
 
+    @Override
+    public Object get(String name) {
+        if (name.equals("contact")) {
+            return this.contact;
+        }
+        else if (name.equals("device")) {
+            return this.device;
+        }
+        else {
+            return null;
+        }
+    }
+
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("contact", this.contact.toJSON());

@@ -45,11 +45,18 @@ public class MessagingPluginSystem extends PluginSystem<MessagingHook> {
         return this.getHook(MessagingHook.PostPush);
     }
 
+    public MessagingHook getNotifyHook() {
+        return this.getHook(MessagingHook.Notify);
+    }
+
     private void build() {
         MessagingHook hook = new MessagingHook(MessagingHook.PrePush);
         this.addHook(hook);
 
         hook = new MessagingHook(MessagingHook.PostPush);
+        this.addHook(hook);
+
+        hook = new MessagingHook(MessagingHook.Notify);
         this.addHook(hook);
     }
 }

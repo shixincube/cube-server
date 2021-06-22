@@ -26,14 +26,17 @@
 
 package cube.service.client.event;
 
+import cube.common.JSONable;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
+import cube.common.entity.Message;
 import cube.service.client.Events;
+import org.json.JSONObject;
 
 /**
  * 接收指定消息事件。
  */
-public class MessageReceiveEvent {
+public class MessageReceiveEvent implements JSONable {
 
     public final static String NAME = Events.ReceiveMessage;
 
@@ -41,11 +44,68 @@ public class MessageReceiveEvent {
 
     private Group group;
 
+    private Message message;
+
     public MessageReceiveEvent(Contact contact) {
         this.contact = contact;
     }
 
     public MessageReceiveEvent(Group group) {
         this.group = group;
+    }
+
+    public Contact getContact() {
+        return this.contact;
+    }
+
+    public Group getGroup() {
+        return this.group;
+    }
+
+    public void setMessage(Message message) {
+        this.message = message;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof MessageReceiveEvent) {
+            MessageReceiveEvent other = (MessageReceiveEvent) object;
+            if (null != this.contact && null != other.contact) {
+                return this.contact.equals(other.contact);
+            }
+            else if (null != this.group && null != other.group) {
+                return this.group.equals(other.group);
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return (null != this.contact) ? this.contact.hashCode() : this.group.hashCode();
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+
+        if (null != this.contact) {
+            json.put("contact", this.contact.toCompactJSON());
+        }
+        else if (null != this.group) {
+            json.put("group", this.group.toCompactJSON());
+        }
+
+        if (null != this.message) {
+            json.put("message", this.message.toJSON());
+        }
+
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return toJSON();
     }
 }

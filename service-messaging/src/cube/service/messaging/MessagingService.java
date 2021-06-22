@@ -775,9 +775,6 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             if (event.getEventName().equals(MessagingAction.Push.name)) {
                 Message message = new Message(event.getData());
 
-                // 调用 Hook
-
-
                 Long ownerId = message.getOwner();
 
                 // 判断是否是推送给 TO 的消息还是推送给 FROM

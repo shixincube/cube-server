@@ -28,10 +28,16 @@ package cube.service.client;
 
 import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
+import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
+import cube.common.entity.Contact;
+import cube.common.entity.Message;
+import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
+import cube.plugin.PluginSystem;
+import cube.service.client.event.MessageReceiveEvent;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.contact.ContactPluginContext;
@@ -39,6 +45,7 @@ import org.json.JSONObject;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 客户端管理器。
@@ -49,6 +56,8 @@ public final class ClientManager {
 
     private Cellet cellet;
 
+    private ExecutorService executor;
+
     /**
      * 存储所有在线的客户端。
      */
@@ -57,6 +66,7 @@ public final class ClientManager {
     private ConcurrentMap<Long, ServerClient> talkContextIndex;
 
     private ClientManager() {
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(2);
         this.clientMap = new ConcurrentHashMap<>();
         this.talkContextIndex = new ConcurrentHashMap<>();
     }
@@ -71,6 +81,8 @@ public final class ClientManager {
         (new Thread() {
             @Override
             public void run() {
+                int count = 10;
+
                 while (null == ContactManager.getInstance().getPluginSystem()) {
                     try {
                         Thread.sleep(1000L);
@@ -79,53 +91,104 @@ public final class ClientManager {
                     }
                 }
 
-                ContactManager.getInstance().getPluginSystem().register(ContactHook.SignIn, new Plugin() {
-                    @Override
-                    public void onAction(PluginContext context) {
-                        onSignIn(context);
+                setupContactPlugin(ContactManager.getInstance().getPluginSystem());
+
+                // 检查消息模块
+                count = 10;
+                AbstractModule messagingModule = null;
+                while (null == (messagingModule = kernel.getModule("Messaging"))) {
+                    try {
+                        Thread.sleep(1000L);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    --count;
+                    if (count == 0) {
+                        break;
+                    }
+                }
+
+                if (null != messagingModule) {
+                    PluginSystem<?> pluginSystem = null;
+
+                    while (null == (pluginSystem = messagingModule.getPluginSystem())) {
+                        try {
+                            Thread.sleep(1000L);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
 
-                    @Override
-                    public void setup() {
-                        // Nothing
-                    }
-                    @Override
-                    public void teardown() {
-                        // Nothing
-                    }
-                });
-                ContactManager.getInstance().getPluginSystem().register(ContactHook.SignOut, new Plugin() {
-                    @Override
-                    public void onAction(PluginContext context) {
-                        onSignOut(context);
-                    }
-
-                    @Override
-                    public void setup() {
-                        // Nothing
-                    }
-                    @Override
-                    public void teardown() {
-                        // Nothing
-                    }
-                });
-                ContactManager.getInstance().getPluginSystem().register(ContactHook.DeviceTimeout, new Plugin() {
-                    @Override
-                    public void onAction(PluginContext context) {
-                        onDeviceTimeout(context);
-                    }
-
-                    @Override
-                    public void setup() {
-                        // Nothing
-                    }
-                    @Override
-                    public void teardown() {
-                        // Nothing
-                    }
-                });
+                    setupMessagingPlugin(pluginSystem);
+                }
             }
         }).start();
+    }
+
+    private void setupContactPlugin(PluginSystem<?> pluginSystem) {
+        pluginSystem.register(ContactHook.SignIn, new Plugin() {
+            @Override
+            public void onAction(PluginContext context) {
+                onSignIn(context);
+            }
+
+            @Override
+            public void setup() {
+                // Nothing
+            }
+            @Override
+            public void teardown() {
+                // Nothing
+            }
+        });
+        pluginSystem.register(ContactHook.SignOut, new Plugin() {
+            @Override
+            public void onAction(PluginContext context) {
+                onSignOut(context);
+            }
+
+            @Override
+            public void setup() {
+                // Nothing
+            }
+            @Override
+            public void teardown() {
+                // Nothing
+            }
+        });
+        pluginSystem.register(ContactHook.DeviceTimeout, new Plugin() {
+            @Override
+            public void onAction(PluginContext context) {
+                onDeviceTimeout(context);
+            }
+
+            @Override
+            public void setup() {
+                // Nothing
+            }
+            @Override
+            public void teardown() {
+                // Nothing
+            }
+        });
+    }
+
+    private void setupMessagingPlugin(PluginSystem<?> pluginSystem) {
+        pluginSystem.register("PostPush", new Plugin() {
+            @Override
+            public void setup() {
+                // Nothing
+            }
+            @Override
+            public void teardown() {
+                // Nothing
+            }
+
+            @Override
+            public void onAction(PluginContext context) {
+                onMessagingPush(context);
+            }
+        });
     }
 
     public void login(Long id, TalkContext talkContext) {
@@ -174,37 +237,80 @@ public final class ClientManager {
 
         // 解析事件
         if (Events.ReceiveMessage.equals(eventName)) {
+            String domain = eventParam.getString("domain");
+            if (eventParam.has("contactId")) {
+                Long contactId = eventParam.getLong("contactId");
 
+                Contact contact = ContactManager.getInstance().getContact(domain, contactId);
+                MessageReceiveEvent event = new MessageReceiveEvent(contact);
+                serverClient.addEvent(event);
+            }
         }
     }
 
     private void onSignIn(PluginContext pluginContext) {
-        ContactPluginContext context = (ContactPluginContext) pluginContext;
+        final ContactPluginContext context = (ContactPluginContext) pluginContext;
 
-        for (ServerClient client : this.clientMap.values()) {
-            if (client.hasEvent(ContactHook.SignIn)) {
-                client.sendEvent(ContactHook.SignIn, context.toJSON());
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                for (ServerClient client : clientMap.values()) {
+                    if (client.hasEvent(ContactHook.SignIn)) {
+                        client.sendEvent(ContactHook.SignIn, context.toJSON());
+                    }
+                }
             }
-        }
+        });
     }
 
     private void onSignOut(PluginContext pluginContext) {
-        ContactPluginContext context = (ContactPluginContext) pluginContext;
+        final ContactPluginContext context = (ContactPluginContext) pluginContext;
 
-        for (ServerClient client : this.clientMap.values()) {
-            if (client.hasEvent(ContactHook.SignOut)) {
-                client.sendEvent(ContactHook.SignOut, context.toJSON());
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                for (ServerClient client : clientMap.values()) {
+                    if (client.hasEvent(ContactHook.SignOut)) {
+                        client.sendEvent(ContactHook.SignOut, context.toJSON());
+                    }
+                }
             }
-        }
+        });
     }
 
     private void onDeviceTimeout(PluginContext pluginContext) {
-        ContactPluginContext context = (ContactPluginContext) pluginContext;
+        final ContactPluginContext context = (ContactPluginContext) pluginContext;
 
-        for (ServerClient client : this.clientMap.values()) {
-            if (client.hasEvent(ContactHook.DeviceTimeout)) {
-                client.sendEvent(ContactHook.DeviceTimeout, context.toJSON());
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                for (ServerClient client : clientMap.values()) {
+                    if (client.hasEvent(ContactHook.DeviceTimeout)) {
+                        client.sendEvent(ContactHook.DeviceTimeout, context.toJSON());
+                    }
+                }
             }
-        }
+        });
+    }
+
+    private void onMessagingPush(PluginContext pluginContext) {
+        final Message message = (Message) pluginContext.get("message");
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                for (ServerClient client : clientMap.values()) {
+                    synchronized (client) {
+                        if (client.hasEvent(MessageReceiveEvent.NAME)) {
+                            // 查找对应的事件
+                            MessageReceiveEvent event = client.queryReceiveEvent(message);
+                            if (null != event) {
+                                client.sendEvent(MessageReceiveEvent.NAME, event.toJSON());
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 }

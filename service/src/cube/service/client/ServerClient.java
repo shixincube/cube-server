@@ -30,6 +30,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.common.entity.Entity;
+import cube.common.entity.Message;
 import cube.service.client.event.MessageReceiveEvent;
 import org.json.JSONObject;
 
@@ -85,16 +86,15 @@ public class ServerClient extends Entity {
         }
     }
 
+    /**
+     * 添加事件。
+     *
+     * @param event
+     */
     public void addEvent(String event) {
         if (!this.events.contains(event)) {
             this.events.add(event);
         }
-    }
-
-    public void addEvent(MessageReceiveEvent event) {
-        this.addEvent(MessageReceiveEvent.NAME);
-
-
     }
 
     public void removeEvent(String event) {
@@ -103,6 +103,41 @@ public class ServerClient extends Entity {
 
     public boolean hasEvent(String event) {
         return this.events.contains(event);
+    }
+
+    /**
+     * 添加事件。
+     *
+     * @param event
+     */
+    public void addEvent(MessageReceiveEvent event) {
+        this.addEvent(MessageReceiveEvent.NAME);
+
+        if (this.messageReceiveEvents.contains(event)) {
+            return;
+        }
+
+        this.messageReceiveEvents.add(event);
+    }
+
+    public MessageReceiveEvent queryReceiveEvent(Message message) {
+        long sourceId = message.getSource().longValue();
+        for (MessageReceiveEvent event : this.messageReceiveEvents) {
+            if (sourceId == 0 && null != event.getContact()) {
+                if (message.getTo().longValue() == event.getContact().getId().longValue()) {
+                    event.setMessage(message);
+                    return event;
+                }
+            }
+            else if (sourceId != 0 && null != event.getGroup()) {
+                if (sourceId == event.getGroup().getId().longValue()) {
+                    event.setMessage(message);
+                    return event;
+                }
+            }
+        }
+
+        return null;
     }
 
     public void sendEvent(String eventName, JSONObject data) {
