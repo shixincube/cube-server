@@ -75,6 +75,12 @@ public final class ClientManager {
         return ClientManager.instance;
     }
 
+    /**
+     * 启动客户端管理器。
+     *
+     * @param cellet
+     * @param kernel
+     */
     public void start(Cellet cellet, Kernel kernel) {
         this.cellet = cellet;
 
@@ -191,6 +197,11 @@ public final class ClientManager {
         });
     }
 
+    /**
+     *
+     * @param id
+     * @param talkContext
+     */
     public void login(Long id, TalkContext talkContext) {
         ServerClient client = this.clientMap.get(id);
         if (null == client) {
@@ -204,6 +215,10 @@ public final class ClientManager {
         this.talkContextIndex.put(talkContext.getSessionId(), client);
     }
 
+    /**
+     *
+     * @param talkContext
+     */
     public void quit(TalkContext talkContext) {
         ServerClient client = this.talkContextIndex.remove(talkContext.getSessionId());
         if (null != client) {
@@ -218,14 +233,14 @@ public final class ClientManager {
     }
 
     /**
-     * 指定客户端申请监听事件。
+     * 指定客户端添加事件监听器。
      *
-     * @param id
+     * @param clientId
      * @param eventName
      * @param eventParam
      */
-    public void listenEvent(Long id, String eventName, JSONObject eventParam) {
-        ServerClient serverClient = this.clientMap.get(id);
+    public void addEventListener(Long clientId, String eventName, JSONObject eventParam) {
+        ServerClient serverClient = this.clientMap.get(clientId);
         if (null == serverClient) {
             return;
         }
@@ -244,6 +259,33 @@ public final class ClientManager {
                 Contact contact = ContactManager.getInstance().getContact(domain, contactId);
                 MessageReceiveEvent event = new MessageReceiveEvent(contact);
                 serverClient.addEvent(event);
+            }
+        }
+    }
+
+    /**
+     * 指定客户端移除事件监听器。
+     *
+     * @param clientId
+     * @param eventName
+     * @param eventParam
+     */
+    public void removeEventListener(Long clientId, String eventName, JSONObject eventParam) {
+        ServerClient serverClient = this.clientMap.get(clientId);
+        if (null == serverClient) {
+            return;
+        }
+
+        serverClient.removeEvent(eventName);
+
+        if (Events.ReceiveMessage.equals(eventName)) {
+            String domain = eventParam.getString("domain");
+            if (eventParam.has("contactId")) {
+                Long contactId = eventParam.getLong("contactId");
+
+                Contact contact = ContactManager.getInstance().getContact(domain, contactId);
+                MessageReceiveEvent event = new MessageReceiveEvent(contact);
+                serverClient.removeEvent(event);
             }
         }
     }

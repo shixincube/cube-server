@@ -97,10 +97,21 @@ public class ServerClient extends Entity {
         }
     }
 
+    /**
+     * 移除事件。
+     *
+     * @param event
+     */
     public void removeEvent(String event) {
         this.events.remove(event);
     }
 
+    /**
+     * 是否包含指定名称的事件。
+     *
+     * @param event
+     * @return
+     */
     public boolean hasEvent(String event) {
         return this.events.contains(event);
     }
@@ -120,6 +131,22 @@ public class ServerClient extends Entity {
         this.messageReceiveEvents.add(event);
     }
 
+    /**
+     * 移除事件。
+     *
+     * @param event
+     */
+    public void removeEvent(MessageReceiveEvent event) {
+        this.removeEvent(MessageReceiveEvent.NAME);
+
+        this.messageReceiveEvents.remove(event);
+    }
+
+    /**
+     *
+     * @param message
+     * @return
+     */
     public MessageReceiveEvent queryReceiveEvent(Message message) {
         long sourceId = message.getSource().longValue();
         for (MessageReceiveEvent event : this.messageReceiveEvents) {
