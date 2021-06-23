@@ -35,11 +35,18 @@ import cube.service.client.ClientCellet;
 import org.json.JSONObject;
 
 /**
- * 推送消息任务。
+ * 查询消息任务。
  */
-public class PushMessageTask extends ClientTask {
+public class QueryMessagesTask extends ClientTask {
 
-    public PushMessageTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
+    /**
+     * 构造函数。
+     *
+     * @param cellet
+     * @param talkContext
+     * @param actionDialect
+     */
+    public QueryMessagesTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
         super(cellet, talkContext, actionDialect);
     }
 
@@ -54,15 +61,27 @@ public class PushMessageTask extends ClientTask {
             return;
         }
 
-        JSONObject message = actionDialect.getParamAsJson("message");
-        JSONObject pretender = actionDialect.getParamAsJson("pretender");
-        JSONObject device = actionDialect.getParamAsJson("device");
+        long beginning = actionDialect.getParamAsLong("beginning");
+        long ending = actionDialect.getParamAsLong("ending");
+        String domain = actionDialect.getParamAsString("domain");
+        Long contactId = actionDialect.containsParam("contactId")
+                ? actionDialect.getParamAsLong("contactId") : null;
+        Long groupId = actionDialect.containsParam("groupId")
+                ? actionDialect.getParamAsLong("groupId") : null;
 
         JSONObject notification = new JSONObject();
-        notification.put("action", MessagingAction.Push.name);
-        notification.put("message", message);
-        notification.put("pretender", pretender);
-        notification.put("device", device);
+        notification.put("action", MessagingAction.Pull.name);
+        notification.put("beginning", beginning);
+        notification.put("ending", ending);
+
+        notification.put("domain", domain);
+
+        if (null != contactId) {
+            notification.put("contactId", contactId.longValue());
+        }
+        else if (null != groupId) {
+            notification.put("groupId", groupId.longValue());
+        }
 
         // 使用 notify 通知模块
         JSONObject result = module.notify(notification);

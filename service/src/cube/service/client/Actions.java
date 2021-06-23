@@ -47,7 +47,9 @@ public enum Actions {
 
     GetGroup("GetGroup"),
 
-    PushMessage("PushMessage")
+    PushMessage("PushMessage"),
+
+    QueryMessages("QueryMessages")
 
     ;
 

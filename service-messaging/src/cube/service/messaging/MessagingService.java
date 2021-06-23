@@ -56,6 +56,7 @@ import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchy;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -229,6 +230,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject notify(JSONObject data) {
         if (data.has("action")) {
@@ -238,6 +242,23 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 Device device = new Device(data.getJSONObject("device"));
                 PushResult result = this.pushMessage(message, device);
                 return result.toJSON();
+            }
+            else if (MessagingAction.Pull.name.equals(action)) {
+                String domain = data.getString("domain");
+                long beginning = data.getLong("beginning");
+                long ending = data.getLong("ending");
+                if (data.has("contactId")) {
+                    Long contactId = data.getLong("contactId");
+                    List<Message> list = this.pullMessage(domain, contactId, beginning, ending);
+                    JSONArray array = new JSONArray();
+
+                    for (Message message : list) {
+                        array.put(message.toJSON());
+                    }
+
+                    data.put("list", array);
+                    return data;
+                }
             }
         }
 

@@ -34,10 +34,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
-import cube.service.client.task.GetContactTask;
-import cube.service.client.task.GetGroupTask;
-import cube.service.client.task.ListOnlineContactsTask;
-import cube.service.client.task.PushMessageTask;
+import cube.service.client.task.*;
 
 import java.util.concurrent.ExecutorService;
 
@@ -90,26 +87,6 @@ public class ClientCellet extends AbstractCellet {
                 }
             });
         }
-        else if (Actions.AddEventListener.name.equals(action)) {
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    ClientManager.getInstance().addEventListener(actionDialect.getParamAsLong("id"),
-                            actionDialect.getParamAsString("event"),
-                            actionDialect.containsParam("param") ? actionDialect.getParamAsJson("param") : null);
-                }
-            });
-        }
-        else if (Actions.RemoveEventListener.name.equals(action)) {
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    ClientManager.getInstance().removeEventListener(actionDialect.getParamAsLong("id"),
-                            actionDialect.getParamAsString("event"),
-                            actionDialect.containsParam("param") ? actionDialect.getParamAsJson("param") : null);
-                }
-            });
-        }
         else if (Actions.PushMessage.name.equals(action)) {
             PushMessageTask task = new PushMessageTask(this, talkContext, actionDialect);
             this.executor.execute(new Runnable() {
@@ -137,8 +114,37 @@ public class ClientCellet extends AbstractCellet {
                 }
             });
         }
+        else if (Actions.AddEventListener.name.equals(action)) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ClientManager.getInstance().addEventListener(actionDialect.getParamAsLong("id"),
+                            actionDialect.getParamAsString("event"),
+                            actionDialect.containsParam("param") ? actionDialect.getParamAsJson("param") : null);
+                }
+            });
+        }
+        else if (Actions.RemoveEventListener.name.equals(action)) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ClientManager.getInstance().removeEventListener(actionDialect.getParamAsLong("id"),
+                            actionDialect.getParamAsString("event"),
+                            actionDialect.containsParam("param") ? actionDialect.getParamAsJson("param") : null);
+                }
+            });
+        }
         else if (Actions.ListOnlineContacts.name.equals(action)) {
             ListOnlineContactsTask task = new ListOnlineContactsTask(this, talkContext, actionDialect);
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    task.run();
+                }
+            });
+        }
+        else if (Actions.QueryMessages.name.equals(action)) {
+            QueryMessagesTask task = new QueryMessagesTask(this, talkContext, actionDialect);
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {

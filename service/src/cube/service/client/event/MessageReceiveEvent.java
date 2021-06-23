@@ -46,22 +46,47 @@ public class MessageReceiveEvent implements JSONable {
 
     private Message message;
 
+    /**
+     * 构造函数。
+     *
+     * @param contact
+     */
     public MessageReceiveEvent(Contact contact) {
         this.contact = contact;
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param group
+     */
     public MessageReceiveEvent(Group group) {
         this.group = group;
     }
 
+    /**
+     * 获取联系人。
+     *
+     * @return
+     */
     public Contact getContact() {
         return this.contact;
     }
 
+    /**
+     * 获取群组。
+     *
+     * @return
+     */
     public Group getGroup() {
         return this.group;
     }
 
+    /**
+     * 设置消息。
+     *
+     * @param message
+     */
     public void setMessage(Message message) {
         this.message = message;
     }

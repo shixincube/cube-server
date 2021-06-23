@@ -31,6 +31,7 @@ import cell.core.talk.TalkContext;
 import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
+import cube.common.entity.Group;
 import cube.common.entity.Message;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -260,6 +261,15 @@ public final class ClientManager {
                 MessageReceiveEvent event = new MessageReceiveEvent(contact);
                 serverClient.addEvent(event);
             }
+            else if (eventParam.has("groupId")) {
+                Long groupId = eventParam.getLong("groupId");
+
+                Group group = ContactManager.getInstance().getGroup(groupId, domain);
+                if (null != group) {
+                    MessageReceiveEvent event = new MessageReceiveEvent(group);
+                    serverClient.addEvent(event);
+                }
+            }
         }
     }
 
@@ -286,6 +296,15 @@ public final class ClientManager {
                 Contact contact = ContactManager.getInstance().getContact(domain, contactId);
                 MessageReceiveEvent event = new MessageReceiveEvent(contact);
                 serverClient.removeEvent(event);
+            }
+            else if (eventParam.has("groupId")) {
+                Long groupId = eventParam.getLong("groupId");
+
+                Group group = ContactManager.getInstance().getGroup(groupId, domain);
+                if (null != group) {
+                    MessageReceiveEvent event = new MessageReceiveEvent(group);
+                    serverClient.removeEvent(event);
+                }
             }
         }
     }
