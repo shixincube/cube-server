@@ -639,7 +639,29 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     }
 
     /**
-     * 生成消息的 From 和 To 的两个副本。
+     * 查询指定群组在指定时间范围内的消息。
+     *
+     * @param group
+     * @param beginningTime
+     * @param endingTime
+     * @return
+     */
+    public List<Message> queryGroupMessages(Group group, long beginningTime, long endingTime) {
+        List<Message> list = this.storage.readWithGroupOrderByTime(group.getDomain().getName(),
+                group.getId(), beginningTime, endingTime);
+
+        // 按照时间升序排序
+        Collections.sort(list);
+
+        for (Message message : list) {
+            message.setOwner(message.getFrom());
+        }
+
+        return list;
+    }
+
+    /**
+     * 制作消息的 From 和 To 的两个副本。
      *
      * @param message
      * @return

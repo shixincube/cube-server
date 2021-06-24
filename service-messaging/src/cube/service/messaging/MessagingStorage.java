@@ -80,12 +80,12 @@ public class MessagingStorage implements Storagable {
     /**
      * 消息状态描述。
      */
-    private final StorageField[] stateFields = new StorageField[] {
-            new StorageField("contact_id", LiteralBase.LONG),
-            new StorageField("message_id", LiteralBase.LONG),
-            new StorageField("state", LiteralBase.INT),
-            new StorageField("timestamp", LiteralBase.LONG)
-    };
+//    private final StorageField[] stateFields = new StorageField[] {
+//            new StorageField("contact_id", LiteralBase.LONG),
+//            new StorageField("message_id", LiteralBase.LONG),
+//            new StorageField("state", LiteralBase.INT),
+//            new StorageField("timestamp", LiteralBase.LONG)
+//    };
 
     private ExecutorService executor;
 
@@ -414,6 +414,73 @@ public class MessagingStorage implements Storagable {
                 messages.add(message);
             }
         }
+
+        return messages;
+    }
+
+    /**
+     * 按照指定的起止时间顺序读取消息。
+     *
+     * @param domain
+     * @param groupId
+     * @param beginning
+     * @param ending
+     * @return
+     */
+    public List<Message> readWithGroupOrderByTime(String domain, Long groupId, long beginning, long ending) {
+        // 取表名
+        String table = this.messageTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("source", LiteralBase.LONG, groupId)),
+                Conditional.createAnd(),
+                Conditional.createGreaterThan(new StorageField("rts", LiteralBase.LONG, beginning)),
+                Conditional.createAnd(),
+                Conditional.createLessThanEqual(new StorageField("rts", LiteralBase.LONG, ending))
+        });
+
+        ArrayList<Long> idList = new ArrayList<>();
+        ArrayList<Message> messages = new ArrayList<>(result.size());
+
+        for (StorageField[] row : result) {
+            Map<String, StorageField> map = StorageFields.get(row);
+
+            // 判断 ID 是否重复
+            Long messageId = map.get("id").getLong();
+            if (idList.contains(messageId)) {
+                continue;
+            }
+
+            idList.add(messageId);
+
+            JSONObject device = null;
+            JSONObject payload = null;
+            JSONObject attachment = null;
+            try {
+                device = new JSONObject(map.get("device").getString());
+                payload = new JSONObject(map.get("payload").getString());
+                if (!map.get("attachment").isNullValue()) {
+                    attachment = new JSONObject(map.get("attachment").getString());
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            Message message = new Message(domain, messageId, map.get("from").getLong(),
+                    map.get("to").getLong(), map.get("source").getLong(), map.get("owner").getLong(),
+                    map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
+                    map.get("scope").getInt(),
+                    device, payload, attachment);
+
+            if (message.getState() == MessageState.Read || message.getState() == MessageState.Sent) {
+                messages.add(message);
+            }
+        }
+
+        idList.clear();
 
         return messages;
     }
