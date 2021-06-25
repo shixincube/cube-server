@@ -286,10 +286,6 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             return new PushResult(message, MessagingStateCode.AttachmentError);
         }
 
-//        if (Logger.isDebugLevel()) {
-//            Logger.d(this.getClass(), "Push message: " + message.getId());
-//        }
-
         // 依照作用域进行投送
         if (message.getScope() == 0) {
             // 一般作用域
@@ -738,10 +734,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             }
         }
 
-        if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "Process attachment [File Exists] : " + message.getFrom() + " - "
-                    + message.getAttachment().getFileCode());
-        }
+//        if (Logger.isDebugLevel()) {
+//            Logger.d(this.getClass(), "Process attachment [File Exists] : " + message.getFrom() + " - "
+//                    + message.getAttachment().getFileCode());
+//        }
 
         // 获取文件标签
         FileLabel fileLabel = fileStorageService.getFile(domainName, fileAttachment.getFileCode());
@@ -787,10 +783,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         // 向消息附件追加文件标签
         fileAttachment.setFileLabel(fileLabel);
 
-        if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "Process attachment [Set file label] : " + message.getFrom() + " - "
-                    + message.getAttachment().getFileCode());
-        }
+//        if (Logger.isDebugLevel()) {
+//            Logger.d(this.getClass(), "Process attachment [Set file label] : " + message.getFrom() + " - "
+//                    + message.getAttachment().getFileCode());
+//        }
 
         // 是否生成缩略图
         JSONObject thumbConfig = fileAttachment.getThumbConfig();

@@ -73,6 +73,10 @@ public class Signal extends Entity {
         return this.destContact;
     }
 
+    public void setDestContact(Contact contact) {
+        this.destContact = contact;
+    }
+
     public Device getDestDevice() {
         return this.destDevice;
     }
@@ -119,6 +123,8 @@ public class Signal extends Entity {
 
     @Override
     public JSONObject toCompactJSON() {
-        return toJSON();
+        JSONObject json = this.toJSON();
+        json.remove("payload");
+        return json;
     }
 }
