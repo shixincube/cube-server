@@ -52,10 +52,10 @@
 		<cellet port="6000">
 			<class>cube.service.contact.ContactServiceCellet</class>
 		</cellet>
-		<cellet port="6000" jar="cellets/cube-service-filestorage-3.0.jar">
+		<cellet port="6000">
 			<class>cube.service.filestorage.FileStorageServiceCellet</class>
 		</cellet>
-		<cellet port="6000" jar="cellets/cube-service-fileprocessor-3.0.jar">
+		<cellet port="6000">
 			<class>cube.service.fileprocessor.FileProcessorServiceCellet</class>
 		</cellet>
 		<cellet port="6000" jar="cellets/cube-service-messaging-3.0.jar">

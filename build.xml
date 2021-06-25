@@ -175,8 +175,8 @@
 				<include name="cube-common-*.jar" />
 				<include name="cube-dispatcher-*.jar" />
 				<include name="cube-service-*.jar" />
-				<exclude name="*service-filestorage*" />
-				<exclude name="*service-fileprocessor*" />
+				<include name="cube-service-filestorage-*.jar" />
+				<include name="cube-service-fileprocessor-*.jar" />
 				<exclude name="*service-messaging*" />
 				<exclude name="*service-multipointcomm*" />
 				<exclude name="*service-conference*" />
@@ -184,8 +184,6 @@
 		</copy>
 		<copy todir="${deploy.dir}/cellets/">
 			<fileset dir="${build.dir}">
-				<include name="cube-service-filestorage-*.jar" />
-				<include name="cube-service-fileprocessor-*.jar" />
 				<include name="cube-service-messaging-*.jar" />
 				<include name="cube-service-multipointcomm-*.jar" />
 				<include name="cube-service-conference-*.jar" />
@@ -202,12 +200,12 @@
 				<include name="cube-common-*.jar" />
 				<include name="cube-dispatcher-*.jar" />
 				<include name="cube-service-*.jar" />
+				<include name="cube-service-filestorage-*.jar" />
+				<include name="cube-service-fileprocessor-*.jar" />
 			</fileset>
 		</delete>
 		<delete failonerror="false" includeemptydirs="true">
 			<fileset dir="${deploy.dir}/cellets/">
-				<include name="cube-service-filestorage-*.jar" />
-				<include name="cube-service-fileprocessor-*.jar" />
 				<include name="cube-service-messaging-*.jar" />
 				<include name="cube-service-multipointcomm-*.jar" />
 				<include name="cube-service-conference-*.jar" />
