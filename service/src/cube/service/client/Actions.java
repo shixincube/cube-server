@@ -49,6 +49,8 @@ public enum Actions {
 
     CreateContact("CreateContact"),
 
+    UpdateContact("UpdateContact"),
+
     PushMessage("PushMessage"),
 
     QueryMessages("QueryMessages")

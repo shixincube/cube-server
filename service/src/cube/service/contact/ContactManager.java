@@ -468,6 +468,50 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 更新联系人。
+     *
+     * @param domain
+     * @param contactId
+     * @param newName
+     * @param newContext
+     */
+    public void updateContact(String domain, Long contactId, String newName, JSONObject newContext) {
+        String key = UniqueKey.make(contactId, domain);
+
+        // 更新缓存里的数据
+        JSONObject data = this.contactCache.applyGet(key);
+        if (null != data) {
+            Contact contact = new Contact(data);
+            if (null != newName) {
+                contact.setName(newName);
+            }
+            if (null != newContext) {
+                contact.setContext(newContext);
+            }
+
+            this.contactCache.applyPut(key, contact.toJSON());
+        }
+
+        // 更新数据库
+        Contact contact = this.storage.readContact(domain, contactId);
+        if (null != contact) {
+            if (null != newName) {
+                contact.setName(newName);
+            }
+            if (null != newContext) {
+                contact.setContext(newContext);
+            }
+
+            this.storage.writeContact(contact);
+
+            ContactTable table = this.onlineTables.get(domain);
+            if (null != table) {
+                table.update(contact);
+            }
+        }
+    }
+
+    /**
      * 获取令牌对应的联系人。
      *
      * @param tokenCode

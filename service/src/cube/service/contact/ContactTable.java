@@ -131,6 +131,23 @@ public class ContactTable {
         this.contactBlockLists.remove(contact.getId());
     }
 
+    /**
+     * 更新联系人。
+     *
+     * @param contact
+     * @return
+     */
+    public boolean update(Contact contact) {
+        Contact current = this.onlineContacts.get(contact.getId());
+        if (null == current) {
+            return false;
+        }
+
+        current.setName(contact.getName());
+        current.setContext(contact.getContext());
+        return true;
+    }
+
     public List<Long> getBlockList(Contact contact) {
         return this.contactBlockLists.get(contact.getId());
     }
