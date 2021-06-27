@@ -282,6 +282,27 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 创建联系人。
+     *
+     * @param contactId
+     * @param domain
+     * @param contactName
+     * @param context
+     * @return
+     */
+    public Contact createContact(Long contactId, String domain, String contactName, JSONObject context) {
+        Contact contact = new Contact(contactId, domain, contactName);
+        contact.setContext(context);
+
+        Device device = new Device("Server", "Cube Server");
+
+        // 更新存储
+        this.storage.writeContact(contact, device);
+
+        return contact;
+    }
+
+    /**
      * 终端签入。
      *
      * @param contact
