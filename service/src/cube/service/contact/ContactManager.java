@@ -318,10 +318,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 终端签入。
      *
-     * @param contact
-     * @param authToken
-     * @param activeDevice
-     * @return
+     * @param contact 指定联系人。
+     * @param authToken 指定联系人使用的授权令牌。
+     * @param activeDevice 指定当前签入的设备。
+     * @return 返回联系人实例。
      */
     public Contact signIn(final Contact contact, final AuthToken authToken, final Device activeDevice) {
         // 判断 Domain 名称
@@ -367,10 +367,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 联系人签出。
      *
-     * @param contact
-     * @param tokenCode
-     * @param activeDevice
-     * @return
+     * @param contact 指定联系人。
+     * @param tokenCode 指定签入时使用的令牌码。
+     * @param activeDevice 指定当前签出的活跃设备。
+     * @return 返回联系人实例。
      */
     public Contact signOut(final Contact contact, String tokenCode, Device activeDevice) {
         // Hook 调用插件
@@ -427,9 +427,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 客户端在断线后恢复。
      *
-     * @param contact
-     * @param tokenCode
-     * @return
+     * @param contact 指定联系人。
+     * @param tokenCode 指定令牌码。
+     * @return 返回联系人实例。操作失败时返回 <code>null</code> 值。
      */
     public Contact comeback(final Contact contact, final String tokenCode) {
         if (null == tokenCode) {
@@ -457,7 +457,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 报告指定的联系人的设备断开连接。
      *
-     * @param contact
+     * @param contact 指定联系人。
      */
     public void reportDisconnect(Contact contact) {
         String key = contact.getUniqueKey();
@@ -468,8 +468,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 获取令牌对应的设备。
      *
-     * @param tokenCode
-     * @return
+     * @param tokenCode 指定设备的令牌码。
+     * @return 返回设备实例。
      */
     public Device getDevice(String tokenCode) {
         TokenDevice device = this.tokenContactMap.get(tokenCode);
@@ -483,12 +483,13 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 更新联系人。
      *
-     * @param domain
-     * @param contactId
-     * @param newName
-     * @param newContext
+     * @param domain 指定域名称。
+     * @param contactId 指定联系人 ID 。
+     * @param newName 指定联系人的新名称。
+     * @param newContext 指定联系人的新上下文数据。
+     * @return 返回更新后的联系人实例。
      */
-    public void updateContact(String domain, Long contactId, String newName, JSONObject newContext) {
+    public Contact updateContact(String domain, Long contactId, String newName, JSONObject newContext) {
         String key = UniqueKey.make(contactId, domain);
 
         // 更新缓存里的数据
@@ -515,20 +516,26 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 contact.setContext(newContext);
             }
 
+            // 更新数据库
             this.storage.writeContact(contact);
 
+            // 尝试更新在线数据
             ContactTable table = this.onlineTables.get(domain);
             if (null != table) {
                 table.update(contact);
             }
+
+            return contact;
         }
+
+        return null;
     }
 
     /**
      * 获取令牌对应的联系人。
      *
-     * @param tokenCode
-     * @return
+     * @param tokenCode 指定令牌码。
+     * @return 返回令牌码对应的联系人。
      */
     public Contact getContact(String tokenCode) {
         TokenDevice device = this.tokenContactMap.get(tokenCode);
@@ -542,9 +549,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 获取联系人。
      *
-     * @param domain
-     * @param id
-     * @return
+     * @param domain 指定域名称。
+     * @param id 指定联系人 ID 。
+     * @return 返回联系人实例。
      */
     public Contact getContact(String domain, Long id) {
         String key = UniqueKey.make(id, domain);
@@ -566,9 +573,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 获取指定的在线联系人。
      *
-     * @param domainName
-     * @param id
-     * @return
+     * @param domainName 指定域名称。
+     * @param id 指定联系人 ID 。
+     * @return 返回指定的在线联系人。
      */
     public Contact getOnlineContact(String domainName, Long id) {
         ContactTable table = this.onlineTables.get(domainName);

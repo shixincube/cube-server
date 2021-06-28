@@ -114,15 +114,6 @@ public class ClientCellet extends AbstractCellet {
                 }
             });
         }
-        else if (Actions.CreateContact.name.equals(action)) {
-            CreateContactTask task = new CreateContactTask(this, talkContext, actionDialect);
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    task.run();
-                }
-            });
-        }
         else if (Actions.AddEventListener.name.equals(action)) {
             this.executor.execute(new Runnable() {
                 @Override
@@ -154,6 +145,24 @@ public class ClientCellet extends AbstractCellet {
         }
         else if (Actions.QueryMessages.name.equals(action)) {
             QueryMessagesTask task = new QueryMessagesTask(this, talkContext, actionDialect);
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    task.run();
+                }
+            });
+        }
+        else if (Actions.UpdateContact.name.equals(action)) {
+            UpdateContactTask task = new UpdateContactTask(this, talkContext, actionDialect);
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    task.run();
+                }
+            });
+        }
+        else if (Actions.CreateContact.name.equals(action)) {
+            CreateContactTask task = new CreateContactTask(this, talkContext, actionDialect);
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
