@@ -161,6 +161,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         return ContactManager.instance;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void start() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
@@ -224,6 +227,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }).start();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void stop() {
         this.storage.close();
@@ -239,11 +245,17 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         this.executor.shutdown();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public PluginSystem<?> getPluginSystem() {
         return this.pluginSystem;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onTick(cube.core.Module module, Kernel kernel) {
         this.daemon.run();
@@ -257,7 +269,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
-     * @param cellet
+     * 设置 Cellet 实例。
+     * @param cellet 指定 Cellet 。
      */
     public void setCellet(ContactServiceCellet cellet) {
         this.cellet = cellet;
@@ -284,11 +297,11 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 创建联系人。
      *
-     * @param contactId
-     * @param domain
-     * @param contactName
-     * @param context
-     * @return
+     * @param contactId 指定联系人 ID 。
+     * @param domain 指定域名称。
+     * @param contactName 指定联系人名称。
+     * @param context 指定联系人上下文数据，可以设置 <code>null</code> 值。
+     * @return 返回联系人实例。
      */
     public Contact createContact(Long contactId, String domain, String contactName, JSONObject context) {
         Contact contact = new Contact(contactId, domain, contactName);
