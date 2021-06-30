@@ -171,6 +171,17 @@ public class AuthStorage implements Storagable {
         return list;
     }
 
+    /**
+     * 添加域应用。
+     *
+     * @param domain
+     * @param appId
+     * @param appKey
+     * @param main
+     * @param http
+     * @param https
+     * @param iceServers
+     */
     public void addDomainApp(String domain, String appId, String appKey, Endpoint main, Endpoint http, Endpoint https,
         JSONArray iceServers) {
         this.storage.executeInsert(this.domainTable, new StorageField[] {
@@ -187,6 +198,13 @@ public class AuthStorage implements Storagable {
         });
     }
 
+    /**
+     * 移除域应用。
+     *
+     * @param domain
+     * @param appId
+     * @param appKey
+     */
     public void removeDomainApp(String domain, String appId, String appKey) {
         this.storage.executeDelete(this.domainTable, new Conditional[] {
                 Conditional.createEqualTo("domain", LiteralBase.STRING, domain),

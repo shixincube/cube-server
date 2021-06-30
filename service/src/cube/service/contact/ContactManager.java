@@ -300,7 +300,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contactId 指定联系人 ID 。
      * @param domain 指定域名称。
      * @param contactName 指定联系人名称。
-     * @param context 指定联系人上下文数据，可以设置 <code>null</code> 值。
+     * @param context 指定联系人上下文数据，可以设置 {@code null} 值。
      * @return 返回联系人实例。
      */
     public Contact createContact(Long contactId, String domain, String contactName, JSONObject context) {
@@ -429,7 +429,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      *
      * @param contact 指定联系人。
      * @param tokenCode 指定令牌码。
-     * @return 返回联系人实例。操作失败时返回 <code>null</code> 值。
+     * @return 返回联系人实例。操作失败时返回 {@code null} 值。
      */
     public Contact comeback(final Contact contact, final String tokenCode) {
         if (null == tokenCode) {

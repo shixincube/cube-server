@@ -29,6 +29,7 @@ package cube.service.fileprocessor;
 import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
 import cube.common.entity.FileThumbnail;
+import cube.common.entity.Image;
 import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -61,6 +62,8 @@ public class FileProcessorService extends AbstractModule {
     private Path workPath;
 
     private CVConnector cvConnector;
+
+    private boolean useImageMagick = true;
 
     public FileProcessorService(ExecutorService executor) {
         super();
@@ -176,67 +179,95 @@ public class FileProcessorService extends AbstractModule {
         int thumbWidth = 0;
         int thumbHeight = 0;
 
-        FileInputStream fis = null;
-
-        try {
-            fis = new FileInputStream(input);
-
-            Thumbnails.Builder<? extends InputStream> fileBuilder = Thumbnails.of(fis).scale(1.0).outputQuality(1.0);
-//            Thumbnails.Builder<File> fileBuilder = Thumbnails.of(input).scale(1.0).outputQuality(1.0);
-
-            BufferedImage src = fileBuilder.asBufferedImage();
-            srcWidth = src.getWidth();
-            srcHeight = src.getHeight();
-
-            if (srcWidth > size || srcHeight > size) {
-                Thumbnails.Builder<File> builder = Thumbnails.of(input);
-                builder.size(size, size).outputFormat("jpg").outputQuality(quality).toFile(outputFile);
-
-                BufferedImage thumb = builder.asBufferedImage();
-                thumbWidth = thumb.getWidth();
-                thumbHeight = thumb.getHeight();
-                thumb = null;
-            }
-            else {
-                Thumbnails.of(input).scale(1.0).outputQuality(quality).toFile(outputFile);
-
-                thumbWidth = srcWidth;
-                thumbHeight = srcHeight;
+        if (this.useImageMagick) {
+            Image image = ImageTools.identify(input.getAbsolutePath());
+            if (null == image) {
+                Logger.w(this.getClass(), "#makeThumbnail - Can NOT identify input file : " + input.getAbsolutePath());
+                return null;
             }
 
-            src = null;
-        } catch (IOException e) {
-            Logger.e(this.getClass(), "#makeThumbnail", e);
-            return null;
-        } finally {
-            if (null != fis) {
-                try {
-                    fis.close();
-                } catch (IOException e) {
-                    // Nothing
+            srcWidth = image.width;
+            srcHeight = image.height;
+
+            Image thumbImage = ImageTools.thumbnail(input.getAbsolutePath(), outputFile, size);
+
+            if (null == thumbImage) {
+                Logger.w(this.getClass(), "#makeThumbnail - Can NOT make thumbnail image : " + input.getAbsolutePath());
+                return null;
+            }
+
+            thumbWidth = thumbImage.width;
+            thumbHeight = thumbImage.height;
+        }
+        else {
+            FileInputStream fis = null;
+
+            try {
+                fis = new FileInputStream(input);
+
+                Thumbnails.Builder<? extends InputStream> fileBuilder = Thumbnails.of(fis).scale(1.0).outputQuality(1.0);
+//                Thumbnails.Builder<File> fileBuilder = Thumbnails.of(input).scale(1.0).outputQuality(1.0);
+
+                BufferedImage src = fileBuilder.asBufferedImage();
+                srcWidth = src.getWidth();
+                srcHeight = src.getHeight();
+
+                if (srcWidth > size || srcHeight > size) {
+                    Thumbnails.Builder<File> builder = Thumbnails.of(input);
+                    builder.size(size, size).outputFormat("jpg").outputQuality(quality).toFile(outputFile);
+
+                    BufferedImage thumb = builder.asBufferedImage();
+                    thumbWidth = thumb.getWidth();
+                    thumbHeight = thumb.getHeight();
+                    thumb = null;
+                }
+                else {
+                    Thumbnails.of(input).scale(1.0).outputQuality(quality).toFile(outputFile);
+
+                    thumbWidth = srcWidth;
+                    thumbHeight = srcHeight;
+                }
+
+                src = null;
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#makeThumbnail", e);
+                return null;
+            } finally {
+                if (null != fis) {
+                    try {
+                        fis.close();
+                    } catch (IOException e) {
+                        // Nothing
+                    }
                 }
             }
         }
 
         // 写入到文件系统
         File thumbFile = new File(outputFile + ".jpg");
-        fileStorage.writeFile(thumbFileCode, thumbFile);
+        if (thumbFile.exists()) {
+            // 写入到文件存储
+            fileStorage.writeFile(thumbFileCode, thumbFile);
 
-        // 放置文件标签
-        FileLabel fileLabel = new FileLabel(domainName, thumbFileCode, srcFileLabel.getOwnerId(),
-                thumbFileName, thumbFile.length(), thumbFile.lastModified(),
-                System.currentTimeMillis(), srcFileLabel.getExpiryTime());
-        fileLabel.setFileType(FileType.JPEG);
-        fileLabel = fileStorage.putFile(fileLabel);
+            // 放置文件标签
+            FileLabel fileLabel = new FileLabel(domainName, thumbFileCode, srcFileLabel.getOwnerId(),
+                    thumbFileName, thumbFile.length(), thumbFile.lastModified(),
+                    System.currentTimeMillis(), srcFileLabel.getExpiryTime());
+            fileLabel.setFileType(FileType.JPEG);
+            fileLabel = fileStorage.putFile(fileLabel);
 
-        // 创建文件缩略图
-        fileThumbnail = new FileThumbnail(fileLabel, thumbWidth, thumbHeight,
-                srcFileLabel.getFileCode(), srcWidth, srcHeight, quality);
+            // 创建文件缩略图
+            fileThumbnail = new FileThumbnail(fileLabel, thumbWidth, thumbHeight,
+                    srcFileLabel.getFileCode(), srcWidth, srcHeight, quality);
 
-        // 删除临时文件
-        thumbFile.delete();
+            // 删除临时文件
+            thumbFile.delete();
 
-        return fileThumbnail;
+            return fileThumbnail;
+        }
+        else {
+            return null;
+        }
     }
 
     public CVResult detectObject(String domainName, String fileCode) {

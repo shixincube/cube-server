@@ -30,10 +30,12 @@ import cell.core.net.Endpoint;
 import cell.util.Utils;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
+import cube.common.entity.IceServer;
 import cube.core.*;
 import cube.plugin.PluginSystem;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -280,17 +282,38 @@ public class AuthService extends AbstractModule {
      * 创建新的访问域。
      *
      * @param domainName 指定域名称。
-     * @param appKey
-     * @param appId
-     * @param mainEndpoint
-     * @param httpEndpoint
-     * @param httpsEndpoint
-     * @return
+     * @param appKey 指定 App Key 。
+     * @param appId 指定 App ID 。
+     * @param mainEndpoint 指定主接入点。
+     * @param httpEndpoint 指定 HTTP 接入点。
+     * @param httpsEndpoint 指定 HTTPS 接入点。
+     * @param iceServers 指定 ICE 服务器列表。
+     * @return 返回创建的域。如果域重复或者创建失败返回 {@code null} 值。
      */
-    public AuthDomain createAuthDomain(String domainName, String appKey, String appId, Endpoint mainEndpoint,
-                                       Endpoint httpEndpoint, Endpoint httpsEndpoint) {
-//        this.authDomainMap
-        return null;
+    public AuthDomain createDomainApp(String domainName, String appKey, String appId, Endpoint mainEndpoint,
+                                       Endpoint httpEndpoint, Endpoint httpsEndpoint, List<IceServer> iceServers) {
+        // 判断是否有重复的 App
+        AuthDomain authDomain = this.authStorage.getDomain(domainName, appKey);
+        if (null != authDomain) {
+            // 已经存在指定的 App
+            return null;
+        }
+
+        if (null == iceServers) {
+            iceServers = new ArrayList<>();
+            iceServers.add(new IceServer("turn:52.83.195.35:3478", "cube", "cube887"));
+        }
+
+        JSONArray jsonArray = new JSONArray();
+        for (int i = 0; i < iceServers.size(); ++i) {
+            jsonArray.put(iceServers.get(i).toJSON());
+        }
+
+        // 新增数据库记录
+        this.authStorage.addDomainApp(domainName, appId, appKey, mainEndpoint, httpEndpoint, httpsEndpoint, jsonArray);
+
+        authDomain = new AuthDomain(domainName, appKey, appId, mainEndpoint, httpEndpoint, httpsEndpoint, jsonArray);
+        return authDomain;
     }
 
     private JSONObject createPrimaryContent() {
@@ -307,5 +330,4 @@ public class AuthService extends AbstractModule {
         }
         return result;
     }
-
 }
