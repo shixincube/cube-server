@@ -26,6 +26,7 @@
 
 package cube.service.contact;
 
+import cube.auth.AuthToken;
 import cube.common.Domain;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
@@ -44,6 +45,8 @@ public class ContactTable {
 
     private ConcurrentHashMap<Long, Contact> onlineContacts;
 
+    private ConcurrentHashMap<Long, AuthToken> contactTokenMap;
+
     /**
      * 联系人的阻止列表。
      */
@@ -52,6 +55,7 @@ public class ContactTable {
     public ContactTable(Domain domain) {
         this.domain = domain;
         this.onlineContacts = new ConcurrentHashMap<>();
+        this.contactTokenMap = new ConcurrentHashMap<>();
         this.contactBlockLists = new ConcurrentHashMap<>();
     }
 
@@ -76,7 +80,7 @@ public class ContactTable {
      * @param device
      * @return
      */
-    public Contact add(Contact contact, Device device) {
+    public Contact add(Contact contact, Device device, AuthToken authToken) {
         Contact current = this.onlineContacts.get(contact.getId());
         if (null == current) {
             current = contact;
@@ -94,6 +98,8 @@ public class ContactTable {
 
             current.addDevice(device);
         }
+
+        this.contactTokenMap.put(current.getId(), authToken);
 
         return current;
     }
@@ -113,6 +119,16 @@ public class ContactTable {
     }
 
     /**
+     * 获取联系人的令牌。
+     *
+     * @param contactId
+     * @return
+     */
+    public AuthToken getAuthToken(Long contactId) {
+        return this.contactTokenMap.get(contactId);
+    }
+
+    /**
      * 获取在线联系人列表。
      *
      * @return
@@ -129,6 +145,7 @@ public class ContactTable {
     public void remove(Contact contact) {
         this.onlineContacts.remove(contact.getId());
         this.contactBlockLists.remove(contact.getId());
+        this.contactTokenMap.remove(contact.getId());
     }
 
     /**

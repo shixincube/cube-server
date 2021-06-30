@@ -26,6 +26,7 @@
 
 package cube.service.auth;
 
+import cell.core.net.Endpoint;
 import cell.util.Utils;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
@@ -60,7 +61,7 @@ public class AuthService extends AbstractModule {
 
     private ConcurrentHashMap<String, AuthToken> authTokenMap;
 
-    private ConcurrentHashMap<String, AuthDomain> authDomainMap;
+    private ConcurrentHashMap<String, AuthDomainSet> authDomainMap;
 
     public AuthService() {
         this.authTokenMap = new ConcurrentHashMap<>();
@@ -122,7 +123,7 @@ public class AuthService extends AbstractModule {
     /**
      * 返回所有域的清单。
      *
-     * @return
+     * @return 返回所有域的清单。
      */
     public List<String> getDomainList() {
         if (this.useFile) {
@@ -139,10 +140,11 @@ public class AuthService extends AbstractModule {
 
     /**
      * 申请令牌。
-     * @param domain
-     * @param appKey
-     * @param cid
-     * @return
+     *
+     * @param domain 指定域名称。
+     * @param appKey 指定 App Key 值。
+     * @param cid 指定绑定的 CID 。
+     * @return 返回令牌。
      */
     public AuthToken applyToken(String domain, String appKey, Long cid) {
         AuthToken token = null;
@@ -203,8 +205,8 @@ public class AuthService extends AbstractModule {
     /**
      * 通过编码获取令牌。
      *
-     * @param code
-     * @return
+     * @param code 指定令牌码。
+     * @return 返回令牌码对应的令牌。
      */
     public AuthToken getToken(String code) {
         AuthToken token = this.authTokenMap.get(code);
@@ -233,26 +235,62 @@ public class AuthService extends AbstractModule {
     }
 
     /**
-     * 返回指定域的主描述内容。
+     * 获取指定域的主描述内容。
      *
-     * @param domain
-     * @return
+     * @param domain 指定域名称。
+     * @return 返回指定域的主描述内容。
      */
-    public JSONObject getPrimaryContent(String domain) {
+    public JSONObject getPrimaryContent(String domain, String appKey) {
         if (this.useFile) {
             return this.primaryContentFile.getContent(domain);
         }
         else {
-            AuthDomain authDomain = this.authDomainMap.get(domain);
+            AuthDomainSet authDomainSet = this.authDomainMap.get(domain);
+            if (null == authDomainSet) {
+                authDomainSet = new AuthDomainSet(domain);
+                this.authDomainMap.put(domain, authDomainSet);
+            }
+
+            if (null == appKey) {
+                // 兼容之前不使用 App Key 查询域的调用方式
+                AuthDomain authDomain = this.authStorage.getDomain(domain, null);
+                if (null == authDomain) {
+                    return null;
+                }
+                return authDomain.getPrimaryDescription().getPrimaryContent();
+            }
+
+            AuthDomain authDomain = authDomainSet.getAuthDomain(appKey);
             if (null == authDomain) {
-                authDomain = this.authStorage.getDomain(domain);
+                authDomain = this.authStorage.getDomain(domain, appKey);
                 if (null != authDomain) {
-                    this.authDomainMap.put(domain, authDomain);
+                    authDomainSet.addAuthDomain(authDomain);
                 }
             }
 
-            return authDomain.getPrimaryDescription().getPrimaryContent();
+            if (null != authDomain) {
+                return authDomain.getPrimaryDescription().getPrimaryContent();
+            }
+
+            return null;
         }
+    }
+
+    /**
+     * 创建新的访问域。
+     *
+     * @param domainName 指定域名称。
+     * @param appKey
+     * @param appId
+     * @param mainEndpoint
+     * @param httpEndpoint
+     * @param httpsEndpoint
+     * @return
+     */
+    public AuthDomain createAuthDomain(String domainName, String appKey, String appId, Endpoint mainEndpoint,
+                                       Endpoint httpEndpoint, Endpoint httpsEndpoint) {
+//        this.authDomainMap
+        return null;
     }
 
     private JSONObject createPrimaryContent() {

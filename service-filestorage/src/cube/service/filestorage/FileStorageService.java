@@ -27,11 +27,13 @@
 package cube.service.filestorage;
 
 import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.cache.SharedMemoryCache;
 import cube.common.entity.FileLabel;
 import cube.core.*;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
+import cube.service.contact.ContactManager;
 import cube.service.filestorage.hierarchy.FileHierarchy;
 import cube.service.filestorage.hierarchy.FileHierarchyManager;
 import cube.service.filestorage.recycle.RecycleBin;
@@ -285,8 +287,14 @@ public class FileStorageService extends AbstractModule {
 
         fileLabel.setDirectURL(descriptor.getURL());
 
+        String appKey = null;
+        AuthToken authToken = ContactManager.getInstance().getAuthToken(fileLabel.getDomain().getName(), fileLabel.getOwnerId());
+        if (null != authToken) {
+            appKey = authToken.getAppKey();
+        }
+
         // 获取外部访问的 URL 信息
-        String[] urls = this.getFileURLs(fileLabel.getDomain().getName());
+        String[] urls = this.getFileURLs(fileLabel.getDomain().getName(), appKey);
         if (null == urls) {
             return null;
         }
@@ -415,9 +423,9 @@ public class FileStorageService extends AbstractModule {
      * @param domain
      * @return
      */
-    private String[] getFileURLs(String domain) {
+    private String[] getFileURLs(String domain, String appKey) {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
-        JSONObject primary = authService.getPrimaryContent(domain);
+        JSONObject primary = authService.getPrimaryContent(domain, appKey);
         if (null == primary) {
             return null;
         }

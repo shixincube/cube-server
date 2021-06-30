@@ -26,7 +26,6 @@
 
 package cube.common;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -83,12 +82,8 @@ public final class StateCode {
      */
     public static JSONObject makeState(int stateCode, String stateDesc) {
         JSONObject state = new JSONObject();
-        try {
-            state.put("code", stateCode);
-            state.put("desc", stateDesc);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        state.put("code", stateCode);
+        state.put("desc", stateDesc);
         return state;
     }
 }

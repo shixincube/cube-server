@@ -602,6 +602,22 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 获取指定域的联系人当前签入的令牌。
+     *
+     * @param domain
+     * @param contactId
+     * @return
+     */
+    public AuthToken getAuthToken(String domain, Long contactId) {
+        ContactTable table = this.onlineTables.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        return table.getAuthToken(contactId);
+    }
+
+    /**
      * 移除指定联系人的设备。
      *
      * @param contactId
@@ -1281,7 +1297,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             this.onlineTables.put(table.getDomain().getName(), table);
         }
         // 记录联系人的通信上下文
-        Contact activeContact = table.add(contact, activeDevice);
+        Contact activeContact = table.add(contact, activeDevice, token);
 
         // 记录令牌对应关系
         this.tokenContactMap.put(token.getCode().toString(), new TokenDevice(activeContact, activeDevice));

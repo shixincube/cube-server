@@ -232,10 +232,6 @@ public class AuthStorage implements Storagable {
         return authDomain;
     }
 
-    public AuthDomain getDomain(String domain) {
-        return this.getDomain(domain, null);
-    }
-
     public void writeToken(AuthToken token) {
         this.storage.executeInsert(this.tokenTable, new StorageField[] {
                 new StorageField("domain", LiteralBase.STRING, token.getDomain()),
