@@ -143,12 +143,20 @@ public final class ConfigUtils {
         return unique;
     }
 
+    /**
+     * 读取 Properties 文件数据。
+     *
+     * @param path
+     * @return
+     * @throws IOException
+     */
     public static Properties readProperties(String path) throws IOException {
-        Properties result = new Properties();
+        Properties result = null;
 
         FileInputStream fis = null;
         try {
             fis = new FileInputStream(new File(path));
+            result = new Properties();
             result.load(fis);
         } catch (FileNotFoundException e) {
             throw e;

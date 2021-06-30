@@ -35,6 +35,7 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.plugin.PluginSystem;
 import cube.service.filestorage.FileStorageService;
+import cube.util.ConfigUtils;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import net.coobird.thumbnailator.Thumbnails;
@@ -47,6 +48,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -84,6 +86,9 @@ public class FileProcessorService extends AbstractModule {
         this.cvConnector = new CVConnector("DJLService",
                 this.getKernel().getNucleus().getTalkService());
 //        this.cvConnector.start("127.0.0.1", 7711);
+
+        // 加载配置
+        this.loadConfig();
     }
 
     @Override
@@ -99,6 +104,51 @@ public class FileProcessorService extends AbstractModule {
     @Override
     public void onTick(cube.core.Module module, Kernel kernel) {
 
+    }
+
+    private void loadConfig() {
+        Path path = Paths.get("config/file-storage.properties");
+        if (!Files.exists(path)) {
+            path = Paths.get("file-storage.properties");
+            if (!Files.exists(path)) {
+                return;
+            }
+        }
+
+        Properties properties = null;
+        try {
+            properties = ConfigUtils.readProperties(path.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (null == properties) {
+            return;
+        }
+
+        String thumbnail = properties.getProperty("thumbnail", "ImageMagick");
+        if (thumbnail.equalsIgnoreCase("ImageMagick")) {
+            this.enableImageMagick();
+            Logger.i(this.getClass(), "Enable ImageMagick");
+        }
+        else {
+            this.disableImageMagick();
+            Logger.i(this.getClass(), "Disable ImageMagick");
+        }
+    }
+
+    /**
+     * 启用 ImageMagick 进行图片处理。
+     */
+    public void enableImageMagick() {
+        this.useImageMagick = true;
+    }
+
+    /**
+     * 禁用 ImageMagick 进行图片处理。
+     */
+    public void disableImageMagick() {
+        this.useImageMagick = false;
     }
 
     /**
