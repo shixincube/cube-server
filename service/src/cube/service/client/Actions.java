@@ -41,6 +41,8 @@ public enum Actions {
 
     NotifyEvent("NotifyEvent"),
 
+    CreateDomainApp("CreateDomainApp"),
+
     ListOnlineContacts("ListOnlineContacts"),
 
     GetContact("GetContact"),

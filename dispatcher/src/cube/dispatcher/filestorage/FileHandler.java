@@ -336,18 +336,21 @@ public class FileHandler extends CrossDomainHandler {
                 public void onComplete(AsyncEvent asyncEvent) throws IOException {
                     Logger.d(this.getClass(), "onComplete");
                     HttpClientFactory.getInstance().destroyHttpClient(httpClient);
+                    complete();
                 }
 
                 @Override
                 public void onTimeout(AsyncEvent asyncEvent) throws IOException {
                     Logger.d(this.getClass(), "onTimeout");
                     HttpClientFactory.getInstance().destroyHttpClient(httpClient);
+                    complete();
                 }
 
                 @Override
                 public void onError(AsyncEvent asyncEvent) throws IOException {
                     Logger.d(this.getClass(), "onError");
                     HttpClientFactory.getInstance().destroyHttpClient(httpClient);
+                    complete();
                 }
             });
 

@@ -170,6 +170,9 @@ public class ClientCellet extends AbstractCellet {
                 }
             });
         }
+        else if (Actions.CreateDomainApp.name.equals(action)) {
+
+        }
     }
 
     @Override

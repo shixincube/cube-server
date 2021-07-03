@@ -119,7 +119,7 @@ public class FileProcessorService extends AbstractModule {
         try {
             properties = ConfigUtils.readProperties(path.toString());
         } catch (IOException e) {
-            e.printStackTrace();
+            // Nothing
         }
 
         if (null == properties) {
