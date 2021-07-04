@@ -26,59 +26,47 @@
 
 package cube.service.client.task;
 
+import cell.core.net.Endpoint;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.core.AbstractModule;
-import cube.service.auth.AuthService;
+import cube.common.entity.Contact;
+import cube.common.entity.IceServer;
+import cube.service.auth.AuthDomain;
+import cube.service.client.Actions;
 import cube.service.client.ClientCellet;
+import cube.service.contact.ContactManager;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.List;
+
 /**
- *
+ * 创建域应用任务。
  */
-public abstract class ClientTask {
+public class CreateDomainAppTask extends ClientTask {
 
-    protected final ClientCellet cellet;
-
-    protected final TalkContext talkContext;
-
-    protected final ActionDialect actionDialect;
-
-    /**
-     * 构造函数。
-     *
-     * @param cellet
-     * @param talkContext
-     * @param actionDialect
-     */
-    public ClientTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
-        this.cellet = cellet;
-        this.talkContext = talkContext;
-        this.actionDialect = actionDialect;
+    public CreateDomainAppTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
+        super(cellet, talkContext, actionDialect);
     }
 
-    protected JSONObject extractNotifier() {
-        if (actionDialect.containsParam("_notifier")) {
-            return actionDialect.getParamAsJson("_notifier");
-        }
+    @Override
+    public void run() {
+        String domainName = actionDialect.getParamAsString("domainName");
+        String appKey = actionDialect.getParamAsString("appKey");
+        String appId = actionDialect.getParamAsString("appId");
+        Endpoint mainEndpoint = null;
+        Endpoint httpEndpoint = null;
+        Endpoint httpsEndpoint = null;
+        List<IceServer> iceServers = null;
 
-        return null;
+        // 获取联系人
+        AuthDomain authDomain = getAuthService().createDomainApp(domainName, appKey, appId,
+                mainEndpoint, httpEndpoint, httpsEndpoint, iceServers);
+
+        ActionDialect result = new ActionDialect(Actions.CreateDomainApp.name);
+        copyNotifier(result);
+        result.addParam("authDomain", authDomain.toJSON());
+
+        cellet.speak(talkContext, result);
     }
-
-    protected void copyNotifier(ActionDialect destination) {
-        if (actionDialect.containsParam("_notifier")) {
-            destination.addParam("_notifier", actionDialect.getParamAsJson("_notifier"));
-        }
-    }
-
-    protected AuthService getAuthService() {
-        return (AuthService) cellet.getKernel().getModule(AuthService.NAME);
-    }
-
-    protected AbstractModule getMessagingModule() {
-        return cellet.getKernel().getModule("Messaging");
-    }
-
-    public abstract void run();
-
 }

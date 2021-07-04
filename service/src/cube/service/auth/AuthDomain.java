@@ -29,6 +29,7 @@ package cube.service.auth;
 import cell.core.net.Endpoint;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
+import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 存储域对应的授权信息的类。
  */
-public class AuthDomain {
+public class AuthDomain implements JSONable {
 
     public final String domainName;
 
@@ -136,5 +137,18 @@ public class AuthDomain {
 
         this.description = new PrimaryDescription(this.mainEndpoint.getHost(), content);
         return this.description;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("domainName", this.domainName);
+        json.put("appKey", this.appKey);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }
