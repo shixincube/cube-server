@@ -171,7 +171,13 @@ public class ClientCellet extends AbstractCellet {
             });
         }
         else if (Actions.CreateDomainApp.name.equals(action)) {
-
+            CreateDomainAppTask task = new CreateDomainAppTask(this, talkContext, actionDialect);
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    task.run();
+                }
+            });
         }
     }
 

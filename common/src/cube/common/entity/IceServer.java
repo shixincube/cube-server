@@ -46,6 +46,12 @@ public class IceServer implements JSONable {
         this.credential = credential;
     }
 
+    public IceServer(JSONObject json) {
+        this.url = json.getString("urls");
+        this.username = json.getString("username");
+        this.credential = json.getString("credential");
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

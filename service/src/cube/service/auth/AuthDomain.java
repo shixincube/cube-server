@@ -144,6 +144,22 @@ public class AuthDomain implements JSONable {
         JSONObject json = new JSONObject();
         json.put("domainName", this.domainName);
         json.put("appKey", this.appKey);
+        if (null != this.appId) {
+            json.put("appId", this.appId);
+        }
+        if (null != this.mainEndpoint) {
+            json.put("mainEndpoint", this.mainEndpoint.toJSON());
+        }
+        if (null != this.httpEndpoint) {
+            json.put("httpEndpoint", this.httpEndpoint.toJSON());
+        }
+        if (null != this.httpsEndpoint) {
+            json.put("httpsEndpoint", this.httpsEndpoint.toJSON());
+        }
+        if (null != this.iceServers) {
+            json.put("iceServers", this.iceServers);
+        }
+
         return json;
     }
 

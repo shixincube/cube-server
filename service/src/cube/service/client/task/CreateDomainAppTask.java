@@ -38,6 +38,7 @@ import cube.service.contact.ContactManager;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -54,14 +55,25 @@ public class CreateDomainAppTask extends ClientTask {
         String domainName = actionDialect.getParamAsString("domainName");
         String appKey = actionDialect.getParamAsString("appKey");
         String appId = actionDialect.getParamAsString("appId");
-        Endpoint mainEndpoint = null;
-        Endpoint httpEndpoint = null;
-        Endpoint httpsEndpoint = null;
-        List<IceServer> iceServers = null;
+        Endpoint mainEndpoint = new Endpoint(actionDialect.getParamAsJson("mainEndpoint"));
+        Endpoint httpEndpoint = new Endpoint(actionDialect.getParamAsJson("httpEndpoint"));
+        Endpoint httpsEndpoint = new Endpoint(actionDialect.getParamAsJson("httpsEndpoint"));
 
-        // 获取联系人
+        List<IceServer> iceServers = null;
+        if (actionDialect.containsParam("iceServers")) {
+            iceServers = new ArrayList<>();
+            JSONObject data = actionDialect.getParamAsJson("iceServers");
+            JSONArray array = data.getJSONArray("list");
+            for (int i = 0; i < array.length(); ++i) {
+                JSONObject iceJson = array.getJSONObject(i);
+                IceServer iceServer = new IceServer(iceJson);
+                iceServers.add(iceServer);
+            }
+        }
+
+        // 创建域应用
         AuthDomain authDomain = getAuthService().createDomainApp(domainName, appKey, appId,
-                mainEndpoint, httpEndpoint, httpsEndpoint, iceServers);
+                 mainEndpoint, httpEndpoint, httpsEndpoint, iceServers);
 
         ActionDialect result = new ActionDialect(Actions.CreateDomainApp.name);
         copyNotifier(result);
