@@ -39,17 +39,17 @@ public class Packet implements JSONable {
     /**
      * 封包的唯一序号。
      */
-    public Long sn;
+    public final Long sn;
 
     /**
      * 封包名称。
      */
-    public String name;
+    public final String name;
 
     /**
      * 封包的负载数据。
      */
-    public JSONObject data;
+    public final JSONObject data;
 
     /**
      * 构造函数。
