@@ -27,6 +27,7 @@
 package cube.dispatcher.signal;
 
 import cell.core.talk.Primitive;
+import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkContext;
 import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
@@ -82,6 +83,13 @@ public class SignalCellet extends AbstractCellet {
         super.onListened(talkContext, primitive);
 
         this.executor.execute(this.borrowTask(talkContext, primitive, true));
+    }
+
+    @Override
+    public void onListened(TalkContext talkContext, PrimitiveInputStream primitiveStream) {
+        super.onListened(talkContext, primitiveStream);
+
+
     }
 
     protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive, boolean sync) {
