@@ -161,6 +161,15 @@ public class ClientCellet extends AbstractCellet {
                 }
             });
         }
+        else if (Actions.ApplyToken.name.equals(action)) {
+            ApplyTokenTask task = new ApplyTokenTask(this, talkContext, actionDialect);
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    task.run();
+                }
+            });
+        }
         else if (Actions.CreateContact.name.equals(action)) {
             CreateContactTask task = new CreateContactTask(this, talkContext, actionDialect);
             this.executor.execute(new Runnable() {

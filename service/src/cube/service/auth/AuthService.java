@@ -149,6 +149,19 @@ public class AuthService extends AbstractModule {
      * @return 返回令牌。
      */
     public AuthToken applyToken(String domain, String appKey, Long cid) {
+        return this.applyToken(domain, appKey, cid, 7L * 24L * 60L * 60L * 1000L);
+    }
+
+    /**
+     * 申请令牌。
+     *
+     * @param domain 指定域名称。
+     * @param appKey 指定 App Key 值。
+     * @param cid 指定绑定的 CID 。
+     * @param durationInMillis 指定令牌的有效时长，单位：毫秒。
+     * @return 返回令牌。
+     */
+    public AuthToken applyToken(String domain, String appKey, Long cid, long durationInMillis) {
         AuthToken token = null;
 
         if (this.useFile) {
@@ -157,7 +170,7 @@ public class AuthService extends AbstractModule {
                 String code = Utils.randomString(32);
 
                 Date now = new Date();
-                Date expiry = new Date(now.getTime() + 7L * 24L * 60L * 60L * 1000L);
+                Date expiry = new Date(now.getTime() + durationInMillis);
 
                 // 创建描述
                 PrimaryDescription description = new PrimaryDescription("127.0.0.1", this.primaryContentFile.getContent(domain));
@@ -182,7 +195,7 @@ public class AuthService extends AbstractModule {
                 String code = Utils.randomString(32);
 
                 Date now = new Date();
-                Date expiry = new Date(now.getTime() + 7L * 24L * 60L * 60L * 1000L);
+                Date expiry = new Date(now.getTime() + durationInMillis);
 
                 // 创建描述
                 PrimaryDescription description = authDomain.getPrimaryDescription();

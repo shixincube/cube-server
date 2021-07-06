@@ -43,6 +43,8 @@ public enum Actions {
 
     CreateDomainApp("CreateDomainApp"),
 
+    ApplyToken("ApplyToken"),
+
     ListOnlineContacts("ListOnlineContacts"),
 
     GetContact("GetContact"),
