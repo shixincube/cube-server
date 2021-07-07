@@ -40,6 +40,7 @@ import cube.common.entity.Device;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
+import cube.util.DummyDevice;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -57,54 +58,76 @@ public class SignInTask extends ServiceTask {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
-        JSONObject contactJson = null;
-        JSONObject authTokenJson = null;
-        try {
-            contactJson = packet.data.getJSONObject("self");
-            authTokenJson = packet.data.getJSONObject("token");
-        } catch (JSONException e) {
-            Logger.w(this.getClass(), "#run", e);
+        if (packet.data.has("code")) {
+            // 获取令牌码
+            String tokenCode = packet.data.getString("code");
+
+            Device device = null;
+            if (packet.data.has("device")) {
+                device = new Device(packet.data.getJSONObject("device"), this.talkContext);
+            }
+            else {
+                device = new DummyDevice(this.talkContext);
+            }
+
+            // 签入联系人
+            Contact contact = ContactManager.getInstance().signIn(tokenCode, device);
+
+            // 应答
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, packet.data));
-            markResponseTime();
-            return;
+                    this.makeResponse(action, packet, ContactStateCode.Ok.code, contact.toJSON()));
         }
+        else {
+            JSONObject contactJson = null;
+            JSONObject authTokenJson = null;
+            try {
+                contactJson = packet.data.getJSONObject("self");
+                authTokenJson = packet.data.getJSONObject("token");
+            } catch (JSONException e) {
+                Logger.w(this.getClass(), "#run", e);
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, packet.data));
+                markResponseTime();
+                return;
+            }
 
-        // 校验 Token
-        AuthToken authToken = new AuthToken(authTokenJson);
+            // 校验 Token
+            AuthToken authToken = new AuthToken(authTokenJson);
 
-        String tokenCode = this.getTokenCode(action);
-        if (!tokenCode.equals(authToken.getCode())) {
+            String tokenCode = this.getTokenCode(action);
+            if (!tokenCode.equals(authToken.getCode())) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, ContactStateCode.InconsistentToken.code, packet.data));
+                markResponseTime();
+                return;
+            }
+
+            // 创建联系人对象
+            Contact contact = new Contact(contactJson, this.talkContext);
+
+            // 活跃设备
+            Device activeDevice = contact.getDevice(this.talkContext);
+            if (null == activeDevice) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, ContactStateCode.Failure.code, packet.data));
+                markResponseTime();
+                return;
+            }
+
+            // 设置终端的对应关系
+            Contact newContact = ContactManager.getInstance().signIn(contact, authToken, activeDevice);
+            if (null == newContact) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, packet.data));
+                markResponseTime();
+                return;
+            }
+
+            // 应答
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.InconsistentToken.code, packet.data));
-            markResponseTime();
-            return;
+                    this.makeResponse(action, packet, ContactStateCode.Ok.code, newContact.toJSON()));
         }
-
-        // 创建联系人对象
-        Contact contact = new Contact(contactJson, this.talkContext);
-
-        // 活跃设备
-        Device activeDevice = contact.getDevice(this.talkContext);
-        if (null == activeDevice) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.Failure.code, packet.data));
-            markResponseTime();
-            return;
-        }
-
-        // 设置终端的对应关系
-        Contact newContact = ContactManager.getInstance().signIn(contact, authToken, activeDevice);
-        if (null == newContact) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, packet.data));
-            markResponseTime();
-            return;
-        }
-
-        // 应答
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, newContact.toJSON()));
+        
         markResponseTime();
     }
 }

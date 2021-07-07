@@ -365,6 +365,63 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 仅使用令牌码签入。
+     *
+     * @param tokenCode 指定令牌码。
+     * @return 返回签入的联系人。
+     */
+    public Contact signIn(String tokenCode, Device activeDevice) {
+        // 获取指定令牌码对应的令牌
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthToken token = authService.getToken(tokenCode);
+        if (null == token) {
+            return null;
+        }
+
+        String domain = token.getDomain();
+        Long cid = token.getContactId();
+
+        if (cid.longValue() == 0L) {
+            // 该令牌没有绑定的联系人 ID
+            return null;
+        }
+
+        Contact contact = this.getContact(domain, cid);
+        contact.addDevice(activeDevice);
+
+        // Hook sign-in
+        ContactHook hook = this.pluginSystem.getSignInHook();
+        hook.apply(new ContactPluginContext(contact, activeDevice));
+
+        this.contactCache.apply(contact.getUniqueKey(), new LockFuture() {
+            @Override
+            public void acquired(String key) {
+                JSONObject data = get();
+                if (null != data) {
+                    Contact cached = new Contact(data);
+
+                    // 追加设备
+                    for (Device device : cached.getDeviceList()) {
+                        if (!contact.hasDevice(device)) {
+                            contact.addDevice(device);
+                        }
+                    }
+                }
+
+                put(contact.toJSON());
+            }
+        });
+
+        // 更新存储
+        this.storage.writeContact(contact, activeDevice);
+
+        // 关注该用户数据
+        this.follow(contact, token, activeDevice);
+
+        return contact;
+    }
+
+    /**
      * 联系人签出。
      *
      * @param contact 指定联系人。
