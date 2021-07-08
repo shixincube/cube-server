@@ -127,7 +127,7 @@ public class SignInTask extends ServiceTask {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Ok.code, newContact.toJSON()));
         }
-        
+
         markResponseTime();
     }
 }
