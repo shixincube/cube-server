@@ -75,7 +75,7 @@ public class SignInTask extends ServiceTask {
 
             // 应答
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.Ok.code, contact.toJSON()));
+                    this.makeResponse(action, packet, ContactStateCode.Ok.code, contact.toJSON(device)));
         }
         else {
             JSONObject contactJson = null;

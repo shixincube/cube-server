@@ -293,4 +293,16 @@ public class Contact extends AbstractContact {
     public JSONObject toCompactJSON() {
         return super.toCompactJSON();
     }
+
+    /**
+     * 在格式数据里增加指定设备。
+     *
+     * @param device
+     * @return
+     */
+    public JSONObject toJSON(Device device) {
+        JSONObject json = this.toJSON();
+        json.put("device", device.toJSON());
+        return json;
+    }
 }
