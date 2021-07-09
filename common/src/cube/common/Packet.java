@@ -120,4 +120,24 @@ public class Packet implements JSONable {
     public JSONObject toCompactJSON() {
         return this.toJSON();
     }
+
+    /**
+     * 提取状态码。
+     *
+     * @param packet
+     * @return
+     */
+    public static int extractCode(Packet packet) {
+        return packet.data.getInt("code");
+    }
+
+    /**
+     * 提取数据负载内容。
+     *
+     * @param packet
+     * @return
+     */
+    public static JSONObject extractDataPayload(Packet packet) {
+        return packet.data.getJSONObject("data");
+    }
 }
