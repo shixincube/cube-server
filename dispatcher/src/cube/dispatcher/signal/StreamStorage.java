@@ -30,8 +30,10 @@ import cell.core.talk.PrimitiveInputStream;
 import cell.util.collection.FlexibleByteBuffer;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -63,6 +65,12 @@ public class StreamStorage {
             e.printStackTrace();
         }
 
-
+        String name = inputStream.getName();
+        List<FlexibleByteBuffer> list = this.bufferMap.get(name);
+        if (null == list) {
+            list = new Vector<>();
+            this.bufferMap.put(name, list);
+        }
+        list.add(buf);
     }
 }
