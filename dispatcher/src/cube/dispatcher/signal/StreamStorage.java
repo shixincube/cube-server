@@ -74,7 +74,7 @@ public class StreamStorage {
         list.add(buf);
     }
 
-    private void write(String name) {
+    private void write(String name, FlexibleByteBuffer buffer) {
 
     }
 }
