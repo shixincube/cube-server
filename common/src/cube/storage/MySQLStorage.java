@@ -498,9 +498,8 @@ public class MySQLStorage extends AbstractStorage {
 
         @Override
         public void run() {
-            List<Connection> tmpList = new ArrayList<>();
-            Connection conn = this.connections.poll();
-            while (null != conn) {
+            List<Connection> list = new ArrayList<>(this.connections);
+            for (Connection conn : list) {
                 Statement statement = null;
                 try {
                     statement = conn.createStatement();
@@ -508,13 +507,18 @@ public class MySQLStorage extends AbstractStorage {
                     if (rs.next()) {
 //                        Logger.d(this.getClass(), "Connection keep alive: " + rs.getString("version()"));
                     }
-                    tmpList.add(conn);
+                    else {
+                        this.connections.remove(conn);
+                    }
                 } catch (SQLException e) {
                     Logger.d(this.getClass(), e.getMessage());
                     try {
                         conn.close();
                     } catch (SQLException ex) {
                     }
+
+                    // 移除失效连接
+                    this.connections.remove(conn);
                 } finally {
                     if (null != statement) {
                         try {
@@ -523,12 +527,7 @@ public class MySQLStorage extends AbstractStorage {
                         }
                     }
                 }
-
-                conn = this.connections.poll();
             }
-
-            this.connections.addAll(tmpList);
-            tmpList.clear();
         }
     }
 }
