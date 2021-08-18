@@ -1,5 +1,6 @@
 /**
  * This source file is part of Cube.
+ * https://shixincube.com
  *
  * The MIT License (MIT)
  *
@@ -24,25 +25,20 @@
  * SOFTWARE.
  */
 
-package cube.storage;
+(function ($, g) {
+    'use strict'
 
-/**
- * 存储类型。
- */
-public enum StorageType {
+    var console = new Console();
+    $.console = console;
 
-    /**
-     * 基于 SQLite 实现的存储。
-     */
-    SQLite,
+    // 检查是否合法
+    console.checkUser(function(valid) {
+        if (!valid) {
+            window.location.href = 'index.html';
+        }
+        else {
+            g.common.updateUserPanel(console);
+        }
+    });
 
-    /**
-     * 基于 MySQL 实现的存储。
-     */
-    MySQL,
-
-    /**
-     * 其他存储。
-     */
-    Other
-}
+})(jQuery, window);

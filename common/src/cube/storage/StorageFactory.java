@@ -91,4 +91,22 @@ public final class StorageFactory {
     public Storage getStorage(String name) {
         return this.storageMap.get(name);
     }
+
+    /**
+     * 获取指定存储的类型。
+     *
+     * @param storage 指定存储器。
+     * @return 返回存储器类型。
+     */
+    public StorageType getStorageType(Storage storage) {
+        if (storage instanceof  MySQLStorage) {
+            return StorageType.MySQL;
+        }
+        else if (storage instanceof SQLiteStorage) {
+            return StorageType.SQLite;
+        }
+        else {
+            return StorageType.Other;
+        }
+    }
 }

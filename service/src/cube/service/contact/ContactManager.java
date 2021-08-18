@@ -194,6 +194,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         this.searchMap = new ConcurrentHashMap<>();
 
+
+
         // 异步初始化缓存和存储
         (new Thread() {
             @Override
@@ -219,6 +221,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                     config.put("file", "storage/ContactService.db");
                     storage = new ContactStorage(executor, StorageType.SQLite, config);
                 }
+                // 启动存储
                 storage.open();
 
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);

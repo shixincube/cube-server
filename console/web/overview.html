@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>Cube Console - 时信魔方控制台</title>
+    <title>用户概览 - Cube Console</title>
     <link rel="icon" href="assets/img/favicon.png" size="192x192" type="image/png">
     <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
     <link rel="stylesheet" href="plugins/ionicons/css/ionicons.min.css">
@@ -120,8 +120,8 @@
             <!-- Sidebar Menu -->
             <nav class="mt-2">
                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-                    <li class="nav-item has-treeview">
-                        <a href="#" class="nav-link">
+                    <li class="nav-item has-treeview menu-open">
+                        <a href="#" class="nav-link active">
                             <i class="nav-icon fas fa-tachometer-alt"></i>
                             <p>仪表板 <i class="right fas fa-angle-left"></i></p>
                         </a>
@@ -133,7 +133,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="overview.html" class="nav-link">
+                                <a href="overview.html" class="nav-link active">
                                     <i class="far fa-circle nav-icon"></i>
                                     <p>用户概览</p>
                                 </a>
@@ -164,12 +164,12 @@
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h3 class="m-0 text-dark">标题</h3>
+                        <h3 class="m-0 text-dark">用户概览</h3>
                     </div><!-- /.col -->
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
                             <li class="breadcrumb-item"><a href="/">首页</a></li>
-                            <li class="breadcrumb-item active">标题</li>
+                            <li class="breadcrumb-item active">用户概览</li>
                         </ol>
                     </div><!-- /.col -->
                 </div><!-- /.row -->
@@ -179,8 +179,44 @@
         <!-- Main content -->
         <div class="content">
             <div class="container-fluid">
+                <!-- Info boxes -->
                 <div class="row">
-                    
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="info-box">
+                            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-user"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">昨日新增用户数</span>
+                                <span class="info-box-number">10</span>
+                            </div>
+                        </div><!-- /.info-box -->
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="info-box">
+                            <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-user-tag"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">昨日活跃用户数</span>
+                                <span class="info-box-number">10</span>
+                            </div>
+                        </div><!-- /.info-box -->
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="info-box">
+                            <span class="info-box-icon bg-success elevation-1"><i class="fas fa-user-clock"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">昨日平均在线时长</span>
+                                <span class="info-box-number">10</span>
+                            </div>
+                        </div><!-- /.info-box -->
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="info-box">
+                            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-stopwatch"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">昨日峰值时段</span>
+                                <span class="info-box-number">10:00 <small>-</small> 12:00</span>
+                            </div>
+                        </div><!-- /.info-box -->
+                    </div>
                 </div><!-- /.row -->
             </div><!-- /.container-fluid -->
         </div><!-- /.content -->
@@ -247,6 +283,6 @@
 <script src="assets/js/util.js"></script>
 <script src="assets/js/console.js"></script>
 <script src="assets/js/pages/common.js"></script>
-<script src="assets/js/pages/template.js"></script>
+<script src="assets/js/pages/overview.js"></script>
 </body>
 </html>
