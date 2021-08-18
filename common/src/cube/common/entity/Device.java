@@ -238,17 +238,13 @@ public class Device implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("name", this.name);
-            json.put("platform", this.platform);
-            if (null != this.address) {
-                json.put("address", this.address);
-            }
-            if (0 != this.port) {
-                json.put("port", this.port);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        json.put("name", this.name);
+        json.put("platform", this.platform);
+        if (null != this.address) {
+            json.put("address", this.address);
+        }
+        if (0 != this.port) {
+            json.put("port", this.port);
         }
         return json;
     }
@@ -259,12 +255,8 @@ public class Device implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
-        try {
-            json.put("name", this.name);
-            json.put("platform", this.platform);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        json.put("name", this.name);
+        json.put("platform", this.platform);
         return json;
     }
 

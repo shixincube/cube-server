@@ -149,6 +149,11 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     protected ConcurrentHashMap<String, ContactSearchResult> searchMap;
 
+    /**
+     * 统计系统。
+     */
+    private StatisticsSystem statisticsSystem;
+
     private ContactManager() {
     }
 
@@ -194,7 +199,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         this.searchMap = new ConcurrentHashMap<>();
 
-
+        this.statisticsSystem = new StatisticsSystem(this.executor);
 
         // 异步初始化缓存和存储
         (new Thread() {
@@ -226,6 +231,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
                 storage.execSelfChecking(authService.getDomainList());
+
+                // 启动统计系统
+                statisticsSystem.start(storage.getStorageType(), storage.getConfig(), authService.getDomainList());
             }
         }).start();
     }
@@ -244,6 +252,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         this.groupCache.stop();
 
         this.searchMap.clear();
+
+        this.statisticsSystem.stop();
 
         this.executor.shutdown();
     }
@@ -508,6 +518,11 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             onlineContact.getId().longValue() == contact.getId().longValue()) {
             // 重置时间戳
             onlineContact.resetTimestamp();
+
+            // 调用插件 Hook
+            ContactHook hook = this.pluginSystem.getComebackHook();
+            hook.apply(new ContactPluginContext(onlineContact, tokenDevice.device));
+
             return onlineContact;
         }
 
@@ -659,6 +674,16 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         return contacts;
+    }
+
+    /**
+     * 获取指定域当前的所有联系人总数。
+     *
+     * @param domain 指定域。
+     * @return 返回指定域当前的所有联系人总数。
+     */
+    protected int countContacts(String domain) {
+        return this.storage.countContacts(domain);
     }
 
     /**

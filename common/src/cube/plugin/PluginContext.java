@@ -31,7 +31,22 @@ package cube.plugin;
  */
 public abstract class PluginContext {
 
+    private String key;
+
     public PluginContext() {
+    }
+
+    protected void setKey(String key) {
+        this.key = key;
+    }
+
+    /**
+     * 获取当前上下文的 Hook 键。
+     *
+     * @return 返回当前上下文的键。
+     */
+    public String getKey() {
+        return this.key;
     }
 
     public abstract Object get(String name);

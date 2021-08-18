@@ -26,6 +26,7 @@
 
 package cube.service.contact;
 
+import cube.common.JSONable;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.plugin.PluginContext;
@@ -34,7 +35,7 @@ import org.json.JSONObject;
 /**
  * 联系人模块插件上下文。
  */
-public class ContactPluginContext extends PluginContext {
+public class ContactPluginContext extends PluginContext implements JSONable {
 
     private Contact contact;
 
@@ -67,10 +68,19 @@ public class ContactPluginContext extends PluginContext {
         }
     }
 
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("contact", this.contact.toJSON());
         json.put("device", this.device.toJSON());
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        json.put("contact", this.contact.toCompactJSON());
+        json.put("device", this.device.toCompactJSON());
         return json;
     }
 }

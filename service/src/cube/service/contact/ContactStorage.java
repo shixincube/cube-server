@@ -233,6 +233,44 @@ public class ContactStorage implements Storagable {
     }
 
     /**
+     * 返回类型。
+     *
+     * @return 返回类型。
+     */
+    public StorageType getStorageType() {
+        return StorageFactory.getInstance().getStorageType(this.storage);
+    }
+
+    /**
+     * 返回配置。
+     *
+     * @return 返回配置。
+     */
+    public JSONObject getConfig() {
+        return this.storage.getConfig();
+    }
+
+    /**
+     * 获取指定域当前的所有联系人总数。
+     *
+     * @param domain 指定域。
+     * @return 返回指定域当前的所有联系人总数。
+     */
+    public int countContacts(String domain) {
+        String table = this.contactTableNameMap.get(domain);
+
+        StringBuilder sql = new StringBuilder("SELECT COUNT(id) FROM ");
+        sql.append(table);
+
+        List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+        if (result.isEmpty()) {
+            return 0;
+        }
+
+        return result.get(0)[0].getInt();
+    }
+
+    /**
      * 写入联系人数据。
      *
      * @param contact

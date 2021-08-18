@@ -82,4 +82,6 @@ public interface Storage {
 
     public List<StorageField[]> executeQuery(String[] tables, StorageField[] fields, Conditional[] conditionals);
 
+    public List<StorageField[]> executeQuery(String sql);
+
 }

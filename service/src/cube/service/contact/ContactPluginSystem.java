@@ -41,12 +41,16 @@ public class ContactPluginSystem extends PluginSystem<ContactHook> {
         return this.getHook(ContactHook.SignIn);
     }
 
+    public ContactHook getSignOutHook() {
+        return this.getHook(ContactHook.SignOut);
+    }
+
     public ContactHook getDeviceTimeoutHook() {
         return this.getHook(ContactHook.DeviceTimeout);
     }
 
-    public ContactHook getSignOutHook() {
-        return this.getHook(ContactHook.SignOut);
+    public ContactHook getComebackHook() {
+        return this.getHook(ContactHook.Comeback);
     }
 
     private void build() {
@@ -54,6 +58,9 @@ public class ContactPluginSystem extends PluginSystem<ContactHook> {
         this.addHook(hook);
 
         hook = new ContactHook(ContactHook.DeviceTimeout);
+        this.addHook(hook);
+
+        hook = new ContactHook(ContactHook.Comeback);
         this.addHook(hook);
 
         hook = new ContactHook(ContactHook.SignOut);

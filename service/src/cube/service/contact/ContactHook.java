@@ -35,9 +35,11 @@ public class ContactHook extends Hook {
 
     public final static String SignIn = "SignIn";
 
+    public final static String SignOut = "SignOut";
+
     public final static String DeviceTimeout = "DeviceTimeout";
 
-    public final static String SignOut = "SignOut";
+    public final static String Comeback = "Comeback";
 
     public ContactHook(String key) {
         super(key);

@@ -389,6 +389,37 @@ public class MySQLStorage extends AbstractStorage {
         return result;
     }
 
+    @Override
+    public List<StorageField[]> executeQuery(String sql) {
+        ArrayList<StorageField[]> result = new ArrayList<>();
+
+        Connection connection = this.pool.get();
+
+        Statement statement = null;
+
+        try {
+            statement = connection.createStatement();
+            ResultSet rs = statement.executeQuery(sql);
+            while (rs.next()) {
+                StorageField[] row = StorageFields.scanResultSet(rs);
+                result.add(row);
+            }
+        } catch (SQLException e) {
+            Logger.w(this.getClass(), "#executeQuery - SQL: " + sql, e);
+        } finally {
+            if (null != statement) {
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                }
+            }
+
+            this.pool.returnConn(connection);
+        }
+
+        return result;
+    }
+
 
     /**
      * 连接池。

@@ -396,4 +396,31 @@ public class SQLiteStorage extends AbstractStorage {
 
         return result;
     }
+
+    @Override
+    public List<StorageField[]> executeQuery(String sql) {
+        ArrayList<StorageField[]> result = new ArrayList<>();
+
+        Statement statement = null;
+
+        try {
+            statement = this.connection.createStatement();
+            ResultSet rs = statement.executeQuery(sql);
+            while (rs.next()) {
+                StorageField[] row = StorageFields.scanResultSet(rs);
+                result.add(row);
+            }
+        } catch (SQLException e) {
+            Logger.d(this.getClass(), e.getMessage());
+        } finally {
+            if (null != statement) {
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+
+        return result;
+    }
 }
