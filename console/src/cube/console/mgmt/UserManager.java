@@ -62,6 +62,8 @@ public class UserManager {
             }
         }
 
+        Logger.i(this.getClass(), "Read config file : " + filepath);
+
         try {
             Properties properties = ConfigUtils.readProperties(filepath);
             this.storage = new UserStorage(properties);
