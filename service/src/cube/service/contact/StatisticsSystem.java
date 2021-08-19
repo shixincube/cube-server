@@ -194,8 +194,6 @@ public final class StatisticsSystem {
         }
     }
 
-    
-
     private void execSelfChecking(List<String> domainNameList) {
         for (String domain : domainNameList) {
             String table = this.contactEventTablePrefix + domain;
