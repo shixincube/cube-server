@@ -40,6 +40,7 @@ import cube.plugin.PluginSystem;
 import cube.storage.StorageFactory;
 import cube.storage.StorageType;
 import cube.util.SQLUtils;
+import cube.util.TimeUtils;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -52,7 +53,14 @@ public final class StatisticsSystem {
 
     public final String ITEM_CONTACT_AMOUNT = "CONTACT_AMOUNT";
 
+    // Daily Active User
     public final String ITEM_DAU = "DAU";
+
+    // Mean Residence Time
+    public final String ITEM_MRT = "MRT";
+
+    // Time Distribution
+    public final String ITEM_TD = "TD";
 
     private final String contactEventTablePrefix = "contact_event_log_";
 
@@ -225,9 +233,9 @@ public final class StatisticsSystem {
 
         for (String domain : this.domainNameList) {
             // 查询是否有记录
-            String table = this.statisticsTableNameMap.get(domain);
+            String statisticTable = this.statisticsTableNameMap.get(domain);
 
-            List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+            List<StorageField[]> result = this.storage.executeQuery(statisticTable, new StorageField[] {
                     new StorageField("sn", LiteralBase.LONG)
             }, new Conditional[] {
                     Conditional.createEqualTo("item", LiteralBase.STRING, ITEM_CONTACT_AMOUNT),
@@ -246,7 +254,7 @@ public final class StatisticsSystem {
 
             // 日用户总数
             int amount = ContactManager.getInstance().countContacts(domain);
-            this.storage.executeInsert(table, new StorageField[] {
+            this.storage.executeInsert(statisticTable, new StorageField[] {
                     new StorageField("item", LiteralBase.STRING, ITEM_CONTACT_AMOUNT),
                     new StorageField("data", LiteralBase.STRING, String.valueOf(amount)),
                     new StorageField("year", LiteralBase.INT, year),
@@ -256,9 +264,118 @@ public final class StatisticsSystem {
             });
 
             // 活跃用户数
+            long beginning = cal.getTimeInMillis();
+            long ending = beginning + (24 * 60 * 60 * 1000L);
+            // 计算 DAU
+            int dau = this.calcDAU(domain, beginning, ending);
+            this.storage.executeInsert(statisticTable, new StorageField[] {
+                    new StorageField("item", LiteralBase.STRING, ITEM_DAU),
+                    new StorageField("data", LiteralBase.STRING, String.valueOf(dau)),
+                    new StorageField("year", LiteralBase.INT, year),
+                    new StorageField("month", LiteralBase.INT, month),
+                    new StorageField("date", LiteralBase.INT, date),
+                    new StorageField("timestamp", LiteralBase.LONG, System.currentTimeMillis())
+            });
 
+            // 平均在线时长
+            long mrt = this.calcMRT(domain, beginning, ending);
+            this.storage.executeInsert(statisticTable, new StorageField[] {
+                    new StorageField("item", LiteralBase.STRING, ITEM_MRT),
+                    new StorageField("data", LiteralBase.STRING, String.valueOf(mrt)),
+                    new StorageField("year", LiteralBase.INT, year),
+                    new StorageField("month", LiteralBase.INT, month),
+                    new StorageField("date", LiteralBase.INT, date),
+                    new StorageField("timestamp", LiteralBase.LONG, System.currentTimeMillis())
+            });
         }
     }
+
+    private int calcDAU(String domain, long beginning, long ending) {
+        String eventTable = this.eventTableNameMap.get(domain);
+
+        StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT `contact_id`) FROM ");
+        sql.append(eventTable);
+        sql.append(" WHERE `event`='SignIn'");
+        sql.append(" AND `time`>=").append(beginning);
+        sql.append(" AND `time`<").append(ending);
+
+        List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+        return result.get(0)[0].getInt();
+    }
+
+    private long calcMRT(String domain, long beginning, long ending) {
+        String eventTable = this.eventTableNameMap.get(domain);
+
+        // 查询所有登录的用户 ID
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT `contact_id` FROM ");
+        sql.append(eventTable);
+        sql.append(" WHERE `event`='SignIn'");
+        sql.append(" AND `time`>=").append(beginning);
+        sql.append(" AND `time`<").append(ending);
+
+        List<StorageField[]> contactIdList = this.storage.executeQuery(sql.toString());
+
+        if (contactIdList.isEmpty()) {
+            return 0;
+        }
+
+        long total = 0;
+        HashMap<Long, Long> durationMap = new HashMap<>();
+
+        for (StorageField[] row : contactIdList) {
+            Long contactId = row[0].getLong();
+            sql.setLength(0);
+
+            sql.append("SELECT `event`,`time` FROM ").append(eventTable);
+            sql.append(" WHERE `contact_id`=").append(contactId);
+            sql.append(" AND `time`>=").append(beginning);
+            sql.append(" AND `time`<").append(ending);
+            sql.append(" ORDER BY `time`");
+
+            long startTime = 0;
+            long duration = 0;
+
+            List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+            for (StorageField[] event : result) {
+                String name = event[0].getString();
+                long time = event[1].getLong();
+
+                if (startTime == 0 &&
+                        (name.equals(ContactHook.SignIn) || name.equals(ContactHook.Comeback))) {
+                    startTime = time;
+                    continue;
+                }
+
+                if (name.equals(ContactHook.SignIn) || name.equals(ContactHook.Comeback)) {
+                    // 跳过 SignIn
+                    continue;
+                } else if (name.equals(ContactHook.DeviceTimeout)) {
+                    duration += (time - startTime) - 15000L;
+                    startTime = 0;
+                } else if (name.equals(ContactHook.SignOut)) {
+                    duration += time - startTime;
+                    startTime = 0;
+                }
+            }
+
+            if (duration == 0 && startTime != 0) {
+                duration = ending - startTime;
+            }
+
+            durationMap.put(contactId, duration);
+            // 累加总时长
+            total += duration;
+        }
+
+        if (durationMap.isEmpty()) {
+            return 0;
+        }
+
+        double value = (double) total / (double) durationMap.size();
+        return Math.round(value);
+    }
+
+//    private JSONObject
 
     protected class SignInPlugin implements Plugin {
 
