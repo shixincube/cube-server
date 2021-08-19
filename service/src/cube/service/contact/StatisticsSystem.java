@@ -30,6 +30,8 @@ import cell.core.talk.LiteralBase;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
+import cube.common.entity.TimeSlice;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -38,9 +40,10 @@ import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
 import cube.storage.StorageFactory;
+import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.SQLUtils;
-import cube.util.TimeUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -179,7 +182,7 @@ public final class StatisticsSystem {
             public void run() {
                 collect();
             }
-        }, 10000, 24 * 60 * 60 * 1000);
+        }, date, 24 * 60 * 60 * 1000);
     }
 
     public void stop() {
@@ -190,6 +193,8 @@ public final class StatisticsSystem {
             this.timer = null;
         }
     }
+
+    
 
     private void execSelfChecking(List<String> domainNameList) {
         for (String domain : domainNameList) {
@@ -221,15 +226,21 @@ public final class StatisticsSystem {
     private void collect() {
         // 统计昨天的数据
         Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.HOUR, 0);
+        // 昨天
+        cal.set(Calendar.DATE, cal.get(Calendar.DATE) - 1);
+
+        // 时间复位
+        cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
-        cal.add(Calendar.DATE, -1);
 
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH) + 1;
         int date = cal.get(Calendar.DATE);
+
+        long beginning = cal.getTimeInMillis();
+        long ending = beginning + (24 * 60 * 60 * 1000L);
 
         for (String domain : this.domainNameList) {
             // 查询是否有记录
@@ -249,7 +260,7 @@ public final class StatisticsSystem {
 
             if (!result.isEmpty()) {
                 // 有数据，不统计
-                break;
+                continue;
             }
 
             // 日用户总数
@@ -263,9 +274,6 @@ public final class StatisticsSystem {
                     new StorageField("timestamp", LiteralBase.LONG, System.currentTimeMillis())
             });
 
-            // 活跃用户数
-            long beginning = cal.getTimeInMillis();
-            long ending = beginning + (24 * 60 * 60 * 1000L);
             // 计算 DAU
             int dau = this.calcDAU(domain, beginning, ending);
             this.storage.executeInsert(statisticTable, new StorageField[] {
@@ -282,6 +290,21 @@ public final class StatisticsSystem {
             this.storage.executeInsert(statisticTable, new StorageField[] {
                     new StorageField("item", LiteralBase.STRING, ITEM_MRT),
                     new StorageField("data", LiteralBase.STRING, String.valueOf(mrt)),
+                    new StorageField("year", LiteralBase.INT, year),
+                    new StorageField("month", LiteralBase.INT, month),
+                    new StorageField("date", LiteralBase.INT, date),
+                    new StorageField("timestamp", LiteralBase.LONG, System.currentTimeMillis())
+            });
+
+            // 按照时间段进行统计
+            List<TimeSlice> timeSlices = this.calcTimeDistribution(domain, beginning, ending);
+            JSONArray tdArray = new JSONArray();
+            for (TimeSlice timeSlice : timeSlices) {
+                tdArray.put(timeSlice.toJSON());
+            }
+            this.storage.executeInsert(statisticTable, new StorageField[] {
+                    new StorageField("item", LiteralBase.STRING, ITEM_TD),
+                    new StorageField("data", LiteralBase.STRING, tdArray.toString()),
                     new StorageField("year", LiteralBase.INT, year),
                     new StorageField("month", LiteralBase.INT, month),
                     new StorageField("date", LiteralBase.INT, date),
@@ -375,7 +398,56 @@ public final class StatisticsSystem {
         return Math.round(value);
     }
 
-//    private JSONObject
+    private List<TimeSlice> calcTimeDistribution(String domain, long beginning, long ending) {
+        ArrayList<TimeSlice> list = new ArrayList<>();
+
+        String eventTable = this.eventTableNameMap.get(domain);
+
+        StringBuilder sql = new StringBuilder();
+
+        long beginningTime = 0;
+        long endingTime = beginning;
+
+        for (int i = 0; i < 24; ++i) {
+            sql.setLength(0);
+
+            beginningTime = endingTime;
+            endingTime = beginningTime + (60 * 60 * 1000);
+
+            sql.append("SELECT * FROM ").append(eventTable);
+            sql.append(" WHERE `event`='SignIn'");
+            sql.append(" AND `time`>=").append(beginningTime);
+            sql.append(" AND `time`<").append(endingTime);
+
+            List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+            if (result.isEmpty()) {
+                // 当前时间段没有数据
+                continue;
+            }
+
+            TimeSlice timeSlice = new TimeSlice(i, beginningTime, endingTime);
+
+            for (StorageField[] row : result) {
+                Map<String, StorageField> map = StorageFields.get(row);
+                String jsonString = map.get("event_data").getString();
+                JSONObject json = new JSONObject(jsonString);
+
+                // 读取联系人信息
+                JSONObject contactJson = json.getJSONObject("contact");
+                contactJson.remove("context");      // 删除 context 数据
+                Contact contact = new Contact(contactJson);
+
+                // 读取设备信息
+                Device device = new Device(json.getJSONObject("device"));
+
+                timeSlice.addContact(contact, device);
+            }
+
+            list.add(timeSlice);
+        }
+
+        return list;
+    }
 
     protected class SignInPlugin implements Plugin {
 

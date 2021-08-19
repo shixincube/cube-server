@@ -27,28 +27,61 @@
 package cube.common.entity;
 
 import cube.common.JSONable;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 时间片段。
  */
 public class TimeSlice implements JSONable {
 
-    public final int sn;
+    public final int slice;
 
-    public TimeSlice(int sn) {
-        this.sn = sn;
+    public final long beginning;
+
+    public final long ending;
+
+    private List<Contact> contactList;
+
+    public TimeSlice(int slice, long beginning, long ending) {
+        this.slice = slice;
+        this.beginning = beginning;
+        this.ending = ending;
+        this.contactList = new ArrayList<>();
     }
 
-
+    public void addContact(Contact contact, Device device) {
+        int index = this.contactList.indexOf(contact);
+        if (index >= 0) {
+            this.contactList.get(index).addDevice(device);
+        }
+        else {
+            contact.addDevice(device);
+            this.contactList.add(contact);
+        }
+    }
 
     @Override
     public JSONObject toJSON() {
-        return null;
+        JSONObject json = new JSONObject();
+        json.put("slice", this.slice);
+        json.put("beginning", this.beginning);
+        json.put("ending", this.ending);
+
+        JSONArray array = new JSONArray();
+        for (Contact contact : this.contactList) {
+            array.put(contact.toJSON());
+        }
+        json.put("list", array);
+
+        return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return null;
+        return this.toJSON();
     }
 }
