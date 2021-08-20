@@ -54,13 +54,14 @@ import java.util.concurrent.ExecutorService;
  */
 public final class StatisticsSystem {
 
-    public final String ITEM_CONTACT_AMOUNT = "CONTACT_AMOUNT";
+    // Total number of users
+    public final String ITEM_TNU = "TNU";
 
     // Daily Active User
     public final String ITEM_DAU = "DAU";
 
-    // Mean Residence Time
-    public final String ITEM_MRT = "MRT";
+    // Average online time
+    public final String ITEM_AOT = "AOT";
 
     // Time Distribution
     public final String ITEM_TD = "TD";
@@ -183,6 +184,14 @@ public final class StatisticsSystem {
                 collect();
             }
         }, date, 24 * 60 * 60 * 1000);
+
+        // 启动时尝试统计数据
+        (new Thread() {
+            @Override
+            public void run() {
+                collect();
+            }
+        }).start();
     }
 
     public void stop() {
@@ -247,7 +256,7 @@ public final class StatisticsSystem {
             List<StorageField[]> result = this.storage.executeQuery(statisticTable, new StorageField[] {
                     new StorageField("sn", LiteralBase.LONG)
             }, new Conditional[] {
-                    Conditional.createEqualTo("item", LiteralBase.STRING, ITEM_CONTACT_AMOUNT),
+                    Conditional.createEqualTo("item", LiteralBase.STRING, ITEM_TNU),
                     Conditional.createAnd(),
                     Conditional.createEqualTo("year", LiteralBase.INT, year),
                     Conditional.createAnd(),
@@ -262,10 +271,10 @@ public final class StatisticsSystem {
             }
 
             // 日用户总数
-            int amount = ContactManager.getInstance().countContacts(domain);
+            int total = ContactManager.getInstance().countContacts(domain);
             this.storage.executeInsert(statisticTable, new StorageField[] {
-                    new StorageField("item", LiteralBase.STRING, ITEM_CONTACT_AMOUNT),
-                    new StorageField("data", LiteralBase.STRING, String.valueOf(amount)),
+                    new StorageField("item", LiteralBase.STRING, ITEM_TNU),
+                    new StorageField("data", LiteralBase.STRING, String.valueOf(total)),
                     new StorageField("year", LiteralBase.INT, year),
                     new StorageField("month", LiteralBase.INT, month),
                     new StorageField("date", LiteralBase.INT, date),
@@ -284,10 +293,10 @@ public final class StatisticsSystem {
             });
 
             // 平均在线时长
-            long mrt = this.calcMRT(domain, beginning, ending);
+            long aot = this.calcAOT(domain, beginning, ending);
             this.storage.executeInsert(statisticTable, new StorageField[] {
-                    new StorageField("item", LiteralBase.STRING, ITEM_MRT),
-                    new StorageField("data", LiteralBase.STRING, String.valueOf(mrt)),
+                    new StorageField("item", LiteralBase.STRING, ITEM_AOT),
+                    new StorageField("data", LiteralBase.STRING, String.valueOf(aot)),
                     new StorageField("year", LiteralBase.INT, year),
                     new StorageField("month", LiteralBase.INT, month),
                     new StorageField("date", LiteralBase.INT, date),
@@ -298,7 +307,7 @@ public final class StatisticsSystem {
             List<TimeSlice> timeSlices = this.calcTimeDistribution(domain, beginning, ending);
             JSONArray tdArray = new JSONArray();
             for (TimeSlice timeSlice : timeSlices) {
-                tdArray.put(timeSlice.toJSON());
+                tdArray.put(timeSlice.toCompactJSON());
             }
             this.storage.executeInsert(statisticTable, new StorageField[] {
                     new StorageField("item", LiteralBase.STRING, ITEM_TD),
@@ -324,7 +333,7 @@ public final class StatisticsSystem {
         return result.get(0)[0].getInt();
     }
 
-    private long calcMRT(String domain, long beginning, long ending) {
+    private long calcAOT(String domain, long beginning, long ending) {
         String eventTable = this.eventTableNameMap.get(domain);
 
         // 查询所有登录的用户 ID
