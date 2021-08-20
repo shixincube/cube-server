@@ -34,6 +34,7 @@ import cube.util.SQLUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -62,7 +63,11 @@ public class DataStorage {
 
     public DataStorage(Properties properties) {
         JSONObject config = new JSONObject();
-
+        config.put(StorageFactory.MYSQL_HOST, properties.getProperty("auth.mysql.host"));
+        config.put(StorageFactory.MYSQL_PORT, properties.getProperty("auth.mysql.port"));
+        config.put(StorageFactory.MYSQL_SCHEMA, properties.getProperty("auth.mysql.schema"));
+        config.put(StorageFactory.MYSQL_USER, properties.getProperty("auth.mysql.user"));
+        config.put(StorageFactory.MYSQL_PASSWORD, properties.getProperty("auth.mysql.password"));
         this.authStorage = StorageFactory.getInstance().createStorage(StorageType.MySQL, "authData", config);
 
         config = new JSONObject();
@@ -82,6 +87,18 @@ public class DataStorage {
     public void close() {
         this.authStorage.close();
         this.statisticStorage.close();
+    }
+
+    public List<String> queryAllDomains() {
+        ArrayList<String> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.authStorage.executeQuery("SELECT DISTINCT `domain` FROM `auth_domain`");
+
+        for (StorageField[] row : result) {
+            list.add(row[0].getString());
+        }
+
+        return list;
     }
 
     public JSONObject queryContactStatistics(String domain, int year, int month, int date) {

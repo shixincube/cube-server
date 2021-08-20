@@ -1,6 +1,5 @@
 /**
  * This source file is part of Cube.
- * https://shixincube.com
  *
  * The MIT License (MIT)
  *
@@ -25,28 +24,40 @@
  * SOFTWARE.
  */
 
-(function ($, g) {
-    'use strict'
+package cube.console.container.handler;
 
-    var console = new Console();
-    $.console = console;
+import cube.console.Console;
+import cube.util.CrossDomainHandler;
+import org.eclipse.jetty.server.handler.ContextHandler;
 
-    // 检查是否合法
-    console.checkUser(function(valid) {
-        if (!valid) {
-            window.location.href = 'index.html';
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+/**
+ * Auth 操作相关接口。
+ */
+public class AuthHandler extends ContextHandler {
+
+    private Console console;
+
+    public AuthHandler(Console console) {
+        super("/auth");
+        this.setHandler(new Handler());
+        this.console = console;
+    }
+
+    protected class Handler extends CrossDomainHandler {
+
+        public Handler() {
         }
-        else {
-            g.common.updateUserPanel(console);
+
+        @Override
+        public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+            if (target.equals("/domain")) {
+
+            }
         }
-    });
-
-    g.overview = {
-        launch: function() {
-            
-        }
-    };
-
-    that = g.overview;
-
-})(jQuery, window);
+    }
+}

@@ -33,6 +33,7 @@ import cell.util.log.LogManager;
 import cell.util.log.Logger;
 import cube.console.mgmt.DispatcherManager;
 import cube.console.mgmt.ServiceManager;
+import cube.console.mgmt.StatisticDataManager;
 import cube.console.mgmt.UserManager;
 import cube.report.JVMReport;
 import cube.report.LogLine;
@@ -88,6 +89,8 @@ public final class Console implements Runnable {
 
     private ServiceManager serviceManager;
 
+    private StatisticDataManager statisticDataManager;
+
     public Console() {
         this.serverLogMap = new ConcurrentHashMap<>();
         this.serverJVMMap = new ConcurrentHashMap<>();
@@ -120,10 +123,12 @@ public final class Console implements Runnable {
         this.userManager = new UserManager();
         this.dispatcherManager = new DispatcherManager(this.consoleTag);
         this.serviceManager = new ServiceManager(this.consoleTag);
+        this.statisticDataManager = new StatisticDataManager();
 
         this.userManager.start();
         this.dispatcherManager.start();
         this.serviceManager.start();
+        this.statisticDataManager.start();
 
         this.timer = Executors.newScheduledThreadPool(2);
         this.timer.scheduleWithFixedDelay(this, 10L, 10L, TimeUnit.SECONDS);
@@ -132,6 +137,7 @@ public final class Console implements Runnable {
     }
 
     public void destroy() {
+        this.statisticDataManager.stop();
         this.serviceManager.stop();
         this.dispatcherManager.stop();
         this.userManager.stop();
