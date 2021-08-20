@@ -56,24 +56,32 @@ public class DataStorage {
 
     private final String contactStatisticsTablePrefix = "contact_statistics_";
 
-    private Storage storage;
+    private Storage authStorage;
+
+    private Storage statisticStorage;
 
     public DataStorage(Properties properties) {
         JSONObject config = new JSONObject();
+
+        this.authStorage = StorageFactory.getInstance().createStorage(StorageType.MySQL, "authData", config);
+
+        config = new JSONObject();
         config.put(StorageFactory.MYSQL_HOST, properties.getProperty("statistic.mysql.host"));
         config.put(StorageFactory.MYSQL_PORT, properties.getProperty("statistic.mysql.port"));
         config.put(StorageFactory.MYSQL_SCHEMA, properties.getProperty("statistic.mysql.schema"));
         config.put(StorageFactory.MYSQL_USER, properties.getProperty("statistic.mysql.user"));
         config.put(StorageFactory.MYSQL_PASSWORD, properties.getProperty("statistic.mysql.password"));
-        this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL, "StatisticData", config);
+        this.statisticStorage = StorageFactory.getInstance().createStorage(StorageType.MySQL, "StatisticData", config);
     }
 
     public void open() {
-        this.storage.open();
+        this.authStorage.open();
+        this.statisticStorage.open();
     }
 
     public void close() {
-        this.storage.close();
+        this.authStorage.close();
+        this.statisticStorage.close();
     }
 
     public JSONObject queryContactStatistics(String domain, int year, int month, int date) {
@@ -86,7 +94,7 @@ public class DataStorage {
         sql.append(" AND `month`=").append(month);
         sql.append(" AND `date`=").append(date);
 
-        List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+        List<StorageField[]> result = this.statisticStorage.executeQuery(sql.toString());
         if (result.isEmpty()) {
             return null;
         }
