@@ -203,3 +203,7 @@ Console.prototype.updateDisptacherConfig = function(dispatcher, handler) {
         handler(null);
     });
 }
+
+Console.prototype.getDomains = function(handler) {
+    
+}

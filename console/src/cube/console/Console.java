@@ -304,6 +304,10 @@ public final class Console implements Runnable {
         return report;
     }
 
+    public StatisticDataManager getStatisticDataManager() {
+        return this.statisticDataManager;
+    }
+
     @Override
     public void run() {
         long now = System.currentTimeMillis();

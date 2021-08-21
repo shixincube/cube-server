@@ -35,6 +35,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -89,5 +90,9 @@ public class StatisticDataManager {
         JSONObject data = this.storage.queryContactStatistics(domain, calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.DATE));
         return data;
+    }
+
+    public List<String> getDomains() {
+        return this.storage.queryAllDomains();
     }
 }
