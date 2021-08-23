@@ -90,6 +90,7 @@ public final class Handlers {
                 new DispatcherHandler(console),
                 new ServiceHandler(console),
                 new AuthHandler(console),
+                new StatisticDataHandler(console),
 
                 new ServerLogHandler(console),
                 new ServerReportHandler(console),

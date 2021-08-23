@@ -39,15 +39,55 @@
             window.location.href = 'index.html';
         }
         else {
+            g.common.updateUserPanel(console);
             that.launch();
         }
     });
 
     g.overview = {
         launch: function() {
+            this.bindUIEvent();
+
             console.getDomains(function(data) {
-                var list = data.list;
-                
+                if (null == data) {
+                    console.log('获取域列表失败');
+                    return;
+                }
+
+                that.updateDomainSelector(data.list);
+
+                setTimeout(function() {
+                    that.refresh($('#domain-selector').find('option:selected').text());
+                }, 1);
+            });
+        },
+
+        bindUIEvent: function() {
+            // 选择域
+            $('#domain-selector').change(function() {
+                var value = $(this).children('option:selected').val();
+                that.refresh(value);
+            });
+        },
+
+        updateDomainSelector: function(list) {
+            var el = $('#domain-selector');
+            list.forEach(function(value, index) {
+                var opt = document.createElement('option');
+                opt.innerText = value;
+                el.append(opt);
+            });
+        },
+
+        refresh: function(domain) {
+            console.getRecentStatistic(domain, function(data) {
+                if (null == data) {
+                    alert('加载域 "' + domain + '" 统计数据错误');
+                    return;
+                }
+
+                $('#recent-tnu').text(data.statistic.TNU);
+
             });
         }
     };
