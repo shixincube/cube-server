@@ -205,5 +205,13 @@ Console.prototype.updateDisptacherConfig = function(dispatcher, handler) {
 }
 
 Console.prototype.getDomains = function(handler) {
-    
+    var that = this;
+    $.get('/auth/domain', function(response, status, xhr) {
+        if (status == 'success') {
+            handler(response);
+        }
+        else {
+            handler(null);
+        }
+    }, 'json');
 }

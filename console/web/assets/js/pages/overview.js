@@ -28,6 +28,8 @@
 (function ($, g) {
     'use strict'
 
+    var that = null;
+
     var console = new Console();
     $.console = console;
 
@@ -37,13 +39,16 @@
             window.location.href = 'index.html';
         }
         else {
-            g.common.updateUserPanel(console);
+            that.launch();
         }
     });
 
     g.overview = {
         launch: function() {
-            
+            console.getDomains(function(data) {
+                var list = data.list;
+                
+            });
         }
     };
 
