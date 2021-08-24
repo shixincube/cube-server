@@ -227,3 +227,19 @@ Console.prototype.getRecentStatistic = function(domain, handler) {
         }
     }, 'json');
 }
+
+Console.prototype.getDailyStatistic = function(domain, year, month, date, handler) {
+    $.get('/statistic/daily', {
+        "domain": domain,
+        "year": year,
+        "month": month,
+        "date": date
+    }, function(response, status, xhr) {
+        if (status == 'success') {
+            handler(response);
+        }
+        else {
+            handler(null);
+        }
+    }, 'json');
+}

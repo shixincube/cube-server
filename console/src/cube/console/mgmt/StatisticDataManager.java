@@ -92,6 +92,11 @@ public class StatisticDataManager {
         return data;
     }
 
+    public JSONObject queryStatisticData(String domain, int year, int month, int date) {
+        JSONObject data = this.storage.queryContactStatistics(domain, year, month, date);
+        return data;
+    }
+
     public List<String> getDomains() {
         return this.storage.queryAllDomains();
     }

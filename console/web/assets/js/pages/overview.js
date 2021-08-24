@@ -86,8 +86,28 @@
                     return;
                 }
 
-                $('#recent-tnu').text(data.statistic.TNU);
+                $('#recent-tnu').text(data.statistic.DNU + '/' + data.statistic.TNU);
+                $('#recent-dau').text(data.statistic.DAU);
+                $('#recent-aot').text(data.statistic.AOT);
+                $('#recent-peak-td').text('--:-- - --:-- # --');
 
+                // 计算分值时段
+                var beginning = 0;
+                var ending = 0;
+                var numContacts = 0;
+                if (data.statistic.TD.length > 0) {
+                    data.statistic.TD.forEach(function(slice) {
+                        if (slice.numContacts > numContacts) {
+                            numContacts = slice.numContacts;
+                            beginning = slice.beginning;
+                            ending = slice.ending;
+                        }
+                    });
+
+                    var bDate = new Date(beginning);
+                    var eDate = new Date(ending);
+                    $('#recent-peak-td').text(bDate.getHours() + ':00 - ' + eDate.getHours() + ':00 # ' + numContacts);
+                }
             });
         }
     };
