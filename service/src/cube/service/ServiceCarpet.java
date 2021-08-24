@@ -119,9 +119,15 @@ public class ServiceCarpet implements CellListener {
         this.kernel.installCache("General", config);
 
         this.kernel.startup();
+
+        // 启动密码机
+        CipherMachine.getInstance().start(this.kernel.getCache("General"));
     }
 
     private void teardownKernel() {
+        // 关闭密码机
+        CipherMachine.getInstance().stop();
+
         this.kernel.uninstallCache("General");
 
         this.kernel.uninstallCache("TokenPool");
