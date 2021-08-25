@@ -87,6 +87,10 @@ public class MySQLStorage extends AbstractStorage {
     @Override
     public boolean exist(String table) {
         Connection connection = this.pool.get();
+        if (null == connection) {
+            return false;
+        }
+
         Statement statement = null;
         try {
             statement = connection.createStatement();
@@ -114,6 +118,10 @@ public class MySQLStorage extends AbstractStorage {
         }
 
         Connection connection = this.pool.get();
+        if (null == connection) {
+            return false;
+        }
+
         // 拼写 SQL 语句
         String sql = SQLUtils.spellCreateTable(table, fields);
         Statement statement = null;
@@ -483,6 +491,10 @@ public class MySQLStorage extends AbstractStorage {
                 } catch (SQLException e) {
                     Logger.e(this.getClass(), "#open", e);
                 }
+            }
+
+            if (null == conn) {
+                return null;
             }
 
             this.count.incrementAndGet();

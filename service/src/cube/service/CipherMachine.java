@@ -29,6 +29,7 @@ package cube.service;
 import cell.core.talk.LiteralBase;
 import cell.util.Base64;
 import cell.util.Utils;
+import cell.util.log.Logger;
 import cube.core.*;
 import cube.storage.MySQLStorage;
 import cube.storage.StorageFactory;
@@ -81,6 +82,10 @@ public final class CipherMachine {
     private Storage storage;
 
     private byte[] currentCipher;
+
+    private long cipherBeginningTime;
+
+    private long cipherEndingTime;
 
     private Timer timer;
 
@@ -142,6 +147,61 @@ public final class CipherMachine {
             this.timer.cancel();
             this.timer = null;
         }
+
+        this.currentCipher = null;
+    }
+
+    public boolean isReady() {
+        return (null != this.currentCipher);
+    }
+
+    public byte[] getCurrentCipher() {
+        return this.currentCipher;
+    }
+
+    public byte[] getCipher(long timestamp) {
+        if (timestamp >= this.cipherBeginningTime && timestamp <= this.cipherEndingTime) {
+            return this.currentCipher;
+        }
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(timestamp);
+
+        // 尝试从缓存里获取
+        String cacheKey = CacheKeyPrefix
+                + calendar.get(Calendar.YEAR) + "_"
+                + (calendar.get(Calendar.MONTH) + 1) + "_"
+                + calendar.get(Calendar.DATE);
+        CacheValue value = this.generalCache.get(new CacheKey(cacheKey));
+        if (null != value) {
+            byte[] cipher = null;
+            try {
+                cipher = Base64.decode(value.get().getString("cipher"));
+            } catch (IOException e) {
+                // Nothing
+            }
+            return cipher;
+        }
+
+        StringBuilder sql = new StringBuilder("SELECT `cipher` FROM ");
+        sql.append(this.table);
+        sql.append(" WHERE `year`=").append(calendar.get(Calendar.YEAR));
+        sql.append(" AND `month`=").append(calendar.get(Calendar.MONTH) + 1);
+        sql.append(" AND `date`=").append(calendar.get(Calendar.DATE));
+
+        List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        byte[] cipher = null;
+        try {
+            cipher = Base64.decode(result.get(0)[0].getString());
+        } catch (IOException e) {
+            // Nothing
+        }
+
+        return cipher;
     }
 
     public byte[] encrypt(byte[] plaintext) {
@@ -168,6 +228,10 @@ public final class CipherMachine {
     }
 
     public String encryptOutputBase64(String plaintext) {
+        if (null == this.currentCipher) {
+            return plaintext;
+        }
+
         byte[] ciphertext = this.encrypt(plaintext.getBytes(Charset.forName("UTf-8")));
         if (null == ciphertext) {
             return null;
@@ -200,6 +264,10 @@ public final class CipherMachine {
     }
 
     public String decryptForBase64(String base64) {
+        if (null == this.currentCipher) {
+            return base64;
+        }
+
         String output = null;
 
         try {
@@ -264,7 +332,12 @@ public final class CipherMachine {
 
     private void execSelfChecking() {
         if (!this.storage.exist(this.table)) {
-            this.storage.executeCreate(this.table, this.fields);
+            boolean ret = this.storage.executeCreate(this.table, this.fields);
+            if (!ret) {
+                // 未能成功连接数据库
+                Logger.w(this.getClass(), "Can NOT connect cipher database");
+                return;
+            }
         }
 
         final Calendar calendar = Calendar.getInstance();
@@ -289,14 +362,6 @@ public final class CipherMachine {
                     json.put("cipher", Base64.encodeBytes(currentCipher));
 
                     context.put(new CacheValue(json));
-
-                    // 删除之前的记录
-                    (new Thread() {
-                        @Override
-                        public void run() {
-                            removePreviousCache(calendar);
-                        }
-                    }).start();
                 }
                 else {
                     JSONObject json = value.get();
@@ -308,6 +373,14 @@ public final class CipherMachine {
                 }
             }
         });
+
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        this.cipherBeginningTime = calendar.getTimeInMillis();
+        this.cipherEndingTime = this.cipherBeginningTime + 24 * 60 * 60 * 1000;
     }
 
     private void startTimer() {

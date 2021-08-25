@@ -33,6 +33,8 @@ public final class Events {
 
     public final static String ReceiveMessage = "ReceiveMessage";
 
+    public final static String SendMessage = "SendMessage";
+
     private Events() {
     }
 }

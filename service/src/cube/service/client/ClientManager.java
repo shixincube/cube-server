@@ -39,6 +39,7 @@ import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
 import cube.service.client.event.MessageReceiveEvent;
+import cube.service.client.event.MessageSendEvent;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.contact.ContactPluginContext;
@@ -271,6 +272,16 @@ public final class ClientManager {
                 }
             }
         }
+        else if (Events.SendMessage.equals(eventName)) {
+            String domain = eventParam.getString("domain");
+            if (eventParam.has("contactId")) {
+                Long contactId = eventParam.getLong("contactId");
+
+                Contact contact = ContactManager.getInstance().getContact(domain, contactId);
+                MessageSendEvent event = new MessageSendEvent(contact);
+                serverClient.addEvent(event);
+            }
+        }
     }
 
     /**
@@ -305,6 +316,16 @@ public final class ClientManager {
                     MessageReceiveEvent event = new MessageReceiveEvent(group);
                     serverClient.removeEvent(event);
                 }
+            }
+        }
+        else if (Events.SendMessage.equals(eventName)) {
+            String domain = eventParam.getString("domain");
+            if (eventParam.has("contactId")) {
+                Long contactId = eventParam.getLong("contactId");
+
+                Contact contact = ContactManager.getInstance().getContact(domain, contactId);
+                MessageSendEvent event = new MessageSendEvent(contact);
+                serverClient.removeEvent(event);
             }
         }
     }
@@ -367,6 +388,14 @@ public final class ClientManager {
                             MessageReceiveEvent event = client.queryReceiveEvent(message);
                             if (null != event) {
                                 client.sendEvent(MessageReceiveEvent.NAME, event.toJSON());
+                            }
+                        }
+
+                        if (client.hasEvent(MessageSendEvent.NAME)) {
+                            // 查找对应的事件
+                            MessageSendEvent event = client.querySendEvent(message);
+                            if (null != event) {
+                                client.sendEvent(MessageSendEvent.NAME, event.toJSON());
                             }
                         }
                     }

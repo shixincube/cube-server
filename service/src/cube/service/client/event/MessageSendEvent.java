@@ -34,11 +34,11 @@ import cube.service.client.Events;
 import org.json.JSONObject;
 
 /**
- * 接收消息事件。
+ * 发送消息事件。
  */
-public class MessageReceiveEvent implements JSONable {
+public class MessageSendEvent implements JSONable {
 
-    public final static String NAME = Events.ReceiveMessage;
+    public final static String NAME = Events.SendMessage;
 
     private Contact contact;
 
@@ -51,7 +51,7 @@ public class MessageReceiveEvent implements JSONable {
      *
      * @param contact
      */
-    public MessageReceiveEvent(Contact contact) {
+    public MessageSendEvent(Contact contact) {
         this.contact = contact;
     }
 
@@ -60,7 +60,7 @@ public class MessageReceiveEvent implements JSONable {
      *
      * @param group
      */
-    public MessageReceiveEvent(Group group) {
+    public MessageSendEvent(Group group) {
         this.group = group;
     }
 
@@ -93,8 +93,8 @@ public class MessageReceiveEvent implements JSONable {
 
     @Override
     public boolean equals(Object object) {
-        if (null != object && object instanceof MessageReceiveEvent) {
-            MessageReceiveEvent other = (MessageReceiveEvent) object;
+        if (null != object && object instanceof MessageSendEvent) {
+            MessageSendEvent other = (MessageSendEvent) object;
             if (null != this.contact && null != other.contact) {
                 return this.contact.equals(other.contact);
             }

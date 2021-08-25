@@ -57,8 +57,6 @@ public class MessagingStorage implements Storagable {
 
     private final String messageTablePrefix = "message_";
 
-//    private final String stateTablePrefix = "state_";
-
     /**
      * 消息字段描述。
      */

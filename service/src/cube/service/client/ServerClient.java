@@ -29,9 +29,11 @@ package cube.service.client;
 import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.common.entity.Contact;
 import cube.common.entity.Entity;
 import cube.common.entity.Message;
 import cube.service.client.event.MessageReceiveEvent;
+import cube.service.client.event.MessageSendEvent;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -49,6 +51,8 @@ public class ServerClient extends Entity {
 
     protected List<MessageReceiveEvent> messageReceiveEvents;
 
+    protected List<MessageSendEvent> messageSendEvents;
+
     private Timer disableTimer;
 
     public ServerClient(Long id, Cellet cellet, TalkContext talkContext) {
@@ -57,6 +61,7 @@ public class ServerClient extends Entity {
         this.talkContext = talkContext;
         this.events = new ArrayList<>();
         this.messageReceiveEvents = new Vector<>();
+        this.messageSendEvents = new Vector<>();
     }
 
     public void resetTalkContext(TalkContext talkContext) {
@@ -132,6 +137,21 @@ public class ServerClient extends Entity {
     }
 
     /**
+     * 添加事件。
+     *
+     * @param event
+     */
+    public void addEvent(MessageSendEvent event) {
+        this.addEvent(MessageSendEvent.NAME);
+
+        if (this.messageSendEvents.contains(event)) {
+            return;
+        }
+
+        this.messageSendEvents.add(event);
+    }
+
+    /**
      * 移除事件。
      *
      * @param event
@@ -140,6 +160,17 @@ public class ServerClient extends Entity {
         this.removeEvent(MessageReceiveEvent.NAME);
 
         this.messageReceiveEvents.remove(event);
+    }
+
+    /**
+     * 移除事件。
+     *
+     * @param event
+     */
+    public void removeEvent(MessageSendEvent event) {
+        this.removeEvent(MessageSendEvent.NAME);
+
+        this.messageSendEvents.remove(event);
     }
 
     /**
@@ -161,6 +192,19 @@ public class ServerClient extends Entity {
                     event.setMessage(message);
                     return event;
                 }
+            }
+        }
+
+        return null;
+    }
+
+    public MessageSendEvent querySendEvent(Message message) {
+        long fromId = message.getFrom().longValue();
+        for (MessageSendEvent event : this.messageSendEvents) {
+            Contact contact = event.getContact();
+            if (null != contact && contact.getId().longValue() == fromId) {
+                event.setMessage(message);
+                return event;
             }
         }
 
