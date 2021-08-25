@@ -29,7 +29,7 @@ package cube.service.client;
 import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.common.entity.Contact;
+import cube.common.UniqueKey;
 import cube.common.entity.Entity;
 import cube.common.entity.Message;
 import cube.service.client.event.MessageReceiveEvent;
@@ -37,6 +37,7 @@ import cube.service.client.event.MessageSendEvent;
 import org.json.JSONObject;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 客户端管理实体。
@@ -49,9 +50,11 @@ public class ServerClient extends Entity {
 
     protected List<String> events;
 
-    protected List<MessageReceiveEvent> messageReceiveEvents;
+    // Key : 实体唯一键
+    protected Map<String, MessageReceiveEvent> messageReceiveEvents;
 
-    protected List<MessageSendEvent> messageSendEvents;
+    // Key : 实体唯一键
+    protected Map<String, MessageSendEvent> messageSendEvents;
 
     private Timer disableTimer;
 
@@ -60,8 +63,8 @@ public class ServerClient extends Entity {
         this.cellet = cellet;
         this.talkContext = talkContext;
         this.events = new ArrayList<>();
-        this.messageReceiveEvents = new Vector<>();
-        this.messageSendEvents = new Vector<>();
+        this.messageReceiveEvents = new ConcurrentHashMap<>();
+        this.messageSendEvents = new ConcurrentHashMap<>();
     }
 
     public void resetTalkContext(TalkContext talkContext) {
@@ -129,11 +132,11 @@ public class ServerClient extends Entity {
     public void addEvent(MessageReceiveEvent event) {
         this.addEvent(MessageReceiveEvent.NAME);
 
-        if (this.messageReceiveEvents.contains(event)) {
+        if (this.messageReceiveEvents.containsKey(event.getUniqueKey())) {
             return;
         }
 
-        this.messageReceiveEvents.add(event);
+        this.messageReceiveEvents.put(event.getUniqueKey(), event);
     }
 
     /**
@@ -144,11 +147,11 @@ public class ServerClient extends Entity {
     public void addEvent(MessageSendEvent event) {
         this.addEvent(MessageSendEvent.NAME);
 
-        if (this.messageSendEvents.contains(event)) {
+        if (this.messageSendEvents.containsKey(event.getUniqueKey())) {
             return;
         }
 
-        this.messageSendEvents.add(event);
+        this.messageSendEvents.put(event.getUniqueKey(), event);
     }
 
     /**
@@ -157,9 +160,11 @@ public class ServerClient extends Entity {
      * @param event
      */
     public void removeEvent(MessageReceiveEvent event) {
-        this.removeEvent(MessageReceiveEvent.NAME);
+        this.messageReceiveEvents.remove(event.getUniqueKey());
 
-        this.messageReceiveEvents.remove(event);
+        if (this.messageReceiveEvents.isEmpty()) {
+            this.removeEvent(MessageReceiveEvent.NAME);
+        }
     }
 
     /**
@@ -168,9 +173,11 @@ public class ServerClient extends Entity {
      * @param event
      */
     public void removeEvent(MessageSendEvent event) {
-        this.removeEvent(MessageSendEvent.NAME);
+        this.messageSendEvents.remove(event.getUniqueKey());
 
-        this.messageSendEvents.remove(event);
+        if (this.messageSendEvents.isEmpty()) {
+            this.removeEvent(MessageSendEvent.NAME);
+        }
     }
 
     /**
@@ -179,33 +186,36 @@ public class ServerClient extends Entity {
      * @return
      */
     public MessageReceiveEvent queryReceiveEvent(Message message) {
+        String key = null;
         long sourceId = message.getSource().longValue();
-        for (MessageReceiveEvent event : this.messageReceiveEvents) {
-            if (sourceId == 0 && null != event.getContact()) {
-                if (message.getTo().longValue() == event.getContact().getId().longValue()) {
-                    event.setMessage(message);
-                    return event;
-                }
-            }
-            else if (sourceId != 0 && null != event.getGroup()) {
-                if (sourceId == event.getGroup().getId().longValue()) {
-                    event.setMessage(message);
-                    return event;
-                }
-            }
+        if (sourceId == 0) {
+            key = UniqueKey.make(message.getTo(), message.getDomain().getName());
+        }
+        else {
+            key = UniqueKey.make(sourceId, message.getDomain().getName());
+        }
+
+        MessageReceiveEvent event = this.messageReceiveEvents.get(key);
+        if (null != event) {
+            event.setMessage(message);
+            return event;
         }
 
         return null;
     }
 
+    /**
+     *
+     * @param message
+     * @return
+     */
     public MessageSendEvent querySendEvent(Message message) {
-        long fromId = message.getFrom().longValue();
-        for (MessageSendEvent event : this.messageSendEvents) {
-            Contact contact = event.getContact();
-            if (null != contact && contact.getId().longValue() == fromId) {
-                event.setMessage(message);
-                return event;
-            }
+        String key = UniqueKey.make(message.getFrom(), message.getDomain().getName());
+
+        MessageSendEvent event = this.messageSendEvents.get(key);
+        if (null != event) {
+            event.setMessage(message);
+            return event;
         }
 
         return null;

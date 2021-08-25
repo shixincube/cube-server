@@ -155,10 +155,21 @@ public final class CipherMachine {
         return (null != this.currentCipher);
     }
 
+    /**
+     * 获取当前有效的密钥。
+     *
+     * @return
+     */
     public byte[] getCurrentCipher() {
         return this.currentCipher;
     }
 
+    /**
+     * 获取指定时间有效的密钥。
+     *
+     * @param timestamp
+     * @return
+     */
     public byte[] getCipher(long timestamp) {
         if (timestamp >= this.cipherBeginningTime && timestamp <= this.cipherEndingTime) {
             return this.currentCipher;
@@ -194,12 +205,19 @@ public final class CipherMachine {
             return null;
         }
 
+        String cipherBase64 = result.get(0)[0].getString();
+
         byte[] cipher = null;
         try {
-            cipher = Base64.decode(result.get(0)[0].getString());
+            cipher = Base64.decode(cipherBase64);
         } catch (IOException e) {
             // Nothing
         }
+
+        // 写入缓存
+        JSONObject json = new JSONObject();
+        json.put("cipher", cipherBase64);
+        this.generalCache.put(new CacheKey(cacheKey), new CacheValue(json));
 
         return cipher;
     }

@@ -83,6 +83,15 @@ public class MessageReceiveEvent implements JSONable {
     }
 
     /**
+     * 获取唯一键。
+     *
+     * @return
+     */
+    public String getUniqueKey() {
+        return (null != this.contact) ? this.contact.getUniqueKey() : this.group.getUniqueKey();
+    }
+
+    /**
      * 设置消息。
      *
      * @param message
