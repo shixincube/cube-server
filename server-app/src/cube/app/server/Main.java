@@ -24,25 +24,22 @@
  * SOFTWARE.
  */
 
-package cube.console.container;
+package cube.app.server;
 
 import cell.util.log.LogLevel;
 import cell.util.log.LogManager;
-import cell.util.log.Logger;
-import cube.console.Console;
+import cube.app.server.container.ContainerManager;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpStatus;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.HandlerList;
 
+/**
+ * 程序入口。
+ */
 public class Main {
 
-    public Main() {
-    }
-
     /**
-     * 启动容器。
+     * 启动服务器。
      *
      * @param port
      */
@@ -50,50 +47,14 @@ public class Main {
         LogManager.getInstance().setLevel(LogLevel.DEBUG);
         LogManager.getInstance().addHandle(LogManager.createSystemOutHandle());
 
-        // 创建 Console
-        Console console = new Console();
-        console.launch();
+        ContainerManager containerManager = new ContainerManager();
 
-        // 创建服务器
-        Server server = new Server(port);
-
-        HandlerList handlers = Handlers.createHandlerList(server, console);
-        server.setHandler(handlers);
-
-        Logger.i(Main.class, "Start cube console server # " + port);
-
-        System.out.println("" +
-                "                                             \n" +
-                "  ,----..                                    \n" +
-                " /   /   \\                ,---,              \n" +
-                "|   :     :         ,--,,---.'|              \n" +
-                ".   |  ;. /       ,'_ /||   | :              \n" +
-                ".   ; /--`   .--. |  | ::   : :      ,---.   \n" +
-                ";   | ;    ,'_ /| :  . |:     |,-.  /     \\  \n" +
-                "|   : |    |  ' | |  . .|   : '  | /    /  | \n" +
-                ".   | '___ |  | ' |  | ||   |  / :.    ' / | \n" +
-                "'   ; : .'|:  | : ;  ; |'   : |: |'   ;   /| \n" +
-                "'   | '/  :'  :  `--'   \\   | '/ :'   |  / | \n" +
-                "|   :    / :  ,      .-./   :    ||   :    | \n" +
-                " \\   \\ .'   `--`----'   /    \\  /  \\   \\  /  \n" +
-                "  `---`                 `-'----'    `----'   \n" +
-                "                                             ");
-
-        System.out.println("Enter \"http://Your-Server-IP:" + port + "\" in your browser to login Cube Console.");
-        System.out.println();
-        System.out.println("在浏览器中输入 \"http://您的服务器IP:" + port + "\" 登录 Cube Console 。");
-        System.out.println();
-
-        try {
-            server.start();
-            server.join();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // 启动容器
+        containerManager.launch(port);
     }
 
     /**
-     * 关闭容器。
+     * 停止服务器。
      *
      * @param port
      */
@@ -103,13 +64,13 @@ public class Main {
             httpClient.start();
             ContentResponse response = httpClient.GET("http://127.0.0.1:" + port + "/stop/");
             if (HttpStatus.OK_200 == response.getStatus()) {
-                System.out.println("Cube Console - stop server # " + port);
+                System.out.println("Cube App Server - stop server # " + port);
             }
             else {
-                System.out.println("Cube Console - STOP FAILED # " + port);
+                System.out.println("Cube App Server - STOP FAILED # " + port);
             }
         } catch (Exception e) {
-            System.err.println("Cube Console - STOP FAILED # " + port + " - " + e.getMessage());
+            System.err.println("Cube App Server - STOP FAILED # " + port + " - " + e.getMessage());
             //e.printStackTrace();
         } finally {
             try {
@@ -123,10 +84,10 @@ public class Main {
     public static void main(String[] args) {
         if (args.length == 1) {
             if (args[0].equalsIgnoreCase("start")) {
-                Main.start(7080);
+                Main.start(7777);
             }
             else if (args[0].equalsIgnoreCase("stop")) {
-                Main.stop(7080);
+                Main.stop(7777);
             }
         }
         else {
