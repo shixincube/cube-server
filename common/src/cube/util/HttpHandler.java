@@ -26,15 +26,18 @@
 
 package cube.util;
 
+import cell.util.collection.FlexibleByteBuffer;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.json.JSONObject;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * HTTP 请求处理句柄。
@@ -80,6 +83,25 @@ public abstract class HttpHandler extends AbstractHandler {
 
     public void doOptions(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         // Nothing
+    }
+
+    public JSONObject readBodyAsJSONObject(HttpServletRequest request) throws IOException {
+        ServletInputStream is = request.getInputStream();
+        FlexibleByteBuffer buffer = new FlexibleByteBuffer(512);
+        byte[] buf = new byte[512];
+        int len = 0;
+        while ((len = is.read(buf)) > 0) {
+            buffer.put(buf, 0, len);
+        }
+
+        buffer.flip();
+
+        String jsonString = new String(buffer.array(), 0, buffer.limit(), Charset.forName("UTF-8"));
+        if (jsonString.length() < 2) {
+            return null;
+        }
+        
+        return new JSONObject(jsonString);
     }
 
     public void respondOk(HttpServletResponse response, JSONObject data) {

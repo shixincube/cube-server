@@ -1,6 +1,4 @@
 .DS_Store
-.idea
-*.iml
 *.class
 build
 dispatcher/logs

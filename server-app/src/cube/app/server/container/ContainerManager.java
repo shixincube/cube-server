@@ -80,8 +80,10 @@ public class ContainerManager {
         HandlerList handlers = new HandlerList();
 
         handlers.setHandlers(new Handler[] {
-            new StopHandler(this.server, this),
-            new DefaultHandler()});
+                new LoginHandler(),
+
+                new StopHandler(this.server, this),
+                new DefaultHandler()});
 
         return handlers;
     }

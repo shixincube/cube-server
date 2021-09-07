@@ -26,30 +26,16 @@
 
 package cube.app.server.user;
 
+import cube.app.server.util.AbstractStorage;
+
+import java.util.Properties;
+
 /**
- * 用户管理器。
+ * 账号存储器。
  */
-public class UserManager {
+public class AccountStorage extends AbstractStorage {
 
-    private final static UserManager instance = new UserManager();
-
-    private AccountStorage accountStorage;
-
-    private UserManager() {
-    }
-
-    public final static UserManager getInstance() {
-        return UserManager.instance;
-    }
-
-    private void loadConfig() {
-        String[] configFiles = new String[] {
-                "server_dev.properties",
-                "server.properties"
-        };
-    }
-
-    public LoginStateCode login(String tokenString) {
-        return LoginStateCode.Unknown;
+    public AccountStorage(Properties properties) {
+        super("AccountStorage", properties);
     }
 }

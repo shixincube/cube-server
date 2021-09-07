@@ -24,32 +24,33 @@
  * SOFTWARE.
  */
 
-package cube.app.server.user;
+package cube.app.server.util;
+
+import cube.core.Storage;
+import cube.storage.StorageFactory;
+import cube.storage.StorageType;
+import org.json.JSONObject;
+
+import java.util.Properties;
 
 /**
- * 用户管理器。
+ * 控制器的存储器。
  */
-public class UserManager {
+public abstract class AbstractStorage {
 
-    private final static UserManager instance = new UserManager();
+    protected Storage storage;
 
-    private AccountStorage accountStorage;
+    public AbstractStorage(String name, Properties properties) {
+        String dbType = properties.getProperty("db");
 
-    private UserManager() {
-    }
-
-    public final static UserManager getInstance() {
-        return UserManager.instance;
-    }
-
-    private void loadConfig() {
-        String[] configFiles = new String[] {
-                "server_dev.properties",
-                "server.properties"
-        };
-    }
-
-    public LoginStateCode login(String tokenString) {
-        return LoginStateCode.Unknown;
+        if (dbType.equalsIgnoreCase("mysql")) {
+            JSONObject config = new JSONObject();
+            config.put(StorageFactory.MYSQL_HOST, properties.getProperty("mysql.host"));
+            config.put(StorageFactory.MYSQL_PORT, properties.getProperty("mysql.port"));
+            config.put(StorageFactory.MYSQL_SCHEMA, properties.getProperty("mysql.schema"));
+            config.put(StorageFactory.MYSQL_USER, properties.getProperty("mysql.user"));
+            config.put(StorageFactory.MYSQL_PASSWORD, properties.getProperty("mysql.password"));
+            this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL, name, config);
+        }
     }
 }

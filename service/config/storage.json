@@ -1,26 +1,46 @@
 {
 	"Auth": {
-		"type": "SQLite",
-		"file": "storage/AuthService.db"
+		"type"     : "MySQL",
+		"host"     : "211.157.135.146",
+		"port"     : 63307,
+		"schema"   : "cube_3",
+		"user"     : "root",
+		"password" : "Cube_2020"
 	},
 
 	"Contact": {
-		"type": "SQLite",
-		"file": "storage/ContactService.db"
+		"type"     : "MySQL",
+		"host"     : "211.157.135.146",
+		"port"     : 63307,
+		"schema"   : "cube_3",
+		"user"     : "root",
+		"password" : "Cube_2020"
 	},
 
 	"FileStorage": {
-		"type": "SQLite",
-		"file": "storage/FileStorageService.db"
+		"type"     : "MySQL",
+		"host"     : "211.157.135.146",
+		"port"     : 63307,
+		"schema"   : "cube_3",
+		"user"     : "root",
+		"password" : "Cube_2020"
 	},
 
 	"Messaging": {
-		"type": "SQLite",
-		"file": "storage/MessagingService.db"
+		"type"     : "MySQL",
+		"host"     : "211.157.135.146",
+		"port"     : 63307,
+		"schema"   : "cube_3",
+		"user"     : "root",
+		"password" : "Cube_2020"
 	},
 
 	"Conference": {
-		"type": "SQLite",
-		"file": "storage/ConferenceService.db"
+		"type"     : "MySQL",
+		"host"     : "211.157.135.146",
+		"port"     : 63307,
+		"schema"   : "cube_3",
+		"user"     : "root",
+		"password" : "Cube_2020"
 	}
 }

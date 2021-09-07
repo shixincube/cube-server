@@ -26,12 +26,15 @@
 
 package cube.app.server.container;
 
+import cube.app.server.user.LoginStateCode;
+import cube.app.server.user.UserManager;
 import cube.util.CrossDomainHandler;
-import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONObject;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -41,16 +44,53 @@ import java.io.IOException;
  */
 public class LoginHandler extends ContextHandler {
 
+    public final static String COOKIE_NAME = "CubeAppToken";
+
     public LoginHandler() {
-        super("/login");
+        super("/account/login/");
         setHandler(new Handler());
     }
 
     protected class Handler extends CrossDomainHandler {
 
+        public Handler() {
+            super();
+        }
+
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-            
+            // 尝试读取数据
+            JSONObject data = readBodyAsJSONObject(request);
+
+            if (null != data) {
+                // 读取登录参数
+
+            }
+            else {
+                // 尝试读取 Cookie
+                Cookie[] cookies = request.getCookies();
+                if (null == cookies) {
+                    respond(response, HttpStatus.BAD_REQUEST_400);
+                    return;
+                }
+
+                String token = null;
+                for (Cookie cookie : request.getCookies()) {
+                    if (COOKIE_NAME.equals(cookie.getName())) {
+                        token = cookie.getValue();
+                        break;
+                    }
+                }
+
+                LoginStateCode state = UserManager.getInstance().login(token);
+
+                JSONObject responseData = new JSONObject();
+                responseData.put("code", state.code);
+                responseData.put("token", null == token ? "" : token);
+
+                // 应答
+                this.respondOk(response, responseData);
+            }
         }
     }
 }
