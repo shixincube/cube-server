@@ -43,6 +43,15 @@ public class Token {
 
     public final long expire;
 
+    public Token(long accountId, String code, String device, long creation, long expire) {
+        this.id = -1;
+        this.accountId = accountId;
+        this.code = code;
+        this.device = device;
+        this.creation = creation;
+        this.expire = expire;
+    }
+
     public Token(long id, long accountId, String code, String device, long creation, long expire) {
         this.id = id;
         this.accountId = accountId;

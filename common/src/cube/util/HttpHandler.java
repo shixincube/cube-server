@@ -37,7 +37,11 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 
 /**
  * HTTP 请求处理句柄。
@@ -96,12 +100,24 @@ public abstract class HttpHandler extends AbstractHandler {
 
         buffer.flip();
 
-        String jsonString = new String(buffer.array(), 0, buffer.limit(), Charset.forName("UTF-8"));
-        if (jsonString.length() < 2) {
-            return null;
+        JSONObject json = new JSONObject();
+
+        String data = new String(buffer.array(), 0, buffer.limit(), Charset.forName("UTF-8"));
+
+        String[] params = data.split("&");
+        for (String param : params) {
+            String[] kv = param.split("=");
+            json.put(kv[0], URLDecoder.decode(kv[1], "UTF-8"));
         }
-        
-        return new JSONObject(jsonString);
+        return json;
+    }
+
+    public void setCookie(HttpServletResponse response, String name, String value, int maxAge) {
+        try {
+            response.setHeader("Set-Cookie", name + "=" + URLEncoder.encode(value, "UTF-8") + ";max-age=" + maxAge);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     public void respondOk(HttpServletResponse response, JSONObject data) {

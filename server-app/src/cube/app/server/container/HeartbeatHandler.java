@@ -24,59 +24,26 @@
  * SOFTWARE.
  */
 
-package cube.app.server.account;
+package cube.app.server.container;
+
+import cube.util.CrossDomainHandler;
+import org.eclipse.jetty.server.handler.ContextHandler;
 
 /**
- * 登录状态码。
+ * 心跳。
  */
-public enum StateCode {
+public class HeartbeatHandler extends ContextHandler {
 
-    /**
-     * 成功。
-     */
-    Success(0),
+    public HeartbeatHandler(String httpOrigin, String httpsOrigin) {
+        super("/account/hb/");
+        setHandler(new Handler(httpOrigin, httpsOrigin));
+    }
 
-    /**
-     * 重复登录。
-     */
-    Repeat(1),
 
-    /**
-     * 找不到用户。
-     */
-    NotFindAccount(5),
+    protected class Handler extends CrossDomainHandler {
 
-    /**
-     * 无效的令牌。
-     */
-    InvalidToken(6),
+        public Handler(String httpOrigin, String httpsOrigin) {
 
-    /**
-     * 找不到令牌。
-     */
-    NotFindToken(7),
-
-    /**
-     * 无效账号。
-     */
-    InvalidAccount(8),
-
-    /**
-     * 查询数据错误。
-     */
-    DataError(9),
-
-    /**
-     * 未知。
-     */
-    Unknown(10);
-
-    /**
-     * 编码。
-     */
-    public final int code;
-
-    StateCode(int code) {
-        this.code = code;
+        }
     }
 }

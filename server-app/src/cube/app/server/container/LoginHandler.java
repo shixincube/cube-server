@@ -28,6 +28,7 @@ package cube.app.server.container;
 
 import cube.app.server.account.StateCode;
 import cube.app.server.account.AccountManager;
+import cube.app.server.account.Token;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -65,8 +66,35 @@ public class LoginHandler extends ContextHandler {
             JSONObject data = readBodyAsJSONObject(request);
 
             if (null != data) {
-                // 读取登录参数
+                String device = data.getString("device");
+                Token token = null;
 
+                // 读取登录参数
+                if (data.has("account")) {
+                    String accountName = data.getString("account");
+                    String password = data.getString("password");
+
+                    token = AccountManager.getInstance().loginWithAccount(accountName, password, device);
+                }
+                else {
+
+                }
+
+                JSONObject responseData = new JSONObject();
+
+                if (null == token) {
+                    responseData.put("code", StateCode.InvalidAccount.code);
+                }
+                else {
+                    responseData.put("code", StateCode.Success.code);
+                    responseData.put("token", token.code);
+
+                    int maxAge = (int)(token.expire / 1000L);
+                    setCookie(response, COOKIE_NAME, token.code, maxAge);
+                }
+
+                // 应答
+                this.respondOk(response, responseData);
             }
             else {
                 // 尝试读取 Cookie
@@ -89,6 +117,10 @@ public class LoginHandler extends ContextHandler {
                 JSONObject responseData = new JSONObject();
                 responseData.put("code", state.code);
                 responseData.put("token", null == token ? "" : token);
+
+                if (state.code > 2) {
+                    setCookie(response, COOKIE_NAME, "?", 1);
+                }
 
                 // 应答
                 this.respondOk(response, responseData);

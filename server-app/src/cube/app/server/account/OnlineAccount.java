@@ -26,33 +26,31 @@
 
 package cube.app.server.account;
 
-import java.util.List;
-import java.util.Vector;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 在线联系人。
  */
 public class OnlineAccount extends Account {
 
-    private List<String> deviceList;
+    private Map<String, Token> deviceTokenMap;
 
-    public OnlineAccount(Account account, String device) {
+    public OnlineAccount(Account account, String device, Token token) {
         this(account.id, account.account, account.phone, account.password, account.name, account.avatar, account.state);
-        this.addDevice(device);
+        this.addDevice(device, token);
     }
 
     public OnlineAccount(long id, String account, String phone, String password, String name, String avatar, int state) {
         super(id, account, phone, password, name, avatar, state);
-        this.deviceList = new Vector<>();
+        this.deviceTokenMap = new ConcurrentHashMap<>();
     }
 
-    public void addDevice(String device) {
-        if (!this.deviceList.contains(device)) {
-            this.deviceList.add(device);
-        }
+    public void addDevice(String device, Token token) {
+        this.deviceTokenMap.put(device, token);
     }
 
     public void removeDevice(String device) {
-        this.deviceList.remove(device);
+        this.deviceTokenMap.remove(device);
     }
 }

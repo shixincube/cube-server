@@ -26,6 +26,7 @@
 
 package cube.app.server.account;
 
+import cell.util.Utils;
 import cube.util.ConfigUtils;
 
 import java.io.File;
@@ -112,6 +113,10 @@ public class AccountManager {
     }
 
     public StateCode login(String tokenCode) {
+        if (null == tokenCode) {
+            return StateCode.DataError;
+        }
+
         Token token = this.accountStorage.readToken(tokenCode);
         if (null == token) {
             return StateCode.NotFindToken;
@@ -127,18 +132,36 @@ public class AccountManager {
             return StateCode.NotFindAccount;
         }
 
-        this.addOnlineAccount(account, token.device);
+        this.addOnlineAccount(account, token.device, token);
 
         return StateCode.Success;
     }
 
-    public void addOnlineAccount(Account account, String device) {
+    public Token loginWithAccount(String accountName, String password, String device) {
+        Account account = this.accountStorage.readAccount(accountName, password);
+        if (null == account) {
+            return null;
+        }
+
+        long now = System.currentTimeMillis();
+        Token token = new Token(account.id, Utils.randomString(32), device,
+                now, now + 7 * 24 * 3600 * 1000);
+
+        // 写入令牌
+        token = this.accountStorage.writeToken(token);
+
+        this.addOnlineAccount(account, device, token);
+
+        return token;
+    }
+
+    public void addOnlineAccount(Account account, String device, Token token) {
         OnlineAccount current = this.onlineMap.get(account.id);
         if (null == current) {
-            this.onlineMap.put(account.id, new OnlineAccount(account, device));
+            this.onlineMap.put(account.id, new OnlineAccount(account, device, token));
         }
         else {
-            current.addDevice(device);
+            current.addDevice(device, token);
         }
     }
 }

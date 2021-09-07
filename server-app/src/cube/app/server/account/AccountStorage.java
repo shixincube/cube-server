@@ -29,6 +29,7 @@ package cube.app.server.account;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.app.server.util.AbstractStorage;
+import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.StorageField;
 import cube.storage.StorageFields;
@@ -138,8 +139,44 @@ public class AccountStorage extends AbstractStorage {
         return token;
     }
 
+    public Token writeToken(Token token) {
+        if (token.id < 0) {
+            this.storage.executeInsert(TABLE_TOKEN, new StorageField[] {
+                    new StorageField("account_id", LiteralBase.LONG, token.accountId),
+                    new StorageField("token", LiteralBase.STRING, token.code),
+                    new StorageField("device", LiteralBase.STRING, token.device),
+                    new StorageField("creation", LiteralBase.LONG, token.creation),
+                    new StorageField("expire", LiteralBase.LONG, token.expire)
+            });
+        }
+        else {
+            this.storage.executeUpdate(TABLE_TOKEN, new StorageField[] {
+                    new StorageField("expire", LiteralBase.LONG, token.expire)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("id", LiteralBase.LONG, token.id)
+            });
+        }
+
+        return this.readToken(token.code);
+    }
+
     public Account readAccount(long accountId) {
         String sql = "SELECT * FROM " + TABLE_ACCOUNT + " WHERE id=" + accountId;
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> dataMap = StorageFields.get(result.get(0));
+        Account account = new Account(dataMap.get("id").getLong(), dataMap.get("account").getString(),
+                dataMap.get("phone").getString(), dataMap.get("password").getString(), dataMap.get("name").getString(),
+                dataMap.get("avatar").getString(), dataMap.get("state").getInt());
+        account.last = dataMap.get("last").getLong();
+        return account;
+    }
+
+    public Account readAccount(String accountName, String password) {
+        String sql = "SELECT * FROM " + TABLE_ACCOUNT + " WHERE `account`='" + accountName + "' AND `password`='" + password + "'";
         List<StorageField[]> result = this.storage.executeQuery(sql);
         if (result.isEmpty()) {
             return null;
