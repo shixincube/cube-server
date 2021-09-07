@@ -39,8 +39,20 @@ import java.io.IOException;
  */
 public class CrossDomainHandler extends HttpHandler {
 
+    private String httpAllowOrigin;
+
+    private String httpsAllowOrigin;
+
     public CrossDomainHandler() {
         super();
+    }
+
+    public void setHttpAllowOrigin(String origin) {
+        this.httpAllowOrigin = origin;
+    }
+
+    public void setHttpsAllowOrigin(String origin) {
+        this.httpsAllowOrigin = origin;
     }
 
     @Override
@@ -72,13 +84,27 @@ public class CrossDomainHandler extends HttpHandler {
 
     protected void allowCrossDomain(HttpServletResponse response) {
         // 允许跨域
-        response.setHeader("Access-Control-Allow-Origin", "*");
         response.setHeader("Access-Control-Allow-Credentials", "true");
+
+        if (null != this.httpAllowOrigin && !this.isHttps()) {
+            response.setHeader("Access-Control-Allow-Origin", this.httpAllowOrigin);
+        }
+        else if (null != this.httpsAllowOrigin && this.isHttps()) {
+            response.setHeader("Access-Control-Allow-Origin", this.httpsAllowOrigin);
+        }
+        else {
+            response.setHeader("Access-Control-Allow-Origin", "*");
+        }
+
         // 允许的方法
         response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
         // 告诉请求端，哪些自定义的头字段可以被允许添加
         response.setHeader("Access-Control-Allow-Headers", "Content-Type,Content-Encoding,Content-Length,X-Requested-With");
         // 允许跨域请求的最长时间，指定时间内不需要发送预请求过来。
         response.setHeader("Access-Control-Max-Age", "3600");
+    }
+
+    private boolean isHttps() {
+        return (this.baseRequest.getProtocol().toUpperCase().indexOf("HTTPS") >= 0);
     }
 }

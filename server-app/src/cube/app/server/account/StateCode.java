@@ -24,32 +24,59 @@
  * SOFTWARE.
  */
 
-package cube.app.server.user;
+package cube.app.server.account;
 
 /**
- * 用户管理器。
+ * 登录状态码。
  */
-public class UserManager {
+public enum StateCode {
 
-    private final static UserManager instance = new UserManager();
+    /**
+     * 成功。
+     */
+    Success(0),
 
-    private AccountStorage accountStorage;
+    /**
+     * 重复登录。
+     */
+    Repeat(1),
 
-    private UserManager() {
-    }
+    /**
+     * 找不到用户。
+     */
+    NotFindAccount(5),
 
-    public final static UserManager getInstance() {
-        return UserManager.instance;
-    }
+    /**
+     * 无效的令牌。
+     */
+    InvalidToken(6),
 
-    private void loadConfig() {
-        String[] configFiles = new String[] {
-                "server_dev.properties",
-                "server.properties"
-        };
-    }
+    /**
+     * 找不到令牌。
+     */
+    NotFindToken(7),
 
-    public LoginStateCode login(String tokenString) {
-        return LoginStateCode.Unknown;
+    /**
+     * 无效用户。
+     */
+    InvalidUser(8),
+
+    /**
+     * 查询数据错误。
+     */
+    DataError(9),
+
+    /**
+     * 未知。
+     */
+    Unknown(10);
+
+    /**
+     * 编码。
+     */
+    public final int code;
+
+    StateCode(int code) {
+        this.code = code;
     }
 }

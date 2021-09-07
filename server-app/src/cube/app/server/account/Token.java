@@ -24,18 +24,31 @@
  * SOFTWARE.
  */
 
-package cube.app.server.user;
-
-import cube.app.server.util.AbstractStorage;
-
-import java.util.Properties;
+package cube.app.server.account;
 
 /**
- * 账号存储器。
+ * 令牌对象。
  */
-public class AccountStorage extends AbstractStorage {
+public class Token {
 
-    public AccountStorage(Properties properties) {
-        super("AccountStorage", properties);
+    public final long id;
+
+    public final long accountId;
+
+    public final String code;
+
+    public final String device;
+
+    public final long creation;
+
+    public final long expire;
+
+    public Token(long id, long accountId, String code, String device, long creation, long expire) {
+        this.id = id;
+        this.accountId = accountId;
+        this.code = code;
+        this.device = device;
+        this.creation = creation;
+        this.expire = expire;
     }
 }

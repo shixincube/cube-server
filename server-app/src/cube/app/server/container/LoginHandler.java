@@ -26,8 +26,8 @@
 
 package cube.app.server.container;
 
-import cube.app.server.user.LoginStateCode;
-import cube.app.server.user.UserManager;
+import cube.app.server.account.StateCode;
+import cube.app.server.account.AccountManager;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -46,15 +46,17 @@ public class LoginHandler extends ContextHandler {
 
     public final static String COOKIE_NAME = "CubeAppToken";
 
-    public LoginHandler() {
+    public LoginHandler(String httpOrigin, String httpsOrigin) {
         super("/account/login/");
-        setHandler(new Handler());
+        setHandler(new Handler(httpOrigin, httpsOrigin));
     }
 
     protected class Handler extends CrossDomainHandler {
 
-        public Handler() {
+        public Handler(String httpOrigin, String httpsOrigin) {
             super();
+            setHttpAllowOrigin(httpOrigin);
+            setHttpsAllowOrigin(httpsOrigin);
         }
 
         @Override
@@ -82,7 +84,7 @@ public class LoginHandler extends ContextHandler {
                     }
                 }
 
-                LoginStateCode state = UserManager.getInstance().login(token);
+                StateCode state = AccountManager.getInstance().login(token);
 
                 JSONObject responseData = new JSONObject();
                 responseData.put("code", state.code);

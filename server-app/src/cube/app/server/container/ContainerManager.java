@@ -27,10 +27,16 @@
 package cube.app.server.container;
 
 import cell.util.log.Logger;
+import cube.app.server.account.AccountManager;
+import cube.util.ConfigUtils;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  * 容器管理器。
@@ -43,6 +49,8 @@ public class ContainerManager {
     }
 
     public void launch(int port) {
+        AccountManager.getInstance().start();
+
         this.server = new Server(port);
 
         this.server.setHandler(createHandlerList());
@@ -77,10 +85,36 @@ public class ContainerManager {
     }
 
     private HandlerList createHandlerList() {
+        String[] configFiles = new String[] {
+                "server_dev.properties",
+                "server.properties"
+        };
+
+        String configFile = null;
+        for (String filename : configFiles) {
+            File file = new File(filename);
+            if (file.exists()) {
+                configFile = filename;
+                break;
+            }
+        }
+
+        String httpAllowOrigin = null;
+        String httpsAllowOrigin = null;
+        if (null != configFile) {
+            try {
+                Properties properties = ConfigUtils.readProperties(configFile);
+                httpAllowOrigin = properties.getProperty("httpAllowOrigin");
+                httpsAllowOrigin = properties.getProperty("httpsAllowOrigin");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         HandlerList handlers = new HandlerList();
 
         handlers.setHandlers(new Handler[] {
-                new LoginHandler(),
+                new LoginHandler(httpAllowOrigin, httpsAllowOrigin),
 
                 new StopHandler(this.server, this),
                 new DefaultHandler()});
@@ -89,6 +123,6 @@ public class ContainerManager {
     }
 
     public void destroy() {
-
+        AccountManager.getInstance().destroy();
     }
 }

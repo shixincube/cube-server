@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,75 +24,35 @@
  * SOFTWARE.
  */
 
-package cube.core;
+package cube.app.server.account;
+
+import java.util.List;
+import java.util.Vector;
 
 /**
- * 字段约束。
+ * 在线联系人。
  */
-public enum Constraint {
+public class OnlineAccount extends Account {
 
-    /**
-     * 对应 NOT NULL 。
-     */
-    NOT_NULL("NOT NULL"),
+    private List<String> deviceList;
 
-    /**
-     * 对应 PRIMARY KEY 。
-     */
-    PRIMARY_KEY("PRIMARY KEY"),
-
-    /**
-     * 对应 AUTOINCREMENT 。
-     */
-    AUTOINCREMENT("AUTOINCREMENT"),
-
-    /**
-     * 对应 AUTO_INCREMENT 。
-     */
-    AUTO_INCREMENT("AUTO_INCREMENT"),
-
-    /**
-     * 对应 UNIQUE 。
-     */
-    UNIQUE("UNIQUE"),
-
-    /**
-     * 对应 DEFAULT 。
-     */
-    DEFAULT("DEFAULT"),
-
-    /**
-     * 对应 DEFAULT ''
-     */
-    DEFAULT_EMPTY("DEFAULT ''"),
-
-    /**
-     * 对应 DEFAULT 0 。
-     */
-    DEFAULT_0("DEFAULT 0"),
-
-    /**
-     * 对应 DEFAULT 1 。
-     */
-    DEFAULT_1("DEFAULT 1"),
-
-    /**
-     * 对应 DEFAULT NULL 。
-     */
-    DEFAULT_NULL("DEFAULT NULL"),
-
-    /**
-     * 对应 CHECK 。
-     */
-    CHECK("CHECK");
-
-    private String statement;
-
-    Constraint(String statement) {
-        this.statement = statement;
+    public OnlineAccount(Account account, String device) {
+        this(account.id, account.account, account.phone, account.password, account.name, account.avatar, account.state);
+        this.addDevice(device);
     }
 
-    public String getStatement() {
-        return this.statement;
+    public OnlineAccount(long id, String account, String phone, String password, String name, String avatar, int state) {
+        super(id, account, phone, password, name, avatar, state);
+        this.deviceList = new Vector<>();
+    }
+
+    public void addDevice(String device) {
+        if (!this.deviceList.contains(device)) {
+            this.deviceList.add(device);
+        }
+    }
+
+    public void removeDevice(String device) {
+        this.deviceList.remove(device);
     }
 }

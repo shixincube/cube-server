@@ -24,59 +24,27 @@
  * SOFTWARE.
  */
 
-package cube.app.server.user;
+package cube.app.server.util;
 
 /**
- * 登录状态码。
+ * 电话号码辅助函数。
  */
-public enum LoginStateCode {
+public class PhoneNumbers {
 
-    /**
-     * 成功。
-     */
-    Success(0),
+    private PhoneNumbers() {
+    }
 
-    /**
-     * 重复登录。
-     */
-    Repeat(1),
-
-    /**
-     * 找不到用户。
-     */
-    NotFindAccount(5),
-
-    /**
-     * 无效的令牌。
-     */
-    InvalidToken(6),
-
-    /**
-     * 找不到令牌。
-     */
-    NotFindToken(7),
-
-    /**
-     * 无效用户。
-     */
-    InvalidUser(8),
-
-    /**
-     * 查询数据错误。
-     */
-    DataError(9),
-
-    /**
-     * 未知。
-     */
-    Unknown(10);
-
-    /**
-     * 编码。
-     */
-    public final int code;
-
-    LoginStateCode(int code) {
-        this.code = code;
+    public static String desensitize(String phoneNumber) {
+        if (phoneNumber.length() == 11) {
+            return phoneNumber.substring(0, 3) + "****" + phoneNumber.substring(7);
+        }
+        else {
+            StringBuilder buf = new StringBuilder(phoneNumber.substring(0, 2));
+            for (int i = 0, len = phoneNumber.length() - 4; i < len; ++i) {
+                buf.append("*");
+            }
+            buf.append(phoneNumber.substring(phoneNumber.length() - 2));
+            return buf.toString();
+        }
     }
 }
