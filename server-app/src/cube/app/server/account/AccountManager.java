@@ -27,14 +27,12 @@
 package cube.app.server.account;
 
 import cell.util.Utils;
+import cell.util.log.Logger;
 import cube.util.ConfigUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -44,9 +42,13 @@ public class AccountManager extends TimerTask {
 
     private final static AccountManager instance = new AccountManager();
 
+    private final static long WEB_TIMEOUT = 5L * 60L * 1000L;
+
     private boolean initializing = false;
 
     private Timer timer;
+
+    private int tickCount = 0;
 
     private AccountStorage accountStorage;
 
@@ -188,6 +190,13 @@ public class AccountManager extends TimerTask {
         return token;
     }
 
+    /**
+     * 账号登出。
+     *
+     * @param token
+     * @param device
+     * @return
+     */
     public StateCode logout(String token, String device) {
         OnlineAccount account = this.onlineTokenMap.remove(token);
         if (null == account) {
@@ -204,16 +213,26 @@ public class AccountManager extends TimerTask {
         return StateCode.Success;
     }
 
+    public Account registerWithAccountName(String accountName, String password, String nickname, String avatar) {
+        
+        return null;
+    }
+
     /**
      * 心跳。
      *
-     * @param token
+     * @param tokenCode
      * @return
      */
-    public boolean heartbeat(String token) {
-        OnlineAccount account = this.onlineTokenMap.get(token);
-        String device = account.getDevice(token);
-        return (null != device);
+    public boolean heartbeat(String tokenCode) {
+        OnlineAccount account = this.onlineTokenMap.get(tokenCode);
+        Token token = account.getToken(tokenCode);
+        if (null == token) {
+            return false;
+        }
+
+        token.timestamp = System.currentTimeMillis();
+        return true;
     }
 
     protected void addOnlineAccount(Account account, String device, Token token) {
@@ -256,5 +275,46 @@ public class AccountManager extends TimerTask {
     @Override
     public void run() {
         this.accountCache.onTick();
+
+        ++this.tickCount;
+        if (this.tickCount >= 3) {
+            this.tickCount = 0;
+
+            final ArrayList<String> tokenList = new ArrayList<>();
+            final ArrayList<String> deviceList = new ArrayList<>();
+
+            long now = System.currentTimeMillis();
+
+            // 检测 Web 端是否离线
+            Iterator<Map.Entry<String, OnlineAccount>> iter = this.onlineTokenMap.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry<String, OnlineAccount> entry = iter.next();
+                String tokenCode = entry.getKey();
+                OnlineAccount account = entry.getValue();
+
+                // 选出 Web 设备
+                String device = account.getDevice(tokenCode);
+                if (null != device && device.startsWith("Web/")) {
+                    Token token = account.getToken(tokenCode);
+                    if (null != token && (now - token.timestamp >= WEB_TIMEOUT)) {
+                        // 超时
+                        tokenList.add(tokenCode);
+                        deviceList.add(device);
+                    }
+                }
+            }
+
+            if (!tokenList.isEmpty()) {
+                (new Thread() {
+                    @Override
+                    public void run() {
+                        for (int i = 0; i < tokenList.size(); ++i) {
+                            Logger.i(AccountManager.class, "Account timeout: " + tokenList.get(i));
+                            logout(tokenList.get(i), deviceList.get(i));
+                        }
+                    }
+                }).start();
+            }
+        }
     }
 }

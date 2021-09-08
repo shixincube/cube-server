@@ -26,8 +26,6 @@
 
 package cube.app.server.account;
 
-import cube.common.entity.Device;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,27 +45,49 @@ public class OnlineAccount extends Account {
 
     public OnlineAccount(long id, String account, String phone, String password, String name, String avatar, int state) {
         super(id, account, phone, password, name, avatar, state);
-        this.deviceTokenMap = new HashMap<>();
-        this.tokenDeviceMap = new HashMap<>();
+
+        synchronized (this) {
+            this.deviceTokenMap = new HashMap<>();
+            this.tokenDeviceMap = new HashMap<>();
+        }
     }
 
     public void addDevice(String device, Token token) {
-        this.deviceTokenMap.put(device, token);
-        this.tokenDeviceMap.put(token.code, device);
+        synchronized (this) {
+            this.deviceTokenMap.put(device, token);
+            this.tokenDeviceMap.put(token.code, device);
+        }
     }
 
     public void removeDevice(String device) {
-        Token token = this.deviceTokenMap.remove(device);
-        if (null != token) {
-            this.tokenDeviceMap.remove(token.code);
+        synchronized (this) {
+            Token token = this.deviceTokenMap.remove(device);
+            if (null != token) {
+                this.tokenDeviceMap.remove(token.code);
+            }
         }
     }
 
     public int numDevices() {
-        return this.deviceTokenMap.size();
+        synchronized (this) {
+            return this.deviceTokenMap.size();
+        }
     }
 
     public String getDevice(String tokenCode) {
-        return this.tokenDeviceMap.get(tokenCode);
+        synchronized (this) {
+            return this.tokenDeviceMap.get(tokenCode);
+        }
+    }
+
+    public Token getToken(String tokenCode) {
+        synchronized (this) {
+            String device = this.tokenDeviceMap.get(tokenCode);
+            if (null == device) {
+                return null;
+            }
+
+            return this.deviceTokenMap.get(device);
+        }
     }
 }

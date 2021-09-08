@@ -43,6 +43,8 @@ public class Token {
 
     public final long expire;
 
+    public long timestamp = System.currentTimeMillis();
+
     public Token(long accountId, String code, String device, long creation, long expire) {
         this.id = -1;
         this.accountId = accountId;
