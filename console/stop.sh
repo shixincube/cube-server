@@ -39,6 +39,9 @@ do
   CLASSPATH="$CLASSPATH":"$PRGDIR"/../deploy/libs/$file
 done
 
-echo "$CLASSPATH"
+# echo "$CLASSPATH"
+echo -e "---------------------"
+echo -e "* Stop Cube Console *"
+echo -e "---------------------"
 
 java -Xmx32m -classpath "$CLASSPATH" cube.console.container.Main stop
