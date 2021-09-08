@@ -162,6 +162,14 @@ public class AccountManager extends TimerTask {
         return StateCode.Success;
     }
 
+    /**
+     * 使用账号密码进行登录。
+     *
+     * @param accountName
+     * @param password
+     * @param device
+     * @return
+     */
     public Token loginWithAccount(String accountName, String password, String device) {
         Account account = this.accountStorage.readAccount(accountName, password);
         if (null == account) {
@@ -180,6 +188,28 @@ public class AccountManager extends TimerTask {
         return token;
     }
 
+    public StateCode logout(String token, String device) {
+        OnlineAccount account = this.onlineTokenMap.remove(token);
+        if (null == account) {
+            return StateCode.NotFindToken;
+        }
+
+        account.removeDevice(device);
+
+        if (0 == account.numDevices()) {
+            // 移除在线的账号
+            this.onlineIdMap.remove(account.id);
+        }
+
+        return StateCode.Success;
+    }
+
+    /**
+     * 心跳。
+     *
+     * @param token
+     * @return
+     */
     public boolean heartbeat(String token) {
         OnlineAccount account = this.onlineTokenMap.get(token);
         String device = account.getDevice(token);
@@ -215,6 +245,12 @@ public class AccountManager extends TimerTask {
 
     public Account getAccount(Long accountId) {
         return this.accountCache.getAccount(accountId);
+    }
+
+    public Account updateAccount(Long accountId, String newName, String newAvatar) {
+        Account account = this.getAccount(accountId);
+        // TODO
+        return account;
     }
 
     @Override

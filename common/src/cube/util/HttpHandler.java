@@ -30,6 +30,7 @@ import cell.util.collection.FlexibleByteBuffer;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.ServletException;
@@ -158,6 +159,20 @@ public abstract class HttpHandler extends AbstractHandler {
     }
 
     public void respond(HttpServletResponse response, int status, JSONObject data) {
+        response.setStatus(status);
+
+        if (null != data) {
+            response.setContentType("application/json");
+            try {
+                response.getWriter().write(data.toString());
+                response.getWriter().close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void respond(HttpServletResponse response, int status, JSONArray data) {
         response.setStatus(status);
 
         if (null != data) {

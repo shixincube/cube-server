@@ -33,6 +33,7 @@ import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,15 +46,21 @@ public class ContainerManager {
 
     private Server server;
 
+    private JSONObject cubeConfig;
+
     public ContainerManager() {
     }
 
     public void launch(int port) {
         AccountManager.getInstance().start();
 
+        Properties config = this.loadConfig();
+
+        this.loadCubeConfig(config);
+
         this.server = new Server(port);
 
-        this.server.setHandler(createHandlerList());
+        this.server.setHandler(createHandlerList(config));
 
         Logger.i(ContainerManager.class, "Start cube app server # " + port);
 
@@ -84,7 +91,48 @@ public class ContainerManager {
         }
     }
 
-    private HandlerList createHandlerList() {
+    public void destroy() {
+        AccountManager.getInstance().destroy();
+    }
+
+    public JSONObject getCubeConfig() {
+        return this.cubeConfig;
+    }
+
+    private void loadCubeConfig(Properties properties) {
+        this.cubeConfig = new JSONObject();
+        this.cubeConfig.put("address", properties.getProperty("cube.address"));
+        this.cubeConfig.put("domain", properties.getProperty("cube.domain"));
+        this.cubeConfig.put("appKey", properties.getProperty("cube.appKey"));
+    }
+
+    private HandlerList createHandlerList(Properties properties) {
+        String httpAllowOrigin = null;
+        String httpsAllowOrigin = null;
+        if (null != properties) {
+            httpAllowOrigin = properties.getProperty("httpAllowOrigin");
+            httpsAllowOrigin = properties.getProperty("httpsAllowOrigin");
+        }
+
+        HandlerList handlers = new HandlerList();
+
+        handlers.setHandlers(new Handler[] {
+                new CubeConfigHandler(httpAllowOrigin, httpsAllowOrigin, this.cubeConfig),
+
+                new LoginHandler(httpAllowOrigin, httpsAllowOrigin),
+                new LogoutHandler(httpAllowOrigin, httpsAllowOrigin),
+                new AccountInfoHandler(httpAllowOrigin, httpsAllowOrigin),
+
+                new HeartbeatHandler(httpAllowOrigin, httpsAllowOrigin),
+                new AccountBuildinHandler(httpAllowOrigin, httpsAllowOrigin),
+
+                new StopHandler(this.server, this),
+                new DefaultHandler()});
+
+        return handlers;
+    }
+
+    private Properties loadConfig() {
         String[] configFiles = new String[] {
                 "server_dev.properties",
                 "server.properties"
@@ -99,32 +147,14 @@ public class ContainerManager {
             }
         }
 
-        String httpAllowOrigin = null;
-        String httpsAllowOrigin = null;
         if (null != configFile) {
             try {
-                Properties properties = ConfigUtils.readProperties(configFile);
-                httpAllowOrigin = properties.getProperty("httpAllowOrigin");
-                httpsAllowOrigin = properties.getProperty("httpsAllowOrigin");
+                return ConfigUtils.readProperties(configFile);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
-        HandlerList handlers = new HandlerList();
-
-        handlers.setHandlers(new Handler[] {
-                new LoginHandler(httpAllowOrigin, httpsAllowOrigin),
-                new HeartbeatHandler(httpAllowOrigin, httpsAllowOrigin),
-                new AccountInfoHandler(httpAllowOrigin, httpsAllowOrigin),
-
-                new StopHandler(this.server, this),
-                new DefaultHandler()});
-
-        return handlers;
-    }
-
-    public void destroy() {
-        AccountManager.getInstance().destroy();
+        return null;
     }
 }

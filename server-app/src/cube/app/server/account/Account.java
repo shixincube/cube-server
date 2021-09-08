@@ -85,7 +85,7 @@ public class Account implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = this.toJSON();
-        json.remove("account");
+        json.remove("password");
         return json;
     }
 }

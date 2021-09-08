@@ -41,7 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * 用户登录。
+ * 账号登录。
  */
 public class LoginHandler extends ContextHandler {
 

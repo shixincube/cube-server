@@ -29,6 +29,9 @@ package cube.app.server.util;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * URL 辅助函数。
+ */
 public class URLUtils {
 
     public static Map<String, String> parseQueryStringParams(String queryString) {

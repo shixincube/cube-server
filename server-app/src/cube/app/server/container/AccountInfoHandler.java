@@ -31,6 +31,7 @@ import cube.app.server.account.AccountManager;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.ServletException;
@@ -64,9 +65,31 @@ public class AccountInfoHandler extends ContextHandler {
             Map<String, String> data = this.parseQueryStringParams(request);
 
             JSONObject responseData = null;
+            JSONArray responseArray = null;
 
             if (data.containsKey("id") && data.containsKey("token")) {
-                responseData = new JSONObject();
+                String token = data.get("token");
+                Long id = Long.parseLong(data.get("id"));
+
+                if (AccountManager.getInstance().isOnlineToken(token)) {
+                    Account account = AccountManager.getInstance().getAccount(id);
+                    responseData = account.toCompactJSON();
+                }
+            }
+            else if (data.containsKey("list") && data.containsKey("token")) {
+                String token = data.get("token");
+
+                if (AccountManager.getInstance().isOnlineToken(token)) {
+                    String[] array = data.get("list").trim().split(",");
+                    responseArray = new JSONArray();
+                    for (String strId : array) {
+                        Long accountId = Long.parseLong(strId.trim());
+                        Account account = AccountManager.getInstance().getAccount(accountId);
+                        if (null != account) {
+                            responseArray.put(account.toCompactJSON());
+                        }
+                    }
+                }
             }
             else if (data.containsKey("token")) {
                 String token = data.get("token");
@@ -79,9 +102,45 @@ public class AccountInfoHandler extends ContextHandler {
             if (null != responseData) {
                 this.respondOk(response, responseData);
             }
+            else if (null != responseArray) {
+                this.respond(response, HttpStatus.OK_200, responseArray);
+            }
             else {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
             }
+        }
+
+        @Override
+        public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+            // 修改账号信息
+
+            JSONObject data = this.readBodyAsJSONObject(request);
+
+            String token = data.getString("token");
+            if (null == token) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                return;
+            }
+
+            Account account = AccountManager.getInstance().getOnlineAccount(token);
+            if (null == account) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                return;
+            }
+
+            String newName = null;
+            String newAvatar = null;
+
+            if (data.has("name")) {
+                newName = data.getString("name");
+            }
+
+            if (data.has("avatar")) {
+                newAvatar = data.getString("avatar");
+            }
+
+            account = AccountManager.getInstance().updateAccount(account.id, newName, newAvatar);
+            this.respondOk(response, account.toCompactJSON());
         }
     }
 }

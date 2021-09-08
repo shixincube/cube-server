@@ -63,6 +63,10 @@ public class OnlineAccount extends Account {
         }
     }
 
+    public int numDevices() {
+        return this.deviceTokenMap.size();
+    }
+
     public String getDevice(String tokenCode) {
         return this.tokenDeviceMap.get(tokenCode);
     }
