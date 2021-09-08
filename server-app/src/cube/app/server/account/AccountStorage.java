@@ -172,6 +172,8 @@ public class AccountStorage extends AbstractStorage {
                 dataMap.get("phone").getString(), dataMap.get("password").getString(), dataMap.get("name").getString(),
                 dataMap.get("avatar").getString(), dataMap.get("state").getInt());
         account.last = dataMap.get("last").getLong();
+        account.region = dataMap.get("region").getString();
+        account.department = dataMap.get("department").getString();
         return account;
     }
 
@@ -187,6 +189,8 @@ public class AccountStorage extends AbstractStorage {
                 dataMap.get("phone").getString(), dataMap.get("password").getString(), dataMap.get("name").getString(),
                 dataMap.get("avatar").getString(), dataMap.get("state").getInt());
         account.last = dataMap.get("last").getLong();
+        account.region = dataMap.get("region").getString();
+        account.department = dataMap.get("department").getString();
         return account;
     }
 }

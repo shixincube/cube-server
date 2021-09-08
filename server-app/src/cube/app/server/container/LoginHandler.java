@@ -63,9 +63,9 @@ public class LoginHandler extends ContextHandler {
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             // 尝试读取数据
-            JSONObject data = readBodyAsJSONObject(request);
+            JSONObject data = this.readBodyAsJSONObject(request);
 
-            if (null != data) {
+            if (null != data && data.has("device")) {
                 String device = data.getString("device");
                 Token token = null;
 

@@ -33,23 +33,32 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 用户管理器。
  */
-public class AccountManager {
+public class AccountManager extends TimerTask {
 
     private final static AccountManager instance = new AccountManager();
 
     private boolean initializing = false;
 
+    private Timer timer;
+
     private AccountStorage accountStorage;
 
-    private Map<Long, OnlineAccount> onlineMap;
+    private Map<Long, OnlineAccount> onlineIdMap;
+
+    private Map<String, OnlineAccount> onlineTokenMap;
+
+    private AccountCache accountCache;
 
     private AccountManager() {
-        this.onlineMap = new ConcurrentHashMap<>();
+        this.onlineIdMap = new ConcurrentHashMap<>();
+        this.onlineTokenMap = new ConcurrentHashMap<>();
     }
 
     public final static AccountManager getInstance() {
@@ -61,14 +70,19 @@ public class AccountManager {
 
         this.initializing = true;
 
+        this.accountCache = new AccountCache(this.accountStorage);
+
+        this.timer = new Timer();
+        this.timer.schedule(this, 30 * 1000, 60 * 1000);
+
         (new Thread() {
             @Override
             public void run() {
-                if (null != accountStorage) {
-                    accountStorage.open();
-                }
+            if (null != accountStorage) {
+                accountStorage.open();
+            }
 
-                initializing = false;
+            initializing = false;
             }
         }).start();
     }
@@ -107,11 +121,22 @@ public class AccountManager {
             }
         }
 
+        if (null != this.timer) {
+            this.timer.cancel();
+            this.timer = null;
+        }
+
         if (null != this.accountStorage) {
             this.accountStorage.close();
         }
     }
 
+    /**
+     * 使用令牌进行登录。
+     *
+     * @param tokenCode
+     * @return
+     */
     public StateCode login(String tokenCode) {
         if (null == tokenCode) {
             return StateCode.DataError;
@@ -155,13 +180,45 @@ public class AccountManager {
         return token;
     }
 
-    public void addOnlineAccount(Account account, String device, Token token) {
-        OnlineAccount current = this.onlineMap.get(account.id);
+    public boolean heartbeat(String token) {
+        OnlineAccount account = this.onlineTokenMap.get(token);
+        String device = account.getDevice(token);
+        return (null != device);
+    }
+
+    protected void addOnlineAccount(Account account, String device, Token token) {
+        OnlineAccount current = this.onlineIdMap.get(account.id);
         if (null == current) {
-            this.onlineMap.put(account.id, new OnlineAccount(account, device, token));
+            current = new OnlineAccount(account, device, token);
+            this.onlineIdMap.put(account.id, current);
         }
         else {
             current.addDevice(device, token);
         }
+
+        this.onlineTokenMap.put(token.code, current);
+    }
+
+    /**
+     * 获取指定令牌的在线联系人。
+     *
+     * @param tokenCode
+     * @return
+     */
+    public OnlineAccount getOnlineAccount(String tokenCode) {
+        return this.onlineTokenMap.get(tokenCode);
+    }
+
+    public boolean isOnlineToken(String tokenCode) {
+        return this.onlineTokenMap.containsKey(tokenCode);
+    }
+
+    public Account getAccount(Long accountId) {
+        return this.accountCache.getAccount(accountId);
+    }
+
+    @Override
+    public void run() {
+        this.accountCache.onTick();
     }
 }

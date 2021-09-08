@@ -26,6 +26,7 @@
 
 package cube.app.server.container;
 
+import cube.app.server.account.Account;
 import cube.app.server.account.AccountManager;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
@@ -36,14 +37,15 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Map;
 
 /**
- * 心跳。
+ * 账号信息。
  */
-public class HeartbeatHandler extends ContextHandler {
+public class AccountInfoHandler extends ContextHandler {
 
-    public HeartbeatHandler(String httpOrigin, String httpsOrigin) {
-        super("/account/hb/");
+    public AccountInfoHandler(String httpOrigin, String httpsOrigin) {
+        super("/account/info/");
         setHandler(new Handler(httpOrigin, httpsOrigin));
     }
 
@@ -56,20 +58,30 @@ public class HeartbeatHandler extends ContextHandler {
         }
 
         @Override
-        public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-            JSONObject data = this.readBodyAsJSONObject(request);
-            if (!data.has("token")) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
-                return;
+        public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+            // 获取账号信息
+
+            Map<String, String> data = this.parseQueryStringParams(request);
+
+            JSONObject responseData = null;
+
+            if (data.containsKey("id") && data.containsKey("token")) {
+                responseData = new JSONObject();
+            }
+            else if (data.containsKey("token")) {
+                String token = data.get("token");
+                Account account = AccountManager.getInstance().getOnlineAccount(token);
+                if (null != account) {
+                    responseData = account.toCompactJSON();
+                }
             }
 
-            String token = data.getString("token");
-            boolean result = AccountManager.getInstance().heartbeat(token);
-
-            JSONObject responseData = new JSONObject();
-            responseData.put("success", result);
-
-            this.respondOk(response, responseData);
+            if (null != responseData) {
+                this.respondOk(response, responseData);
+            }
+            else {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+            }
         }
     }
 }

@@ -24,30 +24,53 @@
  * SOFTWARE.
  */
 
-package cube.app.server.util;
+package cube.app.server.account;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 电话号码辅助函数。
+ * 账号缓存器。
  */
-public class PhoneNumbers {
+public class AccountCache {
 
-    private PhoneNumbers() {
+    private final static long TIMEOUT = 10 * 60 * 1000;
+
+    private AccountStorage storage;
+
+    private Map<Long, Account> accountMap;
+
+    public AccountCache(AccountStorage storage) {
+        this.storage = storage;
+        this.accountMap = new ConcurrentHashMap<>();
     }
 
-    public static String desensitize(String phoneNumber) {
-        if (phoneNumber.length() == 11) {
-            return phoneNumber.substring(0, 3) + "****" + phoneNumber.substring(7);
+    public Account getAccount(Long accountId) {
+        Account account = this.accountMap.get(accountId);
+        if (null != account) {
+            account.timestamp = System.currentTimeMillis();
+            return account;
         }
-        else if (phoneNumber.length() == 0) {
-            return "";
+
+        account = this.storage.readAccount(accountId);
+        if (null == account) {
+            return null;
         }
-        else {
-            StringBuilder buf = new StringBuilder(phoneNumber.substring(0, 2));
-            for (int i = 0, len = phoneNumber.length() - 4; i < len; ++i) {
-                buf.append("*");
+
+        this.accountMap.put(accountId, account);
+        return account;
+    }
+
+    public void onTick() {
+        long now = System.currentTimeMillis();
+
+        Iterator<Map.Entry<Long, Account>> iter = this.accountMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<Long, Account> entry = iter.next();
+            if (now - entry.getValue().timestamp > TIMEOUT) {
+                iter.remove();
             }
-            buf.append(phoneNumber.substring(phoneNumber.length() - 2));
-            return buf.toString();
         }
     }
 }

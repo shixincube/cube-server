@@ -55,6 +55,8 @@ public class Account implements JSONable {
 
     public long last;
 
+    protected long timestamp = System.currentTimeMillis();
+
     public Account(long id, String account, String phone, String password, String name, String avatar, int state) {
         this.id = id;
         this.account = account;
@@ -82,6 +84,8 @@ public class Account implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = this.toJSON();
+        json.remove("account");
+        return json;
     }
 }

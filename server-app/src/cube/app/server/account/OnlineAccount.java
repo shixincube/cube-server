@@ -26,8 +26,10 @@
 
 package cube.app.server.account;
 
+import cube.common.entity.Device;
+
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 在线联系人。
@@ -36,6 +38,8 @@ public class OnlineAccount extends Account {
 
     private Map<String, Token> deviceTokenMap;
 
+    private Map<String, String> tokenDeviceMap;
+
     public OnlineAccount(Account account, String device, Token token) {
         this(account.id, account.account, account.phone, account.password, account.name, account.avatar, account.state);
         this.addDevice(device, token);
@@ -43,14 +47,23 @@ public class OnlineAccount extends Account {
 
     public OnlineAccount(long id, String account, String phone, String password, String name, String avatar, int state) {
         super(id, account, phone, password, name, avatar, state);
-        this.deviceTokenMap = new ConcurrentHashMap<>();
+        this.deviceTokenMap = new HashMap<>();
+        this.tokenDeviceMap = new HashMap<>();
     }
 
     public void addDevice(String device, Token token) {
         this.deviceTokenMap.put(device, token);
+        this.tokenDeviceMap.put(token.code, device);
     }
 
     public void removeDevice(String device) {
-        this.deviceTokenMap.remove(device);
+        Token token = this.deviceTokenMap.remove(device);
+        if (null != token) {
+            this.tokenDeviceMap.remove(token.code);
+        }
+    }
+
+    public String getDevice(String tokenCode) {
+        return this.tokenDeviceMap.get(tokenCode);
     }
 }

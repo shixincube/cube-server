@@ -115,6 +115,8 @@ public class ContainerManager {
 
         handlers.setHandlers(new Handler[] {
                 new LoginHandler(httpAllowOrigin, httpsAllowOrigin),
+                new HeartbeatHandler(httpAllowOrigin, httpsAllowOrigin),
+                new AccountInfoHandler(httpAllowOrigin, httpsAllowOrigin),
 
                 new StopHandler(this.server, this),
                 new DefaultHandler()});

@@ -42,6 +42,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * HTTP 请求处理句柄。
@@ -89,6 +90,12 @@ public abstract class HttpHandler extends AbstractHandler {
         // Nothing
     }
 
+    /**
+     *
+     * @param request
+     * @return 如果没有数据返回 <code>null</code> 值。
+     * @throws IOException
+     */
     public JSONObject readBodyAsJSONObject(HttpServletRequest request) throws IOException {
         ServletInputStream is = request.getInputStream();
         FlexibleByteBuffer buffer = new FlexibleByteBuffer(512);
@@ -100,6 +107,11 @@ public abstract class HttpHandler extends AbstractHandler {
 
         buffer.flip();
 
+        if (buffer.limit() == 0) {
+            // 没有数据
+            return null;
+        }
+
         JSONObject json = new JSONObject();
 
         String data = new String(buffer.array(), 0, buffer.limit(), Charset.forName("UTF-8"));
@@ -107,9 +119,26 @@ public abstract class HttpHandler extends AbstractHandler {
         String[] params = data.split("&");
         for (String param : params) {
             String[] kv = param.split("=");
+            if (kv.length != 2) {
+                continue;
+            }
+
             json.put(kv[0], URLDecoder.decode(kv[1], "UTF-8"));
         }
         return json;
+    }
+
+    public Map<String, String> parseQueryStringParams(HttpServletRequest request) {
+        String queryString = request.getQueryString();
+        Map<String, String> result = new HashMap<>();
+        String[] array = queryString.split("&");
+
+        for (String pair : array) {
+            String[] param = pair.split("=");
+            result.put(param[0], param[1]);
+        }
+
+        return result;
     }
 
     public void setCookie(HttpServletResponse response, String name, String value, int maxAge) {
