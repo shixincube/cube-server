@@ -189,7 +189,8 @@ public class FileHandler extends CrossDomainHandler {
         String fileCode = request.getParameter("fc");
 
         if (null == token || null == fileCode) {
-            this.respond(response, HttpStatus.BAD_REQUEST_400, null);
+            response.setStatus(HttpStatus.BAD_REQUEST_400);
+            this.complete();
             return;
         }
 
