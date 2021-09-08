@@ -132,7 +132,10 @@ public class ServiceServer implements JSONable {
             }
 
             // 存储配置
-            this.storageJsonFile = new File(this.configPath + File.separator + "storage.json");
+            this.storageJsonFile = new File(this.configPath + File.separator + "storage_dev.json");
+            if (!this.storageJsonFile.exists()) {
+                this.storageJsonFile = new File(this.configPath + File.separator + "storage.json");
+            }
             byte[] data = Files.readAllBytes(Paths.get(this.storageJsonFile.getAbsolutePath()));
             this.storageJson = new JSONObject(new String(data, Charset.forName("UTF-8")));
 

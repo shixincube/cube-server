@@ -38,6 +38,7 @@ import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -182,7 +183,12 @@ public final class ConfigUtils {
     public static JSONObject readStorageConfig() {
         JSONObject json = new JSONObject();
         try {
-            byte[] data = Files.readAllBytes(Paths.get("config/storage.json"));
+            Path file = Paths.get("config/storage_dev.json");
+            if (!Files.exists(file)) {
+                file = Paths.get("config/storage.json");
+            }
+
+            byte[] data = Files.readAllBytes(file);
             json = new JSONObject(new String(data, Charset.forName("UTF-8")));
         } catch (IOException e) {
             Logger.d(ConfigUtils.class, "#readStorageConfig - " + e.getMessage());

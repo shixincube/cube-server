@@ -1,46 +1,46 @@
 {
 	"Auth": {
 		"type"     : "MySQL",
-		"host"     : "211.157.135.146",
-		"port"     : 63307,
-		"schema"   : "cube_3",
-		"user"     : "root",
-		"password" : "Cube_2020"
+		"host"     : "192.168.11.128",
+		"port"     : 3307,
+		"schema"   : "cube",
+		"user"     : "cube_3",
+		"password" : "CubeOpenSource"
 	},
 
 	"Contact": {
 		"type"     : "MySQL",
-		"host"     : "211.157.135.146",
-		"port"     : 63307,
-		"schema"   : "cube_3",
-		"user"     : "root",
-		"password" : "Cube_2020"
+		"host"     : "192.168.11.128",
+		"port"     : 3307,
+		"schema"   : "cube",
+		"user"     : "cube_3",
+		"password" : "CubeOpenSource"
 	},
 
 	"FileStorage": {
 		"type"     : "MySQL",
-		"host"     : "211.157.135.146",
-		"port"     : 63307,
-		"schema"   : "cube_3",
-		"user"     : "root",
-		"password" : "Cube_2020"
+		"host"     : "192.168.11.128",
+		"port"     : 3307,
+		"schema"   : "cube",
+		"user"     : "cube_3",
+		"password" : "CubeOpenSource"
 	},
 
 	"Messaging": {
 		"type"     : "MySQL",
-		"host"     : "211.157.135.146",
-		"port"     : 63307,
-		"schema"   : "cube_3",
-		"user"     : "root",
-		"password" : "Cube_2020"
+		"host"     : "192.168.11.128",
+		"port"     : 3307,
+		"schema"   : "cube",
+		"user"     : "cube_3",
+		"password" : "CubeOpenSource"
 	},
 
 	"Conference": {
 		"type"     : "MySQL",
-		"host"     : "211.157.135.146",
-		"port"     : 63307,
-		"schema"   : "cube_3",
-		"user"     : "root",
-		"password" : "Cube_2020"
+		"host"     : "192.168.11.128",
+		"port"     : 3307,
+		"schema"   : "cube",
+		"user"     : "cube_3",
+		"password" : "CubeOpenSource"
 	}
 }
