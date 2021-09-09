@@ -52,7 +52,7 @@ public class AccountStorage extends AbstractStorage {
                     Constraint.PRIMARY_KEY
             }),
             new StorageField("account", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
+                    Constraint.UNIQUE, Constraint.NOT_NULL
             }),
             new StorageField("phone", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_EMPTY
@@ -75,8 +75,8 @@ public class AccountStorage extends AbstractStorage {
             new StorageField("department", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_EMPTY
             }),
-            new StorageField("last", LiteralBase.LONG, new Constraint[] {
-                    Constraint.NOT_NULL, Constraint.DEFAULT_0
+            new StorageField("registration", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
             })
     };
 
@@ -160,7 +160,7 @@ public class AccountStorage extends AbstractStorage {
         return this.readToken(token.code);
     }
 
-    public Account readAccount(long accountId) {
+    public Account readAccount(Long accountId) {
         String sql = "SELECT * FROM " + TABLE_ACCOUNT + " WHERE id=" + accountId;
         List<StorageField[]> result = this.storage.executeQuery(sql);
         if (result.isEmpty()) {
@@ -171,7 +171,7 @@ public class AccountStorage extends AbstractStorage {
         Account account = new Account(dataMap.get("id").getLong(), dataMap.get("account").getString(),
                 dataMap.get("phone").getString(), dataMap.get("password").getString(), dataMap.get("name").getString(),
                 dataMap.get("avatar").getString(), dataMap.get("state").getInt());
-        account.last = dataMap.get("last").getLong();
+        account.registration = dataMap.get("registration").getLong();
         account.region = dataMap.get("region").getString();
         account.department = dataMap.get("department").getString();
         return account;
@@ -188,9 +188,37 @@ public class AccountStorage extends AbstractStorage {
         Account account = new Account(dataMap.get("id").getLong(), dataMap.get("account").getString(),
                 dataMap.get("phone").getString(), dataMap.get("password").getString(), dataMap.get("name").getString(),
                 dataMap.get("avatar").getString(), dataMap.get("state").getInt());
-        account.last = dataMap.get("last").getLong();
+        account.registration = dataMap.get("registration").getLong();
         account.region = dataMap.get("region").getString();
         account.department = dataMap.get("department").getString();
         return account;
+    }
+
+    public Account writeAccount(Long accountId, String accountName, String password, String nickname, String avatar) {
+        long registration = System.currentTimeMillis();
+        boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[]{
+                new StorageField("id", LiteralBase.LONG, accountId),
+                new StorageField("account", LiteralBase.STRING, accountName),
+                new StorageField("password", LiteralBase.STRING, password),
+                new StorageField("name", LiteralBase.STRING, nickname),
+                new StorageField("avatar", LiteralBase.STRING, avatar),
+                new StorageField("registration", LiteralBase.LONG, registration)
+        });
+
+        if (!result) {
+            return null;
+        }
+
+        Account account = new Account(accountId, accountName, "", password, nickname, avatar, 0);
+        account.registration = registration;
+        account.region = "--";
+        account.department = "--";
+        return account;
+    }
+
+    public boolean existsAccountId(Long accountId) {
+        String sql = "SELECT `state` FROM " + TABLE_ACCOUNT + " WHERE `id`=" + accountId;
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        return (!result.isEmpty());
     }
 }

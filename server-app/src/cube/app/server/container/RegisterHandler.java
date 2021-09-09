@@ -28,7 +28,9 @@ package cube.app.server.container;
 
 import cube.app.server.account.Account;
 import cube.app.server.account.AccountManager;
+import cube.app.server.account.StateCode;
 import cube.util.CrossDomainHandler;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
 
@@ -84,7 +86,13 @@ public class RegisterHandler extends ContextHandler {
             if (null != accountName && null != password && null != nickname && null != avatar) {
                 Account account = AccountManager.getInstance().registerWithAccountName(accountName, password, nickname, avatar);
                 if (null != account) {
-                    responseData = account.toCompactJSON();
+                    responseData = new JSONObject();
+                    responseData.put("code", StateCode.Success.code);
+                    responseData.put("account", account.toCompactJSON());
+                }
+                else {
+                    responseData = new JSONObject();
+                    responseData.put("code", StateCode.InvalidAccount.code);
                 }
             }
             else if (null != phone && null != password) {
@@ -95,7 +103,7 @@ public class RegisterHandler extends ContextHandler {
                 this.respondOk(response, responseData);
             }
             else {
-
+                this.respond(response, HttpStatus.FORBIDDEN_403);
             }
         }
     }

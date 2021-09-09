@@ -28,6 +28,7 @@ package cube.app.server.account;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.app.server.util.LuckyNumbers;
 import cube.util.ConfigUtils;
 
 import java.io.File;
@@ -210,12 +211,28 @@ public class AccountManager extends TimerTask {
             this.onlineIdMap.remove(account.id);
         }
 
+        // TODO 修改 Token 的失效时间
+
         return StateCode.Success;
     }
 
+    /**
+     * 使用账号名进行注册。
+     *
+     * @param accountName
+     * @param password
+     * @param nickname
+     * @param avatar
+     * @return
+     */
     public Account registerWithAccountName(String accountName, String password, String nickname, String avatar) {
-        
-        return null;
+        Long accountId = LuckyNumbers.make();
+        if (this.accountStorage.existsAccountId(accountId)) {
+            accountId = (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
+        }
+
+        Account account = this.accountStorage.writeAccount(accountId, accountName, password, nickname, avatar);
+        return account;
     }
 
     /**

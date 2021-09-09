@@ -53,7 +53,7 @@ public class Account implements JSONable {
 
     public String department;
 
-    public long last;
+    public long registration;
 
     protected long timestamp = System.currentTimeMillis();
 
@@ -78,13 +78,14 @@ public class Account implements JSONable {
         json.put("state", this.state);
         json.put("region", null != this.region ? this.region : "--");
         json.put("department", null != this.department ? this.department : "--");
-        json.put("last", this.last);
+        json.put("registration", this.registration);
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = this.toJSON();
+        json.remove("registration");
         json.remove("password");
         return json;
     }
