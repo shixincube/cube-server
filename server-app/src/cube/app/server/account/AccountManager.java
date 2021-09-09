@@ -45,6 +45,8 @@ public class AccountManager extends TimerTask {
 
     private final static long WEB_TIMEOUT = 5L * 60L * 1000L;
 
+    private final boolean useLuckyNumberId = true;
+
     private boolean initializing = false;
 
     private Timer timer;
@@ -192,6 +194,38 @@ public class AccountManager extends TimerTask {
     }
 
     /**
+     * 使用电话号码和密码登录。
+     *
+     * @param phoneNumber
+     * @param password
+     * @param device
+     * @return
+     */
+    public Token loginWithPhoneNumber(String phoneNumber, String password, String device) {
+        Account account = this.accountStorage.readAccountByPhoneNumber(phoneNumber);
+        if (null == account) {
+            // 没有账号
+            return null;
+        }
+
+        if (!account.password.equalsIgnoreCase(password)) {
+            // 密码不一致
+            return null;
+        }
+
+        long now = System.currentTimeMillis();
+        Token token = new Token(account.id, Utils.randomString(32), device,
+                now, now + 7 * 24 * 3600 * 1000);
+
+        // 写入令牌
+        token = this.accountStorage.writeToken(token);
+
+        this.addOnlineAccount(account, device, token);
+
+        return token;
+    }
+
+    /**
      * 账号登出。
      *
      * @param token
@@ -226,12 +260,31 @@ public class AccountManager extends TimerTask {
      * @return
      */
     public Account registerWithAccountName(String accountName, String password, String nickname, String avatar) {
-        Long accountId = LuckyNumbers.make();
-        if (this.accountStorage.existsAccountId(accountId)) {
+        Long accountId = this.useLuckyNumberId ? LuckyNumbers.make() : (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
+        while (this.accountStorage.existsAccountId(accountId)) {
             accountId = (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
         }
 
         Account account = this.accountStorage.writeAccount(accountId, accountName, password, nickname, avatar);
+        return account;
+    }
+
+    /**
+     * 使用手机号码注册。
+     *
+     * @param phoneNumber
+     * @param password
+     * @return
+     */
+    public Account registerWithPhoneNumber(String phoneNumber, String password) {
+        Long accountId = this.useLuckyNumberId ? LuckyNumbers.make() : (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
+        while (this.accountStorage.existsAccountId(accountId)) {
+            accountId = (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
+        }
+
+        String avatar = "default";
+
+        Account account = this.accountStorage.writeAccount(accountId, phoneNumber, password, avatar);
         return account;
     }
 

@@ -27,6 +27,7 @@
 package cube.app.server.account;
 
 import cell.core.talk.LiteralBase;
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.app.server.util.AbstractStorage;
 import cube.core.Conditional;
@@ -194,6 +195,23 @@ public class AccountStorage extends AbstractStorage {
         return account;
     }
 
+    public Account readAccountByPhoneNumber(String phoneNumber) {
+        String sql = "SELECT * FROM " + TABLE_ACCOUNT + " WHERE `phone`='" + phoneNumber + "'";
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> dataMap = StorageFields.get(result.get(0));
+        Account account = new Account(dataMap.get("id").getLong(), dataMap.get("account").getString(),
+                dataMap.get("phone").getString(), dataMap.get("password").getString(), dataMap.get("name").getString(),
+                dataMap.get("avatar").getString(), dataMap.get("state").getInt());
+        account.registration = dataMap.get("registration").getLong();
+        account.region = dataMap.get("region").getString();
+        account.department = dataMap.get("department").getString();
+        return account;
+    }
+
     public Account writeAccount(Long accountId, String accountName, String password, String nickname, String avatar) {
         long registration = System.currentTimeMillis();
         boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[]{
@@ -210,6 +228,31 @@ public class AccountStorage extends AbstractStorage {
         }
 
         Account account = new Account(accountId, accountName, "", password, nickname, avatar, 0);
+        account.registration = registration;
+        account.region = "--";
+        account.department = "--";
+        return account;
+    }
+
+    public Account writeAccount(Long accountId, String phoneNumber, String password, String avatar) {
+        long registration = System.currentTimeMillis();
+        String nickname = "cube-" + Utils.randomString(8).toLowerCase();
+
+        boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[]{
+                new StorageField("id", LiteralBase.LONG, accountId),
+                new StorageField("account", LiteralBase.STRING, phoneNumber),
+                new StorageField("phone", LiteralBase.STRING, phoneNumber),
+                new StorageField("password", LiteralBase.STRING, password),
+                new StorageField("name", LiteralBase.STRING, nickname),
+                new StorageField("avatar", LiteralBase.STRING, avatar),
+                new StorageField("registration", LiteralBase.LONG, registration)
+        });
+
+        if (!result) {
+            return null;
+        }
+
+        Account account = new Account(accountId, phoneNumber, phoneNumber, password, nickname, avatar, 0);
         account.registration = registration;
         account.region = "--";
         account.department = "--";

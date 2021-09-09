@@ -37,6 +37,7 @@ import org.json.JSONObject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.swing.plaf.nimbus.State;
 import java.io.IOException;
 
 /**
@@ -96,7 +97,16 @@ public class RegisterHandler extends ContextHandler {
                 }
             }
             else if (null != phone && null != password) {
-                responseData = new JSONObject();
+                Account account = AccountManager.getInstance().registerWithPhoneNumber(phone, password);
+                if (null != account) {
+                    responseData = new JSONObject();
+                    responseData.put("code", StateCode.Success.code);
+                    responseData.put("account", account.toCompactJSON());
+                }
+                else {
+                    responseData = new JSONObject();
+                    responseData.put("code", StateCode.InvalidAccount.code);
+                }
             }
 
             if (null != responseData) {
