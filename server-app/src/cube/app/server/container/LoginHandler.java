@@ -70,14 +70,14 @@ public class LoginHandler extends ContextHandler {
                 Token token = null;
 
                 // 读取登录参数
-                if (data.has("account")) {
+                if (data.has("account") && data.has("password")) {
                     String accountName = data.getString("account");
                     String password = data.getString("password");
 
                     token = AccountManager.getInstance().loginWithAccount(accountName, password, device);
                 }
-                else if (data.has("phone")) {
-                    String phoneNumber = data.getString("phoneNumber");
+                else if (data.has("phone") && data.has("password")) {
+                    String phoneNumber = data.getString("phone");
                     String password = data.getString("password");
 
                     token = AccountManager.getInstance().loginWithPhoneNumber(phoneNumber, password, device);

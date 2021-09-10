@@ -37,7 +37,7 @@ public enum StateCode {
     Success(0),
 
     /**
-     * 重复登录。
+     * 重复的账号操作行为。
      */
     Repeat(1),
 
