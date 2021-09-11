@@ -142,29 +142,29 @@ public class AccountManager extends TimerTask {
      * @param tokenCode
      * @return
      */
-    public StateCode login(String tokenCode) {
+    public Token login(String tokenCode) {
         if (null == tokenCode) {
-            return StateCode.DataError;
+            return null;
         }
 
         Token token = this.accountStorage.readToken(tokenCode);
         if (null == token) {
-            return StateCode.NotFindToken;
+            return null;
         }
 
         if (token.expire < System.currentTimeMillis()) {
             // 已过期
-            return StateCode.InvalidToken;
+            return null;
         }
 
         Account account = this.accountStorage.readAccount(token.accountId);
         if (null == account) {
-            return StateCode.NotFindAccount;
+            return null;
         }
 
         this.addOnlineAccount(account, token.device, token);
 
-        return StateCode.Success;
+        return token;
     }
 
     /**

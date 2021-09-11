@@ -91,6 +91,8 @@ public class LoginHandler extends ContextHandler {
                 else {
                     responseData.put("code", StateCode.Success.code);
                     responseData.put("token", token.code);
+                    responseData.put("creation", token.creation);
+                    responseData.put("expire", token.expire);
 
                     int maxAge = (int)(token.expire / 1000L);
                     setCookie(response, COOKIE_NAME, token.code, maxAge);
@@ -107,22 +109,31 @@ public class LoginHandler extends ContextHandler {
                     return;
                 }
 
-                String token = null;
+                String tokenCode = null;
                 for (Cookie cookie : request.getCookies()) {
                     if (COOKIE_NAME.equals(cookie.getName())) {
-                        token = cookie.getValue();
+                        tokenCode = cookie.getValue().trim();
                         break;
                     }
                 }
 
-                StateCode state = AccountManager.getInstance().login(token);
+                JSONObject responseData = null;
+                Token token = AccountManager.getInstance().login(tokenCode);
 
-                JSONObject responseData = new JSONObject();
-                responseData.put("code", state.code);
-                responseData.put("token", null == token ? "" : token);
+                if (null == token) {
+                    responseData = new JSONObject();
+                    responseData.put("code", StateCode.InvalidToken.code);
+                    responseData.put("token", tokenCode);
 
-                if (state.code > 2) {
+                    // 作废 Cookie
                     setCookie(response, COOKIE_NAME, "?", 1);
+                }
+                else {
+                    responseData = new JSONObject();
+                    responseData.put("code", StateCode.Success.code);
+                    responseData.put("token", token.code);
+                    responseData.put("creation", token.creation);
+                    responseData.put("expire", token.expire);
                 }
 
                 // 应答

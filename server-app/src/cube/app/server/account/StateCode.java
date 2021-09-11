@@ -67,9 +67,9 @@ public enum StateCode {
     DataError(9),
 
     /**
-     * 未知。
+     * 其他状态。
      */
-    Unknown(10);
+    Other(99);
 
     /**
      * 编码。
