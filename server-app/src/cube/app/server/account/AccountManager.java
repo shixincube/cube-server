@@ -45,6 +45,8 @@ public class AccountManager extends TimerTask {
 
     private final static long WEB_TIMEOUT = 5L * 60L * 1000L;
 
+    private final static long TOKEN_DURATION = 10 * 365 * 24 * 3600 * 1000L;
+
     private final boolean useLuckyNumberId = true;
 
     private boolean initializing = false;
@@ -183,7 +185,7 @@ public class AccountManager extends TimerTask {
 
         long now = System.currentTimeMillis();
         Token token = new Token(account.id, Utils.randomString(32), device,
-                now, now + 7 * 24 * 3600 * 1000);
+                now, now + TOKEN_DURATION);
 
         // 写入令牌
         token = this.accountStorage.writeToken(token);
@@ -215,7 +217,7 @@ public class AccountManager extends TimerTask {
 
         long now = System.currentTimeMillis();
         Token token = new Token(account.id, Utils.randomString(32), device,
-                now, now + 7 * 24 * 3600 * 1000);
+                now, now + TOKEN_DURATION);
 
         // 写入令牌
         token = this.accountStorage.writeToken(token);
@@ -325,6 +327,17 @@ public class AccountManager extends TimerTask {
      * @return
      */
     public OnlineAccount getOnlineAccount(String tokenCode) {
+        OnlineAccount onlineAccount = this.onlineTokenMap.get(tokenCode);
+        if (null != onlineAccount) {
+            return onlineAccount;
+        }
+
+        // 使用令牌登录
+        Token token = login(tokenCode);
+        if (null == token) {
+            return null;
+        }
+
         return this.onlineTokenMap.get(tokenCode);
     }
 

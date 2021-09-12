@@ -82,6 +82,11 @@ public class LoginHandler extends ContextHandler {
 
                     token = AccountManager.getInstance().loginWithPhoneNumber(phoneNumber, password, device);
                 }
+                else if (data.has("token")) {
+                    String tokenCode = data.getString("token");
+
+                    token = AccountManager.getInstance().login(tokenCode);
+                }
 
                 JSONObject responseData = new JSONObject();
 
