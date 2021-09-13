@@ -345,6 +345,19 @@ public class AccountManager extends TimerTask {
         return this.onlineTokenMap.containsKey(tokenCode);
     }
 
+    public boolean isValidToken(String tokenCode) {
+        if (this.onlineTokenMap.containsKey(tokenCode)) {
+            return true;
+        }
+
+        Token token = this.login(tokenCode);
+        if (null == token) {
+            return false;
+        }
+
+        return true;
+    }
+
     public Account getAccount(Long accountId) {
         return this.accountCache.getAccount(accountId);
     }

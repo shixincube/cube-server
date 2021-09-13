@@ -71,7 +71,7 @@ public class CubeConfigHandler extends ContextHandler {
                 return;
             }
 
-            if (AccountManager.getInstance().isOnlineToken(token)) {
+            if (AccountManager.getInstance().isValidToken(token)) {
                 this.respondOk(response, cubeConfig);
             }
             else {

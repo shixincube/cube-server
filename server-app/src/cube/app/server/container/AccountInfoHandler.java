@@ -71,7 +71,7 @@ public class AccountInfoHandler extends ContextHandler {
                 String token = data.get("token");
                 Long id = Long.parseLong(data.get("id"));
 
-                if (AccountManager.getInstance().isOnlineToken(token)) {
+                if (AccountManager.getInstance().isValidToken(token)) {
                     Account account = AccountManager.getInstance().getAccount(id);
                     responseData = account.toCompactJSON();
                 }
@@ -79,7 +79,7 @@ public class AccountInfoHandler extends ContextHandler {
             else if (data.containsKey("list") && data.containsKey("token")) {
                 String token = data.get("token");
 
-                if (AccountManager.getInstance().isOnlineToken(token)) {
+                if (AccountManager.getInstance().isValidToken(token)) {
                     String[] array = data.get("list").trim().split(",");
                     responseArray = new JSONArray();
                     for (String strId : array) {
