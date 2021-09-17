@@ -85,8 +85,23 @@ public class Account implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = this.toJSON();
+        json.remove("account");
         json.remove("registration");
-        json.remove("password");
+        return json;
+    }
+
+    public JSONObject toFullJSON() {
+        JSONObject json = new JSONObject();
+        json.put("id", this.id);
+        json.put("account", this.account);
+        json.put("phone", this.phone);
+        json.put("password", this.password);
+        json.put("name", this.name);
+        json.put("avatar", this.avatar);
+        json.put("state", this.state);
+        json.put("region", null != this.region ? this.region : "--");
+        json.put("department", null != this.department ? this.department : "--");
+        json.put("registration", this.registration);
         return json;
     }
 }
