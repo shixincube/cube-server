@@ -76,8 +76,8 @@ public class Account implements JSONable {
         json.put("name", this.name);
         json.put("avatar", this.avatar);
         json.put("state", this.state);
-        json.put("region", null != this.region ? this.region : "--");
-        json.put("department", null != this.department ? this.department : "--");
+        json.put("region", null != this.region ? this.region : "");
+        json.put("department", null != this.department ? this.department : "");
         json.put("registration", this.registration);
         return json;
     }
@@ -99,8 +99,8 @@ public class Account implements JSONable {
         json.put("name", this.name);
         json.put("avatar", this.avatar);
         json.put("state", this.state);
-        json.put("region", null != this.region ? this.region : "--");
-        json.put("department", null != this.department ? this.department : "--");
+        json.put("region", null != this.region ? this.region : "");
+        json.put("department", null != this.department ? this.department : "");
         json.put("registration", this.registration);
         return json;
     }
