@@ -1689,7 +1689,7 @@ public class ContactStorage implements Storagable {
                 "\"id\": 50001001," +
                 "\"account\": \"cube1\"," +
                 "\"name\": \"李国诚\"," +
-                "\"avatar\": \"avatar01.png\"," +
+                "\"avatar\": \"avatar01\"," +
                 "\"state\": 0," +
                 "\"region\": \"北京\"," +
                 "\"department\": \"产品中心\"," +
@@ -1706,7 +1706,7 @@ public class ContactStorage implements Storagable {
                 "\"id\": 50001002," +
                 "\"account\": \"cube2\"," +
                 "\"name\": \"王沛珊\"," +
-                "\"avatar\": \"avatar13.png\"," +
+                "\"avatar\": \"avatar13\"," +
                 "\"state\": 0," +
                 "\"region\": \"武汉\"," +
                 "\"department\": \"媒介部\"," +
@@ -1723,7 +1723,7 @@ public class ContactStorage implements Storagable {
                 "\"id\": 50001003," +
                 "\"account\": \"cube3\"," +
                 "\"name\": \"郝思雁\"," +
-                "\"avatar\": \"avatar15.png\"," +
+                "\"avatar\": \"avatar15\"," +
                 "\"state\": 0," +
                 "\"region\": \"上海\"," +
                 "\"department\": \"公关部\"," +
@@ -1740,7 +1740,7 @@ public class ContactStorage implements Storagable {
                 "\"id\": 50001004," +
                 "\"account\": \"cube4\"," +
                 "\"name\": \"高海光\"," +
-                "\"avatar\": \"avatar09.png\"," +
+                "\"avatar\": \"avatar09\"," +
                 "\"state\": 0," +
                 "\"region\": \"成都\"," +
                 "\"department\": \"技术部\"," +
@@ -1757,7 +1757,7 @@ public class ContactStorage implements Storagable {
                 "\"id\": 50001005," +
                 "\"account\": \"cube5\"," +
                 "\"name\": \"张明宇\"," +
-                "\"avatar\": \"avatar12.png\"," +
+                "\"avatar\": \"avatar12\"," +
                 "\"state\": 0," +
                 "\"region\": \"广州\"," +
                 "\"department\": \"设计部\"," +
