@@ -81,7 +81,7 @@ public enum MessageState {
      */
     Unknown(0);
 
-    private int code;
+    public final int code;
 
     MessageState(int code) {
         this.code = code;

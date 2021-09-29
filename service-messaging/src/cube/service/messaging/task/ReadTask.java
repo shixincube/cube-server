@@ -40,8 +40,12 @@ import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
 import cube.service.messaging.MessagingService;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 标记消息已读任务。
@@ -72,10 +76,8 @@ public class ReadTask extends ServiceTask {
         String domain = contact.getDomain().getName();
 
         Long contactId = null;
-        Long messageId = null;
         try {
             contactId = data.getLong("contactId");
-            messageId = data.getLong("messageId");
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
@@ -91,18 +93,50 @@ public class ReadTask extends ServiceTask {
             return;
         }
 
-        MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingService.NAME);
-        // 标记消息已读
-        Message message = messagingService.markReadMessage(domain, contactId, messageId);
-        if (null == message) {
+        Long messageId = null;
+        JSONArray messageIds = null;
+        Long messageFrom = null;
+        if (data.has("messageId")) {
+            messageId = data.getLong("messageId");
+        }
+        else if (data.has("messageIdList") && data.has("messageFrom")) {
+            messageIds = data.getJSONArray("messageIdList");
+            messageFrom = data.getLong("messageFrom");
+        }
+        else {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, MessagingStateCode.Failure.code, data));
+                    this.makeResponse(action, packet, MessagingStateCode.DataStructureError.code, data));
             markResponseTime();
             return;
         }
 
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, MessagingStateCode.Ok.code, message.toCompactJSON()));
-        markResponseTime();
+        MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingService.NAME);
+
+        if (null != messageId) {
+            // 标记消息已读
+            Message message = messagingService.markReadMessage(domain, contactId, messageId);
+            if (null == message) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, MessagingStateCode.Failure.code, data));
+                markResponseTime();
+                return;
+            }
+
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, MessagingStateCode.Ok.code, message.toCompactJSON()));
+            markResponseTime();
+        }
+        else {
+            List<Long> messageIdList = new ArrayList<>(messageIds.length());
+            for (int i = 0; i < messageIds.length(); ++i) {
+                messageIdList.add(messageIds.getLong(i));
+            }
+
+            messagingService.markReadMessages(domain, contactId, messageFrom, messageIdList);
+
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, MessagingStateCode.Ok.code, data));
+            markResponseTime();
+        }
     }
 }

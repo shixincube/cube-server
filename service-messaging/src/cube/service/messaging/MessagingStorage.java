@@ -516,13 +516,13 @@ public class MessagingStorage implements Storagable {
      * @param state
      */
     public void writeMessageState(String domain, Long contactId, Long messageId, MessageState state) {
-        String table = this.messageTableNameMap.get(domain);
+        final String table = this.messageTableNameMap.get(domain);
 
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
                 StorageField[] fields = new StorageField[] {
-                        new StorageField("state", LiteralBase.INT, state.getCode())
+                        new StorageField("state", LiteralBase.INT, state.code)
                 };
 
                 storage.executeUpdate(table, fields, new Conditional[] {
@@ -530,6 +530,35 @@ public class MessagingStorage implements Storagable {
                         Conditional.createAnd(),
                         Conditional.createEqualTo(new StorageField("owner", LiteralBase.LONG, contactId))
                 });
+            }
+        });
+    }
+
+    /**
+     * 批量写入消息状态。
+     *
+     * @param domain
+     * @param contactId
+     * @param messageIds
+     * @param state
+     */
+    public void writeMessagesState(String domain, Long contactId, List<Long> messageIds, MessageState state) {
+        final String table = this.messageTableNameMap.get(domain);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                StorageField[] fields = new StorageField[] {
+                        new StorageField("state", LiteralBase.INT, state.code)
+                };
+
+                for (Long messageId : messageIds) {
+                    storage.executeUpdate(table, fields, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId)),
+                            Conditional.createAnd(),
+                            Conditional.createEqualTo(new StorageField("owner", LiteralBase.LONG, contactId.longValue()))
+                    });
+                }
             }
         });
     }
