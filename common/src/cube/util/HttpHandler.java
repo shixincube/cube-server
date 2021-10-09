@@ -136,7 +136,13 @@ public abstract class HttpHandler extends AbstractHandler {
 
         for (String pair : array) {
             String[] param = pair.split("=");
-            result.put(param[0], param[1]);
+            String value = param[1];
+            try {
+                value = URLDecoder.decode(param[1], "UTF-8");
+            } catch (Exception e) {
+                // Nothing
+            }
+            result.put(param[0], value);
         }
 
         return result;
