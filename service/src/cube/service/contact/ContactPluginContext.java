@@ -73,6 +73,14 @@ public class ContactPluginContext extends PluginContext implements JSONable {
         return this.newName;
     }
 
+    public void setNewContext(JSONObject newContext) {
+        this.newContext = newContext;
+    }
+
+    public JSONObject getNewContext() {
+        return this.newContext;
+    }
+
     @Override
     public Object get(String name) {
         if (name.equals("contact")) {
@@ -84,6 +92,9 @@ public class ContactPluginContext extends PluginContext implements JSONable {
         else if (name.equals("newName")) {
             return this.newName;
         }
+        else if (name.equals("newContext")) {
+            return this.newContext;
+        }
         else {
             return null;
         }
@@ -93,6 +104,9 @@ public class ContactPluginContext extends PluginContext implements JSONable {
     public void set(String name, Object value) {
         if (name.equals("newName")) {
             this.newName = (null != value && value instanceof String) ? (String) value : null;
+        }
+        else if (name.equals("newContext")) {
+            this.newContext = (null != value && value instanceof JSONObject) ? (JSONObject) value : null;
         }
     }
 

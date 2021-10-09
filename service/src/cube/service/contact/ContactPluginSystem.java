@@ -57,6 +57,10 @@ public class ContactPluginSystem extends PluginSystem<ContactHook> {
         return this.getHook(ContactHook.ModifyContactName);
     }
 
+    public ContactHook getModifyContactContextHook() {
+        return this.getHook(ContactHook.ModifyContactContext);
+    }
+
     private void build() {
         ContactHook hook = new ContactHook(ContactHook.SignIn);
         this.addHook(hook);
@@ -71,6 +75,9 @@ public class ContactPluginSystem extends PluginSystem<ContactHook> {
         this.addHook(hook);
 
         hook = new ContactHook(ContactHook.ModifyContactName);
+        this.addHook(hook);
+
+        hook = new ContactHook(ContactHook.ModifyContactContext);
         this.addHook(hook);
     }
 }

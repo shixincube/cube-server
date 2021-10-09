@@ -22,5 +22,10 @@
 	"Conference": {
 		"type": "SQLite",
 		"file": "storage/ConferenceService.db"
+	},
+
+	"RiskMgmt": {
+		"type": "SQLite",
+		"file": "storage/RiskMgmt.db"
 	}
 }

@@ -71,12 +71,29 @@ public class SensitiveWord {
     public final SensitiveWordType type;
 
     public SensitiveWord(String word, SensitiveWordType type) {
-        this.word = word;
+        this.word = word.toUpperCase();
         this.type = type;
     }
 
     public SensitiveWord(String word, int code) {
-        this.word = word;
+        this.word = word.toUpperCase();
         this.type = SensitiveWordType.parse(code);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (null != object && object instanceof SensitiveWord) {
+            SensitiveWord other = (SensitiveWord) object;
+            if (other.word.equalsIgnoreCase(this.word)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.word.hashCode();
     }
 }

@@ -60,11 +60,10 @@ public class FilterContactNamePlugin implements Plugin {
      */
     @Override
     public void onAction(PluginContext context) {
-        ContactPluginContext ctx = (ContactPluginContext) context;
-        Contact contact = ctx.getContact();
-
-        String name = contact.getName();
-        name = name.replace("时信", "**");
-        contact.setName(name);
+//        ContactPluginContext ctx = (ContactPluginContext) context;
+//        Contact contact = ctx.getContact();
+//        String name = contact.getName();
+//        name = name.replace("时信", "**");
+//        contact.setName(name);
     }
 }

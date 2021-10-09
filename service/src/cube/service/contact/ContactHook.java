@@ -43,6 +43,8 @@ public class ContactHook extends Hook {
 
     public final static String ModifyContactName = "ModifyContactName";
 
+    public final static String ModifyContactContext = "ModifyContactContext";
+
     public ContactHook(String key) {
         super(key);
     }

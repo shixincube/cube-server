@@ -30,15 +30,20 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
+import cube.service.auth.AuthService;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.contact.ContactManagerListener;
 import cube.service.riskmgmt.plugin.ModifyContactNamePlugin;
+import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 风险管理。
@@ -50,27 +55,59 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
      */
     public final static String NAME = "RiskMgmt";
 
+    private ExecutorService executor;
+
     private MainStorage mainStorage;
 
-    private HashMap<String, SensitiveWord> sensitiveWordMap;
+    private HashMap<String, List<SensitiveWord>> sensitiveWordsMap;
 
     private ModifyContactNamePlugin modifyContactNamePlugin;
 
     public RiskManagement() {
         super();
-        this.sensitiveWordMap = new HashMap<>();
+        this.sensitiveWordsMap = new HashMap<>();
     }
 
     @Override
     public void start() {
+        this.executor = Executors.newFixedThreadPool(8);
+
         ContactManager.getInstance().addListener(this);
 
         JSONObject config = ConfigUtils.readStorageConfig();
+        if (config.has(RiskManagement.NAME)) {
+            config = config.getJSONObject(RiskManagement.NAME);
+
+            if (config.getString("type").equalsIgnoreCase("MySQL")) {
+                this.mainStorage = new MainStorage(this.executor, StorageType.MySQL, config);
+            }
+            else {
+                this.mainStorage = new MainStorage(this.executor, StorageType.SQLite, config);
+            }
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    mainStorage.open();
+
+                    AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
+                    mainStorage.execSelfChecking(authService.getDomainList());
+
+                    loadSensitiveWordToMemory(authService.getDomainList());
+                }
+            });
+        }
     }
 
     @Override
     public void stop() {
         ContactManager.getInstance().removeListener(this);
+
+        if (null != this.mainStorage) {
+            this.mainStorage.close();
+        }
+
+        this.executor.shutdownNow();
     }
 
     @Override
@@ -95,8 +132,30 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         this.modifyContactNamePlugin = null;
     }
 
-    public List<SensitiveWord> recognizeSensitiveWord(String text) {
+    public boolean hasSensitiveWord(String domain, String text) {
+        List<SensitiveWord> list = this.sensitiveWordsMap.get(domain);
+        if (null == list) {
+            return false;
+        }
 
-        return null;
+        String upperCase = text.toUpperCase();
+        for (SensitiveWord sensitiveWord : list) {
+            if (upperCase.indexOf(sensitiveWord.word) >= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public List<SensitiveWord> recognizeSensitiveWord(String domain, String text) {
+        List<SensitiveWord> result = new ArrayList<>();
+        return result;
+    }
+
+    private void loadSensitiveWordToMemory(List<String> domainList) {
+        for (String domain : domainList) {
+            List<SensitiveWord> list = this.mainStorage.readAllSensitiveWords(domain);
+            this.sensitiveWordsMap.put(domain, list);
+        }
     }
 }

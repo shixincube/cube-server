@@ -298,7 +298,15 @@ public class AccountManager extends TimerTask {
      */
     public boolean heartbeat(String tokenCode) {
         OnlineAccount account = this.onlineTokenMap.get(tokenCode);
-        Token token = account.getToken(tokenCode);
+        Token token = null;
+
+        if (null == account) {
+            token = this.login(tokenCode);
+        }
+        else {
+            token = account.getToken(tokenCode);
+        }
+
         if (null == token) {
             return false;
         }

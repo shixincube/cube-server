@@ -805,8 +805,19 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         if (null != context) {
-            contact.setContext(context);
-            modified = true;
+            ContactHook hook = this.pluginSystem.getModifyContactContextHook();
+            ContactPluginContext pluginContext = new ContactPluginContext(contact);
+            // 设置新上下文
+            pluginContext.setNewContext(context);
+            // 调用插件
+            hook.apply(pluginContext);
+            // 获取新上下文
+            context = pluginContext.getNewContext();
+
+            if (null != context) {
+                contact.setContext(context);
+                modified = true;
+            }
         }
 
         if (modified) {

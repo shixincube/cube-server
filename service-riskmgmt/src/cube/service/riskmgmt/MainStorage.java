@@ -26,13 +26,22 @@
 
 package cube.service.riskmgmt;
 
+import cell.core.talk.LiteralBase;
+import cell.util.log.Logger;
 import cube.common.Storagable;
+import cube.core.Constraint;
 import cube.core.Storage;
+import cube.core.StorageField;
+import cube.service.riskmgmt.util.SensitiveWordBuildIn;
 import cube.storage.StorageFactory;
 import cube.storage.StorageType;
+import cube.util.SQLUtils;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -40,26 +49,99 @@ import java.util.concurrent.ExecutorService;
  */
 public class MainStorage implements Storagable {
 
+    private final String sensitiveWordTablePrefix = "risk_sensitive_word_";
+
+    private final StorageField[] sensitiveWordFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("word", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("type", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
     private ExecutorService executor;
 
     private Storage storage;
 
-    public MainStorage(ExecutorService executor, JSONObject config) {
-        this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL, "RickMgmtMainStorage", config);
+    private Map<String, String> sensitiveWordTableNameMap;
+
+    public MainStorage(ExecutorService executor, StorageType type, JSONObject config) {
+        this.executor = executor;
+        this.storage = StorageFactory.getInstance().createStorage(type, "RickMgmtMainStorage", config);
+        this.sensitiveWordTableNameMap = new HashMap<>();
     }
 
     @Override
     public void open() {
-
+        this.storage.open();
     }
 
     @Override
     public void close() {
-
+        this.storage.close();
     }
 
     @Override
     public void execSelfChecking(List<String> domainNameList) {
+        for (String domain : domainNameList) {
+            this.checkSensitiveWordTable(domain);
+        }
+    }
 
+    public void writeSensitiveWord(String domain, SensitiveWord sensitiveWord) {
+        String table = this.sensitiveWordTableNameMap.get(domain);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                storage.executeInsert(table, new StorageField[] {
+                        new StorageField("word", LiteralBase.STRING, sensitiveWord.word),
+                        new StorageField("type", LiteralBase.INT, sensitiveWord.type.code)
+                });
+            }
+        });
+    }
+
+    public List<SensitiveWord> readAllSensitiveWords(String domain) {
+        List<SensitiveWord> list = new ArrayList<>();
+
+        String table = this.sensitiveWordTableNameMap.get(domain);
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+                new StorageField("word", LiteralBase.STRING),
+                new StorageField("type", LiteralBase.INT)
+        });
+        if (result.isEmpty()) {
+            return list;
+        }
+
+        for (StorageField[] row : result) {
+            list.add(new SensitiveWord(row[0].getString(), row[1].getInt()));
+        }
+        return list;
+    }
+
+    private void checkSensitiveWordTable(String domain) {
+        String table = this.sensitiveWordTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.sensitiveWordTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.sensitiveWordFields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+
+                // 插入内置的数据
+                SensitiveWordBuildIn swbi = new SensitiveWordBuildIn();
+                for (SensitiveWord word : swbi.sensitiveWords) {
+                    this.writeSensitiveWord(domain, word);
+                }
+                swbi = null;
+            }
+        }
     }
 }
