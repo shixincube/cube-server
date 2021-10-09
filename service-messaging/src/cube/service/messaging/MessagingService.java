@@ -1,4 +1,4 @@
-/**
+/*
  * This source file is part of Cube.
  * <p>
  * The MIT License (MIT)

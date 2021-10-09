@@ -1,4 +1,4 @@
-/**
+/*
  * This source file is part of Cube.
  *
  * The MIT License (MIT)
@@ -29,7 +29,7 @@ package cube.service.riskmgmt;
 import cube.core.AbstractCellet;
 
 /**
- *
+ * 风控管理 Cellet 单元。
  */
 public class RiskManagementCellet extends AbstractCellet {
 
