@@ -30,29 +30,47 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
+import cube.service.contact.ContactHook;
+import cube.service.contact.ContactManager;
+import cube.service.contact.ContactManagerListener;
+import cube.service.riskmgmt.plugin.ModifyContactNamePlugin;
+import cube.util.ConfigUtils;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * 风险管理。
  */
-public class RiskManagement extends AbstractModule {
+public class RiskManagement extends AbstractModule implements ContactManagerListener {
 
     /**
      * 服务单元名。
      */
     public final static String NAME = "RiskMgmt";
 
+    private MainStorage mainStorage;
+
+    private HashMap<String, SensitiveWord> sensitiveWordMap;
+
+    private ModifyContactNamePlugin modifyContactNamePlugin;
+
     public RiskManagement() {
         super();
+        this.sensitiveWordMap = new HashMap<>();
     }
 
     @Override
     public void start() {
+        ContactManager.getInstance().addListener(this);
 
+        JSONObject config = ConfigUtils.readStorageConfig();
     }
 
     @Override
     public void stop() {
-
+        ContactManager.getInstance().removeListener(this);
     }
 
     @Override
@@ -63,5 +81,22 @@ public class RiskManagement extends AbstractModule {
     @Override
     public void onTick(Module module, Kernel kernel) {
 
+    }
+
+    @Override
+    public void onStarted(ContactManager manager) {
+        this.modifyContactNamePlugin = new ModifyContactNamePlugin(this);
+        manager.getPluginSystem().register(ContactHook.ModifyContactName, this.modifyContactNamePlugin);
+    }
+
+    @Override
+    public void onStopped(ContactManager manager) {
+        manager.getPluginSystem().deregister(ContactHook.ModifyContactName, this.modifyContactNamePlugin);
+        this.modifyContactNamePlugin = null;
+    }
+
+    public List<SensitiveWord> recognizeSensitiveWord(String text) {
+
+        return null;
     }
 }

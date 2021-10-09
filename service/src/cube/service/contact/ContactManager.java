@@ -62,6 +62,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
@@ -154,7 +155,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     private StatisticsSystem statisticsSystem;
 
+    private List<ContactManagerListener> listeners;
+
     private ContactManager() {
+        this.listeners = new Vector<>();
     }
 
     /**
@@ -234,6 +238,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
                 // 启动统计系统
                 statisticsSystem.start(storage.getStorageType(), storage.getConfig(), authService.getDomainList());
+
+                for (ContactManagerListener listener : listeners) {
+                    listener.onStarted(ContactManager.this);
+                }
             }
         }).start();
     }
@@ -256,6 +264,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         this.statisticsSystem.stop();
 
         this.executor.shutdown();
+
+        for (ContactManagerListener listener : this.listeners) {
+            listener.onStopped(this);
+        }
     }
 
     /**
@@ -272,6 +284,27 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     @Override
     public void onTick(cube.core.Module module, Kernel kernel) {
         this.daemon.run();
+    }
+
+    /**
+     * 添加管理器的监听器。
+     *
+     * @param listener
+     */
+    public void addListener(ContactManagerListener listener) {
+        if (this.listeners.contains(listener)) {
+            return;
+        }
+        this.listeners.add(listener);
+    }
+
+    /**
+     * 移除管理器的监听器。
+     *
+     * @param listener
+     */
+    public void removeListener(ContactManagerListener listener) {
+        this.listeners.remove(listener);
     }
 
     /**
@@ -757,7 +790,18 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         boolean modified = false;
 
         if (null != name) {
-            modified = contact.setName(name);
+            ContactHook hook = this.pluginSystem.getModifyContactNameHook();
+            ContactPluginContext pluginContext = new ContactPluginContext(contact);
+            // 设置新名称
+            pluginContext.setNewName(name);
+            // 调用插件
+            hook.apply(pluginContext);
+            // 获取新名称
+            name = pluginContext.getNewName();
+
+            if (null != name) {
+                modified = contact.setName(name);
+            }
         }
 
         if (null != context) {

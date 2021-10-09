@@ -53,6 +53,10 @@ public class ContactPluginSystem extends PluginSystem<ContactHook> {
         return this.getHook(ContactHook.Comeback);
     }
 
+    public ContactHook getModifyContactNameHook() {
+        return this.getHook(ContactHook.ModifyContactName);
+    }
+
     private void build() {
         ContactHook hook = new ContactHook(ContactHook.SignIn);
         this.addHook(hook);
@@ -64,6 +68,9 @@ public class ContactPluginSystem extends PluginSystem<ContactHook> {
         this.addHook(hook);
 
         hook = new ContactHook(ContactHook.SignOut);
+        this.addHook(hook);
+
+        hook = new ContactHook(ContactHook.ModifyContactName);
         this.addHook(hook);
     }
 }

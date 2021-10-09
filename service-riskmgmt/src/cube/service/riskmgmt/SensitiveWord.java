@@ -26,32 +26,57 @@
 
 package cube.service.riskmgmt;
 
-import cube.core.AbstractCellet;
-import cube.core.Kernel;
-
 /**
- * 风控管理 Cellet 单元。
+ * 敏感词。
  */
-public class RiskManagementCellet extends AbstractCellet {
+public class SensitiveWord {
 
-    private RiskManagement riskManagement;
+    public enum SensitiveWordType {
+        /**
+         * 基于产品规则不被允许。
+         */
+        Unallowed(1),
 
-    public RiskManagementCellet() {
-        super(RiskManagement.NAME);
+        /**
+         * 低俗的。
+         */
+        Degraded(2),
+
+        /**
+         * 违法的。
+         */
+        Illegal(3),
+
+        /**
+         * 其他因素。
+         */
+        Other(9);
+
+        public final int code;
+
+        SensitiveWordType(int code) {
+            this.code = code;
+        }
+
+        public static SensitiveWordType parse(int code) {
+            if (code == Unallowed.code) return Unallowed;
+            else if (code == Degraded.code) return Degraded;
+            else if (code == Illegal.code) return Illegal;
+            else return Other;
+        }
+    };
+
+    public final String word;
+
+    public final SensitiveWordType type;
+
+    public SensitiveWord(String word, SensitiveWordType type) {
+        this.word = word;
+        this.type = type;
     }
 
-    @Override
-    public boolean install() {
-        this.riskManagement = new RiskManagement();
-
-        Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
-        kernel.installModule(RiskManagement.NAME, this.riskManagement);
-
-        return true;
-    }
-
-    @Override
-    public void uninstall() {
-        this.riskManagement = null;
+    public SensitiveWord(String word, int code) {
+        this.word = word;
+        this.type = SensitiveWordType.parse(code);
     }
 }

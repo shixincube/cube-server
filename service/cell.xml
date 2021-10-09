@@ -70,6 +70,9 @@
 		<cellet port="6000">
 			<class>cube.service.signal.SignalCellet</class>
 		</cellet>
+		<cellet port="6000">
+			<class>cube.service.riskmgmt.RiskManagementCellet</class>
+		</cellet>
 	</cellets>
 
 	<!-- 适配器配置 -->

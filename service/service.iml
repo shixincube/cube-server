@@ -23,5 +23,6 @@
     <orderEntry type="module" module-name="service-fileprocessor" scope="RUNTIME" />
     <orderEntry type="module" module-name="service-multipointcomm" scope="RUNTIME" />
     <orderEntry type="module" module-name="service-conference" scope="RUNTIME" />
+    <orderEntry type="module" module-name="service-riskmgmt" scope="RUNTIME" />
   </component>
 </module>

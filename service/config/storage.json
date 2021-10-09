@@ -42,5 +42,14 @@
 		"schema"   : "cube",
 		"user"     : "cube_3",
 		"password" : "CubeOpenSource"
+	},
+
+	"RiskMgmt": {
+		"type"     : "MySQL",
+		"host"     : "192.168.11.128",
+		"port"     : 3307,
+		"schema"   : "cube",
+		"user"     : "cube_3",
+		"password" : "CubeOpenSource"
 	}
 }

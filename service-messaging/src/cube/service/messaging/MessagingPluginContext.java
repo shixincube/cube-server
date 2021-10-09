@@ -66,4 +66,11 @@ public class MessagingPluginContext extends PluginContext {
             return null;
         }
     }
+
+    @Override
+    public void set(String name, Object value) {
+        if (name.equals("message")) {
+            this.message = (null != value && value instanceof Message) ? (Message) value : null;
+        }
+    }
 }

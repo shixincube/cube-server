@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,26 +24,42 @@
  * SOFTWARE.
  */
 
-package cube.service.contact;
+package cube.service.riskmgmt;
 
-import cube.plugin.Hook;
+import cube.common.Storagable;
+import cube.core.Storage;
+import cube.storage.StorageFactory;
+import cube.storage.StorageType;
+import org.json.JSONObject;
+
+import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
- * 联系人模块的 Hook 基类。
+ * 数据存储器。
  */
-public class ContactHook extends Hook {
+public class MainStorage implements Storagable {
 
-    public final static String SignIn = "SignIn";
+    private ExecutorService executor;
 
-    public final static String SignOut = "SignOut";
+    private Storage storage;
 
-    public final static String DeviceTimeout = "DeviceTimeout";
+    public MainStorage(ExecutorService executor, JSONObject config) {
+        this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL, "RickMgmtMainStorage", config);
+    }
 
-    public final static String Comeback = "Comeback";
+    @Override
+    public void open() {
 
-    public final static String ModifyContactName = "ModifyContactName";
+    }
 
-    public ContactHook(String key) {
-        super(key);
+    @Override
+    public void close() {
+
+    }
+
+    @Override
+    public void execSelfChecking(List<String> domainNameList) {
+
     }
 }

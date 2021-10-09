@@ -50,4 +50,6 @@ public abstract class PluginContext {
     }
 
     public abstract Object get(String name);
+
+    public abstract void set(String name, Object value);
 }

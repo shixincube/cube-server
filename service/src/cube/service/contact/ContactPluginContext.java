@@ -30,6 +30,7 @@ import cube.common.JSONable;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.plugin.PluginContext;
+import cube.util.DummyDevice;
 import org.json.JSONObject;
 
 /**
@@ -40,6 +41,15 @@ public class ContactPluginContext extends PluginContext implements JSONable {
     private Contact contact;
 
     private Device device;
+
+    private String newName;
+
+    private JSONObject newContext;
+
+    public ContactPluginContext(Contact contact) {
+        super();
+        this.contact = contact;
+    }
 
     public ContactPluginContext(Contact contact, Device device) {
         super();
@@ -55,6 +65,14 @@ public class ContactPluginContext extends PluginContext implements JSONable {
         return this.device;
     }
 
+    public void setNewName(String newName) {
+        this.newName = newName;
+    }
+
+    public String getNewName() {
+        return this.newName;
+    }
+
     @Override
     public Object get(String name) {
         if (name.equals("contact")) {
@@ -63,8 +81,18 @@ public class ContactPluginContext extends PluginContext implements JSONable {
         else if (name.equals("device")) {
             return this.device;
         }
+        else if (name.equals("newName")) {
+            return this.newName;
+        }
         else {
             return null;
+        }
+    }
+
+    @Override
+    public void set(String name, Object value) {
+        if (name.equals("newName")) {
+            this.newName = (null != value && value instanceof String) ? (String) value : null;
         }
     }
 
@@ -72,7 +100,11 @@ public class ContactPluginContext extends PluginContext implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("contact", this.contact.toJSON());
-        json.put("device", this.device.toJSON());
+
+        if (null != this.device) {
+            json.put("device", this.device.toJSON());
+        }
+
         return json;
     }
 
@@ -80,7 +112,11 @@ public class ContactPluginContext extends PluginContext implements JSONable {
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
         json.put("contact", this.contact.toCompactJSON());
-        json.put("device", this.device.toCompactJSON());
+
+        if (null != this.device) {
+            json.put("device", this.device.toCompactJSON());
+        }
+
         return json;
     }
 }

@@ -170,6 +170,28 @@ public class PluginSystem<T extends Hook> {
         }
     }
 
+    /**
+     * 注销指定插件。
+     *
+     * @param key
+     * @param plugin
+     */
+    public void deregister(String key, Plugin plugin) {
+        List<Plugin> list = this.plugins.get(key);
+        if (null == list) {
+            return;
+        }
+
+        if (list.remove(plugin)) {
+            (new Thread() {
+                @Override
+                public void run() {
+                    plugin.teardown();
+                }
+            }).start();
+        }
+    }
+
     protected void apply(String key, PluginContext context) {
         List<Plugin> list = this.plugins.get(key);
         if (null == list) {

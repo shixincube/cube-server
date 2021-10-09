@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,26 +24,10 @@
  * SOFTWARE.
  */
 
-package cube.service.contact;
-
-import cube.plugin.Hook;
+package cube.service.riskmgmt.util;
 
 /**
- * 联系人模块的 Hook 基类。
+ * 内置的敏感词数据。
  */
-public class ContactHook extends Hook {
-
-    public final static String SignIn = "SignIn";
-
-    public final static String SignOut = "SignOut";
-
-    public final static String DeviceTimeout = "DeviceTimeout";
-
-    public final static String Comeback = "Comeback";
-
-    public final static String ModifyContactName = "ModifyContactName";
-
-    public ContactHook(String key) {
-        super(key);
-    }
+public class SensitiveWordBuildIn {
 }

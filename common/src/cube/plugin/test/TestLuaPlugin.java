@@ -118,5 +118,9 @@ public class TestLuaPlugin {
         public Object get(String name) {
             return null;
         }
+
+        @Override
+        public void set(String name, Object value) {
+        }
     }
 }

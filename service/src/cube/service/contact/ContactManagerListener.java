@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Shixin Cube Team.
+ * Copyright (c) 2020-2021 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,24 +26,22 @@
 
 package cube.service.contact;
 
-import cube.plugin.Hook;
-
 /**
- * 联系人模块的 Hook 基类。
+ * 联系人管理器监听器。
  */
-public class ContactHook extends Hook {
+public interface ContactManagerListener {
 
-    public final static String SignIn = "SignIn";
+    /**
+     * 联系人模块已启动回调。
+     *
+     * @param manager
+     */
+    void onStarted(ContactManager manager);
 
-    public final static String SignOut = "SignOut";
-
-    public final static String DeviceTimeout = "DeviceTimeout";
-
-    public final static String Comeback = "Comeback";
-
-    public final static String ModifyContactName = "ModifyContactName";
-
-    public ContactHook(String key) {
-        super(key);
-    }
+    /**
+     * 联系人模块已关闭回调。
+     *
+     * @param manager
+     */
+    void onStopped(ContactManager manager);
 }

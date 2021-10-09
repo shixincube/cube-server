@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2021 Shixin Cube Team.
+ * Copyright (c) 2020 Shixin Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,33 +24,36 @@
  * SOFTWARE.
  */
 
-package cube.service.riskmgmt;
+package cube.service.riskmgmt.plugin;
 
-import cube.common.Storagable;
-
-import java.util.List;
+import cube.plugin.Plugin;
+import cube.plugin.PluginContext;
+import cube.service.riskmgmt.RiskManagement;
 
 /**
- * 数据存储器。
+ * 修改联系人名称插件。
  */
-public class DataStorage implements Storagable {
+public class ModifyContactNamePlugin implements Plugin {
 
-    public DataStorage() {
+    private RiskManagement riskManagement;
+
+    public ModifyContactNamePlugin(RiskManagement riskManagement) {
+        this.riskManagement = riskManagement;
+    }
+
+    @Override
+    public void setup() {
 
     }
 
     @Override
-    public void open() {
+    public void teardown() {
 
     }
 
     @Override
-    public void close() {
-
-    }
-
-    @Override
-    public void execSelfChecking(List<String> domainNameList) {
+    public void onAction(PluginContext context) {
+        String newName = (String) context.get("newName");
 
     }
 }
