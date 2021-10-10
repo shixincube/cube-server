@@ -848,10 +848,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contact
      * @param zoneName
      * @return
-     */
+     *
     public ContactZone getPendingContactZone(Contact contact, String zoneName) {
         return this.storage.readPendingContactZone(contact.getDomain().getName(), contact.getId(), zoneName);
-    }
+    }*/
 
     /**
      * 指定分区是否包含指定联系人。

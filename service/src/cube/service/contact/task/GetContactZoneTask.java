@@ -77,6 +77,7 @@ public class GetContactZoneTask extends ServiceTask {
         String zoneName = null;
         boolean pending = false;
         try {
+            // XJW 去除 pending
             zoneName = data.getString("name");
             if (data.has("pending")) {
                 pending = data.getBoolean("pending");
@@ -90,8 +91,7 @@ public class GetContactZoneTask extends ServiceTask {
         }
 
         // 获取分区
-        ContactZone zone = pending ? ContactManager.getInstance().getPendingContactZone(contact, zoneName)
-                : ContactManager.getInstance().getContactZone(contact, zoneName);
+        ContactZone zone = ContactManager.getInstance().getContactZone(contact, zoneName);
         if (null == zone) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));

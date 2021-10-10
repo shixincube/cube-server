@@ -31,17 +31,14 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 联系人分区。
  */
-public class ContactZone implements JSONable {
-
-    /**
-     * 域。
-     */
-    public final String domain;
+public class ContactZone extends Entity {
 
     /**
      * 所属的联系人的 ID 。
@@ -54,55 +51,77 @@ public class ContactZone implements JSONable {
     public final String name;
 
     /**
-     * 是否待处理。
+     * 是否需要验证。
      */
-    public boolean pending = false;
+    public boolean needsVerify = false;
+
+    /**
+     * 状态。
+     */
+    private ContactZoneState state;
 
     /**
      * 分区的联系人列表。
      */
-    private final List<Long> contacts;
+    private final List<ContactZoneMember> members;
 
-    /**
-     * 添加时的附言。
-     */
-    private final List<String> postscripts;
-
-    public ContactZone(String domain, long owner, String name) {
-        this.domain = domain;
+    public ContactZone(Long id, String domain, long owner, String name, ContactZoneState state) {
+        super(id, domain);
         this.owner = owner;
         this.name = name;
-        this.contacts = new ArrayList<>();
-        this.postscripts = new ArrayList<>();
+        this.state = state;
+        this.members = new ArrayList<>();
+    }
+
+    public void addContact(ContactZoneMember member) {
+        for (ContactZoneMember current : this.members) {
+            if (current.contactId.equals(member.contactId)) {
+                return;
+            }
+        }
+
+        this.members.add(member);
+    }
+
+    public void addContact(Long id) {
+        this.addContact(id, null);
     }
 
     public void addContact(Long id, String postscript) {
-        if (this.contacts.contains(id)) {
-            return;
+        for (ContactZoneMember member : this.members) {
+            if (member.contactId.equals(id)) {
+                return;
+            }
         }
 
-        this.contacts.add(id);
-        this.postscripts.add(null == postscript ? "" : postscript);
+        ContactZoneMember member = new ContactZoneMember(id, postscript);
+        this.members.add(member);
+    }
+
+    public void removeContact(Long id) {
+        for (ContactZoneMember member : this.members) {
+            if (member.contactId.equals(id)) {
+                this.members.remove(member);
+                break;
+            }
+        }
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("id", this.id.longValue());
+        json.put("domain", this.domain.getName());
         json.put("owner", this.owner);
         json.put("name", this.name);
-        json.put("pending", this.pending);
+        json.put("state", this.state.code);
+        json.put("needsVerify", this.needsVerify);
 
         JSONArray array = new JSONArray();
-        for (Long id : this.contacts) {
-            array.put(id.longValue());
+        for (ContactZoneMember member : this.members) {
+            array.put(member.toJSON());
         }
         json.put("contacts", array);
-
-        array = new JSONArray();
-        for (String ps : this.postscripts) {
-            array.put(ps);
-        }
-        json.put("postscripts", array);
 
         return json;
     }
