@@ -43,9 +43,9 @@ public class Account implements JSONable {
 
     public final String password;
 
-    public final String name;
+    public String name;
 
-    public final String avatar;
+    public String avatar;
 
     public final int state;
 

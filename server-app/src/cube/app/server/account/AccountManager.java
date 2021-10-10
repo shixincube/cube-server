@@ -372,7 +372,16 @@ public class AccountManager extends TimerTask {
 
     public Account updateAccount(Long accountId, String newName, String newAvatar) {
         Account account = this.getAccount(accountId);
-        // TODO
+
+        if (null != newName) {
+            account.name = newName;
+        }
+        if (null != newAvatar) {
+            account.avatar = newAvatar;
+        }
+
+        this.accountStorage.updateAccount(accountId, account.name, account.avatar);
+
         return account;
     }
 

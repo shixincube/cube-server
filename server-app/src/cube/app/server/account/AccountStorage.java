@@ -259,6 +259,15 @@ public class AccountStorage extends AbstractStorage {
         return account;
     }
 
+    public void updateAccount(Long accountId, String nickname, String avatar) {
+        this.storage.executeUpdate(TABLE_ACCOUNT, new StorageField[] {
+                new StorageField("name", LiteralBase.STRING, nickname),
+                new StorageField("avatar", LiteralBase.STRING, avatar)
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", LiteralBase.LONG, accountId)
+        });
+    }
+
     public boolean existsAccountId(Long accountId) {
         String sql = "SELECT `state` FROM " + TABLE_ACCOUNT + " WHERE `id`=" + accountId;
         List<StorageField[]> result = this.storage.executeQuery(sql);
