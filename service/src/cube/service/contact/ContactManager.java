@@ -843,17 +843,6 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
-     * 获取指定联系人指定名称的分区待处理数据。
-     *
-     * @param contact
-     * @param zoneName
-     * @return
-     *
-    public ContactZone getPendingContactZone(Contact contact, String zoneName) {
-        return this.storage.readPendingContactZone(contact.getDomain().getName(), contact.getId(), zoneName);
-    }*/
-
-    /**
      * 指定分区是否包含指定联系人。
      *
      * @param contact
@@ -1287,7 +1276,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         this.storage.writeBlockList(contact.getDomain().getName(), contact.getId(), blockId);
 
         // 将阻止的联系人从 Zone 里删除
-        this.storage.removeZoneContact(contact.getDomain().getName(), contact.getId(), blockId);
+        this.storage.removeZonesContact(contact.getDomain().getName(), contact.getId(), blockId);
 
         return this.storage.readBlockList(contact.getDomain().getName(), contact.getId());
     }

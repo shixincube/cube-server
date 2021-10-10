@@ -51,6 +51,11 @@ public class ContactZone extends Entity {
     public final String name;
 
     /**
+     * 显示名。
+     */
+    public String displayName = "";
+
+    /**
      * 是否需要验证。
      */
     public boolean needsVerify = false;
@@ -58,15 +63,16 @@ public class ContactZone extends Entity {
     /**
      * 状态。
      */
-    private ContactZoneState state;
+    public ContactZoneState state;
 
     /**
      * 分区的联系人列表。
      */
     private final List<ContactZoneMember> members;
 
-    public ContactZone(Long id, String domain, long owner, String name, ContactZoneState state) {
+    public ContactZone(Long id, String domain, long owner, String name, long timestamp, ContactZoneState state) {
         super(id, domain);
+        this.setTimestamp(timestamp);
         this.owner = owner;
         this.name = name;
         this.state = state;
@@ -109,13 +115,7 @@ public class ContactZone extends Entity {
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id.longValue());
-        json.put("domain", this.domain.getName());
-        json.put("owner", this.owner);
-        json.put("name", this.name);
-        json.put("state", this.state.code);
-        json.put("needsVerify", this.needsVerify);
+        JSONObject json = this.toCompactJSON();
 
         JSONArray array = new JSONArray();
         for (ContactZoneMember member : this.members) {
@@ -128,6 +128,15 @@ public class ContactZone extends Entity {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        json.put("id", this.id.longValue());
+        json.put("domain", this.domain.getName());
+        json.put("owner", this.owner);
+        json.put("name", this.name);
+        json.put("displayName", this.displayName);
+        json.put("timestamp", this.getTimestamp());
+        json.put("state", this.state.code);
+        json.put("needsVerify", this.needsVerify);
+        return json;
     }
 }

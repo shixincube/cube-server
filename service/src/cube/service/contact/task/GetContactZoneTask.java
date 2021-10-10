@@ -75,12 +75,11 @@ public class GetContactZoneTask extends ServiceTask {
         }
 
         String zoneName = null;
-        boolean pending = false;
+        boolean compact = false;
         try {
-            // XJW 去除 pending
             zoneName = data.getString("name");
-            if (data.has("pending")) {
-                pending = data.getBoolean("pending");
+            if (data.has("compact")) {
+                compact = data.getBoolean("compact");
             }
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
@@ -100,7 +99,7 @@ public class GetContactZoneTask extends ServiceTask {
         }
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, zone.toJSON()));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, compact ? zone.toCompactJSON() : zone.toJSON()));
         markResponseTime();
     }
 }
