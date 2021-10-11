@@ -56,6 +56,8 @@ import cube.service.auth.AuthService;
 import cube.service.contact.plugin.FilterContactNamePlugin;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
+import cube.util.pinyin.ForwardLongestSelector;
+import cube.util.pinyin.PYEngine;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -839,7 +841,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @return
      */
     public ContactZone getContactZone(Contact contact, String zoneName) {
-        return this.storage.readContactZone(contact.getDomain().getName(), contact.getId(), zoneName);
+        ContactZone zone = this.storage.readContactZone(contact.getDomain().getName(), contact.getId(), zoneName);
+        return zone;
     }
 
     /**

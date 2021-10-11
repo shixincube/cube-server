@@ -28,6 +28,8 @@ package cube.common.entity;
 
 import cube.common.Domain;
 import cube.common.UniqueKey;
+import cube.util.pinyin.ForwardLongestSelector;
+import cube.util.pinyin.PYEngine;
 import org.json.JSONObject;
 
 /**
@@ -137,6 +139,15 @@ public abstract class AbstractContact extends Entity {
     }
 
     /**
+     * 返回名称的拼音。
+     *
+     * @return 返回名称的拼音。
+     */
+    public String getNamePinYin() {
+        return PYEngine.toPinyin(this.name, null, null, ",", new ForwardLongestSelector());
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -145,6 +156,7 @@ public abstract class AbstractContact extends Entity {
         json.put("id", this.id);
         json.put("domain", this.domain.getName());
         json.put("name", this.name);
+        json.put("namePY", this.getNamePinYin());
         if (null != this.context) {
             json.put("context", this.context);
         }
@@ -160,6 +172,7 @@ public abstract class AbstractContact extends Entity {
         json.put("id", this.id);
         json.put("domain", this.domain.getName());
         json.put("name", this.name);
+        json.put("namePY", this.getNamePinYin());
         if (null != this.context) {
             json.put("context", this.context);
         }
