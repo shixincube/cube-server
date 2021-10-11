@@ -77,6 +77,16 @@ public enum ContactAction {
     GetContactZone("getContactZone"),
 
     /**
+     * 创建联系人分区。
+     */
+    CreateContactZone("createContactZone"),
+
+    /**
+     * 删除联系人分区。
+     */
+    DeleteContactZone("deleteContactZone"),
+
+    /**
      * 指定分区是否包含指定联系人。
      */
     ContainsContactInZone("containsContactInZone"),

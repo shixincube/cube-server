@@ -26,14 +26,11 @@
 
 package cube.common.entity;
 
-import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 联系人分区。
@@ -68,7 +65,7 @@ public class ContactZone extends Entity {
     /**
      * 分区的联系人列表。
      */
-    private final List<ContactZoneMember> members;
+    private final List<ContactZoneParticipant> participants;
 
     public ContactZone(Long id, String domain, long owner, String name, long timestamp, ContactZoneState state) {
         super(id, domain);
@@ -76,17 +73,22 @@ public class ContactZone extends Entity {
         this.owner = owner;
         this.name = name;
         this.state = state;
-        this.members = new ArrayList<>();
+        this.participants = new ArrayList<>();
     }
 
-    public void addContact(ContactZoneMember member) {
-        for (ContactZoneMember current : this.members) {
-            if (current.contactId.equals(member.contactId)) {
+    public void addContact(ContactZoneParticipant participant) {
+        if (participant.contactId.longValue() == this.owner) {
+            // 过滤分区所有人
+            return;
+        }
+
+        for (ContactZoneParticipant current : this.participants) {
+            if (current.contactId.equals(participant.contactId)) {
                 return;
             }
         }
 
-        this.members.add(member);
+        this.participants.add(participant);
     }
 
     public void addContact(Long id) {
@@ -94,34 +96,48 @@ public class ContactZone extends Entity {
     }
 
     public void addContact(Long id, String postscript) {
-        for (ContactZoneMember member : this.members) {
-            if (member.contactId.equals(id)) {
+        if (id.longValue() == this.owner) {
+            // 过滤分区所有人
+            return;
+        }
+
+        for (ContactZoneParticipant participant : this.participants) {
+            if (participant.contactId.equals(id)) {
                 return;
             }
         }
 
-        ContactZoneMember member = new ContactZoneMember(id, postscript);
-        this.members.add(member);
+        ContactZoneParticipant participant = new ContactZoneParticipant(id, postscript);
+        this.participants.add(participant);
     }
 
     public void removeContact(Long id) {
-        for (ContactZoneMember member : this.members) {
-            if (member.contactId.equals(id)) {
-                this.members.remove(member);
+        for (ContactZoneParticipant participant : this.participants) {
+            if (participant.contactId.equals(id)) {
+                this.participants.remove(participant);
                 break;
             }
         }
+    }
+
+    public List<ContactZoneParticipant> getParticipants() {
+        return this.participants;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = this.toCompactJSON();
 
-        JSONArray array = new JSONArray();
-        for (ContactZoneMember member : this.members) {
-            array.put(member.toJSON());
+        JSONArray participants = new JSONArray();
+        JSONArray contacts = new JSONArray();
+
+        for (ContactZoneParticipant participant : this.participants) {
+            participants.put(participant.toJSON());
+            contacts.put(participant.contactId.longValue());
         }
-        json.put("contacts", array);
+
+        json.put("participants", participants);
+        json.put("contacts", contacts);
 
         return json;
     }

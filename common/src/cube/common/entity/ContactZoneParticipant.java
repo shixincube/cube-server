@@ -32,21 +32,21 @@ import org.json.JSONObject;
 /**
  * 联系人分区成员。
  */
-public class ContactZoneMember implements JSONable {
+public class ContactZoneParticipant implements JSONable {
 
     public final Long contactId;
 
     public final String postscript;
 
-    public ContactZoneMemberState state;
+    public ContactZoneParticipantState state;
 
-    public ContactZoneMember(Long contactId, String postscript) {
-        this(contactId, postscript, ContactZoneMemberState.Normal);
+    public ContactZoneParticipant(Long contactId, String postscript) {
+        this(contactId, postscript, ContactZoneParticipantState.Normal);
     }
 
-    public ContactZoneMember(Long contactId, String postscript, ContactZoneMemberState state) {
+    public ContactZoneParticipant(Long contactId, String postscript, ContactZoneParticipantState state) {
         this.contactId = contactId;
-        this.postscript = postscript;
+        this.postscript = (null != postscript) ? postscript : "";
         this.state = state;
     }
 

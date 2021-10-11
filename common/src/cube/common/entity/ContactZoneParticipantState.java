@@ -29,7 +29,7 @@ package cube.common.entity;
 /**
  * 联系人分区成员状态。
  */
-public enum ContactZoneMemberState {
+public enum ContactZoneParticipantState {
 
     /**
      * 正常状态。
@@ -43,11 +43,11 @@ public enum ContactZoneMemberState {
 
     public final int code;
 
-    ContactZoneMemberState(int code) {
+    ContactZoneParticipantState(int code) {
         this.code = code;
     }
 
-    public static ContactZoneMemberState parse(int code) {
+    public static ContactZoneParticipantState parse(int code) {
         switch (code) {
             case 3:
                 return Pending;

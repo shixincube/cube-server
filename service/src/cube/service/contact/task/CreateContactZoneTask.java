@@ -39,15 +39,19 @@ import cube.common.entity.ContactZone;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-/**
- * 获取联系人的分区分组数据任务。
- */
-public class GetContactZoneTask extends ServiceTask {
+import java.util.ArrayList;
+import java.util.List;
 
-    public GetContactZoneTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+/**
+ * 添加联系人到分区任务。
+ */
+public class CreateContactZoneTask extends ServiceTask {
+
+    public CreateContactZoneTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -75,11 +79,19 @@ public class GetContactZoneTask extends ServiceTask {
         }
 
         String zoneName = null;
-        boolean compact = false;
+        List<Long> contactIdList = null;
+        String displayName = null;
         try {
             zoneName = data.getString("name");
-            if (data.has("compact")) {
-                compact = data.getBoolean("compact");
+
+            JSONArray contactsArray = data.getJSONArray("contacts");
+            contactIdList = new ArrayList<>(contactsArray.length());
+            for (int i = 0; i < contactsArray.length(); ++i) {
+                contactIdList.add(contactsArray.getLong(i));
+            }
+
+            if (data.has("displayName")) {
+                displayName = data.getString("displayName");
             }
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
@@ -89,17 +101,11 @@ public class GetContactZoneTask extends ServiceTask {
             return;
         }
 
-        // 获取分区
-        ContactZone zone = ContactManager.getInstance().getContactZone(contact, zoneName);
-        if (null == zone) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.NotFindContactZone.code, data));
-            markResponseTime();
-            return;
-        }
+        // 创建联系人分区
+        ContactZone zone = ContactManager.getInstance().createContactZone(contact, zoneName, displayName, contactIdList);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, compact ? zone.toCompactJSON() : zone.toJSON()));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, zone.toJSON()));
         markResponseTime();
     }
 }

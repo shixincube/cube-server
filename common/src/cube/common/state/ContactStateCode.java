@@ -67,6 +67,11 @@ public enum ContactStateCode {
     NotFindGroup(15),
 
     /**
+     * 未找到联系人分区。
+     */
+    NotFindContactZone(16),
+
+    /**
      * 令牌不一致。
      */
     InconsistentToken(21),

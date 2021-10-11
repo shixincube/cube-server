@@ -843,6 +843,29 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 创建新的联系人分区。
+     *
+     * @param owner
+     * @param zoneName
+     * @param displayName
+     * @param participants
+     * @return
+     */
+    public ContactZone createContactZone(Contact owner, String zoneName, String displayName, List<Long> participants) {
+        ContactZone zone = new ContactZone(Utils.generateSerialNumber(), owner.getDomain().getName(),
+                owner.getId(), zoneName, System.currentTimeMillis(), ContactZoneState.Normal);
+        zone.displayName = (null != displayName) ? displayName : zoneName;
+
+        for (Long contactId : participants) {
+            zone.addContact(contactId);
+        }
+
+        this.storage.writeContactZone(zone, null);
+
+        return zone;
+    }
+
+    /**
      * 指定分区是否包含指定联系人。
      *
      * @param contact
