@@ -30,7 +30,7 @@ import cube.common.JSONable;
 import org.json.JSONObject;
 
 /**
- * 联系人分区成员。
+ * 联系人分区参与人。
  */
 public class ContactZoneParticipant implements JSONable {
 
@@ -55,9 +55,7 @@ public class ContactZoneParticipant implements JSONable {
         JSONObject json = new JSONObject();
         json.put("id", this.contactId.longValue());
         json.put("state", this.state.code);
-        if (null != this.postscript) {
-            json.put("postscript", this.postscript);
-        }
+        json.put("postscript", this.postscript);
         return json;
     }
 

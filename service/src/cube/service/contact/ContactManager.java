@@ -863,7 +863,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             zone.addContact(contactId);
         }
 
-        this.storage.writeContactZone(zone, null);
+        if (!this.storage.writeContactZone(zone, null)) {
+            // 写入数据失败
+            return null;
+        }
 
         return zone;
     }

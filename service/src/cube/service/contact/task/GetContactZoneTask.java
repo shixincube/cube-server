@@ -81,7 +81,7 @@ public class GetContactZoneTask extends ServiceTask {
             if (data.has("compact")) {
                 compact = data.getBoolean("compact");
             }
-        } catch (JSONException e) {
+        } catch (Exception e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, data));

@@ -110,7 +110,7 @@ public class ContactStorage implements Storagable {
     };
 
     /**
-     * 联系人分区成员字段描述。
+     * 联系人分区参与者字段描述。
      */
     private final StorageField[] contactZoneParticipantFields = new StorageField[] {
             new StorageField("contact_zone_id", LiteralBase.LONG, new Constraint[] {
@@ -610,7 +610,19 @@ public class ContactStorage implements Storagable {
         return (!result.isEmpty());
     }
 
-    public void writeContactZone(final ContactZone zone, final Runnable completed) {
+    public boolean writeContactZone(final ContactZone zone, final Runnable completed) {
+        // 查询是否已存在，如果已存在不允许写入
+        List<StorageField[]> result = this.storage.executeQuery(this.contactZoneTableNameMap.get(zone.getDomain().getName()), new StorageField[] {
+                new StorageField("id", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("owner", LiteralBase.LONG, zone.owner),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("name", LiteralBase.STRING, zone.name)
+        });
+        if (!result.isEmpty()) {
+            return false;
+        }
+
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -642,6 +654,8 @@ public class ContactStorage implements Storagable {
                 }
             }
         });
+
+        return true;
     }
 
     /**

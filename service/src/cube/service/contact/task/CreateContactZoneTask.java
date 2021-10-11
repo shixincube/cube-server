@@ -103,6 +103,13 @@ public class CreateContactZoneTask extends ServiceTask {
 
         // 创建联系人分区
         ContactZone zone = ContactManager.getInstance().createContactZone(contact, zoneName, displayName, contactIdList);
+        if (null == zone) {
+            // 分区已存在
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
+            markResponseTime();
+            return;
+        }
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, zone.toJSON()));

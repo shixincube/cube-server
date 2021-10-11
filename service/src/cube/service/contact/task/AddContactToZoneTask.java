@@ -83,7 +83,7 @@ public class AddContactToZoneTask extends ServiceTask {
             if (data.has("postscript")) {
                 postscript = data.getString("postscript");
             }
-        } catch (JSONException e) {
+        } catch (Exception e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, data));
