@@ -153,12 +153,15 @@ public class AuthStorage implements Storagable {
     }
 
     public List<String> listDomains() {
-        List<String> list = new ArrayList<>();
-
         List<StorageField[]> result = this.storage.executeQuery(this.domainTable, new StorageField[] {
                 new StorageField("domain", LiteralBase.STRING)
         });
 
+        if (null == result) {
+            return null;
+        }
+
+        List<String> list = new ArrayList<>();
         if (!result.isEmpty()) {
             for (StorageField[] data : result) {
                 String domain = data[0].getString();

@@ -136,7 +136,16 @@ public class AuthService extends AbstractModule {
             return result;
         }
         else {
-            return this.authStorage.listDomains();
+            List<String> result = this.authStorage.listDomains();
+            if (null == result) {
+                try {
+                    Thread.sleep(2000L);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                result = this.authStorage.listDomains();
+            }
+            return result;
         }
     }
 

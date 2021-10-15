@@ -277,6 +277,10 @@ public class MySQLStorage extends AbstractStorage {
 
     @Override
     public List<StorageField[]> executeQuery(String table, StorageField[] fields, Conditional[] conditionals) {
+        if (null == this.pool) {
+            return null;
+        }
+
         Connection connection = this.pool.get();
 
         ArrayList<StorageField[]> result = new ArrayList<>();
