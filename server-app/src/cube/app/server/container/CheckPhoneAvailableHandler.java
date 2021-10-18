@@ -26,6 +26,8 @@
 
 package cube.app.server.container;
 
+import cube.app.server.account.AccountManager;
+import cube.app.server.account.StateCode;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
@@ -58,9 +60,33 @@ public class CheckPhoneAvailableHandler extends ContextHandler {
             // 读取数据
             JSONObject data = this.readBodyAsJSONObject(request);
 
+            String regionCode = null;
+            String phoneNumber = null;
+            boolean verificationCodeRequired = false;
+
+            if (data.has("regionCode") && data.has("phoneNumber")) {
+                regionCode = data.getString("regionCode");
+                phoneNumber = data.getString("phoneNumber");
+            }
+
+            if (null == regionCode || null == phoneNumber) {
+                JSONObject responseData = new JSONObject();
+                responseData.put("code", StateCode.DataError.code);
+                responseData.put("verificationCodeRequired", verificationCodeRequired);
+                // 应答
+                this.respondOk(response, responseData);
+                return;
+            }
+
+            if (data.has("verificationCodeRequired")) {
+                verificationCodeRequired = data.getBoolean("verificationCodeRequired");
+            }
+
+            boolean result = AccountManager.getInstance().checkPhoneAvailable(regionCode, phoneNumber, verificationCodeRequired);
+
             JSONObject responseData = new JSONObject();
-            responseData.put("code", 0);
-            responseData.put("result", true);
+            responseData.put("code", result ? StateCode.Success.code : StateCode.NotAllowed.code);
+            responseData.put("verificationCodeRequired", verificationCodeRequired);
             // 应答
             this.respondOk(response, responseData);
         }

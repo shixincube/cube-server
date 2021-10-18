@@ -37,9 +37,9 @@ public enum StateCode {
     Success(0),
 
     /**
-     * 重复的账号操作行为。
+     * 不被允许的行为。
      */
-    Repeat(1),
+    NotAllowed(1),
 
     /**
      * 找不到用户。

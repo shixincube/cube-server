@@ -139,6 +139,25 @@ public class AccountManager extends TimerTask {
     }
 
     /**
+     * 校验号码是否可用，并可设置是否给该号码发送验证码。
+     *
+     * @param regionCode
+     * @param phoneNumber
+     * @param verificationCodeRequired
+     * @return
+     */
+    public boolean checkPhoneAvailable(String regionCode, String phoneNumber, boolean verificationCodeRequired) {
+        Account account = this.accountStorage.readAccountByPhoneNumber(phoneNumber);
+        if (null != account) {
+            // 号码已注册
+            return false;
+        }
+
+        // TODO 发送验证码
+        return true;
+    }
+
+    /**
      * 使用令牌进行登录。
      *
      * @param tokenCode
