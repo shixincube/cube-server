@@ -27,10 +27,12 @@
 package cube.util;
 
 import cell.util.collection.FlexibleByteBuffer;
+import cell.util.log.Logger;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.servlet.ServletException;
@@ -113,19 +115,34 @@ public abstract class HttpHandler extends AbstractHandler {
             return null;
         }
 
-        JSONObject json = new JSONObject();
+        JSONObject json = null;
 
         String data = new String(buffer.array(), 0, buffer.limit(), Charset.forName("UTF-8"));
+        data = data.trim();
 
-        String[] params = data.split("&");
-        for (String param : params) {
-            String[] kv = param.split("=");
-            if (kv.length != 2) {
-                continue;
+        if (data.startsWith("{") && data.endsWith("}")) {
+            try {
+                json = new JSONObject(data);
+            } catch (JSONException e) {
+                Logger.w(this.getClass(), "", e);
             }
-
-            json.put(kv[0], URLDecoder.decode(kv[1], "UTF-8"));
         }
+        else if (data.startsWith("[") && data.endsWith("]")) {
+            Logger.e(this.getClass(), "Unsupported JSON array type");
+        }
+        else {
+            json = new JSONObject();
+            String[] params = data.split("&");
+            for (String param : params) {
+                String[] kv = param.split("=");
+                if (kv.length != 2) {
+                    continue;
+                }
+
+                json.put(kv[0], URLDecoder.decode(kv[1], "UTF-8"));
+            }
+        }
+
         return json;
     }
 
