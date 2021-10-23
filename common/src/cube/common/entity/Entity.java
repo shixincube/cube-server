@@ -52,9 +52,9 @@ public abstract class Entity implements JSONable {
     protected String uniqueKey;
 
     /**
-     * 实体创建的时间戳。
+     * 时间戳。
      */
-    private long timestamp;
+    protected long timestamp;
 
     /**
      * 构造函数。
@@ -69,13 +69,17 @@ public abstract class Entity implements JSONable {
      * @param json 实体的 JSON 数据结构。
      */
     public Entity(JSONObject json) {
-        this.timestamp = System.currentTimeMillis();
-
         if (json.has("id")) {
             this.id = json.getLong("id");
         }
         if (json.has("domain")) {
             this.domain = new Domain(json.getString("domain"));
+        }
+        if (json.has("timestamp")) {
+            this.timestamp = json.getLong("timestamp");
+        }
+        else {
+            this.timestamp = System.currentTimeMillis();
         }
 
         if (null != this.id && null != this.domain) {
@@ -105,6 +109,20 @@ public abstract class Entity implements JSONable {
         this.domain = new Domain(domainName);
         this.uniqueKey = UniqueKey.make(id, domainName);
         this.timestamp = System.currentTimeMillis();
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param id 指定实体 ID 。
+     * @param domainName 指定所在域。
+     * @param timestamp 时间戳。
+     */
+    public Entity(Long id, String domainName, long timestamp) {
+        this.id = id;
+        this.domain = new Domain(domainName);
+        this.uniqueKey = UniqueKey.make(id, domainName);
+        this.timestamp = timestamp;
     }
 
     /**
@@ -165,9 +183,10 @@ public abstract class Entity implements JSONable {
 
     /**
      * 设置时间戳。
+     *
      * @param timestamp
      */
-    protected void setTimestamp(long timestamp) {
+    public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -193,5 +212,35 @@ public abstract class Entity implements JSONable {
     @Override
     public int hashCode() {
         return this.uniqueKey.hashCode();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("id", this.id.longValue());
+        json.put("domain", this.domain.getName());
+        json.put("timestamp", this.timestamp);
+        return json;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
+
+    /**
+     * 更新时间戳。
+     *
+     * @param data
+     * @param timestamp
+     */
+    public static void updateTimestamp(JSONObject data, long timestamp) {
+        data.put("timestamp", timestamp);
     }
 }

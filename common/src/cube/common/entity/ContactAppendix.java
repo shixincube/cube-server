@@ -81,7 +81,7 @@ public class ContactAppendix extends Entity {
      * @param json
      */
     public ContactAppendix(Contact owner, JSONObject json) {
-        super();
+        super(json);
         this.uniqueKey = owner.getUniqueKey() + "_appendix";
         this.owner = owner;
         this.remarkNames = new HashMap<>();
@@ -258,7 +258,7 @@ public class ContactAppendix extends Entity {
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
+        JSONObject json = super.toJSON();
         json.put("ownerId", this.owner.getId());
 
         JSONArray remarkNamesArray = new JSONArray();

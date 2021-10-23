@@ -76,6 +76,7 @@ public class ContactStorage implements Storagable {
     private final StorageField[] contactFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG),
             new StorageField("name", LiteralBase.STRING),
+            new StorageField("timestamp", LiteralBase.LONG),
             new StorageField("context", LiteralBase.STRING),
             new StorageField("recent_device_name", LiteralBase.STRING),
             new StorageField("recent_device_platform", LiteralBase.STRING)
@@ -346,6 +347,7 @@ public class ContactStorage implements Storagable {
                         storage.executeInsert(table, new StorageField[] {
                                 new StorageField("id", LiteralBase.LONG, contact.getId()),
                                 new StorageField("name", LiteralBase.STRING, contact.getName()),
+                                new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
                                 new StorageField("context", LiteralBase.STRING,
                                         (null != contact.getContext()) ? contact.getContext().toString() : null),
                                 new StorageField("recent_device_name", LiteralBase.STRING,
@@ -359,6 +361,7 @@ public class ContactStorage implements Storagable {
                         if (null != device) {
                             storage.executeUpdate(table, new StorageField[] {
                                     new StorageField("name", LiteralBase.STRING, contact.getName()),
+                                    new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
                                     new StorageField("context", LiteralBase.STRING,
                                             (null != contact.getContext()) ? contact.getContext().toString() : null),
                                     new StorageField("recent_device_name", LiteralBase.STRING, device.getName()),
@@ -370,6 +373,7 @@ public class ContactStorage implements Storagable {
                         else {
                             storage.executeUpdate(table, new StorageField[] {
                                     new StorageField("name", LiteralBase.STRING, contact.getName()),
+                                    new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
                                     new StorageField("context", LiteralBase.STRING,
                                             (null != contact.getContext()) ? contact.getContext().toString() : null)
                             }, new Conditional[] {
@@ -409,13 +413,15 @@ public class ContactStorage implements Storagable {
         Contact contact = null;
 
         try {
-            Long contactId = data[0].getLong();
-            String name = data[1].getString();
-            JSONObject context = data[2].isNullValue() ? null : new JSONObject(data[2].getString());
-            String deviceName = data[3].isNullValue() ? null : data[3].getString();
-            String devicePlatform = data[4].isNullValue() ? null : data[4].getString();
+            Map<String, StorageField> map = StorageFields.get(data);
+            Long contactId = map.get("id").getLong();
+            String name = map.get("name").getString();
+            long timestamp = map.get("timestamp").getLong();
+            JSONObject context = map.get("context").isNullValue() ? null : new JSONObject(map.get("context").getString());
+            String deviceName = map.get("recent_device_name").isNullValue() ? null : map.get("recent_device_name").getString();
+            String devicePlatform = map.get("recent_device_platform").isNullValue() ? null : map.get("recent_device_platform").getString();
 
-            contact = new Contact(contactId, domain, name);
+            contact = new Contact(contactId, domain, name, timestamp);
             if (null != context) {
                 contact.setContext(context);
             }
@@ -428,6 +434,25 @@ public class ContactStorage implements Storagable {
         }
 
         return contact;
+    }
+
+    /**
+     * 更新联系人时间戳。
+     *
+     * @param contact
+     */
+    public void updateContactTimestamp(Contact contact) {
+        final String table = this.contactTableNameMap.get(contact.getDomain().getName());
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                storage.executeUpdate(table, new StorageField[] {
+                        new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp())
+                }, new Conditional[] {
+                        Conditional.createEqualTo("id", LiteralBase.LONG, contact.getId().longValue())
+                });
+            }
+        });
     }
 
     /**
@@ -612,8 +637,9 @@ public class ContactStorage implements Storagable {
 
     public boolean writeContactZone(final ContactZone zone, final Runnable completed) {
         // 查询是否已存在，如果已存在不允许写入
-        List<StorageField[]> result = this.storage.executeQuery(this.contactZoneTableNameMap.get(zone.getDomain().getName()), new StorageField[] {
-                new StorageField("id", LiteralBase.LONG)
+        List<StorageField[]> result = this.storage.executeQuery(
+                this.contactZoneTableNameMap.get(zone.getDomain().getName()), new StorageField[] {
+                    new StorageField("id", LiteralBase.LONG)
         }, new Conditional[] {
                 Conditional.createEqualTo("owner", LiteralBase.LONG, zone.owner),
                 Conditional.createAnd(),
@@ -1617,6 +1643,9 @@ public class ContactStorage implements Storagable {
                     }),
                     new StorageField("name", LiteralBase.STRING, new Constraint[] {
                             Constraint.NOT_NULL
+                    }),
+                    new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                            Constraint.DEFAULT_0
                     }),
                     new StorageField("context", LiteralBase.STRING, new Constraint[] {
                             Constraint.DEFAULT_NULL

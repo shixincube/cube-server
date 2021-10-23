@@ -48,6 +48,7 @@ public abstract class AbstractContact extends Entity {
     private JSONObject context;
 
     /**
+     * 构造函数。
      *
      * @param id
      * @param domainName
@@ -59,6 +60,20 @@ public abstract class AbstractContact extends Entity {
     }
 
     /**
+     * 构造函数。
+     *
+     * @param id
+     * @param domainName
+     * @param name
+     * @param timestamp
+     */
+    public AbstractContact(Long id, String domainName, String name, long timestamp) {
+        super(id, domainName, timestamp);
+        this.name = name;
+    }
+
+    /**
+     * 构造函数。
      *
      * @param id
      * @param domain
@@ -70,14 +85,14 @@ public abstract class AbstractContact extends Entity {
     }
 
     /**
+     * 构造函数。
      *
      * @param json
      * @param domain
      */
     public AbstractContact(JSONObject json, String domain) {
-        super();
+        super(json);
 
-        this.id = json.getLong("id");
         this.name = json.getString("name");
         this.domain = (null != domain && domain.length() > 1) ? new Domain(domain) : new Domain(json.getString("domain"));
         this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
@@ -152,9 +167,7 @@ public abstract class AbstractContact extends Entity {
      */
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id);
-        json.put("domain", this.domain.getName());
+        JSONObject json = super.toJSON();
         json.put("name", this.name);
         json.put("namePY", this.getNamePinYin());
         if (null != this.context) {
@@ -168,9 +181,7 @@ public abstract class AbstractContact extends Entity {
      */
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id);
-        json.put("domain", this.domain.getName());
+        JSONObject json = super.toCompactJSON();
         json.put("name", this.name);
         json.put("namePY", this.getNamePinYin());
         if (null != this.context) {

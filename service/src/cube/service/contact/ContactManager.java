@@ -823,6 +823,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         if (modified) {
+            // 重置时间戳
+            contact.resetTimestamp();
+
             // 更新存储
             this.storage.writeContact(contact);
 
@@ -1267,7 +1270,29 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param appendix
      */
     public void updateAppendix(ContactAppendix appendix) {
-        this.contactAppendixMap.put(appendix.getOwner().getUniqueKey(), appendix);
+        final long timestamp = System.currentTimeMillis();
+
+        // 更新联系人的时间戳
+        Contact owner = appendix.getOwner();
+
+        // 更新缓存
+        this.contactCache.apply(owner.getUniqueKey(), new LockFuture() {
+            @Override
+            public void acquired(String key) {
+                JSONObject data = get();
+                if (null == data) {
+                    return;
+                }
+
+                Entity.updateTimestamp(data, timestamp);
+                put(data);
+            }
+        });
+
+        owner.setTimestamp(timestamp);
+        this.storage.updateContactTimestamp(owner);
+
+        this.contactAppendixMap.put(owner.getUniqueKey(), appendix);
         this.storage.writeAppendix(appendix);
     }
 
