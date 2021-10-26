@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2021 Shixin Cube Team.
+ * Copyright (c) 2020-2022 Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,11 @@ package cube.common.entity;
  * 消息状态。
  */
 public enum MessageState {
+
+    /**
+     * 消息处理失败。
+     */
+    Fault(1),
 
     /**
      * 未发送状态。
@@ -70,11 +75,6 @@ public enum MessageState {
      * 被阻止接收。
      */
     ReceiveBlocked(52),
-
-    /**
-     * 消息处理失败。
-     */
-    Fault(1),
 
     /**
      * 未知状态。

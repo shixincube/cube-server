@@ -24,42 +24,21 @@
  * SOFTWARE.
  */
 
-package cube.app.server.account;
+package cube.common.entity;
 
 /**
- * 令牌对象。
+ * 消息作用域。
  */
-public class Token {
+public final class MessageScope {
 
-    public final long id;
+    /**
+     * 无限制。
+     */
+    public final static int Unlimited = 0;
 
-    public final long accountId;
+    /**
+     * 仅自己可见。
+     */
+    public final static int Private = 1;
 
-    public final String code;
-
-    public final String device;
-
-    public final long creation;
-
-    public final long expire;
-
-    public long timestamp = System.currentTimeMillis();
-
-    public Token(long accountId, String code, String device, long creation, long expire) {
-        this.id = -1;
-        this.accountId = accountId;
-        this.code = code;
-        this.device = device;
-        this.creation = creation;
-        this.expire = expire;
-    }
-
-    public Token(long id, long accountId, String code, String device, long creation, long expire) {
-        this.id = id;
-        this.accountId = accountId;
-        this.code = code;
-        this.device = device;
-        this.creation = creation;
-        this.expire = expire;
-    }
 }

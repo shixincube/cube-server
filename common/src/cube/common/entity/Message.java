@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2021 Shixin Cube Team.
+ * Copyright (c) 2020-2022 Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -64,10 +64,8 @@ public class Message extends Entity implements Comparable<Message> {
 
     /**
      * 消息作用域。
-     * 0 - 无限制
-     * 1 - 仅自己可见
      */
-    private int scope = 0;
+    private int scope = MessageScope.Unlimited;
 
     /**
      * 消息生成时的源时间戳。
@@ -113,7 +111,7 @@ public class Message extends Entity implements Comparable<Message> {
         this.remoteTimestamp = packet.data.getLong("rts");
         this.state = MessageState.parse(packet.data.getInt("state"));
 
-        this.scope = packet.data.has("scope") ? packet.data.getInt("scope") : 0;
+        this.scope = packet.data.has("scope") ? packet.data.getInt("scope") : MessageScope.Unlimited;
 
         this.payload = packet.data.getJSONObject("payload");
 
