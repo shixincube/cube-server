@@ -24,58 +24,41 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.common.entity;
 
 /**
- * 消息模块动作定义。
+ * 会话的状态。
  */
-public enum MessagingAction {
+public enum ConversationState {
 
     /**
-     * 将消息推送给指定目标。
+     * 正常状态。
      */
-    Push("push"),
+    Normal(1),
 
     /**
-     * 从自己的消息队列里获取消息。
+     * 重要的或置顶的状态。
      */
-    Pull("pull"),
+    Important(2),
 
     /**
-     * 通知接收方有消息送达。
+     * 已删除。
      */
-    Notify("notify"),
+    Deleted(3);
 
-    /**
-     * 撤回消息。
-     */
-    Recall("recall"),
+    public final int code;
 
-    /**
-     * 删除消息。
-     */
-    Delete("delete"),
+    ConversationState(int code) {
+        this.code = code;
+    }
 
-    /**
-     * 标记已读。
-     */
-    Read("read"),
+    public static ConversationState parse(int code) {
+        for (ConversationState state : ConversationState.values()) {
+            if (state.code == code) {
+                return state;
+            }
+        }
 
-    /**
-     * 获取会话列表。
-     */
-    GetConversations("getConversations"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    MessagingAction(String name) {
-        this.name = name;
+        return Normal;
     }
 }

@@ -27,10 +27,10 @@
 package cube.service.messaging;
 
 import cell.core.talk.LiteralBase;
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.Storagable;
-import cube.common.entity.Message;
-import cube.common.entity.MessageState;
+import cube.common.entity.*;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -57,6 +57,8 @@ public class MessagingStorage implements Storagable {
 
     private final String messageTablePrefix = "message_";
 
+    private final String conversationTablePrefix = "conversation_";
+
     /**
      * 消息字段描述。
      */
@@ -76,14 +78,43 @@ public class MessagingStorage implements Storagable {
     };
 
     /**
-     * 消息状态描述。
+     * 会话描述。
      */
-//    private final StorageField[] stateFields = new StorageField[] {
-//            new StorageField("contact_id", LiteralBase.LONG),
-//            new StorageField("message_id", LiteralBase.LONG),
-//            new StorageField("state", LiteralBase.INT),
-//            new StorageField("timestamp", LiteralBase.LONG)
-//    };
+    private final StorageField[] conversationFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("owner", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("type", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("remind", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("pivotal_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("recent_message_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("avatar_name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("avatar_url", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            })
+    };
 
     private ExecutorService executor;
 
@@ -91,20 +122,20 @@ public class MessagingStorage implements Storagable {
 
     private Map<String, String> messageTableNameMap;
 
-//    private Map<String, String> stateTableNameMap;
+    private Map<String, String> conversationTableNameMap;
 
     public MessagingStorage(ExecutorService executor, Storage storage) {
         this.executor = executor;
         this.storage = storage;
         this.messageTableNameMap = new HashMap<>();
-//        this.stateTableNameMap = new HashMap<>();
+        this.conversationTableNameMap = new HashMap<>();
     }
 
     public MessagingStorage(ExecutorService executor, StorageType type, JSONObject config) {
         this.executor = executor;
         this.storage = StorageFactory.getInstance().createStorage(type, "MessagingStorage", config);
         this.messageTableNameMap = new HashMap<>();
-//        this.stateTableNameMap = new HashMap<>();
+        this.conversationTableNameMap = new HashMap<>();
     }
 
     @Override
@@ -160,8 +191,8 @@ public class MessagingStorage implements Storagable {
             // 检查消息表
             this.checkMessageTable(domain);
 
-            // 检查状态表
-//            this.checkStateTable(domain);
+            // 检查会话表
+            this.checkConversationTable(domain);
         }
     }
 
@@ -595,6 +626,116 @@ public class MessagingStorage implements Storagable {
         return MessageState.parse(state);
     }
 
+    /**
+     * 按照时间倒序读取会话列表。该方法仅返回状态正常的会话。
+     *
+     * @param contact
+     * @return
+     */
+    public List<Conversation> readConversationByDescendingOrder(Contact contact) {
+        String domain = contact.getDomain().getName();
+        String table = this.conversationTableNameMap.get(domain);
+
+        String sql = "SELECT * FROM `" + table + "` WHERE `owner`=" + contact.getId() + " ORDER BY `timestamp` DESC";
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        if (result.isEmpty()) {
+            // 无数据
+            return null;
+        }
+
+        List<Conversation> list = new ArrayList<>(result.size());
+
+        for (StorageField[] row : result) {
+            Map<String, StorageField> map = StorageFields.get(row);
+            if (map.get("state").getInt() == ConversationState.Deleted.code) {
+                // 跳过已删除的会话
+                continue;
+            }
+
+            Long id = map.get("id").getLong();
+            long timestamp = map.get("timestamp").getLong();
+            Long owner = map.get("owner").getLong();
+            ConversationType type = ConversationType.parse(map.get("type").getInt());
+            ConversationState state = ConversationState.parse(map.get("state").getInt());
+            Long pivotalId = map.get("pivotal_id").getLong();
+            ConversationRemindType remind = ConversationRemindType.parse(map.get("remind").getInt());
+
+            // 实例化
+            Conversation conversation = new Conversation(id, domain, timestamp, owner, type, state, pivotalId, remind);
+
+            // 查消息
+            Long recentMessageId = map.get("recent_message_id").getLong();
+            Message message = this.read(domain, owner, recentMessageId);
+            conversation.setRecentMessage(message);
+
+            // Avatar
+            if (!map.get("avatar_name").isNullValue()) {
+                conversation.setAvatarName(map.get("avatar_name").getString());
+            }
+            if (!map.get("avatar_url").isNullValue()) {
+                conversation.setAvatarURL(map.get("avatar_url").getString());
+            }
+
+            // 添加到列表
+            list.add(conversation);
+        }
+
+        return list;
+    }
+
+    /**
+     * 更新指定新信息的会话。
+     *
+     * @param domain
+     * @param ownerId
+     * @param pivotalId
+     * @param messageId
+     * @param timestamp
+     * @param type
+     */
+    public void updateConversation(String domain, Long ownerId, Long pivotalId, Long messageId,
+                                   long timestamp, ConversationType type) {
+        final String table = this.conversationTableNameMap.get(domain);
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                List<StorageField[]> result = storage.executeQuery(table, new StorageField[] {
+                        new StorageField("sn", LiteralBase.LONG)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("owner", LiteralBase.LONG, ownerId.longValue()),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("pivotal_id", LiteralBase.LONG, pivotalId.longValue())
+                });
+
+                if (result.isEmpty()) {
+                    // 无数据，插入新数据
+                    // 会话的 ID 就是关键实体的 ID
+                    long conversationId = pivotalId.longValue();
+                    storage.executeInsert(table, new StorageField[] {
+                            new StorageField("id", LiteralBase.LONG, conversationId),
+                            new StorageField("owner", LiteralBase.LONG, ownerId.longValue()),
+                            new StorageField("timestamp", LiteralBase.LONG, timestamp),
+                            new StorageField("type", LiteralBase.INT, type.code),
+                            new StorageField("state", LiteralBase.INT, ConversationState.Normal.code),
+                            new StorageField("remind", LiteralBase.INT, ConversationRemindType.Normal.code),
+                            new StorageField("pivotal_id", LiteralBase.LONG, pivotalId.longValue()),
+                            new StorageField("recent_message_id", LiteralBase.LONG, messageId.longValue())
+                    });
+                }
+                else {
+                    // 有数据，进行更新
+                    long sn = result.get(0)[0].getLong();
+                    storage.executeUpdate(table, new StorageField[] {
+                            new StorageField("timestamp", LiteralBase.LONG, timestamp),
+                            new StorageField("recent_message_id", LiteralBase.LONG, messageId.longValue()),
+                    }, new Conditional[] {
+                            Conditional.createEqualTo("sn", LiteralBase.LONG, sn)
+                    });
+                }
+            }
+        });
+    }
+
     private void checkMessageTable(String domain) {
         String table = this.messageTablePrefix + domain;
 
@@ -651,35 +792,16 @@ public class MessagingStorage implements Storagable {
         }
     }
 
-    /*private void checkStateTable(String domain) {
-        String table = this.stateTablePrefix + domain;
+    private void checkConversationTable(String domain) {
+        String table = this.conversationTablePrefix + domain;
 
         table = SQLUtils.correctTableName(table);
-        this.stateTableNameMap.put(domain, table);
+        this.conversationTableNameMap.put(domain, table);
 
         if (!this.storage.exist(table)) {
-            // 表不存在，建表
-            StorageField[] fields = new StorageField[] {
-                    new StorageField("sn", LiteralBase.LONG, new Constraint[] {
-                            Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
-                    }),
-                    new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
-                            Constraint.NOT_NULL
-                    }),
-                    new StorageField("message_id", LiteralBase.LONG, new Constraint[] {
-                            Constraint.NOT_NULL
-                    }),
-                    new StorageField("state", LiteralBase.INT, new Constraint[] {
-                            Constraint.NOT_NULL
-                    }),
-                    new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
-                            Constraint.NOT_NULL
-                    })
-            };
-
-            if (this.storage.executeCreate(table, fields)) {
+            if (this.storage.executeCreate(table, this.conversationFields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
         }
-    }*/
+    }
 }

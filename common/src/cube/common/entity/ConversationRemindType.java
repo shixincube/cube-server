@@ -24,58 +24,46 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.common.entity;
 
 /**
- * 消息模块动作定义。
+ * 会话提醒类型。
  */
-public enum MessagingAction {
+public enum ConversationRemindType {
 
     /**
-     * 将消息推送给指定目标。
+     * 正常接收。
      */
-    Push("push"),
+    Normal(1),
 
     /**
-     * 从自己的消息队列里获取消息。
+     * 接收不提醒。
      */
-    Pull("pull"),
+    Closed(2),
 
     /**
-     * 通知接收方有消息送达。
+     * 接收但不关注。
      */
-    Notify("notify"),
+    NotCare(3),
 
     /**
-     * 撤回消息。
+     * 不接收。
      */
-    Recall("recall"),
+    Refused(4);
 
-    /**
-     * 删除消息。
-     */
-    Delete("delete"),
+    public final int code;
 
-    /**
-     * 标记已读。
-     */
-    Read("read"),
+    ConversationRemindType(int code) {
+        this.code = code;
+    }
 
-    /**
-     * 获取会话列表。
-     */
-    GetConversations("getConversations"),
+    public static ConversationRemindType parse(int code) {
+        for (ConversationRemindType type : ConversationRemindType.values()) {
+            if (type.code == code) {
+                return type;
+            }
+        }
 
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    MessagingAction(String name) {
-        this.name = name;
+        return Normal;
     }
 }

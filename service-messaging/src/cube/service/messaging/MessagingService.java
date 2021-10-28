@@ -61,10 +61,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
@@ -287,7 +284,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         }
 
         // 依照作用域进行投送
-        if (message.getScope() == 0) {
+        if (message.getScope() == MessageScope.Unlimited) {
             // 一般作用域
 
             if (message.getTo().longValue() > 0) {
@@ -346,12 +343,16 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 this.messageStateMap.put(new MessageKey(fromCopy.getOwner(), fromCopy.getId()),
                         new MessageStateBundle(fromCopy.getId(), fromCopy.getOwner(), MessageState.Sent));
 
+                // 更新会话
+                this.updateConversations(fromCopy, toCopy);
+
                 // Hook PostPush
                 hook = this.pluginSystem.getPostPushHook();
                 hook.apply(new MessagingPluginContext(message));
 
                 return new PushResult(message, MessagingStateCode.Ok);
-            } else if (message.getSource().longValue() > 0) {
+            }
+            else if (message.getSource().longValue() > 0) {
                 // 进行消息的群组管理
                 Group group = ContactManager.getInstance().getGroup(message.getSource(), message.getDomain().getName());
                 if (null != group) {
@@ -395,6 +396,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                             // 在内存里记录状态
                             this.messageStateMap.put(new MessageKey(contact.getId(), copy.getId()),
                                     new MessageStateBundle(copy.getId(), contact.getId(), MessageState.Sent));
+
+                            // 更新会话
+                            this.updateConversation(group, copy);
                         }
 
                         // 创建 FROM 副本
@@ -416,6 +420,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                         this.messageStateMap.put(new MessageKey(copy.getOwner(), copy.getId()),
                                 new MessageStateBundle(copy.getId(), copy.getOwner(), MessageState.Sent));
 
+                        // 更新会话
+                        this.updateConversation(group, copy);
+
                         // 更新群组活跃时间
                         ContactManager.getInstance().updateGroupActiveTime(group, message.getRemoteTimestamp());
 
@@ -424,22 +431,26 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                         hook.apply(new MessagingPluginContext(message));
 
                         return new PushResult(message, MessagingStateCode.Ok);
-                    } else {
+                    }
+                    else {
                         // 群组状态不正常，设置为故障状态
                         message.setState(MessageState.Fault);
                         return new PushResult(message, MessagingStateCode.GroupError);
                     }
-                } else {
+                }
+                else {
                     // 找不到群组，设置为故障状态
                     message.setState(MessageState.Fault);
                     return new PushResult(message, MessagingStateCode.NoGroup);
                 }
-            } else {
+            }
+            else {
                 // 设置为故障状态
                 message.setState(MessageState.Fault);
                 return new PushResult(message, MessagingStateCode.DataStructureError);
             }
-        } else {
+        }
+        else {
             // 仅自己可见
 
             // 更新状态
@@ -679,6 +690,49 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         return list;
     }
 
+    public List<Conversation> getRecentConversations(Contact contact, int limit) {
+        List<Conversation> list = this.storage.readConversationByDescendingOrder(contact);
+
+        // 将 Important 置顶
+        list.sort(new Comparator<Conversation>() {
+            @Override
+            public int compare(Conversation c1, Conversation c2) {
+                if (c1.getState().code == c2.getState().code) {
+                    // 相同状态，判断时间戳
+                    if (c1.getTimestamp() < c2.getTimestamp()) {
+                        return 1;
+                    }
+                    else if (c1.getTimestamp() > c2.getTimestamp()) {
+                        return -1;
+                    }
+                    else {
+                        return 0;
+                    }
+                }
+                else {
+                    if (c1.getState() == ConversationState.Normal && c2.getState() == ConversationState.Important) {
+                        // 交换顺序，把 c2 排到前面
+                        return 1;
+                    }
+                    else if (c1.getState() == ConversationState.Important && c2.getState() == ConversationState.Normal) {
+                        return -1;
+                    }
+                }
+
+                return 0;
+            }
+        });
+
+        // 返回指定数量的结果
+        int num = Math.min(list.size(), limit);
+        List<Conversation> result = new ArrayList<>(num);
+        for (int i = 0; i < num; ++i) {
+            result.add(list.get(i));
+        }
+
+        return result;
+    }
+
     /**
      * 制作消息的 From 和 To 的两个副本。
      *
@@ -838,6 +892,22 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         return true;
     }
 
+    private void updateConversations(Message fromCopy, Message toCopy) {
+        this.storage.updateConversation(fromCopy.getDomain().getName(), fromCopy.getOwner(),
+                fromCopy.getTo(), fromCopy.getId(),
+                fromCopy.getRemoteTimestamp(), ConversationType.Contact);
+
+        this.storage.updateConversation(toCopy.getDomain().getName(), toCopy.getOwner(),
+                toCopy.getFrom(), toCopy.getId(),
+                toCopy.getRemoteTimestamp(), ConversationType.Contact);
+    }
+
+    private void updateConversation(Group group, Message message) {
+        this.storage.updateConversation(message.getDomain().getName(), message.getOwner(),
+                group.getId(), message.getId(),
+                message.getRemoteTimestamp(), ConversationType.Group);
+    }
+
     @Override
     public void onDelivered(String topic, Endpoint endpoint, JSONObject jsonObject) {
         if (MessagingService.NAME.equals(ModuleEvent.extractModuleName(jsonObject))) {
@@ -893,7 +963,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 if (null != contact) {
                     for (Device device : contact.getDeviceList()) {
                         if (notifyMessage(MessagingAction.Read, device.getTalkContext(), fromId, message)) {
-                            Logger.d(this.getClass(), "Mark read message : '" + message.getTo() + "' mark, from '" + fromId + "'");
+                            Logger.d(this.getClass(), "Mark read message : '"
+                                    + message.getTo() + "' mark, from '" + fromId + "'");
                         }
                     }
                 }

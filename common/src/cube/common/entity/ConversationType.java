@@ -24,58 +24,61 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.common.entity;
 
 /**
- * 消息模块动作定义。
+ * 会话类型。
  */
-public enum MessagingAction {
+public enum ConversationType {
 
     /**
-     * 将消息推送给指定目标。
+     * 与联系人的会话。
      */
-    Push("push"),
+    Contact(1),
 
     /**
-     * 从自己的消息队列里获取消息。
+     * 与群组的会话。
      */
-    Pull("pull"),
+    Group(2),
 
     /**
-     * 通知接收方有消息送达。
+     * 与组织的会话。
      */
-    Notify("notify"),
+    Organization(3),
 
     /**
-     * 撤回消息。
+     * 系统类型会话。
      */
-    Recall("recall"),
+    System(4),
 
     /**
-     * 删除消息。
+     * 通知类型会话。
      */
-    Delete("delete"),
+    Notifier(5),
 
     /**
-     * 标记已读。
+     * 助手类型会话。
      */
-    Read("read"),
+    Assistant(6),
 
     /**
-     * 获取会话列表。
+     * 其他会话类型。
      */
-    GetConversations("getConversations"),
+    Other(9);
 
-    /**
-     * 未知动作。
-     */
-    Unknown("")
+    public final int code;
 
-    ;
+    ConversationType(int code) {
+        this.code = code;
+    }
 
-    public final String name;
+    public static ConversationType parse(int code) {
+        for (ConversationType type : ConversationType.values()) {
+            if (type.code == code) {
+                return type;
+            }
+        }
 
-    MessagingAction(String name) {
-        this.name = name;
+        return Other;
     }
 }
