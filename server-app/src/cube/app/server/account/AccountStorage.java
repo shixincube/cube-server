@@ -162,7 +162,7 @@ public class AccountStorage extends AbstractStorage {
     }
 
     public Account readAccount(Long accountId) {
-        String sql = "SELECT * FROM " + TABLE_ACCOUNT + " WHERE id=" + accountId;
+        String sql = "SELECT * FROM " + TABLE_ACCOUNT + " WHERE `id`=" + accountId;
         List<StorageField[]> result = this.storage.executeQuery(sql);
         if (result.isEmpty()) {
             return null;

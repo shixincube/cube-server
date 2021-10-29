@@ -73,7 +73,9 @@ public class AccountInfoHandler extends ContextHandler {
 
                 if (AccountManager.getInstance().isValidToken(token)) {
                     Account account = AccountManager.getInstance().getAccount(id);
-                    responseData = account.toCompactJSON();
+                    if (null != account) {
+                        responseData = account.toCompactJSON();
+                    }
                 }
             }
             else if (data.containsKey("list") && data.containsKey("token")) {
