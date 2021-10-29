@@ -690,8 +690,17 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         return list;
     }
 
-    public List<Conversation> getRecentConversations(Contact contact, int limit) {
+    /**
+     * 获取指定联系人的最近会话清单。
+     *
+     * @param contact
+     * @return 没有找到数据时返回 {@code null} 值。
+     */
+    public List<Conversation> getRecentConversations(Contact contact) {
         List<Conversation> list = this.storage.readConversationByDescendingOrder(contact);
+        if (null == list) {
+            return null;
+        }
 
         // 将 Important 置顶
         list.sort(new Comparator<Conversation>() {
@@ -723,14 +732,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             }
         });
 
-        // 返回指定数量的结果
-        int num = Math.min(list.size(), limit);
-        List<Conversation> result = new ArrayList<>(num);
-        for (int i = 0; i < num; ++i) {
-            result.add(list.get(i));
-        }
-
-        return result;
+        return list;
     }
 
     /**

@@ -92,14 +92,19 @@ public class GetConversationsTask extends ServiceTask {
         JSONObject response = new JSONObject();
         JSONArray array = new JSONArray();
 
-        List<Conversation> conversationList = messagingService.getRecentConversations(contact, limit);
+        // 获取最近清单
+        List<Conversation> conversationList = messagingService.getRecentConversations(contact);
         if (null != conversationList) {
-            for (Conversation conversation : conversationList) {
+            // 返回指定数量的结果
+            int num = Math.min(conversationList.size(), limit);
+
+            for (int i = 0; i < num; ++i) {
+                Conversation conversation = conversationList.get(i);
                 array.put(conversation.toJSON());
             }
         }
 
-        response.put("total", array.length());
+        response.put("total", (null != conversationList) ? conversationList.size() : array.length());
         response.put("list", array);
 
         this.cellet.speak(this.talkContext,
