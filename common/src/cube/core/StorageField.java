@@ -73,6 +73,66 @@ public class StorageField {
      * 构造函数。
      *
      * @param name 字段名。
+     * @param value 字段值。
+     */
+    public StorageField(String name, long value) {
+        this.name = name;
+        this.literalBase = LiteralBase.LONG;
+        this.value = value;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param name 字段名。
+     * @param value 字段值。
+     */
+    public StorageField(String name, Long value) {
+        this.name = name;
+        this.literalBase = LiteralBase.LONG;
+        this.value = value;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param name 字段名。
+     * @param value 字段值。
+     */
+    public StorageField(String name, int value) {
+        this.name = name;
+        this.literalBase = LiteralBase.INT;
+        this.value = value;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param name 字段名。
+     * @param value 字段值。
+     */
+    public StorageField(String name, Integer value) {
+        this.name = name;
+        this.literalBase = LiteralBase.INT;
+        this.value = value;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param name 字段名。
+     * @param value 字段值。
+     */
+    public StorageField(String name, String value) {
+        this.name = name;
+        this.literalBase = LiteralBase.STRING;
+        this.value = value;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param name 字段名。
      * @param literalBase 字段的数据类型字面义。
      * @param value 字段值。
      */
