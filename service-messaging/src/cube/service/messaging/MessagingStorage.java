@@ -736,6 +736,35 @@ public class MessagingStorage implements Storagable {
         });
     }
 
+    public int countUnread(Conversation conversation) {
+        String domain = conversation.getDomain().getName();
+        String table = this.messageTableNameMap.get(domain);
+        String sql = null;
+
+        if (conversation.getType() == ConversationType.Contact) {
+            sql = "SELECT COUNT(`id`) FROM `" + table + "` WHERE `source`=0 AND `owner`=" + conversation.getOwnerId() +
+                    " AND `from`=" + conversation.getPivotalId() +
+                    " AND `state`=" + MessageState.Sent.code;
+        }
+        else if (conversation.getType() == ConversationType.Group) {
+            sql = "SELECT COUNT(`id`) FROM `" + table + "` WHERE `source`=" + conversation.getPivotalId() +
+                    " AND `owner`=" + conversation.getOwnerId() +
+                    " AND `from`<>" + conversation.getOwnerId() +
+                    " AND `state`=" + MessageState.Sent.code;
+        }
+
+        if (null == sql) {
+            return 0;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        if (result.isEmpty()) {
+            return 0;
+        }
+
+        return result.get(0)[0].getInt();
+    }
+
     private void checkMessageTable(String domain) {
         String table = this.messageTablePrefix + domain;
 

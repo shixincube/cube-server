@@ -64,6 +64,11 @@ public class Conversation extends Entity {
     private Message recentMessage;
 
     /**
+     * 未读消息记录数。
+     */
+    private int unreadCount;
+
+    /**
      * 头像名称。
      */
     private String avatarName;
@@ -81,18 +86,35 @@ public class Conversation extends Entity {
         this.state = state;
         this.pivotalId = pivotalId;
         this.remindType = remindType;
+        this.unreadCount = 0;
     }
 
     public Long getOwnerId() {
         return this.ownerId;
     }
 
+    public ConversationType getType() {
+        return this.type;
+    }
+
+    public Long getPivotalId() {
+        return this.pivotalId;
+    }
+
     public ConversationState getState() {
         return this.state;
     }
 
+    public ConversationRemindType getRemindType() {
+        return this.remindType;
+    }
+
     public void setRecentMessage(Message message) {
         this.recentMessage = message;
+    }
+
+    public void setUnreadCount(int count) {
+        this.unreadCount = count;
     }
 
     public void setAvatarName(String avatarName) {
@@ -112,6 +134,8 @@ public class Conversation extends Entity {
         json.put("remind", this.remindType.code);
         json.put("pivotal", this.pivotalId.longValue());
         json.put("recentMessage", this.recentMessage.toJSON());
+
+        json.put("unread", this.unreadCount);
 
         if (null != this.avatarName) {
             json.put("avatarName", this.avatarName);

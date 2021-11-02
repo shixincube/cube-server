@@ -91,6 +91,11 @@ public enum MessageState {
         return this.code;
     }
 
+    @Override
+    public String toString() {
+        return Integer.toString(this.code);
+    }
+
     public static MessageState parse(int code) {
         switch (code) {
             case 5:

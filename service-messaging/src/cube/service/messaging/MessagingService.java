@@ -732,6 +732,15 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             }
         });
 
+        // 判断会话是否需要读取未读信息
+        for (Conversation conversation : list) {
+            if (conversation.getRemindType() == ConversationRemindType.Normal
+                    || conversation.getRemindType() == ConversationRemindType.Closed) {
+                int unread = this.storage.countUnread(conversation);
+                conversation.setUnreadCount(unread);
+            }
+        }
+
         return list;
     }
 
