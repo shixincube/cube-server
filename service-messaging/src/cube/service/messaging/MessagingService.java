@@ -651,7 +651,15 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         return message;
     }
 
-    public void markReadMessages(String domain, Long contactId, Long fromId, List<Long> messageIdList) {
+    /**
+     * 标记消息为已读。
+     *
+     * @param domain
+     * @param contactId
+     * @param fromId
+     * @param messageIdList
+     */
+    public void markReadMessagesByContact(String domain, Long contactId, Long fromId, List<Long> messageIdList) {
         for (Long messageId : messageIdList) {
             // 修改状态
             MessageKey key = new MessageKey(contactId, messageId);
@@ -665,7 +673,30 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         this.storage.writeMessagesState(domain, contactId, messageIdList, MessageState.Read);
 
         // 通知发件人
+        Contact sender = ContactManager.getInstance().getContact(domain, fromId);
         // TODO XJW
+    }
+
+    /**
+     * 标记消息为已读。
+     *
+     * @param domain
+     * @param contactId
+     * @param groupId
+     * @param messageIdList
+     */
+    public void markReadMessagesByGroup(String domain, Long contactId, Long groupId, List<Long> messageIdList) {
+        for (Long messageId : messageIdList) {
+            // 修改状态
+            MessageKey key = new MessageKey(contactId, messageId);
+            MessageStateBundle stateBundle = this.messageStateMap.get(key);
+            if (null != stateBundle) {
+                stateBundle.state = MessageState.Read;
+            }
+        }
+
+        // 更新存储
+        this.storage.writeMessagesState(domain, contactId, messageIdList, MessageState.Read);
     }
 
     /**

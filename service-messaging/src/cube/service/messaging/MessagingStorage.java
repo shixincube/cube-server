@@ -580,14 +580,14 @@ public class MessagingStorage implements Storagable {
             @Override
             public void run() {
                 StorageField[] fields = new StorageField[] {
-                        new StorageField("state", LiteralBase.INT, state.code)
+                        new StorageField("state", state.code)
                 };
 
                 for (Long messageId : messageIds) {
                     storage.executeUpdate(table, fields, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, messageId)),
+                            Conditional.createEqualTo(new StorageField("id", messageId)),
                             Conditional.createAnd(),
-                            Conditional.createEqualTo(new StorageField("owner", LiteralBase.LONG, contactId.longValue()))
+                            Conditional.createEqualTo(new StorageField("owner", contactId.longValue()))
                     });
                 }
             }

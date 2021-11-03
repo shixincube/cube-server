@@ -42,3 +42,7 @@ token-pool_copy.properties
 contact-cache_copy.properties
 general-cache_copy.properties
 cube-service-conference-3.0.jar
+console_dev.properties
+server_dev.properties
+cipher_dev.properties
+storage_dev.json

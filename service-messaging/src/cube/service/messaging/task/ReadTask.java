@@ -49,6 +49,28 @@ import java.util.List;
 
 /**
  * 标记消息已读任务。
+ *
+ * 参数说明：
+ *
+ * 对单条消息进行标记。
+ * <code>
+ * contactId
+ * messageId
+ * </code>
+ *
+ * 对消息进行批量标记。
+ * <code>
+ * contactId
+ * messageIdList
+ * messageFrom - 该次操作的消息发件人 ID，以便于服务器通知发件人。
+ * </code>
+ *
+ * 对消息进行批量标记。
+ * <code>
+ * contactId
+ * messageIdList
+ * messageSource - 该次操作的消息的群组。
+ * </code>
  */
 public class ReadTask extends ServiceTask {
 
@@ -96,12 +118,18 @@ public class ReadTask extends ServiceTask {
         Long messageId = null;
         JSONArray messageIds = null;
         Long messageFrom = null;
+        Long messageSource = null;
+
         if (data.has("messageId")) {
             messageId = data.getLong("messageId");
         }
         else if (data.has("messageIdList") && data.has("messageFrom")) {
             messageIds = data.getJSONArray("messageIdList");
             messageFrom = data.getLong("messageFrom");
+        }
+        else if (data.has("messageIdList") && data.has("messageSource")) {
+            messageIds = data.getJSONArray("messageIdList");
+            messageSource = data.getLong("messageSource");
         }
         else {
             this.cellet.speak(this.talkContext,
@@ -126,13 +154,27 @@ public class ReadTask extends ServiceTask {
                     this.makeResponse(action, packet, MessagingStateCode.Ok.code, message.toCompactJSON()));
             markResponseTime();
         }
-        else {
+        else if (null != messageFrom) {
+            // 标记针对联系人的消息已读
             List<Long> messageIdList = new ArrayList<>(messageIds.length());
             for (int i = 0; i < messageIds.length(); ++i) {
                 messageIdList.add(messageIds.getLong(i));
             }
 
-            messagingService.markReadMessages(domain, contactId, messageFrom, messageIdList);
+            messagingService.markReadMessagesByContact(domain, contactId, messageFrom, messageIdList);
+
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, MessagingStateCode.Ok.code, data));
+            markResponseTime();
+        }
+        else {
+            // 标记针对群组的消息已读
+            List<Long> messageIdList = new ArrayList<>(messageIds.length());
+            for (int i = 0; i < messageIds.length(); ++i) {
+                messageIdList.add(messageIds.getLong(i));
+            }
+
+            messagingService.markReadMessagesByGroup(domain, contactId, messageSource, messageIdList);
 
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.Ok.code, data));
