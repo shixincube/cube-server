@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -45,6 +46,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -78,7 +80,7 @@ public class PullTask extends ServiceTask {
             return;
         }
 
-        // 获取联系人
+        // 获取联系人，不需要判断是否已经登录
         Contact contact = ContactManager.getInstance().getOnlineContact(domainName, id);
         if (null == contact) {
             // 应答
@@ -90,6 +92,7 @@ public class PullTask extends ServiceTask {
         }
 
         // 检查设备是否属于该联系人
+        /* FIXME 2021-11-03 XJW 判断在线就不再判断设备，后续改为判断 Token Code
         if (!contact.hasDevice(device)) {
             // 应答
             this.cellet.speak(this.talkContext,
@@ -97,16 +100,20 @@ public class PullTask extends ServiceTask {
                             MessagingStateCode.NoDevice.code, packet.data));
             markResponseTime();
             return;
-        }
+        }*/
 
         // 修正起始时间
         long now = System.currentTimeMillis();
-        if (beginning < now - ONE_MONTH) {
-            beginning = now - ONE_MONTH;
+        if (beginning < now - THREE_MONTHS) {
+            beginning = now - THREE_MONTHS;
         }
         // 修正截止时间
         if (ending == 0 || ending <= beginning) {
             ending = now;
+        }
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(PullTask.class, id.toString() + " : " + Utils.convertDateToSimpleString(new Date(beginning)) + " - " + Utils.convertDateToSimpleString(new Date(ending)));
         }
 
         // 获取指定起始时间的消息列表

@@ -742,12 +742,12 @@ public class MessagingStorage implements Storagable {
         String sql = null;
 
         if (conversation.getType() == ConversationType.Contact) {
-            sql = "SELECT COUNT(`id`) FROM `" + table + "` WHERE `source`=0 AND `owner`=" + conversation.getOwnerId() +
+            sql = "SELECT COUNT(DISTINCT `id`) FROM `" + table + "` WHERE `source`=0 AND `owner`=" + conversation.getOwnerId() +
                     " AND `from`=" + conversation.getPivotalId() +
                     " AND `state`=" + MessageState.Sent.code;
         }
         else if (conversation.getType() == ConversationType.Group) {
-            sql = "SELECT COUNT(`id`) FROM `" + table + "` WHERE `source`=" + conversation.getPivotalId() +
+            sql = "SELECT COUNT(DISTINCT `id`) FROM `" + table + "` WHERE `source`=" + conversation.getPivotalId() +
                     " AND `owner`=" + conversation.getOwnerId() +
                     " AND `from`<>" + conversation.getOwnerId() +
                     " AND `state`=" + MessageState.Sent.code;

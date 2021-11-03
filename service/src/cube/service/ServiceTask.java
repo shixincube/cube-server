@@ -47,6 +47,8 @@ public abstract class ServiceTask extends Task {
 
     public final static long ONE_MONTH = 30L * 24L * 60L * 60L * 1000L;
 
+    public final static long THREE_MONTHS = ONE_MONTH * 3;
+
     protected ResponseTime responseTime;
 
     public ServiceTask(Cellet cellet, TalkContext talkContext, Primitive primitive) {
