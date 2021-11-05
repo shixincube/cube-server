@@ -56,8 +56,6 @@ import cube.service.auth.AuthService;
 import cube.service.contact.plugin.FilterContactNamePlugin;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
-import cube.util.pinyin.ForwardLongestSelector;
-import cube.util.pinyin.PYEngine;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -834,6 +832,17 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         return contact;
+    }
+
+    /**
+     * 读取指定时间戳之后的联系人分区数据清单。
+     *
+     * @param contact
+     * @param timestamp
+     * @return
+     */
+    public List<ContactZone> listContactZones(Contact contact, long timestamp, int limit) {
+        return this.storage.readContactZoneList(contact, timestamp, limit);
     }
 
     /**

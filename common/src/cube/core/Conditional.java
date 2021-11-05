@@ -110,6 +110,39 @@ public class Conditional {
     }
 
     /**
+     * 创建等于运算。
+     *
+     * @param fieldName 字段名。
+     * @param value 字段值。
+     * @return 返回条件句式实例。
+     */
+    public static Conditional createEqualTo(String fieldName, int value) {
+        return Conditional.createEqualTo(new StorageField(fieldName, value));
+    }
+
+    /**
+     * 创建等于运算。
+     *
+     * @param fieldName 字段名。
+     * @param value 字段值。
+     * @return 返回条件句式实例。
+     */
+    public static Conditional createEqualTo(String fieldName, long value) {
+        return Conditional.createEqualTo(new StorageField(fieldName, value));
+    }
+
+    /**
+     * 创建等于运算。
+     *
+     * @param fieldName 字段名。
+     * @param value 字段值。
+     * @return 返回条件句式实例。
+     */
+    public static Conditional createEqualTo(String fieldName, String value) {
+        return Conditional.createEqualTo(new StorageField(fieldName, value));
+    }
+
+    /**
      *  创建等于运算。
      *
      * @param fieldName 字段名。

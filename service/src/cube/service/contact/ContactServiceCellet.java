@@ -157,6 +157,10 @@ public class ContactServiceCellet extends AbstractCellet {
             this.executor.execute(new UpdateAppendixTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (ContactAction.ListContactZones.name.equals(action)) {
+            this.executor.execute(new ListContactZonesTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (ContactAction.TopList.name.equals(action)) {
             this.executor.execute(new TopListTask(this, talkContext, primitive,
                     this.markResponseTime(action)));

@@ -113,7 +113,8 @@ public class PullTask extends ServiceTask {
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(PullTask.class, id.toString() + " : " + Utils.convertDateToSimpleString(new Date(beginning)) + " - " + Utils.convertDateToSimpleString(new Date(ending)));
+            Logger.d(PullTask.class, id.toString() + " : " + Utils.convertDateToSimpleString(new Date(beginning))
+                    + " - " + Utils.convertDateToSimpleString(new Date(ending)));
         }
 
         // 获取指定起始时间的消息列表

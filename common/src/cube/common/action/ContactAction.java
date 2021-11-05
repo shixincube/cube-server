@@ -72,6 +72,11 @@ public enum ContactAction {
     ModifyContact("modifyContact"),
 
     /**
+     * 按照指定参数列出联系人分区清单。
+     */
+    ListContactZones("listContactZones"),
+
+    /**
      * 获取联系人分区。
      */
     GetContactZone("getContactZone"),

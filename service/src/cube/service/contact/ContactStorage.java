@@ -107,6 +107,9 @@ public class ContactStorage implements Storagable {
             }),
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("context", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 
@@ -127,6 +130,9 @@ public class ContactStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("postscript", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("context", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             })
     };
@@ -447,12 +453,80 @@ public class ContactStorage implements Storagable {
             @Override
             public void run() {
                 storage.executeUpdate(table, new StorageField[] {
-                        new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp())
+                        new StorageField("timestamp", contact.getTimestamp())
                 }, new Conditional[] {
-                        Conditional.createEqualTo("id", LiteralBase.LONG, contact.getId().longValue())
+                        Conditional.createEqualTo("id", contact.getId())
                 });
             }
         });
+    }
+
+    /**
+     * 读取联系人所有的区分列表。
+     *
+     * @param contact
+     * @param timestamp
+     * @param limit
+     * @return
+     */
+    public List<ContactZone> readContactZoneList(Contact contact, long timestamp, int limit) {
+        List<ContactZone> list = new ArrayList<>();
+
+        String domain = contact.getDomain().getName();
+
+        String table = contactZoneTableNameMap.get(domain);
+
+        Conditional[] conditionals = null;
+        if (limit > 0) {
+            conditionals = new Conditional[] {
+                    Conditional.createEqualTo("owner", contact.getId()),
+                    Conditional.createAnd(),
+                    Conditional.createGreaterThan(new StorageField("timestamp", timestamp)),
+                    Conditional.createLimit(limit)
+            };
+        }
+        else {
+            conditionals = new Conditional[] {
+                    Conditional.createEqualTo("owner", contact.getId()),
+                    Conditional.createAnd(),
+                    Conditional.createGreaterThan(new StorageField("timestamp", timestamp))
+            };
+        }
+
+        // 查询
+        List<StorageField[]> result = this.storage.executeQuery(table, this.contactZoneFields, conditionals);
+
+        if (result.isEmpty()) {
+            return list;
+        }
+
+        // 成员表
+        table = this.contactZoneParticipantTableNameMap.get(domain);
+
+        for (StorageField[] row : result) {
+            Map<String, StorageField> map = StorageFields.get(row);
+
+            ContactZone zone = new ContactZone(map.get("id").getLong(), domain,
+                    map.get("owner").getLong(), map.get("name").getString(), map.get("timestamp").getLong(),
+                    ContactZoneState.parse(map.get("state").getInt()));
+
+            // 查询成员
+            List<StorageField[]> partResult = this.storage.executeQuery(table, this.contactZoneParticipantFields, new Conditional[] {
+                    Conditional.createEqualTo("contact_zone_id", zone.getId()),
+            });
+
+            for (StorageField[] partRow : partResult) {
+                Map<String, StorageField> data = StorageFields.get(partRow);
+                ContactZoneParticipant member = new ContactZoneParticipant(data.get("contact").getLong(), data.get("postscript").getString(),
+                        ContactZoneParticipantState.parse(data.get("state").getInt()));
+                zone.addContact(member);
+            }
+
+            // 添加
+            list.add(zone);
+        }
+
+        return list;
     }
 
     /**
