@@ -38,9 +38,9 @@ import java.util.Map;
  */
 public class FormData {
 
-    private static String sContentType = "Content-Type".toLowerCase();
-    private static String sOctetStream = "octet-stream".toLowerCase();
-    private static String sJson = "json".toLowerCase();
+    private static final String sContentType = "Content-Type".toLowerCase();
+    private static final String sOctetStream = "octet-stream".toLowerCase();
+    private static final String sJson = "json".toLowerCase();
 
     private FlexibleByteBuffer buf;
 
@@ -56,7 +56,7 @@ public class FormData {
      */
     public FormData(byte[] content, int offset, int length) {
         byte[] data = new byte[length];
-        System.arraycopy(content, 0, data, 0, length);
+        System.arraycopy(content, offset, data, 0, length);
         this.buf = new FlexibleByteBuffer(1024);
         this.multipart = this.parse(data);
         this.buf = null;
