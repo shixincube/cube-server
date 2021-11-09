@@ -31,8 +31,8 @@ import cube.common.UniqueKey;
 import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
 import cube.common.entity.HierarchyNodes;
+import cube.service.filestorage.ServiceStorage;
 import cube.service.filestorage.FileStorageService;
-import cube.service.filestorage.FileStructStorage;
 import cube.util.FileUtils;
 
 import java.util.Iterator;
@@ -69,7 +69,7 @@ public class FileHierarchyManager implements FileHierarchyListener {
      *
      * @param structStorage
      */
-    public FileHierarchyManager(FileStructStorage structStorage, FileStorageService fileStorageService) {
+    public FileHierarchyManager(ServiceStorage structStorage, FileStorageService fileStorageService) {
         this.fileHierarchyCache = new FileHierarchyCache(structStorage);
         this.fileStorageService = fileStorageService;
         this.roots = new ConcurrentHashMap<>();

@@ -55,7 +55,7 @@ import java.util.concurrent.ExecutorService;
  * 文件码存储器。
  * 用于管理文件码存储。
  */
-public class FileStructStorage implements Storagable {
+public class ServiceStorage implements Storagable {
 
     private final String version = "1.0";
 
@@ -147,7 +147,7 @@ public class FileStructStorage implements Storagable {
      */
     private Map<String, String> recyclebinTableNameMap;
 
-    public FileStructStorage(ExecutorService executorService, StorageType type, JSONObject config) {
+    public ServiceStorage(ExecutorService executorService, StorageType type, JSONObject config) {
         this.executor = executorService;
         this.storage = StorageFactory.getInstance().createStorage(type, "FileStructStorage", config);
         this.labelTableNameMap = new HashMap<>();

@@ -28,7 +28,7 @@ package cube.service.filestorage.hierarchy;
 
 import cube.common.UniqueKey;
 import cube.core.*;
-import cube.service.filestorage.FileStructStorage;
+import cube.service.filestorage.ServiceStorage;
 import org.json.JSONObject;
 
 /**
@@ -36,9 +36,9 @@ import org.json.JSONObject;
  */
 public class FileHierarchyCache extends AbstractCache {
 
-    private FileStructStorage structStorage;
+    private ServiceStorage structStorage;
 
-    public FileHierarchyCache(FileStructStorage structStorage) {
+    public FileHierarchyCache(ServiceStorage structStorage) {
         super("FileHierarchyCache", "FileHierarchyCache");
         this.structStorage = structStorage;
     }

@@ -91,7 +91,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 文件标签存储器。
      */
-    private FileStructStorage fileStructStorage;
+    private ServiceStorage serviceStorage;
 
     /**
      * 文件层级管理器。
@@ -182,10 +182,10 @@ public class FileStorageService extends AbstractModule {
         this.initStorage();
 
         // 创建文件层级管理器
-        this.fileHierarchyManager = new FileHierarchyManager(this.fileStructStorage, this);
+        this.fileHierarchyManager = new FileHierarchyManager(this.serviceStorage, this);
 
         // 回收站
-        this.recycleBin = new RecycleBin(this.fileStructStorage);
+        this.recycleBin = new RecycleBin(this.serviceStorage);
     }
 
     @Override
@@ -194,7 +194,7 @@ public class FileStorageService extends AbstractModule {
         this.fileSystem.stop();
 
         // 关闭存储
-        this.fileStructStorage.close();
+        this.serviceStorage.close();
     }
 
     @Override
@@ -306,7 +306,7 @@ public class FileStorageService extends AbstractModule {
         fileLabel.setExpiryTime(fileLabel.getCompletedTime() + this.defaultFileDuration);
 
         // 写入到存储器进行记录
-        this.fileStructStorage.writeFileLabel(fileLabel, descriptor);
+        this.serviceStorage.writeFileLabel(fileLabel, descriptor);
 
         // 写入集群缓存
         this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
@@ -330,7 +330,7 @@ public class FileStorageService extends AbstractModule {
         fileLabel.setExpiryTime(expiryTime);
 
         // 更新存储器
-        this.fileStructStorage.updateFileLabel(fileLabel);
+        this.serviceStorage.updateFileLabel(fileLabel);
 
         // 更新集群缓存
         this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
@@ -365,7 +365,7 @@ public class FileStorageService extends AbstractModule {
             return true;
         }
 
-        return this.fileStructStorage.existsFileLabel(domainName, fileCode);
+        return this.serviceStorage.existsFileLabel(domainName, fileCode);
     }
 
     /**
@@ -378,7 +378,7 @@ public class FileStorageService extends AbstractModule {
     public FileLabel getFile(String domainName, String fileCode) {
         CacheValue value = this.fileLabelCache.get(new CacheKey(fileCode));
         if (null == value) {
-            FileLabel fileLabel = this.fileStructStorage.readFileLabel(domainName, fileCode);
+            FileLabel fileLabel = this.serviceStorage.readFileLabel(domainName, fileCode);
             if (null == fileLabel) {
                 return null;
             }
@@ -486,26 +486,26 @@ public class FileStorageService extends AbstractModule {
         if (config.has(FileStorageService.NAME)) {
             config = config.getJSONObject(FileStorageService.NAME);
             if (config.getString("type").equalsIgnoreCase("SQLite")) {
-                this.fileStructStorage = new FileStructStorage(this.executor, StorageType.SQLite, config);
+                this.serviceStorage = new ServiceStorage(this.executor, StorageType.SQLite, config);
             }
             else {
-                this.fileStructStorage = new FileStructStorage(this.executor, StorageType.MySQL, config);
+                this.serviceStorage = new ServiceStorage(this.executor, StorageType.MySQL, config);
             }
         }
         else {
             config.put("file", "storage/FileStorageService.db");
-            this.fileStructStorage = new FileStructStorage(this.executor, StorageType.SQLite, config);
+            this.serviceStorage = new ServiceStorage(this.executor, StorageType.SQLite, config);
         }
 
         (new Thread() {
             @Override
             public void run() {
                 // 打开存储器
-                fileStructStorage.open();
+                serviceStorage.open();
 
                 // 存储进行自校验
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
-                fileStructStorage.execSelfChecking(authService.getDomainList());
+                serviceStorage.execSelfChecking(authService.getDomainList());
             }
         }).start();
     }

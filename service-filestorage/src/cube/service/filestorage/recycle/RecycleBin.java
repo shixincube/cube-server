@@ -28,8 +28,7 @@ package cube.service.filestorage.recycle;
 
 import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
-import cube.service.Director;
-import cube.service.filestorage.FileStructStorage;
+import cube.service.filestorage.ServiceStorage;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchyTool;
 import org.json.JSONObject;
@@ -43,14 +42,14 @@ import java.util.List;
  */
 public class RecycleBin {
 
-    private FileStructStorage structStorage;
+    private ServiceStorage structStorage;
 
     /**
      * 构造函数。
      *
      * @param structStorage
      */
-    public RecycleBin(FileStructStorage structStorage) {
+    public RecycleBin(ServiceStorage structStorage) {
         this.structStorage = structStorage;
     }
 

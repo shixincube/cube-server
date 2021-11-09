@@ -28,7 +28,7 @@ package cube.service.filestorage.test;
 
 import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
-import cube.service.filestorage.FileStructStorage;
+import cube.service.filestorage.ServiceStorage;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchy;
 import cube.service.filestorage.hierarchy.FileHierarchyManager;
@@ -51,7 +51,7 @@ public class FileHierarchyTest {
 
     private ExecutorService executor;
 
-    private FileStructStorage fileStructStorage;
+    private ServiceStorage serviceStorage;
 
     private List<String> domainList;
 
@@ -69,7 +69,7 @@ public class FileHierarchyTest {
         Logger.i(getClass(), "setup");
         this.initStorage();
 
-        this.manager = new FileHierarchyManager(this.fileStructStorage, null);
+        this.manager = new FileHierarchyManager(this.serviceStorage, null);
     }
 
     public void test() {
@@ -162,7 +162,7 @@ public class FileHierarchyTest {
     public void teardown() {
         Logger.i(getClass(), "teardown");
 
-        this.fileStructStorage.close();
+        this.serviceStorage.close();
 
         this.executor.shutdown();
     }
@@ -182,11 +182,11 @@ public class FileHierarchyTest {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        this.fileStructStorage = new FileStructStorage(this.executor, StorageType.SQLite, config);
+        this.serviceStorage = new ServiceStorage(this.executor, StorageType.SQLite, config);
 
-        this.fileStructStorage.open();
+        this.serviceStorage.open();
 
-        this.fileStructStorage.execSelfChecking(this.domainList);
+        this.serviceStorage.execSelfChecking(this.domainList);
     }
 
     public static void main(String[] args) {
