@@ -77,6 +77,11 @@ public enum FileStorageStateCode {
     FileLabelError(16),
 
     /**
+     * 正在写入文件。
+     */
+    Writing(17),
+
+    /**
      * 重名。
      */
     DuplicationOfName(20),

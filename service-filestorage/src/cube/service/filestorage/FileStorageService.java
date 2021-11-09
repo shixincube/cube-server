@@ -264,7 +264,7 @@ public class FileStorageService extends AbstractModule {
         // 获取标识
         FileDescriptor descriptor = this.fileDescriptors.get(fileLabel.getFileCode());
 
-        int count = 100;
+        int count = 1000;
         while (null == descriptor) {
             --count;
             if (count <= 0) {
@@ -272,7 +272,7 @@ public class FileStorageService extends AbstractModule {
             }
 
             try {
-                Thread.sleep(100L);
+                Thread.sleep(10L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -312,6 +312,17 @@ public class FileStorageService extends AbstractModule {
         this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
 
         return fileLabel;
+    }
+
+    /**
+     * 判断指定文件是否已经构建描述符。
+     *
+     * @param fileCode
+     * @return
+     */
+    public boolean hasFileDescriptor(String fileCode) {
+        // 判断是否正在放置文件
+        return this.fileDescriptors.containsKey(fileCode);
     }
 
     /**

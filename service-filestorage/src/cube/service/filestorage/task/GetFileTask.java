@@ -60,7 +60,7 @@ public class GetFileTask extends ServiceTask {
         if (null == tokenCode) {
             // 发生错误
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+                    this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
             markResponseTime();
             return;
         }
@@ -79,16 +79,29 @@ public class GetFileTask extends ServiceTask {
         // 域
         String domain = authToken.getDomain();
 
-        String fileCode = packet.data.getString("fileCode");
+        String fileCode = null;
+        try {
+            fileCode = packet.data.getString("fileCode");
+        } catch (Exception e) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Failure.code, packet.data));
+            markResponseTime();
+            return;
+        }
 
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
 
         // 放置文件
         FileLabel fileLabel = service.getFile(domain, fileCode);
         if (null == fileLabel) {
+            // 判断是否正在放置文件
+            boolean hasDescriptor = service.hasFileDescriptor(fileCode);
+
             // 发生错误
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.Failure.code, packet.data));
+                    this.makeResponse(action, packet,
+                            hasDescriptor ? FileStorageStateCode.Writing.code : FileStorageStateCode.NotFound.code,
+                            packet.data));
             markResponseTime();
             return;
         }

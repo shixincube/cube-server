@@ -119,13 +119,17 @@ public class FileChunkStorage {
     public String append(FileChunk chunk) {
         String fileCode = FileUtils.makeFileCode(chunk.contactId, chunk.domain, chunk.fileName);
 
-        FileChunkStore store = this.fileChunkStores.get(fileCode);
-        if (null == store) {
-            store = new FileChunkStore(fileCode, chunk.token);
-            this.fileChunkStores.put(fileCode, store);
-        }
+        FileChunkStore store = null;
 
-        store.add(chunk);
+        synchronized (this) {
+            store = this.fileChunkStores.get(fileCode);
+            if (null == store) {
+                store = new FileChunkStore(fileCode, chunk.token);
+                this.fileChunkStores.put(fileCode, store);
+            }
+
+            store.add(chunk);
+        }
 
         if (!store.running.get()) {
             store.running.set(true);
@@ -452,7 +456,7 @@ public class FileChunkStorage {
                 return -1;
             }
 
-            if (this.chunkCursor >= this.current.size) {
+            if (this.chunkCursor >= this.current.size || this.chunkCursor >= this.currentData.length) {
                 // 重置块游标
                 this.chunkCursor = 0;
 

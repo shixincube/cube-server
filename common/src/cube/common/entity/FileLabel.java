@@ -158,10 +158,8 @@ public class FileLabel extends Entity {
      * @param json 文件标签的 JSON 格式。
      */
     public FileLabel(JSONObject json) {
-        super();
+        super(json);
 
-        this.id = json.getLong("id");
-        this.domain = new Domain(json.getString("domain"));
         this.fileCode = json.getString("fileCode");
         this.ownerId = json.getLong("ownerId");
         this.fileName = json.getString("fileName");
