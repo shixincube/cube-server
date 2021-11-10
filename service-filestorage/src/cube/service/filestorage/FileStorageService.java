@@ -26,6 +26,7 @@
 
 package cube.service.filestorage;
 
+import cell.core.talk.PrimitiveInputStream;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.cache.SharedMemoryCache;
@@ -426,6 +427,25 @@ public class FileStorageService extends AbstractModule {
         }
 
         return this.fileSystem.loadFileToDisk(fileCode);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Object notify(Object event) {
+        if (event instanceof PrimitiveInputStream) {
+            PrimitiveInputStream inputStream = (PrimitiveInputStream) event;
+            this.writeFile(inputStream.getName(), inputStream);
+
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return event;
     }
 
     /**

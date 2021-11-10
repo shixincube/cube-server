@@ -98,7 +98,7 @@ public abstract class AbstractModule implements Module {
      * @param data
      * @return
      */
-    public JSONObject notify(JSONObject data) {
+    public Object notify(Object data) {
         return data;
     }
 }

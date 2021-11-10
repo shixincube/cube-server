@@ -34,9 +34,9 @@ import cube.service.client.ClientCellet;
 import org.json.JSONObject;
 
 /**
- *
+ * 服务器客户端执行任务。
  */
-public abstract class ClientTask {
+public abstract class ClientTask implements Runnable {
 
     protected final ClientCellet cellet;
 
@@ -79,6 +79,8 @@ public abstract class ClientTask {
         return cellet.getKernel().getModule("Messaging");
     }
 
-    public abstract void run();
+    protected AbstractModule getFileStorageModule() {
+        return cellet.getKernel().getModule("FileStorage");
+    }
 
 }

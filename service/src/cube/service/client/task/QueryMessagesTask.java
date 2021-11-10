@@ -84,7 +84,7 @@ public class QueryMessagesTask extends ClientTask {
         }
 
         // 使用 notify 通知模块
-        JSONObject result = module.notify(notification);
+        JSONObject result = (JSONObject) module.notify(notification);
         if (null != result) {
             response.addParam("result", result);
         }

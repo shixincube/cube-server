@@ -28,6 +28,7 @@ package cube.service.client;
 
 import cell.api.Servable;
 import cell.core.talk.Primitive;
+import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
@@ -80,114 +81,56 @@ public class ClientCellet extends AbstractCellet {
         String action = actionDialect.getName();
 
         if (Actions.LOGIN.name.equals(action)) {
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    ClientManager.getInstance().login(actionDialect.getParamAsLong("id"), talkContext);
-                }
+            this.executor.execute(() -> {
+                ClientManager.getInstance().login(actionDialect.getParamAsLong("id"), talkContext);
             });
         }
         else if (Actions.PushMessage.name.equals(action)) {
-            PushMessageTask task = new PushMessageTask(this, talkContext, actionDialect);
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    task.run();
-                }
-            });
+            this.executor.execute(new PushMessageTask(this, talkContext, actionDialect));
         }
         else if (Actions.GetContact.name.equals(action)) {
-            GetContactTask task = new GetContactTask(this, talkContext, actionDialect);
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    task.run();
-                }
-            });
+            this.executor.execute(new GetContactTask(this, talkContext, actionDialect));
         }
         else if (Actions.GetGroup.name.equals(action)) {
-            GetGroupTask task = new GetGroupTask(this, talkContext, actionDialect);
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    task.run();
-                }
-            });
+            this.executor.execute(new GetGroupTask(this, talkContext, actionDialect));
         }
         else if (Actions.AddEventListener.name.equals(action)) {
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    ClientManager.getInstance().addEventListener(actionDialect.getParamAsLong("id"),
-                            actionDialect.getParamAsString("event"),
-                            actionDialect.containsParam("param") ? actionDialect.getParamAsJson("param") : null);
-                }
+            this.executor.execute(() -> {
+                ClientManager.getInstance().addEventListener(actionDialect.getParamAsLong("id"),
+                        actionDialect.getParamAsString("event"),
+                        actionDialect.containsParam("param") ? actionDialect.getParamAsJson("param") : null);
             });
         }
         else if (Actions.RemoveEventListener.name.equals(action)) {
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    ClientManager.getInstance().removeEventListener(actionDialect.getParamAsLong("id"),
-                            actionDialect.getParamAsString("event"),
-                            actionDialect.containsParam("param") ? actionDialect.getParamAsJson("param") : null);
-                }
+            this.executor.execute(() -> {
+                ClientManager.getInstance().removeEventListener(actionDialect.getParamAsLong("id"),
+                        actionDialect.getParamAsString("event"),
+                        actionDialect.containsParam("param") ? actionDialect.getParamAsJson("param") : null);
             });
         }
         else if (Actions.ListOnlineContacts.name.equals(action)) {
-            ListOnlineContactsTask task = new ListOnlineContactsTask(this, talkContext, actionDialect);
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    task.run();
-                }
-            });
+            this.executor.execute(new ListOnlineContactsTask(this, talkContext, actionDialect));
         }
         else if (Actions.QueryMessages.name.equals(action)) {
-            QueryMessagesTask task = new QueryMessagesTask(this, talkContext, actionDialect);
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    task.run();
-                }
-            });
+            this.executor.execute(new QueryMessagesTask(this, talkContext, actionDialect));
         }
         else if (Actions.UpdateContact.name.equals(action)) {
-            UpdateContactTask task = new UpdateContactTask(this, talkContext, actionDialect);
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    task.run();
-                }
-            });
+            this.executor.execute(new UpdateContactTask(this, talkContext, actionDialect));
         }
         else if (Actions.ApplyToken.name.equals(action)) {
-            ApplyTokenTask task = new ApplyTokenTask(this, talkContext, actionDialect);
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    task.run();
-                }
-            });
+            this.executor.execute(new ApplyTokenTask(this, talkContext, actionDialect));
         }
         else if (Actions.CreateContact.name.equals(action)) {
-            CreateContactTask task = new CreateContactTask(this, talkContext, actionDialect);
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    task.run();
-                }
-            });
+            this.executor.execute(new CreateContactTask(this, talkContext, actionDialect));
         }
         else if (Actions.CreateDomainApp.name.equals(action)) {
-            CreateDomainAppTask task = new CreateDomainAppTask(this, talkContext, actionDialect);
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    task.run();
-                }
-            });
+            this.executor.execute(new CreateDomainAppTask(this, talkContext, actionDialect));
         }
+    }
+
+    @Override
+    public void onListened(TalkContext talkContext, PrimitiveInputStream inputStream) {
+        this.executor.execute(new StreamTask(this, talkContext, inputStream));
     }
 
     @Override

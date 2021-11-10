@@ -231,8 +231,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * {@inheritDoc}
      */
     @Override
-    public JSONObject notify(JSONObject data) {
-        if (data.has("action")) {
+    public Object notify(Object event) {
+        JSONObject data = (event instanceof JSONObject) ? (JSONObject) event : null;
+        if (null != data && data.has("action")) {
             String action = data.getString("action");
             if (MessagingAction.Push.name.equals(action)) {
                 Message message = new Message(data.getJSONObject("message"));
@@ -879,7 +880,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
             // 添加文件
             dir.addFile(fileLabel);
-        } else {
+        }
+        else {
             // 存入发件人的隐藏目录里
 
             fileHierarchy = fileStorageService.getFileHierarchy(domainName, message.getFrom());

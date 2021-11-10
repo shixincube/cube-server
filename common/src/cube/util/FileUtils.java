@@ -68,10 +68,10 @@ public final class FileUtils {
     /**
      * 生成文件码。
      *
-     * @param contactId
-     * @param fileName
-     * @param domain
-     * @return
+     * @param contactId 联系人 ID 。
+     * @param domain 工作的域。
+     * @param fileName 文件名。
+     * @return 返回文件码。
      */
     public static String makeFileCode(Long contactId, String domain, String fileName) {
         StringBuilder buf = new StringBuilder(contactId.toString());

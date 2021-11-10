@@ -348,7 +348,7 @@ public final class Kernel {
      * @param data
      * @return
      */
-    public JSONObject notifyModule(String moduleName, JSONObject data) {
+    public Object notifyModule(String moduleName, Object data) {
         AbstractModule module = this.getModule(moduleName);
         return module.notify(data);
     }

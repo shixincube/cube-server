@@ -153,6 +153,7 @@ public class FileHandler extends CrossDomainHandler {
             responseData.put("fileName", fileName);
             responseData.put("fileSize", fileSize);
             responseData.put("fileCode", fileCode);
+            responseData.put("lastModified", lastModified);
             responseData.put("position", cursor + size);
         } catch (JSONException e) {
             e.printStackTrace();
