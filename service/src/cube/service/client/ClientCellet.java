@@ -114,6 +114,12 @@ public class ClientCellet extends AbstractCellet {
         else if (Actions.QueryMessages.name.equals(action)) {
             this.executor.execute(new QueryMessagesTask(this, talkContext, actionDialect));
         }
+        else if (Actions.GetFile.name.equals(action)) {
+            this.executor.execute(new GetFileTask(this, talkContext, actionDialect));
+        }
+        else if (Actions.PutFile.name.equals(action)) {
+            this.executor.execute(new PutFileTask(this, talkContext, actionDialect));
+        }
         else if (Actions.UpdateContact.name.equals(action)) {
             this.executor.execute(new UpdateContactTask(this, talkContext, actionDialect));
         }

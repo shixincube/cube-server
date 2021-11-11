@@ -301,6 +301,7 @@ public final class FileUtils {
             case PNG:
             case GIF:
             case BMP:
+            case WEBP:
                 return true;
             default:
                 return false;

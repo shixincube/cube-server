@@ -57,9 +57,13 @@ public enum Actions {
 
     PushMessage("PushMessage"),
 
-    QueryMessages("QueryMessages")
+    QueryMessages("QueryMessages"),
 
-    ;
+    GetFile("GetFile"),
+
+    PutFile("PutFile"),
+
+    Cube("Cube");
 
     public final String name;
 

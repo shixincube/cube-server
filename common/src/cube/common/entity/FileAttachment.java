@@ -89,6 +89,15 @@ public class FileAttachment implements JSONable {
     }
 
     /**
+     * 构造函数。
+     *
+     * @param fileLabel 指定文件标签。
+     */
+    public FileAttachment(FileLabel fileLabel) {
+        this.fileLabel = fileLabel;
+    }
+
+    /**
      * 返回文件码。
      *
      * @return 返回文件码。

@@ -30,6 +30,7 @@ import cell.core.talk.PrimitiveInputStream;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.cache.SharedMemoryCache;
+import cube.common.action.FileStorageAction;
 import cube.common.entity.FileLabel;
 import cube.core.*;
 import cube.plugin.PluginSystem;
@@ -436,6 +437,7 @@ public class FileStorageService extends AbstractModule {
     public Object notify(Object event) {
         if (event instanceof PrimitiveInputStream) {
             PrimitiveInputStream inputStream = (PrimitiveInputStream) event;
+            // 写入文件数据
             this.writeFile(inputStream.getName(), inputStream);
 
             try {
@@ -443,9 +445,32 @@ public class FileStorageService extends AbstractModule {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+            return event;
+        }
+        else if (event instanceof JSONObject) {
+            JSONObject data = (JSONObject) event;
+            String action = data.getString("action");
+
+            if (FileStorageAction.GetFile.name.equals(action)) {
+                // 获取文件标签
+                String domain = data.getString("domain");
+                String fileCode = data.getString("fileCode");
+                FileLabel fileLabel = this.getFile(domain, fileCode);
+                if (null != fileLabel) {
+                    return fileLabel.toJSON();
+                }
+            }
+            else if (FileStorageAction.PutFile.name.equals(action)) {
+                JSONObject jsonData = data.getJSONObject("fileLabel");
+                FileLabel label = this.putFile(new FileLabel(jsonData));
+                if (null != label) {
+                    return label.toJSON();
+                }
+            }
         }
 
-        return event;
+        return null;
     }
 
     /**
