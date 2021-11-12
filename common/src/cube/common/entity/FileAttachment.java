@@ -60,6 +60,11 @@ public class FileAttachment implements JSONable {
     private List<FileThumbnail> thumbList;
 
     /**
+     * 文件是否是被压缩的。
+     */
+    private boolean compressed;
+
+    /**
      * 构造函数。
      *
      * @param json 附件的 JSON 结构。
@@ -82,6 +87,9 @@ public class FileAttachment implements JSONable {
                 for (int i = 0, length = array.length(); i < length; ++i) {
                     this.thumbList.add(new FileThumbnail(array.getJSONObject(i)));
                 }
+            }
+            if (json.has("compressed")) {
+                this.compressed = json.getBoolean("compressed");
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -169,28 +177,18 @@ public class FileAttachment implements JSONable {
         JSONObject json = new JSONObject();
 
         if (null != this.fileAnchor) {
-            try {
-                json.put("anchor", this.fileAnchor);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            json.put("anchor", this.fileAnchor);
         }
 
         if (null != this.fileLabel) {
-            try {
-                json.put("label", this.fileLabel.toJSON());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            json.put("label", this.fileLabel.toJSON());
         }
 
         if (null != this.thumbConfig) {
-            try {
-                json.put("thumbConfig", this.thumbConfig);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            json.put("thumbConfig", this.thumbConfig);
         }
+
+        json.put("compressed", this.compressed);
 
         if (null != this.thumbList) {
             try {
