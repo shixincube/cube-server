@@ -916,8 +916,13 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             int size = 480;
             double quality = 0.7;
             try {
-                size = thumbConfig.getInt("size");
-                quality = thumbConfig.getDouble("quality");
+                if (thumbConfig.has("size")) {
+                    size = thumbConfig.getInt("size");
+                }
+
+                if (thumbConfig.has("quality")) {
+                    quality = thumbConfig.getDouble("quality");
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
