@@ -62,7 +62,7 @@ public class FileAttachment implements JSONable {
     /**
      * 文件是否是被压缩的。
      */
-    private boolean compressed;
+    private boolean compressed = false;
 
     /**
      * 构造函数。
@@ -151,6 +151,25 @@ public class FileAttachment implements JSONable {
      */
     public JSONObject getThumbConfig() {
         return this.thumbConfig;
+    }
+
+    /**
+     * 启用缩略图。
+     */
+    public void enableThumbConfig() {
+        this.enableThumbConfig(480, 0.7);
+    }
+
+    /**
+     * 启用缩略图。
+     *
+     * @param size
+     * @param quality
+     */
+    public void enableThumbConfig(int size, double quality) {
+        this.thumbConfig = new JSONObject();
+        this.thumbConfig.put("size", size);
+        this.thumbConfig.put("quality", quality);
     }
 
     public void addThumbnail(FileThumbnail thumbnail) {
