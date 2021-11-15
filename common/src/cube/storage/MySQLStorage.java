@@ -506,6 +506,10 @@ public class MySQLStorage extends AbstractStorage {
         }
 
         protected void returnConn(Connection connection) {
+            if (null == connection) {
+                return;
+            }
+
             try {
                 if (!connection.isClosed()) {
                     this.connections.offer(connection);

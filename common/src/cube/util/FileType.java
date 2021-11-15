@@ -51,7 +51,7 @@ public enum FileType {
 
     RGB(new String[]{ "rgb" }, "image/x-rgb", new byte[] { 0x01, (byte)0xda }),
 
-    JPEG(new String[]{ "jpeg", "jpg", "jpe" }, "image/jpeg", new byte[] { (byte)0xff, (byte)0xd8, (byte)0xff, (byte)0xe0 }),
+    JPEG(new String[]{ "jpg", "jpeg", "jpe" }, "image/jpeg", new byte[] { (byte)0xff, (byte)0xd8, (byte)0xff, (byte)0xe0 }),
 
     NIFF(new String[]{ "nif" }, "application/vnd.music-niff", new byte[] { 0x49, 0x49, 0x4e, 0x31 }),
 
