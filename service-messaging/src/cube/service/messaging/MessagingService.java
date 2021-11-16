@@ -830,111 +830,101 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         if (Logger.isDebugLevel()) {
             Logger.d(this.getClass(), "Process attachment : " + message.getFrom() + " - "
-                    + message.getAttachment().getFileCode());
+                    + message.getAttachment().getFileCode(0));
         }
 
         FileStorageService fileStorageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
 
         String domainName = message.getDomain().getName();
 
-        int count = 12;
-        while (!fileStorageService.existsFileData(fileAttachment.getFileCode())) {
-            try {
-                Thread.sleep(500L);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        for (int i = 0, length = fileAttachment.numFiles(); i < length; ++i) {
+            int count = 12;
+            while (!fileStorageService.existsFileData(fileAttachment.getFileCode(i))) {
+                try {
+                    Thread.sleep(500L);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                --count;
+                if (count <= 0) {
+                    break;
+                }
             }
-            --count;
-            if (count <= 0) {
-                break;
-            }
-        }
 
 //        if (Logger.isDebugLevel()) {
 //            Logger.d(this.getClass(), "Process attachment [File Exists] : " + message.getFrom() + " - "
 //                    + message.getAttachment().getFileCode());
 //        }
 
-        // 获取文件标签
-        FileLabel fileLabel = fileStorageService.getFile(domainName, fileAttachment.getFileCode());
-        if (null == fileLabel) {
-            Logger.e(this.getClass(), "Can NOT find file label : " + fileAttachment.getFileLabel());
-            return false;
-        }
-
-        FileHierarchy fileHierarchy = null;
-        if (message.getSource().longValue() > 0) {
-            // 存入群组的隐藏目录里
-
-            fileHierarchy = fileStorageService.getFileHierarchy(domainName, message.getSource());
-            Directory root = fileHierarchy.getRoot();
-
-            // 将文件存到隐藏目录里
-            Directory dir = null;
-            if (!root.existsDirectory(HIDDEN_DIR)) {
-                dir = root.createDirectory(HIDDEN_DIR);
-                dir.setHidden(true);
-            } else {
-                dir = root.getDirectory(HIDDEN_DIR);
+            // 获取文件标签
+            FileLabel fileLabel = fileStorageService.getFile(domainName, fileAttachment.getFileCode(i));
+            if (null == fileLabel) {
+                Logger.e(this.getClass(), "Can NOT find file label : " + fileAttachment.getFileLabel(i));
+                return false;
             }
 
-            // 添加文件
-            dir.addFile(fileLabel);
-        }
-        else {
-            // 存入发件人的隐藏目录里
+            FileHierarchy fileHierarchy = null;
+            if (message.getSource().longValue() > 0) {
+                // 存入群组的隐藏目录里
 
-            fileHierarchy = fileStorageService.getFileHierarchy(domainName, message.getFrom());
-            Directory root = fileHierarchy.getRoot();
+                fileHierarchy = fileStorageService.getFileHierarchy(domainName, message.getSource());
+                Directory root = fileHierarchy.getRoot();
 
-            Directory dir = root.getDirectory(HIDDEN_DIR);
-            if (null == dir) {
-                dir = root.createDirectory(HIDDEN_DIR);
-                dir.setHidden(true);
+                // 将文件存到隐藏目录里
+                Directory dir = null;
+                if (!root.existsDirectory(HIDDEN_DIR)) {
+                    dir = root.createDirectory(HIDDEN_DIR);
+                    dir.setHidden(true);
+                } else {
+                    dir = root.getDirectory(HIDDEN_DIR);
+                }
+
+                // 添加文件
+                dir.addFile(fileLabel);
+            }
+            else {
+                // 存入发件人的隐藏目录里
+
+                fileHierarchy = fileStorageService.getFileHierarchy(domainName, message.getFrom());
+                Directory root = fileHierarchy.getRoot();
+
+                Directory dir = root.getDirectory(HIDDEN_DIR);
+                if (null == dir) {
+                    dir = root.createDirectory(HIDDEN_DIR);
+                    dir.setHidden(true);
+                }
+
+                // 添加文件
+                dir.addFile(fileLabel);
             }
 
-            // 添加文件
-            dir.addFile(fileLabel);
-        }
-
-        // 向消息附件追加文件标签
-        fileAttachment.setFileLabel(fileLabel);
+            // 向消息附件追加文件标签
+            fileAttachment.addFileLabel(fileLabel);
 
 //        if (Logger.isDebugLevel()) {
 //            Logger.d(this.getClass(), "Process attachment [Set file label] : " + message.getFrom() + " - "
 //                    + message.getAttachment().getFileCode());
 //        }
 
-        // 是否生成缩略图
-        JSONObject thumbConfig = fileAttachment.getThumbConfig();
-        if (null != thumbConfig && this.getKernel().hasModule(FileProcessorService.NAME)) {
-            if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "Make thumb : " + message.getFrom() + " - "
-                        + fileAttachment.getFileLabel().getFileCode());
-            }
-
-            int size = 480;
-            double quality = 0.7;
-            try {
-                if (thumbConfig.has("size")) {
-                    size = thumbConfig.getInt("size");
+            // 是否生成缩略图
+            boolean genThumb = fileAttachment.isImageType(i);
+            if (genThumb && this.getKernel().hasModule(FileProcessorService.NAME)) {
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "Make thumb : " + message.getFrom() + " - "
+                            + fileAttachment.getFileCode(i));
                 }
 
-                if (thumbConfig.has("quality")) {
-                    quality = thumbConfig.getDouble("quality");
+                int quality = 50;
+
+                FileProcessorService processor = (FileProcessorService) this.getKernel().getModule(FileProcessorService.NAME);
+
+                // 生成缩略图
+                FileThumbnail thumbnail = processor.makeThumbnail(domainName, fileLabel, quality);
+
+                // 将缩略图作为文件标签的上下文数据
+                if (null != thumbnail) {
+                    fileLabel.setContext(thumbnail.toJSON());
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            FileProcessorService processor = (FileProcessorService) this.getKernel().getModule(FileProcessorService.NAME);
-
-            // 生成缩略图
-            FileThumbnail thumbnail = processor.makeThumbnail(domainName, fileLabel, size, quality);
-
-            // 添加缩略图
-            if (null != thumbnail) {
-                fileAttachment.addThumbnail(thumbnail);
             }
         }
 

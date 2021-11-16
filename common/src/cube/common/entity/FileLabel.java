@@ -103,6 +103,11 @@ public class FileLabel extends Entity {
     private String directURL;
 
     /**
+     * 文件标签的上下文。
+     */
+    private JSONObject context;
+
+    /**
      * 构造函数。
      *
      * @param domainName 域名称。
@@ -182,6 +187,10 @@ public class FileLabel extends Entity {
         }
         if (json.has("directURL")) {
             this.directURL = json.getString("directURL");
+        }
+
+        if (json.has("context")) {
+            this.context = json.getJSONObject("context");
         }
 
         this.uniqueKey = this.fileCode;
@@ -367,8 +376,21 @@ public class FileLabel extends Entity {
         return this.directURL;
     }
 
+    /**
+     * 设置上下文数据。
+     *
+     * @param context
+     */
+    public void setContext(JSONObject context) {
+        this.context = context;
+    }
+
     @Override
     public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+
         if (null != object && object instanceof FileLabel) {
             FileLabel other = (FileLabel) object;
             if (other.fileCode.equals(this.fileCode)) {
@@ -410,6 +432,11 @@ public class FileLabel extends Entity {
         if (null != this.directURL) {
             json.put("directURL", this.directURL);
         }
+
+        if (null != this.context) {
+            json.put("context", this.context);
+        }
+
         return json;
     }
 

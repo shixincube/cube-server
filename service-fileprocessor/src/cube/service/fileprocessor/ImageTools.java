@@ -103,7 +103,55 @@ public final class ImageTools {
      * @param outputFile
      * @return
      */
-    public static Image thumbnail(String inputFile, String outputFile, int size) {
+    public static Image thumbnail(String inputFile, String outputFile, int quality) {
+        ProcessBuilder pb = new ProcessBuilder("convert", inputFile, "-sample", Integer.toString(quality), outputFile + ".jpg");
+
+        Process process = null;
+        int status = 0;
+
+        try {
+            String line = null;
+            process = pb.start();
+//            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+//            while ((line = stdInput.readLine()) != null) {
+//            }
+            while ((line = stdError.readLine()) != null) {
+                if (line.length() > 0) {
+                    Logger.w(ImageTools.class, "#identify - " + line);
+                }
+            }
+
+            try {
+                status = process.waitFor();
+            } catch (InterruptedException e) {
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != process) {
+                process.destroy();
+            }
+        }
+
+        File file = new File(outputFile + ".jpg");
+        if (file.exists()) {
+            return ImageTools.identify(file.getAbsolutePath());
+        }
+        else {
+            return null;
+        }
+    }
+
+    /**
+     * 生成缩略图。
+     *
+     * @param inputFile
+     * @param outputFile
+     * @param size
+     * @return
+     */
+    public static Image thumbnailResize(String inputFile, String outputFile, int size) {
         ProcessBuilder pb = new ProcessBuilder("convert", inputFile, "-thumbnail", size + "x" + size, outputFile + ".jpg");
 
         Process process = null;

@@ -27,6 +27,8 @@
 package cube.common.entity;
 
 import cube.common.JSONable;
+import cube.util.FileType;
+import cube.util.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,27 +42,17 @@ import java.util.List;
 public class FileAttachment implements JSONable {
 
     /**
-     * JSON 格式描述的锚点。
+     * 锚点。
      */
-    private JSONObject fileAnchor;
+    private List<FileAnchor> anchorList;
 
     /**
      * 文件标签。
      */
-    private FileLabel fileLabel;
+    private List<FileLabel> labelList;
 
     /**
-     * 生成文件缩略图的参数信息。
-     */
-    private JSONObject thumbConfig;
-
-    /**
-     * 文件缩略图列表。
-     */
-    private List<FileThumbnail> thumbList;
-
-    /**
-     * 文件是否是被压缩的。
+     * 是否压缩了原文件。
      */
     private boolean compressed = false;
 
@@ -70,29 +62,27 @@ public class FileAttachment implements JSONable {
      * @param json 附件的 JSON 结构。
      */
     public FileAttachment(JSONObject json) {
-        try {
-            if (json.has("anchor")) {
-                this.fileAnchor = json.getJSONObject("anchor");
-            }
-            if (json.has("label")) {
-                this.fileLabel = new FileLabel(json.getJSONObject("label"));
-            }
-            if (json.has("thumbConfig")) {
-                this.thumbConfig = json.getJSONObject("thumbConfig");
-            }
-            if (json.has("thumbs")) {
-                this.thumbList = new ArrayList<>();
+        this.anchorList = new ArrayList<>();
+        this.labelList = new ArrayList<>();
 
-                JSONArray array = json.getJSONArray("thumbs");
-                for (int i = 0, length = array.length(); i < length; ++i) {
-                    this.thumbList.add(new FileThumbnail(array.getJSONObject(i)));
-                }
+        if (json.has("labels")) {
+            JSONArray array = json.getJSONArray("labels");
+            for (int i = 0; i < array.length(); ++i) {
+                FileLabel fileLabel = new FileLabel(array.getJSONObject(i));
+                this.labelList.add(fileLabel);
             }
-            if (json.has("compressed")) {
-                this.compressed = json.getBoolean("compressed");
+        }
+
+        if (json.has("anchors")) {
+            JSONArray array = json.getJSONArray("anchors");
+            for (int i = 0; i < array.length(); ++i) {
+                FileAnchor fileAnchor = new FileAnchor(array.getJSONObject(i));
+                this.anchorList.add(fileAnchor);
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
+        }
+
+        if (json.has("compressed")) {
+            this.compressed = json.getBoolean("compressed");
         }
     }
 
@@ -102,7 +92,18 @@ public class FileAttachment implements JSONable {
      * @param fileLabel 指定文件标签。
      */
     public FileAttachment(FileLabel fileLabel) {
-        this.fileLabel = fileLabel;
+        this.anchorList = new ArrayList<>();
+        this.labelList = new ArrayList<>();
+        this.labelList.add(fileLabel);
+    }
+
+    /**
+     * 获取包含的文件数量。
+     *
+     * @return
+     */
+    public int numFiles() {
+        return Math.max(this.anchorList.size(), this.labelList.size());
     }
 
     /**
@@ -110,17 +111,13 @@ public class FileAttachment implements JSONable {
      *
      * @return 返回文件码。
      */
-    public String getFileCode() {
-        if (null != this.fileAnchor) {
-            try {
-                return this.fileAnchor.getString("fileCode");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+    public String getFileCode(int index) {
+        if (index < this.anchorList.size()) {
+            return this.anchorList.get(index).fileCode;
         }
 
-        if (null != this.fileLabel) {
-            return this.fileLabel.getFileCode();
+        if (index < this.labelList.size()) {
+            return this.labelList.get(index).getFileCode();
         }
 
         return null;
@@ -131,8 +128,8 @@ public class FileAttachment implements JSONable {
      *
      * @return 返回文件标签。
      */
-    public FileLabel getFileLabel() {
-        return this.fileLabel;
+    public FileLabel getFileLabel(int index) {
+        return this.labelList.get(index);
     }
 
     /**
@@ -140,52 +137,34 @@ public class FileAttachment implements JSONable {
      *
      * @param fileLabel 指定文件标签。
      */
-    public void setFileLabel(FileLabel fileLabel) {
-        this.fileLabel = fileLabel;
-    }
-
-    /**
-     * 缩略图配置参数。
-     *
-     * @return
-     */
-    public JSONObject getThumbConfig() {
-        return this.thumbConfig;
-    }
-
-    /**
-     * 启用缩略图。
-     */
-    public void enableThumbConfig() {
-        this.enableThumbConfig(480, 0.7);
-    }
-
-    /**
-     * 启用缩略图。
-     *
-     * @param size
-     * @param quality
-     */
-    public void enableThumbConfig(int size, double quality) {
-        this.thumbConfig = new JSONObject();
-        this.thumbConfig.put("size", size);
-        this.thumbConfig.put("quality", quality);
-    }
-
-    public void addThumbnail(FileThumbnail thumbnail) {
-        if (null == this.thumbList) {
-            this.thumbList = new ArrayList<>();
-        }
-
-        this.thumbList.add(thumbnail);
-    }
-
-    public void removeThumbnail(FileThumbnail thumbnail) {
-        if (null == this.thumbList) {
+    public void addFileLabel(FileLabel fileLabel) {
+        int index = this.labelList.indexOf(fileLabel);
+        if (index >= 0) {
+            this.labelList.set(index, fileLabel);
             return;
         }
 
-        this.thumbList.remove(thumbnail);
+        this.labelList.add(fileLabel);
+    }
+
+    public boolean isCompressed() {
+        return this.compressed;
+    }
+
+    public void setCompressed(boolean value) {
+        this.compressed = value;
+    }
+
+    public boolean isImageType(int index) {
+        if (index < this.anchorList.size()) {
+            FileAnchor anchor = this.anchorList.get(index);
+            FileType type = FileUtils.extractFileExtensionType(anchor.fileName);
+            if (FileType.JPEG == type || FileType.PNG == type || FileType.BMP == type || FileType.GIF == type) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -195,31 +174,19 @@ public class FileAttachment implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
 
-        if (null != this.fileAnchor) {
-            json.put("anchor", this.fileAnchor);
+        JSONArray array = new JSONArray();
+        for (FileAnchor anchor : this.anchorList) {
+            array.put(anchor.toJSON());
         }
+        json.put("anchors", array);
 
-        if (null != this.fileLabel) {
-            json.put("label", this.fileLabel.toJSON());
+        array = new JSONArray();
+        for (FileLabel label : this.labelList) {
+            array.put(label.toJSON());
         }
-
-        if (null != this.thumbConfig) {
-            json.put("thumbConfig", this.thumbConfig);
-        }
+        json.put("labels", array);
 
         json.put("compressed", this.compressed);
-
-        if (null != this.thumbList) {
-            try {
-                JSONArray array = new JSONArray();
-                for (int i = 0; i < this.thumbList.size(); ++i) {
-                    array.put(this.thumbList.get(i).toJSON());
-                }
-                json.put("thumbs", array);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
 
         return json;
     }

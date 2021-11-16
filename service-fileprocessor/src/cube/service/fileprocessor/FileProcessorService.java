@@ -156,11 +156,10 @@ public class FileProcessorService extends AbstractModule {
      *
      * @param domainName
      * @param fileCode
-     * @param size
      * @param quality
      * @return
      */
-    public FileThumbnail makeThumbnail(String domainName, String fileCode, int size, double quality) {
+    public FileThumbnail makeThumbnail(String domainName, String fileCode, int quality) {
         FileStorageService fileStorage = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
 
         // 查找文件
@@ -169,7 +168,7 @@ public class FileProcessorService extends AbstractModule {
             return null;
         }
 
-        return this.makeThumbnail(domainName, srcFileLabel, size, quality);
+        return this.makeThumbnail(domainName, srcFileLabel, quality);
     }
 
     /**
@@ -177,11 +176,10 @@ public class FileProcessorService extends AbstractModule {
      *
      * @param domainName
      * @param srcFileLabel
-     * @param size
      * @param quality
      * @return
      */
-    public FileThumbnail makeThumbnail(String domainName, FileLabel srcFileLabel, int size, double quality) {
+    public FileThumbnail makeThumbnail(String domainName, FileLabel srcFileLabel, int quality) {
         boolean supported = false;
         FileType fileType = srcFileLabel.getFileType();
         if (fileType == FileType.JPEG || fileType == FileType.PNG
@@ -215,7 +213,7 @@ public class FileProcessorService extends AbstractModule {
         FileThumbnail fileThumbnail = null;
 
         // 生成缩略图文件名
-        String thumbFileName = FileUtils.extractFileName(srcFileLabel.getFileName()) + "_thumb_" + size + ".jpg";
+        String thumbFileName = FileUtils.extractFileName(srcFileLabel.getFileName()) + "_thumb.jpg";
 
         // 生成缩略图文件码
         String thumbFileCode = FileUtils.makeFileCode(srcFileLabel.getOwnerId(), domainName, thumbFileName);
@@ -239,7 +237,8 @@ public class FileProcessorService extends AbstractModule {
             srcWidth = image.width;
             srcHeight = image.height;
 
-            Image thumbImage = ImageTools.thumbnail(input.getAbsolutePath(), outputFile, size);
+            // 生成缩略图
+            Image thumbImage = ImageTools.thumbnail(input.getAbsolutePath(), outputFile, quality);
 
             if (null == thumbImage) {
                 Logger.w(this.getClass(), "#makeThumbnail - Can NOT make thumbnail image : " + input.getAbsolutePath());
@@ -262,9 +261,11 @@ public class FileProcessorService extends AbstractModule {
                 srcWidth = src.getWidth();
                 srcHeight = src.getHeight();
 
+                int size = Math.max(srcWidth, srcHeight);
+
                 if (srcWidth > size || srcHeight > size) {
                     Thumbnails.Builder<File> builder = Thumbnails.of(input);
-                    builder.size(size, size).outputFormat("jpg").outputQuality(quality).toFile(outputFile);
+                    builder.size(size, size).outputFormat("jpg").outputQuality(((double)quality) / 100.0f).toFile(outputFile);
 
                     BufferedImage thumb = builder.asBufferedImage();
                     thumbWidth = thumb.getWidth();
@@ -272,7 +273,7 @@ public class FileProcessorService extends AbstractModule {
                     thumb = null;
                 }
                 else {
-                    Thumbnails.of(input).scale(1.0).outputQuality(quality).toFile(outputFile);
+                    Thumbnails.of(input).scale(1.0).outputQuality(((double)quality) / 100.0f).toFile(outputFile);
 
                     thumbWidth = srcWidth;
                     thumbHeight = srcHeight;

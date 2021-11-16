@@ -47,11 +47,11 @@ public class FileThumbnail extends Entity {
 
     private int sourceHeight;
 
-    private double quality;
+    private int quality;
 
     public FileThumbnail(FileLabel fileLabel, int width, int height,
                          String sourceFileCode, int sourceWidth, int sourceHeight,
-                         double quality) {
+                         int quality) {
         super(Utils.generateSerialNumber(), fileLabel.getDomain());
         this.fileLabel = fileLabel;
         this.width = width;
@@ -71,7 +71,7 @@ public class FileThumbnail extends Entity {
             this.sourceFileCode = json.getString("sourceFileCode");
             this.sourceWidth = json.getInt("sourceWidth");
             this.sourceHeight = json.getInt("sourceHeight");
-            this.quality = json.getDouble("quality");
+            this.quality = json.getInt("quality");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -79,6 +79,10 @@ public class FileThumbnail extends Entity {
 
     @Override
     public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+
         if (null != object && object instanceof FileThumbnail) {
             FileThumbnail other = (FileThumbnail) object;
             if (other.fileLabel.equals(this.fileLabel)) {
