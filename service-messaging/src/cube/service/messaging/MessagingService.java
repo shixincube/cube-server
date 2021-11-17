@@ -914,7 +914,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                             + fileAttachment.getFileCode(i));
                 }
 
-                int quality = 50;
+                int quality = 60;
 
                 FileProcessorService processor = (FileProcessorService) this.getKernel().getModule(FileProcessorService.NAME);
 

@@ -61,7 +61,7 @@ public class Group extends AbstractContact implements Comparable<Group> {
     /**
      * 群组的标签。
      */
-    private String tag = "public";
+    private String tag = GroupTag.Public;
 
     /**
      * 群组状态。

@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -59,6 +60,11 @@ public class GroupAppendix extends Entity {
     private HashMap<Long, JSONObject> contexts;
 
     /**
+     * 成员对该群是否进行了关注。私有信息。
+     */
+    private HashMap<Long, Boolean> followings;
+
+    /**
      * 当前有效的通讯 ID 。
      */
     private Long commId;
@@ -82,6 +88,7 @@ public class GroupAppendix extends Entity {
 
         this.remarks = new HashMap<>();
         this.contexts = new HashMap<>();
+        this.followings = new HashMap<>();
         this.applicants = new ArrayList<>();
 
         this.commId = 0L;
@@ -102,6 +109,7 @@ public class GroupAppendix extends Entity {
 
         this.remarks = new HashMap<>();
         this.contexts = new HashMap<>();
+        this.followings = new HashMap<>();
         this.applicants = new ArrayList<>();
 
         this.commId = 0L;
@@ -111,32 +119,38 @@ public class GroupAppendix extends Entity {
         }
 
         if (json.has("memberRemarks")) {
-            JSONArray array = json.getJSONArray("memberRemarks");
-            for (int i = 0; i < array.length(); ++i) {
-                JSONObject item = array.getJSONObject(i);
-                Long id = item.getLong("id");
-                String name = item.getString("name");
-                this.memberRemarks.put(id, name);
+            JSONObject data = json.getJSONObject("memberRemarks");
+            Iterator<String> iterator = data.keys();
+            while (iterator.hasNext()) {
+                String key = iterator.next();
+                this.memberRemarks.put(Long.parseLong(key), data.getString(key));
             }
         }
 
         if (json.has("remarks")) {
-            JSONArray array = json.getJSONArray("remarks");
-            for (int i = 0; i < array.length(); ++i) {
-                JSONObject item = array.getJSONObject(i);
-                Long id = item.getLong("id");
-                String remark = item.getString("remark");
-                this.remarks.put(id, remark);
+            JSONObject data = json.getJSONObject("remarks");
+            Iterator<String> iterator = data.keys();
+            while (iterator.hasNext()) {
+                String key = iterator.next();
+                this.remarks.put(Long.parseLong(key), data.getString(key));
             }
         }
 
         if (json.has("contexts")) {
-            JSONArray array = json.getJSONArray("contexts");
-            for (int i = 0; i < array.length(); ++i) {
-                JSONObject item = array.getJSONObject(i);
-                Long id = item.getLong("id");
-                JSONObject context = item.getJSONObject("context");
-                this.contexts.put(id, context);
+            JSONObject data = json.getJSONObject("contexts");
+            Iterator<String> iterator = data.keys();
+            while (iterator.hasNext()) {
+                String key = iterator.next();
+                this.contexts.put(Long.parseLong(key), data.getJSONObject(key));
+            }
+        }
+
+        if (json.has("followings")) {
+            JSONObject data = json.getJSONObject("followings");
+            Iterator<String> iterator = data.keys();
+            while (iterator.hasNext()) {
+                String key = iterator.next();
+                this.followings.put(Long.parseLong(key), data.getBoolean(key));
             }
         }
 
@@ -211,6 +225,28 @@ public class GroupAppendix extends Entity {
     public String getRemark(Contact member) {
         this.resetTimestamp();
         return this.remarks.get(member.getId());
+    }
+
+    /**
+     * 指定成员是否关注该群组。
+     *
+     * @param member
+     * @param following
+     */
+    public void setFollowing(Contact member, boolean following) {
+        this.followings.put(member.getId(), following);
+        this.resetTimestamp();
+    }
+
+    /**
+     * 获取指定成员是否关注了该群组。
+     *
+     * @param member
+     * @return
+     */
+    public boolean getFollowing(Contact member) {
+        Boolean following = this.followings.get(member.getId());
+        return (null != following ? following : false);
     }
 
     /**
@@ -308,6 +344,14 @@ public class GroupAppendix extends Entity {
             json.put("context", context);
         }
 
+        Boolean following = this.followings.get(member.getId());
+        if (null != following) {
+            json.put("following", following.booleanValue());
+        }
+        else {
+            json.put("following", false);
+        }
+
         if (this.owner.getOwner().equals(member)) {
             JSONArray array = new JSONArray();
             ArrayList<JSONObject> applicants = new ArrayList<>(this.applicants);
@@ -330,32 +374,29 @@ public class GroupAppendix extends Entity {
 
         json.put("notice", (null == this.notice) ? "" : this.notice);
 
-        JSONArray memberRemarkArray = new JSONArray();
+        JSONObject memberRemarks = new JSONObject();
         for (Map.Entry<Long, String> e : this.memberRemarks.entrySet()) {
-            JSONObject mr = new JSONObject();
-            mr.put("id", e.getKey().longValue());
-            mr.put("name", e.getValue());
-            memberRemarkArray.put(mr);
+            memberRemarks.put(e.getKey().toString(), e.getValue());
         }
-        json.put("memberRemarks", memberRemarkArray);
+        json.put("memberRemarks", memberRemarks);
 
-        JSONArray remarksArray = new JSONArray();
+        JSONObject remarks = new JSONObject();
         for (Map.Entry<Long, String> e : this.remarks.entrySet()) {
-            JSONObject item = new JSONObject();
-            item.put("id", e.getKey().longValue());
-            item.put("remark", e.getValue());
-            remarksArray.put(item);
+            remarks.put(e.getKey().toString(), e.getValue());
         }
-        json.put("remarks", remarksArray);
+        json.put("remarks", remarks);
 
-        JSONArray contextsArray = new JSONArray();
+        JSONObject contexts = new JSONObject();
         for (Map.Entry<Long, JSONObject> e : this.contexts.entrySet()) {
-            JSONObject item = new JSONObject();
-            item.put("id", e.getKey().longValue());
-            item.put("context", e.getValue());
-            contextsArray.put(item);
+            contexts.put(e.getKey().toString(), e.getValue());
         }
-        json.put("contexts", contextsArray);
+        json.put("contexts", contexts);
+
+        JSONObject followings = new JSONObject();
+        for (Map.Entry<Long, Boolean> e : this.followings.entrySet()) {
+            followings.put(e.getKey().toString(), e.getValue().booleanValue());
+        }
+        json.put("followings", followings);
 
         JSONArray applicantArray = new JSONArray();
         for (JSONObject applicantJson : this.applicants) {
