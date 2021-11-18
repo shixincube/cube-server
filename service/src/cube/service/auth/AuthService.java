@@ -227,6 +227,21 @@ public class AuthService extends AbstractModule {
     }
 
     /**
+     * 将令牌里的 CID 进行绑定。
+     *
+     * @param token
+     * @return
+     */
+    public boolean bindToken(AuthToken token) {
+        if (token.getContactId() == 0) {
+            return false;
+        }
+
+        this.authStorage.updateToken(token);
+        return true;
+    }
+
+    /**
      * 通过编码获取令牌。
      *
      * @param code 指定令牌码。

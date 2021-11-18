@@ -646,8 +646,22 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @return 返回令牌码对应的联系人。
      */
     public Contact getContact(String tokenCode) {
+        if (null == tokenCode) {
+            return null;
+        }
+
         TokenDevice device = this.tokenContactMap.get(tokenCode);
         if (null == device) {
+            // 从授权模块查找令牌
+            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+            AuthToken authToken = authService.getToken(tokenCode);
+            if (null != authToken) {
+                long contactId = authToken.getContactId();
+                if (contactId > 0) {
+                    return this.getContact(authToken.getDomain(), contactId);
+                }
+            }
+
             return null;
         }
 
@@ -1493,6 +1507,13 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         // 记录令牌对应关系
         this.tokenContactMap.put(token.getCode().toString(), new TokenDevice(activeContact, activeDevice));
+
+        // 绑定令牌
+        token.setContactId(contact.getId());
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        if (!authService.bindToken(token)) {
+            Logger.w(ContactManager.class, "#follow - bind token for " + contact.getId() + " failed");
+        }
 
         // 建立群组缓存
         GroupTable groupTable = this.activeGroupTables.get(contact.getDomain().getName());

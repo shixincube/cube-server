@@ -777,6 +777,15 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     }
 
     /**
+     * 更新指定的会话。
+     *
+     * @param conversation 指定待更新会话。
+     */
+    public void updateConversation(Conversation conversation) {
+        this.storage.updateConversation(conversation);
+    }
+
+    /**
      * 制作消息的 From 和 To 的两个副本。
      *
      * @param message
@@ -934,17 +943,20 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     private void updateConversations(Message fromCopy, Message toCopy) {
         this.storage.updateConversation(fromCopy.getDomain().getName(), fromCopy.getOwner(),
                 fromCopy.getTo(), fromCopy.getId(),
-                fromCopy.getRemoteTimestamp(), ConversationType.Contact);
+                fromCopy.getRemoteTimestamp(), ConversationType.Contact,
+                ConversationState.Normal, ConversationRemindType.Normal);
 
         this.storage.updateConversation(toCopy.getDomain().getName(), toCopy.getOwner(),
                 toCopy.getFrom(), toCopy.getId(),
-                toCopy.getRemoteTimestamp(), ConversationType.Contact);
+                toCopy.getRemoteTimestamp(), ConversationType.Contact,
+                ConversationState.Normal, ConversationRemindType.Normal);
     }
 
     private void updateConversation(Group group, Message message) {
         this.storage.updateConversation(message.getDomain().getName(), message.getOwner(),
                 group.getId(), message.getId(),
-                message.getRemoteTimestamp(), ConversationType.Group);
+                message.getRemoteTimestamp(), ConversationType.Group,
+                ConversationState.Normal, ConversationRemindType.Normal);
     }
 
     @Override

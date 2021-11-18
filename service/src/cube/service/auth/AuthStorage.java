@@ -285,6 +285,14 @@ public class AuthStorage implements Storagable {
         return token;
     }
 
+    public void updateToken(AuthToken token) {
+        this.storage.executeUpdate(this.tokenTable, new StorageField[] {
+                new StorageField("cid", token.getContactId())
+        }, new Conditional[] {
+                Conditional.createEqualTo("code", token.getCode())
+        });
+    }
+
     private void checkDomainTable() {
         if (!this.storage.exist(this.domainTable)) {
             // 不存在，建新表

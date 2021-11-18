@@ -36,7 +36,6 @@ import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.Conversation;
-import cube.common.entity.Message;
 import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -45,15 +44,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 标记消息已读任务。
  */
-public class GetConversationsTask extends ServiceTask {
+public class UpdateConversationTask extends ServiceTask {
 
-    public GetConversationsTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public UpdateConversationTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -73,9 +71,9 @@ public class GetConversationsTask extends ServiceTask {
             return;
         }
 
-        int limit = 0;
+        Conversation conversation = null;
         try {
-            limit = data.getInt("limit");
+            conversation = new Conversation(data, contact);
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
@@ -85,27 +83,11 @@ public class GetConversationsTask extends ServiceTask {
         }
 
         MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingService.NAME);
-
-        JSONObject response = new JSONObject();
-        JSONArray array = new JSONArray();
-
-        // 获取最近清单
-        List<Conversation> conversationList = messagingService.getRecentConversations(contact);
-        if (null != conversationList) {
-            // 返回指定数量的结果
-            int num = Math.min(conversationList.size(), limit);
-
-            for (int i = 0; i < num; ++i) {
-                Conversation conversation = conversationList.get(i);
-                array.put(conversation.toJSON());
-            }
-        }
-
-        response.put("total", (null != conversationList) ? conversationList.size() : array.length());
-        response.put("list", array);
+        // 更新会话
+        messagingService.updateConversation(conversation);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, MessagingStateCode.Ok.code, response));
+                this.makeResponse(action, packet, MessagingStateCode.Ok.code, conversation.toJSON()));
         markResponseTime();
     }
 }

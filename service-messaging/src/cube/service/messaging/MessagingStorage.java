@@ -686,15 +686,31 @@ public class MessagingStorage implements Storagable {
     /**
      * 更新指定新信息的会话。
      *
+     * @param conversation
+     */
+    public void updateConversation(Conversation conversation) {
+        long messageId = (null != conversation.getRecentMessage()) ? conversation.getRecentMessage().getId() : 0;
+        this.updateConversation(conversation.getDomain().getName(), conversation.getOwnerId(),
+                conversation.getPivotalId(), messageId,
+                conversation.getTimestamp(), conversation.getType(), conversation.getState(),
+                conversation.getRemindType());
+    }
+
+    /**
+     * 更新指定新信息的会话。
+     *
      * @param domain
      * @param ownerId
      * @param pivotalId
      * @param messageId
      * @param timestamp
      * @param type
+     * @param state
+     * @param remindType
      */
-    public void updateConversation(String domain, Long ownerId, Long pivotalId, Long messageId,
-                                   long timestamp, ConversationType type) {
+    public void updateConversation(String domain, Long ownerId, Long pivotalId, long messageId,
+                                   long timestamp, ConversationType type, ConversationState state,
+                                   ConversationRemindType remindType) {
         final String table = this.conversationTableNameMap.get(domain);
         this.executor.execute(new Runnable() {
             @Override
@@ -702,9 +718,9 @@ public class MessagingStorage implements Storagable {
                 List<StorageField[]> result = storage.executeQuery(table, new StorageField[] {
                         new StorageField("sn", LiteralBase.LONG)
                 }, new Conditional[] {
-                        Conditional.createEqualTo("owner", LiteralBase.LONG, ownerId.longValue()),
+                        Conditional.createEqualTo("owner", ownerId.longValue()),
                         Conditional.createAnd(),
-                        Conditional.createEqualTo("pivotal_id", LiteralBase.LONG, pivotalId.longValue())
+                        Conditional.createEqualTo("pivotal_id", pivotalId.longValue())
                 });
 
                 if (result.isEmpty()) {
@@ -712,22 +728,24 @@ public class MessagingStorage implements Storagable {
                     // 会话的 ID 就是关键实体的 ID
                     long conversationId = pivotalId.longValue();
                     storage.executeInsert(table, new StorageField[] {
-                            new StorageField("id", LiteralBase.LONG, conversationId),
-                            new StorageField("owner", LiteralBase.LONG, ownerId.longValue()),
-                            new StorageField("timestamp", LiteralBase.LONG, timestamp),
-                            new StorageField("type", LiteralBase.INT, type.code),
-                            new StorageField("state", LiteralBase.INT, ConversationState.Normal.code),
-                            new StorageField("remind", LiteralBase.INT, ConversationRemindType.Normal.code),
-                            new StorageField("pivotal_id", LiteralBase.LONG, pivotalId.longValue()),
-                            new StorageField("recent_message_id", LiteralBase.LONG, messageId.longValue())
+                            new StorageField("id", conversationId),
+                            new StorageField("owner", ownerId.longValue()),
+                            new StorageField("pivotal_id", pivotalId.longValue()),
+                            new StorageField("timestamp", timestamp),
+                            new StorageField("type", type.code),
+                            new StorageField("state", state.code),
+                            new StorageField("remind", remindType.code),
+                            new StorageField("recent_message_id", messageId)
                     });
                 }
                 else {
                     // 有数据，进行更新
                     long sn = result.get(0)[0].getLong();
                     storage.executeUpdate(table, new StorageField[] {
-                            new StorageField("timestamp", LiteralBase.LONG, timestamp),
-                            new StorageField("recent_message_id", LiteralBase.LONG, messageId.longValue()),
+                            new StorageField("timestamp", timestamp),
+                            new StorageField("state", state.code),
+                            new StorageField("remind", remindType.code),
+                            new StorageField("recent_message_id", messageId),
                     }, new Conditional[] {
                             Conditional.createEqualTo("sn", LiteralBase.LONG, sn)
                     });

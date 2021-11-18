@@ -67,6 +67,11 @@ public enum MessagingAction {
     GetConversations("getConversations"),
 
     /**
+     * 更新会话数据。
+     */
+    UpdateConversation("updateConversation"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

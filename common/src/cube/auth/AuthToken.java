@@ -189,6 +189,15 @@ public class AuthToken implements JSONable {
     }
 
     /**
+     * 设置 CID 。
+     *
+     * @param cid 指定 CID 。
+     */
+    public void setContactId(Long cid) {
+        this.cid = cid;
+    }
+
+    /**
      * 获取主内容描述。
      *
      * @return 返回主内容描述。

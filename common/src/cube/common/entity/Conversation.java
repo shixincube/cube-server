@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -78,6 +79,18 @@ public class Conversation extends Entity {
      */
     private String avatarURL;
 
+    /**
+     * 构造函数。
+     *
+     * @param id
+     * @param domain
+     * @param timestamp
+     * @param ownerId
+     * @param type
+     * @param state
+     * @param pivotalId
+     * @param remindType
+     */
     public Conversation(Long id, String domain, long timestamp, Long ownerId, ConversationType type,
                         ConversationState state, Long pivotalId, ConversationRemindType remindType) {
         super(id, domain, timestamp);
@@ -87,6 +100,35 @@ public class Conversation extends Entity {
         this.pivotalId = pivotalId;
         this.remindType = remindType;
         this.unreadCount = 0;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param json
+     * @throws JSONException
+     */
+    public Conversation(JSONObject json, Contact owner) throws JSONException {
+        super(json);
+        this.ownerId = owner.getId();
+        this.pivotalId = json.getLong("pivotal");
+        this.type = ConversationType.parse(json.getInt("type"));
+        this.state = ConversationState.parse(json.getInt("state"));
+        this.remindType = ConversationRemindType.parse(json.getInt("remind"));
+
+        this.unreadCount = json.has("unread") ? json.getInt("unread") : 0;
+
+        if (json.has("recentMessage")) {
+            this.recentMessage = new Message(json.getJSONObject("recentMessage"));
+        }
+
+        if (json.has("avatarName")) {
+            this.avatarName = json.getString("avatarName");
+        }
+
+        if (json.has("avatarURL")) {
+            this.avatarURL = json.getString("avatarURL");
+        }
     }
 
     public Long getOwnerId() {
@@ -107,6 +149,10 @@ public class Conversation extends Entity {
 
     public ConversationRemindType getRemindType() {
         return this.remindType;
+    }
+
+    public Message getRecentMessage() {
+        return this.recentMessage;
     }
 
     public void setRecentMessage(Message message) {
@@ -133,9 +179,11 @@ public class Conversation extends Entity {
         json.put("state", this.state.code);
         json.put("remind", this.remindType.code);
         json.put("pivotal", this.pivotalId.longValue());
-        json.put("recentMessage", this.recentMessage.toJSON());
-
         json.put("unread", this.unreadCount);
+
+        if (null != this.recentMessage) {
+            json.put("recentMessage", this.recentMessage.toJSON());
+        }
 
         if (null != this.avatarName) {
             json.put("avatarName", this.avatarName);
