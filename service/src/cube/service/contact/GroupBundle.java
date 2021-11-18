@@ -27,7 +27,6 @@
 package cube.service.contact;
 
 import cube.common.JSONable;
-import cube.common.entity.Contact;
 import cube.common.entity.Group;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -43,17 +42,17 @@ public class GroupBundle implements JSONable {
 
     public Group group;
 
-    public List<Contact> members;
+    public List<Long> members;
 
-    public Contact operator;
+    public Long operatorId;
 
-    public GroupBundle(Group group, Contact member) {
+    public GroupBundle(Group group, Long member) {
         this.group = group;
         this.members = new ArrayList<>();
         this.members.add(member);
     }
 
-    public GroupBundle(Group group, List<Contact> members) {
+    public GroupBundle(Group group, List<Long> members) {
         this.group = group;
         this.members = new ArrayList<>(members);
     }
@@ -67,14 +66,14 @@ public class GroupBundle implements JSONable {
 
             // members
             JSONArray memberList = new JSONArray();
-            for (Contact member : this.members) {
-                memberList.put(member.toCompactJSON());
+            for (Long memberId : this.members) {
+                memberList.put(memberId);
             }
             json.put("modified", memberList);
 
             // operator
-            if (null != this.operator) {
-                json.put("operator", this.operator.toCompactJSON());
+            if (null != this.operatorId) {
+                json.put("operator", this.operatorId.longValue());
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -91,14 +90,14 @@ public class GroupBundle implements JSONable {
 
             // members
             JSONArray memberList = new JSONArray();
-            for (Contact member : this.members) {
-                memberList.put(member.toCompactJSON());
+            for (Long memberId : this.members) {
+                memberList.put(memberId);
             }
             json.put("modified", memberList);
 
             // operator
-            if (null != this.operator) {
-                json.put("operator", this.operator.toCompactJSON());
+            if (null != this.operatorId) {
+                json.put("operator", this.operatorId.longValue());
             }
         } catch (JSONException e) {
             e.printStackTrace();

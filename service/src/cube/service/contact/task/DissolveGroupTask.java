@@ -88,8 +88,8 @@ public class DissolveGroupTask extends ServiceTask {
         }
 
         // 检查是否有操作权限
-        Contact owner = group.getOwner();
-        if (!owner.equals(contact)) {
+        Long ownerId = group.getOwnerId();
+        if (!ownerId.equals(contact.getId())) {
             // 解散群操作只能由群的所有者进行
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));

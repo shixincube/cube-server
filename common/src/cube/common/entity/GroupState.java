@@ -61,14 +61,10 @@ public enum GroupState {
      */
     Unknown(-1);
 
-    private int code;
+    public final int code;
 
     GroupState(int code) {
         this.code = code;
-    }
-
-    public int getCode() {
-        return this.code;
     }
 
     public static GroupState parse(int code) {

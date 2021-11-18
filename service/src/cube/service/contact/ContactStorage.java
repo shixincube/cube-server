@@ -144,7 +144,7 @@ public class ContactStorage implements Storagable {
             new StorageField("id", LiteralBase.LONG),
             new StorageField("name", LiteralBase.STRING),
             new StorageField("tag", LiteralBase.STRING),
-            new StorageField("owner", LiteralBase.LONG),
+            new StorageField("owner_id", LiteralBase.LONG),
             new StorageField("creation_time", LiteralBase.LONG),
             new StorageField("last_active", LiteralBase.LONG),
             new StorageField("state", LiteralBase.INT),
@@ -158,8 +158,6 @@ public class ContactStorage implements Storagable {
     private final StorageField[] groupMembersFields = new StorageField[] {
             new StorageField("group", LiteralBase.LONG),
             new StorageField("contact_id", LiteralBase.LONG),
-            new StorageField("contact_name", LiteralBase.STRING),
-            new StorageField("contact_context", LiteralBase.STRING),
             new StorageField("adding_time", LiteralBase.LONG),
             new StorageField("adding_operator", LiteralBase.LONG),
             new StorageField("removing_time", LiteralBase.LONG),
@@ -341,51 +339,49 @@ public class ContactStorage implements Storagable {
 
                 String table = contactTableNameMap.get(domain);
 
-                synchronized (storage) {
-                    List<StorageField[]> list = storage.executeQuery(table,
-                            new StorageField[] { new StorageField("sn", LiteralBase.LONG) },
-                            new Conditional[] {
-                                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
-                            });
+                List<StorageField[]> list = storage.executeQuery(table,
+                        new StorageField[] { new StorageField("sn", LiteralBase.LONG) },
+                        new Conditional[] {
+                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
+                        });
 
-                    if (list.isEmpty()) {
-                        // 没有数据，插入新数据
-                        storage.executeInsert(table, new StorageField[] {
-                                new StorageField("id", LiteralBase.LONG, contact.getId()),
+                if (list.isEmpty()) {
+                    // 没有数据，插入新数据
+                    storage.executeInsert(table, new StorageField[] {
+                            new StorageField("id", LiteralBase.LONG, contact.getId()),
+                            new StorageField("name", LiteralBase.STRING, contact.getName()),
+                            new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
+                            new StorageField("context", LiteralBase.STRING,
+                                    (null != contact.getContext()) ? contact.getContext().toString() : null),
+                            new StorageField("recent_device_name", LiteralBase.STRING,
+                                    (null != device) ? device.getName() : null),
+                            new StorageField("recent_device_platform", LiteralBase.STRING,
+                                    (null != device) ? device.getPlatform() : null)
+                    });
+                }
+                else {
+                    // 更新数据
+                    if (null != device) {
+                        storage.executeUpdate(table, new StorageField[] {
                                 new StorageField("name", LiteralBase.STRING, contact.getName()),
                                 new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
                                 new StorageField("context", LiteralBase.STRING,
                                         (null != contact.getContext()) ? contact.getContext().toString() : null),
-                                new StorageField("recent_device_name", LiteralBase.STRING,
-                                        (null != device) ? device.getName() : null),
-                                new StorageField("recent_device_platform", LiteralBase.STRING,
-                                        (null != device) ? device.getPlatform() : null)
+                                new StorageField("recent_device_name", LiteralBase.STRING, device.getName()),
+                                new StorageField("recent_device_platform", LiteralBase.STRING, device.getPlatform())
+                        }, new Conditional[] {
+                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
                         });
                     }
                     else {
-                        // 更新数据
-                        if (null != device) {
-                            storage.executeUpdate(table, new StorageField[] {
-                                    new StorageField("name", LiteralBase.STRING, contact.getName()),
-                                    new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
-                                    new StorageField("context", LiteralBase.STRING,
-                                            (null != contact.getContext()) ? contact.getContext().toString() : null),
-                                    new StorageField("recent_device_name", LiteralBase.STRING, device.getName()),
-                                    new StorageField("recent_device_platform", LiteralBase.STRING, device.getPlatform())
-                            }, new Conditional[] {
-                                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
-                            });
-                        }
-                        else {
-                            storage.executeUpdate(table, new StorageField[] {
-                                    new StorageField("name", LiteralBase.STRING, contact.getName()),
-                                    new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
-                                    new StorageField("context", LiteralBase.STRING,
-                                            (null != contact.getContext()) ? contact.getContext().toString() : null)
-                            }, new Conditional[] {
-                                    Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
-                            });
-                        }
+                        storage.executeUpdate(table, new StorageField[] {
+                                new StorageField("name", LiteralBase.STRING, contact.getName()),
+                                new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
+                                new StorageField("context", LiteralBase.STRING,
+                                        (null != contact.getContext()) ? contact.getContext().toString() : null)
+                        }, new Conditional[] {
+                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
+                        });
                     }
                 }
 
@@ -837,104 +833,86 @@ public class ContactStorage implements Storagable {
 
                 Long groupId = group.getId();
 
-                synchronized (storage) {
-                    List<StorageField[]> list = storage.executeQuery(groupTable,
-                            groupFields,
-                            new Conditional[] { Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, groupId)) });
+                List<StorageField[]> list = storage.executeQuery(groupTable,
+                        groupFields,
+                        new Conditional[] { Conditional.createEqualTo(new StorageField("id", groupId)) });
 
-                    if (list.isEmpty()) {
-                        // 执行插入
-                        boolean successful = storage.executeInsert(groupTable, new StorageField[] {
-                                new StorageField("id", LiteralBase.LONG, groupId),
-                                new StorageField("name", LiteralBase.STRING, group.getName()),
-                                new StorageField("tag", LiteralBase.STRING, group.getTag()),
-                                new StorageField("owner", LiteralBase.LONG, group.getOwner().getId()),
-                                new StorageField("creation_time", LiteralBase.LONG, group.getCreationTime()),
-                                new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
-                                new StorageField("state", LiteralBase.INT, group.getState().getCode()),
-                                new StorageField("context", LiteralBase.STRING,
-                                        (null == group.getContext()) ? null : group.getContext().toString())
-                        });
+                if (list.isEmpty()) {
+                    // 执行插入
+                    boolean successful = storage.executeInsert(groupTable, new StorageField[] {
+                            new StorageField("id", LiteralBase.LONG, groupId),
+                            new StorageField("name", LiteralBase.STRING, group.getName()),
+                            new StorageField("tag", LiteralBase.STRING, group.getTag()),
+                            new StorageField("owner_id", LiteralBase.LONG, group.getOwnerId()),
+                            new StorageField("creation_time", LiteralBase.LONG, group.getCreationTime()),
+                            new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
+                            new StorageField("state", LiteralBase.INT, group.getState().code),
+                            new StorageField("context", LiteralBase.STRING,
+                                    (null == group.getContext()) ? null : group.getContext().toString())
+                    });
 
-                        if (successful) {
-                            // 插入成员数据
-                            List<StorageField[]> data = new ArrayList<>(group.numMembers());
-                            for (Contact contact : group.getMembers()) {
-                                StorageField[] fields = new StorageField[] {
-                                        new StorageField("group", LiteralBase.LONG, groupId),
-                                        new StorageField("contact_id", LiteralBase.LONG, contact.getId()),
-                                        new StorageField("contact_name", LiteralBase.STRING, contact.getName()),
-                                        new StorageField("contact_context", LiteralBase.STRING,
-                                                (null == contact.getContext()) ? null : contact.getContext().toString()),
-                                        new StorageField("adding_time", LiteralBase.LONG, group.getLastActiveTime()),
-                                        new StorageField("adding_operator", LiteralBase.LONG, group.getOwner().getId())
-                                };
-                                data.add(fields);
-                            }
-
-                            // 插入
-                            if (!storage.executeInsert(groupMemberTable, data)) {
-                                Logger.e(this.getClass(), "Write group member error : " + group.toJSON().toString());
-                            }
+                    if (successful) {
+                        // 插入成员数据
+                        List<StorageField[]> data = new ArrayList<>(group.numMembers());
+                        for (Long memberId : group.getMembers()) {
+                            StorageField[] fields = new StorageField[] {
+                                    new StorageField("group", LiteralBase.LONG, groupId),
+                                    new StorageField("contact_id", LiteralBase.LONG, memberId),
+                                    new StorageField("adding_time", LiteralBase.LONG, group.getLastActiveTime()),
+                                    new StorageField("adding_operator", LiteralBase.LONG, group.getOwnerId())
+                            };
+                            data.add(fields);
                         }
-                        else {
-                            Logger.e(this.getClass(), "Write new group error : " + group.toJSON().toString());
+
+                        // 插入
+                        if (!storage.executeInsert(groupMemberTable, data)) {
+                            Logger.e(this.getClass(), "Write group member error : " + group.toJSON().toString());
                         }
                     }
                     else {
-                        // 执行更新
-                        storage.executeUpdate(groupTable, new StorageField[] {
-                                new StorageField("name", LiteralBase.STRING, group.getName()),
-                                new StorageField("owner", LiteralBase.LONG, group.getOwner().getId()),
-                                new StorageField("creation_time", LiteralBase.LONG, group.getCreationTime()),
-                                new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
-                                new StorageField("state", LiteralBase.INT, group.getState().getCode()),
-                                new StorageField("context", LiteralBase.STRING,
-                                        (null == group.getContext()) ? null : group.getContext().toString())
-                        }, new Conditional[] {
-                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, groupId))
-                        });
+                        Logger.e(this.getClass(), "Write new group error : " + group.toJSON().toString());
+                    }
+                }
+                else {
+                    // 执行更新
+                    storage.executeUpdate(groupTable, new StorageField[] {
+                            new StorageField("name", LiteralBase.STRING, group.getName()),
+                            new StorageField("owner_id", LiteralBase.LONG, group.getOwnerId()),
+                            new StorageField("creation_time", LiteralBase.LONG, group.getCreationTime()),
+                            new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
+                            new StorageField("state", LiteralBase.INT, group.getState().code),
+                            new StorageField("context", LiteralBase.STRING,
+                                    (null == group.getContext()) ? null : group.getContext().toString())
+                    }, new Conditional[] {
+                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, groupId))
+                    });
 
-                        if (writeMembers) {
-                            // 更新成员列表
-                            for (Contact contact : group.getMembers()) {
-                                // 查询成员
-                                List<StorageField[]> cr = storage.executeQuery(groupMemberTable, new StorageField[] {
-                                        new StorageField("sn", LiteralBase.LONG)
-                                }, new Conditional[] {
-                                        Conditional.createEqualTo("group", LiteralBase.LONG, groupId),
-                                        Conditional.createAnd(),
-                                        Conditional.createEqualTo("contact_id", LiteralBase.LONG, contact.getId())
-                                });
+                    if (writeMembers) {
+                        // 更新成员列表
+                        for (Long memberId : group.getMembers()) {
+                            // 查询成员
+                            List<StorageField[]> cr = storage.executeQuery(groupMemberTable, new StorageField[] {
+                                    new StorageField("sn", LiteralBase.LONG)
+                            }, new Conditional[] {
+                                    Conditional.createEqualTo("group", LiteralBase.LONG, groupId),
+                                    Conditional.createAnd(),
+                                    Conditional.createEqualTo("contact_id", LiteralBase.LONG, memberId)
+                            });
 
-                                if (cr.isEmpty()) {
-                                    // 没有该成员数据，进行插入
-                                    // 成员数据字段
-                                    StorageField[] fields = new StorageField[] {
-                                            new StorageField("group", LiteralBase.LONG, groupId),
-                                            new StorageField("contact_id", LiteralBase.LONG, contact.getId()),
-                                            new StorageField("contact_name", LiteralBase.STRING, contact.getName()),
-                                            new StorageField("contact_context", LiteralBase.STRING,
-                                                    (null == contact.getContext()) ? null : contact.getContext().toString()),
-                                            new StorageField("adding_time", LiteralBase.LONG, group.getLastActiveTime()),
-                                            new StorageField("adding_operator", LiteralBase.LONG, group.getOwner().getId())
-                                    };
-                                    storage.executeInsert(groupMemberTable, fields);
-                                }
-                                else {
-                                    // 有该成员数据，进行更新
-                                    // 成员数据字段
-                                    StorageField[] fields = new StorageField[] {
-                                            new StorageField("contact_name", LiteralBase.STRING, contact.getName()),
-                                            new StorageField("contact_context", LiteralBase.STRING,
-                                                    (null == contact.getContext()) ? null : contact.getContext().toString())
-                                    };
-                                    storage.executeUpdate(groupMemberTable, fields, new Conditional[] {
-                                            Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, groupId)),
-                                            Conditional.createAnd(),
-                                            Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, contact.getId()))
-                                    });
-                                }
+                            if (cr.isEmpty()) {
+                                // 没有该成员数据，进行插入
+                                // 成员数据字段
+                                StorageField[] fields = new StorageField[] {
+                                        new StorageField("group", LiteralBase.LONG, groupId),
+                                        new StorageField("contact_id", LiteralBase.LONG, memberId),
+                                        new StorageField("adding_time", LiteralBase.LONG, group.getLastActiveTime()),
+                                        new StorageField("adding_operator", LiteralBase.LONG, group.getOwnerId())
+                                };
+                                storage.executeInsert(groupMemberTable, fields);
+                            }
+                            else {
+                                // 有该成员数据
+                                // Nothing
                             }
                         }
                     }
@@ -989,36 +967,24 @@ public class ContactStorage implements Storagable {
         try {
             StorageField[] groupFields = groupResult.get(0);
             Map<String, StorageField> groupMap = StorageFields.get(groupFields);
-            Long ownerId = groupMap.get("owner").getLong();
-            Contact owner = null;
+            Long ownerId = groupMap.get("owner_id").getLong();
 
-            ArrayList<Contact> members = new ArrayList<>(groupMemberResult.size());
+            ArrayList<Long> members = new ArrayList<>(groupMemberResult.size());
             for (StorageField[] fields : groupMemberResult) {
                 Map<String, StorageField> map = StorageFields.get(fields);
-                Long id = map.get("contact_id").getLong();
-                String name = map.get("contact_name").getString();
-                String context = map.get("contact_context").isNullValue() ? null : map.get("contact_context").getString();
-
-                Contact contact = new Contact(id, domain, name);
-                if (null != context) {
-                    contact.setContext(new JSONObject(context));
-                }
-                members.add(contact);
-
-                if (ownerId.equals(id)) {
-                    owner = contact;
-                }
+                Long contactId = map.get("contact_id").getLong();
+                members.add(contactId);
             }
 
             group = new Group(groupMap.get("id").getLong(), domain, groupMap.get("name").getString(),
-                    owner, groupMap.get("creation_time").getLong());
+                    ownerId, groupMap.get("creation_time").getLong());
             group.setTag(groupMap.get("tag").getString());
             group.setLastActiveTime(groupMap.get("last_active").getLong());
             group.setState(GroupState.parse(groupMap.get("state").getInt()));
 
             // 添加成员
-            for (Contact member : members) {
-                group.addMember(member);
+            for (Long memberId : members) {
+                group.addMember(memberId);
             }
 
             // 是否有上下文数据
@@ -1106,36 +1072,21 @@ public class ContactStorage implements Storagable {
     public void updateGroupWithoutMember(final Group group) {
         String domain = group.getDomain().getName();
         String groupTable = this.groupTableNameMap.get(domain);
-        String groupMemberTable = this.groupMemberTableNameMap.get(domain);
-
-        Contact owner = group.getOwner();
 
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                synchronized (storage) {
-                    storage.executeUpdate(groupTable, new StorageField[] {
-                            new StorageField("name", LiteralBase.STRING, group.getName()),
-                            new StorageField("tag", LiteralBase.STRING, group.getTag()),
-                            new StorageField("owner", LiteralBase.LONG, group.getOwner().getId()),
-                            new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
-                            new StorageField("state", LiteralBase.INT, group.getState().getCode()),
-                            new StorageField("context", LiteralBase.STRING,
-                                    (null == group.getContext()) ? null : group.getContext().toString())
-                    }, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
-                    });
-
-                    storage.executeUpdate(groupMemberTable, new StorageField[] {
-                            new StorageField("contact_name", LiteralBase.STRING, owner.getName()),
-                            new StorageField("contact_context", LiteralBase.STRING,
-                                    (null == owner.getContext()) ? null : owner.getContext().toString())
-                    }, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, group.getId())),
-                            Conditional.createAnd(),
-                            Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, owner.getId()))
-                    });
-                }
+                storage.executeUpdate(groupTable, new StorageField[] {
+                        new StorageField("name", LiteralBase.STRING, group.getName()),
+                        new StorageField("tag", LiteralBase.STRING, group.getTag()),
+                        new StorageField("owner_id", LiteralBase.LONG, group.getOwnerId()),
+                        new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
+                        new StorageField("state", LiteralBase.INT, group.getState().code),
+                        new StorageField("context", LiteralBase.STRING,
+                                (null == group.getContext()) ? null : group.getContext().toString())
+                }, new Conditional[] {
+                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
+                });
             }
         });
     }
@@ -1178,7 +1129,7 @@ public class ContactStorage implements Storagable {
             // 执行更新
             this.storage.executeUpdate(groupTable, new StorageField[]{
                     new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
-                    new StorageField("state", LiteralBase.INT, group.getState().getCode())
+                    new StorageField("state", LiteralBase.INT, group.getState().code)
             }, new Conditional[]{
                     Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
             });
@@ -1191,7 +1142,7 @@ public class ContactStorage implements Storagable {
                 public void run() {
                     storage.executeUpdate(groupTable, new StorageField[]{
                             new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
-                            new StorageField("state", LiteralBase.INT, group.getState().getCode())
+                            new StorageField("state", LiteralBase.INT, group.getState().code)
                     }, new Conditional[]{
                             Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
                     });
@@ -1202,35 +1153,6 @@ public class ContactStorage implements Storagable {
     }
 
     /**
-     * 更新群成员信息。
-     *
-     * @param group
-     * @param member
-     */
-    public void updateGroupMember(final Group group, final Contact member) {
-        String domain = group.getDomain().getName();
-        String groupMemberTable = this.groupMemberTableNameMap.get(domain);
-
-        this.executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                storage.executeUpdate(groupMemberTable, new StorageField[] {
-                        new StorageField("contact_name", LiteralBase.STRING, member.getName()),
-                        new StorageField("contact_context", LiteralBase.STRING,
-                                (null != member.getContext()) ? member.getContext().toString() : null)
-                }, new Conditional[] {
-                        Conditional.createEqualTo("group", LiteralBase.LONG, group.getId()),
-                        Conditional.createAnd(),
-                        Conditional.createEqualTo("contact_id", LiteralBase.LONG, member.getId())
-                });
-            }
-        });
-
-        // 更新活跃时间
-        this.updateGroupActiveTime(group);
-    }
-
-    /**
      * 添加群成员。
      *
      * @param group
@@ -1238,7 +1160,7 @@ public class ContactStorage implements Storagable {
      * @param operatorId
      * @param completed
      */
-    public void addGroupMembers(final Group group, final List<Contact> memberList, final Long operatorId, final Runnable completed) {
+    public void addGroupMembers(final Group group, final List<Long> memberList, final Long operatorId, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -1246,24 +1168,21 @@ public class ContactStorage implements Storagable {
 
                 Long time = System.currentTimeMillis();
 
-                for (Contact member : memberList) {
+                for (Long memberId : memberList) {
                     // 先查询该成员是否之前就在群里
                     List<StorageField[]> queryResult = storage.executeQuery(groupMemberTable, new StorageField[] {
                             new StorageField("sn", LiteralBase.LONG)
                     }, new Conditional[] {
                             Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, group.getId())),
                             Conditional.createAnd(),
-                            Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, member.getId()))
+                            Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, memberId))
                     });
 
                     if (queryResult.isEmpty()) {
                         // 没有记录，插入新记录
                         StorageField[] fields = new StorageField[]{
                                 new StorageField("group", LiteralBase.LONG, group.getId()),
-                                new StorageField("contact_id", LiteralBase.LONG, member.getId()),
-                                new StorageField("contact_name", LiteralBase.STRING, member.getName()),
-                                new StorageField("contact_context", LiteralBase.STRING,
-                                        (null == member.getContext()) ? null : member.getContext().toString()),
+                                new StorageField("contact_id", LiteralBase.LONG, memberId),
                                 new StorageField("adding_time", LiteralBase.LONG, time),
                                 new StorageField("adding_operator", LiteralBase.LONG, operatorId)
                         };
@@ -1276,9 +1195,6 @@ public class ContactStorage implements Storagable {
                         Long sn = queryResult.get(0)[0].getLong();
 
                         storage.executeUpdate(groupMemberTable, new StorageField[] {
-                                new StorageField("contact_name", LiteralBase.STRING, member.getName()),
-                                new StorageField("contact_context", LiteralBase.STRING,
-                                        (null == member.getContext()) ? null : member.getContext().toString()),
                                 new StorageField("adding_time", LiteralBase.LONG, time),
                                 new StorageField("adding_operator", LiteralBase.LONG, operatorId),
                                 new StorageField("removing_time", LiteralBase.LONG, 0L),
@@ -1304,7 +1220,7 @@ public class ContactStorage implements Storagable {
      * @param operatorId
      * @param completed
      */
-    public void removeGroupMembers(final Group group, final List<Contact> memberList, final Long operatorId, final Runnable completed) {
+    public void removeGroupMembers(final Group group, final List<Long> memberList, final Long operatorId, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -1312,14 +1228,14 @@ public class ContactStorage implements Storagable {
 
                 Long time = System.currentTimeMillis();
 
-                for (Contact member : memberList) {
+                for (Long memberId : memberList) {
                     storage.executeUpdate(groupMemberTable, new StorageField[] {
                             new StorageField("removing_time", LiteralBase.LONG, time),
                             new StorageField("removing_operator", LiteralBase.LONG, operatorId)
                     }, new Conditional[] {
                             Conditional.createEqualTo(new StorageField("group", LiteralBase.LONG, group.getId())),
                             Conditional.createAnd(),
-                            Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, member.getId()))
+                            Conditional.createEqualTo(new StorageField("contact_id", LiteralBase.LONG, memberId))
                     });
                 }
 
@@ -1430,7 +1346,7 @@ public class ContactStorage implements Storagable {
         String table = this.appendixTableNameMap.get(group.getDomain().getName());
 
         List<StorageField[]> result = this.storage.executeQuery(table, this.appendixFields, new Conditional[] {
-                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
+                Conditional.createEqualTo(new StorageField("id", group.getId()))
         });
 
         if (result.isEmpty()) {
@@ -1663,9 +1579,9 @@ public class ContactStorage implements Storagable {
 
         List<StorageField[]> list = this.storage.executeQuery(table, null, new Conditional[] {
                     Conditional.createBracket(new Conditional[] {
-                            Conditional.createEqualTo("state", LiteralBase.INT, GroupState.Normal.getCode()),
+                            Conditional.createEqualTo("state", LiteralBase.INT, GroupState.Normal.code),
                             Conditional.createAnd(),
-                            Conditional.createEqualTo("tag", LiteralBase.STRING, "public")
+                            Conditional.createEqualTo("tag", LiteralBase.STRING, GroupTag.Public)
                     }),
                     Conditional.createAnd(),
                     Conditional.createBracket(new Conditional[] {
@@ -1684,8 +1600,8 @@ public class ContactStorage implements Storagable {
 
         for (StorageField[] data : list) {
             Map<String, StorageField> map = StorageFields.get(data);
-            Contact owner = this.readContact(domain, map.get("owner").getLong());
-            Group group = new Group(map.get("id").getLong(), domain, map.get("name").getString(), owner,
+            Long ownerId = map.get("owner_id").getLong();
+            Group group = new Group(map.get("id").getLong(), domain, map.get("name").getString(), ownerId,
                     map.get("creation_time").getLong());
             group.setTag(map.get("tag").getString());
             group.setLastActiveTime(map.get("last_active").getLong());
@@ -1794,7 +1710,7 @@ public class ContactStorage implements Storagable {
                     new StorageField("tag", LiteralBase.STRING, new Constraint[] {
                             Constraint.NOT_NULL
                     }),
-                    new StorageField("owner", LiteralBase.LONG, new Constraint[] {
+                    new StorageField("owner_id", LiteralBase.LONG, new Constraint[] {
                             Constraint.NOT_NULL
                     }),
                     new StorageField("creation_time", LiteralBase.LONG, new Constraint[] {
@@ -1837,12 +1753,6 @@ public class ContactStorage implements Storagable {
                     }),
                     new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
                             Constraint.NOT_NULL
-                    }),
-                    new StorageField("contact_name", LiteralBase.STRING, new Constraint[] {
-                            Constraint.NOT_NULL
-                    }),
-                    new StorageField("contact_context", LiteralBase.STRING, new Constraint[] {
-                            Constraint.DEFAULT_NULL
                     }),
                     new StorageField("adding_time", LiteralBase.LONG, new Constraint[] {
                             Constraint.NOT_NULL

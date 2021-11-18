@@ -947,7 +947,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                                             long beginningLastActive, long endingLastActive,
                                             GroupState groupState) {
         List<Group> result = this.storage.readGroupsWithMember(domain, memberId,
-                beginningLastActive, endingLastActive, groupState.getCode());
+                beginningLastActive, endingLastActive, groupState.code);
         Collections.sort(result);
         return result;
     }
@@ -1001,24 +1001,17 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         return current;
     }
 
-    /**
-     * 修改群成员信息。
-     *
-     * @param group
-     * @param member
-     * @return
-     */
-    public GroupBundle modifyGroupMember(Group group, Contact member) {
-        GroupTable gt = this.getGroupTable(group.getDomain().getName());
-        Contact current = gt.updateGroupMember(group, member);
-
-        if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "Modify group member " + group.getId() + " - " + member.getId());
-        }
-
-        GroupBundle bundle = new GroupBundle(group, current);
-        return bundle;
-    }
+//    public GroupBundle modifyGroupMember(Group group, Contact member) {
+//        GroupTable gt = this.getGroupTable(group.getDomain().getName());
+//        Contact current = gt.updateGroupMember(group, member);
+//
+//        if (Logger.isDebugLevel()) {
+//            Logger.d(this.getClass(), "Modify group member " + group.getId() + " - " + member.getId());
+//        }
+//
+//        GroupBundle bundle = new GroupBundle(group, current);
+//        return bundle;
+//    }
 
     /**
      * 更新群组的活跃时间。
@@ -1063,14 +1056,15 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         table.putGroup(group);
 
         // 向群成员发送事件
-        for (Contact member : group.getMembers()) {
-            if (member.equals(group.getOwner())) {
+        for (Long memberId : group.getMembers()) {
+            if (memberId.equals(group.getOwnerId())) {
                 // 创建群的所有者不进行通知
                 continue;
             }
 
+            String uKey = UniqueKey.make(memberId, group.getDomain().getName());
             ModuleEvent event = new ModuleEvent(NAME, ContactAction.CreateGroup.name, group.toJSON());
-            this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
+            this.contactsAdapter.publish(uKey, event.toJSON());
         }
 
         if (Logger.isDebugLevel()) {
@@ -1098,14 +1092,15 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         // 向群里的成员发送事件
-        for (Contact member : current.getMembers()) {
-            if (member.equals(current.getOwner())) {
+        for (Long memberId : current.getMembers()) {
+            if (memberId.equals(current.getOwnerId())) {
                 // 创建群的所有者不进行通知
                 continue;
             }
 
+            String uKey = UniqueKey.make(memberId, group.getDomain().getName());
             ModuleEvent event = new ModuleEvent(NAME, ContactAction.DissolveGroup.name, current.toJSON());
-            this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
+            this.contactsAdapter.publish(uKey, event.toJSON());
         }
 
         if (Logger.isDebugLevel()) {
@@ -1154,15 +1149,15 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             return null;
         }
 
-        ArrayList<Contact> addedList = new ArrayList<>();
+        ArrayList<Long> addedList = new ArrayList<>();
         for (Contact contact : memberList) {
-            Contact addedContact = group.addMember(contact);
-            if (null == addedContact) {
-                Logger.w(this.getClass(), "Add group member : try to add duplicative member - " + groupId);
+            Long addedContactId = group.addMember(contact.getId());
+            if (null == addedContactId) {
+                Logger.w(this.getClass(), "Add group member : try to add repeated member - " + groupId);
                 continue;
             }
 
-            addedList.add(addedContact);
+            addedList.add(addedContactId);
         }
 
         GroupTable gt = this.getGroupTable(domain);
@@ -1173,12 +1168,14 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         GroupBundle bundle = new GroupBundle(current, addedList);
-        bundle.operator = operator;
+        bundle.operatorId = operator.getId();
 
         // 向群里的成员发送事件
-        for (Contact member : current.getMembers()) {
+        for (Long memberId : current.getMembers()) {
+            String uKey = UniqueKey.make(memberId, group.getDomain().getName());
+
             ModuleEvent event = new ModuleEvent(NAME, ContactAction.AddGroupMember.name, bundle.toJSON());
-            this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
+            this.contactsAdapter.publish(uKey, event.toJSON());
         }
 
         if (Logger.isDebugLevel()) {
@@ -1205,22 +1202,22 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         // 最近的成员列表
-        List<Contact> recentMembers = group.getMembers();
+        List<Long> recentMembers = group.getMembers();
 
-        ArrayList<Contact> removedList = new ArrayList<>();
+        ArrayList<Long> removedList = new ArrayList<>();
         for (Long memberId : memberIdList) {
-            if (group.getOwner().getId().longValue() == memberId.longValue()) {
+            if (group.getOwnerId().longValue() == memberId.longValue()) {
                 Logger.w(this.getClass(), "Remove group member : try to remove owner - " + groupId);
                 continue;
             }
 
-            Contact removedContact = group.removeMember(memberId);
-            if (null == removedContact) {
+            Long removedContactId = group.removeMember(memberId);
+            if (null == removedContactId) {
                 Logger.w(this.getClass(), "Remove group member : try to remove non-member - " + groupId);
                 continue;
             }
 
-            removedList.add(removedContact);
+            removedList.add(removedContactId);
         }
 
         GroupTable gt = this.getGroupTable(domain);
@@ -1231,12 +1228,13 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         GroupBundle bundle = new GroupBundle(current, removedList);
-        bundle.operator = operator;
+        bundle.operatorId = operator.getId();
 
         // 向群里的成员发送事件，使用最近列表
-        for (Contact member : recentMembers) {
+        for (Long memberId : recentMembers) {
+            String uKey = UniqueKey.make(memberId, group.getDomain().getName());
             ModuleEvent event = new ModuleEvent(NAME, ContactAction.RemoveGroupMember.name, bundle.toJSON());
-            this.contactsAdapter.publish(member.getUniqueKey(), event.toJSON());
+            this.contactsAdapter.publish(uKey, event.toJSON());
         }
 
         if (Logger.isDebugLevel()) {
@@ -1331,9 +1329,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         if (broadcast) {
             // 向群组内所有成员广播
             Group group = this.getGroup(appendix.getOwner().getId(), appendix.getOwner().getDomain().getName());
-            for (Contact contact : group.getMembers()) {
-                ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.GroupAppendixUpdated.name, appendix.packJSON(contact));
-                this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());
+            for (Long memberId : group.getMembers()) {
+                String uKey = UniqueKey.make(memberId, group.getDomain().getName());
+                ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.GroupAppendixUpdated.name, appendix.packJSON(memberId));
+                this.contactsAdapter.publish(uKey, event.toJSON());
             }
         }
     }

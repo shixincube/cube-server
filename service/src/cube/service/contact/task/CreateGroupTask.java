@@ -105,7 +105,7 @@ public class CreateGroupTask extends ServiceTask {
         for (int i = 0, size = members.length(); i < size; ++i) {
             JSONObject memberJson = members.getJSONObject(i);
             Contact member = new Contact(memberJson, domain);
-            group.addMember(member);
+            group.addMember(member.getId());
         }
 
         Group newGroup = ContactManager.getInstance().createGroup(group);

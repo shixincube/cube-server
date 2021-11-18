@@ -105,7 +105,7 @@ public class ModifyGroupTask extends ServiceTask {
         if (null != newOwner) {
             // 新的群组必须是当前的群成员
             if (group.hasMember(newOwner.getId())) {
-                group.setOwner(newOwner);
+                group.setOwnerId(newOwner.getId());
             }
         }
         if (null != newName) {

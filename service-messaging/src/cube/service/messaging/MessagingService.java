@@ -368,9 +368,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                         hook.apply(new MessagingPluginContext(message));
 
                         Long senderId = message.getFrom();
-                        List<Contact> list = group.getMembers();
-                        for (Contact contact : list) {
-                            if (contact.getId().longValue() == senderId.longValue()) {
+                        List<Long> list = group.getMembers();
+                        for (Long contactId : list) {
+                            if (contactId.longValue() == senderId.longValue()) {
                                 // 跳过发件人
                                 continue;
                             }
@@ -378,13 +378,13 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                             // 创建 TO 副本
                             Message copy = new Message(message);
                             // 更新 To 数据
-                            copy.setTo(contact.getId());
+                            copy.setTo(contactId);
                             // 设置 Owner
-                            copy.setOwner(contact.getId());
+                            copy.setOwner(contactId);
 
                             // 将消息写入缓存
                             // 写入 TO
-                            String toKey = UniqueKey.make(contact.getId(), contact.getDomain());
+                            String toKey = UniqueKey.make(contactId, message.getDomain());
                             this.messageCache.add(toKey, copy.toJSON(), copy.getRemoteTimestamp());
 
                             // 发布给 TO
@@ -395,8 +395,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                             this.storage.write(copy);
 
                             // 在内存里记录状态
-                            this.messageStateMap.put(new MessageKey(contact.getId(), copy.getId()),
-                                    new MessageStateBundle(copy.getId(), contact.getId(), MessageState.Sent));
+                            this.messageStateMap.put(new MessageKey(contactId, copy.getId()),
+                                    new MessageStateBundle(copy.getId(), contactId, MessageState.Sent));
 
                             // 更新会话
                             this.updateConversation(group, copy);

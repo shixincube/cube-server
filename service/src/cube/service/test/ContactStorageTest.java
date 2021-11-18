@@ -95,9 +95,9 @@ public class ContactStorageTest {
         this.storage.execSelfChecking(this.domainList);
 
         Contact owner = new Contact(Utils.generateSerialNumber(), domain, "Cube-SHIXIN");
-        this.group = new Group(Utils.generateSerialNumber(), domain, "Group-1", owner, System.currentTimeMillis());
+        this.group = new Group(Utils.generateSerialNumber(), domain, "Group-1", owner.getId(), System.currentTimeMillis());
         this.member = new Contact(Utils.generateSerialNumber(), domain, "Cube-" + Utils.randomString(8));
-        this.group.addMember(this.member);
+        this.group.addMember(this.member.getId());
     }
 
     public void teardown() {
@@ -156,12 +156,12 @@ public class ContactStorageTest {
         AtomicBoolean completed = new AtomicBoolean(false);
 
         Contact member = new Contact(Utils.generateSerialNumber(), this.group.getDomain(), "Cube-" + Utils.randomString(8));
-        this.group.addMember(member);
+        this.group.addMember(member.getId());
 
         long time = System.currentTimeMillis();
-        ArrayList<Contact> members = new ArrayList<>();
-        members.add(member);
-        this.storage.addGroupMembers(this.group, members, this.group.getOwner().getId(), new Runnable() {
+        ArrayList<Long> members = new ArrayList<>();
+        members.add(member.getId());
+        this.storage.addGroupMembers(this.group, members, this.group.getOwnerId(), new Runnable() {
             @Override
             public void run() {
                 System.out.println("testAddMember: " + (System.currentTimeMillis() - time) + " ms");
@@ -192,12 +192,12 @@ public class ContactStorageTest {
 
         AtomicBoolean completed = new AtomicBoolean(false);
 
-        Contact member = this.group.removeMember(this.group.getMembers().get(this.group.numMembers() - 1));
+        Long memberId = this.group.removeMember(this.group.getMembers().get(this.group.numMembers() - 1));
 
         long time = System.currentTimeMillis();
-        ArrayList<Contact> members = new ArrayList<>();
-        members.add(member);
-        this.storage.removeGroupMembers(this.group, members, this.group.getOwner().getId(), new Runnable() {
+        ArrayList<Long> members = new ArrayList<>();
+        members.add(memberId);
+        this.storage.removeGroupMembers(this.group, members, this.group.getOwnerId(), new Runnable() {
             @Override
             public void run() {
                 System.out.println("testRemoveMember: " + (System.currentTimeMillis() - time) + " ms");
@@ -227,7 +227,7 @@ public class ContactStorageTest {
         System.out.println(this.getClass().getName() + " testReadGroupList");
 
         List<Group> list = this.storage.readGroupsWithMember(this.group.getDomain().getName(),
-                this.member.getId(), 0L, System.currentTimeMillis(), GroupState.Normal.getCode());
+                this.member.getId(), 0L, System.currentTimeMillis(), GroupState.Normal.code);
         if (!list.get(0).equals(this.group)) {
             System.err.println("List groups error : \n" + this.group.toJSON().toString());
             return;

@@ -34,10 +34,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.Contact;
-import cube.common.entity.Device;
-import cube.common.entity.Group;
-import cube.common.entity.GroupState;
+import cube.common.entity.*;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -80,24 +77,30 @@ public class ListGroupsTask extends ServiceTask {
         // 获取查询起始时间
         long beginning = 0;
         long ending = 0;
+        int pageSize = 4;
         GroupState groupState = GroupState.Normal;
         try {
             beginning = data.getLong("beginning");
-            ending = data.getLong("ending");
+
+            if (data.has("ending")) {
+                ending = data.getLong("ending");
+            }
 
             // 指定群组状态
             if (data.has("state")) {
                 groupState = GroupState.parse(data.getInt("state"));
             }
+
+            if (data.has("pageSize")) {
+                pageSize = data.getInt("pageSize");
+            }
         } catch (JSONException e) {
-            // Nothing
+            e.printStackTrace();
         }
 
         if (ending == 0) {
             ending = System.currentTimeMillis();
         }
-
-        int pageSize = 4;
 
         // 查询从指定活跃时间之后的该联系人所在的所有群
         List<Group> list = ContactManager.getInstance().listGroupsWithMember(domain,
@@ -107,7 +110,7 @@ public class ListGroupsTask extends ServiceTask {
         Iterator<Group> iter = list.iterator();
         while (iter.hasNext()) {
             Group group = iter.next();
-            if (!group.getTag().equals("public")) {
+            if (!group.getTag().equals(GroupTag.Public)) {
                 iter.remove();
             }
         }

@@ -26,7 +26,6 @@
 
 package cube.common.entity;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -315,12 +314,12 @@ public class GroupAppendix extends Entity {
     /**
      * 按照指定成员类型返回数据。
      *
-     * @param member
+     * @param memberId
      * @return
      */
-    public JSONObject packJSON(Contact member) {
+    public JSONObject packJSON(Long memberId) {
         JSONObject json = new JSONObject();
-        json.put("owner", this.owner.toCompactJSON());
+        json.put("ownerId", this.owner.getId());
 
         json.put("notice", (null == this.notice) ? "" : this.notice);
 
@@ -333,18 +332,13 @@ public class GroupAppendix extends Entity {
         }
         json.put("memberRemarks", memberRemarkArray);
 
-        String remarkContent = this.remarks.get(member.getId());
+        String remarkContent = this.remarks.get(memberId);
         if (null == remarkContent) {
             remarkContent = "";
         }
         json.put("remark", remarkContent);
 
-        JSONObject context = this.contexts.get(member.getId());
-        if (null != context) {
-            json.put("context", context);
-        }
-
-        Boolean following = this.followings.get(member.getId());
+        Boolean following = this.followings.get(memberId);
         if (null != following) {
             json.put("following", following.booleanValue());
         }
@@ -352,7 +346,12 @@ public class GroupAppendix extends Entity {
             json.put("following", false);
         }
 
-        if (this.owner.getOwner().equals(member)) {
+        JSONObject context = this.contexts.get(memberId);
+        if (null != context) {
+            json.put("context", context);
+        }
+
+        if (this.owner.getOwnerId().equals(memberId)) {
             JSONArray array = new JSONArray();
             ArrayList<JSONObject> applicants = new ArrayList<>(this.applicants);
             Collections.reverse(applicants);

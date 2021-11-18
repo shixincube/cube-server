@@ -66,7 +66,7 @@ public class ContactStorageTool {
         long now = System.currentTimeMillis();
         long beginning = now - 7 * 24 * 60 * 60 * 1000L;
 
-        List<Group> list = this.storage.readGroupsWithMember(domainName, memberId, beginning, now, GroupState.Normal.getCode());
+        List<Group> list = this.storage.readGroupsWithMember(domainName, memberId, beginning, now, GroupState.Normal.code);
         for (Group group : list) {
             buf.append(group.toCompactJSON());
             buf.append("\n");
@@ -80,8 +80,8 @@ public class ContactStorageTool {
         StringBuilder buf = new StringBuilder();
         buf.append(group.toCompactJSON()).append("\n");
 
-        for (Contact member : group.getMembers()) {
-            buf.append(member.toCompactJSON()).append("\n");
+        for (Long memberId : group.getMembers()) {
+            buf.append(memberId).append("\n");
         }
 
         return buf.toString();

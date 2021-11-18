@@ -39,9 +39,9 @@ import java.util.Vector;
 public class Group extends AbstractContact implements Comparable<Group> {
 
     /**
-     * 群的群组。
+     * 群组所有人的 ID 。
      */
-    private Contact owner;
+    private Long ownerId;
 
     /**
      * 创建时间。
@@ -56,7 +56,7 @@ public class Group extends AbstractContact implements Comparable<Group> {
     /**
      * 群组的成员列表。
      */
-    private Vector<Contact> members;
+    private List<Long> memberIdList;
 
     /**
      * 群组的标签。
@@ -74,16 +74,17 @@ public class Group extends AbstractContact implements Comparable<Group> {
      * @param id 群组 ID 。
      * @param domain 群组域。
      * @param name 群组显示名。
-     * @param owner 群组的群主。
+     * @param ownerId 群组的群主 ID 。
+     * @param creationTime 创建时间。
      */
-    public Group(Long id, String domain, String name, Contact owner, long creationTime) {
+    public Group(Long id, String domain, String name, Long ownerId, long creationTime) {
         super(id, domain, name);
-        this.owner = owner;
+        this.ownerId = ownerId;
         this.creationTime = creationTime;
         this.lastActiveTime = creationTime;
         this.state = GroupState.Normal;
-        this.members = new Vector<>();
-        this.members.add(owner);
+        this.memberIdList = new Vector<>();
+        this.memberIdList.add(this.ownerId);
     }
 
     /**
@@ -93,14 +94,10 @@ public class Group extends AbstractContact implements Comparable<Group> {
      */
     public Group(JSONObject json) {
         super(json, null);
-        this.members = new Vector<>();
+        this.memberIdList = new Vector<>();
 
         this.tag = json.getString("tag");
-
-        JSONObject ownerJson = json.getJSONObject("owner");
-        this.owner = new Contact(ownerJson, this.domain.getName());
-        this.members.add(this.owner);
-
+        this.ownerId = json.getLong("ownerId");
         this.creationTime = json.getLong("creation");
         this.lastActiveTime = json.getLong("lastActive");
         this.state = GroupState.parse(json.getInt("state"));
@@ -108,9 +105,7 @@ public class Group extends AbstractContact implements Comparable<Group> {
         if (json.has("members")) {
             JSONArray array = json.getJSONArray("members");
             for (int i = 0, len = array.length(); i < len; ++i) {
-                JSONObject member = array.getJSONObject(i);
-                Contact contact = new Contact(member, this.domain.getName());
-                this.addMember(contact);
+                this.addMember(array.getLong(i));
             }
         }
     }
@@ -134,21 +129,21 @@ public class Group extends AbstractContact implements Comparable<Group> {
     }
 
     /**
-     * 返回群的群主。
+     * 返回群的群主 ID 。
      *
-     * @return 返回群的群主。
+     * @return 返回群的群主 ID 。
      */
-    public Contact getOwner() {
-        return this.owner;
+    public Long getOwnerId() {
+        return this.ownerId;
     }
 
     /**
-     * 设置群的群主。
+     * 设置群的群主 ID 。
      *
-     * @param owner 指定群的群主。
+     * @param ownerId 指定群的群主 ID 。
      */
-    public void setOwner(Contact owner) {
-        this.owner = owner;
+    public void setOwnerId(Long ownerId) {
+        this.ownerId = ownerId;
     }
 
     /**
@@ -211,7 +206,7 @@ public class Group extends AbstractContact implements Comparable<Group> {
      * @return 返回群成员数量。
      */
     public int numMembers() {
-        return this.members.size();
+        return this.memberIdList.size();
     }
 
     /**
@@ -221,109 +216,46 @@ public class Group extends AbstractContact implements Comparable<Group> {
      * @return 如果包含指定成员返回 {@code true} ，否则返回 {@code false} 。
      */
     public boolean hasMember(Long contactId) {
-        for (int i = 0, size = this.members.size(); i < size; ++i) {
-            Contact member = this.members.get(i);
-            if (member.getId().longValue() == contactId.longValue()) {
-                return true;
-            }
-        }
-        return false;
+        return this.memberIdList.contains(contactId);
     }
 
     /**
      * 添加成员。
      *
-     * @param contact 指定待添加联系人。
-     * @return 如果添加成功返回添加的联系人，否则返回 {@code null} 值。
+     * @param contactId 指定待添加联系人 ID 。
+     * @return 如果添加成功返回添加的联系人 ID ，否则返回 {@code null} 值。
      */
-    public Contact addMember(Contact contact) {
-        if (this.members.contains(contact)) {
+    public Long addMember(Long contactId) {
+        if (this.memberIdList.contains(contactId)) {
             return null;
         }
 
-        this.members.add(contact);
-        return contact;
+        this.memberIdList.add(contactId);
+        return contactId;
     }
 
     /**
      * 移除成员。
-     * 注意：群组无法被移除。
+     * 注意：群主无法被移除。
      *
      * @param contactId 指定待移除的联系人 ID 。
      * @return 如果移除成功返回被移除的联系人，否则返回 {@code null} 值。
      */
-    public Contact removeMember(Long contactId) {
-        Contact contact = this.getMember(contactId);
-        if (null == contact) {
+    public Long removeMember(Long contactId) {
+        if (this.ownerId.equals(contactId)) {
             return null;
         }
 
-        return this.removeMember(contact);
+        return this.memberIdList.remove(contactId) ? contactId : null;
     }
 
     /**
-     * 移除成员。
-     * 注意：群组无法被移除。
+     * 获取成员 ID 列表。
      *
-     * @param contact 指定待移除的联系人。
-     * @return 如果移除成功返回被移除的联系人，否则返回 {@code null} 值。
+     * @return 返回成员 ID 列表的副本。
      */
-    public Contact removeMember(Contact contact) {
-        if (contact.getId().longValue() == this.owner.getId().longValue()) {
-            return null;
-        }
-
-        if (this.members.remove(contact)) {
-            return contact;
-        }
-
-        return null;
-    }
-
-    /**
-     * 获取成员列表。
-     *
-     * @return 返回成员列表的副本。
-     */
-    public List<Contact> getMembers() {
-        return new ArrayList<>(this.members);
-    }
-
-    /**
-     * 获取指定 ID 的成员。
-     *
-     * @param id 指定成员 ID 。
-     * @return 返回指定 ID 的成员实例。没有该成员时返回 {@code null} 值。
-     */
-    public Contact getMember(Long id) {
-        for (int i = 0, size = this.members.size(); i < size; ++i) {
-            Contact member = this.members.get(i);
-            if (member.getId().longValue() == id.longValue()) {
-                return member;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * 更新指定的成员数据。
-     *
-     * @param member 指定新的成员数据。
-     * @return 如果更新成功返回成员实例，否则返回 {@code null} 值。
-     */
-    public Contact updateMember(Contact member) {
-        if (!this.members.remove(member)) {
-            return null;
-        }
-
-        this.members.add(member);
-
-        if (member.getId().longValue() == this.owner.getId().longValue()) {
-            this.owner = member;
-        }
-
-        return member;
+    public List<Long> getMembers() {
+        return new ArrayList<>(this.memberIdList);
     }
 
     /**
@@ -331,26 +263,15 @@ public class Group extends AbstractContact implements Comparable<Group> {
      */
     @Override
     public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+
         if (null != object && object instanceof Group) {
             Group other = (Group) object;
-            if (!other.getId().equals(this.getId()) || !other.getName().equals(this.getName())
-                || !other.owner.getId().equals(this.owner.getId())) {
-                return false;
+            if (other.getId().equals(this.getId()) && other.ownerId.equals(this.ownerId)) {
+                return true;
             }
-
-            for (int i = 0, size = this.members.size(); i < size; ++i) {
-                Contact contact = this.members.get(i);
-                Contact otherContact = other.getMember(contact.getId());
-                if (null == otherContact) {
-                    return false;
-                }
-
-                if (!contact.equals(otherContact)) {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         return false;
@@ -372,16 +293,16 @@ public class Group extends AbstractContact implements Comparable<Group> {
         JSONObject json = super.toJSON();
 
         JSONArray array = new JSONArray();
-        for (Contact contact : this.members) {
-            array.put(contact.toCompactJSON());
+        for (Long memberId : this.memberIdList) {
+            array.put(memberId);
         }
         json.put("members", array);
 
         json.put("tag", this.tag);
-        json.put("owner", this.owner.toCompactJSON());
+        json.put("ownerId", this.ownerId.longValue());
         json.put("creation", this.creationTime);
         json.put("lastActive", this.lastActiveTime);
-        json.put("state", this.state.getCode());
+        json.put("state", this.state.code);
         return json;
     }
 
@@ -392,10 +313,10 @@ public class Group extends AbstractContact implements Comparable<Group> {
     public JSONObject toCompactJSON() {
         JSONObject json = super.toCompactJSON();
         json.put("tag", this.tag);
-        json.put("owner", this.owner.toCompactJSON());
+        json.put("ownerId", this.ownerId.longValue());
         json.put("creation", this.creationTime);
         json.put("lastActive", this.lastActiveTime);
-        json.put("state", this.state.getCode());
+        json.put("state", this.state.code);
         return json;
     }
 
@@ -408,7 +329,7 @@ public class Group extends AbstractContact implements Comparable<Group> {
     public JSONObject toJSON(GroupState state) {
         JSONObject json = this.toJSON();
         json.remove("state");
-        json.put("state", state.getCode());
+        json.put("state", state.code);
         return json;
     }
 
@@ -427,7 +348,7 @@ public class Group extends AbstractContact implements Comparable<Group> {
      * @return 如果 JSON 符合群组数据结构返回 {@code true} 。
      */
     public static boolean isGroup(JSONObject json) {
-        if (json.has("members") || json.has("owner")) {
+        if (json.has("members") || json.has("ownerId")) {
             return true;
         }
         else {

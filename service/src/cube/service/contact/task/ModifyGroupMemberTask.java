@@ -45,6 +45,7 @@ import org.json.JSONObject;
 
 /**
  * 修改群组成员信息任务。
+ * @deprecated 通过群组附录管理成员，不需要该任务。
  */
 public class ModifyGroupMemberTask extends ServiceTask {
 
@@ -94,7 +95,7 @@ public class ModifyGroupMemberTask extends ServiceTask {
         }
 
         // 修改成员信息，并返回 Bundle
-        GroupBundle bundle = ContactManager.getInstance().modifyGroupMember(group, member);
+        GroupBundle bundle = null;//ContactManager.getInstance().modifyGroupMember(group, member);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, bundle.toCompactJSON()));

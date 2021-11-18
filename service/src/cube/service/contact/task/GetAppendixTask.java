@@ -114,7 +114,7 @@ public class GetAppendixTask extends ServiceTask {
             }
             else {
                 this.cellet.speak(this.talkContext,
-                        this.makeResponse(action, packet, ContactStateCode.Ok.code, appendix.packJSON(contact)));
+                        this.makeResponse(action, packet, ContactStateCode.Ok.code, appendix.packJSON(contact.getId())));
             }
         }
         else {

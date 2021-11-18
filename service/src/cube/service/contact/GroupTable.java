@@ -97,9 +97,9 @@ public class GroupTable {
             current.setName(group.getName());
         }
 
-        if (!current.getOwner().equals(group.getOwner())) {
+        if (!current.getOwnerId().equals(group.getOwnerId())) {
             modified = true;
-            current.setOwner(group.getOwner());
+            current.setOwnerId(group.getOwnerId());
         }
 
         JSONObject context = group.getContext();
@@ -218,32 +218,6 @@ public class GroupTable {
     }
 
     /**
-     * 更新群组成员数据。
-     *
-     * @param group
-     * @param member
-     * @return
-     */
-    public Contact updateGroupMember(Group group, Contact member) {
-        Group current = get(group);
-        if (null == current) {
-            this.groups.remove(group.getId());
-            return null;
-        }
-
-        Contact updated = current.updateMember(member);
-
-        current.setLastActiveTime(System.currentTimeMillis());
-        if (group != current) {
-            group.setLastActiveTime(current.getLastActiveTime());
-        }
-
-        this.cache.applyPut(current.getUniqueKey(), current.toJSON());
-        this.storage.updateGroupMember(current, updated);
-        return updated;
-    }
-
-    /**
      * 添加群组成员。
      *
      * @param group
@@ -251,7 +225,7 @@ public class GroupTable {
      * @param operator
      * @return
      */
-    public Group addGroupMembers(Group group, List<Contact> addedContactList, Contact operator) {
+    public Group addGroupMembers(Group group, List<Long> addedContactList, Contact operator) {
         Group current = get(group);
         if (null == current) {
             this.groups.remove(group.getId());
@@ -259,8 +233,8 @@ public class GroupTable {
         }
 
         // 添加成员
-        for (Contact member : addedContactList) {
-            current.addMember(member);
+        for (Long memberId : addedContactList) {
+            current.addMember(memberId);
         }
 
         // 更新时间戳
@@ -291,7 +265,7 @@ public class GroupTable {
      * @param operator
      * @return
      */
-    public Group removeGroupMembers(Group group, List<Contact> removedContactList, Contact operator) {
+    public Group removeGroupMembers(Group group, List<Long> removedContactList, Contact operator) {
         Group current = get(group);
         if (null == current) {
             this.groups.remove(group.getId());
@@ -299,8 +273,8 @@ public class GroupTable {
         }
 
         // 删除成员
-        for (Contact member : removedContactList) {
-            current.removeMember(member);
+        for (Long memberId : removedContactList) {
+            current.removeMember(memberId);
         }
 
         // 更新时间戳

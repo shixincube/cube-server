@@ -186,7 +186,7 @@ public class UpdateAppendixTask extends ServiceTask {
             ContactManager.getInstance().updateAppendix(appendix, broadcast);
 
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, ContactStateCode.Ok.code, appendix.packJSON(contact)));
+                    this.makeResponse(action, packet, ContactStateCode.Ok.code, appendix.packJSON(contact.getId())));
         }
         else {
             this.cellet.speak(this.talkContext,
