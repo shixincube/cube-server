@@ -102,6 +102,8 @@ public class Group extends AbstractContact implements Comparable<Group> {
         this.lastActiveTime = json.getLong("lastActive");
         this.state = GroupState.parse(json.getInt("state"));
 
+        this.memberIdList.add(this.ownerId);
+
         if (json.has("members")) {
             JSONArray array = json.getJSONArray("members");
             for (int i = 0, len = array.length(); i < len; ++i) {
@@ -217,6 +219,14 @@ public class Group extends AbstractContact implements Comparable<Group> {
      */
     public boolean hasMember(Long contactId) {
         return this.memberIdList.contains(contactId);
+    }
+
+    public void addMemberId(Long memberId) {
+        if (this.memberIdList.contains(memberId)) {
+            return;
+        }
+
+        this.memberIdList.add(memberId);
     }
 
     /**

@@ -1035,6 +1035,11 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     public Group createGroup(Group group) {
         long now = System.currentTimeMillis();
 
+        if (!group.getMembers().contains(group.getOwnerId())) {
+            // 创建人不在列表里，加入列表
+            group.addMemberId(group.getOwnerId());
+        }
+
         // 重新生成 ID
         group.resetId(Utils.generateSerialNumber());
         // 重置时间戳
