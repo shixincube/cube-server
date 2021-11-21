@@ -1226,6 +1226,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         GroupTable gt = this.getGroupTable(domain);
+        // 删除群组成员
         Group current = gt.removeGroupMembers(group, removedList, operator);
         if (null == current) {
             Logger.w(this.getClass(), "Remove group member : update cache & storage failed - " + groupId);
