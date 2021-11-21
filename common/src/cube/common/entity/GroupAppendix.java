@@ -51,17 +51,22 @@ public class GroupAppendix extends Entity {
     /**
      * 成员对该群的备注内容。私有信息。
      */
-    private HashMap<Long, String> remarks;
-
-    /**
-     * 成员的上下文。私有信息。
-     */
-    private HashMap<Long, JSONObject> contexts;
+    private HashMap<Long, String> remarkMap;
 
     /**
      * 成员对该群是否进行了关注。私有信息。
      */
-    private HashMap<Long, Boolean> followings;
+    private HashMap<Long, Boolean> followingMap;
+
+    /**
+     * 成员对该群是否设置了显示成员名。私有信息。
+     */
+    private HashMap<Long, Boolean> memberNameDisplayedMap;
+
+    /**
+     * 成员的上下文。私有信息。
+     */
+    private HashMap<Long, JSONObject> contextMap;
 
     /**
      * 当前有效的通讯 ID 。
@@ -85,9 +90,10 @@ public class GroupAppendix extends Entity {
         this.domain = owner.getDomain();
         this.memberRemarks = new HashMap<>();
 
-        this.remarks = new HashMap<>();
-        this.contexts = new HashMap<>();
-        this.followings = new HashMap<>();
+        this.remarkMap = new HashMap<>();
+        this.followingMap = new HashMap<>();
+        this.memberNameDisplayedMap = new HashMap<>();
+        this.contextMap = new HashMap<>();
         this.applicants = new ArrayList<>();
 
         this.commId = 0L;
@@ -106,9 +112,10 @@ public class GroupAppendix extends Entity {
         this.domain = owner.getDomain();
         this.memberRemarks = new HashMap<>();
 
-        this.remarks = new HashMap<>();
-        this.contexts = new HashMap<>();
-        this.followings = new HashMap<>();
+        this.remarkMap = new HashMap<>();
+        this.memberNameDisplayedMap = new HashMap<>();
+        this.followingMap = new HashMap<>();
+        this.contextMap = new HashMap<>();
         this.applicants = new ArrayList<>();
 
         this.commId = 0L;
@@ -126,30 +133,39 @@ public class GroupAppendix extends Entity {
             }
         }
 
-        if (json.has("remarks")) {
-            JSONObject data = json.getJSONObject("remarks");
+        if (json.has("remarkMap")) {
+            JSONObject data = json.getJSONObject("remarkMap");
             Iterator<String> iterator = data.keys();
             while (iterator.hasNext()) {
                 String key = iterator.next();
-                this.remarks.put(Long.parseLong(key), data.getString(key));
+                this.remarkMap.put(Long.parseLong(key), data.getString(key));
             }
         }
 
-        if (json.has("contexts")) {
-            JSONObject data = json.getJSONObject("contexts");
+        if (json.has("followingMap")) {
+            JSONObject data = json.getJSONObject("followingMap");
             Iterator<String> iterator = data.keys();
             while (iterator.hasNext()) {
                 String key = iterator.next();
-                this.contexts.put(Long.parseLong(key), data.getJSONObject(key));
+                this.followingMap.put(Long.parseLong(key), data.getBoolean(key));
             }
         }
 
-        if (json.has("followings")) {
-            JSONObject data = json.getJSONObject("followings");
+        if (json.has("memberNameDisplayedMap")) {
+            JSONObject data = json.getJSONObject("memberNameDisplayedMap");
             Iterator<String> iterator = data.keys();
             while (iterator.hasNext()) {
                 String key = iterator.next();
-                this.followings.put(Long.parseLong(key), data.getBoolean(key));
+                this.memberNameDisplayedMap.put(Long.parseLong(key), data.getBoolean(key));
+            }
+        }
+
+        if (json.has("contextMap")) {
+            JSONObject data = json.getJSONObject("contextMap");
+            Iterator<String> iterator = data.keys();
+            while (iterator.hasNext()) {
+                String key = iterator.next();
+                this.contextMap.put(Long.parseLong(key), data.getJSONObject(key));
             }
         }
 
@@ -211,7 +227,7 @@ public class GroupAppendix extends Entity {
      * @param content
      */
     public void remark(Contact member, String content) {
-        this.remarks.put(member.getId(), content);
+        this.remarkMap.put(member.getId(), content);
         this.resetTimestamp();
     }
 
@@ -223,7 +239,7 @@ public class GroupAppendix extends Entity {
      */
     public String getRemark(Contact member) {
         this.resetTimestamp();
-        return this.remarks.get(member.getId());
+        return this.remarkMap.get(member.getId());
     }
 
     /**
@@ -233,7 +249,7 @@ public class GroupAppendix extends Entity {
      * @param following
      */
     public void setFollowing(Contact member, boolean following) {
-        this.followings.put(member.getId(), following);
+        this.followingMap.put(member.getId(), following);
         this.resetTimestamp();
     }
 
@@ -244,7 +260,7 @@ public class GroupAppendix extends Entity {
      * @return
      */
     public boolean getFollowing(Contact member) {
-        Boolean following = this.followings.get(member.getId());
+        Boolean following = this.followingMap.get(member.getId());
         return (null != following ? following : false);
     }
 
@@ -332,13 +348,13 @@ public class GroupAppendix extends Entity {
         }
         json.put("memberRemarks", memberRemarkArray);
 
-        String remarkContent = this.remarks.get(memberId);
+        String remarkContent = this.remarkMap.get(memberId);
         if (null == remarkContent) {
             remarkContent = "";
         }
         json.put("remark", remarkContent);
 
-        Boolean following = this.followings.get(memberId);
+        Boolean following = this.followingMap.get(memberId);
         if (null != following) {
             json.put("following", following.booleanValue());
         }
@@ -346,7 +362,15 @@ public class GroupAppendix extends Entity {
             json.put("following", false);
         }
 
-        JSONObject context = this.contexts.get(memberId);
+        Boolean display = this.memberNameDisplayedMap.get(memberId);
+        if (null != display) {
+            json.put("memberNameDisplayed", display.booleanValue());
+        }
+        else {
+            json.put("memberNameDisplayed", false);
+        }
+
+        JSONObject context = this.contextMap.get(memberId);
         if (null != context) {
             json.put("context", context);
         }
@@ -379,23 +403,29 @@ public class GroupAppendix extends Entity {
         }
         json.put("memberRemarks", memberRemarks);
 
-        JSONObject remarks = new JSONObject();
-        for (Map.Entry<Long, String> e : this.remarks.entrySet()) {
-            remarks.put(e.getKey().toString(), e.getValue());
+        JSONObject remarkMap = new JSONObject();
+        for (Map.Entry<Long, String> e : this.remarkMap.entrySet()) {
+            remarkMap.put(e.getKey().toString(), e.getValue());
         }
-        json.put("remarks", remarks);
+        json.put("remarkMap", remarkMap);
+
+        JSONObject followingMap = new JSONObject();
+        for (Map.Entry<Long, Boolean> e : this.followingMap.entrySet()) {
+            followingMap.put(e.getKey().toString(), e.getValue().booleanValue());
+        }
+        json.put("followingMap", followingMap);
+
+        JSONObject memberNameDisplayedMap = new JSONObject();
+        for (Map.Entry<Long, Boolean> e : this.memberNameDisplayedMap.entrySet()) {
+            memberNameDisplayedMap.put(e.getKey().toString(), e.getValue().booleanValue());
+        }
+        json.put("memberNameDisplayedMap", memberNameDisplayedMap);
 
         JSONObject contexts = new JSONObject();
-        for (Map.Entry<Long, JSONObject> e : this.contexts.entrySet()) {
+        for (Map.Entry<Long, JSONObject> e : this.contextMap.entrySet()) {
             contexts.put(e.getKey().toString(), e.getValue());
         }
-        json.put("contexts", contexts);
-
-        JSONObject followings = new JSONObject();
-        for (Map.Entry<Long, Boolean> e : this.followings.entrySet()) {
-            followings.put(e.getKey().toString(), e.getValue().booleanValue());
-        }
-        json.put("followings", followings);
+        json.put("contextMap", contexts);
 
         JSONArray applicantArray = new JSONArray();
         for (JSONObject applicantJson : this.applicants) {
