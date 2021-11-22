@@ -44,9 +44,9 @@ import org.json.JSONObject;
  * 解散群组。
  * 只有群所有者能解散群组。
  */
-public class DissolveGroupTask extends ServiceTask {
+public class DismissGroupTask extends ServiceTask {
 
-    public DissolveGroupTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public DismissGroupTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -97,7 +97,7 @@ public class DissolveGroupTask extends ServiceTask {
             return;
         }
 
-        Group newGroup = ContactManager.getInstance().dissolveGroup(group);
+        Group newGroup = ContactManager.getInstance().dismissGroup(group);
         if (null == newGroup) {
             // 解散失败
             this.cellet.speak(this.talkContext,

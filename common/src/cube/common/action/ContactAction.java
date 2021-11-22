@@ -124,7 +124,7 @@ public enum ContactAction {
     /**
      * 解散群组。
      */
-    DissolveGroup("dissolveGroup"),
+    DismissGroup("dismissGroup"),
 
     /**
      * 向群组添加成员。

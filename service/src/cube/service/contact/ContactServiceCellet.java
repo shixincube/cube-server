@@ -137,8 +137,8 @@ public class ContactServiceCellet extends AbstractCellet {
             this.executor.execute(new CreateGroupTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (ContactAction.DissolveGroup.name.equals(action)) {
-            this.executor.execute(new DissolveGroupTask(this, talkContext, primitive,
+        else if (ContactAction.DismissGroup.name.equals(action)) {
+            this.executor.execute(new DismissGroupTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.AddGroupMember.name.equals(action)) {

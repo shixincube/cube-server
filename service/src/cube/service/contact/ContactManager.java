@@ -1085,7 +1085,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param group
      * @return
      */
-    public Group dissolveGroup(final Group group) {
+    public Group dismissGroup(final Group group) {
         // 获取活跃表
         GroupTable table = this.getGroupTable(group.getDomain().getName());
 
@@ -1104,12 +1104,12 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             }
 
             String uKey = UniqueKey.make(memberId, group.getDomain().getName());
-            ModuleEvent event = new ModuleEvent(NAME, ContactAction.DissolveGroup.name, current.toJSON());
+            ModuleEvent event = new ModuleEvent(NAME, ContactAction.DismissGroup.name, current.toJSON());
             this.contactsAdapter.publish(uKey, event.toJSON());
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "Group dissolved : " + current.getUniqueKey() + " - \"" + current.getName() + "\"");
+            Logger.d(this.getClass(), "Group dismissed : " + current.getUniqueKey() + " - \"" + current.getName() + "\"");
         }
 
         return current;
@@ -1610,7 +1610,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             ModuleEvent event = new ModuleEvent(jsonObject);
             String eventName = event.getEventName();
             if (eventName.equals(ContactAction.CreateGroup.name)
-                || eventName.equals(ContactAction.DissolveGroup.name)
+                || eventName.equals(ContactAction.DismissGroup.name)
                 || eventName.equals(ContactAction.AddGroupMember.name)
                 || eventName.equals(ContactAction.RemoveGroupMember.name)) {
                 // 获取在线的联系人信息
