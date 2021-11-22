@@ -80,10 +80,12 @@ public class GroupTable {
 
     /**
      * 更新群组。对群组进行比较，如果群组数据发生变化，则更新。
+     *
      * @param group
+     * @param force 是否强制更新，跳过比较。
      * @return
      */
-    public Group updateGroup(Group group) {
+    public Group updateGroup(Group group, boolean force) {
         Group current = get(group);
         if (null == current) {
             this.groups.remove(group.getId());
@@ -92,29 +94,37 @@ public class GroupTable {
 
         boolean modified = false;
 
-        if (!current.getName().equals(group.getName())) {
-            modified = true;
-            current.setName(group.getName());
-        }
-
-        if (!current.getOwnerId().equals(group.getOwnerId())) {
-            modified = true;
-            current.setOwnerId(group.getOwnerId());
-        }
-
-        JSONObject context = group.getContext();
-        if (null != context) {
-            if (null == current.getContext()) {
+        if (!force) {
+            if (!current.getName().equals(group.getName())) {
                 modified = true;
-                current.setContext(context);
+                current.setName(group.getName());
             }
-            else {
-                JSONObject currentCtx = current.getContext();
-                if (!currentCtx.toString().equals(context.toString())) {
+
+            if (!current.getOwnerId().equals(group.getOwnerId())) {
+                modified = true;
+                current.setOwnerId(group.getOwnerId());
+            }
+
+            JSONObject context = group.getContext();
+            if (null != context) {
+                if (null == current.getContext()) {
                     modified = true;
                     current.setContext(context);
                 }
+                else {
+                    JSONObject currentCtx = current.getContext();
+                    if (!currentCtx.toString().equals(context.toString())) {
+                        modified = true;
+                        current.setContext(context);
+                    }
+                }
             }
+        }
+        else {
+            modified = true;
+            current.setName(group.getName());
+            current.setOwnerId(group.getOwnerId());
+            current.setContext(group.getContext());
         }
 
         if (modified) {

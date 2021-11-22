@@ -71,13 +71,19 @@ public class ModifyGroupTask extends ServiceTask {
         String domain = contact.getDomain().getName();
 
         Long groupId = null;
+        Long newOwnerId = null;
         Contact newOwner = null;
         String newName = null;
         JSONObject newContext = null;
         try {
-            groupId = data.getLong("groupId");
+            // 群组 ID
+            groupId = data.has("id") ? data.getLong("id") : data.getLong("groupId");
+
             if (data.has("owner")) {
                 newOwner = new Contact(data.getJSONObject("owner"), domain);
+            }
+            if (data.has("ownerId")) {
+                newOwnerId = data.getLong("ownerId");
             }
             if (data.has("name")) {
                 newName = data.getString("name");
@@ -108,6 +114,12 @@ public class ModifyGroupTask extends ServiceTask {
                 group.setOwnerId(newOwner.getId());
             }
         }
+        else if (null != newOwnerId) {
+            if (group.hasMember(newOwnerId)) {
+                group.setOwnerId(newOwnerId);
+            }
+        }
+
         if (null != newName) {
             group.setName(newName);
         }
@@ -118,8 +130,9 @@ public class ModifyGroupTask extends ServiceTask {
         // 修改群组信息
         Group result = ContactManager.getInstance().modifyGroup(group);
 
+        // 返回 Compact 结构
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, result.toJSON()));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, result.toCompactJSON()));
         markResponseTime();
     }
 }

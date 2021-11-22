@@ -992,7 +992,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     public Group modifyGroup(Group modifiedGroup) {
         GroupTable gt = this.getGroupTable(modifiedGroup.getDomain().getName());
-        Group current = gt.updateGroup(modifiedGroup);
+        Group current = gt.updateGroup(modifiedGroup, true);
 
         if (Logger.isDebugLevel()) {
             Logger.d(this.getClass(), "Modify group " + modifiedGroup.getId());
@@ -1000,18 +1000,6 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         return current;
     }
-
-//    public GroupBundle modifyGroupMember(Group group, Contact member) {
-//        GroupTable gt = this.getGroupTable(group.getDomain().getName());
-//        Contact current = gt.updateGroupMember(group, member);
-//
-//        if (Logger.isDebugLevel()) {
-//            Logger.d(this.getClass(), "Modify group member " + group.getId() + " - " + member.getId());
-//        }
-//
-//        GroupBundle bundle = new GroupBundle(group, current);
-//        return bundle;
-//    }
 
     /**
      * 更新群组的活跃时间。
