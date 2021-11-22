@@ -185,7 +185,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 group = ContactManager.getInstance().getGroup(group.getId(), group.getDomain().getName());
                 GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
                 appendix.setCommId(0L);
-                ContactManager.getInstance().updateAppendix(appendix, true);
+                ContactManager.getInstance().updateAppendix(group, appendix, true);
             }
 
             this.mediaUnitLeader.release(commField);
@@ -957,7 +957,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                             group = ContactManager.getInstance().getGroup(group.getId(), group.getDomain().getName());
                             GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
                             appendix.setCommId(0L);
-                            ContactManager.getInstance().updateAppendix(appendix, true);
+                            ContactManager.getInstance().updateAppendix(group, appendix, true);
                         }
 
                         // 更新缓存

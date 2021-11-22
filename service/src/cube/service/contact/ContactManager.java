@@ -1316,13 +1316,16 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      *
      * @param appendix
      */
-    public void updateAppendix(GroupAppendix appendix, boolean broadcast) {
+    public void updateAppendix(Group group, GroupAppendix appendix, boolean broadcast) {
         this.groupCache.applyPut(appendix.getUniqueKey(), appendix.toJSON());
         this.storage.writeAppendix(appendix);
 
+        // 更新群组的活跃时间
+        group.setLastActiveTime(System.currentTimeMillis());
+        this.storage.updateGroupActiveTime(group);
+
         if (broadcast) {
             // 向群组内所有成员广播
-            Group group = this.getGroup(appendix.getOwner().getId(), appendix.getOwner().getDomain().getName());
             for (Long memberId : group.getMembers()) {
                 String uKey = UniqueKey.make(memberId, group.getDomain().getName());
                 ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.GroupAppendixUpdated.name, appendix.packJSON(memberId));
