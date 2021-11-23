@@ -1252,7 +1252,7 @@ public class ContactStorage implements Storagable {
      * @param appendix
      */
     public void writeAppendix(ContactAppendix appendix) {
-        String table = this.appendixTableNameMap.get(appendix.getOwner().getDomain().getName());
+        String table = this.appendixTableNameMap.get(appendix.getContact().getDomain().getName());
 
         this.executor.execute(new Runnable() {
             @Override
@@ -1260,12 +1260,12 @@ public class ContactStorage implements Storagable {
                 List<StorageField[]> list = storage.executeQuery(table, new StorageField[] {
                         new StorageField("id", LiteralBase.LONG)
                 }, new Conditional[] {
-                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
+                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getContact().getId()))
                 });
 
                 if (list.isEmpty()) {
                     storage.executeInsert(table, new StorageField[] {
-                            new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()),
+                            new StorageField("id", LiteralBase.LONG, appendix.getContact().getId()),
                             new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
                     });
                 }
@@ -1273,7 +1273,7 @@ public class ContactStorage implements Storagable {
                     storage.executeUpdate(table, new StorageField[] {
                             new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
                     }, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
+                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getContact().getId()))
                     });
                 }
             }
@@ -1308,7 +1308,7 @@ public class ContactStorage implements Storagable {
      * @param appendix
      */
     public void writeAppendix(GroupAppendix appendix) {
-        String table = this.appendixTableNameMap.get(appendix.getOwner().getDomain().getName());
+        String table = this.appendixTableNameMap.get(appendix.getGroup().getDomain().getName());
 
         this.executor.execute(new Runnable() {
             @Override
@@ -1316,12 +1316,12 @@ public class ContactStorage implements Storagable {
                 List<StorageField[]> list = storage.executeQuery(table, new StorageField[] {
                         new StorageField("id", LiteralBase.LONG)
                 }, new Conditional[] {
-                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
+                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getGroup().getId()))
                 });
 
                 if (list.isEmpty()) {
                     storage.executeInsert(table, new StorageField[] {
-                            new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()),
+                            new StorageField("id", LiteralBase.LONG, appendix.getGroup().getId()),
                             new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
                     });
                 }
@@ -1329,7 +1329,7 @@ public class ContactStorage implements Storagable {
                     storage.executeUpdate(table, new StorageField[] {
                             new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
                     }, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getOwner().getId()))
+                            Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getGroup().getId()))
                     });
                 }
             }

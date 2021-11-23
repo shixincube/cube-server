@@ -1288,10 +1288,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         final long timestamp = System.currentTimeMillis();
 
         // 更新联系人的时间戳
-        Contact owner = appendix.getOwner();
+        Contact contact = appendix.getContact();
 
         // 更新缓存
-        this.contactCache.apply(owner.getUniqueKey(), new LockFuture() {
+        this.contactCache.apply(contact.getUniqueKey(), new LockFuture() {
             @Override
             public void acquired(String key) {
                 JSONObject data = get();
@@ -1304,10 +1304,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             }
         });
 
-        owner.setTimestamp(timestamp);
-        this.storage.updateContactTimestamp(owner);
+        contact.setTimestamp(timestamp);
+        this.storage.updateContactTimestamp(contact);
 
-        this.contactAppendixMap.put(owner.getUniqueKey(), appendix);
+        this.contactAppendixMap.put(contact.getUniqueKey(), appendix);
         this.storage.writeAppendix(appendix);
     }
 

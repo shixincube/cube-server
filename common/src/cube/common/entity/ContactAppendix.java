@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ContactAppendix extends Entity {
 
-    private Contact owner;
+    private Contact contact;
 
     /**
      * 其他联系人对该联系人的备注名。
@@ -62,12 +62,12 @@ public class ContactAppendix extends Entity {
     /**
      * 构造函数。
      *
-     * @param owner
+     * @param contact
      */
-    public ContactAppendix(Contact owner) {
+    public ContactAppendix(Contact contact) {
         super();
-        this.uniqueKey = owner.getUniqueKey() + "_appendix";
-        this.owner = owner;
+        this.uniqueKey = contact.getUniqueKey() + "_appendix";
+        this.contact = contact;
         this.remarkNames = new HashMap<>();
         this.noNoticeContacts = new Vector<>();
         this.noNoticeGroups = new Vector<>();
@@ -77,13 +77,13 @@ public class ContactAppendix extends Entity {
     /**
      * 构造函数。
      *
-     * @param owner
+     * @param contact
      * @param json
      */
-    public ContactAppendix(Contact owner, JSONObject json) {
+    public ContactAppendix(Contact contact, JSONObject json) {
         super(json);
-        this.uniqueKey = owner.getUniqueKey() + "_appendix";
-        this.owner = owner;
+        this.uniqueKey = contact.getUniqueKey() + "_appendix";
+        this.contact = contact;
         this.remarkNames = new HashMap<>();
         this.noNoticeContacts = new Vector<>();
         this.noNoticeGroups = new Vector<>();
@@ -126,8 +126,8 @@ public class ContactAppendix extends Entity {
      *
      * @return 返回附录所属的联系人。
      */
-    public Contact getOwner() {
-        return this.owner;
+    public Contact getContact() {
+        return this.contact;
     }
 
     /**
@@ -225,7 +225,7 @@ public class ContactAppendix extends Entity {
      */
     public JSONObject packJSON(Contact contact) {
         JSONObject json = new JSONObject();
-        json.put("owner", this.owner.toCompactJSON());
+        json.put("contact", this.contact.toCompactJSON());
         String remarkName = this.remarkNames.get(contact.getId());
         if (null == remarkName) {
             remarkName = "";
@@ -233,7 +233,7 @@ public class ContactAppendix extends Entity {
         json.put("remarkName", remarkName);
 
         // 打包自己的数据
-        if (contact.getId().equals(this.owner.getId())) {
+        if (contact.getId().equals(this.contact.getId())) {
             JSONArray array = new JSONArray();
             for (Long id : this.noNoticeContacts) {
                 array.put(id.longValue());
@@ -259,7 +259,7 @@ public class ContactAppendix extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("ownerId", this.owner.getId());
+        json.put("contactId", this.contact.getId());
 
         JSONArray remarkNamesArray = new JSONArray();
         Iterator<Map.Entry<Long, String>> iter = this.remarkNames.entrySet().iterator();

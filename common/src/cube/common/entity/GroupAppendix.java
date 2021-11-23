@@ -36,12 +36,22 @@ import java.util.*;
  */
 public class GroupAppendix extends Entity {
 
-    private Group owner;
+    private Group group;
 
     /**
      * 群组公告。
      */
     private String notice;
+
+    /**
+     * 公告操作员 ID 。
+     */
+    private Long noticeOperatorId;
+
+    /**
+     * 公告时间。
+     */
+    private long noticeTime;
 
     /**
      * 每个成员的备注名。公开信息。
@@ -81,13 +91,13 @@ public class GroupAppendix extends Entity {
     /**
      * 构造函数。
      *
-     * @param owner
+     * @param group
      */
-    public GroupAppendix(Group owner) {
+    public GroupAppendix(Group group) {
         super();
-        this.uniqueKey = owner.getUniqueKey() + "_appendix";
-        this.owner = owner;
-        this.domain = owner.getDomain();
+        this.uniqueKey = group.getUniqueKey() + "_appendix";
+        this.group = group;
+        this.domain = group.getDomain();
         this.memberRemarks = new HashMap<>();
 
         this.remarkMap = new HashMap<>();
@@ -102,14 +112,14 @@ public class GroupAppendix extends Entity {
     /**
      * 构造函数。
      *
-     * @param owner
+     * @param group
      * @param json
      */
-    public GroupAppendix(Group owner, JSONObject json) {
+    public GroupAppendix(Group group, JSONObject json) {
         super();
-        this.uniqueKey = owner.getUniqueKey() + "_appendix";
-        this.owner = owner;
-        this.domain = owner.getDomain();
+        this.uniqueKey = group.getUniqueKey() + "_appendix";
+        this.group = group;
+        this.domain = group.getDomain();
         this.memberRemarks = new HashMap<>();
 
         this.remarkMap = new HashMap<>();
@@ -122,6 +132,8 @@ public class GroupAppendix extends Entity {
 
         if (json.has("notice")) {
             this.notice = json.getString("notice");
+            this.noticeOperatorId = json.has("noticeOperatorId") ? json.getLong("noticeOperatorId") : null;
+            this.noticeTime = json.has("noticeTime") ? json.getLong("noticeTime") : 0;
         }
 
         if (json.has("memberRemarks")) {
@@ -186,18 +198,26 @@ public class GroupAppendix extends Entity {
      *
      * @return 返回附件所属的群组。
      */
-    public Group getOwner() {
-        return this.owner;
+    public Group getGroup() {
+        return this.group;
     }
 
     /**
      * 设置群组公告。
      *
-     * @param notice
+     * @param notice 指定公告内容。
+     * @param contact 指定操作公告的联系人。
      */
-    public void setNotice(String notice) {
+    public boolean setNotice(String notice, Contact contact) {
+        if (!contact.getId().equals(this.group.getOwnerId())) {
+            return false;
+        }
+
         this.resetTimestamp();
         this.notice = notice;
+        this.noticeOperatorId = contact.getId();
+        this.noticeTime = this.timestamp;
+        return true;
     }
 
     /**
@@ -226,7 +246,7 @@ public class GroupAppendix extends Entity {
      * @param member
      * @param content
      */
-    public void remark(Contact member, String content) {
+    public void remarkGroup(Contact member, String content) {
         this.remarkMap.put(member.getId(), content);
         this.resetTimestamp();
     }
@@ -335,9 +355,11 @@ public class GroupAppendix extends Entity {
      */
     public JSONObject packJSON(Long memberId) {
         JSONObject json = new JSONObject();
-        json.put("ownerId", this.owner.getId());
+        json.put("groupId", this.group.getId());
 
         json.put("notice", (null == this.notice) ? "" : this.notice);
+        json.put("noticeOperatorId", (null == this.noticeOperatorId) ? 0L : this.noticeOperatorId.longValue());
+        json.put("noticeTime", this.noticeTime);
 
         JSONArray memberRemarkArray = new JSONArray();
         for (Map.Entry<Long, String> e : this.memberRemarks.entrySet()) {
@@ -375,7 +397,7 @@ public class GroupAppendix extends Entity {
             json.put("context", context);
         }
 
-        if (this.owner.getOwnerId().equals(memberId)) {
+        if (this.group.getOwnerId().equals(memberId)) {
             JSONArray array = new JSONArray();
             ArrayList<JSONObject> applicants = new ArrayList<>(this.applicants);
             Collections.reverse(applicants);
@@ -393,9 +415,11 @@ public class GroupAppendix extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("ownerId", this.owner.getId());
+        json.put("groupId", this.group.getId());
 
         json.put("notice", (null == this.notice) ? "" : this.notice);
+        json.put("noticeOperatorId", (null == this.noticeOperatorId) ? 0L : this.noticeOperatorId.longValue());
+        json.put("noticeTime", this.noticeTime);
 
         JSONObject memberRemarks = new JSONObject();
         for (Map.Entry<Long, String> e : this.memberRemarks.entrySet()) {

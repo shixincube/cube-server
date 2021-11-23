@@ -158,26 +158,30 @@ public class UpdateAppendixTask extends ServiceTask {
             GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
 
             boolean broadcast = false;
+            boolean modified = false;
 
             if (data.has("notice")) {
                 // 更新公告
-                appendix.setNotice(data.getString("notice"));
+                modified = appendix.setNotice(data.getString("notice"), contact);
             }
 
             if (data.has("memberRemark")) {
                 // 更新群成员备注名
                 JSONObject remark = data.getJSONObject("memberRemark");
                 appendix.setMemberRemarkName(remark.getLong("id"), remark.getString("name"));
+                modified = true;
             }
 
             if (data.has("remark")) {
-                // 更新备注
-                appendix.remark(contact, data.getString("remark"));
+                // 更新成员对该群的备注
+                appendix.remarkGroup(contact, data.getString("remark"));
+                modified = true;
             }
 
             if (data.has("following")) {
                 // 更新关注
                 appendix.setFollowing(contact, data.getBoolean("following"));
+                modified = true;
             }
 
             if (data.has("commId")) {
@@ -189,9 +193,12 @@ public class UpdateAppendixTask extends ServiceTask {
                     appendix.setCommId(commId);
                     broadcast = true;
                 }
+                modified = true;
             }
 
-            ContactManager.getInstance().updateAppendix(group, appendix, broadcast);
+            if (modified) {
+                ContactManager.getInstance().updateAppendix(group, appendix, broadcast);
+            }
 
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Ok.code, appendix.packJSON(contact.getId())));
