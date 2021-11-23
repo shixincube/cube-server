@@ -880,13 +880,13 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param participants
      * @return
      */
-    public ContactZone createContactZone(Contact owner, String zoneName, String displayName, List<Long> participants) {
+    public ContactZone createContactZone(Contact owner, String zoneName, String displayName, List<ContactZoneParticipant> participants) {
         ContactZone zone = new ContactZone(Utils.generateSerialNumber(), owner.getDomain().getName(),
                 owner.getId(), zoneName, System.currentTimeMillis(), ContactZoneState.Normal);
         zone.displayName = (null != displayName) ? displayName : zoneName;
 
-        for (Long contactId : participants) {
-            zone.addContact(contactId);
+        for (ContactZoneParticipant participant : participants) {
+            zone.addParticipant(participant);
         }
 
         if (!this.storage.writeContactZone(zone, null)) {
@@ -898,39 +898,47 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
-     * 指定分区是否包含指定联系人。
+     * 删除指定的联系人分区。
+     *
+     * @param owner
+     * @param zoneName
+     */
+    public void deleteContactZone(Contact owner, String zoneName) {
+
+    }
+
+    /**
+     * 指定分区是否包含指定参与人。
      *
      * @param contact
      * @param zoneName
-     * @param contactId
+     * @param participantId
      * @return
      */
-    public boolean containsContactInZone(Contact contact, String zoneName, Long contactId) {
-        return this.storage.hasContactInZone(contact.getDomain().getName(), contact.getId(), zoneName, contactId);
+    public boolean containsParticipantInZone(Contact contact, String zoneName, Long participantId) {
+        return this.storage.hasParticipantInZone(contact.getDomain().getName(), contact.getId(), zoneName, participantId);
     }
 
     /**
-     * 添加联系人到指定的 Zone 。
+     * 添加参与人到指定的分区。
      *
      * @param contact
      * @param zoneName
-     * @param contactId
+     * @param participant
      */
-    public void addContactToZone(Contact contact, String zoneName, Long contactId, String postscript) {
-        this.storage.addZoneContact(contact.getDomain().getName(), contact.getId(),
-                zoneName, contactId, postscript);
+    public void addParticipantToZone(Contact contact, String zoneName, ContactZoneParticipant participant) {
+        this.storage.addZoneParticipant(contact.getDomain().getName(), contact.getId(), zoneName, participant);
     }
 
     /**
-     * 从指定的 Zone 移除联系人。
+     * 从指定的分区移除参与人。
      *
      * @param contact
      * @param zoneName
-     * @param contactId
+     * @param participant
      */
-    public void removeContactFromZone(Contact contact, String zoneName, Long contactId) {
-        this.storage.removeZoneContact(contact.getDomain().getName(), contact.getId(),
-                zoneName, contactId);
+    public void removeParticipantFromZone(Contact contact, String zoneName, ContactZoneParticipant participant) {
+        this.storage.removeZoneParticipant(contact.getDomain().getName(), contact.getId(), zoneName, participant);
     }
 
     /**
@@ -1321,7 +1329,6 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         this.storage.writeAppendix(appendix);
 
         // 更新群组的活跃时间
-        group.setLastActiveTime(System.currentTimeMillis());
         this.storage.updateGroupActiveTime(group);
 
         if (broadcast) {
@@ -1348,8 +1355,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         this.storage.writeBlockList(contact.getDomain().getName(), contact.getId(), blockId);
 
-        // 将阻止的联系人从 Zone 里删除
-        this.storage.removeZonesContact(contact.getDomain().getName(), contact.getId(), blockId);
+        // 将阻止的联系人从分区里删除
+        this.storage.clearParticipantInZones(contact.getDomain().getName(), contact.getId(), blockId);
 
         return this.storage.readBlockList(contact.getDomain().getName(), contact.getId());
     }

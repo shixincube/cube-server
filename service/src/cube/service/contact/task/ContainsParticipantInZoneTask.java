@@ -35,6 +35,7 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.ContactZoneParticipant;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -42,11 +43,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * 从分区移除联系人任务。
+ * 指定分区是否包含指定联系人任务。
  */
-public class RemoveContactFromZoneTask extends ServiceTask {
+public class ContainsParticipantInZoneTask extends ServiceTask {
 
-    public RemoveContactFromZoneTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public ContainsParticipantInZoneTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -74,10 +75,10 @@ public class RemoveContactFromZoneTask extends ServiceTask {
         }
 
         String zoneName = null;
-        Long contactId = null;
+        Long participantId = null;
         try {
             zoneName = data.getString("name");
-            contactId = data.getLong("contactId");
+            participantId = data.has("participantId") ? data.getLong("participantId") : data.getLong("id");
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
@@ -86,11 +87,16 @@ public class RemoveContactFromZoneTask extends ServiceTask {
             return;
         }
 
-        // 从分区移除联系人
-        ContactManager.getInstance().removeContactFromZone(contact, zoneName, contactId);
+        // 判断是否包含指定联系人
+        boolean contained = ContactManager.getInstance().containsParticipantInZone(contact, zoneName, participantId);
+
+        JSONObject result = new JSONObject();
+        result.put("contained", contained);
+        result.put("name", zoneName);
+        result.put("participantId", participantId.longValue());
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, data));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, result));
         markResponseTime();
     }
 }

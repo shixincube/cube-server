@@ -782,6 +782,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * @param conversation 指定待更新会话。
      */
     public void updateConversation(Conversation conversation) {
+        conversation.resetTimestamp();
         this.storage.updateConversation(conversation);
     }
 

@@ -159,10 +159,12 @@ public class UpdateAppendixTask extends ServiceTask {
 
             boolean broadcast = false;
             boolean modified = false;
+            boolean needResetTimestamp = false;
 
             if (data.has("notice")) {
                 // 更新公告
                 modified = appendix.setNotice(data.getString("notice"), contact);
+                needResetTimestamp = true;
             }
 
             if (data.has("memberRemark")) {
@@ -184,6 +186,12 @@ public class UpdateAppendixTask extends ServiceTask {
                 modified = true;
             }
 
+            if (data.has("memberNameDisplayed")) {
+                // 更新群成员名称显示标志位
+                appendix.setMemberNameDisplayed(contact, data.getBoolean("memberNameDisplayed"));
+                modified = true;
+            }
+
             if (data.has("commId")) {
                 // 更新群组当前的通讯 ID
                 Long commId = data.getLong("commId");
@@ -197,6 +205,11 @@ public class UpdateAppendixTask extends ServiceTask {
             }
 
             if (modified) {
+                if (needResetTimestamp) {
+                    // 更新时间戳
+                    group.resetTimestamp();
+                }
+
                 ContactManager.getInstance().updateAppendix(group, appendix, broadcast);
             }
 

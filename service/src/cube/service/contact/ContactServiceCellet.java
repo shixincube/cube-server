@@ -97,16 +97,16 @@ public class ContactServiceCellet extends AbstractCellet {
             this.executor.execute(new GetContactZoneTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (ContactAction.AddContactToZone.name.equals(action)) {
-            this.executor.execute(new AddContactToZoneTask(this, talkContext, primitive,
+        else if (ContactAction.AddParticipantToZone.name.equals(action)) {
+            this.executor.execute(new AddParticipantToZoneTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (ContactAction.RemoveContactFromZone.name.equals(action)) {
-            this.executor.execute(new RemoveContactFromZoneTask(this, talkContext, primitive,
+        else if (ContactAction.RemoveParticipantFromZone.name.equals(action)) {
+            this.executor.execute(new RemoveParticipantFromZoneTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (ContactAction.ContainsContactInZone.name.equals(action)) {
-            this.executor.execute(new ContainsContactInZoneTask(this, talkContext, primitive,
+        else if (ContactAction.ContainsParticipantInZone.name.equals(action)) {
+            this.executor.execute(new ContainsParticipantInZoneTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.CreateContactZone.name.equals(action)) {

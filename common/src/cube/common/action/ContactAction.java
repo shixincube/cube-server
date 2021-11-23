@@ -92,19 +92,19 @@ public enum ContactAction {
     DeleteContactZone("deleteContactZone"),
 
     /**
-     * 指定分区是否包含指定联系人。
+     * 指定分区是否包含指定参与人。
      */
-    ContainsContactInZone("containsContactInZone"),
+    ContainsParticipantInZone("containsParticipantInZone"),
 
     /**
-     * 添加联系人到分区。
+     * 添加参与人到分区。
      */
-    AddContactToZone("addContactToZone"),
+    AddParticipantToZone("addParticipantToZone"),
 
     /**
-     * 从分区移除联系人。
+     * 从分区移除参与人。
      */
-    RemoveContactFromZone("removeContactFromZone"),
+    RemoveParticipantFromZone("removeParticipantFromZone"),
 
     /**
      * 获取群组信息。

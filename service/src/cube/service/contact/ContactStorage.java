@@ -120,7 +120,10 @@ public class ContactStorage implements Storagable {
             new StorageField("contact_zone_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("contact", LiteralBase.LONG, new Constraint[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("type", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("state", LiteralBase.INT, new Constraint[] {
@@ -470,12 +473,14 @@ public class ContactStorage implements Storagable {
 
         String domain = contact.getDomain().getName();
 
-        String table = contactZoneTableNameMap.get(domain);
+        String table = this.contactZoneTableNameMap.get(domain);
 
         Conditional[] conditionals = null;
         if (limit > 0) {
             conditionals = new Conditional[] {
                     Conditional.createEqualTo("owner", contact.getId()),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("state", ContactZoneState.Normal.code),
                     Conditional.createAnd(),
                     Conditional.createGreaterThan(new StorageField("timestamp", timestamp)),
                     Conditional.createLimit(limit)
@@ -484,6 +489,8 @@ public class ContactStorage implements Storagable {
         else {
             conditionals = new Conditional[] {
                     Conditional.createEqualTo("owner", contact.getId()),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("state", ContactZoneState.Normal.code),
                     Conditional.createAnd(),
                     Conditional.createGreaterThan(new StorageField("timestamp", timestamp))
             };
@@ -513,9 +520,11 @@ public class ContactStorage implements Storagable {
 
             for (StorageField[] partRow : partResult) {
                 Map<String, StorageField> data = StorageFields.get(partRow);
-                ContactZoneParticipant member = new ContactZoneParticipant(data.get("contact").getLong(), data.get("postscript").getString(),
+                ContactZoneParticipant participant = new ContactZoneParticipant(data.get("id").getLong(),
+                        ContactZoneParticipantType.parse(data.get("type").getInt()),
+                        data.get("postscript").getString(),
                         ContactZoneParticipantState.parse(data.get("state").getInt()));
-                zone.addContact(member);
+                zone.addParticipant(participant);
             }
 
             // 添加
@@ -531,10 +540,9 @@ public class ContactStorage implements Storagable {
      * @param domain
      * @param owner
      * @param name
-     * @param contactId
-     * @param postscript
+     * @param participant
      */
-    public void addZoneContact(String domain, long owner, String name, Long contactId, String postscript) {
+    public void addZoneParticipant(String domain, long owner, String name, ContactZoneParticipant participant) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -559,17 +567,18 @@ public class ContactStorage implements Storagable {
                 storage.executeUpdate(table, new StorageField[] {
                         new StorageField("timestamp", LiteralBase.LONG, time)
                 }, new Conditional[] {
-                        Conditional.createEqualTo("id", LiteralBase.LONG, zoneId.longValue())
+                        Conditional.createEqualTo("id", LiteralBase.LONG, zoneId)
                 });
 
                 table = contactZoneParticipantTableNameMap.get(domain);
 
                 storage.executeInsert(table, new StorageField[] {
                         new StorageField("contact_zone_id", LiteralBase.LONG, zoneId),
-                        new StorageField("contact", LiteralBase.LONG, contactId.longValue()),
-                        new StorageField("state", LiteralBase.INT, ContactZoneState.Normal.code),
+                        new StorageField("id", LiteralBase.LONG, participant.id),
+                        new StorageField("type", LiteralBase.INT, participant.type.code),
+                        new StorageField("state", LiteralBase.INT, participant.state.code),
                         new StorageField("timestamp", LiteralBase.LONG, time),
-                        new StorageField("postscript", LiteralBase.STRING, (null != postscript) ? postscript : "")
+                        new StorageField("postscript", LiteralBase.STRING, participant.postscript)
                 });
             }
         });
@@ -581,9 +590,9 @@ public class ContactStorage implements Storagable {
      * @param domain
      * @param owner
      * @param name
-     * @param contactId
+     * @param participant
      */
-    public void removeZoneContact(String domain, long owner, String name, Long contactId) {
+    public void removeZoneParticipant(String domain, long owner, String name, ContactZoneParticipant participant) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -608,28 +617,29 @@ public class ContactStorage implements Storagable {
                 storage.executeUpdate(table, new StorageField[] {
                         new StorageField("timestamp", LiteralBase.LONG, time)
                 }, new Conditional[] {
-                        Conditional.createEqualTo("id", LiteralBase.LONG, zoneId.longValue())
+                        Conditional.createEqualTo("id", LiteralBase.LONG, zoneId)
                 });
 
                 table = contactZoneParticipantTableNameMap.get(domain);
 
                 storage.executeDelete(table, new Conditional[] {
-                        Conditional.createEqualTo("contact_zone_id", LiteralBase.LONG, zoneId.longValue()),
+                        Conditional.createEqualTo("contact_zone_id", LiteralBase.LONG, zoneId),
                         Conditional.createAnd(),
-                        Conditional.createEqualTo("contact", LiteralBase.LONG, contactId.longValue())
+                        Conditional.createEqualTo("id", LiteralBase.LONG, participant.id)
                 });
             }
         });
     }
 
     /**
-     * 删除指定联系人的所有 Zone 里的记录。
+     * 删除指定指定参与人所在的 Zone 里的基础。
+     * 即将指定 owner 里的所有 zone 里包含 participantId 的记录删除。
      *
      * @param domain
      * @param owner
-     * @param contactId
+     * @param participantId
      */
-    public void removeZonesContact(String domain, long owner, Long contactId) {
+    public void clearParticipantInZones(String domain, long owner, Long participantId) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -654,13 +664,13 @@ public class ContactStorage implements Storagable {
                     storage.executeUpdate(table, new StorageField[] {
                             new StorageField("timestamp", LiteralBase.LONG, time)
                     }, new Conditional[] {
-                            Conditional.createEqualTo("id", LiteralBase.LONG, zoneId.longValue())
+                            Conditional.createEqualTo("id", LiteralBase.LONG, zoneId)
                     });
 
                     storage.executeDelete(participantTable, new Conditional[] {
-                            Conditional.createEqualTo("contact_zone_id", LiteralBase.LONG, zoneId.longValue()),
+                            Conditional.createEqualTo("contact_zone_id", LiteralBase.LONG, zoneId),
                             Conditional.createAnd(),
-                            Conditional.createEqualTo("contact", LiteralBase.LONG, contactId.longValue())
+                            Conditional.createEqualTo("id", LiteralBase.LONG, participantId)
                     });
                 }
             }
@@ -673,10 +683,10 @@ public class ContactStorage implements Storagable {
      * @param domain
      * @param owner
      * @param name
-     * @param contactId
+     * @param participantId
      * @return
      */
-    public boolean hasContactInZone(String domain, long owner, String name, Long contactId) {
+    public boolean hasParticipantInZone(String domain, long owner, String name, Long participantId) {
         String table = this.contactZoneTableNameMap.get(domain);
         List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
                 new StorageField("id", LiteralBase.LONG)
@@ -697,9 +707,9 @@ public class ContactStorage implements Storagable {
         result = this.storage.executeQuery(table, new StorageField[] {
                 new StorageField("state", LiteralBase.INT)
         }, new Conditional[] {
-                Conditional.createEqualTo("contact_zone_id", LiteralBase.LONG, zoneId.longValue()),
+                Conditional.createEqualTo("contact_zone_id", LiteralBase.LONG, zoneId),
                 Conditional.createAnd(),
-                Conditional.createEqualTo("contact", LiteralBase.LONG, contactId.longValue())
+                Conditional.createEqualTo("id", LiteralBase.LONG, participantId)
         });
 
         return (!result.isEmpty());
@@ -738,7 +748,8 @@ public class ContactStorage implements Storagable {
                 for (ContactZoneParticipant participant : zone.getParticipants()) {
                     storage.executeInsert(participantTable, new StorageField[] {
                             new StorageField("contact_zone_id", LiteralBase.LONG, zone.getId()),
-                            new StorageField("contact", LiteralBase.LONG, participant.contactId),
+                            new StorageField("id", LiteralBase.LONG, participant.id),
+                            new StorageField("type", LiteralBase.INT, participant.type.code),
                             new StorageField("state", LiteralBase.INT, participant.state.code),
                             new StorageField("timestamp", LiteralBase.LONG, zone.getTimestamp()),
                             new StorageField("postscript", LiteralBase.STRING, participant.postscript),
@@ -765,9 +776,9 @@ public class ContactStorage implements Storagable {
     public ContactZone readContactZone(String domain, long owner, String name) {
         String table = this.contactZoneTableNameMap.get(domain);
         List<StorageField[]> result = this.storage.executeQuery(table, this.contactZoneFields, new Conditional[] {
-                Conditional.createEqualTo("owner", LiteralBase.LONG, owner),
+                Conditional.createEqualTo("owner", owner),
                 Conditional.createAnd(),
-                Conditional.createEqualTo("name", LiteralBase.STRING, name),
+                Conditional.createEqualTo("name", name)
         });
 
         if (result.isEmpty()) {
@@ -783,17 +794,37 @@ public class ContactStorage implements Storagable {
         // 查询成员
         table = this.contactZoneParticipantTableNameMap.get(domain);
         result = this.storage.executeQuery(table, this.contactZoneParticipantFields, new Conditional[] {
-                Conditional.createEqualTo("contact_zone_id", LiteralBase.LONG, zone.getId().longValue()),
+                Conditional.createEqualTo("contact_zone_id", LiteralBase.LONG, zone.getId()),
         });
 
         for (StorageField[] row : result) {
             Map<String, StorageField> data = StorageFields.get(row);
-            ContactZoneParticipant member = new ContactZoneParticipant(data.get("contact").getLong(), data.get("postscript").getString(),
+            ContactZoneParticipant participant = new ContactZoneParticipant(data.get("id").getLong(),
+                    ContactZoneParticipantType.parse(data.get("type").getInt()),
+                    data.get("postscript").getString(),
                     ContactZoneParticipantState.parse(data.get("state").getInt()));
-            zone.addContact(member);
+            zone.addParticipant(participant);
         }
 
         return zone;
+    }
+
+    /**
+     * 删除指定联系人分区。
+     *
+     * @param domain
+     * @param owner
+     * @param name
+     */
+    public void deleteContactZone(String domain, long owner, String name) {
+        String table = this.contactZoneTableNameMap.get(domain);
+        this.storage.executeUpdate(table, new StorageField[] {
+                new StorageField("state", ContactZoneState.Deleted.code)
+        }, new Conditional[] {
+                Conditional.createEqualTo("owner", owner),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("name", name)
+        });
     }
 
     /**

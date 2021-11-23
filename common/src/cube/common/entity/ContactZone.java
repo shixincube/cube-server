@@ -76,44 +76,41 @@ public class ContactZone extends Entity {
         this.participants = new ArrayList<>();
     }
 
-    public void addContact(ContactZoneParticipant participant) {
-        if (participant.contactId.longValue() == this.owner) {
+    public void addParticipant(ContactZoneParticipant participant) {
+        if (participant.type == ContactZoneParticipantType.Contact
+                && participant.id.longValue() == this.owner) {
             // 过滤分区所有人
             return;
         }
 
-        for (ContactZoneParticipant current : this.participants) {
-            if (current.contactId.equals(participant.contactId)) {
-                return;
-            }
+        if (!this.participants.contains(participant)) {
+            this.participants.add(participant);
         }
-
-        this.participants.add(participant);
     }
 
-    public void addContact(Long id) {
-        this.addContact(id, null);
+    public void addParticipant(Long id, ContactZoneParticipantType type) {
+        this.addParticipant(id, type, null);
     }
 
-    public void addContact(Long id, String postscript) {
+    public void addParticipant(Long id, ContactZoneParticipantType type, String postscript) {
         if (id.longValue() == this.owner) {
             // 过滤分区所有人
             return;
         }
 
         for (ContactZoneParticipant participant : this.participants) {
-            if (participant.contactId.equals(id)) {
+            if (participant.id.equals(id)) {
                 return;
             }
         }
 
-        ContactZoneParticipant participant = new ContactZoneParticipant(id, postscript);
+        ContactZoneParticipant participant = new ContactZoneParticipant(id, type, postscript);
         this.participants.add(participant);
     }
 
-    public void removeContact(Long id) {
+    public void removeParticipant(Long id) {
         for (ContactZoneParticipant participant : this.participants) {
-            if (participant.contactId.equals(id)) {
+            if (participant.id.equals(id)) {
                 this.participants.remove(participant);
                 break;
             }
@@ -129,15 +126,12 @@ public class ContactZone extends Entity {
         JSONObject json = this.toCompactJSON();
 
         JSONArray participants = new JSONArray();
-        JSONArray contacts = new JSONArray();
 
         for (ContactZoneParticipant participant : this.participants) {
             participants.put(participant.toJSON());
-            contacts.put(participant.contactId.longValue());
         }
 
         json.put("participants", participants);
-        json.put("contacts", contacts);
 
         return json;
     }

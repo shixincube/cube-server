@@ -36,6 +36,7 @@ import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.ContactZone;
+import cube.common.entity.ContactZoneParticipant;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -43,11 +44,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * 添加联系人到分区任务。
+ * 添加参与人到分区任务。
  */
-public class AddContactToZoneTask extends ServiceTask {
+public class AddParticipantToZoneTask extends ServiceTask {
 
-    public AddContactToZoneTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public AddParticipantToZoneTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -75,14 +76,10 @@ public class AddContactToZoneTask extends ServiceTask {
         }
 
         String zoneName = null;
-        Long contactId = null;
-        String postscript = null;
+        ContactZoneParticipant participant = null;
         try {
             zoneName = data.getString("name");
-            contactId = data.getLong("contactId");
-            if (data.has("postscript")) {
-                postscript = data.getString("postscript");
-            }
+            participant = new ContactZoneParticipant(data.getJSONObject("participant"));
         } catch (Exception e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
@@ -91,8 +88,8 @@ public class AddContactToZoneTask extends ServiceTask {
             return;
         }
 
-        // 添加联系人到分区
-        ContactManager.getInstance().addContactToZone(contact, zoneName, contactId, postscript);
+        // 添加参与人到分区
+        ContactManager.getInstance().addParticipantToZone(contact, zoneName, participant);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, data));

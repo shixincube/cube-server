@@ -34,26 +34,55 @@ import org.json.JSONObject;
  */
 public class ContactZoneParticipant implements JSONable {
 
-    public final Long contactId;
+    public final Long id;
+
+    public final ContactZoneParticipantType type;
 
     public final String postscript;
 
     public ContactZoneParticipantState state;
 
-    public ContactZoneParticipant(Long contactId, String postscript) {
-        this(contactId, postscript, ContactZoneParticipantState.Normal);
+    public ContactZoneParticipant(JSONObject json) {
+        this(json.getLong("id"), ContactZoneParticipantType.parse(json.getInt("type")),
+                json.has("postscript") ? json.getString("postscript") : null);
     }
 
-    public ContactZoneParticipant(Long contactId, String postscript, ContactZoneParticipantState state) {
-        this.contactId = contactId;
+    public ContactZoneParticipant(Long id, ContactZoneParticipantType type) {
+        this(id, type, null);
+    }
+
+    public ContactZoneParticipant(Long id, ContactZoneParticipantType type, String postscript) {
+        this(id, type, postscript, ContactZoneParticipantState.Normal);
+    }
+
+    public ContactZoneParticipant(Long id, ContactZoneParticipantType type, String postscript, ContactZoneParticipantState state) {
+        this.id = id;
+        this.type = type;
         this.postscript = (null != postscript) ? postscript : "";
         this.state = state;
     }
 
     @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+
+        if (null != object && object instanceof ContactZoneParticipant) {
+            ContactZoneParticipant other = (ContactZoneParticipant) object;
+            if (other.id.equals(this.id) && other.type.code == this.type.code) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("id", this.contactId.longValue());
+        json.put("id", this.id.longValue());
+        json.put("type", this.type.code);
         json.put("state", this.state.code);
         json.put("postscript", this.postscript);
         return json;

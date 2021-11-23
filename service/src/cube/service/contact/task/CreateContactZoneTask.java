@@ -36,6 +36,7 @@ import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.ContactZone;
+import cube.common.entity.ContactZoneParticipant;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -79,15 +80,16 @@ public class CreateContactZoneTask extends ServiceTask {
         }
 
         String zoneName = null;
-        List<Long> contactIdList = null;
+        List<ContactZoneParticipant> participantList = null;
         String displayName = null;
         try {
             zoneName = data.getString("name");
 
-            JSONArray contactsArray = data.getJSONArray("contacts");
-            contactIdList = new ArrayList<>(contactsArray.length());
-            for (int i = 0; i < contactsArray.length(); ++i) {
-                contactIdList.add(contactsArray.getLong(i));
+            JSONArray array = data.getJSONArray("participants");
+            participantList = new ArrayList<>(array.length());
+            for (int i = 0; i < array.length(); ++i) {
+                ContactZoneParticipant participant = new ContactZoneParticipant(array.getJSONObject(i));
+                participantList.add(participant);
             }
 
             if (data.has("displayName")) {
@@ -102,7 +104,7 @@ public class CreateContactZoneTask extends ServiceTask {
         }
 
         // 创建联系人分区
-        ContactZone zone = ContactManager.getInstance().createContactZone(contact, zoneName, displayName, contactIdList);
+        ContactZone zone = ContactManager.getInstance().createContactZone(contact, zoneName, displayName, participantList);
         if (null == zone) {
             // 分区已存在
             this.cellet.speak(this.talkContext,

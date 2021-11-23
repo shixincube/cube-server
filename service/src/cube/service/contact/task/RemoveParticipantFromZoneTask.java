@@ -35,6 +35,7 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.ContactZoneParticipant;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -42,11 +43,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * 指定分区是否包含指定联系人任务。
+ * 从分区移除联系人任务。
  */
-public class ContainsContactInZoneTask extends ServiceTask {
+public class RemoveParticipantFromZoneTask extends ServiceTask {
 
-    public ContainsContactInZoneTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public RemoveParticipantFromZoneTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -74,10 +75,10 @@ public class ContainsContactInZoneTask extends ServiceTask {
         }
 
         String zoneName = null;
-        Long contactId = null;
+        ContactZoneParticipant participant = null;
         try {
             zoneName = data.getString("name");
-            contactId = data.getLong("contactId");
+            participant = new ContactZoneParticipant(data.getJSONObject("participant"));
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
@@ -86,16 +87,11 @@ public class ContainsContactInZoneTask extends ServiceTask {
             return;
         }
 
-        // 判断是否包含指定联系人
-        boolean contained = ContactManager.getInstance().containsContactInZone(contact, zoneName, contactId);
-
-        JSONObject result = new JSONObject();
-        result.put("contained", contained);
-        result.put("name", zoneName);
-        result.put("contactId", contactId.longValue());
+        // 从分区移除参与人
+        ContactManager.getInstance().removeParticipantFromZone(contact, zoneName, participant);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, result));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, data));
         markResponseTime();
     }
 }

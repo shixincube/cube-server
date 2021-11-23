@@ -238,6 +238,7 @@ public class GroupAppendix extends Entity {
      */
     public void setMemberRemarkName(Long memberId, String name) {
         this.memberRemarks.put(memberId, name);
+        this.resetTimestamp();
     }
 
     /**
@@ -258,7 +259,6 @@ public class GroupAppendix extends Entity {
      * @return
      */
     public String getRemark(Contact member) {
-        this.resetTimestamp();
         return this.remarkMap.get(member.getId());
     }
 
@@ -282,6 +282,17 @@ public class GroupAppendix extends Entity {
     public boolean getFollowing(Contact member) {
         Boolean following = this.followingMap.get(member.getId());
         return (null != following ? following : false);
+    }
+
+    /**
+     * 指定成员是否要显示群组里的成员名。
+     *
+     * @param member
+     * @param display
+     */
+    public void setMemberNameDisplayed(Contact member, boolean display) {
+        this.memberNameDisplayedMap.put(member.getId(), display);
+        this.resetTimestamp();
     }
 
     /**
