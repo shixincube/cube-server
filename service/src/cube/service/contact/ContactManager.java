@@ -947,6 +947,11 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 ContactZoneParticipant inviter = new ContactZoneParticipant(contact.getId(), ContactZoneParticipantType.Contact,
                         System.currentTimeMillis(), contact.getId(), participant.postscript, ContactZoneParticipantState.Pending);
                 this.storage.addZoneParticipant(peerZone, inviter);
+
+                // 通知对方
+                String uKey = UniqueKey.make(participant.id, contact.getDomain().getName());
+                ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.ModifyZone.name, inviter.toJSON());
+                this.contactsAdapter.publish(uKey, event.toJSON());
             }
         }
 
@@ -974,8 +979,29 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @return
      */
     public ContactZoneParticipant modifyZoneParticipant(Contact contact, String zoneName, ContactZoneParticipant participant) {
-        
-        return null;
+        ContactZone zone = this.storage.readContactZone(contact.getDomain().getName(), contact.getId(), zoneName);
+        if (null == zone) {
+            return null;
+        }
+
+        if (zone.peerMode) {
+            // 对等模式
+            ContactZone peerZone = this.storage.readContactZone(contact.getDomain().getName(), participant.id, zoneName);
+            if (null != peerZone) {
+                // 修改对端的自己
+                ContactZoneParticipant inviter = new ContactZoneParticipant(contact.getId(), ContactZoneParticipantType.Contact,
+                        System.currentTimeMillis(), contact.getId(), participant.postscript, participant.state);
+                this.storage.updateZoneParticipant(peerZone, inviter);
+
+                String uKey = UniqueKey.make(participant.id, contact.getDomain().getName());
+                ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.ModifyZoneParticipant.name, inviter.toJSON());
+                this.contactsAdapter.publish(uKey, event.toJSON());
+            }
+        }
+
+        this.storage.updateZoneParticipant(zone, participant);
+
+        return participant;
     }
 
     /**
@@ -1648,9 +1674,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 || eventName.equals(ContactAction.DismissGroup.name)
                 || eventName.equals(ContactAction.AddGroupMember.name)
                 || eventName.equals(ContactAction.RemoveGroupMember.name)) {
-                // 获取在线的联系人信息
+                // 获取在线的联系人
                 Contact contact = this.getOnlineContact(domain, id);
                 if (null == contact) {
+                    // 联系人在本地不在线
                     return;
                 }
 
@@ -1658,9 +1685,22 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 this.pushAction(eventName, contact, event.getData());
             }
             else if (ContactAction.GroupAppendixUpdated.name.equals(eventName)) {
+                // 获取在线的联系人
                 Contact contact = this.getOnlineContact(domain, id);
                 if (null == contact) {
-                    // 联系人不在线
+                    // 联系人在本地不在线
+                    return;
+                }
+
+                // 推送数据
+                this.pushAction(eventName, contact, event.getData());
+            }
+            else if (ContactAction.ModifyZoneParticipant.name.equals(eventName)
+                || ContactAction.ModifyZone.name.equals(eventName)) {
+                // 获取在线的联系人
+                Contact contact = this.getOnlineContact(domain, id);
+                if (null == contact) {
+                    // 联系人在本地不在线
                     return;
                 }
 

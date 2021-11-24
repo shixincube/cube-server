@@ -42,6 +42,11 @@ public enum ContactZoneParticipantState {
     Pending(1),
 
     /**
+     * 已知待处理状态。
+     */
+    KnownPending(2),
+
+    /**
      * 拒绝。
      */
     Reject(3);

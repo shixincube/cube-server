@@ -112,6 +112,11 @@ public enum ContactAction {
     ModifyZoneParticipant("modifyZoneParticipant"),
 
     /**
+     * 修改分区信息，有参与人加入或移除。
+     */
+    ModifyZone("modifyZone"),
+
+    /**
      * 获取群组信息。
      */
     GetGroup("getGroup"),

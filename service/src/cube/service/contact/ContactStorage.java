@@ -664,6 +664,35 @@ public class ContactStorage implements Storagable {
     }
 
     /**
+     * 更新分区参与人数据。
+     *
+     * @param zone
+     * @param participant
+     */
+    public void updateZoneParticipant(ContactZone zone, ContactZoneParticipant participant) {
+        this.executor.execute(() -> {
+            String table = contactZoneParticipantTableNameMap.get(zone.getDomain().getName());
+            storage.executeUpdate(table, new StorageField[] {
+                    new StorageField("type", participant.type.code),
+                    new StorageField("state", participant.state.code),
+                    new StorageField("timestamp", participant.timestamp),
+            }, new Conditional[] {
+                    Conditional.createEqualTo("contact_zone_id", zone.getId()),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("id", participant.id)
+            });
+
+            // 更新时间戳
+            table = contactZoneTableNameMap.get(zone.getDomain().getName());
+            storage.executeUpdate(table, new StorageField[] {
+                    new StorageField("timestamp", System.currentTimeMillis())
+            }, new Conditional[] {
+                    Conditional.createEqualTo("id", zone.getId())
+            });
+        });
+    }
+
+    /**
      * 删除指定指定参与人所在的 Zone 里的基础。
      * 即将指定 owner 里的所有 zone 里包含 participantId 的记录删除。
      *
@@ -835,15 +864,15 @@ public class ContactStorage implements Storagable {
      *
      * @param domain
      * @param owner
-     * @param name
+     * @param zoneName
      * @return
      */
-    public ContactZone readContactZone(String domain, long owner, String name) {
+    public ContactZone readContactZone(String domain, long owner, String zoneName) {
         String table = this.contactZoneTableNameMap.get(domain);
         List<StorageField[]> result = this.storage.executeQuery(table, this.contactZoneFields, new Conditional[] {
                 Conditional.createEqualTo("owner", owner),
                 Conditional.createAnd(),
-                Conditional.createEqualTo("name", name)
+                Conditional.createEqualTo("name", zoneName)
         });
 
         if (result.isEmpty()) {
@@ -854,7 +883,7 @@ public class ContactStorage implements Storagable {
         ContactZone zone = new ContactZone(map.get("id").getLong(),
                 domain,
                 owner,
-                name,
+                zoneName,
                 map.get("timestamp").getLong(),
                 map.get("display_name").getString(),
                 ContactZoneState.parse(map.get("state").getInt()),
