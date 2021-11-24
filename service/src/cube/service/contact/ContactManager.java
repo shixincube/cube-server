@@ -904,7 +904,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param zoneName
      */
     public void deleteContactZone(Contact owner, String zoneName) {
-
+        this.storage.deleteContactZone(owner.getDomain().getName(), owner.getId(), zoneName);
     }
 
     /**

@@ -88,26 +88,6 @@ public class ContactZone extends Entity {
         }
     }
 
-    public void addParticipant(Long id, ContactZoneParticipantType type) {
-        this.addParticipant(id, type, null);
-    }
-
-    public void addParticipant(Long id, ContactZoneParticipantType type, String postscript) {
-        if (id.longValue() == this.owner) {
-            // 过滤分区所有人
-            return;
-        }
-
-        for (ContactZoneParticipant participant : this.participants) {
-            if (participant.id.equals(id)) {
-                return;
-            }
-        }
-
-        ContactZoneParticipant participant = new ContactZoneParticipant(id, type, postscript);
-        this.participants.add(participant);
-    }
-
     public void removeParticipant(Long id) {
         for (ContactZoneParticipant participant : this.participants) {
             if (participant.id.equals(id)) {

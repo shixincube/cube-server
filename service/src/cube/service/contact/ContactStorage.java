@@ -522,6 +522,7 @@ public class ContactStorage implements Storagable {
                 Map<String, StorageField> data = StorageFields.get(partRow);
                 ContactZoneParticipant participant = new ContactZoneParticipant(data.get("id").getLong(),
                         ContactZoneParticipantType.parse(data.get("type").getInt()),
+                        data.get("timestamp").getLong(),
                         data.get("postscript").getString(),
                         ContactZoneParticipantState.parse(data.get("state").getInt()));
                 zone.addParticipant(participant);
@@ -577,7 +578,7 @@ public class ContactStorage implements Storagable {
                         new StorageField("id", LiteralBase.LONG, participant.id),
                         new StorageField("type", LiteralBase.INT, participant.type.code),
                         new StorageField("state", LiteralBase.INT, participant.state.code),
-                        new StorageField("timestamp", LiteralBase.LONG, time),
+                        new StorageField("timestamp", LiteralBase.LONG, participant.timestamp),
                         new StorageField("postscript", LiteralBase.STRING, participant.postscript)
                 });
             }
@@ -707,9 +708,9 @@ public class ContactStorage implements Storagable {
         result = this.storage.executeQuery(table, new StorageField[] {
                 new StorageField("state", LiteralBase.INT)
         }, new Conditional[] {
-                Conditional.createEqualTo("contact_zone_id", LiteralBase.LONG, zoneId),
+                Conditional.createEqualTo("contact_zone_id", zoneId),
                 Conditional.createAnd(),
-                Conditional.createEqualTo("id", LiteralBase.LONG, participantId)
+                Conditional.createEqualTo("id", participantId)
         });
 
         return (!result.isEmpty());
@@ -751,7 +752,7 @@ public class ContactStorage implements Storagable {
                             new StorageField("id", LiteralBase.LONG, participant.id),
                             new StorageField("type", LiteralBase.INT, participant.type.code),
                             new StorageField("state", LiteralBase.INT, participant.state.code),
-                            new StorageField("timestamp", LiteralBase.LONG, zone.getTimestamp()),
+                            new StorageField("timestamp", LiteralBase.LONG, participant.timestamp),
                             new StorageField("postscript", LiteralBase.STRING, participant.postscript),
                     });
                 }
@@ -801,6 +802,7 @@ public class ContactStorage implements Storagable {
             Map<String, StorageField> data = StorageFields.get(row);
             ContactZoneParticipant participant = new ContactZoneParticipant(data.get("id").getLong(),
                     ContactZoneParticipantType.parse(data.get("type").getInt()),
+                    data.get("timestamp").getLong(),
                     data.get("postscript").getString(),
                     ContactZoneParticipantState.parse(data.get("state").getInt()));
             zone.addParticipant(participant);
@@ -817,13 +819,15 @@ public class ContactStorage implements Storagable {
      * @param name
      */
     public void deleteContactZone(String domain, long owner, String name) {
-        String table = this.contactZoneTableNameMap.get(domain);
-        this.storage.executeUpdate(table, new StorageField[] {
-                new StorageField("state", ContactZoneState.Deleted.code)
-        }, new Conditional[] {
-                Conditional.createEqualTo("owner", owner),
-                Conditional.createAnd(),
-                Conditional.createEqualTo("name", name)
+        final String table = this.contactZoneTableNameMap.get(domain);
+        this.executor.execute(() -> {
+            storage.executeUpdate(table, new StorageField[] {
+                    new StorageField("state", ContactZoneState.Deleted.code)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("owner", owner),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("name", name)
+            });
         });
     }
 
