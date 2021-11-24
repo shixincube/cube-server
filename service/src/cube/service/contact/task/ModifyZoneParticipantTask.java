@@ -35,21 +35,19 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
-import cube.common.entity.Group;
+import cube.common.entity.ContactZoneParticipant;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
-import cube.service.contact.GroupBundle;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * 修改群组成员信息任务。
- * @deprecated 通过群组附录管理成员，不需要该任务。
+ * 修改分区参与人信息。
  */
-public class ModifyGroupMemberTask extends ServiceTask {
+public class ModifyZoneParticipantTask extends ServiceTask {
 
-    public ModifyGroupMemberTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public ModifyZoneParticipantTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -69,14 +67,11 @@ public class ModifyGroupMemberTask extends ServiceTask {
             return;
         }
 
-        // 域
-        String domain = contact.getDomain().getName();
-
-        Long groupId = null;
-        Contact member = null;
+        String zoneName = null;
+        ContactZoneParticipant participant = null;
         try {
-            groupId = data.getLong("groupId");
-            member = new Contact(data.getJSONObject("member"), domain);
+            zoneName = data.getString("name");
+            participant = new ContactZoneParticipant(data.getJSONObject("participant"));
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
@@ -85,20 +80,17 @@ public class ModifyGroupMemberTask extends ServiceTask {
             return;
         }
 
-        // 获取群组
-        Group group = ContactManager.getInstance().getGroup(groupId, domain);
-        if (null == group) {
+        // 修改参与人数据
+        ContactZoneParticipant result = ContactManager.getInstance().modifyZoneParticipant(contact, zoneName, participant);
+        if (null == result) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
             markResponseTime();
             return;
         }
 
-        // 修改成员信息，并返回 Bundle
-        GroupBundle bundle = null;//ContactManager.getInstance().modifyGroupMember(group, member);
-
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, bundle.toCompactJSON()));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, result.toJSON()));
         markResponseTime();
     }
 }

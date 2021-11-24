@@ -117,6 +117,10 @@ public class ContactServiceCellet extends AbstractCellet {
             this.executor.execute(new DeleteContactZoneTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (ContactAction.ModifyZoneParticipant.name.equals(action)) {
+            this.executor.execute(new ModifyZoneParticipantTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (ContactAction.Search.name.equals(action)) {
             this.executor.execute(new SearchTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
@@ -131,10 +135,6 @@ public class ContactServiceCellet extends AbstractCellet {
         }
         else if (ContactAction.ModifyGroup.name.equals(action)) {
             this.executor.execute(new ModifyGroupTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (ContactAction.ModifyGroupMember.name.equals(action)) {
-            this.executor.execute(new ModifyGroupMemberTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.CreateGroup.name.equals(action)) {

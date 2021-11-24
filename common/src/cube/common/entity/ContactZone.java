@@ -53,26 +53,30 @@ public class ContactZone extends Entity {
     public String displayName = "";
 
     /**
-     * 是否需要验证。
-     */
-    public boolean needsVerify = false;
-
-    /**
      * 状态。
      */
     public ContactZoneState state;
+
+    /**
+     * 是否工作在对等模式下。
+     * 在对等模式下，添加 Contact 时，会在对方的同名 Zone 下也添加自己的 Contact ，且状态为 Pending 。
+     */
+    public boolean peerMode = false;
 
     /**
      * 分区的联系人列表。
      */
     private final List<ContactZoneParticipant> participants;
 
-    public ContactZone(Long id, String domain, long owner, String name, long timestamp, ContactZoneState state) {
+    public ContactZone(Long id, String domain, long owner, String name, long timestamp,
+                       String displayName, ContactZoneState state, boolean peerMode) {
         super(id, domain);
         this.setTimestamp(timestamp);
         this.owner = owner;
         this.name = name;
         this.state = state;
+        this.displayName = displayName;
+        this.peerMode = peerMode;
         this.participants = new ArrayList<>();
     }
 
@@ -126,7 +130,7 @@ public class ContactZone extends Entity {
         json.put("displayName", this.displayName);
         json.put("timestamp", this.getTimestamp());
         json.put("state", this.state.code);
-        json.put("needsVerify", this.needsVerify);
+        json.put("peerMode", this.peerMode);
         return json;
     }
 }

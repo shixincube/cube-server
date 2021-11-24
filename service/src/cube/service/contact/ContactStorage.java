@@ -102,6 +102,9 @@ public class ContactStorage implements Storagable {
             new StorageField("display_name", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("peer_mode", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
+            }),
             new StorageField("state", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL, Constraint.DEFAULT_0
             }),
@@ -130,6 +133,9 @@ public class ContactStorage implements Storagable {
                     Constraint.NOT_NULL, Constraint.DEFAULT_0
             }),
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("inviter_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("postscript", LiteralBase.STRING, new Constraint[] {
@@ -509,9 +515,14 @@ public class ContactStorage implements Storagable {
         for (StorageField[] row : result) {
             Map<String, StorageField> map = StorageFields.get(row);
 
-            ContactZone zone = new ContactZone(map.get("id").getLong(), domain,
-                    map.get("owner").getLong(), map.get("name").getString(), map.get("timestamp").getLong(),
-                    ContactZoneState.parse(map.get("state").getInt()));
+            ContactZone zone = new ContactZone(map.get("id").getLong(),
+                    domain,
+                    map.get("owner").getLong(),
+                    map.get("name").getString(),
+                    map.get("timestamp").getLong(),
+                    map.get("display_name").getString(),
+                    ContactZoneState.parse(map.get("state").getInt()),
+                    map.get("peer_mode").getInt() == 1);
 
             // 查询成员
             List<StorageField[]> partResult = this.storage.executeQuery(table, this.contactZoneParticipantFields, new Conditional[] {
@@ -523,6 +534,7 @@ public class ContactStorage implements Storagable {
                 ContactZoneParticipant participant = new ContactZoneParticipant(data.get("id").getLong(),
                         ContactZoneParticipantType.parse(data.get("type").getInt()),
                         data.get("timestamp").getLong(),
+                        data.get("inviter_id").getLong(),
                         data.get("postscript").getString(),
                         ContactZoneParticipantState.parse(data.get("state").getInt()));
                 zone.addParticipant(participant);
@@ -536,7 +548,17 @@ public class ContactStorage implements Storagable {
     }
 
     /**
-     * 添加联系人到指定分区。
+     * 添加参与人到指定分区。
+     *
+     * @param zone
+     * @param participant
+     */
+    public void addZoneParticipant(ContactZone zone, ContactZoneParticipant participant) {
+        this.addZoneParticipant(zone.getDomain().getName(), zone.owner, zone.name, participant);
+    }
+
+    /**
+     * 添加参与人到指定分区。
      *
      * @param domain
      * @param owner
@@ -551,9 +573,9 @@ public class ContactStorage implements Storagable {
                 List<StorageField[]> result = storage.executeQuery(table, new StorageField[] {
                         new StorageField("id", LiteralBase.LONG)
                 }, new Conditional[] {
-                        Conditional.createEqualTo("owner", LiteralBase.LONG, owner),
+                        Conditional.createEqualTo("owner", owner),
                         Conditional.createAnd(),
-                        Conditional.createEqualTo("name", LiteralBase.STRING, name)
+                        Conditional.createEqualTo("name", name)
                 });
 
                 if (result.isEmpty()) {
@@ -566,27 +588,36 @@ public class ContactStorage implements Storagable {
 
                 // 更新时间戳
                 storage.executeUpdate(table, new StorageField[] {
-                        new StorageField("timestamp", LiteralBase.LONG, time)
+                        new StorageField("timestamp", time)
                 }, new Conditional[] {
-                        Conditional.createEqualTo("id", LiteralBase.LONG, zoneId)
+                        Conditional.createEqualTo("id", zoneId)
                 });
 
                 table = contactZoneParticipantTableNameMap.get(domain);
 
+                // 删除旧数据
+                storage.executeDelete(table, new Conditional[] {
+                        Conditional.createEqualTo("contact_zone_id", zoneId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("id", participant.id)
+                });
+
+                // 插入新数据
                 storage.executeInsert(table, new StorageField[] {
-                        new StorageField("contact_zone_id", LiteralBase.LONG, zoneId),
-                        new StorageField("id", LiteralBase.LONG, participant.id),
-                        new StorageField("type", LiteralBase.INT, participant.type.code),
-                        new StorageField("state", LiteralBase.INT, participant.state.code),
-                        new StorageField("timestamp", LiteralBase.LONG, participant.timestamp),
-                        new StorageField("postscript", LiteralBase.STRING, participant.postscript)
+                        new StorageField("contact_zone_id", zoneId),
+                        new StorageField("id", participant.id),
+                        new StorageField("type", participant.type.code),
+                        new StorageField("state", participant.state.code),
+                        new StorageField("timestamp", participant.timestamp),
+                        new StorageField("inviter_id", participant.inviterId),
+                        new StorageField("postscript", participant.postscript)
                 });
             }
         });
     }
 
     /**
-     * 从指定分区移除联系人。
+     * 从指定分区移除参与人。
      *
      * @param domain
      * @param owner
@@ -624,9 +655,9 @@ public class ContactStorage implements Storagable {
                 table = contactZoneParticipantTableNameMap.get(domain);
 
                 storage.executeDelete(table, new Conditional[] {
-                        Conditional.createEqualTo("contact_zone_id", LiteralBase.LONG, zoneId),
+                        Conditional.createEqualTo("contact_zone_id", zoneId),
                         Conditional.createAnd(),
-                        Conditional.createEqualTo("id", LiteralBase.LONG, participant.id)
+                        Conditional.createEqualTo("id", participant.id)
                 });
             }
         });
@@ -716,44 +747,79 @@ public class ContactStorage implements Storagable {
         return (!result.isEmpty());
     }
 
-    public boolean writeContactZone(final ContactZone zone, final Runnable completed) {
-        // 查询是否已存在，如果已存在不允许写入
-        List<StorageField[]> result = this.storage.executeQuery(
-                this.contactZoneTableNameMap.get(zone.getDomain().getName()), new StorageField[] {
-                    new StorageField("id", LiteralBase.LONG)
-        }, new Conditional[] {
-                Conditional.createEqualTo("owner", LiteralBase.LONG, zone.owner),
-                Conditional.createAnd(),
-                Conditional.createEqualTo("name", LiteralBase.STRING, zone.name)
-        });
-        if (!result.isEmpty()) {
-            return false;
-        }
-
+    /**
+     * 写入联系人分区。
+     *
+     * @param zone
+     * @param completed
+     */
+    public void writeContactZone(final ContactZone zone, final Runnable completed) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
                 String table = contactZoneTableNameMap.get(zone.getDomain().getName());
-
-                storage.executeInsert(table, new StorageField[] {
-                        new StorageField("id", LiteralBase.LONG, zone.getId()),
-                        new StorageField("owner", LiteralBase.LONG, zone.owner),
-                        new StorageField("name", LiteralBase.STRING, zone.name),
-                        new StorageField("display_name", LiteralBase.STRING, zone.displayName),
-                        new StorageField("state", LiteralBase.INT, zone.state.code),
-                        new StorageField("timestamp", LiteralBase.LONG, zone.getTimestamp())
-                });
-
                 String participantTable = contactZoneParticipantTableNameMap.get(zone.getDomain().getName());
+
+                Long zoneId = zone.getId();
+
+                // 查询是否已存在
+                List<StorageField[]> result = storage.executeQuery(table, new StorageField[] {
+                                new StorageField("id", LiteralBase.LONG)
+                        }, new Conditional[] {
+                                Conditional.createEqualTo("owner", zone.owner),
+                                Conditional.createAnd(),
+                                Conditional.createEqualTo("name", zone.name)
+                        });
+
+                if (result.isEmpty()) {
+                    // 插入
+                    storage.executeInsert(table, new StorageField[] {
+                            new StorageField("id", zone.getId()),
+                            new StorageField("owner", zone.owner),
+                            new StorageField("name", zone.name),
+                            new StorageField("display_name", zone.displayName),
+                            new StorageField("peer_mode", zone.peerMode ? 1 : 0),
+                            new StorageField("state", zone.state.code),
+                            new StorageField("timestamp", zone.getTimestamp())
+                    });
+                }
+                else {
+                    // 更新
+
+                    // 旧的 ID
+                    zoneId = result.get(0)[0].getLong();
+
+                    // 清空原参与人表
+                    storage.executeDelete(participantTable, new Conditional[] {
+                            Conditional.createEqualTo("contact_zone_id", zoneId)
+                    });
+
+                    storage.executeUpdate(table, new StorageField[] {
+                            new StorageField("id", zone.getId()),
+                            new StorageField("display_name", zone.displayName),
+                            new StorageField("peer_mode", zone.peerMode ? 1 : 0),
+                            new StorageField("state", zone.state.code),
+                            new StorageField("timestamp", zone.getTimestamp())
+                    }, new Conditional[] {
+                            Conditional.createEqualTo("owner", zone.owner),
+                            Conditional.createAnd(),
+                            Conditional.createEqualTo("name", zone.name)
+                    });
+
+                    // 新的 ID
+                    zoneId = zone.getId();
+                }
+
                 // 参与人
                 for (ContactZoneParticipant participant : zone.getParticipants()) {
                     storage.executeInsert(participantTable, new StorageField[] {
-                            new StorageField("contact_zone_id", LiteralBase.LONG, zone.getId()),
-                            new StorageField("id", LiteralBase.LONG, participant.id),
-                            new StorageField("type", LiteralBase.INT, participant.type.code),
-                            new StorageField("state", LiteralBase.INT, participant.state.code),
-                            new StorageField("timestamp", LiteralBase.LONG, participant.timestamp),
-                            new StorageField("postscript", LiteralBase.STRING, participant.postscript),
+                            new StorageField("contact_zone_id", zoneId),
+                            new StorageField("id", participant.id),
+                            new StorageField("type", participant.type.code),
+                            new StorageField("state", participant.state.code),
+                            new StorageField("timestamp", participant.timestamp),
+                            new StorageField("inviter_id", participant.inviterId),
+                            new StorageField("postscript", participant.postscript),
                     });
                 }
 
@@ -762,8 +828,6 @@ public class ContactStorage implements Storagable {
                 }
             }
         });
-
-        return true;
     }
 
     /**
@@ -787,10 +851,14 @@ public class ContactStorage implements Storagable {
         }
 
         Map<String, StorageField> map = StorageFields.get(result.get(0));
-        ContactZone zone = new ContactZone(map.get("id").getLong(), domain, owner, name,
+        ContactZone zone = new ContactZone(map.get("id").getLong(),
+                domain,
+                owner,
+                name,
                 map.get("timestamp").getLong(),
-                ContactZoneState.parse(map.get("state").getInt()));
-        zone.displayName = map.get("display_name").getString();
+                map.get("display_name").getString(),
+                ContactZoneState.parse(map.get("state").getInt()),
+                map.get("peer_mode").getInt() == 1);
 
         // 查询成员
         table = this.contactZoneParticipantTableNameMap.get(domain);
@@ -803,6 +871,7 @@ public class ContactStorage implements Storagable {
             ContactZoneParticipant participant = new ContactZoneParticipant(data.get("id").getLong(),
                     ContactZoneParticipantType.parse(data.get("type").getInt()),
                     data.get("timestamp").getLong(),
+                    data.get("inviter_id").getLong(),
                     data.get("postscript").getString(),
                     ContactZoneParticipantState.parse(data.get("state").getInt()));
             zone.addParticipant(participant);

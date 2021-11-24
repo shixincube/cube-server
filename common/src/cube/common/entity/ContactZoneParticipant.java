@@ -36,9 +36,11 @@ public class ContactZoneParticipant implements JSONable {
 
     public final Long id;
 
+    public final long timestamp;
+
     public final ContactZoneParticipantType type;
 
-    public final long timestamp;
+    public final Long inviterId;
 
     public final String postscript;
 
@@ -47,17 +49,17 @@ public class ContactZoneParticipant implements JSONable {
     public ContactZoneParticipant(JSONObject json) {
         this(json.getLong("id"), ContactZoneParticipantType.parse(json.getInt("type")),
                 json.getLong("timestamp"),
-                json.has("postscript") ? json.getString("postscript") : null);
+                json.getLong("inviterId"),
+                json.has("postscript") ? json.getString("postscript") : null,
+                ContactZoneParticipantState.parse(json.getInt("state")));
     }
 
-    public ContactZoneParticipant(Long id, ContactZoneParticipantType type, long timestamp, String postscript) {
-        this(id, type, timestamp, postscript, ContactZoneParticipantState.Normal);
-    }
-
-    public ContactZoneParticipant(Long id, ContactZoneParticipantType type, long timestamp, String postscript, ContactZoneParticipantState state) {
+    public ContactZoneParticipant(Long id, ContactZoneParticipantType type, long timestamp,
+                                  Long inviterId, String postscript, ContactZoneParticipantState state) {
         this.id = id;
         this.type = type;
         this.timestamp = timestamp;
+        this.inviterId = inviterId;
         this.postscript = (null != postscript) ? postscript : "";
         this.state = state;
     }
@@ -85,6 +87,7 @@ public class ContactZoneParticipant implements JSONable {
         json.put("type", this.type.code);
         json.put("timestamp", this.timestamp);
         json.put("state", this.state.code);
+        json.put("inviterId", this.inviterId.longValue());
         json.put("postscript", this.postscript);
         return json;
     }

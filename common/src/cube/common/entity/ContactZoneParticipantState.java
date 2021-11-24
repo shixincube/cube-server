@@ -39,7 +39,12 @@ public enum ContactZoneParticipantState {
     /**
      * 待处理状态。
      */
-    Pending(3);
+    Pending(1),
+
+    /**
+     * 拒绝。
+     */
+    Reject(3);
 
     public final int code;
 
@@ -48,11 +53,11 @@ public enum ContactZoneParticipantState {
     }
 
     public static ContactZoneParticipantState parse(int code) {
-        switch (code) {
-            case 3:
-                return Pending;
-            default:
-                return Normal;
+        for (ContactZoneParticipantState state : ContactZoneParticipantState.values()) {
+            if (state.code == code) {
+                return state;
+            }
         }
+        return ContactZoneParticipantState.Normal;
     }
 }

@@ -107,6 +107,11 @@ public enum ContactAction {
     RemoveParticipantFromZone("removeParticipantFromZone"),
 
     /**
+     * 修改分区参与人信息。
+     */
+    ModifyZoneParticipant("modifyZoneParticipant"),
+
+    /**
      * 获取群组信息。
      */
     GetGroup("getGroup"),
@@ -140,11 +145,6 @@ public enum ContactAction {
      * 修改群组信息。
      */
     ModifyGroup("modifyGroup"),
-
-    /**
-     * 修改群组成员。
-     */
-    ModifyGroupMember("modifyGroupMember"),
 
     /**
      * 获取指定的附录。

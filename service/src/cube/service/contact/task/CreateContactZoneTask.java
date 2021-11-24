@@ -82,18 +82,25 @@ public class CreateContactZoneTask extends ServiceTask {
         String zoneName = null;
         List<ContactZoneParticipant> participantList = null;
         String displayName = null;
+        boolean peerMode = false;
         try {
             zoneName = data.getString("name");
 
-            JSONArray array = data.getJSONArray("participants");
-            participantList = new ArrayList<>(array.length());
-            for (int i = 0; i < array.length(); ++i) {
-                ContactZoneParticipant participant = new ContactZoneParticipant(array.getJSONObject(i));
-                participantList.add(participant);
+            if (data.has("participants")) {
+                JSONArray array = data.getJSONArray("participants");
+                participantList = new ArrayList<>(array.length());
+                for (int i = 0; i < array.length(); ++i) {
+                    ContactZoneParticipant participant = new ContactZoneParticipant(array.getJSONObject(i));
+                    participantList.add(participant);
+                }
             }
 
             if (data.has("displayName")) {
                 displayName = data.getString("displayName");
+            }
+
+            if (data.has("peerMode")) {
+                peerMode = data.getBoolean("peerMode");
             }
         } catch (JSONException e) {
             Logger.w(this.getClass(), "#run", e);
@@ -104,7 +111,8 @@ public class CreateContactZoneTask extends ServiceTask {
         }
 
         // 创建联系人分区
-        ContactZone zone = ContactManager.getInstance().createContactZone(contact, zoneName, displayName, participantList);
+        ContactZone zone = ContactManager.getInstance().createContactZone(contact, zoneName, displayName,
+                peerMode, participantList);
         if (null == zone) {
             // 分区已存在
             this.cellet.speak(this.talkContext,

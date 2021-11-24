@@ -877,22 +877,27 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param owner
      * @param zoneName
      * @param displayName
+     * @param peerMode
      * @param participants
      * @return
      */
-    public ContactZone createContactZone(Contact owner, String zoneName, String displayName, List<ContactZoneParticipant> participants) {
+    public ContactZone createContactZone(Contact owner, String zoneName, String displayName, boolean peerMode,
+                                         List<ContactZoneParticipant> participants) {
+        String displayZoneName = (null != displayName) ? displayName : zoneName;
+
+        // 创建实例
         ContactZone zone = new ContactZone(Utils.generateSerialNumber(), owner.getDomain().getName(),
-                owner.getId(), zoneName, System.currentTimeMillis(), ContactZoneState.Normal);
-        zone.displayName = (null != displayName) ? displayName : zoneName;
+                owner.getId(), zoneName, System.currentTimeMillis(),
+                displayZoneName, ContactZoneState.Normal, peerMode);
 
-        for (ContactZoneParticipant participant : participants) {
-            zone.addParticipant(participant);
+        if (null != participants) {
+            for (ContactZoneParticipant participant : participants) {
+                zone.addParticipant(participant);
+            }
         }
 
-        if (!this.storage.writeContactZone(zone, null)) {
-            // 写入数据失败
-            return null;
-        }
+        // 写入数据库
+        this.storage.writeContactZone(zone, null);
 
         return zone;
     }
@@ -925,9 +930,28 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contact
      * @param zoneName
      * @param participant
+     * @return
      */
-    public void addParticipantToZone(Contact contact, String zoneName, ContactZoneParticipant participant) {
+    public boolean addParticipantToZone(Contact contact, String zoneName, ContactZoneParticipant participant) {
+        ContactZone zone = this.storage.readContactZone(contact.getDomain().getName(), contact.getId(), zoneName);
+        if (null == zone) {
+            return false;
+        }
+
+        if (zone.peerMode) {
+            // 对等模式
+            ContactZone peerZone = this.storage.readContactZone(contact.getDomain().getName(),
+                    participant.id, zoneName);
+            if (null != peerZone) {
+                // 向对端的分区插入邀请人
+                ContactZoneParticipant inviter = new ContactZoneParticipant(contact.getId(), ContactZoneParticipantType.Contact,
+                        System.currentTimeMillis(), contact.getId(), participant.postscript, ContactZoneParticipantState.Pending);
+                this.storage.addZoneParticipant(peerZone, inviter);
+            }
+        }
+
         this.storage.addZoneParticipant(contact.getDomain().getName(), contact.getId(), zoneName, participant);
+        return true;
     }
 
     /**
@@ -939,6 +963,19 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     public void removeParticipantFromZone(Contact contact, String zoneName, ContactZoneParticipant participant) {
         this.storage.removeZoneParticipant(contact.getDomain().getName(), contact.getId(), zoneName, participant);
+    }
+
+    /**
+     * 修改分区参与人数据。
+     *
+     * @param contact
+     * @param zoneName
+     * @param participant
+     * @return
+     */
+    public ContactZoneParticipant modifyZoneParticipant(Contact contact, String zoneName, ContactZoneParticipant participant) {
+        
+        return null;
     }
 
     /**
