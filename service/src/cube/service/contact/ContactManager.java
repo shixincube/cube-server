@@ -965,9 +965,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contact
      * @param zoneName
      * @param participant
+     * @return 返回时间戳。
      */
-    public void removeParticipantFromZone(Contact contact, String zoneName, ContactZoneParticipant participant) {
-        this.storage.removeZoneParticipant(contact.getDomain().getName(), contact.getId(), zoneName, participant);
+    public long removeParticipantFromZone(Contact contact, String zoneName, ContactZoneParticipant participant) {
+        return this.storage.removeZoneParticipant(contact.getDomain().getName(), contact.getId(), zoneName, participant);
     }
 
     /**

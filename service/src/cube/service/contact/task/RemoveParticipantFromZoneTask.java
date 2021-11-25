@@ -88,7 +88,10 @@ public class RemoveParticipantFromZoneTask extends ServiceTask {
         }
 
         // 从分区移除参与人
-        ContactManager.getInstance().removeParticipantFromZone(contact, zoneName, participant);
+        long timestamp = ContactManager.getInstance().removeParticipantFromZone(contact, zoneName, participant);
+
+        // 写入时间戳
+        data.put("timestamp", timestamp);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, data));

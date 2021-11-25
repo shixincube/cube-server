@@ -623,8 +623,11 @@ public class ContactStorage implements Storagable {
      * @param owner
      * @param name
      * @param participant
+     * @return 返回时间戳。
      */
-    public void removeZoneParticipant(String domain, long owner, String name, ContactZoneParticipant participant) {
+    public long removeZoneParticipant(String domain, long owner, String name, ContactZoneParticipant participant) {
+        final long time = System.currentTimeMillis();
+
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -642,7 +645,6 @@ public class ContactStorage implements Storagable {
                     return;
                 }
 
-                long time = System.currentTimeMillis();
                 Long zoneId = result.get(0)[0].getLong();
 
                 // 更新时间戳
@@ -661,6 +663,8 @@ public class ContactStorage implements Storagable {
                 });
             }
         });
+
+        return time;
     }
 
     /**
