@@ -73,9 +73,33 @@ public class SearchTask extends ServiceTask {
         }
 
         // 关键字
-        String keyword = data.getString("keyword");
+        String keyword = null;
+
+        // 按照 ID 检索
+        String contactId = null;
+
+        if (data.has("keyword")) {
+            keyword = data.getString("keyword");
+        }
+        else if (data.has("contactId")) {
+            contactId = data.getString("contactId");
+        }
+        else {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ConferenceStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
+        }
+
         // 搜索
-        ContactSearchResult result = ContactManager.getInstance().searchWithFuzzyRule(contact.getDomain().getName(), keyword);
+        ContactSearchResult result = null;
+
+        if (null != keyword) {
+            result = ContactManager.getInstance().searchWithFuzzyRule(contact.getDomain().getName(), keyword);
+        }
+        else {
+            result = ContactManager.getInstance().searchWithContactId(contact.getDomain().getName(), contactId);
+        }
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ConferenceStateCode.Ok.code, result.toCompactJSON()));

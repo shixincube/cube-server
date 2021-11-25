@@ -1554,6 +1554,28 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 使用联系人 ID 检索。
+     *
+     * @param domain
+     * @param contactId
+     * @return
+     */
+    public ContactSearchResult searchWithContactId(String domain, String contactId) {
+        ContactSearchResult result = new ContactSearchResult(contactId);
+
+        try {
+            Contact contact = this.storage.readContact(domain, Long.parseLong(contactId));
+            if (null != contact) {
+                result.addContact(contact);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    /**
      * 跟踪该联系人数据。
      *
      * @param contact

@@ -310,6 +310,26 @@ public class AccountManager extends TimerTask {
     }
 
     /**
+     * 搜索指定账号 ID 的账号。
+     *
+     * @param accountId
+     * @return
+     */
+    public Account searchAccountWithId(Long accountId) {
+        return this.accountStorage.readAccount(accountId);
+    }
+
+    /**
+     * 搜索指定电话号码的账号。
+     *
+     * @param phoneNumber
+     * @return
+     */
+    public Account searchAccountWithPhoneNumber(String phoneNumber) {
+        return this.accountStorage.readAccountByPhoneNumber(phoneNumber);
+    }
+
+    /**
      * 心跳。
      *
      * @param tokenCode
