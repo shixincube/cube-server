@@ -48,13 +48,12 @@ public enum ContactZoneState {
     }
 
     public static ContactZoneState parse(int code) {
-        switch (code) {
-            case 0:
-                return Normal;
-            case 1:
-                return Deleted;
-            default:
-                return Normal;
+        for (ContactZoneState state : ContactZoneState.values()) {
+            if (state.code == code) {
+                return state;
+            }
         }
+
+        return Deleted;
     }
 }

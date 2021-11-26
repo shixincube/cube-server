@@ -35,6 +35,7 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.ContactZone;
 import cube.common.entity.ContactZoneParticipant;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
@@ -88,10 +89,10 @@ public class RemoveParticipantFromZoneTask extends ServiceTask {
         }
 
         // 从分区移除参与人
-        long timestamp = ContactManager.getInstance().removeParticipantFromZone(contact, zoneName, participant);
+        ContactZone contactZone = ContactManager.getInstance().removeParticipantFromZone(contact, zoneName, participant);
 
         // 写入时间戳
-        data.put("timestamp", timestamp);
+        data.put("timestamp", contactZone.getTimestamp());
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, data));

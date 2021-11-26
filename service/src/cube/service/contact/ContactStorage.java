@@ -554,7 +554,7 @@ public class ContactStorage implements Storagable {
      * @param participant
      */
     public void addZoneParticipant(ContactZone zone, ContactZoneParticipant participant) {
-        this.addZoneParticipant(zone.getDomain().getName(), zone.owner, zone.name, participant);
+        this.addZoneParticipant(zone.getDomain().getName(), zone.owner, zone.name, zone.getTimestamp(), participant);
     }
 
     /**
@@ -563,9 +563,10 @@ public class ContactStorage implements Storagable {
      * @param domain
      * @param owner
      * @param name
+     * @param timestamp
      * @param participant
      */
-    public void addZoneParticipant(String domain, long owner, String name, ContactZoneParticipant participant) {
+    public void addZoneParticipant(String domain, long owner, String name, long timestamp, ContactZoneParticipant participant) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -583,12 +584,11 @@ public class ContactStorage implements Storagable {
                     return;
                 }
 
-                long time = System.currentTimeMillis();
                 Long zoneId = result.get(0)[0].getLong();
 
                 // 更新时间戳
                 storage.executeUpdate(table, new StorageField[] {
-                        new StorageField("timestamp", time)
+                        new StorageField("timestamp", timestamp)
                 }, new Conditional[] {
                         Conditional.createEqualTo("id", zoneId)
                 });
@@ -619,15 +619,23 @@ public class ContactStorage implements Storagable {
     /**
      * 从指定分区移除参与人。
      *
+     * @param zone
+     * @param participant
+     */
+    public void removeZoneParticipant(ContactZone zone, ContactZoneParticipant participant) {
+        this.removeZoneParticipant(zone.getDomain().getName(), zone.owner, zone.name, zone.getTimestamp(), participant);
+    }
+
+    /**
+     * 从指定分区移除参与人。
+     *
      * @param domain
      * @param owner
      * @param name
+     * @praam timestamp
      * @param participant
-     * @return 返回时间戳。
      */
-    public long removeZoneParticipant(String domain, long owner, String name, ContactZoneParticipant participant) {
-        final long time = System.currentTimeMillis();
-
+    public void removeZoneParticipant(String domain, long owner, String name, long timestamp, ContactZoneParticipant participant) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -635,9 +643,9 @@ public class ContactStorage implements Storagable {
                 List<StorageField[]> result = storage.executeQuery(table, new StorageField[] {
                         new StorageField("id", LiteralBase.LONG)
                 }, new Conditional[] {
-                        Conditional.createEqualTo("owner", LiteralBase.LONG, owner),
+                        Conditional.createEqualTo("owner", owner),
                         Conditional.createAnd(),
-                        Conditional.createEqualTo("name", LiteralBase.STRING, name)
+                        Conditional.createEqualTo("name", name)
                 });
 
                 if (result.isEmpty()) {
@@ -649,9 +657,9 @@ public class ContactStorage implements Storagable {
 
                 // 更新时间戳
                 storage.executeUpdate(table, new StorageField[] {
-                        new StorageField("timestamp", LiteralBase.LONG, time)
+                        new StorageField("timestamp", timestamp)
                 }, new Conditional[] {
-                        Conditional.createEqualTo("id", LiteralBase.LONG, zoneId)
+                        Conditional.createEqualTo("id", zoneId)
                 });
 
                 table = contactZoneParticipantTableNameMap.get(domain);
@@ -663,8 +671,6 @@ public class ContactStorage implements Storagable {
                 });
             }
         });
-
-        return time;
     }
 
     /**

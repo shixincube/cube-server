@@ -123,6 +123,9 @@ public class ClientCellet extends AbstractCellet {
         else if (Actions.UpdateContact.name.equals(action)) {
             this.executor.execute(new UpdateContactTask(this, talkContext, actionDialect));
         }
+        else if (Actions.ModifyContactZone.name.equals(action)) {
+            this.executor.execute(new ModifyContactZoneTask(this, talkContext, actionDialect));
+        }
         else if (Actions.ApplyToken.name.equals(action)) {
             this.executor.execute(new ApplyTokenTask(this, talkContext, actionDialect));
         }

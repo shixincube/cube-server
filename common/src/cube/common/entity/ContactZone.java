@@ -80,6 +80,25 @@ public class ContactZone extends Entity {
         this.participants = new ArrayList<>();
     }
 
+    public ContactZone(JSONObject json) {
+        super(json);
+        this.owner = json.getLong("owner");
+        this.name = json.getString("name");
+        this.displayName = json.getString("displayName");
+        this.state = ContactZoneState.parse(json.getInt("state"));
+        this.peerMode = json.getBoolean("peerMode");
+        this.participants = new ArrayList<>();
+
+        if (json.has("participants")) {
+            JSONArray array = json.getJSONArray("participants");
+            for (int i = 0; i < array.length(); ++i) {
+                JSONObject data = array.getJSONObject(i);
+                ContactZoneParticipant participant = new ContactZoneParticipant(data);
+                this.addParticipant(participant);
+            }
+        }
+    }
+
     public void addParticipant(ContactZoneParticipant participant) {
         if (participant.type == ContactZoneParticipantType.Contact
                 && participant.id.longValue() == this.owner) {
@@ -105,6 +124,16 @@ public class ContactZone extends Entity {
         return this.participants;
     }
 
+    public ContactZoneParticipant getParticipant(Long id) {
+        for (ContactZoneParticipant participant : this.participants) {
+            if (participant.id.equals(id)) {
+                return participant;
+            }
+        }
+
+        return null;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = this.toCompactJSON();
@@ -122,13 +151,10 @@ public class ContactZone extends Entity {
 
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id.longValue());
-        json.put("domain", this.domain.getName());
+        JSONObject json = super.toCompactJSON();
         json.put("owner", this.owner);
         json.put("name", this.name);
         json.put("displayName", this.displayName);
-        json.put("timestamp", this.getTimestamp());
         json.put("state", this.state.code);
         json.put("peerMode", this.peerMode);
         return json;

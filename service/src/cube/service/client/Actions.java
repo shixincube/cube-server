@@ -63,6 +63,8 @@ public enum Actions {
 
     PutFile("PutFile"),
 
+    ModifyContactZone("ModifyContactZone"),
+
     Cube("Cube");
 
     public final String name;

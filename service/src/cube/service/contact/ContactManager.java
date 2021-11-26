@@ -932,11 +932,14 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param participant
      * @return
      */
-    public boolean addParticipantToZone(Contact contact, String zoneName, ContactZoneParticipant participant) {
+    public ContactZone addParticipantToZone(Contact contact, String zoneName, ContactZoneParticipant participant) {
         ContactZone zone = this.storage.readContactZone(contact.getDomain().getName(), contact.getId(), zoneName);
         if (null == zone) {
-            return false;
+            return null;
         }
+
+        // 更新时间戳
+        zone.resetTimestamp();
 
         if (zone.peerMode) {
             // 对等模式
@@ -945,18 +948,24 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             if (null != peerZone) {
                 // 向对端的分区插入邀请人
                 ContactZoneParticipant inviter = new ContactZoneParticipant(contact.getId(), ContactZoneParticipantType.Contact,
-                        System.currentTimeMillis(), contact.getId(), participant.postscript, ContactZoneParticipantState.Pending);
+                        System.currentTimeMillis(), contact.getId(), participant.postscript, participant.state);
+                peerZone.addParticipant(inviter);
+                // 重置时间戳
+                peerZone.resetTimestamp();
+                // 更新数据库
                 this.storage.addZoneParticipant(peerZone, inviter);
 
                 // 通知对方
                 String uKey = UniqueKey.make(participant.id, contact.getDomain().getName());
-                ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.ModifyZone.name, inviter.toJSON());
+                ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.ModifyZone.name, peerZone.toJSON());
                 this.contactsAdapter.publish(uKey, event.toJSON());
             }
         }
 
-        this.storage.addZoneParticipant(contact.getDomain().getName(), contact.getId(), zoneName, participant);
-        return true;
+        this.storage.addZoneParticipant(zone, participant);
+
+        zone.addParticipant(participant);
+        return zone;
     }
 
     /**
@@ -965,10 +974,45 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contact
      * @param zoneName
      * @param participant
-     * @return 返回时间戳。
+     * @return
      */
-    public long removeParticipantFromZone(Contact contact, String zoneName, ContactZoneParticipant participant) {
-        return this.storage.removeZoneParticipant(contact.getDomain().getName(), contact.getId(), zoneName, participant);
+    public ContactZone removeParticipantFromZone(Contact contact, String zoneName, ContactZoneParticipant participant) {
+        ContactZone zone = this.storage.readContactZone(contact.getDomain().getName(), contact.getId(), zoneName);
+        if (null == zone) {
+            return null;
+        }
+
+        zone.removeParticipant(participant.id);
+        // 更新时间戳
+        zone.resetTimestamp();
+
+        if (zone.peerMode) {
+            // 对等模式，对等删除
+            ContactZone peerZone = this.storage.readContactZone(contact.getDomain().getName(),
+                    participant.id, zoneName);
+            if (null != peerZone) {
+                ContactZoneParticipant inviter = peerZone.getParticipant(contact.getId());
+                if (null != inviter) {
+                    // 更新时间戳
+                    peerZone.resetTimestamp();
+                    // 移除
+                    this.storage.removeZoneParticipant(peerZone, inviter);
+
+                    // 通知对方
+                    String uKey = UniqueKey.make(participant.id, contact.getDomain().getName());
+                    ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.ModifyZone.name, peerZone.toJSON());
+                    this.contactsAdapter.publish(uKey, event.toJSON());
+                }
+                else {
+                    Logger.w(ContactManager.class, "#removeParticipantFromZone - Can NOT find inviter : " + participant.id);
+                }
+            }
+        }
+
+        // 移除
+        this.storage.removeZoneParticipant(zone, participant);
+
+        return zone;
     }
 
     /**
