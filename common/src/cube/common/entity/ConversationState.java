@@ -42,14 +42,24 @@ public enum ConversationState {
     Important(2),
 
     /**
-     * 已删除。
+     * 已删除状态。
      */
-    Deleted(3);
+    Deleted(3),
+
+    /**
+     * 已销毁状态。
+     */
+    Destroyed(4);
 
     public final int code;
 
     ConversationState(int code) {
         this.code = code;
+    }
+
+    @Override
+    public String toString() {
+        return Integer.toString(this.code);
     }
 
     public static ConversationState parse(int code) {
@@ -59,6 +69,6 @@ public enum ConversationState {
             }
         }
 
-        return Normal;
+        return Deleted;
     }
 }

@@ -636,7 +636,8 @@ public class MessagingStorage implements Storagable {
         String domain = contact.getDomain().getName();
         String table = this.conversationTableNameMap.get(domain);
 
-        String sql = "SELECT * FROM `" + table + "` WHERE `owner`=" + contact.getId() + " ORDER BY `timestamp` DESC";
+        String sql = "SELECT * FROM `" + table + "` WHERE `owner`=" + contact.getId()
+                + " AND `state`<>" + ConversationState.Destroyed.toString() + " ORDER BY `timestamp` DESC";
         List<StorageField[]> result = this.storage.executeQuery(sql);
         if (result.isEmpty()) {
             // 无数据
@@ -647,10 +648,10 @@ public class MessagingStorage implements Storagable {
 
         for (StorageField[] row : result) {
             Map<String, StorageField> map = StorageFields.get(row);
-            if (map.get("state").getInt() == ConversationState.Deleted.code) {
-                // 跳过已删除的会话
-                continue;
-            }
+//            if (map.get("state").getInt() == ConversationState.Destroyed.code) {
+//                // 跳过已销毁的会话
+//                continue;
+//            }
 
             Long id = map.get("id").getLong();
             long timestamp = map.get("timestamp").getLong();
@@ -718,9 +719,9 @@ public class MessagingStorage implements Storagable {
                 List<StorageField[]> result = storage.executeQuery(table, new StorageField[] {
                         new StorageField("sn", LiteralBase.LONG)
                 }, new Conditional[] {
-                        Conditional.createEqualTo("owner", ownerId.longValue()),
+                        Conditional.createEqualTo("owner", ownerId),
                         Conditional.createAnd(),
-                        Conditional.createEqualTo("pivotal_id", pivotalId.longValue())
+                        Conditional.createEqualTo("pivotal_id", pivotalId)
                 });
 
                 if (result.isEmpty()) {
@@ -729,8 +730,8 @@ public class MessagingStorage implements Storagable {
                     long conversationId = pivotalId.longValue();
                     storage.executeInsert(table, new StorageField[] {
                             new StorageField("id", conversationId),
-                            new StorageField("owner", ownerId.longValue()),
-                            new StorageField("pivotal_id", pivotalId.longValue()),
+                            new StorageField("owner", ownerId),
+                            new StorageField("pivotal_id", pivotalId),
                             new StorageField("timestamp", timestamp),
                             new StorageField("type", type.code),
                             new StorageField("state", state.code),
@@ -747,7 +748,7 @@ public class MessagingStorage implements Storagable {
                             new StorageField("remind", remindType.code),
                             new StorageField("recent_message_id", messageId),
                     }, new Conditional[] {
-                            Conditional.createEqualTo("sn", LiteralBase.LONG, sn)
+                            Conditional.createEqualTo("sn", sn)
                     });
                 }
             }
