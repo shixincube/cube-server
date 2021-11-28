@@ -98,7 +98,7 @@ public class AccountInfoHandler extends ContextHandler {
                 Account account = AccountManager.getInstance().getOnlineAccount(token);
                 if (null != account) {
                     // 返回完整信息
-                    responseData = account.toFullJSON();
+                    responseData = account.toCompactJSON();
                 }
             }
 
@@ -136,10 +136,22 @@ public class AccountInfoHandler extends ContextHandler {
 
             if (data.has("name")) {
                 newName = data.getString("name");
+                if (newName.length() < 3) {
+                    newName = null;
+                }
+                else {
+                    account.name = newName;
+                }
             }
 
             if (data.has("avatar")) {
                 newAvatar = data.getString("avatar");
+                if (newAvatar.length() < 2) {
+                    newAvatar = null;
+                }
+                else {
+                    account.avatar = newAvatar;
+                }
             }
 
             account = AccountManager.getInstance().updateAccount(account.id, newName, newAvatar);
