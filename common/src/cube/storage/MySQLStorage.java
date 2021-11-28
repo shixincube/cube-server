@@ -218,6 +218,8 @@ public class MySQLStorage extends AbstractStorage {
 
     @Override
     public boolean executeUpdate(String table, StorageField[] fields, Conditional[] conditionals) {
+        boolean updated = false;
+
         Connection connection = this.pool.get();
 
         // 拼写 SQL 语句
@@ -226,7 +228,10 @@ public class MySQLStorage extends AbstractStorage {
         Statement statement = null;
         try {
             statement = connection.createStatement();
-            statement.executeUpdate(sql);
+            int row = statement.executeUpdate(sql);
+            if (row > 0) {
+                updated = true;
+            }
         } catch (SQLException e) {
             Logger.e(this.getClass(), "#executeUpdate - SQL: " + sql, e);
             return false;
@@ -240,7 +245,8 @@ public class MySQLStorage extends AbstractStorage {
 
             this.pool.returnConn(connection);
         }
-        return true;
+
+        return updated;
     }
 
     @Override

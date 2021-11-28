@@ -222,7 +222,10 @@ public class Message extends Entity implements Comparable<Message> {
         this.remoteTimestamp = remoteTimestamp;
         this.state = MessageState.parse(state);
         this.scope = scope;
-        this.sourceDevice = new Device(sourceDevice);
+
+        if (null != sourceDevice) {
+            this.sourceDevice = new Device(sourceDevice);
+        }
 
         this.payload = payload;
 
@@ -380,6 +383,10 @@ public class Message extends Entity implements Comparable<Message> {
      */
     @Override
     public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        
         if (null != object && object instanceof Message) {
             Message other = (Message) object;
             if (other.id.longValue() == this.id.longValue()

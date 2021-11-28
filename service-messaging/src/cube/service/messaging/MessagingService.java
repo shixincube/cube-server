@@ -644,10 +644,17 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         // 更新存储
         this.storage.writeMessageState(domain, contactId, messageId, MessageState.Read);
 
-        // 通知发件人
-        String fromKey = UniqueKey.make(message.getFrom(), domain);
-        ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Read.name, message.toCompactJSON());
-        this.contactsAdapter.publish(fromKey, event.toJSON());
+        // 获取发件人侧的消息
+        Message senderMessage = this.storage.readCompact(domain, message.getFrom(), messageId);
+        if (null != senderMessage && senderMessage.getState() == MessageState.Sent) {
+            // 修改状态
+            this.storage.writeMessageState(domain, message.getFrom(), messageId, MessageState.Read);
+
+            // 通知发件人
+            String fromKey = UniqueKey.make(message.getFrom(), domain);
+            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Read.name, senderMessage.toCompactJSON());
+            this.contactsAdapter.publish(fromKey, event.toJSON());
+        }
 
         return message;
     }
@@ -673,9 +680,28 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         // 更新存储
         this.storage.writeMessagesState(domain, contactId, messageIdList, MessageState.Read);
 
+        // 将发件人的消息也标记为已读
+        List<Long> validIdList = this.storage.writeMessagesState(domain, fromId, messageIdList, MessageState.Sent, MessageState.Read);
+
+        List<Message> messageList = new ArrayList<>(validIdList.size());
+        for (Long messageId : validIdList) {
+            Message message = this.storage.readCompact(domain, fromId, messageId);
+            if (null != message) {
+                messageList.add(message);
+            }
+        }
+
         // 通知发件人
         Contact sender = ContactManager.getInstance().getContact(domain, fromId);
-        // TODO XJW
+        notifyContactMessageRead(sender, messageList);
+    }
+
+    private void notifyContactMessageRead(Contact contact, List<Message> messageList) {
+        String uniqueKey = UniqueKey.make(contact.getId(), contact.getDomain().getName());
+        for (Message message : messageList) {
+            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Read.name, message.toCompactJSON());
+            this.contactsAdapter.publish(uniqueKey, event.toJSON());
+        }
     }
 
     /**
@@ -981,13 +1007,15 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                             if (notifyMessage(MessagingAction.Notify, talkContext, ownerId, message)) {
                                 Logger.d(this.getClass(), "Notify message: '" + message.getFrom()
                                         + "' -> '" + message.getTo() + "'");
-                            } else {
+                            }
+                            else {
                                 Logger.w(this.getClass(), "Notify message error: '" + message.getFrom()
                                         + "' -> '" + message.getTo() + "'");
                             }
                         }
                     }
-                } else if (ownerId.longValue() == message.getFrom().longValue()) {
+                }
+                else if (ownerId.longValue() == message.getFrom().longValue()) {
                     // 将消息发送给源联系人的其他设备
                     Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(),
                             message.getFrom());
@@ -1006,7 +1034,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                         }
                     }
                 }
-            } else if (event.getEventName().equals(MessagingAction.Read.name)) {
+            }
+            else if (event.getEventName().equals(MessagingAction.Read.name)) {
                 Message message = new Message(event.getData());
 
                 Long fromId = message.getId();
@@ -1020,7 +1049,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                         }
                     }
                 }
-            } else if (event.getEventName().equals(MessagingAction.Recall.name)) {
+            }
+            else if (event.getEventName().equals(MessagingAction.Recall.name)) {
                 Message message = new Message(event.getData());
 
                 Long ownerId = message.getOwner();

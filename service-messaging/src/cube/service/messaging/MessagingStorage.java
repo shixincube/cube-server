@@ -27,7 +27,6 @@
 package cube.service.messaging;
 
 import cell.core.talk.LiteralBase;
-import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.Storagable;
 import cube.common.entity.*;
@@ -248,6 +247,52 @@ public class MessagingStorage implements Storagable {
     }
 
     /**
+     * 以紧凑结构读出消息。
+     *
+     * @param domain
+     * @param contactId
+     * @param messageId
+     * @return
+     */
+    public Message readCompact(String domain, Long contactId, Long messageId) {
+        String table = this.messageTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        StorageField[] fields = new StorageField[] {
+                new StorageField("id", LiteralBase.LONG),
+                new StorageField("from", LiteralBase.LONG),
+                new StorageField("to", LiteralBase.LONG),
+                new StorageField("source", LiteralBase.LONG),
+                new StorageField("owner", LiteralBase.LONG),
+                new StorageField("lts", LiteralBase.LONG),
+                new StorageField("rts", LiteralBase.LONG),
+                new StorageField("state", LiteralBase.INT),
+                new StorageField("scope", LiteralBase.INT)
+        };
+
+        List<StorageField[]> result = this.storage.executeQuery(table, fields, new Conditional[] {
+                Conditional.createEqualTo("id", messageId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("owner", contactId)
+        });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+
+        Message message = new Message(domain, map.get("id").getLong(), map.get("from").getLong(),
+                map.get("to").getLong(), map.get("source").getLong(), map.get("owner").getLong(),
+                map.get("lts").getLong(), map.get("rts").getLong(), map.get("state").getInt(),
+                map.get("scope").getInt(),
+                null, null, null);
+        return message;
+    }
+
+    /**
      * 读取属于指定联系人的消息。
      *
      * @param domain
@@ -262,9 +307,9 @@ public class MessagingStorage implements Storagable {
         }
 
         List<StorageField[]> result = this.storage.executeQuery(table, this.messageFields, new Conditional[] {
-                Conditional.createEqualTo("id", LiteralBase.LONG, messageId),
+                Conditional.createEqualTo("id", messageId),
                 Conditional.createAnd(),
-                Conditional.createEqualTo("owner", LiteralBase.LONG, contactId)
+                Conditional.createEqualTo("owner", contactId)
         });
 
         if (result.isEmpty()) {
@@ -553,7 +598,7 @@ public class MessagingStorage implements Storagable {
             @Override
             public void run() {
                 StorageField[] fields = new StorageField[] {
-                        new StorageField("state", LiteralBase.INT, state.code)
+                        new StorageField("state", state.code)
                 };
 
                 storage.executeUpdate(table, fields, new Conditional[] {
@@ -587,11 +632,49 @@ public class MessagingStorage implements Storagable {
                     storage.executeUpdate(table, fields, new Conditional[] {
                             Conditional.createEqualTo(new StorageField("id", messageId)),
                             Conditional.createAnd(),
-                            Conditional.createEqualTo(new StorageField("owner", contactId.longValue()))
+                            Conditional.createEqualTo(new StorageField("owner", contactId))
                     });
                 }
             }
         });
+    }
+
+    /**
+     * 修改消息状态。
+     *
+     * @param domain
+     * @param contactId
+     * @param messageIds
+     * @param sourceState
+     * @param newState
+     * @return
+     */
+    public List<Long> writeMessagesState(String domain, Long contactId, List<Long> messageIds,
+                                   MessageState sourceState, MessageState newState) {
+        List<Long> resultIdList = new ArrayList<>();
+
+        String table = this.messageTableNameMap.get(domain);
+
+        StorageField[] fields = new StorageField[] {
+                new StorageField("state", newState.code)
+        };
+
+        for (Long messageId : messageIds) {
+            boolean updated = this.storage.executeUpdate(table, fields, new Conditional[] {
+                    Conditional.createEqualTo(new StorageField("id", messageId)),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo(new StorageField("owner", contactId)),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo(new StorageField("state", sourceState.code))
+            });
+
+            if (updated) {
+                // 选出符合条件的消息 ID
+                resultIdList.add(messageId);
+            }
+        }
+
+        return resultIdList;
     }
 
     /**
