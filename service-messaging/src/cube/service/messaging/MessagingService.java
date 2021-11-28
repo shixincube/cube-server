@@ -685,6 +685,14 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         List<Message> messageList = new ArrayList<>(validIdList.size());
         for (Long messageId : validIdList) {
+            // 更新状态
+            MessageKey key = new MessageKey(fromId, messageId);
+            MessageStateBundle stateBundle = this.messageStateMap.get(key);
+            if (null != stateBundle && stateBundle.state == MessageState.Sent) {
+                stateBundle.state = MessageState.Read;
+            }
+
+            // 读取数据
             Message message = this.storage.readCompact(domain, fromId, messageId);
             if (null != message) {
                 messageList.add(message);
