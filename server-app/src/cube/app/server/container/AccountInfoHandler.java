@@ -98,7 +98,7 @@ public class AccountInfoHandler extends ContextHandler {
                 Account account = AccountManager.getInstance().getOnlineAccount(token);
                 if (null != account) {
                     // 返回完整信息
-                    responseData = account.toCompactJSON();
+                    responseData = account.toFullJSON();
                 }
             }
 

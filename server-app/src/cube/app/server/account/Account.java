@@ -71,7 +71,7 @@ public class Account implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("id", this.id);
-        json.put("account", this.account);
+//        json.put("account", this.account);
         json.put("phone", PhoneNumbers.desensitize(this.phone));
         json.put("name", this.name);
         json.put("avatar", this.avatar);
@@ -85,7 +85,7 @@ public class Account implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = this.toJSON();
-        json.remove("account");
+//        json.remove("account");
         json.remove("registration");
         return json;
     }
@@ -93,9 +93,9 @@ public class Account implements JSONable {
     public JSONObject toFullJSON() {
         JSONObject json = new JSONObject();
         json.put("id", this.id);
-        json.put("account", this.account);
+//        json.put("account", this.account);
         json.put("phone", this.phone);
-        json.put("password", this.password);
+//        json.put("password", this.password);
         json.put("name", this.name);
         json.put("avatar", this.avatar);
         json.put("state", this.state);
