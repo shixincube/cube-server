@@ -653,14 +653,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * @return
      */
     public Message markReadMessage(String domain, Long contactId, Long messageId) {
-        Message message = this.storage.read(domain, contactId, messageId);
+        Message message = this.storage.readCompact(domain, contactId, messageId);
         if (null == message) {
             // 没有找到消息
-            return null;
-        }
-
-        if (message.getTo().longValue() != contactId.longValue()) {
-            // 消息的收件人不正确
             return null;
         }
 
@@ -677,16 +672,28 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         // 更新存储
         this.storage.writeMessageState(domain, contactId, messageId, MessageState.Read);
 
-        // 获取发件人侧的消息
-        Message senderMessage = this.storage.readCompact(domain, message.getFrom(), messageId);
-        if (null != senderMessage && senderMessage.getState() == MessageState.Sent) {
-            // 修改状态
-            this.storage.writeMessageState(domain, message.getFrom(), messageId, MessageState.Read);
+        if (!message.isFromGroup() && message.getFrom().longValue() != contactId.longValue()) {
+            // 获取发件人侧的消息
+            Message senderMessage = this.storage.readCompact(domain, message.getFrom(), messageId);
+            if (null != senderMessage && senderMessage.getState() == MessageState.Sent) {
+                // 修改状态
+                key = new MessageKey(message.getFrom(), messageId);
+                stateBundle = this.messageStateMap.get(key);
+                if (null != stateBundle) {
+                    stateBundle.state = MessageState.Read;
+                }
 
-            // 通知发件人
-            String fromKey = UniqueKey.make(message.getFrom(), domain);
-            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Read.name, senderMessage.toCompactJSON());
-            this.contactsAdapter.publish(fromKey, event.toJSON());
+                // 更新存储
+                this.storage.writeMessageState(domain, message.getFrom(), messageId, MessageState.Read);
+
+                // 修改状态
+                senderMessage.setState(MessageState.Read);
+
+                // 通知发件人
+                String fromKey = UniqueKey.make(message.getFrom(), domain);
+                ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Read.name, senderMessage.toCompactJSON());
+                this.contactsAdapter.publish(fromKey, event.toJSON());
+            }
         }
 
         return message;
