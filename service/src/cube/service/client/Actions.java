@@ -59,6 +59,8 @@ public enum Actions {
 
     QueryMessages("QueryMessages"),
 
+    MarkReadMessages("MarkReadMessages"),
+
     GetFile("GetFile"),
 
     PutFile("PutFile"),

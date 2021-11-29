@@ -234,7 +234,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     public Object notify(Object event) {
         JSONObject data = (event instanceof JSONObject) ? (JSONObject) event : null;
         if (null != data && data.has("action")) {
+            // 动作
             String action = data.getString("action");
+
             if (MessagingAction.Push.name.equals(action)) {
                 Message message = new Message(data.getJSONObject("message"));
                 Device device = new Device(data.getJSONObject("device"));
@@ -257,6 +259,25 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                     data.put("list", array);
                     return data;
                 }
+            }
+            else if (MessagingAction.Read.name.equals(action)) {
+                String domain = data.getString("domain");
+                Long receiverId = data.getLong("to");
+                Long senderId = data.getLong("from");
+                JSONArray idArray = data.getJSONArray("list");
+                List<Long> messageIds = new ArrayList<>(idArray.length());
+                for (int i = 0; i < idArray.length(); ++i) {
+                    messageIds.add(idArray.getLong(i));
+                }
+                // 标记消息已读
+                List<Message> messageList = this.markReadMessagesByContact(domain, receiverId, senderId, messageIds);
+                // 将标记的消息返回
+                JSONArray messageArray = new JSONArray();
+                for (Message message : messageList) {
+                    messageArray.put(message.toCompactJSON());
+                }
+                data.put("messages", messageArray);
+                return data;
             }
         }
 
@@ -611,6 +632,18 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     }
 
     /**
+     * 获取紧凑结构的消息。
+     *
+     * @param domain
+     * @param contactId
+     * @param messageId
+     * @return
+     */
+    public Message getCompactMessage(String domain, Long contactId, Long messageId) {
+        return this.storage.readCompact(domain, contactId, messageId);
+    }
+
+    /**
      * 标记消息已读。将 TO 的消息副本标记为已读状态。
      * 修改之后将该状态通知给消息的发送人。
      *
@@ -666,8 +699,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * @param contactId
      * @param fromId
      * @param messageIdList
+     * @return
      */
-    public void markReadMessagesByContact(String domain, Long contactId, Long fromId, List<Long> messageIdList) {
+    public List<Message> markReadMessagesByContact(String domain, Long contactId, Long fromId, List<Long> messageIdList) {
         for (Long messageId : messageIdList) {
             // 修改状态
             MessageKey key = new MessageKey(contactId, messageId);
@@ -702,6 +736,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         // 通知发件人
         Contact sender = ContactManager.getInstance().getContact(domain, fromId);
         notifyContactMessageRead(sender, messageList);
+        return messageList;
     }
 
     private void notifyContactMessageRead(Contact contact, List<Message> messageList) {
@@ -1046,14 +1081,15 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             else if (event.getEventName().equals(MessagingAction.Read.name)) {
                 Message message = new Message(event.getData());
 
-                Long fromId = message.getId();
+                // 获取发件人
+                Long fromId = message.getFrom();
 
                 Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(), fromId);
                 if (null != contact) {
                     for (Device device : contact.getDeviceList()) {
                         if (notifyMessage(MessagingAction.Read, device.getTalkContext(), fromId, message)) {
                             Logger.d(this.getClass(), "Mark read message : '"
-                                    + message.getTo() + "' mark, from '" + fromId + "'");
+                                    + message.getTo() + "' mark - from '" + fromId + "'");
                         }
                     }
                 }

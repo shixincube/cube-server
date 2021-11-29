@@ -271,6 +271,15 @@ public class Message extends Entity implements Comparable<Message> {
     }
 
     /**
+     * 是否来自群组。
+     *
+     * @return 如果来源是群组返回 {@code true} 。
+     */
+    public boolean isFromGroup() {
+        return this.source.longValue() > 0;
+    }
+
+    /**
      * 设置消息副本持有人。
      *
      * @param ownerId 指定持有人 ID 。

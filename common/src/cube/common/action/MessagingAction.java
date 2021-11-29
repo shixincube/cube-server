@@ -62,6 +62,11 @@ public enum MessagingAction {
     Read("read"),
 
     /**
+     * 查询消息状态。
+     */
+    QueryState("queryState"),
+
+    /**
      * 获取会话列表。
      */
     GetConversations("getConversations"),
