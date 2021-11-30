@@ -62,6 +62,7 @@ public class ModifyContactZoneTask extends ClientTask {
         String action = actionDialect.getParamAsString("action");
 
         ContactZone contactZone = null;
+        ContactZoneParticipant zoneParticipant = null;
 
         if (action.equals(ContactAction.AddParticipantToZone.name)) {
             JSONObject participantJson = actionDialect.getParamAsJson("participant");
@@ -73,12 +74,20 @@ public class ModifyContactZoneTask extends ClientTask {
             ContactZoneParticipant participant = new ContactZoneParticipant(participantJson);
             contactZone = ContactManager.getInstance().removeParticipantFromZone(contact, zoneName, participant);
         }
+        else if (action.equals(ContactAction.ModifyZoneParticipant.name)) {
+            JSONObject participantJson = actionDialect.getParamAsJson("participant");
+            ContactZoneParticipant participant = new ContactZoneParticipant(participantJson);
+            zoneParticipant = ContactManager.getInstance().modifyZoneParticipant(contact, zoneName, participant);
+        }
         else {
             contactZone = ContactManager.getInstance().getContactZone(contact, zoneName);
         }
 
         if (null != contactZone) {
             response.addParam("contactZone", contactZone.toJSON());
+        }
+        if (null != zoneParticipant) {
+            response.addParam("participant", zoneParticipant.toCompactJSON());
         }
 
         cellet.speak(talkContext, response);
