@@ -90,12 +90,18 @@ public class AddParticipantToZoneTask extends ServiceTask {
 
         // 添加参与人到分区
         ContactZone contactZone = ContactManager.getInstance().addParticipantToZone(contact, zoneName, participant);
+        if (null != contactZone) {
+            // 返回时间戳
+            data.put("timestamp", contactZone.getTimestamp());
 
-        // 返回时间戳
-        data.put("timestamp", contactZone.getTimestamp());
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.Ok.code, data));
+        }
+        else {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, ContactStateCode.Failure.code, data));
+        }
 
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, data));
         markResponseTime();
     }
 }

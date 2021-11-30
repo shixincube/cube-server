@@ -695,7 +695,7 @@ public class ContactStorage implements Storagable {
             // 更新时间戳
             table = contactZoneTableNameMap.get(zone.getDomain().getName());
             storage.executeUpdate(table, new StorageField[] {
-                    new StorageField("timestamp", System.currentTimeMillis())
+                    new StorageField("timestamp", participant.timestamp)
             }, new Conditional[] {
                     Conditional.createEqualTo("id", zone.getId())
             });

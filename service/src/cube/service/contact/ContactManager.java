@@ -938,6 +938,21 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             return null;
         }
 
+        // 判断发起人的阻止列表
+        List<Long> blockList = this.getBlockList(contact);
+        if (blockList.contains(participant.id)) {
+            // 被阻止，不允许添加
+            return null;
+        }
+
+        // 判断被添加人的阻止列表
+        Contact participantContact = this.getContact(contact.getDomain().getName(), participant.id);
+        blockList = this.getBlockList(participantContact);
+        if (blockList.contains(contact.getId())) {
+            // 被受邀者阻止，不允许添加
+            return null;
+        }
+
         // 更新时间戳
         zone.resetTimestamp();
 
@@ -1029,13 +1044,17 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             return null;
         }
 
+        // 设置时间戳
+        long timestamp = System.currentTimeMillis();
+        participant.timestamp = timestamp;
+
         if (zone.peerMode) {
             // 对等模式
             ContactZone peerZone = this.storage.readContactZone(contact.getDomain().getName(), participant.id, zoneName);
             if (null != peerZone) {
                 // 修改对端的自己
                 ContactZoneParticipant inviter = new ContactZoneParticipant(contact.getId(), ContactZoneParticipantType.Contact,
-                        System.currentTimeMillis(), contact.getId(), participant.postscript, participant.state);
+                        timestamp, contact.getId(), participant.postscript, participant.state);
                 this.storage.updateZoneParticipant(peerZone, inviter);
 
                 String uKey = UniqueKey.make(participant.id, contact.getDomain().getName());

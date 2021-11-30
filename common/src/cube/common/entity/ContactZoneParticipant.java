@@ -36,7 +36,7 @@ public class ContactZoneParticipant implements JSONable {
 
     public final Long id;
 
-    public final long timestamp;
+    public long timestamp;
 
     public final ContactZoneParticipantType type;
 
