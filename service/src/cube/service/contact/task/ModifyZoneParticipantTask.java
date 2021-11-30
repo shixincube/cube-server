@@ -90,7 +90,7 @@ public class ModifyZoneParticipantTask extends ServiceTask {
         }
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, ContactStateCode.Ok.code, result.toJSON()));
+                this.makeResponse(action, packet, ContactStateCode.Ok.code, result.toCompactJSON()));
         markResponseTime();
     }
 }

@@ -136,7 +136,7 @@ public class ContactZone extends Entity {
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = this.toCompactJSON();
+        JSONObject json = ContactZone.this.toCompactJSON();
 
         JSONArray participants = new JSONArray();
 

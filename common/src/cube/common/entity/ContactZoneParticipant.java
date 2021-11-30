@@ -82,18 +82,19 @@ public class ContactZoneParticipant implements JSONable {
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id.longValue());
-        json.put("type", this.type.code);
-        json.put("timestamp", this.timestamp);
-        json.put("state", this.state.code);
-        json.put("inviterId", this.inviterId.longValue());
+        JSONObject json = this.toCompactJSON();
         json.put("postscript", this.postscript);
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        json.put("id", this.id.longValue());
+        json.put("type", this.type.code);
+        json.put("timestamp", this.timestamp);
+        json.put("state", this.state.code);
+        json.put("inviterId", this.inviterId.longValue());
+        return json;
     }
 }

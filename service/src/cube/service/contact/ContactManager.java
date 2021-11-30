@@ -970,9 +970,12 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 // 更新数据库
                 this.storage.addZoneParticipant(peerZone, inviter);
 
+                // 绑定数据
+                ContactZoneBundle bundle = new ContactZoneBundle(peerZone, inviter);
+
                 // 通知对方
                 String uKey = UniqueKey.make(participant.id, contact.getDomain().getName());
-                ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.ModifyZone.name, peerZone.toJSON());
+                ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.ModifyZone.name, bundle.toJSON());
                 this.contactsAdapter.publish(uKey, event.toJSON());
             }
         }
@@ -1013,9 +1016,12 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                     // 移除
                     this.storage.removeZoneParticipant(peerZone, inviter);
 
+                    // 绑定数据
+                    ContactZoneBundle bundle = new ContactZoneBundle(peerZone, inviter);
+
                     // 通知对方
                     String uKey = UniqueKey.make(participant.id, contact.getDomain().getName());
-                    ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.ModifyZone.name, peerZone.toJSON());
+                    ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.ModifyZone.name, bundle.toJSON());
                     this.contactsAdapter.publish(uKey, event.toJSON());
                 }
                 else {
@@ -1053,16 +1059,20 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             ContactZone peerZone = this.storage.readContactZone(contact.getDomain().getName(), participant.id, zoneName);
             if (null != peerZone) {
                 // 修改对端的自己
-                ContactZoneParticipant inviter = new ContactZoneParticipant(contact.getId(), ContactZoneParticipantType.Contact,
-                        timestamp, contact.getId(), participant.postscript, participant.state);
-                this.storage.updateZoneParticipant(peerZone, inviter);
+                ContactZoneParticipant selfInPeerZone = new ContactZoneParticipant(contact.getId(), ContactZoneParticipantType.Contact,
+                        timestamp, participant.id, participant.postscript, participant.state);
+                this.storage.updateZoneParticipant(peerZone, selfInPeerZone);
+
+                // 绑定数据
+                ContactZoneBundle bundle = new ContactZoneBundle(peerZone, selfInPeerZone);
 
                 String uKey = UniqueKey.make(participant.id, contact.getDomain().getName());
-                ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.ModifyZoneParticipant.name, inviter.toJSON());
+                ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.ModifyZoneParticipant.name, bundle.toCompactJSON());
                 this.contactsAdapter.publish(uKey, event.toJSON());
             }
         }
 
+        // 更新自己的 Zone
         this.storage.updateZoneParticipant(zone, participant);
 
         return participant;

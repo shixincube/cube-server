@@ -231,7 +231,11 @@ public abstract class Entity implements JSONable {
      */
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        json.put("id", this.id.longValue());
+        json.put("domain", this.domain.getName());
+        json.put("timestamp", this.timestamp);
+        return json;
     }
 
     /**

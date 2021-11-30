@@ -120,6 +120,9 @@ public class ContactStorage implements Storagable {
      * 联系人分区参与者字段描述。
      */
     private final StorageField[] contactZoneParticipantFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
             new StorageField("contact_zone_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
