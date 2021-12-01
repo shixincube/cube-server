@@ -945,18 +945,20 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             return null;
         }
 
-        // 判断被添加人的阻止列表
-        Contact participantContact = this.getContact(contact.getDomain().getName(), participant.id);
-        blockList = this.getBlockList(participantContact);
-        if (blockList.contains(contact.getId())) {
-            // 被受邀者阻止，不允许添加
-            return null;
+        if (participant.type == ContactZoneParticipantType.Contact) {
+            // 判断被添加人的阻止列表
+            Contact participantContact = this.getContact(contact.getDomain().getName(), participant.id);
+            blockList = this.getBlockList(participantContact);
+            if (blockList.contains(contact.getId())) {
+                // 被受邀者阻止，不允许添加
+                return null;
+            }
         }
 
         // 更新时间戳
         zone.resetTimestamp();
 
-        if (zone.peerMode) {
+        if (zone.peerMode && participant.type == ContactZoneParticipantType.Contact) {
             // 对等模式
             ContactZone peerZone = this.storage.readContactZone(contact.getDomain().getName(),
                     participant.id, zoneName);
@@ -1004,7 +1006,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         // 更新时间戳
         zone.resetTimestamp();
 
-        if (zone.peerMode) {
+        if (zone.peerMode && participant.type == ContactZoneParticipantType.Contact) {
             // 对等模式，对等删除
             ContactZone peerZone = this.storage.readContactZone(contact.getDomain().getName(),
                     participant.id, zoneName);
@@ -1054,7 +1056,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         long timestamp = System.currentTimeMillis();
         participant.timestamp = timestamp;
 
-        if (zone.peerMode) {
+        if (zone.peerMode && participant.type == ContactZoneParticipantType.Contact) {
             // 对等模式
             ContactZone peerZone = this.storage.readContactZone(contact.getDomain().getName(), participant.id, zoneName);
             if (null != peerZone) {
