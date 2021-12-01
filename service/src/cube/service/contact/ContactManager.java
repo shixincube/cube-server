@@ -971,7 +971,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 this.storage.addZoneParticipant(peerZone, inviter);
 
                 // 绑定数据
-                ContactZoneBundle bundle = new ContactZoneBundle(peerZone, inviter);
+                ContactZoneBundle bundle = new ContactZoneBundle(peerZone, inviter, ContactZoneBundle.ACTION_ADD);
 
                 // 通知对方
                 String uKey = UniqueKey.make(participant.id, contact.getDomain().getName());
@@ -1017,7 +1017,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                     this.storage.removeZoneParticipant(peerZone, inviter);
 
                     // 绑定数据
-                    ContactZoneBundle bundle = new ContactZoneBundle(peerZone, inviter);
+                    ContactZoneBundle bundle = new ContactZoneBundle(peerZone, inviter, ContactZoneBundle.ACTION_REMOVE);
 
                     // 通知对方
                     String uKey = UniqueKey.make(participant.id, contact.getDomain().getName());
@@ -1064,7 +1064,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 this.storage.updateZoneParticipant(peerZone, selfInPeerZone);
 
                 // 绑定数据
-                ContactZoneBundle bundle = new ContactZoneBundle(peerZone, selfInPeerZone);
+                ContactZoneBundle bundle = new ContactZoneBundle(peerZone, selfInPeerZone, ContactZoneBundle.ACTION_UPDATE);
 
                 String uKey = UniqueKey.make(participant.id, contact.getDomain().getName());
                 ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.ModifyZoneParticipant.name, bundle.toCompactJSON());

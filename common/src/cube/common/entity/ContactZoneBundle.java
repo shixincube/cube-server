@@ -34,13 +34,22 @@ import org.json.JSONObject;
  */
 public class ContactZoneBundle implements JSONable {
 
+    public final static int ACTION_ADD = 1;
+
+    public final static int ACTION_REMOVE = 0;
+
+    public final static int ACTION_UPDATE = 9;
+
     private ContactZone zone;
 
     private ContactZoneParticipant participant;
 
-    public ContactZoneBundle(ContactZone zone, ContactZoneParticipant participant) {
+    private int action = ACTION_UPDATE;
+
+    public ContactZoneBundle(ContactZone zone, ContactZoneParticipant participant, int action) {
         this.zone = zone;
         this.participant = participant;
+        this.action = action;
     }
 
     @Override
@@ -48,6 +57,7 @@ public class ContactZoneBundle implements JSONable {
         JSONObject json = new JSONObject();
         json.put("zone", this.zone.toCompactJSON());
         json.put("participant", this.participant.toJSON());
+        json.put("action", this.action);
         return json;
     }
 
@@ -56,6 +66,7 @@ public class ContactZoneBundle implements JSONable {
         JSONObject json = new JSONObject();
         json.put("zone", this.zone.toCompactJSON());
         json.put("participant", this.participant.toCompactJSON());
+        json.put("action", this.action);
         return json;
     }
 }
