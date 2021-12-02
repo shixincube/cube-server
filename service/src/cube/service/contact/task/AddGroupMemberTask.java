@@ -117,7 +117,7 @@ public class AddGroupMemberTask extends ServiceTask {
             return;
         }
 
-        // 判读参数列表里的成员数组是否为空
+        // 判断参数列表里的成员数组是否为空
         if (null != memberList && memberList.isEmpty()) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, data));
