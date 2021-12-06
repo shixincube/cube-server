@@ -107,6 +107,14 @@ public class RenameDirectoryTask extends ServiceTask {
             return;
         }
 
+        if (!directory.hasParent()) {
+            // 根目录不允许修改名称
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Reject.code, packet.data));
+            markResponseTime();
+            return;
+        }
+
         // 重命名目录
         Directory renameDirectory = directory.renameDirectory(dirName);
         if (null == renameDirectory) {
