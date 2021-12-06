@@ -68,12 +68,12 @@ public class FileStorageService extends AbstractModule {
     /**
      * 默认的文件有效时长。
      */
-    private long defaultFileDuration = 30L * 24L * 60L * 60L * 1000L;
+    private long defaultFileDuration = 30 * 24 * 60 * 60 * 1000;
 
     /**
      * 文件大小门限。
      */
-    private long fileSizeThreshold = 20L * 1024L * 1024L;
+    private long fileSizeThreshold = 20 * 1024 * 1024;
 
     /**
      * 文件系统。

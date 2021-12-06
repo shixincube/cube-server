@@ -74,6 +74,11 @@ public enum FileStorageAction {
     DeleteDir("deleteDir"),
 
     /**
+     * 重命名目录。
+     */
+    RenameDir("renameDir"),
+
+    /**
      * 删除文件。
      */
     DeleteFile("deleteFile"),

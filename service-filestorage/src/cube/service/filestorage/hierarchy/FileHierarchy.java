@@ -254,7 +254,7 @@ public class FileHierarchy {
      * @return 创建失败返回 {@code null} 值。
      */
     protected Directory createDirectory(Directory directory, String directoryName, Long directoryId) {
-        if (directoryName.equals("root")) {
+        if (directoryName.equalsIgnoreCase("root")) {
             // 不允许使用 root 作为目录名
             return null;
         }
@@ -410,6 +410,32 @@ public class FileHierarchy {
         this.listener.onDirectoryRemove(this, list);
 
         return true;
+    }
+
+    /**
+     * 重命名目录。
+     *
+     * @param directory 指定待重命名的目录。
+     * @param newName 指定新名称。
+     * @return 返回修改后的目录。
+     */
+    protected Directory renameDirectory(Directory directory, String newName) {
+        if (newName.equalsIgnoreCase("root")) {
+            // 不允许使用 root 作为目录名
+            return null;
+        }
+
+        this.timestamp = System.currentTimeMillis();
+
+        // 更新名称
+        directory.node.getContext().put(KEY_DIR_NAME, newName);
+
+        // 更新时间戳
+        directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
+
+        HierarchyNodes.save(this.cache, directory.node);
+
+        return directory;
     }
 
     /**

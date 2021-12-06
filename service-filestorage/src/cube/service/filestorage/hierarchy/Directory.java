@@ -30,6 +30,7 @@ import cube.common.Domain;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
+import cube.service.Director;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -268,6 +269,16 @@ public class Directory implements JSONable {
      */
     public List<Directory> deleteDirectories(List<Directory> subdirectories, boolean recursive) {
         return this.fileHierarchy.deleteDirectories(this, subdirectories, recursive);
+    }
+
+    /**
+     * 重命名。
+     *
+     * @param newName 指定新的目录名。
+     * @return 返回目录。
+     */
+    public Directory renameDirectory(String newName) {
+        return this.fileHierarchy.renameDirectory(this, newName);
     }
 
     /**
