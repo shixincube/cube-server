@@ -130,6 +130,7 @@ public class DeleteFileTask extends ServiceTask {
 
         JSONObject result = new JSONObject();
         result.put("workingId", workingId.longValue());
+        result.put("workingDir", workingDir.toCompactJSON());
         result.put("deletedList", deleted);
 
         // 成功
