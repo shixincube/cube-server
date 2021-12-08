@@ -64,4 +64,13 @@ public class DirectoryTrash extends Trash {
         json.put("directory", dirJson);
         return json;
     }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toCompactJSON();
+        JSONObject dirJson = this.directory.toCompactJSON();
+        FileHierarchyTool.packDirectory(this.directory, dirJson);
+        json.put("directory", dirJson);
+        return json;
+    }
 }

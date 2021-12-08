@@ -68,6 +68,15 @@ public class FileTrash extends Trash {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("file", this.fileLabel.toCompactJSON());
+        json.put("parent", this.parent.toCompactJSON());
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toCompactJSON();
+        json.put("file", this.fileLabel.toCompactJSON());
+        json.put("parent", this.parent.toCompactJSON());
         return json;
     }
 }

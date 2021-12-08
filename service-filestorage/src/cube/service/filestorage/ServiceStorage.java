@@ -440,7 +440,7 @@ public class ServiceStorage implements Storagable {
                 new StorageField("data", LiteralBase.STRING)
         }, new Conditional[] {
                 Conditional.createEqualTo(new StorageField("root_id", LiteralBase.LONG, rootId)),
-                Conditional.createLimit(beginIndex, (endIndex - beginIndex))
+                Conditional.createLimit(beginIndex, (endIndex - beginIndex + 1))
         });
 
         List<JSONObject> jsonList = new ArrayList<>();

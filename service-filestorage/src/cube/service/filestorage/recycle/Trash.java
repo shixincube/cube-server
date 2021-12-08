@@ -113,6 +113,13 @@ public abstract class Trash extends Entity {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        json.put("id", this.getId().longValue());
+        json.put("domain", this.root.getDomain().getName());
+        json.put("timestamp", this.getTimestamp());
+        json.put("rootId", this.root.getId().longValue());
+        json.put("parentId", this.getParent().getId().longValue());
+        json.put("originalId", this.originalId.longValue());
+        return json;
     }
 }

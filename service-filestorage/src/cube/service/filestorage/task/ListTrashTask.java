@@ -113,7 +113,7 @@ public class ListTrashTask extends ServiceTask {
 
         JSONArray array = new JSONArray();
         for (Trash trash : list) {
-            array.put(trash.toJSON());
+            array.put(trash.toCompactJSON());
         }
         result.put("list", array);
 
