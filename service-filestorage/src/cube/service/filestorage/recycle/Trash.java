@@ -59,7 +59,7 @@ public abstract class Trash extends Entity {
      * @param originalId
      */
     public Trash(Directory root, RecycleChain chain, Long originalId) {
-        super(Utils.generateSerialNumber());
+        super(originalId);
 
         this.root = root;
         this.chain = chain;
