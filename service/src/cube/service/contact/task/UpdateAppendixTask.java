@@ -90,25 +90,6 @@ public class UpdateAppendixTask extends ServiceTask {
 
             if (id.longValue() == contact.getId().longValue()) {
                 // 本联系人提交的更新数据
-
-                if (data.has("addNoNoticeContact")) {
-                    // 添加无提醒联系人
-                    appendix.addNoNoticeContact(data.getLong("addNoNoticeContact"));
-                }
-                else if (data.has("removeNoNoticeContact")) {
-                    // 删除无提醒联系人
-                    appendix.removeNoNoticeContact(data.getLong("removeNoNoticeContact"));
-                }
-
-                if (data.has("addNoNoticeGroup")) {
-                    // 添加无提醒群组
-                    appendix.addNoNoticeGroup(data.getLong("addNoNoticeGroup"));
-                }
-                else if (data.has("removeNoNoticeGroup")) {
-                    // 删除无提醒群组
-                    appendix.removeNoNoticeGroup(data.getLong("removeNoNoticeGroup"));
-                }
-
                 if (data.has("assignedData")) {
                     // 更新全部赋值数据
                     JSONObject map = data.getJSONObject("assignedData");

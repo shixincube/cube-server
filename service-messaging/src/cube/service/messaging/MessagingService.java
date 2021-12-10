@@ -517,27 +517,30 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         // 从缓存里读取数据
         List<SeriesItem> list = this.messageCache.query(key, beginningTime, endingTime);
-        for (SeriesItem item : list) {
-            Message message = new Message(item.data);
-            MessageState state = message.getState();
+        if (null != list) {
+            for (SeriesItem item : list) {
+                Message message = new Message(item.data);
+                MessageState state = message.getState();
 
-            MessageKey messageKey = new MessageKey(contactId, message.getId());
+                MessageKey messageKey = new MessageKey(contactId, message.getId());
 
-            MessageStateBundle msb = this.messageStateMap.get(messageKey);
-            if (null != msb) {
-                state = msb.state;
-            } else {
-                MessageState ms = this.storage.readMessageState(domain, contactId, message.getId());
-                if (null != ms) {
-                    this.messageStateMap.put(messageKey, new MessageStateBundle(message.getId(), contactId, ms));
-                    state = ms;
+                MessageStateBundle msb = this.messageStateMap.get(messageKey);
+                if (null != msb) {
+                    state = msb.state;
                 }
-            }
+                else {
+                    MessageState ms = this.storage.readMessageState(domain, contactId, message.getId());
+                    if (null != ms) {
+                        this.messageStateMap.put(messageKey, new MessageStateBundle(message.getId(), contactId, ms));
+                        state = ms;
+                    }
+                }
 
-            if (state == MessageState.Sent || state == MessageState.Read) {
-                // 重置状态
-                message.setState(state);
-                result.add(message);
+                if (state == MessageState.Sent || state == MessageState.Read) {
+                    // 重置状态
+                    message.setState(state);
+                    result.add(message);
+                }
             }
         }
 

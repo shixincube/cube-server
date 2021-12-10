@@ -29,7 +29,9 @@ package cube.common.entity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -43,16 +45,6 @@ public class ContactAppendix extends Entity {
      * 其他联系人对该联系人的备注名。
      */
     private Map<Long, String> remarkNames;
-
-    /**
-     * 不对当前联系人进行提示的联系人。
-     */
-    private List<Long> noNoticeContacts;
-
-    /**
-     * 不对当前联系人进行提示的群组。
-     */
-    private List<Long> noNoticeGroups;
 
     /**
      * 已配置的数据。
@@ -69,8 +61,6 @@ public class ContactAppendix extends Entity {
         this.uniqueKey = contact.getUniqueKey() + "_appendix";
         this.contact = contact;
         this.remarkNames = new HashMap<>();
-        this.noNoticeContacts = new Vector<>();
-        this.noNoticeGroups = new Vector<>();
         this.assignedData = new ConcurrentHashMap<>();
     }
 
@@ -85,8 +75,6 @@ public class ContactAppendix extends Entity {
         this.uniqueKey = contact.getUniqueKey() + "_appendix";
         this.contact = contact;
         this.remarkNames = new HashMap<>();
-        this.noNoticeContacts = new Vector<>();
-        this.noNoticeGroups = new Vector<>();
         this.assignedData = new ConcurrentHashMap<>();
 
         JSONArray remarkNamesArray = json.getJSONArray("remarkNames");
@@ -95,20 +83,6 @@ public class ContactAppendix extends Entity {
             Long id = item.getLong("id");
             String name = item.getString("name");
             this.remarkNames.put(id, name);
-        }
-
-        if (json.has("noNoticeContacts")) {
-            JSONArray array = json.getJSONArray("noNoticeContacts");
-            for (int i = 0; i < array.length(); ++i) {
-                this.noNoticeContacts.add(array.getLong(i));
-            }
-        }
-
-        if (json.has("noNoticeGroups")) {
-            JSONArray array = json.getJSONArray("noNoticeGroups");
-            for (int i = 0; i < array.length(); ++i) {
-                this.noNoticeGroups.add(array.getLong(i));
-            }
         }
 
         if (json.has("assignedData")) {
@@ -149,62 +123,7 @@ public class ContactAppendix extends Entity {
      * @return
      */
     public String getRemarkName(Contact contact) {
-        this.resetTimestamp();
         return this.remarkNames.get(contact.getId());
-    }
-
-    /**
-     *
-     * @param contactId
-     * @return
-     */
-    public boolean isNoNoticeContact(Long contactId) {
-        return this.noNoticeContacts.contains(contactId);
-    }
-
-    /**
-     *
-     * @param contactId
-     */
-    public void addNoNoticeContact(Long contactId) {
-        if (!this.noNoticeContacts.contains(contactId)) {
-            this.noNoticeContacts.add(contactId);
-        }
-    }
-
-    /**
-     *
-     * @param contactId
-     */
-    public void removeNoNoticeContact(Long contactId) {
-        this.noNoticeContacts.remove(contactId);
-    }
-
-    /**
-     *
-     * @param groupId
-     * @return
-     */
-    public boolean isNoNoticeGroup(Long groupId) {
-        return this.noNoticeGroups.contains(groupId);
-    }
-
-    /**
-     *
-     * @param groupId
-     */
-    public void addNoNoticeGroup(Long groupId) {
-        if (!this.noNoticeGroups.contains(groupId)) {
-            this.noNoticeGroups.add(groupId);
-        }
-    }
-
-    /**
-     *
-     * @param groupId
-     */
-    public void removeNoNoticeGroup(Long groupId) {
-        this.noNoticeGroups.remove(groupId);
     }
 
     /**
@@ -226,6 +145,7 @@ public class ContactAppendix extends Entity {
     public JSONObject packJSON(Contact contact) {
         JSONObject json = new JSONObject();
         json.put("contact", this.contact.toCompactJSON());
+
         String remarkName = this.remarkNames.get(contact.getId());
         if (null == remarkName) {
             remarkName = "";
@@ -234,18 +154,6 @@ public class ContactAppendix extends Entity {
 
         // 打包自己的数据
         if (contact.getId().equals(this.contact.getId())) {
-            JSONArray array = new JSONArray();
-            for (Long id : this.noNoticeContacts) {
-                array.put(id.longValue());
-            }
-            json.put("noNoticeContacts", array);
-
-            array = new JSONArray();
-            for (Long id : this.noNoticeGroups) {
-                array.put(id.longValue());
-            }
-            json.put("noNoticeGroups", array);
-
             JSONObject dataMap = new JSONObject();
             for (Map.Entry<String, JSONObject> e : this.assignedData.entrySet()) {
                 dataMap.put(e.getKey(), e.getValue());
@@ -271,18 +179,6 @@ public class ContactAppendix extends Entity {
             remarkNamesArray.put(item);
         }
         json.put("remarkNames", remarkNamesArray);
-
-        JSONArray array = new JSONArray();
-        for (Long id : this.noNoticeContacts) {
-            array.put(id.longValue());
-        }
-        json.put("noNoticeContacts", array);
-
-        array = new JSONArray();
-        for (Long id : this.noNoticeGroups) {
-            array.put(id.longValue());
-        }
-        json.put("noNoticeGroups", array);
 
         JSONObject dataMap = new JSONObject();
         for (Map.Entry<String, JSONObject> e : this.assignedData.entrySet()) {

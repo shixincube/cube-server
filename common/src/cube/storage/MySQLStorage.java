@@ -288,6 +288,10 @@ public class MySQLStorage extends AbstractStorage {
         }
 
         Connection connection = this.pool.get();
+        if (null == connection) {
+            Logger.e("MySQLStorage", "MySQL connection timeout");
+            return null;
+        }
 
         ArrayList<StorageField[]> result = new ArrayList<>();
 
