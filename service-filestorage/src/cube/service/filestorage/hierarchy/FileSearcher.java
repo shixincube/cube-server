@@ -132,7 +132,7 @@ public class FileSearcher {
 
         int begin = filter.beginIndex;
         int end = filter.endIndex;
-        final int num = end - begin;
+        final int num = end - begin + 1;
 
         // 从根目录开始进行递归
         AtomicInteger index = new AtomicInteger(0);

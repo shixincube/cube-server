@@ -47,7 +47,7 @@ public class SearchFilter {
 
     protected int beginIndex = 0;
 
-    protected int endIndex = 20;
+    protected int endIndex = 19;
 
     private int hash = 0;
 
