@@ -110,7 +110,7 @@ public class RestoreTrashTask extends ServiceTask {
 
         // 成功
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result.toJSON()));
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result.toCompactJSON()));
         markResponseTime();
     }
 }

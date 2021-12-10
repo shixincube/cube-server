@@ -67,6 +67,19 @@ public class RestoreResult implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        JSONArray array = new JSONArray();
+        for (Trash trash : this.successList) {
+            array.put(trash.toCompactJSON());
+        }
+        json.put("successList", array);
+
+        array = new JSONArray();
+        for (Trash trash : this.failureList) {
+            array.put(trash.toCompactJSON());
+        }
+        json.put("failureList", array);
+
+        return json;
     }
 }
