@@ -297,6 +297,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     public MultipointCommStateCode applyCall(CommField commField, Contact participant, Device device) {
         CommField current = null;
         if (commField.isPrivate()) {
+            // 开始计时
+            commField.tryTiming();
+
             current = this.getCommField(commField.getId());
             if (null == current) {
                 current = commField;
@@ -341,7 +344,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             }
 
             CommFieldEndpoint ep = current.getEndpoint(participant);
-            if (null != ep && ep.getState() != MultipointCommStateCode.CallBye) {
+            if (null != ep && ep.getState() != CommFieldEndpointState.CallBye) {
                 // 主叫忙
                 return MultipointCommStateCode.CallerBusy;
             }
@@ -576,7 +579,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 return;
             }
 
-            endpoint.setState(MultipointCommStateCode.Calling);
+            endpoint.setState(CommFieldEndpointState.Calling);
 
             Logger.i(this.getClass(), "Offer: " + current.getCaller().getId() + " -> " + current.getCallee().getId());
 
@@ -687,7 +690,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             current.stopTrace(endpoint);
 
             // 修改被叫状态
-            endpoint.setState(MultipointCommStateCode.CallConnected);
+            endpoint.setState(CommFieldEndpointState.CallConnected);
 
             Logger.i(this.getClass(), "Answer: " + current.getCallee().getId() + " -> " + current.getCaller().getId());
 
@@ -703,7 +706,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             // 停止超时追踪
             callerField.stopTrace(callerEndpoint);
             // 修改主叫状态
-            callerEndpoint.setState(MultipointCommStateCode.CallConnected);
+            callerEndpoint.setState(CommFieldEndpointState.CallConnected);
 
             // 向主叫发送 Answer
             AnswerSignaling toCaller = new AnswerSignaling(callerField,
@@ -773,7 +776,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         }
 
         if (current.isPrivate()) {
-            if (endpoint.getState() == MultipointCommStateCode.CallConnected) {
+            if (endpoint.getState() == CommFieldEndpointState.CallConnected) {
                 // 已连接状态直接向对端发送 Candidate
 
                 Contact peer = null;
@@ -842,7 +845,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         if (current.isPrivate()) {
             Logger.i(this.getClass(), "Bye: " + current.getFounder().getId());
 
-            if (endpoint.getState() == MultipointCommStateCode.CallBye) {
+            if (endpoint.getState() == CommFieldEndpointState.CallBye) {
                 callback.on(MultipointCommStateCode.Ok, signaling);
 
                 // 接收方收到 Bye，回复到服务器，删除对应的信息
@@ -855,7 +858,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             }
 
             // 更新状态
-            endpoint.setState(MultipointCommStateCode.CallBye);
+            endpoint.setState(CommFieldEndpointState.CallBye);
             endpoint.readyTimestamp = 0L;
             endpoint.clearCandidates();
 
@@ -886,7 +889,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             if (null != targetField && (targetField.getCaller().equals(caller) || targetField.getCallee().equals(callee))) {
                 CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
                 if (null != targetEndpoint) {
-                    targetEndpoint.setState(MultipointCommStateCode.CallBye);
+                    targetEndpoint.setState(CommFieldEndpointState.CallBye);
                     targetEndpoint.readyTimestamp = 0L;
                     targetEndpoint.clearCandidates();
 
@@ -929,7 +932,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
                     if (null == signaling.getTarget()) {
                         // 更新状态
-                        endpoint.setState(MultipointCommStateCode.CallBye);
+                        endpoint.setState(CommFieldEndpointState.CallBye);
                         endpoint.clearCandidates();
 
                         // 移除
@@ -1005,7 +1008,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
             if (null != endpoint) {
                 // 更新状态
-                endpoint.setState(MultipointCommStateCode.Busy);
+                endpoint.setState(CommFieldEndpointState.Busy);
                 endpoint.clearCandidates();
 
                 // 停止追踪
@@ -1019,7 +1022,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             if (null != targetField) {
                 CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
                 if (null != targetEndpoint) {
-                    targetEndpoint.setState(MultipointCommStateCode.Busy);
+                    targetEndpoint.setState(CommFieldEndpointState.Busy);
 
                     // 被叫忙
                     BusySignaling toTarget = new BusySignaling(targetField,

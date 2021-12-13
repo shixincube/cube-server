@@ -244,6 +244,8 @@ public class CommField extends Entity {
      * @param source
      */
     public void markSingleCalling(CommField source) {
+        this.tryTiming();
+
         this.boundCalling = new BoundCalling(source.getCaller(), source.getCallee());
     }
 
@@ -459,9 +461,7 @@ public class CommField extends Entity {
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id);
-        json.put("domain", this.domain.getName());
+        JSONObject json = super.toJSON();
         json.put("name", this.name);
         json.put("founder", this.founder.toCompactJSON());
         json.put("mediaConstraint", this.mediaConstraint.toJSON());
@@ -489,9 +489,7 @@ public class CommField extends Entity {
 
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id);
-        json.put("domain", this.domain.getName());
+        JSONObject json = super.toCompactJSON();
         json.put("name", this.name);
         json.put("founder", this.founder.toBasicJSON());
         json.put("mediaConstraint", this.mediaConstraint.toJSON());

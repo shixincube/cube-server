@@ -117,26 +117,6 @@ public enum MultipointCommStateCode {
     UnsupportedOperation(25),
 
     /**
-     * 正在建立通话。
-     */
-    Calling(30),
-
-    /**
-     * 当前线路忙。
-     */
-    Busy(31),
-
-    /**
-     * 通话已接通。
-     */
-    CallConnected(33),
-
-    /**
-     * 通话结束。
-     */
-    CallBye(35),
-
-    /**
      * 主叫忙。
      */
     CallerBusy(41),

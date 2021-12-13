@@ -57,7 +57,7 @@ public class CommFieldEndpoint extends Entity {
     /**
      * 当前节点的状态。
      */
-    private MultipointCommStateCode state;
+    private CommFieldEndpointState state;
 
     /**
      * 最近一次修改状态时间戳。
@@ -121,7 +121,7 @@ public class CommFieldEndpoint extends Entity {
 
         this.contact = contact;
         this.device = device;
-        this.state = MultipointCommStateCode.CallBye;
+        this.state = CommFieldEndpointState.CallBye;
         this.lastModified = System.currentTimeMillis();
 
         this.name = contact.getUniqueKey() + "_" + device.getName() + "_" + device.getPlatform();
@@ -133,14 +133,12 @@ public class CommFieldEndpoint extends Entity {
      * @param json
      */
     public CommFieldEndpoint(JSONObject json) {
-        super();
+        super(json);
 
-        this.id = json.getLong("id");
-        this.domain = new Domain(json.getString("domain"));
+        this.name = json.getString("name");
         this.contact = new Contact(json.getJSONObject("contact"));
         this.device = new Device(json.getJSONObject("device"));
-        this.name = json.getString("name");
-        this.state = MultipointCommStateCode.match(json.getInt("state"));
+        this.state = CommFieldEndpointState.parse(json.getInt("state"));
 
         if (json.has("description")) {
             this.sessionDescription = json.getJSONObject("description");
@@ -249,7 +247,7 @@ public class CommFieldEndpoint extends Entity {
      *
      * @param state
      */
-    public void setState(MultipointCommStateCode state) {
+    public void setState(CommFieldEndpointState state) {
         this.state = state;
         this.lastModified = System.currentTimeMillis();
     }
@@ -259,7 +257,7 @@ public class CommFieldEndpoint extends Entity {
      *
      * @return
      */
-    public MultipointCommStateCode getState() {
+    public CommFieldEndpointState getState() {
         return this.state;
     }
 
@@ -286,9 +284,7 @@ public class CommFieldEndpoint extends Entity {
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id.longValue());
-        json.put("domain", this.domain.getName());
+        JSONObject json = super.toJSON();
         json.put("contact", this.contact.toBasicJSON());
         json.put("device", this.device.toCompactJSON());
         json.put("name", this.name);
@@ -316,9 +312,7 @@ public class CommFieldEndpoint extends Entity {
 
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id.longValue());
-        json.put("domain", this.domain.getName());
+        JSONObject json = super.toCompactJSON();
         json.put("contact", this.contact.toBasicJSON());
         json.put("device", this.device.toCompactJSON());
         json.put("name", this.name);
