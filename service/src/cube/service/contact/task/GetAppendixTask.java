@@ -104,7 +104,7 @@ public class GetAppendixTask extends ServiceTask {
 
             GroupAppendix appendix = ContactManager.getInstance().getAppendix(group);
 
-            // 是否是仅获取部分数据
+            // 是否是仅获取 Comm ID 数据
             if (data.has("commId")) {
                 JSONObject result = new JSONObject();
                 result.put("commId", appendix.getCommId());

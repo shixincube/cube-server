@@ -367,6 +367,7 @@ public class GroupAppendix extends Entity {
     public JSONObject packJSON(Long memberId) {
         JSONObject json = new JSONObject();
         json.put("groupId", this.group.getId());
+        json.put("group", this.group.toCompactJSON());
 
         json.put("notice", (null == this.notice) ? "" : this.notice);
         json.put("noticeOperatorId", (null == this.noticeOperatorId) ? 0L : this.noticeOperatorId.longValue());
