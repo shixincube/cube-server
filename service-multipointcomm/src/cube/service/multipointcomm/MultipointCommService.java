@@ -843,7 +843,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         }
 
         if (current.isPrivate()) {
-            Logger.i(this.getClass(), "Bye: " + current.getFounder().getId());
+            Logger.i(this.getClass(), "Bye (Private): " + current.getFounder().getId());
 
             if (endpoint.getState() == CommFieldEndpointState.CallBye) {
                 callback.on(MultipointCommStateCode.Ok, signaling);
@@ -864,6 +864,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
 
             // 停止追踪
             current.stopTrace(endpoint);
+
+            // 停止计时
+            current.stopTiming();
 
             Contact caller = current.getCaller();
             Contact callee = current.getCallee();
@@ -889,6 +892,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             if (null != targetField && (targetField.getCaller().equals(caller) || targetField.getCallee().equals(callee))) {
                 CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
                 if (null != targetEndpoint) {
+                    // 对方接听过
                     targetEndpoint.setState(CommFieldEndpointState.CallBye);
                     targetEndpoint.readyTimestamp = 0L;
                     targetEndpoint.clearCandidates();
@@ -902,6 +906,14 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                     ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, toTarget.getName(), toTarget.toJSON());
                     this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
                 }
+                else {
+                    // 对方未接听
+                    // 取消所有通话状态
+                    targetField.clearCalling();
+                }
+
+                // 更新对方的场域
+                this.updateCommField(targetField, true);
 
                 // 清空 Calling 信息
                 current.clearAll();
