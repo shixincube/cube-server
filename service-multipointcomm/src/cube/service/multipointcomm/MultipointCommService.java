@@ -1030,18 +1030,20 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             }
 
             // 对方的通信场域
-            CommField targetField = this.getCommField(target.getId());
-            if (null != targetField) {
-                CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
-                if (null != targetEndpoint) {
-                    targetEndpoint.setState(CommFieldEndpointState.Busy);
+            if (null != target) {
+                CommField targetField = this.getCommField(target.getId());
+                if (null != targetField) {
+                    CommFieldEndpoint targetEndpoint = targetField.getEndpoint(target);
+                    if (null != targetEndpoint) {
+                        targetEndpoint.setState(CommFieldEndpointState.Busy);
 
-                    // 被叫忙
-                    BusySignaling toTarget = new BusySignaling(targetField,
-                            targetEndpoint.getContact(), targetEndpoint.getDevice());
-                    toTarget.copy(signaling);
-                    ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, toTarget.getName(), toTarget.toJSON());
-                    this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
+                        // 被叫忙
+                        BusySignaling toTarget = new BusySignaling(targetField,
+                                targetEndpoint.getContact(), targetEndpoint.getDevice());
+                        toTarget.copy(signaling);
+                        ModuleEvent event = new ModuleEvent(MultipointCommService.NAME, toTarget.getName(), toTarget.toJSON());
+                        this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
+                    }
                 }
             }
         }

@@ -568,6 +568,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contact 指定联系人。
      */
     public void reportDisconnect(Contact contact) {
+        if (null == this.contactsAdapter) {
+            return;
+        }
+
         String key = contact.getUniqueKey();
         ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.Disconnect.name, contact.toJSON());
         this.contactsAdapter.publish(key, event.toJSON());
