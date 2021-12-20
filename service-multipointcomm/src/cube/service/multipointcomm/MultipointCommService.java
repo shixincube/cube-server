@@ -1305,7 +1305,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                     if (null != device) {
                         if (pushPacket(device.getTalkContext(), contact, device, signaling.getName(), signaling.toJSON())) {
                             Logger.i(this.getClass(), "Push signaling '" + signaling.getName()
-                                    + "' to '" + target.getId() + "'");
+                                    + "' to '" + targetContact.getId() + "'");
                         }
                     }
                 }
@@ -1335,7 +1335,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                         if (pushPacket(device.getTalkContext(), contact, device,
                                 signaling.getName(), signaling.toJSON())) {
                             Logger.i(this.getClass(), "Push signaling '" + signaling.getName()
-                                    + "' to '" + target.getId() + "'");
+                                    + "' to '" + targetContact.getId() + "'");
                         }
                     }
                 }
