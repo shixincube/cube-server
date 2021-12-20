@@ -1003,19 +1003,16 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         }
 
         if (current.isPrivate()) {
-            Contact caller = current.getCaller();
-            Contact callee = current.getCallee();
+            Contact caller = (null == current.getCaller()) ? signaling.getCaller() : current.getCaller();
+            Contact callee = (null == current.getCallee()) ? signaling.getCallee() : current.getCallee();
             Contact target = null;
 
-            if (signaling.getContact().equals(caller)) {
+            if (signaling.getContact().getId().longValue() == caller.getId().longValue()) {
                 target = callee;
             }
             else {
                 target = caller;
             }
-
-            signaling.setCaller(current.getCaller());
-            signaling.setCallee(current.getCallee());
 
             CommFieldEndpoint endpoint = current.getEndpoint(signaling.getContact(), signaling.getDevice());
             if (null != endpoint) {
@@ -1045,6 +1042,9 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                         this.contactsAdapter.publish(target.getUniqueKey(), event.toJSON());
                     }
                 }
+            }
+            else {
+                Logger.w(MultipointCommService.class, "#processBusy - Can NOT find target peer : " + signaling.getContact().getId());
             }
         }
         else {
