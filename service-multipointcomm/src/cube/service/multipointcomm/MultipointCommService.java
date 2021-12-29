@@ -197,9 +197,19 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     }
 
     private Properties loadConfig() {
-        File file = new File("config/multipoint-comm.properties");
-        if (!file.exists()) {
-            file = new File("multipoint-comm.properties");
+        String[] files = new String[]{
+                "config/multipoint-comm_dev.properties",
+                "multipoint-comm_dev.properties",
+                "config/multipoint-comm.properties",
+                "multipoint-comm.properties"
+        };
+
+        File file = null;
+        for (String filename : files) {
+            file = new File(filename);
+            if (file.exists()) {
+                break;
+            }
         }
 
         FileInputStream fis = null;

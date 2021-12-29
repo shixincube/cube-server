@@ -761,6 +761,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param device
      */
     public void removeContactDevice(final Long contactId, final String domainName, final Device device) {
+        if (null == this.contactCache) {
+            return;
+        }
+
         String key = UniqueKey.make(contactId, domainName);
         this.contactCache.apply(key, new LockFuture() {
             @Override

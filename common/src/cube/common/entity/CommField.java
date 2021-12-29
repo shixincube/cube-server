@@ -126,12 +126,10 @@ public class CommField extends Entity {
      * @param json
      */
     public CommField(JSONObject json) {
-        super();
+        super(json);
 
         this.endpoints = new ConcurrentHashMap<>();
 
-        this.id = json.getLong("id");
-        this.domain = new Domain(json.getString("domain"));
         this.name = json.getString("name");
         this.founder = new Contact(json.getJSONObject("founder"));
         this.mediaConstraint = new MediaConstraint((json.getJSONObject("mediaConstraint")));

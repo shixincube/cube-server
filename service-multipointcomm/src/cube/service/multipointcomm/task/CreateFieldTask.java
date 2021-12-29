@@ -59,6 +59,7 @@ public class CreateFieldTask extends ServiceTask {
             field = new CommField(packet.data);
         } catch (Exception e) {
             Logger.w(this.getClass(), "#run", e);
+
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MultipointCommStateCode.InvalidParameter.code, packet.data));
             markResponseTime();

@@ -282,6 +282,10 @@ public class KurentoCompositeMediaUnit extends AbstractCompositeMediaUnit {
         }
 
         KurentoIncomingSession incomingSession = lobby.getIncomingSession(endpoint.getId());
+        if (null == incomingSession) {
+            return MultipointCommStateCode.NoPeerEndpoint;
+        }
+
         if (incomingSession.getSN().longValue() == sn.longValue()) {
             // 添加 Candidate
             IceCandidate candidate = new IceCandidate(candidateJson.getString("candidate"),
