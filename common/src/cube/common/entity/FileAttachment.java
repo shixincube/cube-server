@@ -30,7 +30,6 @@ import cube.common.JSONable;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;

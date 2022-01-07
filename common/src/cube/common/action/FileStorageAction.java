@@ -49,11 +49,6 @@ public enum FileStorageAction {
     GetRoot("getRoot"),
 
     /**
-     * 插入文件到目录。
-     */
-    InsertFile("insertFile"),
-
-    /**
      * 罗列目录清单。
      */
     ListDirs("listDirs"),
@@ -77,6 +72,11 @@ public enum FileStorageAction {
      * 重命名目录。
      */
     RenameDir("renameDir"),
+
+    /**
+     * 插入文件到目录。
+     */
+    InsertFile("insertFile"),
 
     /**
      * 删除文件。

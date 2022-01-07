@@ -37,17 +37,35 @@ public class FileThumbnail extends Entity {
 
     private FileLabel fileLabel;
 
+    /**
+     * 缩略图宽度。
+     */
     private int width;
 
+    /**
+     * 缩略图高度。
+     */
     private int height;
 
+    /**
+     * 缩略图质量。
+     */
+    private int quality;
+
+    /**
+     * 源文件的文件码。
+     */
     private String sourceFileCode;
 
+    /**
+     * 源文件宽度。
+     */
     private int sourceWidth;
 
+    /**
+     * 源文件高度。
+     */
     private int sourceHeight;
-
-    private int quality;
 
     public FileThumbnail(FileLabel fileLabel, int width, int height,
                          String sourceFileCode, int sourceWidth, int sourceHeight,

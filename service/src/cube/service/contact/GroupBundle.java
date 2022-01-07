@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 群操作时用户捆绑相关成员的元素。
+ * 群组操作时受影响的相关数据描述。
  */
 public class GroupBundle implements JSONable {
 
