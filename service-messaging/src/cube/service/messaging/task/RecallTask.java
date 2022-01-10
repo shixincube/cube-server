@@ -96,6 +96,10 @@ public class RecallTask extends ServiceTask {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.Failure.code, data));
         }
+        else {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, MessagingStateCode.Ok.code, data));
+        }
 
         markResponseTime();
     }
