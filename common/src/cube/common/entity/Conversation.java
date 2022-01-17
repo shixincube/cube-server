@@ -114,7 +114,7 @@ public class Conversation extends Entity {
         this.pivotalId = json.getLong("pivotal");
         this.type = ConversationType.parse(json.getInt("type"));
         this.state = ConversationState.parse(json.getInt("state"));
-        this.remindType = ConversationRemindType.parse(json.getInt("remind"));
+        this.remindType = ConversationRemindType.parse(json.getInt("reminding"));
 
         this.unreadCount = json.has("unread") ? json.getInt("unread") : 0;
 
@@ -177,7 +177,7 @@ public class Conversation extends Entity {
         json.put("owner", this.ownerId.longValue());
         json.put("type", this.type.code);
         json.put("state", this.state.code);
-        json.put("remind", this.remindType.code);
+        json.put("reminding", this.remindType.code);
         json.put("pivotal", this.pivotalId.longValue());
         json.put("unread", this.unreadCount);
 

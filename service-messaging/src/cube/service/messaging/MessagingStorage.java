@@ -98,7 +98,7 @@ public class MessagingStorage implements Storagable {
             new StorageField("state", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("remind", LiteralBase.INT, new Constraint[] {
+            new StorageField("reminding", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("pivotal_id", LiteralBase.LONG, new Constraint[] {
@@ -742,10 +742,10 @@ public class MessagingStorage implements Storagable {
             ConversationType type = ConversationType.parse(map.get("type").getInt());
             ConversationState state = ConversationState.parse(map.get("state").getInt());
             Long pivotalId = map.get("pivotal_id").getLong();
-            ConversationRemindType remind = ConversationRemindType.parse(map.get("remind").getInt());
+            ConversationRemindType reminding = ConversationRemindType.parse(map.get("reminding").getInt());
 
             // 实例化
-            Conversation conversation = new Conversation(id, domain, timestamp, owner, type, state, pivotalId, remind);
+            Conversation conversation = new Conversation(id, domain, timestamp, owner, type, state, pivotalId, reminding);
 
             // 查消息
             Long recentMessageId = map.get("recent_message_id").getLong();
@@ -818,7 +818,7 @@ public class MessagingStorage implements Storagable {
                             new StorageField("timestamp", timestamp),
                             new StorageField("type", type.code),
                             new StorageField("state", state.code),
-                            new StorageField("remind", remindType.code),
+                            new StorageField("reminding", remindType.code),
                             new StorageField("recent_message_id", messageId)
                     });
                 }
@@ -828,7 +828,7 @@ public class MessagingStorage implements Storagable {
                     storage.executeUpdate(table, new StorageField[] {
                             new StorageField("timestamp", timestamp),
                             new StorageField("state", state.code),
-                            new StorageField("remind", remindType.code),
+                            new StorageField("reminding", remindType.code),
                             new StorageField("recent_message_id", messageId),
                     }, new Conditional[] {
                             Conditional.createEqualTo("sn", sn)
