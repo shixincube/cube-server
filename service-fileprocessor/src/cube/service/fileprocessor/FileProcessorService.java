@@ -74,6 +74,9 @@ public class FileProcessorService extends AbstractModule {
 
     @Override
     public void start() {
+        // 工具校验
+        this.useImageMagick = ImageTools.check();
+
         this.workPath = Paths.get("storage/tmp");
         if (!Files.exists(this.workPath)) {
             try {

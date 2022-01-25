@@ -29,7 +29,11 @@ package cube.service.fileprocessor;
 import cell.util.log.Logger;
 import cube.common.entity.Image;
 import cube.util.FileType;
+import cube.util.FileUtils;
+import net.coobird.thumbnailator.Thumbnails;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +46,42 @@ public final class ImageTools {
 
     public static String WORKING_PATH = "storage/tmp/";
 
+    private static boolean USE_IMAGEMAGICK = false;
+
     private ImageTools() {
+    }
+
+    public static boolean check() {
+        ProcessBuilder pb = new ProcessBuilder("convert", "-help");
+
+        Process process = null;
+        int status = 1;
+
+        try {
+            String line = null;
+            process = pb.start();
+            try {
+                status = process.waitFor();
+            } catch (InterruptedException e) {
+            }
+        } catch (IOException e) {
+            status = 2;
+        } finally {
+            if (null != process) {
+                process.destroy();
+            }
+        }
+
+        if (status == 0) {
+            USE_IMAGEMAGICK = true;
+            Logger.i(ImageTools.class, "Use ImageMagick for processing image data");
+        }
+        else {
+            USE_IMAGEMAGICK = false;
+            Logger.i(ImageTools.class, "Use Java Image IO for processing image data");
+        }
+
+        return USE_IMAGEMAGICK;
     }
 
     /**
@@ -52,44 +91,56 @@ public final class ImageTools {
      * @return 不支持的文件类型返回 {@code null} 值。
      */
     public static Image identify(String fullpath) {
-        ProcessBuilder pb = new ProcessBuilder("identify", "-format", "%m %W %H ", fullpath);
-
-        Process process = null;
-        int status = 0;
-
         Image image = null;
 
-        try {
-            String line = null;
-            process = pb.start();
-            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            while ((line = stdInput.readLine()) != null) {
-                if (line.length() > 0) {
-                    String[] tmp = line.split(" ");
-                    if (tmp.length == 3 || line.startsWith("GIF")) {
-                        FileType type = FileType.matchExtension(tmp[0]);
-                        if (type == FileType.JPEG || type == FileType.PNG || type == FileType.GIF || type == FileType.BMP) {
-                            image = new Image(type, Integer.parseInt(tmp[1]), Integer.parseInt(tmp[2]));
+        if (USE_IMAGEMAGICK) {
+            ProcessBuilder pb = new ProcessBuilder("identify", "-format", "%m %W %H ", fullpath);
+
+            Process process = null;
+            int status = 0;
+
+            try {
+                String line = null;
+                process = pb.start();
+                BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                while ((line = stdInput.readLine()) != null) {
+                    if (line.length() > 0) {
+                        String[] tmp = line.split(" ");
+                        if (tmp.length == 3 || line.startsWith("GIF")) {
+                            FileType type = FileType.matchExtension(tmp[0]);
+                            if (type == FileType.JPEG || type == FileType.PNG || type == FileType.GIF || type == FileType.BMP) {
+                                image = new Image(type, Integer.parseInt(tmp[1]), Integer.parseInt(tmp[2]));
+                            }
                         }
                     }
                 }
-            }
-            while ((line = stdError.readLine()) != null) {
-                if (line.length() > 0) {
-                    Logger.w(ImageTools.class, "#identify - " + line);
+                while ((line = stdError.readLine()) != null) {
+                    if (line.length() > 0) {
+                        Logger.w(ImageTools.class, "#identify - " + line);
+                    }
+                }
+
+                try {
+                    status = process.waitFor();
+                } catch (InterruptedException e) {
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (null != process) {
+                    process.destroy();
                 }
             }
-
+        }
+        else {
+            FileType fileType = FileUtils.extractFileExtensionType(fullpath);
             try {
-                status = process.waitFor();
-            } catch (InterruptedException e) {
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (null != process) {
-                process.destroy();
+               BufferedImage source = ImageIO.read(new File(fullpath));
+               image = new Image(fileType, source.getWidth(), source.getHeight());
+               source = null;
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
 
@@ -104,42 +155,61 @@ public final class ImageTools {
      * @return
      */
     public static Image thumbnail(String inputFile, String outputFile, int quality) {
-        ProcessBuilder pb = new ProcessBuilder("convert", inputFile, "-sample", Integer.toString(quality), outputFile + ".jpg");
+        if (USE_IMAGEMAGICK) {
+            ProcessBuilder pb = new ProcessBuilder("convert", inputFile, "-sample", Integer.toString(quality), outputFile + ".jpg");
 
-        Process process = null;
-        int status = 0;
+            Process process = null;
+            int status = 0;
 
-        try {
-            String line = null;
-            process = pb.start();
+            try {
+                String line = null;
+                process = pb.start();
 //            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 //            while ((line = stdInput.readLine()) != null) {
 //            }
-            while ((line = stdError.readLine()) != null) {
-                if (line.length() > 0) {
-                    Logger.w(ImageTools.class, "#identify - " + line);
+                while ((line = stdError.readLine()) != null) {
+                    if (line.length() > 0) {
+                        Logger.w(ImageTools.class, "#thumbnail - " + line);
+                    }
+                }
+
+                try {
+                    status = process.waitFor();
+                } catch (InterruptedException e) {
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (null != process) {
+                    process.destroy();
                 }
             }
 
-            try {
-                status = process.waitFor();
-            } catch (InterruptedException e) {
+            File file = new File(outputFile + ".jpg");
+            if (file.exists()) {
+                return ImageTools.identify(file.getAbsolutePath());
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (null != process) {
-                process.destroy();
+            else {
+                return null;
             }
-        }
-
-        File file = new File(outputFile + ".jpg");
-        if (file.exists()) {
-            return ImageTools.identify(file.getAbsolutePath());
         }
         else {
-            return null;
+            try {
+                Thumbnails.of(new File(inputFile))
+                        .outputQuality(((float)quality) / 100.0f)
+                        .toFile(outputFile + ".jpg");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            File file = new File(outputFile + ".jpg");
+            if (file.exists()) {
+                return ImageTools.identify(file.getAbsolutePath());
+            }
+            else {
+                return null;
+            }
         }
     }
 
@@ -152,42 +222,61 @@ public final class ImageTools {
      * @return
      */
     public static Image thumbnailResize(String inputFile, String outputFile, int size) {
-        ProcessBuilder pb = new ProcessBuilder("convert", inputFile, "-thumbnail", size + "x" + size, outputFile + ".jpg");
+        if (USE_IMAGEMAGICK) {
+            ProcessBuilder pb = new ProcessBuilder("convert", inputFile, "-thumbnail", size + "x" + size, outputFile + ".jpg");
 
-        Process process = null;
-        int status = 0;
+            Process process = null;
+            int status = 0;
 
-        try {
-            String line = null;
-            process = pb.start();
+            try {
+                String line = null;
+                process = pb.start();
 //            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 //            while ((line = stdInput.readLine()) != null) {
 //            }
-            while ((line = stdError.readLine()) != null) {
-                if (line.length() > 0) {
-                    Logger.w(ImageTools.class, "#identify - " + line);
+                while ((line = stdError.readLine()) != null) {
+                    if (line.length() > 0) {
+                        Logger.w(ImageTools.class, "#thumbnailResize - " + line);
+                    }
+                }
+
+                try {
+                    status = process.waitFor();
+                } catch (InterruptedException e) {
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (null != process) {
+                    process.destroy();
                 }
             }
 
-            try {
-                status = process.waitFor();
-            } catch (InterruptedException e) {
+            File file = new File(outputFile + ".jpg");
+            if (file.exists()) {
+                return ImageTools.identify(file.getAbsolutePath());
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (null != process) {
-                process.destroy();
+            else {
+                return null;
             }
-        }
-
-        File file = new File(outputFile + ".jpg");
-        if (file.exists()) {
-            return ImageTools.identify(file.getAbsolutePath());
         }
         else {
-            return null;
+            try {
+                Thumbnails.of(new File(inputFile))
+                        .size(size, size)
+                        .toFile(outputFile + ".jpg");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            File file = new File(outputFile + ".jpg");
+            if (file.exists()) {
+                return ImageTools.identify(file.getAbsolutePath());
+            }
+            else {
+                return null;
+            }
         }
     }
 
@@ -204,8 +293,10 @@ public final class ImageTools {
 //        image = ImageTools.identify("/Users/ambrose/Documents/Repositories/Cube3/assets/showcase/cloud_file.gif");
 //        System.out.println(image);
 
-        Image image = ImageTools.thumbnail("/Users/ambrose/Documents/Repositories/Cube3/assets/illustrations/Cube3Framework.png",
-                "service/storage/tmp/t1", 480);
-        System.out.println(image);
+//        Image image = ImageTools.thumbnail("/Users/ambrose/Documents/Repositories/Cube3/assets/illustrations/Cube3Framework.png",
+//                "service/storage/tmp/t1", 480);
+//        System.out.println(image);
+
+        ImageTools.check();
     }
 }
