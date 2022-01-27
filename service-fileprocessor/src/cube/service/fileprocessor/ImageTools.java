@@ -97,7 +97,7 @@ public final class ImageTools {
             ProcessBuilder pb = new ProcessBuilder("identify", "-format", "%m %W %H ", fullpath);
 
             Process process = null;
-            int status = 0;
+            int status = 1;
 
             try {
                 String line = null;
@@ -159,7 +159,7 @@ public final class ImageTools {
             ProcessBuilder pb = new ProcessBuilder("convert", inputFile, "-sample", Integer.toString(quality), outputFile + ".jpg");
 
             Process process = null;
-            int status = 0;
+            int status = 1;
 
             try {
                 String line = null;
@@ -226,7 +226,7 @@ public final class ImageTools {
             ProcessBuilder pb = new ProcessBuilder("convert", inputFile, "-thumbnail", size + "x" + size, outputFile + ".jpg");
 
             Process process = null;
-            int status = 0;
+            int status = 1;
 
             try {
                 String line = null;
