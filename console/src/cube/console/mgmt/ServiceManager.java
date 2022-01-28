@@ -231,24 +231,60 @@ public class ServiceManager {
                 (new Thread() {
                     @Override
                     public void run() {
-                        int status = 0;
+                        int status = 1;
                         ProcessBuilder pb = new ProcessBuilder(deployPath + "/start-service.sh");
                         pb.directory(new File(deployPath));
                         try {
-                            String line = null;
+                            // 执行脚本
                             Process process = pb.start();
                             BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
                             BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-                            while ((line = stdInput.readLine()) != null) {
-                                if (line.length() > 0) {
-                                    Logger.i(DispatcherManager.class, "#startService - " + line);
+
+                            (new Thread() {
+                                @Override
+                                public void run() {
+                                    String line = null;
+                                    try {
+                                        while ((line = stdInput.readLine()) != null) {
+                                            if (line.length() > 0) {
+                                                Logger.i(DispatcherManager.class, "#startService - " + line);
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    } finally {
+                                        if (null != stdInput) {
+                                            try {
+                                                stdInput.close();
+                                            } catch (IOException e) {
+                                            }
+                                        }
+                                    }
                                 }
-                            }
-                            while ((line = stdError.readLine()) != null) {
-                                if (line.length() > 0) {
-                                    Logger.w(DispatcherManager.class, "#startService - " + line);
+                            }).start();
+
+                            (new Thread() {
+                                @Override
+                                public void run() {
+                                    String line = null;
+                                    try {
+                                        while ((line = stdError.readLine()) != null) {
+                                            if (line.length() > 0) {
+                                                Logger.w(DispatcherManager.class, "#startService - " + line);
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    } finally {
+                                        if (null != stdError) {
+                                            try {
+                                                stdError.close();
+                                            } catch (IOException e) {
+                                            }
+                                        }
+                                    }
                                 }
-                            }
+                            }).start();
 
                             try {
                                 status = process.waitFor();
@@ -312,24 +348,60 @@ public class ServiceManager {
                 (new Thread() {
                     @Override
                     public void run() {
-                        int status = 0;
+                        int status = 1;
                         ProcessBuilder pb = new ProcessBuilder(deployPath + "/stop-service.sh");
                         pb.directory(new File(deployPath));
                         try {
-                            String line = null;
+                            // 执行脚本
                             Process process = pb.start();
                             BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
                             BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-                            while ((line = stdInput.readLine()) != null) {
-                                if (line.length() > 0) {
-                                    Logger.i(DispatcherManager.class, "#stopService - " + line);
+
+                            (new Thread() {
+                                @Override
+                                public void run() {
+                                    String line = null;
+                                    try {
+                                        while ((line = stdInput.readLine()) != null) {
+                                            if (line.length() > 0) {
+                                                Logger.i(DispatcherManager.class, "#stopService - " + line);
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    } finally {
+                                        if (null != stdInput) {
+                                            try {
+                                                stdInput.close();
+                                            } catch (IOException e) {
+                                            }
+                                        }
+                                    }
                                 }
-                            }
-                            while ((line = stdError.readLine()) != null) {
-                                if (line.length() > 0) {
-                                    Logger.w(DispatcherManager.class, "#stopService - " + line);
+                            }).start();
+
+                            (new Thread() {
+                                @Override
+                                public void run() {
+                                    String line = null;
+                                    try {
+                                        while ((line = stdError.readLine()) != null) {
+                                            if (line.length() > 0) {
+                                                Logger.w(DispatcherManager.class, "#stopService - " + line);
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    } finally {
+                                        if (null != stdError) {
+                                            try {
+                                                stdError.close();
+                                            } catch (IOException e) {
+                                            }
+                                        }
+                                    }
                                 }
-                            }
+                            }).start();
 
                             try {
                                 status = process.waitFor();

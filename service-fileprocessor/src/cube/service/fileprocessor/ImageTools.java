@@ -58,7 +58,6 @@ public final class ImageTools {
         int status = 1;
 
         try {
-            String line = null;
             process = pb.start();
             try {
                 status = process.waitFor();
@@ -97,13 +96,16 @@ public final class ImageTools {
             ProcessBuilder pb = new ProcessBuilder("identify", "-format", "%m %W %H ", fullpath);
 
             Process process = null;
+            BufferedReader stdInput = null;
             int status = 1;
 
             try {
-                String line = null;
+                // 启动进程
                 process = pb.start();
-                BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
+                stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+                String line = null;
                 while ((line = stdInput.readLine()) != null) {
                     if (line.length() > 0) {
                         String[] tmp = line.split(" ");
@@ -115,11 +117,6 @@ public final class ImageTools {
                         }
                     }
                 }
-                while ((line = stdError.readLine()) != null) {
-                    if (line.length() > 0) {
-                        Logger.w(ImageTools.class, "#identify - " + line);
-                    }
-                }
 
                 try {
                     status = process.waitFor();
@@ -128,6 +125,13 @@ public final class ImageTools {
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
+                if (null != stdInput) {
+                    try {
+                        stdInput.close();
+                    } catch (IOException e) {
+                    }
+                }
+
                 if (null != process) {
                     process.destroy();
                 }
@@ -159,15 +163,13 @@ public final class ImageTools {
             ProcessBuilder pb = new ProcessBuilder("convert", inputFile, "-sample", Integer.toString(quality), outputFile + ".jpg");
 
             Process process = null;
+            BufferedReader stdError = null;
             int status = 1;
 
             try {
                 String line = null;
                 process = pb.start();
-//            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-//            while ((line = stdInput.readLine()) != null) {
-//            }
+                stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
                 while ((line = stdError.readLine()) != null) {
                     if (line.length() > 0) {
                         Logger.w(ImageTools.class, "#thumbnail - " + line);
@@ -181,6 +183,13 @@ public final class ImageTools {
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
+                if (null != stdError) {
+                    try {
+                        stdError.close();
+                    } catch (IOException e) {
+                    }
+                }
+
                 if (null != process) {
                     process.destroy();
                 }
@@ -226,15 +235,13 @@ public final class ImageTools {
             ProcessBuilder pb = new ProcessBuilder("convert", inputFile, "-thumbnail", size + "x" + size, outputFile + ".jpg");
 
             Process process = null;
+            BufferedReader stdError = null;
             int status = 1;
 
             try {
                 String line = null;
                 process = pb.start();
-//            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-//            while ((line = stdInput.readLine()) != null) {
-//            }
+                stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
                 while ((line = stdError.readLine()) != null) {
                     if (line.length() > 0) {
                         Logger.w(ImageTools.class, "#thumbnailResize - " + line);
@@ -248,6 +255,13 @@ public final class ImageTools {
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
+                if (null != stdError) {
+                    try {
+                        stdError.close();
+                    } catch (IOException e) {
+                    }
+                }
+
                 if (null != process) {
                     process.destroy();
                 }
