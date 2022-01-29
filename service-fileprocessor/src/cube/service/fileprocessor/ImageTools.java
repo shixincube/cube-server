@@ -93,7 +93,7 @@ public final class ImageTools {
         Image image = null;
 
         if (USE_IMAGEMAGICK) {
-            ProcessBuilder pb = new ProcessBuilder("identify", "-format", "%m %W %H ", fullpath);
+            ProcessBuilder pb = new ProcessBuilder("identify", "-format", "%m %w %h ", fullpath);
 
             Process process = null;
             BufferedReader stdInput = null;
