@@ -34,6 +34,7 @@ import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.plugin.PluginSystem;
+import cube.service.fileprocessor.processor.OCRProcessor;
 import cube.service.filestorage.FileStorageService;
 import cube.util.ConfigUtils;
 import cube.util.FileType;
@@ -377,5 +378,15 @@ public class FileProcessorService extends AbstractModule {
         }
 
         return cvResult;
+    }
+
+    /**
+     *
+     * @param domainName
+     * @param fileCode
+     * @return
+     */
+    public OCRProcessor createOCRProcessor(String domainName, String fileCode) {
+        return null;
     }
 }

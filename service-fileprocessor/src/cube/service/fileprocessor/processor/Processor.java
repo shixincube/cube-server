@@ -29,7 +29,13 @@ package cube.service.fileprocessor.processor;
 /**
  * 处理器接口。
  */
-public interface Processor {
+public abstract class Processor {
 
-    void go();
+    private String workPath;
+
+    public Processor(String workPath) {
+        this.workPath = workPath;
+    }
+
+    abstract void go();
 }

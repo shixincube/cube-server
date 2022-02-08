@@ -26,22 +26,22 @@
 
 package cube.service.fileprocessor.processor;
 
-import cube.common.entity.FileLabel;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * OCR 处理器。
  */
-public class OCRProcessor extends OpticalCharacterRecognition implements Processor {
+public class OCRProcessor extends OpticalCharacterRecognition {
 
-    public OCRProcessor() {
-    }
-
-    public void setInputImage(FileLabel fileLabel) {
-
+    public OCRProcessor(String workPath) {
+        super(workPath);
     }
 
     @Override
     public void go() {
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add("tesseract");
 
     }
 }

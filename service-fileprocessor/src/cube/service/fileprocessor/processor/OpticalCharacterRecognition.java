@@ -26,18 +26,26 @@
 
 package cube.service.fileprocessor.processor;
 
-import cube.common.entity.FileLabel;
+import java.io.File;
 
 /**
  * OCR 处理器。
  */
-public abstract class OpticalCharacterRecognition {
+public abstract class OpticalCharacterRecognition extends Processor {
 
-    protected FileLabel inputImage;
+    protected File inputImage;
 
-    protected FileLabel outputText;
+    protected File outputText;
 
-    public OpticalCharacterRecognition() {
+    public OpticalCharacterRecognition(String workPath) {
+        super(workPath);
+    }
 
+    public void setInputImage(File file) {
+        this.inputImage = file;
+    }
+
+    public void setOutputText(File file) {
+        this.outputText = file;
     }
 }
