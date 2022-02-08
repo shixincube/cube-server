@@ -109,6 +109,11 @@ public enum FileStorageAction {
     SearchFile("searchFile"),
 
     /**
+     * 精确查找文件。
+     */
+    FindFile("findFile"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

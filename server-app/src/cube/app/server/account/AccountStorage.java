@@ -56,7 +56,7 @@ public class AccountStorage extends AbstractStorage {
                     Constraint.UNIQUE, Constraint.NOT_NULL
             }),
             new StorageField("phone", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_EMPTY
+                    Constraint.DEFAULT_NULL
             }),
             new StorageField("password", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
@@ -71,10 +71,10 @@ public class AccountStorage extends AbstractStorage {
                     Constraint.DEFAULT_0
             }),
             new StorageField("region", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_EMPTY
+                    Constraint.DEFAULT_NULL
             }),
             new StorageField("department", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_EMPTY
+                    Constraint.DEFAULT_NULL
             }),
             new StorageField("registration", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
@@ -92,14 +92,14 @@ public class AccountStorage extends AbstractStorage {
                     Constraint.NOT_NULL
             }),
             new StorageField("device", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL, Constraint.DEFAULT_EMPTY
+                    Constraint.NOT_NULL
             }),
             new StorageField("creation", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("expire", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
-            }),
+            })
     };
 
     public AccountStorage(Properties properties) {

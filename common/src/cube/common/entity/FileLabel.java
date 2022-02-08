@@ -32,6 +32,8 @@ import cube.util.FileType;
 import cube.util.FileUtils;
 import org.json.JSONObject;
 
+import java.io.File;
+
 /**
  * 文件标签。
  */

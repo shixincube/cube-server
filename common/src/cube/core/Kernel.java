@@ -30,6 +30,7 @@ import cell.api.Nucleus;
 import cell.util.log.Logger;
 import cube.cache.SharedMemoryCache;
 import cube.mq.AdapterMQ;
+import cube.util.ProcessManager;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -184,6 +185,9 @@ public final class Kernel {
             AbstractCache cache = citer.next();
             cache.stop();
         }
+
+        // 销毁进程管理器
+        ProcessManager.getInstance().destroy();
     }
 
     /**

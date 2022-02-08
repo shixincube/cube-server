@@ -342,6 +342,39 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
+     * 查找指定文件名、修改日期和文件大小的文件。
+     *
+     * @param domain
+     * @param fileName
+     * @param lastModified
+     * @param fileSize
+     * @return 如果找到该文件返回文件码，否则返回 {@code null} 值。
+     */
+    public String findFile(String domain, String fileName, long lastModified, long fileSize) {
+        String labelTable = this.labelTableNameMap.get(domain);
+        if (null == labelTable) {
+            return null;
+        }
+
+        String fileCode = null;
+        List<StorageField[]> result = this.storage.executeQuery(labelTable, new StorageField[] {
+                new StorageField("file_code", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo("file_name", fileName),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("last_modified", lastModified),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("file_size", fileSize)
+        });
+
+        if (!result.isEmpty()) {
+            fileCode = result.get(0)[0].getString();
+        }
+
+        return fileCode;
+    }
+
+    /**
      * 写入节点数据。
      *
      * @param domain

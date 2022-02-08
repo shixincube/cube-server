@@ -382,6 +382,23 @@ public class FileStorageService extends AbstractModule {
     }
 
     /**
+     * 精确查找指定属性的文件。
+     * @param domainName
+     * @param fileName
+     * @param lastModified
+     * @param fileSize
+     * @return
+     */
+    public FileLabel findFile(String domainName, String fileName, long lastModified, long fileSize) {
+        String fileCode = this.serviceStorage.findFile(domainName, fileName, lastModified, fileSize);
+        if (null == fileCode) {
+            return null;
+        }
+
+        return this.getFile(domainName, fileCode);
+    }
+
+    /**
      * 读文件标签。
      *
      * @param domainName
