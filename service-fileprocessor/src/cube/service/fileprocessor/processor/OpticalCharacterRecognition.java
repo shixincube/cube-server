@@ -37,6 +37,8 @@ public abstract class OpticalCharacterRecognition extends Processor {
 
     protected File outputText;
 
+    protected String language = "chi_sim";
+
     public OpticalCharacterRecognition(String workPath) {
         super(workPath);
     }
@@ -47,5 +49,13 @@ public abstract class OpticalCharacterRecognition extends Processor {
 
     public void setOutputText(File file) {
         this.outputText = file;
+    }
+
+    public File getInputImage() {
+        return this.inputImage;
+    }
+
+    public File getOutputText() {
+        return this.outputText;
     }
 }

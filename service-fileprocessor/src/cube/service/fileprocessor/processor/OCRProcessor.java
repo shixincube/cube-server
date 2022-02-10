@@ -26,6 +26,11 @@
 
 package cube.service.fileprocessor.processor;
 
+import cell.util.log.Logger;
+import cube.util.FileUtils;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,10 +43,58 @@ public class OCRProcessor extends OpticalCharacterRecognition {
         super(workPath);
     }
 
+    private boolean check() {
+        if (null == this.inputImage) {
+            return false;
+        }
+
+        if (null == this.outputText) {
+            String name = FileUtils.extractFileName(this.inputImage.getName());
+            this.outputText = new File(this.getWorkPath() + name);
+        }
+
+        return true;
+    }
+
     @Override
     public void go() {
+        if (!this.check()) {
+            Logger.w(OCRProcessor.class, "Check failed");
+            return;
+        }
+
         List<String> commandLine = new ArrayList<>();
         commandLine.add("tesseract");
+        commandLine.add(this.inputImage.getAbsolutePath());
+        commandLine.add(this.outputText.getAbsolutePath());
+        commandLine.add("-l");
+        commandLine.add(this.language);
 
+        int status = 1;
+
+        Process process = null;
+        ProcessBuilder pb = new ProcessBuilder(commandLine);
+
+        try {
+            process = pb.start();
+
+            try {
+                status = process.waitFor();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != process) {
+                process.destroy();
+            }
+
+            process = null;
+        }
+
+        if (0 != status) {
+            Logger.w(OCRProcessor.class, "Process error: " + status);
+        }
     }
 }

@@ -61,11 +61,13 @@ public enum Actions {
 
     MarkReadMessages("MarkReadMessages"),
 
+    ModifyContactZone("ModifyContactZone"),
+
     GetFile("GetFile"),
 
     PutFile("PutFile"),
 
-    ModifyContactZone("ModifyContactZone"),
+    FindFile("FindFile"),
 
     Cube("Cube");
 

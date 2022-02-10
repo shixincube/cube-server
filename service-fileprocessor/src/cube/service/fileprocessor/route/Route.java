@@ -24,25 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.service.fileprocessor.processor;
+package cube.service.fileprocessor.route;
 
-/**
- * 处理器接口。
- */
-public abstract class Processor {
-
-    private String workPath;
-
-    public Processor(String workPath) {
-        this.workPath = workPath;
-        if (!this.workPath.endsWith("/")) {
-            this.workPath = this.workPath + "/";
-        }
-    }
-
-    public String getWorkPath() {
-        return this.workPath;
-    }
-
-    abstract void go();
+public class Route {
 }

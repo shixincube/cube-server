@@ -389,8 +389,8 @@ public class FileStorageService extends AbstractModule {
      * @param fileSize
      * @return
      */
-    public FileLabel findFile(String domainName, String fileName, long lastModified, long fileSize) {
-        String fileCode = this.serviceStorage.findFile(domainName, fileName, lastModified, fileSize);
+    public FileLabel findFile(String domainName, Long contactId, String fileName, long lastModified, long fileSize) {
+        String fileCode = this.serviceStorage.findFile(domainName, contactId, fileName, lastModified, fileSize);
         if (null == fileCode) {
             return null;
         }
@@ -483,6 +483,18 @@ public class FileStorageService extends AbstractModule {
                 FileLabel label = this.putFile(new FileLabel(jsonData));
                 if (null != label) {
                     return label.toJSON();
+                }
+            }
+            else if (FileStorageAction.FindFile.name.equals(action)) {
+                String domain = data.getString("domain");
+                long contactId = data.getLong("contactId");
+                String fileName = data.getString("fileName");
+                long lastModified = data.getLong("lastModified");
+                long fileSize = data.getLong("fileSize");
+                // 查找文件
+                FileLabel fileLabel = this.findFile(domain, contactId, fileName, lastModified, fileSize);
+                if (null != fileLabel) {
+                    return fileLabel.toCompactJSON();
                 }
             }
         }

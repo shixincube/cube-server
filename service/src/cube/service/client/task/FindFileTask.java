@@ -29,37 +29,47 @@ package cube.service.client.task;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.common.action.FileStorageAction;
+import cube.common.entity.Contact;
 import cube.common.state.FileStorageStateCode;
 import cube.core.AbstractModule;
 import cube.service.client.Actions;
 import cube.service.client.ClientCellet;
+import cube.service.contact.ContactManager;
 import org.json.JSONObject;
 
 /**
- * 放置文件标签。
+ * 查找文件任务。
  */
-public class PutFileTask extends ClientTask {
+public class FindFileTask extends ClientTask {
 
-    public PutFileTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
+    public FindFileTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
         super(cellet, talkContext, actionDialect);
     }
 
     @Override
     public void run() {
-        JSONObject fileLabel = actionDialect.getParamAsJson("fileLabel");
+        String domain = actionDialect.getParamAsString("domain");
+        long contactId = actionDialect.getParamAsLong("contactId");
+        String fileName = actionDialect.getParamAsString("fileName");
+        long fileSize = actionDialect.getParamAsLong("fileSize");
+        long lastModified = actionDialect.getParamAsLong("lastModified");
 
         JSONObject notification = new JSONObject();
-        notification.put("action", FileStorageAction.PutFile.name);
-        notification.put("fileLabel", fileLabel);
+        notification.put("action", FileStorageAction.FindFile.name);
+        notification.put("domain", domain);
+        notification.put("contactId", contactId);
+        notification.put("fileName", fileName);
+        notification.put("lastModified", lastModified);
+        notification.put("fileSize", fileSize);
 
-        ActionDialect response = new ActionDialect(Actions.PutFile.name);
+        ActionDialect response = new ActionDialect(Actions.FindFile.name);
         copyNotifier(response);
 
         // 获取文件存储模块
         AbstractModule module = this.getFileStorageModule();
         Object result = module.notify(notification);
         if (null == result) {
-            response.addParam("code", FileStorageStateCode.Failure.code);
+            response.addParam("code", FileStorageStateCode.NotFound.code);
             cellet.speak(talkContext, response);
             return;
         }

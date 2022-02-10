@@ -77,6 +77,7 @@ public class FindFileTask extends ServiceTask {
 
         // 域
         String domain = authToken.getDomain();
+        long contactId = authToken.getContactId();
 
         String fileName = null;
         long lastModified = 0;
@@ -95,7 +96,7 @@ public class FindFileTask extends ServiceTask {
 
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
         // 精确查找文件
-        FileLabel fileLabel = service.findFile(domain, fileName, lastModified, fileSize);
+        FileLabel fileLabel = service.findFile(domain, contactId, fileName, lastModified, fileSize);
 
         if (null != fileLabel) {
             // 应答
