@@ -36,6 +36,7 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.OCRProcessor;
+import cube.service.fileprocessor.processor.OCRProcessorContext;
 import cube.service.filestorage.FileStorageService;
 import cube.util.ConfigUtils;
 import cube.util.FileType;
@@ -409,7 +410,8 @@ public class FileProcessorService extends AbstractModule {
         OCRProcessor ocrProcessor = new OCRProcessor(this.workPath);
         ocrProcessor.setInputImage(imageFile.toFile());
 
-        ocrProcessor.go();
+        OCRProcessorContext context = new OCRProcessorContext();
+        ocrProcessor.go(context);
 
         return null;
     }
