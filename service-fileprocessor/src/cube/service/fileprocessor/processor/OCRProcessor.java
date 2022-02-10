@@ -51,7 +51,7 @@ public class OCRProcessor extends OpticalCharacterRecognition {
 
         if (null == this.outputText) {
             String name = FileUtils.extractFileName(this.inputImage.getName());
-            this.outputText = new File(this.getWorkPath() + name);
+            this.outputText = new File(this.getWorkPath().toString(), name);
         }
 
         return true;

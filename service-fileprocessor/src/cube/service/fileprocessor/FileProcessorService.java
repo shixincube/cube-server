@@ -410,9 +410,6 @@ public class FileProcessorService extends AbstractModule {
         OCRProcessor ocrProcessor = new OCRProcessor(this.workPath);
         ocrProcessor.setInputImage(imageFile.toFile());
 
-        OCRProcessorContext context = new OCRProcessorContext();
-        ocrProcessor.go(context);
-
         return null;
     }
 
@@ -435,6 +432,9 @@ public class FileProcessorService extends AbstractModule {
                 String fileCode = data.getString("fileCode");
                 // 创建 OCR 处理器
                 OCRProcessor processor = createOCRProcessor(domain, fileCode);
+
+                OCRProcessorContext context = new OCRProcessorContext();
+                processor.go(context);
             }
         }
 

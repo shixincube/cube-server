@@ -26,15 +26,50 @@
 
 package cube.service.fileprocessor.processor;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * OCR 处理结果上下文。
  */
 public class OCRProcessorContext extends ProcessorContext {
 
+    private List<String> resultText;
+
     public OCRProcessorContext() {
         super();
+        this.resultText = new ArrayList<>();
+    }
+
+    public void readResult(File file) {
+        BufferedReader reader = null;
+
+        try {
+            reader = new BufferedReader(new FileReader(file));
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                this.resultText.add(line);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+    }
+
+    public List<String> getResultText() {
+        return this.resultText;
     }
 
     @Override
@@ -46,6 +81,11 @@ public class OCRProcessorContext extends ProcessorContext {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
+        JSONArray text = new JSONArray();
+        for (String line : this.resultText) {
+
+        }
+        json.put("text", text);
         return json;
     }
 }
