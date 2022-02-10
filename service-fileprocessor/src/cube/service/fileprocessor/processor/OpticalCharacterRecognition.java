@@ -27,6 +27,7 @@
 package cube.service.fileprocessor.processor;
 
 import java.io.File;
+import java.nio.file.Path;
 
 /**
  * OCR 处理器。
@@ -39,7 +40,7 @@ public abstract class OpticalCharacterRecognition extends Processor {
 
     protected String language = "chi_sim";
 
-    public OpticalCharacterRecognition(String workPath) {
+    public OpticalCharacterRecognition(Path workPath) {
         super(workPath);
     }
 

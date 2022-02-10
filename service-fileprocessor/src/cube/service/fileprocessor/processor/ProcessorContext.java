@@ -24,67 +24,25 @@
  * SOFTWARE.
  */
 
-package cube.common.state;
+package cube.service.fileprocessor.processor;
+
+import cube.common.JSONable;
 
 /**
- * 文件处理状态码。
+ * 处理器上下文。
  */
-public enum FileProcessorStateCode {
+public abstract class ProcessorContext implements JSONable {
 
-    /**
-     * 成功。
-     */
-    Ok(0),
+    private boolean successful = false;
 
-    /**
-     * 无效参数。
-     */
-    InvalidParameter(5),
-
-    /**
-     * 遇到故障。
-     */
-    Failure(9),
-
-    /**
-     * 无效域信息。
-     */
-    InvalidDomain(11),
-
-    /**
-     * 操作超时。
-     */
-    OptTimeout(12),
-
-    /**
-     * 无文件。
-     */
-    NoFile(14),
-
-    /**
-     * 与 CV 服务器无连接。
-     */
-    NoCVConnection(21),
-
-    /**
-     * 未知的状态。
-     */
-    Unknown(99)
-
-    ;
-
-    public final int code;
-
-    FileProcessorStateCode(int code) {
-        this.code = code;
+    protected ProcessorContext() {
     }
 
-    public static FileProcessorStateCode parse(int code) {
-        for (FileProcessorStateCode sc : FileProcessorStateCode.values()) {
-            if (sc.code == code) {
-                return sc;
-            }
-        }
-        return FileProcessorStateCode.Unknown;
+    protected void setSuccessful(boolean value) {
+        this.successful = value;
+    }
+
+    public boolean isSuccessful() {
+        return this.successful;
     }
 }

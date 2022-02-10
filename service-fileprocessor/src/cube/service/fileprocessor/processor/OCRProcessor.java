@@ -31,6 +31,7 @@ import cube.util.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +40,7 @@ import java.util.List;
  */
 public class OCRProcessor extends OpticalCharacterRecognition {
 
-    public OCRProcessor(String workPath) {
+    public OCRProcessor(Path workPath) {
         super(workPath);
     }
 
@@ -57,7 +58,7 @@ public class OCRProcessor extends OpticalCharacterRecognition {
     }
 
     @Override
-    public void go() {
+    public void go(ProcessorContext context) {
         if (!this.check()) {
             Logger.w(OCRProcessor.class, "Check failed");
             return;
@@ -95,6 +96,9 @@ public class OCRProcessor extends OpticalCharacterRecognition {
 
         if (0 != status) {
             Logger.w(OCRProcessor.class, "Process error: " + status);
+        }
+        else {
+            context.setSuccessful(true);
         }
     }
 }

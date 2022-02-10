@@ -69,6 +69,8 @@ public enum Actions {
 
     FindFile("FindFile"),
 
+    ProcessFile("ProcessFile"),
+
     Cube("Cube");
 
     public final String name;

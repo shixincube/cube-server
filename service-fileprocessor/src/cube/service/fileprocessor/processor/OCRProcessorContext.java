@@ -24,67 +24,28 @@
  * SOFTWARE.
  */
 
-package cube.common.state;
+package cube.service.fileprocessor.processor;
+
+import org.json.JSONObject;
 
 /**
- * 文件处理状态码。
+ * OCR 处理结果上下文。
  */
-public enum FileProcessorStateCode {
+public class OCRProcessorContext extends ProcessorContext {
 
-    /**
-     * 成功。
-     */
-    Ok(0),
-
-    /**
-     * 无效参数。
-     */
-    InvalidParameter(5),
-
-    /**
-     * 遇到故障。
-     */
-    Failure(9),
-
-    /**
-     * 无效域信息。
-     */
-    InvalidDomain(11),
-
-    /**
-     * 操作超时。
-     */
-    OptTimeout(12),
-
-    /**
-     * 无文件。
-     */
-    NoFile(14),
-
-    /**
-     * 与 CV 服务器无连接。
-     */
-    NoCVConnection(21),
-
-    /**
-     * 未知的状态。
-     */
-    Unknown(99)
-
-    ;
-
-    public final int code;
-
-    FileProcessorStateCode(int code) {
-        this.code = code;
+    public OCRProcessorContext() {
+        super();
     }
 
-    public static FileProcessorStateCode parse(int code) {
-        for (FileProcessorStateCode sc : FileProcessorStateCode.values()) {
-            if (sc.code == code) {
-                return sc;
-            }
-        }
-        return FileProcessorStateCode.Unknown;
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = this.toCompactJSON();
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        return json;
     }
 }

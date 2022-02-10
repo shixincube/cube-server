@@ -26,23 +26,22 @@
 
 package cube.service.fileprocessor.processor;
 
+import java.nio.file.Path;
+
 /**
- * 处理器接口。
+ * 处理器基类。
  */
 public abstract class Processor {
 
-    private String workPath;
+    private Path workPath;
 
-    public Processor(String workPath) {
+    public Processor(Path workPath) {
         this.workPath = workPath;
-        if (!this.workPath.endsWith("/")) {
-            this.workPath = this.workPath + "/";
-        }
     }
 
-    public String getWorkPath() {
+    public Path getWorkPath() {
         return this.workPath;
     }
 
-    abstract void go();
+    abstract void go(ProcessorContext context);
 }

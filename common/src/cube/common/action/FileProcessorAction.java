@@ -34,6 +34,11 @@ public enum FileProcessorAction {
     Thumb("thumb"),
 
     /**
+     * 字符识别。
+     */
+    OCR("ocr"),
+
+    /**
      * 对象检测。
      */
     DetectObject("detectObject"),

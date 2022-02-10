@@ -141,6 +141,9 @@ public class ClientCellet extends AbstractCellet {
         else if (Actions.CreateDomainApp.name.equals(action)) {
             this.executor.execute(new CreateDomainAppTask(this, talkContext, actionDialect));
         }
+        else if (Actions.ProcessFile.name.equals(action)) {
+            this.executor.execute(new ProcessFileTask(this, talkContext, actionDialect));
+        }
     }
 
     @Override

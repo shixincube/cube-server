@@ -47,3 +47,4 @@ server_dev.properties
 cipher_dev.properties
 storage_dev.json
 multipoint-comm_dev.properties
+service/storage/tmp
