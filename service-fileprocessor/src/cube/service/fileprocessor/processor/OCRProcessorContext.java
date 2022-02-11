@@ -26,6 +26,7 @@
 
 package cube.service.fileprocessor.processor;
 
+import cube.common.entity.FileLabel;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -40,9 +41,15 @@ public class OCRProcessorContext extends ProcessorContext {
 
     private List<String> resultText;
 
+    private FileLabel imageFile;
+
     public OCRProcessorContext() {
         super();
         this.resultText = new ArrayList<>();
+    }
+
+    public void setImageFile(FileLabel imageFile) {
+        this.imageFile = imageFile;
     }
 
     public void readResult(File file) {
@@ -75,6 +82,10 @@ public class OCRProcessorContext extends ProcessorContext {
     @Override
     public JSONObject toJSON() {
         JSONObject json = this.toCompactJSON();
+        json.put("success", this.isSuccessful());
+        if (null != this.imageFile) {
+            json.put("image", this.imageFile.toCompactJSON());
+        }
         return json;
     }
 
@@ -83,7 +94,7 @@ public class OCRProcessorContext extends ProcessorContext {
         JSONObject json = new JSONObject();
         JSONArray text = new JSONArray();
         for (String line : this.resultText) {
-
+            text.put(line);
         }
         json.put("text", text);
         return json;

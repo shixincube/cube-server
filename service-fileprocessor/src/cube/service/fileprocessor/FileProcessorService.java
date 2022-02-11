@@ -391,14 +391,14 @@ public class FileProcessorService extends AbstractModule {
      */
     public OCRProcessor createOCRProcessor(String domainName, String fileCode) {
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
-        FileLabel label = storageService.getFile(domainName, fileCode);
-        if (null == label) {
+        FileLabel fileLabel = storageService.getFile(domainName, fileCode);
+        if (null == fileLabel) {
             return null;
         }
 
-        Path imageFile = Paths.get(this.workPath.toString(), fileCode + "." + label.getFileType().getPreferredExtension());
+        Path imageFile = Paths.get(this.workPath.toString(), fileCode + "." + fileLabel.getFileType().getPreferredExtension());
 
-        if (!this.existsFile(fileCode, label.getFileType().getPreferredExtension())) {
+        if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
             String path = storageService.loadFileToDisk(domainName, fileCode);
             try {
                 Files.copy(Paths.get(path), imageFile);
@@ -408,9 +408,10 @@ public class FileProcessorService extends AbstractModule {
         }
 
         OCRProcessor ocrProcessor = new OCRProcessor(this.workPath);
+        ocrProcessor.setImageFile(fileLabel);
         ocrProcessor.setInputImage(imageFile.toFile());
 
-        return null;
+        return ocrProcessor;
     }
 
     private boolean existsFile(String fileCode, String fileType) {
@@ -432,9 +433,11 @@ public class FileProcessorService extends AbstractModule {
                 String fileCode = data.getString("fileCode");
                 // 创建 OCR 处理器
                 OCRProcessor processor = createOCRProcessor(domain, fileCode);
-
-                OCRProcessorContext context = new OCRProcessorContext();
-                processor.go(context);
+                if (null != processor) {
+                    OCRProcessorContext context = new OCRProcessorContext();
+                    processor.go(context);
+                    return context.toJSON();
+                }
             }
         }
 

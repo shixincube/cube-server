@@ -27,6 +27,7 @@
 package cube.service.fileprocessor.processor;
 
 import cell.util.log.Logger;
+import cube.common.entity.FileLabel;
 import cube.util.FileUtils;
 
 import java.io.File;
@@ -40,8 +41,14 @@ import java.util.List;
  */
 public class OCRProcessor extends OpticalCharacterRecognition {
 
+    private FileLabel imageFile;
+
     public OCRProcessor(Path workPath) {
         super(workPath);
+    }
+
+    public void setImageFile(FileLabel imageFile) {
+        this.imageFile = imageFile;
     }
 
     private boolean check() {
@@ -70,11 +77,14 @@ public class OCRProcessor extends OpticalCharacterRecognition {
         commandLine.add(this.outputText.getAbsolutePath());
         commandLine.add("-l");
         commandLine.add(this.language);
+        commandLine.add("hocr");
 
         int status = 1;
 
         Process process = null;
         ProcessBuilder pb = new ProcessBuilder(commandLine);
+        // 设置工作目录
+        pb.directory(getWorkPath().toFile());
 
         try {
             process = pb.start();
@@ -99,6 +109,8 @@ public class OCRProcessor extends OpticalCharacterRecognition {
         }
         else {
             context.setSuccessful(true);
+            ((OCRProcessorContext) context).setImageFile(this.imageFile);
+            ((OCRProcessorContext) context).readResult(this.outputText);
         }
     }
 }
