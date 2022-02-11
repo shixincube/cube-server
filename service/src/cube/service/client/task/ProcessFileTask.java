@@ -76,6 +76,7 @@ public class ProcessFileTask extends ClientTask {
         }
 
         response.addParam("code", FileStorageStateCode.Ok.code);
+        response.addParam("result", (JSONObject) result);
         cellet.speak(talkContext, response);
     }
 }

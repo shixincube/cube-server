@@ -26,7 +26,10 @@
 
 package cube.service.fileprocessor.processor;
 
+import cell.util.log.Logger;
+import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
+import cube.util.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -48,30 +51,62 @@ public class OCRProcessorContext extends ProcessorContext {
         this.resultText = new ArrayList<>();
     }
 
+    public OCRProcessorContext(JSONObject json) {
+        super();
+        this.resultText = new ArrayList<>();
+        this.setSuccessful(json.getBoolean("success"));
+
+        JSONArray textArray = json.getJSONArray("text");
+        for (int i = 0; i < textArray.length(); ++i) {
+            this.resultText.add(textArray.getString(i));
+        }
+
+        if (json.has("image")) {
+            this.imageFile = new FileLabel(json.getJSONObject("image"));
+        }
+    }
+
     public void setImageFile(FileLabel imageFile) {
         this.imageFile = imageFile;
     }
 
-    public void readResult(File file) {
-        BufferedReader reader = null;
+    public FileLabel getImageFile() {
+        return this.imageFile;
+    }
 
-        try {
-            reader = new BufferedReader(new FileReader(file));
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                this.resultText.add(line);
+    public void readResult(File file) {
+        if (!file.exists()) {
+            file = new File(file.getAbsolutePath() + ".txt");
+            if (!file.exists()) {
+                file = new File(file.getAbsolutePath() + ".hocr");
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (null != reader) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
+        }
+
+        String ext = FileUtils.extractFileExtension(file.getName());
+        if (ext.length() == 0 || ext.equalsIgnoreCase("txt")) {
+            BufferedReader reader = null;
+
+            try {
+                reader = new BufferedReader(new FileReader(file));
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    this.resultText.add(line);
+                }
+            } catch (FileNotFoundException e) {
+                Logger.e(this.getClass(), "#readResult", e);
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#readResult", e);
+            } finally {
+                if (null != reader) {
+                    try {
+                        reader.close();
+                    } catch (IOException e) {
+                    }
                 }
             }
+        }
+        else if (ext.equalsIgnoreCase("hocr")) {
+
         }
     }
 
@@ -82,21 +117,27 @@ public class OCRProcessorContext extends ProcessorContext {
     @Override
     public JSONObject toJSON() {
         JSONObject json = this.toCompactJSON();
-        json.put("success", this.isSuccessful());
+
         if (null != this.imageFile) {
             json.put("image", this.imageFile.toCompactJSON());
         }
+
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
+
+        json.put("process", FileProcessorAction.OCR.name);
+        json.put("success", this.isSuccessful());
+
         JSONArray text = new JSONArray();
         for (String line : this.resultText) {
             text.put(line);
         }
         json.put("text", text);
+
         return json;
     }
 }
