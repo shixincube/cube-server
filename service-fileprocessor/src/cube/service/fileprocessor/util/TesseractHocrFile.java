@@ -27,6 +27,7 @@
 package cube.service.fileprocessor.util;
 
 import cell.util.Utils;
+import cube.geometry.BoundingBox;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -110,7 +111,11 @@ public class TesseractHocrFile {
 
             nodeList = el.getElementsByTagName("div");
             for (int i = 0; i < nodeList.getLength(); ++i) {
-
+                Element nodeEl = (Element) nodeList.item(i);
+                String className = nodeEl.getAttribute("class");
+                if (className.equals("ocr_page")) {
+                    parsePage(nodeEl);
+                }
             }
         } catch (ParserConfigurationException e) {
             e.printStackTrace();
@@ -121,6 +126,47 @@ public class TesseractHocrFile {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private Page parsePage(Element el) {
+        Page page = new Page();
+
+        String title = el.getAttribute("title");
+        String[] params = title.split(";");
+        for (String param : params) {
+            param = param.trim();
+            if (param.startsWith("bbox")) {
+                String[] bboxParam = param.split(" ");
+                if (bboxParam.length == 5) {
+                    BoundingBox bbox = new BoundingBox(Integer.parseInt(bboxParam[1]),
+                            Integer.parseInt(bboxParam[2]),
+                            Integer.parseInt(bboxParam[3]),
+                            Integer.parseInt(bboxParam[4]));
+                    page.bbox = bbox;
+                }
+            }
+        }
+
+        NodeList nodeList = el.getChildNodes();
+
+        return page;
+    }
+
+    private void parseArea(Page page, Element el) {
+
+    }
+
+    public class Page {
+
+        protected BoundingBox bbox;
+
+        protected Page() {
+        }
+
+    }
+
+    public class Area {
+
     }
 
     public static void main(String[] args) {
