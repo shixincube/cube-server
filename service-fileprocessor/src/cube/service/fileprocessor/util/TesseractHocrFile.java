@@ -326,6 +326,14 @@ public class TesseractHocrFile implements JSONable {
 
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
+            json.put("bbox", this.bbox.toJSON());
+
+            JSONArray array = new JSONArray();
+            for (Area area : this.areas) {
+                array.put(area.toJSON());
+            }
+            json.put("areas", array);
+
             return json;
         }
     }
