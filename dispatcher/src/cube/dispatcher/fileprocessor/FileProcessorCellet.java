@@ -31,6 +31,9 @@ import cell.core.talk.TalkContext;
 import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.filestorage.FileHandler;
+import cube.util.HttpServer;
+import org.eclipse.jetty.server.handler.ContextHandler;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -69,6 +72,16 @@ public class FileProcessorCellet extends AbstractCellet {
     public boolean install() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(32);
         this.performer = (Performer) this.getNucleus().getParameter("performer");
+
+        // 配置 HTTP/HTTPS 服务的句柄
+        HttpServer httpServer = performer.getHttpServer();
+
+        // 添加句柄
+        ContextHandler mediaListHandler = new ContextHandler();
+        mediaListHandler.setContextPath("/file/media/");
+        mediaListHandler.setHandler(new MediaListHandler(performer));
+        httpServer.addContextHandler(mediaListHandler);
+
         return true;
     }
 

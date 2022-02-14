@@ -85,10 +85,10 @@ public class FileStorageCellet extends AbstractCellet {
         HttpServer httpServer = performer.getHttpServer();
 
         // 添加句柄
-        ContextHandler upload = new ContextHandler();
-        upload.setContextPath("/filestorage/file/");
-        upload.setHandler(new FileHandler(this.fileChunkStorage, performer));
-        httpServer.addContextHandler(upload);
+        ContextHandler fileHandler = new ContextHandler();
+        fileHandler.setContextPath("/filestorage/file/");
+        fileHandler.setHandler(new FileHandler(this.fileChunkStorage, performer));
+        httpServer.addContextHandler(fileHandler);
 
         return true;
     }

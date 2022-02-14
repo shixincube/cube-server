@@ -324,7 +324,7 @@ public class FileHandler extends CrossDomainHandler {
         if (null != clientResponse && clientResponse.getStatus() == HttpStatus.OK_200) {
             InputStream content = listener.getInputStream();
 
-            // async output
+            // Async output
             AsyncContext async = request.startAsync();
             ServletOutputStream output = response.getOutputStream();
             StandardDataStream dataStream = new StandardDataStream(content, async, output);
