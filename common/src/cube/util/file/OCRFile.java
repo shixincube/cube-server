@@ -333,7 +333,7 @@ public class OCRFile implements JSONable {
 
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
-            json.put("bbox", this.bbox);
+            json.put("bbox", this.bbox.toJSON());
             json.put("word", this.word);
             return json;
         }
