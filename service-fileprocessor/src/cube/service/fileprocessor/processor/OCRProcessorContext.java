@@ -30,6 +30,8 @@ import cell.util.log.Logger;
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
 import cube.util.FileUtils;
+import cube.util.file.OCRFile;
+import cube.util.file.TesseractHocrFile;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -42,9 +44,11 @@ import java.util.List;
  */
 public class OCRProcessorContext extends ProcessorContext {
 
+    private FileLabel imageFile;
+
     private List<String> resultText;
 
-    private FileLabel imageFile;
+    private OCRFile ocrFile;
 
     public OCRProcessorContext() {
         super();
@@ -75,10 +79,11 @@ public class OCRProcessorContext extends ProcessorContext {
     }
 
     public void readResult(File file) {
+        String filename = file.getName();
         if (!file.exists()) {
-            file = new File(file.getAbsolutePath() + ".txt");
+            file = new File(file.getParent(), filename + ".txt");
             if (!file.exists()) {
-                file = new File(file.getAbsolutePath() + ".hocr");
+                file = new File(file.getParent(), filename + ".hocr");
             }
         }
 
@@ -104,9 +109,13 @@ public class OCRProcessorContext extends ProcessorContext {
                     }
                 }
             }
+
+            this.ocrFile = new OCRFile(this.resultText);
         }
         else if (ext.equalsIgnoreCase("hocr")) {
-
+            TesseractHocrFile tesseractHocrFile = new TesseractHocrFile(file);
+            this.ocrFile = tesseractHocrFile;
+            this.resultText.addAll(tesseractHocrFile.toText());
         }
     }
 
@@ -137,6 +146,8 @@ public class OCRProcessorContext extends ProcessorContext {
             text.put(line);
         }
         json.put("text", text);
+
+        json.put("ocr", this.ocrFile.toJSON());
 
         return json;
     }

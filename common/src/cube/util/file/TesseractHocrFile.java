@@ -27,9 +27,7 @@
 package cube.util.file;
 
 import cell.util.Utils;
-import cube.common.JSONable;
 import cube.geometry.BoundingBox;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -41,17 +39,19 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
  */
-public class TesseractHocrFile implements JSONable {
+public class TesseractHocrFile extends OCRFile {
 
-    private List<Page> pages = new ArrayList<>();
+    private String filename;
 
     public TesseractHocrFile(File file) {
+        super();
+
+        this.filename = file.getName();
+
         File newFile = this.preproccess(file);
         if (null != newFile) {
             this.readXML(newFile);
@@ -60,28 +60,17 @@ public class TesseractHocrFile implements JSONable {
     }
 
     public TesseractHocrFile(JSONObject json) {
+        super(json);
 
-    }
-
-    public List<Page> getPages() {
-        return this.pages;
+        if (json.has("filename")) {
+            this.filename = json.getString("filename");
+        }
     }
 
     @Override
     public JSONObject toJSON() {
-        return this.toCompactJSON();
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-
-        JSONArray pageArray = new JSONArray();
-        for (Page page : this.pages) {
-            pageArray.put(page.toJSON());
-        }
-        json.put("pages", pageArray);
-
+        JSONObject json = super.toJSON();
+        json.put("filename", this.filename);
         return json;
     }
 
@@ -295,9 +284,7 @@ public class TesseractHocrFile implements JSONable {
     }
 
     private Word parseWord(Line line, Element el) {
-        Word word = new Word();
-
-        word.word = el.getTextContent();
+        Word word = new Word(el.getTextContent());
 
         String title = el.getAttribute("title");
         String[] params = title.split(";");
@@ -318,161 +305,5 @@ public class TesseractHocrFile implements JSONable {
         line.words.add(word);
 
         return word;
-    }
-
-    public class Page {
-        protected BoundingBox bbox;
-
-        protected List<Area> areas = new ArrayList<>();
-
-        protected Page() {
-        }
-
-        public BoundingBox getBoundingBox() {
-            return this.bbox;
-        }
-
-        public List<Area> getAreas() {
-            return this.areas;
-        }
-
-        public JSONObject toJSON() {
-            JSONObject json = new JSONObject();
-            json.put("bbox", this.bbox.toJSON());
-
-            JSONArray array = new JSONArray();
-            for (Area area : this.areas) {
-                array.put(area.toJSON());
-            }
-            json.put("areas", array);
-
-            return json;
-        }
-    }
-
-    public class Area {
-        protected BoundingBox bbox;
-
-        protected List<Part> parts = new ArrayList<>();
-
-        protected Area() {
-        }
-
-        public BoundingBox getBoundingBox() {
-            return this.bbox;
-        }
-
-        public List<Part> getParts() {
-            return this.parts;
-        }
-
-        public JSONObject toJSON() {
-            JSONObject json = new JSONObject();
-            json.put("bbox", this.bbox.toJSON());
-
-            JSONArray array = new JSONArray();
-            for (Part part : this.parts) {
-                array.put(part.toJSON());
-            }
-            json.put("parts", array);
-
-            return json;
-        }
-    }
-
-    public class Part {
-        protected BoundingBox bbox;
-
-        protected String language;
-
-        protected List<Line> lines = new ArrayList<>();
-
-        public BoundingBox getBoundingBox() {
-            return this.bbox;
-        }
-
-        public String getLanguage() {
-            return this.language;
-        }
-
-        public List<Line> getLines() {
-            return this.lines;
-        }
-
-        protected Part() {
-        }
-
-        public JSONObject toJSON() {
-            JSONObject json = new JSONObject();
-            json.put("bbox", this.bbox.toJSON());
-            json.put("language", this.language);
-
-            JSONArray array = new JSONArray();
-            for (Line line : this.lines) {
-                array.put(line.toJSON());
-            }
-            json.put("lines", array);
-
-            return json;
-        }
-    }
-
-    public class Line {
-        protected BoundingBox bbox;
-
-        protected List<Word> words = new ArrayList<>();
-
-        protected Line() {
-        }
-
-        public BoundingBox getBoundingBox() {
-            return this.bbox;
-        }
-
-        public List<Word> getWords() {
-            return this.words;
-        }
-
-        public JSONObject toJSON() {
-            JSONObject json = new JSONObject();
-            json.put("bbox", this.bbox.toJSON());
-
-            JSONArray array = new JSONArray();
-            for (Word word : this.words) {
-                array.put(word.toJSON());
-            }
-            json.put("words", array);
-
-            return json;
-        }
-    }
-
-    public class Word {
-        protected BoundingBox bbox;
-
-        protected String word;
-
-        protected Word() {
-        }
-
-        public BoundingBox getBoundingBox() {
-            return this.bbox;
-        }
-
-        public String getWord() {
-            return this.word;
-        }
-
-        public JSONObject toJSON() {
-            JSONObject json = new JSONObject();
-            json.put("bbox", this.bbox);
-            json.put("word", this.word);
-            return json;
-        }
-    }
-
-    public static void main(String[] args) {
-        File file = new File("service/storage/tmp/x.html");
-        TesseractHocrFile hocrFile = new TesseractHocrFile(file);
     }
 }
