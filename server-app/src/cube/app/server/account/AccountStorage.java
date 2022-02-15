@@ -53,7 +53,7 @@ public class AccountStorage extends AbstractStorage {
                     Constraint.PRIMARY_KEY
             }),
             new StorageField("account", LiteralBase.STRING, new Constraint[] {
-                    Constraint.UNIQUE, Constraint.NOT_NULL
+                    Constraint.NOT_NULL
             }),
             new StorageField("phone", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL

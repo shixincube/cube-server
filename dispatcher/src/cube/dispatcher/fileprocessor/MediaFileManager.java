@@ -28,6 +28,7 @@ package cube.dispatcher.fileprocessor;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
+import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.AuthAction;
 import cube.common.action.FileStorageAction;
@@ -36,15 +37,22 @@ import cube.common.entity.FileLabel;
 import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
+import cube.dispatcher.filestorage.FileHandler;
 import cube.dispatcher.filestorage.FileStorageCellet;
 import cube.dispatcher.filestorage.HttpClientFactory;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.util.InputStreamResponseListener;
+import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.servlet.AsyncContext;
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
+import javax.servlet.ServletOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -167,6 +175,12 @@ public final class MediaFileManager {
             httpClient.newRequest(fileLabel.getDirectURL())
                     .timeout(10, TimeUnit.SECONDS)
                     .send(listener);
+
+            InputStream content = listener.getInputStream();
+            byte[] bytes = new byte[4096];
+//            while () {
+//
+//            }
         }
 
 

@@ -28,6 +28,8 @@ package cube.dispatcher.fileprocessor;
 
 import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
+import cube.util.FileUtils;
+import org.eclipse.jetty.http.HttpStatus;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -37,20 +39,33 @@ import java.io.IOException;
 /**
  * 媒体列表句柄。
  */
-public class MediaListHandler extends CrossDomainHandler {
+public class MediaStreamHandler extends CrossDomainHandler {
+
+    private final String m3u8MIME = "application/x-mpegURL";
 
     private Performer performer;
 
-    public MediaListHandler(Performer performer) {
+    public MediaStreamHandler(Performer performer) {
         this.performer = performer;
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
+        String token = request.getParameter("t");
+        if (null == token) {
+            response.setStatus(HttpStatus.FORBIDDEN_403);
+            response.setContentType(m3u8MIME);
+            return;
+        }
+
         String uri = request.getRequestURI();
+        String[] path = uri.split("/");
+        String listFile = path[path.length - 1];
 
+        String fileCode = FileUtils.extractFileName(listFile);
 
+        MediaFileManager.getInstance().checkAndLoad(token, fileCode);
 
         this.complete();
     }

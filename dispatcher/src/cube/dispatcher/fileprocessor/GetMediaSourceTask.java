@@ -42,8 +42,6 @@ import org.json.JSONObject;
  */
 public class GetMediaSourceTask extends DispatcherTask {
 
-    private boolean waitResponse = true;
-
     public GetMediaSourceTask(FileProcessorCellet cellet, TalkContext talkContext, Primitive primitive
             , Performer performer) {
         super(cellet, talkContext, primitive, performer);
