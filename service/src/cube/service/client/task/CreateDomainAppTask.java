@@ -29,12 +29,10 @@ package cube.service.client.task;
 import cell.core.net.Endpoint;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.common.entity.Contact;
+import cube.common.entity.AuthDomain;
 import cube.common.entity.IceServer;
-import cube.service.auth.AuthDomain;
 import cube.service.client.Actions;
 import cube.service.client.ClientCellet;
-import cube.service.contact.ContactManager;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.service.auth;
+package cube.common.entity;
 
 import cell.core.net.Endpoint;
 import cube.auth.AuthToken;

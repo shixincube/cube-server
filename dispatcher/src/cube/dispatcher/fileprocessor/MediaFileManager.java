@@ -30,6 +30,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cube.common.Packet;
 import cube.common.action.FileStorageAction;
+import cube.common.entity.AuthDomain;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
@@ -46,6 +47,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -58,6 +60,8 @@ public final class MediaFileManager {
     private String mediaPath;
 
     private Performer performer;
+
+    private Map<String, AuthDomain> authDomainMap;
 
     private MediaFileManager() {
         this.mediaPath = "cube-media-files/";
@@ -73,6 +77,10 @@ public final class MediaFileManager {
 
     public void setPerformer(Performer performer) {
         this.performer = performer;
+    }
+
+    public String getMediaSourceURL(String domain, String fileCode) {
+        return null;
     }
 
     public FileLabel getFile(String token, String fileCode) {

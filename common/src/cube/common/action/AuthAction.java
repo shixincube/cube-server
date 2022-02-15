@@ -42,6 +42,11 @@ public enum AuthAction {
     GetToken("getToken"),
 
     /**
+     * 获取访问域。
+     */
+    GetDomain("getDomain"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

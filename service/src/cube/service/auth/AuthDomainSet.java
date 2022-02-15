@@ -26,6 +26,8 @@
 
 package cube.service.auth;
 
+import cube.common.entity.AuthDomain;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 /**

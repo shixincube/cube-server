@@ -35,6 +35,7 @@ import cube.common.action.AuthAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.auth.task.ApplyTokenTask;
+import cube.service.auth.task.GetDomainTask;
 import cube.service.auth.task.GetTokenTask;
 
 import java.util.concurrent.ExecutorService;
@@ -81,6 +82,10 @@ public class AuthServiceCellet extends AbstractCellet {
         }
         else if (AuthAction.GetToken.name.equals(action)) {
             this.executor.execute(new GetTokenTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (AuthAction.GetDomain.name.equals(action)) {
+            this.executor.execute(new GetDomainTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
     }

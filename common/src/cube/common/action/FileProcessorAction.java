@@ -29,6 +29,11 @@ package cube.common.action;
 public enum FileProcessorAction {
 
     /**
+     * 获取媒体源地址。
+     */
+    GetMediaSource("getMediaSource"),
+
+    /**
      * 生成缩略图。
      */
     Thumb("thumb"),

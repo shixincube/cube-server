@@ -28,6 +28,7 @@ package cube.service.auth;
 
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
+import cube.common.entity.AuthDomain;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

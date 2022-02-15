@@ -82,6 +82,8 @@ public class FileProcessorCellet extends AbstractCellet {
         mediaListHandler.setHandler(new MediaListHandler(performer));
         httpServer.addContextHandler(mediaListHandler);
 
+        MediaFileManager.getInstance().setPerformer(performer);
+
         return true;
     }
 

@@ -30,6 +30,7 @@ import cell.core.net.Endpoint;
 import cell.util.Utils;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
+import cube.common.entity.AuthDomain;
 import cube.common.entity.IceServer;
 import cube.core.*;
 import cube.plugin.PluginSystem;
@@ -119,7 +120,7 @@ public class AuthService extends AbstractModule {
 
     @Override
     public void onTick(cube.core.Module module, Kernel kernel) {
-
+        // Nothing
     }
 
     /**
@@ -271,6 +272,16 @@ public class AuthService extends AbstractModule {
         }
 
         return token;
+    }
+
+    /**
+     * 获取授权域。
+     *
+     * @param domain
+     * @return
+     */
+    public AuthDomain getAuthDomain(String domain) {
+        return this.authStorage.getDomain(domain, null);
     }
 
     /**

@@ -44,6 +44,7 @@ import cube.service.filestorage.system.FileDescriptor;
 import cube.service.filestorage.system.FileSystem;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
+import cube.util.FileUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 

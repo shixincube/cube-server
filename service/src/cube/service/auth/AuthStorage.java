@@ -32,6 +32,7 @@ import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
 import cube.common.Storagable;
+import cube.common.entity.AuthDomain;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -218,6 +219,13 @@ public class AuthStorage implements Storagable {
         });
     }
 
+    /**
+     * 获取访问域。
+     *
+     * @param domain
+     * @param appKey 可以设置 {@code null} 值。
+     * @return
+     */
     public AuthDomain getDomain(String domain, String appKey) {
         List<StorageField[]> result = null;
 
