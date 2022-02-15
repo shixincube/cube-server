@@ -41,6 +41,7 @@ import cube.dispatcher.filestorage.FileHandler;
 import cube.dispatcher.filestorage.FileStorageCellet;
 import cube.dispatcher.filestorage.HttpClientFactory;
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.util.InputStreamResponseListener;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONException;
@@ -51,6 +52,7 @@ import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
 import javax.servlet.ServletOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -58,7 +60,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * 媒体文件管理器。
@@ -134,7 +138,7 @@ public final class MediaFileManager {
         Packet packet = new Packet(sn, FileStorageAction.GetFile.name, payload);
         ActionDialect packetDialect = packet.toDialect();
 
-        ActionDialect dialect = this.performer.syncTransmit(token, FileStorageCellet.NAME, packetDialect);
+        ActionDialect dialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
         if (null == dialect) {
             return null;
         }
@@ -158,7 +162,12 @@ public final class MediaFileManager {
         return fileLabel;
     }
 
-    public void checkAndLoad(String token, String fileCode) {
+    public FileLabel checkAndLoad(String token, String fileCode) {
+        FileLabel fileLabel = this.getFile(token, fileCode);
+        if (null == fileLabel) {
+            return null;
+        }
+
         Path path = Paths.get(this.mediaPath, fileCode);
         if (!Files.exists(path)) {
             try {
@@ -167,7 +176,7 @@ public final class MediaFileManager {
                 e.printStackTrace();
             }
 
-            FileLabel fileLabel = this.getFile(token, fileCode);
+            File localFile = new File(path.toFile(), "media." + fileLabel.getFileType().getPreferredExtension());
 
             InputStreamResponseListener listener = new InputStreamResponseListener();
 
@@ -176,14 +185,47 @@ public final class MediaFileManager {
                     .timeout(10, TimeUnit.SECONDS)
                     .send(listener);
 
-            InputStream content = listener.getInputStream();
-            byte[] bytes = new byte[4096];
-//            while () {
-//
-//            }
+            Response clientResponse = null;
+            try {
+                clientResponse = listener.get(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (TimeoutException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+
+            if (null != clientResponse && clientResponse.getStatus() == HttpStatus.OK_200) {
+                FileOutputStream fos = null;
+
+                InputStream content = listener.getInputStream();
+
+                byte[] bytes = new byte[4096];
+                int length = 0;
+                try {
+                    fos = new FileOutputStream(localFile);
+
+                    while ((length = content.read(bytes)) > 0) {
+                        fos.write(bytes, 0, length);
+                    }
+
+                    fos.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (null != fos) {
+                        try {
+                            fos.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
         }
 
-
+        return fileLabel;
     }
 
     private AuthDomain requestAuthDomain(String domainName) {
