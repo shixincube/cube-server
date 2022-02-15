@@ -28,7 +28,10 @@ package cube.dispatcher.fileprocessor;
 
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
+import cube.common.action.FileProcessorAction;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
 import cube.dispatcher.filestorage.FileHandler;
@@ -96,7 +99,15 @@ public class FileProcessorCellet extends AbstractCellet {
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
 
-        this.executor.execute(this.borrowTask(talkContext, primitive, true));
+        ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
+        String action = actionDialect.getName();
+
+        if (FileProcessorAction.GetMediaSource.name.equals(action)) {
+            this.executor.execute(new GetMediaSourceTask(this, talkContext, primitive, this.performer));
+        }
+        else {
+            this.executor.execute(this.borrowTask(talkContext, primitive, true));
+        }
     }
 
     protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive, boolean sync) {

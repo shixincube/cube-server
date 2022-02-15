@@ -29,7 +29,10 @@ package cube.dispatcher.fileprocessor;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.common.Packet;
 import cube.common.StateCode;
+import cube.common.action.FileProcessorAction;
+import cube.common.state.FileProcessorStateCode;
 import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
 import org.json.JSONObject;
@@ -56,15 +59,23 @@ public class GetMediaSourceTask extends DispatcherTask {
             return;
         }
 
-        ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
+        Packet packet = this.getRequest();
 
-        if (null == response) {
-            response = this.makeResponse(this.getRequest().data, StateCode.GatewayError, "Service failed");
-        }
-        else {
-            response = this.makeResponse(response);
+        String domainName = packet.data.getString("domain");
+        String fileCode = packet.data.getString("fileCode");
+        boolean secure = packet.data.getBoolean("secure");
+
+        String url = MediaFileManager.getInstance().getMediaSourceURL(domainName, fileCode, secure);
+        if (null == url) {
+            ActionDialect response = this.packResponse(packet.data, FileProcessorStateCode.Failure.code);
+            this.cellet.speak(this.talkContext, response);
+            return;
         }
 
+        JSONObject payload = new JSONObject();
+        payload.put("url", url);
+
+        ActionDialect response = this.packResponse(payload, FileProcessorStateCode.Ok.code);
         this.cellet.speak(this.talkContext, response);
     }
 }

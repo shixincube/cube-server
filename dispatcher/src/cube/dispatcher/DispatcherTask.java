@@ -89,8 +89,8 @@ public abstract class DispatcherTask extends Task {
         return response;
     }
 
-    protected ActionDialect makeResponse(JSONObject data, int stateCode, String desc) {
-        Packet packet = new Packet(this.request.sn, this.request.name, data);
+    protected ActionDialect makeResponse(JSONObject payload, int stateCode, String desc) {
+        Packet packet = new Packet(this.request.sn, this.request.name, payload);
         ActionDialect response = packet.toDialect();
         response.addParam("state", StateCode.makeState(stateCode, desc));
         return response;
@@ -100,6 +100,42 @@ public abstract class DispatcherTask extends Task {
         ActionDialect result = response.toDialect();
         result.addParam("state", StateCode.makeState(StateCode.GatewayError, "Gateway error"));
         return result;
+    }
+
+    /**
+     * 打包为客户端的格式。
+     *
+     * @param data
+     * @param code
+     * @return
+     */
+    protected ActionDialect packResponse(JSONObject data, int code) {
+        JSONObject payload = new JSONObject();
+        payload.put("data", data);
+        payload.put("code", code);
+        Packet packet = new Packet(this.request.sn, this.request.name, payload);
+        ActionDialect response = packet.toDialect();
+        response.addParam("state", StateCode.makeState(StateCode.OK, "OK"));
+        return response;
+    }
+
+    /**
+     * 打包为客户端的格式。
+     *
+     * @param data
+     * @param code
+     * @param stateCode
+     * @param stateDesc
+     * @return
+     */
+    protected ActionDialect packResponse(JSONObject data, int code, int stateCode, String stateDesc) {
+        JSONObject payload = new JSONObject();
+        payload.put("data", data);
+        payload.put("code", code);
+        Packet packet = new Packet(this.request.sn, this.request.name, payload);
+        ActionDialect response = packet.toDialect();
+        response.addParam("state", StateCode.makeState(stateCode, stateDesc));
+        return response;
     }
 
     /**

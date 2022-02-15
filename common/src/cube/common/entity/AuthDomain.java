@@ -115,6 +115,33 @@ public class AuthDomain implements JSONable {
         }
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param json
+     */
+    public AuthDomain(JSONObject json) {
+        this.domainName = json.getString("domainName");
+        this.appKey = json.getString("appKey");
+        this.appId = json.has("appId") ? json.getString("appId") : null;
+        this.mainEndpoint = json.has("mainEndpoint") ? new Endpoint(json.getJSONObject("mainEndpoint")) : null;
+        this.httpEndpoint = json.has("httpEndpoint") ? new Endpoint(json.getJSONObject("httpEndpoint")) : null;
+        this.httpsEndpoint = json.has("httpsEndpoint") ? new Endpoint(json.getJSONObject("httpsEndpoint")) : null;
+        this.iceServers = json.has("iceServers") ? json.getJSONArray("iceServers") : null;
+    }
+
+    public Endpoint getMainEndpoint() {
+        return this.mainEndpoint;
+    }
+
+    public Endpoint getHttpEndpoint() {
+        return this.httpEndpoint;
+    }
+
+    public Endpoint getHttpsEndpoint() {
+        return this.httpsEndpoint;
+    }
+
     public PrimaryDescription getPrimaryDescription() {
         if (null != this.description) {
             return this.description;

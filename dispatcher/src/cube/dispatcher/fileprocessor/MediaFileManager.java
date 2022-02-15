@@ -29,16 +29,17 @@ package cube.dispatcher.fileprocessor;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cube.common.Packet;
+import cube.common.action.AuthAction;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.AuthDomain;
 import cube.common.entity.FileLabel;
+import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.filestorage.FileStorageCellet;
 import cube.dispatcher.filestorage.HttpClientFactory;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.util.InputStreamResponseListener;
-import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -47,6 +48,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -69,6 +71,8 @@ public final class MediaFileManager {
         if (!path.exists()) {
             path.mkdirs();
         }
+
+        this.authDomainMap = new HashMap<>();
     }
 
     public final static MediaFileManager getInstance() {
@@ -79,8 +83,35 @@ public final class MediaFileManager {
         this.performer = performer;
     }
 
-    public String getMediaSourceURL(String domain, String fileCode) {
-        return null;
+    public String getMediaSourceURL(String domainName, String fileCode, boolean secure) {
+        AuthDomain authDomain = this.authDomainMap.get(domainName);
+        if (null == authDomain) {
+            authDomain = this.requestAuthDomain(domainName);
+            if (null == authDomain) {
+                return null;
+            }
+
+            this.authDomainMap.put(domainName, authDomain);
+        }
+
+        StringBuilder buf = new StringBuilder();
+        if (secure) {
+            buf.append("https://");
+            buf.append(authDomain.getHttpsEndpoint().getHost());
+            buf.append(":");
+            buf.append(authDomain.getHttpsEndpoint().getPort());
+        }
+        else {
+            buf.append("http://");
+            buf.append(authDomain.getHttpEndpoint().getHost());
+            buf.append(":");
+            buf.append(authDomain.getHttpEndpoint().getPort());
+        }
+        buf.append("/file/media/");
+        buf.append(fileCode);
+        buf.append(".m3u8");
+
+        return buf.toString();
     }
 
     public FileLabel getFile(String token, String fileCode) {
@@ -139,5 +170,22 @@ public final class MediaFileManager {
         }
 
 
+    }
+
+    private AuthDomain requestAuthDomain(String domainName) {
+        JSONObject data = new JSONObject();
+        data.put("domain", domainName);
+
+        Packet packet = new Packet(AuthAction.GetDomain.name, data);
+
+        ActionDialect response = this.performer.syncTransmit("Auth", packet.toDialect());
+        Packet responsePacket = new Packet(response);
+        if (FileProcessorStateCode.Ok.code == Packet.extractCode(responsePacket)) {
+            AuthDomain authDomain = new AuthDomain(Packet.extractDataPayload(responsePacket));
+            return authDomain;
+        }
+        else {
+            return null;
+        }
     }
 }

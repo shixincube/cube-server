@@ -255,7 +255,8 @@ public class AuthStorage implements Storagable {
         Endpoint httpsEndpoint = new Endpoint(map.get("https_address").getString(), map.get("https_port").getInt());
         JSONArray iceServers = new JSONArray(map.get("ice_servers").getString());
 
-        AuthDomain authDomain = new AuthDomain(domain, appKey, map.get("app_id").getString(),
+        AuthDomain authDomain = new AuthDomain(domain, (null == appKey) ? map.get("app_key").getString() : appKey,
+                map.get("app_id").getString(),
                 mainEndpoint, httpEndpoint, httpsEndpoint, iceServers);
 
         return authDomain;

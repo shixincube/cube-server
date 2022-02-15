@@ -271,6 +271,15 @@ public class Performer implements TalkListener {
     }
 
     /**
+     * 选择节点。随机方式。
+     *
+     * @return
+     */
+    private synchronized Director selectDirector() {
+        return this.directorList.get(Utils.randomInt(0, this.directorList.size() - 1));
+    }
+
+    /**
      * 更新联系人。
      *
      * @param contact 指定联系人。
@@ -573,14 +582,47 @@ public class Performer implements TalkListener {
      * @return
      */
     public ActionDialect syncTransmit(TalkContext talkContext, String celletName, ActionDialect actionDialect) {
-        long sn = actionDialect.containsParam("sn") ?
-                actionDialect.getParamAsLong("sn") : Utils.generateSerialNumber();
-
         Director director = this.selectDirector(talkContext, celletName);
         if (null == director) {
             Logger.e(this.getClass(), "Can not connect '" + celletName + "'");
             return null;
         }
+
+        return this.syncTransmit(director, celletName, actionDialect);
+    }
+
+    /**
+     * 向服务单元发送数据，并阻塞当前线程直到应答或超时。
+     *
+     * @param tokenCode
+     * @param celletName
+     * @param actionDialect
+     * @return
+     */
+    public ActionDialect syncTransmit(String tokenCode, String celletName, ActionDialect actionDialect) {
+        Device device = this.tokenDeviceMap.get(tokenCode);
+        if (null == device) {
+            Logger.i(this.getClass(), "#syncTransmit Can NOT find device by token: " + tokenCode);
+            return null;
+        }
+
+        return this.syncTransmit(device.getTalkContext(), celletName, actionDialect);
+    }
+
+    /**
+     * 向服务单元发送数据，并阻塞当前线程直到应答或超时。
+     *
+     * @param celletName
+     * @param actionDialect
+     * @return
+     */
+    public ActionDialect syncTransmit(String celletName, ActionDialect actionDialect) {
+        return this.syncTransmit(this.selectDirector(), celletName, actionDialect);
+    }
+
+    private ActionDialect syncTransmit(Director director, String celletName, ActionDialect actionDialect) {
+        long sn = actionDialect.containsParam("sn") ?
+                actionDialect.getParamAsLong("sn") : Utils.generateSerialNumber();
 
         // 添加 Performer 信息
         actionDialect.addParam(this.performerKey, createPerformer(sn));
@@ -612,24 +654,6 @@ public class Performer implements TalkListener {
             Logger.e(this.getClass(), "Service timeout '" + celletName + "'");
             return null;
         }
-    }
-
-    /**
-     * 向服务单元发送数据，并阻塞当前线程直到应答或超时。
-     *
-     * @param tokenCode
-     * @param celletName
-     * @param actionDialect
-     * @return
-     */
-    public ActionDialect syncTransmit(String tokenCode, String celletName, ActionDialect actionDialect) {
-        Device device = this.tokenDeviceMap.get(tokenCode);
-        if (null == device) {
-            Logger.i(this.getClass(), "#syncTransmit Can NOT find device by token: " + tokenCode);
-            return null;
-        }
-
-        return this.syncTransmit(device.getTalkContext(), celletName, actionDialect);
     }
 
     private JSONObject createPerformer(long sn) {
