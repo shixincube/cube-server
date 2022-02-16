@@ -86,6 +86,9 @@ public class FileProcessorCellet extends AbstractCellet {
 
         MediaFileManager.getInstance().setPerformer(performer);
 
+        // 校验工具
+        MediaFileManager.getInstance().check();
+
         return true;
     }
 

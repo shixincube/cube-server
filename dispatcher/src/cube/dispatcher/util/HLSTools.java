@@ -38,12 +38,51 @@ import java.util.List;
  */
 public final class HLSTools {
 
-    public static boolean videoToHLS(File workPath, String filename, String outputName) {
+    private HLSTools() {
+    }
+
+    /**
+     * 校验工具是否可用。
+     *
+     * @return
+     */
+    public static boolean checkEnabled() {
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add("ffmpeg");
+        commandLine.add("-version");
+
+        int status = 1;
+
+        Process process = null;
+        ProcessBuilder pb = new ProcessBuilder(commandLine);
+
+        try {
+            process = pb.start();
+
+            try {
+                status = process.waitFor();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            Logger.w(HLSTools.class, "#checkEnabled", e);
+        } finally {
+            if (null != process) {
+                process.destroy();
+            }
+
+            process = null;
+        }
+
+        return (0 == status);
+    }
+
+    public static boolean toHLS(File workPath, File inputFile, File outputFile) {
         List<String> commandLine = new ArrayList<>();
         commandLine.add("ffmpeg");
         commandLine.add("-re");
         commandLine.add("-i");
-        commandLine.add(filename);
+        commandLine.add(inputFile.getName());
         commandLine.add("-c");
         commandLine.add("copy");
         commandLine.add("-f");
@@ -54,7 +93,7 @@ public final class HLSTools {
         commandLine.add("0");
         commandLine.add("-bsf:v");
         commandLine.add("h264_mp4toannexb");
-        commandLine.add(outputName);
+        commandLine.add(outputFile.getName());
 
         int status = 1;
 
@@ -72,7 +111,7 @@ public final class HLSTools {
                 e.printStackTrace();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.w(HLSTools.class, "toHLS", e);
         } finally {
             if (null != process) {
                 process.destroy();
@@ -82,7 +121,7 @@ public final class HLSTools {
         }
 
         if (0 != status) {
-            Logger.w(HLSTools.class, "#videoToHLS : " + status);
+            Logger.w(HLSTools.class, "#toHLS : " + status);
             return false;
         }
         else {

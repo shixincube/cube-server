@@ -27,34 +27,25 @@
 package cube.dispatcher.fileprocessor;
 
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AuthAction;
 import cube.common.action.ClientAction;
-import cube.common.action.FileStorageAction;
 import cube.common.entity.AuthDomain;
 import cube.common.entity.FileLabel;
 import cube.common.state.AuthStateCode;
 import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
-import cube.dispatcher.filestorage.FileHandler;
-import cube.dispatcher.filestorage.FileStorageCellet;
 import cube.dispatcher.filestorage.HttpClientFactory;
 import cube.dispatcher.util.HLSTools;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.util.InputStreamResponseListener;
 import org.eclipse.jetty.http.HttpStatus;
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
-import javax.servlet.ServletOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -95,6 +86,13 @@ public final class MediaFileManager {
         return MediaFileManager.instance;
     }
 
+    public void check() {
+        boolean enabled = HLSTools.checkEnabled();
+        if (!enabled) {
+            Logger.w(this.getClass(), "HLS tools is NOT enabled");
+        }
+    }
+
     public void setPerformer(Performer performer) {
         this.performer = performer;
     }
@@ -124,8 +122,10 @@ public final class MediaFileManager {
             buf.append(authDomain.getHttpEndpoint().getPort());
         }
         buf.append("/file/media/");
+        // 以文件码为路径
         buf.append(fileCode);
-        buf.append(".m3u8");
+        buf.append("/");
+        buf.append("hls.m3u8");
 
         return buf.toString();
     }
@@ -165,11 +165,27 @@ public final class MediaFileManager {
         File m3u8File = new File(path, "media.m3u8");
 
         if (!m3u8File.exists()) {
+            Logger.d(this.getClass(), "#getM3U8File - HLS : " + path.getAbsolutePath()
+                    + " - " + mediaFile.getName() + " -> " + m3u8File.getName());
             // 没有发现 HLS 流文件，生成流文件
-            HLSTools.videoToHLS(path, mediaFile.getName(), m3u8File.getName());
+            boolean result = HLSTools.toHLS(path, mediaFile, m3u8File);
+            if (!result) {
+                return null;
+            }
         }
 
-        return null;
+        return m3u8File;
+    }
+
+    /**
+     * 定位 TS 文件。
+     *
+     * @param fileCode
+     * @param filename
+     * @return
+     */
+    public File locateTransportStream(String fileCode, String filename) {
+        return Paths.get(this.mediaPath, fileCode, filename).toFile();
     }
 
     private File checkAndLoad(String tokenCode, String fileCode) {
