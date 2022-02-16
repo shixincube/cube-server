@@ -28,8 +28,8 @@ package cube.service.client.task;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.common.action.ClientAction;
 import cube.common.entity.Contact;
-import cube.service.client.Actions;
 import cube.service.client.ClientCellet;
 import cube.service.contact.ContactManager;
 
@@ -50,7 +50,7 @@ public class GetContactTask extends ClientTask {
         // 获取联系人
         Contact contact = ContactManager.getInstance().getContact(domain, contactId);
 
-        ActionDialect result = new ActionDialect(Actions.GetContact.name);
+        ActionDialect result = new ActionDialect(ClientAction.GetContact.name);
         copyNotifier(result);
         result.addParam("contact", contact.toJSON());
 

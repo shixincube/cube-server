@@ -34,6 +34,7 @@ import org.eclipse.jetty.http.HttpStatus;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -65,7 +66,7 @@ public class MediaStreamHandler extends CrossDomainHandler {
 
         String fileCode = FileUtils.extractFileName(listFile);
 
-        MediaFileManager.getInstance().checkAndLoad(token, fileCode);
+        File m3u8File = MediaFileManager.getInstance().getM3U8File(token, fileCode);
 
         this.complete();
     }

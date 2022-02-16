@@ -28,36 +28,42 @@ package cube.service.client.task;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.common.action.ClientAction;
-import cube.common.entity.Contact;
+import cube.common.state.AuthStateCode;
+import cube.service.auth.AuthService;
 import cube.service.client.ClientCellet;
-import cube.service.contact.ContactManager;
-import org.json.JSONObject;
 
 /**
- * 创建联系人任务。
+ * 获取访问令牌信息。
  */
-public class CreateContactTask extends ClientTask {
+public class GetAuthTokenTask extends ClientTask {
 
-    public CreateContactTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
+    public GetAuthTokenTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
         super(cellet, talkContext, actionDialect);
     }
 
     @Override
     public void run() {
-        String domain = actionDialect.getParamAsString("domain");
-        Long contactId = actionDialect.getParamAsLong("id");
-        String name = actionDialect.getParamAsString("name");
-        JSONObject context = actionDialect.containsParam("context")
-                ? actionDialect.getParamAsJson("context") : null;
+        String tokenCode = actionDialect.getParamAsString("tokenCode");
 
-        // 获取联系人
-        Contact contact = ContactManager.getInstance().createContact(contactId, domain, name, context);
+        ActionDialect response = new ActionDialect(ClientAction.GetAuthToken.name);
+        copyNotifier(response);
 
-        ActionDialect result = new ActionDialect(ClientAction.CreateContact.name);
-        copyNotifier(result);
-        result.addParam("contact", contact.toJSON());
+        // 获取访问令牌
+        AuthService module = this.getAuthService();
+        AuthToken authToken = module.getToken(tokenCode);
+        if (null == authToken) {
+            response.addParam("code", AuthStateCode.Failure.code);
+            cellet.speak(talkContext, response);
+            return;
+        }
 
-        cellet.speak(talkContext, result);
+        Logger.d(this.getClass(), "Gets auth token : " + tokenCode);
+
+        response.addParam("code", AuthStateCode.Ok.code);
+        response.addParam("token", authToken.toJSON());
+        cellet.speak(talkContext, response);
     }
 }

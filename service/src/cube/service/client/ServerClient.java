@@ -30,6 +30,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.common.UniqueKey;
+import cube.common.action.ClientAction;
 import cube.common.entity.Entity;
 import cube.common.entity.Message;
 import cube.service.client.event.MessageReceiveEvent;
@@ -226,7 +227,7 @@ public class ServerClient extends Entity {
             return;
         }
 
-        ActionDialect actionDialect = new ActionDialect(Actions.NotifyEvent.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.NotifyEvent.name);
         actionDialect.addParam("event", eventName);
         actionDialect.addParam("data", data);
         this.cellet.speak(this.talkContext, actionDialect);

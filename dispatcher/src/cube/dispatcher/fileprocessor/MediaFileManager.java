@@ -29,17 +29,21 @@ package cube.dispatcher.fileprocessor;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AuthAction;
+import cube.common.action.ClientAction;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.AuthDomain;
 import cube.common.entity.FileLabel;
+import cube.common.state.AuthStateCode;
 import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.filestorage.FileHandler;
 import cube.dispatcher.filestorage.FileStorageCellet;
 import cube.dispatcher.filestorage.HttpClientFactory;
+import cube.dispatcher.util.HLSTools;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.util.InputStreamResponseListener;
@@ -126,45 +130,58 @@ public final class MediaFileManager {
         return buf.toString();
     }
 
-    public FileLabel getFile(String token, String fileCode) {
-        JSONObject payload = new JSONObject();
-        try {
-            payload.put("fileCode", fileCode);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+    public FileLabel getFile(String domainName, String fileCode) {
+        ActionDialect requestDialect = new ActionDialect(ClientAction.GetFile.name);
+        requestDialect.addParam("domain", domainName);
+        requestDialect.addParam("fileCode", fileCode);
 
-        Long sn = Utils.generateSerialNumber();
-        Packet packet = new Packet(sn, FileStorageAction.GetFile.name, payload);
-        ActionDialect packetDialect = packet.toDialect();
-
-        ActionDialect dialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
+        ActionDialect dialect = this.performer.syncTransmit("Client", requestDialect);
         if (null == dialect) {
             return null;
         }
 
-        Packet responsePacket = new Packet(dialect);
-
-        int code = -1;
-        JSONObject fileLabelJson = null;
-        try {
-            code = responsePacket.data.getInt("code");
-            if (code != FileStorageStateCode.Ok.code) {
-                return null;
-            }
-
-            fileLabelJson = responsePacket.data.getJSONObject("data");
-        } catch (JSONException e) {
-            e.printStackTrace();
+        int code = dialect.getParamAsInt("code");
+        if (code != FileStorageStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getFile - Response code : " + code);
+            return null;
         }
 
-        FileLabel fileLabel = new FileLabel(fileLabelJson);
+        JSONObject data = dialect.getParamAsJson("fileLabel");
+        FileLabel fileLabel = new FileLabel(data);
         return fileLabel;
     }
 
-    public FileLabel checkAndLoad(String token, String fileCode) {
-        FileLabel fileLabel = this.getFile(token, fileCode);
+    /**
+     * 获取对应文件的 M3U8 文件。
+     *
+     * @param tokenCode
+     * @param fileCode
+     * @return
+     */
+    public File getM3U8File(String tokenCode, String fileCode) {
+        File mediaFile = this.checkAndLoad(tokenCode, fileCode);
+
+        File path = mediaFile.getParentFile();
+        File m3u8File = new File(path, "media.m3u8");
+
+        if (!m3u8File.exists()) {
+            // 没有发现 HLS 流文件，生成流文件
+            HLSTools.videoToHLS(path, mediaFile.getName(), m3u8File.getName());
+        }
+
+        return null;
+    }
+
+    private File checkAndLoad(String tokenCode, String fileCode) {
+        AuthToken authToken = this.requestAuthToken(tokenCode);
+        if (null == authToken) {
+            Logger.w(this.getClass(), "Can NOT find auth token: " + tokenCode);
+            return null;
+        }
+
+        FileLabel fileLabel = this.getFile(authToken.getDomain(), fileCode);
         if (null == fileLabel) {
+            Logger.w(this.getClass(), "Can NOT find file label: " + fileCode);
             return null;
         }
 
@@ -175,13 +192,15 @@ public final class MediaFileManager {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
 
-            File localFile = new File(path.toFile(), "media." + fileLabel.getFileType().getPreferredExtension());
-
+        File localFile = new File(path.toFile(), "media." + fileLabel.getFileType().getPreferredExtension());
+        if (!localFile.exists()) {
             InputStreamResponseListener listener = new InputStreamResponseListener();
 
             HttpClient httpClient = HttpClientFactory.getInstance().createHttpClient();
             httpClient.newRequest(fileLabel.getDirectURL())
+                    .header("Connection", "close")
                     .timeout(10, TimeUnit.SECONDS)
                     .send(listener);
 
@@ -225,7 +244,7 @@ public final class MediaFileManager {
             }
         }
 
-        return fileLabel;
+        return localFile;
     }
 
     private AuthDomain requestAuthDomain(String domainName) {
@@ -243,5 +262,20 @@ public final class MediaFileManager {
         else {
             return null;
         }
+    }
+
+    private AuthToken requestAuthToken(String tokenCode) {
+        AuthToken authToken = null;
+
+        ActionDialect requestDialect = new ActionDialect(ClientAction.GetAuthToken.name);
+        requestDialect.addParam("tokenCode", tokenCode);
+
+        ActionDialect response = this.performer.syncTransmit("Client", requestDialect);
+        if (null == response || response.getParamAsInt("code") != AuthStateCode.Ok.code) {
+            return null;
+        }
+
+        authToken = new AuthToken(response.getParamAsJson("token"));
+        return authToken;
     }
 }

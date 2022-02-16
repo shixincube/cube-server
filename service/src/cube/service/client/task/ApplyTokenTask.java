@@ -29,7 +29,7 @@ package cube.service.client.task;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.auth.AuthToken;
-import cube.service.client.Actions;
+import cube.common.action.ClientAction;
 import cube.service.client.ClientCellet;
 
 /**
@@ -61,7 +61,7 @@ public class ApplyTokenTask extends ClientTask {
             token = getAuthService().applyToken(domain, appKey, cid);
         }
 
-        ActionDialect result = new ActionDialect(Actions.ApplyToken.name);
+        ActionDialect result = new ActionDialect(ClientAction.ApplyToken.name);
         copyNotifier(result);
         result.addParam("token", token.toJSON());
 

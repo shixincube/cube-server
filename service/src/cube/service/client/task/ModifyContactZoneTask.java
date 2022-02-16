@@ -28,11 +28,11 @@ package cube.service.client.task;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.common.action.ClientAction;
 import cube.common.action.ContactAction;
 import cube.common.entity.Contact;
 import cube.common.entity.ContactZone;
 import cube.common.entity.ContactZoneParticipant;
-import cube.service.client.Actions;
 import cube.service.client.ClientCellet;
 import cube.service.contact.ContactManager;
 import org.json.JSONObject;
@@ -48,7 +48,7 @@ public class ModifyContactZoneTask extends ClientTask {
 
     @Override
     public void run() {
-        ActionDialect response = new ActionDialect(Actions.ModifyContactZone.name);
+        ActionDialect response = new ActionDialect(ClientAction.ModifyContactZone.name);
         copyNotifier(response);
 
         String domain = actionDialect.getParamAsString("domain");

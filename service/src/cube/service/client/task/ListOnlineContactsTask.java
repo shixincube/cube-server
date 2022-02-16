@@ -28,8 +28,8 @@ package cube.service.client.task;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.common.action.ClientAction;
 import cube.common.entity.Contact;
-import cube.service.client.Actions;
 import cube.service.client.ClientCellet;
 import cube.service.contact.ContactManager;
 import org.json.JSONArray;
@@ -59,7 +59,7 @@ public class ListOnlineContactsTask extends ClientTask {
         JSONObject data = new JSONObject();
         data.put("contacts", contacts);
 
-        ActionDialect result = new ActionDialect(Actions.ListOnlineContacts.name);
+        ActionDialect result = new ActionDialect(ClientAction.ListOnlineContacts.name);
         copyNotifier(result);
         result.addParam("data", data);
 

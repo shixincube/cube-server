@@ -24,16 +24,18 @@
  * SOFTWARE.
  */
 
-package cube.service.client;
+package cube.common.action;
 
 /**
  * 客户端相关操作动作描述。
  */
-public enum Actions {
+public enum ClientAction {
 
     LOGIN("Login"),
 
     LOGOUT("Logout"),
+
+    GetAuthToken("GetAuthToken"),
 
     AddEventListener("AddEventListener"),
 
@@ -75,7 +77,7 @@ public enum Actions {
 
     public final String name;
 
-    Actions(String name) {
+    ClientAction(String name) {
         this.name = name;
     }
 }

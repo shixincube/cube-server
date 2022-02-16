@@ -28,12 +28,10 @@ package cube.service.client.task;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.common.action.FileProcessorAction;
-import cube.common.action.FileStorageAction;
+import cube.common.action.ClientAction;
 import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.core.AbstractModule;
-import cube.service.client.Actions;
 import cube.service.client.ClientCellet;
 import org.json.JSONObject;
 
@@ -57,7 +55,7 @@ public class ProcessFileTask extends ClientTask {
         notification.put("domain", domain);
         notification.put("fileCode", fileCode);
 
-        ActionDialect response = new ActionDialect(Actions.ProcessFile.name);
+        ActionDialect response = new ActionDialect(ClientAction.ProcessFile.name);
         copyNotifier(response);
 
         // 获取文件存储模块

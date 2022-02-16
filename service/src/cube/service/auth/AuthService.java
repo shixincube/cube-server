@@ -30,6 +30,7 @@ import cell.core.net.Endpoint;
 import cell.util.Utils;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
+import cube.common.action.ClientAction;
 import cube.common.entity.AuthDomain;
 import cube.common.entity.IceServer;
 import cube.core.*;
@@ -324,6 +325,22 @@ public class AuthService extends AbstractModule {
 
             return null;
         }
+    }
+
+    @Override
+    public Object notify(Object data) {
+        JSONObject json = (JSONObject) data;
+        String action = json.getString("action");
+
+        if (ClientAction.GetAuthToken.name.equals(action)) {
+            String tokenCode = json.getString("token");
+            AuthToken authToken = this.getToken(tokenCode);
+            if (null != authToken) {
+                return authToken.toJSON();
+            }
+        }
+
+        return null;
     }
 
     /**

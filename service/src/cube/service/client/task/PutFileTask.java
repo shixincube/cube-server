@@ -28,10 +28,10 @@ package cube.service.client.task;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.common.action.ClientAction;
 import cube.common.action.FileStorageAction;
 import cube.common.state.FileStorageStateCode;
 import cube.core.AbstractModule;
-import cube.service.client.Actions;
 import cube.service.client.ClientCellet;
 import org.json.JSONObject;
 
@@ -52,7 +52,7 @@ public class PutFileTask extends ClientTask {
         notification.put("action", FileStorageAction.PutFile.name);
         notification.put("fileLabel", fileLabel);
 
-        ActionDialect response = new ActionDialect(Actions.PutFile.name);
+        ActionDialect response = new ActionDialect(ClientAction.PutFile.name);
         copyNotifier(response);
 
         // 获取文件存储模块

@@ -33,6 +33,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
+import cube.common.action.ClientAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.client.task.*;
@@ -80,68 +81,71 @@ public class ClientCellet extends AbstractCellet {
         ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = actionDialect.getName();
 
-        if (Actions.LOGIN.name.equals(action)) {
+        if (ClientAction.LOGIN.name.equals(action)) {
             this.executor.execute(() -> {
                 ClientManager.getInstance().login(actionDialect.getParamAsLong("id"), talkContext);
             });
         }
-        else if (Actions.PushMessage.name.equals(action)) {
+        else if (ClientAction.GetAuthToken.name.equals(action)) {
+            this.executor.execute(new GetAuthTokenTask(this, talkContext, actionDialect));
+        }
+        else if (ClientAction.PushMessage.name.equals(action)) {
             this.executor.execute(new PushMessageTask(this, talkContext, actionDialect));
         }
-        else if (Actions.GetContact.name.equals(action)) {
+        else if (ClientAction.GetContact.name.equals(action)) {
             this.executor.execute(new GetContactTask(this, talkContext, actionDialect));
         }
-        else if (Actions.GetGroup.name.equals(action)) {
+        else if (ClientAction.GetGroup.name.equals(action)) {
             this.executor.execute(new GetGroupTask(this, talkContext, actionDialect));
         }
-        else if (Actions.AddEventListener.name.equals(action)) {
+        else if (ClientAction.AddEventListener.name.equals(action)) {
             this.executor.execute(() -> {
                 ClientManager.getInstance().addEventListener(actionDialect.getParamAsLong("id"),
                         actionDialect.getParamAsString("event"),
                         actionDialect.containsParam("param") ? actionDialect.getParamAsJson("param") : null);
             });
         }
-        else if (Actions.RemoveEventListener.name.equals(action)) {
+        else if (ClientAction.RemoveEventListener.name.equals(action)) {
             this.executor.execute(() -> {
                 ClientManager.getInstance().removeEventListener(actionDialect.getParamAsLong("id"),
                         actionDialect.getParamAsString("event"),
                         actionDialect.containsParam("param") ? actionDialect.getParamAsJson("param") : null);
             });
         }
-        else if (Actions.ListOnlineContacts.name.equals(action)) {
+        else if (ClientAction.ListOnlineContacts.name.equals(action)) {
             this.executor.execute(new ListOnlineContactsTask(this, talkContext, actionDialect));
         }
-        else if (Actions.QueryMessages.name.equals(action)) {
+        else if (ClientAction.QueryMessages.name.equals(action)) {
             this.executor.execute(new QueryMessagesTask(this, talkContext, actionDialect));
         }
-        else if (Actions.MarkReadMessages.name.equals(action)) {
+        else if (ClientAction.MarkReadMessages.name.equals(action)) {
             this.executor.execute(new MarkReadTask(this, talkContext, actionDialect));
         }
-        else if (Actions.GetFile.name.equals(action)) {
+        else if (ClientAction.GetFile.name.equals(action)) {
             this.executor.execute(new GetFileTask(this, talkContext, actionDialect));
         }
-        else if (Actions.PutFile.name.equals(action)) {
+        else if (ClientAction.PutFile.name.equals(action)) {
             this.executor.execute(new PutFileTask(this, talkContext, actionDialect));
         }
-        else if (Actions.FindFile.name.equals(action)) {
+        else if (ClientAction.FindFile.name.equals(action)) {
             this.executor.execute(new FindFileTask(this, talkContext, actionDialect));
         }
-        else if (Actions.UpdateContact.name.equals(action)) {
+        else if (ClientAction.UpdateContact.name.equals(action)) {
             this.executor.execute(new UpdateContactTask(this, talkContext, actionDialect));
         }
-        else if (Actions.ModifyContactZone.name.equals(action)) {
+        else if (ClientAction.ModifyContactZone.name.equals(action)) {
             this.executor.execute(new ModifyContactZoneTask(this, talkContext, actionDialect));
         }
-        else if (Actions.ApplyToken.name.equals(action)) {
+        else if (ClientAction.ApplyToken.name.equals(action)) {
             this.executor.execute(new ApplyTokenTask(this, talkContext, actionDialect));
         }
-        else if (Actions.CreateContact.name.equals(action)) {
+        else if (ClientAction.CreateContact.name.equals(action)) {
             this.executor.execute(new CreateContactTask(this, talkContext, actionDialect));
         }
-        else if (Actions.CreateDomainApp.name.equals(action)) {
+        else if (ClientAction.CreateDomainApp.name.equals(action)) {
             this.executor.execute(new CreateDomainAppTask(this, talkContext, actionDialect));
         }
-        else if (Actions.ProcessFile.name.equals(action)) {
+        else if (ClientAction.ProcessFile.name.equals(action)) {
             this.executor.execute(new ProcessFileTask(this, talkContext, actionDialect));
         }
     }

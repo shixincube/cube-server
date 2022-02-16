@@ -69,6 +69,9 @@ public abstract class ClientTask implements Runnable {
         if (actionDialect.containsParam("_notifier")) {
             destination.addParam("_notifier", actionDialect.getParamAsJson("_notifier"));
         }
+        else if (actionDialect.containsParam("_performer")) {
+            destination.addParam("_performer", actionDialect.getParamAsJson("_performer"));
+        }
     }
 
     protected AuthService getAuthService() {

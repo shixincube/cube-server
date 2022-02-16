@@ -28,13 +28,11 @@ package cube.service.client.task;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.common.action.ClientAction;
 import cube.common.action.FileStorageAction;
-import cube.common.entity.Contact;
 import cube.common.state.FileStorageStateCode;
 import cube.core.AbstractModule;
-import cube.service.client.Actions;
 import cube.service.client.ClientCellet;
-import cube.service.contact.ContactManager;
 import org.json.JSONObject;
 
 /**
@@ -62,7 +60,7 @@ public class FindFileTask extends ClientTask {
         notification.put("lastModified", lastModified);
         notification.put("fileSize", fileSize);
 
-        ActionDialect response = new ActionDialect(Actions.FindFile.name);
+        ActionDialect response = new ActionDialect(ClientAction.FindFile.name);
         copyNotifier(response);
 
         // 获取文件存储模块

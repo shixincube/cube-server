@@ -28,9 +28,9 @@ package cube.service.client.task;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.common.action.ClientAction;
 import cube.common.action.MessagingAction;
 import cube.core.AbstractModule;
-import cube.service.client.Actions;
 import cube.service.client.ClientCellet;
 import org.json.JSONObject;
 
@@ -45,7 +45,7 @@ public class PushMessageTask extends ClientTask {
 
     @Override
     public void run() {
-        ActionDialect response = new ActionDialect(Actions.PushMessage.name);
+        ActionDialect response = new ActionDialect(ClientAction.PushMessage.name);
         copyNotifier(response);
 
         AbstractModule module = this.getMessagingModule();

@@ -124,6 +124,8 @@ public class DispatcherListener implements CellListener {
         String celletsConfig = properties.getProperty("cellets");
         String[] celletNames = celletsConfig.split(",");
         this.cellets = new ArrayList<>(celletNames.length);
+        // 默认都允许访问 Client
+        this.cellets.add("Client");
         for (String cellet : celletNames) {
             this.cellets.add(cellet.trim());
         }

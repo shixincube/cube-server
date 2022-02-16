@@ -28,9 +28,8 @@ package cube.service.client.task;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.common.entity.Contact;
+import cube.common.action.ClientAction;
 import cube.common.entity.Group;
-import cube.service.client.Actions;
 import cube.service.client.ClientCellet;
 import cube.service.contact.ContactManager;
 
@@ -51,7 +50,7 @@ public class GetGroupTask extends ClientTask {
         // 获取联系人
         Group group = ContactManager.getInstance().getGroup(groupId, domain);
 
-        ActionDialect result = new ActionDialect(Actions.GetGroup.name);
+        ActionDialect result = new ActionDialect(ClientAction.GetGroup.name);
         copyNotifier(result);
 
         if (null != group) {

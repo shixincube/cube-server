@@ -29,9 +29,9 @@ package cube.service.client.task;
 import cell.core.net.Endpoint;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.common.action.ClientAction;
 import cube.common.entity.AuthDomain;
 import cube.common.entity.IceServer;
-import cube.service.client.Actions;
 import cube.service.client.ClientCellet;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -73,7 +73,7 @@ public class CreateDomainAppTask extends ClientTask {
         AuthDomain authDomain = getAuthService().createDomainApp(domainName, appKey, appId,
                  mainEndpoint, httpEndpoint, httpsEndpoint, iceServers);
 
-        ActionDialect result = new ActionDialect(Actions.CreateDomainApp.name);
+        ActionDialect result = new ActionDialect(ClientAction.CreateDomainApp.name);
         copyNotifier(result);
         result.addParam("authDomain", authDomain.toJSON());
 
