@@ -238,7 +238,7 @@ public class AccountStorage extends AbstractStorage {
         long registration = System.currentTimeMillis();
         String nickname = "cube-" + Utils.randomString(8).toLowerCase();
 
-        boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[]{
+        boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[] {
                 new StorageField("id", LiteralBase.LONG, accountId),
                 new StorageField("account", LiteralBase.STRING, phoneNumber),
                 new StorageField("phone", LiteralBase.STRING, phoneNumber),
@@ -257,6 +257,31 @@ public class AccountStorage extends AbstractStorage {
         account.region = "--";
         account.department = "--";
         return account;
+    }
+
+    /**
+     * 写入账号数据。
+     *
+     * @param account
+     * @return
+     */
+    public Account writeAccount(Account account) {
+        if (this.existsAccountId(account.id)) {
+            return account;
+        }
+
+        boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[] {
+                new StorageField("id", account.id),
+                new StorageField("account", account.account),
+                new StorageField("phone", account.phone),
+                new StorageField("password", account.password),
+                new StorageField("name", account.name),
+                new StorageField("avatar", account.avatar),
+                new StorageField("registration", account.registration),
+                new StorageField("region", account.region),
+                new StorageField("department", account.department)
+        });
+        return result ? account : null;
     }
 
     public void updateAccount(Long accountId, String nickname, String avatar) {

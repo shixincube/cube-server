@@ -95,7 +95,6 @@ public class Account implements JSONable {
         json.put("id", this.id);
 //        json.put("account", this.account);
         json.put("phone", this.phone);
-//        json.put("password", this.password);
         json.put("name", this.name);
         json.put("avatar", this.avatar);
         json.put("state", this.state);

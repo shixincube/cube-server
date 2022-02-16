@@ -87,6 +87,12 @@ public class AccountManager extends TimerTask {
             public void run() {
             if (null != accountStorage) {
                 accountStorage.open();
+
+                BuildInData buildInData = new BuildInData();
+                for (Account account : buildInData.accountList) {
+                    accountStorage.writeAccount(account);
+                }
+                buildInData = null;
             }
 
             initializing = false;
@@ -269,6 +275,16 @@ public class AccountManager extends TimerTask {
         // TODO 修改 Token 的失效时间
 
         return StateCode.Success;
+    }
+
+    /**
+     * 注册账号。
+     *
+     * @param account
+     * @return
+     */
+    public Account register(Account account) {
+        return this.accountStorage.writeAccount(account);
     }
 
     /**
