@@ -41,12 +41,26 @@ public class TimeDuration {
 
     public final int milliseconds;
 
+    public TimeDuration(int hours, int minutes, int seconds) {
+        this(0, hours, minutes, seconds, 0);
+    }
+
     public TimeDuration(int days, int hours, int minutes, int seconds, int milliseconds) {
         this.days = days;
         this.hours = hours;
         this.minutes = minutes;
         this.seconds = seconds;
         this.milliseconds = milliseconds;
+    }
+
+    public String formatHMS() {
+        StringBuilder buf = new StringBuilder();
+        buf.append(this.hours < 10 ? "0" + this.hours : this.hours);
+        buf.append(":");
+        buf.append(this.minutes < 10 ? "0" + this.minutes : this.minutes);
+        buf.append(":");
+        buf.append(this.seconds < 10 ? "0" + this.seconds : this.seconds);
+        return buf.toString();
     }
 
     @Override

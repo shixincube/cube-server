@@ -1039,6 +1039,7 @@ public enum FileType {
     AVI(new String[]{ "avi" }, "video/x-msvideo"),
     MOVIE(new String[]{ "movie" }, "video/x-sgi-movie"),
     SMV(new String[]{ "smv" }, "video/x-smv"),
+    TS(new String[]{ "ts" }, "video/MP2T"),
     ICE(new String[]{ "ice" }, "x-conference/x-cooltalk"),
 
     // 以上代码为机器自动生成

@@ -97,7 +97,7 @@ public final class ImageTools {
 
             Process process = null;
             BufferedReader stdInput = null;
-            int status = 1;
+            int status = -1;
 
             try {
                 // 启动进程

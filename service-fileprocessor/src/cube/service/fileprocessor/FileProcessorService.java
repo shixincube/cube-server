@@ -37,6 +37,8 @@ import cube.core.Kernel;
 import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.OCRProcessor;
 import cube.service.fileprocessor.processor.OCRProcessorContext;
+import cube.service.fileprocessor.processor.SnapshotContext;
+import cube.service.fileprocessor.processor.SnapshotFrameProcessor;
 import cube.service.filestorage.FileStorageService;
 import cube.util.ConfigUtils;
 import cube.util.FileType;
@@ -384,6 +386,7 @@ public class FileProcessorService extends AbstractModule {
     }
 
     /**
+     * 创建指定的 OCR 处理器。
      *
      * @param domainName
      * @param fileCode
@@ -393,6 +396,12 @@ public class FileProcessorService extends AbstractModule {
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
         FileLabel fileLabel = storageService.getFile(domainName, fileCode);
         if (null == fileLabel) {
+            return null;
+        }
+
+        if (!FileUtils.isImageType(fileLabel.getFileType())) {
+            // 指定的文件不是图片格式
+            Logger.w(this.getClass(), "File is NOT image : " + fileLabel.getFileName());
             return null;
         }
 
@@ -412,6 +421,46 @@ public class FileProcessorService extends AbstractModule {
         ocrProcessor.setInputImage(imageFile.toFile());
 
         return ocrProcessor;
+    }
+
+    /**
+     * 创建视频帧快照处理器。
+     *
+     * @param domainName
+     * @param fileCode
+     * @return
+     */
+    public SnapshotFrameProcessor createSnapshotFrameProcessor(String domainName, String fileCode) {
+        FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+        FileLabel fileLabel = storageService.getFile(domainName, fileCode);
+        if (null == fileLabel) {
+            return null;
+        }
+
+        if (!FileUtils.isVideoType(fileLabel.getFileType())) {
+            // 指定的文件不是视频文件
+            Logger.w(this.getClass(), "File is NOT video : " + fileLabel.getFileName());
+            return null;
+        }
+
+        Path videoFile = Paths.get(this.workPath.toString(), fileCode + "." + fileLabel.getFileType().getPreferredExtension());
+
+        if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
+            String path = storageService.loadFileToDisk(domainName, fileCode);
+            if (null == path) {
+                return null;
+            }
+
+            try {
+                Files.copy(Paths.get(path), videoFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        SnapshotFrameProcessor processor = new SnapshotFrameProcessor(this.workPath);
+        processor.setInputVideoFile(videoFile.toFile(), fileLabel);
+        return processor;
     }
 
     private boolean existsFile(String fileCode, String fileType) {
@@ -435,6 +484,17 @@ public class FileProcessorService extends AbstractModule {
                 OCRProcessor processor = createOCRProcessor(domain, fileCode);
                 if (null != processor) {
                     OCRProcessorContext context = new OCRProcessorContext();
+                    processor.go(context);
+                    return context.toJSON();
+                }
+            }
+            else if (FileProcessorAction.Snapshot.name.equals(action)) {
+                String domain = data.getString("domain");
+                String fileCode = data.getString("fileCode");
+                // 创建处理器
+                SnapshotFrameProcessor processor = createSnapshotFrameProcessor(domain, fileCode);
+                if (null != processor) {
+                    SnapshotContext context = new SnapshotContext();
                     processor.go(context);
                     return context.toJSON();
                 }

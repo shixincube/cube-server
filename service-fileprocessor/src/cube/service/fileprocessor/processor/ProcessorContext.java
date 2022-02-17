@@ -27,6 +27,12 @@
 package cube.service.fileprocessor.processor;
 
 import cube.common.JSONable;
+import cube.common.action.FileProcessorAction;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 处理器上下文。
@@ -34,6 +40,8 @@ import cube.common.JSONable;
 public abstract class ProcessorContext implements JSONable {
 
     private boolean successful = false;
+
+    private List<String> stdOutput;
 
     protected ProcessorContext() {
     }
@@ -44,5 +52,22 @@ public abstract class ProcessorContext implements JSONable {
 
     public boolean isSuccessful() {
         return this.successful;
+    }
+
+    public synchronized void appendStdOutput(String line) {
+        if (null == this.stdOutput) {
+            this.stdOutput = new ArrayList<>();
+        }
+
+        this.stdOutput.add(line);
+    }
+
+    public JSONObject toJSON(String process) {
+        JSONObject json = new JSONObject();
+
+        json.put("process", process);
+        json.put("success", this.successful);
+
+        return json;
     }
 }

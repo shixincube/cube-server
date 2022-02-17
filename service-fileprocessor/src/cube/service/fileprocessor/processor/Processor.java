@@ -26,6 +26,12 @@
 
 package cube.service.fileprocessor.processor;
 
+import cell.util.log.Logger;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 
 /**
@@ -41,6 +47,33 @@ public abstract class Processor {
 
     public Path getWorkPath() {
         return this.workPath;
+    }
+
+    public Runnable buildInputStreamWorker(InputStream inputStream, ProcessorContext context) {
+        Runnable worker = new Runnable() {
+            @Override
+            public void run() {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                String line = null;
+                try {
+                    while ((line = reader.readLine()) != null) {
+                        context.appendStdOutput(line);
+                    }
+                } catch (Exception e) {
+                    Logger.w(Processor.class, "#buildInputStreamWorker", e);
+                } finally {
+                    if (null != reader) {
+                        try {
+                            reader.close();
+                        } catch (IOException e) {
+                            // Nothing
+                        }
+                    }
+                }
+            }
+        };
+
+        return worker;
     }
 
     abstract void go(ProcessorContext context);

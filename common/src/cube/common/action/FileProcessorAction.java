@@ -44,6 +44,11 @@ public enum FileProcessorAction {
     OCR("ocr"),
 
     /**
+     * 视频快照。
+     */
+    Snapshot("snapshot"),
+
+    /**
      * 对象检测。
      */
     DetectObject("detectObject"),

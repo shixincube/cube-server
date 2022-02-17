@@ -136,10 +136,7 @@ public class OCRProcessorContext extends ProcessorContext {
 
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-
-        json.put("process", FileProcessorAction.OCR.name);
-        json.put("success", this.isSuccessful());
+        JSONObject json = super.toJSON(FileProcessorAction.OCR.name);
 
         JSONArray text = new JSONArray();
         for (String line : this.resultText) {

@@ -48,7 +48,7 @@ public abstract class FFmpeg extends Processor {
         return this.running.get();
     }
 
-    protected boolean call(List<String> params) {
+    protected boolean call(List<String> params, ProcessorContext context) {
         List<String> commandLine = new ArrayList<>();
         commandLine.add("ffmpeg");
         commandLine.addAll(params);
@@ -64,6 +64,9 @@ public abstract class FFmpeg extends Processor {
             process = pb.start();
 
             this.running.set(true);
+
+            Runnable worker = this.buildInputStreamWorker(process.getErrorStream(), context);
+            worker.run();
 
             try {
                 status = process.waitFor();

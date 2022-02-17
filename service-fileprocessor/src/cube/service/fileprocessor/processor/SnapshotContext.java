@@ -26,12 +26,46 @@
 
 package cube.service.fileprocessor.processor;
 
+import cube.common.action.FileProcessorAction;
+import cube.common.entity.FileLabel;
+import cube.util.FileType;
+import cube.util.TimeDuration;
+import org.json.JSONObject;
+
 /**
- * 视频帧处理器。
+ * 快照设置。
  */
-public class VideoFrameProcessor {
+public class SnapshotContext extends ProcessorContext {
 
-    public VideoFrameProcessor() {
+    public TimeDuration startTime;
 
+    public double rate;
+
+    public FileType outputType;
+
+    public FileLabel videoFile;
+
+    public SnapshotContext() {
+        this.startTime = new TimeDuration(0, 0, 0);
+        this.rate = 0.5;
+        this.outputType = FileType.JPEG;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = this.toCompactJSON();
+
+        if (null != this.videoFile) {
+            json.put("video", this.videoFile.toCompactJSON());
+        }
+
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toJSON(FileProcessorAction.Snapshot.name);
+        json.put("start", this.startTime.formatHMS());
+        return json;
     }
 }

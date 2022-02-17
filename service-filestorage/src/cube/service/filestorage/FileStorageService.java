@@ -74,7 +74,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 文件大小门限。
      */
-    private long fileSizeThreshold = 20 * 1024 * 1024;
+    private long fileSizeThreshold = 500 * 1024 * 1024;
 
     /**
      * 文件系统。
@@ -441,7 +441,12 @@ public class FileStorageService extends AbstractModule {
      */
     public String loadFileToDisk(String domainName, String fileCode) {
         FileLabel fileLabel = this.getFile(domainName, fileCode);
-        if (null == fileLabel || fileLabel.getFileSize() > this.fileSizeThreshold) {
+        if (null == fileLabel) {
+            return null;
+        }
+
+        if (fileLabel.getFileSize() > this.fileSizeThreshold) {
+            Logger.w(this.getClass(), "#loadFileToDisk - File size is greater than threshold : " + fileLabel.getFileSize());
             return null;
         }
 

@@ -309,6 +309,27 @@ public final class FileUtils {
     }
 
     /**
+     * 是否是常用的视频类型。
+     *
+     * @param fileType
+     * @return
+     */
+    public static boolean isVideoType(FileType fileType) {
+        switch (fileType) {
+            case MP4:
+            case MPG4:
+            case MPG:
+            case MPEG:
+            case AVI:
+            case MKV:
+            case TS:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
      * 优化文件路径显示。
      *
      * @param absolutePath
