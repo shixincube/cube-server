@@ -26,58 +26,32 @@
 
 package cube.service.fileprocessor.processor;
 
-import cell.util.log.Logger;
-import cube.common.entity.FileLabel;
-import cube.util.FileUtils;
-
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * OCR 处理器。
+ * FFMPEG 工具。
  */
-public class OCRProcessor extends OpticalCharacterRecognition {
+public abstract class FFmpeg extends Processor {
 
-    private FileLabel imageFile;
+    private AtomicBoolean running;
 
-    public OCRProcessor(Path workPath) {
+    public FFmpeg(Path workPath) {
         super(workPath);
+        this.running = new AtomicBoolean(false);
     }
 
-    public void setImageFile(FileLabel imageFile) {
-        this.imageFile = imageFile;
+    public boolean isRunning() {
+        return this.running.get();
     }
 
-    private boolean check() {
-        if (null == this.inputImage) {
-            return false;
-        }
-
-        if (null == this.outputText) {
-            String name = FileUtils.extractFileName(this.inputImage.getName());
-            this.outputText = new File(this.getWorkPath().toString(), name);
-        }
-
-        return true;
-    }
-
-    @Override
-    public void go(ProcessorContext context) {
-        if (!this.check()) {
-            Logger.w(OCRProcessor.class, "Check failed");
-            return;
-        }
-
+    protected boolean call(List<String> params) {
         List<String> commandLine = new ArrayList<>();
-        commandLine.add("tesseract");
-        commandLine.add(this.inputImage.getAbsolutePath());
-        commandLine.add(this.outputText.getAbsolutePath());
-        commandLine.add("-l");
-        commandLine.add(this.language);
-        commandLine.add("hocr");
+        commandLine.add("ffmpeg");
+        commandLine.addAll(params);
 
         int status = -1;
 
@@ -88,6 +62,8 @@ public class OCRProcessor extends OpticalCharacterRecognition {
 
         try {
             process = pb.start();
+
+            this.running.set(true);
 
             try {
                 status = process.waitFor();
@@ -104,13 +80,6 @@ public class OCRProcessor extends OpticalCharacterRecognition {
             process = null;
         }
 
-        if (0 == status || 1 == status) {
-            context.setSuccessful(true);
-            ((OCRProcessorContext) context).setImageFile(this.imageFile);
-            ((OCRProcessorContext) context).readResult(this.outputText);
-        }
-        else {
-            Logger.w(OCRProcessor.class, "Process error: " + status);
-        }
+        return (0 == status || 1 == status);
     }
 }

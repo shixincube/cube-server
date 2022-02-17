@@ -80,7 +80,7 @@ set _EXECJAVA=%_RUNJAVA%
 set MAINCLASS=cell.carpet.Cell
 set ACTION=start -console false
 set JAVA_OPTS="-server"
-REM set JAVA_OPTS="-server -verbose:gc -Xms1024m -Xmx1024m -Xmn384m -Xss256k -XX:SurvivorRatio=8 -XX:LargePageSizeInBytes=128m -XX:MaxTenuringThreshold=7 -XX:GCTimeRatio=19 -XX:+DisableExplicitGC -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:-CMSParallelRemarkEnabled -XX:CMSInitiatingOccupancyFraction=70 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:+PrintClassHistogram -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintHeapAtGC -Xloggc:logs/gc.log"
+REM set JAVA_OPTS="-server -verbose:gc -Xms1024m -Xmx1024m -Xmn384m -Xss256k -XX:SurvivorRatio=8 -XX:LargePageSizeInBytes=128m -XX:MaxTenuringThreshold=7 -XX:GCTimeRatio=19 -XX:+DisableExplicitGC -XX:+CMSClassUnloadingEnabled -XX:-CMSParallelRemarkEnabled -XX:CMSInitiatingOccupancyFraction=70 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:+PrintClassHistogram -XX:+PrintGCDetails -Xloggc:logs/gc.log"
 
 if ""%1"" == ""start"" goto doStart
 if ""%1"" == ""stop"" goto doStop

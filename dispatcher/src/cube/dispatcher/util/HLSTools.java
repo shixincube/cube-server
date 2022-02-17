@@ -51,7 +51,7 @@ public final class HLSTools {
         commandLine.add("ffmpeg");
         commandLine.add("-version");
 
-        int status = 1;
+        int status = -1;
 
         Process process = null;
         ProcessBuilder pb = new ProcessBuilder(commandLine);
@@ -74,7 +74,7 @@ public final class HLSTools {
             process = null;
         }
 
-        return (0 == status);
+        return (0 == status || 1 == status);
     }
 
     public static boolean toHLS(File workPath, File inputFile, File outputFile) {
@@ -95,7 +95,7 @@ public final class HLSTools {
         commandLine.add("h264_mp4toannexb");
         commandLine.add(outputFile.getName());
 
-        int status = 1;
+        int status = -1;
 
         Process process = null;
         ProcessBuilder pb = new ProcessBuilder(commandLine);
@@ -120,12 +120,12 @@ public final class HLSTools {
             process = null;
         }
 
-        if (0 != status) {
-            Logger.w(HLSTools.class, "#toHLS : " + status);
-            return false;
+        if (0 == status || 1 == status) {
+            return true;
         }
         else {
-            return true;
+            Logger.w(HLSTools.class, "#toHLS : " + status);
+            return false;
         }
     }
 }
