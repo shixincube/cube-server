@@ -72,6 +72,8 @@ public class SnapshotFrameProcessor extends FFmpeg {
             }
         }
 
+        snapshotContext.videoFile = this.videoFileLabel;
+
         ArrayList<String> params = new ArrayList<>();
         params.add("-ss");
         params.add(snapshotContext.startTime.formatHMS());
@@ -90,7 +92,6 @@ public class SnapshotFrameProcessor extends FFmpeg {
             return;
         }
 
-        snapshotContext.videoFile = this.videoFileLabel;
         context.setSuccessful(true);
     }
 }

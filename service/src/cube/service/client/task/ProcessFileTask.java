@@ -26,14 +26,21 @@
 
 package cube.service.client.task;
 
+import cell.core.talk.PrimitiveOutputStream;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.common.action.ClientAction;
+import cube.common.entity.ProcessResultStream;
 import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.core.AbstractModule;
 import cube.service.client.ClientCellet;
 import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
  * 处理文件任务。
@@ -73,8 +80,57 @@ public class ProcessFileTask extends ClientTask {
             return;
         }
 
+        // 是否需要回传文件
+        JSONObject responseData = (JSONObject) result;
+        if (responseData.has("stream")) {
+            // 需要回送流
+            ProcessResultStream prs = new ProcessResultStream(responseData.getJSONObject("stream"));
+            this.transmitFile(prs.fullPath, prs.streamName, true);
+        }
+
         response.addParam("code", FileStorageStateCode.Ok.code);
-        response.addParam("result", (JSONObject) result);
+        response.addParam("result", responseData);
         cellet.speak(talkContext, response);
+    }
+
+    private void transmitFile(String fullPath, String streamName, boolean deleteAfterCompletion) {
+        final PrimitiveOutputStream stream = cellet.speakStream(talkContext, streamName);
+        (new Thread() {
+            @Override
+            public void run() {
+                FileInputStream fis = null;
+
+                File file = new File(fullPath);
+
+                try {
+                    fis = new FileInputStream(file);
+                    byte[] bytes = new byte[4096];
+                    int length = 0;
+                    while ((length = fis.read(bytes)) > 0) {
+                        stream.write(bytes, 0, length);
+                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (null != fis) {
+                        try {
+                            fis.close();
+                        } catch (IOException e) {
+                        }
+                    }
+
+                    try {
+                        stream.close();
+                    } catch (IOException e) {
+                    }
+                }
+
+                if (deleteAfterCompletion) {
+                    file.delete();
+                }
+            }
+        }).start();
     }
 }
