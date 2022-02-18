@@ -31,6 +31,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.common.UniqueKey;
 import cube.common.action.ClientAction;
+import cube.common.entity.Client;
 import cube.common.entity.Entity;
 import cube.common.entity.Message;
 import cube.service.client.event.MessageReceiveEvent;
@@ -47,6 +48,8 @@ public class ServerClient extends Entity {
 
     private Cellet cellet;
 
+    protected Client desc;
+
     protected TalkContext talkContext;
 
     protected List<String> events;
@@ -59,10 +62,11 @@ public class ServerClient extends Entity {
 
     private Timer disableTimer;
 
-    public ServerClient(Long id, Cellet cellet, TalkContext talkContext) {
+    public ServerClient(Long id, Cellet cellet, TalkContext talkContext, Client desc) {
         super(id);
         this.cellet = cellet;
         this.talkContext = talkContext;
+        this.desc = desc;
         this.events = new ArrayList<>();
         this.messageReceiveEvents = new ConcurrentHashMap<>();
         this.messageSendEvents = new ConcurrentHashMap<>();

@@ -28,8 +28,10 @@ package cube.service.client;
 
 import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
+import cube.common.entity.Client;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
 import cube.common.entity.Message;
@@ -38,11 +40,14 @@ import cube.core.Kernel;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
+import cube.service.auth.AuthService;
 import cube.service.client.event.MessageReceiveEvent;
 import cube.service.client.event.MessageSendEvent;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.contact.ContactPluginContext;
+import cube.storage.StorageType;
+import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,6 +72,8 @@ public final class ClientManager {
 
     private ConcurrentMap<Long, ServerClient> talkContextIndex;
 
+    private ClientStorage clientStorage;
+
     private ClientManager() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(2);
         this.clientMap = new ConcurrentHashMap<>();
@@ -86,9 +93,23 @@ public final class ClientManager {
     public void start(Cellet cellet, Kernel kernel) {
         this.cellet = cellet;
 
+        // 使用授权模块的配置
+        JSONObject config = ConfigUtils.readStorageConfig().getJSONObject(AuthService.NAME);
+        if (config.getString("type").equalsIgnoreCase("SQLite")) {
+            this.clientStorage = new ClientStorage(StorageType.SQLite, config);
+        }
+        else {
+            this.clientStorage = new ClientStorage(StorageType.MySQL, config);
+        }
+
+        this.clientStorage.open();
+
         (new Thread() {
             @Override
             public void run() {
+                // 自检数据表
+                clientStorage.execSelfChecking(null);
+
                 int count = 10;
 
                 while (null == ContactManager.getInstance().getPluginSystem()) {
@@ -131,6 +152,17 @@ public final class ClientManager {
                 }
             }
         }).start();
+    }
+
+    /**
+     * 停止。
+     */
+    public void stop() {
+        if (null != this.clientStorage) {
+            this.clientStorage.close();
+        }
+
+        this.executor.shutdown();
     }
 
     private void setupContactPlugin(PluginSystem<?> pluginSystem) {
@@ -200,14 +232,25 @@ public final class ClientManager {
     }
 
     /**
+     * 客户端登录。
      *
-     * @param id
+     * @param actionDialect
      * @param talkContext
      */
-    public void login(Long id, TalkContext talkContext) {
+    public boolean login(ActionDialect actionDialect, TalkContext talkContext) {
+        Long id = actionDialect.getParamAsLong("id");
+        String name = actionDialect.getParamAsString("name");
+        String password = actionDialect.getParamAsString("password");
+
+        Client desc = this.clientStorage.getClient(name, password);
+        if (null == desc) {
+            // 没有找到客户端
+            return false;
+        }
+
         ServerClient client = this.clientMap.get(id);
         if (null == client) {
-            client = new ServerClient(id, this.cellet, talkContext);
+            client = new ServerClient(id, this.cellet, talkContext, desc);
             this.clientMap.put(id, client);
         }
         else {
@@ -215,9 +258,11 @@ public final class ClientManager {
         }
 
         this.talkContextIndex.put(talkContext.getSessionId(), client);
+        return true;
     }
 
     /**
+     * 客户端连接断开。
      *
      * @param talkContext
      */

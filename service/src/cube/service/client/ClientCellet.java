@@ -68,6 +68,8 @@ public class ClientCellet extends AbstractCellet {
     @Override
     public void uninstall() {
         this.executor.shutdown();
+
+        ClientManager.getInstance().stop();
     }
 
     public Kernel getKernel() {
@@ -83,7 +85,11 @@ public class ClientCellet extends AbstractCellet {
 
         if (ClientAction.LOGIN.name.equals(action)) {
             this.executor.execute(() -> {
-                ClientManager.getInstance().login(actionDialect.getParamAsLong("id"), talkContext);
+                boolean result = ClientManager.getInstance().login(actionDialect, talkContext);
+                if (!result) {
+                    // 关闭不合法的客户端
+                    hangup(talkContext, false);
+                }
             });
         }
         else if (ClientAction.GetAuthToken.name.equals(action)) {
