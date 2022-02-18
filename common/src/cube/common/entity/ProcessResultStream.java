@@ -42,9 +42,12 @@ public class ProcessResultStream implements JSONable {
 
     public String fileName;
 
+    public long fileSize;
+
     public ProcessResultStream(File file) {
         this.fullPath = file.getAbsolutePath();
         this.fileName = file.getName();
+        this.fileSize = file.length();
         this.streamName = this.fileName;
     }
 
@@ -52,6 +55,7 @@ public class ProcessResultStream implements JSONable {
         this.fullPath = json.getString("fullPath");
         this.streamName = json.getString("streamName");
         this.fileName = json.getString("fileName");
+        this.fileSize = json.getLong("fileSize");
     }
 
     @Override
@@ -60,6 +64,7 @@ public class ProcessResultStream implements JSONable {
         json.put("fullPath", this.fullPath);
         json.put("streamName", this.streamName);
         json.put("fileName", this.fileName);
+        json.put("fileSize", this.fileSize);
         return json;
     }
 

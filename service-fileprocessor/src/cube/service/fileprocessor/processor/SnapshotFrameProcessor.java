@@ -27,9 +27,15 @@
 package cube.service.fileprocessor.processor;
 
 import cell.util.log.Logger;
+import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
+import cube.common.entity.ProcessResultStream;
+import cube.util.FileUtils;
+import cube.util.ZipUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,6 +58,42 @@ public class SnapshotFrameProcessor extends FFmpeg {
     public void setInputVideoFile(File inputVideoFile, FileLabel fileLabel) {
         this.inputVideoFile = inputVideoFile;
         this.videoFileLabel = fileLabel;
+    }
+
+    private void postHandle(File path, SnapshotContext snapshotContext) {
+        if (!path.isDirectory()) {
+            return;
+        }
+
+        File outputFile = new File(path,
+                FileProcessorAction.Snapshot.name.toLowerCase() + "_"
+                        + FileUtils.extractFileName(this.videoFileLabel.getFileName()) + ".zip");
+        if (outputFile.exists()) {
+            outputFile.delete();
+        }
+
+        File[] files = path.listFiles();
+        if (null == files || files.length == 0) {
+            return;
+        }
+
+        ArrayList<File> list = new ArrayList<>();
+        for (File file : files) {
+            if (file.isFile() && !file.isHidden()) {
+                list.add(file);
+            }
+        }
+
+        try {
+            ZipUtils.toZip(list, new FileOutputStream(outputFile));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        if (outputFile.exists()) {
+            ProcessResultStream resultStream = new ProcessResultStream(outputFile);
+            snapshotContext.setResultStream(resultStream);
+        }
     }
 
     @Override
@@ -93,5 +135,9 @@ public class SnapshotFrameProcessor extends FFmpeg {
         }
 
         context.setSuccessful(true);
+
+        // 后处理
+        File path = new File(getWorkPath().toFile(), this.videoFileLabel.getFileCode());
+        this.postHandle(path, snapshotContext);
     }
 }

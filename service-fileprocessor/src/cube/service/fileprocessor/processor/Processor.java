@@ -27,11 +27,10 @@
 package cube.service.fileprocessor.processor;
 
 import cell.util.log.Logger;
+import cube.common.entity.FileLabel;
+import cube.common.entity.ProcessResultStream;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.file.Path;
 
 /**
@@ -49,7 +48,7 @@ public abstract class Processor {
         return this.workPath;
     }
 
-    public Runnable buildInputStreamWorker(InputStream inputStream, ProcessorContext context) {
+    protected Runnable buildInputStreamWorker(InputStream inputStream, ProcessorContext context) {
         Runnable worker = new Runnable() {
             @Override
             public void run() {

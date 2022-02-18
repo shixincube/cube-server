@@ -65,7 +65,9 @@ public class SnapshotContext extends ProcessorContext {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = super.toJSON(FileProcessorAction.Snapshot.name);
+
         json.put("start", this.startTime.formatHMS());
+
         return json;
     }
 }

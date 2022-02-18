@@ -29,6 +29,7 @@ package cube.service.client.task;
 import cell.core.talk.PrimitiveOutputStream;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.common.action.ClientAction;
 import cube.common.entity.ProcessResultStream;
 import cube.common.state.FileProcessorStateCode;
@@ -85,7 +86,17 @@ public class ProcessFileTask extends ClientTask {
         if (responseData.has("stream")) {
             // 需要回送流
             ProcessResultStream prs = new ProcessResultStream(responseData.getJSONObject("stream"));
+
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#run - transmit stream to client : " + prs.streamName);
+            }
+
             this.transmitFile(prs.fullPath, prs.streamName, true);
+        }
+        else {
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#run - No stream : " + fileCode);
+            }
         }
 
         response.addParam("code", FileStorageStateCode.Ok.code);
@@ -109,6 +120,8 @@ public class ProcessFileTask extends ClientTask {
                     while ((length = fis.read(bytes)) > 0) {
                         stream.write(bytes, 0, length);
                     }
+
+                    stream.flush();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
