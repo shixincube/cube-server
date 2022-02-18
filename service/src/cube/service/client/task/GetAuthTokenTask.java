@@ -46,14 +46,23 @@ public class GetAuthTokenTask extends ClientTask {
 
     @Override
     public void run() {
-        String tokenCode = actionDialect.getParamAsString("tokenCode");
+        String tokenCode = null;
+        Long contactId = null;
+
+        if (actionDialect.containsParam("tokenCode")) {
+            tokenCode = actionDialect.getParamAsString("tokenCode");
+        }
+        else if (actionDialect.containsParam("contactId")) {
+            contactId = actionDialect.getParamAsLong("contactId");
+        }
 
         ActionDialect response = new ActionDialect(ClientAction.GetAuthToken.name);
         copyNotifier(response);
 
         // 获取访问令牌
         AuthService module = this.getAuthService();
-        AuthToken authToken = module.getToken(tokenCode);
+        AuthToken authToken = (null != tokenCode) ? module.getToken(tokenCode) :
+                module.queryAuthTokenByContactId(contactId);
         if (null == authToken) {
             response.addParam("code", AuthStateCode.Failure.code);
             cellet.speak(talkContext, response);

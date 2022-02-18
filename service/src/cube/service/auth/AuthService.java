@@ -335,6 +335,16 @@ public class AuthService extends AbstractModule {
         }
     }
 
+    /**
+     * 通过联系人 ID 查找授权令牌。
+     *
+     * @param contactId
+     * @return
+     */
+    public AuthToken queryAuthTokenByContactId(Long contactId) {
+        return this.authStorage.queryToken(contactId);
+    }
+
     @Override
     public Object notify(Object data) {
         JSONObject json = (JSONObject) data;

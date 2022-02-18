@@ -302,6 +302,31 @@ public class AuthStorage implements Storagable {
         });
     }
 
+    /**
+     * 通过 CID 查询授权令牌。
+     *
+     * @param cid
+     * @return
+     */
+    public AuthToken queryToken(Long cid) {
+        List<StorageField[]> result = this.storage.executeQuery(this.tokenTable, this.tokenFields, new Conditional[] {
+                Conditional.createEqualTo("cid", cid.longValue())
+        });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+
+        Date issues = new Date(map.get("issues").getLong());
+        Date expiry = new Date(map.get("expiry").getLong());
+
+        AuthToken token = new AuthToken(map.get("code").getString(), map.get("domain").getString(),
+                map.get("app_key").getString(), map.get("cid").getLong(), issues, expiry,
+                new PrimaryDescription(new JSONObject(map.get("primary_content").getString())));
+        return token;
+    }
+
     private void checkDomainTable() {
         if (!this.storage.exist(this.domainTable)) {
             // 不存在，建新表
