@@ -34,6 +34,7 @@ import cell.util.CachedQueueExecutor;
 import cube.common.action.FileProcessorAction;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.fileprocessor.handler.MediaStreamHandler;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
 

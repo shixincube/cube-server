@@ -24,10 +24,11 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.fileprocessor;
+package cube.dispatcher.fileprocessor.handler;
 
 import cell.util.log.Logger;
 import cube.dispatcher.Performer;
+import cube.dispatcher.fileprocessor.MediaFileManager;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 
