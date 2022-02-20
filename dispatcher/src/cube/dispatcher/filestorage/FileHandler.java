@@ -37,6 +37,7 @@ import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
 import cube.util.FileType;
+import cube.util.HttpClientFactory;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;

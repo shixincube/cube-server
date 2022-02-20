@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.filestorage;
+package cube.util;
 
 import org.eclipse.jetty.client.HttpClient;
 

@@ -38,6 +38,7 @@ import cube.common.UniqueKey;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.dispatcher.util.HttpConfig;
+import cube.util.HttpClientFactory;
 import cube.util.HttpServer;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -414,6 +415,8 @@ public class Performer implements TalkListener {
             Endpoint ep = director.endpoint;
             this.talkService.hangup(ep.getHost(), ep.getPort(), false);
         }
+
+        HttpClientFactory.getInstance().close();
     }
 
     /**

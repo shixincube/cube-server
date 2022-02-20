@@ -97,8 +97,6 @@ public class FileStorageCellet extends AbstractCellet {
     public void uninstall() {
         this.fileChunkStorage.close();
 
-        HttpClientFactory.getInstance().close();
-
         this.executor.shutdown();
     }
 
