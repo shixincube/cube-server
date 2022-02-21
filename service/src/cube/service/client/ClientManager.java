@@ -26,7 +26,6 @@
 
 package cube.service.client;
 
-import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.CachedQueueExecutor;
@@ -61,7 +60,7 @@ public final class ClientManager {
 
     private final static ClientManager instance = new ClientManager();
 
-    private Cellet cellet;
+    private ClientCellet cellet;
 
     private ExecutorService executor;
 
@@ -90,7 +89,7 @@ public final class ClientManager {
      * @param cellet
      * @param kernel
      */
-    public void start(Cellet cellet, Kernel kernel) {
+    public void start(ClientCellet cellet, Kernel kernel) {
         this.cellet = cellet;
 
         // 使用授权模块的配置

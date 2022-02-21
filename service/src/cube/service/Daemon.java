@@ -38,6 +38,7 @@ import cube.service.contact.ContactManager;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.TimerTask;
 
@@ -83,6 +84,28 @@ public class Daemon extends TimerTask implements LogHandle {
         this.kernel = kernel;
         this.nucleus = nucleus;
         this.logRecords = new ArrayList<>();
+    }
+
+    public List<LogLine> getLogRecords(int limit) {
+        synchronized (this.logRecords) {
+            if (limit <= 0) {
+                return new ArrayList<>(this.logRecords);
+            }
+            else {
+                List<LogLine> list = new ArrayList<>(limit);
+
+                for (int i = this.logRecords.size() - 1; i >= 0; --i) {
+                    list.add(this.logRecords.get(i));
+                    if (list.size() >= limit) {
+                        break;
+                    }
+                }
+
+                Collections.reverse(list);
+
+                return list;
+            }
+        }
     }
 
     @Override

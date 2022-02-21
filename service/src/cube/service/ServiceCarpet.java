@@ -67,6 +67,8 @@ public class ServiceCarpet implements CellListener {
         nucleus.setParameter("kernel", this.kernel);
 
         this.daemon = new Daemon(this.kernel, nucleus);
+        nucleus.setParameter("daemon", this.daemon);
+
         LogManager.getInstance().addHandle(this.daemon);
     }
 

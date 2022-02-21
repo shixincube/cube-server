@@ -36,6 +36,7 @@ import cell.util.CachedQueueExecutor;
 import cube.common.action.ClientAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.service.Daemon;
 import cube.service.client.task.*;
 
 import java.util.concurrent.ExecutorService;
@@ -74,6 +75,10 @@ public class ClientCellet extends AbstractCellet {
 
     public Kernel getKernel() {
         return this.kernel;
+    }
+
+    public Daemon getDaemon() {
+        return (Daemon) this.getNucleus().getParameter("daemon");
     }
 
     @Override
@@ -153,6 +158,9 @@ public class ClientCellet extends AbstractCellet {
         }
         else if (ClientAction.ProcessFile.name.equals(action)) {
             this.executor.execute(new ProcessFileTask(this, talkContext, actionDialect));
+        }
+        else if (ClientAction.GetLog.name.equals(action)) {
+            this.executor.execute(new GetLogTask(this, talkContext, actionDialect));
         }
     }
 

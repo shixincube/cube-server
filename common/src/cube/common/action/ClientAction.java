@@ -35,6 +35,8 @@ public enum ClientAction {
 
     LOGOUT("Logout"),
 
+    GetLog("GetLog"),
+
     GetAuthToken("GetAuthToken"),
 
     AddEventListener("AddEventListener"),
