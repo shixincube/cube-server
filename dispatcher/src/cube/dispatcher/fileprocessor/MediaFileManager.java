@@ -98,6 +98,10 @@ public final class MediaFileManager {
     }
 
     public String getMediaSourceURL(String domainName, String fileCode, boolean secure) {
+        if (null == fileCode || fileCode.length() == 0) {
+            return null;
+        }
+
         AuthDomain authDomain = this.authDomainMap.get(domainName);
         if (null == authDomain) {
             authDomain = this.requestAuthDomain(domainName);

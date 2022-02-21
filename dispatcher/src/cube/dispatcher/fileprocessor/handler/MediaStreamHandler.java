@@ -97,7 +97,7 @@ public class MediaStreamHandler extends CrossDomainHandler {
             response.setContentType(m3u8MIME);
 
             String token = request.getParameter("t");
-            if (null == token) {
+            if (null == token || token.length() == 0) {
                 response.setStatus(HttpStatus.FORBIDDEN_403);
                 return;
             }

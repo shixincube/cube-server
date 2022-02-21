@@ -78,20 +78,20 @@ public class FileProcessorCellet extends AbstractCellet {
         this.performer = (Performer) this.getNucleus().getParameter("performer");
 
         // 配置 HTTP/HTTPS 服务的句柄
-        HttpServer httpServer = performer.getHttpServer();
+        HttpServer httpServer = this.performer.getHttpServer();
 
         // 添加句柄
         ContextHandler mediaListHandler = new ContextHandler();
         mediaListHandler.setContextPath(MediaStreamHandler.CONTEXT_PATH);
-        mediaListHandler.setHandler(new MediaStreamHandler(performer));
+        mediaListHandler.setHandler(new MediaStreamHandler(this.performer));
         httpServer.addContextHandler(mediaListHandler);
 
         ContextHandler getMediaSourceHandler = new ContextHandler();
         getMediaSourceHandler.setContextPath(GetMediaSourceHandler.CONTEXT_PATH);
-        getMediaSourceHandler.setHandler(new GetMediaSourceHandler(performer));
+        getMediaSourceHandler.setHandler(new GetMediaSourceHandler(this.performer));
         httpServer.addContextHandler(getMediaSourceHandler);
 
-        MediaFileManager.getInstance().setPerformer(performer);
+        MediaFileManager.getInstance().setPerformer(this.performer);
 
         // 校验工具
         MediaFileManager.getInstance().check();

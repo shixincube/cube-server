@@ -52,11 +52,11 @@ public class GetMediaSourceHandler extends CrossDomainHandler {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
         String token = request.getParameter("t");
-        if (null == token) {
+        if (null == token || token.length() == 0) {
             token = request.getParameter("token");
         }
 
-        if (null == token) {
+        if (null == token || token.length() == 0) {
             // 参数错误
             response.setStatus(HttpStatus.FORBIDDEN_403);
             return;
