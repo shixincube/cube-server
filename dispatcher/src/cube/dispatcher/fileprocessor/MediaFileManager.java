@@ -214,7 +214,7 @@ public final class MediaFileManager {
         if (!localFile.exists()) {
             InputStreamResponseListener listener = new InputStreamResponseListener();
 
-            HttpClient httpClient = HttpClientFactory.getInstance().createHttpClient();
+            HttpClient httpClient = HttpClientFactory.getInstance().borrowHttpClient();
             httpClient.newRequest(fileLabel.getDirectURL())
                     .header("Connection", "close")
                     .timeout(10, TimeUnit.SECONDS)
@@ -258,6 +258,8 @@ public final class MediaFileManager {
                     }
                 }
             }
+
+            HttpClientFactory.getInstance().returnHttpClient(httpClient);
         }
 
         return localFile;

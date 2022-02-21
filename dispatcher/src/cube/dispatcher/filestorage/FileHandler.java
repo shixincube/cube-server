@@ -262,7 +262,7 @@ public class FileHandler extends CrossDomainHandler {
 
         final FlexibleByteBuffer buf = new FlexibleByteBuffer((int)fileLabel.getFileSize());
 
-        HttpClient httpClient = HttpClientFactory.getInstance().createHttpClient();
+        HttpClient httpClient = HttpClientFactory.getInstance().borrowHttpClient();
         httpClient.newRequest(fileLabel.getDirectURL())
                 .send(new BufferingResponseListener(this.bufferSize) {
                     @Override
@@ -280,7 +280,7 @@ public class FileHandler extends CrossDomainHandler {
 
         synchronized (mutex) {
             try {
-                mutex.wait(30L * 1000L);
+                mutex.wait(10 * 60 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -298,7 +298,7 @@ public class FileHandler extends CrossDomainHandler {
 
         response.setStatus(HttpStatus.OK_200);
 
-        HttpClientFactory.getInstance().destroyHttpClient(httpClient);
+        HttpClientFactory.getInstance().returnHttpClient(httpClient);
     }
 
     private void processByNonBlocking(HttpServletRequest request, HttpServletResponse response,
@@ -306,7 +306,7 @@ public class FileHandler extends CrossDomainHandler {
             throws IOException, ServletException {
         InputStreamResponseListener listener = new InputStreamResponseListener();
 
-        HttpClient httpClient = HttpClientFactory.getInstance().createHttpClient();
+        HttpClient httpClient = HttpClientFactory.getInstance().borrowHttpClient();
         httpClient.newRequest(fileLabel.getDirectURL())
                 .timeout(10, TimeUnit.SECONDS)
                 .send(listener);
@@ -338,21 +338,21 @@ public class FileHandler extends CrossDomainHandler {
                 @Override
                 public void onComplete(AsyncEvent asyncEvent) throws IOException {
                     Logger.d(this.getClass(), "onComplete");
-                    HttpClientFactory.getInstance().destroyHttpClient(httpClient);
+                    HttpClientFactory.getInstance().returnHttpClient(httpClient);
                     complete();
                 }
 
                 @Override
                 public void onTimeout(AsyncEvent asyncEvent) throws IOException {
                     Logger.d(this.getClass(), "onTimeout");
-                    HttpClientFactory.getInstance().destroyHttpClient(httpClient);
+                    HttpClientFactory.getInstance().returnHttpClient(httpClient);
                     complete();
                 }
 
                 @Override
                 public void onError(AsyncEvent asyncEvent) throws IOException {
                     Logger.d(this.getClass(), "onError");
-                    HttpClientFactory.getInstance().destroyHttpClient(httpClient);
+                    HttpClientFactory.getInstance().returnHttpClient(httpClient);
                     complete();
                 }
             });
@@ -366,7 +366,7 @@ public class FileHandler extends CrossDomainHandler {
         }
         else {
             this.respond(response, HttpStatus.BAD_REQUEST_400, fileLabel.toCompactJSON());
-            HttpClientFactory.getInstance().destroyHttpClient(httpClient);
+            HttpClientFactory.getInstance().returnHttpClient(httpClient);
         }
     }
 

@@ -48,7 +48,7 @@ public final class HttpClientFactory {
         return HttpClientFactory.instance;
     }
 
-    public HttpClient createHttpClient() {
+    public HttpClient borrowHttpClient() {
         HttpClient client = this.queue.poll();
         if (null != client) {
             return client;
@@ -63,7 +63,7 @@ public final class HttpClientFactory {
         return client;
     }
 
-    public void destroyHttpClient(HttpClient client) {
+    public void returnHttpClient(HttpClient client) {
         this.queue.offer(client);
     }
 
