@@ -33,6 +33,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 支持跨域的处理器。
@@ -43,16 +45,33 @@ public class CrossDomainHandler extends HttpHandler {
 
     private String httpsAllowOrigin;
 
+    private List<String> allowOriginList;
+
     public CrossDomainHandler() {
         super();
+        this.allowOriginList = new ArrayList<>();
     }
 
     public void setHttpAllowOrigin(String origin) {
         this.httpAllowOrigin = origin;
+        this.addAllowOrigin(origin);
     }
 
     public void setHttpsAllowOrigin(String origin) {
         this.httpsAllowOrigin = origin;
+        this.addAllowOrigin(origin);
+    }
+
+    public void addAllowOrigin(String origin) {
+        if (this.allowOriginList.contains(origin)) {
+            return;
+        }
+
+        this.allowOriginList.add(origin);
+    }
+
+    public void removeAllowOrigin(String origin) {
+        this.allowOriginList.remove(origin);
     }
 
     @Override
@@ -86,14 +105,20 @@ public class CrossDomainHandler extends HttpHandler {
         // 允许跨域
         response.setHeader("Access-Control-Allow-Credentials", "true");
 
-        if (null != this.httpAllowOrigin && !this.isHttps()) {
-            response.setHeader("Access-Control-Allow-Origin", this.httpAllowOrigin);
-        }
-        else if (null != this.httpsAllowOrigin && this.isHttps()) {
-            response.setHeader("Access-Control-Allow-Origin", this.httpsAllowOrigin);
+        String rootURL = this.baseRequest.getRootURL().toString();
+        if (this.allowOriginList.contains(rootURL)) {
+            response.setHeader("Access-Control-Allow-Origin", rootURL);
         }
         else {
-            response.setHeader("Access-Control-Allow-Origin", "*");
+            if (null != this.httpAllowOrigin && !this.isHttps()) {
+                response.setHeader("Access-Control-Allow-Origin", this.httpAllowOrigin);
+            }
+            else if (null != this.httpsAllowOrigin && this.isHttps()) {
+                response.setHeader("Access-Control-Allow-Origin", this.httpsAllowOrigin);
+            }
+            else {
+                response.setHeader("Access-Control-Allow-Origin", "*");
+            }
         }
 
         // 允许的方法
@@ -104,7 +129,7 @@ public class CrossDomainHandler extends HttpHandler {
         response.setHeader("Access-Control-Max-Age", "3600");
     }
 
-    private boolean isHttps() {
+    protected boolean isHttps() {
         return (this.baseRequest.getProtocol().toUpperCase().indexOf("HTTPS") >= 0);
     }
 }

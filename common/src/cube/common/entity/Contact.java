@@ -48,6 +48,17 @@ public class Contact extends AbstractContact {
      * 构造函数。
      *
      * @param id 联系人 ID 。
+     * @param domainName 联系人所在的域。
+     */
+    public Contact(long id, String domainName) {
+        super(id, domainName, "");
+        this.deviceList = new ArrayList<>(1);
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param id 联系人 ID 。
      * @param domainName 所在域的域名。
      * @param name 显示名。
      */

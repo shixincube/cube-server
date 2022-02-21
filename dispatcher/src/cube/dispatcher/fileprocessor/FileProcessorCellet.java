@@ -34,6 +34,7 @@ import cell.util.CachedQueueExecutor;
 import cube.common.action.FileProcessorAction;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.fileprocessor.handler.GetMediaSourceHandler;
 import cube.dispatcher.fileprocessor.handler.MediaStreamHandler;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -81,9 +82,14 @@ public class FileProcessorCellet extends AbstractCellet {
 
         // 添加句柄
         ContextHandler mediaListHandler = new ContextHandler();
-        mediaListHandler.setContextPath("/file/media/");
+        mediaListHandler.setContextPath(MediaStreamHandler.CONTEXT_PATH);
         mediaListHandler.setHandler(new MediaStreamHandler(performer));
         httpServer.addContextHandler(mediaListHandler);
+
+        ContextHandler getMediaSourceHandler = new ContextHandler();
+        getMediaSourceHandler.setContextPath(GetMediaSourceHandler.CONTEXT_PATH);
+        getMediaSourceHandler.setHandler(new GetMediaSourceHandler(performer));
+        httpServer.addContextHandler(getMediaSourceHandler);
 
         MediaFileManager.getInstance().setPerformer(performer);
 

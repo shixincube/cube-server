@@ -33,10 +33,13 @@ import cell.core.talk.*;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.common.StateCode;
 import cube.common.UniqueKey;
+import cube.common.action.ClientAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
+import cube.common.state.AuthStateCode;
 import cube.dispatcher.util.HttpConfig;
 import cube.util.HttpClientFactory;
 import cube.util.HttpServer;
@@ -103,6 +106,11 @@ public class Performer implements TalkListener {
     private ConcurrentHashMap<String, Device> tokenDeviceMap;
 
     /**
+     * 有效的令牌。
+     */
+    private ConcurrentHashMap<String, AuthToken> validAuthTokenMap;
+
+    /**
      * 数据传输记录。
      */
     protected ConcurrentHashMap<Long, Transmission> transmissionMap;
@@ -131,6 +139,7 @@ public class Performer implements TalkListener {
         this.listenerMap = new ConcurrentHashMap<>();
         this.onlineContacts = new ConcurrentHashMap<>();
         this.tokenDeviceMap = new ConcurrentHashMap<>();
+        this.validAuthTokenMap = new ConcurrentHashMap<>();
         this.transmissionMap = new ConcurrentHashMap<>();
         this.blockMap = new ConcurrentHashMap<>();
     }
@@ -452,6 +461,31 @@ public class Performer implements TalkListener {
             }
         }
         return null;
+    }
+
+    /**
+     * 校验令牌码是否有效。
+     *
+     * @param tokenCode
+     * @return
+     */
+    public AuthToken verifyToken(String tokenCode) {
+        AuthToken authToken = this.validAuthTokenMap.get(tokenCode);
+        if (null != authToken) {
+            return authToken;
+        }
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.GetAuthToken.name);
+        actionDialect.addParam("tokenCode", tokenCode);
+
+        ActionDialect response = this.syncTransmit("Client", actionDialect);
+        if (response.getParamAsInt("code") != AuthStateCode.Ok.code) {
+            return null;
+        }
+
+        authToken = new AuthToken(response.getParamAsJson("token"));
+        this.validAuthTokenMap.put(tokenCode, authToken);
+        return authToken;
     }
 
     /**

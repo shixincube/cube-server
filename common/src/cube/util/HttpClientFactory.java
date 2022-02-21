@@ -51,6 +51,13 @@ public final class HttpClientFactory {
     public HttpClient borrowHttpClient() {
         HttpClient client = this.queue.poll();
         if (null != client) {
+            if (!client.isStarted()) {
+                try {
+                    client.start();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             return client;
         }
 

@@ -44,6 +44,8 @@ import java.io.IOException;
  */
 public class MediaStreamHandler extends CrossDomainHandler {
 
+    public final static String CONTEXT_PATH = "/file/media/";
+
     private final String m3u8MIME = "application/x-mpegURL";
 
     private final String tsMIME = "video/MP2T";
