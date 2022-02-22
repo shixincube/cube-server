@@ -26,6 +26,7 @@
 
 package cube.core;
 
+import cube.storage.StorageType;
 import org.json.JSONObject;
 
 /**
@@ -39,6 +40,11 @@ public abstract class AbstractStorage implements Storage {
     private String name;
 
     /**
+     * 实现类型。
+     */
+    protected StorageType type;
+
+    /**
      * 配置信息。
      */
     protected JSONObject config;
@@ -48,8 +54,9 @@ public abstract class AbstractStorage implements Storage {
      *
      * @param name 指定存储名称。
      */
-    public AbstractStorage(String name) {
+    public AbstractStorage(String name, StorageType type) {
         this.name = name;
+        this.type = type;
     }
 
     /**
@@ -57,6 +64,13 @@ public abstract class AbstractStorage implements Storage {
      */
     public String getName() {
         return this.name;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public StorageType getType() {
+        return this.type;
     }
 
     /**

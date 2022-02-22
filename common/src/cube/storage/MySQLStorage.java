@@ -57,7 +57,7 @@ public class MySQLStorage extends AbstractStorage {
     private ConnectionPool pool;
 
     public MySQLStorage(String name) {
-        super(name);
+        super(name, StorageType.MySQL);
     }
 
     @Override

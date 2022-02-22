@@ -42,7 +42,6 @@ import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.FileType;
 import cube.util.SQLUtils;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -156,6 +155,14 @@ public class ServiceStorage implements Storagable {
         this.recyclebinTableNameMap = new HashMap<>();
     }
 
+    public StorageType getType() {
+        return this.storage.getType();
+    }
+
+    public JSONObject getConfig() {
+        return this.storage.getConfig();
+    }
+
     @Override
     public void open() {
         this.storage.open();
@@ -266,7 +273,7 @@ public class ServiceStorage implements Storagable {
                 List<StorageField[]> result = storage.executeQuery(labelTable, new StorageField[] {
                         new StorageField("sn", LiteralBase.LONG)
                 }, new Conditional[] {
-                        Conditional.createEqualTo(new StorageField("file_code", LiteralBase.STRING, fileLabel.getFileCode()))
+                        Conditional.createEqualTo(new StorageField("file_code", fileLabel.getFileCode()))
                 });
 
                 if (result.isEmpty()) {
@@ -281,12 +288,12 @@ public class ServiceStorage implements Storagable {
                     // 更新数据
                     // 标签表
                     storage.executeUpdate(labelTable, labelFields, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("file_code", LiteralBase.STRING, fileLabel.getFileCode()))
+                            Conditional.createEqualTo(new StorageField("file_code", fileLabel.getFileCode()))
                     });
 
                     // 描述符表
                     storage.executeUpdate(descriptorTable, descriptorFields, new Conditional[] {
-                            Conditional.createEqualTo(new StorageField("file_code", LiteralBase.STRING, fileLabel.getFileCode()))
+                            Conditional.createEqualTo(new StorageField("file_code", fileLabel.getFileCode()))
                     });
                 }
             }
@@ -307,7 +314,7 @@ public class ServiceStorage implements Storagable {
         }
 
         List<StorageField[]> result = this.storage.executeQuery(labelTable, this.labelFields, new Conditional[] {
-                Conditional.createEqualTo(new StorageField("file_code", LiteralBase.STRING, fileCode))
+                Conditional.createEqualTo(new StorageField("file_code", fileCode))
         });
 
         if (!result.isEmpty()) {

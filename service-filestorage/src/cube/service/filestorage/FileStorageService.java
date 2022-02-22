@@ -137,7 +137,7 @@ public class FileStorageService extends AbstractModule {
             // 创建文件系统
             String filesystem = properties.getProperty("filesystem", "disk");
             if (filesystem.equalsIgnoreCase("disk")) {
-                String path = properties.getProperty("disk.dir", "storage/files");
+                String path = properties.getProperty("disk.path", "storage/files");
                 String host = properties.getProperty("disk.host", "127.0.0.1");
                 int port = Integer.parseInt(properties.getProperty("disk.port", "6080"));
 
@@ -233,9 +233,10 @@ public class FileStorageService extends AbstractModule {
 
         // 写入文件系统
         FileDescriptor descriptor = this.fileSystem.writeFile(fileCode, inputStream);
-
-        // 缓存文件标识
-        this.fileDescriptors.put(fileCode, descriptor);
+        if (null != descriptor) {
+            // 缓存文件标识
+            this.fileDescriptors.put(fileCode, descriptor);
+        }
     }
 
     /**
@@ -250,9 +251,10 @@ public class FileStorageService extends AbstractModule {
 
         // 写入文件系统
         FileDescriptor descriptor = this.fileSystem.writeFile(fileCode, file);
-
-        // 缓存文件标识
-        this.fileDescriptors.put(fileCode, descriptor);
+        if (null != descriptor) {
+            // 缓存文件标识
+            this.fileDescriptors.put(fileCode, descriptor);
+        }
     }
 
     /**
@@ -597,6 +599,11 @@ public class FileStorageService extends AbstractModule {
                 // 存储进行自校验
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
                 serviceStorage.execSelfChecking(authService.getDomainList());
+
+                // 激活磁盘集群
+                if (fileSystem instanceof DiskSystem) {
+                    ((DiskSystem) fileSystem).activateCluster(serviceStorage.getType(), serviceStorage.getConfig());
+                }
             }
         }).start();
     }

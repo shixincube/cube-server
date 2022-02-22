@@ -26,6 +26,7 @@
 
 package cube.core;
 
+import cube.storage.StorageType;
 import org.json.JSONObject;
 
 import java.util.List;
@@ -43,10 +44,18 @@ public interface Storage {
     public String getName();
 
     /**
+     * 获取配置。
      *
      * @return
      */
     public JSONObject getConfig();
+
+    /**
+     * 获取类型。
+     *
+     * @return
+     */
+    public StorageType getType();
 
     /**
      *

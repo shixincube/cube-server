@@ -50,7 +50,7 @@ public class SQLiteStorage extends AbstractStorage {
     private Connection connection = null;
 
     public SQLiteStorage(String name) {
-        super(name);
+        super(name, StorageType.SQLite);
     }
 
     @Override

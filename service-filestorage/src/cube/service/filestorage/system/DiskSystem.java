@@ -28,11 +28,13 @@ package cube.service.filestorage.system;
 
 import cell.core.net.Endpoint;
 import cell.util.log.Logger;
+import cube.storage.StorageType;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.util.resource.PathResource;
 import org.eclipse.jetty.util.resource.Resource;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -52,7 +54,7 @@ public class DiskSystem implements FileSystem {
 
     private Path managingPath;
 
-    private String contextPath = "/filestorage/";
+    private String contextPath = "/files/";
 
     private Endpoint endpoint;
 
@@ -61,6 +63,8 @@ public class DiskSystem implements FileSystem {
     private HttpServer httpServer;
 
     private List<String> writingFiles;
+
+    private DiskCluster diskCluster;
 
     public DiskSystem(String managingPath, String host, int port) {
         this.managingPath = Paths.get(managingPath);
@@ -102,6 +106,28 @@ public class DiskSystem implements FileSystem {
     @Override
     public void stop() {
         this.httpServer.stop();
+
+        if (null != this.diskCluster) {
+            this.diskCluster.close();
+            this.diskCluster = null;
+        }
+    }
+
+    /**
+     * 激活集群。
+     *
+     * @param type
+     * @param config
+     */
+    public void activateCluster(StorageType type, JSONObject config) {
+        if (null != this.diskCluster) {
+            this.diskCluster.close();
+        }
+
+        this.diskCluster = new DiskCluster(this.endpoint.getHost(), this.endpoint.getPort(), type, config);
+        this.diskCluster.setContextPath(this.contextPath);
+        this.diskCluster.open();
+        this.diskCluster.execSelfChecking(null);
     }
 
     @Override
@@ -118,7 +144,15 @@ public class DiskSystem implements FileSystem {
             Files.copy(Paths.get(file.getPath()), target, StandardCopyOption.REPLACE_EXISTING);
             size = Files.size(target);
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(this.getClass(), "#writeFile(String,File)", e);
+            synchronized (this.writingFiles) {
+                this.writingFiles.remove(fileName);
+            }
+            return null;
+        }
+
+        if (null != this.diskCluster) {
+            this.diskCluster.addFile(fileName);
         }
 
         FileDescriptor descriptor = new FileDescriptor("disk", fileName, this.url + fileName);
@@ -160,7 +194,11 @@ public class DiskSystem implements FileSystem {
             }
             fos.flush();
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(this.getClass(), "#writeFile(String,InputStream)", e);
+            synchronized (this.writingFiles) {
+                this.writingFiles.remove(fileName);
+            }
+            return null;
         } finally {
             if (null != fos) {
                 try {
@@ -168,6 +206,10 @@ public class DiskSystem implements FileSystem {
                 } catch (IOException e) {
                 }
             }
+        }
+
+        if (null != this.diskCluster) {
+            this.diskCluster.addFile(fileName);
         }
 
         FileDescriptor descriptor = new FileDescriptor("disk", fileName, this.url + fileName);
@@ -213,7 +255,33 @@ public class DiskSystem implements FileSystem {
 
     @Override
     public String loadFileToDisk(String fileName) {
-        Path path = Paths.get(this.managingPath.toString(), fileName);
-        return path.toAbsolutePath().toString();
+        if (this.existsFile(fileName)) {
+            Path path = Paths.get(this.managingPath.toString(), fileName);
+            return path.toAbsolutePath().toString();
+        }
+        else if (null != this.diskCluster) {
+            // 从集群加载数据
+            File file = new File(this.managingPath.toFile(), fileName);
+            FileOutputStream fos = null;
+
+            try {
+                fos = new FileOutputStream(file);
+                this.diskCluster.loadFile(fileName, fos);
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#loadFileToDisk", e);
+            } finally {
+                if (null != fos) {
+                    try {
+                        fos.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+
+            return file.exists() ? file.getAbsolutePath() : null;
+        }
+        else {
+            return null;
+        }
     }
 }
