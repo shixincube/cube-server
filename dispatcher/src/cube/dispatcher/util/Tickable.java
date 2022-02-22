@@ -24,38 +24,12 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage;
-
-import cube.service.filestorage.system.FileDescriptor;
-
-import java.util.Iterator;
+package cube.dispatcher.util;
 
 /**
- * 守护任务。
+ * 定时回调句柄。
  */
-public class DaemonTask implements Runnable {
+public interface Tickable {
 
-    /**
-     * 文件描述符的超时时长。
-     */
-    private final long fileDescriptorTimeout = 60 * 60 * 1000;
-
-    private FileStorageService service;
-
-    public DaemonTask(FileStorageService service) {
-        this.service = service;
-    }
-
-    @Override
-    public void run() {
-        long now = System.currentTimeMillis();
-
-        Iterator<FileDescriptor> fditer = this.service.fileDescriptors.values().iterator();
-        while (fditer.hasNext()) {
-            FileDescriptor descriptor = fditer.next();
-            if (now - descriptor.getTimestamp() > this.fileDescriptorTimeout) {
-                fditer.remove();
-            }
-        }
-    }
+    void onTick(long now);
 }

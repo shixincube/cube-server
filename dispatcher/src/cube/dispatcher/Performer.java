@@ -41,6 +41,7 @@ import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.state.AuthStateCode;
 import cube.dispatcher.util.HttpConfig;
+import cube.dispatcher.util.Tickable;
 import cube.util.HttpClientFactory;
 import cube.util.HttpServer;
 import org.json.JSONException;
@@ -55,7 +56,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Performer 接入层连接器。
  */
-public class Performer implements TalkListener {
+public class Performer implements TalkListener, Tickable {
 
     private final String performerKey = "_performer";
 
@@ -123,7 +124,12 @@ public class Performer implements TalkListener {
     /**
      * 阻塞超时时长。
      */
-    private long blockTimeout = 10000L;
+    private long blockTimeout = 10000;
+
+    /**
+     * 定时回调清单。
+     */
+    private List<Tickable> tickableList;
 
     /**
      * 构造函数。
@@ -142,6 +148,7 @@ public class Performer implements TalkListener {
         this.validAuthTokenMap = new ConcurrentHashMap<>();
         this.transmissionMap = new ConcurrentHashMap<>();
         this.blockMap = new ConcurrentHashMap<>();
+        this.tickableList = new ArrayList<>();
     }
 
     /**
@@ -707,6 +714,26 @@ public class Performer implements TalkListener {
     private ActionDialect processResponse(ActionDialect response) {
         response.addParam("state", StateCode.makeState(StateCode.OK, "OK"));
         return response;
+    }
+
+    public void addTickable(Tickable tickable) {
+        if (!this.tickableList.contains(tickable)) {
+            return;
+        }
+
+        this.tickableList.add(tickable);
+    }
+
+    /**
+     * Tick 回调。
+     *
+     * @param now
+     */
+    @Override
+    public void onTick(long now) {
+        for (Tickable tickable : this.tickableList) {
+            tickable.onTick(now);
+        }
     }
 
     @Override

@@ -77,7 +77,7 @@ public class DispatcherListener implements CellListener {
         this.cellets = null;
 
         this.timer = new Timer();
-        this.timer.schedule(this.daemon, 10L * 1000L, 10L * 1000L);
+        this.timer.schedule(this.daemon, 10 * 1000, 10 * 1000);
 
         // 配置管理信息
         this.initManagement(performer, nucleus);

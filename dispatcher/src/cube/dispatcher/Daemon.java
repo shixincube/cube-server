@@ -52,16 +52,16 @@ public class Daemon extends TimerTask implements LogHandle {
 
     private long startTime = 0;
 
-    private long contactTimeout = 30 * 1000L;
+    private long contactTimeout = 30 * 1000;
 
-    private long transmissionTimeout = 10 * 1000L;
+    private long transmissionTimeout = 10 * 1000;
 
     private Performer performer;
 
     /**
      * 报告发送间隔。
      */
-    private long reportInterval = 60L * 1000L;
+    private long reportInterval = 60 * 1000;
 
     /**
      * 最近一次报告时间。
@@ -82,6 +82,12 @@ public class Daemon extends TimerTask implements LogHandle {
     @Override
     public void run() {
         long now = System.currentTimeMillis();
+
+        try {
+            this.performer.onTick(now);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // 检查 Talk context 失效
         Iterator<Map.Entry<String, Contact>> contactIter = this.performer.getOnlineContacts().entrySet().iterator();

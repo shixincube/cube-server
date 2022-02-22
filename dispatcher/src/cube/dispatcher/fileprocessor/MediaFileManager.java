@@ -39,6 +39,7 @@ import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.util.HLSTools;
+import cube.dispatcher.util.Tickable;
 import cube.util.HttpClientFactory;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Response;
@@ -46,14 +47,13 @@ import org.eclipse.jetty.client.util.InputStreamResponseListener;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +62,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * 媒体文件管理器。
  */
-public final class MediaFileManager {
+public final class MediaFileManager implements Tickable {
 
     private final static MediaFileManager instance = new MediaFileManager();
 
@@ -71,6 +71,21 @@ public final class MediaFileManager {
     private Performer performer;
 
     private Map<String, AuthDomain> authDomainMap;
+
+    /**
+     * 上一次检测目录时间。
+     */
+    private long lastCheckPath = 0;
+
+    /**
+     * 检查目录周期，默认 4 小时。
+     */
+    private long checkPathPeriod = 4 * 60 * 60 * 1000;
+
+    /**
+     * 媒体目录超期时间，默认 7 天。
+     */
+    private long mediaPathTimeout = 7 * 24 * 60 * 60 * 1000;
 
     private MediaFileManager() {
         this.mediaPath = "cube-media-files/";
@@ -95,8 +110,39 @@ public final class MediaFileManager {
 
     public void setPerformer(Performer performer) {
         this.performer = performer;
+        this.performer.addTickable(this);
+        this.lastCheckPath = System.currentTimeMillis();
     }
 
+    /**
+     * 罗列当前媒体数据的所有目录。
+     *
+     * @return
+     */
+    private File[] listAllMediaPath() {
+        File path = new File(this.mediaPath);
+        File[] files = path.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File path) {
+                if (path.isDirectory()) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+        });
+        return files;
+    }
+
+    /**
+     * 获取指定文件码媒体文件的回放流链接。
+     *
+     * @param domainName
+     * @param fileCode
+     * @param secure
+     * @return
+     */
     public String getMediaSourceURL(String domainName, String fileCode, boolean secure) {
         if (null == fileCode || fileCode.length() == 0) {
             return null;
@@ -299,5 +345,17 @@ public final class MediaFileManager {
 
         authToken = new AuthToken(response.getParamAsJson("token"));
         return authToken;
+    }
+
+    @Override
+    public void onTick(long now) {
+        if (now - this.lastCheckPath > this.checkPathPeriod) {
+            this.lastCheckPath = now;
+
+            File[] file = listAllMediaPath();
+            if (null != file && file.length > 0) {
+
+            }
+        }
     }
 }
