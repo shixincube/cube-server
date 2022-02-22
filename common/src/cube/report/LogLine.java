@@ -26,14 +26,20 @@
 
 package cube.report;
 
+import cell.util.log.LogLevel;
 import cube.common.JSONable;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * 日志行。
  */
 public class LogLine implements JSONable {
+
+    private final static SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss.SSS");
 
     public int level;
 
@@ -59,6 +65,19 @@ public class LogLine implements JSONable {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append(TIME_FORMAT.format(new Date(this.time)));
+        buf.append(" [");
+        buf.append(LogLevel.parse(this.level).name());
+        buf.append("] ");
+        buf.append(this.tag);
+        buf.append(" ");
+        buf.append(this.text);
+        return buf.toString();
     }
 
     @Override
