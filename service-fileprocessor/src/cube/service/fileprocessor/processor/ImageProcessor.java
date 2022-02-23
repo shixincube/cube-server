@@ -30,6 +30,7 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.ProcessResultStream;
 import cube.file.EliminateColorOperation;
 import cube.file.ImageOperation;
+import cube.file.ReverseColorOperation;
 import cube.util.FileUtils;
 
 import java.io.File;
@@ -72,20 +73,39 @@ public class ImageProcessor extends Processor {
             EliminateColorOperation operation = (EliminateColorOperation) imageOperation;
             String outputFilename = operation.getOutputFilename();
             if (null == outputFilename) {
-                outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_eliminate.jpg";
+                outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_eliminated.jpg";
             }
-            boolean success = ImageMagick.eliminateColor(this.getWorkPath().toFile(), this.imageFile.getName(), outputFilename,
-                    operation.getReservedColor(), operation.getFillColor());
+            // 使用 ImageMagick 操作
+            boolean success = ImageMagick.eliminateColor(this.getWorkPath().toFile(), this.imageFile.getName(),
+                    outputFilename, operation.getReservedColor(), operation.getFillColor());
 
             // 处理结果
             ctx.setSuccessful(success);
 
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                if (outputFile.exists()) {
-                    ProcessResultStream resultStream = new ProcessResultStream(outputFile);
-                    ctx.setResultStream(resultStream);
-                }
+                ProcessResultStream resultStream = new ProcessResultStream(outputFile);
+                ctx.setResultStream(resultStream);
+            }
+        }
+        else if (imageOperation instanceof ReverseColorOperation) {
+            // 反转颜色
+            ReverseColorOperation operation = (ReverseColorOperation) imageOperation;
+            String outputFilename = operation.getOutputFilename();
+            if (null == outputFilename) {
+                outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_reversed.jpg";
+            }
+            // 使用 ImageMagick 操作
+            boolean success = ImageMagick.reverseColor(this.getWorkPath().toFile(), this.imageFile.getName(),
+                    outputFilename);
+
+            // 处理结果
+            ctx.setSuccessful(success);
+
+            if (success) {
+                File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
+                ProcessResultStream resultStream = new ProcessResultStream(outputFile);
+                ctx.setResultStream(resultStream);
             }
         }
     }

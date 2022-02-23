@@ -29,37 +29,17 @@ package cube.file;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
-import java.io.File;
-
 /**
- * 图片操作。
+ * OCR 操作配置。
  */
-public abstract class ImageOperation implements FileOperation, JSONable {
+public class OCROperation implements FileOperation, JSONable {
 
-    private File inputFile;
-
-    public ImageOperation() {
-    }
-
-    /**
-     * 获取具体的图像操作。
-     *
-     * @return
-     */
-    public abstract String getOperation();
-
-    public File getInputFile() {
-        return this.inputFile;
-    }
-
-    public void setInputFile(File inputFile) {
-        this.inputFile = inputFile;
+    public OCROperation() {
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("operation", this.getOperation());
         return json;
     }
 

@@ -30,9 +30,8 @@ import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
 import cube.file.EliminateColorOperation;
 import cube.file.ImageOperation;
+import cube.file.ReverseColorOperation;
 import org.json.JSONObject;
-
-import java.io.File;
 
 /**
  * 图像处理上下文。
@@ -54,6 +53,9 @@ public class ImageProcessorContext extends ProcessorContext {
         String operation = parameterJSON.getString("operation");
         if (EliminateColorOperation.Operation.equals(operation)) {
             this.imageOperation = new EliminateColorOperation(parameterJSON);
+        }
+        else if (ReverseColorOperation.Operation.equals(operation)) {
+            this.imageOperation = new ReverseColorOperation(parameterJSON);
         }
     }
 

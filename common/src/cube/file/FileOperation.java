@@ -26,45 +26,8 @@
 
 package cube.file;
 
-import cube.common.JSONable;
-import org.json.JSONObject;
-
-import java.io.File;
-
 /**
- * 图片操作。
+ * 文件操作接口。
  */
-public abstract class ImageOperation implements FileOperation, JSONable {
-
-    private File inputFile;
-
-    public ImageOperation() {
-    }
-
-    /**
-     * 获取具体的图像操作。
-     *
-     * @return
-     */
-    public abstract String getOperation();
-
-    public File getInputFile() {
-        return this.inputFile;
-    }
-
-    public void setInputFile(File inputFile) {
-        this.inputFile = inputFile;
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("operation", this.getOperation());
-        return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
-    }
+public interface FileOperation {
 }

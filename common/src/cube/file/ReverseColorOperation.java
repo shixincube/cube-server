@@ -26,45 +26,42 @@
 
 package cube.file;
 
-import cube.common.JSONable;
 import org.json.JSONObject;
 
-import java.io.File;
-
 /**
- * 图片操作。
+ * 反转颜色。
  */
-public abstract class ImageOperation implements FileOperation, JSONable {
+public class ReverseColorOperation extends ImageOperation {
 
-    private File inputFile;
+    public final static String Operation = "ReverseColor";
 
-    public ImageOperation() {
+    private String outputFilename;
+
+    public ReverseColorOperation(JSONObject json) {
+        if (json.has("outputFilename")) {
+            this.outputFilename = json.getString("outputFilename");
+        }
     }
 
-    /**
-     * 获取具体的图像操作。
-     *
-     * @return
-     */
-    public abstract String getOperation();
-
-    public File getInputFile() {
-        return this.inputFile;
+    @Override
+    public String getOperation() {
+        return Operation;
     }
 
-    public void setInputFile(File inputFile) {
-        this.inputFile = inputFile;
+    public void setOutputFilename(String outputFilename) {
+        this.outputFilename = outputFilename;
+    }
+
+    public String getOutputFilename() {
+        return this.outputFilename;
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("operation", this.getOperation());
+        JSONObject json = super.toJSON();
+        if (null != this.outputFilename) {
+            json.put("outputFilename", this.outputFilename);
+        }
         return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
     }
 }
