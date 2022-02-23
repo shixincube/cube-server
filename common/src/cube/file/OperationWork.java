@@ -45,7 +45,31 @@ public class OperationWork {
         this.process = process;
     }
 
+    public String getProcess() {
+        return this.process;
+    }
+
     public void setOperation(FileOperation fileOperation) {
         this.fileOperation = fileOperation;
+    }
+
+    public FileOperation getFileOperation() {
+        return this.fileOperation;
+    }
+
+    public void setInput(File file) {
+        this.input = file;
+    }
+
+    public File getInput() {
+        return this.input;
+    }
+
+    public void setOutput(File file) {
+        this.output = file;
+    }
+
+    public File getOutput() {
+        return this.output;
     }
 }

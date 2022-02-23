@@ -26,13 +26,18 @@
 
 package cube.file;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
  * 文件处理流。
  */
-public class FileOperationWorkflow implements Runnable {
+public class FileOperationWorkflow {
+
+    private String domain;
+
+    private String sourceFileCode;
 
     private List<OperationWork> workList;
 
@@ -40,13 +45,19 @@ public class FileOperationWorkflow implements Runnable {
         this.workList = new LinkedList<>();
     }
 
+    public String getDomain() {
+        return this.domain;
+    }
+
+    public String getSourceFileCode() {
+        return this.sourceFileCode;
+    }
+
     public void append(OperationWork operationWork) {
         this.workList.add(operationWork);
     }
 
-
-    @Override
-    public void run() {
-
+    public List<OperationWork> getWorkList() {
+        return new ArrayList<>(this.workList);
     }
 }

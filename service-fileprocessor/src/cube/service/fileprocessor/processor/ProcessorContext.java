@@ -66,6 +66,10 @@ public abstract class ProcessorContext implements JSONable {
         this.resultStream = resultStream;
     }
 
+    public ProcessResultStream getResultStream() {
+        return this.resultStream;
+    }
+
     public synchronized void appendStdOutput(String line) {
         if (null == this.stdOutput) {
             this.stdOutput = new ArrayList<>();

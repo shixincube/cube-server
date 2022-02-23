@@ -36,6 +36,8 @@ import java.io.File;
  */
 public class ProcessResultStream implements JSONable {
 
+    public File file;
+
     public String fullPath;
 
     public String streamName;
@@ -45,6 +47,7 @@ public class ProcessResultStream implements JSONable {
     public long fileSize;
 
     public ProcessResultStream(File file) {
+        this.file = file;
         this.fullPath = file.getAbsolutePath();
         this.fileName = file.getName();
         this.fileSize = file.length();

@@ -34,6 +34,9 @@ import cube.common.entity.Image;
 import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
+import cube.file.FileOperation;
+import cube.file.FileOperationWorkflow;
+import cube.file.OperationWork;
 import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.*;
 import cube.service.filestorage.FileStorageService;
@@ -51,6 +54,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -512,6 +516,67 @@ public class FileProcessorService extends AbstractModule {
         return Files.exists(path);
     }
 
+    public void launchOperationWorkFlow(FileOperationWorkflow workflow) {
+        // 域
+        String domainName = workflow.getDomain();
+        // 源文件的文件码
+        String fileCode = workflow.getSourceFileCode();
+
+        FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+        FileLabel fileLabel = storageService.getFile(domainName, fileCode);
+        if (null == fileLabel) {
+            return;
+        }
+
+        Path sourceFile = Paths.get(this.workPath.toString(), fileCode + "." + fileLabel.getFileType().getPreferredExtension());
+
+        if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
+            String path = storageService.loadFileToDisk(domainName, fileCode);
+            if (null == path) {
+                return;
+            }
+
+            try {
+                Files.copy(Paths.get(path), sourceFile);
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#launchOperationWorkFlow", e);
+                return;
+            }
+        }
+
+        List<OperationWork> workList = workflow.getWorkList();
+        for (int i = 0, length = workList.size(); i < length; ++i) {
+            OperationWork work = workList.get(i);
+            OperationWork nextWork = (i + 1 < length) ? workList.get(i + 1) : null;
+
+            String process = work.getProcess();
+
+            if (FileProcessorAction.Image.name.equals(process)) {
+                // 创建处理器
+                ImageProcessor imageProcessor = new ImageProcessor(this.workPath);
+                imageProcessor.setImageFile(sourceFile.toFile(), fileLabel);
+                // 创建上下文
+                ImageProcessorContext context = new ImageProcessorContext();
+                context.parseOperation(work.getFileOperation());
+                imageProcessor.go(context);
+
+                if (context.isSuccessful()) {
+                    work.setOutput(context.getResultStream().file);
+
+                    if (null != nextWork) {
+                        nextWork.setInput(work.getOutput());
+                    }
+                }
+                else {
+                    break;
+                }
+            }
+            else if (FileProcessorAction.OCR.name.equals(process)) {
+
+            }
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -529,7 +594,7 @@ public class FileProcessorService extends AbstractModule {
                 if (null != processor) {
                     ImageProcessorContext context = new ImageProcessorContext();
                     // 解析参数
-                    context.parseParameter(data.getJSONObject("parameter"));
+                    context.parseOperation(data.getJSONObject("parameter"));
                     processor.go(context);
                     return context.toJSON();
                 }
