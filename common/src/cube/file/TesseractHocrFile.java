@@ -27,7 +27,7 @@
 package cube.file;
 
 import cell.util.Utils;
-import cube.geometry.BoundingBox;
+import cube.vision.BoundingBox;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

@@ -27,7 +27,7 @@
 package cube.file;
 
 import cube.common.JSONable;
-import cube.geometry.BoundingBox;
+import cube.vision.BoundingBox;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

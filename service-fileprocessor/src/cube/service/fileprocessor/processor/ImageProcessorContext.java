@@ -27,13 +27,21 @@
 package cube.service.fileprocessor.processor;
 
 import cube.common.action.FileProcessorAction;
+import cube.common.entity.FileLabel;
 import cube.file.EliminateColorOperation;
+import cube.file.ImageOperation;
 import org.json.JSONObject;
+
+import java.io.File;
 
 /**
  * 图像处理上下文。
  */
 public class ImageProcessorContext extends ProcessorContext {
+
+    private ImageOperation imageOperation;
+
+    private FileLabel inputFileLabel;
 
     public ImageProcessorContext() {
     }
@@ -45,13 +53,30 @@ public class ImageProcessorContext extends ProcessorContext {
     public void parseParameter(JSONObject parameterJSON) {
         String operation = parameterJSON.getString("operation");
         if (EliminateColorOperation.Operation.equals(operation)) {
-            
+            this.imageOperation = new EliminateColorOperation(parameterJSON);
         }
+    }
+
+    public ImageOperation getImageOperation() {
+        return this.imageOperation;
+    }
+
+    public void setInputFileLabel(FileLabel fileLabel) {
+        this.inputFileLabel = fileLabel;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON(FileProcessorAction.Image.name);
+
+        if (null != this.inputFileLabel) {
+            json.put("input", this.inputFileLabel.toCompactJSON());
+        }
+
+        if (null != this.imageOperation) {
+            json.put("operation", this.imageOperation.toJSON());
+        }
+
         return json;
     }
 

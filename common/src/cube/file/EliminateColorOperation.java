@@ -26,6 +26,7 @@
 
 package cube.file;
 
+import cube.vision.Color;
 import org.json.JSONObject;
 
 /**
@@ -35,11 +36,23 @@ public class EliminateColorOperation extends ImageOperation {
 
     public final static String Operation = "EliminateColor";
 
-    public EliminateColorOperation() {
+    private Color reservedColor;
+
+    private Color fillColor;
+
+    private String outputFilename;
+
+    public EliminateColorOperation(Color reservedColor, Color fillColor) {
+        this.reservedColor = reservedColor;
+        this.fillColor = fillColor;
     }
 
-    public EliminateColorOperation(String inputFileCode) {
-        super(inputFileCode);
+    public EliminateColorOperation(JSONObject json) {
+        this.reservedColor = new Color(json.getJSONObject("reserved"));
+        this.fillColor = new Color(json.getJSONObject("fill"));
+        if (json.has("outputFilename")) {
+            this.outputFilename = json.getString("outputFilename");
+        }
     }
 
     @Override
@@ -47,9 +60,30 @@ public class EliminateColorOperation extends ImageOperation {
         return Operation;
     }
 
+    public Color getReservedColor() {
+        return this.reservedColor;
+    }
+
+    public Color getFillColor() {
+        return this.fillColor;
+    }
+
+    public void setOutputFilename(String outputFilename) {
+        this.outputFilename = outputFilename;
+    }
+
+    public String getOutputFilename() {
+        return this.outputFilename;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        json.put("reserved", this.reservedColor.toJSON());
+        json.put("fill", this.fillColor.toJSON());
+        if (null != this.outputFilename) {
+            json.put("outputFilename", this.outputFilename);
+        }
         return json;
     }
 }

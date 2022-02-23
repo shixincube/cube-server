@@ -29,18 +29,16 @@ package cube.file;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
+import java.io.File;
+
 /**
  * 图片操作。
  */
 public abstract class ImageOperation implements JSONable {
 
-    private String inputFileCode;
+    private File inputFile;
 
     public ImageOperation() {
-    }
-
-    public ImageOperation(String inputFileCode) {
-        this.inputFileCode = inputFileCode;
     }
 
     /**
@@ -50,12 +48,12 @@ public abstract class ImageOperation implements JSONable {
      */
     public abstract String getOperation();
 
-    public String getInputFileCode() {
-        return this.inputFileCode;
+    public File getInputFile() {
+        return this.inputFile;
     }
 
-    public void setInputFileCode(String fileCode) {
-        this.inputFileCode = fileCode;
+    public void setInputFile(File inputFile) {
+        this.inputFile = inputFile;
     }
 
     @Override

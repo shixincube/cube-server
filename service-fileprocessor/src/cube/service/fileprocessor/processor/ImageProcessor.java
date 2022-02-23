@@ -27,6 +27,9 @@
 package cube.service.fileprocessor.processor;
 
 import cube.common.entity.FileLabel;
+import cube.file.EliminateColorOperation;
+import cube.file.ImageOperation;
+import cube.util.FileUtils;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -49,6 +52,10 @@ public class ImageProcessor extends Processor {
         this.imageFileLabel = fileLabel;
     }
 
+    public File getImageFile() {
+        return this.imageFile;
+    }
+
     @Override
     public void go(ProcessorContext context) {
         if (!(context instanceof ImageProcessorContext)) {
@@ -56,5 +63,26 @@ public class ImageProcessor extends Processor {
         }
 
         ImageProcessorContext ctx = (ImageProcessorContext) context;
+        ctx.setInputFileLabel(this.imageFileLabel);
+        
+        ImageOperation imageOperation = ctx.getImageOperation();
+        if (imageOperation instanceof EliminateColorOperation) {
+            // 剔除颜色操作
+            EliminateColorOperation operation = (EliminateColorOperation) imageOperation;
+            String outputFilename = operation.getOutputFilename();
+            if (null == outputFilename) {
+                outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_eliminate.jpg";
+            }
+            boolean success = ImageMagick.eliminateColor(this.getWorkPath().toFile(), this.imageFile.getName(), outputFilename,
+                    operation.getReservedColor(), operation.getFillColor());
+
+            if (success) {
+                File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
+
+            }
+
+            // 处理结果
+            ctx.setSuccessful(success);
+        }
     }
 }

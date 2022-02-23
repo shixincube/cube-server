@@ -294,7 +294,7 @@ public final class ImageTools {
         }
     }
 
-    public static void main(String[] args) {
+//    public static void main(String[] args) {
 //        Image image = ImageTools.identify("/Users/ambrose/Documents/Repositories/Cube3/cube-server/README.md");
 //        System.out.println(image);
 //
@@ -311,6 +311,6 @@ public final class ImageTools {
 //                "service/storage/tmp/t1", 480);
 //        System.out.println(image);
 
-        ImageTools.check();
-    }
+//        ImageTools.check();
+//    }
 }

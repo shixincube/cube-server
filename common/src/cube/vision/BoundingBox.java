@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.geometry;
+package cube.vision;
 
 import cube.common.JSONable;
 import org.json.JSONObject;
