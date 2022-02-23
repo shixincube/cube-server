@@ -63,6 +63,10 @@ public class ProcessFileTask extends ClientTask {
         notification.put("domain", domain);
         notification.put("fileCode", fileCode);
 
+        if (actionDialect.containsParam("parameter")) {
+            notification.put("parameter", actionDialect.getParamAsJson("parameter"));
+        }
+
         ActionDialect response = new ActionDialect(ClientAction.ProcessFile.name);
         copyNotifier(response);
 
@@ -74,6 +78,7 @@ public class ProcessFileTask extends ClientTask {
             return;
         }
 
+        // 调用
         Object result = module.notify(notification);
         if (null == result) {
             response.addParam("code", FileProcessorStateCode.NoFile.code);

@@ -35,10 +35,7 @@ import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.plugin.PluginSystem;
-import cube.service.fileprocessor.processor.OCRProcessor;
-import cube.service.fileprocessor.processor.OCRProcessorContext;
-import cube.service.fileprocessor.processor.SnapshotContext;
-import cube.service.fileprocessor.processor.SnapshotFrameProcessor;
+import cube.service.fileprocessor.processor.*;
 import cube.service.filestorage.FileStorageService;
 import cube.util.ConfigUtils;
 import cube.util.FileType;
@@ -386,6 +383,47 @@ public class FileProcessorService extends AbstractModule {
     }
 
     /**
+     * 创建图像处理器。
+     *
+     * @param domainName
+     * @param fileCode
+     * @return
+     */
+    public ImageProcessor createImageProcessor(String domainName, String fileCode) {
+        FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+        FileLabel fileLabel = storageService.getFile(domainName, fileCode);
+        if (null == fileLabel) {
+            return null;
+        }
+
+        if (!FileUtils.isImageType(fileLabel.getFileType())) {
+            // 指定的文件不是图片格式
+            Logger.w(this.getClass(), "File is NOT image : " + fileLabel.getFileName());
+            return null;
+        }
+
+        Path imageFile = Paths.get(this.workPath.toString(), fileCode + "." + fileLabel.getFileType().getPreferredExtension());
+
+        if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
+            String path = storageService.loadFileToDisk(domainName, fileCode);
+            if (null == path) {
+                return null;
+            }
+
+            try {
+                Files.copy(Paths.get(path), imageFile);
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#createImageProcessor", e);
+                return null;
+            }
+        }
+
+        ImageProcessor imageProcessor = new ImageProcessor(this.workPath);
+        imageProcessor.setImageFile(imageFile.toFile(), fileLabel);
+        return imageProcessor;
+    }
+
+    /**
      * 创建指定的 OCR 处理器。
      *
      * @param domainName
@@ -409,10 +447,15 @@ public class FileProcessorService extends AbstractModule {
 
         if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
             String path = storageService.loadFileToDisk(domainName, fileCode);
+            if (null == path) {
+                return null;
+            }
+
             try {
                 Files.copy(Paths.get(path), imageFile);
             } catch (IOException e) {
-                e.printStackTrace();
+                Logger.e(this.getClass(), "#createOCRProcessor", e);
+                return null;
             }
         }
 
@@ -454,7 +497,8 @@ public class FileProcessorService extends AbstractModule {
             try {
                 Files.copy(Paths.get(path), videoFile);
             } catch (IOException e) {
-                e.printStackTrace();
+                Logger.e(this.getClass(), "#createSnapshotFrameProcessor", e);
+                return null;
             }
         }
 
@@ -477,7 +521,20 @@ public class FileProcessorService extends AbstractModule {
             JSONObject data = (JSONObject) event;
             String action = data.getString("action");
 
-            if (FileProcessorAction.OCR.name.equals(action)) {
+            if (FileProcessorAction.Image.name.equals(action)) {
+                String domain = data.getString("domain");
+                String fileCode = data.getString("fileCode");
+                // 创建图像处理器
+                ImageProcessor processor = createImageProcessor(domain, fileCode);
+                if (null != processor) {
+                    ImageProcessorContext context = new ImageProcessorContext();
+                    // 解析参数
+                    context.parseParameter(data.getJSONObject("parameter"));
+                    processor.go(context);
+                    return context.toJSON();
+                }
+            }
+            else if (FileProcessorAction.OCR.name.equals(action)) {
                 String domain = data.getString("domain");
                 String fileCode = data.getString("fileCode");
                 // 创建 OCR 处理器

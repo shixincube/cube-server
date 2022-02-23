@@ -24,49 +24,37 @@
  * SOFTWARE.
  */
 
-package cube.file;
+package cube.service.fileprocessor.processor;
 
-import cube.common.JSONable;
-import org.json.JSONObject;
+import cube.common.entity.FileLabel;
+
+import java.io.File;
+import java.nio.file.Path;
 
 /**
- * 图片操作。
+ * 图像数据处理器。
  */
-public abstract class ImageOperation implements JSONable {
+public class ImageProcessor extends Processor {
 
-    private String inputFileCode;
+    private File imageFile;
 
-    public ImageOperation() {
+    private FileLabel imageFileLabel;
+
+    public ImageProcessor(Path workPath) {
+        super(workPath);
     }
 
-    public ImageOperation(String inputFileCode) {
-        this.inputFileCode = inputFileCode;
-    }
-
-    /**
-     * 获取具体的图像操作。
-     *
-     * @return
-     */
-    public abstract String getOperation();
-
-    public String getInputFileCode() {
-        return this.inputFileCode;
-    }
-
-    public void setInputFileCode(String fileCode) {
-        this.inputFileCode = fileCode;
+    public void setImageFile(File file, FileLabel fileLabel) {
+        this.imageFile = file;
+        this.imageFileLabel = fileLabel;
     }
 
     @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("operation", this.getOperation());
-        return json;
-    }
+    public void go(ProcessorContext context) {
+        if (!(context instanceof ImageProcessorContext)) {
+            return;
+        }
 
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
+        ImageProcessorContext ctx = (ImageProcessorContext) context;
     }
 }

@@ -24,44 +24,34 @@
  * SOFTWARE.
  */
 
-package cube.file;
+package cube.service.fileprocessor.processor;
 
-import cube.common.JSONable;
+import cube.common.action.FileProcessorAction;
+import cube.file.EliminateColorOperation;
 import org.json.JSONObject;
 
 /**
- * 图片操作。
+ * 图像处理上下文。
  */
-public abstract class ImageOperation implements JSONable {
+public class ImageProcessorContext extends ProcessorContext {
 
-    private String inputFileCode;
-
-    public ImageOperation() {
+    public ImageProcessorContext() {
     }
 
-    public ImageOperation(String inputFileCode) {
-        this.inputFileCode = inputFileCode;
+    public ImageProcessorContext(JSONObject json) {
+        super(json);
     }
 
-    /**
-     * 获取具体的图像操作。
-     *
-     * @return
-     */
-    public abstract String getOperation();
-
-    public String getInputFileCode() {
-        return this.inputFileCode;
-    }
-
-    public void setInputFileCode(String fileCode) {
-        this.inputFileCode = fileCode;
+    public void parseParameter(JSONObject parameterJSON) {
+        String operation = parameterJSON.getString("operation");
+        if (EliminateColorOperation.Operation.equals(operation)) {
+            
+        }
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("operation", this.getOperation());
+        JSONObject json = super.toJSON(FileProcessorAction.Image.name);
         return json;
     }
 

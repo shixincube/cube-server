@@ -26,6 +26,8 @@
 
 package cube.file;
 
+import org.json.JSONObject;
+
 /**
  * 剔除图像颜色。
  */
@@ -43,5 +45,11 @@ public class EliminateColorOperation extends ImageOperation {
     @Override
     public String getOperation() {
         return Operation;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        return json;
     }
 }

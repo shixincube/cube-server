@@ -56,9 +56,9 @@ public class OCRProcessorContext extends ProcessorContext {
     }
 
     public OCRProcessorContext(JSONObject json) {
-        super();
+        super(json);
+
         this.resultText = new ArrayList<>();
-        this.setSuccessful(json.getBoolean("success"));
 
         JSONArray textArray = json.getJSONArray("text");
         for (int i = 0; i < textArray.length(); ++i) {
