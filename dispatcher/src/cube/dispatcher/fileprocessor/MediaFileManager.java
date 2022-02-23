@@ -40,6 +40,7 @@ import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.util.HLSTools;
 import cube.dispatcher.util.Tickable;
+import cube.util.FileUtils;
 import cube.util.HttpClientFactory;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Response;
@@ -352,9 +353,16 @@ public final class MediaFileManager implements Tickable {
         if (now - this.lastCheckPath > this.checkPathPeriod) {
             this.lastCheckPath = now;
 
-            File[] file = listAllMediaPath();
-            if (null != file && file.length > 0) {
-
+            File[] files = listAllMediaPath();
+            if (null != files && files.length > 0) {
+                for (File path : files) {
+                    if (now - path.lastModified() > this.mediaPathTimeout) {
+                        // 清空目录
+                        FileUtils.emptyPath(path);
+                        // 删除空目录
+                        path.delete();
+                    }
+                }
             }
         }
     }

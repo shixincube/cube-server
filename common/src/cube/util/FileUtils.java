@@ -373,6 +373,29 @@ public final class FileUtils {
         return result.toString();
     }
 
+    /**
+     * 清空路径。
+     *
+     * @param path
+     */
+    public static void emptyPath(File path) {
+        if (path.isDirectory()) {
+            File[] files = path.listFiles();
+            if (null != files && files.length > 0) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        emptyPath(file);
+                        // 删除空目录
+                        file.delete();
+                    }
+                    else {
+                        file.delete();
+                    }
+                }
+            }
+        }
+    }
+
 //    public static void main(String[] args) {
 //        System.out.println(FileUtils.fixFilePath("/Users/ambrose/Documents/Repositories/Cube3/cube-server/console/../deploy"));
 //        System.out.println(FileUtils.fixFilePath("D:/ambrose/Documents/Repositories/Cube3/cube-server/console/../deploy"));

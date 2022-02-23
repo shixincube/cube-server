@@ -162,6 +162,9 @@ public class ClientCellet extends AbstractCellet {
         else if (ClientAction.GetLog.name.equals(action)) {
             this.executor.execute(new GetLogTask(this, talkContext, actionDialect));
         }
+        else {
+            this.executor.execute(new UnsupportedActionTask(this, talkContext, actionDialect));
+        }
     }
 
     @Override
