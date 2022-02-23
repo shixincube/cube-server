@@ -30,8 +30,8 @@ import cell.util.log.Logger;
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
 import cube.util.FileUtils;
-import cube.util.file.OCRFile;
-import cube.util.file.TesseractHocrFile;
+import cube.file.OCRFile;
+import cube.file.TesseractHocrFile;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

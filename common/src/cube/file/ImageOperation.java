@@ -24,55 +24,49 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.file;
 
-public enum FileProcessorAction {
+import cube.common.JSONable;
+import org.json.JSONObject;
 
-    /**
-     * 获取媒体源地址。
-     */
-    GetMediaSource("getMediaSource"),
+/**
+ * 图片操作。
+ */
+public abstract class ImageOperation implements JSONable {
 
-    /**
-     * 生成缩略图。
-     */
-    Thumb("thumb"),
+    private String inputFileCode;
 
-    /**
-     * 图像操作。
-     */
-    Image("image"),
+    public ImageOperation() {
+    }
 
-    /**
-     * 字符识别。
-     */
-    OCR("ocr"),
+    public ImageOperation(String inputFileCode) {
+        this.inputFileCode = inputFileCode;
+    }
 
     /**
-     * 视频快照。
+     * 获取具体的图像操作。
+     *
+     * @return
      */
-    Snapshot("snapshot"),
+    public abstract String getOperation();
 
-    /**
-     * 对象检测。
-     */
-    DetectObject("detectObject"),
+    public String getInputFileCode() {
+        return this.inputFileCode;
+    }
 
-    /**
-     * 对象检测应答。
-     */
-    DetectObjectAck("detectObjectAck"),
+    public void setInputFileCode(String fileCode) {
+        this.inputFileCode = fileCode;
+    }
 
-    /**
-     * 未知动作。
-     */
-    Unknown("")
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
 
-    ;
+        return json;
+    }
 
-    public final String name;
-
-    FileProcessorAction(String name) {
-        this.name = name;
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

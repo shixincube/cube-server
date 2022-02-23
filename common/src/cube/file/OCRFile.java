@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.util.file;
+package cube.file;
 
 import cube.common.JSONable;
 import cube.geometry.BoundingBox;

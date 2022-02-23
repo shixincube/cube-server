@@ -24,55 +24,24 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.file;
 
-public enum FileProcessorAction {
+/**
+ * 剔除图像颜色。
+ */
+public class EliminateColorOperation extends ImageOperation {
 
-    /**
-     * 获取媒体源地址。
-     */
-    GetMediaSource("getMediaSource"),
+    public final static String Operation = "EliminateColor";
 
-    /**
-     * 生成缩略图。
-     */
-    Thumb("thumb"),
+    public EliminateColorOperation() {
+    }
 
-    /**
-     * 图像操作。
-     */
-    Image("image"),
+    public EliminateColorOperation(String inputFileCode) {
+        super(inputFileCode);
+    }
 
-    /**
-     * 字符识别。
-     */
-    OCR("ocr"),
-
-    /**
-     * 视频快照。
-     */
-    Snapshot("snapshot"),
-
-    /**
-     * 对象检测。
-     */
-    DetectObject("detectObject"),
-
-    /**
-     * 对象检测应答。
-     */
-    DetectObjectAck("detectObjectAck"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    FileProcessorAction(String name) {
-        this.name = name;
+    @Override
+    public String getOperation() {
+        return Operation;
     }
 }

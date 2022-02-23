@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.util.file;
+package cube.file;
 
 import cell.util.Utils;
 import cube.geometry.BoundingBox;
