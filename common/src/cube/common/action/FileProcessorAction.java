@@ -49,6 +49,16 @@ public enum FileProcessorAction {
     OCR("ocr"),
 
     /**
+     * 提交工作流。
+     */
+    SubmitWorkflow("submitWorkflow"),
+
+    /**
+     * 取消工作流。
+     */
+    CancelWorkflow("cancelWorkflow"),
+
+    /**
      * 视频快照。
      */
     Snapshot("snapshot"),

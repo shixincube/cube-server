@@ -566,7 +566,7 @@ public class FileProcessorService extends AbstractModule {
 
             prevWork = (i > 0) ? workList.get(i - 1) : null;
 
-            String process = work.getProcess();
+            String process = work.getFileOperation().getProcessAction();
 
             List<File> inputFile = (null != prevWork) ? prevWork.getOutput() : work.getInput();
 

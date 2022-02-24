@@ -30,4 +30,11 @@ package cube.file;
  * 文件操作接口。
  */
 public interface FileOperation {
+
+    /**
+     * 获取操作对应的动作。
+     *
+     * @return
+     */
+    public String getProcessAction();
 }

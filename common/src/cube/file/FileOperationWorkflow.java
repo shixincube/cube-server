@@ -26,6 +26,7 @@
 
 package cube.file;
 
+import cell.util.Utils;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
@@ -38,6 +39,8 @@ import java.util.List;
  */
 public class FileOperationWorkflow implements JSONable {
 
+    private long sn;
+
     private String domain;
 
     private String sourceFileCode;
@@ -45,6 +48,7 @@ public class FileOperationWorkflow implements JSONable {
     private List<OperationWork> workList;
 
     public FileOperationWorkflow() {
+        this.sn = Utils.generateSerialNumber();
         this.workList = new LinkedList<>();
     }
 
@@ -56,12 +60,12 @@ public class FileOperationWorkflow implements JSONable {
         this.domain = domain;
     }
 
-    public void setSourceFileCode(String fileCode) {
-        this.sourceFileCode = fileCode;
-    }
-
     public String getSourceFileCode() {
         return this.sourceFileCode;
+    }
+
+    public void setSourceFileCode(String fileCode) {
+        this.sourceFileCode = fileCode;
     }
 
     public void append(OperationWork operationWork) {

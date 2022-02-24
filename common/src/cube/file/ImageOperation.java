@@ -27,6 +27,7 @@
 package cube.file;
 
 import cube.common.JSONable;
+import cube.common.action.FileProcessorAction;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -47,6 +48,11 @@ public abstract class ImageOperation implements FileOperation, JSONable {
      * @return
      */
     public abstract String getOperation();
+
+    @Override
+    public String getProcessAction() {
+        return FileProcessorAction.Image.name;
+    }
 
     public File getInputFile() {
         return this.inputFile;

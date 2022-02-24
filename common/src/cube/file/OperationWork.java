@@ -34,20 +34,14 @@ import java.util.List;
  */
 public class OperationWork {
 
-    private String process;
-
     private FileOperation fileOperation;
 
     private List<File> input;
 
     private List<File> output;
 
-    public OperationWork(String process) {
-        this.process = process;
-    }
-
-    public String getProcess() {
-        return this.process;
+    public OperationWork(FileOperation fileOperation) {
+        this.fileOperation = fileOperation;
     }
 
     public void setOperation(FileOperation fileOperation) {

@@ -27,6 +27,7 @@
 package cube.file;
 
 import cube.common.JSONable;
+import cube.common.action.FileProcessorAction;
 import org.json.JSONObject;
 
 /**
@@ -35,6 +36,11 @@ import org.json.JSONObject;
 public class OCROperation implements FileOperation, JSONable {
 
     public OCROperation() {
+    }
+
+    @Override
+    public String getProcessAction() {
+        return FileProcessorAction.OCR.name;
     }
 
     @Override

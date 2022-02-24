@@ -37,6 +37,9 @@ public class ReverseColorOperation extends ImageOperation {
 
     private String outputFilename;
 
+    public ReverseColorOperation() {
+    }
+
     public ReverseColorOperation(JSONObject json) {
         if (json.has("outputFilename")) {
             this.outputFilename = json.getString("outputFilename");
