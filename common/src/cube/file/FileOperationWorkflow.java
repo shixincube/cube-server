@@ -26,6 +26,9 @@
 
 package cube.file;
 
+import cube.common.JSONable;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,7 +36,7 @@ import java.util.List;
 /**
  * 文件处理流。
  */
-public class FileOperationWorkflow {
+public class FileOperationWorkflow implements JSONable {
 
     private String domain;
 
@@ -49,6 +52,14 @@ public class FileOperationWorkflow {
         return this.domain;
     }
 
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
+    public void setSourceFileCode(String fileCode) {
+        this.sourceFileCode = fileCode;
+    }
+
     public String getSourceFileCode() {
         return this.sourceFileCode;
     }
@@ -59,5 +70,17 @@ public class FileOperationWorkflow {
 
     public List<OperationWork> getWorkList() {
         return new ArrayList<>(this.workList);
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

@@ -34,7 +34,6 @@ import cube.common.entity.Image;
 import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
-import cube.file.FileOperation;
 import cube.file.FileOperationWorkflow;
 import cube.file.OperationWork;
 import cube.plugin.PluginSystem;
@@ -54,6 +53,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -477,7 +477,7 @@ public class FileProcessorService extends AbstractModule {
      * @param fileCode
      * @return
      */
-    public SnapshotFrameProcessor createSnapshotFrameProcessor(String domainName, String fileCode) {
+    public SnapshotProcessor createSnapshotFrameProcessor(String domainName, String fileCode) {
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
         FileLabel fileLabel = storageService.getFile(domainName, fileCode);
         if (null == fileLabel) {
@@ -506,7 +506,7 @@ public class FileProcessorService extends AbstractModule {
             }
         }
 
-        SnapshotFrameProcessor processor = new SnapshotFrameProcessor(this.workPath);
+        SnapshotProcessor processor = new SnapshotProcessor(this.workPath);
         processor.setInputVideoFile(videoFile.toFile(), fileLabel);
         return processor;
     }
@@ -516,6 +516,11 @@ public class FileProcessorService extends AbstractModule {
         return Files.exists(path);
     }
 
+    /**
+     * 加载操作工作流。
+     *
+     * @param workflow
+     */
     public void launchOperationWorkFlow(FileOperationWorkflow workflow) {
         // 域
         String domainName = workflow.getDomain();
@@ -525,6 +530,7 @@ public class FileProcessorService extends AbstractModule {
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
         FileLabel fileLabel = storageService.getFile(domainName, fileCode);
         if (null == fileLabel) {
+            Logger.e(this.getClass(), "#launchOperationWorkFlow - Not find file : " + fileCode);
             return;
         }
 
@@ -533,6 +539,7 @@ public class FileProcessorService extends AbstractModule {
         if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
             String path = storageService.loadFileToDisk(domainName, fileCode);
             if (null == path) {
+                Logger.e(this.getClass(), "#launchOperationWorkFlow - Load file to disk failed : " + fileCode);
                 return;
             }
 
@@ -545,35 +552,55 @@ public class FileProcessorService extends AbstractModule {
         }
 
         List<OperationWork> workList = workflow.getWorkList();
+
+        // 设置入口文件
+        List<File> input = new ArrayList<>();
+        input.add(sourceFile.toFile());
+        workList.get(0).setInput(input);
+
+        boolean interrupt = false;
+        OperationWork prevWork = null;
+
         for (int i = 0, length = workList.size(); i < length; ++i) {
             OperationWork work = workList.get(i);
-            OperationWork nextWork = (i + 1 < length) ? workList.get(i + 1) : null;
+
+            prevWork = (i > 0) ? workList.get(i - 1) : null;
 
             String process = work.getProcess();
+
+            List<File> inputFile = (null != prevWork) ? prevWork.getOutput() : work.getInput();
 
             if (FileProcessorAction.Image.name.equals(process)) {
                 // 创建处理器
                 ImageProcessor imageProcessor = new ImageProcessor(this.workPath);
-                imageProcessor.setImageFile(sourceFile.toFile(), fileLabel);
+                imageProcessor.setImageFile(inputFile.get(0));
                 // 创建上下文
                 ImageProcessorContext context = new ImageProcessorContext();
                 context.parseOperation(work.getFileOperation());
+                // 进行处理
                 imageProcessor.go(context);
 
                 if (context.isSuccessful()) {
-                    work.setOutput(context.getResultStream().file);
-
-                    if (null != nextWork) {
-                        nextWork.setInput(work.getOutput());
-                    }
+                    // 设置当前工序的输出
+                    List<File> output = new ArrayList<>();
+                    output.add(context.getResultStream().file);
+                    work.setOutput(output);
                 }
                 else {
+                    interrupt = true;
                     break;
                 }
             }
             else if (FileProcessorAction.OCR.name.equals(process)) {
 
             }
+            else if (FileProcessorAction.Snapshot.name.equals(process)) {
+
+            }
+        }
+
+        if (!interrupt) {
+//            List<File> output =
         }
     }
 
@@ -614,7 +641,7 @@ public class FileProcessorService extends AbstractModule {
                 String domain = data.getString("domain");
                 String fileCode = data.getString("fileCode");
                 // 创建处理器
-                SnapshotFrameProcessor processor = createSnapshotFrameProcessor(domain, fileCode);
+                SnapshotProcessor processor = createSnapshotFrameProcessor(domain, fileCode);
                 if (null != processor) {
                     SnapshotContext context = new SnapshotContext();
                     processor.go(context);

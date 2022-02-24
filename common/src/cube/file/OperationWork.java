@@ -27,6 +27,7 @@
 package cube.file;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * 文件操作工作。
@@ -37,9 +38,9 @@ public class OperationWork {
 
     private FileOperation fileOperation;
 
-    private File input;
+    private List<File> input;
 
-    private File output;
+    private List<File> output;
 
     public OperationWork(String process) {
         this.process = process;
@@ -57,19 +58,19 @@ public class OperationWork {
         return this.fileOperation;
     }
 
-    public void setInput(File file) {
+    public void setInput(List<File> file) {
         this.input = file;
     }
 
-    public File getInput() {
+    public List<File> getInput() {
         return this.input;
     }
 
-    public void setOutput(File file) {
+    public void setOutput(List<File> file) {
         this.output = file;
     }
 
-    public File getOutput() {
+    public List<File> getOutput() {
         return this.output;
     }
 }

@@ -54,6 +54,10 @@ public class ImageProcessor extends Processor {
         this.imageFileLabel = fileLabel;
     }
 
+    public void setImageFile(File file) {
+        this.imageFile = file;
+    }
+
     public File getImageFile() {
         return this.imageFile;
     }

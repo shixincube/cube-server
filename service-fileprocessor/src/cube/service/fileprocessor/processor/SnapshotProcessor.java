@@ -45,13 +45,13 @@ import java.util.ArrayList;
 /**
  * 视频帧处理器。
  */
-public class SnapshotFrameProcessor extends FFmpeg {
+public class SnapshotProcessor extends FFmpeg {
 
     private File inputVideoFile;
 
     private FileLabel videoFileLabel;
 
-    public SnapshotFrameProcessor(Path workPath) {
+    public SnapshotProcessor(Path workPath) {
         super(workPath);
     }
 
