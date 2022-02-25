@@ -54,7 +54,7 @@ public abstract class ProcessorContext implements JSONable {
         }
     }
 
-    protected void setSuccessful(boolean value) {
+    public void setSuccessful(boolean value) {
         this.successful = value;
     }
 

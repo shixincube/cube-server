@@ -35,6 +35,7 @@ import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.file.FileOperationWorkflow;
+import cube.file.FileProcessResult;
 import cube.file.OperationWork;
 import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.*;
@@ -517,21 +518,45 @@ public class FileProcessorService extends AbstractModule {
     }
 
     /**
+     * 异步加载工作流。
+     *
+     * @param executor
+     * @param workflow
+     * @return 返回是否成功启动工作流。
+     */
+    public boolean launchOperationWorkFlow(ExecutorService executor, FileOperationWorkflow workflow) {
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                launchOperationWorkFlow(workflow);
+            }
+        });
+        return true;
+    }
+
+    /**
      * 加载操作工作流。
      *
      * @param workflow
+     * @return 返回是否成功启动工作流。
      */
-    public void launchOperationWorkFlow(FileOperationWorkflow workflow) {
+    public boolean launchOperationWorkFlow(FileOperationWorkflow workflow) {
         // 域
         String domainName = workflow.getDomain();
         // 源文件的文件码
         String fileCode = workflow.getSourceFileCode();
 
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#launchOperationWorkFlow - Start workflow : " + workflow.getSN() +
+                    " - @" + domainName + " - " + fileCode);
+        }
+
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
         FileLabel fileLabel = storageService.getFile(domainName, fileCode);
         if (null == fileLabel) {
-            Logger.e(this.getClass(), "#launchOperationWorkFlow - Not find file : " + fileCode);
-            return;
+            Logger.e(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN()
+                    + ") Not find file : " + fileCode);
+            return false;
         }
 
         Path sourceFile = Paths.get(this.workPath.toString(), fileCode + "." + fileLabel.getFileType().getPreferredExtension());
@@ -539,15 +564,16 @@ public class FileProcessorService extends AbstractModule {
         if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
             String path = storageService.loadFileToDisk(domainName, fileCode);
             if (null == path) {
-                Logger.e(this.getClass(), "#launchOperationWorkFlow - Load file to disk failed : " + fileCode);
-                return;
+                Logger.e(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN()
+                        + ") Load file to disk failed : " + fileCode);
+                return false;
             }
 
             try {
                 Files.copy(Paths.get(path), sourceFile);
             } catch (IOException e) {
-                Logger.e(this.getClass(), "#launchOperationWorkFlow", e);
-                return;
+                Logger.e(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN() + ")", e);
+                return false;
             }
         }
 
@@ -585,6 +611,7 @@ public class FileProcessorService extends AbstractModule {
                     List<File> output = new ArrayList<>();
                     output.add(context.getResultStream().file);
                     work.setOutput(output);
+                    work.setProcessResult(new FileProcessResult(context.toJSON()));
                 }
                 else {
                     interrupt = true;
@@ -599,9 +626,23 @@ public class FileProcessorService extends AbstractModule {
             }
         }
 
+        Logger.i(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN() + ") interrupt : " + interrupt);
+
         if (!interrupt) {
-//            List<File> output =
+            OperationWork lastWork = workList.get(workList.size() - 1);
+            FileProcessResult result = lastWork.getProcessResult();
+            if (null == result) {
+                Logger.e(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN()
+                        + ") Result data error : " + fileCode);
+                return false;
+            }
         }
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#launchOperationWorkFlow - End workflow : " + workflow.getSN());
+        }
+
+        return true;
     }
 
     /**
@@ -636,6 +677,16 @@ public class FileProcessorService extends AbstractModule {
                     processor.go(context);
                     return context.toJSON();
                 }
+            }
+            else if (FileProcessorAction.SubmitWorkflow.name.equals(action)) {
+                JSONObject workflowJson = data.getJSONObject("workflow");
+                // 解析工作流
+                FileOperationWorkflow workflow = new FileOperationWorkflow(workflowJson);
+                // 加载工作流
+                boolean result = this.launchOperationWorkFlow(this.executor, workflow);
+                WorkflowContext context = new WorkflowContext(action);
+                context.setSuccessful(result);
+                return context.toJSON();
             }
             else if (FileProcessorAction.Snapshot.name.equals(action)) {
                 String domain = data.getString("domain");

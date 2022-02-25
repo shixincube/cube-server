@@ -38,6 +38,9 @@ public class OCROperation implements FileOperation, JSONable {
     public OCROperation() {
     }
 
+    public OCROperation(JSONObject json) {
+    }
+
     @Override
     public String getProcessAction() {
         return FileProcessorAction.OCR.name;
@@ -46,6 +49,7 @@ public class OCROperation implements FileOperation, JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("process", this.getProcessAction());
         return json;
     }
 

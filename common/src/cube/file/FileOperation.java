@@ -26,10 +26,12 @@
 
 package cube.file;
 
+import cube.common.JSONable;
+
 /**
  * 文件操作接口。
  */
-public interface FileOperation {
+public interface FileOperation extends JSONable {
 
     /**
      * 获取操作对应的动作。

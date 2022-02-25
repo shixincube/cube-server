@@ -75,6 +75,10 @@ public enum ClientAction {
 
     ProcessFile("ProcessFile"),
 
+    SubmitWorkflow("SubmitWorkflow"),
+
+    CancelWorkflow("CancelWorkflow"),
+
     Cube("Cube");
 
     public final String name;

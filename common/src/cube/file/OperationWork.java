@@ -26,13 +26,16 @@
 
 package cube.file;
 
+import cube.common.JSONable;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.util.List;
 
 /**
  * 文件操作工作。
  */
-public class OperationWork {
+public class OperationWork implements JSONable {
 
     private FileOperation fileOperation;
 
@@ -40,8 +43,14 @@ public class OperationWork {
 
     private List<File> output;
 
+    private FileProcessResult processResult;
+
     public OperationWork(FileOperation fileOperation) {
         this.fileOperation = fileOperation;
+    }
+
+    public OperationWork(JSONObject json) {
+        this.fileOperation = FileOperationHelper.parseFileOperation(json.getJSONObject("operation"));
     }
 
     public void setOperation(FileOperation fileOperation) {
@@ -66,5 +75,25 @@ public class OperationWork {
 
     public List<File> getOutput() {
         return this.output;
+    }
+
+    public void setProcessResult(FileProcessResult result) {
+        this.processResult = result;
+    }
+
+    public FileProcessResult getProcessResult() {
+        return this.processResult;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("operation", this.fileOperation.toJSON());
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

@@ -77,7 +77,12 @@ public class ImageProcessor extends Processor {
             EliminateColorOperation operation = (EliminateColorOperation) imageOperation;
             String outputFilename = operation.getOutputFilename();
             if (null == outputFilename) {
-                outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_eliminated.jpg";
+                if (null != this.imageFileLabel) {
+                    outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_eliminated.jpg";
+                }
+                else {
+                    outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_eliminated.jpg";
+                }
             }
             // 使用 ImageMagick 操作
             boolean success = ImageMagick.eliminateColor(this.getWorkPath().toFile(), this.imageFile.getName(),
@@ -97,7 +102,12 @@ public class ImageProcessor extends Processor {
             ReverseColorOperation operation = (ReverseColorOperation) imageOperation;
             String outputFilename = operation.getOutputFilename();
             if (null == outputFilename) {
-                outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_reversed.jpg";
+                if (null != this.imageFileLabel) {
+                    outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_reversed.jpg";
+                }
+                else {
+                    outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_reversed.jpg";
+                }
             }
             // 使用 ImageMagick 操作
             boolean success = ImageMagick.reverseColor(this.getWorkPath().toFile(), this.imageFile.getName(),

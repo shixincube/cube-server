@@ -61,7 +61,7 @@ public class ImageProcessorContext extends ProcessorContext {
     }
 
     public void parseOperation(FileOperation fileOperation) {
-
+        this.imageOperation = (ImageOperation) fileOperation;
     }
 
     public ImageOperation getImageOperation() {

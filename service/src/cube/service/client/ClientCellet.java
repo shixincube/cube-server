@@ -159,6 +159,9 @@ public class ClientCellet extends AbstractCellet {
         else if (ClientAction.ProcessFile.name.equals(action)) {
             this.executor.execute(new ProcessFileTask(this, talkContext, actionDialect));
         }
+        else if (ClientAction.SubmitWorkflow.name.equals(action)) {
+            this.executor.execute(new SubmitWorkflowTask(this, talkContext, actionDialect));
+        }
         else if (ClientAction.GetLog.name.equals(action)) {
             this.executor.execute(new GetLogTask(this, talkContext, actionDialect));
         }

@@ -26,52 +26,32 @@
 
 package cube.file;
 
-import cube.common.JSONable;
 import cube.common.action.FileProcessorAction;
 import org.json.JSONObject;
 
-import java.io.File;
-
 /**
- * 图片操作。
+ * 文件操作辅助类。
  */
-public abstract class ImageOperation implements FileOperation, JSONable {
+public final class FileOperationHelper {
 
-    private File inputFile;
-
-    public ImageOperation() {
+    private FileOperationHelper() {
     }
 
-    /**
-     * 获取具体的图像操作。
-     *
-     * @return
-     */
-    public abstract String getOperation();
+    public static FileOperation parseFileOperation(JSONObject json) {
+        String process = json.getString("process");
+        if (FileProcessorAction.Image.name.equals(process)) {
+            String operation = json.getString("operation");
+            if (EliminateColorOperation.Operation.equals(operation)) {
+                return new EliminateColorOperation(json);
+            }
+            else if (ReverseColorOperation.Operation.equals(operation)) {
+                return new ReverseColorOperation(json);
+            }
+        }
+        else if (FileProcessorAction.OCR.name.equals(process)) {
+            return new OCROperation(json);
+        }
 
-    @Override
-    public String getProcessAction() {
-        return FileProcessorAction.Image.name;
-    }
-
-    public File getInputFile() {
-        return this.inputFile;
-    }
-
-    public void setInputFile(File inputFile) {
-        this.inputFile = inputFile;
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("process", this.getProcessAction());
-        json.put("operation", this.getOperation());
-        return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
+        return null;
     }
 }

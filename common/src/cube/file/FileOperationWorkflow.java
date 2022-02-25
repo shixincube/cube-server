@@ -28,6 +28,7 @@ package cube.file;
 
 import cell.util.Utils;
 import cube.common.JSONable;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -50,6 +51,23 @@ public class FileOperationWorkflow implements JSONable {
     public FileOperationWorkflow() {
         this.sn = Utils.generateSerialNumber();
         this.workList = new LinkedList<>();
+    }
+
+    public FileOperationWorkflow(JSONObject json) {
+        this.sn = json.getLong("sn");
+        this.domain = json.getString("domain");
+        this.sourceFileCode = json.getString("source");
+
+        this.workList = new LinkedList<>();
+        JSONArray works = json.getJSONArray("works");
+        for (int i = 0; i < works.length(); ++i) {
+            JSONObject workJson = works.getJSONObject(i);
+            this.workList.add(new OperationWork(workJson));
+        }
+    }
+
+    public long getSN() {
+        return this.sn;
     }
 
     public String getDomain() {
@@ -79,6 +97,15 @@ public class FileOperationWorkflow implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
+        json.put("domain", this.domain);
+        json.put("source", this.sourceFileCode);
+
+        JSONArray works = new JSONArray();
+        for (OperationWork work : this.workList) {
+            works.put(work.toJSON());
+        }
+        json.put("works", works);
 
         return json;
     }
