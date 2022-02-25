@@ -36,10 +36,13 @@ import cube.common.entity.Group;
 import cube.common.entity.Message;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
+import cube.file.FileOperationWorkflow;
+import cube.file.OperationWork;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
+import cube.service.client.event.FileWorkflowEvent;
 import cube.service.client.event.MessageReceiveEvent;
 import cube.service.client.event.MessageSendEvent;
 import cube.service.contact.ContactHook;
@@ -113,7 +116,7 @@ public final class ClientManager {
 
                 while (null == ContactManager.getInstance().getPluginSystem()) {
                     try {
-                        Thread.sleep(1000L);
+                        Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -121,12 +124,12 @@ public final class ClientManager {
 
                 setupContactPlugin(ContactManager.getInstance().getPluginSystem());
 
-                // 检查消息模块
+                // 配置消息模块
                 count = 10;
                 AbstractModule messagingModule = null;
                 while (null == (messagingModule = kernel.getModule("Messaging"))) {
                     try {
-                        Thread.sleep(1000L);
+                        Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -141,13 +144,42 @@ public final class ClientManager {
 
                     while (null == (pluginSystem = messagingModule.getPluginSystem())) {
                         try {
-                            Thread.sleep(1000L);
+                            Thread.sleep(1000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }
 
                     setupMessagingPlugin(pluginSystem);
+                }
+
+                // 配置文件处理模块
+                count = 10;
+                AbstractModule fileProcessor = null;
+                while (null == (fileProcessor = kernel.getModule("FileProcessor"))) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    --count;
+                    if (count == 0) {
+                        break;
+                    }
+                }
+
+                if (null != fileProcessor) {
+                    PluginSystem<?> pluginSystem = null;
+
+                    while (null == (pluginSystem = fileProcessor.getPluginSystem())) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    setupFileProcessorPlugin(pluginSystem);
                 }
             }
         }).start();
@@ -230,11 +262,66 @@ public final class ClientManager {
         });
     }
 
+    private void setupFileProcessorPlugin(PluginSystem<?> pluginSystem) {
+        pluginSystem.register("StartWorkflow", new Plugin() {
+            @Override
+            public void setup() {}
+
+            @Override
+            public void teardown() {}
+
+            @Override
+            public void onAction(PluginContext context) {
+                onFileProcessor("StartWorkflow", context);
+            }
+        });
+
+        pluginSystem.register("StopWorkflow", new Plugin() {
+            @Override
+            public void setup() {}
+
+            @Override
+            public void teardown() {}
+
+            @Override
+            public void onAction(PluginContext context) {
+                onFileProcessor("StopWorkflow", context);
+            }
+        });
+
+        pluginSystem.register("StartWorkInWorkflow", new Plugin() {
+            @Override
+            public void setup() {}
+
+            @Override
+            public void teardown() {}
+
+            @Override
+            public void onAction(PluginContext context) {
+                onFileProcessor("StartWorkInWorkflow", context);
+            }
+        });
+
+        pluginSystem.register("StopWorkInWorkflow", new Plugin() {
+            @Override
+            public void setup() {}
+
+            @Override
+            public void teardown() {}
+
+            @Override
+            public void onAction(PluginContext context) {
+                onFileProcessor("StopWorkInWorkflow", context);
+            }
+        });
+    }
+
     /**
      * 客户端登录。
      *
      * @param actionDialect
      * @param talkContext
+     * @return 返回是否登录成功。
      */
     public boolean login(ActionDialect actionDialect, TalkContext talkContext) {
         Long id = actionDialect.getParamAsLong("id");
@@ -441,6 +528,25 @@ public final class ClientManager {
                             if (null != event) {
                                 client.sendEvent(MessageSendEvent.NAME, event.toJSON());
                             }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private void onFileProcessor(String eventName, PluginContext pluginContext) {
+        FileOperationWorkflow workflow = (FileOperationWorkflow) pluginContext.get("workflow");
+        OperationWork work = (OperationWork) pluginContext.get("work");
+        FileWorkflowEvent event = new FileWorkflowEvent(eventName, workflow, work);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                for (ServerClient client : clientMap.values()) {
+                    synchronized (client) {
+                        if (client.hasEvent(eventName)) {
+
                         }
                     }
                 }

@@ -77,7 +77,7 @@ public class ImageProcessorContext extends ProcessorContext {
         JSONObject json = super.toJSON(FileProcessorAction.Image.name);
 
         if (null != this.inputFileLabel) {
-            json.put("input", this.inputFileLabel.toCompactJSON());
+            json.put("inputFileLabel", this.inputFileLabel.toCompactJSON());
         }
 
         if (null != this.imageOperation) {

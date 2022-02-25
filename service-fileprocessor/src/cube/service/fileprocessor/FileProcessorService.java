@@ -37,6 +37,7 @@ import cube.core.Kernel;
 import cube.file.FileOperationWorkflow;
 import cube.file.FileProcessResult;
 import cube.file.OperationWork;
+import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.*;
 import cube.service.filestorage.FileStorageService;
@@ -75,6 +76,11 @@ public class FileProcessorService extends AbstractModule {
 
     private boolean useImageMagick = true;
 
+    /**
+     * 插件系统。
+     */
+    protected ProcessorPluginSystem pluginSystem;
+
     public FileProcessorService(ExecutorService executor) {
         super();
         this.executor = executor;
@@ -82,6 +88,8 @@ public class FileProcessorService extends AbstractModule {
 
     @Override
     public void start() {
+        this.pluginSystem = new ProcessorPluginSystem();
+
         // 工具校验
         this.useImageMagick = ImageTools.check();
 
@@ -109,7 +117,7 @@ public class FileProcessorService extends AbstractModule {
 
     @Override
     public PluginSystem<?> getPluginSystem() {
-        return null;
+        return this.pluginSystem;
     }
 
     @Override
@@ -577,6 +585,10 @@ public class FileProcessorService extends AbstractModule {
             }
         }
 
+        // 调用钩子
+        WorkflowPluginContext pluginContext = new WorkflowPluginContext(workflow);
+        this.pluginSystem.getStartWorkflowHook().apply(pluginContext);
+
         List<OperationWork> workList = workflow.getWorkList();
 
         // 设置入口文件
@@ -592,9 +604,15 @@ public class FileProcessorService extends AbstractModule {
 
             prevWork = (i > 0) ? workList.get(i - 1) : null;
 
-            String process = work.getFileOperation().getProcessAction();
-
             List<File> inputFile = (null != prevWork) ? prevWork.getOutput() : work.getInput();
+            if (null != prevWork) {
+                work.setInput(inputFile);
+            }
+
+            pluginContext = new WorkflowPluginContext(workflow, work);
+            this.pluginSystem.getStartWorkInWorkflowHook().apply(pluginContext);
+
+            String process = work.getFileOperation().getProcessAction();
 
             if (FileProcessorAction.Image.name.equals(process)) {
                 // 创建处理器
@@ -622,8 +640,11 @@ public class FileProcessorService extends AbstractModule {
 
             }
             else if (FileProcessorAction.Snapshot.name.equals(process)) {
-
+                // TODO
             }
+
+            pluginContext = new WorkflowPluginContext(workflow, work);
+            this.pluginSystem.getStopWorkInWorkflowHook().apply(pluginContext);
         }
 
         Logger.i(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN() + ") interrupt : " + interrupt);
@@ -638,9 +659,24 @@ public class FileProcessorService extends AbstractModule {
             }
         }
 
+        // 删除过程文件
+        for (int i = 0, len = workList.size() - 1; i < len; ++i) {
+            OperationWork work = workList.get(i);
+            List<File> output = work.getOutput();
+            for (File file : output) {
+                if (file.exists()) {
+                    file.delete();
+                }
+            }
+        }
+
         if (Logger.isDebugLevel()) {
             Logger.d(this.getClass(), "#launchOperationWorkFlow - End workflow : " + workflow.getSN());
         }
+
+        // 调用钩子
+        pluginContext = new WorkflowPluginContext(workflow);
+        this.pluginSystem.getStopWorkflowHook().apply(pluginContext);
 
         return true;
     }

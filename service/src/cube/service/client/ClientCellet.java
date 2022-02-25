@@ -90,11 +90,7 @@ public class ClientCellet extends AbstractCellet {
 
         if (ClientAction.LOGIN.name.equals(action)) {
             this.executor.execute(() -> {
-                boolean result = ClientManager.getInstance().login(actionDialect, talkContext);
-                if (!result) {
-                    // 关闭不合法的客户端
-                    hangup(talkContext, false);
-                }
+                login(actionDialect, talkContext);
             });
         }
         else if (ClientAction.GetAuthToken.name.equals(action)) {
@@ -180,5 +176,16 @@ public class ClientCellet extends AbstractCellet {
         super.onQuitted(talkContext, servable);
 
         ClientManager.getInstance().quit(talkContext);
+    }
+
+    private void login(ActionDialect actionDialect, TalkContext talkContext) {
+        boolean result = ClientManager.getInstance().login(actionDialect, talkContext);
+        if (!result) {
+            // 关闭不合法的客户端
+            hangup(talkContext, false);
+        }
+        else {
+            
+        }
     }
 }

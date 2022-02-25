@@ -107,7 +107,8 @@ public class FileProcessResult {
         public ImageProcessResult(JSONObject json) {
             this.successful = json.getBoolean("success");
 
-            this.inputFileLabel = new FileLabel(json.getJSONObject("input"));
+            this.inputFileLabel = json.has("inputFileLabel") ?
+                    new FileLabel(json.getJSONObject("inputFileLabel")) : null;
 
             String operation = json.getJSONObject("operation").getString("operation");
             if (EliminateColorOperation.Operation.equals(operation)) {
