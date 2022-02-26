@@ -88,7 +88,7 @@ public class ClientCellet extends AbstractCellet {
         ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = actionDialect.getName();
 
-        if (ClientAction.LOGIN.name.equals(action)) {
+        if (ClientAction.Login.name.equals(action)) {
             this.executor.execute(() -> {
                 login(actionDialect, talkContext);
             });
@@ -185,7 +185,9 @@ public class ClientCellet extends AbstractCellet {
             hangup(talkContext, false);
         }
         else {
-            
+            ActionDialect response = new ActionDialect(ClientAction.Login.name);
+            response.addParam("sessionId", talkContext.getSessionId().longValue());
+            this.speak(talkContext, response);
         }
     }
 }

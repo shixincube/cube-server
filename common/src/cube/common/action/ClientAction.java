@@ -31,9 +31,9 @@ package cube.common.action;
  */
 public enum ClientAction {
 
-    LOGIN("Login"),
+    Login("Login"),
 
-    LOGOUT("Logout"),
+    Logout("Logout"),
 
     GetLog("GetLog"),
 
