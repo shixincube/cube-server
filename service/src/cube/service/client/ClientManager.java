@@ -366,6 +366,16 @@ public final class ClientManager {
     }
 
     /**
+     * 获取指定会话上下文对应的客户端。
+     *
+     * @param talkContext
+     * @return
+     */
+    public ServerClient getClient(TalkContext talkContext) {
+        return this.talkContextIndex.get(talkContext.getSessionId());
+    }
+
+    /**
      * 指定客户端添加事件监听器。
      *
      * @param clientId

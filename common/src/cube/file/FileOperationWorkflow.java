@@ -46,6 +46,8 @@ public class FileOperationWorkflow implements JSONable {
 
     private String sourceFileCode;
 
+    private long clientId;
+
     private List<OperationWork> workList;
 
     public FileOperationWorkflow() {
@@ -76,6 +78,14 @@ public class FileOperationWorkflow implements JSONable {
 
     public void setDomain(String domain) {
         this.domain = domain;
+    }
+
+    public long getClientId() {
+        return this.clientId;
+    }
+
+    public void setClientId(long clientId) {
+        this.clientId = clientId;
     }
 
     public String getSourceFileCode() {

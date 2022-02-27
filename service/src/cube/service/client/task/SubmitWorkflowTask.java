@@ -37,6 +37,7 @@ import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.core.AbstractModule;
 import cube.service.client.ClientCellet;
+import cube.service.client.ClientManager;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -60,6 +61,7 @@ public class SubmitWorkflowTask extends ClientTask {
         JSONObject notification = new JSONObject();
         notification.put("action", FileProcessorAction.SubmitWorkflow.name);
         notification.put("workflow", workflowJson);
+        notification.put("clientId", ClientManager.getInstance().getClient(talkContext).getId().longValue());
 
         ActionDialect response = new ActionDialect(ClientAction.SubmitWorkflow.name);
         copyNotifier(response);

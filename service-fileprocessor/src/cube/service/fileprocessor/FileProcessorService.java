@@ -718,6 +718,7 @@ public class FileProcessorService extends AbstractModule {
                 JSONObject workflowJson = data.getJSONObject("workflow");
                 // 解析工作流
                 FileOperationWorkflow workflow = new FileOperationWorkflow(workflowJson);
+                workflow.setClientId(data.getLong("clientId"));
                 // 加载工作流
                 boolean result = this.launchOperationWorkFlow(this.executor, workflow);
                 WorkflowContext context = new WorkflowContext(action);
