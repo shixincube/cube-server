@@ -26,8 +26,6 @@
 
 package cube.service.fileprocessor.processor.video;
 
-import cube.common.action.FileProcessorAction;
-import cube.service.fileprocessor.processor.ProcessorContext;
 import cube.util.FileType;
 import cube.util.TimeDuration;
 import org.json.JSONObject;
@@ -35,7 +33,7 @@ import org.json.JSONObject;
 /**
  * 快照设置。
  */
-public class SnapshotContext extends ProcessorContext {
+public class SnapshotContext extends VideoProcessorContext {
 
     public TimeDuration startTime;
 
@@ -51,7 +49,7 @@ public class SnapshotContext extends ProcessorContext {
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = super.toJSON(FileProcessorAction.Video.name);
+        JSONObject json = super.toJSON();
         json.put("start", this.startTime.formatHMS());
         return json;
     }

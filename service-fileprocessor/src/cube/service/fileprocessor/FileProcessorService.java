@@ -39,6 +39,7 @@ import cube.file.OperationWork;
 import cube.file.OperationWorkflow;
 import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.*;
+import cube.service.fileprocessor.processor.video.SnapshotContext;
 import cube.service.fileprocessor.processor.video.VideoProcessor;
 import cube.service.fileprocessor.processor.video.VideoProcessorBuilder;
 import cube.service.fileprocessor.processor.video.VideoProcessorContext;
@@ -513,7 +514,7 @@ public class FileProcessorService extends AbstractModule {
             try {
                 Files.copy(Paths.get(path), videoFile);
             } catch (IOException e) {
-                Logger.e(this.getClass(), "#createSnapshotFrameProcessor", e);
+                Logger.e(this.getClass(), "#createVideoProcessor", e);
                 return null;
             }
         }
@@ -734,7 +735,7 @@ public class FileProcessorService extends AbstractModule {
                 // 创建视频处理器
                 VideoProcessor processor = createVideoProcessor(domain, fileCode, data.getJSONObject("parameter"));
                 if (null != processor) {
-                    VideoProcessorContext context = new VideoProcessorContext();
+                    SnapshotContext context = new SnapshotContext();
                     processor.go(context);
                     return context.toJSON();
                 }

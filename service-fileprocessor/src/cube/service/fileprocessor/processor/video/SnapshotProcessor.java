@@ -73,7 +73,7 @@ public class SnapshotProcessor extends VideoProcessor {
             return;
         }
 
-        File outputFile = new File(path, "snapshot_" + TimeUtils.formatDate(System.currentTimeMillis()) + "_"
+        File outputFile = new File(path, "snapshot_" + TimeUtils.formatDateForPathSymbol(System.currentTimeMillis()) + "_"
                         + FileUtils.extractFileName(this.getFilename()) + ".zip");
         if (outputFile.exists()) {
             outputFile.delete();
@@ -109,10 +109,14 @@ public class SnapshotProcessor extends VideoProcessor {
             return;
         }
 
+        long time = System.currentTimeMillis();
+
+        this.snapshotOperation.setInputFile(this.inputFile);
+
         SnapshotContext snapshotContext = (SnapshotContext) context;
 
         String output = (null != this.inputFileLabel) ? this.inputFileLabel.getFileCode() :
-                this.getFilename() + "_" + TimeUtils.formatDate(System.currentTimeMillis());
+                this.getFilename() + "_" + TimeUtils.formatDateForPathSymbol(time);
 
         // 创建输出目录
         Path outputPath = Paths.get(getWorkPath().toString(), output);
@@ -142,7 +146,8 @@ public class SnapshotProcessor extends VideoProcessor {
             return;
         }
 
-        context.setSuccessful(true);
+        snapshotContext.setElapsedTime(System.currentTimeMillis() - time);
+        snapshotContext.setSuccessful(true);
 
         // 后处理
         File path = new File(getWorkPath().toFile(), output);

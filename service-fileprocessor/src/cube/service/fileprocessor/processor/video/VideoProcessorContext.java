@@ -26,24 +26,42 @@
 
 package cube.service.fileprocessor.processor.video;
 
+import cube.common.action.FileProcessorAction;
 import cube.service.fileprocessor.processor.ProcessorContext;
 import org.json.JSONObject;
 
 /**
  * 视频处理器上下文。
  */
-public class VideoProcessorContext extends ProcessorContext {
+public abstract class VideoProcessorContext extends ProcessorContext {
+
+    private long elapsedTime;
 
     public VideoProcessorContext() {
     }
 
+    public VideoProcessorContext(JSONObject json) {
+        super(json);
+        this.elapsedTime = json.getLong("elapsed");
+    }
+
+    public void setElapsedTime(long value) {
+        this.elapsedTime = value;
+    }
+
+    public long getElapsedTime() {
+        return this.elapsedTime;
+    }
+
     @Override
     public JSONObject toJSON() {
-        return null;
+        JSONObject json = super.toJSON(FileProcessorAction.Video.name);
+        json.put("elapsed", this.elapsedTime);
+        return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return null;
+        return this.toJSON();
     }
 }

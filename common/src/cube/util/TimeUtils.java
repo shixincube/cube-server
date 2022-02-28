@@ -42,7 +42,7 @@ public final class TimeUtils {
 
     private final static long TD_DAY = 24 * TD_HOUR;
 
-    private final static SimpleDateFormat gsDateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+    private final static SimpleDateFormat gsDateFormatPathSymbol = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
 
     private TimeUtils() {
     }
@@ -87,7 +87,7 @@ public final class TimeUtils {
      * @param timestamp
      * @return
      */
-    public static String formatDate(long timestamp) {
-        return gsDateFormat.format(new Date(timestamp));
+    public static String formatDateForPathSymbol(long timestamp) {
+        return gsDateFormatPathSymbol.format(new Date(timestamp));
     }
 }

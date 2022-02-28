@@ -40,11 +40,16 @@ public class SnapshotOperation extends VideoOperation {
     }
 
     public SnapshotOperation(JSONObject json) {
-
     }
 
     @Override
     public String getOperation() {
         return Operation;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        return json;
     }
 }
