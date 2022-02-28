@@ -34,11 +34,14 @@ import cube.common.entity.Image;
 import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
-import cube.file.OperationWorkflow;
 import cube.file.FileProcessResult;
 import cube.file.OperationWork;
+import cube.file.OperationWorkflow;
 import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.*;
+import cube.service.fileprocessor.processor.video.VideoProcessor;
+import cube.service.fileprocessor.processor.video.VideoProcessorBuilder;
+import cube.service.fileprocessor.processor.video.VideoProcessorContext;
 import cube.service.filestorage.FileStorageService;
 import cube.util.ConfigUtils;
 import cube.util.FileType;
@@ -479,13 +482,14 @@ public class FileProcessorService extends AbstractModule {
     }
 
     /**
-     * 创建视频帧快照处理器。
+     * 创建视频处理器。
      *
      * @param domainName
      * @param fileCode
+     * @param operationJson
      * @return
      */
-    public SnapshotProcessor createSnapshotFrameProcessor(String domainName, String fileCode) {
+    public VideoProcessor createVideoProcessor(String domainName, String fileCode, JSONObject operationJson) {
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
         FileLabel fileLabel = storageService.getFile(domainName, fileCode);
         if (null == fileLabel) {
@@ -514,8 +518,8 @@ public class FileProcessorService extends AbstractModule {
             }
         }
 
-        SnapshotProcessor processor = new SnapshotProcessor(this.workPath);
-        processor.setInputVideoFile(videoFile.toFile(), fileLabel);
+        VideoProcessor processor = VideoProcessorBuilder.build(this.workPath, operationJson);
+        processor.setInputFile(videoFile.toFile(), fileLabel);
         return processor;
     }
 
@@ -638,9 +642,6 @@ public class FileProcessorService extends AbstractModule {
             else if (FileProcessorAction.OCR.name.equals(process)) {
 
             }
-            else if (FileProcessorAction.Snapshot.name.equals(process)) {
-                // TODO
-            }
 
             pluginContext = new WorkflowPluginContext(workflow, work);
             this.pluginSystem.getStopWorkInWorkflowHook().apply(pluginContext);
@@ -724,13 +725,16 @@ public class FileProcessorService extends AbstractModule {
                 context.setSuccessful(result);
                 return context.toJSON();
             }
-            else if (FileProcessorAction.Snapshot.name.equals(action)) {
+            else if (FileProcessorAction.CancelWorkflow.name.equals(action)) {
+                // TODO
+            }
+            else if (FileProcessorAction.Video.name.equals(action)) {
                 String domain = data.getString("domain");
                 String fileCode = data.getString("fileCode");
-                // 创建处理器
-                SnapshotProcessor processor = createSnapshotFrameProcessor(domain, fileCode);
+                // 创建视频处理器
+                VideoProcessor processor = createVideoProcessor(domain, fileCode, data.getJSONObject("parameter"));
                 if (null != processor) {
-                    SnapshotContext context = new SnapshotContext();
+                    VideoProcessorContext context = new VideoProcessorContext();
                     processor.go(context);
                     return context.toJSON();
                 }

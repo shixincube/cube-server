@@ -26,6 +26,9 @@
 
 package cube.util;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * 时间操作相关的辅助函数库。
  */
@@ -38,6 +41,8 @@ public final class TimeUtils {
     private final static long TD_HOUR = 60 * TD_MINUTE;
 
     private final static long TD_DAY = 24 * TD_HOUR;
+
+    private final static SimpleDateFormat gsDateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
 
     private TimeUtils() {
     }
@@ -74,5 +79,15 @@ public final class TimeUtils {
         milliseconds = (int) duration;
 
         return new TimeDuration(days, hours, minutes, seconds, milliseconds);
+    }
+
+    /**
+     * 格式化日期。
+     *
+     * @param timestamp
+     * @return
+     */
+    public static String formatDate(long timestamp) {
+        return gsDateFormat.format(new Date(timestamp));
     }
 }

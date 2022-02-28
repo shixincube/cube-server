@@ -24,65 +24,26 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.fileprocessor.processor.video;
 
-public enum FileProcessorAction {
+import cube.service.fileprocessor.processor.ProcessorContext;
+import org.json.JSONObject;
 
-    /**
-     * 获取媒体源地址。
-     */
-    GetMediaSource("getMediaSource"),
+/**
+ * 视频处理器上下文。
+ */
+public class VideoProcessorContext extends ProcessorContext {
 
-    /**
-     * 生成缩略图。
-     */
-    Thumb("thumb"),
+    public VideoProcessorContext() {
+    }
 
-    /**
-     * 图像文件操作。
-     */
-    Image("image"),
+    @Override
+    public JSONObject toJSON() {
+        return null;
+    }
 
-    /**
-     * 视频文件操作。
-     */
-    Video("video"),
-
-    /**
-     * 字符识别。
-     */
-    OCR("ocr"),
-
-    /**
-     * 提交工作流。
-     */
-    SubmitWorkflow("submitWorkflow"),
-
-    /**
-     * 取消工作流。
-     */
-    CancelWorkflow("cancelWorkflow"),
-
-    /**
-     * 对象检测。
-     */
-    DetectObject("detectObject"),
-
-    /**
-     * 对象检测应答。
-     */
-    DetectObjectAck("detectObjectAck"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    FileProcessorAction(String name) {
-        this.name = name;
+    @Override
+    public JSONObject toCompactJSON() {
+        return null;
     }
 }

@@ -75,5 +75,5 @@ public abstract class Processor {
         return worker;
     }
 
-    abstract void go(ProcessorContext context);
+    public abstract void go(ProcessorContext context);
 }

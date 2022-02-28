@@ -562,10 +562,6 @@ public final class ClientManager {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                if (eventQueue.isEmpty()) {
-                    return;
-                }
-
                 FileWorkflowEvent workflowEvent = eventQueue.poll();
                 if (null != workflowEvent) {
                     long clientId = workflowEvent.getWorkflow().getClientId();

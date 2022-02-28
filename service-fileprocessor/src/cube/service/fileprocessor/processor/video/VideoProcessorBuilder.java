@@ -24,65 +24,33 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.fileprocessor.processor.video;
 
-public enum FileProcessorAction {
+import cube.file.SnapshotOperation;
+import org.json.JSONObject;
 
-    /**
-     * 获取媒体源地址。
-     */
-    GetMediaSource("getMediaSource"),
+import java.nio.file.Path;
 
-    /**
-     * 生成缩略图。
-     */
-    Thumb("thumb"),
+/**
+ * 视频处理器构建器。
+ */
+public final class VideoProcessorBuilder {
 
-    /**
-     * 图像文件操作。
-     */
-    Image("image"),
+    private VideoProcessorBuilder() {
+    }
 
-    /**
-     * 视频文件操作。
-     */
-    Video("video"),
+    public static VideoProcessor build(Path workPath, JSONObject operationJson) {
+        VideoProcessor processor = null;
 
-    /**
-     * 字符识别。
-     */
-    OCR("ocr"),
+        // 解析 Operation
+        String operation = operationJson.getString("operation");
 
-    /**
-     * 提交工作流。
-     */
-    SubmitWorkflow("submitWorkflow"),
+        if (SnapshotOperation.Operation.equals(operation)) {
+            SnapshotOperation snapshotOperation = new SnapshotOperation(operationJson);
+            SnapshotProcessor snapshot = new SnapshotProcessor(workPath, snapshotOperation);
+            processor = snapshot;
+        }
 
-    /**
-     * 取消工作流。
-     */
-    CancelWorkflow("cancelWorkflow"),
-
-    /**
-     * 对象检测。
-     */
-    DetectObject("detectObject"),
-
-    /**
-     * 对象检测应答。
-     */
-    DetectObjectAck("detectObjectAck"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    FileProcessorAction(String name) {
-        this.name = name;
+        return processor;
     }
 }

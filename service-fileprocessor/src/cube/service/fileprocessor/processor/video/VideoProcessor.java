@@ -24,65 +24,32 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.fileprocessor.processor.video;
 
-public enum FileProcessorAction {
+import cube.common.entity.FileLabel;
+import cube.service.fileprocessor.processor.FFmpeg;
+import cube.service.fileprocessor.processor.ProcessorContext;
 
-    /**
-     * 获取媒体源地址。
-     */
-    GetMediaSource("getMediaSource"),
+import java.io.File;
+import java.nio.file.Path;
 
-    /**
-     * 生成缩略图。
-     */
-    Thumb("thumb"),
+/**
+ * 视频处理器。
+ */
+public abstract class VideoProcessor extends FFmpeg {
 
-    /**
-     * 图像文件操作。
-     */
-    Image("image"),
+    protected File inputFile;
 
-    /**
-     * 视频文件操作。
-     */
-    Video("video"),
+    protected FileLabel inputFileLabel;
 
-    /**
-     * 字符识别。
-     */
-    OCR("ocr"),
-
-    /**
-     * 提交工作流。
-     */
-    SubmitWorkflow("submitWorkflow"),
-
-    /**
-     * 取消工作流。
-     */
-    CancelWorkflow("cancelWorkflow"),
-
-    /**
-     * 对象检测。
-     */
-    DetectObject("detectObject"),
-
-    /**
-     * 对象检测应答。
-     */
-    DetectObjectAck("detectObjectAck"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    FileProcessorAction(String name) {
-        this.name = name;
+    public VideoProcessor(Path workPath) {
+        super(workPath);
     }
+
+    public void setInputFile(File file, FileLabel fileLabel) {
+        this.inputFile = file;
+        this.inputFileLabel = fileLabel;
+    }
+
+    public abstract void go(ProcessorContext context);
 }

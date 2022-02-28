@@ -24,13 +24,14 @@
  * SOFTWARE.
  */
 
-package cube.service.fileprocessor.processor;
+package cube.service.fileprocessor.processor.video;
 
 import cell.util.log.Logger;
-import cube.common.action.FileProcessorAction;
-import cube.common.entity.FileLabel;
 import cube.common.entity.ProcessResultStream;
+import cube.file.SnapshotOperation;
+import cube.service.fileprocessor.processor.ProcessorContext;
 import cube.util.FileUtils;
+import cube.util.TimeUtils;
 import cube.util.ZipUtils;
 
 import java.io.File;
@@ -45,19 +46,26 @@ import java.util.ArrayList;
 /**
  * 视频帧处理器。
  */
-public class SnapshotProcessor extends FFmpeg {
+public class SnapshotProcessor extends VideoProcessor {
 
-    private File inputVideoFile;
+    private SnapshotOperation snapshotOperation;
 
-    private FileLabel videoFileLabel;
-
-    public SnapshotProcessor(Path workPath) {
+    public SnapshotProcessor(Path workPath, SnapshotOperation operation) {
         super(workPath);
+        this.snapshotOperation = operation;
     }
 
-    public void setInputVideoFile(File inputVideoFile, FileLabel fileLabel) {
-        this.inputVideoFile = inputVideoFile;
-        this.videoFileLabel = fileLabel;
+    public SnapshotOperation getSnapshotOperation() {
+        return this.snapshotOperation;
+    }
+
+    private String getFilename() {
+        if (null != this.inputFileLabel) {
+            return FileUtils.extractFileName(this.inputFileLabel.getFileName());
+        }
+        else {
+            return FileUtils.extractFileName(this.inputFile.getName());
+        }
     }
 
     private void postHandle(File path, SnapshotContext snapshotContext) {
@@ -65,9 +73,8 @@ public class SnapshotProcessor extends FFmpeg {
             return;
         }
 
-        File outputFile = new File(path,
-                FileProcessorAction.Snapshot.name.toLowerCase() + "_"
-                        + FileUtils.extractFileName(this.videoFileLabel.getFileName()) + ".zip");
+        File outputFile = new File(path, "snapshot_" + TimeUtils.formatDate(System.currentTimeMillis()) + "_"
+                        + FileUtils.extractFileName(this.getFilename()) + ".zip");
         if (outputFile.exists()) {
             outputFile.delete();
         }
@@ -104,8 +111,11 @@ public class SnapshotProcessor extends FFmpeg {
 
         SnapshotContext snapshotContext = (SnapshotContext) context;
 
+        String output = (null != this.inputFileLabel) ? this.inputFileLabel.getFileCode() :
+                this.getFilename() + "_" + TimeUtils.formatDate(System.currentTimeMillis());
+
         // 创建输出目录
-        Path outputPath = Paths.get(getWorkPath().toString(), this.videoFileLabel.getFileCode());
+        Path outputPath = Paths.get(getWorkPath().toString(), output);
         if (!Files.exists(outputPath)) {
             try {
                 Files.createDirectories(outputPath);
@@ -114,19 +124,17 @@ public class SnapshotProcessor extends FFmpeg {
             }
         }
 
-        snapshotContext.videoFile = this.videoFileLabel;
-
         ArrayList<String> params = new ArrayList<>();
         params.add("-ss");
         params.add(snapshotContext.startTime.formatHMS());
         params.add("-i");
-        params.add(this.inputVideoFile.getName());
+        params.add(this.inputFile.getName());
         params.add("-f");
         params.add("image2");
         params.add("-r");
         params.add(String.format("%.2f", snapshotContext.rate));
         params.add("-y");
-        params.add(this.videoFileLabel.getFileCode() + "/%04d." + snapshotContext.outputType.getPreferredExtension());
+        params.add(output + "/%04d." + snapshotContext.outputType.getPreferredExtension());
 
         boolean result = this.call(params, context);
         if (!result) {
@@ -137,7 +145,7 @@ public class SnapshotProcessor extends FFmpeg {
         context.setSuccessful(true);
 
         // 后处理
-        File path = new File(getWorkPath().toFile(), this.videoFileLabel.getFileCode());
+        File path = new File(getWorkPath().toFile(), output);
         this.postHandle(path, snapshotContext);
     }
 }

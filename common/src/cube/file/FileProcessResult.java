@@ -48,6 +48,8 @@ public class FileProcessResult {
 
     private ImageProcessResult imageResult;
 
+    private VideoProcessResult videoResult;
+
     private OCRProcessResult ocrResult;
 
     private ProcessResultStream resultStream;
@@ -60,11 +62,11 @@ public class FileProcessResult {
         if (FileProcessorAction.Image.name.equals(this.process)) {
             this.imageResult = new ImageProcessResult(json);
         }
+        else if (FileProcessorAction.Video.name.equals(this.process)) {
+            this.videoResult = new VideoProcessResult(json);
+        }
         else if (FileProcessorAction.OCR.name.equals(this.process)) {
             this.ocrResult = new OCRProcessResult(json);
-        }
-        else if (FileProcessorAction.Snapshot.name.equals(this.process)) {
-
         }
         else if (FileProcessorAction.SubmitWorkflow.name.equals(this.process)) {
             this.submitWorkflowResult = new SubmitWorkflowResult(json);
@@ -149,7 +151,17 @@ public class FileProcessResult {
         }
     }
 
+    /**
+     * 视频处理结果。
+     */
+    public class VideoProcessResult {
 
+        public final boolean successful;
+
+        public VideoProcessResult(JSONObject json) {
+            this.successful = json.getBoolean("success");
+        }
+    }
 
     /**
      * OCR 处理结果。

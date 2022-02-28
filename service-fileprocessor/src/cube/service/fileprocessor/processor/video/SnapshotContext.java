@@ -24,65 +24,40 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.fileprocessor.processor.video;
 
-public enum FileProcessorAction {
+import cube.common.action.FileProcessorAction;
+import cube.service.fileprocessor.processor.ProcessorContext;
+import cube.util.FileType;
+import cube.util.TimeDuration;
+import org.json.JSONObject;
 
-    /**
-     * 获取媒体源地址。
-     */
-    GetMediaSource("getMediaSource"),
+/**
+ * 快照设置。
+ */
+public class SnapshotContext extends ProcessorContext {
 
-    /**
-     * 生成缩略图。
-     */
-    Thumb("thumb"),
+    public TimeDuration startTime;
 
-    /**
-     * 图像文件操作。
-     */
-    Image("image"),
+    public double rate;
 
-    /**
-     * 视频文件操作。
-     */
-    Video("video"),
+    public FileType outputType;
 
-    /**
-     * 字符识别。
-     */
-    OCR("ocr"),
+    public SnapshotContext() {
+        this.startTime = new TimeDuration(0, 0, 0);
+        this.rate = 0.5;
+        this.outputType = FileType.JPEG;
+    }
 
-    /**
-     * 提交工作流。
-     */
-    SubmitWorkflow("submitWorkflow"),
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON(FileProcessorAction.Video.name);
+        json.put("start", this.startTime.formatHMS());
+        return json;
+    }
 
-    /**
-     * 取消工作流。
-     */
-    CancelWorkflow("cancelWorkflow"),
-
-    /**
-     * 对象检测。
-     */
-    DetectObject("detectObject"),
-
-    /**
-     * 对象检测应答。
-     */
-    DetectObjectAck("detectObjectAck"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    FileProcessorAction(String name) {
-        this.name = name;
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

@@ -24,50 +24,54 @@
  * SOFTWARE.
  */
 
-package cube.service.fileprocessor.processor;
+package cube.file;
 
+import cube.common.JSONable;
 import cube.common.action.FileProcessorAction;
-import cube.common.entity.FileLabel;
-import cube.util.FileType;
-import cube.util.TimeDuration;
 import org.json.JSONObject;
 
+import java.io.File;
+
 /**
- * 快照设置。
+ * 视频操作。
  */
-public class SnapshotContext extends ProcessorContext {
+public abstract class VideoOperation implements FileOperation, JSONable {
 
-    public TimeDuration startTime;
+    private File inputFile;
 
-    public double rate;
+    public VideoOperation() {
+    }
 
-    public FileType outputType;
+    /**
+     * 获取具体的视频操作。
+     *
+     * @return
+     */
+    public abstract String getOperation();
 
-    public FileLabel videoFile;
+    @Override
+    public String getProcessAction() {
+        return FileProcessorAction.Video.name;
+    }
 
-    public SnapshotContext() {
-        this.startTime = new TimeDuration(0, 0, 0);
-        this.rate = 0.5;
-        this.outputType = FileType.JPEG;
+    public File getInputFile() {
+        return this.inputFile;
+    }
+
+    public void setInputFile(File inputFile) {
+        this.inputFile = inputFile;
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = this.toCompactJSON();
-
-        if (null != this.videoFile) {
-            json.put("video", this.videoFile.toCompactJSON());
-        }
-
+        JSONObject json = new JSONObject();
+        json.put("process", this.getProcessAction());
+        json.put("operation", this.getOperation());
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = super.toJSON(FileProcessorAction.Snapshot.name);
-
-        json.put("start", this.startTime.formatHMS());
-
-        return json;
+        return this.toJSON();
     }
 }
