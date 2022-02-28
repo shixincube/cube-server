@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * 文件处理流。
  */
-public class FileOperationWorkflow implements JSONable {
+public class OperationWorkflow implements JSONable {
 
     private long sn;
 
@@ -50,15 +50,19 @@ public class FileOperationWorkflow implements JSONable {
 
     private List<OperationWork> workList;
 
-    public FileOperationWorkflow() {
+    public OperationWorkflow() {
         this.sn = Utils.generateSerialNumber();
         this.workList = new LinkedList<>();
     }
 
-    public FileOperationWorkflow(JSONObject json) {
+    public OperationWorkflow(JSONObject json) {
         this.sn = json.getLong("sn");
         this.domain = json.getString("domain");
         this.sourceFileCode = json.getString("source");
+
+        if (json.has("clientId")) {
+            this.clientId = json.getLong("clientId");
+        }
 
         this.workList = new LinkedList<>();
         JSONArray works = json.getJSONArray("works");
@@ -110,6 +114,10 @@ public class FileOperationWorkflow implements JSONable {
         json.put("sn", this.sn);
         json.put("domain", this.domain);
         json.put("source", this.sourceFileCode);
+
+        if (this.clientId > 0) {
+            json.put("clientId", this.clientId);
+        }
 
         JSONArray works = new JSONArray();
         for (OperationWork work : this.workList) {

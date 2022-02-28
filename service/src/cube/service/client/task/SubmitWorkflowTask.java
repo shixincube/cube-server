@@ -100,7 +100,7 @@ public class SubmitWorkflowTask extends ClientTask {
             }
         }
 
-        response.addParam("code", FileStorageStateCode.Ok.code);
+        response.addParam("code", FileProcessorStateCode.Ok.code);
         response.addParam("result", responseData);
         cellet.speak(talkContext, response);
     }

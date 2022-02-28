@@ -24,10 +24,10 @@
  * SOFTWARE.
  */
 
-package cube.service.client.event;
+package cube.file.event;
 
 import cube.common.JSONable;
-import cube.file.FileOperationWorkflow;
+import cube.file.OperationWorkflow;
 import cube.file.OperationWork;
 import org.json.JSONObject;
 
@@ -38,21 +38,29 @@ public class FileWorkflowEvent implements JSONable {
 
     private String name;
 
-    private FileOperationWorkflow workflow;
+    private OperationWorkflow workflow;
 
     private OperationWork work;
 
-    public FileWorkflowEvent(String name, FileOperationWorkflow workflow, OperationWork work) {
+    public FileWorkflowEvent(String name, OperationWorkflow workflow, OperationWork work) {
         this.name = name;
         this.workflow = workflow;
         this.work = work;
+    }
+
+    public FileWorkflowEvent(JSONObject json) {
+        this.name = json.getString("name");
+        this.workflow = new OperationWorkflow(json.getJSONObject("workflow"));
+        if (json.has("work")) {
+            this.work = new OperationWork(json.getJSONObject("work"));
+        }
     }
 
     public String getName() {
         return this.name;
     }
 
-    public FileOperationWorkflow getWorkflow() {
+    public OperationWorkflow getWorkflow() {
         return this.workflow;
     }
 
@@ -63,8 +71,11 @@ public class FileWorkflowEvent implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("name", this.name);
         json.put("workflow", this.workflow.toJSON());
-        json.put("work", this.work.toJSON());
+        if (null != this.work) {
+            json.put("work", this.work.toJSON());
+        }
         return json;
     }
 

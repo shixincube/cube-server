@@ -34,10 +34,9 @@ import cube.common.entity.Image;
 import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
-import cube.file.FileOperationWorkflow;
+import cube.file.OperationWorkflow;
 import cube.file.FileProcessResult;
 import cube.file.OperationWork;
-import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.*;
 import cube.service.filestorage.FileStorageService;
@@ -532,7 +531,7 @@ public class FileProcessorService extends AbstractModule {
      * @param workflow
      * @return 返回是否成功启动工作流。
      */
-    public boolean launchOperationWorkFlow(ExecutorService executor, FileOperationWorkflow workflow) {
+    public boolean launchOperationWorkFlow(ExecutorService executor, OperationWorkflow workflow) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -548,7 +547,7 @@ public class FileProcessorService extends AbstractModule {
      * @param workflow
      * @return 返回是否成功启动工作流。
      */
-    public boolean launchOperationWorkFlow(FileOperationWorkflow workflow) {
+    public boolean launchOperationWorkFlow(OperationWorkflow workflow) {
         // 域
         String domainName = workflow.getDomain();
         // 源文件的文件码
@@ -717,7 +716,7 @@ public class FileProcessorService extends AbstractModule {
             else if (FileProcessorAction.SubmitWorkflow.name.equals(action)) {
                 JSONObject workflowJson = data.getJSONObject("workflow");
                 // 解析工作流
-                FileOperationWorkflow workflow = new FileOperationWorkflow(workflowJson);
+                OperationWorkflow workflow = new OperationWorkflow(workflowJson);
                 workflow.setClientId(data.getLong("clientId"));
                 // 加载工作流
                 boolean result = this.launchOperationWorkFlow(this.executor, workflow);

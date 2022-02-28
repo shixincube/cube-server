@@ -36,13 +36,13 @@ import cube.common.entity.Group;
 import cube.common.entity.Message;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
-import cube.file.FileOperationWorkflow;
+import cube.file.OperationWorkflow;
 import cube.file.OperationWork;
+import cube.file.event.FileWorkflowEvent;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
-import cube.service.client.event.FileWorkflowEvent;
 import cube.service.client.event.MessageReceiveEvent;
 import cube.service.client.event.MessageSendEvent;
 import cube.service.contact.ContactHook;
@@ -52,7 +52,9 @@ import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
+import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
@@ -76,10 +78,13 @@ public final class ClientManager {
 
     private ClientStorage clientStorage;
 
+    private ConcurrentLinkedQueue<FileWorkflowEvent> eventQueue;
+
     private ClientManager() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(2);
         this.clientMap = new ConcurrentHashMap<>();
         this.talkContextIndex = new ConcurrentHashMap<>();
+        this.eventQueue = new ConcurrentLinkedQueue<>();
     }
 
     public static ClientManager getInstance() {
@@ -545,18 +550,30 @@ public final class ClientManager {
         });
     }
 
-    private void onFileProcessor(String eventName, PluginContext pluginContext) {
-        FileOperationWorkflow workflow = (FileOperationWorkflow) pluginContext.get("workflow");
+    private synchronized void onFileProcessor(String eventName, PluginContext pluginContext) {
+        OperationWorkflow workflow = (OperationWorkflow) pluginContext.get("workflow");
+        // OperationWork 可以是 null 值
         OperationWork work = (OperationWork) pluginContext.get("work");
         FileWorkflowEvent event = new FileWorkflowEvent(eventName, workflow, work);
+
+        // 事件进入队列
+        this.eventQueue.offer(event);
 
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                for (ServerClient client : clientMap.values()) {
-                    synchronized (client) {
-                        if (client.hasEvent(eventName)) {
+                if (eventQueue.isEmpty()) {
+                    return;
+                }
 
+                FileWorkflowEvent workflowEvent = eventQueue.poll();
+                if (null != workflowEvent) {
+                    long clientId = workflowEvent.getWorkflow().getClientId();
+                    for (ServerClient client : clientMap.values()) {
+                        if (client.getId().longValue() == clientId) {
+                            synchronized (client) {
+                                client.sendEvent(workflowEvent.getName(), workflowEvent.toJSON());
+                            }
                         }
                     }
                 }

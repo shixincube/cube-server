@@ -26,7 +26,7 @@
 
 package cube.service.fileprocessor;
 
-import cube.file.FileOperationWorkflow;
+import cube.file.OperationWorkflow;
 import cube.file.OperationWork;
 import cube.plugin.PluginContext;
 
@@ -35,22 +35,22 @@ import cube.plugin.PluginContext;
  */
 public class WorkflowPluginContext extends PluginContext {
 
-    private FileOperationWorkflow workflow;
+    private OperationWorkflow workflow;
 
     private OperationWork work;
 
-    public WorkflowPluginContext(FileOperationWorkflow workflow) {
+    public WorkflowPluginContext(OperationWorkflow workflow) {
         super();
         this.workflow = workflow;
     }
 
-    public WorkflowPluginContext(FileOperationWorkflow workflow, OperationWork work) {
+    public WorkflowPluginContext(OperationWorkflow workflow, OperationWork work) {
         super();
         this.workflow = workflow;
         this.work = work;
     }
 
-    public FileOperationWorkflow getWorkflow() {
+    public OperationWorkflow getWorkflow() {
         return this.workflow;
     }
 
@@ -73,7 +73,7 @@ public class WorkflowPluginContext extends PluginContext {
     @Override
     public void set(String name, Object value) {
         if (name.equals("workflow")) {
-            this.workflow = (FileOperationWorkflow) value;
+            this.workflow = (OperationWorkflow) value;
         }
         else if (name.equals("work")) {
             this.work = (OperationWork) value;

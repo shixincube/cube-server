@@ -33,7 +33,6 @@ import cell.util.log.Logger;
 import cube.common.action.ClientAction;
 import cube.common.entity.ProcessResultStream;
 import cube.common.state.FileProcessorStateCode;
-import cube.common.state.FileStorageStateCode;
 import cube.core.AbstractModule;
 import cube.service.client.ClientCellet;
 import org.json.JSONObject;
@@ -104,7 +103,7 @@ public class ProcessFileTask extends ClientTask {
             }
         }
 
-        response.addParam("code", FileStorageStateCode.Ok.code);
+        response.addParam("code", FileProcessorStateCode.Ok.code);
         response.addParam("result", responseData);
         cellet.speak(talkContext, response);
     }

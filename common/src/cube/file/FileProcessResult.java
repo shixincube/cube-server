@@ -26,6 +26,7 @@
 
 package cube.file;
 
+import cell.util.log.Logger;
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
 import cube.common.entity.ProcessResultStream;
@@ -42,6 +43,8 @@ import java.util.List;
 public class FileProcessResult {
 
     public final String process;
+
+    private SubmitWorkflowResult submitWorkflowResult;
 
     private ImageProcessResult imageResult;
 
@@ -62,6 +65,9 @@ public class FileProcessResult {
         }
         else if (FileProcessorAction.Snapshot.name.equals(this.process)) {
 
+        }
+        else if (FileProcessorAction.SubmitWorkflow.name.equals(this.process)) {
+            this.submitWorkflowResult = new SubmitWorkflowResult(json);
         }
 
         if (json.has("stream")) {
@@ -85,12 +91,27 @@ public class FileProcessResult {
         return this.resultFile;
     }
 
+    public SubmitWorkflowResult getSubmitWorkflowResult() {
+        return this.submitWorkflowResult;
+    }
+
     public ImageProcessResult getImageResult() {
         return this.imageResult;
     }
 
     public OCRProcessResult getOCRResult() {
         return this.ocrResult;
+    }
+
+    /**
+     * 提交工作流结果。
+     */
+    public class SubmitWorkflowResult {
+        public final boolean successful;
+
+        public SubmitWorkflowResult(JSONObject json) {
+            this.successful = json.getBoolean("success");
+        }
     }
 
     /**
