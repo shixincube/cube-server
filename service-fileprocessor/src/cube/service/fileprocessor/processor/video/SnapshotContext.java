@@ -30,28 +30,35 @@ import cube.file.SnapshotOperation;
 import cube.file.VideoOperation;
 import cube.util.FileType;
 import cube.util.TimeDuration;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  * 快照设置。
  */
 public class SnapshotContext extends VideoProcessorContext {
 
-    public TimeDuration startTime;
+    public TimeDuration timeOffset;
+
+    public TimeDuration duration;
 
     public double rate;
 
     public FileType outputType;
 
     public SnapshotContext() {
-        this.startTime = new TimeDuration(0, 0, 0);
+        this.timeOffset = new TimeDuration(0, 0, 0);
+        this.duration = new TimeDuration(0, 0, 0,0);
         this.rate = 0.5;
         this.outputType = FileType.JPEG;
     }
 
     public void setVideoOperation(SnapshotOperation value) {
         super.setVideoOperation(value);
-        this.startTime = value.startTime;
+        this.timeOffset = value.timeOffset;
+        this.duration = value.duration;
         this.rate = value.rate;
         this.outputType = value.outputType;
     }
@@ -59,9 +66,20 @@ public class SnapshotContext extends VideoProcessorContext {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("startTime", this.startTime.toJSON());
+        json.put("timeOffset", this.timeOffset.toJSON());
+        json.put("duration", this.duration.toJSON());
         json.put("rate", this.rate);
         json.put("outputType", this.outputType.getPreferredExtension());
+
+        List<String> logs = this.getStdOutput();
+        if (null != logs) {
+            JSONArray array = new JSONArray();
+            for (String log : logs) {
+                array.put(log);
+            }
+            json.put("logs", array);
+        }
+
         return json;
     }
 

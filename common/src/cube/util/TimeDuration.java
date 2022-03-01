@@ -47,6 +47,10 @@ public class TimeDuration {
         this(0, hours, minutes, seconds, 0);
     }
 
+    public TimeDuration(int hours, int minutes, int seconds, int milliseconds) {
+        this(0, hours, minutes, seconds, milliseconds);
+    }
+
     public TimeDuration(int days, int hours, int minutes, int seconds, int milliseconds) {
         this.days = days;
         this.hours = hours;
@@ -63,6 +67,16 @@ public class TimeDuration {
         this.milliseconds = json.getInt("milliseconds");
     }
 
+    /**
+     * 是否所有数据均为 0 值。
+     *
+     * @return
+     */
+    public boolean isZero() {
+        return (this.days == 0 && this.hours == 0 && this.minutes == 0
+                && this.seconds == 0 && this.milliseconds == 0);
+    }
+
     public String formatHMS() {
         StringBuilder buf = new StringBuilder();
         buf.append(this.hours < 10 ? "0" + this.hours : this.hours);
@@ -70,6 +84,28 @@ public class TimeDuration {
         buf.append(this.minutes < 10 ? "0" + this.minutes : this.minutes);
         buf.append(":");
         buf.append(this.seconds < 10 ? "0" + this.seconds : this.seconds);
+        return buf.toString();
+    }
+
+    public String formatHMSMs() {
+        StringBuilder buf = new StringBuilder();
+        buf.append(this.hours < 10 ? "0" + this.hours : this.hours);
+        buf.append(":");
+        buf.append(this.minutes < 10 ? "0" + this.minutes : this.minutes);
+        buf.append(":");
+        buf.append(this.seconds < 10 ? "0" + this.seconds : this.seconds);
+        buf.append(".");
+        buf.append(this.milliseconds);
+        return buf.toString();
+    }
+
+    public String formatMSMs() {
+        StringBuilder buf = new StringBuilder();
+        buf.append(this.minutes < 10 ? "0" + this.minutes : this.minutes);
+        buf.append(":");
+        buf.append(this.seconds < 10 ? "0" + this.seconds : this.seconds);
+        buf.append(".");
+        buf.append(this.milliseconds);
         return buf.toString();
     }
 

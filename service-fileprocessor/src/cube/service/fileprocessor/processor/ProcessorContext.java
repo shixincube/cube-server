@@ -78,6 +78,10 @@ public abstract class ProcessorContext implements JSONable {
         this.stdOutput.add(line);
     }
 
+    protected List<String> getStdOutput() {
+        return this.stdOutput;
+    }
+
     public JSONObject toJSON(String process) {
         JSONObject json = new JSONObject();
 

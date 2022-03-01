@@ -132,17 +132,23 @@ public class SnapshotProcessor extends VideoProcessor {
 
         ArrayList<String> params = new ArrayList<>();
         params.add("-ss");
-        params.add(snapshotContext.startTime.formatHMS());
+        params.add(snapshotContext.timeOffset.formatHMSMs());
         params.add("-i");
         params.add(this.inputFile.getName());
         params.add("-f");
         params.add("image2");
         params.add("-r");
         params.add(String.format("%.2f", snapshotContext.rate));
-        params.add("-y");
-        params.add(output + "/%04d." + snapshotContext.outputType.getPreferredExtension());
 
-        boolean result = this.call(params, context);
+        if (!snapshotContext.duration.isZero()) {
+            params.add("-t");
+            params.add(snapshotContext.duration.formatHMSMs());
+        }
+
+        params.add("-y");
+        params.add(output + "/%05d." + snapshotContext.outputType.getPreferredExtension());
+
+        boolean result = this.call(params, snapshotContext);
         if (!result) {
             Logger.w(this.getClass(), "#go - ffmpeg command failed");
             return;

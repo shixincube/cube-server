@@ -52,6 +52,8 @@ public class FileProcessResult {
 
     private OCRProcessResult ocrResult;
 
+    private List<String> logs;
+
     private ProcessResultStream resultStream;
 
     private File resultFile;
@@ -75,6 +77,19 @@ public class FileProcessResult {
         if (json.has("stream")) {
             this.resultStream = new ProcessResultStream(json.getJSONObject("stream"));
         }
+
+        if (json.has("logs")) {
+            JSONArray array = json.getJSONArray("logs");
+            this.logs = new ArrayList<>(array.length());
+
+            for (int i = 0; i < array.length(); ++i) {
+                this.logs.add(array.getString(i));
+            }
+        }
+    }
+
+    public List<String> getLogs() {
+        return this.logs;
     }
 
     public boolean hasResultStream() {
