@@ -39,6 +39,7 @@ public final class FileOperationHelper {
 
     public static FileOperation parseFileOperation(JSONObject json) {
         String process = json.getString("process");
+
         if (FileProcessorAction.Image.name.equals(process)) {
             String operation = json.getString("operation");
             if (EliminateColorOperation.Operation.equals(operation)) {
@@ -46,6 +47,12 @@ public final class FileOperationHelper {
             }
             else if (ReverseColorOperation.Operation.equals(operation)) {
                 return new ReverseColorOperation(json);
+            }
+        }
+        else if (FileProcessorAction.Video.name.equals(process)) {
+            String operation = json.getString("operation");
+            if (SnapshotOperation.Operation.equals(operation)) {
+                return new SnapshotOperation(json);
             }
         }
         else if (FileProcessorAction.OCR.name.equals(process)) {

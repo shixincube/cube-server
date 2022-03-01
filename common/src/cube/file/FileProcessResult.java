@@ -185,6 +185,8 @@ public class FileProcessResult {
             String operation = json.getJSONObject("operation").getString("operation");
             if (SnapshotOperation.Operation.equals(operation)) {
                 this.operation = new SnapshotOperation(json.getJSONObject("operation"));
+
+
             }
         }
 

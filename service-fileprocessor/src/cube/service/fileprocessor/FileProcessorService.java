@@ -34,27 +34,23 @@ import cube.common.entity.Image;
 import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
-import cube.file.FileProcessResult;
-import cube.file.OperationWork;
-import cube.file.OperationWorkflow;
+import cube.file.*;
 import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.*;
 import cube.service.fileprocessor.processor.video.SnapshotContext;
+import cube.service.fileprocessor.processor.video.SnapshotProcessor;
 import cube.service.fileprocessor.processor.video.VideoProcessor;
 import cube.service.fileprocessor.processor.video.VideoProcessorBuilder;
-import cube.service.fileprocessor.processor.video.VideoProcessorContext;
 import cube.service.filestorage.FileStorageService;
 import cube.util.ConfigUtils;
 import cube.util.FileType;
 import cube.util.FileUtils;
+import cube.util.ZipUtils;
 import net.coobird.thumbnailator.Thumbnails;
 import org.json.JSONObject;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -619,25 +615,56 @@ public class FileProcessorService extends AbstractModule {
             String process = work.getFileOperation().getProcessAction();
 
             if (FileProcessorAction.Image.name.equals(process)) {
-                // 创建处理器
-                ImageProcessor imageProcessor = new ImageProcessor(this.workPath);
-                imageProcessor.setImageFile(inputFile.get(0));
-                // 创建上下文
-                ImageProcessorContext context = new ImageProcessorContext();
-                context.parseOperation(work.getFileOperation());
-                // 进行处理
-                imageProcessor.go(context);
+                // 设置当前工序的输出
+                List<File> output = new ArrayList<>(inputFile.size());
+                ImageProcessorContext context = null;
 
-                if (context.isSuccessful()) {
-                    // 设置当前工序的输出
-                    List<File> output = new ArrayList<>();
-                    output.add(context.getResultStream().file);
-                    work.setOutput(output);
-                    work.setProcessResult(new FileProcessResult(context.toJSON()));
+                for (File file : inputFile) {
+                    // 创建处理器
+                    ImageProcessor imageProcessor = new ImageProcessor(this.workPath);
+                    imageProcessor.setImageFile(file);
+                    // 创建上下文
+                    context = new ImageProcessorContext();
+                    context.parseOperation(work.getFileOperation());
+                    // 进行处理
+                    imageProcessor.go(context);
+
+                    if (context.isSuccessful()) {
+                        // 设置当前工序的输出
+                        output.add(context.getResultStream().file);
+                    }
+                    else {
+                        interrupt = true;
+                        break;
+                    }
                 }
-                else {
-                    interrupt = true;
-                    break;
+
+                work.setOutput(output);
+                work.setProcessResult(new FileProcessResult(context.toJSON()));
+            }
+            else if (FileProcessorAction.Video.name.equals(process)) {
+                // 创建处理器
+                FileOperation fileOperation = work.getFileOperation();
+                if (fileOperation instanceof SnapshotOperation) {
+                    SnapshotProcessor processor = new SnapshotProcessor(this.workPath, (SnapshotOperation) fileOperation);
+                    // 设置待处理文件
+                    processor.setInputFile(inputFile.get(0));
+                    // 创建上下文
+                    SnapshotContext context = new SnapshotContext();
+                    context.packToZip = false;  // 分帧文件不打包
+                    context.copyToWorkPath = true;  // 将输出结果复制到工作目录
+                    // 执行处理
+                    processor.go(context);
+
+                    if (context.isSuccessful()) {
+                        // 设置当前工序的输出
+                        work.setOutput(context.getOutputFiles());
+                        work.setProcessResult(new FileProcessResult(context.toJSON()));
+                    }
+                    else {
+                        interrupt = true;
+                        break;
+                    }
                 }
             }
             else if (FileProcessorAction.OCR.name.equals(process)) {
@@ -650,6 +677,7 @@ public class FileProcessorService extends AbstractModule {
 
         Logger.i(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN() + ") interrupt : " + interrupt);
 
+        File resultFile = null;
         if (!interrupt) {
             OperationWork lastWork = workList.get(workList.size() - 1);
             FileProcessResult result = lastWork.getProcessResult();
@@ -657,6 +685,15 @@ public class FileProcessorService extends AbstractModule {
                 Logger.e(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN()
                         + ") Result data error : " + fileCode);
                 return false;
+            }
+
+            // 结果文件打包
+            resultFile = this.packFileSet(fileCode, lastWork.getOutput());
+            if (resultFile.exists()) {
+                // 清空结果文件
+                for (File file : lastWork.getOutput()) {
+                    file.delete();
+                }
             }
         }
 
@@ -676,10 +713,21 @@ public class FileProcessorService extends AbstractModule {
         }
 
         // 调用钩子
-        pluginContext = new WorkflowPluginContext(workflow);
+        pluginContext = new WorkflowPluginContext(workflow, resultFile);
         this.pluginSystem.getStopWorkflowHook().apply(pluginContext);
 
         return true;
+    }
+
+    private File packFileSet(String packName, List<File> fileList) {
+        String filename = packName.endsWith(".zip") ? packName : packName + ".zip";
+        File outputFile = new File(workPath.toFile(), filename);
+        try {
+            ZipUtils.toZip(fileList, new FileOutputStream(outputFile));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return outputFile;
     }
 
     /**

@@ -51,5 +51,9 @@ public abstract class VideoProcessor extends FFmpeg {
         this.inputFileLabel = fileLabel;
     }
 
+    public void setInputFile(File file) {
+        this.inputFile = file;
+    }
+
     public abstract void go(ProcessorContext context);
 }

@@ -28,10 +28,14 @@ package cube.util;
 
 import org.json.JSONObject;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * 时间长度计量。
  */
-public class TimeDuration {
+public class TimeOffset {
 
     public final int days;
 
@@ -43,15 +47,15 @@ public class TimeDuration {
 
     public final int milliseconds;
 
-    public TimeDuration(int hours, int minutes, int seconds) {
+    public TimeOffset(int hours, int minutes, int seconds) {
         this(0, hours, minutes, seconds, 0);
     }
 
-    public TimeDuration(int hours, int minutes, int seconds, int milliseconds) {
+    public TimeOffset(int hours, int minutes, int seconds, int milliseconds) {
         this(0, hours, minutes, seconds, milliseconds);
     }
 
-    public TimeDuration(int days, int hours, int minutes, int seconds, int milliseconds) {
+    public TimeOffset(int days, int hours, int minutes, int seconds, int milliseconds) {
         this.days = days;
         this.hours = hours;
         this.minutes = minutes;
@@ -59,12 +63,69 @@ public class TimeDuration {
         this.milliseconds = milliseconds;
     }
 
-    public TimeDuration(JSONObject json) {
+    public TimeOffset(JSONObject json) {
         this.days = json.getInt("days");
         this.hours = json.getInt("hours");
         this.minutes = json.getInt("minutes");
         this.seconds = json.getInt("seconds");
         this.milliseconds = json.getInt("milliseconds");
+    }
+
+    /**
+     *
+     * @param value
+     * @param unit
+     * @return
+     * @see java.util.Calendar
+     */
+    public TimeOffset increment(int value, int unit) {
+        int days = this.days;
+        int hours = this.hours;
+        int minutes = this.minutes;
+        int seconds = this.seconds;
+        int milliseconds = this.milliseconds;
+
+        if (unit == Calendar.SECOND) {
+            seconds += value;
+        }
+        else if (unit == Calendar.MINUTE) {
+            minutes += value;
+        }
+        else if (unit == Calendar.HOUR) {
+            hours += value;
+        }
+        else if (unit == Calendar.MILLISECOND) {
+            milliseconds += value;
+        }
+        else if (unit == Calendar.DATE) {
+            days += value;
+        }
+
+        if (milliseconds >= 1000) {
+            int quotient = (int) Math.floor((double)milliseconds / 1000.0);
+            seconds += quotient;
+            milliseconds = milliseconds % 1000;
+        }
+
+        if (seconds >= 60) {
+            int quotient = (int) Math.floor((double)seconds / 60.0);
+            minutes += quotient;
+            seconds = seconds % 60;
+        }
+
+        if (minutes >= 60) {
+            int quotient = (int) Math.floor((double)minutes / 60.0);
+            hours += quotient;
+            minutes = minutes % 60;
+        }
+
+        if (hours >= 24) {
+            int quotient = (int) Math.floor((double)hours / 24.0);
+            days += quotient;
+            hours = hours % 24;
+        }
+
+        return new TimeOffset(days, hours, minutes, seconds, milliseconds);
     }
 
     /**

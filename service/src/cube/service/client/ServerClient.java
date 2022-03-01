@@ -27,6 +27,7 @@
 package cube.service.client;
 
 import cell.core.cellet.Cellet;
+import cell.core.talk.PrimitiveOutputStream;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.common.UniqueKey;
@@ -38,6 +39,10 @@ import cube.service.client.event.MessageReceiveEvent;
 import cube.service.client.event.MessageSendEvent;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -235,6 +240,38 @@ public class ServerClient extends Entity {
         actionDialect.addParam("event", eventName);
         actionDialect.addParam("data", data);
         this.cellet.speak(this.talkContext, actionDialect);
+    }
+
+    public void transmitStream(String streamName, File file) {
+        PrimitiveOutputStream stream = this.cellet.speakStream(this.talkContext, streamName);
+        FileInputStream fis = null;
+
+        try {
+            fis = new FileInputStream(file);
+            byte[] bytes = new byte[4096];
+            int length = 0;
+            while ((length = fis.read(bytes)) > 0) {
+                stream.write(bytes, 0, length);
+            }
+
+            stream.flush();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != fis) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                }
+            }
+
+            try {
+                stream.close();
+            } catch (IOException e) {
+            }
+        }
     }
 
     @Override

@@ -47,7 +47,7 @@ public final class TimeUtils {
     private TimeUtils() {
     }
 
-    public static TimeDuration calcTimeDuration(final long durationInMillisecond) {
+    public static TimeOffset calcTimeDuration(final long durationInMillisecond) {
         int days = 0;
         int hours = 0;
         int minutes = 0;
@@ -78,7 +78,7 @@ public final class TimeUtils {
 
         milliseconds = (int) duration;
 
-        return new TimeDuration(days, hours, minutes, seconds, milliseconds);
+        return new TimeOffset(days, hours, minutes, seconds, milliseconds);
     }
 
     /**

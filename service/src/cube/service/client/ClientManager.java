@@ -52,6 +52,7 @@ import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -568,6 +569,16 @@ public final class ClientManager {
                     for (ServerClient client : clientMap.values()) {
                         if (client.getId().longValue() == clientId) {
                             synchronized (client) {
+                                if (eventName.equals("StopWorkflow")) {
+                                    File resultFile = (File) pluginContext.get("resultFile");
+                                    if (null != resultFile && resultFile.exists()) {
+                                        // 传输文件数据
+                                        client.transmitStream(resultFile.getName(), resultFile);
+                                        // 删除结果文件
+                                        resultFile.delete();
+                                    }
+                                }
+
                                 client.sendEvent(workflowEvent.getName(), workflowEvent.toJSON());
                             }
                         }

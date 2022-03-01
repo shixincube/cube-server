@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 
 /**
@@ -74,7 +75,7 @@ public class SnapshotProcessor extends VideoProcessor {
         }
 
         File outputFile = new File(path, "snapshot_" + TimeUtils.formatDateForPathSymbol(System.currentTimeMillis()) + "_"
-                        + FileUtils.extractFileName(this.getFilename()) + ".zip");
+                        + this.getFilename() + ".zip");
         if (outputFile.exists()) {
             outputFile.delete();
         }
@@ -87,19 +88,49 @@ public class SnapshotProcessor extends VideoProcessor {
         ArrayList<File> list = new ArrayList<>();
         for (File file : files) {
             if (file.isFile() && !file.isHidden()) {
+                if (file.getName().endsWith("zip")) {
+                    continue;
+                }
+
                 list.add(file);
             }
         }
 
-        try {
-            ZipUtils.toZip(list, new FileOutputStream(outputFile));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        if (snapshotContext.copyToWorkPath) {
+            // 复制到工作目录
+            String filenamePrefix = "snapshot_" + path.getName() + "_";
+            ArrayList<File> newList = new ArrayList<>();
+            for (File file : list) {
+                File targetFile = new File(getWorkPath().toFile(), filenamePrefix + file.getName());
+                try {
+                    Files.copy(Paths.get(file.getAbsolutePath()), Paths.get(targetFile.getAbsolutePath()),
+                            StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                newList.add(targetFile);
+            }
+
+            // 设置输出结果
+            snapshotContext.setOutputFiles(newList);
+        }
+        else {
+            // 设置输出结果
+            snapshotContext.setOutputFiles(list);
         }
 
-        if (outputFile.exists()) {
-            ProcessResultStream resultStream = new ProcessResultStream(outputFile);
-            snapshotContext.setResultStream(resultStream);
+        // 文件打包
+        if (snapshotContext.packToZip) {
+            try {
+                ZipUtils.toZip(list, new FileOutputStream(outputFile));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            if (outputFile.exists()) {
+                ProcessResultStream resultStream = new ProcessResultStream(outputFile);
+                snapshotContext.setResultStream(resultStream);
+            }
         }
     }
 
@@ -118,7 +149,7 @@ public class SnapshotProcessor extends VideoProcessor {
         snapshotContext.setVideoOperation(this.snapshotOperation);
 
         String output = (null != this.inputFileLabel) ? this.inputFileLabel.getFileCode() :
-                this.getFilename() + "_" + TimeUtils.formatDateForPathSymbol(time);
+                this.getFilename();
 
         // 创建输出目录
         Path outputPath = Paths.get(getWorkPath().toString(), output);
