@@ -26,6 +26,8 @@
 
 package cube.file;
 
+import cube.util.FileType;
+import cube.util.TimeDuration;
 import org.json.JSONObject;
 
 /**
@@ -35,11 +37,23 @@ public class SnapshotOperation extends VideoOperation {
 
     public final static String Operation = "Snapshot";
 
+    public TimeDuration startTime;
+
+    public double rate;
+
+    public FileType outputType;
+
     public SnapshotOperation() {
         super();
+        this.startTime = new TimeDuration(0, 0, 0);
+        this.rate = 0.5;
+        this.outputType = FileType.JPEG;
     }
 
     public SnapshotOperation(JSONObject json) {
+        this.startTime = new TimeDuration(json.getJSONObject("startTime"));
+        this.rate = json.getDouble("rate");
+        this.outputType = FileType.matchExtension(json.getString("outputType"));
     }
 
     @Override
@@ -50,6 +64,9 @@ public class SnapshotOperation extends VideoOperation {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        json.put("startTime", this.startTime.toJSON());
+        json.put("rate", this.rate);
+        json.put("outputType", this.outputType.getPreferredExtension());
         return json;
     }
 }

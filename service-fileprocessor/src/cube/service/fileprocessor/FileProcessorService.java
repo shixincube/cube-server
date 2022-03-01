@@ -704,6 +704,17 @@ public class FileProcessorService extends AbstractModule {
                     return context.toJSON();
                 }
             }
+            else if (FileProcessorAction.Video.name.equals(action)) {
+                String domain = data.getString("domain");
+                String fileCode = data.getString("fileCode");
+                // 创建视频处理器
+                VideoProcessor processor = createVideoProcessor(domain, fileCode, data.getJSONObject("parameter"));
+                if (null != processor) {
+                    SnapshotContext context = new SnapshotContext();
+                    processor.go(context);
+                    return context.toJSON();
+                }
+            }
             else if (FileProcessorAction.OCR.name.equals(action)) {
                 String domain = data.getString("domain");
                 String fileCode = data.getString("fileCode");
@@ -728,17 +739,6 @@ public class FileProcessorService extends AbstractModule {
             }
             else if (FileProcessorAction.CancelWorkflow.name.equals(action)) {
                 // TODO
-            }
-            else if (FileProcessorAction.Video.name.equals(action)) {
-                String domain = data.getString("domain");
-                String fileCode = data.getString("fileCode");
-                // 创建视频处理器
-                VideoProcessor processor = createVideoProcessor(domain, fileCode, data.getJSONObject("parameter"));
-                if (null != processor) {
-                    SnapshotContext context = new SnapshotContext();
-                    processor.go(context);
-                    return context.toJSON();
-                }
             }
         }
 

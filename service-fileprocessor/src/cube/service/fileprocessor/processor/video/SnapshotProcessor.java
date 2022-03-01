@@ -114,6 +114,8 @@ public class SnapshotProcessor extends VideoProcessor {
         this.snapshotOperation.setInputFile(this.inputFile);
 
         SnapshotContext snapshotContext = (SnapshotContext) context;
+        // 设置参数
+        snapshotContext.setVideoOperation(this.snapshotOperation);
 
         String output = (null != this.inputFileLabel) ? this.inputFileLabel.getFileCode() :
                 this.getFilename() + "_" + TimeUtils.formatDateForPathSymbol(time);

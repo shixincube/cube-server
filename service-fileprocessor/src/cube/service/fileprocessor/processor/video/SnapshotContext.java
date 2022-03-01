@@ -26,6 +26,8 @@
 
 package cube.service.fileprocessor.processor.video;
 
+import cube.file.SnapshotOperation;
+import cube.file.VideoOperation;
 import cube.util.FileType;
 import cube.util.TimeDuration;
 import org.json.JSONObject;
@@ -47,10 +49,19 @@ public class SnapshotContext extends VideoProcessorContext {
         this.outputType = FileType.JPEG;
     }
 
+    public void setVideoOperation(SnapshotOperation value) {
+        super.setVideoOperation(value);
+        this.startTime = value.startTime;
+        this.rate = value.rate;
+        this.outputType = value.outputType;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("start", this.startTime.formatHMS());
+        json.put("startTime", this.startTime.toJSON());
+        json.put("rate", this.rate);
+        json.put("outputType", this.outputType.getPreferredExtension());
         return json;
     }
 

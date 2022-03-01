@@ -26,6 +26,8 @@
 
 package cube.util;
 
+import org.json.JSONObject;
+
 /**
  * 时间长度计量。
  */
@@ -53,6 +55,14 @@ public class TimeDuration {
         this.milliseconds = milliseconds;
     }
 
+    public TimeDuration(JSONObject json) {
+        this.days = json.getInt("days");
+        this.hours = json.getInt("hours");
+        this.minutes = json.getInt("minutes");
+        this.seconds = json.getInt("seconds");
+        this.milliseconds = json.getInt("milliseconds");
+    }
+
     public String formatHMS() {
         StringBuilder buf = new StringBuilder();
         buf.append(this.hours < 10 ? "0" + this.hours : this.hours);
@@ -72,5 +82,15 @@ public class TimeDuration {
         buf.append(this.seconds).append("秒 ");
         buf.append(this.milliseconds).append("毫秒");
         return buf.toString();
+    }
+
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("days", this.days);
+        json.put("hours", this.hours);
+        json.put("minutes", this.minutes);
+        json.put("seconds", this.seconds);
+        json.put("milliseconds", this.milliseconds);
+        return json;
     }
 }

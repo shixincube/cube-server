@@ -101,6 +101,10 @@ public class FileProcessResult {
         return this.imageResult;
     }
 
+    public VideoProcessResult getVideoResult() {
+        return this.videoResult;
+    }
+
     public OCRProcessResult getOCRResult() {
         return this.ocrResult;
     }
@@ -158,8 +162,19 @@ public class FileProcessResult {
 
         public final boolean successful;
 
+        private VideoOperation operation;
+
         public VideoProcessResult(JSONObject json) {
             this.successful = json.getBoolean("success");
+
+            String operation = json.getJSONObject("operation").getString("operation");
+            if (SnapshotOperation.Operation.equals(operation)) {
+                this.operation = new SnapshotOperation(json.getJSONObject("operation"));
+            }
+        }
+
+        public VideoOperation getOperation() {
+            return this.operation;
         }
     }
 
