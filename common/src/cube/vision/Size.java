@@ -24,64 +24,38 @@
  * SOFTWARE.
  */
 
-package cube.service.fileprocessor;
+package cube.vision;
 
 import cube.common.JSONable;
-import cube.common.entity.BoundingBox;
-import cube.common.entity.DetectedObject;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * CV 处理结果。
+ * 大小描述。
  */
-public class CVResult implements JSONable {
+public class Size implements JSONable {
 
-    private String fileName;
+    public int width;
 
-    private List<DetectedObject> detectedObjects;
+    public int height;
 
-    public CVResult() {
+    public Size() {
     }
 
-    public CVResult(String fileName) {
-        this.fileName = fileName;
+    public Size(int width, int height) {
+        this.width = width;
+        this.height = height;
     }
 
-    public void set(CVResult result) {
-        this.fileName = result.fileName;
-        this.detectedObjects = result.detectedObjects;
-    }
-
-    public List<DetectedObject> getDetectedObjects() {
-        return this.detectedObjects;
-    }
-
-    public void setDetectedObjects(JSONArray array) {
-        this.detectedObjects = new ArrayList<>();
-
-        for (int i = 0; i < array.length(); ++i) {
-            JSONObject json = array.getJSONObject(i);
-            DetectedObject obj = new DetectedObject(json.getString("class"),
-                    json.getDouble("probability"),
-                    new BoundingBox(json.getJSONObject("bound")));
-            this.detectedObjects.add(obj);
-        }
+    public Size(JSONObject json) {
+        this.width = json.getInt("width");
+        this.height = json.getInt("height");
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("fileName", this.fileName);
-
-        JSONArray objects = new JSONArray();
-        for (DetectedObject object : this.detectedObjects) {
-            objects.put(object.toJSON());
-        }
-        json.put("detectedObjects", objects);
+        json.put("width", this.width);
+        json.put("height", this.height);
         return json;
     }
 

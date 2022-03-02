@@ -103,7 +103,6 @@ public class FileProcessorService extends AbstractModule {
 
         this.cvConnector = new CVConnector("DJLService",
                 this.getKernel().getNucleus().getTalkService());
-//        this.cvConnector.start("127.0.0.1", 7711);
 
         // 加载配置
         this.loadConfig();
@@ -152,6 +151,17 @@ public class FileProcessorService extends AbstractModule {
         else {
             this.disableImageMagick();
             Logger.i(this.getClass(), "Disable ImageMagick");
+        }
+
+        if (properties.containsKey("ai.host")) {
+            String host = properties.getProperty("ai.host");
+            int port = Integer.parseInt(properties.getProperty("ai.port", "7711"));
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    cvConnector.start(host, port);
+                }
+            });
         }
     }
 
@@ -341,25 +351,39 @@ public class FileProcessorService extends AbstractModule {
 
     public CVResult detectObject(String domainName, String fileCode) {
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
-        FileLabel label = storageService.getFile(domainName, fileCode);
-        if (null == label) {
+        FileLabel fileLabel = storageService.getFile(domainName, fileCode);
+        if (null == fileLabel) {
             Logger.w(this.getClass(), "#detectObject - can not find file label: " + fileCode);
             return null;
         }
 
-        String path = storageService.loadFileToDisk(domainName, fileCode);
-
-        File file = new File(path);
-        if (!file.exists()) {
-            Logger.w(this.getClass(), "#detectObject - can not find file: " + path);
+        if (!FileUtils.isImageType(fileLabel.getFileType())) {
+            // 指定的文件不是图片格式
+            Logger.w(this.getClass(), "File is NOT image : " + fileLabel.getFileName());
             return null;
+        }
+
+        Path imageFile = Paths.get(this.workPath.toString(), fileCode + "." + fileLabel.getFileType().getPreferredExtension());
+
+        if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
+            String path = storageService.loadFileToDisk(domainName, fileCode);
+            if (null == path) {
+                return null;
+            }
+
+            try {
+                Files.copy(Paths.get(path), imageFile);
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#detectObject", e);
+                return null;
+            }
         }
 
         final Object mutex = new Object();
         final CVResult cvResult = new CVResult();
         final AtomicBoolean failure = new AtomicBoolean(false);
 
-        this.cvConnector.detectObjects(file, fileCode, new CVCallback() {
+        this.cvConnector.detectObjects(imageFile.toFile(), new CVCallback() {
             @Override
             public void handleSuccess(CVResult result) {
                 cvResult.set(result);
@@ -381,7 +405,7 @@ public class FileProcessorService extends AbstractModule {
 
         synchronized (mutex) {
             try {
-                mutex.wait(40L * 1000L);
+                mutex.wait(5 * 60 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

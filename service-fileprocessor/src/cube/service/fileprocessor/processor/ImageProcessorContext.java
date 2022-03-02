@@ -28,10 +28,7 @@ package cube.service.fileprocessor.processor;
 
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
-import cube.file.EliminateColorOperation;
-import cube.file.FileOperation;
-import cube.file.ImageOperation;
-import cube.file.ReverseColorOperation;
+import cube.file.*;
 import org.json.JSONObject;
 
 /**
@@ -57,6 +54,9 @@ public class ImageProcessorContext extends ProcessorContext {
         }
         else if (ReverseColorOperation.Operation.equals(operation)) {
             this.imageOperation = new ReverseColorOperation(parameterJSON);
+        }
+        else if (SteganographyOperation.Operation.equals(operation)) {
+            this.imageOperation = new SteganographyOperation(parameterJSON);
         }
     }
 

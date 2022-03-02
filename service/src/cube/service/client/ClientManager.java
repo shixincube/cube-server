@@ -58,6 +58,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 客户端管理器。
@@ -81,11 +82,14 @@ public final class ClientManager {
 
     private ConcurrentLinkedQueue<FileWorkflowEvent> eventQueue;
 
+    private AtomicBoolean sendingEvent;
+
     private ClientManager() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(2);
         this.clientMap = new ConcurrentHashMap<>();
         this.talkContextIndex = new ConcurrentHashMap<>();
         this.eventQueue = new ConcurrentLinkedQueue<>();
+        this.sendingEvent = new AtomicBoolean(false);
     }
 
     public static ClientManager getInstance() {
@@ -560,30 +564,40 @@ public final class ClientManager {
         // 事件进入队列
         this.eventQueue.offer(event);
 
+        if (this.sendingEvent.get()) {
+            return;
+        }
+
+        this.sendingEvent.set(true);
+
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                FileWorkflowEvent workflowEvent = eventQueue.poll();
-                if (null != workflowEvent) {
-                    long clientId = workflowEvent.getWorkflow().getClientId();
-                    for (ServerClient client : clientMap.values()) {
-                        if (client.getId().longValue() == clientId) {
-                            synchronized (client) {
-                                if (eventName.equals("StopWorkflow")) {
-                                    File resultFile = (File) pluginContext.get("resultFile");
-                                    if (null != resultFile && resultFile.exists()) {
-                                        // 传输文件数据
-                                        client.transmitStream(resultFile.getName(), resultFile);
-                                        // 删除结果文件
-                                        resultFile.delete();
+                while (!eventQueue.isEmpty()) {
+                    FileWorkflowEvent workflowEvent = eventQueue.poll();
+                    if (null != workflowEvent) {
+                        long clientId = workflowEvent.getWorkflow().getClientId();
+                        for (ServerClient client : clientMap.values()) {
+                            if (client.getId().longValue() == clientId) {
+                                synchronized (client) {
+                                    if (eventName.equals("StopWorkflow")) {
+                                        File resultFile = (File) pluginContext.get("resultFile");
+                                        if (null != resultFile && resultFile.exists()) {
+                                            // 传输文件数据
+                                            client.transmitStream(resultFile.getName(), resultFile);
+                                            // 删除结果文件
+                                            resultFile.delete();
+                                        }
                                     }
-                                }
 
-                                client.sendEvent(workflowEvent.getName(), workflowEvent.toJSON());
+                                    client.sendEvent(workflowEvent.getName(), workflowEvent.toJSON());
+                                }
                             }
                         }
                     }
                 }
+
+                sendingEvent.set(false);
             }
         });
     }

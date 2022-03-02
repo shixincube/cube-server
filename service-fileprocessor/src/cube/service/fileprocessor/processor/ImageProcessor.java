@@ -28,9 +28,11 @@ package cube.service.fileprocessor.processor;
 
 import cube.common.entity.FileLabel;
 import cube.common.entity.ProcessResultStream;
+import cube.common.entity.TextConstraint;
 import cube.file.EliminateColorOperation;
 import cube.file.ImageOperation;
 import cube.file.ReverseColorOperation;
+import cube.file.SteganographyOperation;
 import cube.util.FileUtils;
 
 import java.io.File;
@@ -72,7 +74,7 @@ public class ImageProcessor extends Processor {
         ctx.setInputFileLabel(this.imageFileLabel);
 
         ImageOperation imageOperation = ctx.getImageOperation();
-        if (imageOperation instanceof EliminateColorOperation) {
+        if (EliminateColorOperation.Operation.equals(imageOperation.getOperation())) {
             // 剔除颜色操作
             EliminateColorOperation operation = (EliminateColorOperation) imageOperation;
             String outputFilename = operation.getOutputFilename();
@@ -97,7 +99,7 @@ public class ImageProcessor extends Processor {
                 ctx.setResultStream(resultStream);
             }
         }
-        else if (imageOperation instanceof ReverseColorOperation) {
+        else if (ReverseColorOperation.Operation.equals(imageOperation.getOperation())) {
             // 反转颜色
             ReverseColorOperation operation = (ReverseColorOperation) imageOperation;
             String outputFilename = operation.getOutputFilename();
@@ -112,6 +114,36 @@ public class ImageProcessor extends Processor {
             // 使用 ImageMagick 操作
             boolean success = ImageMagick.reverseColor(this.getWorkPath().toFile(), this.imageFile.getName(),
                     outputFilename);
+
+            // 处理结果
+            ctx.setSuccessful(success);
+
+            if (success) {
+                File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
+                ProcessResultStream resultStream = new ProcessResultStream(outputFile);
+                ctx.setResultStream(resultStream);
+            }
+        }
+        else if (SteganographyOperation.Operation.equals(imageOperation.getOperation())) {
+            // 隐写数据到图像
+            SteganographyOperation operation = (SteganographyOperation) imageOperation;
+            String outputFilename = operation.getOutputFilename();
+            if (null == outputFilename) {
+                if (null != this.imageFileLabel) {
+                    outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_stegano.png";
+                }
+                else {
+                    outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_stegano.png";
+                }
+            }
+
+            TextConstraint textConstraint = operation.getTextConstraint();
+            if (null == textConstraint) {
+                textConstraint = new TextConstraint();
+            }
+            // 使用 ImageMagick 操作
+            boolean success = ImageMagick.steganography(this.getWorkPath().toFile(), operation.getHiddenText(),
+                    operation.getWatermarkSize(), textConstraint, this.imageFile.getName(), outputFilename);
 
             // 处理结果
             ctx.setSuccessful(success);

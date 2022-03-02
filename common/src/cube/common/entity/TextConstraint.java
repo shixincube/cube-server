@@ -24,64 +24,57 @@
  * SOFTWARE.
  */
 
-package cube.service.fileprocessor;
+package cube.common.entity;
 
 import cube.common.JSONable;
-import cube.common.entity.BoundingBox;
-import cube.common.entity.DetectedObject;
-import org.json.JSONArray;
+import cube.vision.Color;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * CV 处理结果。
+ * 文本约束。
  */
-public class CVResult implements JSONable {
+public class TextConstraint implements JSONable {
 
-    private String fileName;
+    public String font = null;
 
-    private List<DetectedObject> detectedObjects;
+    public int pointSize = 24;
 
-    public CVResult() {
+    public Color color = new Color(0, 0, 0);
+
+    public TextConstraint() {
     }
 
-    public CVResult(String fileName) {
-        this.fileName = fileName;
-    }
-
-    public void set(CVResult result) {
-        this.fileName = result.fileName;
-        this.detectedObjects = result.detectedObjects;
-    }
-
-    public List<DetectedObject> getDetectedObjects() {
-        return this.detectedObjects;
-    }
-
-    public void setDetectedObjects(JSONArray array) {
-        this.detectedObjects = new ArrayList<>();
-
-        for (int i = 0; i < array.length(); ++i) {
-            JSONObject json = array.getJSONObject(i);
-            DetectedObject obj = new DetectedObject(json.getString("class"),
-                    json.getDouble("probability"),
-                    new BoundingBox(json.getJSONObject("bound")));
-            this.detectedObjects.add(obj);
+    public TextConstraint(JSONObject json) {
+        this.pointSize = json.getInt("pointSize");
+        this.color = new Color(json.getJSONObject("color"));
+        if (json.has("font")) {
+            this.font = json.getString("font");
         }
+    }
+
+    public TextConstraint setFont(String font) {
+        this.font = font;
+        return this;
+    }
+
+    public TextConstraint setPointSize(int size) {
+        this.pointSize = size;
+        return this;
+    }
+
+    public TextConstraint setColor(Color color) {
+        this.color = color;
+        return this;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("fileName", this.fileName);
-
-        JSONArray objects = new JSONArray();
-        for (DetectedObject object : this.detectedObjects) {
-            objects.put(object.toJSON());
+        json.put("pointSize", this.pointSize);
+        json.put("color", this.color.toJSON());
+        if (null != this.font) {
+            json.put("font", this.font);
         }
-        json.put("detectedObjects", objects);
         return json;
     }
 

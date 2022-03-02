@@ -26,10 +26,14 @@
 
 package cube.service.fileprocessor.processor;
 
+import cube.common.entity.TextConstraint;
+import cube.util.FileUtils;
 import cube.vision.Color;
+import cube.vision.Size;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,6 +100,77 @@ public class ImageMagick {
         else {
             return false;
         }
+    }
+
+
+
+    /**
+     * 将指定文本隐写到图片内。
+     *
+     * @param workPath
+     * @param hiddenText
+     * @param markSize
+     * @param textConstraint
+     * @param imageFile
+     * @param output
+     * @return
+     */
+    public static boolean steganography(File workPath, String hiddenText, Size markSize, TextConstraint textConstraint,
+                                        String imageFile, String output) {
+        String watermark = "watermark_" + FileUtils.extractFileName(output) + ".gif";
+
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add("convert");
+        commandLine.add("-gravity");
+        commandLine.add("center");
+        commandLine.add("-size");
+        commandLine.add(markSize.width + "x" + markSize.height);
+        commandLine.add("-font");
+        commandLine.add(null == textConstraint.font ?
+                Paths.get("").toAbsolutePath().toString() + "/assets/Songti.ttc" : textConstraint.font);
+        commandLine.add("-pointsize");
+        commandLine.add(Integer.toString(textConstraint.pointSize));
+        commandLine.add("-fill");
+        commandLine.add(textConstraint.color.formatHex());
+        commandLine.add("label:" + hiddenText);
+        commandLine.add(watermark);
+
+        File watermarkFile = new File(workPath, watermark);
+        int status = execute(workPath, commandLine);
+        if (0 == status || 1 == status) {
+            if (!watermarkFile.exists()) {
+                return false;
+            }
+        }
+        else {
+            return false;
+        }
+
+        commandLine.clear();
+        // 将水印隐写到图片
+        commandLine.add("composite");
+        commandLine.add(watermark);
+        commandLine.add(imageFile);
+        commandLine.add("-stegano");
+        commandLine.add("+0+0");
+        commandLine.add(output);
+
+        status = execute(workPath, commandLine);
+
+        // 删除水印文件。
+        watermarkFile.delete();
+
+        if (0 == status || 1 == status) {
+            File file = new File(workPath, output);
+            return file.exists();
+        }
+        else {
+            return false;
+        }
+    }
+
+    public static boolean recoverSteganography() {
+        return false;
     }
 
     private static int execute(File workPath, List<String> commandLine) {

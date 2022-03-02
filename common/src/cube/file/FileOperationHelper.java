@@ -48,6 +48,12 @@ public final class FileOperationHelper {
             else if (ReverseColorOperation.Operation.equals(operation)) {
                 return new ReverseColorOperation(json);
             }
+            else if (SteganographyOperation.Operation.equals(operation)) {
+                return new SteganographyOperation(json);
+            }
+            else if (DetectObjectsOperation.Operation.equals(operation)) {
+                return new DetectObjectsOperation(json);
+            }
         }
         else if (FileProcessorAction.Video.name.equals(process)) {
             String operation = json.getString("operation");

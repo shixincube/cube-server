@@ -60,6 +60,8 @@ public class CVConnector implements TalkListener {
 
     private int port;
 
+    private Timer retryTimer;
+
     private ConcurrentHashMap<Long, Block> blockMap;
 
     public CVConnector(String celletName, TalkService talkService) {
@@ -77,58 +79,87 @@ public class CVConnector implements TalkListener {
     }
 
     public void stop() {
+        if (null != this.retryTimer) {
+            this.retryTimer.cancel();
+            this.retryTimer = null;
+        }
+
         this.talkService.hangup(this.host, this.port, false);
         this.talkService.removeListener(this.celletName);
     }
 
-    public void detectObjects(File file, String fileCode, CVCallback callback) {
-        if (!this.talkService.isCalled(this.host, this.port)) {
-            callback.handleFailure(FileProcessorStateCode.NoCVConnection, new CVResult(fileCode));
-            return;
+    /**
+     * 校验是否是本地文件，如果是不进行传输。
+     *
+     * @param file
+     * @return
+     */
+    private boolean checkLocalFile(File file) {
+        if (this.host.equals("127.0.0.1") || this.host.equals("localhost")) {
+            if (file.exists()) {
+                return true;
+            }
         }
 
-        FileInputStream fis = null;
-        PrimitiveOutputStream stream = this.talkService.speakStream(this.celletName, fileCode);
+        return false;
+    }
 
-        try {
-            fis = new FileInputStream(file);
-            int length = 0;
-            byte[] buf = new byte[4096];
-            while ((length = fis.read(buf)) > 0) {
-                stream.write(buf, 0, length);
-            }
-            stream.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (null != fis) {
-                try {
-                    fis.close();
-                } catch (IOException e) {
-                }
-            }
-
-            if (null != stream) {
-                try {
-                    stream.close();
-                } catch (IOException e) {
-                }
-            }
+    public void detectObjects(File file, CVCallback callback) {
+        if (!this.talkService.isCalled(this.host, this.port)) {
+            callback.handleFailure(FileProcessorStateCode.NoCVConnection, new CVResult(file.getName()));
+            return;
         }
 
         long sn = Utils.generateSerialNumber();
         ActionDialect dialect = new ActionDialect(FileProcessorAction.DetectObject.name);
         dialect.addParam("sn", sn);
-        dialect.addParam("file", fileCode);
+        dialect.addParam("file", file.getName());
 
+        if (this.checkLocalFile(file)) {
+            // 文件在本地，不进行传输
+            dialect.addParam("fullpath", file.getAbsolutePath());
+        }
+        else {
+            // 将文件数据发送给服务器
+            FileInputStream fis = null;
+            PrimitiveOutputStream stream = this.talkService.speakStream(this.celletName, file.getName());
+
+            try {
+                fis = new FileInputStream(file);
+                int length = 0;
+                byte[] buf = new byte[4096];
+                while ((length = fis.read(buf)) > 0) {
+                    stream.write(buf, 0, length);
+                }
+                stream.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (null != fis) {
+                    try {
+                        fis.close();
+                    } catch (IOException e) {
+                    }
+                }
+
+                if (null != stream) {
+                    try {
+                        stream.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+        }
+
+        // 发送请求
         this.talkService.speak(this.celletName, dialect);
 
-        Block block = new Block(sn, fileCode);
+        Block block = new Block(sn, file.getName());
         this.blockMap.put(sn, block);
 
         synchronized (block) {
             try {
-                block.wait(30L * 1000L);
+                block.wait(30 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -140,7 +171,7 @@ public class CVConnector implements TalkListener {
         this.blockMap.remove(sn);
 
         if (null == response) {
-            callback.handleFailure(FileProcessorStateCode.Failure, new CVResult(fileCode));
+            callback.handleFailure(FileProcessorStateCode.Failure, new CVResult(file.getName()));
             return;
         }
 
@@ -148,13 +179,13 @@ public class CVConnector implements TalkListener {
         int code = response.getParamAsInt("code");
 
         if (code != FileProcessorStateCode.Ok.code) {
-            callback.handleFailure(FileProcessorStateCode.parse(code), new CVResult(fileCode));
+            callback.handleFailure(FileProcessorStateCode.parse(code), new CVResult(file.getName()));
             return;
         }
 
         JSONObject data = response.getParamAsJson("data");
 
-        CVResult result = new CVResult(fileCode);
+        CVResult result = new CVResult(file.getName());
         result.setDetectedObjects(data.getJSONArray("list"));
         callback.handleSuccess(result);
     }
@@ -215,13 +246,18 @@ public class CVConnector implements TalkListener {
             }
         }).start();
 
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
+        if (null != this.retryTimer) {
+            this.retryTimer.cancel();
+        }
+
+        this.retryTimer = new Timer();
+        this.retryTimer.schedule(new TimerTask() {
             @Override
             public void run() {
+                retryTimer = null;
                 talkService.call(host, port);
             }
-        }, 45L * 1000L);
+        }, 45 * 1000);
     }
 
     /**
