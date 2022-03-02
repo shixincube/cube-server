@@ -712,13 +712,20 @@ public class FileProcessorService extends AbstractModule {
             }
 
             // 结果文件打包
-            resultFile = this.packFileSet(fileCode, lastWork.getOutput());
-            if (resultFile.exists()) {
-                // 清空结果文件
-                for (File file : lastWork.getOutput()) {
-                    file.delete();
+            if (lastWork.getOutput().size() == 1) {
+                resultFile = lastWork.getOutput().get(0);
+            }
+            else {
+                resultFile = this.packFileSet(fileCode, lastWork.getOutput());
+                if (resultFile.exists()) {
+                    // 清空结果文件
+                    for (File file : lastWork.getOutput()) {
+                        file.delete();
+                    }
                 }
             }
+
+            workflow.setResultFilename(resultFile.getName());
         }
 
         // 删除过程文件

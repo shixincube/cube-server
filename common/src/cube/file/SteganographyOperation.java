@@ -52,7 +52,13 @@ public class SteganographyOperation extends ImageOperation {
         this.watermarkSize = watermarkSize;
     }
 
+    public SteganographyOperation(Size watermarkSize) {
+        this.recover = true;
+        this.watermarkSize = watermarkSize;
+    }
+
     public SteganographyOperation(JSONObject json) {
+        this.recover = json.getBoolean("recover");
         this.hiddenText = json.getString("hiddenText");
         this.watermarkSize = new Size(json.getJSONObject("watermarkSize"));
 
@@ -105,6 +111,8 @@ public class SteganographyOperation extends ImageOperation {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+
+        json.put("recover", this.recover);
         json.put("hiddenText", this.hiddenText);
         json.put("watermarkSize", this.watermarkSize.toJSON());
 

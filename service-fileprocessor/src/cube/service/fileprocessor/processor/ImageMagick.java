@@ -169,8 +169,31 @@ public class ImageMagick {
         }
     }
 
-    public static boolean recoverSteganography() {
-        return false;
+    /**
+     * 恢复隐写的水印。
+     *
+     * @param workPath
+     * @param markSize
+     * @param imageFile
+     * @param output
+     * @return
+     */
+    public static boolean recoverSteganography(File workPath, Size markSize, String imageFile, String output) {
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add("convert");
+        commandLine.add("-size");
+        commandLine.add(markSize.width + "x" + markSize.height + "+0+0");
+        commandLine.add("stegano:" + imageFile);
+        commandLine.add(output);
+
+        int status = execute(workPath, commandLine);
+        if (0 == status || 1 == status) {
+            File file = new File(output);
+            return file.exists();
+        }
+        else {
+            return false;
+        }
     }
 
     private static int execute(File workPath, List<String> commandLine) {

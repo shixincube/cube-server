@@ -50,6 +50,8 @@ public class OperationWorkflow implements JSONable {
 
     private List<OperationWork> workList;
 
+    private String resultFilename;
+
     public OperationWorkflow() {
         this.sn = Utils.generateSerialNumber();
         this.workList = new LinkedList<>();
@@ -69,6 +71,10 @@ public class OperationWorkflow implements JSONable {
         for (int i = 0; i < works.length(); ++i) {
             JSONObject workJson = works.getJSONObject(i);
             this.workList.add(new OperationWork(workJson));
+        }
+
+        if (json.has("resultFilename")) {
+            this.resultFilename = json.getString("resultFilename");
         }
     }
 
@@ -108,6 +114,14 @@ public class OperationWorkflow implements JSONable {
         return new ArrayList<>(this.workList);
     }
 
+    public void setResultFilename(String filename) {
+        this.resultFilename = filename;
+    }
+
+    public String getResultFilename() {
+        return this.resultFilename;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -124,6 +138,10 @@ public class OperationWorkflow implements JSONable {
             works.put(work.toJSON());
         }
         json.put("works", works);
+
+        if (null != this.resultFilename) {
+            json.put("resultFilename", this.resultFilename);
+        }
 
         return json;
     }
