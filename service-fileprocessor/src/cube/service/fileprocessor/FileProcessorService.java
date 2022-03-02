@@ -725,6 +725,7 @@ public class FileProcessorService extends AbstractModule {
                 }
             }
 
+            // 设置结果文件名
             workflow.setResultFilename(resultFile.getName());
         }
 

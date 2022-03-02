@@ -127,6 +127,7 @@ public class ImageProcessor extends Processor {
         else if (SteganographyOperation.Operation.equals(imageOperation.getOperation())) {
             // 隐写数据到图像
             SteganographyOperation operation = (SteganographyOperation) imageOperation;
+
             String outputFilename = operation.getOutputFilename();
             if (null == outputFilename) {
                 if (null != this.imageFileLabel) {
@@ -137,13 +138,20 @@ public class ImageProcessor extends Processor {
                 }
             }
 
-            TextConstraint textConstraint = operation.getTextConstraint();
-            if (null == textConstraint) {
-                textConstraint = new TextConstraint();
+            boolean success = false;
+
+            if (operation.isRecover()) {
+
             }
-            // 使用 ImageMagick 操作
-            boolean success = ImageMagick.steganography(this.getWorkPath().toFile(), operation.getHiddenText(),
-                    operation.getWatermarkSize(), textConstraint, this.imageFile.getName(), outputFilename);
+            else {
+                TextConstraint textConstraint = operation.getTextConstraint();
+                if (null == textConstraint) {
+                    textConstraint = new TextConstraint();
+                }
+                // 使用 ImageMagick 操作
+                success = ImageMagick.steganography(this.getWorkPath().toFile(), operation.getHiddenText(),
+                        operation.getWatermarkSize(), textConstraint, this.imageFile.getName(), outputFilename);
+            }
 
             // 处理结果
             ctx.setSuccessful(success);

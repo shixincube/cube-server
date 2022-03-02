@@ -59,8 +59,11 @@ public class SteganographyOperation extends ImageOperation {
 
     public SteganographyOperation(JSONObject json) {
         this.recover = json.getBoolean("recover");
-        this.hiddenText = json.getString("hiddenText");
         this.watermarkSize = new Size(json.getJSONObject("watermarkSize"));
+
+        if (json.has("hiddenText")) {
+            this.hiddenText = json.getString("hiddenText");
+        }
 
         if (json.has("textConstraint")) {
             this.textConstraint = new TextConstraint(json.getJSONObject("textConstraint"));
@@ -69,6 +72,10 @@ public class SteganographyOperation extends ImageOperation {
         if (json.has("outputFilename")) {
             this.outputFilename = json.getString("outputFilename");
         }
+    }
+
+    public boolean isRecover() {
+        return this.recover;
     }
 
     public void setHiddenText(String hiddenText) {
@@ -113,8 +120,11 @@ public class SteganographyOperation extends ImageOperation {
         JSONObject json = super.toJSON();
 
         json.put("recover", this.recover);
-        json.put("hiddenText", this.hiddenText);
         json.put("watermarkSize", this.watermarkSize.toJSON());
+
+        if (null != this.hiddenText) {
+            json.put("hiddenText", this.hiddenText);
+        }
 
         if (null != this.textConstraint) {
             json.put("textConstraint", this.textConstraint.toJSON());
