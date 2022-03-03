@@ -28,9 +28,11 @@ package cube.service.fileprocessor.processor;
 
 import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
+import cube.common.entity.ProcessResultStream;
 import cube.util.FileUtils;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -41,14 +43,14 @@ import java.util.List;
  */
 public class OCRProcessor extends OpticalCharacterRecognition {
 
-    private FileLabel imageFile;
+    private FileLabel imageFileLabel;
 
     public OCRProcessor(Path workPath) {
         super(workPath);
     }
 
-    public void setImageFile(FileLabel imageFile) {
-        this.imageFile = imageFile;
+    public void setImageFileLabel(FileLabel imageFileLabel) {
+        this.imageFileLabel = imageFileLabel;
     }
 
     private boolean check() {
@@ -70,6 +72,8 @@ public class OCRProcessor extends OpticalCharacterRecognition {
             Logger.w(OCRProcessor.class, "Check failed");
             return;
         }
+
+        OCRProcessorContext processorContext = (OCRProcessorContext) context;
 
         List<String> commandLine = new ArrayList<>();
         commandLine.add("tesseract");
@@ -105,9 +109,18 @@ public class OCRProcessor extends OpticalCharacterRecognition {
         }
 
         if (0 == status || 1 == status) {
-            context.setSuccessful(true);
-            ((OCRProcessorContext) context).setImageFile(this.imageFile);
-            ((OCRProcessorContext) context).readResult(this.outputText);
+            processorContext.setSuccessful(true);
+            processorContext.setImageFileLabel(this.imageFileLabel);
+            processorContext.readResult(this.outputText);
+
+            File outputFile = new File(this.getWorkPath().toFile(), this.outputText.getName() + ".ocr");
+            try {
+                processorContext.getOcrFile().outputFile(new FileOutputStream(outputFile));
+                ProcessResultStream resultStream = new ProcessResultStream(outputFile);
+                processorContext.setResultStream(resultStream);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         else {
             Logger.w(OCRProcessor.class, "Process error: " + status);

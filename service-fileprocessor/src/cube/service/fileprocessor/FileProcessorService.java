@@ -496,7 +496,7 @@ public class FileProcessorService extends AbstractModule {
         }
 
         OCRProcessor ocrProcessor = new OCRProcessor(this.workPath);
-        ocrProcessor.setImageFile(fileLabel);
+        ocrProcessor.setImageFileLabel(fileLabel);
         ocrProcessor.setInputImage(imageFile.toFile());
 
         return ocrProcessor;
@@ -654,7 +654,6 @@ public class FileProcessorService extends AbstractModule {
                     imageProcessor.go(context);
 
                     if (context.isSuccessful()) {
-                        // 设置当前工序的输出
                         output.add(context.getResultStream().file);
                     }
                     else {
@@ -663,6 +662,7 @@ public class FileProcessorService extends AbstractModule {
                     }
                 }
 
+                // 设置当前工序的输出
                 work.setOutput(output);
                 work.setProcessResult(new FileProcessResult(context.toJSON()));
             }
@@ -692,7 +692,31 @@ public class FileProcessorService extends AbstractModule {
                 }
             }
             else if (FileProcessorAction.OCR.name.equals(process)) {
+                // 设置当前工序的输出
+                List<File> output = new ArrayList<>(inputFile.size());
+                OCRProcessorContext context = null;
 
+                for (File file : inputFile) {
+                    // 创建处理器
+                    OCRProcessor processor = new OCRProcessor(this.workPath);
+                    processor.setInputImage(file);
+                    // 创建上下文
+                    context = new OCRProcessorContext();
+                    // 执行处理
+                    processor.go(context);
+
+                    if (context.isSuccessful()) {
+                        output.add(context.getResultStream().file);
+                    }
+                    else {
+                        interrupt = true;
+                        break;
+                    }
+                }
+
+                // 设置当前工序的输出
+                work.setOutput(output);
+                work.setProcessResult(new FileProcessResult(context.toJSON()));
             }
 
             pluginContext = new WorkflowPluginContext(workflow, work);
@@ -730,13 +754,15 @@ public class FileProcessorService extends AbstractModule {
             workflow.setResultFilename(resultFile.getName());
         }
 
-        // 删除过程文件
-        for (int i = 0, len = workList.size() - 1; i < len; ++i) {
-            OperationWork work = workList.get(i);
-            List<File> output = work.getOutput();
-            for (File file : output) {
-                if (file.exists()) {
-                    file.delete();
+        if (workflow.isDeleteProcessedFile()) {
+            // 删除过程文件
+            for (int i = 0, len = workList.size() - 1; i < len; ++i) {
+                OperationWork work = workList.get(i);
+                List<File> output = work.getOutput();
+                for (File file : output) {
+                    if (file.exists()) {
+                        file.delete();
+                    }
                 }
             }
         }

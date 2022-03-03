@@ -130,6 +130,13 @@ public class ImageMagick {
                 Paths.get("").toAbsolutePath().toString() + "/assets/STHeiti.ttc" : textConstraint.font);
         commandLine.add("-pointsize");
         commandLine.add(Integer.toString(textConstraint.pointSize));
+
+        // 文本间距控制
+        commandLine.add("-kerning");
+        commandLine.add("2");
+        commandLine.add("-interline-spacing");
+        commandLine.add("10");
+
         commandLine.add("-fill");
         commandLine.add(textConstraint.color.formatHex());
         commandLine.add("label:" + hiddenText);

@@ -424,6 +424,23 @@ public class FileStorageService extends AbstractModule {
     }
 
     /**
+     * 删除文件。
+     *
+     * @param domainName
+     * @param fileLabel
+     */
+    public void deleteFile(String domainName, FileLabel fileLabel) {
+        // 从缓存移除
+        this.fileLabelCache.remove(new CacheKey(fileLabel.getFileCode()));
+
+        // 从数据库里删除
+        this.serviceStorage.deleteFile(domainName, fileLabel.getFileCode());
+
+        // 从文件系统删除
+        this.fileSystem.deleteFile(fileLabel.getFileCode());
+    }
+
+    /**
      * 获取指定域下，联系人或群组的文件目录。
      *
      * @param domainName
@@ -502,6 +519,15 @@ public class FileStorageService extends AbstractModule {
                 // 查找文件
                 FileLabel fileLabel = this.findFile(domain, contactId, fileName, lastModified, fileSize);
                 if (null != fileLabel) {
+                    return fileLabel.toCompactJSON();
+                }
+            }
+            else if (FileStorageAction.DeleteFile.name.equals(action)) {
+                String domain = data.getString("domain");
+                String fileCode = data.getString("fileCode");
+                FileLabel fileLabel = this.getFile(domain, fileCode);
+                if (null != fileLabel) {
+                    this.deleteFile(domain, fileLabel);
                     return fileLabel.toCompactJSON();
                 }
             }

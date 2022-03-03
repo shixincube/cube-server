@@ -71,6 +71,8 @@ public enum ClientAction {
 
     PutFile("PutFile"),
 
+    DeleteFile("DeleteFile"),
+
     FindFile("FindFile"),
 
     ProcessFile("ProcessFile"),

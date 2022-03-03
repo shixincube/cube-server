@@ -200,6 +200,8 @@ public class FileProcessResult {
      */
     public class OCRProcessResult {
 
+        public final boolean successful;
+
         private List<String> resultText;
 
         private OCRFile ocr;
@@ -207,14 +209,19 @@ public class FileProcessResult {
         private FileLabel imageFile;
 
         public OCRProcessResult(JSONObject json) {
-            this.resultText = new ArrayList<>();
+            this.successful = json.getBoolean("success");
 
-            JSONArray textArray = json.getJSONArray("text");
-            for (int i = 0; i < textArray.length(); ++i) {
-                this.resultText.add(textArray.getString(i));
+            if (json.has("text")) {
+                this.resultText = new ArrayList<>();
+                JSONArray textArray = json.getJSONArray("text");
+                for (int i = 0; i < textArray.length(); ++i) {
+                    this.resultText.add(textArray.getString(i));
+                }
             }
 
-            this.ocr = new OCRFile(json.getJSONObject("ocr"));
+            if (json.has("ocr")) {
+                this.ocr = new OCRFile(json.getJSONObject("ocr"));
+            }
 
             if (json.has("image")) {
                 this.imageFile = new FileLabel(json.getJSONObject("image"));
@@ -223,6 +230,10 @@ public class FileProcessResult {
 
         public List<String> getResultText() {
             return this.resultText;
+        }
+
+        public OCRFile getOCRFile() {
+            return this.ocr;
         }
 
         public FileLabel getImageFile() {

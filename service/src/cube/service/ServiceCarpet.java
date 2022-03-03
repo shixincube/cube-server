@@ -28,6 +28,7 @@ package cube.service;
 
 import cell.api.Nucleus;
 import cell.carpet.CellListener;
+import cell.util.Utils;
 import cell.util.log.LogManager;
 import cell.util.log.Logger;
 import cube.cache.SharedMemoryCache;
@@ -40,6 +41,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Properties;
 import java.util.Timer;
 
@@ -82,6 +84,8 @@ public class ServiceCarpet implements CellListener {
         this.timer.schedule(daemon, 30L * 1000L, 10L * 1000L);
 
         this.initManagement(nucleus);
+
+        Logger.i(this.getClass(), "Service STARTED - " + Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
     }
 
     @Override

@@ -46,6 +46,8 @@ public class OperationWorkflow implements JSONable {
 
     private String sourceFileCode;
 
+    private boolean deleteProcessedFile = true;
+
     private long clientId;
 
     private List<OperationWork> workList;
@@ -80,6 +82,14 @@ public class OperationWorkflow implements JSONable {
 
     public long getSN() {
         return this.sn;
+    }
+
+    public boolean isDeleteProcessedFile() {
+        return this.deleteProcessedFile;
+    }
+
+    public void setDeleteProcessedFile(boolean value) {
+        this.deleteProcessedFile = value;
     }
 
     public String getDomain() {

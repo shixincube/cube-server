@@ -349,6 +349,31 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
+     * 删除文件记录。
+     *
+     * @param domain
+     * @param fileCode
+     * @return
+     */
+    public boolean deleteFile(String domain, String fileCode) {
+        String labelTable = this.labelTableNameMap.get(domain);
+        if (null == labelTable) {
+            return false;
+        }
+
+        boolean result = this.storage.executeDelete(labelTable, new Conditional[] {
+                Conditional.createEqualTo("file_code", fileCode)
+        });
+
+        String recyclebinTable = this.recyclebinTableNameMap.get(domain);
+        this.storage.executeDelete(recyclebinTable, new Conditional[] {
+                Conditional.createEqualTo("file_code", fileCode)
+        });
+
+        return result;
+    }
+
+    /**
      * 查找指定文件名、修改日期和文件大小的文件。
      *
      * @param domain

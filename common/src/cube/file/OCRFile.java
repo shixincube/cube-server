@@ -31,6 +31,8 @@ import cube.vision.BoundingBox;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.*;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,6 +75,36 @@ public class OCRFile implements JSONable {
         }
     }
 
+    public OCRFile(File file) {
+        StringBuilder buf = new StringBuilder();
+        BufferedReader reader = null;
+
+        try {
+            reader = new BufferedReader(new FileReader(file));
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                buf.append(line);
+            }
+
+            JSONObject json = new JSONObject(buf.toString());
+            JSONArray pageArray = json.getJSONArray("pages");
+            for (int i = 0; i < pageArray.length(); ++i) {
+                this.pages.add(new Page(pageArray.getJSONObject(i)));
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+    }
+
     public List<Page> getPages() {
         return this.pages;
     }
@@ -87,6 +119,20 @@ public class OCRFile implements JSONable {
             }
         }
         return text;
+    }
+
+    public void outputFile(FileOutputStream stream) throws IOException {
+        JSONObject json = this.toJSON();
+        String jsonString = json.toString(4);
+        try {
+            stream.write(jsonString.getBytes(Charset.forName("UTF-8")));
+            stream.flush();
+        } finally {
+            try {
+                stream.close();
+            } catch (IOException e) {
+            }
+        }
     }
 
     @Override

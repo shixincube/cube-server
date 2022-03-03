@@ -134,6 +134,9 @@ public class ClientCellet extends AbstractCellet {
         else if (ClientAction.PutFile.name.equals(action)) {
             this.executor.execute(new PutFileTask(this, talkContext, actionDialect));
         }
+        else if (ClientAction.DeleteFile.name.equals(action)) {
+            this.executor.execute(new DeleteFileTask(this, talkContext, actionDialect));
+        }
         else if (ClientAction.FindFile.name.equals(action)) {
             this.executor.execute(new FindFileTask(this, talkContext, actionDialect));
         }

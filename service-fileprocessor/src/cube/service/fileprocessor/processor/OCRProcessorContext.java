@@ -29,9 +29,9 @@ package cube.service.fileprocessor.processor;
 import cell.util.log.Logger;
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
-import cube.util.FileUtils;
 import cube.file.OCRFile;
 import cube.file.TesseractHocrFile;
+import cube.util.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class OCRProcessorContext extends ProcessorContext {
 
-    private FileLabel imageFile;
+    private FileLabel imageFileLabel;
 
     private List<String> resultText;
 
@@ -66,16 +66,12 @@ public class OCRProcessorContext extends ProcessorContext {
         }
 
         if (json.has("image")) {
-            this.imageFile = new FileLabel(json.getJSONObject("image"));
+            this.imageFileLabel = new FileLabel(json.getJSONObject("image"));
         }
     }
 
-    public void setImageFile(FileLabel imageFile) {
-        this.imageFile = imageFile;
-    }
-
-    public FileLabel getImageFile() {
-        return this.imageFile;
+    public void setImageFileLabel(FileLabel imageFileLabel) {
+        this.imageFileLabel = imageFileLabel;
     }
 
     public void readResult(File file) {
@@ -119,16 +115,16 @@ public class OCRProcessorContext extends ProcessorContext {
         }
     }
 
-    public List<String> getResultText() {
-        return this.resultText;
+    public OCRFile getOcrFile() {
+        return this.ocrFile;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = this.toCompactJSON();
 
-        if (null != this.imageFile) {
-            json.put("image", this.imageFile.toCompactJSON());
+        if (null != this.imageFileLabel) {
+            json.put("image", this.imageFileLabel.toCompactJSON());
         }
 
         return json;
