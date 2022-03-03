@@ -27,6 +27,7 @@
 package cube.file;
 
 import cube.common.entity.TextConstraint;
+import cube.util.TextUtils;
 import cube.vision.Size;
 import org.json.JSONObject;
 
@@ -47,9 +48,10 @@ public class SteganographyOperation extends ImageOperation {
 
     private String outputFilename;
 
-    public SteganographyOperation(String text, Size watermarkSize) {
+    public SteganographyOperation(String text) {
         this.hiddenText = text;
-        this.watermarkSize = watermarkSize;
+        this.watermarkSize = TextUtils.measureTextAreas(text, new TextConstraint(),
+                2, 10, 1024, 1024);
     }
 
     public SteganographyOperation(Size watermarkSize) {

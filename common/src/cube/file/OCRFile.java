@@ -114,7 +114,9 @@ public class OCRFile implements JSONable {
         for (Page page : this.pages) {
             for (Area area : page.areas) {
                 for (Part part : area.parts) {
-                    text.add(part.toText());
+                    for (String line : part.toText()) {
+                        text.add(line);
+                    }
                 }
             }
         }
@@ -286,12 +288,12 @@ public class OCRFile implements JSONable {
             return this.lines;
         }
 
-        public String toText() {
-            StringBuilder buf = new StringBuilder();
+        public List<String> toText() {
+            List<String> result = new ArrayList<>(this.lines.size());
             for (Line line : this.lines) {
-                buf.append(line.toText());
+                result.add(line.toText());
             }
-            return buf.toString();
+            return result;
         }
 
         public JSONObject toJSON() {

@@ -52,6 +52,15 @@ public class Size implements JSONable {
     }
 
     @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append(this.width);
+        buf.append("x");
+        buf.append(this.height);
+        return buf.toString();
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("width", this.width);
