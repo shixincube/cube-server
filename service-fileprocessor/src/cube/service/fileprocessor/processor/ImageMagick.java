@@ -127,7 +127,7 @@ public class ImageMagick {
         commandLine.add(markSize.width + "x" + markSize.height);
         commandLine.add("-font");
         commandLine.add(null == textConstraint.font ?
-                Paths.get("").toAbsolutePath().toString() + "/assets/Songti.ttc" : textConstraint.font);
+                Paths.get("").toAbsolutePath().toString() + "/assets/STHeiti.ttc" : textConstraint.font);
         commandLine.add("-pointsize");
         commandLine.add(Integer.toString(textConstraint.pointSize));
         commandLine.add("-fill");
@@ -188,7 +188,7 @@ public class ImageMagick {
 
         int status = execute(workPath, commandLine);
         if (0 == status || 1 == status) {
-            File file = new File(output);
+            File file = new File(workPath, output);
             return file.exists();
         }
         else {

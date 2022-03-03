@@ -114,6 +114,10 @@ public class OperationWorkflow implements JSONable {
         return new ArrayList<>(this.workList);
     }
 
+    public OperationWork getFirstWork() {
+        return this.workList.get(0);
+    }
+
     public void setResultFilename(String filename) {
         this.resultFilename = filename;
     }

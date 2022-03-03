@@ -129,21 +129,33 @@ public class ImageProcessor extends Processor {
             SteganographyOperation operation = (SteganographyOperation) imageOperation;
 
             String outputFilename = operation.getOutputFilename();
-            if (null == outputFilename) {
-                if (null != this.imageFileLabel) {
-                    outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_stegano.png";
-                }
-                else {
-                    outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_stegano.png";
-                }
-            }
 
             boolean success = false;
 
             if (operation.isRecover()) {
+                if (null == outputFilename) {
+                    if (null != this.imageFileLabel) {
+                        outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_watermark.jpg";
+                    }
+                    else {
+                        outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_watermark.jpg";
+                    }
+                }
 
+                // 使用 ImageMagick 操作
+                success = ImageMagick.recoverSteganography(this.getWorkPath().toFile(), operation.getWatermarkSize(),
+                        this.imageFile.getName(), outputFilename);
             }
             else {
+                if (null == outputFilename) {
+                    if (null != this.imageFileLabel) {
+                        outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_stegano.png";
+                    }
+                    else {
+                        outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_stegano.png";
+                    }
+                }
+
                 TextConstraint textConstraint = operation.getTextConstraint();
                 if (null == textConstraint) {
                     textConstraint = new TextConstraint();

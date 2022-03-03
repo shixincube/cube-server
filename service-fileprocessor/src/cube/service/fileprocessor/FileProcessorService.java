@@ -699,7 +699,8 @@ public class FileProcessorService extends AbstractModule {
             this.pluginSystem.getStopWorkInWorkflowHook().apply(pluginContext);
         }
 
-        Logger.i(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN() + ") interrupt : " + interrupt);
+        Logger.i(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN() + ") interrupt : " + interrupt +
+                " - " + sourceFile.toFile().getName());
 
         File resultFile = null;
         if (!interrupt) {
@@ -741,7 +742,8 @@ public class FileProcessorService extends AbstractModule {
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#launchOperationWorkFlow - End workflow : " + workflow.getSN());
+            Logger.d(this.getClass(), "#launchOperationWorkFlow - End workflow : " + workflow.getSN() + " - " +
+                    workflow.getResultFilename());
         }
 
         // 调用钩子

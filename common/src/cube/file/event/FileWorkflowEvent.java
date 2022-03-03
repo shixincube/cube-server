@@ -31,6 +31,8 @@ import cube.file.OperationWorkflow;
 import cube.file.OperationWork;
 import org.json.JSONObject;
 
+import java.io.File;
+
 /**
  * 工作流事件。
  */
@@ -41,6 +43,8 @@ public class FileWorkflowEvent implements JSONable {
     private OperationWorkflow workflow;
 
     private OperationWork work;
+
+    public File resultFile;
 
     public FileWorkflowEvent(String name, OperationWorkflow workflow, OperationWork work) {
         this.name = name;

@@ -559,7 +559,10 @@ public final class ClientManager {
         OperationWorkflow workflow = (OperationWorkflow) pluginContext.get("workflow");
         // OperationWork 可以是 null 值
         OperationWork work = (OperationWork) pluginContext.get("work");
+
+        // 创建事件
         FileWorkflowEvent event = new FileWorkflowEvent(eventName, workflow, work);
+        event.resultFile = (File) pluginContext.get("resultFile");
 
         // 事件进入队列
         this.eventQueue.offer(event);
@@ -576,12 +579,13 @@ public final class ClientManager {
                 while (!eventQueue.isEmpty()) {
                     FileWorkflowEvent workflowEvent = eventQueue.poll();
                     if (null != workflowEvent) {
+                        String eventName = workflowEvent.getName();
                         long clientId = workflowEvent.getWorkflow().getClientId();
                         for (ServerClient client : clientMap.values()) {
                             if (client.getId().longValue() == clientId) {
                                 synchronized (client) {
                                     if (eventName.equals("StopWorkflow")) {
-                                        File resultFile = (File) pluginContext.get("resultFile");
+                                        File resultFile = workflowEvent.resultFile;
                                         if (null != resultFile && resultFile.exists()) {
                                             // 传输文件数据
                                             client.transmitStream(resultFile.getName(), resultFile);
