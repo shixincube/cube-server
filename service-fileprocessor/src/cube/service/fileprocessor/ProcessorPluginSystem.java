@@ -37,33 +37,33 @@ public class ProcessorPluginSystem extends PluginSystem<ProcessorHook> {
         this.build(cellet);
     }
 
-    public ProcessorHook getStartWorkflowHook() {
-        return this.getHook(ProcessorHook.StartWorkflow);
+    public ProcessorHook getWorkflowStartedHook() {
+        return this.getHook(ProcessorHook.WorkflowStarted);
     }
 
-    public ProcessorHook getStopWorkflowHook() {
-        return this.getHook(ProcessorHook.StopWorkflow);
+    public ProcessorHook getWorkflowStoppedHook() {
+        return this.getHook(ProcessorHook.WorkflowStopped);
     }
 
-    public ProcessorHook getStartWorkInWorkflowHook() {
-        return this.getHook(ProcessorHook.StartWorkInWorkflow);
+    public ProcessorHook getWorkBegunHook() {
+        return this.getHook(ProcessorHook.WorkBegun);
     }
 
-    public ProcessorHook getStopWorkInWorkflowHook() {
-        return this.getHook(ProcessorHook.StopWorkInWorkflow);
+    public ProcessorHook getWorkEndedHook() {
+        return this.getHook(ProcessorHook.WorkEnded);
     }
 
     private void build(FileProcessorServiceCellet cellet) {
-        ProcessorHook hook = new ProcessorHook(ProcessorHook.StartWorkflow, cellet);
+        ProcessorHook hook = new ProcessorHook(ProcessorHook.WorkflowStarted, cellet);
         this.addHook(hook);
 
-        hook = new ProcessorHook(ProcessorHook.StopWorkflow, cellet);
+        hook = new ProcessorHook(ProcessorHook.WorkflowStopped, cellet);
         this.addHook(hook);
 
-        hook = new ProcessorHook(ProcessorHook.StartWorkInWorkflow, cellet);
+        hook = new ProcessorHook(ProcessorHook.WorkBegun, cellet);
         this.addHook(hook);
 
-        hook = new ProcessorHook(ProcessorHook.StopWorkInWorkflow, cellet);
+        hook = new ProcessorHook(ProcessorHook.WorkEnded, cellet);
         this.addHook(hook);
     }
 }

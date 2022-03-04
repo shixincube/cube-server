@@ -162,6 +162,25 @@ public class FileLabel extends Entity {
     /**
      * 构造函数。
      *
+     * @param domainName 域名称。
+     * @param fileCode 文件码。
+     * @param ownerId 所属联系人 ID 。
+     * @param file 文件。
+     */
+    public FileLabel(String domainName, String fileCode, Long ownerId, File file) {
+        super(Utils.generateSerialNumber(), domainName);
+        this.uniqueKey = fileCode;
+        this.ownerId = ownerId;
+        this.fileName = file.getName();
+        this.fileSize = file.length();
+        this.lastModified = file.lastModified();
+        this.completedTime = System.currentTimeMillis();
+        this.expiryTime = 0;
+    }
+
+    /**
+     * 构造函数。
+     *
      * @param json 文件标签的 JSON 格式。
      */
     public FileLabel(JSONObject json) {

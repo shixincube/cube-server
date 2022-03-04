@@ -28,6 +28,7 @@ package cube.file;
 
 import cell.util.Utils;
 import cube.common.JSONable;
+import cube.common.entity.FileLabel;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -53,6 +54,8 @@ public class OperationWorkflow implements JSONable {
     private List<OperationWork> workList;
 
     private String resultFilename;
+
+    private FileLabel resultFileLabel;
 
     private boolean deleteProcessedFile = true;
 
@@ -83,6 +86,10 @@ public class OperationWorkflow implements JSONable {
 
         if (json.has("resultFilename")) {
             this.resultFilename = json.getString("resultFilename");
+        }
+
+        if (json.has("resultFileLabel")) {
+            this.resultFileLabel = new FileLabel(json.getJSONObject("resultFileLabel"));
         }
     }
 
@@ -154,6 +161,14 @@ public class OperationWorkflow implements JSONable {
         return this.resultFilename;
     }
 
+    public void setResultFileLabel(FileLabel fileLabel) {
+        this.resultFileLabel = fileLabel;
+    }
+
+    public FileLabel getResultFileLabel() {
+        return this.resultFileLabel;
+    }
+
     public boolean isDeleteProcessedFile() {
         return this.deleteProcessedFile;
     }
@@ -192,6 +207,10 @@ public class OperationWorkflow implements JSONable {
 
         if (null != this.resultFilename) {
             json.put("resultFilename", this.resultFilename);
+        }
+
+        if (null != this.resultFileLabel) {
+            json.put("resultFileLabel", this.resultFileLabel.toCompactJSON());
         }
 
         return json;

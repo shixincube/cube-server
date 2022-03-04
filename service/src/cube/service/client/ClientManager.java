@@ -273,7 +273,7 @@ public final class ClientManager {
     }
 
     private void setupFileProcessorPlugin(PluginSystem<?> pluginSystem) {
-        pluginSystem.register("StartWorkflow", new Plugin() {
+        pluginSystem.register("WorkflowStarted", new Plugin() {
             @Override
             public void setup() {}
 
@@ -282,11 +282,11 @@ public final class ClientManager {
 
             @Override
             public void onAction(PluginContext context) {
-                onFileProcessor("StartWorkflow", context);
+                onFileProcessor("WorkflowStarted", context);
             }
         });
 
-        pluginSystem.register("StopWorkflow", new Plugin() {
+        pluginSystem.register("WorkflowStopped", new Plugin() {
             @Override
             public void setup() {}
 
@@ -295,11 +295,11 @@ public final class ClientManager {
 
             @Override
             public void onAction(PluginContext context) {
-                onFileProcessor("StopWorkflow", context);
+                onFileProcessor("WorkflowStopped", context);
             }
         });
 
-        pluginSystem.register("StartWorkInWorkflow", new Plugin() {
+        pluginSystem.register("WorkBegun", new Plugin() {
             @Override
             public void setup() {}
 
@@ -308,11 +308,11 @@ public final class ClientManager {
 
             @Override
             public void onAction(PluginContext context) {
-                onFileProcessor("StartWorkInWorkflow", context);
+                onFileProcessor("WorkBegun", context);
             }
         });
 
-        pluginSystem.register("StopWorkInWorkflow", new Plugin() {
+        pluginSystem.register("WorkEnded", new Plugin() {
             @Override
             public void setup() {}
 
@@ -321,7 +321,7 @@ public final class ClientManager {
 
             @Override
             public void onAction(PluginContext context) {
-                onFileProcessor("StopWorkInWorkflow", context);
+                onFileProcessor("WorkEnded", context);
             }
         });
     }
@@ -591,7 +591,7 @@ public final class ClientManager {
                         for (ServerClient client : clientMap.values()) {
                             if (client.getId().longValue() == clientId) {
                                 synchronized (client) {
-                                    if (eventName.equals("StopWorkflow")) {
+                                    if (eventName.equals("WorkflowStopped")) {
                                         File resultFile = workflowEvent.resultFile;
                                         if (null != resultFile && resultFile.exists()) {
                                             // 传输文件数据

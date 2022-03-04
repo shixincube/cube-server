@@ -26,8 +26,15 @@
 
 package cube.util;
 
+import cube.common.entity.FileLabel;
+
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -90,6 +97,65 @@ public final class FileUtils {
         // Hash
         String code = FileUtils.fastHash(list);
         return code;
+    }
+
+    /**
+     * 制作文件标签。
+     *
+     * @param domainName 域名称。
+     * @param fileCode 文件码。
+     * @param contactId 所属联系人 ID 。
+     * @param file 文件。
+     * @return
+     */
+    public static FileLabel makeFileLabel(String domainName, String fileCode, Long contactId, File file) {
+        // 计算文件散列码
+        MessageDigest md5 = null;
+        MessageDigest sha1 = null;
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+            sha1 = MessageDigest.getInstance("SHA1");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+
+        FileInputStream fis = null;
+
+        try {
+            fis = new FileInputStream(file);
+            byte[] bytes = new byte[4096];
+            int length = 0;
+            while ((length = fis.read(bytes)) > 0) {
+                md5.update(bytes, 0, length);
+                sha1.update(bytes, 0, length);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != fis) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        byte[] hashMD5 = md5.digest();
+        byte[] hashSHA1 = sha1.digest();
+        String md5Code = FileUtils.bytesToHexString(hashMD5);
+        String sha1Code = FileUtils.bytesToHexString(hashSHA1);
+
+        // 判断文件类型
+        FileType fileType = FileType.matchExtension(extractFileExtension(file.getName()));
+
+        FileLabel fileLabel = new FileLabel(domainName, fileCode, contactId, file);
+        fileLabel.setFileType(fileType);
+        fileLabel.setMD5Code(md5Code);
+        fileLabel.setSHA1Code(sha1Code);
+
+        return fileLabel;
     }
 
     /**

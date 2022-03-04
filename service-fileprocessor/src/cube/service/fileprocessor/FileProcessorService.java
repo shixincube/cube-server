@@ -610,7 +610,7 @@ public class FileProcessorService extends AbstractModule {
 
         // 调用钩子
         WorkflowPluginContext pluginContext = new WorkflowPluginContext(workflow);
-        this.pluginSystem.getStartWorkflowHook().apply(pluginContext);
+        this.pluginSystem.getWorkflowStartedHook().apply(pluginContext);
 
         List<OperationWork> workList = workflow.getWorkList();
 
@@ -633,7 +633,7 @@ public class FileProcessorService extends AbstractModule {
             }
 
             pluginContext = new WorkflowPluginContext(workflow, work);
-            this.pluginSystem.getStartWorkInWorkflowHook().apply(pluginContext);
+            this.pluginSystem.getWorkBegunHook().apply(pluginContext);
 
             String process = work.getFileOperation().getProcessAction();
 
@@ -719,7 +719,7 @@ public class FileProcessorService extends AbstractModule {
             }
 
             pluginContext = new WorkflowPluginContext(workflow, work);
-            this.pluginSystem.getStopWorkInWorkflowHook().apply(pluginContext);
+            this.pluginSystem.getWorkEndedHook().apply(pluginContext);
         }
 
         Logger.i(this.getClass(), "#executeOperation - (" + workflow.getSN() + ") interrupt : " + interrupt +
@@ -787,7 +787,7 @@ public class FileProcessorService extends AbstractModule {
 
         // 调用钩子
         pluginContext = new WorkflowPluginContext(workflow, resultFile);
-        this.pluginSystem.getStopWorkflowHook().apply(pluginContext);
+        this.pluginSystem.getWorkflowStoppedHook().apply(pluginContext);
 
         return true;
     }
@@ -806,13 +806,32 @@ public class FileProcessorService extends AbstractModule {
     /**
      * 将结果文件写入存储。
      *
+     * @param contactId
+     * @param domainName
      * @param file
      * @return
      */
-    private FileLabel writeFileToStorageService(File file) {
-        FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+    protected FileLabel writeFileToStorageService(Long contactId, String domainName, File file) {
+        if (!file.exists()) {
+            // 文件不存在
+            return null;
+        }
 
-        return null;
+        // 生成文件码
+        String fileCode = FileUtils.makeFileCode(contactId, domainName, file.getName());
+
+        FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+        // 将文件写入存储服务
+        storageService.writeFile(fileCode, file);
+
+        // 生成文件标签
+        FileLabel fileLabel = FileUtils.makeFileLabel(domainName, fileCode, contactId, file);
+
+        // 登记文件标签
+        FileLabel validFileLabel = storageService.putFile(fileLabel);
+
+        // 返回有效的文件标签
+        return validFileLabel;
     }
 
     /**

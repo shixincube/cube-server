@@ -28,10 +28,12 @@ package cube.service.fileprocessor;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
+import cube.common.entity.FileLabel;
 import cube.common.state.FileProcessorStateCode;
 import cube.file.OperationWorkflow;
 import cube.plugin.Hook;
@@ -45,13 +47,13 @@ import org.json.JSONObject;
  */
 public class ProcessorHook extends Hook {
 
-    public final static String StartWorkflow = "StartWorkflow";
+    public final static String WorkflowStarted = "WorkflowStarted";
 
-    public final static String StopWorkflow = "StopWorkflow";
+    public final static String WorkflowStopped = "WorkflowStopped";
 
-    public final static String StartWorkInWorkflow = "StartWorkInWorkflow";
+    public final static String WorkBegun = "WorkBegun";
 
-    public final static String StopWorkInWorkflow = "StopWorkInWorkflow";
+    public final static String WorkEnded = "WorkEnded";
 
     private FileProcessorServiceCellet cellet;
 
@@ -73,7 +75,7 @@ public class ProcessorHook extends Hook {
 
         OperationWorkflow workflow = ctx.getWorkflow();
         Long contactId = workflow.getContactId();
-        if (null == contactId) {
+        if (null == contactId || workflow.getClientId() > 0) {
             // 没有指定联系人
             return;
         }
@@ -82,6 +84,18 @@ public class ProcessorHook extends Hook {
         if (null == contact) {
             // 没有找到对应的联系人
             return;
+        }
+
+        if (ProcessorHook.WorkflowStopped.equals(this.getKey())) {
+            // 将结果文件写入存储服务
+            FileLabel fileLabel = this.cellet.getService().writeFileToStorageService(contactId, contact.getDomain().getName(),
+                    ctx.getResultFile());
+            if (null != fileLabel) {
+                workflow.setResultFileLabel(fileLabel);
+            }
+            else {
+                Logger.e(this.getClass(), "Write file to file storage failed: " + contactId);
+            }
         }
 
         for (Device device : contact.getDeviceList()) {
