@@ -557,6 +557,13 @@ public final class ClientManager {
 
     private synchronized void onFileProcessor(String eventName, PluginContext pluginContext) {
         OperationWorkflow workflow = (OperationWorkflow) pluginContext.get("workflow");
+
+        long clientId = workflow.getClientId();
+        if (clientId == 0) {
+            // 不是来自服务器客户端的任务
+            return;
+        }
+
         // OperationWork 可以是 null 值
         OperationWork work = (OperationWork) pluginContext.get("work");
 

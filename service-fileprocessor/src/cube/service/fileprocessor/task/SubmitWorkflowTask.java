@@ -33,18 +33,17 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.action.FileProcessorAction;
 import cube.common.state.FileProcessorStateCode;
+import cube.file.OperationWorkflow;
 import cube.service.ServiceTask;
-import cube.service.fileprocessor.CVResult;
 import cube.service.fileprocessor.FileProcessorService;
 import cube.service.fileprocessor.FileProcessorServiceCellet;
 import org.json.JSONObject;
 
 /**
- * 检测图像对象任务。
+ * 提交工作流任务。
  */
-public class DetectObjectTask extends ServiceTask {
+public class SubmitWorkflowTask extends ServiceTask {
 
     /**
      * 构造函数。
@@ -52,9 +51,10 @@ public class DetectObjectTask extends ServiceTask {
      * @param cellet
      * @param talkContext
      * @param primitive
+     * @param responseTime
      */
-    public DetectObjectTask(Cellet cellet, TalkContext talkContext, Primitive primitive,
-                            ResponseTime responseTime) {
+    public SubmitWorkflowTask(Cellet cellet, TalkContext talkContext, Primitive primitive,
+                              ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -63,27 +63,39 @@ public class DetectObjectTask extends ServiceTask {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
-        JSONObject data = packet.data;
-
-        String domain = data.getString("domain");
-        String fileCode = data.getString("fileCode");
-
-        FileProcessorService service = ((FileProcessorServiceCellet) this.cellet).getService();
-
-        // 进行识别
-        CVResult result = service.detectObject(domain, fileCode);
-        if (null == result) {
-            // 应答
-            ActionDialect response = this.makeResponse(action, packet,
-                    FileProcessorAction.DetectObjectAck.name, FileProcessorStateCode.Failure.code, data);
-            this.cellet.speak(this.talkContext, response);
+        // 获取令牌码
+        String tokenCode = this.getTokenCode(action);
+        if (null == tokenCode) {
+            // 发生错误
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileProcessorStateCode.Unauthorized.code, packet.data));
             markResponseTime();
             return;
         }
 
+        // 请求的数据
+        JSONObject data = packet.data;
+        JSONObject workflowJson = data.getJSONObject("workflow");
+
+        // 实例化
+        OperationWorkflow workflow = new OperationWorkflow(workflowJson);
+
+        // 检查参数
+        Long contactId = workflow.getContactId();
+        if (null == contactId) {
+            // 发生错误
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileProcessorStateCode.InvalidParameter.code, packet.data));
+            markResponseTime();
+            return;
+        }
+
+        FileProcessorService service = ((FileProcessorServiceCellet) this.cellet).getService();
+        service.launchOperationWorkFlow(workflow);
+
         // 应答
         ActionDialect response = this.makeResponse(action, packet,
-                FileProcessorAction.DetectObjectAck.name, FileProcessorStateCode.Ok.code, result.toJSON());
+                FileProcessorStateCode.Ok.code, workflow.toCompactJSON());
         this.cellet.speak(this.talkContext, response);
         markResponseTime();
     }

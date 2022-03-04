@@ -57,7 +57,6 @@ import cube.service.filestorage.hierarchy.FileHierarchy;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -891,12 +890,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         }
 
         JSONObject payload = new JSONObject();
-        try {
-            payload.put("code", MessagingStateCode.Ok.code);
-            payload.put("data", message.toJSON());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        payload.put("code", MessagingStateCode.Ok.code);
+        payload.put("data", message.toJSON());
 
         Packet packet = new Packet(action.name, payload);
         ActionDialect dialect = Director.attachDirector(packet.toDialect(),

@@ -42,10 +42,7 @@ import cube.service.fileprocessor.processor.video.SnapshotProcessor;
 import cube.service.fileprocessor.processor.video.VideoProcessor;
 import cube.service.fileprocessor.processor.video.VideoProcessorBuilder;
 import cube.service.filestorage.FileStorageService;
-import cube.util.ConfigUtils;
-import cube.util.FileType;
-import cube.util.FileUtils;
-import cube.util.ZipUtils;
+import cube.util.*;
 import net.coobird.thumbnailator.Thumbnails;
 import org.json.JSONObject;
 
@@ -67,6 +64,8 @@ public class FileProcessorService extends AbstractModule {
 
     public final static String NAME = "FileProcessor";
 
+    private FileProcessorServiceCellet cellet;
+
     private ExecutorService executor = null;
 
     private Path workPath;
@@ -80,14 +79,15 @@ public class FileProcessorService extends AbstractModule {
      */
     protected ProcessorPluginSystem pluginSystem;
 
-    public FileProcessorService(ExecutorService executor) {
+    public FileProcessorService(ExecutorService executor, FileProcessorServiceCellet cellet) {
         super();
         this.executor = executor;
+        this.cellet = cellet;
     }
 
     @Override
     public void start() {
-        this.pluginSystem = new ProcessorPluginSystem();
+        this.pluginSystem = new ProcessorPluginSystem(this.cellet);
 
         // 工具校验
         this.useImageMagick = ImageTools.check();
@@ -552,15 +552,14 @@ public class FileProcessorService extends AbstractModule {
     /**
      * 异步加载工作流。
      *
-     * @param executor
      * @param workflow
      * @return 返回是否成功启动工作流。
      */
-    public boolean launchOperationWorkFlow(ExecutorService executor, OperationWorkflow workflow) {
+    public boolean launchOperationWorkFlow(OperationWorkflow workflow) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                launchOperationWorkFlow(workflow);
+                executeOperation(workflow);
             }
         });
         return true;
@@ -572,21 +571,21 @@ public class FileProcessorService extends AbstractModule {
      * @param workflow
      * @return 返回是否成功启动工作流。
      */
-    public boolean launchOperationWorkFlow(OperationWorkflow workflow) {
+    private boolean executeOperation(OperationWorkflow workflow) {
         // 域
         String domainName = workflow.getDomain();
         // 源文件的文件码
         String fileCode = workflow.getSourceFileCode();
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#launchOperationWorkFlow - Start workflow : " + workflow.getSN() +
-                    " - @" + domainName + " - " + fileCode);
+            Logger.d(this.getClass(), "#executeOperation - Start workflow : " + workflow.getSN() +
+                    " - @" + domainName + "/" + fileCode);
         }
 
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
         FileLabel fileLabel = storageService.getFile(domainName, fileCode);
         if (null == fileLabel) {
-            Logger.e(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN()
+            Logger.e(this.getClass(), "#executeOperation - (" + workflow.getSN()
                     + ") Not find file : " + fileCode);
             return false;
         }
@@ -596,7 +595,7 @@ public class FileProcessorService extends AbstractModule {
         if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
             String path = storageService.loadFileToDisk(domainName, fileCode);
             if (null == path) {
-                Logger.e(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN()
+                Logger.e(this.getClass(), "#executeOperation - (" + workflow.getSN()
                         + ") Load file to disk failed : " + fileCode);
                 return false;
             }
@@ -604,7 +603,7 @@ public class FileProcessorService extends AbstractModule {
             try {
                 Files.copy(Paths.get(path), sourceFile);
             } catch (IOException e) {
-                Logger.e(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN() + ")", e);
+                Logger.e(this.getClass(), "#executeOperation - (" + workflow.getSN() + ")", e);
                 return false;
             }
         }
@@ -723,15 +722,17 @@ public class FileProcessorService extends AbstractModule {
             this.pluginSystem.getStopWorkInWorkflowHook().apply(pluginContext);
         }
 
-        Logger.i(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN() + ") interrupt : " + interrupt +
+        Logger.i(this.getClass(), "#executeOperation - (" + workflow.getSN() + ") interrupt : " + interrupt +
                 " - " + sourceFile.toFile().getName());
 
         File resultFile = null;
         if (!interrupt) {
+            // 没有出现中断
+
             OperationWork lastWork = workList.get(workList.size() - 1);
             FileProcessResult result = lastWork.getProcessResult();
             if (null == result) {
-                Logger.e(this.getClass(), "#launchOperationWorkFlow - (" + workflow.getSN()
+                Logger.e(this.getClass(), "#executeOperation - (" + workflow.getSN()
                         + ") Result data error : " + fileCode);
                 return false;
             }
@@ -739,9 +740,21 @@ public class FileProcessorService extends AbstractModule {
             // 结果文件打包
             if (lastWork.getOutput().size() == 1) {
                 resultFile = lastWork.getOutput().get(0);
+                // 扩展名
+                String ext = FileUtils.extractFileExtension(resultFile.getName());
+                // 矫正输出文件名
+                String finalName = FileUtils.extractFileName(fileLabel.getFileName()) + "_" +
+                        TimeUtils.formatDateForPathSymbol(resultFile.lastModified()) + "." + ext;
+                File finalFile = new File(resultFile.getParent(), finalName);
+                resultFile.renameTo(finalFile);
+                resultFile = finalFile;
             }
             else {
-                resultFile = this.packFileSet(fileCode, lastWork.getOutput());
+                // 矫正输出文件名
+                String finalName = FileUtils.extractFileName(fileLabel.getFileName()) + "_" +
+                        TimeUtils.formatDateForPathSymbol(System.currentTimeMillis()) + ".zip";
+
+                resultFile = this.packFileSet(finalName, lastWork.getOutput());
                 if (resultFile.exists()) {
                     // 清空结果文件
                     for (File file : lastWork.getOutput()) {
@@ -768,7 +781,7 @@ public class FileProcessorService extends AbstractModule {
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#launchOperationWorkFlow - End workflow : " + workflow.getSN() + " - " +
+            Logger.d(this.getClass(), "#executeOperation - End workflow : " + workflow.getSN() + " - " +
                     workflow.getResultFilename());
         }
 
@@ -788,6 +801,18 @@ public class FileProcessorService extends AbstractModule {
             e.printStackTrace();
         }
         return outputFile;
+    }
+
+    /**
+     * 将结果文件写入存储。
+     *
+     * @param file
+     * @return
+     */
+    private FileLabel writeFileToStorageService(File file) {
+        FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+
+        return null;
     }
 
     /**
@@ -840,7 +865,7 @@ public class FileProcessorService extends AbstractModule {
                 OperationWorkflow workflow = new OperationWorkflow(workflowJson);
                 workflow.setClientId(data.getLong("clientId"));
                 // 加载工作流
-                boolean result = this.launchOperationWorkFlow(this.executor, workflow);
+                boolean result = this.launchOperationWorkFlow(workflow);
                 WorkflowContext context = new WorkflowContext(action);
                 context.setSuccessful(result);
                 return context.toJSON();

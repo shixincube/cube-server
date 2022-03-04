@@ -88,7 +88,7 @@ public final class FileUtils {
         List<byte[]> list = FileUtils.slice(keystr.getBytes(Charset.forName("UTF-8")), 64);
 
         // Hash
-        String code = FileUtils.fashHash(list);
+        String code = FileUtils.fastHash(list);
         return code;
     }
 
@@ -111,7 +111,7 @@ public final class FileUtils {
         return buf.toString();
     }
 
-    private static String fashHash(List<byte[]> bytes) {
+    private static String fastHash(List<byte[]> bytes) {
         int seed = 13;
         int length = bytes.get(0).length;
         int[] hashCode = new int[length];

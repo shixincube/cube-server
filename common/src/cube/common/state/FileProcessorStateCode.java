@@ -37,6 +37,11 @@ public enum FileProcessorStateCode {
     Ok(0),
 
     /**
+     * 未授权的请求。
+     */
+    Unauthorized(4),
+
+    /**
      * 无效参数。
      */
     InvalidParameter(5),

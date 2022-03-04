@@ -26,7 +26,19 @@
 
 package cube.service.fileprocessor;
 
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cube.common.Packet;
+import cube.common.action.FileProcessorAction;
+import cube.common.entity.Contact;
+import cube.common.entity.Device;
+import cube.common.state.FileProcessorStateCode;
+import cube.file.OperationWorkflow;
 import cube.plugin.Hook;
+import cube.plugin.PluginContext;
+import cube.service.Director;
+import cube.service.contact.ContactManager;
+import org.json.JSONObject;
 
 /**
  * 处理器钩子。
@@ -41,12 +53,54 @@ public class ProcessorHook extends Hook {
 
     public final static String StopWorkInWorkflow = "StopWorkInWorkflow";
 
+    private FileProcessorServiceCellet cellet;
+
     /**
      * 构造函数。
      *
      * @param key
      */
-    public ProcessorHook(String key) {
+    public ProcessorHook(String key, FileProcessorServiceCellet cellet) {
         super(key);
+        this.cellet = cellet;
+    }
+
+    @Override
+    public void apply(PluginContext context) {
+        super.apply(context);
+
+        WorkflowPluginContext ctx = (WorkflowPluginContext) context;
+
+        OperationWorkflow workflow = ctx.getWorkflow();
+        Long contactId = workflow.getContactId();
+        if (null == contactId) {
+            // 没有指定联系人
+            return;
+        }
+
+        Contact contact = ContactManager.getInstance().getOnlineContact(workflow.getDomain(), workflow.getContactId());
+        if (null == contact) {
+            // 没有找到对应的联系人
+            return;
+        }
+
+        for (Device device : contact.getDeviceList()) {
+            TalkContext talkContext = device.getTalkContext();
+            if (null == talkContext) {
+                continue;
+            }
+
+            WorkflowOperatingEvent event = new WorkflowOperatingEvent(this.getKey(), workflow);
+            event.setWork(ctx.getWork());
+
+            JSONObject payload = new JSONObject();
+            payload.put("code", FileProcessorStateCode.Ok.code);
+            payload.put("data", event.toJSON());
+
+            Packet packet = new Packet(FileProcessorAction.WorkflowOperating.name, payload);
+            ActionDialect dialect = Director.attachDirector(packet.toDialect(),
+                    contactId.longValue(), contact.getDomain().getName());
+            this.cellet.speak(talkContext, dialect);
+        }
     }
 }

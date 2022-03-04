@@ -33,8 +33,8 @@ import cube.plugin.PluginSystem;
  */
 public class ProcessorPluginSystem extends PluginSystem<ProcessorHook> {
 
-    public ProcessorPluginSystem() {
-        this.build();
+    public ProcessorPluginSystem(FileProcessorServiceCellet cellet) {
+        this.build(cellet);
     }
 
     public ProcessorHook getStartWorkflowHook() {
@@ -53,17 +53,17 @@ public class ProcessorPluginSystem extends PluginSystem<ProcessorHook> {
         return this.getHook(ProcessorHook.StopWorkInWorkflow);
     }
 
-    private void build() {
-        ProcessorHook hook = new ProcessorHook(ProcessorHook.StartWorkflow);
+    private void build(FileProcessorServiceCellet cellet) {
+        ProcessorHook hook = new ProcessorHook(ProcessorHook.StartWorkflow, cellet);
         this.addHook(hook);
 
-        hook = new ProcessorHook(ProcessorHook.StopWorkflow);
+        hook = new ProcessorHook(ProcessorHook.StopWorkflow, cellet);
         this.addHook(hook);
 
-        hook = new ProcessorHook(ProcessorHook.StartWorkInWorkflow);
+        hook = new ProcessorHook(ProcessorHook.StartWorkInWorkflow, cellet);
         this.addHook(hook);
 
-        hook = new ProcessorHook(ProcessorHook.StopWorkInWorkflow);
+        hook = new ProcessorHook(ProcessorHook.StopWorkInWorkflow, cellet);
         this.addHook(hook);
     }
 }

@@ -24,70 +24,52 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.fileprocessor;
 
-public enum FileProcessorAction {
+import cube.common.JSONable;
+import cube.file.OperationWork;
+import cube.file.OperationWorkflow;
+import org.json.JSONObject;
 
-    /**
-     * 获取媒体源地址。
-     */
-    GetMediaSource("getMediaSource"),
+/**
+ * 工作流操作事件。
+ */
+public class WorkflowOperatingEvent implements JSONable {
 
-    /**
-     * 提交工作流。
-     */
-    SubmitWorkflow("submitWorkflow"),
+    private String name;
 
-    /**
-     * 取消工作流。
-     */
-    CancelWorkflow("cancelWorkflow"),
+    private OperationWorkflow workflow;
 
-    /**
-     * 工作流操作中。
-     */
-    WorkflowOperating("workflowOperating"),
+    private OperationWork work;
 
-    /**
-     * 图像文件操作。
-     */
-    Image("image"),
-
-    /**
-     * 视频文件操作。
-     */
-    Video("video"),
-
-    /**
-     * 字符识别。
-     */
-    OCR("ocr"),
-
-    /**
-     * 生成缩略图。
-     */
-    Thumb("thumb"),
-
-    /**
-     * 对象检测。
-     */
-    DetectObject("detectObject"),
-
-    /**
-     * 对象检测应答。
-     */
-    DetectObjectAck("detectObjectAck"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    FileProcessorAction(String name) {
+    public WorkflowOperatingEvent(String name, OperationWorkflow workflow) {
         this.name = name;
+        this.workflow = workflow;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setWork(OperationWork work) {
+        this.work = work;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("name", this.name);
+        json.put("workflow", this.workflow.toJSON());
+
+        if (null != this.work) {
+            json.put("work", this.work.toJSON());
+        }
+
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

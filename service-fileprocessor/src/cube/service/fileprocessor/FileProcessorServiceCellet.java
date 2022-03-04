@@ -34,7 +34,9 @@ import cell.util.CachedQueueExecutor;
 import cube.common.action.FileProcessorAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.service.fileprocessor.task.CancelWorkflowTask;
 import cube.service.fileprocessor.task.DetectObjectTask;
+import cube.service.fileprocessor.task.SubmitWorkflowTask;
 
 import java.util.concurrent.ExecutorService;
 
@@ -59,7 +61,7 @@ public class FileProcessorServiceCellet extends AbstractCellet {
     public boolean install() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
 
-        this.service = new FileProcessorService(this.executor);
+        this.service = new FileProcessorService(this.executor, this);
 
         Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
         kernel.installModule(this.getName(), this.service);
@@ -82,8 +84,17 @@ public class FileProcessorServiceCellet extends AbstractCellet {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
 
-        if (FileProcessorAction.DetectObject.name.equals(action)) {
-            this.executor.execute(new DetectObjectTask(this, talkContext, primitive));
+        if (FileProcessorAction.SubmitWorkflow.name.equals(action)) {
+            this.executor.execute(new SubmitWorkflowTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (FileProcessorAction.CancelWorkflow.name.equals(action)) {
+            this.executor.execute(new CancelWorkflowTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (FileProcessorAction.DetectObject.name.equals(action)) {
+            this.executor.execute(new DetectObjectTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
     }
 }
