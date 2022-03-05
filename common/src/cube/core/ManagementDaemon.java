@@ -41,7 +41,7 @@ public class ManagementDaemon extends Thread {
 
     private boolean spinning = true;
 
-    private final long spinningSleep = 60L * 1000L;
+    private final long spinningSleep = 60 * 1000;
 
     private ExecutorService executor;
 
@@ -59,6 +59,10 @@ public class ManagementDaemon extends Thread {
                 Thread.sleep(this.spinningSleep);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+            }
+
+            if (!this.spinning) {
+                break;
             }
 
             List<AbstractModule> list = this.kernel.getModules();

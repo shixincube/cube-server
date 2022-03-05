@@ -41,22 +41,49 @@ import java.util.List;
  */
 public class OperationWorkflow implements JSONable {
 
+    /**
+     * 序号。
+     */
     private long sn;
 
+    /**
+     * 域名称。
+     */
     private String domain;
 
+    /**
+     * 源文件的文件码。
+     */
     private String sourceFileCode;
 
+    /**
+     * 联系人 ID 。
+     */
     private Long contactId;
 
+    /**
+     * 服务器客户端的 ID 。
+     */
     private long clientId;
 
+    /**
+     * 操作工作列表。
+     */
     private List<OperationWork> workList;
 
+    /**
+     * 结果文件名。
+     */
     private String resultFilename;
 
+    /**
+     * 结果文件的文件标签。
+     */
     private FileLabel resultFileLabel;
 
+    /**
+     * 是否删除过程文件。
+     */
     private boolean deleteProcessedFile = true;
 
     public OperationWorkflow() {
