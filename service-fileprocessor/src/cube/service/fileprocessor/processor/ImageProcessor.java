@@ -30,10 +30,7 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.ProcessResult;
 import cube.common.entity.TextConstraint;
 import cube.file.ImageOperation;
-import cube.file.operation.CropOperation;
-import cube.file.operation.EliminateColorOperation;
-import cube.file.operation.ReverseColorOperation;
-import cube.file.operation.SteganographyOperation;
+import cube.file.operation.*;
 import cube.util.FileUtils;
 
 import java.io.File;
@@ -89,9 +86,29 @@ public class ImageProcessor extends Processor {
             // 使用 ImageMagick 操作
             boolean success = ImageMagick.crop(this.getWorkPath().toFile(), this.imageFile.getName(),
                     outputFilename, operation.getCropRect());
+
             // 处理结果
             ctx.setSuccessful(success);
+            if (success) {
+                File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
+                ProcessResult result = new ProcessResult(outputFile);
+                ctx.setResult(result);
+            }
+        }
+        else if (ReplaceColorOperation.Operation.equals(imageOperation.getOperation())) {
+            // 替换颜色
+            ReplaceColorOperation operation = (ReplaceColorOperation) imageOperation;
 
+            if (null == outputFilename) {
+                outputFilename = makeOutputFilename("replaced");
+            }
+
+            // 使用 ImageMagick 操作
+            boolean success = ImageMagick.replaceColor(this.getWorkPath().toFile(), this.imageFile.getName(),
+                    outputFilename, operation.getTargetColor(), operation.getReplaceColor(), operation.getFuzzFactor());
+
+            // 处理结果
+            ctx.setSuccessful(success);
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
                 ProcessResult result = new ProcessResult(outputFile);
@@ -112,7 +129,6 @@ public class ImageProcessor extends Processor {
 
             // 处理结果
             ctx.setSuccessful(success);
-
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
                 ProcessResult result = new ProcessResult(outputFile);

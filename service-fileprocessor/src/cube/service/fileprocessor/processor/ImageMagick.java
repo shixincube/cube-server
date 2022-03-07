@@ -130,6 +130,41 @@ public final class ImageMagick {
         }
     }
 
+    /**
+     * 替换指定颜色。
+     *
+     * @param workPath
+     * @param filename
+     * @param output
+     * @param targetColor
+     * @param replaceColor
+     * @param fuzz
+     * @return
+     */
+    public static boolean replaceColor(File workPath, String filename, String output,
+                                       Color targetColor, Color replaceColor, int fuzz) {
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add("convert");
+        commandLine.add(filename);
+        commandLine.add("-channel");
+        commandLine.add("rgba");
+        commandLine.add("-fuzz");
+        commandLine.add(fuzz + "%");
+        commandLine.add("-fill");
+        commandLine.add(replaceColor.formatRGB());
+        commandLine.add("-opaque");
+        commandLine.add(targetColor.formatRGB());
+        commandLine.add(output);
+
+        int status = execute(workPath, commandLine);
+        if (0 == status || 1 == status) {
+            File file = new File(workPath, output);
+            return file.exists();
+        }
+        else {
+            return false;
+        }
+    }
 
 
     /**

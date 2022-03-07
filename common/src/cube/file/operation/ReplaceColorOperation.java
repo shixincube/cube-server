@@ -27,39 +27,55 @@
 package cube.file.operation;
 
 import cube.file.ImageOperation;
-import cube.vision.Rectangle;
+import cube.vision.Color;
 import org.json.JSONObject;
 
 /**
- * 剪裁图像。
+ * 替换图像颜色。
  */
-public class CropOperation extends ImageOperation {
+public class ReplaceColorOperation extends ImageOperation {
 
-    public final static String Operation = "Crop";
+    public final static String Operation = "ReplaceColor";
 
-    private Rectangle cropRect;
+    private Color targetColor;
 
-    public CropOperation(int x, int y, int width, int height) {
-        super();
-        this.cropRect = new Rectangle(x, y, width, height);
+    private Color replaceColor;
+
+    private int fuzzFactor = 20;
+
+    public ReplaceColorOperation(Color targetColor, Color replaceColor) {
+        this.targetColor = targetColor;
+        this.replaceColor = replaceColor;
     }
 
-    public CropOperation(Rectangle rect) {
-        super();
-        this.cropRect = rect;
+    public ReplaceColorOperation(Color targetColor, Color replaceColor, int fuzzFactor) {
+        this.targetColor = targetColor;
+        this.replaceColor = replaceColor;
+        this.fuzzFactor = fuzzFactor;
     }
 
-    public CropOperation(JSONObject json) {
+    public ReplaceColorOperation(JSONObject json) {
         super(json);
-        this.cropRect = new Rectangle(json.getJSONObject("rect"));
+
+        this.targetColor = new Color(json.getJSONObject("target"));
+        this.replaceColor = new Color(json.getJSONObject("replace"));
+        this.fuzzFactor = json.getInt("fuzz");
     }
 
-    public void setCropRect(Rectangle rect) {
-        this.cropRect = rect;
+    public Color getTargetColor() {
+        return this.targetColor;
     }
 
-    public Rectangle getCropRect() {
-        return this.cropRect;
+    public Color getReplaceColor() {
+        return this.replaceColor;
+    }
+
+    public void setFuzzFactor(int fuzzFactor) {
+        this.fuzzFactor = fuzzFactor;
+    }
+
+    public int getFuzzFactor() {
+        return this.fuzzFactor;
     }
 
     @Override
@@ -71,7 +87,9 @@ public class CropOperation extends ImageOperation {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
 
-        json.put("rect", this.cropRect.toJSON());
+        json.put("target", this.targetColor.toJSON());
+        json.put("replace", this.replaceColor.toJSON());
+        json.put("fuzz", this.fuzzFactor);
 
         return json;
     }

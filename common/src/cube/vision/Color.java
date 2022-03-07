@@ -80,6 +80,17 @@ public class Color {
         return this.blue;
     }
 
+    public String formatRGB() {
+        StringBuilder buf = new StringBuilder("rgb(");
+        buf.append(this.red);
+        buf.append(",");
+        buf.append(this.green);
+        buf.append(",");
+        buf.append(this.blue);
+        buf.append(")");
+        return buf.toString();
+    }
+
     public String formatHex() {
         StringBuilder buf = new StringBuilder("#");
         String redHex = Integer.toHexString(this.red);

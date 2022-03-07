@@ -46,6 +46,9 @@ public final class FileOperationHelper {
             if (CropOperation.Operation.equals(operation)) {
                 return new CropOperation(json);
             }
+            else if (ReplaceColorOperation.Operation.equals(operation)) {
+                return new ReplaceColorOperation(json);
+            }
             else if (EliminateColorOperation.Operation.equals(operation)) {
                 return new EliminateColorOperation(json);
             }
