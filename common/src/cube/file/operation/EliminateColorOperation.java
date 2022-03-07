@@ -24,32 +24,36 @@
  * SOFTWARE.
  */
 
-package cube.file;
+package cube.file.operation;
 
-import cube.common.entity.DetectedObject;
+import cube.file.ImageOperation;
+import cube.vision.Color;
 import org.json.JSONObject;
 
-import java.util.List;
-
 /**
- * 检测图像里的对象操作。
+ * 剔除图像颜色。
  */
-public class DetectObjectsOperation extends ImageOperation {
+public class EliminateColorOperation extends ImageOperation {
 
-    public final static String Operation = "detectObject";
+    public final static String Operation = "EliminateColor";
 
-    private List<DetectedObject> detectedObjectList;
+    private Color reservedColor;
 
-    public DetectObjectsOperation() {
-        super();
+    private Color fillColor;
+
+    private String outputFilename;
+
+    public EliminateColorOperation(Color reservedColor, Color fillColor) {
+        this.reservedColor = reservedColor;
+        this.fillColor = fillColor;
     }
 
-    public DetectObjectsOperation(JSONObject json) {
-
-    }
-
-    public void setDetectedObjects(List<DetectedObject> detectedObjects) {
-        this.detectedObjectList = detectedObjects;
+    public EliminateColorOperation(JSONObject json) {
+        this.reservedColor = new Color(json.getJSONObject("reserved"));
+        this.fillColor = new Color(json.getJSONObject("fill"));
+        if (json.has("outputFilename")) {
+            this.outputFilename = json.getString("outputFilename");
+        }
     }
 
     @Override
@@ -57,10 +61,30 @@ public class DetectObjectsOperation extends ImageOperation {
         return Operation;
     }
 
+    public Color getReservedColor() {
+        return this.reservedColor;
+    }
+
+    public Color getFillColor() {
+        return this.fillColor;
+    }
+
+    public void setOutputFilename(String outputFilename) {
+        this.outputFilename = outputFilename;
+    }
+
+    public String getOutputFilename() {
+        return this.outputFilename;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-
+        json.put("reserved", this.reservedColor.toJSON());
+        json.put("fill", this.fillColor.toJSON());
+        if (null != this.outputFilename) {
+            json.put("outputFilename", this.outputFilename);
+        }
         return json;
     }
 }

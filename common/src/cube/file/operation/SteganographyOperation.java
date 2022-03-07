@@ -24,9 +24,10 @@
  * SOFTWARE.
  */
 
-package cube.file;
+package cube.file.operation;
 
 import cube.common.entity.TextConstraint;
+import cube.file.ImageOperation;
 import cube.util.TextUtils;
 import cube.vision.Size;
 import org.json.JSONObject;

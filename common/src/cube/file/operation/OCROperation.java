@@ -24,50 +24,33 @@
  * SOFTWARE.
  */
 
-package cube.service.fileprocessor;
+package cube.file.operation;
 
 import cube.common.JSONable;
-import cube.file.OperationWork;
-import cube.file.OperationWorkflow;
+import cube.common.action.FileProcessorAction;
+import cube.file.FileOperation;
 import org.json.JSONObject;
 
 /**
- * 工作流操作事件。
+ * OCR 操作配置。
  */
-public class WorkflowOperatingEvent implements JSONable {
+public class OCROperation implements FileOperation, JSONable {
 
-    /**
-     * 事件名称。
-     */
-    private String name;
-
-    private OperationWorkflow workflow;
-
-    private OperationWork work;
-
-    public WorkflowOperatingEvent(String name, OperationWorkflow workflow) {
-        this.name = name;
-        this.workflow = workflow;
+    public OCROperation() {
     }
 
-    public String getName() {
-        return this.name;
+    public OCROperation(JSONObject json) {
     }
 
-    public void setWork(OperationWork work) {
-        this.work = work;
+    @Override
+    public String getProcessAction() {
+        return FileProcessorAction.OCR.name;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("name", this.name);
-        json.put("workflow", this.workflow.toJSON());
-
-        if (null != this.work) {
-            json.put("work", this.work.toJSON());
-        }
-
+        json.put("process", this.getProcessAction());
         return json;
     }
 

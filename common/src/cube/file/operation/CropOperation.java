@@ -24,26 +24,45 @@
  * SOFTWARE.
  */
 
-package cube.file;
+package cube.file.operation;
 
+import cube.file.ImageOperation;
+import cube.vision.Rectangle;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * 反转颜色。
+ * 剪裁图像。
  */
-public class ReverseColorOperation extends ImageOperation {
+public class CropOperation extends ImageOperation {
 
-    public final static String Operation = "ReverseColor";
+    public final static String Operation = "Crop";
 
-    private String outputFilename;
+    private List<Rectangle> cropRectList;
 
-    public ReverseColorOperation() {
+    public CropOperation() {
+        super();
+        this.cropRectList = new ArrayList<>();
     }
 
-    public ReverseColorOperation(JSONObject json) {
-        if (json.has("outputFilename")) {
-            this.outputFilename = json.getString("outputFilename");
+    public CropOperation(JSONObject json) {
+        super();
+        this.cropRectList = new ArrayList<>();
+        JSONArray rects = json.getJSONArray("rects");
+        for (int i = 0; i < rects.length(); ++i) {
+            this.cropRectList.add(new Rectangle(rects.getJSONObject(i)));
         }
+    }
+
+    public void addCropRect(Rectangle rect) {
+        this.cropRectList.add(rect);
+    }
+
+    public List<Rectangle> getCropRects() {
+        return this.cropRectList;
     }
 
     @Override
@@ -51,20 +70,16 @@ public class ReverseColorOperation extends ImageOperation {
         return Operation;
     }
 
-    public void setOutputFilename(String outputFilename) {
-        this.outputFilename = outputFilename;
-    }
-
-    public String getOutputFilename() {
-        return this.outputFilename;
-    }
-
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        if (null != this.outputFilename) {
-            json.put("outputFilename", this.outputFilename);
+
+        JSONArray rects = new JSONArray();
+        for (Rectangle rect : this.cropRectList) {
+            rects.put(rect.toJSON());
         }
+        json.put("rects", rects);
+
         return json;
     }
 }

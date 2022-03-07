@@ -24,37 +24,48 @@
  * SOFTWARE.
  */
 
-package cube.file;
+package cube.file.operation;
 
-import cube.common.JSONable;
-import cube.common.action.FileProcessorAction;
+import cube.file.ImageOperation;
 import org.json.JSONObject;
 
 /**
- * OCR 操作配置。
+ * 反转颜色。
  */
-public class OCROperation implements FileOperation, JSONable {
+public class ReverseColorOperation extends ImageOperation {
 
-    public OCROperation() {
+    public final static String Operation = "ReverseColor";
+
+    private String outputFilename;
+
+    public ReverseColorOperation() {
     }
 
-    public OCROperation(JSONObject json) {
+    public ReverseColorOperation(JSONObject json) {
+        if (json.has("outputFilename")) {
+            this.outputFilename = json.getString("outputFilename");
+        }
     }
 
     @Override
-    public String getProcessAction() {
-        return FileProcessorAction.OCR.name;
+    public String getOperation() {
+        return Operation;
+    }
+
+    public void setOutputFilename(String outputFilename) {
+        this.outputFilename = outputFilename;
+    }
+
+    public String getOutputFilename() {
+        return this.outputFilename;
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("process", this.getProcessAction());
+        JSONObject json = super.toJSON();
+        if (null != this.outputFilename) {
+            json.put("outputFilename", this.outputFilename);
+        }
         return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
     }
 }

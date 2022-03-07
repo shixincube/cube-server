@@ -26,10 +26,11 @@
 
 package cube.file;
 
-import cell.util.log.Logger;
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
 import cube.common.entity.ProcessResultStream;
+import cube.file.operation.EliminateColorOperation;
+import cube.file.operation.ReverseColorOperation;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

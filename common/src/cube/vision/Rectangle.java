@@ -23,56 +23,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package cube.vision;
 
-package cube.service.fileprocessor;
-
-import cube.common.JSONable;
-import cube.file.OperationWork;
-import cube.file.OperationWorkflow;
 import org.json.JSONObject;
 
 /**
- * 工作流操作事件。
+ * 矩形描述。
  */
-public class WorkflowOperatingEvent implements JSONable {
+public class Rectangle extends BoundingBox {
 
-    /**
-     * 事件名称。
-     */
-    private String name;
-
-    private OperationWorkflow workflow;
-
-    private OperationWork work;
-
-    public WorkflowOperatingEvent(String name, OperationWorkflow workflow) {
-        this.name = name;
-        this.workflow = workflow;
+    public Rectangle(int x, int y, int width, int height) {
+        super(x, y, width, height);
     }
 
-    public String getName() {
-        return this.name;
-    }
-
-    public void setWork(OperationWork work) {
-        this.work = work;
+    public Rectangle(JSONObject json) {
+        super(json);
     }
 
     @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("name", this.name);
-        json.put("workflow", this.workflow.toJSON());
-
-        if (null != this.work) {
-            json.put("work", this.work.toJSON());
-        }
-
-        return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append(this.width);
+        buf.append("x");
+        buf.append(this.height);
+        buf.append("+");
+        buf.append(this.x);
+        buf.append("+");
+        buf.append(this.y);
+        return buf.toString();
     }
 }

@@ -29,6 +29,9 @@ package cube.service.fileprocessor.processor;
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
 import cube.file.*;
+import cube.file.operation.EliminateColorOperation;
+import cube.file.operation.ReverseColorOperation;
+import cube.file.operation.SteganographyOperation;
 import org.json.JSONObject;
 
 /**

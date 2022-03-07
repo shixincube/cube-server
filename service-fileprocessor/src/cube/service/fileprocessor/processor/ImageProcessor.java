@@ -29,10 +29,10 @@ package cube.service.fileprocessor.processor;
 import cube.common.entity.FileLabel;
 import cube.common.entity.ProcessResultStream;
 import cube.common.entity.TextConstraint;
-import cube.file.EliminateColorOperation;
+import cube.file.operation.EliminateColorOperation;
 import cube.file.ImageOperation;
-import cube.file.ReverseColorOperation;
-import cube.file.SteganographyOperation;
+import cube.file.operation.ReverseColorOperation;
+import cube.file.operation.SteganographyOperation;
 import cube.util.FileUtils;
 
 import java.io.File;

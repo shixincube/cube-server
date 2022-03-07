@@ -47,12 +47,24 @@ import org.json.JSONObject;
  */
 public class ProcessorHook extends Hook {
 
+    /**
+     * 工作流已开始执行。
+     */
     public final static String WorkflowStarted = "WorkflowStarted";
 
+    /**
+     * 工作流已停止执行。
+     */
     public final static String WorkflowStopped = "WorkflowStopped";
 
+    /**
+     * 操作工作已开始。
+     */
     public final static String WorkBegun = "WorkBegun";
 
+    /**
+     * 操作工作已结束。
+     */
     public final static String WorkEnded = "WorkEnded";
 
     private FileProcessorServiceCellet cellet;
