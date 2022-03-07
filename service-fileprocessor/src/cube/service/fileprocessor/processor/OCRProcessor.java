@@ -116,8 +116,8 @@ public class OCRProcessor extends OpticalCharacterRecognition {
             File outputFile = new File(this.getWorkPath().toFile(), this.outputText.getName() + ".ocr");
             try {
                 processorContext.getOcrFile().outputFile(new FileOutputStream(outputFile));
-                ProcessResult resultStream = new ProcessResult(outputFile);
-                processorContext.setResultStream(resultStream);
+                ProcessResult result = new ProcessResult(outputFile);
+                processorContext.setResult(result);
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -652,7 +652,7 @@ public class FileProcessorService extends AbstractModule {
                     imageProcessor.go(context);
 
                     if (context.isSuccessful()) {
-                        output.add(context.getResultStream().file);
+                        output.add(context.getResult().file);
                     }
                     else {
                         interrupt = true;
@@ -704,7 +704,7 @@ public class FileProcessorService extends AbstractModule {
                     processor.go(context);
 
                     if (context.isSuccessful()) {
-                        output.add(context.getResultStream().file);
+                        output.add(context.getResult().file);
                     }
                     else {
                         interrupt = true;

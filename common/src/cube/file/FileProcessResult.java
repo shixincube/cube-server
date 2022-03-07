@@ -55,7 +55,7 @@ public class FileProcessResult {
 
     private List<String> logs;
 
-    private ProcessResult resultStream;
+    private ProcessResult result;
 
     private File resultFile;
 
@@ -76,7 +76,7 @@ public class FileProcessResult {
         }
 
         if (json.has("processResult")) {
-            this.resultStream = new ProcessResult(json.getJSONObject("processResult"));
+            this.result = new ProcessResult(json.getJSONObject("processResult"));
         }
 
         if (json.has("logs")) {
@@ -93,12 +93,12 @@ public class FileProcessResult {
         return this.logs;
     }
 
-    public boolean hasResultStream() {
-        return (null != this.resultStream);
+    public boolean hasResult() {
+        return (null != this.result);
     }
 
-    public ProcessResult getResultStream() {
-        return this.resultStream;
+    public ProcessResult getResult() {
+        return this.result;
     }
 
     public void setResultFile(File file) {

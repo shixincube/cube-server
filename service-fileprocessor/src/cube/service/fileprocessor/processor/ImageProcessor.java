@@ -94,8 +94,8 @@ public class ImageProcessor extends Processor {
 
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResult resultStream = new ProcessResult(outputFile);
-                ctx.setResultStream(resultStream);
+                ProcessResult result = new ProcessResult(outputFile);
+                ctx.setResult(result);
             }
         }
         else if (EliminateColorOperation.Operation.equals(imageOperation.getOperation())) {
@@ -115,8 +115,8 @@ public class ImageProcessor extends Processor {
 
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResult resultStream = new ProcessResult(outputFile);
-                ctx.setResultStream(resultStream);
+                ProcessResult result = new ProcessResult(outputFile);
+                ctx.setResult(result);
             }
         }
         else if (ReverseColorOperation.Operation.equals(imageOperation.getOperation())) {
@@ -136,8 +136,8 @@ public class ImageProcessor extends Processor {
 
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResult resultStream = new ProcessResult(outputFile);
-                ctx.setResultStream(resultStream);
+                ProcessResult result = new ProcessResult(outputFile);
+                ctx.setResult(result);
             }
         }
         else if (SteganographyOperation.Operation.equals(imageOperation.getOperation())) {
@@ -173,8 +173,8 @@ public class ImageProcessor extends Processor {
 
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResult resultStream = new ProcessResult(outputFile);
-                ctx.setResultStream(resultStream);
+                ProcessResult result = new ProcessResult(outputFile);
+                ctx.setResult(result);
             }
         }
     }

@@ -62,8 +62,8 @@ public abstract class ProcessorContext implements JSONable {
         return this.successful;
     }
 
-    public void setResult(ProcessResult resultStream) {
-        this.result = resultStream;
+    public void setResult(ProcessResult result) {
+        this.result = result;
     }
 
     public ProcessResult getResult() {
