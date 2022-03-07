@@ -34,7 +34,7 @@ import java.io.File;
 /**
  * 处理结果流描述。
  */
-public class ProcessResultStream implements JSONable {
+public class ProcessResult implements JSONable {
 
     public File file;
 
@@ -46,7 +46,7 @@ public class ProcessResultStream implements JSONable {
 
     public long fileSize;
 
-    public ProcessResultStream(File file) {
+    public ProcessResult(File file) {
         this.file = file;
         this.fullPath = file.getAbsolutePath();
         this.fileName = file.getName();
@@ -54,7 +54,7 @@ public class ProcessResultStream implements JSONable {
         this.streamName = this.fileName;
     }
 
-    public ProcessResultStream(JSONObject json) {
+    public ProcessResult(JSONObject json) {
         this.fullPath = json.getString("fullPath");
         this.streamName = json.getString("streamName");
         this.fileName = json.getString("fileName");

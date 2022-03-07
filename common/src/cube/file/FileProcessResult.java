@@ -28,7 +28,7 @@ package cube.file;
 
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
-import cube.common.entity.ProcessResultStream;
+import cube.common.entity.ProcessResult;
 import cube.file.operation.EliminateColorOperation;
 import cube.file.operation.ReverseColorOperation;
 import org.json.JSONArray;
@@ -55,7 +55,7 @@ public class FileProcessResult {
 
     private List<String> logs;
 
-    private ProcessResultStream resultStream;
+    private ProcessResult resultStream;
 
     private File resultFile;
 
@@ -75,8 +75,8 @@ public class FileProcessResult {
             this.submitWorkflowResult = new SubmitWorkflowResult(json);
         }
 
-        if (json.has("stream")) {
-            this.resultStream = new ProcessResultStream(json.getJSONObject("stream"));
+        if (json.has("processResult")) {
+            this.resultStream = new ProcessResult(json.getJSONObject("processResult"));
         }
 
         if (json.has("logs")) {
@@ -97,7 +97,7 @@ public class FileProcessResult {
         return (null != this.resultStream);
     }
 
-    public ProcessResultStream getResultStream() {
+    public ProcessResult getResultStream() {
         return this.resultStream;
     }
 

@@ -43,7 +43,10 @@ public final class FileOperationHelper {
 
         if (FileProcessorAction.Image.name.equals(process)) {
             String operation = json.getString("operation");
-            if (EliminateColorOperation.Operation.equals(operation)) {
+            if (CropOperation.Operation.equals(operation)) {
+                return new CropOperation(json);
+            }
+            else if (EliminateColorOperation.Operation.equals(operation)) {
                 return new EliminateColorOperation(json);
             }
             else if (ReverseColorOperation.Operation.equals(operation)) {

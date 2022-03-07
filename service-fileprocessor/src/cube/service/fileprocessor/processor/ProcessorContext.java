@@ -27,7 +27,7 @@
 package cube.service.fileprocessor.processor;
 
 import cube.common.JSONable;
-import cube.common.entity.ProcessResultStream;
+import cube.common.entity.ProcessResult;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -42,15 +42,15 @@ public abstract class ProcessorContext implements JSONable {
 
     private List<String> stdOutput;
 
-    private ProcessResultStream resultStream;
+    private ProcessResult result;
 
     protected ProcessorContext() {
     }
 
     protected ProcessorContext(JSONObject json) {
         this.successful = json.getBoolean("success");
-        if (json.has("stream")) {
-            this.resultStream = new ProcessResultStream(json.getJSONObject("stream"));
+        if (json.has("processResult")) {
+            this.result = new ProcessResult(json.getJSONObject("processResult"));
         }
     }
 
@@ -62,12 +62,12 @@ public abstract class ProcessorContext implements JSONable {
         return this.successful;
     }
 
-    public void setResultStream(ProcessResultStream resultStream) {
-        this.resultStream = resultStream;
+    public void setResult(ProcessResult resultStream) {
+        this.result = resultStream;
     }
 
-    public ProcessResultStream getResultStream() {
-        return this.resultStream;
+    public ProcessResult getResult() {
+        return this.result;
     }
 
     public synchronized void appendStdOutput(String line) {
@@ -88,8 +88,8 @@ public abstract class ProcessorContext implements JSONable {
         json.put("process", process);
         json.put("success", this.successful);
 
-        if (null != this.resultStream) {
-            json.put("stream", this.resultStream.toJSON());
+        if (null != this.result) {
+            json.put("processResult", this.result.toJSON());
         }
 
         return json;

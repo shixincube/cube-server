@@ -28,7 +28,7 @@ package cube.service.fileprocessor.processor;
 
 import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
-import cube.common.entity.ProcessResultStream;
+import cube.common.entity.ProcessResult;
 import cube.util.FileUtils;
 
 import java.io.File;
@@ -116,7 +116,7 @@ public class OCRProcessor extends OpticalCharacterRecognition {
             File outputFile = new File(this.getWorkPath().toFile(), this.outputText.getName() + ".ocr");
             try {
                 processorContext.getOcrFile().outputFile(new FileOutputStream(outputFile));
-                ProcessResultStream resultStream = new ProcessResultStream(outputFile);
+                ProcessResult resultStream = new ProcessResult(outputFile);
                 processorContext.setResultStream(resultStream);
             } catch (IOException e) {
                 e.printStackTrace();

@@ -27,7 +27,7 @@
 package cube.service.fileprocessor.processor.video;
 
 import cell.util.log.Logger;
-import cube.common.entity.ProcessResultStream;
+import cube.common.entity.ProcessResult;
 import cube.file.SnapshotOperation;
 import cube.service.fileprocessor.processor.ProcessorContext;
 import cube.util.FileUtils;
@@ -128,7 +128,7 @@ public class SnapshotProcessor extends VideoProcessor {
             }
 
             if (outputFile.exists()) {
-                ProcessResultStream resultStream = new ProcessResultStream(outputFile);
+                ProcessResult resultStream = new ProcessResult(outputFile);
                 snapshotContext.setResultStream(resultStream);
             }
         }

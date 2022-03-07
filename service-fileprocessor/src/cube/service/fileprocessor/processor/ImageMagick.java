@@ -29,6 +29,7 @@ package cube.service.fileprocessor.processor;
 import cube.common.entity.TextConstraint;
 import cube.util.FileUtils;
 import cube.vision.Color;
+import cube.vision.Rectangle;
 import cube.vision.Size;
 
 import java.io.File;
@@ -37,9 +38,36 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ImageMagick {
+public final class ImageMagick {
 
     private ImageMagick() {
+    }
+
+    /**
+     * 剪裁指定区域图像。
+     *
+     * @param workPath
+     * @param filename
+     * @param output
+     * @param rect
+     * @return
+     */
+    public static boolean crop(File workPath, String filename, String output, Rectangle rect) {
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add("convert");
+        commandLine.add(filename);
+        commandLine.add("-crop");
+        commandLine.add(rect.toString());
+        commandLine.add(output);
+
+        int status = execute(workPath, commandLine);
+        if (0 == status || 1 == status) {
+            File file = new File(workPath, output);
+            return file.exists();
+        }
+        else {
+            return false;
+        }
     }
 
     /**

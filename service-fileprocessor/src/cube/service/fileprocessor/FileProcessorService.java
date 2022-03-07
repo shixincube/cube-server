@@ -647,8 +647,7 @@ public class FileProcessorService extends AbstractModule {
                     ImageProcessor imageProcessor = new ImageProcessor(this.workPath);
                     imageProcessor.setImageFile(file);
                     // 创建上下文
-                    context = new ImageProcessorContext();
-                    context.parseOperation(work.getFileOperation());
+                    context = new ImageProcessorContext((ImageOperation) work.getFileOperation());
                     // 进行处理
                     imageProcessor.go(context);
 
@@ -849,9 +848,9 @@ public class FileProcessorService extends AbstractModule {
                 // 创建图像处理器
                 ImageProcessor processor = createImageProcessor(domain, fileCode);
                 if (null != processor) {
-                    ImageProcessorContext context = new ImageProcessorContext();
-                    // 解析参数
-                    context.parseOperation(data.getJSONObject("parameter"));
+                    // 创建上下文
+                    ImageProcessorContext context = new ImageProcessorContext(
+                            (ImageOperation) FileOperationHelper.parseFileOperation(data.getJSONObject("parameter")));
                     processor.go(context);
                     return context.toJSON();
                 }

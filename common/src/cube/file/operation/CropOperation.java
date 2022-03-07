@@ -28,11 +28,7 @@ package cube.file.operation;
 
 import cube.file.ImageOperation;
 import cube.vision.Rectangle;
-import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 剪裁图像。
@@ -41,28 +37,24 @@ public class CropOperation extends ImageOperation {
 
     public final static String Operation = "Crop";
 
-    private List<Rectangle> cropRectList;
+    private Rectangle cropRect;
 
-    public CropOperation() {
+    public CropOperation(Rectangle rect) {
         super();
-        this.cropRectList = new ArrayList<>();
+        this.cropRect = rect;
     }
 
     public CropOperation(JSONObject json) {
-        super();
-        this.cropRectList = new ArrayList<>();
-        JSONArray rects = json.getJSONArray("rects");
-        for (int i = 0; i < rects.length(); ++i) {
-            this.cropRectList.add(new Rectangle(rects.getJSONObject(i)));
-        }
+        super(json);
+        this.cropRect = new Rectangle(json.getJSONObject("rect"));
     }
 
-    public void addCropRect(Rectangle rect) {
-        this.cropRectList.add(rect);
+    public void setCropRect(Rectangle rect) {
+        this.cropRect = rect;
     }
 
-    public List<Rectangle> getCropRects() {
-        return this.cropRectList;
+    public Rectangle getCropRect() {
+        return this.cropRect;
     }
 
     @Override
@@ -74,11 +66,7 @@ public class CropOperation extends ImageOperation {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
 
-        JSONArray rects = new JSONArray();
-        for (Rectangle rect : this.cropRectList) {
-            rects.put(rect.toJSON());
-        }
-        json.put("rects", rects);
+        json.put("rect", this.cropRect.toJSON());
 
         return json;
     }

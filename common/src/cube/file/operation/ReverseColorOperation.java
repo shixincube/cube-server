@@ -36,15 +36,11 @@ public class ReverseColorOperation extends ImageOperation {
 
     public final static String Operation = "ReverseColor";
 
-    private String outputFilename;
-
     public ReverseColorOperation() {
     }
 
     public ReverseColorOperation(JSONObject json) {
-        if (json.has("outputFilename")) {
-            this.outputFilename = json.getString("outputFilename");
-        }
+        super(json);
     }
 
     @Override
@@ -52,20 +48,9 @@ public class ReverseColorOperation extends ImageOperation {
         return Operation;
     }
 
-    public void setOutputFilename(String outputFilename) {
-        this.outputFilename = outputFilename;
-    }
-
-    public String getOutputFilename() {
-        return this.outputFilename;
-    }
-
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        if (null != this.outputFilename) {
-            json.put("outputFilename", this.outputFilename);
-        }
         return json;
     }
 }

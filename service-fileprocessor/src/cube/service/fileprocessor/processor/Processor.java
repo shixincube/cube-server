@@ -27,8 +27,6 @@
 package cube.service.fileprocessor.processor;
 
 import cell.util.log.Logger;
-import cube.common.entity.FileLabel;
-import cube.common.entity.ProcessResultStream;
 
 import java.io.*;
 import java.nio.file.Path;

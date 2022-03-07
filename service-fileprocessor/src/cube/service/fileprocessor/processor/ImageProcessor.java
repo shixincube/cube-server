@@ -27,10 +27,11 @@
 package cube.service.fileprocessor.processor;
 
 import cube.common.entity.FileLabel;
-import cube.common.entity.ProcessResultStream;
+import cube.common.entity.ProcessResult;
 import cube.common.entity.TextConstraint;
-import cube.file.operation.EliminateColorOperation;
 import cube.file.ImageOperation;
+import cube.file.operation.CropOperation;
+import cube.file.operation.EliminateColorOperation;
 import cube.file.operation.ReverseColorOperation;
 import cube.file.operation.SteganographyOperation;
 import cube.util.FileUtils;
@@ -74,18 +75,37 @@ public class ImageProcessor extends Processor {
         ctx.setInputFileLabel(this.imageFileLabel);
 
         ImageOperation imageOperation = ctx.getImageOperation();
-        if (EliminateColorOperation.Operation.equals(imageOperation.getOperation())) {
+
+        String outputFilename = imageOperation.getOutputFilename();
+
+        if (CropOperation.Operation.equals(imageOperation.getOperation())) {
+            // 裁剪图像区域
+            CropOperation operation = (CropOperation) imageOperation;
+
+            if (null == outputFilename) {
+                outputFilename = makeOutputFilename("cropped");
+            }
+
+            // 使用 ImageMagick 操作
+            boolean success = ImageMagick.crop(this.getWorkPath().toFile(), this.imageFile.getName(),
+                    outputFilename, operation.getCropRect());
+            // 处理结果
+            ctx.setSuccessful(success);
+
+            if (success) {
+                File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
+                ProcessResult resultStream = new ProcessResult(outputFile);
+                ctx.setResultStream(resultStream);
+            }
+        }
+        else if (EliminateColorOperation.Operation.equals(imageOperation.getOperation())) {
             // 剔除颜色操作
             EliminateColorOperation operation = (EliminateColorOperation) imageOperation;
-            String outputFilename = operation.getOutputFilename();
+
             if (null == outputFilename) {
-                if (null != this.imageFileLabel) {
-                    outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_eliminated.jpg";
-                }
-                else {
-                    outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_eliminated.jpg";
-                }
+                outputFilename = makeOutputFilename("eliminated");
             }
+
             // 使用 ImageMagick 操作
             boolean success = ImageMagick.eliminateColor(this.getWorkPath().toFile(), this.imageFile.getName(),
                     outputFilename, operation.getReservedColor(), operation.getFillColor());
@@ -95,22 +115,18 @@ public class ImageProcessor extends Processor {
 
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResultStream resultStream = new ProcessResultStream(outputFile);
+                ProcessResult resultStream = new ProcessResult(outputFile);
                 ctx.setResultStream(resultStream);
             }
         }
         else if (ReverseColorOperation.Operation.equals(imageOperation.getOperation())) {
             // 反转颜色
             ReverseColorOperation operation = (ReverseColorOperation) imageOperation;
-            String outputFilename = operation.getOutputFilename();
+
             if (null == outputFilename) {
-                if (null != this.imageFileLabel) {
-                    outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_reversed.jpg";
-                }
-                else {
-                    outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_reversed.jpg";
-                }
+                outputFilename = makeOutputFilename("reversed");
             }
+
             // 使用 ImageMagick 操作
             boolean success = ImageMagick.reverseColor(this.getWorkPath().toFile(), this.imageFile.getName(),
                     outputFilename);
@@ -120,26 +136,18 @@ public class ImageProcessor extends Processor {
 
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResultStream resultStream = new ProcessResultStream(outputFile);
+                ProcessResult resultStream = new ProcessResult(outputFile);
                 ctx.setResultStream(resultStream);
             }
         }
         else if (SteganographyOperation.Operation.equals(imageOperation.getOperation())) {
             // 隐写数据到图像
             SteganographyOperation operation = (SteganographyOperation) imageOperation;
-
-            String outputFilename = operation.getOutputFilename();
-
             boolean success = false;
 
             if (operation.isRecover()) {
                 if (null == outputFilename) {
-                    if (null != this.imageFileLabel) {
-                        outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_watermark.jpg";
-                    }
-                    else {
-                        outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_watermark.jpg";
-                    }
+                    outputFilename = makeOutputFilename("watermark");
                 }
 
                 // 使用 ImageMagick 操作
@@ -148,12 +156,7 @@ public class ImageProcessor extends Processor {
             }
             else {
                 if (null == outputFilename) {
-                    if (null != this.imageFileLabel) {
-                        outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_stegano.png";
-                    }
-                    else {
-                        outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_stegano.png";
-                    }
+                    outputFilename = makeOutputFilename("stegano");
                 }
 
                 TextConstraint textConstraint = operation.getTextConstraint();
@@ -170,9 +173,20 @@ public class ImageProcessor extends Processor {
 
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResultStream resultStream = new ProcessResultStream(outputFile);
+                ProcessResult resultStream = new ProcessResult(outputFile);
                 ctx.setResultStream(resultStream);
             }
         }
+    }
+
+    private String makeOutputFilename(String suffix) {
+        String outputFilename = null;
+        if (null != this.imageFileLabel) {
+            outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_" + suffix + ".png";
+        }
+        else {
+            outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_" + suffix + ".png";
+        }
+        return outputFilename;
     }
 }

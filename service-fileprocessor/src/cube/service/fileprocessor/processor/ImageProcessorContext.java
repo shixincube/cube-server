@@ -28,10 +28,7 @@ package cube.service.fileprocessor.processor;
 
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
-import cube.file.*;
-import cube.file.operation.EliminateColorOperation;
-import cube.file.operation.ReverseColorOperation;
-import cube.file.operation.SteganographyOperation;
+import cube.file.ImageOperation;
 import org.json.JSONObject;
 
 /**
@@ -43,28 +40,12 @@ public class ImageProcessorContext extends ProcessorContext {
 
     private FileLabel inputFileLabel;
 
-    public ImageProcessorContext() {
+    public ImageProcessorContext(ImageOperation imageOperation) {
+        this.imageOperation = imageOperation;
     }
 
     public ImageProcessorContext(JSONObject json) {
         super(json);
-    }
-
-    public void parseOperation(JSONObject parameterJSON) {
-        String operation = parameterJSON.getString("operation");
-        if (EliminateColorOperation.Operation.equals(operation)) {
-            this.imageOperation = new EliminateColorOperation(parameterJSON);
-        }
-        else if (ReverseColorOperation.Operation.equals(operation)) {
-            this.imageOperation = new ReverseColorOperation(parameterJSON);
-        }
-        else if (SteganographyOperation.Operation.equals(operation)) {
-            this.imageOperation = new SteganographyOperation(parameterJSON);
-        }
-    }
-
-    public void parseOperation(FileOperation fileOperation) {
-        this.imageOperation = (ImageOperation) fileOperation;
     }
 
     public ImageOperation getImageOperation() {

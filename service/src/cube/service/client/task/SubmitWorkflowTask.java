@@ -32,9 +32,8 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.action.ClientAction;
 import cube.common.action.FileProcessorAction;
-import cube.common.entity.ProcessResultStream;
+import cube.common.entity.ProcessResult;
 import cube.common.state.FileProcessorStateCode;
-import cube.common.state.FileStorageStateCode;
 import cube.core.AbstractModule;
 import cube.service.client.ClientCellet;
 import cube.service.client.ClientManager;
@@ -84,9 +83,9 @@ public class SubmitWorkflowTask extends ClientTask {
 
         // 是否需要回传文件
         JSONObject responseData = (JSONObject) result;
-        if (responseData.has("stream")) {
+        if (responseData.has("processResult")) {
             // 需要回送流
-            ProcessResultStream prs = new ProcessResultStream(responseData.getJSONObject("stream"));
+            ProcessResult prs = new ProcessResult(responseData.getJSONObject("processResult"));
 
             if (Logger.isDebugLevel()) {
                 Logger.d(this.getClass(), "#run - transmit stream to client : " + prs.streamName);

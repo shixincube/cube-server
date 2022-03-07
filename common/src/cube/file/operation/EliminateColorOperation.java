@@ -41,19 +41,16 @@ public class EliminateColorOperation extends ImageOperation {
 
     private Color fillColor;
 
-    private String outputFilename;
-
     public EliminateColorOperation(Color reservedColor, Color fillColor) {
         this.reservedColor = reservedColor;
         this.fillColor = fillColor;
     }
 
     public EliminateColorOperation(JSONObject json) {
+        super(json);
+
         this.reservedColor = new Color(json.getJSONObject("reserved"));
         this.fillColor = new Color(json.getJSONObject("fill"));
-        if (json.has("outputFilename")) {
-            this.outputFilename = json.getString("outputFilename");
-        }
     }
 
     @Override
@@ -69,22 +66,13 @@ public class EliminateColorOperation extends ImageOperation {
         return this.fillColor;
     }
 
-    public void setOutputFilename(String outputFilename) {
-        this.outputFilename = outputFilename;
-    }
-
-    public String getOutputFilename() {
-        return this.outputFilename;
-    }
-
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+
         json.put("reserved", this.reservedColor.toJSON());
         json.put("fill", this.fillColor.toJSON());
-        if (null != this.outputFilename) {
-            json.put("outputFilename", this.outputFilename);
-        }
+
         return json;
     }
 }

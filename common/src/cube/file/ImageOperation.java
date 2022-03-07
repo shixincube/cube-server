@@ -39,7 +39,15 @@ public abstract class ImageOperation implements FileOperation, JSONable {
 
     private File inputFile;
 
+    private String outputFilename;
+
     public ImageOperation() {
+    }
+
+    public ImageOperation(JSONObject json) {
+        if (json.has("outputFilename")) {
+            this.outputFilename = json.getString("outputFilename");
+        }
     }
 
     /**
@@ -62,11 +70,24 @@ public abstract class ImageOperation implements FileOperation, JSONable {
         this.inputFile = inputFile;
     }
 
+    public void setOutputFilename(String outputFilename) {
+        this.outputFilename = outputFilename;
+    }
+
+    public String getOutputFilename() {
+        return this.outputFilename;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("process", this.getProcessAction());
         json.put("operation", this.getOperation());
+
+        if (null != this.outputFilename) {
+            json.put("outputFilename", this.outputFilename);
+        }
+
         return json;
     }
 
