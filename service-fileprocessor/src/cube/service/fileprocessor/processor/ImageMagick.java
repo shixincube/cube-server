@@ -166,6 +166,31 @@ public final class ImageMagick {
         }
     }
 
+    /**
+     * 图像转灰度图。
+     *
+     * @param workPath
+     * @param filename
+     * @param output
+     * @return
+     */
+    public static boolean grayscale(File workPath, String filename, String output) {
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add("convert");
+        commandLine.add(filename);
+        commandLine.add("-colorspace");
+        commandLine.add("Gray");
+        commandLine.add(output);
+
+        int status = execute(workPath, commandLine);
+        if (0 == status || 1 == status) {
+            File file = new File(workPath, output);
+            return file.exists();
+        }
+        else {
+            return false;
+        }
+    }
 
     /**
      * 将指定文本隐写到图片内。

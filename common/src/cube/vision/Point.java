@@ -30,61 +30,34 @@ import cube.common.JSONable;
 import org.json.JSONObject;
 
 /**
- * 大小描述。
+ * 点描述。
  */
-public class Size implements JSONable {
+public class Point implements JSONable {
 
-    public int width;
+    public int x;
 
-    public int height;
+    public int y;
 
-    public Size() {
+    public Point(int x, int y) {
+        this.x = x;
+        this.y = y;
     }
 
-    public Size(int width, int height) {
-        this.width = width;
-        this.height = height;
-    }
-
-    public Size(JSONObject json) {
-        this.width = json.getInt("width");
-        this.height = json.getInt("height");
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-        buf.append(this.width);
-        buf.append("x");
-        buf.append(this.height);
-        return buf.toString();
+    public Point(JSONObject json) {
+        this.x = json.getInt("x");
+        this.y = json.getInt("y");
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("width", this.width);
-        json.put("height", this.height);
+        json.put("x", this.x);
+        json.put("y", this.y);
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         return this.toJSON();
-    }
-
-    /**
-     * 从字符串形式解析数据。
-     *
-     * @param string
-     * @return
-     */
-    public static Size parse(String string) {
-        String[] data = string.split("x");
-        if (data.length == 2) {
-            return new Size(Integer.parseInt(data[0]), Integer.parseInt(data[1]));
-        }
-
-        return null;
     }
 }

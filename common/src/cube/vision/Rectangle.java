@@ -40,6 +40,10 @@ public class Rectangle extends BoundingBox {
         super(json);
     }
 
+    public Rectangle(Rectangle rectangle) {
+        super(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+    }
+
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
@@ -51,5 +55,24 @@ public class Rectangle extends BoundingBox {
         buf.append("+");
         buf.append(this.y);
         return buf.toString();
+    }
+
+    /**
+     * 解析字符串形式。
+     *
+     * @param string
+     * @return
+     */
+    public static Rectangle parse(String string) {
+        String[] seg = string.split("\\+");
+        if (seg.length == 3) {
+            String[] wh = seg[0].split("x");
+            if (wh.length == 2) {
+                return new Rectangle(Integer.parseInt(seg[1]), Integer.parseInt(seg[2]),
+                        Integer.parseInt(wh[0]), Integer.parseInt(wh[1]));
+            }
+        }
+
+        return null;
     }
 }

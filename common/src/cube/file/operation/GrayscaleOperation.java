@@ -24,67 +24,34 @@
  * SOFTWARE.
  */
 
-package cube.vision;
+package cube.file.operation;
 
-import cube.common.JSONable;
+import cube.file.ImageOperation;
 import org.json.JSONObject;
 
 /**
- * 大小描述。
+ * 灰度图操作。
  */
-public class Size implements JSONable {
+public class GrayscaleOperation extends ImageOperation {
 
-    public int width;
+    public final static String Operation = "Grayscale";
 
-    public int height;
-
-    public Size() {
+    public GrayscaleOperation() {
+        super();
     }
 
-    public Size(int width, int height) {
-        this.width = width;
-        this.height = height;
-    }
-
-    public Size(JSONObject json) {
-        this.width = json.getInt("width");
-        this.height = json.getInt("height");
+    public GrayscaleOperation(JSONObject json) {
+        super(json);
     }
 
     @Override
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-        buf.append(this.width);
-        buf.append("x");
-        buf.append(this.height);
-        return buf.toString();
+    public String getOperation() {
+        return Operation;
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("width", this.width);
-        json.put("height", this.height);
+        JSONObject json = super.toJSON();
         return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
-    }
-
-    /**
-     * 从字符串形式解析数据。
-     *
-     * @param string
-     * @return
-     */
-    public static Size parse(String string) {
-        String[] data = string.split("x");
-        if (data.length == 2) {
-            return new Size(Integer.parseInt(data[0]), Integer.parseInt(data[1]));
-        }
-
-        return null;
     }
 }
