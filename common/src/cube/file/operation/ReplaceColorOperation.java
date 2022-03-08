@@ -28,7 +28,11 @@ package cube.file.operation;
 
 import cube.file.ImageOperation;
 import cube.vision.Color;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 替换图像颜色。
@@ -43,6 +47,8 @@ public class ReplaceColorOperation extends ImageOperation {
 
     private int fuzzFactor = 20;
 
+    private List<ReplaceColorOperation> operations;
+
     public ReplaceColorOperation(Color targetColor, Color replaceColor) {
         this.targetColor = targetColor;
         this.replaceColor = replaceColor;
@@ -54,12 +60,26 @@ public class ReplaceColorOperation extends ImageOperation {
         this.fuzzFactor = fuzzFactor;
     }
 
+    public ReplaceColorOperation(List<ReplaceColorOperation> operations) {
+        this.operations = operations;
+    }
+
     public ReplaceColorOperation(JSONObject json) {
         super(json);
 
-        this.targetColor = new Color(json.getJSONObject("target"));
-        this.replaceColor = new Color(json.getJSONObject("replace"));
-        this.fuzzFactor = json.getInt("fuzz");
+        if (json.has("operations")) {
+            JSONArray array = json.getJSONArray("operations");
+            this.operations = new ArrayList<>(array.length());
+            for (int i = 0; i < array.length(); ++i) {
+                ReplaceColorOperation rco = new ReplaceColorOperation(array.getJSONObject(i));
+                this.operations.add(rco);
+            }
+        }
+        else {
+            this.targetColor = new Color(json.getJSONObject("target"));
+            this.replaceColor = new Color(json.getJSONObject("replace"));
+            this.fuzzFactor = json.getInt("fuzz");
+        }
     }
 
     public Color getTargetColor() {
@@ -78,6 +98,10 @@ public class ReplaceColorOperation extends ImageOperation {
         return this.fuzzFactor;
     }
 
+    public List<ReplaceColorOperation> getOperationList() {
+        return this.operations;
+    }
+
     @Override
     public String getOperation() {
         return Operation;
@@ -87,9 +111,18 @@ public class ReplaceColorOperation extends ImageOperation {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
 
-        json.put("target", this.targetColor.toJSON());
-        json.put("replace", this.replaceColor.toJSON());
-        json.put("fuzz", this.fuzzFactor);
+        if (null != this.operations) {
+            JSONArray array = new JSONArray();
+            for (ReplaceColorOperation rco : this.operations) {
+                array.put(rco.toJSON());
+            }
+            json.put("operations", array);
+        }
+        else {
+            json.put("target", this.targetColor.toJSON());
+            json.put("replace", this.replaceColor.toJSON());
+            json.put("fuzz", this.fuzzFactor);
+        }
 
         return json;
     }

@@ -35,6 +35,8 @@ import cube.util.FileUtils;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 图像数据处理器。
@@ -123,16 +125,61 @@ public class ImageProcessor extends Processor {
                 outputFilename = makeOutputFilename("replaced");
             }
 
-            // 使用 ImageMagick 操作
-            boolean success = ImageMagick.replaceColor(this.getWorkPath().toFile(), this.imageFile.getName(),
-                    outputFilename, operation.getTargetColor(), operation.getReplaceColor(), operation.getFuzzFactor());
+            List<ReplaceColorOperation> list = operation.getOperationList();
+            if (null == list) {
+                // 使用 ImageMagick 操作
+                boolean success = ImageMagick.replaceColor(this.getWorkPath().toFile(), this.imageFile.getName(),
+                        outputFilename, operation.getTargetColor(), operation.getReplaceColor(), operation.getFuzzFactor());
 
-            // 处理结果
-            ctx.setSuccessful(success);
-            if (success) {
-                File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResult result = new ProcessResult(outputFile);
-                ctx.setResult(result);
+                // 处理结果
+                ctx.setSuccessful(success);
+                if (success) {
+                    File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
+                    ProcessResult result = new ProcessResult(outputFile);
+                    ctx.setResult(result);
+                }
+            }
+            else {
+                String tmpInputFilename = this.imageFile.getName();
+                String tmpOutputFilename = makeOutputFilename("" + System.currentTimeMillis());
+
+                List<String> tmpList = new ArrayList<>();
+
+                boolean success = false;
+                for (ReplaceColorOperation rco : list) {
+                    success = ImageMagick.replaceColor(this.getWorkPath().toFile(), tmpInputFilename,
+                            tmpOutputFilename, rco.getTargetColor(), rco.getReplaceColor(), rco.getFuzzFactor());
+
+                    if (!success) {
+                        break;
+                    }
+
+                    tmpList.add(tmpInputFilename);
+
+                    // 将输出文件设置为新的输入文件
+                    tmpInputFilename = tmpOutputFilename;
+                    tmpOutputFilename = makeOutputFilename("" + System.currentTimeMillis());
+                }
+
+                // 清空临时文件
+                if (tmpList.size() > 1) {
+                    tmpList.remove(0);
+                    for (String filename : tmpList) {
+                        File tmpFile = new File(this.getWorkPath().toFile(), filename);
+                        tmpFile.delete();
+                    }
+                }
+
+                // 处理结果
+                ctx.setSuccessful(success);
+                if (success) {
+                    File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
+                    // 修改文件名
+                    File tmpFile = new File(this.getWorkPath().toFile(), tmpInputFilename);
+                    tmpFile.renameTo(outputFile);
+                    ProcessResult result = new ProcessResult(outputFile);
+                    ctx.setResult(result);
+                }
             }
         }
         else if (EliminateColorOperation.Operation.equals(imageOperation.getOperation())) {
@@ -221,7 +268,15 @@ public class ImageProcessor extends Processor {
             outputFilename = FileUtils.extractFileName(this.imageFileLabel.getFileName()) + "_" + suffix + ".png";
         }
         else {
-            outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_" + suffix + ".png";
+            String filename = this.imageFile.getName();
+            int index = filename.lastIndexOf("_");
+            if (index > 0) {
+                filename = filename.substring(0, index);
+                outputFilename = filename + "_" + suffix + ".png";
+            }
+            else {
+                outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_" + suffix + ".png";
+            }
         }
         return outputFilename;
     }

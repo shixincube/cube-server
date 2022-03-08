@@ -79,6 +79,11 @@ public class FileProcessorService extends AbstractModule {
      */
     protected ProcessorPluginSystem pluginSystem;
 
+    /**
+     * 文件有效期。超过有效期自动删除。
+     */
+    private long fileExpires = 15 * 24 * 60 * 60 * 1000;
+
     public FileProcessorService(ExecutorService executor, FileProcessorServiceCellet cellet) {
         super();
         this.executor = executor;
@@ -120,7 +125,16 @@ public class FileProcessorService extends AbstractModule {
 
     @Override
     public void onTick(cube.core.Module module, Kernel kernel) {
+        long now = System.currentTimeMillis();
 
+        File[] files = this.workPath.toFile().listFiles();
+        for (File file : files) {
+            if (file.isFile()) {
+                if (now - file.lastModified() > this.fileExpires) {
+                    file.delete();
+                }
+            }
+        }
     }
 
     private void loadConfig() {
