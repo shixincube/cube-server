@@ -70,6 +70,13 @@ public class Group extends AbstractContact implements Comparable<Group> {
 
     /**
      * 构造函数。
+     */
+    public Group() {
+        super();
+    }
+
+    /**
+     * 构造函数。
      *
      * @param id 群组 ID 。
      * @param domain 群组域。

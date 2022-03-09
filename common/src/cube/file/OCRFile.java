@@ -235,7 +235,10 @@ public class OCRFile implements JSONable {
         public String toText() {
             StringBuilder buf = new StringBuilder();
             for (Part part : this.parts) {
-                buf.append(part.toText());
+                for (String line : part.toText()) {
+                    buf.append(line);
+                    buf.append("\n");
+                }
             }
             return buf.toString();
         }

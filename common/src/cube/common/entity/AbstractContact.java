@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
 import cube.common.Domain;
 import cube.common.UniqueKey;
 import cube.util.pinyin.ForwardLongestSelector;
@@ -46,6 +47,13 @@ public abstract class AbstractContact extends Entity {
      * 联系携带的上下文 JSON 数据。
      */
     private JSONObject context;
+
+    /**
+     * 构造函数。
+     */
+    public AbstractContact() {
+        super(Utils.generateSerialNumber());
+    }
 
     /**
      * 构造函数。
