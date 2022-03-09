@@ -46,6 +46,13 @@ public class Contact extends AbstractContact {
 
     /**
      * 构造函数。
+     */
+    public Contact() {
+        super();
+    }
+
+    /**
+     * 构造函数。
      *
      * @param id 联系人 ID 。
      * @param domainName 联系人所在的域。

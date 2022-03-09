@@ -135,7 +135,7 @@ public abstract class AbstractContact extends Entity {
      * @param name 联系人名称。
      */
     public boolean setName(String name) {
-        if (this.name.equals(name)) {
+        if (null != this.name && this.name.equals(name)) {
             return false;
         }
 

@@ -137,6 +137,16 @@ public class ContactAppendix extends Entity {
     }
 
     /**
+     * 获取配置数据。
+     *
+     * @param key
+     * @return
+     */
+    public JSONObject getAssignedData(String key) {
+        return this.assignedData.get(key);
+    }
+
+    /**
      * 对指定联系人打包附录数据。
      *
      * @param contact

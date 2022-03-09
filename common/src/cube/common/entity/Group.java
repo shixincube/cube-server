@@ -73,6 +73,8 @@ public class Group extends AbstractContact implements Comparable<Group> {
      */
     public Group() {
         super();
+        this.state = GroupState.Normal;
+        this.memberIdList = new Vector<>();
     }
 
     /**
