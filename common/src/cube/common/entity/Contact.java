@@ -45,6 +45,11 @@ public class Contact extends AbstractContact {
     private List<Device> deviceList;
 
     /**
+     * 附录。
+     */
+    private ContactAppendix appendix;
+
+    /**
      * 构造函数。
      */
     public Contact() {
@@ -282,6 +287,24 @@ public class Contact extends AbstractContact {
         return this.deviceList.contains(device);
     }
 
+    /**
+     * 设置附录。
+     *
+     * @param appendix
+     */
+    public void setAppendix(ContactAppendix appendix) {
+        this.appendix = appendix;
+    }
+
+    /**
+     * 获取附录。
+     *
+     * @return
+     */
+    public ContactAppendix getAppendix() {
+        return this.appendix;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (null != object && object instanceof Contact) {
@@ -306,7 +329,7 @@ public class Contact extends AbstractContact {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
 
-        if (!this.deviceList.isEmpty()) {
+        if (null != this.deviceList && !this.deviceList.isEmpty()) {
             JSONArray array = new JSONArray();
             for (int i = 0, len = this.deviceList.size(); i < len; ++i) {
                 Device device = this.deviceList.get(i);

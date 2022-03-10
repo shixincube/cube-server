@@ -49,6 +49,15 @@ public class Point implements JSONable {
     }
 
     @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append(this.x);
+        buf.append(",");
+        buf.append(this.y);
+        return buf.toString();
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("x", this.x);

@@ -1,6 +1,5 @@
 package cube.util.pinyin;
 
-
 import org.ahocorasick.trie.Emit;
 import org.ahocorasick.trie.Trie;
 
@@ -13,7 +12,6 @@ import java.util.List;
  *
  * Created by guyacong on 2016/12/23.
  */
-
 public final class PYEngine {
 
     static final EmitComparator EMIT_COMPARATOR = new EmitComparator();

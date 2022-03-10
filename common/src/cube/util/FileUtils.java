@@ -64,12 +64,27 @@ public final class FileUtils {
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
     };
 
-    private final static long KB = 1024L;
-    private final static long MB = 1024L * KB;
-    private final static long GB = 1024L * MB;
-    private final static long TB = 1024L * GB;
+    private final static long KB = 1024;
+    private final static long MB = 1024 * KB;
+    private final static long GB = 1024 * MB;
+    private final static long TB = 1024 * GB;
 
     private FileUtils() {
+    }
+
+    /**
+     * 快速生成字符串 Hash 值。
+     *
+     * @param string
+     * @return
+     */
+    public static String fastHash(String string) {
+        // 将 string 串切割
+        List<byte[]> list = FileUtils.slice(string.getBytes(Charset.forName("UTF-8")), 32);
+
+        // Hash
+        String code = FileUtils.fastHash(list);
+        return code;
     }
 
     /**

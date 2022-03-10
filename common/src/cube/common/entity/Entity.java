@@ -94,6 +94,7 @@ public abstract class Entity implements JSONable {
      */
     public Entity(Long id) {
         this.id = id;
+        this.domain = new Domain("");
         this.uniqueKey = UniqueKey.make(id, "");
         this.timestamp = System.currentTimeMillis();
     }

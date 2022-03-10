@@ -29,6 +29,7 @@ package cube.common.entity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -59,6 +60,12 @@ public class Group extends AbstractContact implements Comparable<Group> {
     private List<Long> memberIdList;
 
     /**
+     * 群组的成员实体列表。
+     * 该属性仅供客户端使用。
+     */
+    private List<Contact> memberList;
+
+    /**
      * 群组的标签。
      */
     private String tag = GroupTag.Public;
@@ -73,6 +80,9 @@ public class Group extends AbstractContact implements Comparable<Group> {
      */
     public Group() {
         super();
+        this.ownerId = 0L;
+        this.creationTime = System.currentTimeMillis();
+        this.lastActiveTime = System.currentTimeMillis();
         this.state = GroupState.Normal;
         this.memberIdList = new Vector<>();
     }
@@ -117,6 +127,13 @@ public class Group extends AbstractContact implements Comparable<Group> {
             JSONArray array = json.getJSONArray("members");
             for (int i = 0, len = array.length(); i < len; ++i) {
                 this.addMember(array.getLong(i));
+            }
+        }
+
+        if (json.has("memberContacts")) {
+            JSONArray array = json.getJSONArray("memberContacts");
+            for (int i = 0; i < array.length(); ++i) {
+                this.addMember(new Contact(array.getJSONObject(i)));
             }
         }
     }
@@ -277,6 +294,26 @@ public class Group extends AbstractContact implements Comparable<Group> {
         return new ArrayList<>(this.memberIdList);
     }
 
+    public void addMember(Contact contact) {
+        if (null == this.memberList) {
+            this.memberList = new ArrayList<>();
+        }
+
+        this.memberList.add(contact);
+    }
+
+    public void removeMember(Contact contact) {
+        if (null == this.memberList) {
+            return;
+        }
+
+        this.memberList.remove(contact);
+    }
+
+    public List<Contact> getMemberList() {
+        return this.memberList;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -322,6 +359,15 @@ public class Group extends AbstractContact implements Comparable<Group> {
         json.put("creation", this.creationTime);
         json.put("lastActive", this.lastActiveTime);
         json.put("state", this.state.code);
+
+        if (null != this.memberList) {
+            JSONArray contacts = new JSONArray();
+            for (Contact contact : this.memberList) {
+                contacts.put(contact.toJSON());
+            }
+            json.put("memberContacts", contacts);
+        }
+
         return json;
     }
 
