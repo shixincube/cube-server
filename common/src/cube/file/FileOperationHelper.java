@@ -49,6 +49,9 @@ public final class FileOperationHelper {
             else if (GrayscaleOperation.Operation.equals(operation)) {
                 return new GrayscaleOperation(json);
             }
+            else if (BrightnessOperation.Operation.equals(operation)) {
+                return new BrightnessOperation(json);
+            }
             else if (ReplaceColorOperation.Operation.equals(operation)) {
                 return new ReplaceColorOperation(json);
             }

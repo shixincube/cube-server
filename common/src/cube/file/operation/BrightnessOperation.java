@@ -24,39 +24,51 @@
  * SOFTWARE.
  */
 
-package cube.service.fileprocessor.processor;
+package cube.file.operation;
 
-import java.io.File;
-import java.nio.file.Path;
+import cube.file.ImageOperation;
+import org.json.JSONObject;
 
 /**
- * OCR 处理器。
+ * 亮度对比度操作。
  */
-public abstract class OpticalCharacterRecognition extends Processor {
+public class BrightnessOperation extends ImageOperation {
 
-    protected File inputImage;
+    public final static String Operation = "Brightness";
 
-    protected File outputText;
+    private int brightness;
 
-    protected String language = "chi_sim+eng";
+    private int contrast;
 
-    public OpticalCharacterRecognition(Path workPath) {
-        super(workPath);
+    public BrightnessOperation(int brightness, int contrast) {
+        this.brightness = brightness;
+        this.contrast = contrast;
     }
 
-    public void setInputImage(File file) {
-        this.inputImage = file;
+    public BrightnessOperation(JSONObject json) {
+        super(json);
+        this.brightness = json.getInt("brightness");
+        this.contrast = json.getInt("contrast");
     }
 
-    public void setOutputText(File file) {
-        this.outputText = file;
+    public int getBrightness() {
+        return this.brightness;
     }
 
-    public File getInputImage() {
-        return this.inputImage;
+    public int getContrast() {
+        return this.contrast;
     }
 
-    public File getOutputText() {
-        return this.outputText;
+    @Override
+    public String getOperation() {
+        return Operation;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("brightness", this.brightness);
+        json.put("contrast", this.contrast);
+        return json;
     }
 }

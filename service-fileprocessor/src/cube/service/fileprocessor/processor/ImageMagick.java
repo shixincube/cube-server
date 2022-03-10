@@ -193,6 +193,34 @@ public final class ImageMagick {
     }
 
     /**
+     * 调整图片亮度和对比度。
+     *
+     * @param workPath
+     * @param filename
+     * @param output
+     * @param brightness
+     * @param contrast
+     * @return
+     */
+    public static boolean brightness(File workPath, String filename, String output, int brightness, int contrast) {
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add("convert");
+        commandLine.add(filename);
+        commandLine.add("-brightness-contrast");
+        commandLine.add(brightness + "x" + contrast);
+        commandLine.add(output);
+
+        int status = execute(workPath, commandLine);
+        if (0 == status || 1 == status) {
+            File file = new File(workPath, output);
+            return file.exists();
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
      * 将指定文本隐写到图片内。
      *
      * @param workPath
