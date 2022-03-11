@@ -137,6 +137,26 @@ public class ImageProcessor extends Processor {
                 ctx.setResult(result);
             }
         }
+        else if (SharpeningOperation.Operation.equals(imageOperation.getOperation())) {
+            // 锐化
+            SharpeningOperation operation = (SharpeningOperation) imageOperation;
+
+            if (null == outputFilename) {
+                outputFilename = makeOutputFilename("brightness");
+            }
+
+            // 使用 ImageMagick 操作
+            boolean success = ImageMagick.sharpen(this.getWorkPath().toFile(), this.imageFile.getName(),
+                    outputFilename, operation.getSigma());
+
+            // 处理结果
+            ctx.setSuccessful(success);
+            if (success) {
+                File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
+                ProcessResult result = new ProcessResult(outputFile);
+                ctx.setResult(result);
+            }
+        }
         else if (ReplaceColorOperation.Operation.equals(imageOperation.getOperation())) {
             // 替换颜色
             ReplaceColorOperation operation = (ReplaceColorOperation) imageOperation;

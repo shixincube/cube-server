@@ -221,6 +221,33 @@ public final class ImageMagick {
     }
 
     /**
+     * 图像锐化。
+     *
+     * @param workPath
+     * @param filename
+     * @param output
+     * @param sigma
+     * @return
+     */
+    public static boolean sharpen(File workPath, String filename, String output, double sigma) {
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add("convert");
+        commandLine.add(filename);
+        commandLine.add("-sharpen");
+        commandLine.add("0x" + String.format("%.1f", sigma));
+        commandLine.add(output);
+
+        int status = execute(workPath, commandLine);
+        if (0 == status || 1 == status) {
+            File file = new File(workPath, output);
+            return file.exists();
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
      * 将指定文本隐写到图片内。
      *
      * @param workPath
