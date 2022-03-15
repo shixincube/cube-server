@@ -500,7 +500,15 @@ public class FileStorageService extends AbstractModule {
                 String fileCode = data.getString("fileCode");
                 FileLabel fileLabel = this.getFile(domain, fileCode);
                 if (null != fileLabel) {
-                    return fileLabel.toJSON();
+                    JSONObject response = fileLabel.toJSON();
+                    if (data.getBoolean("transmitting")) {
+                        // 加载文件到本地
+                        String fullPath = this.loadFileToDisk(domain, fileCode);
+                        if (null != fullPath) {
+                            response.put("fullPath", fullPath);
+                        }
+                    }
+                    return response;
                 }
             }
             else if (FileStorageAction.PutFile.name.equals(action)) {
