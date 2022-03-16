@@ -93,9 +93,9 @@ public class HubService extends AbstractModule {
             @Override
             public void run() {
                 ClientDescription description = new ClientDescription(data.getJSONObject("client"));
-                Event event = EventBuilder.build(data.getJSONObject("event"));
 
-                System.out.println(data.getJSONObject("event").toString());
+                // 解析事件
+                Event event = EventBuilder.build(data.getJSONObject("event"));
 
                 EventController.getInstance().receive(event, description);
 

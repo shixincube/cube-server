@@ -26,6 +26,8 @@
 
 package cube.hub;
 
+import cube.hub.event.LoginQRCodeEvent;
+import cube.hub.event.NewMessageEvent;
 import org.json.JSONObject;
 
 /**
@@ -37,6 +39,26 @@ public class EventBuilder {
     }
 
     public static Event build(JSONObject eventJson) {
+        Product product = Product.parse(eventJson.getString("product"));
+        if (product == Product.WeChat) {
+            return buildWeChatEvent(eventJson);
+        }
+
         return null;
+    }
+
+    private static Event buildWeChatEvent(JSONObject eventJson) {
+        String name = eventJson.getString("name");
+
+        Event event = null;
+
+        if (NewMessageEvent.NAME.equals(name)) {
+            event = new NewMessageEvent(eventJson);
+        }
+        else if (LoginQRCodeEvent.NAME.equals(name)) {
+
+        }
+
+        return event;
     }
 }

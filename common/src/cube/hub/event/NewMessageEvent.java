@@ -26,6 +26,7 @@
 
 package cube.hub.event;
 
+import cube.common.entity.Contact;
 import cube.hub.MetaMessage;
 import org.json.JSONObject;
 
@@ -38,8 +39,8 @@ public class NewMessageEvent extends WeChatEvent {
 
     private MetaMessage meta;
 
-    public NewMessageEvent(MetaMessage meta) {
-        super(NAME);
+    public NewMessageEvent(Contact account, MetaMessage meta) {
+        super(NAME, account);
         this.meta = meta;
     }
 

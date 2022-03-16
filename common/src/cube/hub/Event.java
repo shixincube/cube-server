@@ -27,6 +27,7 @@
 package cube.hub;
 
 import cube.common.JSONable;
+import cube.common.entity.FileLabel;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -42,6 +43,8 @@ public abstract class Event implements JSONable {
 
     protected File file;
 
+    protected FileLabel fileLabel;
+
     public Event(Product product, String name) {
         this.product = product;
         this.name = name;
@@ -56,6 +59,10 @@ public abstract class Event implements JSONable {
     public Event(JSONObject json) {
         this.product = Product.parse(json.getString("product"));
         this.name = json.getString("name");
+
+        if (json.has("fileLabel")) {
+            this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
+        }
     }
 
     public Product getProduct() {
@@ -70,11 +77,24 @@ public abstract class Event implements JSONable {
         return this.file;
     }
 
+    public void setFileLabel(FileLabel fileLabel) {
+        this.fileLabel = fileLabel;
+    }
+
+    public FileLabel getFileLabel() {
+        return this.fileLabel;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("product", this.product.name);
         json.put("name", this.name);
+
+        if (null != this.fileLabel) {
+            json.put("fileLabel", this.fileLabel.toCompactJSON());
+        }
+
         return json;
     }
 

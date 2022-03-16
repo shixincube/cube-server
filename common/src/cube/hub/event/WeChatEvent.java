@@ -26,6 +26,7 @@
 
 package cube.hub.event;
 
+import cube.common.entity.Contact;
 import cube.hub.Event;
 import cube.hub.Product;
 import org.json.JSONObject;
@@ -37,6 +38,8 @@ import java.io.File;
  */
 public abstract class WeChatEvent extends Event {
 
+    private Contact account;
+
     public WeChatEvent(String name) {
         super(Product.WeChat, name);
     }
@@ -45,7 +48,29 @@ public abstract class WeChatEvent extends Event {
         super(Product.WeChat, name, file);
     }
 
+    public WeChatEvent(String name, Contact account) {
+        super(Product.WeChat, name);
+        this.account = account;
+    }
+
+    public WeChatEvent(String name, File file, Contact account) {
+        super(Product.WeChat, name, file);
+        this.account = account;
+    }
+
     public WeChatEvent(JSONObject json) {
         super(json);
+        if (json.has("account")) {
+            this.account = new Contact(json.getJSONObject("account"));
+        }
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        if (null != this.account) {
+            json.put("account", this.account.toCompactJSON());
+        }
+        return json;
     }
 }
