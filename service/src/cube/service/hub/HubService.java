@@ -27,10 +27,14 @@
 package cube.service.hub;
 
 import cell.util.log.Logger;
+import cube.common.entity.ClientDescription;
 import cube.common.entity.Message;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
+import cube.hub.Event;
+import cube.hub.EventBuilder;
+import cube.hub.HubStateCode;
 import cube.hub.Type;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
@@ -82,6 +86,22 @@ public class HubService extends AbstractModule {
     @Override
     public void onTick(Module module, Kernel kernel) {
 
+    }
+
+    public void triggerEvent(JSONObject data, Responder responder) {
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                ClientDescription description = new ClientDescription(data.getJSONObject("client"));
+                Event event = EventBuilder.build(data.getJSONObject("event"));
+
+                System.out.println(data.getJSONObject("event").toString());
+
+                EventController.getInstance().receive(event, description);
+
+                responder.respond(HubStateCode.Ok.code, new JSONObject());
+            }
+        });
     }
 
     private void setupMessagingPlugin() {
@@ -165,7 +185,9 @@ public class HubService extends AbstractModule {
                             JSONObject payload = message.getPayload();
                             String type = payload.getString("type");
                             if (Type.Event.equals(type)) {
-
+                                ClientDescription description = new ClientDescription(payload.getJSONObject("client"));
+                                Event event = EventBuilder.build(payload.getJSONObject("data"));
+                                EventController.getInstance().receive(event, description);
                             }
                             else if (Type.Signal.equals(type)) {
                                 // TODO

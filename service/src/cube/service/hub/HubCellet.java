@@ -26,9 +26,15 @@
 
 package cube.service.hub;
 
+import cell.core.talk.Primitive;
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
+import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.hub.HubAction;
 
 import java.util.concurrent.ExecutorService;
 
@@ -39,6 +45,8 @@ public class HubCellet extends AbstractCellet {
 
     private ExecutorService executor;
 
+    private HubService service;
+
     public HubCellet() {
         super(HubService.NAME);
     }
@@ -47,8 +55,9 @@ public class HubCellet extends AbstractCellet {
     public boolean install() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
 
+        this.service = new HubService(this.executor);
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
-        kernel.installModule(HubService.NAME, new HubService(this.executor));
+        kernel.installModule(HubService.NAME, this.service);
 
         return true;
     }
@@ -59,5 +68,25 @@ public class HubCellet extends AbstractCellet {
 
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.uninstallModule(HubService.NAME);
+
+        this.service = null;
+    }
+
+    @Override
+    public void onListened(TalkContext talkContext, Primitive primitive) {
+        super.onListened(talkContext, primitive);
+
+        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
+        String action = dialect.getName();
+
+        if (HubAction.TriggerEvent.name.equals(action)) {
+            this.service.triggerEvent(dialect.getParamAsJson("data"), new Responder(dialect, this, talkContext));
+        }
+        else if (HubAction.TransmitSignal.name.equals(action)) {
+            // TODO
+        }
+        else {
+            Logger.w(this.getClass(), "No support action : " + action);
+        }
     }
 }

@@ -26,8 +26,24 @@
 
 package cube.service.hub;
 
+import cube.common.entity.ClientDescription;
+import cube.hub.Event;
+
 /**
  * 事件控制器。
  */
 public class EventController {
+
+    private final static EventController instance = new EventController();
+
+    private EventController() {
+    }
+
+    public final static EventController getInstance() {
+        return EventController.instance;
+    }
+
+    public void receive(Event event, ClientDescription clientDescription) {
+
+    }
 }

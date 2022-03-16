@@ -26,26 +26,32 @@
 
 package cube.hub.event;
 
-import cube.hub.Event;
-import cube.hub.Product;
+import cube.hub.MetaMessage;
 import org.json.JSONObject;
 
-import java.io.File;
-
 /**
- * 微信事件。
+ * 新消息事件。
  */
-public abstract class WeChatEvent extends Event {
+public class NewMessageEvent extends WeChatEvent {
 
-    public WeChatEvent(String name) {
-        super(Product.WeChat, name);
+    public final static String NAME = "NewMessage";
+
+    private MetaMessage meta;
+
+    public NewMessageEvent(MetaMessage meta) {
+        super(NAME);
+        this.meta = meta;
     }
 
-    public WeChatEvent(String name, File file) {
-        super(Product.WeChat, name, file);
-    }
-
-    public WeChatEvent(JSONObject json) {
+    public NewMessageEvent(JSONObject json) {
         super(json);
+        this.meta = new MetaMessage(json.getJSONObject("meta"));
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("meta", this.meta.toJSON());
+        return json;
     }
 }

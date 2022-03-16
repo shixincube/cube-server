@@ -24,28 +24,43 @@
  * SOFTWARE.
  */
 
-package cube.hub.event;
-
-import cube.hub.Event;
-import cube.hub.Product;
-import org.json.JSONObject;
-
-import java.io.File;
+package cube.hub;
 
 /**
- * 微信事件。
+ * Hub 模块状态码。
  */
-public abstract class WeChatEvent extends Event {
+public enum HubStateCode {
 
-    public WeChatEvent(String name) {
-        super(Product.WeChat, name);
-    }
+    /**
+     * 成功。
+     */
+    Ok(0),
 
-    public WeChatEvent(String name, File file) {
-        super(Product.WeChat, name, file);
-    }
+    /**
+     * 无效参数。
+     */
+    InvalidParameter(5),
 
-    public WeChatEvent(JSONObject json) {
-        super(json);
+    /**
+     * 遇到故障。
+     */
+    Failure(9),
+
+    /**
+     * 无效域信息。
+     */
+    InvalidDomain(11),
+
+    /**
+     * 未知的状态。
+     */
+    Unknown(99)
+
+    ;
+
+    public final int code;
+
+    HubStateCode(int code) {
+        this.code = code;
     }
 }

@@ -24,28 +24,19 @@
  * SOFTWARE.
  */
 
-package cube.hub.event;
+package cube.hub;
 
-import cube.hub.Event;
-import cube.hub.Product;
 import org.json.JSONObject;
 
-import java.io.File;
-
 /**
- * 微信事件。
+ * 事件构建器。
  */
-public abstract class WeChatEvent extends Event {
+public class EventBuilder {
 
-    public WeChatEvent(String name) {
-        super(Product.WeChat, name);
+    private EventBuilder() {
     }
 
-    public WeChatEvent(String name, File file) {
-        super(Product.WeChat, name, file);
-    }
-
-    public WeChatEvent(JSONObject json) {
-        super(json);
+    public static Event build(JSONObject eventJson) {
+        return null;
     }
 }

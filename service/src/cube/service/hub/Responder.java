@@ -24,28 +24,39 @@
  * SOFTWARE.
  */
 
-package cube.hub.event;
+package cube.service.hub;
 
-import cube.hub.Event;
-import cube.hub.Product;
+import cell.core.cellet.Cellet;
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
 import org.json.JSONObject;
 
-import java.io.File;
-
 /**
- * 微信事件。
+ * 应答机。
  */
-public abstract class WeChatEvent extends Event {
+public class Responder {
 
-    public WeChatEvent(String name) {
-        super(Product.WeChat, name);
+    private final static String ParamName = "_notifier";
+
+    private Cellet cellet;
+
+    private TalkContext talkContext;
+
+    private JSONObject notifier;
+    private String name;
+
+    public Responder(ActionDialect request, Cellet cellet, TalkContext talkContext) {
+        this.notifier = request.getParamAsJson(ParamName);
+        this.name = request.getName();
+        this.cellet = cellet;
+        this.talkContext = talkContext;
     }
 
-    public WeChatEvent(String name, File file) {
-        super(Product.WeChat, name, file);
-    }
-
-    public WeChatEvent(JSONObject json) {
-        super(json);
+    public void respond(int code, JSONObject data) {
+        ActionDialect actionDialect = new ActionDialect(this.name);
+        actionDialect.addParam(ParamName, this.notifier);
+        actionDialect.addParam("code", code);
+        actionDialect.addParam("data", data);
+        this.cellet.speak(this.talkContext, actionDialect);
     }
 }

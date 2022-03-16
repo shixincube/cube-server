@@ -26,26 +26,22 @@
 
 package cube.hub.event;
 
-import cube.hub.Event;
-import cube.hub.Product;
 import org.json.JSONObject;
 
 import java.io.File;
 
 /**
- * 微信事件。
+ * 登录二维码事件。
  */
-public abstract class WeChatEvent extends Event {
+public class LoginQRCodeEvent extends WeChatEvent {
 
-    public WeChatEvent(String name) {
-        super(Product.WeChat, name);
+    public final static String NAME = "LoginQRCode";
+
+    public LoginQRCodeEvent(File file) {
+        super(NAME, file);
     }
 
-    public WeChatEvent(String name, File file) {
-        super(Product.WeChat, name, file);
-    }
-
-    public WeChatEvent(JSONObject json) {
+    public LoginQRCodeEvent(JSONObject json) {
         super(json);
     }
 }

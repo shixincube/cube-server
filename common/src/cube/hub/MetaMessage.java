@@ -24,28 +24,56 @@
  * SOFTWARE.
  */
 
-package cube.hub.event;
+package cube.hub;
 
-import cube.hub.Event;
-import cube.hub.Product;
+import cube.common.JSONable;
 import org.json.JSONObject;
 
-import java.io.File;
-
 /**
- * 微信事件。
+ * 消息。
  */
-public abstract class WeChatEvent extends Event {
+public class MetaMessage implements JSONable {
 
-    public WeChatEvent(String name) {
-        super(Product.WeChat, name);
+    private long id;
+
+    private JSONObject meta;
+
+    private String sender;
+
+    private String ground;
+
+    private long timestamp;
+
+    public MetaMessage(long id, String sender, String ground, long timestamp,
+                       JSONObject meta) {
+        this.id = id;
+        this.sender = sender;
+        this.ground = ground;
+        this.timestamp = timestamp;
+        this.meta = meta;
     }
 
-    public WeChatEvent(String name, File file) {
-        super(Product.WeChat, name, file);
+    public MetaMessage(JSONObject json) {
+        this.id = json.getLong("id");
+        this.sender = json.getString("sender");
+        this.ground = json.getString("ground");
+        this.timestamp = json.getLong("timestamp");
+        this.meta = json.getJSONObject("meta");
     }
 
-    public WeChatEvent(JSONObject json) {
-        super(json);
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("id", this.id);
+        json.put("sender", this.sender);
+        json.put("ground", this.ground);
+        json.put("timestamp", this.timestamp);
+        json.put("meta", this.meta);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

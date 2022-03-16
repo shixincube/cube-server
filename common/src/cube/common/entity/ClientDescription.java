@@ -51,6 +51,12 @@ public class ClientDescription extends Entity {
         this.state = state;
     }
 
+    public ClientDescription(JSONObject json) {
+        this.name = json.getString("name");
+        this.password = json.has("password") ? json.getString("password") : null;
+        this.state = ClientState.parse(json.getInt("state"));
+    }
+
     public String getName() {
         return this.name;
     }

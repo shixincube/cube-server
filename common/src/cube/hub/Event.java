@@ -53,6 +53,11 @@ public abstract class Event implements JSONable {
         this.file = file;
     }
 
+    public Event(JSONObject json) {
+        this.product = Product.parse(json.getString("product"));
+        this.name = json.getString("name");
+    }
+
     public Product getProduct() {
         return this.product;
     }
