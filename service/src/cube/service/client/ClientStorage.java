@@ -29,7 +29,7 @@ package cube.service.client;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
-import cube.common.entity.Client;
+import cube.common.entity.ClientDescription;
 import cube.common.entity.ClientState;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -103,7 +103,7 @@ public class ClientStorage implements Storagable {
      * @param client
      * @return
      */
-    public boolean addClient(Client client) {
+    public boolean addClient(ClientDescription client) {
         List<StorageField[]> result = this.storage.executeQuery(this.clientTable, new StorageField[] {
                 new StorageField("state", LiteralBase.INT),
         }, new Conditional[] {
@@ -128,7 +128,7 @@ public class ClientStorage implements Storagable {
      * @param client
      * @return
      */
-    public boolean deleteClient(Client client) {
+    public boolean deleteClient(ClientDescription client) {
         return this.storage.executeDelete(this.clientTable, new Conditional[] {
                 Conditional.createEqualTo("name", client.getName()),
                 Conditional.createAnd(),
@@ -143,7 +143,7 @@ public class ClientStorage implements Storagable {
      * @param password
      * @return
      */
-    public Client getClient(String name, String password) {
+    public ClientDescription getClient(String name, String password) {
         List<StorageField[]> result = this.storage.executeQuery(this.clientTable, this.clientFields, new Conditional[] {
                 Conditional.createEqualTo("name", name),
                 Conditional.createAnd(),
@@ -155,7 +155,7 @@ public class ClientStorage implements Storagable {
         }
 
         Map<String, StorageField> map = StorageFields.get(result.get(0));
-        return new Client(map.get("name").getString(), map.get("password").getString(),
+        return new ClientDescription(map.get("name").getString(), map.get("password").getString(),
                 ClientState.parse(map.get("state").getInt()));
     }
 
@@ -176,7 +176,7 @@ public class ClientStorage implements Storagable {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                Client client = new Client("admin", password);
+                ClientDescription client = new ClientDescription("admin", password);
                 this.addClient(client);
             }
         }

@@ -24,51 +24,25 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
-
-import org.json.JSONObject;
+package cube.hub;
 
 /**
- * 客户端描述。
+ * 消息类型描述。
  */
-public class Client extends Entity {
+public final class Type {
 
-    private String name;
+    /**
+     * 事件。
+     * 用于进行数据传输。
+     */
+    public final static String Event = "HubEvent";
 
-    private String password;
+    /**
+     * 信号。
+     * 用于进行操作控制。
+     */
+    public final static String Signal = "HubSignal";
 
-    private ClientState state;
-
-    public Client(String name, String password) {
-        this.name = name;
-        this.password = password;
-        this.state = ClientState.Normal;
-    }
-
-    public Client(String name, String password, ClientState state) {
-        this.name = name;
-        this.password = password;
-        this.state = state;
-    }
-
-    public String getName() {
-        return this.name;
-    }
-
-    public String getPassword() {
-        return this.password;
-    }
-
-    public ClientState getState() {
-        return this.state;
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("name", this.name);
-        json.put("password", this.password);
-        json.put("state", this.state.code);
-        return json;
+    private Type() {
     }
 }

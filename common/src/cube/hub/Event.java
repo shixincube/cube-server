@@ -43,12 +43,18 @@ public abstract class Event implements JSONable {
     protected File file;
 
     public Event(Product product, String name) {
+        this.product = product;
         this.name = name;
     }
 
-    public Event(String name, File file) {
+    public Event(Product product, String name, File file) {
+        this.product = product;
         this.name = name;
         this.file = file;
+    }
+
+    public Product getProduct() {
+        return this.product;
     }
 
     public String getName() {
@@ -62,6 +68,7 @@ public abstract class Event implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("product", this.product.name);
         json.put("name", this.name);
         return json;
     }

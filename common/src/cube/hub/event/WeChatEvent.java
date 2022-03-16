@@ -24,36 +24,19 @@
  * SOFTWARE.
  */
 
-package cube.hub;
+package cube.hub.event;
+
+import cube.hub.Event;
+import cube.hub.Product;
 
 /**
- * 产品类型枚举。
+ * 微信事件。
  */
-public enum Product {
+public abstract class WeChatEvent extends Event {
 
-    WeChat("WeChat"),
 
-    FeiShu("FeiShu"),
 
-    DingDing("DingDing"),
-
-    Unknown("Unknown")
-
-    ;
-
-    public final String name;
-
-    Product(String name) {
-        this.name = name;
-    }
-
-    public final static Product parse(String name) {
-        for (Product app : Product.values()) {
-            if (app.name.equalsIgnoreCase(name)) {
-                return app;
-            }
-        }
-
-        return Unknown;
+    public WeChatEvent(String name) {
+        super(Product.WeChat, name);
     }
 }

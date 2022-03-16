@@ -30,14 +30,14 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
-import cube.common.entity.Client;
+import cube.common.entity.ClientDescription;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
 import cube.common.entity.Message;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
-import cube.file.OperationWorkflow;
 import cube.file.OperationWork;
+import cube.file.OperationWorkflow;
 import cube.file.event.FileWorkflowEvent;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
@@ -53,7 +53,6 @@ import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -338,7 +337,7 @@ public final class ClientManager {
         String name = actionDialect.getParamAsString("name");
         String password = actionDialect.getParamAsString("password");
 
-        Client desc = this.clientStorage.getClient(name, password);
+        ClientDescription desc = this.clientStorage.getClient(name, password);
         if (null == desc) {
             // 没有找到客户端
             return false;

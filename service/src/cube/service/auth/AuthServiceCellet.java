@@ -53,7 +53,7 @@ public class AuthServiceCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(4);
 
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.installModule(AuthService.NAME, new AuthService());

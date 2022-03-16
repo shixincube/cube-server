@@ -24,36 +24,40 @@
  * SOFTWARE.
  */
 
-package cube.hub;
+package cube.service.hub;
+
+import cell.util.CachedQueueExecutor;
+import cube.core.AbstractCellet;
+import cube.core.Kernel;
+
+import java.util.concurrent.ExecutorService;
 
 /**
- * 产品类型枚举。
+ * Hub 服务的 Cellet 单元。
  */
-public enum Product {
+public class HubCellet extends AbstractCellet {
 
-    WeChat("WeChat"),
+    private ExecutorService executor;
 
-    FeiShu("FeiShu"),
-
-    DingDing("DingDing"),
-
-    Unknown("Unknown")
-
-    ;
-
-    public final String name;
-
-    Product(String name) {
-        this.name = name;
+    public HubCellet() {
+        super(HubService.NAME);
     }
 
-    public final static Product parse(String name) {
-        for (Product app : Product.values()) {
-            if (app.name.equalsIgnoreCase(name)) {
-                return app;
-            }
-        }
+    @Override
+    public boolean install() {
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
 
-        return Unknown;
+        Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
+        kernel.installModule(HubService.NAME, new HubService(this.executor));
+
+        return true;
+    }
+
+    @Override
+    public void uninstall() {
+        this.executor.shutdown();
+
+        Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
+        kernel.uninstallModule(HubService.NAME);
     }
 }

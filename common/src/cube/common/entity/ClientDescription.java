@@ -24,36 +24,59 @@
  * SOFTWARE.
  */
 
-package cube.hub;
+package cube.common.entity;
+
+import org.json.JSONObject;
 
 /**
- * 产品类型枚举。
+ * 客户端描述。
  */
-public enum Product {
+public class ClientDescription extends Entity {
 
-    WeChat("WeChat"),
+    private String name;
 
-    FeiShu("FeiShu"),
+    private String password;
 
-    DingDing("DingDing"),
+    private ClientState state;
 
-    Unknown("Unknown")
-
-    ;
-
-    public final String name;
-
-    Product(String name) {
+    public ClientDescription(String name, String password) {
         this.name = name;
+        this.password = password;
+        this.state = ClientState.Normal;
     }
 
-    public final static Product parse(String name) {
-        for (Product app : Product.values()) {
-            if (app.name.equalsIgnoreCase(name)) {
-                return app;
-            }
-        }
+    public ClientDescription(String name, String password, ClientState state) {
+        this.name = name;
+        this.password = password;
+        this.state = state;
+    }
 
-        return Unknown;
+    public String getName() {
+        return this.name;
+    }
+
+    public String getPassword() {
+        return this.password;
+    }
+
+    public ClientState getState() {
+        return this.state;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("name", this.name);
+        json.put("password", this.password);
+        json.put("state", this.state.code);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        json.put("name", this.name);
+        json.put("state", this.state.code);
+        return json;
     }
 }
