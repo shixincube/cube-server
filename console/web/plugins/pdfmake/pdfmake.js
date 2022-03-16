@@ -15345,7 +15345,7 @@ var objectKeys = Object.keys || function (obj) {
 //
 // 1. The origin of this software must not be misrepresented; you must not
 //   claim that you wrote the original software. If you use this software
-//   in a product, an acknowledgment in the product documentation would be
+//   in a application, an acknowledgment in the application documentation would be
 //   appreciated but is not required.
 // 2. Altered source versions must be plainly marked as such, and must not be
 //   misrepresented as being the original software.
@@ -15403,7 +15403,7 @@ module.exports = adler32;
 //
 // 1. The origin of this software must not be misrepresented; you must not
 //   claim that you wrote the original software. If you use this software
-//   in a product, an acknowledgment in the product documentation would be
+//   in a application, an acknowledgment in the application documentation would be
 //   appreciated but is not required.
 // 2. Altered source versions must be plainly marked as such, and must not be
 //   misrepresented as being the original software.
@@ -28132,7 +28132,7 @@ if (typeof Object.create === 'function') {
 //
 // 1. The origin of this software must not be misrepresented; you must not
 //   claim that you wrote the original software. If you use this software
-//   in a product, an acknowledgment in the product documentation would be
+//   in a application, an acknowledgment in the application documentation would be
 //   appreciated but is not required.
 // 2. Altered source versions must be plainly marked as such, and must not be
 //   misrepresented as being the original software.
@@ -46102,7 +46102,7 @@ function finalReordering(font, glyphs, plan) {
     if (tryPref && base + 1 < end) {
       for (var _i23 = base + 1; _i23 < end; _i23++) {
         if (glyphs[_i23].features.pref) {
-          // 1. Only reorder a glyph produced by substitution during application
+          // 1. Only reorder a glyph produced by substitution during product
           //    of the <pref> feature. (Note that a font may shape a Ra consonant with
           //    the feature generally but block it in certain contexts.)
 

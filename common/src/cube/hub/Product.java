@@ -26,48 +26,34 @@
 
 package cube.hub;
 
-import cube.common.JSONable;
-import org.json.JSONObject;
-
-import java.io.File;
-
 /**
- * 事件描述。
+ * 应用类型。
  */
-public abstract class Event implements JSONable {
+public enum Product {
 
-    protected Product product;
+    WeChat("WeChat"),
 
-    protected String name;
+    FeiShu("FeiShu"),
 
-    protected File file;
+    DingDing("DingDing"),
 
-    public Event(Product product, String name) {
+    Unknown("Unknown")
+
+    ;
+
+    public final String name;
+
+    Product(String name) {
         this.name = name;
     }
 
-    public Event(String name, File file) {
-        this.name = name;
-        this.file = file;
-    }
+    public final static Product parse(String name) {
+        for (Product app : Product.values()) {
+            if (app.name.equalsIgnoreCase(name)) {
+                return app;
+            }
+        }
 
-    public String getName() {
-        return this.name;
-    }
-
-    public File getFile() {
-        return this.file;
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("name", this.name);
-        return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
+        return Unknown;
     }
 }
