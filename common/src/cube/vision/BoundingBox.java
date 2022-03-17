@@ -60,6 +60,17 @@ public class BoundingBox implements JSONable {
         this.height = json.getInt("height");
     }
 
+    /**
+     * 对点进行碰撞检测。
+     *
+     * @param x
+     * @param y
+     * @return
+     */
+    public boolean detectCollision(int x, int y) {
+        return (x > this.x && y > this.y && x < this.x + this.width && y < this.y + this.height);
+    }
+
     @Override
     public JSONObject toJSON() {
         return this.toCompactJSON();
