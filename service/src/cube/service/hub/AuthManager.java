@@ -24,41 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.hub;
+package cube.service.hub;
 
-import cube.hub.event.LoginQRCodeEvent;
-import cube.hub.event.SubmitMessagesEvent;
-import org.json.JSONObject;
-
-/**
- * 事件构建器。
- */
-public class EventBuilder {
-
-    private EventBuilder() {
-    }
-
-    public static Event build(JSONObject eventJson) {
-        Product product = Product.parse(eventJson.getString("product"));
-        if (product == Product.WeChat) {
-            return buildWeChatEvent(eventJson);
-        }
-
-        return null;
-    }
-
-    private static Event buildWeChatEvent(JSONObject eventJson) {
-        String name = eventJson.getString("name");
-
-        Event event = null;
-
-        if (SubmitMessagesEvent.NAME.equals(name)) {
-            event = new SubmitMessagesEvent(eventJson);
-        }
-        else if (LoginQRCodeEvent.NAME.equals(name)) {
-
-        }
-
-        return event;
-    }
+public class AuthManager {
 }

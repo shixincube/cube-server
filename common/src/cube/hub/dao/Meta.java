@@ -24,35 +24,53 @@
  * SOFTWARE.
  */
 
-package cube.hub.event;
+package cube.hub.dao;
 
-import cube.common.entity.Contact;
-import cube.hub.MetaMessage;
+import cube.common.JSONable;
 import org.json.JSONObject;
 
 /**
- * 新消息事件。
+ * 元。
  */
-public class NewMessageEvent extends WeChatEvent {
+public class Meta implements JSONable {
 
-    public final static String NAME = "NewMessage";
+    protected long id;
 
-    private MetaMessage meta;
+    protected long timestamp;
 
-    public NewMessageEvent(Contact account, MetaMessage meta) {
-        super(NAME, account);
-        this.meta = meta;
+    public Meta(long id) {
+        this.id = id;
+        this.timestamp = System.currentTimeMillis();
     }
 
-    public NewMessageEvent(JSONObject json) {
-        super(json);
-        this.meta = new MetaMessage(json.getJSONObject("meta"));
+    public Meta(long id, long timestamp) {
+        this.id = id;
+        this.timestamp = timestamp;
+    }
+
+    public Meta(JSONObject json) {
+        this.id = json.getLong("id");
+        this.timestamp = json.getLong("timestamp");
+    }
+
+    public long getId() {
+        return this.id;
+    }
+
+    public long getTimestamp() {
+        return this.timestamp;
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = super.toJSON();
-        json.put("meta", this.meta.toJSON());
+        JSONObject json = new JSONObject();
+        json.put("id", this.id);
+        json.put("timestamp", this.timestamp);
         return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

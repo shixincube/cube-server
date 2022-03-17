@@ -24,56 +24,32 @@
  * SOFTWARE.
  */
 
-package cube.hub;
+package cube.hub.event;
 
-import cube.common.JSONable;
+import cube.common.entity.Contact;
+import cube.common.entity.Message;
 import org.json.JSONObject;
 
+import java.util.List;
+
 /**
- * 消息。
+ * 新消息事件。
  */
-public class MetaMessage implements JSONable {
+public class SubmitMessagesEvent extends WeChatEvent {
 
-    private long id;
+    public final static String NAME = "SubmitMessages";
 
-    private JSONObject meta;
-
-    private String sender;
-
-    private String ground;
-
-    private long timestamp;
-
-    public MetaMessage(long id, String sender, String ground, long timestamp,
-                       JSONObject meta) {
-        this.id = id;
-        this.sender = sender;
-        this.ground = ground;
-        this.timestamp = timestamp;
-        this.meta = meta;
+    public SubmitMessagesEvent(Contact account, List<Message> message) {
+        super(NAME, account);
     }
 
-    public MetaMessage(JSONObject json) {
-        this.id = json.getLong("id");
-        this.sender = json.getString("sender");
-        this.ground = json.getString("ground");
-        this.timestamp = json.getLong("timestamp");
-        this.meta = json.getJSONObject("meta");
+    public SubmitMessagesEvent(JSONObject json) {
+        super(json);
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id);
-        json.put("sender", this.sender);
-        json.put("ground", this.ground);
-        json.put("timestamp", this.timestamp);
-        json.put("meta", this.meta);
+        JSONObject json = super.toJSON();
         return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
     }
 }

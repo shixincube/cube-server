@@ -93,6 +93,24 @@ public class Message extends Entity implements Comparable<Message> {
     private MessageState state = MessageState.Unknown;
 
     /**
+     * 消息发件人。
+     * 仅用于客户端。
+     */
+    private Contact sender;
+
+    /**
+     * 消息所在的群组。
+     * 仅用于客户端。
+     */
+    private Group group;
+
+    /**
+     * 消息互动的联系人。
+     * 仅用于客户端。
+     */
+    private Contact partner;
+
+    /**
      * 构造函数。
      *
      * @param packet 指定包含消息数据的数据包。
@@ -133,15 +151,27 @@ public class Message extends Entity implements Comparable<Message> {
     public Message(JSONObject json) {
         super();
 
-        try {
+        this.id = json.getLong("id");
+        this.localTimestamp = json.getLong("lts");
+        this.remoteTimestamp = json.getLong("rts");
+        this.state = MessageState.parse(json.getInt("state"));
+
+        if (json.has("sender")) {
+            this.sender = new Contact(json.getJSONObject("sender"));
+
+            if (json.has("group")) {
+                this.group = new Group(json.getJSONObject("group"));
+            }
+
+            if (json.has("partner")) {
+                this.partner = new Contact(json.getJSONObject("partner"));
+            }
+        }
+        else {
             this.domain = new Domain(json.getString("domain"));
-            this.id = json.getLong("id");
             this.from = json.getLong("from");
             this.to = json.getLong("to");
             this.source = json.getLong("source");
-            this.localTimestamp = json.getLong("lts");
-            this.remoteTimestamp = json.getLong("rts");
-            this.state = MessageState.parse(json.getInt("state"));
 
             if (json.has("scope")) {
                 this.scope = json.getInt("scope");
@@ -151,22 +181,20 @@ public class Message extends Entity implements Comparable<Message> {
                 this.owner = json.getLong("owner");
             }
 
-            if (json.has("payload")) {
-                this.payload = json.getJSONObject("payload");
-            }
-
-            if (json.has("attachment")) {
-                this.attachment = new FileAttachment(json.getJSONObject("attachment"));
-            }
-
             if (json.has("device")) {
                 this.sourceDevice = new Device(json.getJSONObject("device"));
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
+
+            this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
         }
 
-        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
+        if (json.has("payload")) {
+            this.payload = json.getJSONObject("payload");
+        }
+
+        if (json.has("attachment")) {
+            this.attachment = new FileAttachment(json.getJSONObject("attachment"));
+        }
     }
 
     /**
@@ -235,6 +263,73 @@ public class Message extends Entity implements Comparable<Message> {
     }
 
     /**
+     * 构造函数。
+     *
+     * @param id
+     * @param sender
+     * @param group
+     * @param timestamp
+     * @param payload
+     */
+    public Message(long id, Contact sender, Group group, long timestamp, JSONObject payload) {
+        super();
+        this.id = id;
+        this.sender = sender;
+        this.group = group;
+        this.localTimestamp = timestamp;
+        this.remoteTimestamp = timestamp;
+        this.payload = payload;
+        this.state = MessageState.Sent;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param id
+     * @param sender
+     * @param partner
+     * @param timestamp
+     * @param payload
+     */
+    public Message(long id, Contact sender, Contact partner, long timestamp, JSONObject payload) {
+        super();
+        this.id = id;
+        this.sender = sender;
+        this.partner = partner;
+        this.localTimestamp = timestamp;
+        this.remoteTimestamp = timestamp;
+        this.payload = payload;
+        this.state = MessageState.Sent;
+    }
+
+    /**
+     * 获取消息发送人。
+     *
+     * @return
+     */
+    public Contact getSender() {
+        return this.sender;
+    }
+
+    /**
+     * 获取消息的群组。
+     *
+     * @return
+     */
+    public Group getGroup() {
+        return this.group;
+    }
+
+    /**
+     * 获取消息对话互动联系人。
+     *
+     * @return
+     */
+    public Contact getPartner() {
+        return this.partner;
+    }
+
+    /**
      * 获取消息发件人 ID 。
      *
      * @return 返回消息发件人 ID 。
@@ -276,7 +371,7 @@ public class Message extends Entity implements Comparable<Message> {
      * @return 如果来源是群组返回 {@code true} 。
      */
     public boolean isFromGroup() {
-        return this.source.longValue() > 0;
+        return (this.source > 0) || (null != this.group);
     }
 
     /**
@@ -413,16 +508,31 @@ public class Message extends Entity implements Comparable<Message> {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("domain", this.domain.getName());
+
         json.put("id", this.id.longValue());
-        json.put("from", this.from.longValue());
-        json.put("to", this.to.longValue());
-        json.put("source", this.source.longValue());
-        json.put("owner", this.owner.longValue());
         json.put("lts", this.localTimestamp);
         json.put("rts", this.remoteTimestamp);
         json.put("state", this.state.getCode());
-        json.put("scope", this.scope);
+
+        if (null != this.sender) {
+            json.put("sender", this.sender.toCompactJSON());
+
+            if (null != this.group) {
+                json.put("group", this.group.toCompactJSON());
+            }
+
+            if (null != this.partner) {
+                json.put("partner", this.partner.toCompactJSON());
+            }
+        }
+        else {
+            json.put("domain", this.domain.getName());
+            json.put("from", this.from.longValue());
+            json.put("to", this.to.longValue());
+            json.put("source", this.source.longValue());
+            json.put("owner", this.owner.longValue());
+            json.put("scope", this.scope);
+        }
 
         if (null != this.payload) {
             json.put("payload", this.payload);

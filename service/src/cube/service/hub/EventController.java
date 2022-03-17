@@ -30,7 +30,7 @@ import cube.common.entity.ClientDescription;
 import cube.hub.Event;
 import cube.hub.Product;
 import cube.hub.event.LoginQRCodeEvent;
-import cube.hub.event.NewMessageEvent;
+import cube.hub.event.SubmitMessagesEvent;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -60,8 +60,8 @@ public class EventController {
 
     public void receive(Event event, ClientDescription clientDescription) {
         if (event.getProduct() == Product.WeChat) {
-            if (NewMessageEvent.NAME.equals(event.getName())) {
-                NewMessageEvent nme = (NewMessageEvent) event;
+            if (SubmitMessagesEvent.NAME.equals(event.getName())) {
+                SubmitMessagesEvent nme = (SubmitMessagesEvent) event;
 
             }
             else if (LoginQRCodeEvent.NAME.equals(event.getName())) {
