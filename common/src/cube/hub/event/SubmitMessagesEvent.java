@@ -27,6 +27,7 @@
 package cube.hub.event;
 
 import cube.common.entity.Contact;
+import cube.common.entity.Group;
 import cube.common.entity.Message;
 import org.json.JSONObject;
 
@@ -39,7 +40,7 @@ public class SubmitMessagesEvent extends WeChatEvent {
 
     public final static String NAME = "SubmitMessages";
 
-    public SubmitMessagesEvent(Contact account, List<Message> message) {
+    public SubmitMessagesEvent(Contact account, Group ground, List<Message> message) {
         super(NAME, account);
     }
 

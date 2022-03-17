@@ -28,7 +28,6 @@ package cube.hub.dao.wechat;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.common.JSONable;
 import cube.common.entity.Contact;
 import cube.hub.dao.Meta;
 import cube.util.FileUtils;
@@ -299,8 +298,6 @@ public class PlainMessage extends Meta {
     public JSONObject toCompactJSON() {
         return this.toJSON();
     }
-
-    
 
     private String md5(File file) {
         MessageDigest md5 = null;
