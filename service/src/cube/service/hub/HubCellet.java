@@ -59,6 +59,8 @@ public class HubCellet extends AbstractCellet {
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.installModule(HubService.NAME, this.service);
 
+        SignalController.getInstance().setCellet(this);
+
         return true;
     }
 

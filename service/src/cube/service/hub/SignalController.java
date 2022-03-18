@@ -26,13 +26,15 @@
 
 package cube.service.hub;
 
-import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
-import cube.common.entity.ClientDescription;
 import cube.hub.signal.AckSignal;
+import cube.hub.signal.PassBySignal;
 import cube.hub.signal.ReadySignal;
 import cube.hub.signal.Signal;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -44,7 +46,7 @@ public class SignalController {
 
     private ConcurrentHashMap<Long, TalkContext> pretenderIdMap;
 
-    private Cellet cellet;
+    private HubCellet cellet;
 
     private SignalController() {
         this.pretenderIdMap = new ConcurrentHashMap<>();
@@ -54,14 +56,42 @@ public class SignalController {
         return SignalController.instance;
     }
 
+    public void setCellet(HubCellet cellet) {
+        this.cellet = cellet;
+    }
+
+    public boolean send(Signal signal) {
+        return true;
+    }
+
     public Signal receive(Signal signal) {
-        if (ReadySignal.NAME.equals(signal.getName())) {
+        if (PassBySignal.NAME.equals(signal.getName())) {
+            this.passBy((PassBySignal) signal);
+        }
+        else if (ReadySignal.NAME.equals(signal.getName())) {
             ReadySignal readySignal = (ReadySignal) signal;
             this.pretenderIdMap.put(readySignal.getDescription().getPretender().getId(),
                     readySignal.talkContext);
         }
 
         return new AckSignal();
+    }
+
+    private void passBy(PassBySignal passBySignal) {
+        if (passBySignal.isBroadcast()) {
+            Long skipId = passBySignal.getDescription().getPretender().getId();
+
+            Iterator<Map.Entry<Long, TalkContext>> iter = this.pretenderIdMap.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry<Long, TalkContext> entry = iter.next();
+                Long id = entry.getKey();
+                if (skipId.equals(id)) {
+                    continue;
+                }
+
+                List<Signal> signalList = passBySignal.getSignals();
+            }
+        }
     }
 
     private void transmit(Long pretenderId) {

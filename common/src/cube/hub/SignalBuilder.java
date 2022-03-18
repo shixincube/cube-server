@@ -26,7 +26,9 @@
 
 package cube.hub;
 
+import cube.hub.signal.PassBySignal;
 import cube.hub.signal.ReadySignal;
+import cube.hub.signal.ReportSignal;
 import cube.hub.signal.Signal;
 import org.json.JSONObject;
 
@@ -41,7 +43,13 @@ public class SignalBuilder {
     public static Signal build(JSONObject signalJson) {
         String name = signalJson.getString("name");
 
-        if (ReadySignal.NAME.equals(name)) {
+        if (PassBySignal.NAME.equals(name)) {
+            return new PassBySignal(signalJson);
+        }
+        else if (ReportSignal.NAME.equals(name)) {
+            return new ReportSignal(signalJson);
+        }
+        else if (ReadySignal.NAME.equals(name)) {
             return new ReadySignal(signalJson);
         }
 
