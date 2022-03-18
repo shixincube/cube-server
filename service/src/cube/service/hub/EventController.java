@@ -59,8 +59,11 @@ public class EventController {
         return EventController.instance;
     }
 
-    public void receive(Event event, ClientDescription clientDescription) {
+    public void receive(Event event) {
         if (event.getProduct() == Product.WeChat) {
+            // WeChat 事件
+            ClientDescription clientDescription = event.getDescription();
+
             if (SubmitMessagesEvent.NAME.equals(event.getName())) {
                 SubmitMessagesEvent submitMessagesEvent = (SubmitMessagesEvent) event;
 

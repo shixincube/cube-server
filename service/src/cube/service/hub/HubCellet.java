@@ -80,10 +80,10 @@ public class HubCellet extends AbstractCellet {
         String action = dialect.getName();
 
         if (HubAction.TriggerEvent.name.equals(action)) {
-            this.service.triggerEvent(dialect.getParamAsJson("data"), new Responder(dialect, this, talkContext));
+            this.service.triggerEvent(dialect.getParamAsJson("event"), new Responder(dialect, this, talkContext));
         }
         else if (HubAction.TransmitSignal.name.equals(action)) {
-            // TODO
+            this.service.transmitSignal(dialect.getParamAsJson("signal"), new Responder(dialect, this, talkContext));
         }
         else {
             Logger.w(this.getClass(), "No support action : " + action);

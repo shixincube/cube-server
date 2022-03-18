@@ -24,47 +24,27 @@
  * SOFTWARE.
  */
 
-package cube.service.hub;
+package cube.hub;
 
-import cell.core.cellet.Cellet;
-import cell.core.talk.TalkContext;
-import cell.core.talk.dialect.ActionDialect;
+import cube.hub.signal.ReadySignal;
+import cube.hub.signal.Signal;
 import org.json.JSONObject;
 
 /**
- * 应答机。
+ * 信令构建器。
  */
-public class Responder {
+public class SignalBuilder {
 
-    private final static String ParamName = "_notifier";
-
-    private Cellet cellet;
-
-    private TalkContext talkContext;
-
-    private JSONObject notifier;
-    private String name;
-
-    public Responder(ActionDialect request, Cellet cellet, TalkContext talkContext) {
-        this.notifier = request.getParamAsJson(ParamName);
-        this.name = request.getName();
-        this.cellet = cellet;
-        this.talkContext = talkContext;
+    private SignalBuilder() {
     }
 
-    public TalkContext getTalkContext() {
-        return this.talkContext;
-    }
+    public static Signal build(JSONObject signalJson) {
+        String name = signalJson.getString("name");
 
-    public String getClientAddress() {
-        return this.talkContext.getSessionHost();
-    }
+        if (ReadySignal.NAME.equals(name)) {
+            return new ReadySignal(signalJson);
+        }
 
-    public void respond(int code, JSONObject data) {
-        ActionDialect actionDialect = new ActionDialect(this.name);
-        actionDialect.addParam(ParamName, this.notifier);
-        actionDialect.addParam("code", code);
-        actionDialect.addParam("data", data);
-        this.cellet.speak(this.talkContext, actionDialect);
+        return null;
     }
 }

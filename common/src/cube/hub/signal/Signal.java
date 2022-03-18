@@ -27,6 +27,7 @@
 package cube.hub.signal;
 
 import cube.common.JSONable;
+import cube.common.entity.ClientDescription;
 import org.json.JSONObject;
 
 /**
@@ -36,22 +37,42 @@ public abstract class Signal implements JSONable {
 
     private final String name;
 
+    private ClientDescription description;
+
     public Signal(String name) {
         this.name = name;
     }
 
+    public Signal(String name, ClientDescription description) {
+        this.name = name;
+        this.description = description;
+    }
+
     public Signal(JSONObject json) {
         this.name = json.getString("name");
+
+        if (json.has("description")) {
+            this.description = new ClientDescription(json.getJSONObject("description"));
+        }
     }
 
     public String getName() {
         return this.name;
     }
 
+    public ClientDescription getDescription() {
+        return this.description;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
+
+        if (null != this.description) {
+            json.put("description", this.description.toCompactJSON());
+        }
+
         return json;
     }
 

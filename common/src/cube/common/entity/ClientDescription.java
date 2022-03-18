@@ -57,6 +57,10 @@ public class ClientDescription extends Entity {
         this.name = json.getString("name");
         this.password = json.has("password") ? json.getString("password") : null;
         this.state = ClientState.parse(json.getInt("state"));
+
+        if (json.has("pretender")) {
+            this.pretender = new Contact(json.getJSONObject("pretender"));
+        }
     }
 
     public String getName() {
@@ -75,21 +79,27 @@ public class ClientDescription extends Entity {
         return this.pretender;
     }
 
+    public void setPretender(Contact pretender) {
+        this.pretender = pretender;
+    }
+
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
         buf.append("(");
         buf.append(this.name);
+        if (null != this.pretender) {
+            buf.append("|");
+            buf.append(this.pretender.getId());
+        }
         buf.append(")");
         return buf.toString();
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("name", this.name);
+        JSONObject json = this.toCompactJSON();
         json.put("password", this.password);
-        json.put("state", this.state.code);
         return json;
     }
 
@@ -98,6 +108,9 @@ public class ClientDescription extends Entity {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
         json.put("state", this.state.code);
+        if (null != this.pretender) {
+            json.put("pretender", this.pretender.toCompactJSON());
+        }
         return json;
     }
 }

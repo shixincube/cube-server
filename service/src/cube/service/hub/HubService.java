@@ -32,10 +32,13 @@ import cube.common.entity.Message;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
+import cube.hub.SignalBuilder;
 import cube.hub.event.Event;
 import cube.hub.EventBuilder;
 import cube.hub.HubStateCode;
 import cube.hub.Type;
+import cube.hub.signal.ReadySignal;
+import cube.hub.signal.Signal;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
@@ -92,14 +95,30 @@ public class HubService extends AbstractModule {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                ClientDescription description = new ClientDescription(data.getJSONObject("client"));
-
                 // 解析事件
-                Event event = EventBuilder.build(data.getJSONObject("event"));
+                Event event = EventBuilder.build(data);
 
-                EventController.getInstance().receive(event, description);
+                EventController.getInstance().receive(event);
 
                 responder.respond(HubStateCode.Ok.code, new JSONObject());
+            }
+        });
+    }
+
+    public void transmitSignal(JSONObject data, Responder responder) {
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                // 解析信令
+                Signal signal = SignalBuilder.build(data);
+
+                if (ReadySignal.NAME.equals(signal.getName())) {
+                    ((ReadySignal)signal).talkContext = responder.getTalkContext();
+                }
+
+                Signal ack = SignalController.getInstance().receive(signal);
+
+                responder.respond(HubStateCode.Ok.code, ack.toJSON());
             }
         });
     }
@@ -185,9 +204,8 @@ public class HubService extends AbstractModule {
                             JSONObject payload = message.getPayload();
                             String type = payload.getString("type");
                             if (Type.Event.equals(type)) {
-                                ClientDescription description = new ClientDescription(payload.getJSONObject("client"));
-                                Event event = EventBuilder.build(payload.getJSONObject("data"));
-                                EventController.getInstance().receive(event, description);
+                                Event event = EventBuilder.build(payload.getJSONObject("event"));
+                                EventController.getInstance().receive(event);
                             }
                             else if (Type.Signal.equals(type)) {
                                 // TODO

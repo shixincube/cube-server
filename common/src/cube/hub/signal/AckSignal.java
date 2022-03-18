@@ -24,47 +24,22 @@
  * SOFTWARE.
  */
 
-package cube.service.hub;
+package cube.hub.signal;
 
-import cell.core.cellet.Cellet;
-import cell.core.talk.TalkContext;
-import cell.core.talk.dialect.ActionDialect;
 import org.json.JSONObject;
 
 /**
- * 应答机。
+ * 应答信令。
  */
-public class Responder {
+public class AckSignal extends Signal {
 
-    private final static String ParamName = "_notifier";
+    public final static String NAME = "Ack";
 
-    private Cellet cellet;
-
-    private TalkContext talkContext;
-
-    private JSONObject notifier;
-    private String name;
-
-    public Responder(ActionDialect request, Cellet cellet, TalkContext talkContext) {
-        this.notifier = request.getParamAsJson(ParamName);
-        this.name = request.getName();
-        this.cellet = cellet;
-        this.talkContext = talkContext;
+    public AckSignal() {
+        super(NAME);
     }
 
-    public TalkContext getTalkContext() {
-        return this.talkContext;
-    }
-
-    public String getClientAddress() {
-        return this.talkContext.getSessionHost();
-    }
-
-    public void respond(int code, JSONObject data) {
-        ActionDialect actionDialect = new ActionDialect(this.name);
-        actionDialect.addParam(ParamName, this.notifier);
-        actionDialect.addParam("code", code);
-        actionDialect.addParam("data", data);
-        this.cellet.speak(this.talkContext, actionDialect);
+    public AckSignal(JSONObject json) {
+        super(json);
     }
 }

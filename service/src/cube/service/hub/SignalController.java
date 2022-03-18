@@ -28,43 +28,43 @@ package cube.service.hub;
 
 import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
-import cell.core.talk.dialect.ActionDialect;
-import org.json.JSONObject;
+import cube.common.entity.ClientDescription;
+import cube.hub.signal.AckSignal;
+import cube.hub.signal.ReadySignal;
+import cube.hub.signal.Signal;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 应答机。
+ * 信令控制中心。
  */
-public class Responder {
+public class SignalController {
 
-    private final static String ParamName = "_notifier";
+    private final static SignalController instance = new SignalController();
+
+    private ConcurrentHashMap<Long, TalkContext> pretenderIdMap;
 
     private Cellet cellet;
 
-    private TalkContext talkContext;
-
-    private JSONObject notifier;
-    private String name;
-
-    public Responder(ActionDialect request, Cellet cellet, TalkContext talkContext) {
-        this.notifier = request.getParamAsJson(ParamName);
-        this.name = request.getName();
-        this.cellet = cellet;
-        this.talkContext = talkContext;
+    private SignalController() {
+        this.pretenderIdMap = new ConcurrentHashMap<>();
     }
 
-    public TalkContext getTalkContext() {
-        return this.talkContext;
+    public final static SignalController getInstance() {
+        return SignalController.instance;
     }
 
-    public String getClientAddress() {
-        return this.talkContext.getSessionHost();
+    public Signal receive(Signal signal) {
+        if (ReadySignal.NAME.equals(signal.getName())) {
+            ReadySignal readySignal = (ReadySignal) signal;
+            this.pretenderIdMap.put(readySignal.getDescription().getPretender().getId(),
+                    readySignal.talkContext);
+        }
+
+        return new AckSignal();
     }
 
-    public void respond(int code, JSONObject data) {
-        ActionDialect actionDialect = new ActionDialect(this.name);
-        actionDialect.addParam(ParamName, this.notifier);
-        actionDialect.addParam("code", code);
-        actionDialect.addParam("data", data);
-        this.cellet.speak(this.talkContext, actionDialect);
+    private void transmit(Long pretenderId) {
+
     }
 }
