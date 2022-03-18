@@ -24,28 +24,16 @@
  * SOFTWARE.
  */
 
-package cube.hub;
+package cube.hub.signal;
 
 /**
- * Hub 动作。
+ * 就绪信号。
  */
-public enum HubAction {
+public class ReadySignal extends Signal {
 
-    /**
-     * 触发事件。
-     */
-    TriggerEvent("triggerEvent"),
+    public final static String NAME = "Ready";
 
-    /**
-     * 传输信号。
-     */
-    TransmitSignal("transmitSignal"),
-
-    ;
-
-    public final String name;
-
-    HubAction(String name) {
-        this.name = name;
+    public ReadySignal() {
+        super(NAME);
     }
 }

@@ -32,7 +32,7 @@ import cube.common.entity.Message;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
-import cube.hub.Event;
+import cube.hub.event.Event;
 import cube.hub.EventBuilder;
 import cube.hub.HubStateCode;
 import cube.hub.Type;

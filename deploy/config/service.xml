@@ -58,6 +58,9 @@
 		<cellet port="6000">
 			<class>cube.service.fileprocessor.FileProcessorServiceCellet</class>
 		</cellet>
+		<cellet port="6000">
+			<class>cube.service.hub.HubCellet</class>
+		</cellet>
 		<cellet port="6000" jar="cellets/cube-service-messaging-3.0.jar">
 			<class>cube.service.messaging.MessagingServiceCellet</class>
 		</cellet>

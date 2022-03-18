@@ -26,8 +26,9 @@
 
 package cube.service.hub;
 
+import cell.util.log.Logger;
 import cube.common.entity.ClientDescription;
-import cube.hub.Event;
+import cube.hub.event.Event;
 import cube.hub.Product;
 import cube.hub.event.LoginQRCodeEvent;
 import cube.hub.event.SubmitMessagesEvent;
@@ -61,7 +62,13 @@ public class EventController {
     public void receive(Event event, ClientDescription clientDescription) {
         if (event.getProduct() == Product.WeChat) {
             if (SubmitMessagesEvent.NAME.equals(event.getName())) {
-                SubmitMessagesEvent nme = (SubmitMessagesEvent) event;
+                SubmitMessagesEvent submitMessagesEvent = (SubmitMessagesEvent) event;
+
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "Event [" + submitMessagesEvent.getName() + "]"
+                        + " - " + clientDescription.toString());
+                }
+
 
             }
             else if (LoginQRCodeEvent.NAME.equals(event.getName())) {

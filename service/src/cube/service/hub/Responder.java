@@ -52,6 +52,10 @@ public class Responder {
         this.talkContext = talkContext;
     }
 
+    public String getClientAddress() {
+        return this.talkContext.getSessionHost();
+    }
+
     public void respond(int code, JSONObject data) {
         ActionDialect actionDialect = new ActionDialect(this.name);
         actionDialect.addParam(ParamName, this.notifier);

@@ -26,6 +26,7 @@
 
 package cube.hub;
 
+import cube.hub.event.Event;
 import cube.hub.event.LoginQRCodeEvent;
 import cube.hub.event.SubmitMessagesEvent;
 import org.json.JSONObject;

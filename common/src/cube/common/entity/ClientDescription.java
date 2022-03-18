@@ -39,6 +39,8 @@ public class ClientDescription extends Entity {
 
     private ClientState state;
 
+    private Contact pretender;
+
     public ClientDescription(String name, String password) {
         this.name = name;
         this.password = password;
@@ -67,6 +69,19 @@ public class ClientDescription extends Entity {
 
     public ClientState getState() {
         return this.state;
+    }
+
+    public Contact getPretender() {
+        return this.pretender;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("(");
+        buf.append(this.name);
+        buf.append(")");
+        return buf.toString();
     }
 
     @Override

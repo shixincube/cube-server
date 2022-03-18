@@ -24,28 +24,39 @@
  * SOFTWARE.
  */
 
-package cube.hub;
+package cube.hub.signal;
+
+import cube.common.JSONable;
+import org.json.JSONObject;
 
 /**
- * Hub 动作。
+ * 信号。
  */
-public enum HubAction {
+public abstract class Signal implements JSONable {
 
-    /**
-     * 触发事件。
-     */
-    TriggerEvent("triggerEvent"),
+    private final String name;
 
-    /**
-     * 传输信号。
-     */
-    TransmitSignal("transmitSignal"),
-
-    ;
-
-    public final String name;
-
-    HubAction(String name) {
+    public Signal(String name) {
         this.name = name;
+    }
+
+    public Signal(JSONObject json) {
+        this.name = json.getString("name");
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("name", this.name);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

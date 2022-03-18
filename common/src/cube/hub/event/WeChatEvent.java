@@ -27,7 +27,6 @@
 package cube.hub.event;
 
 import cube.common.entity.Contact;
-import cube.hub.Event;
 import cube.hub.Product;
 import org.json.JSONObject;
 

@@ -24,10 +24,11 @@
  * SOFTWARE.
  */
 
-package cube.hub;
+package cube.hub.event;
 
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
+import cube.hub.Product;
 import org.json.JSONObject;
 
 import java.io.File;
