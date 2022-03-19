@@ -24,29 +24,33 @@
  * SOFTWARE.
  */
 
-package cube.service.hub;
+package cube.hub.dao;
 
-import cube.core.Storage;
-import cube.storage.StorageFactory;
-import cube.storage.StorageType;
-import org.json.JSONObject;
+import cube.hub.Product;
 
 /**
- * 授权管理器。
+ * 通道码。
  */
-public class AuthManager {
+public class ChannelCode {
 
-    private Storage storage;
+    public final long id;
 
-    public AuthManager(JSONObject config) {
-        this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL, "HubAuth", config);
-    }
+    public final String code;
 
-    public void start() {
-        this.storage.open();
-    }
+    public final long creation;
 
-    public void stop() {
-        this.storage.close();
+    public final long expiration;
+
+    public final Product product;
+
+    public final int state;
+
+    public ChannelCode(long id, String code, long creation, long expiration, Product product, int state) {
+        this.id = id;
+        this.code = code;
+        this.creation = creation;
+        this.expiration = expiration;
+        this.product = product;
+        this.state = state;
     }
 }

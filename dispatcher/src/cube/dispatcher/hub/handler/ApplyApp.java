@@ -26,6 +26,7 @@
 
 package cube.dispatcher.hub.handler;
 
+import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
 
 /**
@@ -33,7 +34,12 @@ import cube.util.CrossDomainHandler;
  */
 public class ApplyApp extends CrossDomainHandler {
 
-    public ApplyApp() {
+    public final static String CONTEXT_PATH = "/hub/apply/";
+
+    private Performer performer;
+
+    public ApplyApp(Performer performer) {
         super();
+        this.performer = performer;
     }
 }

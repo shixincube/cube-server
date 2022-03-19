@@ -32,7 +32,10 @@ import cell.core.talk.TalkContext;
 import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.fileprocessor.handler.MediaStreamHandler;
+import cube.dispatcher.hub.handler.ApplyApp;
 import cube.util.HttpServer;
+import org.eclipse.jetty.server.handler.ContextHandler;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -113,5 +116,10 @@ public class HubCellet extends AbstractCellet {
     private void setupHandler() {
         HttpServer httpServer = this.performer.getHttpServer();
 
+        // 申请应用
+        ContextHandler applyAppHandler = new ContextHandler();
+        applyAppHandler.setContextPath(ApplyApp.CONTEXT_PATH);
+        applyAppHandler.setHandler(new ApplyApp(this.performer));
+        httpServer.addContextHandler(applyAppHandler);
     }
 }

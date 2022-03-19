@@ -42,9 +42,9 @@ import cube.hub.signal.Signal;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
+import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
@@ -63,6 +63,8 @@ public class HubService extends AbstractModule {
     private SignalController signalController;
     private EventController eventController;
 
+    private ChannelManager channelManager;
+
     private Queue<Message> messageQueue;
     private boolean queueProcessing;
 
@@ -78,10 +80,17 @@ public class HubService extends AbstractModule {
         this.signalController = new SignalController(this.cellet);
         this.eventController = new EventController();
 
+        JSONObject config = ConfigUtils.readStorageConfig();
+        if (config.has(NAME)) {
+            this.channelManager = new ChannelManager(config.getJSONObject(NAME));
+        }
+
         (new Thread() {
             @Override
             public void run() {
                 setupMessagingPlugin();
+
+                channelManager.start();
             }
         }).start();
 
@@ -90,7 +99,9 @@ public class HubService extends AbstractModule {
 
     @Override
     public void stop() {
-
+        if (null != this.channelManager) {
+            this.channelManager.stop();
+        }
     }
 
     @Override
@@ -148,10 +159,6 @@ public class HubService extends AbstractModule {
             }
         });
     }
-
-//    public File getFileByCode(String fileCode) {
-//        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
-//    }
 
     private void setupMessagingPlugin() {
         Kernel kernel = this.getKernel();
