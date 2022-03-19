@@ -29,6 +29,7 @@ package cube.service.hub;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.hub.HubAction;
+import cube.hub.event.Event;
 import cube.hub.signal.AckSignal;
 import cube.hub.signal.PassBySignal;
 import cube.hub.signal.ReadySignal;
@@ -44,24 +45,22 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class SignalController {
 
-    private final static SignalController instance = new SignalController();
-
     private ConcurrentHashMap<Long, TalkContext> pretenderIdMap;
 
     private HubCellet cellet;
 
-    private SignalController() {
-        this.pretenderIdMap = new ConcurrentHashMap<>();
-    }
+    private ConcurrentHashMap<Long, Signal> blockingSignalMap;
 
-    public final static SignalController getInstance() {
-        return SignalController.instance;
-    }
-
-    public void setCellet(HubCellet cellet) {
+    public SignalController(HubCellet cellet) {
         this.cellet = cellet;
+        this.pretenderIdMap = new ConcurrentHashMap<>();
+        this.blockingSignalMap = new ConcurrentHashMap<>();
     }
 
+    /**
+     * 删除客户端。
+     * @param talkContext
+     */
     public void removeClient(TalkContext talkContext) {
         Iterator<Map.Entry<Long, TalkContext>> iter = this.pretenderIdMap.entrySet().iterator();
         while (iter.hasNext()) {
@@ -83,6 +82,47 @@ public class SignalController {
         actionDialect.addParam("signal", signal.toJSON());
 
         this.cellet.speak(talkContext, actionDialect);
+        return true;
+    }
+
+    public Event transmitSyncEvent(Long pretenderId, Signal signal) {
+        TalkContext talkContext = this.pretenderIdMap.get(pretenderId);
+        if (null == talkContext) {
+            return null;
+        }
+
+        this.blockingSignalMap.put(signal.getSerialNumber(), signal);
+
+        ActionDialect actionDialect = new ActionDialect(HubAction.TransmitSignal.name);
+        actionDialect.addParam("signal", signal.toJSON());
+
+        this.cellet.speak(talkContext, actionDialect);
+
+        synchronized (signal) {
+            try {
+                signal.wait(5 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        this.blockingSignalMap.remove(signal.getSerialNumber());
+
+        return signal.event;
+    }
+
+    public boolean capture(Event event) {
+        Signal signal = this.blockingSignalMap.remove(event.getSerialNumber());
+        if (null == signal) {
+            return false;
+        }
+
+        signal.event = event;
+
+        synchronized (signal) {
+            signal.notify();
+        }
+
         return true;
     }
 

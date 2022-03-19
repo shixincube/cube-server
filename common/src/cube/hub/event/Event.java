@@ -26,6 +26,7 @@
 
 package cube.hub.event;
 
+import cell.util.Utils;
 import cube.common.JSONable;
 import cube.common.entity.ClientDescription;
 import cube.common.entity.FileLabel;
@@ -39,6 +40,8 @@ import java.io.File;
  */
 public abstract class Event implements JSONable {
 
+    private long sn;
+
     protected Product product;
 
     protected String name;
@@ -51,17 +54,33 @@ public abstract class Event implements JSONable {
 
     public Event(Product product, String name) {
         this.product = product;
+        this.sn = Utils.generateSerialNumber();
         this.name = name;
     }
 
     public Event(Product product, String name, File file) {
         this.product = product;
+        this.sn = Utils.generateSerialNumber();
+        this.name = name;
+        this.file = file;
+    }
+
+    public Event(Product product, long sn, String name) {
+        this.product = product;
+        this.sn = sn;
+        this.name = name;
+    }
+
+    public Event(Product product, long sn, String name, File file) {
+        this.product = product;
+        this.sn = sn;
         this.name = name;
         this.file = file;
     }
 
     public Event(JSONObject json) {
         this.product = Product.parse(json.getString("product"));
+        this.sn = json.getLong("sn");
         this.name = json.getString("name");
 
         if (json.has("fileLabel")) {
@@ -71,6 +90,10 @@ public abstract class Event implements JSONable {
         if (json.has("description")) {
             this.description = new ClientDescription(json.getJSONObject("description"));
         }
+    }
+
+    public long getSerialNumber() {
+        return this.sn;
     }
 
     public Product getProduct() {
@@ -105,6 +128,7 @@ public abstract class Event implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("product", this.product.name);
+        json.put("sn", this.sn);
         json.put("name", this.name);
 
         if (null != this.fileLabel) {

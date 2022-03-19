@@ -28,16 +28,15 @@ package cube.service.hub;
 
 import cell.core.talk.TalkContext;
 import cell.util.log.Logger;
-import cube.common.entity.ClientDescription;
 import cube.common.entity.Message;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
-import cube.hub.SignalBuilder;
-import cube.hub.event.Event;
 import cube.hub.EventBuilder;
 import cube.hub.HubStateCode;
+import cube.hub.SignalBuilder;
 import cube.hub.Type;
+import cube.hub.event.Event;
 import cube.hub.signal.ReadySignal;
 import cube.hub.signal.Signal;
 import cube.plugin.Plugin;
@@ -45,6 +44,7 @@ import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
@@ -60,6 +60,9 @@ public class HubService extends AbstractModule {
 
     private ExecutorService executor;
 
+    private SignalController signalController;
+    private EventController eventController;
+
     private Queue<Message> messageQueue;
     private boolean queueProcessing;
 
@@ -72,7 +75,8 @@ public class HubService extends AbstractModule {
 
     @Override
     public void start() {
-        SignalController.getInstance().setCellet(this.cellet);
+        this.signalController = new SignalController(this.cellet);
+        this.eventController = new EventController();
 
         (new Thread() {
             @Override
@@ -80,6 +84,8 @@ public class HubService extends AbstractModule {
                 setupMessagingPlugin();
             }
         }).start();
+
+        WeChatHub.getInstance().setService(this);
     }
 
     @Override
@@ -94,11 +100,18 @@ public class HubService extends AbstractModule {
 
     @Override
     public void onTick(Module module, Kernel kernel) {
-
     }
 
-    public void onQuitted(TalkContext talkContext) {
-        SignalController.getInstance().removeClient(talkContext);
+    public EventController getEventController() {
+        return this.eventController;
+    }
+
+    public SignalController getSignalController() {
+        return this.signalController;
+    }
+
+    public void quit(TalkContext talkContext) {
+        this.signalController.removeClient(talkContext);
     }
 
     public void triggerEvent(JSONObject data, Responder responder) {
@@ -108,7 +121,10 @@ public class HubService extends AbstractModule {
                 // 解析事件
                 Event event = EventBuilder.build(data);
 
-                EventController.getInstance().receive(event);
+                // 捕获是否是阻塞事件
+                if (!signalController.capture(event)) {
+                    eventController.receive(event);
+                }
 
                 responder.respond(HubStateCode.Ok.code, new JSONObject());
             }
@@ -126,12 +142,16 @@ public class HubService extends AbstractModule {
                     ((ReadySignal)signal).talkContext = responder.getTalkContext();
                 }
 
-                Signal ack = SignalController.getInstance().receive(signal);
+                Signal ack = signalController.receive(signal);
 
                 responder.respond(HubStateCode.Ok.code, ack.toJSON());
             }
         });
     }
+
+//    public File getFileByCode(String fileCode) {
+//        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+//    }
 
     private void setupMessagingPlugin() {
         Kernel kernel = this.getKernel();
@@ -215,10 +235,11 @@ public class HubService extends AbstractModule {
                             String type = payload.getString("type");
                             if (Type.Event.equals(type)) {
                                 Event event = EventBuilder.build(payload.getJSONObject("event"));
-                                EventController.getInstance().receive(event);
+                                eventController.receive(event);
                             }
                             else if (Type.Signal.equals(type)) {
-                                // TODO
+                                Signal signal = SignalBuilder.build(payload.getJSONObject("signal"));
+                                signalController.receive(signal);
                             }
                         }
 

@@ -28,35 +28,27 @@ package cube.service.hub;
 
 import cell.util.log.Logger;
 import cube.common.entity.ClientDescription;
-import cube.hub.event.Event;
 import cube.hub.Product;
+import cube.hub.event.Event;
 import cube.hub.event.LoginQRCodeEvent;
+import cube.hub.event.ReportEvent;
 import cube.hub.event.SubmitMessagesEvent;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * 事件控制器。
  */
 public class EventController {
 
-    private final static EventController instance = new EventController();
-
     /**
-     * WeChat 实时队列。
+     * WeChat 事件对应映射。
      */
-    private ConcurrentLinkedQueue<Event> weChatRTEventQueue;
+    private ConcurrentHashMap<Long, List<Event>> weChatEventMap;
 
-    private ConcurrentHashMap<String, ConcurrentLinkedQueue<Event>> weChatEventMap;
-
-    private EventController() {
-        this.weChatRTEventQueue = new ConcurrentLinkedQueue<>();
+    public EventController() {
         this.weChatEventMap = new ConcurrentHashMap<>();
-    }
-
-    public final static EventController getInstance() {
-        return EventController.instance;
     }
 
     public void receive(Event event) {
@@ -74,8 +66,11 @@ public class EventController {
 
 
             }
+            else if (ReportEvent.NAME.equals(event.getName())) {
+                WeChatHub.getInstance().updateReport((ReportEvent) event);
+            }
             else if (LoginQRCodeEvent.NAME.equals(event.getName())) {
-                this.weChatRTEventQueue.offer(event);
+
             }
         }
     }

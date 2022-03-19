@@ -26,8 +26,10 @@
 
 package cube.hub.signal;
 
+import cell.util.Utils;
 import cube.common.JSONable;
 import cube.common.entity.ClientDescription;
+import cube.hub.event.Event;
 import org.json.JSONObject;
 
 /**
@@ -35,25 +37,36 @@ import org.json.JSONObject;
  */
 public abstract class Signal implements JSONable {
 
+    private long sn;
+
     private final String name;
 
     private ClientDescription description;
 
+    public Event event;
+
     public Signal(String name) {
+        this.sn = Utils.generateSerialNumber();
         this.name = name;
     }
 
     public Signal(String name, ClientDescription description) {
+        this.sn = Utils.generateSerialNumber();
         this.name = name;
         this.description = description;
     }
 
     public Signal(JSONObject json) {
+        this.sn = json.getLong("sn");
         this.name = json.getString("name");
 
         if (json.has("description")) {
             this.description = new ClientDescription(json.getJSONObject("description"));
         }
+    }
+
+    public long getSerialNumber() {
+        return this.sn;
     }
 
     public String getName() {
@@ -71,6 +84,7 @@ public abstract class Signal implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
         json.put("name", this.name);
 
         if (null != this.description) {

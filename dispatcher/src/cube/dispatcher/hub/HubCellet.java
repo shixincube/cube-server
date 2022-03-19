@@ -24,76 +24,94 @@
  * SOFTWARE.
  */
 
-package cube.service.hub;
+package cube.dispatcher.hub;
 
-import cell.api.Servable;
 import cell.core.talk.Primitive;
+import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkContext;
-import cell.core.talk.dialect.ActionDialect;
-import cell.core.talk.dialect.DialectFactory;
 import cell.util.CachedQueueExecutor;
-import cell.util.log.Logger;
 import cube.core.AbstractCellet;
-import cube.core.Kernel;
-import cube.hub.HubAction;
+import cube.dispatcher.Performer;
+import cube.util.HttpServer;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
 /**
- * Hub 服务的 Cellet 单元。
+ * Hub 模块的 Cellet 服务单元。
  */
 public class HubCellet extends AbstractCellet {
 
+    /**
+     * Cellet 名称。
+     */
+    public final static String NAME = "Signal";
+
+    /**
+     * 线程池。
+     */
     private ExecutorService executor;
 
-    private HubService service;
+    /**
+     * 执行机。
+     */
+    private Performer performer;
+
+    /**
+     * 任务缓存队列。
+     */
+    private ConcurrentLinkedQueue<PassThroughTask> taskQueue;
 
     public HubCellet() {
-        super(HubService.NAME);
+        super(HubCellet.NAME);
+        this.taskQueue = new ConcurrentLinkedQueue<>();
     }
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
-
-        this.service = new HubService(this, this.executor);
-        Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
-        kernel.installModule(HubService.NAME, this.service);
-
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(4);
+        this.performer = (Performer) this.getNucleus().getParameter("performer");
         return true;
     }
 
     @Override
     public void uninstall() {
         this.executor.shutdown();
-
-        Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
-        kernel.uninstallModule(HubService.NAME);
-
-        this.service = null;
     }
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
 
-        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
-        String action = dialect.getName();
-
-        if (HubAction.TriggerEvent.name.equals(action)) {
-            this.service.triggerEvent(dialect.getParamAsJson("event"), new Responder(dialect, this, talkContext));
-        }
-        else if (HubAction.TransmitSignal.name.equals(action)) {
-            this.service.transmitSignal(dialect.getParamAsJson("signal"), new Responder(dialect, this, talkContext));
-        }
-        else {
-            Logger.w(this.getClass(), "No support action : " + action);
-        }
+        this.executor.execute(this.borrowTask(talkContext, primitive, true));
     }
 
     @Override
-    public void onQuitted(TalkContext talkContext, Servable servable) {
-        super.onQuitted(talkContext, servable);
-        this.service.quit(talkContext);
+    public void onListened(TalkContext talkContext, PrimitiveInputStream primitiveStream) {
+        super.onListened(talkContext, primitiveStream);
+    }
+
+    protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive, boolean sync) {
+        PassThroughTask task = this.taskQueue.poll();
+        if (null == task) {
+            task = new PassThroughTask(this, talkContext, primitive, this.performer, sync);
+            task.responseTime = this.markResponseTime(task.getAction().getName());
+            return task;
+        }
+
+        task.reset(talkContext, primitive, sync);
+        task.responseTime = this.markResponseTime(task.getAction().getName());
+        return task;
+    }
+
+    protected void returnTask(PassThroughTask task) {
+        task.markResponseTime();
+
+        this.taskQueue.offer(task);
+    }
+
+    private void setupHandler() {
+        HttpServer httpServer = this.performer.getHttpServer();
+
     }
 }

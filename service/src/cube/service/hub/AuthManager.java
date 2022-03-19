@@ -26,5 +26,27 @@
 
 package cube.service.hub;
 
+import cube.core.Storage;
+import cube.storage.StorageFactory;
+import cube.storage.StorageType;
+import org.json.JSONObject;
+
+/**
+ * 授权管理器。
+ */
 public class AuthManager {
+
+    private Storage storage;
+
+    public AuthManager(JSONObject config) {
+        this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL, "HubAuth", config);
+    }
+
+    public void start() {
+        this.storage.open();
+    }
+
+    public void stop() {
+        this.storage.close();
+    }
 }

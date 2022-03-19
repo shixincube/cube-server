@@ -14,7 +14,7 @@
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *ø
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,24 +24,16 @@
  * SOFTWARE.
  */
 
-package cube.hub.event;
+package cube.dispatcher.hub.handler;
 
-import org.json.JSONObject;
-
-import java.io.File;
+import cube.util.CrossDomainHandler;
 
 /**
- * 登录二维码事件。
+ * 申请应用。
  */
-public class LoginQRCodeEvent extends WeChatEvent {
+public class ApplyApp extends CrossDomainHandler {
 
-    public final static String NAME = "LoginQRCode";
-
-    public LoginQRCodeEvent(long sn, File file) {
-        super(sn, NAME, file);
-    }
-
-    public LoginQRCodeEvent(JSONObject json) {
-        super(json);
+    public ApplyApp() {
+        super();
     }
 }

@@ -177,7 +177,6 @@ public class ClientCellet extends AbstractCellet {
     @Override
     public void onQuitted(TalkContext talkContext, Servable servable) {
         super.onQuitted(talkContext, servable);
-
         ClientManager.getInstance().quit(talkContext);
     }
 

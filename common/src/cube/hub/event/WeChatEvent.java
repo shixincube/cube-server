@@ -43,8 +43,16 @@ public abstract class WeChatEvent extends Event {
         super(Product.WeChat, name);
     }
 
+    public WeChatEvent(long sn, String name) {
+        super(Product.WeChat, sn, name);
+    }
+
     public WeChatEvent(String name, File file) {
         super(Product.WeChat, name, file);
+    }
+
+    public WeChatEvent(long sn, String name, File file) {
+        super(Product.WeChat, sn, name, file);
     }
 
     public WeChatEvent(String name, Contact account) {
