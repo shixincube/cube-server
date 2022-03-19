@@ -26,6 +26,7 @@
 
 package cube.service.hub;
 
+import cell.api.Servable;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
@@ -55,11 +56,9 @@ public class HubCellet extends AbstractCellet {
     public boolean install() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
 
-        this.service = new HubService(this.executor);
+        this.service = new HubService(this, this.executor);
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.installModule(HubService.NAME, this.service);
-
-        SignalController.getInstance().setCellet(this);
 
         return true;
     }
@@ -90,5 +89,11 @@ public class HubCellet extends AbstractCellet {
         else {
             Logger.w(this.getClass(), "No support action : " + action);
         }
+    }
+
+    @Override
+    public void onQuitted(TalkContext talkContext, Servable servable) {
+        super.onQuitted(talkContext, servable);
+        this.service.onQuitted(talkContext);
     }
 }

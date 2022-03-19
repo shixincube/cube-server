@@ -27,6 +27,8 @@
 package cube.service.hub;
 
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cube.hub.HubAction;
 import cube.hub.signal.AckSignal;
 import cube.hub.signal.PassBySignal;
 import cube.hub.signal.ReadySignal;
@@ -60,7 +62,27 @@ public class SignalController {
         this.cellet = cellet;
     }
 
-    public boolean send(Signal signal) {
+    public void removeClient(TalkContext talkContext) {
+        Iterator<Map.Entry<Long, TalkContext>> iter = this.pretenderIdMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<Long, TalkContext> entry = iter.next();
+            if (entry.getValue() == talkContext) {
+                iter.remove();
+                break;
+            }
+        }
+    }
+
+    public boolean transmit(Long pretenderId, Signal signal) {
+        TalkContext talkContext = this.pretenderIdMap.get(pretenderId);
+        if (null == talkContext) {
+            return false;
+        }
+
+        ActionDialect actionDialect = new ActionDialect(HubAction.TransmitSignal.name);
+        actionDialect.addParam("signal", signal.toJSON());
+
+        this.cellet.speak(talkContext, actionDialect);
         return true;
     }
 
@@ -89,12 +111,33 @@ public class SignalController {
                     continue;
                 }
 
+                TalkContext talkContext = entry.getValue();
+                if (!talkContext.isValid()) {
+                    iter.remove();
+                    continue;
+                }
+
                 List<Signal> signalList = passBySignal.getSignals();
+                for (Signal signal : signalList) {
+                    ActionDialect actionDialect = new ActionDialect(HubAction.TransmitSignal.name);
+                    actionDialect.addParam("signal", signal.toJSON());
+
+                    this.cellet.speak(talkContext, actionDialect);
+                }
             }
         }
-    }
+        else {
+            List<Long> destinations = passBySignal.getDestinations();
+            if (null == destinations) {
+                return;
+            }
 
-    private void transmit(Long pretenderId) {
-
+            for (Long id : destinations) {
+                List<Signal> signalList = passBySignal.getSignals();
+                for (Signal signal : signalList) {
+                    this.transmit(id, signal);
+                }
+            }
+        }
     }
 }

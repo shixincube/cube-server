@@ -26,6 +26,7 @@
 
 package cube.service.hub;
 
+import cell.core.talk.TalkContext;
 import cell.util.log.Logger;
 import cube.common.entity.ClientDescription;
 import cube.common.entity.Message;
@@ -55,12 +56,15 @@ public class HubService extends AbstractModule {
 
     public final static String NAME = "Hub";
 
+    private HubCellet cellet;
+
     private ExecutorService executor;
 
     private Queue<Message> messageQueue;
     private boolean queueProcessing;
 
-    public HubService(ExecutorService executor) {
+    public HubService(HubCellet cellet, ExecutorService executor) {
+        this.cellet = cellet;
         this.executor = executor;
         this.messageQueue = new LinkedList<>();
         this.queueProcessing = false;
@@ -68,6 +72,8 @@ public class HubService extends AbstractModule {
 
     @Override
     public void start() {
+        SignalController.getInstance().setCellet(this.cellet);
+
         (new Thread() {
             @Override
             public void run() {
@@ -89,6 +95,10 @@ public class HubService extends AbstractModule {
     @Override
     public void onTick(Module module, Kernel kernel) {
 
+    }
+
+    public void onQuitted(TalkContext talkContext) {
+        SignalController.getInstance().removeClient(talkContext);
     }
 
     public void triggerEvent(JSONObject data, Responder responder) {
