@@ -27,6 +27,7 @@
 package cube.dispatcher.hub.handler;
 
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.dispatcher.Performer;
 import cube.dispatcher.hub.HubCellet;
 import cube.hub.EventBuilder;
@@ -59,7 +60,7 @@ public class OpenChannel extends CrossDomainHandler {
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
-        String code = request.getParameter("code");
+        String code = request.getParameter("c");
         if (null == code || code.length() == 0) {
             response.setStatus(HttpStatus.BAD_REQUEST_400);
             this.complete();
@@ -72,7 +73,7 @@ public class OpenChannel extends CrossDomainHandler {
         ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
         actionDialect.addParam("signal", requestSignal.toJSON());
 
-        ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect);
+        ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect, 2 * 60 * 1000);
         if (null == result) {
             response.setStatus(HttpStatus.FORBIDDEN_403);
             this.complete();
@@ -81,6 +82,7 @@ public class OpenChannel extends CrossDomainHandler {
 
         int stateCode = result.getParamAsInt("code");
         if (HubStateCode.Ok.code != stateCode) {
+            Logger.w(this.getClass(), "#doGet - state : " + stateCode);
             response.setStatus(HttpStatus.UNAUTHORIZED_401);
             this.complete();
             return;

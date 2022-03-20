@@ -37,6 +37,7 @@ import cube.core.Module;
 import cube.hub.*;
 import cube.hub.dao.ChannelCode;
 import cube.hub.event.Event;
+import cube.hub.signal.AckSignal;
 import cube.hub.signal.LoginQRCodeSignal;
 import cube.hub.signal.ReadySignal;
 import cube.hub.signal.Signal;
@@ -170,29 +171,37 @@ public class HubService extends AbstractModule {
             public void run() {
                 if (actionDialect.containsParam("signal")) {
                     JSONObject signalJson = actionDialect.getParamAsJson("signal");
+                    // 解析信令
                     Signal signal = SignalBuilder.build(signalJson);
+                    if (null == signal) {
+                        responder.respondDispatcher(sn, HubStateCode.UnsupportedSignal.code, new AckSignal());
+                        return;
+                    }
+
+                    // 获取令牌
                     ChannelCode channelCode = channelManager.getChannelCode(signal.getCode());
                     if (null == channelCode) {
-                        responder.respondDispatcher(sn, HubStateCode.Unauthorized.code, signalJson);
+                        responder.respondDispatcher(sn, HubStateCode.Unauthorized.code, signal);
                         return;
                     }
 
                     if (Product.WeChat == channelCode.product) {
                         if (signal instanceof LoginQRCodeSignal) {
-                            FileLabel fileLabel = WeChatHub.getInstance().openChannel();
-                            if (null != fileLabel) {
-
+                            // 获取登录二维码
+                            Event event = WeChatHub.getInstance().openChannel();
+                            if (null != event) {
+                                responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
                             }
                             else {
-                                responder.respondDispatcher(sn, HubStateCode.Failure.code, signalJson);
+                                responder.respondDispatcher(sn, HubStateCode.Failure.code, signal);
                             }
                         }
                         else {
-                            responder.respondDispatcher(sn, HubStateCode.Failure.code, signalJson);
+                            responder.respondDispatcher(sn, HubStateCode.Failure.code, signal);
                         }
                     }
                     else {
-                        responder.respondDispatcher(sn, HubStateCode.InvalidParameter.code, signalJson);
+                        responder.respondDispatcher(sn, HubStateCode.InvalidParameter.code, signal);
                     }
                 }
             }

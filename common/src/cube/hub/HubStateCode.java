@@ -57,6 +57,16 @@ public enum HubStateCode {
     Unauthorized(12),
 
     /**
+     * 不支持的信令。
+     */
+    UnsupportedSignal(13),
+
+    /**
+     * 不支持的事件。
+     */
+    UnsupportedEvent(14),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)

@@ -632,7 +632,7 @@ public class Performer implements TalkListener, Tickable {
             return null;
         }
 
-        return this.syncTransmit(director, celletName, actionDialect);
+        return this.syncTransmit(director, celletName, actionDialect, this.blockTimeout);
     }
 
     /**
@@ -661,10 +661,22 @@ public class Performer implements TalkListener, Tickable {
      * @return
      */
     public ActionDialect syncTransmit(String celletName, ActionDialect actionDialect) {
-        return this.syncTransmit(this.selectDirector(), celletName, actionDialect);
+        return this.syncTransmit(this.selectDirector(), celletName, actionDialect, this.blockTimeout);
     }
 
-    private ActionDialect syncTransmit(Director director, String celletName, ActionDialect actionDialect) {
+    /**
+     * 向服务单元发送数据，并阻塞当前线程直到应答或超时。
+     *
+     * @param celletName
+     * @param actionDialect
+     * @param timeout
+     * @return
+     */
+    public ActionDialect syncTransmit(String celletName, ActionDialect actionDialect, long timeout) {
+        return this.syncTransmit(this.selectDirector(), celletName, actionDialect, timeout);
+    }
+
+    private ActionDialect syncTransmit(Director director, String celletName, ActionDialect actionDialect, long timeout) {
         long sn = actionDialect.containsParam("sn") ?
                 actionDialect.getParamAsLong("sn") : Utils.generateSerialNumber();
 
@@ -681,7 +693,7 @@ public class Performer implements TalkListener, Tickable {
 
         synchronized (block) {
             try {
-                block.wait(this.blockTimeout);
+                block.wait(timeout);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

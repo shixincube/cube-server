@@ -27,7 +27,6 @@
 package cube.service.hub;
 
 import cell.util.log.Logger;
-import cube.common.entity.FileLabel;
 import cube.hub.event.Event;
 import cube.hub.event.ReportEvent;
 import cube.hub.signal.LoginQRCodeSignal;
@@ -65,7 +64,7 @@ public class WeChatHub {
         this.service = service;
     }
 
-    public FileLabel openChannel() {
+    public Event openChannel() {
         // 找到最少服务数量的客户端
         int minNum = Integer.MAX_VALUE;
         Long id = null;
@@ -87,13 +86,14 @@ public class WeChatHub {
 
         // 获取空闲端的登录二维码文件
         SignalController signalController = this.service.getSignalController();
+        // 发送信令并等待响应事件
         Event event = signalController.transmitSyncEvent(id, new LoginQRCodeSignal());
         if (null == event) {
             Logger.w(this.getClass(), "No login QR code event");
             return null;
         }
 
-        return event.getFileLabel();
+        return event;
     }
 
     public void updateReport(ReportEvent reportEvent) {

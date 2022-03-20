@@ -33,20 +33,48 @@ import cube.hub.Product;
  */
 public class ChannelCode {
 
-    public final long id;
+    /**
+     * 状态：可用。
+     */
+    public final static int ENABLED = 0;
 
+    /**
+     * 状态：禁用。
+     */
+    public final static int DISABLED = 1;
+
+    /**
+     * 状态：其他。
+     */
+    public final static int OTHER = 9;
+
+
+    /**
+     * 访问码。
+     */
     public final String code;
 
+    /**
+     * 创建时间。
+     */
     public final long creation;
 
+    /**
+     * 到期时间。
+     */
     public final long expiration;
 
+    /**
+     * 产品归属。
+     */
     public final Product product;
 
+    /**
+     * 状态。
+     */
     public final int state;
 
-    public ChannelCode(long id, String code, long creation, long expiration, Product product, int state) {
-        this.id = id;
+    public ChannelCode(String code, long creation, long expiration, Product product, int state) {
         this.code = code;
         this.creation = creation;
         this.expiration = expiration;

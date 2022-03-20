@@ -26,10 +26,7 @@
 
 package cube.hub;
 
-import cube.hub.signal.PassBySignal;
-import cube.hub.signal.ReadySignal;
-import cube.hub.signal.ReportSignal;
-import cube.hub.signal.Signal;
+import cube.hub.signal.*;
 import org.json.JSONObject;
 
 /**
@@ -49,8 +46,14 @@ public class SignalBuilder {
         else if (ReportSignal.NAME.equals(name)) {
             return new ReportSignal(signalJson);
         }
+        else if (LoginQRCodeSignal.NAME.equals(name)) {
+            return new LoginQRCodeSignal(signalJson);
+        }
         else if (ReadySignal.NAME.equals(name)) {
             return new ReadySignal(signalJson);
+        }
+        else if (AckSignal.NAME.equals(name)) {
+            return new AckSignal(signalJson);
         }
 
         return null;

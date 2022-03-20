@@ -27,15 +27,21 @@
 package cube.service.hub;
 
 import cell.core.talk.LiteralBase;
+import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
 import cube.hub.Product;
 import cube.hub.dao.ChannelCode;
 import cube.storage.StorageFactory;
+import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import org.json.JSONObject;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 授权管理器。
@@ -86,11 +92,31 @@ public class ChannelManager {
     }
 
     public ChannelCode getChannelCode(String code) {
-        return null;
+        List<StorageField[]> result = this.storage.executeQuery(this.channelCodeTable, this.channelCodeFields, new Conditional[] {
+                Conditional.createEqualTo("code", code)
+        });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+        return new ChannelCode(map.get("code").getString(), map.get("creation").getLong(),
+                map.get("expiration").getLong(), Product.parse(map.get("product").getString()),
+                map.get("state").getInt());
     }
 
-    public ChannelCode createChannelCode(long expiredDuration) {
-        return null;
+    public ChannelCode createChannelCode(Product product, long expiredDuration) {
+        long now = System.currentTimeMillis();
+        ChannelCode channelCode = new ChannelCode(Utils.randomString(32), now,
+                now + expiredDuration, product, ChannelCode.ENABLED);
+        this.storage.executeInsert(this.channelCodeTable, new StorageField[] {
+                new StorageField("code", channelCode.code),
+                new StorageField("creation", channelCode.creation),
+                new StorageField("expiration", channelCode.expiration),
+                new StorageField("product", channelCode.product.name),
+                new StorageField("state", channelCode.state),
+        });
+        return channelCode;
     }
 
     private void execSelfChecking() {
