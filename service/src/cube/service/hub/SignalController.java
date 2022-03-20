@@ -30,10 +30,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.hub.HubAction;
 import cube.hub.event.Event;
-import cube.hub.signal.AckSignal;
-import cube.hub.signal.PassBySignal;
-import cube.hub.signal.ReadySignal;
-import cube.hub.signal.Signal;
+import cube.hub.signal.*;
 
 import java.util.Iterator;
 import java.util.List;
@@ -134,6 +131,14 @@ public class SignalController {
             ReadySignal readySignal = (ReadySignal) signal;
             this.pretenderIdMap.put(readySignal.getDescription().getPretender().getId(),
                     readySignal.talkContext);
+
+            (new Thread() {
+                @Override
+                public void run() {
+                    // 通知客户端提交状态报告
+                    transmit(readySignal.getDescription().getPretender().getId(), new ReportSignal());
+                }
+            }).start();
         }
 
         return new AckSignal();
