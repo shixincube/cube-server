@@ -28,6 +28,7 @@ package cube.hub;
 
 import cube.hub.event.Event;
 import cube.hub.event.LoginQRCodeEvent;
+import cube.hub.event.ReportEvent;
 import cube.hub.event.SubmitMessagesEvent;
 import org.json.JSONObject;
 
@@ -56,8 +57,11 @@ public class EventBuilder {
         if (SubmitMessagesEvent.NAME.equals(name)) {
             event = new SubmitMessagesEvent(eventJson);
         }
+        else if (ReportEvent.NAME.equals(name)) {
+            event = new ReportEvent(eventJson);
+        }
         else if (LoginQRCodeEvent.NAME.equals(name)) {
-
+            event = new LoginQRCodeEvent(eventJson);
         }
 
         return event;

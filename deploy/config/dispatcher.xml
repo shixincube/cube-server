@@ -71,6 +71,7 @@
 			<class>cube.dispatcher.messaging.MessagingCellet</class>
 			<class>cube.dispatcher.multipointcomm.MultipointCommCellet</class>
 			<class>cube.dispatcher.conference.ConferenceCellet</class>
+			<class>cube.dispatcher.hub.HubCellet</class>
 		</cellet>
 	</cellets>
 

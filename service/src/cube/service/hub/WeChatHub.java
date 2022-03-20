@@ -97,6 +97,11 @@ public class WeChatHub {
     }
 
     public void updateReport(ReportEvent reportEvent) {
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#updateReport - report from " +
+                    reportEvent.getDescription().getPretender().getId());
+        }
+
         this.reportMap.put(reportEvent.getDescription().getPretender().getId(),
                 reportEvent);
     }

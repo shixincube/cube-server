@@ -135,6 +135,11 @@ public class HubService extends AbstractModule {
             public void run() {
                 // 解析事件
                 Event event = EventBuilder.build(data);
+                if (null == event) {
+                    Logger.w(HubService.class, "Build event failed");
+                    responder.respond(HubStateCode.UnsupportedEvent.code, new JSONObject());
+                    return;
+                }
 
                 // 捕获是否是阻塞事件
                 if (!signalController.capture(event)) {
