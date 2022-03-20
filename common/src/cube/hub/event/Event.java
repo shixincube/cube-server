@@ -132,7 +132,7 @@ public abstract class Event implements JSONable {
         json.put("name", this.name);
 
         if (null != this.fileLabel) {
-            json.put("fileLabel", this.fileLabel.toCompactJSON());
+            json.put("fileLabel", this.fileLabel.toJSON());
         }
 
         if (null != this.description) {
@@ -144,6 +144,15 @@ public abstract class Event implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        json.put("product", this.product.name);
+        json.put("sn", this.sn);
+        json.put("name", this.name);
+
+        if (null != this.fileLabel) {
+            json.put("fileLabel", this.fileLabel.toCompactJSON());
+        }
+
+        return json;
     }
 }

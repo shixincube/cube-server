@@ -52,6 +52,11 @@ public enum HubStateCode {
     InvalidDomain(11),
 
     /**
+     * 未授权。
+     */
+    Unauthorized(12),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)

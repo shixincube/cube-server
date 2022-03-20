@@ -24,22 +24,19 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.hub.handler;
-
-import cube.dispatcher.Performer;
-import cube.util.CrossDomainHandler;
+package cube.dispatcher.hub;
 
 /**
- * 申请应用。
+ * 缓存中心。
  */
-public class ApplyApp extends CrossDomainHandler {
+public class CacheCenter {
 
-    public final static String CONTEXT_PATH = "/hub/apply/";
+    private final static CacheCenter instance = new CacheCenter();
 
-    private Performer performer;
+    private CacheCenter() {
+    }
 
-    public ApplyApp(Performer performer) {
-        super();
-        this.performer = performer;
+    public final static CacheCenter getInstance() {
+        return CacheCenter.instance;
     }
 }

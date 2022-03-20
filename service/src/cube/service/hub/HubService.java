@@ -27,16 +27,17 @@
 package cube.service.hub;
 
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.common.entity.FileLabel;
 import cube.common.entity.Message;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
-import cube.hub.EventBuilder;
-import cube.hub.HubStateCode;
-import cube.hub.SignalBuilder;
-import cube.hub.Type;
+import cube.hub.*;
+import cube.hub.dao.ChannelCode;
 import cube.hub.event.Event;
+import cube.hub.signal.LoginQRCodeSignal;
 import cube.hub.signal.ReadySignal;
 import cube.hub.signal.Signal;
 import cube.plugin.Plugin;
@@ -55,6 +56,8 @@ import java.util.concurrent.ExecutorService;
 public class HubService extends AbstractModule {
 
     public final static String NAME = "Hub";
+
+    private final String performerKey = "_performer";
 
     private HubCellet cellet;
 
@@ -156,6 +159,42 @@ public class HubService extends AbstractModule {
                 Signal ack = signalController.receive(signal);
 
                 responder.respond(HubStateCode.Ok.code, ack.toJSON());
+            }
+        });
+    }
+
+    public void processChannel(ActionDialect actionDialect, Responder responder) {
+        long sn = actionDialect.getParamAsJson(this.performerKey).getLong("sn");
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                if (actionDialect.containsParam("signal")) {
+                    JSONObject signalJson = actionDialect.getParamAsJson("signal");
+                    Signal signal = SignalBuilder.build(signalJson);
+                    ChannelCode channelCode = channelManager.getChannelCode(signal.getCode());
+                    if (null == channelCode) {
+                        responder.respondDispatcher(sn, HubStateCode.Unauthorized.code, signalJson);
+                        return;
+                    }
+
+                    if (Product.WeChat == channelCode.product) {
+                        if (signal instanceof LoginQRCodeSignal) {
+                            FileLabel fileLabel = WeChatHub.getInstance().openChannel();
+                            if (null != fileLabel) {
+
+                            }
+                            else {
+                                responder.respondDispatcher(sn, HubStateCode.Failure.code, signalJson);
+                            }
+                        }
+                        else {
+                            responder.respondDispatcher(sn, HubStateCode.Failure.code, signalJson);
+                        }
+                    }
+                    else {
+                        responder.respondDispatcher(sn, HubStateCode.InvalidParameter.code, signalJson);
+                    }
+                }
             }
         });
     }

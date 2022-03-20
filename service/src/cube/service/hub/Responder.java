@@ -29,6 +29,7 @@ package cube.service.hub;
 import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -37,6 +38,8 @@ import org.json.JSONObject;
 public class Responder {
 
     private final static String ParamName = "_notifier";
+
+    private final String performerKey = "_performer";
 
     private Cellet cellet;
 
@@ -66,5 +69,20 @@ public class Responder {
         actionDialect.addParam("code", code);
         actionDialect.addParam("data", data);
         this.cellet.speak(this.talkContext, actionDialect);
+    }
+
+    public void respondDispatcher(long sn, int code, JSONObject data) {
+        ActionDialect actionDialect = new ActionDialect(this.name);
+    }
+
+    private JSONObject createPerformer(long sn) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("sn", sn);
+            json.put("ts", System.currentTimeMillis());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
     }
 }

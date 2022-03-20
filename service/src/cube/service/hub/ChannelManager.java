@@ -89,6 +89,10 @@ public class ChannelManager {
         return null;
     }
 
+    public ChannelCode createChannelCode(long expiredDuration) {
+        return null;
+    }
+
     private void execSelfChecking() {
         if (!this.storage.exist(this.channelCodeTable)) {
             // 不存在，建新表

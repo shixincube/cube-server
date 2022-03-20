@@ -99,6 +99,7 @@ public class MediaStreamHandler extends CrossDomainHandler {
             String token = request.getParameter("t");
             if (null == token || token.length() == 0) {
                 response.setStatus(HttpStatus.FORBIDDEN_403);
+                this.complete();
                 return;
             }
 
@@ -106,6 +107,7 @@ public class MediaStreamHandler extends CrossDomainHandler {
             File m3u8File = MediaFileManager.getInstance().getM3U8File(token, fileCode);
             if (null == m3u8File) {
                 response.setStatus(HttpStatus.NOT_FOUND_404);
+                this.complete();
                 return;
             }
 

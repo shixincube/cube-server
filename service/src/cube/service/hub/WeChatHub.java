@@ -65,7 +65,7 @@ public class WeChatHub {
         this.service = service;
     }
 
-    public FileLabel applyIdleApp() {
+    public FileLabel openChannel() {
         // 找到最少服务数量的客户端
         int minNum = Integer.MAX_VALUE;
         Long id = null;

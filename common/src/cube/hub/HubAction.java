@@ -41,6 +41,11 @@ public enum HubAction {
      */
     TransmitSignal("transmitSignal"),
 
+    /**
+     * 管道操作。
+     */
+    Channel("channel")
+
     ;
 
     public final String name;

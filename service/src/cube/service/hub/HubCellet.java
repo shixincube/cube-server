@@ -86,6 +86,9 @@ public class HubCellet extends AbstractCellet {
         else if (HubAction.TransmitSignal.name.equals(action)) {
             this.service.transmitSignal(dialect.getParamAsJson("signal"), new Responder(dialect, this, talkContext));
         }
+        else if (HubAction.Channel.name.equals(action)) {
+            this.service.processChannel(dialect, new Responder(dialect, this, talkContext));
+        }
         else {
             Logger.w(this.getClass(), "No support action : " + action);
         }

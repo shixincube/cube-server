@@ -39,6 +39,8 @@ public abstract class Signal implements JSONable {
 
     private long sn;
 
+    private String code;
+
     private final String name;
 
     private ClientDescription description;
@@ -60,6 +62,10 @@ public abstract class Signal implements JSONable {
         this.sn = json.getLong("sn");
         this.name = json.getString("name");
 
+        if (json.has("code")) {
+            this.code = json.getString("code");
+        }
+
         if (json.has("description")) {
             this.description = new ClientDescription(json.getJSONObject("description"));
         }
@@ -67,6 +73,14 @@ public abstract class Signal implements JSONable {
 
     public long getSerialNumber() {
         return this.sn;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getCode() {
+        return this.code;
     }
 
     public String getName() {
@@ -86,6 +100,10 @@ public abstract class Signal implements JSONable {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
         json.put("name", this.name);
+
+        if (null != this.code) {
+            json.put("code", this.code);
+        }
 
         if (null != this.description) {
             json.put("description", this.description.toCompactJSON());

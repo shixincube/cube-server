@@ -24,17 +24,11 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.filestorage;
+package cube.dispatcher.util;
 
-import cell.core.talk.dialect.ActionDialect;
-import cell.util.Utils;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
-import cube.common.Packet;
-import cube.common.action.FileStorageAction;
 import cube.common.entity.FileLabel;
-import cube.common.state.FileStorageStateCode;
-import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
 import cube.util.FileType;
 import cube.util.HttpClientFactory;
@@ -44,8 +38,6 @@ import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.client.util.BufferingResponseListener;
 import org.eclipse.jetty.client.util.InputStreamResponseListener;
 import org.eclipse.jetty.http.HttpStatus;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -59,201 +51,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * 文件上传处理。
+ * 文件标签句柄。
  */
-public class FileHandler extends CrossDomainHandler {
-
-    private FileChunkStorage fileChunkStorage;
-
-    private Performer performer;
+public class FileLabelHandler extends CrossDomainHandler {
 
     private int bufferSize = 5 * 1024 * 1024;
 
-    /**
-     * 构造函数。
-     *
-     * @param fileChunkStorage
-     * @param performer
-     */
-    public FileHandler(FileChunkStorage fileChunkStorage, Performer performer) {
+    public FileLabelHandler() {
         super();
-        this.fileChunkStorage = fileChunkStorage;
-        this.performer = performer;
     }
 
-    /**
-     * 上传文件处理。
-     *
-     * @param request
-     * @param response
-     * @throws IOException
-     * @throws ServletException
-     */
-    @Override
-    public void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws IOException, ServletException {
-        // Token Code
-        String token = request.getParameter("token");
-        // SN
-        Long sn = Long.parseLong(request.getParameter("sn"));
-
-        // 读取流
-        FlexibleByteBuffer buf = new FlexibleByteBuffer();
-        byte[] bytes = new byte[4096];
-        InputStream is = request.getInputStream();
-
-        int length = 0;
-        while ((length = is.read(bytes)) > 0) {
-            buf.put(bytes, 0, length);
-        }
-
-        // 整理缓存
-        buf.flip();
-
-        // Contact ID
-        Long contactId = null;
-        // 域
-        String domain = null;
-        // 文件大小
-        long fileSize = 0;
-        // 文件修改时间
-        long lastModified = 0;
-        // 文件块所处的索引位置
-        long cursor = 0;
-        // 文件块大小
-        int size = 0;
-        // 文件名
-        String fileName = null;
-        // 文件块数据
-        byte[] data = null;
-
-        try {
-            FormData formData = new FormData(buf.array(), 0, buf.limit());
-
-            contactId = Long.parseLong(formData.getValue("cid"));
-            domain = formData.getValue("domain");
-            fileSize = Long.parseLong(formData.getValue("fileSize"));
-            lastModified = Long.parseLong(formData.getValue("lastModified"));
-            cursor = Long.parseLong(formData.getValue("cursor"));
-            size = Integer.parseInt(formData.getValue("size"));
-            fileName = formData.getFileName();
-            data = formData.getFileChunk();
-        } catch (Exception e) {
-            Logger.w(this.getClass(), "FileUploadHandler", e);
-            this.respond(response, HttpStatus.FORBIDDEN_403, new JSONObject());
-            return;
-        }
-
-        buf = null;
-
-        FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, lastModified, cursor, size, data);
-        String fileCode = this.fileChunkStorage.append(chunk);
-
-        JSONObject responseData = new JSONObject();
-        try {
-            responseData.put("fileName", fileName);
-            responseData.put("fileSize", fileSize);
-            responseData.put("fileCode", fileCode);
-            responseData.put("lastModified", lastModified);
-            responseData.put("position", cursor + size);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        JSONObject payload = new JSONObject();
-        try {
-            payload.put("data", responseData);
-            payload.put("code", FileStorageStateCode.Ok.code);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        Packet packet = new Packet(sn, FileStorageAction.UploadFile.name, payload);
-
-        this.respondOk(response, packet.toJSON());
-
-        this.complete();
-    }
-
-    /**
-     * 下载文件处理。
-     *
-     * @param request
-     * @param response
-     * @throws IOException
-     * @throws ServletException
-     */
-    @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws IOException, ServletException {
-        // Token Code
-        String token = request.getParameter("token");
-        // File Code
-        String fileCode = request.getParameter("fc");
-
-        if (null == token || null == fileCode) {
-            response.setStatus(HttpStatus.BAD_REQUEST_400);
-            this.complete();
-            return;
-        }
-
-        // Type
-        String typeDesc = request.getParameter("type");
-        FileType type = FileType.matchExtension(typeDesc);
-
-        // SN
-        Long sn = null;
-        if (null != request.getParameter("sn")) {
-            sn = Long.parseLong(request.getParameter("sn"));
-        }
-        else {
-            sn = Utils.generateSerialNumber();
-        }
-
-        JSONObject payload = new JSONObject();
-        try {
-            payload.put("fileCode", fileCode);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        Packet packet = new Packet(sn, FileStorageAction.GetFile.name, payload);
-        ActionDialect packetDialect = packet.toDialect();
-        packetDialect.addParam("token", token);
-
-        ActionDialect dialect = this.performer.syncTransmit(token, FileStorageCellet.NAME, packetDialect);
-        if (null == dialect) {
-            this.respond(response, HttpStatus.FORBIDDEN_403, packet.toJSON());
-            return;
-        }
-
-        Packet responsePacket = new Packet(dialect);
-
-        int code = -1;
-        JSONObject fileLabelJson = null;
-        try {
-            code = responsePacket.data.getInt("code");
-            if (code != FileStorageStateCode.Ok.code) {
-                // 状态错误
-                this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
-                return;
-            }
-
-            fileLabelJson = responsePacket.data.getJSONObject("data");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        FileLabel fileLabel = new FileLabel(fileLabelJson);
-
-        if (fileLabel.getFileSize() > (long) this.bufferSize) {
-            this.processByNonBlocking(request, response, fileLabel, type);
-        }
-        else {
-            this.processByBlocking(request, response, fileLabel, type);
-        }
-    }
-
-    private void processByBlocking(HttpServletRequest request, HttpServletResponse response,
+    protected void processByBlocking(HttpServletRequest request, HttpServletResponse response,
                                    FileLabel fileLabel, FileType type)
             throws IOException, ServletException {
         final Object mutex = new Object();
@@ -301,7 +109,7 @@ public class FileHandler extends CrossDomainHandler {
         this.complete();
     }
 
-    private void processByNonBlocking(HttpServletRequest request, HttpServletResponse response,
+    protected void processByNonBlocking(HttpServletRequest request, HttpServletResponse response,
                                       FileLabel fileLabel, FileType type)
             throws IOException, ServletException {
         InputStreamResponseListener listener = new InputStreamResponseListener();

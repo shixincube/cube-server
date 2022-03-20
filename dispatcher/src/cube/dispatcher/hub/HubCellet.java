@@ -32,8 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
-import cube.dispatcher.fileprocessor.handler.MediaStreamHandler;
-import cube.dispatcher.hub.handler.ApplyApp;
+import cube.dispatcher.hub.handler.OpenChannel;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
 
@@ -48,7 +47,7 @@ public class HubCellet extends AbstractCellet {
     /**
      * Cellet 名称。
      */
-    public final static String NAME = "Signal";
+    public final static String NAME = "Hub";
 
     /**
      * 线程池。
@@ -74,6 +73,9 @@ public class HubCellet extends AbstractCellet {
     public boolean install() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(4);
         this.performer = (Performer) this.getNucleus().getParameter("performer");
+
+        setupHandler();
+
         return true;
     }
 
@@ -116,10 +118,10 @@ public class HubCellet extends AbstractCellet {
     private void setupHandler() {
         HttpServer httpServer = this.performer.getHttpServer();
 
-        // 申请应用
-        ContextHandler applyAppHandler = new ContextHandler();
-        applyAppHandler.setContextPath(ApplyApp.CONTEXT_PATH);
-        applyAppHandler.setHandler(new ApplyApp(this.performer));
-        httpServer.addContextHandler(applyAppHandler);
+        // 打开管道
+        ContextHandler openHandler = new ContextHandler();
+        openHandler.setContextPath(OpenChannel.CONTEXT_PATH);
+        openHandler.setHandler(new OpenChannel(this.performer));
+        httpServer.addContextHandler(openHandler);
     }
 }
