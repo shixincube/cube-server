@@ -24,41 +24,47 @@
  * SOFTWARE.
  */
 
-package cube.hub;
+package cube.hub.signal;
 
-import cube.hub.signal.*;
+import cube.hub.dao.ChannelCode;
 import org.json.JSONObject;
 
 /**
- * 信令构建器。
+ * 频道码信令。
  */
-public class SignalBuilder {
+public class ChannelCodeSignal extends Signal {
 
-    private SignalBuilder() {
+    public final static String NAME = "ChannelCode";
+
+    private ChannelCode channelCode;
+
+    public ChannelCodeSignal(String code) {
+        super(NAME);
+        setCode(code);
     }
 
-    public static Signal build(JSONObject signalJson) {
-        String name = signalJson.getString("name");
+    public ChannelCodeSignal(ChannelCode channelCode) {
+        super(NAME);
+        this.channelCode = channelCode;
+    }
 
-        if (ChannelCodeSignal.NAME.equals(name)) {
-            return new ChannelCodeSignal(signalJson);
+    public ChannelCodeSignal(JSONObject json) {
+        super(json);
+        if (json.has("channelCode")) {
+            this.channelCode = new ChannelCode(json.getJSONObject("channelCode"));
         }
-        else if (PassBySignal.NAME.equals(name)) {
-            return new PassBySignal(signalJson);
-        }
-        else if (ReportSignal.NAME.equals(name)) {
-            return new ReportSignal(signalJson);
-        }
-        else if (LoginQRCodeSignal.NAME.equals(name)) {
-            return new LoginQRCodeSignal(signalJson);
-        }
-        else if (ReadySignal.NAME.equals(name)) {
-            return new ReadySignal(signalJson);
-        }
-        else if (AckSignal.NAME.equals(name)) {
-            return new AckSignal(signalJson);
-        }
+    }
 
-        return null;
+    public ChannelCode getChannelCode() {
+        return this.channelCode;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        if (null != this.channelCode) {
+            json.put("channelCode", this.channelCode.toJSON());
+        }
+        return json;
     }
 }

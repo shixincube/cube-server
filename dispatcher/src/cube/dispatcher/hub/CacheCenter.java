@@ -26,6 +26,10 @@
 
 package cube.dispatcher.hub;
 
+import cube.common.entity.FileLabel;
+
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * 缓存中心。
  */
@@ -33,10 +37,21 @@ public class CacheCenter {
 
     private final static CacheCenter instance = new CacheCenter();
 
+    private ConcurrentHashMap<String, FileLabel> fileLabelMap;
+
     private CacheCenter() {
+        this.fileLabelMap = new ConcurrentHashMap<>();
     }
 
     public final static CacheCenter getInstance() {
         return CacheCenter.instance;
+    }
+
+    public void putFileLabel(FileLabel fileLabel) {
+        this.fileLabelMap.put(fileLabel.getFileCode(), fileLabel);
+    }
+
+    public FileLabel getFileLabel(String fileCode) {
+        return this.fileLabelMap.get(fileCode);
     }
 }

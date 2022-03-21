@@ -61,6 +61,10 @@ public class FileLabelHandler extends CrossDomainHandler {
         super();
     }
 
+    protected int getBufferSize() {
+        return this.bufferSize;
+    }
+
     protected void processByBlocking(HttpServletRequest request, HttpServletResponse response,
                                    FileLabel fileLabel, FileType type)
             throws IOException, ServletException {

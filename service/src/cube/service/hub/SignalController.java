@@ -123,6 +123,12 @@ public class SignalController {
         return true;
     }
 
+    /**
+     * 接收来自客户端的信令。
+     *
+     * @param signal
+     * @return
+     */
     public Signal receive(Signal signal) {
         if (PassBySignal.NAME.equals(signal.getName())) {
             this.passBy((PassBySignal) signal);
@@ -139,6 +145,9 @@ public class SignalController {
                     transmit(readySignal.getDescription().getPretender().getId(), new ReportSignal());
                 }
             }).start();
+        }
+        else if (ReportSignal.NAME.equals(signal.getName())) {
+            //WeChatHub.getInstance().getReports();
         }
 
         return new AckSignal();

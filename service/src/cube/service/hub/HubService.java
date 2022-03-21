@@ -37,10 +37,7 @@ import cube.core.Module;
 import cube.hub.*;
 import cube.hub.dao.ChannelCode;
 import cube.hub.event.Event;
-import cube.hub.signal.AckSignal;
-import cube.hub.signal.LoginQRCodeSignal;
-import cube.hub.signal.ReadySignal;
-import cube.hub.signal.Signal;
+import cube.hub.signal.*;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
@@ -180,6 +177,19 @@ public class HubService extends AbstractModule {
                     Signal signal = SignalBuilder.build(signalJson);
                     if (null == signal) {
                         responder.respondDispatcher(sn, HubStateCode.UnsupportedSignal.code, new AckSignal());
+                        return;
+                    }
+
+                    // 判断管道码信令
+                    if (ChannelCodeSignal.NAME.equals(signal.getName())) {
+                        ChannelCode channelCode = channelManager.getChannelCode(signal.getCode());
+                        if (null == channelCode) {
+                            responder.respondDispatcher(sn, HubStateCode.Ok.code, signal);
+                        }
+                        else {
+                            ChannelCodeSignal responseSignal = new ChannelCodeSignal(channelCode);
+                            responder.respondDispatcher(sn, HubStateCode.Ok.code, responseSignal);
+                        }
                         return;
                     }
 

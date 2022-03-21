@@ -27,81 +27,65 @@
 package cube.dispatcher.hub.handler;
 
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.log.Logger;
 import cube.dispatcher.Performer;
-import cube.dispatcher.hub.CacheCenter;
 import cube.dispatcher.hub.HubCellet;
-import cube.hub.EventBuilder;
 import cube.hub.HubAction;
 import cube.hub.HubStateCode;
 import cube.hub.SignalBuilder;
-import cube.hub.event.Event;
-import cube.hub.signal.LoginQRCodeSignal;
+import cube.hub.dao.ChannelCode;
+import cube.hub.signal.ChannelCodeSignal;
 import cube.hub.signal.Signal;
-import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 申请应用。
+ * 辅助函数。
  */
-public class OpenChannel extends CrossDomainHandler {
+public class Helper {
 
-    public final static String CONTEXT_PATH = "/hub/open/";
-
-    private Performer performer;
-
-    public OpenChannel(Performer performer) {
-        super();
-        this.performer = performer;
+    private Helper() {
     }
 
-    @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response) {
+    public static ChannelCode checkChannelCode(HttpServletRequest request, HttpServletResponse response,
+                                               Performer performer) {
         String code = request.getParameter("c");
         if (null == code || code.length() == 0) {
             response.setStatus(HttpStatus.BAD_REQUEST_400);
-            this.complete();
-            return;
+            return null;
         }
 
-        LoginQRCodeSignal requestSignal = new LoginQRCodeSignal();
-        requestSignal.setCode(code);
+        ChannelCodeSignal channelCodeSignal = new ChannelCodeSignal(code);
+        ActionDialect requestAction = new ActionDialect(HubAction.TransmitSignal.name);
+        requestAction.addParam("signal", channelCodeSignal.toJSON());
 
-        ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
-        actionDialect.addParam("signal", requestSignal.toJSON());
-
-        ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect, 2 * 60 * 1000);
-        if (null == result) {
+        ActionDialect responseAction = performer.syncTransmit(HubCellet.NAME, requestAction);
+        if (null == responseAction) {
             response.setStatus(HttpStatus.FORBIDDEN_403);
-            this.complete();
-            return;
+            return null;
         }
 
-        int stateCode = result.getParamAsInt("code");
+        int stateCode = responseAction.getParamAsInt("code");
         if (HubStateCode.Ok.code != stateCode) {
-            Logger.w(this.getClass(), "#doGet - state : " + stateCode);
             response.setStatus(HttpStatus.UNAUTHORIZED_401);
-            this.complete();
-            return;
+            return null;
         }
 
-        if (result.containsParam("event")) {
-            Event event = EventBuilder.build(result.getParamAsJson("event"));
-            // 添加到缓存
-            CacheCenter.getInstance().putFileLabel(event.getFileLabel());
-            this.respondOk(response, event.toCompactJSON());
-        }
-        else if (result.containsParam("signal")) {
-            Signal signal = SignalBuilder.build(result.getParamAsJson("signal"));
-            this.respondOk(response, signal.toCompactJSON());
+        Signal resultSignal = SignalBuilder.build(responseAction.getParamAsJson("signal"));
+        if (resultSignal instanceof ChannelCodeSignal) {
+            ChannelCode channelCode = ((ChannelCodeSignal)resultSignal).getChannelCode();
+            if (null != channelCode) {
+                return channelCode;
+            }
+            else {
+                response.setStatus(HttpStatus.NOT_FOUND_404);
+                return null;
+            }
         }
         else {
             response.setStatus(HttpStatus.NOT_FOUND_404);
+            return null;
         }
-
-        this.complete();
     }
 }
