@@ -169,6 +169,25 @@ public class ChannelManager {
     }
 
     /**
+     * 获取通道登录账号所在的伪装者 ID 。
+     *
+     * @param channelCode
+     * @return
+     */
+    public Long getPretenderId(String channelCode) {
+        List<StorageField[]> result = this.storage.executeQuery(this.allocatingTable, this.allocatingFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("code", channelCode)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+        return map.get("pretender_id").getLong();
+    }
+
+    /**
      * 设置通道码对应的账号 ID 。
      *
      * @param channelCode

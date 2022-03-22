@@ -52,6 +52,9 @@ public class SignalBuilder {
         else if (LoginQRCodeSignal.NAME.equals(name)) {
             return new LoginQRCodeSignal(signalJson);
         }
+        else if (LogoutSignal.NAME.equals(name)) {
+            return new LogoutSignal(signalJson);
+        }
         else if (ReadySignal.NAME.equals(name)) {
             return new ReadySignal(signalJson);
         }

@@ -29,7 +29,6 @@ package cube.service.hub;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
-import cube.common.entity.FileLabel;
 import cube.common.entity.Message;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -120,6 +119,10 @@ public class HubService extends AbstractModule {
 
     public SignalController getSignalController() {
         return this.signalController;
+    }
+
+    public ChannelManager getChannelManager() {
+        return this.channelManager;
     }
 
     public void quit(TalkContext talkContext) {
@@ -215,7 +218,7 @@ public class HubService extends AbstractModule {
                     if (Product.WeChat == channelCode.product) {
                         if (signal instanceof LoginQRCodeSignal) {
                             // 获取登录二维码
-                            Event event = WeChatHub.getInstance().openChannel(channelManager, channelCode);
+                            Event event = WeChatHub.getInstance().openChannel(channelCode);
                             if (null != event) {
                                 responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
                             }

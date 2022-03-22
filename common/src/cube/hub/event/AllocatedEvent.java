@@ -26,6 +26,7 @@
 
 package cube.hub.event;
 
+import cube.common.entity.Contact;
 import org.json.JSONObject;
 
 /**
@@ -35,8 +36,8 @@ public class AllocatedEvent extends WeChatEvent {
 
     public final static String NAME = "Allocated";
 
-    public AllocatedEvent(String code) {
-        super(NAME);
+    public AllocatedEvent(String code, Contact account) {
+        super(NAME, account);
         this.setCode(code);
     }
 

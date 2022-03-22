@@ -32,6 +32,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 状态报告。
@@ -54,6 +55,11 @@ public class ReportEvent extends WeChatEvent {
      * 已管理的账号。
      */
     private List<Contact> managedAccounts;
+
+    /**
+     * 频道码映射。
+     */
+    private Map<String, String> channelCodeMap;
 
     public ReportEvent(int totalAppNum, int idleAppNum, List<Contact> managedAccounts) {
         super(NAME);

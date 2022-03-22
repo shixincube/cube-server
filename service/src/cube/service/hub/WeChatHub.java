@@ -27,6 +27,7 @@
 package cube.service.hub;
 
 import cell.util.log.Logger;
+import cube.common.entity.Contact;
 import cube.hub.dao.ChannelCode;
 import cube.hub.event.Event;
 import cube.hub.event.LoginQRCodeEvent;
@@ -77,7 +78,8 @@ public class WeChatHub {
         return this.reportMap;
     }
 
-    public Event openChannel(ChannelManager channelManager, ChannelCode channelCode) {
+    public Event openChannel(ChannelCode channelCode) {
+        ChannelManager channelManager = this.service.getChannelManager();
         // 校验通道码
         String accountId = channelManager.getAccountId(channelCode.code);
         if (null != accountId) {
@@ -130,6 +132,22 @@ public class WeChatHub {
         this.recentLoginEventMap.put(channelCode.code, loginQRCodeEvent);
 
         return event;
+    }
+
+    public Contact closeChannel(ChannelManager channelManager, ChannelCode channelCode) {
+        // 校验通道码
+        String accountId = channelManager.getAccountId(channelCode.code);
+        if (null == accountId) {
+            // 没有绑定账号
+            Logger.d(this.getClass(), "#closeChannel - Not allocated account on channel: " + channelCode.code);
+            return null;
+        }
+
+        for (Map.Entry<Long, ReportEvent> entry : this.reportMap.entrySet()) {
+
+        }
+
+        return null;
     }
 
     public void updateReport(ReportEvent reportEvent) {

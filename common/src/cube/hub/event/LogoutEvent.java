@@ -14,7 +14,7 @@
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *
+ *ø
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,38 +24,24 @@
  * SOFTWARE.
  */
 
-package cube.hub.signal;
+package cube.hub.event;
 
 import cube.common.entity.Contact;
 import org.json.JSONObject;
 
 /**
- * 账号退出登录。
+ * 退出登录事件。
  */
-public class LogoutSignal extends Signal {
+public class LogoutEvent extends WeChatEvent {
 
     public final static String NAME = "Logout";
 
-    private Contact account;
-
-    public LogoutSignal(Contact account) {
-        super(NAME);
-        this.account = account;
+    public LogoutEvent(long sn, String channelCode, Contact account) {
+        super(sn, NAME, account);
+        this.setCode(channelCode);
     }
 
-    public LogoutSignal(JSONObject json) {
+    public LogoutEvent(JSONObject json) {
         super(json);
-        this.account = new Contact(json.getJSONObject("account"));
-    }
-
-    public Contact getAccount() {
-        return this.account;
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = super.toJSON();
-        json.put("account", this.account.toCompactJSON());
-        return json;
     }
 }
