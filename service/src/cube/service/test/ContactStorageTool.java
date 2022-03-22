@@ -64,7 +64,7 @@ public class ContactStorageTool {
         StringBuilder buf = new StringBuilder();
 
         long now = System.currentTimeMillis();
-        long beginning = now - 7 * 24 * 60 * 60 * 1000L;
+        long beginning = now - 7L * 24 * 60 * 60 * 1000L;
 
         List<Group> list = this.storage.readGroupsWithMember(domainName, memberId, beginning, now, GroupState.Normal.code);
         for (Group group : list) {

@@ -38,7 +38,7 @@ public class DaemonTask implements Runnable {
     /**
      * 文件描述符的超时时长。
      */
-    private final long fileDescriptorTimeout = 60 * 60 * 1000;
+    private final long fileDescriptorTimeout = 60 * 60 * 1000L;
 
     private FileStorageService service;
 

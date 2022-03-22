@@ -183,7 +183,7 @@ public final class StatisticsSystem {
             public void run() {
                 collect();
             }
-        }, date, 24 * 60 * 60 * 1000);
+        }, date, 24L * 60 * 60 * 1000);
 
         // 启动时尝试统计数据
         (new Thread() {
@@ -247,7 +247,7 @@ public final class StatisticsSystem {
         int date = cal.get(Calendar.DATE);
 
         long beginning = cal.getTimeInMillis();
-        long ending = beginning + (24 * 60 * 60 * 1000L);
+        long ending = beginning + (24L * 60 * 60 * 1000L);
 
         for (String domain : this.domainNameList) {
             // 查询是否有记录

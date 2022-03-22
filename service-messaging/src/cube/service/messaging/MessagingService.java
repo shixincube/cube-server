@@ -213,7 +213,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
     @Override
     public void onTick(cube.core.Module module, Kernel kernel) {
-        long DAY30 = 30 * 24 * 60 * 60 * 1000;
+        long DAY30 = 30L * 24 * 60 * 60 * 1000;
         long now = System.currentTimeMillis();
         long delta = now - DAY30;
 

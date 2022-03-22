@@ -398,7 +398,7 @@ public final class CipherMachine {
         calendar.set(Calendar.MILLISECOND, 0);
 
         this.cipherBeginningTime = calendar.getTimeInMillis();
-        this.cipherEndingTime = this.cipherBeginningTime + 24 * 60 * 60 * 1000;
+        this.cipherEndingTime = this.cipherBeginningTime + 24L * 60 * 60 * 1000;
     }
 
     private void startTimer() {
@@ -421,7 +421,7 @@ public final class CipherMachine {
             public void run() {
                 execSelfChecking();
             }
-        }, date, 24 * 60 * 60 * 1000);
+        }, date, 24L * 60 * 60 * 1000);
     }
 
     private void removePreviousCache(Calendar calendar) {

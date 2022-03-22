@@ -184,9 +184,10 @@ public class HubService extends AbstractModule {
                         return;
                     }
 
+                    ChannelCode channelCode = channelManager.getChannelCode(signal.getCode());
+
                     // 判断管道码信令
                     if (ChannelCodeSignal.NAME.equals(signal.getName())) {
-                        ChannelCode channelCode = channelManager.getChannelCode(signal.getCode());
                         if (null == channelCode) {
                             responder.respondDispatcher(sn, HubStateCode.Ok.code, signal);
                         }
@@ -197,8 +198,7 @@ public class HubService extends AbstractModule {
                         return;
                     }
 
-                    // 获取令牌
-                    ChannelCode channelCode = channelManager.getChannelCode(signal.getCode());
+                    // 校验令牌
                     if (null == channelCode) {
                         responder.respondDispatcher(sn, HubStateCode.Unauthorized.code, signal);
                         return;
@@ -206,7 +206,7 @@ public class HubService extends AbstractModule {
 
                     if (System.currentTimeMillis() >= channelCode.expiration) {
                         // 过期
-                        Logger.w(this.getClass(), "#processChannel - channel code expired : " + channelCode.code);
+                        Logger.w(HubService.this.getClass(), "#processChannel - channel code expired : " + channelCode.code);
                         responder.respondDispatcher(sn, HubStateCode.Expired.code, signal);
                         return;
                     }
@@ -229,6 +229,9 @@ public class HubService extends AbstractModule {
                     else {
                         responder.respondDispatcher(sn, HubStateCode.InvalidParameter.code, signal);
                     }
+                }
+                else {
+                    Logger.e(HubService.this.getClass(), "Unknown channel request");
                 }
             }
         });

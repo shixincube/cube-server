@@ -84,7 +84,7 @@ public final class MediaFileManager implements Tickable {
     /**
      * 媒体目录超期时间，默认 7 天。
      */
-    private long mediaPathTimeout = 7 * 24 * 60 * 60 * 1000;
+    private long mediaPathTimeout = 7L * 24 * 60 * 60 * 1000;
 
     private MediaFileManager() {
         this.mediaPath = "cube-media-files/";

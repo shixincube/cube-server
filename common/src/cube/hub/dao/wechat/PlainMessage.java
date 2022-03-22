@@ -118,7 +118,7 @@ public class PlainMessage extends Meta {
 
         if (dateText.contains("昨") || dateText.contains("天")) {
             this.datePrecision = DatePrecision.Day;
-            this.date = System.currentTimeMillis() - 24 * 60 * 60 * 1000;
+            this.date = System.currentTimeMillis() - 24L * 60 * 60 * 1000;
         }
         else if (dateText.indexOf("时期") == 0 || dateText.indexOf("星期") == 0 || dateText.contains("期")) {
             Calendar calendar = Calendar.getInstance();
@@ -199,7 +199,7 @@ public class PlainMessage extends Meta {
         }
         else {
             long delta = System.currentTimeMillis() - this.date;
-            if (delta > 24 * 60 * 60 * 1000 && delta < 2 * 24 * 60 * 60 * 1000) {
+            if (delta > 24L * 60 * 60 * 1000 && delta < 2L * 24 * 60 * 60 * 1000) {
                 return "昨天";
             }
             else {
