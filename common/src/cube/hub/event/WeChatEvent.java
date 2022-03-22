@@ -39,6 +39,8 @@ public abstract class WeChatEvent extends Event {
 
     private Contact account;
 
+    private long timestamp;
+
     public WeChatEvent(String name) {
         super(Product.WeChat, name);
     }
@@ -70,6 +72,14 @@ public abstract class WeChatEvent extends Event {
         if (json.has("account")) {
             this.account = new Contact(json.getJSONObject("account"));
         }
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public long getTimestamp() {
+        return this.timestamp;
     }
 
     @Override

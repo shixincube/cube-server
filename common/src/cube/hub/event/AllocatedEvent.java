@@ -14,7 +14,7 @@
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *
+ *ø
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,30 +24,23 @@
  * SOFTWARE.
  */
 
-package cube.hub.signal;
+package cube.hub.event;
 
 import org.json.JSONObject;
 
 /**
- * 客户端提交登录二维码信令。
+ * 已分配账号事件。
  */
-public class LoginQRCodeSignal extends Signal {
+public class AllocatedEvent extends WeChatEvent {
 
-    public final static String NAME = "LoginQRCode";
+    public final static String NAME = "Allocated";
 
-    private long timestamp;
-
-    public LoginQRCodeSignal(String channelCode) {
+    public AllocatedEvent(String code) {
         super(NAME);
-        this.setCode(channelCode);
-        this.timestamp = System.currentTimeMillis();
+        this.setCode(code);
     }
 
-    public LoginQRCodeSignal(JSONObject json) {
+    public AllocatedEvent(JSONObject json) {
         super(json);
-    }
-
-    public long getTimestamp() {
-        return this.timestamp;
     }
 }

@@ -28,6 +28,7 @@ package cube.service.hub;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.hub.HubAction;
 import cube.hub.event.Event;
 import cube.hub.signal.*;
@@ -90,6 +91,11 @@ public class SignalController {
 
         this.blockingSignalMap.put(signal.getSerialNumber(), signal);
 
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#transmitSyncEvent - Signal " + signal.getName()
+                    + " (" + signal.getSerialNumber() + ")");
+        }
+
         ActionDialect actionDialect = new ActionDialect(HubAction.TransmitSignal.name);
         actionDialect.addParam("signal", signal.toJSON());
 
@@ -112,6 +118,11 @@ public class SignalController {
         Signal signal = this.blockingSignalMap.remove(event.getSerialNumber());
         if (null == signal) {
             return false;
+        }
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#capture - Event " + event.getName()
+                    + " (" + event.getSerialNumber() + ")");
         }
 
         signal.event = event;

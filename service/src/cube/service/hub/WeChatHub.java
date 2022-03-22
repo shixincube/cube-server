@@ -29,6 +29,7 @@ package cube.service.hub;
 import cell.util.log.Logger;
 import cube.hub.dao.ChannelCode;
 import cube.hub.event.Event;
+import cube.hub.event.LoginQRCodeEvent;
 import cube.hub.event.ReportEvent;
 import cube.hub.signal.LoginQRCodeSignal;
 
@@ -50,8 +51,15 @@ public class WeChatHub {
 
     private Map<Long, ReportEvent> reportMap;
 
+    /**
+     * 最近请求登录的通道码映射。
+     */
+    private Map<String, LoginQRCodeEvent> recentLoginEventMap;
+
     private WeChatHub() {
         this.reportMap = new ConcurrentHashMap<>();
+        this.recentLoginEventMap = new ConcurrentHashMap<>();
+
         if (!this.workPath.exists()) {
             this.workPath.mkdirs();
         }
@@ -76,6 +84,16 @@ public class WeChatHub {
             // 已经绑定了账号
             Logger.d(this.getClass(), "#openChannel - Allocated account on channel: " + channelCode.code);
             return null;
+        }
+
+        LoginQRCodeEvent loginQRCodeEvent = this.recentLoginEventMap.get(channelCode.code);
+        if (null != loginQRCodeEvent) {
+            if (System.currentTimeMillis() - loginQRCodeEvent.getTimestamp() < 30 * 1000) {
+                // 30 秒内不再更新二维码
+                return loginQRCodeEvent;
+            }
+
+            this.recentLoginEventMap.remove(channelCode.code);
         }
 
         // 找到最少服务数量的客户端
@@ -105,6 +123,11 @@ public class WeChatHub {
             Logger.w(this.getClass(), "#openChannel - No login QR code event");
             return null;
         }
+
+        loginQRCodeEvent = (LoginQRCodeEvent) event;
+        loginQRCodeEvent.setTimestamp(System.currentTimeMillis());
+        loginQRCodeEvent.setPretenderId(id);
+        this.recentLoginEventMap.put(channelCode.code, loginQRCodeEvent);
 
         return event;
     }

@@ -32,6 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.hub.handler.FileHandler;
 import cube.dispatcher.hub.handler.OpenChannel;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -117,6 +118,12 @@ public class HubCellet extends AbstractCellet {
 
     private void setupHandler() {
         HttpServer httpServer = this.performer.getHttpServer();
+
+        // 文件下载
+        ContextHandler fileHandler = new ContextHandler();
+        fileHandler.setContextPath(FileHandler.CONTEXT_PATH);
+        fileHandler.setHandler(new FileHandler(this.performer));
+        httpServer.addContextHandler(fileHandler);
 
         // 打开管道
         ContextHandler openHandler = new ContextHandler();

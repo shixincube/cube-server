@@ -37,6 +37,8 @@ public class LoginQRCodeEvent extends WeChatEvent {
 
     public final static String NAME = "LoginQRCode";
 
+    private Long pretenderId;
+
     public LoginQRCodeEvent(long sn, String channelCode, File file) {
         super(sn, NAME, file);
         setCode(channelCode);
@@ -44,5 +46,13 @@ public class LoginQRCodeEvent extends WeChatEvent {
 
     public LoginQRCodeEvent(JSONObject json) {
         super(json);
+    }
+
+    public void setPretenderId(Long pretenderId) {
+        this.pretenderId = pretenderId;
+    }
+
+    public Long getPretenderId() {
+        return this.pretenderId;
     }
 }

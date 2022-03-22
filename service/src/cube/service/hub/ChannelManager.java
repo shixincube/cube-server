@@ -86,6 +86,10 @@ public class ChannelManager {
             new StorageField("account_id", LiteralBase.STRING, new Constraint[]{
                     Constraint.NOT_NULL
             }),
+            // 所在的伪装者节点
+            new StorageField("pretender_id", LiteralBase.LONG, new Constraint[]{
+                    Constraint.NOT_NULL
+            }),
             // 时间戳
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[]{
                     Constraint.NOT_NULL
@@ -169,9 +173,10 @@ public class ChannelManager {
      *
      * @param channelCode
      * @param accountId
+     * @param pretenderId
      * @return 如果返回 {@code false} 则表示设置失败。
      */
-    public boolean setAccountId(String channelCode, String accountId) {
+    public boolean setAccountId(String channelCode, String accountId, Long pretenderId) {
         List<StorageField[]> result = this.storage.executeQuery(this.allocatingTable, this.allocatingFields,
                 new Conditional[] {
                         Conditional.createEqualTo("code", channelCode)
@@ -184,6 +189,7 @@ public class ChannelManager {
         return this.storage.executeInsert(this.allocatingTable, new StorageField[] {
                 new StorageField("code", channelCode),
                 new StorageField("account_id", accountId),
+                new StorageField("pretender_id", pretenderId.longValue()),
                 new StorageField("timestamp", System.currentTimeMillis())
         });
     }

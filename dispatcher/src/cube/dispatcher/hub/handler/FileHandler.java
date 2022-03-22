@@ -82,9 +82,7 @@ public class FileHandler extends FileLabelHandler {
             else {
                 this.processByNonBlocking(request, response, fileLabel, fileLabel.getFileType());
             }
-        } catch (IOException e) {
-            Logger.w(this.getClass(), "", e);
-        } catch (ServletException e) {
+        } catch (IOException | ServletException e) {
             Logger.w(this.getClass(), "", e);
         }
 

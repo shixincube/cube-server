@@ -27,6 +27,7 @@
 package cube.dispatcher.hub.handler;
 
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.dispatcher.Performer;
 import cube.dispatcher.hub.HubCellet;
 import cube.hub.HubAction;
@@ -57,7 +58,7 @@ public class Helper {
         }
 
         ChannelCodeSignal channelCodeSignal = new ChannelCodeSignal(code);
-        ActionDialect requestAction = new ActionDialect(HubAction.TransmitSignal.name);
+        ActionDialect requestAction = new ActionDialect(HubAction.Channel.name);
         requestAction.addParam("signal", channelCodeSignal.toJSON());
 
         ActionDialect responseAction = performer.syncTransmit(HubCellet.NAME, requestAction);
@@ -76,7 +77,15 @@ public class Helper {
         if (resultSignal instanceof ChannelCodeSignal) {
             ChannelCode channelCode = ((ChannelCodeSignal)resultSignal).getChannelCode();
             if (null != channelCode) {
-                return channelCode;
+                // 校验有效期
+                if (System.currentTimeMillis() >= channelCode.expiration) {
+                    // 过期
+                    Logger.w(Helper.class, "#checkChannelCode - channel code expired : " + channelCode.code);
+                    return null;
+                }
+                else {
+                    return channelCode;
+                }
             }
             else {
                 response.setStatus(HttpStatus.NOT_FOUND_404);

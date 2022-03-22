@@ -39,7 +39,7 @@ import org.json.JSONObject;
  */
 public class Responder {
 
-    private final static String ParamName = "_notifier";
+    private final static String NotifierParamName = "_notifier";
 
     private final String performerKey = "_performer";
 
@@ -51,7 +51,7 @@ public class Responder {
     private String name;
 
     public Responder(ActionDialect request, Cellet cellet, TalkContext talkContext) {
-        this.notifier = request.getParamAsJson(ParamName);
+        this.notifier = request.getParamAsJson(NotifierParamName);
         this.name = request.getName();
         this.cellet = cellet;
         this.talkContext = talkContext;
@@ -67,7 +67,9 @@ public class Responder {
 
     public void respond(int code, JSONObject data) {
         ActionDialect actionDialect = new ActionDialect(this.name);
-        actionDialect.addParam(ParamName, this.notifier);
+        if (null != this.notifier) {
+            actionDialect.addParam(NotifierParamName, this.notifier);
+        }
         actionDialect.addParam("code", code);
         actionDialect.addParam("data", data);
         this.cellet.speak(this.talkContext, actionDialect);

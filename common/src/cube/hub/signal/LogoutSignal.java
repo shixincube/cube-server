@@ -26,28 +26,16 @@
 
 package cube.hub.signal;
 
-import org.json.JSONObject;
-
 /**
- * 客户端提交登录二维码信令。
+ * 账号退出登录。
  */
-public class LoginQRCodeSignal extends Signal {
+public class LogoutSignal extends Signal {
 
-    public final static String NAME = "LoginQRCode";
+    public final static String NAME = "Logout";
 
-    private long timestamp;
+    private String accountId;
 
-    public LoginQRCodeSignal(String channelCode) {
+    public LogoutSignal() {
         super(NAME);
-        this.setCode(channelCode);
-        this.timestamp = System.currentTimeMillis();
-    }
-
-    public LoginQRCodeSignal(JSONObject json) {
-        super(json);
-    }
-
-    public long getTimestamp() {
-        return this.timestamp;
     }
 }

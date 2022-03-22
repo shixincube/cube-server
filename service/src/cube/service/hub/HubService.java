@@ -139,7 +139,8 @@ public class HubService extends AbstractModule {
                 }
 
                 if (Logger.isDebugLevel()) {
-                    Logger.d(this.getClass(), "#triggerEvent - " + event.getName());
+                    Logger.d(this.getClass(), "#triggerEvent - " + event.getName()
+                            + " (" + event.getSerialNumber() + ")");
                 }
 
                 // 捕获是否是阻塞事件
@@ -189,7 +190,7 @@ public class HubService extends AbstractModule {
                     // 判断管道码信令
                     if (ChannelCodeSignal.NAME.equals(signal.getName())) {
                         if (null == channelCode) {
-                            responder.respondDispatcher(sn, HubStateCode.Ok.code, signal);
+                            responder.respondDispatcher(sn, HubStateCode.Unauthorized.code, signal);
                         }
                         else {
                             ChannelCodeSignal responseSignal = new ChannelCodeSignal(channelCode);
