@@ -74,7 +74,27 @@ public class ChannelManager {
             })
     };
 
+    private final StorageField[] allocatingFields = new StorageField[]{
+            new StorageField("sn", LiteralBase.LONG, new Constraint[]{
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            // 授权码
+            new StorageField("code", LiteralBase.STRING, new Constraint[]{
+                    Constraint.NOT_NULL
+            }),
+            // 分配的 ID
+            new StorageField("account_id", LiteralBase.STRING, new Constraint[]{
+                    Constraint.NOT_NULL
+            }),
+            // 时间戳
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[]{
+                    Constraint.NOT_NULL
+            })
+    };
+
     private final String channelCodeTable = "hub_channel_code";
+
+    private final String allocatingTable = "hub_allocating";
 
     private Storage storage;
 
@@ -91,6 +111,12 @@ public class ChannelManager {
         this.storage.close();
     }
 
+    /**
+     * 获取指定的通道码。
+     *
+     * @param code
+     * @return
+     */
     public ChannelCode getChannelCode(String code) {
         List<StorageField[]> result = this.storage.executeQuery(this.channelCodeTable, this.channelCodeFields, new Conditional[] {
                 Conditional.createEqualTo("code", code)
@@ -119,11 +145,72 @@ public class ChannelManager {
         return channelCode;
     }
 
+    /**
+     * 获取通道码对应的账号 ID 。
+     *
+     * @param channelCode
+     * @return
+     */
+    public String getAccountId(String channelCode) {
+        List<StorageField[]> result = this.storage.executeQuery(this.allocatingTable, this.allocatingFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("code", channelCode)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+        return map.get("account_id").getString();
+    }
+
+    /**
+     * 设置通道码对应的账号 ID 。
+     *
+     * @param channelCode
+     * @param accountId
+     * @return 如果返回 {@code false} 则表示设置失败。
+     */
+    public boolean setAccountId(String channelCode, String accountId) {
+        List<StorageField[]> result = this.storage.executeQuery(this.allocatingTable, this.allocatingFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("code", channelCode)
+                });
+        if (!result.isEmpty()) {
+            Map<String, StorageField> map = StorageFields.get(result.get(0));
+            return map.get("account_id").getString().equals(accountId);
+        }
+
+        return this.storage.executeInsert(this.allocatingTable, new StorageField[] {
+                new StorageField("code", channelCode),
+                new StorageField("account_id", accountId),
+                new StorageField("timestamp", System.currentTimeMillis())
+        });
+    }
+
+    /**
+     * 删除通道码对应的账号。
+     *
+     * @param channelCode
+     */
+    public void clearAccountId(String channelCode) {
+        this.storage.executeDelete(this.allocatingTable, new Conditional[] {
+                Conditional.createEqualTo("code", channelCode)
+        });
+    }
+
     private void execSelfChecking() {
         if (!this.storage.exist(this.channelCodeTable)) {
             // 不存在，建新表
             if (this.storage.executeCreate(this.channelCodeTable, this.channelCodeFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.channelCodeTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.allocatingTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.allocatingTable, this.allocatingFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.allocatingTable + "' successfully");
             }
         }
     }

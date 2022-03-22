@@ -42,6 +42,8 @@ public abstract class Event implements JSONable {
 
     private long sn;
 
+    private String code;
+
     protected Product product;
 
     protected String name;
@@ -83,6 +85,10 @@ public abstract class Event implements JSONable {
         this.sn = json.getLong("sn");
         this.name = json.getString("name");
 
+        if (json.has("code")) {
+            this.code = json.getString("code");
+        }
+
         if (json.has("fileLabel")) {
             this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
         }
@@ -94,6 +100,14 @@ public abstract class Event implements JSONable {
 
     public long getSerialNumber() {
         return this.sn;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getCode() {
+        return this.code;
     }
 
     public Product getProduct() {
@@ -131,6 +145,10 @@ public abstract class Event implements JSONable {
         json.put("sn", this.sn);
         json.put("name", this.name);
 
+        if (null != this.code) {
+            json.put("code", this.code);
+        }
+
         if (null != this.fileLabel) {
             json.put("fileLabel", this.fileLabel.toJSON());
         }
@@ -148,6 +166,10 @@ public abstract class Event implements JSONable {
         json.put("product", this.product.name);
         json.put("sn", this.sn);
         json.put("name", this.name);
+
+        if (null != this.code) {
+            json.put("code", this.code);
+        }
 
         if (null != this.fileLabel) {
             json.put("fileLabel", this.fileLabel.toCompactJSON());

@@ -27,6 +27,7 @@
 package cube.service.hub;
 
 import cell.util.log.Logger;
+import cube.hub.dao.ChannelCode;
 import cube.hub.event.Event;
 import cube.hub.event.ReportEvent;
 import cube.hub.signal.LoginQRCodeSignal;
@@ -68,7 +69,15 @@ public class WeChatHub {
         return this.reportMap;
     }
 
-    public Event openChannel() {
+    public Event openChannel(ChannelManager channelManager, ChannelCode channelCode) {
+        // 校验通道码
+        String accountId = channelManager.getAccountId(channelCode.code);
+        if (null != accountId) {
+            // 已经绑定了账号
+            Logger.d(this.getClass(), "#openChannel - Allocated account on channel: " + channelCode.code);
+            return null;
+        }
+
         // 找到最少服务数量的客户端
         int minNum = Integer.MAX_VALUE;
         Long id = null;
@@ -84,16 +93,16 @@ public class WeChatHub {
         }
 
         if (null == id) {
-            Logger.w(this.getClass(), "Can NOT find idle app");
+            Logger.w(this.getClass(), "#openChannel - Can NOT find idle app");
             return null;
         }
 
         // 获取空闲端的登录二维码文件
         SignalController signalController = this.service.getSignalController();
         // 发送信令并等待响应事件
-        Event event = signalController.transmitSyncEvent(id, new LoginQRCodeSignal());
+        Event event = signalController.transmitSyncEvent(id, new LoginQRCodeSignal(channelCode.code));
         if (null == event) {
-            Logger.w(this.getClass(), "No login QR code event");
+            Logger.w(this.getClass(), "#openChannel - No login QR code event");
             return null;
         }
 

@@ -35,8 +35,9 @@ public class LoginQRCodeSignal extends Signal {
 
     public final static String NAME = "LoginQRCode";
 
-    public LoginQRCodeSignal() {
+    public LoginQRCodeSignal(String channelCode) {
         super(NAME);
+        this.setCode(channelCode);
     }
 
     public LoginQRCodeSignal(JSONObject json) {

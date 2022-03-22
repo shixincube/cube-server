@@ -40,6 +40,7 @@ import cube.hub.signal.LoginQRCodeSignal;
 import cube.hub.signal.Signal;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
+import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -67,13 +68,12 @@ public class OpenChannel extends CrossDomainHandler {
             return;
         }
 
-        LoginQRCodeSignal requestSignal = new LoginQRCodeSignal();
-        requestSignal.setCode(code);
-
+        // 创建信令
+        LoginQRCodeSignal requestSignal = new LoginQRCodeSignal(code);
         ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
         actionDialect.addParam("signal", requestSignal.toJSON());
 
-        ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect, 2 * 60 * 1000);
+        ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect, 3 * 60 * 1000);
         if (null == result) {
             response.setStatus(HttpStatus.FORBIDDEN_403);
             this.complete();
@@ -83,7 +83,9 @@ public class OpenChannel extends CrossDomainHandler {
         int stateCode = result.getParamAsInt("code");
         if (HubStateCode.Ok.code != stateCode) {
             Logger.w(this.getClass(), "#doGet - state : " + stateCode);
-            response.setStatus(HttpStatus.UNAUTHORIZED_401);
+            JSONObject data = new JSONObject();
+            data.put("code", stateCode);
+            this.respond(response, HttpStatus.UNAUTHORIZED_401, data);
             this.complete();
             return;
         }

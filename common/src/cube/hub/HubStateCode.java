@@ -67,6 +67,11 @@ public enum HubStateCode {
     UnsupportedEvent(14),
 
     /**
+     * 数据过期。
+     */
+    Expired(15),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)

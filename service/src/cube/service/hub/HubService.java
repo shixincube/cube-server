@@ -138,6 +138,10 @@ public class HubService extends AbstractModule {
                     return;
                 }
 
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "#triggerEvent - " + event.getName());
+                }
+
                 // 捕获是否是阻塞事件
                 if (!signalController.capture(event)) {
                     eventController.receive(event);
@@ -200,10 +204,17 @@ public class HubService extends AbstractModule {
                         return;
                     }
 
+                    if (System.currentTimeMillis() >= channelCode.expiration) {
+                        // 过期
+                        Logger.w(this.getClass(), "#processChannel - channel code expired : " + channelCode.code);
+                        responder.respondDispatcher(sn, HubStateCode.Expired.code, signal);
+                        return;
+                    }
+
                     if (Product.WeChat == channelCode.product) {
                         if (signal instanceof LoginQRCodeSignal) {
                             // 获取登录二维码
-                            Event event = WeChatHub.getInstance().openChannel();
+                            Event event = WeChatHub.getInstance().openChannel(channelManager, channelCode);
                             if (null != event) {
                                 responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
                             }
