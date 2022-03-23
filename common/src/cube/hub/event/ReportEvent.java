@@ -60,7 +60,7 @@ public class ReportEvent extends WeChatEvent {
     /**
      * 频道码映射。
      */
-    private Map<String, String> channelCodeMap;
+    private Map<String, Contact> channelCodeMap;
 
     public ReportEvent(int totalAppNum, int idleAppNum, List<Contact> managedAccounts) {
         super(NAME);
@@ -71,8 +71,8 @@ public class ReportEvent extends WeChatEvent {
 
     public ReportEvent(JSONObject json) {
         super(json);
-        json.put("total", this.totalAppNum);
-        json.put("idle", this.idleAppNum);
+        this.totalAppNum = json.getInt("total");
+        this.idleAppNum = json.getInt("idle");
 
         this.managedAccounts = new ArrayList<>();
         JSONArray array = json.getJSONArray("accounts");
@@ -85,7 +85,8 @@ public class ReportEvent extends WeChatEvent {
             JSONObject map = json.getJSONObject("channelCodes");
             this.channelCodeMap = new HashMap<>();
             for (String key : map.keySet()) {
-                this.channelCodeMap.put(key, map.getString(key));
+                JSONObject value = map.getJSONObject(key);
+                this.channelCodeMap.put(key, new Contact(value));
             }
         }
     }
@@ -102,15 +103,15 @@ public class ReportEvent extends WeChatEvent {
         return this.managedAccounts;
     }
 
-    public void putChannelCode(String channelCode, String accountId) {
+    public void putChannelCode(String channelCode, Contact account) {
         if (null == this.channelCodeMap) {
             this.channelCodeMap = new HashMap<>();
         }
 
-        this.channelCodeMap.put(channelCode, accountId);
+        this.channelCodeMap.put(channelCode, account);
     }
 
-    public Map<String, String> getChannelCodes() {
+    public Map<String, Contact> getChannelCodes() {
         return this.channelCodeMap;
     }
 
@@ -128,8 +129,8 @@ public class ReportEvent extends WeChatEvent {
 
         if (null != this.channelCodeMap) {
             JSONObject map = new JSONObject();
-            for (Map.Entry<String, String> entry : this.channelCodeMap.entrySet()) {
-                map.put(entry.getKey(), entry.getValue());
+            for (Map.Entry<String, Contact> entry : this.channelCodeMap.entrySet()) {
+                map.put(entry.getKey(), entry.getValue().toCompactJSON());
             }
             json.put("channelCodes", map);
         }
@@ -142,9 +143,13 @@ public class ReportEvent extends WeChatEvent {
         StringBuilder buf = new StringBuilder();
         buf.append("\n");
         buf.append("---------------- Report ----------------\n");
-        buf.append("Pretender : ");
-        buf.append(this.getDescription().getPretender().getId());
-        buf.append("\n");
+
+        if (null != this.getDescription()) {
+            buf.append("Pretender : ");
+            buf.append(this.getDescription().getPretender().getId());
+            buf.append("\n");
+        }
+
         buf.append("Statistics: ");
         buf.append(this.totalAppNum - this.idleAppNum);
         buf.append(" / ");
@@ -152,10 +157,10 @@ public class ReportEvent extends WeChatEvent {
         buf.append("\n");
 
         if (null != this.channelCodeMap) {
-            for (Map.Entry<String, String> entry : this.channelCodeMap.entrySet()) {
+            for (Map.Entry<String, Contact> entry : this.channelCodeMap.entrySet()) {
                 buf.append(entry.getKey());
                 buf.append(" -> ");
-                buf.append(entry.getValue());
+                buf.append(entry.getValue().getName());
                 buf.append("\n");
             }
         }

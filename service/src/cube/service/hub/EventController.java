@@ -74,23 +74,9 @@ public class EventController {
             else if (AllocatedEvent.NAME.equals(event.getName())) {
                 AllocatedEvent allocatedEvent = (AllocatedEvent) event;
                 // 已分配账号
-                ReportEvent report = WeChatHub.getInstance().getReport(allocatedEvent.getPretenderId());
-                if (null != report) {
-                    report.putChannelCode(event.getCode(), this.getWeChatId(allocatedEvent.getAccount()));
-                    if (Logger.isDebugLevel()) {
-                        Logger.d(this.getClass(), report.toString());
-                    }
-                }
+                WeChatHub.getInstance().reportAlloc(allocatedEvent.getPretenderId(),
+                        allocatedEvent.getCode(), allocatedEvent.getAccount());
             }
         }
-    }
-
-    private String getWeChatId(Contact account) {
-        JSONObject ctx = account.getContext();
-        if (null == ctx) {
-            return null;
-        }
-
-        return ctx.has("id") ? ctx.getString("id") : null;
     }
 }

@@ -33,6 +33,7 @@ import cube.hub.event.Event;
 import cube.hub.event.LoginQRCodeEvent;
 import cube.hub.event.ReportEvent;
 import cube.hub.signal.LoginQRCodeSignal;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.util.Iterator;
@@ -182,5 +183,35 @@ public class WeChatHub {
 
         this.reportMap.put(reportEvent.getDescription().getPretender().getId(),
                 reportEvent);
+    }
+
+    /**
+     * 报告已分配账号。
+     *
+     * @param pretenderId
+     * @param channelCode
+     * @param account
+     */
+    public void reportAlloc(Long pretenderId, String channelCode, Contact account) {
+        String weChatId = this.getWeChatId(account);
+
+        ReportEvent reportEvent = this.reportMap.get(pretenderId);
+        if (null != reportEvent) {
+            reportEvent.putChannelCode(channelCode, account);
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#reportAlloc" + reportEvent.toString());
+            }
+        }
+
+        this.service.getChannelManager().setAccountId(channelCode, weChatId, pretenderId);
+    }
+
+    private String getWeChatId(Contact account) {
+        JSONObject ctx = account.getContext();
+        if (null == ctx) {
+            return null;
+        }
+
+        return ctx.has("id") ? ctx.getString("id") : null;
     }
 }
