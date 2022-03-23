@@ -43,5 +43,5 @@ else
   fi
 fi 
 
-echo "\nStart SERVICE: $PRGDIR/$EXECUTABLE -tag service -config config/service.xml\n"
+echo -e "\nStart SERVICE: $PRGDIR/$EXECUTABLE -tag service -config config/service.xml\n"
 exec "$PRGDIR"/"$EXECUTABLE" -tag service -config config/service.xml

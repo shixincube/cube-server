@@ -43,5 +43,5 @@ else
   fi
 fi 
 
-echo "\nStop SERVICE: $PRGDIR/$EXECUTABLE service\n"
+echo -e "\nStop SERVICE: $PRGDIR/$EXECUTABLE service\n"
 exec "$PRGDIR"/"$EXECUTABLE" service

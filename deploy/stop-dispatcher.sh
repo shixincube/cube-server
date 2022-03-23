@@ -43,5 +43,5 @@ else
   fi
 fi 
 
-echo "\nStop DISPATCHER: $PRGDIR/$EXECUTABLE dispatcher\n"
+echo -e "\nStop DISPATCHER: $PRGDIR/$EXECUTABLE dispatcher\n"
 exec "$PRGDIR"/"$EXECUTABLE" dispatcher

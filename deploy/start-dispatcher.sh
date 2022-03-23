@@ -43,5 +43,5 @@ else
   fi
 fi 
 
-echo "\nStart DISPATCHER: $PRGDIR/$EXECUTABLE -tag dispatcher -config config/dispatcher.xml\n"
+echo -e "\nStart DISPATCHER: $PRGDIR/$EXECUTABLE -tag dispatcher -config config/dispatcher.xml\n"
 exec "$PRGDIR"/"$EXECUTABLE" -tag dispatcher -config config/dispatcher.xml
