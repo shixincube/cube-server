@@ -24,31 +24,22 @@
  * SOFTWARE.
  */
 
-package cube.hub.signal;
+package cube.hub.event;
 
 import org.json.JSONObject;
 
 /**
- * 客户端提交登录二维码信令。
+ * 应答。
  */
-public class LoginQRCodeSignal extends Signal {
+public class AckEvent extends WeChatEvent {
 
-    public final static String NAME = "LoginQRCode";
+    public final static String NAME = "Ack";
 
-    private long timestamp;
-
-    public LoginQRCodeSignal(String channelCode) {
-        super(NAME);
-        this.setCode(channelCode);
-        this.timestamp = System.currentTimeMillis();
+    public AckEvent(long sn) {
+        super(sn, NAME);
     }
 
-    public LoginQRCodeSignal(JSONObject json) {
+    public AckEvent(JSONObject json) {
         super(json);
-        this.timestamp = System.currentTimeMillis();
-    }
-
-    public long getTimestamp() {
-        return this.timestamp;
     }
 }

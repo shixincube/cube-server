@@ -55,6 +55,9 @@ public class SignalBuilder {
         else if (LogoutSignal.NAME.equals(name)) {
             return new LogoutSignal(signalJson);
         }
+        else if (SilenceSignal.NAME.equals(name)) {
+            return new SilenceSignal(signalJson);
+        }
         else if (ReadySignal.NAME.equals(name)) {
             return new ReadySignal(signalJson);
         }

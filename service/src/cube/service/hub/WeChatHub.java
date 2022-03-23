@@ -103,8 +103,8 @@ public class WeChatHub {
 
         LoginQRCodeEvent loginQRCodeEvent = this.recentLoginEventMap.get(channelCode.code);
         if (null != loginQRCodeEvent) {
-            if (System.currentTimeMillis() - loginQRCodeEvent.getTimestamp() < 30 * 1000) {
-                // 30 秒内不再更新二维码
+            if (System.currentTimeMillis() - loginQRCodeEvent.getTimestamp() < 60 * 1000) {
+                // 60 秒内不再更新二维码
                 return loginQRCodeEvent;
             }
 

@@ -200,7 +200,11 @@ public class SignalController {
             for (Long id : destinations) {
                 List<Signal> signalList = passBySignal.getSignals();
                 for (Signal signal : signalList) {
-                    this.transmit(id, signal);
+                    boolean result = this.transmit(id, signal);
+                    if (!result) {
+                        Logger.i(this.getClass(), "Pass-by to " + id + " failed");
+                        break;
+                    }
                 }
             }
         }

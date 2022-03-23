@@ -77,6 +77,9 @@ public class EventController {
                 WeChatHub.getInstance().reportAlloc(allocatedEvent.getPretenderId(),
                         allocatedEvent.getCode(), allocatedEvent.getAccount());
             }
+            else {
+                Logger.d(this.getClass(), "#receive - Ignored : " + event.getName());
+            }
         }
     }
 }

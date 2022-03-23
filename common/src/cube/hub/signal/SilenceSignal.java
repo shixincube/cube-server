@@ -29,26 +29,32 @@ package cube.hub.signal;
 import org.json.JSONObject;
 
 /**
- * 客户端提交登录二维码信令。
+ * 进入静默状态。
  */
-public class LoginQRCodeSignal extends Signal {
+public class SilenceSignal extends Signal {
 
-    public final static String NAME = "LoginQRCode";
+    public final static String NAME = "Silence";
 
-    private long timestamp;
+    private long duration;
 
-    public LoginQRCodeSignal(String channelCode) {
+    public SilenceSignal(long duration) {
         super(NAME);
-        this.setCode(channelCode);
-        this.timestamp = System.currentTimeMillis();
+        this.duration = duration;
     }
 
-    public LoginQRCodeSignal(JSONObject json) {
+    public SilenceSignal(JSONObject json) {
         super(json);
-        this.timestamp = System.currentTimeMillis();
+        this.duration = json.getLong("duration");
     }
 
-    public long getTimestamp() {
-        return this.timestamp;
+    public long getDuration() {
+        return this.duration;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("duration", this.duration);
+        return json;
     }
 }

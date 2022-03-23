@@ -103,6 +103,14 @@ public class ReportEvent extends WeChatEvent {
         return this.managedAccounts;
     }
 
+    public void addManagedAccount(Contact account) {
+        this.managedAccounts.add(account);
+    }
+
+    public void removeManagedAccount(Contact account) {
+        this.managedAccounts.remove(account);
+    }
+
     public void putChannelCode(String channelCode, Contact account) {
         if (null == this.channelCodeMap) {
             this.channelCodeMap = new HashMap<>();

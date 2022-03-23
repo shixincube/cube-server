@@ -66,6 +66,9 @@ public class EventBuilder {
         else if (LogoutEvent.NAME.equals(name)) {
             event = new LogoutEvent(eventJson);
         }
+        else if (AckEvent.NAME.equals(name)) {
+            event = new AckEvent(eventJson);
+        }
 
         return event;
     }
