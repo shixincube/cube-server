@@ -43,33 +43,40 @@ public abstract class WeChatEvent extends Event {
 
     public WeChatEvent(String name) {
         super(Product.WeChat, name);
+        this.timestamp = System.currentTimeMillis();
     }
 
     public WeChatEvent(long sn, String name) {
         super(Product.WeChat, sn, name);
+        this.timestamp = System.currentTimeMillis();
     }
 
     public WeChatEvent(String name, File file) {
         super(Product.WeChat, name, file);
+        this.timestamp = System.currentTimeMillis();
     }
 
     public WeChatEvent(long sn, String name, File file) {
         super(Product.WeChat, sn, name, file);
+        this.timestamp = System.currentTimeMillis();
     }
 
     public WeChatEvent(long sn, String name, Contact account) {
         super(Product.WeChat, sn, name);
         this.account = account;
+        this.timestamp = System.currentTimeMillis();
     }
 
     public WeChatEvent(String name, Contact account) {
         super(Product.WeChat, name);
         this.account = account;
+        this.timestamp = System.currentTimeMillis();
     }
 
     public WeChatEvent(String name, File file, Contact account) {
         super(Product.WeChat, name, file);
         this.account = account;
+        this.timestamp = System.currentTimeMillis();
     }
 
     public WeChatEvent(JSONObject json) {
@@ -77,6 +84,8 @@ public abstract class WeChatEvent extends Event {
         if (json.has("account")) {
             this.account = new Contact(json.getJSONObject("account"));
         }
+
+        this.timestamp = System.currentTimeMillis();
     }
 
     public void setTimestamp(long timestamp) {
@@ -89,6 +98,15 @@ public abstract class WeChatEvent extends Event {
 
     public Contact getAccount() {
         return this.account;
+    }
+
+    public String getWeChatId(Contact account) {
+        JSONObject ctx = account.getContext();
+        if (null == ctx) {
+            return null;
+        }
+
+        return ctx.has("id") ? ctx.getString("id") : null;
     }
 
     @Override

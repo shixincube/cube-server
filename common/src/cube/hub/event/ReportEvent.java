@@ -67,6 +67,7 @@ public class ReportEvent extends WeChatEvent {
         this.totalAppNum = totalAppNum;
         this.idleAppNum = idleAppNum;
         this.managedAccounts = managedAccounts;
+        this.channelCodeMap = new HashMap<>();
     }
 
     public ReportEvent(JSONObject json) {
@@ -81,9 +82,9 @@ public class ReportEvent extends WeChatEvent {
             this.managedAccounts.add(account);
         }
 
+        this.channelCodeMap = new HashMap<>();
         if (json.has("channelCodes")) {
             JSONObject map = json.getJSONObject("channelCodes");
-            this.channelCodeMap = new HashMap<>();
             for (String key : map.keySet()) {
                 JSONObject value = map.getJSONObject(key);
                 this.channelCodeMap.put(key, new Contact(value));
@@ -108,15 +109,31 @@ public class ReportEvent extends WeChatEvent {
     }
 
     public void removeManagedAccount(Contact account) {
-        this.managedAccounts.remove(account);
+        for (int i = 0; i < this.managedAccounts.size(); ++i) {
+            Contact current = this.managedAccounts.get(i);
+            if (getWeChatId(account).equals(getWeChatId(current))) {
+                this.managedAccounts.remove(i);
+                // 空闲 App 数量增加
+                ++this.idleAppNum;
+                break;
+            }
+        }
     }
 
     public void putChannelCode(String channelCode, Contact account) {
-        if (null == this.channelCodeMap) {
-            this.channelCodeMap = new HashMap<>();
-        }
-
         this.channelCodeMap.put(channelCode, account);
+    }
+
+    public Contact removeChannelCode(String channelCode) {
+        return this.channelCodeMap.remove(channelCode);
+    }
+
+    public Contact getAccount(String channelCode) {
+        return this.channelCodeMap.get(channelCode);
+    }
+
+    public boolean hasChannelCode(String channelCode) {
+        return this.channelCodeMap.containsKey(channelCode);
     }
 
     public Map<String, Contact> getChannelCodes() {
@@ -135,7 +152,7 @@ public class ReportEvent extends WeChatEvent {
         }
         json.put("accounts", array);
 
-        if (null != this.channelCodeMap) {
+        if (!this.channelCodeMap.isEmpty()) {
             JSONObject map = new JSONObject();
             for (Map.Entry<String, Contact> entry : this.channelCodeMap.entrySet()) {
                 map.put(entry.getKey(), entry.getValue().toCompactJSON());
@@ -164,7 +181,7 @@ public class ReportEvent extends WeChatEvent {
         buf.append(this.totalAppNum);
         buf.append("\n");
 
-        if (null != this.channelCodeMap) {
+        if (!this.channelCodeMap.isEmpty()) {
             for (Map.Entry<String, Contact> entry : this.channelCodeMap.entrySet()) {
                 buf.append(entry.getKey());
                 buf.append(" -> ");

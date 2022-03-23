@@ -31,8 +31,10 @@ import cube.common.entity.Contact;
 import cube.hub.dao.ChannelCode;
 import cube.hub.event.Event;
 import cube.hub.event.LoginQRCodeEvent;
+import cube.hub.event.LogoutEvent;
 import cube.hub.event.ReportEvent;
 import cube.hub.signal.LoginQRCodeSignal;
+import cube.hub.signal.LogoutSignal;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -91,7 +93,7 @@ public class WeChatHub {
      * @param channelCode
      * @return
      */
-    public Event openChannel(ChannelCode channelCode) {
+    public synchronized Event openChannel(ChannelCode channelCode) {
         ChannelManager channelManager = this.service.getChannelManager();
         // 校验通道码
         String accountId = channelManager.getAccountId(channelCode.code);
@@ -107,13 +109,15 @@ public class WeChatHub {
                 // 60 秒内不再更新二维码
                 return loginQRCodeEvent;
             }
-
-            this.recentLoginEventMap.remove(channelCode.code);
         }
+
+        // 插入数据，防止重复申请
+        LoginQRCodeEvent preEvent = new LoginQRCodeEvent(0, channelCode.code, null);
+        this.recentLoginEventMap.put(channelCode.code, preEvent);
 
         // 找到最少服务数量的客户端
         int minNum = Integer.MAX_VALUE;
-        Long id = null;
+        Long pretenderId = null;
         Iterator<Map.Entry<Long, ReportEvent>> iter = this.reportMap.entrySet().iterator();
         while (iter.hasNext()) {
             Map.Entry<Long, ReportEvent> entry = iter.next();
@@ -121,31 +125,37 @@ public class WeChatHub {
             int num = report.getTotalAppNum() - report.getIdleAppNum();
             if (num < minNum) {
                 minNum = num;
-                id = entry.getKey();
+                pretenderId = entry.getKey();
             }
         }
 
-        if (null == id) {
-            Logger.w(this.getClass(), "#openChannel - Can NOT find idle app");
+        if (null == pretenderId) {
+            Logger.w(this.getClass(), "#openChannel - Can NOT find idle seeker");
+            this.recentLoginEventMap.remove(channelCode.code);
             return null;
         }
 
         // 获取空闲端的登录二维码文件
         SignalController signalController = this.service.getSignalController();
         // 发送信令并等待响应事件
-        Event event = signalController.transmitSyncEvent(id, new LoginQRCodeSignal(channelCode.code));
+        Event event = signalController.transmitSyncEvent(pretenderId, new LoginQRCodeSignal(channelCode.code));
         if (null == event) {
             Logger.w(this.getClass(), "#openChannel - No login QR code event");
+            this.recentLoginEventMap.remove(channelCode.code);
             return null;
         }
 
         loginQRCodeEvent = (LoginQRCodeEvent) event;
         loginQRCodeEvent.setTimestamp(System.currentTimeMillis());
-        loginQRCodeEvent.setPretenderId(id);
+        loginQRCodeEvent.setPretenderId(pretenderId);
 
         if (null != loginQRCodeEvent.getFileLabel()) {
-            // 有二维码文件，保存记录以便扫描确认
+            // 有二维码文件，保存记录放置重复申请
             this.recentLoginEventMap.put(channelCode.code, loginQRCodeEvent);
+        }
+        else {
+            // 没有获取到二维码文件
+            this.recentLoginEventMap.remove(channelCode.code);
         }
 
         return event;
@@ -154,11 +164,11 @@ public class WeChatHub {
     /**
      * 关闭通道。
      *
-     * @param channelManager
      * @param channelCode
      * @return
      */
-    public Contact closeChannel(ChannelManager channelManager, ChannelCode channelCode) {
+    public synchronized Event closeChannel(ChannelCode channelCode) {
+        ChannelManager channelManager = this.service.getChannelManager();
         // 校验通道码
         String accountId = channelManager.getAccountId(channelCode.code);
         if (null == accountId) {
@@ -167,11 +177,40 @@ public class WeChatHub {
             return null;
         }
 
+        ReportEvent report = null;
+        Contact account = null;
+        Long pretenderId = null;
         for (Map.Entry<Long, ReportEvent> entry : this.reportMap.entrySet()) {
-
+            report = entry.getValue();
+            if (report.hasChannelCode(channelCode.code)) {
+                account = report.getAccount(channelCode.code);
+                pretenderId = entry.getKey();
+                break;
+            }
         }
 
-        return null;
+        if (null == pretenderId) {
+            Logger.w(this.getClass(), "#closeChannel - Can NOT find seeker: " + channelCode.code);
+            return null;
+        }
+
+        SignalController signalController = this.service.getSignalController();
+        // 发送信令并等待响应事件
+        Event event = signalController.transmitSyncEvent(pretenderId, new LogoutSignal(account, channelCode.code));
+        if (null == event) {
+            Logger.w(this.getClass(), "#closeChannel - No logout event");
+            return null;
+        }
+
+        if (event instanceof LogoutEvent) {
+            // 清空账号分配数据
+            channelManager.clearAccountId(channelCode.code);
+            // 删除报告里的数据
+            report.removeManagedAccount(account);
+            report.removeChannelCode(channelCode.code);
+        }
+
+        return event;
     }
 
     public void updateReport(ReportEvent reportEvent) {
@@ -204,6 +243,8 @@ public class WeChatHub {
         }
 
         this.service.getChannelManager().setAccountId(channelCode, weChatId, pretenderId);
+
+        this.recentLoginEventMap.remove(channelCode);
     }
 
     private String getWeChatId(Contact account) {

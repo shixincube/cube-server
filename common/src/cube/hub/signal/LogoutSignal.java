@@ -38,9 +38,10 @@ public class LogoutSignal extends Signal {
 
     private Contact account;
 
-    public LogoutSignal(Contact account) {
+    public LogoutSignal(Contact account, String channelCode) {
         super(NAME);
         this.account = account;
+        setCode(channelCode);
     }
 
     public LogoutSignal(JSONObject json) {
