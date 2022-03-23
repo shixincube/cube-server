@@ -28,11 +28,13 @@ package cube.service.hub;
 
 import cell.util.log.Logger;
 import cube.common.entity.ClientDescription;
+import cube.common.entity.Contact;
 import cube.hub.Product;
+import cube.hub.event.AllocatedEvent;
 import cube.hub.event.Event;
-import cube.hub.event.LoginQRCodeEvent;
 import cube.hub.event.ReportEvent;
 import cube.hub.event.SubmitMessagesEvent;
+import org.json.JSONObject;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,14 +66,31 @@ public class EventController {
                         + " - " + clientDescription.toString());
                 }
 
-
+                // 记录消息
             }
             else if (ReportEvent.NAME.equals(event.getName())) {
                 WeChatHub.getInstance().updateReport((ReportEvent) event);
             }
-            else if (LoginQRCodeEvent.NAME.equals(event.getName())) {
-
+            else if (AllocatedEvent.NAME.equals(event.getName())) {
+                AllocatedEvent allocatedEvent = (AllocatedEvent) event;
+                // 已分配账号
+                ReportEvent report = WeChatHub.getInstance().getReport(allocatedEvent.getPretenderId());
+                if (null != report) {
+                    report.putChannelCode(event.getCode(), this.getWeChatId(allocatedEvent.getAccount()));
+                    if (Logger.isDebugLevel()) {
+                        Logger.d(this.getClass(), report.toString());
+                    }
+                }
             }
         }
+    }
+
+    private String getWeChatId(Contact account) {
+        JSONObject ctx = account.getContext();
+        if (null == ctx) {
+            return null;
+        }
+
+        return ctx.has("id") ? ctx.getString("id") : null;
     }
 }

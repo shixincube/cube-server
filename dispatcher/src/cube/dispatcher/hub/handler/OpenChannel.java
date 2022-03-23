@@ -92,16 +92,23 @@ public class OpenChannel extends CrossDomainHandler {
 
         if (result.containsParam("event")) {
             Event event = EventBuilder.build(result.getParamAsJson("event"));
-            // 添加到缓存
-            CacheCenter.getInstance().putFileLabel(event.getFileLabel());
-            this.respondOk(response, event.toCompactJSON());
+            if (null != event.getFileLabel()) {
+                // 添加到缓存
+                CacheCenter.getInstance().putFileLabel(event.getFileLabel());
+                this.respondOk(response, event.toCompactJSON());
+            }
+            else {
+                this.respond(response, HttpStatus.SERVICE_UNAVAILABLE_503, event.toCompactJSON());
+            }
         }
         else if (result.containsParam("signal")) {
             Signal signal = SignalBuilder.build(result.getParamAsJson("signal"));
             this.respondOk(response, signal.toCompactJSON());
         }
         else {
-            response.setStatus(HttpStatus.NOT_FOUND_404);
+            JSONObject data = new JSONObject();
+            data.put("code", HubStateCode.Failure);
+            this.respond(response, HttpStatus.NOT_FOUND_404, data);
         }
 
         this.complete();

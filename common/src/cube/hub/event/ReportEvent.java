@@ -31,6 +31,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -79,6 +80,14 @@ public class ReportEvent extends WeChatEvent {
             Contact account = new Contact(array.getJSONObject(i));
             this.managedAccounts.add(account);
         }
+
+        if (json.has("channelCodes")) {
+            JSONObject map = json.getJSONObject("channelCodes");
+            this.channelCodeMap = new HashMap<>();
+            for (String key : map.keySet()) {
+                this.channelCodeMap.put(key, map.getString(key));
+            }
+        }
     }
 
     public int getTotalAppNum() {
@@ -93,6 +102,18 @@ public class ReportEvent extends WeChatEvent {
         return this.managedAccounts;
     }
 
+    public void putChannelCode(String channelCode, String accountId) {
+        if (null == this.channelCodeMap) {
+            this.channelCodeMap = new HashMap<>();
+        }
+
+        this.channelCodeMap.put(channelCode, accountId);
+    }
+
+    public Map<String, String> getChannelCodes() {
+        return this.channelCodeMap;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
@@ -105,6 +126,41 @@ public class ReportEvent extends WeChatEvent {
         }
         json.put("accounts", array);
 
+        if (null != this.channelCodeMap) {
+            JSONObject map = new JSONObject();
+            for (Map.Entry<String, String> entry : this.channelCodeMap.entrySet()) {
+                map.put(entry.getKey(), entry.getValue());
+            }
+            json.put("channelCodes", map);
+        }
+
         return json;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("\n");
+        buf.append("---------------- Report ----------------\n");
+        buf.append("Pretender : ");
+        buf.append(this.getDescription().getPretender().getId());
+        buf.append("\n");
+        buf.append("Statistics: ");
+        buf.append(this.totalAppNum - this.idleAppNum);
+        buf.append(" / ");
+        buf.append(this.totalAppNum);
+        buf.append("\n");
+
+        if (null != this.channelCodeMap) {
+            for (Map.Entry<String, String> entry : this.channelCodeMap.entrySet()) {
+                buf.append(entry.getKey());
+                buf.append(" -> ");
+                buf.append(entry.getValue());
+                buf.append("\n");
+            }
+        }
+
+        buf.append("----------------------------------------\n");
+        return buf.toString();
     }
 }

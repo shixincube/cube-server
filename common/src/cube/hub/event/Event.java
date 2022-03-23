@@ -138,6 +138,10 @@ public abstract class Event implements JSONable {
         return this.description;
     }
 
+    public Long getPretenderId() {
+        return (null != this.description) ? this.description.getPretender().getId() : null;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

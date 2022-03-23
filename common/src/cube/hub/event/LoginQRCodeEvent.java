@@ -52,6 +52,7 @@ public class LoginQRCodeEvent extends WeChatEvent {
         this.pretenderId = pretenderId;
     }
 
+    @Override
     public Long getPretenderId() {
         return this.pretenderId;
     }

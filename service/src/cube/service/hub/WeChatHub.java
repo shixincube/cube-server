@@ -74,10 +74,22 @@ public class WeChatHub {
         this.service = service;
     }
 
-    public Map<Long, ReportEvent> getReports() {
-        return this.reportMap;
+    /**
+     * 获取报告
+     *
+     * @param pretenderId
+     * @return
+     */
+    public ReportEvent getReport(Long pretenderId) {
+        return this.reportMap.get(pretenderId);
     }
 
+    /**
+     * 开启通道。
+     *
+     * @param channelCode
+     * @return
+     */
     public Event openChannel(ChannelCode channelCode) {
         ChannelManager channelManager = this.service.getChannelManager();
         // 校验通道码
@@ -129,11 +141,22 @@ public class WeChatHub {
         loginQRCodeEvent = (LoginQRCodeEvent) event;
         loginQRCodeEvent.setTimestamp(System.currentTimeMillis());
         loginQRCodeEvent.setPretenderId(id);
-        this.recentLoginEventMap.put(channelCode.code, loginQRCodeEvent);
+
+        if (null != loginQRCodeEvent.getFileLabel()) {
+            // 有二维码文件，保存记录以便扫描确认
+            this.recentLoginEventMap.put(channelCode.code, loginQRCodeEvent);
+        }
 
         return event;
     }
 
+    /**
+     * 关闭通道。
+     *
+     * @param channelManager
+     * @param channelCode
+     * @return
+     */
     public Contact closeChannel(ChannelManager channelManager, ChannelCode channelCode) {
         // 校验通道码
         String accountId = channelManager.getAccountId(channelCode.code);
@@ -153,7 +176,8 @@ public class WeChatHub {
     public void updateReport(ReportEvent reportEvent) {
         if (Logger.isDebugLevel()) {
             Logger.d(this.getClass(), "#updateReport - report from " +
-                    reportEvent.getDescription().getPretender().getId());
+                    reportEvent.getDescription().getPretender().getId() +
+                    reportEvent.toString());
         }
 
         this.reportMap.put(reportEvent.getDescription().getPretender().getId(),

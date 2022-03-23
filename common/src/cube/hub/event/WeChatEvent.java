@@ -87,6 +87,10 @@ public abstract class WeChatEvent extends Event {
         return this.timestamp;
     }
 
+    public Contact getAccount() {
+        return this.account;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
