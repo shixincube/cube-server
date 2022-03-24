@@ -107,7 +107,7 @@ public class OpenChannel extends CrossDomainHandler {
         }
         else {
             JSONObject data = new JSONObject();
-            data.put("code", HubStateCode.Failure);
+            data.put("code", HubStateCode.Failure.code);
             this.respond(response, HttpStatus.NOT_FOUND_404, data);
         }
 

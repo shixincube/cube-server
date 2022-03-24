@@ -38,6 +38,11 @@ public class LogoutSignal extends Signal {
 
     private Contact account;
 
+    public LogoutSignal(String channelCode) {
+        super(NAME);
+        setCode(channelCode);
+    }
+
     public LogoutSignal(Contact account, String channelCode) {
         super(NAME);
         this.account = account;
@@ -46,7 +51,9 @@ public class LogoutSignal extends Signal {
 
     public LogoutSignal(JSONObject json) {
         super(json);
-        this.account = new Contact(json.getJSONObject("account"));
+        if (json.has("account")) {
+            this.account = new Contact(json.getJSONObject("account"));
+        }
     }
 
     public Contact getAccount() {
@@ -56,7 +63,9 @@ public class LogoutSignal extends Signal {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("account", this.account.toCompactJSON());
+        if (null != this.account) {
+            json.put("account", this.account.toCompactJSON());
+        }
         return json;
     }
 }

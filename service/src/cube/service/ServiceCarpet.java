@@ -85,7 +85,19 @@ public class ServiceCarpet implements CellListener {
 
         this.initManagement(nucleus);
 
-        Logger.i(this.getClass(), "Service STARTED - " + Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
+        StringBuilder buf = new StringBuilder();
+        buf.append("Service STARTED - ");
+        buf.append(Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
+        buf.append("\n");
+        buf.append("--------------------------------------------------------------------------------------\n");
+        buf.append("   ______            __                  _____                         _\n");
+        buf.append("  / ____/  __  __   / /_   ___          / ___/  ___    _____ _   __   (_)  _____  ___\n");
+        buf.append(" / /      / / / /  / __ \\ / _ \\         \\__ \\  / _ \\  / ___/| | / /  / /  / ___/ / _ \\\n");
+        buf.append("/ /___   / /_/ /  / /_/ //  __/        ___/ / /  __/ / /    | |/ /  / /  / /__  /  __/\n");
+        buf.append("\\____/   \\__,_/  /_.___/ \\___/        /____/  \\___/ /_/     |___/  /_/   \\___/  \\___/\n");
+        buf.append("--------------------------------------------------------------------------------------\n");
+        Logger.i(this.getClass(), buf.toString());
+        buf = null;
     }
 
     @Override

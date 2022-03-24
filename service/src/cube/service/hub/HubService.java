@@ -175,7 +175,7 @@ public class HubService extends AbstractModule {
     }
 
     public void processChannel(ActionDialect actionDialect, Responder responder) {
-        long sn = actionDialect.getParamAsJson(this.performerKey).getLong("sn");
+        final long sn = actionDialect.getParamAsJson(this.performerKey).getLong("sn");
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -219,6 +219,16 @@ public class HubService extends AbstractModule {
                         if (signal instanceof LoginQRCodeSignal) {
                             // 获取登录二维码
                             Event event = WeChatHub.getInstance().openChannel(channelCode);
+                            if (null != event) {
+                                responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
+                            }
+                            else {
+                                responder.respondDispatcher(sn, HubStateCode.Failure.code, signal);
+                            }
+                        }
+                        else if (signal instanceof LogoutSignal) {
+                            // 退出登录
+                            Event event = WeChatHub.getInstance().closeChannel(channelCode);
                             if (null != event) {
                                 responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
                             }

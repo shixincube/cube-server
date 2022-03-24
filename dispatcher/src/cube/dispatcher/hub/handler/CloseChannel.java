@@ -26,7 +26,22 @@
 
 package cube.dispatcher.hub.handler;
 
+import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
+import cube.dispatcher.Performer;
+import cube.dispatcher.hub.CacheCenter;
+import cube.dispatcher.hub.HubCellet;
+import cube.hub.EventBuilder;
+import cube.hub.HubAction;
+import cube.hub.HubStateCode;
+import cube.hub.dao.ChannelCode;
+import cube.hub.event.Event;
+import cube.hub.event.LogoutEvent;
+import cube.hub.signal.LoginQRCodeSignal;
+import cube.hub.signal.LogoutSignal;
 import cube.util.CrossDomainHandler;
+import org.eclipse.jetty.http.HttpStatus;
+import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,12 +51,62 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class CloseChannel extends CrossDomainHandler {
 
-    public CloseChannel() {
+    public final static String CONTEXT_PATH = "/hub/close/";
+
+    private Performer performer;
+
+    public CloseChannel(Performer performer) {
         super();
+        this.performer = performer;
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
+        ChannelCode channelCode = Helper.checkChannelCode(request, response, this.performer);
+        if (null == channelCode) {
+            this.complete();
+            return;
+        }
 
+        // 创建信令
+        LogoutSignal requestSignal = new LogoutSignal(channelCode.code);
+        ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
+        actionDialect.addParam("signal", requestSignal.toJSON());
+
+        ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect, 3 * 60 * 1000);
+        if (null == result) {
+            response.setStatus(HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
+        }
+
+        int stateCode = result.getParamAsInt("code");
+        if (HubStateCode.Ok.code != stateCode) {
+            Logger.w(this.getClass(), "#doGet - state : " + stateCode);
+            JSONObject data = new JSONObject();
+            data.put("code", stateCode);
+            this.respond(response, HttpStatus.UNAUTHORIZED_401, data);
+            this.complete();
+            return;
+        }
+
+        if (result.containsParam("event")) {
+            Event event = EventBuilder.build(result.getParamAsJson("event"));
+            if (event instanceof LogoutEvent) {
+                this.respondOk(response, event.toCompactJSON());
+            }
+            else {
+                JSONObject data = new JSONObject();
+                data.put("code", HubStateCode.ControllerError.code);
+                this.respond(response, HttpStatus.NOT_FOUND_404, data);
+            }
+        }
+        else {
+            JSONObject data = new JSONObject();
+            data.put("code", HubStateCode.Failure.code);
+            this.respond(response, HttpStatus.NOT_FOUND_404, data);
+        }
+
+        this.complete();
     }
 }

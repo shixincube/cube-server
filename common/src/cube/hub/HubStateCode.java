@@ -72,6 +72,11 @@ public enum HubStateCode {
     Expired(15),
 
     /**
+     * 控制器错误。
+     */
+    ControllerError(17),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)
@@ -82,5 +87,15 @@ public enum HubStateCode {
 
     HubStateCode(int code) {
         this.code = code;
+    }
+
+    public static HubStateCode parse(int code) {
+        for (HubStateCode stateCode : HubStateCode.values()) {
+            if (stateCode.code == code) {
+                return stateCode;
+            }
+        }
+
+        return HubStateCode.Unknown;
     }
 }
