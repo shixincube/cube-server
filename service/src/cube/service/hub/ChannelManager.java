@@ -29,69 +29,172 @@ package cube.service.hub;
 import cell.core.talk.LiteralBase;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.common.entity.Contact;
+import cube.common.entity.Message;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
 import cube.hub.Product;
 import cube.hub.dao.ChannelCode;
+import cube.hub.dao.wechat.PlainMessage;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 授权管理器。
  */
 public class ChannelManager {
 
-    private final StorageField[] channelCodeFields = new StorageField[]{
-            new StorageField("id", LiteralBase.LONG, new Constraint[]{
+    private final StorageField[] channelCodeFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
             // 授权码
-            new StorageField("code", LiteralBase.STRING, new Constraint[]{
+            new StorageField("code", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 创建时间戳
-            new StorageField("creation", LiteralBase.LONG, new Constraint[]{
+            new StorageField("creation", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 到期时间戳
-            new StorageField("expiration", LiteralBase.LONG, new Constraint[]{
+            new StorageField("expiration", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 产品
-            new StorageField("product", LiteralBase.STRING, new Constraint[]{
+            new StorageField("product", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 状态
-            new StorageField("state", LiteralBase.INT, new Constraint[]{
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             })
     };
 
-    private final StorageField[] allocatingFields = new StorageField[]{
-            new StorageField("sn", LiteralBase.LONG, new Constraint[]{
+    private final StorageField[] allocatingFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
             // 授权码
-            new StorageField("code", LiteralBase.STRING, new Constraint[]{
+            new StorageField("code", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 分配的 ID
-            new StorageField("account_id", LiteralBase.STRING, new Constraint[]{
+            new StorageField("account_id", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 所在的伪装者节点
-            new StorageField("pretender_id", LiteralBase.LONG, new Constraint[]{
+            new StorageField("pretender_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 时间戳
-            new StorageField("timestamp", LiteralBase.LONG, new Constraint[]{
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] accountFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            // 账号 ID
+            new StorageField("account_id", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 账号名
+            new StorageField("account_name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 数据来源绑定的通道码
+            new StorageField("source_code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 产品分类
+            new StorageField("product", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 数据 JSON
+            new StorageField("data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] partnerMessageFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            // 授权码
+            new StorageField("code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            // 消息的来源账号
+            new StorageField("account_id", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 消息对应的好友/伙伴
+            new StorageField("partner_id", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 发件人 ID
+            new StorageField("sender_id", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            // 消息时间戳
+            new StorageField("date", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 消息时间精度
+            new StorageField("date_precision", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 消息实体的 JSON 数据
+            new StorageField("message", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] groupMessageFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            // 授权码
+            new StorageField("code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            // 消息的来源账号
+            new StorageField("account_id", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 消息对应的群组名
+            new StorageField("group_name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 发件人 ID
+            new StorageField("sender_id", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            // 发件人名称
+            new StorageField("sender_name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 消息时间戳
+            new StorageField("date", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 消息时间精度
+            new StorageField("date_precision", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 消息实体的 JSON 数据
+            new StorageField("message", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             })
     };
@@ -100,13 +203,32 @@ public class ChannelManager {
 
     private final String allocatingTable = "hub_allocating";
 
+    private final String accountTable = "hub_account";
+
+    private final String partnerMessageTable = "hub_partner_message";
+
+    private final String groupMessageTable = "hub_group_message";
+
     private Storage storage;
 
+    private ExecutorService executor;
+
+    /**
+     * 消息数量上限，保存的消息主要用于进行校验，数据库不对消息进行持久化存储。
+     */
+    private int partnerMessageLimit = 50;
+
+    /**
+     * 消息数量上限，保存的消息主要用于进行校验，数据库不对消息进行持久化存储。
+     */
+    private int groupMessageLimit = 100;
+
     public ChannelManager(JSONObject config) {
-        this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL, "HubAuth", config);
+        this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL, "HubService", config);
     }
 
-    public void start() {
+    public void start(ExecutorService executor) {
+        this.executor = executor;
         this.storage.open();
         this.execSelfChecking();
     }
@@ -156,16 +278,17 @@ public class ChannelManager {
      * @return
      */
     public String getAccountId(String channelCode) {
-        List<StorageField[]> result = this.storage.executeQuery(this.allocatingTable, this.allocatingFields,
-                new Conditional[] {
+        List<StorageField[]> result = this.storage.executeQuery(this.allocatingTable,
+                new StorageField[] {
+                        new StorageField("account_id", LiteralBase.STRING)
+                }, new Conditional[] {
                         Conditional.createEqualTo("code", channelCode)
                 });
         if (result.isEmpty()) {
             return null;
         }
 
-        Map<String, StorageField> map = StorageFields.get(result.get(0));
-        return map.get("account_id").getString();
+        return result.get(0)[0].getString();
     }
 
     /**
@@ -175,16 +298,37 @@ public class ChannelManager {
      * @return
      */
     public Long getPretenderId(String channelCode) {
-        List<StorageField[]> result = this.storage.executeQuery(this.allocatingTable, this.allocatingFields,
-                new Conditional[] {
+        List<StorageField[]> result = this.storage.executeQuery(this.allocatingTable,
+                new StorageField[] {
+                        new StorageField("pretender_id", LiteralBase.LONG)
+                }, new Conditional[] {
                         Conditional.createEqualTo("code", channelCode)
                 });
         if (result.isEmpty()) {
             return null;
         }
 
-        Map<String, StorageField> map = StorageFields.get(result.get(0));
-        return map.get("pretender_id").getLong();
+        return result.get(0)[0].getLong();
+    }
+
+    /**
+     * 获取账号 ID 对应的通道。
+     *
+     * @param accountId
+     * @return
+     */
+    public String getChannelCodeWithAccountId(String accountId) {
+        List<StorageField[]> result = this.storage.executeQuery(this.allocatingTable,
+                new StorageField[] {
+                        new StorageField("code", LiteralBase.STRING)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("account_id", accountId)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        return result.get(0)[0].getString();
     }
 
     /**
@@ -195,7 +339,7 @@ public class ChannelManager {
      * @param pretenderId
      * @return 如果返回 {@code false} 则表示设置失败。
      */
-    public boolean setAccountId(String channelCode, String accountId, Long pretenderId) {
+    public boolean allocAccountId(String channelCode, String accountId, Long pretenderId) {
         List<StorageField[]> result = this.storage.executeQuery(this.allocatingTable, this.allocatingFields,
                 new Conditional[] {
                         Conditional.createEqualTo("code", channelCode)
@@ -218,9 +362,237 @@ public class ChannelManager {
      *
      * @param channelCode
      */
-    public void clearAccountId(String channelCode) {
+    public void freeAccountId(String channelCode) {
         this.storage.executeDelete(this.allocatingTable, new Conditional[] {
                 Conditional.createEqualTo("code", channelCode)
+        });
+    }
+
+    /**
+     * 查询账号。
+     *
+     * @param accountId
+     * @param product
+     * @return
+     */
+    public Contact queryAccount(String accountId, Product product) {
+        List<StorageField[]> result = this.storage.executeQuery(this.accountTable,
+                this.accountFields, new Conditional[] {
+                        Conditional.createEqualTo("account_id", accountId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("product", product.name)
+                });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+        String data = map.get("data").getString();
+        JSONObject json = new JSONObject(data);
+        return new Contact(json);
+    }
+
+    /**
+     * 更新指定的账号信息。
+     *
+     * @param account
+     * @param accountId
+     * @param channelCode
+     * @param product
+     */
+    public void updateAccount(Contact account, String accountId, String channelCode, Product product) {
+        List<StorageField[]> result = this.storage.executeQuery(this.accountTable,
+                this.accountFields, new Conditional[] {
+                        Conditional.createEqualTo("account_id", accountId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("product", product.name)
+                });
+
+        if (result.isEmpty()) {
+            // 插入
+            this.storage.executeInsert(this.accountTable, new StorageField[] {
+                    new StorageField("account_id", accountId),
+                    new StorageField("account_name", account.getName()),
+                    new StorageField("source_code", channelCode),
+                    new StorageField("product", product.name),
+                    new StorageField("data", account.toJSON().toString())
+            });
+        }
+        else {
+            // 更新
+            long sn = result.get(0)[0].getLong();
+            this.storage.executeUpdate(this.accountTable, new StorageField[] {
+                    new StorageField("account_id", accountId),
+                    new StorageField("account_name", account.getName()),
+                    new StorageField("source_code", channelCode),
+                    new StorageField("product", product.name),
+                    new StorageField("data", account.toJSON().toString())
+            }, new Conditional[] {
+                    Conditional.createEqualTo("sn", sn)
+            });
+        }
+    }
+
+    /**
+     * 获取指定伙伴的消息记录列表。
+     *
+     * @param channelCode
+     * @param accountId
+     * @param partnerId
+     * @return
+     */
+    public List<Message> getMessagesByPartner(String channelCode, String accountId, String partnerId) {
+        List<StorageField[]> result = this.storage.executeQuery(this.partnerMessageTable,
+            new StorageField[] {
+                    new StorageField("sn", LiteralBase.LONG),
+                    new StorageField("message", LiteralBase.STRING)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("code", channelCode),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("account_id", accountId),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("partner_id", partnerId)
+            });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        List<Message> list = new ArrayList<>(result.size());
+
+        for (StorageField[] data : result) {
+            String messageString = data[1].getString();
+            JSONObject json = new JSONObject(messageString);
+            Message message = new Message(json);
+            list.add(message);
+        }
+
+        if (result.size() > this.partnerMessageLimit) {
+            int deleteNum = result.size() - this.partnerMessageLimit;
+            final List<Long> deletedSNList = new ArrayList<>(deleteNum);
+            for (int i = 0; i < deleteNum; ++i) {
+                deletedSNList.add(result.get(i)[0].getLong());
+            }
+            // 执行删除
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    for (Long sn : deletedSNList) {
+                        storage.executeDelete(partnerMessageTable, new Conditional[] {
+                                Conditional.createEqualTo("sn", sn)
+                        });
+                    }
+                }
+            });
+        }
+
+        return list;
+    }
+
+    /**
+     * 获取指定群组的消息。
+     *
+     * @param channelCode
+     * @param accountId
+     * @param groupName
+     * @return
+     */
+    public List<Message> getMessagesByGroup(String channelCode, String accountId, String groupName) {
+        List<StorageField[]> result = this.storage.executeQuery(this.groupMessageTable,
+                new StorageField[] {
+                        new StorageField("sn", LiteralBase.LONG),
+                        new StorageField("message", LiteralBase.STRING)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("code", channelCode),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("account_id", accountId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("group_name", groupName)
+                });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        List<Message> list = new ArrayList<>(result.size());
+
+        for (StorageField[] data : result) {
+            String messageString = data[1].getString();
+            JSONObject json = new JSONObject(messageString);
+            Message message = new Message(json);
+            list.add(message);
+        }
+
+        if (result.size() > this.groupMessageLimit) {
+            int deleteNum = result.size() - this.groupMessageLimit;
+            final List<Long> deletedSNList = new ArrayList<>(deleteNum);
+            for (int i = 0; i < deleteNum; ++i) {
+                deletedSNList.add(result.get(i)[0].getLong());
+            }
+            // 执行删除
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    for (Long sn : deletedSNList) {
+                        storage.executeDelete(groupMessageTable, new Conditional[] {
+                                Conditional.createEqualTo("sn", sn)
+                        });
+                    }
+                }
+            });
+        }
+
+        return list;
+    }
+
+    /**
+     * 追加消息记录。
+     *
+     * @param channelCode
+     * @param accountId
+     * @param partnerId
+     * @param senderId
+     * @param message
+     * @return
+     */
+    public boolean appendMessageByPartner(String channelCode, String accountId,
+                                          String partnerId, String senderId, Message message) {
+        PlainMessage plainMessage = PlainMessage.create(message);
+
+        return this.storage.executeInsert(this.partnerMessageTable, new StorageField[] {
+                new StorageField("code", channelCode),
+                new StorageField("account_id", accountId),
+                new StorageField("partner_id", partnerId),
+                new StorageField("sender_id", senderId),
+                new StorageField("date", plainMessage.getDate()),
+                new StorageField("date_precision", plainMessage.getDatePrecision()),
+                new StorageField("message", message.toJSON().toString())
+        });
+    }
+
+    /**
+     * 追加消息记录。
+     *
+     * @param channelCode
+     * @param accountId
+     * @param groupName
+     * @param senderName
+     * @param message
+     * @return
+     */
+    public boolean appendMessageByGroup(String channelCode, String accountId,
+                                        String groupName, String senderName, Message message) {
+        PlainMessage plainMessage = PlainMessage.create(message);
+
+        return this.storage.executeInsert(this.groupMessageTable, new StorageField[] {
+                new StorageField("code", channelCode),
+                new StorageField("account_id", accountId),
+                new StorageField("group_name", groupName),
+                new StorageField("sender_name", senderName),
+                new StorageField("date", plainMessage.getDate()),
+                new StorageField("date_precision", plainMessage.getDatePrecision()),
+                new StorageField("message", message.toJSON().toString())
         });
     }
 
@@ -236,6 +608,27 @@ public class ChannelManager {
             // 不存在，建新表
             if (this.storage.executeCreate(this.allocatingTable, this.allocatingFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.allocatingTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.accountTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.accountTable, this.accountFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.accountTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.partnerMessageTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.partnerMessageTable, this.partnerMessageFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.partnerMessageTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.groupMessageTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.groupMessageTable, this.groupMessageFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.groupMessageTable + "' successfully");
             }
         }
     }

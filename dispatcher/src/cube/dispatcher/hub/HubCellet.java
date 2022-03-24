@@ -32,6 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.hub.handler.CloseChannel;
 import cube.dispatcher.hub.handler.FileHandler;
 import cube.dispatcher.hub.handler.OpenChannel;
 import cube.util.HttpServer;
@@ -130,5 +131,11 @@ public class HubCellet extends AbstractCellet {
         openHandler.setContextPath(OpenChannel.CONTEXT_PATH);
         openHandler.setHandler(new OpenChannel(this.performer));
         httpServer.addContextHandler(openHandler);
+
+        // 关闭管道
+        ContextHandler closeHandler = new ContextHandler();
+        closeHandler.setContextPath(CloseChannel.CONTEXT_PATH);
+        closeHandler.setHandler(new CloseChannel(this.performer));
+        httpServer.addContextHandler(closeHandler);
     }
 }

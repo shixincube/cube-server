@@ -40,6 +40,7 @@ import cube.hub.signal.*;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
+import cube.service.auth.AuthService;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
@@ -84,13 +85,16 @@ public class HubService extends AbstractModule {
         if (config.has(NAME)) {
             this.channelManager = new ChannelManager(config.getJSONObject(NAME));
         }
+        else {
+            this.channelManager = new ChannelManager(config.getJSONObject(AuthService.NAME));
+        }
 
         (new Thread() {
             @Override
             public void run() {
                 setupMessagingPlugin();
 
-                channelManager.start();
+                channelManager.start(executor);
             }
         }).start();
 

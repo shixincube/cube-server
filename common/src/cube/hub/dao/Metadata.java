@@ -32,23 +32,23 @@ import org.json.JSONObject;
 /**
  * 元。
  */
-public class Meta implements JSONable {
+public class Metadata implements JSONable {
 
     protected long id;
 
     protected long timestamp;
 
-    public Meta(long id) {
+    public Metadata(long id) {
         this.id = id;
         this.timestamp = System.currentTimeMillis();
     }
 
-    public Meta(long id, long timestamp) {
+    public Metadata(long id, long timestamp) {
         this.id = id;
         this.timestamp = timestamp;
     }
 
-    public Meta(JSONObject json) {
+    public Metadata(JSONObject json) {
         this.id = json.getLong("id");
         this.timestamp = json.getLong("timestamp");
     }

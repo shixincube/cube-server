@@ -28,17 +28,20 @@ package cube.service.hub;
 
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
+import cube.common.entity.Group;
+import cube.common.entity.Message;
+import cube.hub.Product;
 import cube.hub.dao.ChannelCode;
-import cube.hub.event.Event;
-import cube.hub.event.LoginQRCodeEvent;
-import cube.hub.event.LogoutEvent;
-import cube.hub.event.ReportEvent;
+import cube.hub.dao.wechat.PlainMessage;
+import cube.hub.event.*;
 import cube.hub.signal.LoginQRCodeSignal;
 import cube.hub.signal.LogoutSignal;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -204,7 +207,7 @@ public class WeChatHub {
 
         if (event instanceof LogoutEvent) {
             // 清空账号分配数据
-            channelManager.clearAccountId(channelCode.code);
+            channelManager.freeAccountId(channelCode.code);
             // 删除报告里的数据
             report.removeManagedAccount(account);
             report.removeChannelCode(channelCode.code);
@@ -219,6 +222,8 @@ public class WeChatHub {
                     reportEvent.getDescription().getPretender().getId() +
                     reportEvent.toString());
         }
+
+        // TODO 进行数据对比，因为可能客户端已经退出了，但是没有发生 Logout 事件
 
         this.reportMap.put(reportEvent.getDescription().getPretender().getId(),
                 reportEvent);
@@ -242,9 +247,68 @@ public class WeChatHub {
             }
         }
 
-        this.service.getChannelManager().setAccountId(channelCode, weChatId, pretenderId);
+        // 分配通道账号
+        this.service.getChannelManager().allocAccountId(channelCode, weChatId, pretenderId);
 
+        // 更新账号
+        this.service.getChannelManager().updateAccount(account, weChatId, channelCode,
+                Product.WeChat);
+
+        // 移除临时存储变量
         this.recentLoginEventMap.remove(channelCode);
+    }
+
+    public boolean submitMessages(SubmitMessagesEvent event) {
+        Contact account = event.getAccount();
+        String accountId = this.getWeChatId(account);
+
+        // 获取当前所属的通道码
+        String channelCode = this.service.getChannelManager().getChannelCodeWithAccountId(accountId);
+        if (null == channelCode) {
+            Logger.w(this.getClass(), "Can NOT find channel code with Account ID: " + accountId);
+            return false;
+        }
+
+        // 判断消息来源
+        Contact partner = event.getPartner();
+        Group group = event.getGroup();
+
+        if (null != partner) {
+            String partnerId = getWeChatId(partner);
+            // 获取当前已存储的消息
+            List<Message> messageList = this.service.getChannelManager().getMessagesByPartner(channelCode,
+                    accountId, partnerId);
+            // 匹配新消息
+            List<Message> newMessageList = matchNewMessages(messageList, event.getMessages());
+
+            for (Message message : newMessageList) {
+                // 补充发件人 ID
+                Contact sender = message.getSender();
+                if (sender.getName().equals(account.getName())) {
+                    setWeChatId(sender, accountId);
+                }
+                else {
+                    setWeChatId(sender, partnerId);
+                }
+
+                this.service.getChannelManager().appendMessageByPartner(channelCode,
+                        accountId, partnerId, getWeChatId(sender), message);
+            }
+        }
+        else if (null != group) {
+            // 获取当前已存储的消息
+            List<Message> messageList = this.service.getChannelManager().getMessagesByGroup(channelCode,
+                    accountId, group.getName());
+            // 匹配新消息
+            List<Message> newMessageList = matchNewMessages(messageList, event.getMessages());
+
+            for (Message message : newMessageList) {
+                this.service.getChannelManager().appendMessageByGroup(channelCode,
+                        accountId, group.getName(), message.getSender().getName(), message);
+            }
+        }
+
+        return true;
     }
 
     private String getWeChatId(Contact account) {
@@ -254,5 +318,34 @@ public class WeChatHub {
         }
 
         return ctx.has("id") ? ctx.getString("id") : null;
+    }
+
+    private void setWeChatId(Contact contact, String id) {
+        JSONObject ctx = contact.getContext();
+        if (null == ctx) {
+            ctx = new JSONObject();
+            contact.setContext(ctx);
+        }
+
+        ctx.put("id", id);
+    }
+
+    private List<Message> matchNewMessages(List<Message> baseList, List<Message> currentList) {
+        ArrayList<PlainMessage> basePlainList = new ArrayList<>();
+        for (Message message : baseList) {
+            basePlainList.add(PlainMessage.create(message));
+        }
+
+        List<Message> list = new ArrayList<>();
+
+        for (Message message : currentList) {
+            PlainMessage plainMessage = PlainMessage.create(message);
+            if (!basePlainList.contains(plainMessage)) {
+                // 在基础列表里没有找到该消息
+                list.add(message);
+            }
+        }
+
+        return list;
     }
 }

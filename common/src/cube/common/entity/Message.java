@@ -429,6 +429,15 @@ public class Message extends Entity implements Comparable<Message> {
     }
 
     /**
+     * 设置消息附件。
+     *
+     * @param attachment
+     */
+    public void setAttachment(FileAttachment attachment) {
+        this.attachment = attachment;
+    }
+
+    /**
      * 获取消息附件。
      *
      * @return 返回消息的文件附件。

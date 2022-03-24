@@ -60,13 +60,8 @@ public class EventController {
 
             if (SubmitMessagesEvent.NAME.equals(event.getName())) {
                 SubmitMessagesEvent submitMessagesEvent = (SubmitMessagesEvent) event;
-
-                if (Logger.isDebugLevel()) {
-                    Logger.d(this.getClass(), "Event [" + submitMessagesEvent.getName() + "]"
-                        + " - " + clientDescription.toString());
-                }
-
                 // 记录消息
+                WeChatHub.getInstance().submitMessages(submitMessagesEvent);
             }
             else if (ReportEvent.NAME.equals(event.getName())) {
                 WeChatHub.getInstance().updateReport((ReportEvent) event);

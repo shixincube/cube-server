@@ -29,7 +29,8 @@ package cube.hub.dao.wechat;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
-import cube.hub.dao.Meta;
+import cube.common.entity.Message;
+import cube.hub.dao.Metadata;
 import cube.util.FileUtils;
 import org.json.JSONObject;
 
@@ -43,9 +44,7 @@ import java.util.Calendar;
 /**
  * 平滑消息。
  */
-public class PlainMessage extends Meta {
-
-    private long id;
+public class PlainMessage extends Metadata {
 
     private int datePrecision;
     private long date;
@@ -249,6 +248,16 @@ public class PlainMessage extends Meta {
     }
 
     @Override
+    public boolean equals(Object object) {
+        if (object instanceof PlainMessage) {
+            PlainMessage other = (PlainMessage) object;
+            return this.equalsContent(other);
+        }
+
+        return false;
+    }
+
+    @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
         buf.append("[");
@@ -329,5 +338,15 @@ public class PlainMessage extends Meta {
 
         byte[] hashMD5 = md5.digest();
         return FileUtils.bytesToHexString(hashMD5);
+    }
+
+    /**
+     * 创建平滑消息格式。
+     *
+     * @param message
+     * @return
+     */
+    public static PlainMessage create(Message message) {
+        return new PlainMessage(message.getPayload());
     }
 }
