@@ -150,9 +150,13 @@ public class HubService extends AbstractModule {
                             + " (" + event.getSerialNumber() + ")");
                 }
 
-                // 捕获是否是阻塞事件
-                if (!signalController.capture(event)) {
-                    eventController.receive(event);
+                try {
+                    // 捕获是否是阻塞事件
+                    if (!signalController.capture(event)) {
+                        eventController.receive(event);
+                    }
+                } catch (Exception e) {
+                    Logger.e(HubService.class, "#triggerEvent", e);
                 }
 
                 responder.respond(HubStateCode.Ok.code, new JSONObject());

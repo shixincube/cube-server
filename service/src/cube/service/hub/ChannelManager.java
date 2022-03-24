@@ -456,7 +456,7 @@ public class ChannelManager {
             });
 
         if (result.isEmpty()) {
-            return null;
+            return new ArrayList<>();
         }
 
         List<Message> list = new ArrayList<>(result.size());
@@ -512,7 +512,7 @@ public class ChannelManager {
                 });
 
         if (result.isEmpty()) {
-            return null;
+            return new ArrayList<>();
         }
 
         List<Message> list = new ArrayList<>(result.size());

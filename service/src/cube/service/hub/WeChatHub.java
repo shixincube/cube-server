@@ -331,6 +331,10 @@ public class WeChatHub {
     }
 
     private List<Message> matchNewMessages(List<Message> baseList, List<Message> currentList) {
+        if (baseList.isEmpty()) {
+            return currentList;
+        }
+
         ArrayList<PlainMessage> basePlainList = new ArrayList<>();
         for (Message message : baseList) {
             basePlainList.add(PlainMessage.create(message));

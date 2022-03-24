@@ -455,6 +455,16 @@ public final class FileUtils {
     }
 
     /**
+     * 修正 Windows 系统文件路径保存到 JSON 时转义字符无法解析的问题。
+     *
+     * @param path
+     * @return
+     */
+    public static String fixWindowsPathForJSON(String path) {
+        return path.replaceAll("\\\\", "/");
+    }
+
+    /**
      * 清空路径。
      *
      * @param path

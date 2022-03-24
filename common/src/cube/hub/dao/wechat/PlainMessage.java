@@ -294,7 +294,7 @@ public class PlainMessage extends Metadata {
 
         if (null != this.file) {
             json.put("file", this.file.getName());
-            json.put("fullPath", this.file.getAbsolutePath());
+            json.put("fullPath", FileUtils.fixWindowsPathForJSON(this.file.getAbsolutePath()));
             json.put("fileMD5", this.fileMD5);
         }
 
