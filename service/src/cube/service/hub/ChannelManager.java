@@ -31,6 +31,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
 import cube.common.entity.Conversation;
+import cube.common.entity.ConversationType;
 import cube.common.entity.Message;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -45,6 +46,7 @@ import cube.storage.StorageType;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -451,9 +453,50 @@ public class ChannelManager {
         }
     }
 
-    public List<String> queryRecentGroup() {
-        //Conversation
-        return null;
+    /**
+     * 获取指定账号 ID 对应的消息伙伴的 ID 列表。
+     *
+     * @param channelCode
+     * @param accountId
+     * @return
+     */
+    public List<String> getMessagePartnerIdList(String channelCode, String accountId) {
+        String sql = "SELECT DISTINCT `partner_id` FROM `" + this.partnerMessageTable + "` WHERE `code`='" +
+                channelCode + "' AND `account_id`='" + accountId + "'";
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        List<String> list = new ArrayList<>();
+        for (StorageField[] data : result) {
+            list.add(data[0].getString());
+        }
+
+        return list;
+    }
+
+    /**
+     * 获取指定账号 ID  对应的群组名列表。
+     *
+     * @param channelCode
+     * @param accountId
+     * @return
+     */
+    public List<String> getMessageGroupNameList(String channelCode, String accountId) {
+        String sql = "SELECT DISTINCT `group_name` FROM `" + this.partnerMessageTable + "` WHERE `code`='" +
+                channelCode + "' AND `account_id`='" + accountId + "'";
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        List<String> list = new ArrayList<>();
+        for (StorageField[] data : result) {
+            list.add(data[0].getString());
+        }
+
+        return list;
     }
 
     /**

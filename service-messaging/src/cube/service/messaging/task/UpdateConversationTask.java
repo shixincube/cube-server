@@ -74,7 +74,7 @@ public class UpdateConversationTask extends ServiceTask {
         Conversation conversation = null;
         try {
             conversation = new Conversation(data, contact);
-        } catch (JSONException e) {
+        } catch (Exception e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.DataStructureError.code, data));

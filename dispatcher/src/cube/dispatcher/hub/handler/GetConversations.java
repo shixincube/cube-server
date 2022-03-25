@@ -34,8 +34,8 @@ import cube.hub.EventBuilder;
 import cube.hub.HubAction;
 import cube.hub.HubStateCode;
 import cube.hub.data.ChannelCode;
+import cube.hub.event.ConversationsEvent;
 import cube.hub.event.Event;
-import cube.hub.event.SubmitMessagesEvent;
 import cube.hub.signal.GetConversationsSignal;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
@@ -45,8 +45,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 获取消息列表
+ * 获取最近会话数据。
  * 参数 c - 通道码。
+ * 参数 nc - 返回的最近会话数量。
  */
 public class GetConversations extends CrossDomainHandler {
 
@@ -67,8 +68,19 @@ public class GetConversations extends CrossDomainHandler {
             return;
         }
 
+        int numOfConv = 8;
+        String numOfConvString = request.getParameter("nc");
+        if (null != numOfConvString && numOfConvString.length() > 0) {
+            try {
+                numOfConv = Integer.parseInt(numOfConvString);
+            } catch (Exception e) {
+                // Nothing
+            }
+        }
+
         // 创建信令
         GetConversationsSignal getConversationsSignal = new GetConversationsSignal(channelCode.code);
+        getConversationsSignal.setNumConversations(numOfConv);
         ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
         actionDialect.addParam("signal", getConversationsSignal.toJSON());
 
@@ -91,8 +103,8 @@ public class GetConversations extends CrossDomainHandler {
 
         if (result.containsParam("event")) {
             Event event = EventBuilder.build(result.getParamAsJson("event"));
-            if (event instanceof SubmitMessagesEvent) {
-                this.respondOk(response, event.toCompactJSON());
+            if (event instanceof ConversationsEvent) {
+                this.respondOk(response, event.toJSON());
             }
             else {
                 JSONObject data = new JSONObject();

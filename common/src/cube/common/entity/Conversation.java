@@ -26,8 +26,13 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 会话。
@@ -60,9 +65,9 @@ public class Conversation extends Entity {
     private Long pivotalId;
 
     /**
-     * 最近的一条消息。
+     * 最近的消息列表。
      */
-    private Message recentMessage;
+    private List<Message> recentMessages;
 
     /**
      * 未读消息记录数。
@@ -78,6 +83,11 @@ public class Conversation extends Entity {
      * 头像的 URL 。
      */
     private String avatarURL;
+
+    /**
+     * 关键实体。
+     */
+    private AbstractContact pivotalEntity;
 
     /**
      * 构造函数。
@@ -105,12 +115,75 @@ public class Conversation extends Entity {
     /**
      * 构造函数。
      *
-     * @param json
-     * @throws JSONException
+     * @param contact
      */
-    public Conversation(JSONObject json, Contact owner) throws JSONException {
+    public Conversation(Contact contact) {
+        this(contact, new ArrayList<>());
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param group
+     */
+    public Conversation(Group group) {
+        this(group, new ArrayList<>());
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param contact
+     * @param recentMessages
+     */
+    public Conversation(Contact contact, List<Message> recentMessages) {
+        super(Utils.generateSerialNumber(), "", System.currentTimeMillis());
+        this.pivotalEntity = contact;
+        this.ownerId = 0L;
+        this.type = ConversationType.Contact;
+        this.state = ConversationState.Normal;
+        this.pivotalId = 0L;
+        this.remindType = ConversationRemindType.Normal;
+        this.unreadCount = 0;
+        this.recentMessages = recentMessages;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param group
+     * @param recentMessages
+     */
+    public Conversation(Group group, List<Message> recentMessages) {
+        super(Utils.generateSerialNumber(), "", System.currentTimeMillis());
+        this.pivotalEntity = group;
+        this.ownerId = 0L;
+        this.type = ConversationType.Group;
+        this.state = ConversationState.Normal;
+        this.pivotalId = 0L;
+        this.remindType = ConversationRemindType.Normal;
+        this.unreadCount = 0;
+        this.recentMessages = recentMessages;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param json
+     */
+    public Conversation(JSONObject json) {
+        this(json, null);
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param json
+     * @param owner
+     */
+    public Conversation(JSONObject json, Contact owner) {
         super(json);
-        this.ownerId = owner.getId();
+        this.ownerId = (null != owner) ? owner.getId() : 0L;
         this.pivotalId = json.getLong("pivotal");
         this.type = ConversationType.parse(json.getInt("type"));
         this.state = ConversationState.parse(json.getInt("state"));
@@ -118,8 +191,26 @@ public class Conversation extends Entity {
 
         this.unreadCount = json.has("unread") ? json.getInt("unread") : 0;
 
+        if (json.has("pivotalEntity")) {
+            if (ConversationType.Contact == this.type) {
+                this.pivotalEntity = new Contact(json.getJSONObject("pivotalEntity"));
+            }
+            else if (ConversationType.Group == this.type) {
+                this.pivotalEntity = new Group(json.getJSONObject("pivotalEntity"));
+            }
+        }
+
         if (json.has("recentMessage")) {
-            this.recentMessage = new Message(json.getJSONObject("recentMessage"));
+            this.recentMessages = new ArrayList<>();
+            this.recentMessages.add(new Message(json.getJSONObject("recentMessage")));
+        }
+        else if (json.has("recentMessages")) {
+            this.recentMessages = new ArrayList<>();
+            JSONArray array = json.getJSONArray("recentMessages");
+            for (int i = 0; i < array.length(); ++i) {
+                Message message = new Message(array.getJSONObject(i));
+                this.recentMessages.add(message);
+            }
         }
 
         if (json.has("avatarName")) {
@@ -151,12 +242,39 @@ public class Conversation extends Entity {
         return this.remindType;
     }
 
+    public AbstractContact getPivotalEntity() {
+        return this.pivotalEntity;
+    }
+
+    public List<Message> getRecentMessages() {
+        return this.recentMessages;
+    }
+
+    public void addRecentMessage(Message message) {
+        this.recentMessages.add(message);
+    }
+
+    public void removeRecentMessage(Message message) {
+        this.recentMessages.remove(message);
+    }
+
     public Message getRecentMessage() {
-        return this.recentMessage;
+        if (null == this.recentMessages) {
+            return null;
+        }
+
+        return this.recentMessages.get(this.recentMessages.size() - 1);
     }
 
     public void setRecentMessage(Message message) {
-        this.recentMessage = message;
+        if (null != this.recentMessages) {
+            this.recentMessages.clear();
+        }
+        else {
+            this.recentMessages = new ArrayList<>();
+        }
+
+        this.recentMessages.add(message);
     }
 
     public void setUnreadCount(int count) {
@@ -181,8 +299,21 @@ public class Conversation extends Entity {
         json.put("pivotal", this.pivotalId.longValue());
         json.put("unread", this.unreadCount);
 
-        if (null != this.recentMessage) {
-            json.put("recentMessage", this.recentMessage.toJSON());
+        if (null != this.pivotalEntity) {
+            json.put("pivotalEntity", this.pivotalEntity.toCompactJSON());
+        }
+
+        if (null != this.recentMessages) {
+            if (this.recentMessages.size() == 1) {
+                json.put("recentMessage", this.recentMessages.get(0).toJSON());
+            }
+            else {
+                JSONArray array = new JSONArray();
+                for (Message message : this.recentMessages) {
+                    array.put(message.toJSON());
+                }
+                json.put("recentMessages", array);
+            }
         }
 
         if (null != this.avatarName) {

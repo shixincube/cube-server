@@ -34,6 +34,7 @@ import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
 import cube.dispatcher.hub.handler.CloseChannel;
 import cube.dispatcher.hub.handler.FileHandler;
+import cube.dispatcher.hub.handler.GetConversations;
 import cube.dispatcher.hub.handler.OpenChannel;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -137,5 +138,11 @@ public class HubCellet extends AbstractCellet {
         closeHandler.setContextPath(CloseChannel.CONTEXT_PATH);
         closeHandler.setHandler(new CloseChannel(this.performer));
         httpServer.addContextHandler(closeHandler);
+
+        // 获取会话数据
+        ContextHandler getConvHandler = new ContextHandler();
+        getConvHandler.setContextPath(GetConversations.CONTEXT_PATH);
+        getConvHandler.setHandler(new GetConversations(this.performer));
+        httpServer.addContextHandler(getConvHandler);
     }
 }

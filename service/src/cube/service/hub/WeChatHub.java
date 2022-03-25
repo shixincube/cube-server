@@ -28,6 +28,7 @@ package cube.service.hub;
 
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
+import cube.common.entity.Conversation;
 import cube.common.entity.Group;
 import cube.common.entity.Message;
 import cube.hub.Product;
@@ -42,10 +43,7 @@ import cube.hub.signal.LogoutSignal;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -324,8 +322,92 @@ public class WeChatHub {
         return true;
     }
 
+    /**
+     * 获取指定通道的最近会话列表。
+     *
+     * @param channelCode
+     * @param signal
+     * @return
+     */
     public ConversationsEvent getRecentConversations(ChannelCode channelCode, GetConversationsSignal signal) {
-        return null;
+        Map<String, Conversation> map = new HashMap<>();
+
+        // 获取账号 ID
+        String accountId = this.service.getChannelManager().getAccountId(channelCode.code);
+
+        // 与伙伴的会话
+        List<String> partnerIdList = this.service.getChannelManager().getMessagePartnerIdList(channelCode.code, accountId);
+        if (null != partnerIdList) {
+            for (String partnerId : partnerIdList) {
+                // 查找账号
+                Contact partner = this.service.getChannelManager().queryAccount(partnerId, channelCode.product);
+                if (null == partner) {
+                    continue;
+                }
+
+                Conversation conversation = map.get(partnerId);
+                if (null == conversation) {
+                    conversation = new Conversation(partner);
+                    map.put(partnerId, conversation);
+                }
+
+                // 查找消息
+                List<Message> rawList = this.service.getChannelManager().getMessagesByPartner(channelCode.code,
+                        accountId, partnerId);
+
+                for (Message message : rawList) {
+                    // 将 Message 的负载还原，然后转为统一的 Message 格式
+                    conversation.addRecentMessage(DataHelper.convertMessage(partner, PlainMessage.create(message)));
+                }
+            }
+        }
+
+        // 群组里的会话
+        List<String> groupNameList = this.service.getChannelManager().getMessageGroupNameList(channelCode.code, accountId);
+        if (null != groupNameList) {
+            for (String groupName : groupNameList) {
+                Group group = new Group();
+                group.setName(groupName);
+
+                Conversation conversation = map.get(groupName);
+                if (null == conversation) {
+                    conversation = new Conversation(group);
+                    map.put(groupName, conversation);
+                }
+
+                // 查找消息
+                List<Message> rawList = this.service.getChannelManager().getMessagesByGroup(channelCode.code,
+                        accountId, groupName);
+
+                for (Message message : rawList) {
+                    // 将 Message 的负载还原，然后转为统一的 Message 格式
+                    conversation.addRecentMessage(DataHelper.convertMessage(group, PlainMessage.create(message)));
+                }
+            }
+        }
+
+        List<Conversation> conversationList = new ArrayList<>();
+        for (Conversation conversation : map.values()) {
+            conversationList.add(conversation);
+        }
+
+        // 排序，时间倒序
+        conversationList.sort(new Comparator<Conversation>() {
+            @Override
+            public int compare(Conversation conversation1, Conversation conversation2) {
+                return (int) (conversation2.getRecentMessage().getRemoteTimestamp() -
+                        conversation1.getRecentMessage().getRemoteTimestamp());
+            }
+        });
+
+        // 控制返回数据量
+        List<Conversation> conversations = new ArrayList<>();
+        for (int i = 0, length = Math.min(signal.getNumConversations(), conversationList.size()); i < length; ++i) {
+            conversations.add(conversationList.get(i));
+        }
+
+        ConversationsEvent event = new ConversationsEvent(conversations);
+        return event;
     }
 
     /**

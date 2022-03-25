@@ -35,9 +35,9 @@ public class GetConversationsSignal extends Signal {
 
     public final static String NAME = "GetConversations";
 
-    private String partnerId;
+    private int numConversations = 8;
 
-    private String groupName;
+    private int numRecentMessages = 0;
 
     public GetConversationsSignal(String channelCode) {
         super(NAME);
@@ -46,39 +46,35 @@ public class GetConversationsSignal extends Signal {
 
     public GetConversationsSignal(JSONObject json) {
         super(json);
-        if (json.has("groupName")) {
-            this.groupName = json.getString("groupName");
+        if (json.has("numConversations")) {
+            this.numConversations = json.getInt("numConversations");
         }
-        if (json.has("partnerId")) {
-            this.partnerId = json.getString("partnerId");
+        if (json.has("numRecentMessages")) {
+            this.numRecentMessages = json.getInt("numRecentMessages");
         }
     }
 
-    public void setPartnerId(String partnerId) {
-        this.partnerId = partnerId;
+    public int getNumConversations() {
+        return this.numConversations;
     }
 
-    public String getPartnerId() {
-        return this.partnerId;
+    public void setNumConversations(int value) {
+        this.numConversations = value;
     }
 
-    public void setGroupName(String groupName) {
-        this.groupName = groupName;
+    public int getNumRecentMessages() {
+        return this.numRecentMessages;
     }
 
-    public String getGroupName() {
-        return this.groupName;
+    public void setNumRecentMessages(int value) {
+        this.numRecentMessages = value;
     }
 
     @Override
     public JSONObject toJSON() {
          JSONObject json = super.toJSON();
-         if (null != this.groupName) {
-             json.put("groupName", this.groupName);
-         }
-         else if (null != this.partnerId) {
-             json.put("partnerId", this.partnerId);
-         }
+         json.put("numConversations", this.numConversations);
+         json.put("numRecentMessages", this.numRecentMessages);
          return json;
     }
 }
