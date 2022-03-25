@@ -35,7 +35,9 @@ import cube.core.Kernel;
 import cube.core.Module;
 import cube.hub.*;
 import cube.hub.data.ChannelCode;
+import cube.hub.event.ConversationsEvent;
 import cube.hub.event.Event;
+import cube.hub.event.SubmitMessagesEvent;
 import cube.hub.signal.*;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
@@ -224,9 +226,19 @@ public class HubService extends AbstractModule {
                     }
 
                     if (Product.WeChat == channelCode.product) {
-                        if (signal instanceof GetMessagesSignal) {
+                        if (signal instanceof GetConversationsSignal) {
                             // 获取消息
-                            Event event = WeChatHub.getInstance().getMessages((GetMessagesSignal) signal);
+                            ConversationsEvent event = WeChatHub.getInstance().getRecentConversations(channelCode, (GetConversationsSignal) signal);
+                            if (null != event) {
+                                responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
+                            }
+                            else {
+                                responder.respondDispatcher(sn, HubStateCode.Failure.code, signal);
+                            }
+                        }
+                        else if (signal instanceof GetMessagesSignal) {
+                            // 获取消息
+                            SubmitMessagesEvent event = WeChatHub.getInstance().getMessages(channelCode, (GetMessagesSignal) signal);
                             if (null != event) {
                                 responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
                             }

@@ -31,20 +31,20 @@ import org.json.JSONObject;
 /**
  * 获取消息信令。
  */
-public class GetMessagesSignal extends Signal {
+public class GetConversationsSignal extends Signal {
 
-    public final static String NAME = "GetMessages";
+    public final static String NAME = "GetConversations";
 
     private String partnerId;
 
     private String groupName;
 
-    public GetMessagesSignal(String channelCode) {
+    public GetConversationsSignal(String channelCode) {
         super(NAME);
         setCode(channelCode);
     }
 
-    public GetMessagesSignal(JSONObject json) {
+    public GetConversationsSignal(JSONObject json) {
         super(json);
         if (json.has("groupName")) {
             this.groupName = json.getString("groupName");

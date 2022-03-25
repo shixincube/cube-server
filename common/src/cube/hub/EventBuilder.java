@@ -54,6 +54,9 @@ public class EventBuilder {
         if (SubmitMessagesEvent.NAME.equals(name)) {
             event = new SubmitMessagesEvent(eventJson);
         }
+        else if (ConversationsEvent.NAME.equals(name)) {
+            event = new ConversationsEvent(eventJson);
+        }
         else if (ReportEvent.NAME.equals(name)) {
             event = new ReportEvent(eventJson);
         }

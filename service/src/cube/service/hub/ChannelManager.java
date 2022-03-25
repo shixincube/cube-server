@@ -30,6 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
+import cube.common.entity.Conversation;
 import cube.common.entity.Message;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -134,7 +135,7 @@ public class ChannelManager {
             }),
             // 授权码
             new StorageField("code", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
+                    Constraint.NOT_NULL
             }),
             // 消息的来源账号
             new StorageField("account_id", LiteralBase.STRING, new Constraint[] {
@@ -168,7 +169,7 @@ public class ChannelManager {
             }),
             // 授权码
             new StorageField("code", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
+                    Constraint.NOT_NULL
             }),
             // 消息的来源账号
             new StorageField("account_id", LiteralBase.STRING, new Constraint[] {
@@ -448,6 +449,11 @@ public class ChannelManager {
                     Conditional.createEqualTo("sn", sn)
             });
         }
+    }
+
+    public List<String> queryRecentGroup() {
+        //Conversation
+        return null;
     }
 
     /**

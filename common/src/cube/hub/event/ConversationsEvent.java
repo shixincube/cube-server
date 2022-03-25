@@ -24,37 +24,22 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.hub.handler;
+package cube.hub.event;
 
-import cube.dispatcher.Performer;
-import cube.hub.data.ChannelCode;
-import cube.util.CrossDomainHandler;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.json.JSONObject;
 
 /**
- *
+ * 会话数据事件。
  */
-public class GetMessages extends CrossDomainHandler {
+public class ConversationsEvent extends WeChatEvent {
 
-    public final static String CONTEXT_PATH = "/hub/messages/";
+    public final static String NAME = "Conversations";
 
-    private Performer performer;
-
-    public GetMessages(Performer performer) {
-        super();
-        this.performer = performer;
+    public ConversationsEvent() {
+        super(NAME);
     }
 
-    @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response) {
-        ChannelCode channelCode = Helper.checkChannelCode(request, response, this.performer);
-        if (null == channelCode) {
-            this.complete();
-            return;
-        }
-
-
+    public ConversationsEvent(JSONObject json) {
+        super(json);
     }
 }

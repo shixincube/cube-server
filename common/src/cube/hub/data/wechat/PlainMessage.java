@@ -29,6 +29,7 @@ package cube.hub.data.wechat;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
+import cube.common.entity.FileLabel;
 import cube.common.entity.Message;
 import cube.hub.data.Metadata;
 import cube.util.FileUtils;
@@ -53,6 +54,7 @@ public class PlainMessage extends Metadata {
 
     private File file;
     private String fileMD5;
+    private FileLabel fileLabel;
 
     private Contact sender;
 
@@ -81,7 +83,14 @@ public class PlainMessage extends Metadata {
 
         if (json.has("file")) {
             this.file = new File(json.getString("fullPath"));
+        }
+
+        if (json.has("fileMD5")) {
             this.fileMD5 = json.getString("fileMD5");
+        }
+
+        if (json.has("fileLabel")) {
+            this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
         }
     }
 
@@ -100,6 +109,10 @@ public class PlainMessage extends Metadata {
     public void setFile(File file) {
         this.file = file;
         this.fileMD5 = md5(file);
+    }
+
+    public FileLabel getFileLabel() {
+        return this.fileLabel;
     }
 
     public void setSender(Contact sender) {
@@ -220,11 +233,23 @@ public class PlainMessage extends Metadata {
     }
 
     public boolean isImageType() {
-        if (null == this.file) {
-            return false;
+        if (null != this.file) {
+            return FileUtils.isImageType(FileUtils.extractFileExtensionType(this.file.getName()));
         }
 
-        return FileUtils.isImageType(FileUtils.extractFileExtensionType(this.file.getName()));
+        if (null != this.fileLabel) {
+            return FileUtils.isImageType(FileUtils.extractFileExtensionType(this.fileLabel.getFileName()));
+        }
+
+        return false;
+    }
+
+    public boolean isFileType() {
+        if (null != this.file || null != this.fileLabel) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -295,7 +320,14 @@ public class PlainMessage extends Metadata {
         if (null != this.file) {
             json.put("file", this.file.getName());
             json.put("fullPath", FileUtils.fixWindowsPathForJSON(this.file.getAbsolutePath()));
+        }
+
+        if (null != this.fileMD5) {
             json.put("fileMD5", this.fileMD5);
+        }
+
+        if (null != this.fileLabel) {
+            json.put("fileLabel", this.fileLabel.toJSON());
         }
 
         json.put("sender", this.sender.toJSON());
@@ -305,7 +337,21 @@ public class PlainMessage extends Metadata {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = this.toJSON();
+
+        if (json.has("file")) {
+            json.remove("file");
+        }
+
+        if (json.has("fullPath")) {
+            json.remove("fullPath");
+        }
+
+        if (json.has("fileLabel")) {
+            json.remove("fileLabel");
+            json.put("fileLabel", this.fileLabel.toCompactJSON());
+        }
+        return json;
     }
 
     private String md5(File file) {

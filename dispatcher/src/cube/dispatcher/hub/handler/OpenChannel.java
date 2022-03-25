@@ -47,6 +47,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * 开通通道。
+ * 参数 c - 通道码。
  */
 public class OpenChannel extends CrossDomainHandler {
 

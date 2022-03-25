@@ -43,6 +43,9 @@ public class SignalBuilder {
         if (ChannelCodeSignal.NAME.equals(name)) {
             return new ChannelCodeSignal(signalJson);
         }
+        else if (GetConversationsSignal.NAME.equals(name)) {
+            return new GetConversationsSignal(signalJson);
+        }
         else if (GetMessagesSignal.NAME.equals(name)) {
             return new GetMessagesSignal(signalJson);
         }

@@ -32,8 +32,10 @@ import cube.common.entity.Group;
 import cube.common.entity.Message;
 import cube.hub.Product;
 import cube.hub.data.ChannelCode;
+import cube.hub.data.DataHelper;
 import cube.hub.data.wechat.PlainMessage;
 import cube.hub.event.*;
+import cube.hub.signal.GetConversationsSignal;
 import cube.hub.signal.GetMessagesSignal;
 import cube.hub.signal.LoginQRCodeSignal;
 import cube.hub.signal.LogoutSignal;
@@ -282,6 +284,10 @@ public class WeChatHub {
 
         if (null != partner) {
             String partnerId = getWeChatId(partner);
+
+            // 更新账号信息
+            this.service.getChannelManager().updateAccount(partner, partnerId, channelCode, Product.WeChat);
+
             // 获取当前已存储的消息
             List<Message> messageList = this.service.getChannelManager().getMessagesByPartner(channelCode,
                     accountId, partnerId);
@@ -318,7 +324,66 @@ public class WeChatHub {
         return true;
     }
 
-    public SubmitMessagesEvent getMessages(GetMessagesSignal signal) {
+    public ConversationsEvent getRecentConversations(ChannelCode channelCode, GetConversationsSignal signal) {
+        return null;
+    }
+
+    /**
+     * 获取指定通道的消息列表。
+     *
+     * @param channelCode
+     * @param signal
+     * @return
+     */
+    public SubmitMessagesEvent getMessages(ChannelCode channelCode, GetMessagesSignal signal) {
+        // 获取账号 ID
+        String accountId = this.service.getChannelManager().getAccountId(channelCode.code);
+        // 查询账号
+        Contact account = this.service.getChannelManager().queryAccount(accountId, channelCode.product);
+
+        if (null != signal.getGroupName()) {
+            // 原始消息列表
+            List<Message> rawList = this.service.getChannelManager().getMessagesByGroup(channelCode.code,
+                    accountId, signal.getGroupName());
+            if (rawList.isEmpty()) {
+                // 没有数据
+                return null;
+            }
+
+            Group group = new Group();
+            group.setName(signal.getGroupName());
+
+            List<Message> messages = new ArrayList<>(rawList.size());
+            for (Message message : rawList) {
+                // 将 Message 的负载还原，然后转为统一的 Message 格式
+                messages.add(DataHelper.convertMessage(group, PlainMessage.create(message)));
+            }
+
+            SubmitMessagesEvent event = new SubmitMessagesEvent(account, group, messages);
+            return event;
+        }
+        else if (null != signal.getPartnerId()) {
+            // 原始消息列表
+            List<Message> rawList = this.service.getChannelManager().getMessagesByPartner(channelCode.code,
+                    accountId, signal.getPartnerId());
+            if (rawList.isEmpty()) {
+                // 没有数据
+                return null;
+            }
+
+            // 查找账号
+            Contact partner = this.service.getChannelManager().queryAccount(signal.getPartnerId(), channelCode.product);
+
+            List<Message> messages = new ArrayList<>(rawList.size());
+            for (Message message : rawList) {
+                // 将 Message 的负载还原，然后转为统一的 Message 格式
+                messages.add(DataHelper.convertMessage(partner, PlainMessage.create(message)));
+            }
+
+            SubmitMessagesEvent event = new SubmitMessagesEvent(account, partner, messages);
+            return event;
+        }
+
         return null;
     }
 

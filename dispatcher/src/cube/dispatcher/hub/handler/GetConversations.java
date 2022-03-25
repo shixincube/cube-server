@@ -35,8 +35,8 @@ import cube.hub.HubAction;
 import cube.hub.HubStateCode;
 import cube.hub.data.ChannelCode;
 import cube.hub.event.Event;
-import cube.hub.event.LogoutEvent;
-import cube.hub.signal.LogoutSignal;
+import cube.hub.event.SubmitMessagesEvent;
+import cube.hub.signal.GetConversationsSignal;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
@@ -45,16 +45,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 关闭通道。
+ * 获取消息列表
  * 参数 c - 通道码。
  */
-public class CloseChannel extends CrossDomainHandler {
+public class GetConversations extends CrossDomainHandler {
 
-    public final static String CONTEXT_PATH = "/hub/close/";
+    public final static String CONTEXT_PATH = "/hub/conversations/";
 
     private Performer performer;
 
-    public CloseChannel(Performer performer) {
+    public GetConversations(Performer performer) {
         super();
         this.performer = performer;
     }
@@ -68,9 +68,9 @@ public class CloseChannel extends CrossDomainHandler {
         }
 
         // 创建信令
-        LogoutSignal requestSignal = new LogoutSignal(channelCode.code);
+        GetConversationsSignal getConversationsSignal = new GetConversationsSignal(channelCode.code);
         ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
-        actionDialect.addParam("signal", requestSignal.toJSON());
+        actionDialect.addParam("signal", getConversationsSignal.toJSON());
 
         ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect, 3 * 60 * 1000);
         if (null == result) {
@@ -91,7 +91,7 @@ public class CloseChannel extends CrossDomainHandler {
 
         if (result.containsParam("event")) {
             Event event = EventBuilder.build(result.getParamAsJson("event"));
-            if (event instanceof LogoutEvent) {
+            if (event instanceof SubmitMessagesEvent) {
                 this.respondOk(response, event.toCompactJSON());
             }
             else {
