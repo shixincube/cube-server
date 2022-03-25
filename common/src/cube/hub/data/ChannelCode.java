@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.hub.dao;
+package cube.hub.data;
 
 import cube.common.JSONable;
 import cube.hub.Product;

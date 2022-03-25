@@ -29,15 +29,13 @@ package cube.dispatcher.hub.handler;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.dispatcher.Performer;
-import cube.dispatcher.hub.CacheCenter;
 import cube.dispatcher.hub.HubCellet;
 import cube.hub.EventBuilder;
 import cube.hub.HubAction;
 import cube.hub.HubStateCode;
-import cube.hub.dao.ChannelCode;
+import cube.hub.data.ChannelCode;
 import cube.hub.event.Event;
 import cube.hub.event.LogoutEvent;
-import cube.hub.signal.LoginQRCodeSignal;
 import cube.hub.signal.LogoutSignal;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
@@ -47,7 +45,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 关闭指定管道。
+ * 关闭通道。
  */
 public class CloseChannel extends CrossDomainHandler {
 

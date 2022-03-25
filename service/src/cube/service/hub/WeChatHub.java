@@ -31,9 +31,10 @@ import cube.common.entity.Contact;
 import cube.common.entity.Group;
 import cube.common.entity.Message;
 import cube.hub.Product;
-import cube.hub.dao.ChannelCode;
-import cube.hub.dao.wechat.PlainMessage;
+import cube.hub.data.ChannelCode;
+import cube.hub.data.wechat.PlainMessage;
 import cube.hub.event.*;
+import cube.hub.signal.GetMessagesSignal;
 import cube.hub.signal.LoginQRCodeSignal;
 import cube.hub.signal.LogoutSignal;
 import org.json.JSONObject;
@@ -258,6 +259,12 @@ public class WeChatHub {
         this.recentLoginEventMap.remove(channelCode);
     }
 
+    /**
+     * 提交消息数据。
+     *
+     * @param event
+     * @return
+     */
     public boolean submitMessages(SubmitMessagesEvent event) {
         Contact account = event.getAccount();
         String accountId = this.getWeChatId(account);
@@ -309,6 +316,10 @@ public class WeChatHub {
         }
 
         return true;
+    }
+
+    public SubmitMessagesEvent getMessages(GetMessagesSignal signal) {
+        return null;
     }
 
     private String getWeChatId(Contact account) {

@@ -24,53 +24,37 @@
  * SOFTWARE.
  */
 
-package cube.hub.dao;
+package cube.dispatcher.hub.handler;
 
-import cube.common.JSONable;
-import org.json.JSONObject;
+import cube.dispatcher.Performer;
+import cube.hub.data.ChannelCode;
+import cube.util.CrossDomainHandler;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
- * 元。
+ *
  */
-public class Metadata implements JSONable {
+public class GetMessages extends CrossDomainHandler {
 
-    protected long id;
+    public final static String CONTEXT_PATH = "/hub/messages/";
 
-    protected long timestamp;
+    private Performer performer;
 
-    public Metadata(long id) {
-        this.id = id;
-        this.timestamp = System.currentTimeMillis();
-    }
-
-    public Metadata(long id, long timestamp) {
-        this.id = id;
-        this.timestamp = timestamp;
-    }
-
-    public Metadata(JSONObject json) {
-        this.id = json.getLong("id");
-        this.timestamp = json.getLong("timestamp");
-    }
-
-    public long getId() {
-        return this.id;
-    }
-
-    public long getTimestamp() {
-        return this.timestamp;
+    public GetMessages(Performer performer) {
+        super();
+        this.performer = performer;
     }
 
     @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("id", this.id);
-        json.put("timestamp", this.timestamp);
-        return json;
-    }
+    public void doGet(HttpServletRequest request, HttpServletResponse response) {
+        ChannelCode channelCode = Helper.checkChannelCode(request, response, this.performer);
+        if (null == channelCode) {
+            this.complete();
+            return;
+        }
 
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
+
     }
 }

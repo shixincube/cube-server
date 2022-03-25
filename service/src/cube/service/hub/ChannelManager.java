@@ -36,8 +36,8 @@ import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
 import cube.hub.Product;
-import cube.hub.dao.ChannelCode;
-import cube.hub.dao.wechat.PlainMessage;
+import cube.hub.data.ChannelCode;
+import cube.hub.data.wechat.PlainMessage;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
@@ -46,6 +46,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -223,8 +224,14 @@ public class ChannelManager {
      */
     private int groupMessageLimit = 100;
 
+    /**
+     * 用于临时存储通道码。
+     */
+    private Map<String, ChannelCode> channelCodeMap;
+
     public ChannelManager(JSONObject config) {
         this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL, "HubService", config);
+        this.channelCodeMap = new ConcurrentHashMap<>();
     }
 
     public void start(ExecutorService executor) {
@@ -235,6 +242,7 @@ public class ChannelManager {
 
     public void stop() {
         this.storage.close();
+        this.channelCodeMap.clear();
     }
 
     /**
@@ -244,6 +252,11 @@ public class ChannelManager {
      * @return
      */
     public ChannelCode getChannelCode(String code) {
+        ChannelCode channelCode = this.channelCodeMap.get(code);
+        if (null != channelCode) {
+            return channelCode;
+        }
+
         List<StorageField[]> result = this.storage.executeQuery(this.channelCodeTable, this.channelCodeFields, new Conditional[] {
                 Conditional.createEqualTo("code", code)
         });
@@ -252,9 +265,12 @@ public class ChannelManager {
         }
 
         Map<String, StorageField> map = StorageFields.get(result.get(0));
-        return new ChannelCode(map.get("code").getString(), map.get("creation").getLong(),
+        channelCode = new ChannelCode(map.get("code").getString(), map.get("creation").getLong(),
                 map.get("expiration").getLong(), Product.parse(map.get("product").getString()),
                 map.get("state").getInt());
+        // 加入到缓存
+        this.channelCodeMap.put(code, channelCode);
+        return channelCode;
     }
 
     public ChannelCode createChannelCode(Product product, long expiredDuration) {

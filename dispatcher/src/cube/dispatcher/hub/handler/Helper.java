@@ -33,7 +33,7 @@ import cube.dispatcher.hub.HubCellet;
 import cube.hub.HubAction;
 import cube.hub.HubStateCode;
 import cube.hub.SignalBuilder;
-import cube.hub.dao.ChannelCode;
+import cube.hub.data.ChannelCode;
 import cube.hub.signal.ChannelCodeSignal;
 import cube.hub.signal.Signal;
 import org.eclipse.jetty.http.HttpStatus;

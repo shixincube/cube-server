@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.hub.dao.wechat;
+package cube.hub.data.wechat;
 
 /**
  * 消息时间精度。

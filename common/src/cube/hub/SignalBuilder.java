@@ -43,11 +43,14 @@ public class SignalBuilder {
         if (ChannelCodeSignal.NAME.equals(name)) {
             return new ChannelCodeSignal(signalJson);
         }
-        else if (PassBySignal.NAME.equals(name)) {
-            return new PassBySignal(signalJson);
+        else if (GetMessagesSignal.NAME.equals(name)) {
+            return new GetMessagesSignal(signalJson);
         }
         else if (ReportSignal.NAME.equals(name)) {
             return new ReportSignal(signalJson);
+        }
+        else if (PassBySignal.NAME.equals(name)) {
+            return new PassBySignal(signalJson);
         }
         else if (LoginQRCodeSignal.NAME.equals(name)) {
             return new LoginQRCodeSignal(signalJson);

@@ -24,47 +24,53 @@
  * SOFTWARE.
  */
 
-package cube.hub.signal;
+package cube.hub.data;
 
-import cube.hub.data.ChannelCode;
+import cube.common.JSONable;
 import org.json.JSONObject;
 
 /**
- * 频道码信令。
+ * 元。
  */
-public class ChannelCodeSignal extends Signal {
+public class Metadata implements JSONable {
 
-    public final static String NAME = "ChannelCode";
+    protected long id;
 
-    private ChannelCode channelCode;
+    protected long timestamp;
 
-    public ChannelCodeSignal(String code) {
-        super(NAME);
-        setCode(code);
+    public Metadata(long id) {
+        this.id = id;
+        this.timestamp = System.currentTimeMillis();
     }
 
-    public ChannelCodeSignal(ChannelCode channelCode) {
-        super(NAME);
-        this.channelCode = channelCode;
+    public Metadata(long id, long timestamp) {
+        this.id = id;
+        this.timestamp = timestamp;
     }
 
-    public ChannelCodeSignal(JSONObject json) {
-        super(json);
-        if (json.has("channelCode")) {
-            this.channelCode = new ChannelCode(json.getJSONObject("channelCode"));
-        }
+    public Metadata(JSONObject json) {
+        this.id = json.getLong("id");
+        this.timestamp = json.getLong("timestamp");
     }
 
-    public ChannelCode getChannelCode() {
-        return this.channelCode;
+    public long getId() {
+        return this.id;
+    }
+
+    public long getTimestamp() {
+        return this.timestamp;
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = super.toJSON();
-        if (null != this.channelCode) {
-            json.put("channelCode", this.channelCode.toJSON());
-        }
+        JSONObject json = new JSONObject();
+        json.put("id", this.id);
+        json.put("timestamp", this.timestamp);
         return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

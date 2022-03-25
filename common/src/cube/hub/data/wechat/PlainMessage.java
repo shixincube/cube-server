@@ -24,13 +24,13 @@
  * SOFTWARE.
  */
 
-package cube.hub.dao.wechat;
+package cube.hub.data.wechat;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
 import cube.common.entity.Message;
-import cube.hub.dao.Metadata;
+import cube.hub.data.Metadata;
 import cube.util.FileUtils;
 import org.json.JSONObject;
 

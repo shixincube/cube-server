@@ -31,7 +31,7 @@ import cube.common.entity.FileLabel;
 import cube.dispatcher.Performer;
 import cube.dispatcher.hub.CacheCenter;
 import cube.dispatcher.util.FileLabelHandler;
-import cube.hub.dao.ChannelCode;
+import cube.hub.data.ChannelCode;
 import org.eclipse.jetty.http.HttpStatus;
 
 import javax.servlet.ServletException;
