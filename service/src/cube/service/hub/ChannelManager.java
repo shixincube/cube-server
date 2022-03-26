@@ -484,7 +484,7 @@ public class ChannelManager {
      * @return
      */
     public List<String> getMessageGroupNameList(String channelCode, String accountId) {
-        String sql = "SELECT DISTINCT `group_name` FROM `" + this.partnerMessageTable + "` WHERE `code`='" +
+        String sql = "SELECT DISTINCT `group_name` FROM `" + this.groupMessageTable + "` WHERE `code`='" +
                 channelCode + "' AND `account_id`='" + accountId + "'";
         List<StorageField[]> result = this.storage.executeQuery(sql);
         if (result.isEmpty()) {

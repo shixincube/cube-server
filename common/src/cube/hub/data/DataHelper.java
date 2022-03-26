@@ -52,7 +52,7 @@ public class DataHelper {
         JSONObject payload = packMessagePayload(plainMessage);
         FileAttachment fileAttachment = null;
 
-        if (plainMessage.isImageType() || plainMessage.isFileType()) {
+        if (null != plainMessage.getFileLabel()) {
             fileAttachment = new FileAttachment(plainMessage.getFileLabel());
         }
 
@@ -74,7 +74,7 @@ public class DataHelper {
         JSONObject payload = packMessagePayload(plainMessage);
         FileAttachment fileAttachment = null;
 
-        if (plainMessage.isImageType() || plainMessage.isFileType()) {
+        if (null != plainMessage.getFileLabel()) {
             fileAttachment = new FileAttachment(plainMessage.getFileLabel());
         }
 

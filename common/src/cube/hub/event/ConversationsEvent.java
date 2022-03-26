@@ -57,6 +57,10 @@ public class ConversationsEvent extends WeChatEvent {
         }
     }
 
+    public List<Conversation> getConversations() {
+        return this.conversations;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
