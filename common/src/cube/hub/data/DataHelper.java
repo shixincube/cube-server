@@ -104,4 +104,13 @@ public class DataHelper {
 
         return payload;
     }
+
+    public static String extractAccountId(Contact contact) {
+        JSONObject ctx = contact.getContext();
+        if (null == ctx) {
+            return null;
+        }
+
+        return ctx.has("id") ? ctx.getString("id") : null;
+    }
 }

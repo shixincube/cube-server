@@ -30,10 +30,7 @@ import cell.util.log.Logger;
 import cube.common.entity.ClientDescription;
 import cube.common.entity.Contact;
 import cube.hub.Product;
-import cube.hub.event.AllocatedEvent;
-import cube.hub.event.Event;
-import cube.hub.event.ReportEvent;
-import cube.hub.event.SubmitMessagesEvent;
+import cube.hub.event.*;
 import org.json.JSONObject;
 
 import java.util.List;
@@ -65,6 +62,9 @@ public class EventController {
             }
             else if (ReportEvent.NAME.equals(event.getName())) {
                 WeChatHub.getInstance().updateReport((ReportEvent) event);
+            }
+            else if (GroupDataEvent.NAME.equals(event.getName())) {
+                WeChatHub.getInstance().updateGroup((GroupDataEvent) event);
             }
             else if (AllocatedEvent.NAME.equals(event.getName())) {
                 AllocatedEvent allocatedEvent = (AllocatedEvent) event;

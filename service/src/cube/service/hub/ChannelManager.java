@@ -30,8 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
-import cube.common.entity.Conversation;
-import cube.common.entity.ConversationType;
+import cube.common.entity.Group;
 import cube.common.entity.Message;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -39,6 +38,7 @@ import cube.core.Storage;
 import cube.core.StorageField;
 import cube.hub.Product;
 import cube.hub.data.ChannelCode;
+import cube.hub.data.DataHelper;
 import cube.hub.data.wechat.PlainMessage;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
@@ -46,7 +46,6 @@ import cube.storage.StorageType;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -123,6 +122,53 @@ public class ChannelManager {
             }),
             // 产品分类
             new StorageField("product", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 数据 JSON
+            new StorageField("data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] groupFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            // 群组所属的账号 ID
+            new StorageField("account_id", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 群组名称
+            new StorageField("group_name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 更新时间戳
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 产品分类
+            new StorageField("product", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 数据 JSON
+            new StorageField("data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] groupMemberFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("group_sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 账号 ID
+            new StorageField("account_id", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            // 账号名
+            new StorageField("account_name", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 数据 JSON
@@ -209,6 +255,10 @@ public class ChannelManager {
 
     private final String accountTable = "hub_account";
 
+    private final String groupTable = "hub_group";
+
+    private final String groupMemberTable = "hub_group_member";
+
     private final String partnerMessageTable = "hub_partner_message";
 
     private final String groupMessageTable = "hub_group_message";
@@ -233,7 +283,8 @@ public class ChannelManager {
     private Map<String, ChannelCode> channelCodeMap;
 
     public ChannelManager(JSONObject config) {
-        this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL, "HubService", config);
+        this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL,
+                "HubService", config);
         this.channelCodeMap = new ConcurrentHashMap<>();
     }
 
@@ -260,8 +311,9 @@ public class ChannelManager {
             return channelCode;
         }
 
-        List<StorageField[]> result = this.storage.executeQuery(this.channelCodeTable, this.channelCodeFields, new Conditional[] {
-                Conditional.createEqualTo("code", code)
+        List<StorageField[]> result = this.storage.executeQuery(this.channelCodeTable,
+                this.channelCodeFields, new Conditional[] {
+                        Conditional.createEqualTo("code", code)
         });
         if (result.isEmpty()) {
             return null;
@@ -420,7 +472,8 @@ public class ChannelManager {
      * @param channelCode
      * @param product
      */
-    public void updateAccount(Contact account, String accountId, String channelCode, Product product) {
+    public synchronized void updateAccount(Contact account, String accountId, String channelCode,
+                                           Product product) {
         List<StorageField[]> result = this.storage.executeQuery(this.accountTable,
                 this.accountFields, new Conditional[] {
                         Conditional.createEqualTo("account_id", accountId),
@@ -450,6 +503,68 @@ public class ChannelManager {
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", sn)
             });
+        }
+    }
+
+    public Group queryGroup(Contact account, Group group, Product product) {
+
+        return null;
+    }
+
+    public synchronized void updateGroup(Contact account, Group group, Product product) {
+        String accountId = DataHelper.extractAccountId(account);
+        List<StorageField[]> result = this.storage.executeQuery(this.groupTable, new StorageField[] {
+                new StorageField("sn", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("account_id", accountId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("group_name", group.getName())
+        });
+
+        long groupSN = 0;
+
+        if (result.isEmpty()) {
+            groupSN = group.getId();
+            // 插入
+            this.storage.executeInsert(this.groupTable, new StorageField[] {
+                    new StorageField("sn", groupSN),
+                    new StorageField("account_id", accountId),
+                    new StorageField("group_name", group.getName()),
+                    new StorageField("timestamp", System.currentTimeMillis()),
+                    new StorageField("product", product.name),
+                    new StorageField("data", group.toCompactJSON().toString()),
+            });
+        }
+        else {
+            groupSN = result.get(0)[0].getLong();
+            // 更新
+            this.storage.executeUpdate(this.groupTable, new StorageField[] {
+                    new StorageField("timestamp", System.currentTimeMillis()),
+                    new StorageField("data", group.toCompactJSON().toString())
+            }, new Conditional[] {
+                    Conditional.createEqualTo("sn", groupSN)
+            });
+
+            List<Contact> contacts = group.getMemberList();
+            if (null != contacts) {
+                // 删除所有成员数据
+                this.storage.executeDelete(this.groupMemberTable, new Conditional[] {
+                        Conditional.createEqualTo("group_sn", groupSN)
+                });
+            }
+        }
+
+        List<Contact> contacts = group.getMemberList();
+        if (null != contacts) {
+            for (Contact contact : contacts) {
+                String cid = DataHelper.extractAccountId(contact);
+                this.storage.executeInsert(this.groupMemberTable, new StorageField[] {
+                        new StorageField("group_sn", groupSN),
+                        new StorageField("account_id", (null != cid) ? cid : ""),
+                        new StorageField("account_name", contact.getName()),
+                        new StorageField("data", contact.toJSON().toString())
+                });
+            }
         }
     }
 
@@ -680,6 +795,20 @@ public class ChannelManager {
             // 不存在，建新表
             if (this.storage.executeCreate(this.accountTable, this.accountFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.accountTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.groupTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.groupTable, this.groupFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.groupTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.groupMemberTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.groupMemberTable, this.groupMemberFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.groupMemberTable + "' successfully");
             }
         }
 

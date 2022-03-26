@@ -63,7 +63,7 @@ public class Group extends AbstractContact implements Comparable<Group> {
      * 群组的成员实体列表。
      * 该属性仅供客户端使用。
      */
-    private List<Contact> memberList;
+    private List<Contact> memberContactList;
 
     /**
      * 群组的标签。
@@ -295,23 +295,23 @@ public class Group extends AbstractContact implements Comparable<Group> {
     }
 
     public void addMember(Contact contact) {
-        if (null == this.memberList) {
-            this.memberList = new ArrayList<>();
+        if (null == this.memberContactList) {
+            this.memberContactList = new ArrayList<>();
         }
 
-        this.memberList.add(contact);
+        this.memberContactList.add(contact);
     }
 
     public void removeMember(Contact contact) {
-        if (null == this.memberList) {
+        if (null == this.memberContactList) {
             return;
         }
 
-        this.memberList.remove(contact);
+        this.memberContactList.remove(contact);
     }
 
     public List<Contact> getMemberList() {
-        return this.memberList;
+        return this.memberContactList;
     }
 
     /**
@@ -360,9 +360,9 @@ public class Group extends AbstractContact implements Comparable<Group> {
         json.put("lastActive", this.lastActiveTime);
         json.put("state", this.state.code);
 
-        if (null != this.memberList) {
+        if (null != this.memberContactList) {
             JSONArray contacts = new JSONArray();
-            for (Contact contact : this.memberList) {
+            for (Contact contact : this.memberContactList) {
                 contacts.put(contact.toJSON());
             }
             json.put("memberContacts", contacts);

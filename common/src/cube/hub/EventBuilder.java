@@ -60,6 +60,9 @@ public class EventBuilder {
         else if (ReportEvent.NAME.equals(name)) {
             event = new ReportEvent(eventJson);
         }
+        else if (GroupDataEvent.NAME.equals(name)) {
+            event = new GroupDataEvent(eventJson);
+        }
         else if (LoginQRCodeEvent.NAME.equals(name)) {
             event = new LoginQRCodeEvent(eventJson);
         }

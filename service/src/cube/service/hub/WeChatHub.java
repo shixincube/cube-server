@@ -260,6 +260,17 @@ public class WeChatHub {
     }
 
     /**
+     * 更新群组数据。
+     *
+     * @param event
+     */
+    public void updateGroup(GroupDataEvent event) {
+        Contact account = event.getAccount();
+        Group group = event.getGroup();
+        this.service.getChannelManager().updateGroup(account, group, event.getProduct());
+    }
+
+    /**
      * 提交消息数据。
      *
      * @param event
