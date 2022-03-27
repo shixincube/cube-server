@@ -160,6 +160,7 @@ public class ChannelManager {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
+            // 群组表的记录 SN
             new StorageField("group_sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -506,9 +507,40 @@ public class ChannelManager {
         }
     }
 
-    public Group queryGroup(Contact account, Group group, Product product) {
+    public Group queryGroup(Contact account, String groupName, Product product) {
+        String accountId = DataHelper.extractAccountId(account);
+        List<StorageField[]> result = this.storage.executeQuery(this.groupTable, new StorageField[] {
+                new StorageField("sn", LiteralBase.LONG),
+                new StorageField("data", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo("account_id", accountId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("group_name", groupName),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("product", product.name)
+        });
 
-        return null;
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        long groupSN = result.get(0)[0].getLong();
+        String dataString = result.get(0)[1].getString();
+
+        Group group = new Group(new JSONObject(dataString));
+
+        result = this.storage.executeQuery(this.groupMemberTable, new StorageField[] {
+                new StorageField("data", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo("group_sn", groupSN)
+        });
+        for (StorageField[] data : result) {
+            String memberDataString = data[0].getString();
+            Contact contact = new Contact(new JSONObject(memberDataString));
+            group.addMember(contact);
+        }
+
+        return group;
     }
 
     public synchronized void updateGroup(Contact account, Group group, Product product) {
@@ -532,7 +564,7 @@ public class ChannelManager {
                     new StorageField("group_name", group.getName()),
                     new StorageField("timestamp", System.currentTimeMillis()),
                     new StorageField("product", product.name),
-                    new StorageField("data", group.toCompactJSON().toString()),
+                    new StorageField("data", group.toCompactJSON().toString())
             });
         }
         else {
