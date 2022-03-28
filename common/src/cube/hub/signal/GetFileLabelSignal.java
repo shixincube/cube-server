@@ -35,12 +35,27 @@ public class GetFileLabelSignal extends Signal {
 
     public final static String NAME = "GetFileLabel";
 
-    public GetFileLabelSignal(String code) {
+    private String fileCode;
+
+    public GetFileLabelSignal(String channelCode, String fileCode) {
         super(NAME);
-        setCode(code);
+        setCode(channelCode);
+        this.fileCode = fileCode;
     }
 
     public GetFileLabelSignal(JSONObject json) {
         super(json);
+        this.fileCode = json.getString("fileCode");
+    }
+
+    public String getFileCode() {
+        return this.fileCode;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("fileCode", this.fileCode);
+        return json;
     }
 }

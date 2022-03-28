@@ -55,14 +55,14 @@ public class SignalBuilder {
         else if (PassBySignal.NAME.equals(name)) {
             return new PassBySignal(signalJson);
         }
+        else if (GetFileLabelSignal.NAME.equals(name)) {
+            return new GetFileLabelSignal(signalJson);
+        }
         else if (LoginQRCodeSignal.NAME.equals(name)) {
             return new LoginQRCodeSignal(signalJson);
         }
         else if (LogoutSignal.NAME.equals(name)) {
             return new LogoutSignal(signalJson);
-        }
-        else if (GetFileLabelSignal.NAME.equals(name)) {
-            return new GetFileLabelSignal(signalJson);
         }
         else if (SilenceSignal.NAME.equals(name)) {
             return new SilenceSignal(signalJson);

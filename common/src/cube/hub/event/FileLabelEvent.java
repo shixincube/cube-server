@@ -26,6 +26,7 @@
 
 package cube.hub.event;
 
+import cube.common.entity.FileLabel;
 import org.json.JSONObject;
 
 /**
@@ -35,8 +36,9 @@ public class FileLabelEvent extends WeChatEvent {
 
     public final static String NAME = "FileLabel";
 
-    public FileLabelEvent(long sn) {
+    public FileLabelEvent(long sn, FileLabel fileLabel) {
         super(sn, NAME);
+        setFileLabel(fileLabel);
     }
 
     public FileLabelEvent(JSONObject json) {

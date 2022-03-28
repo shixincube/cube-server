@@ -26,13 +26,22 @@
 
 package cube.dispatcher.hub.handler;
 
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
 import cube.dispatcher.Performer;
 import cube.dispatcher.hub.CacheCenter;
+import cube.dispatcher.hub.HubCellet;
 import cube.dispatcher.util.FileLabelHandler;
+import cube.hub.EventBuilder;
+import cube.hub.HubAction;
+import cube.hub.HubStateCode;
 import cube.hub.data.ChannelCode;
+import cube.hub.event.Event;
+import cube.hub.event.FileLabelEvent;
+import cube.hub.signal.GetFileLabelSignal;
 import org.eclipse.jetty.http.HttpStatus;
+import org.json.JSONObject;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -70,9 +79,48 @@ public class FileHandler extends FileLabelHandler {
 
         FileLabel fileLabel = CacheCenter.getInstance().getFileLabel(fileCode);
         if (null == fileLabel) {
-            response.setStatus(HttpStatus.NOT_FOUND_404);
-            this.complete();
-            return;
+            // 没有缓存，从服务节点获取
+            GetFileLabelSignal requestSignal = new GetFileLabelSignal(channelCode.code, fileCode);
+            ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
+            actionDialect.addParam("signal", requestSignal.toJSON());
+            ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect);
+            if (null == result) {
+                response.setStatus(HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
+            int stateCode = result.getParamAsInt("code");
+            if (HubStateCode.Ok.code != stateCode) {
+                Logger.w(this.getClass(), "#doGet - state : " + stateCode);
+                JSONObject data = new JSONObject();
+                data.put("code", stateCode);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, data);
+                this.complete();
+                return;
+            }
+
+            if (result.containsParam("event")) {
+                Event event = EventBuilder.build(result.getParamAsJson("event"));
+                if (event instanceof FileLabelEvent) {
+                    fileLabel = event.getFileLabel();
+                    CacheCenter.getInstance().putFileLabel(fileLabel);
+                }
+                else {
+                    JSONObject data = new JSONObject();
+                    data.put("code", HubStateCode.ControllerError.code);
+                    this.respond(response, HttpStatus.NOT_FOUND_404, data);
+                    this.complete();
+                    return;
+                }
+            }
+            else {
+                JSONObject data = new JSONObject();
+                data.put("code", HubStateCode.Failure.code);
+                this.respond(response, HttpStatus.NOT_FOUND_404, data);
+                this.complete();
+                return;
+            }
         }
 
         try {

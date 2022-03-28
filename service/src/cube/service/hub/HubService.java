@@ -29,6 +29,7 @@ package cube.service.hub;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.common.action.FileStorageAction;
 import cube.common.entity.FileLabel;
 import cube.common.entity.Message;
 import cube.core.AbstractModule;
@@ -38,6 +39,7 @@ import cube.hub.*;
 import cube.hub.data.ChannelCode;
 import cube.hub.event.ConversationsEvent;
 import cube.hub.event.Event;
+import cube.hub.event.FileLabelEvent;
 import cube.hub.event.SubmitMessagesEvent;
 import cube.hub.signal.*;
 import cube.plugin.Plugin;
@@ -247,6 +249,18 @@ public class HubService extends AbstractModule {
                                 responder.respondDispatcher(sn, HubStateCode.Failure.code, signal);
                             }
                         }
+                        else if (signal instanceof GetFileLabelSignal) {
+                            // 获取文件标签
+                            GetFileLabelSignal getFileLabelSignal = (GetFileLabelSignal) signal;
+                            FileLabel fileLabel = getFileLabel(getFileLabelSignal.getFileCode());
+                            if (null != fileLabel) {
+                                FileLabelEvent event = new FileLabelEvent(sn, fileLabel);
+                                responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
+                            }
+                            else {
+                                responder.respondDispatcher(sn, HubStateCode.Failure.code, signal);
+                            }
+                        }
                         else if (signal instanceof LoginQRCodeSignal) {
                             // 获取登录二维码
                             Event event = WeChatHub.getInstance().openChannel(channelCode);
@@ -283,7 +297,21 @@ public class HubService extends AbstractModule {
     }
 
     private FileLabel getFileLabel(String fileCode) {
-        return null;
+        JSONObject notification = new JSONObject();
+        notification.put("action", FileStorageAction.GetFile.name);
+        notification.put("domain", "shixincube.com");
+        notification.put("fileCode", fileCode);
+        notification.put("transmitting", false);
+
+        AbstractModule module = this.getKernel().getModule("FileStorage");
+        Object result = module.notify(notification);
+        if (null == result) {
+            Logger.w(this.getClass(), "#getFileLabel - file storage module error");
+            return null;
+        }
+
+        FileLabel fileLabel = new FileLabel((JSONObject) result);
+        return fileLabel;
     }
 
     private void setupMessagingPlugin() {
