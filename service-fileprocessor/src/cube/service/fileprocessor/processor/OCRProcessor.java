@@ -108,7 +108,7 @@ public class OCRProcessor extends OpticalCharacterRecognition {
             process = null;
         }
 
-        if (0 == status || 1 == status) {
+        if (-1 != status) {
             processorContext.setSuccessful(true);
             processorContext.setImageFileLabel(this.imageFileLabel);
             processorContext.readResult(this.outputText);
