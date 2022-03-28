@@ -71,4 +71,15 @@ public class ConversationsEvent extends WeChatEvent {
         json.put("conversations", list);
         return json;
     }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toCompactJSON();
+        JSONArray list = new JSONArray();
+        for (Conversation conversation : this.conversations) {
+            list.put(conversation.toJSON());
+        }
+        json.put("conversations", list);
+        return json;
+    }
 }

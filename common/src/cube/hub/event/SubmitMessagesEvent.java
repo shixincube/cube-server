@@ -110,4 +110,25 @@ public class SubmitMessagesEvent extends WeChatEvent {
 
         return json;
     }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toCompactJSON();
+
+        if (null != this.group) {
+            json.put("group", this.group.toCompactJSON());
+        }
+
+        if (null != this.partner) {
+            json.put("partner", this.partner.toCompactJSON());
+        }
+
+        JSONArray array = new JSONArray();
+        for (Message message : this.messages) {
+            array.put(message.toJSON());
+        }
+        json.put("messages", array);
+
+        return json;
+    }
 }

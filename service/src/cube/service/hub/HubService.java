@@ -37,10 +37,7 @@ import cube.core.Kernel;
 import cube.core.Module;
 import cube.hub.*;
 import cube.hub.data.ChannelCode;
-import cube.hub.event.ConversationsEvent;
-import cube.hub.event.Event;
-import cube.hub.event.FileLabelEvent;
-import cube.hub.event.SubmitMessagesEvent;
+import cube.hub.event.*;
 import cube.hub.signal.*;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
@@ -222,7 +219,8 @@ public class HubService extends AbstractModule {
                     }
                     if (System.currentTimeMillis() >= channelCode.expiration) {
                         // 过期
-                        Logger.w(HubService.this.getClass(), "#processChannel - channel code expired : " + channelCode.code);
+                        Logger.w(HubService.this.getClass(),
+                                "#processChannel - channel code expired : " + channelCode.code);
                         responder.respondDispatcher(sn, HubStateCode.Expired.code, signal);
                         return;
                     }
@@ -241,7 +239,19 @@ public class HubService extends AbstractModule {
                         }
                         else if (signal instanceof GetMessagesSignal) {
                             // 获取消息
-                            SubmitMessagesEvent event = WeChatHub.getInstance().getMessages(channelCode, (GetMessagesSignal) signal);
+                            SubmitMessagesEvent event = WeChatHub.getInstance().getMessages(channelCode,
+                                    (GetMessagesSignal) signal);
+                            if (null != event) {
+                                responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
+                            }
+                            else {
+                                responder.respondDispatcher(sn, HubStateCode.Failure.code, signal);
+                            }
+                        }
+                        else if (signal instanceof GetGroupSignal) {
+                            // 获取群组数据
+                            GroupDataEvent event = WeChatHub.getInstance().getGroupData(channelCode,
+                                    (GetGroupSignal) signal);
                             if (null != event) {
                                 responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
                             }

@@ -49,6 +49,9 @@ public class SignalBuilder {
         else if (GetMessagesSignal.NAME.equals(name)) {
             return new GetMessagesSignal(signalJson);
         }
+        else if (GetGroupSignal.NAME.equals(name)) {
+            return new GetGroupSignal(signalJson);
+        }
         else if (ReportSignal.NAME.equals(name)) {
             return new ReportSignal(signalJson);
         }

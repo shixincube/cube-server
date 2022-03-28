@@ -59,4 +59,11 @@ public class GroupDataEvent extends WeChatEvent {
         json.put("group", this.group.toJSON());
         return json;
     }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toCompactJSON();
+        json.put("group", this.group.toJSON());
+        return json;
+    }
 }

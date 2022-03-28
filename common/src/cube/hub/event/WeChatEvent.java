@@ -117,4 +117,13 @@ public abstract class WeChatEvent extends Event {
         }
         return json;
     }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toCompactJSON();
+        if (null != this.account) {
+            json.put("account", this.account.toCompactJSON());
+        }
+        return json;
+    }
 }

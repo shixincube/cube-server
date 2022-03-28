@@ -164,6 +164,20 @@ public class ReportEvent extends WeChatEvent {
     }
 
     @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toCompactJSON();
+        json.put("total", this.totalAppNum);
+        json.put("idle", this.idleAppNum);
+
+        JSONArray array = new JSONArray();
+        for (Contact account : this.managedAccounts) {
+            array.put(account.toCompactJSON());
+        }
+        json.put("accounts", array);
+        return json;
+    }
+
+    @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
         buf.append("\n");

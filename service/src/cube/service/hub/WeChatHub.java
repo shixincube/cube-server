@@ -36,10 +36,7 @@ import cube.hub.data.ChannelCode;
 import cube.hub.data.DataHelper;
 import cube.hub.data.wechat.PlainMessage;
 import cube.hub.event.*;
-import cube.hub.signal.GetConversationsSignal;
-import cube.hub.signal.GetMessagesSignal;
-import cube.hub.signal.LoginQRCodeSignal;
-import cube.hub.signal.LogoutSignal;
+import cube.hub.signal.*;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -478,6 +475,35 @@ public class WeChatHub {
         }
 
         return null;
+    }
+
+    /**
+     * 获取指定群组数据。
+     *
+     * @param channelCode
+     * @param signal
+     * @return
+     */
+    public GroupDataEvent getGroupData(ChannelCode channelCode, GetGroupSignal signal) {
+        // 获取账号 ID
+        String accountId = this.service.getChannelManager().getAccountId(channelCode.code);
+        if (null == accountId) {
+            return null;
+        }
+
+        // 查询账号
+        Contact account = this.service.getChannelManager().queryAccount(accountId, channelCode.product);
+        if (null == account) {
+            return null;
+        }
+
+        Group group = this.service.getChannelManager().queryGroup(account, signal.getGroupName(),
+                channelCode.product);
+        if (null == group) {
+            return null;
+        }
+
+        return new GroupDataEvent(account, group);
     }
 
     private String getWeChatId(Contact account) {

@@ -32,10 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
-import cube.dispatcher.hub.handler.CloseChannel;
-import cube.dispatcher.hub.handler.FileHandler;
-import cube.dispatcher.hub.handler.GetConversations;
-import cube.dispatcher.hub.handler.OpenChannel;
+import cube.dispatcher.hub.handler.*;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
 
@@ -144,5 +141,11 @@ public class HubCellet extends AbstractCellet {
         getConvHandler.setContextPath(GetConversations.CONTEXT_PATH);
         getConvHandler.setHandler(new GetConversations(this.performer));
         httpServer.addContextHandler(getConvHandler);
+
+        // 获取群组数据
+        ContextHandler getGroupHandler = new ContextHandler();
+        getGroupHandler.setContextPath(GetGroup.CONTEXT_PATH);
+        getGroupHandler.setHandler(new GetGroup(this.performer));
+        httpServer.addContextHandler(getGroupHandler);
     }
 }
