@@ -29,6 +29,7 @@ package cube.service.hub;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.common.entity.FileLabel;
 import cube.common.entity.Message;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -217,7 +218,6 @@ public class HubService extends AbstractModule {
                         responder.respondDispatcher(sn, HubStateCode.Unauthorized.code, signal);
                         return;
                     }
-
                     if (System.currentTimeMillis() >= channelCode.expiration) {
                         // 过期
                         Logger.w(HubService.this.getClass(), "#processChannel - channel code expired : " + channelCode.code);
@@ -280,6 +280,10 @@ public class HubService extends AbstractModule {
                 }
             }
         });
+    }
+
+    private FileLabel getFileLabel(String fileCode) {
+        return null;
     }
 
     private void setupMessagingPlugin() {
