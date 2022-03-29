@@ -61,9 +61,9 @@ public final class ImageMagick {
         commandLine.add(output);
 
         int status = execute(workPath, commandLine);
-        if (0 == status || 1 == status) {
+        if (-1 != status) {
             File file = new File(workPath, output);
-            return file.exists();
+            return awaits(file);
         }
         else {
             return false;
@@ -92,9 +92,9 @@ public final class ImageMagick {
         commandLine.add(output);
 
         int status = execute(workPath, commandLine);
-        if (0 == status || 1 == status) {
+        if (-1 != status) {
             File file = new File(workPath, output);
-            return file.exists();
+            return awaits(file);
         }
         else {
             return false;
@@ -121,9 +121,9 @@ public final class ImageMagick {
         commandLine.add(output);
 
         int status = execute(workPath, commandLine);
-        if (0 == status || 1 == status) {
+        if (-1 != status) {
             File file = new File(workPath, output);
-            return file.exists();
+            return awaits(file);
         }
         else {
             return false;
@@ -157,9 +157,9 @@ public final class ImageMagick {
         commandLine.add(output);
 
         int status = execute(workPath, commandLine);
-        if (0 == status || 1 == status) {
+        if (-1 != status) {
             File file = new File(workPath, output);
-            return file.exists();
+            return awaits(file);
         }
         else {
             return false;
@@ -183,9 +183,9 @@ public final class ImageMagick {
         commandLine.add(output);
 
         int status = execute(workPath, commandLine);
-        if (0 == status || 1 == status) {
+        if (-1 != status) {
             File file = new File(workPath, output);
-            return file.exists();
+            return awaits(file);
         }
         else {
             return false;
@@ -211,9 +211,9 @@ public final class ImageMagick {
         commandLine.add(output);
 
         int status = execute(workPath, commandLine);
-        if (0 == status || 1 == status) {
+        if (-1 != status) {
             File file = new File(workPath, output);
-            return file.exists();
+            return awaits(file);
         }
         else {
             return false;
@@ -238,9 +238,9 @@ public final class ImageMagick {
         commandLine.add(output);
 
         int status = execute(workPath, commandLine);
-        if (0 == status || 1 == status) {
+        if (-1 != status) {
             File file = new File(workPath, output);
-            return file.exists();
+            return awaits(file);
         }
         else {
             return false;
@@ -287,8 +287,8 @@ public final class ImageMagick {
 
         File watermarkFile = new File(workPath, watermark);
         int status = execute(workPath, commandLine);
-        if (0 == status || 1 == status) {
-            if (!watermarkFile.exists()) {
+        if (-1 != status) {
+            if (!awaits(watermarkFile)) {
                 return false;
             }
         }
@@ -310,9 +310,9 @@ public final class ImageMagick {
         // 删除水印文件。
         watermarkFile.delete();
 
-        if (0 == status || 1 == status) {
+        if (-1 != status) {
             File file = new File(workPath, output);
-            return file.exists();
+            return awaits(file);
         }
         else {
             return false;
@@ -337,9 +337,9 @@ public final class ImageMagick {
         commandLine.add(output);
 
         int status = execute(workPath, commandLine);
-        if (0 == status || 1 == status) {
+        if (-1 != status) {
             File file = new File(workPath, output);
-            return file.exists();
+            return awaits(file);
         }
         else {
             return false;
@@ -373,5 +373,17 @@ public final class ImageMagick {
         }
 
         return status;
+    }
+
+    private static boolean awaits(File file) {
+        if (!file.exists()) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return file.exists();
     }
 }
