@@ -66,6 +66,9 @@ public class EventBuilder {
         else if (FileLabelEvent.NAME.equals(name)) {
             event = new FileLabelEvent(eventJson);
         }
+        else if (SendMessageEvent.NAME.equals(name)) {
+            event = new SendMessageEvent(eventJson);
+        }
         else if (LoginQRCodeEvent.NAME.equals(name)) {
             event = new LoginQRCodeEvent(eventJson);
         }

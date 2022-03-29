@@ -26,6 +26,7 @@
 
 package cube.hub.data.wechat;
 
+import cell.util.Base64;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
@@ -38,6 +39,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
@@ -78,7 +80,13 @@ public class PlainMessage extends Metadata {
         this.sender = new Contact(json.getJSONObject("sender"));
 
         if (json.has("text")) {
-            this.text = json.getString("text");
+            // 解析 Base64
+            try {
+                byte[] bytes = Base64.decode(json.getString("text"));
+                this.text = new String(bytes, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         if (json.has("file")) {
@@ -314,7 +322,9 @@ public class PlainMessage extends Metadata {
         json.put("date", this.date);
 
         if (null != this.text) {
-            json.put("text", this.text);
+            // 转 Base64
+            String base64 = Base64.encodeBytes(this.text.getBytes(StandardCharsets.UTF_8));
+            json.put("text", base64);
         }
 
         if (null != this.file) {
