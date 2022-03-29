@@ -424,6 +424,13 @@ public class Performer implements TalkListener, Tickable {
     }
 
     public void stop() {
+        for (Block block : this.blockMap.values()) {
+            synchronized (block) {
+                block.notify();
+            }
+        }
+        this.blockMap.clear();
+
         // 停止 HTTP 服务器
         this.httpServer.stop();
 

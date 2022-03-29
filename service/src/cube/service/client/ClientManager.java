@@ -554,7 +554,7 @@ public final class ClientManager {
         });
     }
 
-    private synchronized void onFileProcessor(String eventName, PluginContext pluginContext) {
+    private void onFileProcessor(String eventName, PluginContext pluginContext) {
         OperationWorkflow workflow = (OperationWorkflow) pluginContext.get("workflow");
 
         long clientId = workflow.getClientId();
@@ -573,11 +573,13 @@ public final class ClientManager {
         // 事件进入队列
         this.eventQueue.offer(event);
 
-        if (this.sendingEvent.get()) {
-            return;
-        }
+        synchronized (this.sendingEvent) {
+            if (this.sendingEvent.get()) {
+                return;
+            }
 
-        this.sendingEvent.set(true);
+            this.sendingEvent.set(true);
+        }
 
         this.executor.execute(new Runnable() {
             @Override
@@ -592,11 +594,21 @@ public final class ClientManager {
                                 synchronized (client) {
                                     if (eventName.equals("WorkflowStopped")) {
                                         File resultFile = workflowEvent.resultFile;
-                                        if (null != resultFile && resultFile.exists()) {
-                                            // 传输文件数据
-                                            client.transmitStream(resultFile.getName(), resultFile);
-                                            // 删除结果文件
-                                            resultFile.delete();
+                                        if (null != resultFile) {
+                                            if (resultFile.exists()) {
+                                                // 传输文件数据
+                                                client.transmitStream(resultFile.getName(), resultFile);
+                                                // 删除结果文件
+                                                resultFile.delete();
+                                            }
+                                            else {
+                                                Logger.e(ClientManager.class,
+                                                        "@WorkflowStopped - result file is not exists : " +
+                                                                resultFile.getName());
+                                            }
+                                        }
+                                        else {
+                                            Logger.d(ClientManager.class, "@WorkflowStopped - no result");
                                         }
                                     }
 
@@ -607,7 +619,9 @@ public final class ClientManager {
                     }
                 }
 
-                sendingEvent.set(false);
+                synchronized (sendingEvent) {
+                    sendingEvent.set(false);
+                }
             }
         });
     }

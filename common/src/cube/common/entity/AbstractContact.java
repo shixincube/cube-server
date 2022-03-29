@@ -33,10 +33,15 @@ import cube.util.pinyin.ForwardLongestSelector;
 import cube.util.pinyin.PYEngine;
 import org.json.JSONObject;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * 抽象联系人。
  */
 public abstract class AbstractContact extends Entity {
+
+    private final static Pattern sPattern = Pattern.compile("\\s*|\t|\r|\n");
 
     /**
      * 联系人显示名。
@@ -139,7 +144,8 @@ public abstract class AbstractContact extends Entity {
             return false;
         }
 
-        this.name = name;
+        Matcher matcher = sPattern.matcher(name);
+        this.name = matcher.replaceAll("");
         return true;
     }
 

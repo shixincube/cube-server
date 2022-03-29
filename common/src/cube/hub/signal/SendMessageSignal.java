@@ -27,6 +27,8 @@
 package cube.hub.signal;
 
 import cell.util.Base64;
+import cube.common.entity.Contact;
+import cube.common.entity.Group;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -39,22 +41,61 @@ public class SendMessageSignal extends Signal {
 
     public final static String NAME = "SendMessage";
 
+    private Contact account;
+
+    private Contact partner;
+
+    private Group group;
+
     private String text;
 
-    public SendMessageSignal(String code, String text) {
+    public SendMessageSignal(String channelCode, Contact account, Contact partner, String text) {
         super(NAME);
-        setCode(code);
+        setCode(channelCode);
+        this.account = account;
+        this.partner = partner;
+        this.text = text;
+    }
+
+    public SendMessageSignal(String channelCode, Contact account, Group group, String text) {
+        super(NAME);
+        setCode(channelCode);
+        this.account = account;
+        this.group = group;
         this.text = text;
     }
 
     public SendMessageSignal(JSONObject json) {
         super(json);
+
+        this.account = new Contact(json.getJSONObject("account"));
+
+        if (json.has("partner")) {
+            this.partner = new Contact(json.getJSONObject("partner"));
+        }
+
+        if (json.has("group")) {
+            this.group = new Group(json.getJSONObject("group"));
+        }
+
         try {
             byte[] bytes = Base64.decode(json.getString("text"));
             this.text = new String(bytes, StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public Contact getAccount() {
+        return this.account;
+    }
+
+    public Contact getPartner() {
+        return this.partner;
+    }
+
+    public Group getGroup() {
+        return this.group;
     }
 
     public String getText() {
@@ -64,6 +105,17 @@ public class SendMessageSignal extends Signal {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+
+        json.put("account", this.account.toCompactJSON());
+
+        if (null != this.partner) {
+            json.put("partner", this.partner.toCompactJSON());
+        }
+
+        if (null != this.group) {
+            json.put("group", this.group.toCompactJSON());
+        }
+
         String base64 = Base64.encodeBytes(this.text.getBytes(StandardCharsets.UTF_8));
         json.put("text", base64);
         return json;
