@@ -107,6 +107,15 @@ public class Contact extends AbstractContact {
     /**
      * 构造函数。
      *
+     * @param externalId 外部 ID 。
+     */
+    public Contact(String externalId) {
+        super(externalId);
+    }
+
+    /**
+     * 构造函数。
+     *
      * @param json 符合格式的 JSON 数据。
      */
     public Contact(JSONObject json) {

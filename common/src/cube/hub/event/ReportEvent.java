@@ -111,7 +111,7 @@ public class ReportEvent extends WeChatEvent {
     public void removeManagedAccount(Contact account) {
         for (int i = 0; i < this.managedAccounts.size(); ++i) {
             Contact current = this.managedAccounts.get(i);
-            if (getWeChatId(account).equals(getWeChatId(current))) {
+            if (account.getExternalId().equals(current.getExternalId())) {
                 this.managedAccounts.remove(i);
                 // 空闲 App 数量增加
                 ++this.idleAppNum;

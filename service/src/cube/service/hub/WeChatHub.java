@@ -37,7 +37,6 @@ import cube.hub.data.DataHelper;
 import cube.hub.data.wechat.PlainMessage;
 import cube.hub.event.*;
 import cube.hub.signal.*;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.util.*;
@@ -235,7 +234,7 @@ public class WeChatHub {
      * @param account
      */
     public void reportAlloc(Long pretenderId, String channelCode, Contact account) {
-        String weChatId = this.getWeChatId(account);
+        String weChatId = account.getExternalId();
 
         ReportEvent reportEvent = this.reportMap.get(pretenderId);
         if (null != reportEvent) {
@@ -275,7 +274,7 @@ public class WeChatHub {
      */
     public boolean submitMessages(SubmitMessagesEvent event) {
         Contact account = event.getAccount();
-        String accountId = this.getWeChatId(account);
+        String accountId = account.getExternalId();
 
         // 获取当前所属的通道码
         String channelCode = this.service.getChannelManager().getChannelCodeWithAccountId(accountId);
@@ -289,7 +288,7 @@ public class WeChatHub {
         Group group = event.getGroup();
 
         if (null != partner) {
-            String partnerId = getWeChatId(partner);
+            String partnerId = partner.getExternalId();
 
             // 更新账号信息
             this.service.getChannelManager().updateAccount(partner, partnerId, channelCode, Product.WeChat);
@@ -304,14 +303,14 @@ public class WeChatHub {
                 // 补充发件人 ID
                 Contact sender = message.getSender();
                 if (sender.getName().equals(account.getName())) {
-                    setWeChatId(sender, accountId);
+                    sender.setExternalId(accountId);
                 }
                 else {
-                    setWeChatId(sender, partnerId);
+                    sender.setExternalId(partnerId);
                 }
 
                 this.service.getChannelManager().appendMessageByPartner(channelCode,
-                        accountId, partnerId, getWeChatId(sender), message);
+                        accountId, partnerId, sender.getExternalId(), message);
             }
         }
         else if (null != group) {
@@ -504,25 +503,6 @@ public class WeChatHub {
         }
 
         return new GroupDataEvent(account, group);
-    }
-
-    private String getWeChatId(Contact account) {
-        JSONObject ctx = account.getContext();
-        if (null == ctx) {
-            return null;
-        }
-
-        return ctx.has("id") ? ctx.getString("id") : null;
-    }
-
-    private void setWeChatId(Contact contact, String id) {
-        JSONObject ctx = contact.getContext();
-        if (null == ctx) {
-            ctx = new JSONObject();
-            contact.setContext(ctx);
-        }
-
-        ctx.put("id", id);
     }
 
     private List<Message> matchNewMessages(List<Message> baseList, List<Message> currentList) {

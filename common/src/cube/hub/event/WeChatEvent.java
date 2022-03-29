@@ -100,15 +100,6 @@ public abstract class WeChatEvent extends Event {
         return this.account;
     }
 
-    public String getWeChatId(Contact account) {
-        JSONObject ctx = account.getContext();
-        if (null == ctx) {
-            return null;
-        }
-
-        return ctx.has("id") ? ctx.getString("id") : null;
-    }
-
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();

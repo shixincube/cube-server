@@ -54,10 +54,26 @@ public abstract class AbstractContact extends Entity {
     private JSONObject context;
 
     /**
+     * 外部 ID 。
+     */
+    private String externalId;
+
+    /**
      * 构造函数。
      */
     public AbstractContact() {
         super(Utils.generateSerialNumber());
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param externalId
+     */
+    public AbstractContact(String externalId) {
+        super(Utils.generateSerialNumber(), "");
+        this.externalId = externalId;
+        this.name = externalId;
     }
 
     /**
@@ -107,11 +123,16 @@ public abstract class AbstractContact extends Entity {
         super(json);
 
         this.name = json.getString("name");
-        this.domain = (null != domain && domain.length() > 1) ? new Domain(domain) : new Domain(json.getString("domain"));
+        this.domain = (null != domain && domain.length() > 1) ? new Domain(domain)
+                : new Domain(json.has("domain") ? json.getString("domain") : "");
         this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
 
         if (json.has("context")) {
             this.context = json.getJSONObject("context");
+        }
+
+        if (json.has("externalId")) {
+            this.externalId = json.getString("externalId");
         }
     }
 
@@ -123,6 +144,24 @@ public abstract class AbstractContact extends Entity {
     public void resetId(Long newId) {
         this.id = newId;
         this.uniqueKey = UniqueKey.make(newId, this.domain);
+    }
+
+    /**
+     * 获取外部 ID 。
+     *
+     * @return
+     */
+    public String getExternalId() {
+        return this.externalId;
+    }
+
+    /**
+     * 设置外部 ID 。
+     * @param externalId
+     *
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
 
     /**
@@ -187,6 +226,9 @@ public abstract class AbstractContact extends Entity {
         if (null != this.context) {
             json.put("context", this.context);
         }
+        if (null != this.externalId) {
+            json.put("externalId", this.externalId);
+        }
         return json;
     }
 
@@ -200,6 +242,9 @@ public abstract class AbstractContact extends Entity {
         json.put("namePY", this.getNamePinYin());
         if (null != this.context) {
             json.put("context", this.context);
+        }
+        if (null != this.externalId) {
+            json.put("externalId", this.externalId);
         }
         return json;
     }

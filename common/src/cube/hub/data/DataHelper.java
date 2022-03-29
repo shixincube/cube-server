@@ -106,21 +106,6 @@ public class DataHelper {
     }
 
     /**
-     * 提取联系人 ID 。
-     *
-     * @param contact
-     * @return
-     */
-    public static String extractAccountId(Contact contact) {
-        JSONObject ctx = contact.getContext();
-        if (null == ctx) {
-            return null;
-        }
-
-        return ctx.has("id") ? ctx.getString("id") : null;
-    }
-
-    /**
      * 构建联系人实例。
      *
      * @param name
@@ -128,13 +113,8 @@ public class DataHelper {
      * @return
      */
     public static Contact makeContact(String name, String accountId) {
-        Contact contact = new Contact();
+        Contact contact = new Contact(accountId);
         contact.setName(name);
-
-        JSONObject ctx = new JSONObject();
-        ctx.put("id", accountId);
-        contact.setContext(ctx);
-
         return contact;
     }
 }

@@ -508,7 +508,7 @@ public class ChannelManager {
     }
 
     public Group queryGroup(Contact account, String groupName, Product product) {
-        String accountId = DataHelper.extractAccountId(account);
+        String accountId = account.getExternalId();
         List<StorageField[]> result = this.storage.executeQuery(this.groupTable, new StorageField[] {
                 new StorageField("sn", LiteralBase.LONG),
                 new StorageField("data", LiteralBase.STRING)
@@ -544,7 +544,7 @@ public class ChannelManager {
     }
 
     public synchronized void updateGroup(Contact account, Group group, Product product) {
-        String accountId = DataHelper.extractAccountId(account);
+        String accountId = account.getExternalId();
         List<StorageField[]> result = this.storage.executeQuery(this.groupTable, new StorageField[] {
                 new StorageField("sn", LiteralBase.LONG)
         }, new Conditional[] {
@@ -589,7 +589,7 @@ public class ChannelManager {
         List<Contact> contacts = group.getMemberList();
         if (null != contacts) {
             for (Contact contact : contacts) {
-                String cid = DataHelper.extractAccountId(contact);
+                String cid = contact.getExternalId();
                 this.storage.executeInsert(this.groupMemberTable, new StorageField[] {
                         new StorageField("group_sn", groupSN),
                         new StorageField("account_id", (null != cid) ? cid : ""),
