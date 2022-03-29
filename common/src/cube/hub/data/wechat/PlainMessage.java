@@ -73,6 +73,13 @@ public class PlainMessage extends Metadata {
         this.text = text;
     }
 
+    public PlainMessage(String text, long date, int datePrecision) {
+        super(Utils.generateSerialNumber());
+        this.datePrecision = datePrecision;
+        this.date = date;
+        this.text = text;
+    }
+
     public PlainMessage(JSONObject json) {
         super(json);
         this.datePrecision = json.getInt("precision");

@@ -49,18 +49,16 @@ public class SendMessageSignal extends Signal {
 
     private String text;
 
-    public SendMessageSignal(String channelCode, Contact account, Contact partner, String text) {
+    public SendMessageSignal(String channelCode, Contact partner, String text) {
         super(NAME);
         setCode(channelCode);
-        this.account = account;
         this.partner = partner;
         this.text = text;
     }
 
-    public SendMessageSignal(String channelCode, Contact account, Group group, String text) {
+    public SendMessageSignal(String channelCode, Group group, String text) {
         super(NAME);
         setCode(channelCode);
-        this.account = account;
         this.group = group;
         this.text = text;
     }
@@ -68,7 +66,9 @@ public class SendMessageSignal extends Signal {
     public SendMessageSignal(JSONObject json) {
         super(json);
 
-        this.account = new Contact(json.getJSONObject("account"));
+        if (json.has("account")) {
+            this.account = new Contact(json.getJSONObject("account"));
+        }
 
         if (json.has("partner")) {
             this.partner = new Contact(json.getJSONObject("partner"));
@@ -90,6 +90,10 @@ public class SendMessageSignal extends Signal {
         return this.account;
     }
 
+    public void setAccount(Contact account) {
+        this.account = account;
+    }
+
     public Contact getPartner() {
         return this.partner;
     }
@@ -106,7 +110,9 @@ public class SendMessageSignal extends Signal {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
 
-        json.put("account", this.account.toCompactJSON());
+        if (null != this.account) {
+            json.put("account", this.account.toCompactJSON());
+        }
 
         if (null != this.partner) {
             json.put("partner", this.partner.toCompactJSON());

@@ -105,6 +105,9 @@ public class HubService extends AbstractModule {
 
     @Override
     public void stop() {
+        // 关闭信令控制器
+        this.signalController.dispose();
+
         if (null != this.channelManager) {
             this.channelManager.stop();
         }
@@ -266,6 +269,18 @@ public class HubService extends AbstractModule {
                             if (null != fileLabel) {
                                 FileLabelEvent event = new FileLabelEvent(sn, fileLabel);
                                 responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
+                            }
+                            else {
+                                responder.respondDispatcher(sn, HubStateCode.Failure.code, signal);
+                            }
+                        }
+                        else if (signal instanceof SendMessageSignal) {
+                            // 发送消息
+                            SendMessageSignal sendMessageSignal = (SendMessageSignal) signal;
+                            Event resultEvent = WeChatHub.getInstance().transportSignal(channelCode,
+                                    sendMessageSignal);
+                            if (null != resultEvent) {
+                                responder.respondDispatcher(sn, HubStateCode.Ok.code, resultEvent);
                             }
                             else {
                                 responder.respondDispatcher(sn, HubStateCode.Failure.code, signal);

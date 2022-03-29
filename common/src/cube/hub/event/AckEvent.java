@@ -35,6 +35,10 @@ public class AckEvent extends WeChatEvent {
 
     public final static String NAME = "Ack";
 
+    public AckEvent() {
+        super(NAME);
+    }
+
     public AckEvent(long sn) {
         super(sn, NAME);
     }

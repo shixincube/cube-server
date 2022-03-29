@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
 import cube.common.Domain;
 import cube.common.Packet;
 import cube.common.UniqueKey;
@@ -156,8 +157,10 @@ public class Message extends Entity implements Comparable<Message> {
         this.remoteTimestamp = json.getLong("rts");
         this.state = MessageState.parse(json.getInt("state"));
 
-        if (json.has("sender")) {
-            this.sender = new Contact(json.getJSONObject("sender"));
+        if (!json.has("from")) {
+            if (json.has("sender")) {
+                this.sender = new Contact(json.getJSONObject("sender"));
+            }
 
             if (json.has("group")) {
                 this.group = new Group(json.getJSONObject("group"));
@@ -296,6 +299,38 @@ public class Message extends Entity implements Comparable<Message> {
         this.id = id;
         this.sender = sender;
         this.partner = partner;
+        this.localTimestamp = timestamp;
+        this.remoteTimestamp = timestamp;
+        this.payload = payload;
+        this.state = MessageState.Sent;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param partner
+     * @param payload
+     */
+    public Message(Contact partner, JSONObject payload) {
+        super();
+        this.id = Utils.generateSerialNumber();
+        this.partner = partner;
+        this.localTimestamp = timestamp;
+        this.remoteTimestamp = timestamp;
+        this.payload = payload;
+        this.state = MessageState.Sent;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param group
+     * @param payload
+     */
+    public Message(Group group, JSONObject payload) {
+        super();
+        this.id = Utils.generateSerialNumber();
+        this.group = group;
         this.localTimestamp = timestamp;
         this.remoteTimestamp = timestamp;
         this.payload = payload;
@@ -523,8 +558,10 @@ public class Message extends Entity implements Comparable<Message> {
         json.put("rts", this.remoteTimestamp);
         json.put("state", this.state.getCode());
 
-        if (null != this.sender) {
-            json.put("sender", this.sender.toCompactJSON());
+        if (this.from == 0) {
+            if (null != this.sender) {
+                json.put("sender", this.sender.toCompactJSON());
+            }
 
             if (null != this.group) {
                 json.put("group", this.group.toCompactJSON());

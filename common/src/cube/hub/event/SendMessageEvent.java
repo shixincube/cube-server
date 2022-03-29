@@ -26,13 +26,10 @@
 
 package cube.hub.event;
 
-import cell.util.Base64;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
+import cube.hub.data.wechat.PlainMessage;
 import org.json.JSONObject;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 /**
  * 发送消息事件。
@@ -45,18 +42,18 @@ public class SendMessageEvent extends WeChatEvent {
 
     private Group group;
 
-    private String text;
+    private PlainMessage plainMessage;
 
-    public SendMessageEvent(Contact account, Contact partner, String text) {
+    public SendMessageEvent(Contact account, Contact partner, PlainMessage plainMessage) {
         super(NAME, account);
         this.partner = partner;
-        this.text = text;
+        this.plainMessage = plainMessage;
     }
 
-    public SendMessageEvent(Contact account, Group group, String text) {
+    public SendMessageEvent(Contact account, Group group, PlainMessage plainMessage) {
         super(NAME, account);
         this.group = group;
-        this.text = text;
+        this.plainMessage = plainMessage;
     }
 
     public SendMessageEvent(JSONObject json) {
@@ -70,11 +67,8 @@ public class SendMessageEvent extends WeChatEvent {
             this.group = new Group(json.getJSONObject("group"));
         }
 
-        try {
-            byte[] bytes = Base64.decode(json.getString("text"));
-            this.text = new String(bytes, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (json.has("plainMessage")) {
+            this.plainMessage = new PlainMessage(json.getJSONObject("plainMessage"));
         }
     }
 
@@ -86,8 +80,8 @@ public class SendMessageEvent extends WeChatEvent {
         return this.group;
     }
 
-    public String getText() {
-        return this.text;
+    public PlainMessage getPlainMessage() {
+        return this.plainMessage;
     }
 
     @Override
@@ -111,8 +105,10 @@ public class SendMessageEvent extends WeChatEvent {
             json.put("group", this.group.toCompactJSON());
         }
 
-        String base64 = Base64.encodeBytes(this.text.getBytes(StandardCharsets.UTF_8));
-        json.put("text", base64);
+        if (null != this.plainMessage) {
+            json.put("plainMessage", this.plainMessage.toJSON());
+        }
+
         return json;
     }
 }

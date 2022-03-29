@@ -505,6 +505,84 @@ public class WeChatHub {
         return new GroupDataEvent(account, group);
     }
 
+    /**
+     * 标记客户端发送了新消息。
+     *
+     * @param event
+     */
+    public void markMessageSent(SendMessageEvent event) {
+        Contact account = event.getAccount();
+        String accountId = account.getExternalId();
+
+        // 获取当前所属的通道码
+        String channelCode = this.service.getChannelManager().getChannelCodeWithAccountId(accountId);
+        if (null == channelCode) {
+            Logger.w(this.getClass(), "#markMessageSent - Can NOT find channel code with Account ID: " + accountId);
+            return;
+        }
+
+        Contact partner = event.getPartner();
+        Group group = event.getGroup();
+
+        PlainMessage plainMessage = event.getPlainMessage();
+
+        if (null != partner) {
+            // 创建 Message
+            Message message = new Message(plainMessage.getId(), account, partner,
+                    plainMessage.getTimestamp(), plainMessage.toJSON());
+
+            this.service.getChannelManager().appendMessageByPartner(channelCode,
+                    accountId, partner.getExternalId(), accountId, message);
+        }
+        else if (null != group) {
+            // 创建 Message
+            Message message = new Message(plainMessage.getId(), account, group,
+                    plainMessage.getTimestamp(), plainMessage.toJSON());
+
+            this.service.getChannelManager().appendMessageByGroup(channelCode,
+                    accountId, group.getName(), account.getName(), message);
+        }
+    }
+
+    /**
+     * 发送指定信令到通道。
+     *
+     * @param channelCode
+     * @param signal
+     * @return
+     */
+    public Event transportSignal(ChannelCode channelCode, Signal signal) {
+        // 获取账号 ID
+        String accountId = this.service.getChannelManager().getAccountId(channelCode.code);
+        if (null == accountId) {
+            return null;
+        }
+
+        // 查询账号
+        Contact account = this.service.getChannelManager().queryAccount(accountId, channelCode.product);
+        if (null == account) {
+            return null;
+        }
+
+        // 获取听风者 ID
+        Long pretenderId = this.service.getChannelManager().getPretenderId(channelCode.code);
+        if (null == pretenderId) {
+            return null;
+        }
+
+        if (signal instanceof SendMessageSignal) {
+            // 设置账号数据
+            ((SendMessageSignal) signal).setAccount(account);
+        }
+
+        if (this.service.getSignalController().transmit(pretenderId, signal)) {
+            return new AckEvent();
+        }
+        else {
+            return null;
+        }
+    }
+
     private List<Message> matchNewMessages(List<Message> baseList, List<Message> currentList) {
         if (baseList.isEmpty()) {
             return currentList;

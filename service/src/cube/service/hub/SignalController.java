@@ -56,6 +56,18 @@ public class SignalController {
     }
 
     /**
+     * 关闭。
+     */
+    public void dispose() {
+        for (Signal signal : this.blockingSignalMap.values()) {
+            synchronized (signal) {
+                signal.notify();
+            }
+        }
+        this.blockingSignalMap.clear();
+    }
+
+    /**
      * 删除客户端。
      * @param talkContext
      */
@@ -156,9 +168,6 @@ public class SignalController {
                     transmit(readySignal.getDescription().getPretender().getId(), new ReportSignal());
                 }
             }).start();
-        }
-        else if (ReportSignal.NAME.equals(signal.getName())) {
-            //WeChatHub.getInstance().getReports();
         }
 
         return new AckSignal();

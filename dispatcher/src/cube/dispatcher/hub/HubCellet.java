@@ -147,5 +147,11 @@ public class HubCellet extends AbstractCellet {
         getGroupHandler.setContextPath(GetGroup.CONTEXT_PATH);
         getGroupHandler.setHandler(new GetGroup(this.performer));
         httpServer.addContextHandler(getGroupHandler);
+
+        // 发送消息操作
+        ContextHandler sendMsgHandler = new ContextHandler();
+        sendMsgHandler.setContextPath(SendMessage.CONTEXT_PATH);
+        sendMsgHandler.setHandler(new SendMessage(this.performer));
+        httpServer.addContextHandler(sendMsgHandler);
     }
 }

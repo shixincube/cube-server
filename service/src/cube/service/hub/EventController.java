@@ -66,6 +66,9 @@ public class EventController {
             else if (GroupDataEvent.NAME.equals(event.getName())) {
                 WeChatHub.getInstance().updateGroup((GroupDataEvent) event);
             }
+            else if (SendMessageEvent.NAME.equals(event.getName())) {
+                WeChatHub.getInstance().markMessageSent((SendMessageEvent) event);
+            }
             else if (AllocatedEvent.NAME.equals(event.getName())) {
                 AllocatedEvent allocatedEvent = (AllocatedEvent) event;
                 // 已分配账号
