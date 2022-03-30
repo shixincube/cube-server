@@ -358,6 +358,41 @@ public class OCRFile implements JSONable {
 
             return json;
         }
+
+        public Line createLine(List<Word> wordList) {
+            Line line = new Line();
+            int x = Integer.MAX_VALUE;
+            int y = Integer.MAX_VALUE;
+            int boundaryX = 0;
+            int boundaryY = 0;
+            for (Word word : wordList) {
+                line.words.add(word);
+
+                BoundingBox bbox = word.bbox;
+                if (bbox.x < x) {
+                    x = bbox.x;
+                }
+                if (bbox.y < y) {
+                    y = bbox.y;
+                }
+                if (bbox.x + bbox.width > boundaryX) {
+                    boundaryX = bbox.x + bbox.width;
+                }
+                if (bbox.y + bbox.height > boundaryY) {
+                    boundaryY = bbox.y + bbox.height;
+                }
+            }
+
+            line.bbox = new BoundingBox(x, y, boundaryX - x, boundaryY - y);
+            return line;
+        }
+
+        public Line createLine(Word word) {
+            Line line = new Line();
+            line.words.add(word);
+            line.bbox = word.bbox;
+            return line;
+        }
     }
 
     public class Word {
@@ -380,6 +415,10 @@ public class OCRFile implements JSONable {
 
         public String getWord() {
             return this.word;
+        }
+
+        public void setWord(String word) {
+            this.word = word;
         }
 
         public JSONObject toJSON() {

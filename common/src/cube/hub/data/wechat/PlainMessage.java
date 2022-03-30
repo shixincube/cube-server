@@ -192,8 +192,6 @@ public class PlainMessage extends Metadata {
                 }
                 else {
                     Logger.e(this.getClass(), "Error date format : " + dateText);
-                    this.datePrecision = DatePrecision.Day;
-                    this.date = System.currentTimeMillis() - 24L * 60 * 60 * 1000;
                 }
             }
         }
