@@ -50,7 +50,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class CloseChannel extends CrossDomainHandler {
 
-    public final static String CONTEXT_PATH = "/hub/close/";
+    public final static String CONTEXT_PATH = "/hub/close";
 
     private Performer performer;
 

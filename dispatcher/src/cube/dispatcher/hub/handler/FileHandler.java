@@ -53,7 +53,7 @@ import java.io.IOException;
  */
 public class FileHandler extends FileLabelHandler {
 
-    public final static String CONTEXT_PATH = "/hub/file/";
+    public final static String CONTEXT_PATH = "/hub/file";
 
     private Performer performer;
 

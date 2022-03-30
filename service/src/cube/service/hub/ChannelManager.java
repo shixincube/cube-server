@@ -38,7 +38,6 @@ import cube.core.Storage;
 import cube.core.StorageField;
 import cube.hub.Product;
 import cube.hub.data.ChannelCode;
-import cube.hub.data.DataHelper;
 import cube.hub.data.wechat.PlainMessage;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
@@ -437,6 +436,20 @@ public class ChannelManager {
     public void freeAccountId(String channelCode) {
         this.storage.executeDelete(this.allocatingTable, new Conditional[] {
                 Conditional.createEqualTo("code", channelCode)
+        });
+    }
+
+    /**
+     * 更新账号数据。
+     *
+     * @param account
+     */
+    public void updateAccount(Contact account) {
+        this.storage.executeUpdate(this.accountTable, new StorageField[] {
+                new StorageField("account_name", account.getName()),
+                new StorageField("data", account.toJSON().toString())
+        }, new Conditional[] {
+                Conditional.createEqualTo("account_id", account.getExternalId())
         });
     }
 

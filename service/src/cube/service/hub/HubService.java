@@ -229,7 +229,16 @@ public class HubService extends AbstractModule {
                     }
 
                     if (Product.WeChat == channelCode.product) {
-                        if (signal instanceof GetConversationsSignal) {
+                        if (signal instanceof GetAccountSignal) {
+                            AccountEvent event = WeChatHub.getInstance().getAccount(channelCode);
+                            if (null != event) {
+                                responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
+                            }
+                            else {
+                                responder.respondDispatcher(sn, HubStateCode.Failure.code, signal);
+                            }
+                        }
+                        else if (signal instanceof GetConversationsSignal) {
                             // 获取最近会话
                             ConversationsEvent event = WeChatHub.getInstance().getRecentConversations(channelCode,
                                     (GetConversationsSignal) signal);

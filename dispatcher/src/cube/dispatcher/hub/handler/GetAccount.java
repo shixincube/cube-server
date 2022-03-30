@@ -29,9 +29,9 @@ package cube.dispatcher.hub.handler;
 import cube.dispatcher.Performer;
 import cube.hub.HubStateCode;
 import cube.hub.data.ChannelCode;
+import cube.hub.event.AccountEvent;
 import cube.hub.event.Event;
-import cube.hub.event.GroupDataEvent;
-import cube.hub.signal.GetGroupSignal;
+import cube.hub.signal.GetAccountSignal;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
 
@@ -39,13 +39,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 获取指定的群组信息。
+ * 获取账号信息。
  */
-public class GetGroup extends HubHandler {
+public class GetAccount extends HubHandler {
 
-    public final static String CONTEXT_PATH = "/hub/group";
+    public final static String CONTEXT_PATH = "/hub/account";
 
-    public GetGroup(Performer performer) {
+    public GetAccount(Performer performer) {
         super(performer);
     }
 
@@ -57,21 +57,14 @@ public class GetGroup extends HubHandler {
             return;
         }
 
-        String groupName = request.getParameter("name");
-        if (null == groupName || groupName.length() < 1) {
-            response.setStatus(HttpStatus.BAD_REQUEST_400);
-            this.complete();
-            return;
-        }
-
-        GetGroupSignal requestSignal = new GetGroupSignal(channelCode.code, groupName);
+        GetAccountSignal requestSignal = new GetAccountSignal(channelCode.code);
         Event event = this.syncTransmit(request, response, requestSignal);
         if (null == event) {
             this.complete();
             return;
         }
 
-        if (event instanceof GroupDataEvent) {
+        if (event instanceof AccountEvent) {
             this.respondOk(response, event.toCompactJSON());
         }
         else {

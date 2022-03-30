@@ -51,7 +51,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class GetConversations extends CrossDomainHandler {
 
-    public final static String CONTEXT_PATH = "/hub/conversations/";
+    public final static String CONTEXT_PATH = "/hub/conversations";
 
     private Performer performer;
 

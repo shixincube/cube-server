@@ -330,6 +330,31 @@ public class WeChatHub {
     }
 
     /**
+     * 更新账号数据。
+     *
+     * @param accountEvent
+     */
+    public void updateAccount(AccountEvent accountEvent) {
+        this.service.getChannelManager().updateAccount(accountEvent.getAccount());
+    }
+
+    /**
+     * 获取账号数据。
+     *
+     * @param channelCode
+     * @return
+     */
+    public AccountEvent getAccount(ChannelCode channelCode) {
+        String accountId = this.service.getChannelManager().getAccountId(channelCode.code);
+        if (null == accountId) {
+            return null;
+        }
+
+        Contact account = this.service.getChannelManager().queryAccount(accountId, channelCode.product);
+        return new AccountEvent(account);
+    }
+
+    /**
      * 获取指定通道的最近会话列表。
      *
      * @param channelCode

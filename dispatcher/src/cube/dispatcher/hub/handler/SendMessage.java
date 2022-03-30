@@ -48,7 +48,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class SendMessage extends HubHandler {
 
-    public final static String CONTEXT_PATH = "/hub/message/";
+    public final static String CONTEXT_PATH = "/hub/message";
 
     public SendMessage(Performer performer) {
         super(performer);

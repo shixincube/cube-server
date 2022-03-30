@@ -51,7 +51,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class OpenChannel extends CrossDomainHandler {
 
-    public final static String CONTEXT_PATH = "/hub/open/";
+    public final static String CONTEXT_PATH = "/hub/open";
 
     private Performer performer;
 
