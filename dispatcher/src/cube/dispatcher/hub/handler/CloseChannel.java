@@ -48,20 +48,18 @@ import javax.servlet.http.HttpServletResponse;
  * 关闭通道。
  * 参数 c - 通道码。
  */
-public class CloseChannel extends CrossDomainHandler {
+public class CloseChannel extends HubHandler {
 
-    public final static String CONTEXT_PATH = "/hub/close";
-
-    private Performer performer;
+    public final static String CONTEXT_PATH = "/hub/close/";
 
     public CloseChannel(Performer performer) {
-        super();
-        this.performer = performer;
+        super(performer);
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
-        ChannelCode channelCode = Helper.checkChannelCode(request, response, this.performer);
+        String code = this.getRequestPath(request);
+        ChannelCode channelCode = Helper.checkChannelCode(code, response, this.performer);
         if (null == channelCode) {
             this.complete();
             return;

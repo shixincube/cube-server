@@ -43,7 +43,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class GetAccount extends HubHandler {
 
-    public final static String CONTEXT_PATH = "/hub/account";
+    public final static String CONTEXT_PATH = "/hub/account/";
 
     public GetAccount(Performer performer) {
         super(performer);
@@ -51,6 +51,8 @@ public class GetAccount extends HubHandler {
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
+        String path = this.getRequestPath(request);
+
         ChannelCode channelCode = Helper.checkChannelCode(request, response, this.performer);
         if (null == channelCode) {
             this.complete();

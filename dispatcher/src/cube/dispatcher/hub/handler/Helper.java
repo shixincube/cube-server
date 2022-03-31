@@ -49,9 +49,8 @@ public class Helper {
     private Helper() {
     }
 
-    public static ChannelCode checkChannelCode(HttpServletRequest request, HttpServletResponse response,
+    public static ChannelCode checkChannelCode(String code, HttpServletResponse response,
                                                Performer performer) {
-        String code = request.getParameter("c");
         if (null == code || code.length() == 0) {
             response.setStatus(HttpStatus.BAD_REQUEST_400);
             return null;

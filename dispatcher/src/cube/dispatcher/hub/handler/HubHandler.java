@@ -54,6 +54,11 @@ public abstract class HubHandler extends CrossDomainHandler {
         this.performer = performer;
     }
 
+    protected String getRequestPath(HttpServletRequest request) {
+        String path = request.getPathInfo();
+        return path.substring(1).trim();
+    }
+
     protected Event syncTransmit(HttpServletRequest request, HttpServletResponse response,
                        Signal signal) {
         ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
