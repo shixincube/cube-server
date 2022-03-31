@@ -48,7 +48,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class SendMessage extends HubHandler {
 
-    public final static String CONTEXT_PATH = "/hub/message";
+    public final static String CONTEXT_PATH = "/hub/message/";
 
     public SendMessage(Performer performer) {
         super(performer);
@@ -56,7 +56,8 @@ public class SendMessage extends HubHandler {
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
-        ChannelCode channelCode = Helper.checkChannelCode(request, response, this.performer);
+        String code = this.getRequestPath(request);
+        ChannelCode channelCode = Helper.checkChannelCode(code, response, this.performer);
         if (null == channelCode) {
             this.complete();
             return;
@@ -87,6 +88,9 @@ public class SendMessage extends HubHandler {
         Message message = null;
         try {
             JSONObject data = new JSONObject(jsonString);
+
+
+
             message = new Message(data);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#doPost - " + request.getRemoteAddr(), e);
@@ -118,12 +122,12 @@ public class SendMessage extends HubHandler {
 
             SendMessageSignal signal = new SendMessageSignal(channelCode.code, message.getPartner(), content);
             Event event = this.syncTransmit(request, response, signal);
-            if (null == event) {
-                response.setStatus(HttpStatus.NOT_FOUND_404);
+            if (null != event) {
+                this.respondOk(response, event.toJSON());
                 this.complete();
             }
             else {
-                this.respondOk(response, event.toJSON());
+                response.setStatus(HttpStatus.NOT_FOUND_404);
                 this.complete();
             }
         }

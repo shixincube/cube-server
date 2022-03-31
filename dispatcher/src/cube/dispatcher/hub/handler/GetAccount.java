@@ -51,9 +51,8 @@ public class GetAccount extends HubHandler {
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
-        String path = this.getRequestPath(request);
-
-        ChannelCode channelCode = Helper.checkChannelCode(request, response, this.performer);
+        String code = this.getRequestPath(request);
+        ChannelCode channelCode = Helper.checkChannelCode(code, response, this.performer);
         if (null == channelCode) {
             this.complete();
             return;

@@ -45,7 +45,7 @@ import java.net.URLDecoder;
  */
 public class GetGroup extends HubHandler {
 
-    public final static String CONTEXT_PATH = "/hub/group";
+    public final static String CONTEXT_PATH = "/hub/group/";
 
     public GetGroup(Performer performer) {
         super(performer);
@@ -53,7 +53,8 @@ public class GetGroup extends HubHandler {
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
-        ChannelCode channelCode = Helper.checkChannelCode(request, response, this.performer);
+        String code = this.getRequestPath(request);
+        ChannelCode channelCode = Helper.checkChannelCode(code, response, this.performer);
         if (null == channelCode) {
             this.complete();
             return;

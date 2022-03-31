@@ -53,7 +53,7 @@ import java.io.IOException;
  */
 public class FileHandler extends FileLabelHandler {
 
-    public final static String CONTEXT_PATH = "/hub/file";
+    public final static String CONTEXT_PATH = "/hub/file/";
 
     private Performer performer;
 
@@ -64,15 +64,19 @@ public class FileHandler extends FileLabelHandler {
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
-        ChannelCode channelCode = Helper.checkChannelCode(request, response, this.performer);
-        if (null == channelCode) {
+        String pathInfo = request.getPathInfo();
+        String[] path = pathInfo.substring(1).trim().split("/");
+        if (path.length != 2) {
+            this.respond(response, HttpStatus.BAD_REQUEST_400);
             this.complete();
             return;
         }
 
-        String fileCode = request.getParameter("fc");
-        if (null == fileCode) {
-            response.setStatus(HttpStatus.BAD_REQUEST_400);
+        String code = path[0];
+        String fileCode = path[1];
+
+        ChannelCode channelCode = Helper.checkChannelCode(code, response, this.performer);
+        if (null == channelCode) {
             this.complete();
             return;
         }

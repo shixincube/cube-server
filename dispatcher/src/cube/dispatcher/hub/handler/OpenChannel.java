@@ -38,7 +38,6 @@ import cube.hub.SignalBuilder;
 import cube.hub.event.Event;
 import cube.hub.signal.LoginQRCodeSignal;
 import cube.hub.signal.Signal;
-import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
 
@@ -49,21 +48,18 @@ import javax.servlet.http.HttpServletResponse;
  * 开通通道。
  * 参数 c - 通道码。
  */
-public class OpenChannel extends CrossDomainHandler {
+public class OpenChannel extends HubHandler {
 
-    public final static String CONTEXT_PATH = "/hub/open";
-
-    private Performer performer;
+    public final static String CONTEXT_PATH = "/hub/open/";
 
     public OpenChannel(Performer performer) {
-        super();
-        this.performer = performer;
+        super(performer);
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
-        String code = request.getParameter("c");
-        if (null == code || code.length() == 0) {
+        String code = this.getRequestPath(request);
+        if (code.length() < 8) {
             response.setStatus(HttpStatus.BAD_REQUEST_400);
             this.complete();
             return;

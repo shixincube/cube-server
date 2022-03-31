@@ -37,7 +37,6 @@ import cube.hub.data.ChannelCode;
 import cube.hub.event.Event;
 import cube.hub.event.LogoutEvent;
 import cube.hub.signal.LogoutSignal;
-import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
 

@@ -37,7 +37,6 @@ import cube.hub.data.ChannelCode;
 import cube.hub.event.ConversationsEvent;
 import cube.hub.event.Event;
 import cube.hub.signal.GetConversationsSignal;
-import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
 
@@ -49,20 +48,18 @@ import javax.servlet.http.HttpServletResponse;
  * 参数 c - 通道码。
  * 参数 nc - 返回的最近会话数量。
  */
-public class GetConversations extends CrossDomainHandler {
+public class GetConversations extends HubHandler {
 
-    public final static String CONTEXT_PATH = "/hub/conversations";
-
-    private Performer performer;
+    public final static String CONTEXT_PATH = "/hub/conversations/";
 
     public GetConversations(Performer performer) {
-        super();
-        this.performer = performer;
+        super(performer);
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
-        ChannelCode channelCode = Helper.checkChannelCode(request, response, this.performer);
+        String code = this.getRequestPath(request);
+        ChannelCode channelCode = Helper.checkChannelCode(code, response, this.performer);
         if (null == channelCode) {
             this.complete();
             return;
