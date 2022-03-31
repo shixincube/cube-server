@@ -37,6 +37,8 @@ import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 /**
  * 获取指定的群组信息。
@@ -62,6 +64,13 @@ public class GetGroup extends HubHandler {
             response.setStatus(HttpStatus.BAD_REQUEST_400);
             this.complete();
             return;
+        }
+
+        // 群组名解码
+        try {
+            groupName = URLDecoder.decode(groupName, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         }
 
         GetGroupSignal requestSignal = new GetGroupSignal(channelCode.code, groupName);

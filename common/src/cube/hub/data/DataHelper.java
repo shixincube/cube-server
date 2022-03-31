@@ -59,6 +59,7 @@ public class DataHelper {
         Message message = new Message(plainMessage.getId(), plainMessage.getSender(),
                 group, plainMessage.getDate(), payload);
         message.setAttachment(fileAttachment);
+        message.setTimestampPrecision(plainMessage.getDatePrecision());
 
         return message;
     }
@@ -81,6 +82,7 @@ public class DataHelper {
         Message message = new Message(plainMessage.getId(), plainMessage.getSender(),
                 partner, plainMessage.getDate(), payload);
         message.setAttachment(fileAttachment);
+        message.setTimestampPrecision(plainMessage.getDatePrecision());
 
         return message;
     }

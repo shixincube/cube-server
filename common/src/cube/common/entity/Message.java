@@ -112,6 +112,12 @@ public class Message extends Entity implements Comparable<Message> {
     private Contact partner;
 
     /**
+     * 时间戳精度。
+     * 仅用于客户端。
+     */
+    private int timestampPrecision = 0;
+
+    /**
      * 构造函数。
      *
      * @param packet 指定包含消息数据的数据包。
@@ -168,6 +174,10 @@ public class Message extends Entity implements Comparable<Message> {
 
             if (json.has("partner")) {
                 this.partner = new Contact(json.getJSONObject("partner"));
+            }
+
+            if (json.has("timestampPrecision")) {
+                this.timestampPrecision = json.getInt("timestampPrecision");
             }
         }
         else {
@@ -527,6 +537,24 @@ public class Message extends Entity implements Comparable<Message> {
     }
 
     /**
+     * 设置时间戳精度。
+     *
+     * @param timestampPrecision
+     */
+    public void setTimestampPrecision(int timestampPrecision) {
+        this.timestampPrecision = timestampPrecision;
+    }
+
+    /**
+     * 获取时间戳精度。
+     *
+     * @return
+     */
+    public int getTimestampPrecision() {
+        return this.timestampPrecision;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -570,6 +598,8 @@ public class Message extends Entity implements Comparable<Message> {
             if (null != this.partner) {
                 json.put("partner", this.partner.toCompactJSON());
             }
+
+            json.put("timestampPrecision", this.timestampPrecision);
         }
         else {
             json.put("domain", this.domain.getName());

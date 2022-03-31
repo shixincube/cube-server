@@ -368,7 +368,9 @@ public class WeChatHub {
         String accountId = this.service.getChannelManager().getAccountId(channelCode.code);
 
         // 与伙伴的会话
-        List<String> partnerIdList = this.service.getChannelManager().getMessagePartnerIdList(channelCode.code, accountId);
+        List<String> partnerIdList = this.service.getChannelManager()
+                .getMessagePartnerIdList(channelCode.code, accountId);
+
         if (null != partnerIdList) {
             for (String partnerId : partnerIdList) {
                 // 查找账号
@@ -395,7 +397,9 @@ public class WeChatHub {
         }
 
         // 群组里的会话
-        List<String> groupNameList = this.service.getChannelManager().getMessageGroupNameList(channelCode.code, accountId);
+        List<String> groupNameList = this.service.getChannelManager()
+                .getMessageGroupNameList(channelCode.code, accountId);
+
         if (null != groupNameList) {
             for (String groupName : groupNameList) {
                 Group group = new Group();
