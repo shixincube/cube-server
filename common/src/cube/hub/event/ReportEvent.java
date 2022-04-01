@@ -109,14 +109,29 @@ public class ReportEvent extends WeChatEvent {
     }
 
     public void removeManagedAccount(Contact account) {
-        for (int i = 0; i < this.managedAccounts.size(); ++i) {
-            Contact current = this.managedAccounts.get(i);
-            if (account.getExternalId().equals(current.getExternalId())) {
-                this.managedAccounts.remove(i);
-                // 空闲 App 数量增加
-                ++this.idleAppNum;
-                break;
+        synchronized (this) {
+            for (int i = 0; i < this.managedAccounts.size(); ++i) {
+                Contact current = this.managedAccounts.get(i);
+                if (account.getExternalId().equals(current.getExternalId())) {
+                    this.managedAccounts.remove(i);
+                    // 空闲 App 数量增加
+                    ++this.idleAppNum;
+                    break;
+                }
             }
+        }
+    }
+
+    public boolean hasManagedAccount(Contact account) {
+        synchronized (this) {
+            for (int i = 0; i < this.managedAccounts.size(); ++i) {
+                Contact current = this.managedAccounts.get(i);
+                if (account.getExternalId().equals(current.getExternalId())) {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 

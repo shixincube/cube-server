@@ -28,6 +28,7 @@ package cube.hub.signal;
 
 import cell.util.Base64;
 import cube.common.entity.Contact;
+import cube.common.entity.ConversationType;
 import cube.common.entity.Group;
 import org.json.JSONObject;
 
@@ -43,23 +44,25 @@ public class SendMessageSignal extends Signal {
 
     private Contact account;
 
-    private Contact partner;
+    private ConversationType conversationType;
 
-    private Group group;
+    private String partnerId;
+
+    private String groupName;
 
     private String text;
 
-    public SendMessageSignal(String channelCode, Contact partner, String text) {
+    public SendMessageSignal(String channelCode, ConversationType conversationType, String idOrName, String text) {
         super(NAME);
         setCode(channelCode);
-        this.partner = partner;
-        this.text = text;
-    }
 
-    public SendMessageSignal(String channelCode, Group group, String text) {
-        super(NAME);
-        setCode(channelCode);
-        this.group = group;
+        if (conversationType == ConversationType.Contact) {
+            this.partnerId = idOrName;
+        }
+        else if (conversationType == ConversationType.Group) {
+            this.groupName = idOrName;
+        }
+
         this.text = text;
     }
 
@@ -70,12 +73,14 @@ public class SendMessageSignal extends Signal {
             this.account = new Contact(json.getJSONObject("account"));
         }
 
-        if (json.has("partner")) {
-            this.partner = new Contact(json.getJSONObject("partner"));
+        if (json.has("partnerId")) {
+            this.partnerId = json.getString("partnerId");
+            this.conversationType = ConversationType.Contact;
         }
 
-        if (json.has("group")) {
-            this.group = new Group(json.getJSONObject("group"));
+        if (json.has("groupName")) {
+            this.groupName = json.getString("groupName");
+            this.conversationType = ConversationType.Group;
         }
 
         try {
@@ -94,12 +99,16 @@ public class SendMessageSignal extends Signal {
         this.account = account;
     }
 
-    public Contact getPartner() {
-        return this.partner;
+    public ConversationType getConversationType() {
+        return this.conversationType;
     }
 
-    public Group getGroup() {
-        return this.group;
+    public String getPartnerId() {
+        return this.partnerId;
+    }
+
+    public String getGroupName() {
+        return this.groupName;
     }
 
     public String getText() {
@@ -114,12 +123,12 @@ public class SendMessageSignal extends Signal {
             json.put("account", this.account.toCompactJSON());
         }
 
-        if (null != this.partner) {
-            json.put("partner", this.partner.toCompactJSON());
+        if (null != this.partnerId) {
+            json.put("partnerId", this.partnerId);
         }
 
-        if (null != this.group) {
-            json.put("group", this.group.toCompactJSON());
+        if (null != this.groupName) {
+            json.put("groupName", this.groupName);
         }
 
         String base64 = Base64.encodeBytes(this.text.getBytes(StandardCharsets.UTF_8));

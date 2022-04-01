@@ -29,6 +29,7 @@ package cube.dispatcher.hub.handler;
 import cell.util.Base64;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
+import cube.common.entity.ConversationType;
 import cube.common.entity.Message;
 import cube.dispatcher.Performer;
 import cube.hub.data.ChannelCode;
@@ -85,53 +86,46 @@ public class SendMessage extends HubHandler {
         }
 
         String jsonString = new String(buf.array(), 0, buf.limit(), StandardCharsets.UTF_8);
-        Message message = null;
         try {
             JSONObject data = new JSONObject(jsonString);
-
-
-
-            message = new Message(data);
-        } catch (Exception e) {
-            Logger.e(this.getClass(), "#doPost - " + request.getRemoteAddr(), e);
-            response.setStatus(HttpStatus.FORBIDDEN_403);
-            this.complete();
-            return;
-        }
-
-        JSONObject payload = message.getPayload();
-        if (!payload.has("type")) {
-            response.setStatus(HttpStatus.FORBIDDEN_403);
-            this.complete();
-            return;
-        }
-
-        String type = payload.getString("type");
-        if (type.equalsIgnoreCase("text") && payload.has("content")) {
-            String content = payload.getString("content");
-            try {
+            if (data.has("text")) {
+                String content = data.getString("text");
                 // 进行 Base64 解码
                 byte[] bytes = Base64.decode(content);
+                // 还原的原文本
                 content = new String(bytes, StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                Logger.e(this.getClass(), "#doPost - " + request.getRemoteAddr(), e);
-                response.setStatus(HttpStatus.FORBIDDEN_403);
-                this.complete();
-                return;
-            }
 
-            SendMessageSignal signal = new SendMessageSignal(channelCode.code, message.getPartner(), content);
-            Event event = this.syncTransmit(request, response, signal);
-            if (null != event) {
-                this.respondOk(response, event.toJSON());
-                this.complete();
+                SendMessageSignal signal = null;
+                if (data.has("partnerId")) {
+                    signal = new SendMessageSignal(channelCode.code,
+                            ConversationType.Contact, data.getString("partnerId"), content);
+                }
+                else if (data.has("groupName")) {
+                    signal = new SendMessageSignal(channelCode.code,
+                            ConversationType.Group, data.getString("groupName"), content);
+                }
+                else {
+                    response.setStatus(HttpStatus.BAD_REQUEST_400);
+                    this.complete();
+                    return;
+                }
+
+                Event event = this.syncTransmit(request, response, signal);
+                if (null != event) {
+                    this.respondOk(response, event.toJSON());
+                    this.complete();
+                }
+                else {
+                    response.setStatus(HttpStatus.NOT_FOUND_404);
+                    this.complete();
+                }
             }
             else {
-                response.setStatus(HttpStatus.NOT_FOUND_404);
+                response.setStatus(HttpStatus.FORBIDDEN_403);
                 this.complete();
             }
-        }
-        else {
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#doPost - " + request.getRemoteAddr(), e);
             response.setStatus(HttpStatus.FORBIDDEN_403);
             this.complete();
         }
