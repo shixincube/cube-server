@@ -99,6 +99,7 @@ public class CrossDomainHandler extends HttpHandler {
 
     public void doOptions(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         response.setStatus(HttpStatus.OK_200);
+        this.complete();
     }
 
     protected void allowCrossDomain(HttpServletResponse response) {

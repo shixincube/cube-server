@@ -246,15 +246,27 @@ public class Conversation extends Entity {
         return this.pivotalEntity;
     }
 
+    public void setPivotalEntity(AbstractContact pivotalEntity) {
+        this.pivotalEntity = pivotalEntity;
+    }
+
     public List<Message> getRecentMessages() {
         return this.recentMessages;
     }
 
     public void addRecentMessage(Message message) {
+        if (null == this.recentMessages) {
+            this.recentMessages = new ArrayList<>();
+        }
+
         this.recentMessages.add(message);
     }
 
     public void removeRecentMessage(Message message) {
+        if (null == this.recentMessages) {
+            return;
+        }
+
         this.recentMessages.remove(message);
     }
 

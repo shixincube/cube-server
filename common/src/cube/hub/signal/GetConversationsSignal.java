@@ -35,9 +35,9 @@ public class GetConversationsSignal extends Signal {
 
     public final static String NAME = "GetConversations";
 
-    private int numConversations = 8;
+    private int numConversations = 10;
 
-    private int numRecentMessages = 0;
+    private int numRecentMessages = 5;
 
     public GetConversationsSignal(String channelCode) {
         super(NAME);

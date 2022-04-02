@@ -29,9 +29,7 @@ package cube.service.hub;
 import cell.core.talk.LiteralBase;
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.common.entity.Contact;
-import cube.common.entity.Group;
-import cube.common.entity.Message;
+import cube.common.entity.*;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -44,9 +42,7 @@ import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
@@ -249,6 +245,32 @@ public class ChannelManager {
             })
     };
 
+    private final StorageField[] contactBookFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            // 对应的联系人 ID
+            new StorageField("account_id", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 联系人 ID
+            new StorageField("contact_id", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 联系人名称
+            new StorageField("contact_name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 数据更新时间戳
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 数据 JSON
+            new StorageField("data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
     private final String channelCodeTable = "hub_channel_code";
 
     private final String allocatingTable = "hub_allocating";
@@ -263,6 +285,8 @@ public class ChannelManager {
 
     private final String groupMessageTable = "hub_group_message";
 
+    private final String contactBookTable = "hub_contact_book";
+
     private Storage storage;
 
     private ExecutorService executor;
@@ -270,12 +294,12 @@ public class ChannelManager {
     /**
      * 消息数量上限，保存的消息主要用于进行校验，数据库不对消息进行持久化存储。
      */
-    private int partnerMessageLimit = 50;
+    private int partnerMessageLimit = 1000;
 
     /**
      * 消息数量上限，保存的消息主要用于进行校验，数据库不对消息进行持久化存储。
      */
-    private int groupMessageLimit = 100;
+    private int groupMessageLimit = 2000;
 
     /**
      * 用于临时存储通道码。
@@ -660,25 +684,144 @@ public class ChannelManager {
     }
 
     /**
+     * 获取按照时间倒序排序的会话列表。
+     * 返回的会话里没有消息数据。
+     *
+     * @param channelCode
+     * @param accountId
+     * @return
+     */
+    public List<Conversation> queryRecentConversations(ChannelCode channelCode, String accountId,
+                                                     int numConversations, int numMessages) {
+        List<Conversation> list = new ArrayList<>();
+
+        String sql = "SELECT DISTINCT `partner_id` FROM `" + this.partnerMessageTable +
+                "` WHERE `code`='" + channelCode.code +
+                "' AND `account_id`='" + accountId + "'" +
+                " LIMIT " + numConversations;
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        for (StorageField[] data : result) {
+            String partnerId = data[0].getString();
+
+            Contact partner = this.queryAccount(partnerId, channelCode.product);
+            if (null == partner) {
+                continue;
+            }
+
+            Conversation conversation = null;
+
+            sql = "SELECT `date`,`message` FROM `" + this.partnerMessageTable +
+                    "` WHERE `partner_id`='" + partnerId +
+                    "' AND `account_id`='" + accountId + "'" +
+                    " ORDER BY `date` DESC" +
+                    " LIMIT " + numMessages;
+            List<StorageField[]> messageResult = this.storage.executeQuery(sql);
+            for (StorageField[] messageData : messageResult) {
+                if (null == conversation) {
+                    long timestamp = messageData[0].getLong();
+                    conversation = new Conversation(0L, "", timestamp,
+                            0L, ConversationType.Contact,
+                            ConversationState.Normal, 0L, ConversationRemindType.Normal);
+                    // 设置实体
+                    conversation.setPivotalEntity(partner);
+                }
+
+                String messageString = messageData[1].getString();
+                Message message = new Message(new JSONObject(messageString));
+                conversation.addRecentMessage(message);
+
+                if (conversation.getRecentMessages().size() > numMessages) {
+                    break;
+                }
+            }
+
+            // 添加
+            list.add(conversation);
+        }
+
+        sql = "SELECT DISTINCT `group_name` FROM `" + this.groupMessageTable +
+                "` WHERE `code`='" + channelCode.code +
+                "' AND `account_id`='" + accountId + "'" +
+                " LIMIT " + numConversations;
+        result = this.storage.executeQuery(sql);
+        for (StorageField[] data : result) {
+            String groupName = data[0].getString();
+
+            Group group = new Group();
+            group.setName(groupName);
+
+            Conversation conversation = null;
+
+            sql = "SELECT `date`,`message` FROM `" + this.groupMessageTable +
+                    "` WHERE `group_name`='" + groupName +
+                    "' AND `account_id`='" + accountId + "'" +
+                    " ORDER BY `date` DESC" +
+                    " LIMIT " + numMessages;
+            List<StorageField[]> messageResult = this.storage.executeQuery(sql);
+            for (StorageField[] messageData : messageResult) {
+                if (null == conversation) {
+                    long timestamp = messageData[0].getLong();
+                    conversation = new Conversation(0L, "", timestamp,
+                            0L, ConversationType.Group,
+                            ConversationState.Normal, 0L, ConversationRemindType.Normal);
+                    // 设置实体
+                    conversation.setPivotalEntity(group);
+                }
+
+                String messageString = messageData[1].getString();
+                Message message = new Message(new JSONObject(messageString));
+                conversation.addRecentMessage(message);
+
+                if (conversation.getRecentMessages().size() > numMessages) {
+                    break;
+                }
+            }
+
+            // 添加
+            list.add(conversation);
+        }
+
+        // 时间倒序
+        list.sort(new Comparator<Conversation>() {
+            @Override
+            public int compare(Conversation conv1, Conversation conv2) {
+                return (int)(conv2.getTimestamp() - conv1.getTimestamp());
+            }
+        });
+
+        return list;
+    }
+
+    /**
      * 获取指定伙伴的消息记录列表。
      *
      * @param channelCode
      * @param accountId
      * @param partnerId
+     * @param limit
      * @return
      */
-    public List<Message> getMessagesByPartner(String channelCode, String accountId, String partnerId) {
-        List<StorageField[]> result = this.storage.executeQuery(this.partnerMessageTable,
-            new StorageField[] {
-                    new StorageField("sn", LiteralBase.LONG),
-                    new StorageField("message", LiteralBase.STRING)
-            }, new Conditional[] {
-                    Conditional.createEqualTo("code", channelCode),
-                    Conditional.createAnd(),
-                    Conditional.createEqualTo("account_id", accountId),
-                    Conditional.createAnd(),
-                    Conditional.createEqualTo("partner_id", partnerId)
-            });
+    public List<Message> getMessagesByPartner(String channelCode, String accountId, String partnerId,
+                                              int limit) {
+//        List<StorageField[]> result = this.storage.executeQuery(this.partnerMessageTable,
+//            new StorageField[] {
+//                    new StorageField("sn", LiteralBase.LONG),
+//                    new StorageField("message", LiteralBase.STRING)
+//            }, new Conditional[] {
+//                    Conditional.createEqualTo("code", channelCode),
+//                    Conditional.createAnd(),
+//                    Conditional.createEqualTo("account_id", accountId),
+//                    Conditional.createAnd(),
+//                    Conditional.createEqualTo("partner_id", partnerId)
+//            });
+
+        String sql = "SELECT `message` FROM `" + this.partnerMessageTable + "` " +
+                "WHERE `code`='" + channelCode +
+                "' AND account_id='" + accountId +
+                "' AND partner_id='" + partnerId + "'" +
+                " LIMIT " + limit +
+                " ORDER BY `date` DESC";
+        List<StorageField[]> result = this.storage.executeQuery(sql);
 
         if (result.isEmpty()) {
             return new ArrayList<>();
@@ -687,30 +830,14 @@ public class ChannelManager {
         List<Message> list = new ArrayList<>(result.size());
 
         for (StorageField[] data : result) {
-            String messageString = data[1].getString();
+            String messageString = data[0].getString();
             JSONObject json = new JSONObject(messageString);
             Message message = new Message(json);
             list.add(message);
         }
 
-        if (result.size() > this.partnerMessageLimit) {
-            int deleteNum = result.size() - this.partnerMessageLimit;
-            final List<Long> deletedSNList = new ArrayList<>(deleteNum);
-            for (int i = 0; i < deleteNum; ++i) {
-                deletedSNList.add(result.get(i)[0].getLong());
-            }
-            // 执行删除
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    for (Long sn : deletedSNList) {
-                        storage.executeDelete(partnerMessageTable, new Conditional[] {
-                                Conditional.createEqualTo("sn", sn)
-                        });
-                    }
-                }
-            });
-        }
+        // 翻转列表，按照时间顺序输出
+        Collections.reverse(list);
 
         return list;
     }
@@ -721,20 +848,30 @@ public class ChannelManager {
      * @param channelCode
      * @param accountId
      * @param groupName
+     * @param limit
      * @return
      */
-    public List<Message> getMessagesByGroup(String channelCode, String accountId, String groupName) {
-        List<StorageField[]> result = this.storage.executeQuery(this.groupMessageTable,
-                new StorageField[] {
-                        new StorageField("sn", LiteralBase.LONG),
-                        new StorageField("message", LiteralBase.STRING)
-                }, new Conditional[] {
-                        Conditional.createEqualTo("code", channelCode),
-                        Conditional.createAnd(),
-                        Conditional.createEqualTo("account_id", accountId),
-                        Conditional.createAnd(),
-                        Conditional.createEqualTo("group_name", groupName)
-                });
+    public List<Message> getMessagesByGroup(String channelCode, String accountId, String groupName,
+                                            int limit) {
+//        List<StorageField[]> result = this.storage.executeQuery(this.groupMessageTable,
+//                new StorageField[] {
+//                        new StorageField("sn", LiteralBase.LONG),
+//                        new StorageField("message", LiteralBase.STRING)
+//                }, new Conditional[] {
+//                        Conditional.createEqualTo("code", channelCode),
+//                        Conditional.createAnd(),
+//                        Conditional.createEqualTo("account_id", accountId),
+//                        Conditional.createAnd(),
+//                        Conditional.createEqualTo("group_name", groupName)
+//                });
+
+        String sql = "SELECT `message` FROM `" + this.groupMessageTable + "` " +
+                "WHERE `code`='" + channelCode +
+                "' AND account_id='" + accountId +
+                "' AND group_name='" + groupName + "'" +
+                " LIMIT " + limit +
+                " ORDER BY `date` DESC";
+        List<StorageField[]> result = this.storage.executeQuery(sql);
 
         if (result.isEmpty()) {
             return new ArrayList<>();
@@ -743,30 +880,14 @@ public class ChannelManager {
         List<Message> list = new ArrayList<>(result.size());
 
         for (StorageField[] data : result) {
-            String messageString = data[1].getString();
+            String messageString = data[0].getString();
             JSONObject json = new JSONObject(messageString);
             Message message = new Message(json);
             list.add(message);
         }
 
-        if (result.size() > this.groupMessageLimit) {
-            int deleteNum = result.size() - this.groupMessageLimit;
-            final List<Long> deletedSNList = new ArrayList<>(deleteNum);
-            for (int i = 0; i < deleteNum; ++i) {
-                deletedSNList.add(result.get(i)[0].getLong());
-            }
-            // 执行删除
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    for (Long sn : deletedSNList) {
-                        storage.executeDelete(groupMessageTable, new Conditional[] {
-                                Conditional.createEqualTo("sn", sn)
-                        });
-                    }
-                }
-            });
-        }
+        // 翻转列表，按照时间顺序输出
+        Collections.reverse(list);
 
         return list;
     }

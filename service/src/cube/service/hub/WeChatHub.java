@@ -27,19 +27,20 @@
 package cube.service.hub;
 
 import cell.util.log.Logger;
-import cube.common.entity.Contact;
-import cube.common.entity.Conversation;
-import cube.common.entity.Group;
-import cube.common.entity.Message;
+import cube.common.entity.*;
 import cube.hub.Product;
 import cube.hub.data.ChannelCode;
 import cube.hub.data.DataHelper;
 import cube.hub.data.wechat.PlainMessage;
 import cube.hub.event.*;
+import cube.hub.signal.Signal;
 import cube.hub.signal.*;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -295,7 +296,7 @@ public class WeChatHub {
 
             // 获取当前已存储的消息
             List<Message> messageList = this.service.getChannelManager().getMessagesByPartner(channelCode,
-                    accountId, partnerId);
+                    accountId, partnerId, 20);
             // 匹配新消息
             List<Message> newMessageList = matchNewMessages(messageList, event.getMessages());
 
@@ -316,7 +317,7 @@ public class WeChatHub {
         else if (null != group) {
             // 获取当前已存储的消息
             List<Message> messageList = this.service.getChannelManager().getMessagesByGroup(channelCode,
-                    accountId, group.getName());
+                    accountId, group.getName(), 20);
             // 匹配新消息
             List<Message> newMessageList = matchNewMessages(messageList, event.getMessages());
 
@@ -362,84 +363,30 @@ public class WeChatHub {
      * @return
      */
     public ConversationsEvent getRecentConversations(ChannelCode channelCode, GetConversationsSignal signal) {
-        Map<String, Conversation> map = new HashMap<>();
-
         // 获取账号 ID
         String accountId = this.service.getChannelManager().getAccountId(channelCode.code);
 
-        // 与伙伴的会话
-        List<String> partnerIdList = this.service.getChannelManager()
-                .getMessagePartnerIdList(channelCode.code, accountId);
+        List<Conversation> conversations = this.service.getChannelManager().queryRecentConversations(channelCode,
+                accountId, signal.getNumConversations(), signal.getNumRecentMessages());
 
-        if (null != partnerIdList) {
-            for (String partnerId : partnerIdList) {
-                // 查找账号
-                Contact partner = this.service.getChannelManager().queryAccount(partnerId, channelCode.product);
-                if (null == partner) {
-                    continue;
-                }
+        for (Conversation conversation : conversations) {
+            // 按照时间正序插入消息的统一格式
+            List<Message> messages = new ArrayList<>(conversation.getRecentMessages());
+            conversation.getRecentMessages().clear();
 
-                Conversation conversation = map.get(partnerId);
-                if (null == conversation) {
-                    conversation = new Conversation(partner);
-                    map.put(partnerId, conversation);
-                }
-
-                // 查找消息
-                List<Message> rawList = this.service.getChannelManager().getMessagesByPartner(channelCode.code,
-                        accountId, partnerId);
-
-                for (Message message : rawList) {
+            for (int i = messages.size() - 1; i >= 0; --i) {
+                Message message = messages.get(i);
+                if (conversation.getType() == ConversationType.Contact) {
                     // 将 Message 的负载还原，然后转为统一的 Message 格式
-                    conversation.addRecentMessage(DataHelper.convertMessage(partner, PlainMessage.create(message)));
+                    conversation.addRecentMessage(DataHelper.convertMessage((Contact) conversation.getPivotalEntity(),
+                            PlainMessage.create(message)));
                 }
-            }
-        }
-
-        // 群组里的会话
-        List<String> groupNameList = this.service.getChannelManager()
-                .getMessageGroupNameList(channelCode.code, accountId);
-
-        if (null != groupNameList) {
-            for (String groupName : groupNameList) {
-                Group group = new Group();
-                group.setName(groupName);
-
-                Conversation conversation = map.get(groupName);
-                if (null == conversation) {
-                    conversation = new Conversation(group);
-                    map.put(groupName, conversation);
-                }
-
-                // 查找消息
-                List<Message> rawList = this.service.getChannelManager().getMessagesByGroup(channelCode.code,
-                        accountId, groupName);
-
-                for (Message message : rawList) {
+                else if (conversation.getType() == ConversationType.Group) {
                     // 将 Message 的负载还原，然后转为统一的 Message 格式
-                    conversation.addRecentMessage(DataHelper.convertMessage(group, PlainMessage.create(message)));
+                    conversation.addRecentMessage(DataHelper.convertMessage((Group) conversation.getPivotalEntity(),
+                            PlainMessage.create(message)));
                 }
             }
-        }
-
-        List<Conversation> conversationList = new ArrayList<>();
-        for (Conversation conversation : map.values()) {
-            conversationList.add(conversation);
-        }
-
-        // 排序，时间倒序
-        conversationList.sort(new Comparator<Conversation>() {
-            @Override
-            public int compare(Conversation conversation1, Conversation conversation2) {
-                return (int) (conversation2.getRecentMessage().getRemoteTimestamp() -
-                        conversation1.getRecentMessage().getRemoteTimestamp());
-            }
-        });
-
-        // 控制返回数据量
-        List<Conversation> conversations = new ArrayList<>();
-        for (int i = 0, length = Math.min(signal.getNumConversations(), conversationList.size()); i < length; ++i) {
-            conversations.add(conversationList.get(i));
         }
 
         ConversationsEvent event = new ConversationsEvent(conversations);
@@ -462,7 +409,7 @@ public class WeChatHub {
         if (null != signal.getGroupName()) {
             // 原始消息列表
             List<Message> rawList = this.service.getChannelManager().getMessagesByGroup(channelCode.code,
-                    accountId, signal.getGroupName());
+                    accountId, signal.getGroupName(), 20);
             if (rawList.isEmpty()) {
                 // 没有数据
                 return null;
@@ -483,14 +430,15 @@ public class WeChatHub {
         else if (null != signal.getPartnerId()) {
             // 原始消息列表
             List<Message> rawList = this.service.getChannelManager().getMessagesByPartner(channelCode.code,
-                    accountId, signal.getPartnerId());
+                    accountId, signal.getPartnerId(), 20);
             if (rawList.isEmpty()) {
                 // 没有数据
                 return null;
             }
 
             // 查找账号
-            Contact partner = this.service.getChannelManager().queryAccount(signal.getPartnerId(), channelCode.product);
+            Contact partner = this.service.getChannelManager().queryAccount(
+                    signal.getPartnerId(), channelCode.product);
 
             List<Message> messages = new ArrayList<>(rawList.size());
             for (Message message : rawList) {
