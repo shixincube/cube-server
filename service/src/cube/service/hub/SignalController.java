@@ -169,6 +169,16 @@ public class SignalController {
                 }
             }).start();
         }
+        else if (QueryChannelCodeSignal.NAME.equals(signal.getName())) {
+            QueryChannelCodeSignal querySignal = (QueryChannelCodeSignal) signal;
+            String code = this.cellet.getService().getChannelManager()
+                                    .getChannelCodeWithAccountId(querySignal.getAccountId());
+            if (null != code) {
+                QueryChannelCodeSignal ack = new QueryChannelCodeSignal(querySignal.getAccountId());
+                ack.setCode(code);
+                return ack;
+            }
+        }
 
         return new AckSignal();
     }

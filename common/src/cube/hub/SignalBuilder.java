@@ -79,6 +79,9 @@ public class SignalBuilder {
         else if (ReadySignal.NAME.equals(name)) {
             return new ReadySignal(signalJson);
         }
+        else if (QueryChannelCodeSignal.NAME.equals(name)) {
+            return new QueryChannelCodeSignal(signalJson);
+        }
         else if (AckSignal.NAME.equals(name)) {
             return new AckSignal(signalJson);
         }

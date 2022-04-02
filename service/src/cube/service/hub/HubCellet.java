@@ -73,6 +73,10 @@ public class HubCellet extends AbstractCellet {
         this.service = null;
     }
 
+    public HubService getService() {
+        return this.service;
+    }
+
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
