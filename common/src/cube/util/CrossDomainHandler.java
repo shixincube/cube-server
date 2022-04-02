@@ -103,17 +103,18 @@ public class CrossDomainHandler extends HttpHandler {
 
     protected void allowCrossDomain(HttpServletResponse response) {
         // 允许跨域
-        response.setHeader("Access-Control-Allow-Credentials", "true");
-
         String rootURL = this.baseRequest.getRootURL().toString();
         if (this.allowOriginList.contains(rootURL)) {
+            response.setHeader("Access-Control-Allow-Credentials", "true");
             response.setHeader("Access-Control-Allow-Origin", rootURL);
         }
         else {
             if (null != this.httpAllowOrigin && !this.isHttps()) {
+                response.setHeader("Access-Control-Allow-Credentials", "true");
                 response.setHeader("Access-Control-Allow-Origin", this.httpAllowOrigin);
             }
             else if (null != this.httpsAllowOrigin && this.isHttps()) {
+                response.setHeader("Access-Control-Allow-Credentials", "true");
                 response.setHeader("Access-Control-Allow-Origin", this.httpsAllowOrigin);
             }
             else {
