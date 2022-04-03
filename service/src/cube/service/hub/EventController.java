@@ -55,13 +55,16 @@ public class EventController {
             // WeChat 事件
             ClientDescription clientDescription = event.getDescription();
 
-            if (AccountEvent.NAME.equals(event.getName())) {
-                WeChatHub.getInstance().updateAccount((AccountEvent) event);
-            }
-            else if (SubmitMessagesEvent.NAME.equals(event.getName())) {
+            if (SubmitMessagesEvent.NAME.equals(event.getName())) {
                 SubmitMessagesEvent submitMessagesEvent = (SubmitMessagesEvent) event;
                 // 记录消息
                 WeChatHub.getInstance().submitMessages(submitMessagesEvent);
+            }
+            else if (ContactDataEvent.NAME.equals(event.getName())) {
+                WeChatHub.getInstance().updateContactBook((ContactDataEvent) event);
+            }
+            else if (AccountEvent.NAME.equals(event.getName())) {
+                WeChatHub.getInstance().updateAccount((AccountEvent) event);
             }
             else if (ReportEvent.NAME.equals(event.getName())) {
                 WeChatHub.getInstance().updateReport((ReportEvent) event);

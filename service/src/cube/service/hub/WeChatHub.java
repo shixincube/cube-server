@@ -356,6 +356,16 @@ public class WeChatHub {
     }
 
     /**
+     * 更新通讯录数据。
+     *
+     * @param contactDataEvent
+     */
+    public void updateContactBook(ContactDataEvent contactDataEvent) {
+        this.service.getChannelManager().updateContactBook(contactDataEvent.getAccount().getExternalId(),
+                contactDataEvent.getProduct(), contactDataEvent.getContact(), false);
+    }
+
+    /**
      * 获取指定通道的最近会话列表。
      *
      * @param channelCode
