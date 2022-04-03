@@ -291,8 +291,8 @@ public class WeChatHub {
         if (null != partner) {
             String partnerId = partner.getExternalId();
 
-            // 更新账号信息
-            this.service.getChannelManager().updateAccount(partner, partnerId, channelCode, Product.WeChat);
+            // 更新通讯录信息
+            this.service.getChannelManager().updateContactBook(partnerId, Product.WeChat, partner, false);
 
             // 获取当前已存储的消息
             List<Message> messageList = this.service.getChannelManager().getMessagesByPartner(channelCode,
@@ -336,7 +336,7 @@ public class WeChatHub {
      * @param accountEvent
      */
     public void updateAccount(AccountEvent accountEvent) {
-        this.service.getChannelManager().updateAccount(accountEvent.getAccount());
+        this.service.getChannelManager().updateAccount(accountEvent.getAccount(), accountEvent.getProduct());
     }
 
     /**

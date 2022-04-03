@@ -265,6 +265,10 @@ public class ChannelManager {
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            // 产品分类
+            new StorageField("product", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             // 数据 JSON
             new StorageField("data", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
@@ -464,20 +468,6 @@ public class ChannelManager {
     }
 
     /**
-     * 更新账号数据。
-     *
-     * @param account
-     */
-    public void updateAccount(Contact account) {
-        this.storage.executeUpdate(this.accountTable, new StorageField[] {
-                new StorageField("account_name", account.getName()),
-                new StorageField("data", account.toJSON().toString())
-        }, new Conditional[] {
-                Conditional.createEqualTo("account_id", account.getExternalId())
-        });
-    }
-
-    /**
      * 查询账号。
      *
      * @param accountId
@@ -500,6 +490,22 @@ public class ChannelManager {
         String data = map.get("data").getString();
         JSONObject json = new JSONObject(data);
         return new Contact(json);
+    }
+
+    /**
+     * 更新账号数据。
+     *
+     * @param account
+     */
+    public void updateAccount(Contact account, Product product) {
+        this.storage.executeUpdate(this.accountTable, new StorageField[] {
+                new StorageField("account_name", account.getName()),
+                new StorageField("data", account.toJSON().toString())
+        }, new Conditional[] {
+                Conditional.createEqualTo("account_id", account.getExternalId()),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("product", product.name)
+        });
     }
 
     /**
@@ -538,6 +544,59 @@ public class ChannelManager {
                     new StorageField("source_code", channelCode),
                     new StorageField("product", product.name),
                     new StorageField("data", account.toJSON().toString())
+            }, new Conditional[] {
+                    Conditional.createEqualTo("sn", sn)
+            });
+        }
+    }
+
+    /**
+     * 更新通讯录数据。
+     *
+     * @param accountId
+     * @param product
+     * @param contact
+     */
+    public synchronized void updateContactBook(String accountId, Product product,
+                                               Contact contact, boolean forceUpdate) {
+        List<StorageField[]> result = this.storage.executeQuery(this.contactBookTable,
+                new StorageField[] {
+                        new StorageField("sn", LiteralBase.LONG),
+                        new StorageField("timestamp", LiteralBase.LONG)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("account_id", accountId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("contact_id", contact.getExternalId()),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("product", product.name)
+                });
+
+        if (result.isEmpty()) {
+            // 插入
+            this.storage.executeInsert(this.contactBookTable, new StorageField[] {
+                    new StorageField("account_id", accountId),
+                    new StorageField("contact_id", contact.getExternalId()),
+                    new StorageField("contact_name", contact.getName()),
+                    new StorageField("timestamp", System.currentTimeMillis()),
+                    new StorageField("product", product.name),
+                    new StorageField("data", contact.toJSON().toString())
+            });
+        }
+        else {
+            // 更新
+            long sn = result.get(0)[0].getLong();
+            long timestamp = result.get(0)[1].getLong();
+            if (!forceUpdate) {
+                if (System.currentTimeMillis() - timestamp < 7L * 24 * 60 * 60 * 1000) {
+                    // 更新间隔小于7天
+                    return;
+                }
+            }
+
+            this.storage.executeUpdate(this.contactBookTable, new StorageField[] {
+                    new StorageField("contact_name", contact.getName()),
+                    new StorageField("timestamp", System.currentTimeMillis()),
+                    new StorageField("data", contact.toJSON().toString())
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", sn)
             });
@@ -961,6 +1020,13 @@ public class ChannelManager {
             // 不存在，建新表
             if (this.storage.executeCreate(this.accountTable, this.accountFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.accountTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.contactBookTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.contactBookTable, this.contactBookFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.contactBookTable + "' successfully");
             }
         }
 
