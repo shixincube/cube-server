@@ -27,6 +27,7 @@
 package cube.service.hub;
 
 import cell.core.talk.LiteralBase;
+import cell.util.Base64;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.entity.*;
@@ -42,6 +43,8 @@ import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -573,34 +576,81 @@ public class ChannelManager {
 
         if (result.isEmpty()) {
             // 插入
+            String originalName = contact.getName();
+            String contactName = Base64.encodeBytes(originalName.getBytes(StandardCharsets.UTF_8));
+            contact.setName(contactName);
             this.storage.executeInsert(this.contactBookTable, new StorageField[] {
                     new StorageField("account_id", accountId),
                     new StorageField("contact_id", contact.getExternalId()),
-                    new StorageField("contact_name", contact.getName()),
+                    new StorageField("contact_name", contactName),
                     new StorageField("timestamp", System.currentTimeMillis()),
                     new StorageField("product", product.name),
                     new StorageField("data", contact.toJSON().toString())
             });
+            contact.setName(originalName);
         }
         else {
             // 更新
             long sn = result.get(0)[0].getLong();
             long timestamp = result.get(0)[1].getLong();
             if (!forceUpdate) {
-                if (System.currentTimeMillis() - timestamp < 7L * 24 * 60 * 60 * 1000) {
+                if (System.currentTimeMillis() - timestamp < 24L * 60 * 60 * 1000) {
                     // 更新间隔小于7天
                     return;
                 }
             }
 
+            String originalName = contact.getName();
+            String contactName = Base64.encodeBytes(originalName.getBytes(StandardCharsets.UTF_8));
+            contact.setName(contactName);
+
             this.storage.executeUpdate(this.contactBookTable, new StorageField[] {
-                    new StorageField("contact_name", contact.getName()),
+                    new StorageField("contact_name", contactName),
                     new StorageField("timestamp", System.currentTimeMillis()),
                     new StorageField("data", contact.toJSON().toString())
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", sn)
             });
+
+            contact.setName(originalName);
         }
+    }
+
+    /**
+     * 查询通讯录里的联系人。
+     *
+     * @param account
+     * @param contactId
+     * @param product
+     * @return
+     */
+    public Contact queryPartnerFromBook(Contact account, String contactId, Product product) {
+        List<StorageField[]> result = this.storage.executeQuery(this.contactBookTable,
+                new StorageField[] {
+                        new StorageField("data", LiteralBase.STRING)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("account_id", account.getExternalId()),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("product", product.name)
+                });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Contact contact = new Contact(new JSONObject(result.get(0)[0].getString()));
+
+        try {
+            byte[] bytes = Base64.decode(contact.getName());
+            String name = new String(bytes, StandardCharsets.UTF_8);
+            contact.setName(name);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return contact;
     }
 
     public Group queryGroup(Contact account, String groupName, Product product) {

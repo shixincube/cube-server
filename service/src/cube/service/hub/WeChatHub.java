@@ -447,8 +447,8 @@ public class WeChatHub {
             }
 
             // 查找账号
-            Contact partner = this.service.getChannelManager().queryAccount(
-                    signal.getPartnerId(), channelCode.product);
+            Contact partner = this.service.getChannelManager().queryPartnerFromBook(
+                    account, signal.getPartnerId(), channelCode.product);
 
             List<Message> messages = new ArrayList<>(rawList.size());
             for (Message message : rawList) {
