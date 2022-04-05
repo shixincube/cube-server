@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
@@ -46,12 +47,23 @@ public class ContactZoneParticipant implements JSONable {
 
     public ContactZoneParticipantState state;
 
+    public AbstractContact linkedContact;
+
     public ContactZoneParticipant(JSONObject json) {
         this(json.getLong("id"), ContactZoneParticipantType.parse(json.getInt("type")),
                 json.getLong("timestamp"),
                 json.getLong("inviterId"),
                 json.has("postscript") ? json.getString("postscript") : null,
                 ContactZoneParticipantState.parse(json.getInt("state")));
+
+        if (json.has("linkedContact")) {
+            if (this.type == ContactZoneParticipantType.Contact) {
+                this.linkedContact = new Contact(json.getJSONObject("linkedContact"));
+            }
+            else if (this.type == ContactZoneParticipantType.Group) {
+                this.linkedContact = new Group(json.getJSONObject("linkedContact"));
+            }
+        }
     }
 
     public ContactZoneParticipant(Long id, ContactZoneParticipantType type, long timestamp,
@@ -62,6 +74,35 @@ public class ContactZoneParticipant implements JSONable {
         this.inviterId = inviterId;
         this.postscript = (null != postscript) ? postscript : "";
         this.state = state;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param linkedContact
+     */
+    public ContactZoneParticipant(AbstractContact linkedContact) {
+        this(Utils.generateSerialNumber(),
+                linkedContact instanceof Contact ?
+                        ContactZoneParticipantType.Contact : ContactZoneParticipantType.Group,
+                System.currentTimeMillis(),
+                0L,
+                "",
+                ContactZoneParticipantState.Normal);
+        this.linkedContact = linkedContact;
+    }
+
+    /**
+     * 设置连接的联系人实例。
+     *
+     * @param linkedContact
+     */
+    public void setLinkedContact(AbstractContact linkedContact) {
+        this.linkedContact = linkedContact;
+    }
+
+    public AbstractContact getLinkedContact() {
+        return this.linkedContact;
     }
 
     @Override
@@ -84,6 +125,11 @@ public class ContactZoneParticipant implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = this.toCompactJSON();
         json.put("postscript", this.postscript);
+
+        if (null != this.linkedContact) {
+            json.put("linkedContact", this.linkedContact.toJSON());
+        }
+
         return json;
     }
 

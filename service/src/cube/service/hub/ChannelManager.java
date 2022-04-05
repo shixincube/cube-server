@@ -594,8 +594,8 @@ public class ChannelManager {
             long sn = result.get(0)[0].getLong();
             long timestamp = result.get(0)[1].getLong();
             if (!forceUpdate) {
-                if (System.currentTimeMillis() - timestamp < 24L * 60 * 60 * 1000) {
-                    // 更新间隔小于7天
+                if (System.currentTimeMillis() - timestamp < 2L * 24 * 60 * 60 * 1000) {
+                    // 更新间隔小于2天
                     return;
                 }
             }

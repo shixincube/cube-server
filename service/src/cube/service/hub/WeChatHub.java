@@ -292,7 +292,7 @@ public class WeChatHub {
             String partnerId = partner.getExternalId();
 
             // 更新通讯录信息
-            this.service.getChannelManager().updateContactBook(partnerId, Product.WeChat, partner, false);
+            this.service.getChannelManager().updateContactBook(accountId, event.getProduct(), partner, false);
 
             // 获取当前已存储的消息
             List<Message> messageList = this.service.getChannelManager().getMessagesByPartner(channelCode,
