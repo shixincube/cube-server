@@ -928,8 +928,8 @@ public class ChannelManager {
                 "WHERE `code`='" + channelCode +
                 "' AND account_id='" + accountId +
                 "' AND partner_id='" + partnerId + "'" +
-                " LIMIT " + limit +
-                " ORDER BY `date` DESC";
+                " ORDER BY `date` DESC" +
+                " LIMIT " + limit;
         List<StorageField[]> result = this.storage.executeQuery(sql);
 
         if (result.isEmpty()) {
@@ -978,8 +978,8 @@ public class ChannelManager {
                 "WHERE `code`='" + channelCode +
                 "' AND account_id='" + accountId +
                 "' AND group_name='" + groupName + "'" +
-                " LIMIT " + limit +
-                " ORDER BY `date` DESC";
+                " ORDER BY `date` DESC" +
+                " LIMIT " + limit;
         List<StorageField[]> result = this.storage.executeQuery(sql);
 
         if (result.isEmpty()) {
