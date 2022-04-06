@@ -49,6 +49,9 @@ public class SignalBuilder {
         else if (GetConversationsSignal.NAME.equals(name)) {
             return new GetConversationsSignal(signalJson);
         }
+        else if (GetContactZoneSignal.NAME.equals(name)) {
+            return new GetContactZoneSignal(signalJson);
+        }
         else if (GetMessagesSignal.NAME.equals(name)) {
             return new GetMessagesSignal(signalJson);
         }

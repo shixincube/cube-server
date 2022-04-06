@@ -24,38 +24,39 @@
  * SOFTWARE.
  */
 
-package cube.hub.event;
+package cube.hub.signal;
 
-import cube.common.entity.ContactZone;
+import cube.common.entity.ContactZoneParticipantType;
 import org.json.JSONObject;
 
 /**
- * 联系人 Zone 数据事件。
+ * 获取联系人分区信令。
  */
-public class ContactZoneEvent extends WeChatEvent {
+public class GetContactZoneSignal extends Signal {
 
-    public final static String NAME = "ContactZone";
+    public final static String NAME = "GetContactZone";
 
-    private ContactZone contactZone;
+    private ContactZoneParticipantType participantType;
 
-    public ContactZoneEvent(ContactZone contactZone) {
+    public GetContactZoneSignal(String channelCode, ContactZoneParticipantType participantType) {
         super(NAME);
-        this.contactZone = contactZone;
+        setCode(channelCode);
+        this.participantType = participantType;
     }
 
-    public ContactZoneEvent(JSONObject json) {
+    public GetContactZoneSignal(JSONObject json) {
         super(json);
-        this.contactZone = new ContactZone(json.getJSONObject("zone"));
+        this.participantType = ContactZoneParticipantType.parse(json.getInt("participantType"));
     }
 
-    public ContactZone getContactZone() {
-        return this.contactZone;
+    public ContactZoneParticipantType getParticipantType() {
+        return this.participantType;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("zone", this.contactZone.toJSON());
+        json.put("participantType", this.participantType.code);
         return json;
     }
 }

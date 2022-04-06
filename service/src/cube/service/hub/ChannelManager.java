@@ -337,6 +337,10 @@ public class ChannelManager {
      * @return
      */
     public ChannelCode getChannelCode(String code) {
+        if (null == code) {
+            return null;
+        }
+
         ChannelCode channelCode = this.channelCodeMap.get(code);
         if (null != channelCode) {
             return channelCode;
@@ -551,6 +555,36 @@ public class ChannelManager {
                     Conditional.createEqualTo("sn", sn)
             });
         }
+    }
+
+    /**
+     * 查询通讯录。
+     *
+     * @param accountId
+     * @param product
+     * @return
+     */
+    public List<Contact> queryContactBook(String accountId, Product product) {
+        List<Contact> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.contactBookTable,
+                new StorageField[] {
+                        new StorageField("data", LiteralBase.STRING)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("account_id", accountId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("product", product.name)
+                });
+        if (result.isEmpty()) {
+            return list;
+        }
+
+        for (StorageField[] data : result) {
+            String jsonString = data[0].getString();
+            list.add(new Contact(new JSONObject(jsonString)));
+        }
+
+        return list;
     }
 
     /**

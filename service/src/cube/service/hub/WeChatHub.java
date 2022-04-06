@@ -366,6 +366,35 @@ public class WeChatHub {
     }
 
     /**
+     * 获取指定的通讯录。
+     *
+     * @param signal
+     * @return
+     */
+    public ContactZoneEvent getContactBook(ChannelCode channelCode, GetContactZoneSignal signal) {
+        String accountId = this.service.getChannelManager().getAccountId(channelCode.code);
+        if (null == accountId) {
+            return null;
+        }
+
+        if (signal.getParticipantType() == ContactZoneParticipantType.Contact) {
+            ContactZone contactZone = new ContactZone("contacts");
+            contactZone.displayName = "通讯录";
+
+            List<Contact> list = this.service.getChannelManager().queryContactBook(accountId, channelCode.product);
+            for (Contact contact : list) {
+                ContactZoneParticipant participant = new ContactZoneParticipant(contact);
+                contactZone.addParticipant(participant);
+            }
+
+            return new ContactZoneEvent(contactZone);
+        }
+        else {
+            return null;
+        }
+    }
+
+    /**
      * 获取指定通道的最近会话列表。
      *
      * @param channelCode

@@ -66,6 +66,9 @@ public class EventBuilder {
         else if (ReportEvent.NAME.equals(name)) {
             event = new ReportEvent(eventJson);
         }
+        else if (ContactZoneEvent.NAME.equals(name)) {
+            event = new ContactZoneEvent(eventJson);
+        }
         else if (GroupDataEvent.NAME.equals(name)) {
             event = new GroupDataEvent(eventJson);
         }

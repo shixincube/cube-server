@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -78,6 +79,16 @@ public class ContactZone extends Entity {
         this.displayName = displayName;
         this.peerMode = peerMode;
         this.participants = new ArrayList<>();
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param name
+     */
+    public ContactZone(String name) {
+        this(Utils.generateSerialNumber(), "", 0, name, System.currentTimeMillis(),
+                name, ContactZoneState.Normal, false);
     }
 
     public ContactZone(JSONObject json) {

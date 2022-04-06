@@ -249,6 +249,17 @@ public class HubService extends AbstractModule {
                                 responder.respondDispatcher(sn, HubStateCode.Failure.code, signal);
                             }
                         }
+                        else if (signal instanceof GetContactZoneSignal) {
+                            // 获取联系人分区
+                            ContactZoneEvent event = WeChatHub.getInstance().getContactBook(channelCode,
+                                    (GetContactZoneSignal) signal);
+                            if (null != event) {
+                                responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
+                            }
+                            else {
+                                responder.respondDispatcher(sn, HubStateCode.Failure.code, signal);
+                            }
+                        }
                         else if (signal instanceof GetMessagesSignal) {
                             // 获取消息
                             SubmitMessagesEvent event = WeChatHub.getInstance().getMessages(channelCode,
