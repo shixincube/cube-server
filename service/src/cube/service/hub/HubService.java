@@ -134,6 +134,10 @@ public class HubService extends AbstractModule {
         return this.channelManager;
     }
 
+    public ExecutorService getExecutor() {
+        return this.executor;
+    }
+
     public void quit(TalkContext talkContext) {
         this.signalController.removeClient(talkContext);
     }

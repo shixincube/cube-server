@@ -483,7 +483,9 @@ public class ChannelManager {
      */
     public Contact queryAccount(String accountId, Product product) {
         List<StorageField[]> result = this.storage.executeQuery(this.accountTable,
-                this.accountFields, new Conditional[] {
+                new StorageField[] {
+                        new StorageField("data", LiteralBase.STRING)
+                }, new Conditional[] {
                         Conditional.createEqualTo("account_id", accountId),
                         Conditional.createAnd(),
                         Conditional.createEqualTo("product", product.name)
@@ -493,41 +495,25 @@ public class ChannelManager {
             return null;
         }
 
-        Map<String, StorageField> map = StorageFields.get(result.get(0));
-        String data = map.get("data").getString();
+        String data = result.get(0)[0].getString();
         JSONObject json = new JSONObject(data);
         return new Contact(json);
     }
 
     /**
-     * 更新账号数据。
-     *
-     * @param account
-     */
-    public void updateAccount(Contact account, Product product) {
-        this.storage.executeUpdate(this.accountTable, new StorageField[] {
-                new StorageField("account_name", account.getName()),
-                new StorageField("data", account.toJSON().toString())
-        }, new Conditional[] {
-                Conditional.createEqualTo("account_id", account.getExternalId()),
-                Conditional.createAnd(),
-                Conditional.createEqualTo("product", product.name)
-        });
-    }
-
-    /**
      * 更新指定的账号信息。
      *
-     * @param account
-     * @param accountId
      * @param channelCode
+     * @param account
      * @param product
      */
-    public synchronized void updateAccount(Contact account, String accountId, String channelCode,
-                                           Product product) {
-        List<StorageField[]> result = this.storage.executeQuery(this.accountTable,
-                this.accountFields, new Conditional[] {
-                        Conditional.createEqualTo("account_id", accountId),
+    public synchronized void updateAccount(String channelCode, Contact account, Product product) {
+        String nameBase64 = Base64.encodeBytes(account.getName().getBytes(StandardCharsets.UTF_8));
+
+        List<StorageField[]> result = this.storage.executeQuery(this.accountTable, new StorageField[] {
+                        new StorageField("sn", LiteralBase.LONG)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("account_id", account.getExternalId()),
                         Conditional.createAnd(),
                         Conditional.createEqualTo("product", product.name)
                 });
@@ -535,8 +521,8 @@ public class ChannelManager {
         if (result.isEmpty()) {
             // 插入
             this.storage.executeInsert(this.accountTable, new StorageField[] {
-                    new StorageField("account_id", accountId),
-                    new StorageField("account_name", account.getName()),
+                    new StorageField("account_id", account.getExternalId()),
+                    new StorageField("account_name", nameBase64),
                     new StorageField("source_code", channelCode),
                     new StorageField("product", product.name),
                     new StorageField("data", account.toJSON().toString())
@@ -546,8 +532,8 @@ public class ChannelManager {
             // 更新
             long sn = result.get(0)[0].getLong();
             this.storage.executeUpdate(this.accountTable, new StorageField[] {
-                    new StorageField("account_id", accountId),
-                    new StorageField("account_name", account.getName()),
+                    new StorageField("account_id", account.getExternalId()),
+                    new StorageField("account_name", nameBase64),
                     new StorageField("source_code", channelCode),
                     new StorageField("product", product.name),
                     new StorageField("data", account.toJSON().toString())

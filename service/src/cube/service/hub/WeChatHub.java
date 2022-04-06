@@ -225,6 +225,21 @@ public class WeChatHub {
 
         this.reportMap.put(reportEvent.getDescription().getPretender().getId(),
                 reportEvent);
+
+        this.service.getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                // 更新账号
+                for (Contact account : reportEvent.getManagedAccounts()) {
+                    String channelCode = service.getChannelManager().getChannelCodeWithAccountId(account.getExternalId());
+                    if (null == channelCode) {
+                        continue;
+                    }
+
+                    service.getChannelManager().updateAccount(channelCode, account, reportEvent.getProduct());
+                }
+            }
+        });
     }
 
     /**
@@ -249,8 +264,7 @@ public class WeChatHub {
         this.service.getChannelManager().allocAccountId(channelCode, weChatId, pretenderId);
 
         // 更新账号
-        this.service.getChannelManager().updateAccount(account, weChatId, channelCode,
-                Product.WeChat);
+        this.service.getChannelManager().updateAccount(channelCode, account, Product.WeChat);
 
         // 移除临时存储变量
         this.recentLoginEventMap.remove(channelCode);
@@ -336,7 +350,12 @@ public class WeChatHub {
      * @param accountEvent
      */
     public void updateAccount(AccountEvent accountEvent) {
-        this.service.getChannelManager().updateAccount(accountEvent.getAccount(), accountEvent.getProduct());
+        String channelCode = this.service.getChannelManager().getChannelCodeWithAccountId(accountEvent.getAccount().getExternalId());
+        if (null == channelCode) {
+            return;
+        }
+
+        this.service.getChannelManager().updateAccount(channelCode, accountEvent.getAccount(), accountEvent.getProduct());
     }
 
     /**
