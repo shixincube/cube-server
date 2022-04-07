@@ -400,13 +400,18 @@ public class WeChatHub {
             ContactZone contactZone = new ContactZone("contacts");
             contactZone.displayName = "通讯录";
 
-            List<Contact> list = this.service.getChannelManager().queryContactBook(accountId, channelCode.product);
-            for (Contact contact : list) {
-                ContactZoneParticipant participant = new ContactZoneParticipant(contact);
-                contactZone.addParticipant(participant);
+            // 总数
+            int totalSize = this.service.getChannelManager().countContactBook(accountId, channelCode.product);
+            if (totalSize > 0) {
+                List<Contact> list = this.service.getChannelManager().queryContactBook(accountId,
+                        channelCode.product, signal.getBeginIndex(), signal.getEndIndex());
+                for (Contact contact : list) {
+                    ContactZoneParticipant participant = new ContactZoneParticipant(contact);
+                    contactZone.addParticipant(participant);
+                }
             }
 
-            return new ContactZoneEvent(contactZone);
+            return new ContactZoneEvent(contactZone, signal.getBeginIndex(), signal.getEndIndex(), totalSize);
         }
         else {
             return null;

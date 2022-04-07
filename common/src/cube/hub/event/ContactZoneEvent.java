@@ -38,24 +38,51 @@ public class ContactZoneEvent extends WeChatEvent {
 
     private ContactZone contactZone;
 
-    public ContactZoneEvent(ContactZone contactZone) {
+    private int beginIndex;
+
+    private int endIndex;
+
+    private int totalSize;
+
+    public ContactZoneEvent(ContactZone contactZone, int beginIndex, int endIndex, int totalSize) {
         super(NAME);
         this.contactZone = contactZone;
+        this.beginIndex = beginIndex;
+        this.endIndex = endIndex;
+        this.totalSize = totalSize;
     }
 
     public ContactZoneEvent(JSONObject json) {
         super(json);
         this.contactZone = new ContactZone(json.getJSONObject("zone"));
+        this.beginIndex = json.getInt("begin");
+        this.endIndex = json.getInt("end");
+        this.totalSize = json.getInt("total");
     }
 
     public ContactZone getContactZone() {
         return this.contactZone;
     }
 
+    public int getBeginIndex() {
+        return this.beginIndex;
+    }
+
+    public int getEndIndex() {
+        return this.endIndex;
+    }
+
+    public int getTotalSize() {
+        return this.totalSize;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("zone", this.contactZone.toJSON());
+        json.put("begin", this.beginIndex);
+        json.put("end", this.endIndex);
+        json.put("total", this.totalSize);
         return json;
     }
 }

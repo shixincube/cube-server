@@ -38,25 +38,44 @@ public class GetContactZoneSignal extends Signal {
 
     private ContactZoneParticipantType participantType;
 
-    public GetContactZoneSignal(String channelCode, ContactZoneParticipantType participantType) {
+    private int beginIndex;
+
+    private int endIndex;
+
+    public GetContactZoneSignal(String channelCode, ContactZoneParticipantType participantType,
+                                int beginIndex, int endIndex) {
         super(NAME);
         setCode(channelCode);
         this.participantType = participantType;
+        this.beginIndex = beginIndex;
+        this.endIndex = endIndex;
     }
 
     public GetContactZoneSignal(JSONObject json) {
         super(json);
         this.participantType = ContactZoneParticipantType.parse(json.getInt("participantType"));
+        this.beginIndex = json.getInt("begin");
+        this.endIndex = json.getInt("end");
     }
 
     public ContactZoneParticipantType getParticipantType() {
         return this.participantType;
     }
 
+    public int getBeginIndex() {
+        return this.beginIndex;
+    }
+
+    public int getEndIndex() {
+        return this.endIndex;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("participantType", this.participantType.code);
+        json.put("begin", this.beginIndex);
+        json.put("end", this.endIndex);
         return json;
     }
 }

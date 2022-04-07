@@ -544,13 +544,33 @@ public class ChannelManager {
     }
 
     /**
-     * 查询通讯录。
+     * 通讯录记录数。
      *
      * @param accountId
      * @param product
      * @return
      */
-    public List<Contact> queryContactBook(String accountId, Product product) {
+    public int countContactBook(String accountId, Product product) {
+        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(`sn`) FROM `" +
+                this.contactBookTable +"` WHERE `account_id`='" + accountId +
+                "' AND `product`='" + product.name + "'");
+        if (result.isEmpty()) {
+            return 0;
+        }
+
+        return result.get(0)[0].getInt();
+    }
+
+    /**
+     * 查询通讯录。
+     *
+     * @param accountId
+     * @param product
+     * @param beginIndex
+     * @param endIndex
+     * @return
+     */
+    public List<Contact> queryContactBook(String accountId, Product product, int beginIndex, int endIndex) {
         List<Contact> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.contactBookTable,
@@ -559,7 +579,8 @@ public class ChannelManager {
                 }, new Conditional[] {
                         Conditional.createEqualTo("account_id", accountId),
                         Conditional.createAnd(),
-                        Conditional.createEqualTo("product", product.name)
+                        Conditional.createEqualTo("product", product.name),
+                        Conditional.createLimit(beginIndex, (endIndex - beginIndex + 1))
                 });
         if (result.isEmpty()) {
             return list;
@@ -567,7 +588,17 @@ public class ChannelManager {
 
         for (StorageField[] data : result) {
             String jsonString = data[0].getString();
-            list.add(new Contact(new JSONObject(jsonString)));
+            Contact contact = new Contact(new JSONObject(jsonString));
+            String nameBase64 = contact.getName();
+            try {
+                // 联系人名还原
+                String name = new String(Base64.decode(nameBase64), StandardCharsets.UTF_8);
+                contact.setName(name);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            list.add(contact);
         }
 
         return list;

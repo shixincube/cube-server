@@ -57,7 +57,36 @@ public class GetContactBook extends HubHandler {
             return;
         }
 
-        GetContactZoneSignal signal = new GetContactZoneSignal(code, ContactZoneParticipantType.Contact);
+        int begin = 0;
+        int end = 9;
+
+        String beginString = request.getParameter("begin");
+        String endString = request.getParameter("end");
+
+        if (null != beginString && beginString.length() > 0) {
+            try {
+                begin = Integer.parseInt(beginString);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (null != endString && endString.length() > 0) {
+            try {
+                end = Integer.parseInt(endString);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (begin >= end) {
+            response.setStatus(HttpStatus.BAD_REQUEST_400);
+            this.complete();
+            return;
+        }
+
+        GetContactZoneSignal signal = new GetContactZoneSignal(code,
+                ContactZoneParticipantType.Contact, begin, end);
         Event event = this.syncTransmit(request, response, signal);
         if (null == event) {
             this.complete();

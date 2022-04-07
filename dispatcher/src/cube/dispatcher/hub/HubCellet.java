@@ -89,7 +89,7 @@ public class HubCellet extends AbstractCellet {
             public void run() {
                 onTick();
             }
-        }, 5000, 60 * 1000);
+        }, 5000, 10 * 60 * 1000);
 
         return true;
     }
