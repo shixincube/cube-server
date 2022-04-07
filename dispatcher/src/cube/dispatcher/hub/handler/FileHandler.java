@@ -44,8 +44,11 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 /**
@@ -81,58 +84,91 @@ public class FileHandler extends FileLabelHandler {
             return;
         }
 
-        FileLabel fileLabel = CacheCenter.getInstance().getFileLabel(fileCode);
-        if (null == fileLabel) {
-            // 没有缓存，从服务节点获取
-            GetFileLabelSignal requestSignal = new GetFileLabelSignal(channelCode.code, fileCode);
-            ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
-            actionDialect.addParam("signal", requestSignal.toJSON());
-            ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect);
-            if (null == result) {
-                response.setStatus(HttpStatus.FORBIDDEN_403);
-                this.complete();
-                return;
+        CacheCenter.CachedFile cachedFile = CacheCenter.getInstance().tryGetFile(fileCode);
+        if (null != cachedFile) {
+            // 填充响应头
+            this.fillHeaders(response, cachedFile.fileLabel, cachedFile.file.length(),
+                    cachedFile.fileLabel.getFileType());
+
+            FileInputStream fis = null;
+            try {
+                fis = new FileInputStream(cachedFile.file);
+                ServletOutputStream os = response.getOutputStream();
+                byte[] data = new byte[4096];
+                int length = 0;
+                while ((length = fis.read(data)) > 0) {
+                    os.write(data, 0, length);
+                }
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#doGet", e);
+            } finally {
+                if (null != fis) {
+                    try {
+                        fis.close();
+                    } catch (IOException e) {
+                        // Nothing
+                    }
+                }
             }
 
-            int stateCode = result.getParamAsInt("code");
-            if (HubStateCode.Ok.code != stateCode) {
-                Logger.w(this.getClass(), "#doGet - state : " + stateCode);
-                JSONObject data = new JSONObject();
-                data.put("code", stateCode);
-                this.respond(response, HttpStatus.UNAUTHORIZED_401, data);
-                this.complete();
-                return;
-            }
+            response.setStatus(HttpStatus.OK_200);
+            this.complete();
+            return;
+        }
 
-            if (result.containsParam("event")) {
-                Event event = EventBuilder.build(result.getParamAsJson("event"));
-                if (event instanceof FileLabelEvent) {
-                    fileLabel = event.getFileLabel();
-                    CacheCenter.getInstance().putFileLabel(fileLabel);
-                }
-                else {
-                    JSONObject data = new JSONObject();
-                    data.put("code", HubStateCode.ControllerError.code);
-                    this.respond(response, HttpStatus.NOT_FOUND_404, data);
-                    this.complete();
-                    return;
-                }
+        FileLabel fileLabel = null;
+        File outputFile = null;
+
+        // 没有缓存，从服务节点获取
+        GetFileLabelSignal requestSignal = new GetFileLabelSignal(channelCode.code, fileCode);
+        ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
+        actionDialect.addParam("signal", requestSignal.toJSON());
+        ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect);
+        if (null == result) {
+            response.setStatus(HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
+        }
+
+        int stateCode = result.getParamAsInt("code");
+        if (HubStateCode.Ok.code != stateCode) {
+            Logger.w(this.getClass(), "#doGet - state : " + stateCode);
+            JSONObject data = new JSONObject();
+            data.put("code", stateCode);
+            this.respond(response, HttpStatus.UNAUTHORIZED_401, data);
+            this.complete();
+            return;
+        }
+
+        if (result.containsParam("event")) {
+            Event event = EventBuilder.build(result.getParamAsJson("event"));
+            if (event instanceof FileLabelEvent) {
+                fileLabel = event.getFileLabel();
+                // 加入新标签，返回缓存文件名
+                outputFile = CacheCenter.getInstance().putFileLabel(fileLabel);
             }
             else {
                 JSONObject data = new JSONObject();
-                data.put("code", HubStateCode.Failure.code);
+                data.put("code", HubStateCode.ControllerError.code);
                 this.respond(response, HttpStatus.NOT_FOUND_404, data);
                 this.complete();
                 return;
             }
         }
+        else {
+            JSONObject data = new JSONObject();
+            data.put("code", HubStateCode.Failure.code);
+            this.respond(response, HttpStatus.NOT_FOUND_404, data);
+            this.complete();
+            return;
+        }
 
         try {
             if (fileLabel.getFileSize() <= this.getBufferSize()) {
-                this.processByBlocking(request, response, fileLabel, fileLabel.getFileType());
+                this.processByBlocking(request, response, fileLabel, fileLabel.getFileType(), outputFile);
             }
             else {
-                this.processByNonBlocking(request, response, fileLabel, fileLabel.getFileType());
+                this.processByNonBlocking(request, response, fileLabel, fileLabel.getFileType(), outputFile);
             }
         } catch (IOException | ServletException e) {
             Logger.w(this.getClass(), "", e);

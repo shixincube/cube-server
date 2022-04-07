@@ -42,9 +42,7 @@ import org.eclipse.jetty.http.HttpStatus;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLEncoder;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +64,7 @@ public class FileLabelHandler extends CrossDomainHandler {
     }
 
     protected void processByBlocking(HttpServletRequest request, HttpServletResponse response,
-                                   FileLabel fileLabel, FileType type)
+                                   FileLabel fileLabel, FileType type, File file)
             throws IOException, ServletException {
         final Object mutex = new Object();
 
@@ -98,6 +96,25 @@ public class FileLabelHandler extends CrossDomainHandler {
 
         buf.flip();
 
+        if (null != file) {
+            // 写入文件
+            FileOutputStream fos = null;
+            try {
+                fos = new FileOutputStream(file);
+                fos.write(buf.array(), 0, buf.limit());
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#processByBlocking", e);
+            } finally {
+                if (null != fos) {
+                    try {
+                        fos.close();
+                    } catch (Exception e) {
+                        // Nothing
+                    }
+                }
+            }
+        }
+
         // 填写头信息
         this.fillHeaders(response, fileLabel, buf.limit(), type);
 
@@ -114,7 +131,7 @@ public class FileLabelHandler extends CrossDomainHandler {
     }
 
     protected void processByNonBlocking(HttpServletRequest request, HttpServletResponse response,
-                                      FileLabel fileLabel, FileType type)
+                                      FileLabel fileLabel, FileType type, File file)
             throws IOException, ServletException {
         InputStreamResponseListener listener = new InputStreamResponseListener();
 
@@ -140,7 +157,7 @@ public class FileLabelHandler extends CrossDomainHandler {
             // Async output
             AsyncContext async = request.startAsync();
             ServletOutputStream output = response.getOutputStream();
-            StandardDataStream dataStream = new StandardDataStream(content, async, output);
+            StandardDataStream dataStream = new StandardDataStream(content, async, output, file);
             async.addListener(new AsyncListener() {
                 @Override
                 public void onStartAsync(AsyncEvent asyncEvent) throws IOException {
@@ -182,7 +199,7 @@ public class FileLabelHandler extends CrossDomainHandler {
         }
     }
 
-    private void fillHeaders(HttpServletResponse response, FileLabel fileLabel, long length, FileType type) {
+    protected void fillHeaders(HttpServletResponse response, FileLabel fileLabel, long length, FileType type) {
         if (FileType.FILE == type) {
             try {
                 StringBuilder buf = new StringBuilder("attachment;");
@@ -217,13 +234,23 @@ public class FileLabelHandler extends CrossDomainHandler {
         private final InputStream content;
         private final AsyncContext async;
         private final ServletOutputStream output;
+        private FileOutputStream fileOutputStream;
 
         protected long contentLength = 0;
 
-        private StandardDataStream(InputStream content, AsyncContext async, ServletOutputStream output) {
+        private StandardDataStream(InputStream content, AsyncContext async,
+                                   ServletOutputStream output, File file) {
             this.content = content;
             this.async = async;
             this.output = output;
+
+            if (null != file) {
+                try {
+                    this.fileOutputStream = new FileOutputStream(file);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         @Override
@@ -235,17 +262,35 @@ public class FileLabelHandler extends CrossDomainHandler {
                 int len = this.content.read(buffer);
                 if (len < 0) {
                     this.async.complete();
+
                     try {
                         this.content.close();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+
+                    if (null != this.fileOutputStream) {
+                        try {
+                            this.fileOutputStream.close();
+                        } catch (IOException e) {
+                            // Nothing
+                        }
+                    }
+
                     return;
                 }
 
                 // 将数据写入输出流
                 this.output.write(buffer, 0, len);
                 this.contentLength += len;
+
+                if (null != this.fileOutputStream) {
+                    try {
+                        this.fileOutputStream.write(buffer, 0, len);
+                    } catch (IOException e) {
+                        Logger.w(this.getClass(), "#onWritePossible", e);
+                    }
+                }
             }
         }
 
@@ -258,6 +303,14 @@ public class FileLabelHandler extends CrossDomainHandler {
                 this.content.close();
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+
+            if (null != this.fileOutputStream) {
+                try {
+                    this.fileOutputStream.close();
+                } catch (IOException e) {
+                    // Nothing
+                }
             }
         }
     }

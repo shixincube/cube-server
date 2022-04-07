@@ -36,6 +36,8 @@ import cube.dispatcher.hub.handler.*;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
@@ -64,6 +66,11 @@ public class HubCellet extends AbstractCellet {
      */
     private ConcurrentLinkedQueue<PassThroughTask> taskQueue;
 
+    /**
+     * 守护任务定时器。
+     */
+    private Timer daemonTimer;
+
     public HubCellet() {
         super(HubCellet.NAME);
         this.taskQueue = new ConcurrentLinkedQueue<>();
@@ -76,11 +83,24 @@ public class HubCellet extends AbstractCellet {
 
         setupHandler();
 
+        this.daemonTimer = new Timer();
+        this.daemonTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                onTick();
+            }
+        }, 5000, 60 * 1000);
+
         return true;
     }
 
     @Override
     public void uninstall() {
+        if (null != this.daemonTimer) {
+            this.daemonTimer.cancel();
+            this.daemonTimer = null;
+        }
+
         this.executor.shutdown();
     }
 
@@ -113,6 +133,10 @@ public class HubCellet extends AbstractCellet {
         task.markResponseTime();
 
         this.taskQueue.offer(task);
+    }
+
+    private void onTick() {
+        CacheCenter.getInstance().selfChecking();
     }
 
     private void setupHandler() {
