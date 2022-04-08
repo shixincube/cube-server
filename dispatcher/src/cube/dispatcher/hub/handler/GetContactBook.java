@@ -94,7 +94,7 @@ public class GetContactBook extends HubHandler {
         }
 
         if (event instanceof ContactZoneEvent) {
-            this.respondOk(response, event.toJSON());
+            this.respondOk(response, event.toCompactJSON());
             this.complete();
         }
         else {

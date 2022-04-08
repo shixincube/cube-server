@@ -27,6 +27,8 @@
 package cube.hub.event;
 
 import cube.common.entity.ContactZone;
+import cube.hub.data.DataHelper;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -83,6 +85,28 @@ public class ContactZoneEvent extends WeChatEvent {
         json.put("begin", this.beginIndex);
         json.put("end", this.endIndex);
         json.put("total", this.totalSize);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toCompactJSON();
+        json.put("begin", this.beginIndex);
+        json.put("end", this.endIndex);
+        json.put("total", this.totalSize);
+
+        // 过滤数据
+        JSONObject zoneJson = new JSONObject(this.contactZone.toJSON().toMap());
+        JSONArray participants = zoneJson.getJSONArray("participants");
+        for (int i = 0; i < participants.length(); ++i) {
+            JSONObject part = participants.getJSONObject(i);
+            if (part.has("linkedContact")) {
+                part.put("linkedContact",
+                        DataHelper.filterContactAvatarFileLabel(part.getJSONObject("linkedContact")));
+            }
+        }
+
+        json.put("zone", zoneJson);
         return json;
     }
 }

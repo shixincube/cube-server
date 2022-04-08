@@ -43,4 +43,9 @@ public class AccountEvent extends WeChatEvent {
     public AccountEvent(JSONObject json) {
         super(json);
     }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return super.toCompactJSON();
+    }
 }

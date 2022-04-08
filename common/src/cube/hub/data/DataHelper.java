@@ -119,4 +119,61 @@ public class DataHelper {
         contact.setName(name);
         return contact;
     }
+
+    /**
+     * 过滤联系人头像数据的文件标签中的直接连接地址信息。
+     *
+     * @param contact
+     * @return 返回经过过滤的联系人的 JSON 数据。
+     */
+    public static JSONObject filterContactAvatarFileLabel(Contact contact) {
+        JSONObject ctx = contact.getContext();
+        if (null == ctx) {
+            return contact.toCompactJSON();
+        }
+
+        if (!ctx.has("avatarFileLabel")) {
+            return contact.toCompactJSON();
+        }
+
+        JSONObject json = ctx.getJSONObject("avatarFileLabel");
+        if (!json.has("directURL")) {
+            return contact.toCompactJSON();
+        }
+
+        JSONObject ctxCopy = new JSONObject(ctx.toMap());
+        ctxCopy.getJSONObject("avatarFileLabel").remove("directURL");
+
+        // 使用副本替换
+        JSONObject result = contact.toCompactJSON();
+        result.remove("context");
+        result.put("context", ctxCopy);
+
+        return result;
+    }
+
+    /**
+     * 过滤联系人头像数据的文件标签中的直接连接地址信息。
+     *
+     * @param contactJSON
+     * @return
+     */
+    public static JSONObject filterContactAvatarFileLabel(JSONObject contactJSON) {
+        if (!contactJSON.has("context")) {
+            return contactJSON;
+        }
+
+        JSONObject ctx = contactJSON.getJSONObject("context");
+        if (!ctx.has("avatarFileLabel")) {
+            return contactJSON;
+        }
+
+        JSONObject json = ctx.getJSONObject("avatarFileLabel");
+        if (!json.has("directURL")) {
+            return contactJSON;
+        }
+
+        json.remove("directURL");
+        return contactJSON;
+    }
 }

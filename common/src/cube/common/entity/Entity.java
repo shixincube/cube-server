@@ -191,6 +191,15 @@ public abstract class Entity implements JSONable {
         this.timestamp = timestamp;
     }
 
+    /**
+     * 设置域。
+     *
+     * @param domainName
+     */
+    public void setDomain(String domainName) {
+        this.domain = new Domain(domainName);
+    }
+
     @Override
     public boolean equals(Object object) {
         if (null != object && object instanceof Entity) {

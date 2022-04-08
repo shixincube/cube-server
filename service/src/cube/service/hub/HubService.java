@@ -46,6 +46,10 @@ import cube.service.auth.AuthService;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
@@ -63,6 +67,8 @@ public class HubService extends AbstractModule {
 
     private ExecutorService executor;
 
+    private Path workPath;
+
     private SignalController signalController;
     private EventController eventController;
 
@@ -76,12 +82,21 @@ public class HubService extends AbstractModule {
         this.executor = executor;
         this.messageQueue = new LinkedList<>();
         this.queueProcessing = false;
+
+        this.workPath = Paths.get("storage/hub/");
+        if (!Files.exists(this.workPath)) {
+            try {
+                Files.createDirectories(this.workPath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
     public void start() {
         this.signalController = new SignalController(this.cellet);
-        this.eventController = new EventController();
+        this.eventController = new EventController(this, this.workPath);
 
         JSONObject config = ConfigUtils.readStorageConfig();
         if (config.has(NAME)) {
@@ -136,6 +151,10 @@ public class HubService extends AbstractModule {
 
     public ExecutorService getExecutor() {
         return this.executor;
+    }
+
+    public Path getWorkPath() {
+        return this.workPath;
     }
 
     public void quit(TalkContext talkContext) {

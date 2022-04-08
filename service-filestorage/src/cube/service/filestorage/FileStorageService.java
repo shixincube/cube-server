@@ -463,7 +463,7 @@ public class FileStorageService extends AbstractModule {
      *
      * @param domainName
      * @param fileCode
-     * @return
+     * @return 返回文件在本地的绝对路径。
      */
     public String loadFileToDisk(String domainName, String fileCode) {
         FileLabel fileLabel = this.getFile(domainName, fileCode);
@@ -546,6 +546,11 @@ public class FileStorageService extends AbstractModule {
                     this.deleteLocalFile(domain, fileLabel);
                     return fileLabel.toCompactJSON();
                 }
+            }
+            else if (FileStorageAction.LoadFile.name.equals(action)) {
+                String domain = data.getString("domain");
+                String fileCode = data.getString("fileCode");
+                return this.loadFileToDisk(domain, fileCode);
             }
         }
 

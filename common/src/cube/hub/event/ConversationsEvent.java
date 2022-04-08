@@ -27,6 +27,8 @@
 package cube.hub.event;
 
 import cube.common.entity.Conversation;
+import cube.common.entity.ConversationType;
+import cube.hub.data.DataHelper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -77,7 +79,14 @@ public class ConversationsEvent extends WeChatEvent {
         JSONObject json = super.toCompactJSON();
         JSONArray list = new JSONArray();
         for (Conversation conversation : this.conversations) {
-            list.put(conversation.toJSON());
+            JSONObject conversationJson = conversation.toJSON();
+
+            if (conversationJson.has("pivotalEntity")) {
+                conversationJson.put("pivotalEntity",
+                        DataHelper.filterContactAvatarFileLabel(conversationJson.getJSONObject("pivotalEntity")));
+            }
+
+            list.put(conversationJson);
         }
         json.put("conversations", list);
         return json;

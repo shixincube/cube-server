@@ -50,8 +50,6 @@ public class WeChatHub {
 
     private final static WeChatHub instance = new WeChatHub();
 
-    private File workPath = new File("hub/");
-
     private HubService service;
 
     private Map<Long, ReportEvent> reportMap;
@@ -64,10 +62,6 @@ public class WeChatHub {
     private WeChatHub() {
         this.reportMap = new ConcurrentHashMap<>();
         this.recentLoginEventMap = new ConcurrentHashMap<>();
-
-        if (!this.workPath.exists()) {
-            this.workPath.mkdirs();
-        }
     }
 
     public final static WeChatHub getInstance() {

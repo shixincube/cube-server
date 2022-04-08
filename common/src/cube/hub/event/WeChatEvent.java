@@ -28,6 +28,7 @@ package cube.hub.event;
 
 import cube.common.entity.Contact;
 import cube.hub.Product;
+import cube.hub.data.DataHelper;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -113,7 +114,7 @@ public abstract class WeChatEvent extends Event {
     public JSONObject toCompactJSON() {
         JSONObject json = super.toCompactJSON();
         if (null != this.account) {
-            json.put("account", this.account.toCompactJSON());
+            json.put("account", DataHelper.filterContactAvatarFileLabel(this.account));
         }
         return json;
     }

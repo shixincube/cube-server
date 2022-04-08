@@ -26,45 +26,22 @@
 
 package cube.hub.event;
 
-import cube.common.entity.Contact;
-import cube.common.entity.Group;
-import cube.hub.data.DataHelper;
+import cube.common.entity.FileLabel;
 import org.json.JSONObject;
 
 /**
- * 群组数据事件。
+ * 屏幕快照事件。
  */
-public class GroupDataEvent extends WeChatEvent {
+public class ScreenshotEvent extends WeChatEvent {
 
-    public final static String NAME = "GroupData";
+    public final static String NAME = "Screenshot";
 
-    private Group group;
-
-    public GroupDataEvent(Contact account, Group group) {
-        super(NAME, account);
-        this.group = group;
+    public ScreenshotEvent(FileLabel fileLabel) {
+        super(NAME);
+        setFileLabel(fileLabel);
     }
 
-    public GroupDataEvent(JSONObject json) {
+    public ScreenshotEvent(JSONObject json) {
         super(json);
-        this.group = new Group(json.getJSONObject("group"));
-    }
-
-    public Group getGroup() {
-        return this.group;
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = super.toJSON();
-        json.put("group", this.group.toJSON());
-        return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        JSONObject json = super.toCompactJSON();
-        json.put("group", DataHelper.filterContactAvatarFileLabel(this.group.toJSON()));
-        return json;
     }
 }

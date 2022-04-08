@@ -44,6 +44,11 @@ public enum FileStorageAction {
     GetFile("getFile"),
 
     /**
+     * 加载文件数据。
+     */
+    LoadFile("loadFile"),
+
+    /**
      * 获取根目录信息。
      */
     GetRoot("getRoot"),

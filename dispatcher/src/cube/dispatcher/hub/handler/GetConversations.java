@@ -101,7 +101,7 @@ public class GetConversations extends HubHandler {
         if (result.containsParam("event")) {
             Event event = EventBuilder.build(result.getParamAsJson("event"));
             if (event instanceof ConversationsEvent) {
-                this.respondOk(response, event.toJSON());
+                this.respondOk(response, event.toCompactJSON());
             }
             else {
                 JSONObject data = new JSONObject();
