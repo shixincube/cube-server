@@ -26,9 +26,12 @@
 
 package cube.service.filestorage;
 
+import cube.common.entity.FileLabel;
+import cube.service.auth.AuthService;
 import cube.service.filestorage.system.FileDescriptor;
 
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * 守护任务。
@@ -42,8 +45,11 @@ public class DaemonTask implements Runnable {
 
     private FileStorageService service;
 
+    private long lastCheckFileLabelTimestamp;
+
     public DaemonTask(FileStorageService service) {
         this.service = service;
+        this.lastCheckFileLabelTimestamp = System.currentTimeMillis();
     }
 
     @Override
@@ -56,6 +62,20 @@ public class DaemonTask implements Runnable {
             if (now - descriptor.getTimestamp() > this.fileDescriptorTimeout) {
                 fditer.remove();
             }
+        }
+
+        if (now - this.lastCheckFileLabelTimestamp > 24L * 60 * 60 * 1000) {
+            AuthService authService = (AuthService) this.service.getKernel().getModule(AuthService.NAME);
+            for (String domainName : authService.getDomainList()) {
+                // 获取超期的文件标签
+                List<FileLabel> fileLabelList = this.service.serviceStorage.listFileLabel(domainName, now);
+                for (FileLabel fileLabel : fileLabelList) {
+                    // 删除本地文件
+                    this.service.deleteLocalFile(domainName, fileLabel);
+                }
+            }
+
+            this.lastCheckFileLabelTimestamp = now;
         }
     }
 }

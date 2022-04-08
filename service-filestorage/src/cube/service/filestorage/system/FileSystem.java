@@ -73,8 +73,9 @@ public interface FileSystem {
      * 删除文件。
      *
      * @param fileName
+     * @return
      */
-    public void deleteFile(String fileName);
+    public boolean deleteFile(String fileName);
 
     /**
      * 文件是否存在。

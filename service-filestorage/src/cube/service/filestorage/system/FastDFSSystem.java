@@ -63,8 +63,8 @@ public class FastDFSSystem implements FileSystem {
     }
 
     @Override
-    public void deleteFile(String fileName) {
-
+    public boolean deleteFile(String fileName) {
+        return false;
     }
 
     @Override

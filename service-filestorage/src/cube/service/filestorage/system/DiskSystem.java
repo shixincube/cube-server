@@ -236,15 +236,18 @@ public class DiskSystem implements FileSystem {
     }
 
     @Override
-    public void deleteFile(String fileName) {
+    public boolean deleteFile(String fileName) {
         Path file = Paths.get(this.managingPath.toString(), fileName);
         try {
             if (Files.exists(file)) {
                 Files.delete(file);
+                return true;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return false;
     }
 
     @Override

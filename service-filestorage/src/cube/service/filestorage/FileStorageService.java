@@ -44,7 +44,6 @@ import cube.service.filestorage.system.FileDescriptor;
 import cube.service.filestorage.system.FileSystem;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
-import cube.util.FileUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -94,7 +93,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 文件标签存储器。
      */
-    private ServiceStorage serviceStorage;
+    protected ServiceStorage serviceStorage;
 
     /**
      * 文件层级管理器。
@@ -428,16 +427,24 @@ public class FileStorageService extends AbstractModule {
      *
      * @param domainName
      * @param fileLabel
+     * @return
      */
-    public void deleteFile(String domainName, FileLabel fileLabel) {
-        // 从缓存移除
-        this.fileLabelCache.remove(new CacheKey(fileLabel.getFileCode()));
-
-        // 从数据库里删除
-        this.serviceStorage.deleteFile(domainName, fileLabel.getFileCode());
-
+    public boolean deleteLocalFile(String domainName, FileLabel fileLabel) {
         // 从文件系统删除
-        this.fileSystem.deleteFile(fileLabel.getFileCode());
+        if (this.fileSystem.deleteFile(fileLabel.getFileCode())) {
+            // 从缓存移除
+            this.fileLabelCache.remove(new CacheKey(fileLabel.getFileCode()));
+
+            // 从数据库里删除
+            this.serviceStorage.deleteFile(domainName, fileLabel.getFileCode());
+
+            return true;
+        }
+        else {
+            Logger.i(this.getClass(), "#deleteFile - Not exists file: " +
+                    fileLabel.getFileCode() + " - " + fileLabel.getFileName());
+            return false;
+        }
     }
 
     /**
@@ -535,7 +542,8 @@ public class FileStorageService extends AbstractModule {
                 String fileCode = data.getString("fileCode");
                 FileLabel fileLabel = this.getFile(domain, fileCode);
                 if (null != fileLabel) {
-                    this.deleteFile(domain, fileLabel);
+                    // 删除本地文件
+                    this.deleteLocalFile(domain, fileLabel);
                     return fileLabel.toCompactJSON();
                 }
             }

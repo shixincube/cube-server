@@ -374,6 +374,52 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
+     * 查找所有指定超期时间的文件标签。
+     *
+     * @param domain
+     * @param expiryTime
+     * @return
+     */
+    public List<FileLabel> listFileLabel(String domain, long expiryTime) {
+        List<FileLabel> list = new ArrayList<>();
+        String labelTable = this.labelTableNameMap.get(domain);
+        if (null == labelTable) {
+            return list;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(labelTable, this.labelFields, new Conditional[] {
+                Conditional.createLessThan(new StorageField("expiry_time", LiteralBase.LONG, expiryTime))
+        });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> map = StorageFields.get(fields);
+
+            FileLabel label = new FileLabel(map.get("id").getLong(), domain, map.get("file_code").getString(),
+                    map.get("owner_id").getLong(), map.get("file_name").getString(), map.get("file_size").getLong(),
+                    map.get("last_modified").getLong(), map.get("completed_time").getLong(), map.get("expiry_time").getLong());
+
+            label.setFileType(FileType.matchExtension(map.get("file_type").getString()));
+
+            if (!map.get("md5").isNullValue()) {
+                label.setMD5Code(map.get("md5").getString());
+            }
+
+            if (!map.get("sha1").isNullValue()) {
+                label.setSHA1Code(map.get("sha1").getString());
+            }
+
+            label.setFileURLs(map.get("file_url").getString(),
+                    (map.get("file_secure_url").isNullValue()) ? null : map.get("file_secure_url").getString());
+
+            label.setDirectURL(map.get("direct_url").getString());
+
+            list.add(label);
+        }
+
+        return list;
+    }
+
+    /**
      * 查找指定文件名、修改日期和文件大小的文件。
      *
      * @param domain
