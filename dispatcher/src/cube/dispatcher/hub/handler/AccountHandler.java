@@ -41,11 +41,11 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * 获取账号信息。
  */
-public class GetAccount extends HubHandler {
+public class AccountHandler extends HubHandler {
 
     public final static String CONTEXT_PATH = "/hub/account/";
 
-    public GetAccount(Performer performer) {
+    public AccountHandler(Performer performer) {
         super(performer);
     }
 

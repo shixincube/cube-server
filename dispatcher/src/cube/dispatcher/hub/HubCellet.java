@@ -162,8 +162,8 @@ public class HubCellet extends AbstractCellet {
 
         // 获取账号数据
         ContextHandler getAccountHandler = new ContextHandler();
-        getAccountHandler.setContextPath(GetAccount.CONTEXT_PATH);
-        getAccountHandler.setHandler(new GetAccount(this.performer));
+        getAccountHandler.setContextPath(AccountHandler.CONTEXT_PATH);
+        getAccountHandler.setHandler(new AccountHandler(this.performer));
         httpServer.addContextHandler(getAccountHandler);
 
         // 获取会话数据
