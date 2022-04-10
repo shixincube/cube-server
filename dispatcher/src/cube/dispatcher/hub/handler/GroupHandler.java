@@ -26,25 +26,28 @@
 
 package cube.dispatcher.hub.handler;
 
-import cube.common.entity.ContactZoneParticipantType;
 import cube.dispatcher.Performer;
+import cube.hub.HubStateCode;
 import cube.hub.data.ChannelCode;
-import cube.hub.event.ContactZoneEvent;
 import cube.hub.event.Event;
-import cube.hub.signal.GetContactZoneSignal;
+import cube.hub.event.GroupDataEvent;
+import cube.hub.signal.GetGroupSignal;
 import org.eclipse.jetty.http.HttpStatus;
+import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 /**
- * 获取通讯录。
+ * 获取指定的群组信息。
  */
-public class GetContactBook extends HubHandler {
+public class GroupHandler extends HubHandler {
 
-    public final static String CONTEXT_PATH = "/hub/book/";
+    public final static String CONTEXT_PATH = "/hub/group/";
 
-    public GetContactBook(Performer performer) {
+    public GroupHandler(Performer performer) {
         super(performer);
     }
 
@@ -57,49 +60,36 @@ public class GetContactBook extends HubHandler {
             return;
         }
 
-        int begin = 0;
-        int end = 9;
-
-        String beginString = request.getParameter("begin");
-        String endString = request.getParameter("end");
-
-        if (null != beginString && beginString.length() > 0) {
-            try {
-                begin = Integer.parseInt(beginString);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (null != endString && endString.length() > 0) {
-            try {
-                end = Integer.parseInt(endString);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (begin >= end) {
+        String groupName = request.getParameter("name");
+        if (null == groupName || groupName.length() < 1) {
             response.setStatus(HttpStatus.BAD_REQUEST_400);
             this.complete();
             return;
         }
 
-        GetContactZoneSignal signal = new GetContactZoneSignal(code,
-                ContactZoneParticipantType.Contact, begin, end);
-        Event event = this.syncTransmit(request, response, signal);
+        // 群组名解码
+        try {
+            groupName = URLDecoder.decode(groupName, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        GetGroupSignal requestSignal = new GetGroupSignal(channelCode.code, groupName);
+        Event event = this.syncTransmit(request, response, requestSignal);
         if (null == event) {
             this.complete();
             return;
         }
 
-        if (event instanceof ContactZoneEvent) {
+        if (event instanceof GroupDataEvent) {
             this.respondOk(response, event.toCompactJSON());
-            this.complete();
         }
         else {
-            this.respond(response, HttpStatus.BAD_REQUEST_400);
-            this.complete();
+            JSONObject data = new JSONObject();
+            data.put("code", HubStateCode.ControllerError.code);
+            this.respond(response, HttpStatus.NOT_FOUND_404, data);
         }
+
+        this.complete();
     }
 }

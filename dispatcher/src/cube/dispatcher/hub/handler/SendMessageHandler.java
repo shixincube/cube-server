@@ -47,11 +47,11 @@ import java.nio.charset.StandardCharsets;
 /**
  * 发送消息。
  */
-public class SendMessage extends HubHandler {
+public class SendMessageHandler extends HubHandler {
 
     public final static String CONTEXT_PATH = "/hub/message/";
 
-    public SendMessage(Performer performer) {
+    public SendMessageHandler(Performer performer) {
         super(performer);
     }
 

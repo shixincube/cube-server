@@ -48,11 +48,11 @@ import javax.servlet.http.HttpServletResponse;
  * 参数 c - 通道码。
  * 参数 nc - 返回的最近会话数量。
  */
-public class GetConversations extends HubHandler {
+public class ConversationsHandler extends HubHandler {
 
     public final static String CONTEXT_PATH = "/hub/conversations/";
 
-    public GetConversations(Performer performer) {
+    public ConversationsHandler(Performer performer) {
         super(performer);
     }
 
