@@ -45,8 +45,8 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * 获取最近会话数据。
- * 参数 c - 通道码。
- * 参数 nc - 返回的最近会话数量。
+ * 查询参数 nc - 请求的最近会话数量。
+ * 查询参数 nm - 请求的每个会话的消息数量。
  */
 public class ConversationsHandler extends HubHandler {
 
@@ -75,9 +75,27 @@ public class ConversationsHandler extends HubHandler {
             }
         }
 
+        if (numOfConv > 10) {
+            numOfConv = 10;
+        }
+
+        int numOfMessage = 5;
+        String numOfMessageString = request.getParameter("nm");
+        if (null != numOfMessageString && numOfMessageString.length() > 0) {
+            try {
+                numOfMessage = Integer.parseInt(numOfMessageString);
+            } catch (Exception e) {
+                // Nothing
+            }
+        }
+        if (numOfMessage > 10) {
+            numOfMessage = 10;
+        }
+
         // 创建信令
         GetConversationsSignal getConversationsSignal = new GetConversationsSignal(channelCode.code);
         getConversationsSignal.setNumConversations(numOfConv);
+        getConversationsSignal.setNumRecentMessages(numOfMessage);
         ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
         actionDialect.addParam("signal", getConversationsSignal.toJSON());
 

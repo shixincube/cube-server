@@ -161,28 +161,34 @@ public class HubCellet extends AbstractCellet {
         httpServer.addContextHandler(closeHandler);
 
         // 获取账号数据
-        ContextHandler getAccountHandler = new ContextHandler();
-        getAccountHandler.setContextPath(AccountHandler.CONTEXT_PATH);
-        getAccountHandler.setHandler(new AccountHandler(this.performer));
-        httpServer.addContextHandler(getAccountHandler);
+        ContextHandler accountHandler = new ContextHandler();
+        accountHandler.setContextPath(AccountHandler.CONTEXT_PATH);
+        accountHandler.setHandler(new AccountHandler(this.performer));
+        httpServer.addContextHandler(accountHandler);
 
         // 获取会话数据
-        ContextHandler getConvHandler = new ContextHandler();
-        getConvHandler.setContextPath(ConversationsHandler.CONTEXT_PATH);
-        getConvHandler.setHandler(new ConversationsHandler(this.performer));
-        httpServer.addContextHandler(getConvHandler);
+        ContextHandler convsHandler = new ContextHandler();
+        convsHandler.setContextPath(ConversationsHandler.CONTEXT_PATH);
+        convsHandler.setHandler(new ConversationsHandler(this.performer));
+        httpServer.addContextHandler(convsHandler);
+
+        // 获取消息记录数据
+        ContextHandler messagesHandler = new ContextHandler();
+        messagesHandler.setContextPath(MessagesHandler.CONTEXT_PATH);
+        messagesHandler.setHandler(new MessagesHandler(this.performer));
+        httpServer.addContextHandler(messagesHandler);
 
         // 获取通讯录数据
-        ContextHandler getContactBookHandler = new ContextHandler();
-        getContactBookHandler.setContextPath(ContactBookHandler.CONTEXT_PATH);
-        getContactBookHandler.setHandler(new ContactBookHandler(this.performer));
-        httpServer.addContextHandler(getContactBookHandler);
+        ContextHandler contactBookHandler = new ContextHandler();
+        contactBookHandler.setContextPath(ContactBookHandler.CONTEXT_PATH);
+        contactBookHandler.setHandler(new ContactBookHandler(this.performer));
+        httpServer.addContextHandler(contactBookHandler);
 
         // 获取群组数据
-        ContextHandler getGroupHandler = new ContextHandler();
-        getGroupHandler.setContextPath(GroupHandler.CONTEXT_PATH);
-        getGroupHandler.setHandler(new GroupHandler(this.performer));
-        httpServer.addContextHandler(getGroupHandler);
+        ContextHandler groupHandler = new ContextHandler();
+        groupHandler.setContextPath(GroupHandler.CONTEXT_PATH);
+        groupHandler.setHandler(new GroupHandler(this.performer));
+        httpServer.addContextHandler(groupHandler);
 
         // 发送消息操作
         ContextHandler sendMsgHandler = new ContextHandler();

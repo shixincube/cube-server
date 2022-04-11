@@ -36,7 +36,6 @@ import cube.hub.event.*;
 import cube.hub.signal.Signal;
 import cube.hub.signal.*;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -304,7 +303,7 @@ public class WeChatHub {
 
             // 获取当前已存储的消息
             List<Message> messageList = this.service.getChannelManager().getMessagesByPartner(channelCode,
-                    accountId, partnerId, 20);
+                    accountId, partnerId, 0, 20);
             // 匹配新消息
             List<Message> newMessageList = matchNewMessages(messageList, event.getMessages());
 
@@ -325,7 +324,7 @@ public class WeChatHub {
         else if (null != group) {
             // 获取当前已存储的消息
             List<Message> messageList = this.service.getChannelManager().getMessagesByGroup(channelCode,
-                    accountId, group.getName(), 20);
+                    accountId, group.getName(), 0, 20);
             // 匹配新消息
             List<Message> newMessageList = matchNewMessages(messageList, event.getMessages());
 
@@ -457,16 +456,19 @@ public class WeChatHub {
      * @param signal
      * @return
      */
-    public SubmitMessagesEvent getMessages(ChannelCode channelCode, GetMessagesSignal signal) {
+    public MessagesEvent getMessages(ChannelCode channelCode, GetMessagesSignal signal) {
         // 获取账号 ID
         String accountId = this.service.getChannelManager().getAccountId(channelCode.code);
         // 查询账号
         Contact account = this.service.getChannelManager().queryAccount(accountId, channelCode.product);
 
+        int beginIndex = signal.getBeginIndex();
+        int endIndex = signal.getEndIndex();
+
         if (null != signal.getGroupName()) {
             // 原始消息列表
             List<Message> rawList = this.service.getChannelManager().getMessagesByGroup(channelCode.code,
-                    accountId, signal.getGroupName(), 20);
+                    accountId, signal.getGroupName(), beginIndex, (endIndex - beginIndex + 1));
             if (rawList.isEmpty()) {
                 // 没有数据
                 return null;
@@ -481,13 +483,13 @@ public class WeChatHub {
                 messages.add(DataHelper.convertMessage(group, PlainMessage.create(message)));
             }
 
-            SubmitMessagesEvent event = new SubmitMessagesEvent(account, group, messages);
+            MessagesEvent event = new MessagesEvent(group, beginIndex, endIndex, messages);
             return event;
         }
         else if (null != signal.getPartnerId()) {
             // 原始消息列表
             List<Message> rawList = this.service.getChannelManager().getMessagesByPartner(channelCode.code,
-                    accountId, signal.getPartnerId(), 20);
+                    accountId, signal.getPartnerId(), beginIndex, (endIndex - beginIndex + 1));
             if (rawList.isEmpty()) {
                 // 没有数据
                 return null;
@@ -503,7 +505,7 @@ public class WeChatHub {
                 messages.add(DataHelper.convertMessage(partner, PlainMessage.create(message)));
             }
 
-            SubmitMessagesEvent event = new SubmitMessagesEvent(account, partner, messages);
+            MessagesEvent event = new MessagesEvent(partner, beginIndex, endIndex, messages);
             return event;
         }
 

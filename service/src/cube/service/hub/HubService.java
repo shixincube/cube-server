@@ -285,7 +285,7 @@ public class HubService extends AbstractModule {
                         }
                         else if (signal instanceof GetMessagesSignal) {
                             // 获取消息
-                            SubmitMessagesEvent event = WeChatHub.getInstance().getMessages(channelCode,
+                            MessagesEvent event = WeChatHub.getInstance().getMessages(channelCode,
                                     (GetMessagesSignal) signal);
                             if (null != event) {
                                 responder.respondDispatcher(sn, HubStateCode.Ok.code, event);

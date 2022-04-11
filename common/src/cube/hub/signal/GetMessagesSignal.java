@@ -39,9 +39,15 @@ public class GetMessagesSignal extends Signal {
 
     private String groupName;
 
-    public GetMessagesSignal(String channelCode) {
+    private int beginIndex;
+
+    private int endIndex;
+
+    public GetMessagesSignal(String channelCode, int beginIndex, int endIndex) {
         super(NAME);
         setCode(channelCode);
+        this.beginIndex = beginIndex;
+        this.endIndex = endIndex;
     }
 
     public GetMessagesSignal(JSONObject json) {
@@ -52,6 +58,22 @@ public class GetMessagesSignal extends Signal {
         if (json.has("partnerId")) {
             this.partnerId = json.getString("partnerId");
         }
+
+        if (json.has("begin")) {
+            this.beginIndex = json.getInt("begin");
+        }
+
+        if (json.has("end")) {
+            this.endIndex = json.getInt("end");
+        }
+    }
+
+    public int getBeginIndex() {
+        return this.beginIndex;
+    }
+
+    public int getEndIndex() {
+        return this.endIndex;
     }
 
     public void setPartnerId(String partnerId) {
@@ -79,6 +101,10 @@ public class GetMessagesSignal extends Signal {
          else if (null != this.partnerId) {
              json.put("partnerId", this.partnerId);
          }
+
+         json.put("begin", this.beginIndex);
+         json.put("end", this.endIndex);
+
          return json;
     }
 }

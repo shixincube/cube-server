@@ -57,6 +57,9 @@ public class EventBuilder {
         else if (ContactDataEvent.NAME.equals(name)) {
             event = new ContactDataEvent(eventJson);
         }
+        else if (MessagesEvent.NAME.equals(name)) {
+            event = new MessagesEvent(eventJson);
+        }
         else if (AccountEvent.NAME.equals(name)) {
             event = new AccountEvent(eventJson);
         }

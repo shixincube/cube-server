@@ -26,25 +26,31 @@
 
 package cube.dispatcher.hub.handler;
 
-import cube.common.entity.ContactZoneParticipantType;
+import cell.util.log.Logger;
 import cube.dispatcher.Performer;
 import cube.hub.data.ChannelCode;
-import cube.hub.event.ContactZoneEvent;
 import cube.hub.event.Event;
-import cube.hub.signal.GetContactZoneSignal;
+import cube.hub.event.MessagesEvent;
+import cube.hub.signal.GetMessagesSignal;
 import org.eclipse.jetty.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 /**
- * 获取通讯录。
+ * 消息数据句柄。
+ * 查询参数：cid
+ * 查询参数：gn
+ * 查询参数：begin
+ * 查询参数：end
  */
-public class ContactBookHandler extends HubHandler {
+public class MessagesHandler extends HubHandler {
 
-    public final static String CONTEXT_PATH = "/hub/book/";
+    public final static String CONTEXT_PATH = "/hub/messages/";
 
-    public ContactBookHandler(Performer performer) {
+    public MessagesHandler(Performer performer) {
         super(performer);
     }
 
@@ -57,30 +63,46 @@ public class ContactBookHandler extends HubHandler {
             return;
         }
 
+        String contactId = request.getParameter("cid");
+        String groupName = request.getParameter("gn");
+        if (null == contactId && null == groupName) {
+            response.setStatus(HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
+        }
+
+        if (null != groupName) {
+            try {
+                groupName = URLDecoder.decode(groupName, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                Logger.w(this.getClass(), "", e);
+                response.setStatus(HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
+        }
+
         int begin = 0;
         int end = 9;
-
-        String beginString = request.getParameter("begin");
-        String endString = request.getParameter("end");
-
-        if (null != beginString && beginString.length() > 0) {
+        String beginParam = request.getParameter("begin");
+        String endParam = request.getParameter("end");
+        if (null != beginParam) {
             try {
-                begin = Integer.parseInt(beginString);
+                begin = Integer.parseInt(beginParam);
             } catch (Exception e) {
-                e.printStackTrace();
+                // Nothing
+            }
+        }
+        if (null != endParam) {
+            try {
+                end = Integer.parseInt(endParam);
+            } catch (Exception e) {
+                // Nothing
             }
         }
 
-        if (null != endString && endString.length() > 0) {
-            try {
-                end = Integer.parseInt(endString);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (begin >= end) {
-            response.setStatus(HttpStatus.BAD_REQUEST_400);
+        if (end <= begin) {
+            response.setStatus(HttpStatus.FORBIDDEN_403);
             this.complete();
             return;
         }
@@ -91,21 +113,23 @@ public class ContactBookHandler extends HubHandler {
             return;
         }
 
-        GetContactZoneSignal signal = new GetContactZoneSignal(code,
-                ContactZoneParticipantType.Contact, begin, end);
+        GetMessagesSignal signal = new GetMessagesSignal(code, begin, end);
+        if (null != contactId) {
+            signal.setPartnerId(contactId);
+        }
+        else {
+            signal.setGroupName(groupName);
+        }
+
         Event event = this.syncTransmit(request, response, signal);
-        if (null == event) {
+        if (!(event instanceof MessagesEvent)) {
+            response.setStatus(HttpStatus.BAD_REQUEST_400);
             this.complete();
             return;
         }
 
-        if (event instanceof ContactZoneEvent) {
-            this.respondOk(response, event.toCompactJSON());
-            this.complete();
-        }
-        else {
-            this.respond(response, HttpStatus.BAD_REQUEST_400);
-            this.complete();
-        }
+        MessagesEvent messagesEvent = (MessagesEvent) event;
+        this.respondOk(response, messagesEvent.toCompactJSON());
+        this.complete();
     }
 }

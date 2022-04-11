@@ -958,31 +958,19 @@ public class ChannelManager {
      * @param channelCode
      * @param accountId
      * @param partnerId
-     * @param limit
+     * @param startIndex
+     * @param count
      * @return
      */
     public List<Message> getMessagesByPartner(String channelCode, String accountId, String partnerId,
-                                              int limit) {
-//        List<StorageField[]> result = this.storage.executeQuery(this.partnerMessageTable,
-//            new StorageField[] {
-//                    new StorageField("sn", LiteralBase.LONG),
-//                    new StorageField("message", LiteralBase.STRING)
-//            }, new Conditional[] {
-//                    Conditional.createEqualTo("code", channelCode),
-//                    Conditional.createAnd(),
-//                    Conditional.createEqualTo("account_id", accountId),
-//                    Conditional.createAnd(),
-//                    Conditional.createEqualTo("partner_id", partnerId)
-//            });
-
+                                              int startIndex, int count) {
         String sql = "SELECT `message` FROM `" + this.partnerMessageTable + "` " +
                 "WHERE `code`='" + channelCode +
                 "' AND account_id='" + accountId +
                 "' AND partner_id='" + partnerId + "'" +
                 " ORDER BY `date` DESC" +
-                " LIMIT " + limit;
+                " LIMIT " + startIndex + "," + count;
         List<StorageField[]> result = this.storage.executeQuery(sql);
-
         if (result.isEmpty()) {
             return new ArrayList<>();
         }
@@ -1008,31 +996,19 @@ public class ChannelManager {
      * @param channelCode
      * @param accountId
      * @param groupName
-     * @param limit
+     * @param startIndex
+     * @param count
      * @return
      */
     public List<Message> getMessagesByGroup(String channelCode, String accountId, String groupName,
-                                            int limit) {
-//        List<StorageField[]> result = this.storage.executeQuery(this.groupMessageTable,
-//                new StorageField[] {
-//                        new StorageField("sn", LiteralBase.LONG),
-//                        new StorageField("message", LiteralBase.STRING)
-//                }, new Conditional[] {
-//                        Conditional.createEqualTo("code", channelCode),
-//                        Conditional.createAnd(),
-//                        Conditional.createEqualTo("account_id", accountId),
-//                        Conditional.createAnd(),
-//                        Conditional.createEqualTo("group_name", groupName)
-//                });
-
+                                            int startIndex, int count) {
         String sql = "SELECT `message` FROM `" + this.groupMessageTable + "` " +
                 "WHERE `code`='" + channelCode +
                 "' AND account_id='" + accountId +
                 "' AND group_name='" + groupName + "'" +
                 " ORDER BY `date` DESC" +
-                " LIMIT " + limit;
+                " LIMIT " + startIndex + "," + count;
         List<StorageField[]> result = this.storage.executeQuery(sql);
-
         if (result.isEmpty()) {
             return new ArrayList<>();
         }
