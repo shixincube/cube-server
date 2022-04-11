@@ -117,7 +117,8 @@ public class MessagesEvent extends WeChatEvent {
     public JSONObject toCompactJSON() {
         JSONObject json = super.toCompactJSON();
         if (null != this.group) {
-            json.put("group", this.group.toCompactJSON());
+            json.put("group",
+                    DataHelper.filterContactAvatarFileLabel(this.group.toCompactJSON()));
         }
         else if (null != this.partner) {
             json.put("partner",

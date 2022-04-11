@@ -122,8 +122,12 @@ public class MessagesHandler extends HubHandler {
         }
 
         Event event = this.syncTransmit(request, response, signal);
+        if (null == event) {
+            this.complete();
+            return;
+        }
+
         if (!(event instanceof MessagesEvent)) {
-            response.setStatus(HttpStatus.BAD_REQUEST_400);
             this.complete();
             return;
         }
