@@ -43,6 +43,11 @@ public class DataHelper {
      */
     public final static String DEFAULT_DOMAIN_NAME = "shixincube.com";
 
+    /**
+     * 默认的所有人 ID 。
+     */
+    public final static Long DEFAULT_OWNER_ID = 1124L;
+
     private DataHelper() {
     }
 

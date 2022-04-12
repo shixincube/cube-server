@@ -211,6 +211,12 @@ public class HubService extends AbstractModule {
         });
     }
 
+    /**
+     * 处理来自 API 层的请求。
+     *
+     * @param actionDialect
+     * @param responder
+     */
     public void processChannel(ActionDialect actionDialect, Responder responder) {
         final long sn = actionDialect.getParamAsJson(this.performerKey).getLong("sn");
         this.executor.execute(new Runnable() {
@@ -361,6 +367,26 @@ public class HubService extends AbstractModule {
                 else {
                     Logger.e(HubService.this.getClass(), "Unknown channel request");
                 }
+            }
+        });
+    }
+
+    public void processPutFile(ActionDialect actionDialect, Responder responder) {
+        final long sn = actionDialect.getParamAsJson(this.performerKey).getLong("sn");
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                JSONObject labelJson = actionDialect.getParamAsJson("fileLabel");
+
+                JSONObject notification = new JSONObject();
+                notification.put("action", FileStorageAction.PutFile.name);
+                notification.put("fileLabel", labelJson);
+
+                AbstractModule module = getKernel().getModule("FileStorage");
+                Object result = module.notify(notification);
+                FileLabel fileLabel = new FileLabel((JSONObject) result);
+                FileLabelEvent event = new FileLabelEvent(sn, fileLabel);
+                responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
             }
         });
     }

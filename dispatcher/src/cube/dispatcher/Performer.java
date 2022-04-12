@@ -42,6 +42,7 @@ import cube.common.entity.Device;
 import cube.common.state.AuthStateCode;
 import cube.dispatcher.util.HttpConfig;
 import cube.dispatcher.util.Tickable;
+import cube.util.FileUtils;
 import cube.util.HttpClientFactory;
 import cube.util.HttpServer;
 import org.json.JSONException;
@@ -50,6 +51,8 @@ import org.json.JSONObject;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -624,7 +627,69 @@ public class Performer implements TalkListener, Tickable {
         }
     }
 
+    /**
+     * 向服务单元发送流。
+     *
+     * @param celletName
+     * @param streamName
+     * @param inputStream
+     * @return 返回流的 MD5 码和 SHA1 码。
+     */
+    public String[] transmit(String celletName, String streamName, InputStream inputStream) {
+        // 选择 Director
+        Director director = this.selectDirector();
 
+        MessageDigest md5 = null;
+        MessageDigest sha1 = null;
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+            sha1 = MessageDigest.getInstance("SHA1");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+
+        long total = 0;
+        // 发送数据
+        PrimitiveOutputStream stream = director.speaker.speakStream(celletName, streamName);
+        try {
+            byte[] buf = new byte[64 * 1024];
+            int length = 0;
+            while ((length = inputStream.read(buf)) > 0) {
+                // 发送数据
+                stream.write(buf, 0, length);
+
+                // 计算散列
+                md5.update(buf, 0, length);
+                sha1.update(buf, 0, length);
+
+                total += length;
+            }
+        } catch (IOException e) {
+            Logger.e(this.getClass(), "Writing primitive output stream", e);
+        } finally {
+            try {
+                stream.close();
+            } catch (IOException e) {
+                // Nothing
+            }
+
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                // Nothing
+            }
+        }
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#transmit stream '" + streamName + "' (" + total + " bytes)");
+        }
+
+        byte[] hashMD5 = md5.digest();
+        byte[] hashSHA1 = sha1.digest();
+        String md5Code = FileUtils.bytesToHexString(hashMD5);
+        String sha1Code = FileUtils.bytesToHexString(hashSHA1);
+        return new String[] { md5Code, sha1Code };
+    }
 
     /**
      * 向服务单元发送数据，并阻塞当前线程直到应答或超时。

@@ -114,8 +114,31 @@ public final class FileUtils {
         return code;
     }
 
-    public static String makeFileCode() {
-        return null;
+    /**
+     * 生成文件码。
+     *
+     * @param identification 识别码。
+     * @param domain 工作的域。
+     * @param fileName 文件名。
+     * @return 返回文件码。
+     */
+    public static String makeFileCode(String identification, String domain, String fileName) {
+        StringBuilder buf = new StringBuilder(identification);
+        buf.append("_").append(domain).append("_").append(fileName);
+
+        // 补空位
+        if (buf.length() < 64) {
+            buf.append("_").append(identification);
+        }
+
+        String keystr = buf.toString();
+
+        // 将 Key 串切割
+        List<byte[]> list = FileUtils.slice(keystr.getBytes(Charset.forName("UTF-8")), 64);
+
+        // Hash
+        String code = FileUtils.fastHash(list);
+        return code;
     }
 
     /**

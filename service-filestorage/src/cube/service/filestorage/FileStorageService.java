@@ -307,7 +307,9 @@ public class FileStorageService extends AbstractModule {
         fileLabel.setFileURLs(urls[0] + queryString, urls[1] + queryString);
 
         // 设置有效期
-        fileLabel.setExpiryTime(fileLabel.getCompletedTime() + this.defaultFileDuration);
+        if (0 == fileLabel.getExpiryTime()) {
+            fileLabel.setExpiryTime(fileLabel.getCompletedTime() + this.defaultFileDuration);
+        }
 
         // 写入到存储器进行记录
         this.serviceStorage.writeFileLabel(fileLabel, descriptor);

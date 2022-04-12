@@ -44,7 +44,12 @@ public enum HubAction {
     /**
      * 管道操作。
      */
-    Channel("channel")
+    Channel("channel"),
+
+    /**
+     * 放置文件。
+     */
+    PutFile("putFile")
 
     ;
 

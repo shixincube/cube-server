@@ -39,9 +39,11 @@ import cube.hub.EventBuilder;
 import cube.hub.HubAction;
 import cube.hub.HubStateCode;
 import cube.hub.data.ChannelCode;
+import cube.hub.data.DataHelper;
 import cube.hub.event.Event;
 import cube.hub.event.FileLabelEvent;
 import cube.hub.signal.GetFileLabelSignal;
+import cube.util.FileType;
 import cube.util.FileUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
@@ -122,16 +124,48 @@ public class FileHandler extends FileLabelHandler {
                 return;
             }
 
-            //String fileCode = FileUtils.makeFileCode(contactId, domain, file.getName());
-
             // 修改文件名
             String extName = FileUtils.extractFileExtension(filename);
             File newFile = new File(CacheCenter.getInstance().getWorkPath().toFile(),
                     FileUtils.fastHash(code + filename) + (extName.length() > 0 ? "." + extName : ""));
             file.renameTo(newFile);
 
-            // 发送文件数据
+            // 生成文件码
+            String fileCode = FileUtils.makeFileCode(code, DataHelper.DEFAULT_DOMAIN_NAME, newFile.getName());
 
+            // 发送文件数据
+            String[] hashCodes = this.performer.transmit(HubCellet.NAME, fileCode, new FileInputStream(newFile));
+
+            // 判断文件类型
+            FileType fileType = FileType.matchExtension(extName);
+
+            // 生成文件标签
+            FileLabel fileLabel = new FileLabel(DataHelper.DEFAULT_DOMAIN_NAME, fileCode,
+                    DataHelper.DEFAULT_OWNER_ID, newFile);
+            fileLabel.setFileType(fileType);
+            fileLabel.setMD5Code(hashCodes[0]);
+            fileLabel.setSHA1Code(hashCodes[1]);
+
+            // 设置有效期
+            fileLabel.setExpiryTime(fileLabel.getTimestamp() + 24 * 60 * 60 * 1000);
+
+            // 放置文件
+            ActionDialect actionDialect = new ActionDialect(HubAction.PutFile.name);
+            actionDialect.addParam("fileLabel", fileLabel.toJSON());
+            ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect, 60 * 1000);
+            if (result.containsParam("event")) {
+                Event event = EventBuilder.build(result.getParamAsJson("event"));
+                // 将文件进行缓存
+                file = CacheCenter.getInstance().putFileLabel(fileLabel);
+                newFile.renameTo(file);
+
+                this.respondOk(response, fileLabel.toCompactJSON());
+                this.complete();
+            }
+            else {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
