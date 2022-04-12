@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.filestorage;
+package cube.dispatcher.util;
 
 import cell.util.collection.FlexibleByteBuffer;
 
@@ -146,8 +146,8 @@ public class FormData {
                         cdata = new String(buf.array(), 0, buf.limit(), Charset.forName("UTF-8"));
                         String lowerData = cdata.toLowerCase();
 
-                        if (lowerData.indexOf(sContentType) >= 0) {
-                            if (lowerData.indexOf(sOctetStream) >= 0) {
+                        if (lowerData.contains(sContentType)) {
+                            if (lowerData.contains(sOctetStream)) {
                                 // 文件流
                                 // 跳过空行
                                 cursor += 2;

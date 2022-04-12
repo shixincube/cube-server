@@ -27,6 +27,7 @@
 package cube.dispatcher.hub.handler;
 
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
 import cube.dispatcher.Performer;
@@ -50,6 +51,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * 文件处理。
@@ -63,6 +65,39 @@ public class FileHandler extends FileLabelHandler {
     public FileHandler(Performer performer) {
         super();
         this.performer = performer;
+    }
+
+    @Override
+    public void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+        String path = request.getPathInfo();
+        String code = path.substring(1).trim();
+        ChannelCode channelCode = Helper.checkChannelCode(code, response, this.performer);
+        if (null == channelCode) {
+            this.complete();
+            return;
+        }
+
+        // 读取流
+        FlexibleByteBuffer buf = new FlexibleByteBuffer();
+        byte[] bytes = new byte[4096];
+        InputStream is = request.getInputStream();
+
+        int length = 0;
+        while ((length = is.read(bytes)) > 0) {
+            buf.put(bytes, 0, length);
+        }
+
+        // 整理缓存
+        buf.flip();
+
+        try {
+
+        } catch (Exception e) {
+            Logger.w(this.getClass(), "#doPost", e);
+            this.respond(response, HttpStatus.FORBIDDEN_403, new JSONObject());
+            return;
+        }
     }
 
     @Override
@@ -84,6 +119,7 @@ public class FileHandler extends FileLabelHandler {
             return;
         }
 
+        // 尝试从缓存里读取文件
         CacheCenter.CachedFile cachedFile = CacheCenter.getInstance().tryGetFile(fileCode);
         if (null != cachedFile) {
             // 填充响应头

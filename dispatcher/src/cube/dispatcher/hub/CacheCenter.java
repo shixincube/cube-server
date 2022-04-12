@@ -114,6 +114,10 @@ public class CacheCenter {
         return file.exists() ? new CachedFile(file, fileLabel) : null;
     }
 
+    public void writeFileChunk(String filename, byte[] data) {
+
+    }
+
     public void selfChecking() {
         // 遍历目录，删除超期文件
         File[] files = this.workPath.toFile().listFiles();

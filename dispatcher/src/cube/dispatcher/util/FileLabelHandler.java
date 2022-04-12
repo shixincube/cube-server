@@ -53,7 +53,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class FileLabelHandler extends CrossDomainHandler {
 
-    private int bufferSize = 5 * 1024 * 1024;
+    private int bufferSize = 20 * 1024 * 1024;
 
     public FileLabelHandler() {
         super();

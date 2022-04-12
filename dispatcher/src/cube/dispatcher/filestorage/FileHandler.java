@@ -35,6 +35,7 @@ import cube.common.action.FileStorageAction;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
+import cube.dispatcher.util.FormData;
 import cube.util.CrossDomainHandler;
 import cube.util.FileType;
 import cube.util.HttpClientFactory;
@@ -67,7 +68,7 @@ public class FileHandler extends CrossDomainHandler {
 
     private Performer performer;
 
-    private int bufferSize = 5 * 1024 * 1024;
+    private int bufferSize = 10 * 1024 * 1024;
 
     /**
      * 构造函数。
@@ -139,7 +140,7 @@ public class FileHandler extends CrossDomainHandler {
             fileName = formData.getFileName();
             data = formData.getFileChunk();
         } catch (Exception e) {
-            Logger.w(this.getClass(), "FileUploadHandler", e);
+            Logger.w(this.getClass(), "#doPost", e);
             this.respond(response, HttpStatus.FORBIDDEN_403, new JSONObject());
             return;
         }
