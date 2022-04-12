@@ -27,9 +27,12 @@
 package cube.dispatcher.hub;
 
 import cube.common.entity.FileLabel;
+import cube.util.FileUtils;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -66,6 +69,16 @@ public class CacheCenter {
         return CacheCenter.instance;
     }
 
+    public Path getWorkPath() {
+        return this.workPath;
+    }
+
+    /**
+     * 写入文件标签数据。
+     *
+     * @param fileLabel
+     * @return
+     */
     public File putFileLabel(FileLabel fileLabel) {
         this.fileLabelMap.put(fileLabel.getFileCode(), fileLabel);
 
@@ -85,6 +98,12 @@ public class CacheCenter {
                 fileLabel.getFileCode() + "." + fileLabel.getFileType().getPreferredExtension());
     }
 
+    /**
+     * 尝试读取已缓存的文件数据。
+     *
+     * @param fileCode
+     * @return
+     */
     public CachedFile tryGetFile(String fileCode) {
         FileLabel fileLabel = this.fileLabelMap.get(fileCode);
 
@@ -114,8 +133,16 @@ public class CacheCenter {
         return file.exists() ? new CachedFile(file, fileLabel) : null;
     }
 
-    public void writeFileChunk(String filename, byte[] data) {
+    public void lock(String channelCode) {
+        synchronized (this) {
 
+        }
+    }
+
+    public void unlock(String channelCode) {
+        synchronized (this) {
+
+        }
     }
 
     public void selfChecking() {

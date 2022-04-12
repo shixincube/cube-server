@@ -50,3 +50,4 @@ multipoint-comm_dev.properties
 service/storage/tmp
 dispatcher/cube-media-files
 service/storage/hub
+dispatcher/cube-hub-files

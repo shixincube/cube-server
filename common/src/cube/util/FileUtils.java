@@ -114,6 +114,10 @@ public final class FileUtils {
         return code;
     }
 
+    public static String makeFileCode() {
+        return null;
+    }
+
     /**
      * 制作文件标签。
      *

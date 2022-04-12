@@ -30,6 +30,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.dispatcher.Performer;
 import cube.dispatcher.hub.CacheCenter;
+import cube.dispatcher.hub.Controller;
 import cube.dispatcher.hub.HubCellet;
 import cube.hub.EventBuilder;
 import cube.hub.HubAction;
@@ -52,8 +53,8 @@ public class OpenChannel extends HubHandler {
 
     public final static String CONTEXT_PATH = "/hub/open/";
 
-    public OpenChannel(Performer performer) {
-        super(performer);
+    public OpenChannel(Performer performer, Controller controller) {
+        super(performer, controller);
     }
 
     @Override
@@ -61,6 +62,12 @@ public class OpenChannel extends HubHandler {
         String code = this.getRequestPath(request);
         if (code.length() < 8) {
             response.setStatus(HttpStatus.BAD_REQUEST_400);
+            this.complete();
+            return;
+        }
+
+        if (!this.controller.verify(code)) {
+            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
             this.complete();
             return;
         }

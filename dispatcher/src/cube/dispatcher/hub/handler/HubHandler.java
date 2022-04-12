@@ -29,6 +29,7 @@ package cube.dispatcher.hub.handler;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.dispatcher.Performer;
+import cube.dispatcher.hub.Controller;
 import cube.dispatcher.hub.HubCellet;
 import cube.hub.EventBuilder;
 import cube.hub.HubAction;
@@ -49,9 +50,12 @@ public abstract class HubHandler extends CrossDomainHandler {
 
     protected Performer performer;
 
-    public HubHandler(Performer performer) {
+    protected Controller controller;
+
+    public HubHandler(Performer performer, Controller controller) {
         super();
         this.performer = performer;
+        this.controller = controller;
     }
 
     protected String getRequestPath(HttpServletRequest request) {

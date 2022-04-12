@@ -32,6 +32,7 @@ import cell.util.log.Logger;
 import cube.common.entity.ConversationType;
 import cube.common.entity.Message;
 import cube.dispatcher.Performer;
+import cube.dispatcher.hub.Controller;
 import cube.hub.data.ChannelCode;
 import cube.hub.event.Event;
 import cube.hub.signal.SendMessageSignal;
@@ -51,13 +52,20 @@ public class SendMessageHandler extends HubHandler {
 
     public final static String CONTEXT_PATH = "/hub/message/";
 
-    public SendMessageHandler(Performer performer) {
-        super(performer);
+    public SendMessageHandler(Performer performer, Controller controller) {
+        super(performer, controller);
     }
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
         String code = this.getRequestPath(request);
+
+        if (!this.controller.verify(code)) {
+            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+            this.complete();
+            return;
+        }
+
         ChannelCode channelCode = Helper.checkChannelCode(code, response, this.performer);
         if (null == channelCode) {
             this.complete();

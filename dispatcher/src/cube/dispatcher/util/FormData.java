@@ -26,9 +26,14 @@
 
 package cube.dispatcher.util;
 
+import cell.util.Utils;
 import cell.util.collection.FlexibleByteBuffer;
 
+import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -51,8 +56,11 @@ public class FormData {
     private byte[] chunk;
 
     /**
+     * 构造函数。
      *
      * @param content
+     * @param offset
+     * @param length
      */
     public FormData(byte[] content, int offset, int length) {
         byte[] data = new byte[length];
@@ -60,6 +68,173 @@ public class FormData {
         this.buf = new FlexibleByteBuffer(1024);
         this.multipart = this.parse(data);
         this.buf = null;
+    }
+
+    /**
+     * 构造函数。
+     *
+     * @param formFile
+     * @param outputFile
+     */
+    public FormData(File formFile, File outputFile) {
+        FileInputStream fis = null;
+        FileOutputStream fos = null;
+
+        this.buf = new FlexibleByteBuffer(1024);
+        String boundary = null;
+        int endBoundaryLength = 0;
+        boolean segment = false;
+        boolean read = false;
+
+        try {
+            fis = new FileInputStream(formFile);
+            fos = new FileOutputStream(outputFile);
+
+            int data = -1;
+            while ((data = fis.read()) != -1) {
+                byte b = (byte) data;
+
+                if (read) {
+                    if (b == '\r') {
+                        byte next = (byte) fis.read();
+                        if (next == '\n') {
+                            byte[] bytes = new byte[endBoundaryLength];
+                            int length = 0;
+                            if ((length = fis.read(bytes)) > 0) {
+                                String line = new String(bytes, 0, length, StandardCharsets.UTF_8);
+                                if (line.contains(boundary)) {
+                                    // 结束
+                                    break;
+                                }
+                                else {
+                                    fos.write(b);
+                                    fos.write(next);
+                                    fos.write(bytes, 0, length);
+                                }
+                            }
+                            else {
+                                fos.write(b);
+                                fos.write(next);
+                                break;
+                            }
+                        }
+                        else {
+                            fos.write(b);
+                            fos.write(next);
+                        }
+                    }
+                    else if (b == '\n') {
+                        byte[] bytes = new byte[endBoundaryLength];
+                        int length = 0;
+                        if ((length = fis.read(bytes)) > 0) {
+                            String line = new String(bytes, 0, length, StandardCharsets.UTF_8);
+                            if (line.contains(boundary)) {
+                                // 结束
+                                break;
+                            }
+                            else {
+                                fos.write(b);
+                                fos.write(bytes, 0, length);
+                            }
+                        }
+                        else {
+                            fos.write(b);
+                            break;
+                        }
+                    }
+                    else {
+                        fos.write(b);
+                    }
+
+                    continue;
+                }
+
+                if (b == '\r') {
+                    data = fis.read();
+                    byte next = (byte) data;
+                    if (next != '\n') {
+                        this.buf.put(b);
+                        this.buf.put(next);
+                        continue;
+                    }
+                }
+
+                if (b == '\r' || b == '\n') {
+                    this.buf.flip();
+
+                    if (segment) {
+                        String line = new String(this.buf.array(), 0, this.buf.limit());
+                        if (line.toLowerCase().contains("name=\"file\"") && line.toLowerCase().contains("filename")) {
+                            // 文件数据
+                            segment = true;
+                            int pos = line.lastIndexOf("filename");
+                            this.fileName = line.substring(pos + 10, line.length() - 1);
+                        }
+                        else if (line.toLowerCase().contains(sContentType) && line.toLowerCase().contains(sOctetStream)) {
+                            // 文件类型
+                            segment = false;
+                            // 进入读取数据流程
+                            read = true;
+                            // 跳过空白行
+                            data = fis.read();
+                            if (data != -1) {
+                                b = (byte) data;
+                                if (b == '\r') {
+                                    // 读 '\n'
+                                    fis.read();
+                                }
+                            }
+                            else {
+                                break;
+                            }
+                        }
+                        else {
+                            // 其他字段
+                            // TODO
+                            segment = false;
+                        }
+                    }
+                    else {
+                        if (null == boundary) {
+                            boundary = new String(this.buf.array(), 0, this.buf.limit());
+                            endBoundaryLength = boundary.length() + 2;
+                            segment = true;
+                        }
+                        else {
+                            String line = new String(this.buf.array(), 0, this.buf.limit());
+                            if (line.equals(boundary)) {
+                                segment = true;
+                            }
+                        }
+                    }
+
+                    this.buf.clear();
+                }
+                else {
+                    this.buf.put(b);
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != fis) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    // Nothing
+                }
+            }
+
+            if (null != fos) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    // Nothing
+                }
+            }
+        }
     }
 
     public String getFileName() {
@@ -107,7 +282,7 @@ public class FormData {
 
         boolean rn = false;
 
-        long t = System.currentTimeMillis();
+        //long t = System.currentTimeMillis();
         ActionType action = ActionType.TO_FIND_DISPOSITION;
 
         while (cursor < content.length) {
@@ -242,8 +417,8 @@ public class FormData {
     }
 
 
-    /*public static void main(String[] args) {
-        StringBuilder buf = new StringBuilder(Utils.randomString(32 * 1024));
+    public static void main(String[] args) {
+        /*StringBuilder buf = new StringBuilder(Utils.randomString(32 * 1024));
         buf.append("\r\n").append(Utils.randomString(16 * 1024));
         buf.append("\n").append(Utils.randomString(16 * 1024));
         String fc = buf.toString();
@@ -288,7 +463,34 @@ public class FormData {
                 "IHDR" + "���I(dt�Wk\u0000n|�������6�Z��\\�Z�A��i�c�\u001Az�;I�� ����[9�+�\u0002E��\u0012�mb\u001F�=��3�)\u0002������\u0018J���(�p_F*�NYs�\u001F\u001B\u0001����Ł\u0014�2���h��/\u0017��S�\u00001�Q���\u0000��љ��\t@33���\u0000k\u0001\u0019��3�i��0��\u0013~�ȣ(�V>c�����} \u0019\u001Cr�_�������!\u0018\u001C�ba�2�'��{�ҹ�oQ\u001F?{�v\u0019�\u0010h\u0002�\u0000p%\n" +
                 "-----------------------------131022975738869420362846154883--";
 
-        String[] list = new String[] { data1, data2 };
+        File[] files = new File[] {
+                new File("dispatcher/cube-hub-files/data1.form"),
+                new File("dispatcher/cube-hub-files/data2.form")
+        };
+        if (!files[0].exists()) {
+            try {
+                Files.write(Paths.get(files[0].getAbsolutePath()), data1.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if (!files[1].exists()) {
+            try {
+                Files.write(Paths.get(files[1].getAbsolutePath()), data2.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        for (int i = 0; i < files.length; ++i) {
+            File formFile = files[i];
+            File outputFile = new File("dispatcher/cube-hub-files/" + formFile.getName() + ".dat");
+            FormData formData = new FormData(formFile, outputFile);
+            System.out.println("Filename: " + formData.getFileName());
+            System.out.println("File: " + outputFile.getName() + " - " + outputFile.length());
+        }*/
+
+        /*String[] list = new String[] { data1, data2 };
 
         for (String data : list) {
             long t = System.currentTimeMillis();
@@ -300,6 +502,6 @@ public class FormData {
             System.out.println("filename: " + form.getFileName());
             System.out.println("chunk: " + form.getFileChunk().length
                     + " - [" + (char)form.getFileChunk()[0] + "][" + (char)form.getFileChunk()[form.getFileChunk().length - 1] + "]");
-        }
-    }*/
+        }*/
+    }
 }

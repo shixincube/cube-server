@@ -27,13 +27,14 @@
 package cube.dispatcher.hub.handler;
 
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
 import cube.dispatcher.Performer;
 import cube.dispatcher.hub.CacheCenter;
+import cube.dispatcher.hub.Controller;
 import cube.dispatcher.hub.HubCellet;
 import cube.dispatcher.util.FileLabelHandler;
+import cube.dispatcher.util.FormData;
 import cube.hub.EventBuilder;
 import cube.hub.HubAction;
 import cube.hub.HubStateCode;
@@ -41,6 +42,7 @@ import cube.hub.data.ChannelCode;
 import cube.hub.event.Event;
 import cube.hub.event.FileLabelEvent;
 import cube.hub.signal.GetFileLabelSignal;
+import cube.util.FileUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
 
@@ -48,10 +50,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 /**
  * 文件处理。
@@ -62,9 +61,12 @@ public class FileHandler extends FileLabelHandler {
 
     private Performer performer;
 
-    public FileHandler(Performer performer) {
+    private Controller controller;
+
+    public FileHandler(Performer performer, Controller controller) {
         super();
         this.performer = performer;
+        this.controller = controller;
     }
 
     @Override
@@ -72,31 +74,69 @@ public class FileHandler extends FileLabelHandler {
             throws IOException, ServletException {
         String path = request.getPathInfo();
         String code = path.substring(1).trim();
+
+        if (!this.controller.verify(code)) {
+            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+            this.complete();
+            return;
+        }
+
         ChannelCode channelCode = Helper.checkChannelCode(code, response, this.performer);
         if (null == channelCode) {
             this.complete();
             return;
         }
 
-        // 读取流
-        FlexibleByteBuffer buf = new FlexibleByteBuffer();
-        byte[] bytes = new byte[4096];
-        InputStream is = request.getInputStream();
-
-        int length = 0;
-        while ((length = is.read(bytes)) > 0) {
-            buf.put(bytes, 0, length);
-        }
-
-        // 整理缓存
-        buf.flip();
+        File formFile = new File(CacheCenter.getInstance().getWorkPath().toFile(), code + ".form");
+        FileOutputStream fos = null;
 
         try {
+            fos = new FileOutputStream(formFile);
+
+            // 读取流
+            byte[] bytes = new byte[4096];
+            InputStream is = request.getInputStream();
+
+            int length = 0;
+            while ((length = is.read(bytes)) > 0) {
+                fos.write(bytes, 0, length);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != fos) {
+                fos.close();
+            }
+        }
+
+        try {
+            CacheCenter.getInstance().lock(code);
+
+            File file = new File(CacheCenter.getInstance().getWorkPath().toFile(), code);
+            // 读取 Form 文件数据
+            FormData formData = new FormData(formFile, file);
+            String filename = formData.getFileName();
+            if (null == filename || !file.exists() || file.length() == 0) {
+                this.respond(response, HttpStatus.INTERNAL_SERVER_ERROR_500);
+                this.complete();
+                return;
+            }
+
+            //String fileCode = FileUtils.makeFileCode(contactId, domain, file.getName());
+
+            // 修改文件名
+            String extName = FileUtils.extractFileExtension(filename);
+            File newFile = new File(CacheCenter.getInstance().getWorkPath().toFile(),
+                    FileUtils.fastHash(code + filename) + (extName.length() > 0 ? "." + extName : ""));
+            file.renameTo(newFile);
+
+            // 发送文件数据
 
         } catch (Exception e) {
-            Logger.w(this.getClass(), "#doPost", e);
-            this.respond(response, HttpStatus.FORBIDDEN_403, new JSONObject());
-            return;
+            e.printStackTrace();
+        } finally {
+            formFile.delete();
+            CacheCenter.getInstance().unlock(code);
         }
     }
 

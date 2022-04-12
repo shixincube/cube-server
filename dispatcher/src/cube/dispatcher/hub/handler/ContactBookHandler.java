@@ -28,6 +28,7 @@ package cube.dispatcher.hub.handler;
 
 import cube.common.entity.ContactZoneParticipantType;
 import cube.dispatcher.Performer;
+import cube.dispatcher.hub.Controller;
 import cube.hub.data.ChannelCode;
 import cube.hub.event.ContactZoneEvent;
 import cube.hub.event.Event;
@@ -44,13 +45,20 @@ public class ContactBookHandler extends HubHandler {
 
     public final static String CONTEXT_PATH = "/hub/book/";
 
-    public ContactBookHandler(Performer performer) {
-        super(performer);
+    public ContactBookHandler(Performer performer, Controller controller) {
+        super(performer, controller);
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
         String code = this.getRequestPath(request);
+
+        if (!this.controller.verify(code)) {
+            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+            this.complete();
+            return;
+        }
+
         ChannelCode channelCode = Helper.checkChannelCode(code, response, this.performer);
         if (null == channelCode) {
             this.complete();

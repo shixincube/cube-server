@@ -28,6 +28,7 @@ package cube.dispatcher.hub.handler;
 
 import cell.util.log.Logger;
 import cube.dispatcher.Performer;
+import cube.dispatcher.hub.Controller;
 import cube.hub.data.ChannelCode;
 import cube.hub.event.Event;
 import cube.hub.event.MessagesEvent;
@@ -50,13 +51,20 @@ public class MessagesHandler extends HubHandler {
 
     public final static String CONTEXT_PATH = "/hub/messages/";
 
-    public MessagesHandler(Performer performer) {
-        super(performer);
+    public MessagesHandler(Performer performer, Controller controller) {
+        super(performer, controller);
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
         String code = this.getRequestPath(request);
+
+        if (!this.controller.verify(code)) {
+            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+            this.complete();
+            return;
+        }
+
         ChannelCode channelCode = Helper.checkChannelCode(code, response, this.performer);
         if (null == channelCode) {
             this.complete();

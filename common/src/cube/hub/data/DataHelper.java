@@ -38,6 +38,11 @@ import org.json.JSONObject;
  */
 public class DataHelper {
 
+    /**
+     * 默认的工作域。
+     */
+    public final static String DEFAULT_DOMAIN_NAME = "shixincube.com";
+
     private DataHelper() {
     }
 

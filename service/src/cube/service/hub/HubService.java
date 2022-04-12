@@ -37,6 +37,7 @@ import cube.core.Kernel;
 import cube.core.Module;
 import cube.hub.*;
 import cube.hub.data.ChannelCode;
+import cube.hub.data.DataHelper;
 import cube.hub.event.*;
 import cube.hub.signal.*;
 import cube.plugin.Plugin;
@@ -367,7 +368,7 @@ public class HubService extends AbstractModule {
     private FileLabel getFileLabel(String fileCode) {
         JSONObject notification = new JSONObject();
         notification.put("action", FileStorageAction.GetFile.name);
-        notification.put("domain", "shixincube.com");
+        notification.put("domain", DataHelper.DEFAULT_DOMAIN_NAME);
         notification.put("fileCode", fileCode);
         notification.put("transmitting", false);
 

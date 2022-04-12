@@ -34,6 +34,7 @@ import cube.dispatcher.Performer;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
 
+import java.io.File;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
@@ -105,6 +106,10 @@ public class FileStorageCellet extends AbstractCellet {
         super.onListened(talkContext, primitive);
 
         this.executor.execute(this.borrowTask(talkContext, primitive, true));
+    }
+
+    public void uploadFile(File file) {
+
     }
 
     protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive, boolean sync) {
