@@ -29,7 +29,6 @@ package cube.hub.signal;
 import cell.util.Base64;
 import cube.common.entity.Contact;
 import cube.common.entity.ConversationType;
-import cube.common.entity.Group;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -52,7 +51,15 @@ public class SendMessageSignal extends Signal {
 
     private String text;
 
-    public SendMessageSignal(String channelCode, ConversationType conversationType, String idOrName, String text) {
+    private String fileCode;
+
+    public SendMessageSignal(String channelCode,
+                             ConversationType conversationType, String idOrName) {
+        this(channelCode, conversationType, idOrName, null);
+    }
+
+    public SendMessageSignal(String channelCode,
+                             ConversationType conversationType, String idOrName, String text) {
         super(NAME);
         setCode(channelCode);
 
@@ -115,6 +122,14 @@ public class SendMessageSignal extends Signal {
         return this.text;
     }
 
+    public void setFileCode(String fileCode) {
+        this.fileCode = fileCode;
+    }
+
+    public String getFileCode() {
+        return this.fileCode;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
@@ -131,8 +146,11 @@ public class SendMessageSignal extends Signal {
             json.put("groupName", this.groupName);
         }
 
-        String base64 = Base64.encodeBytes(this.text.getBytes(StandardCharsets.UTF_8));
-        json.put("text", base64);
+        if (null != this.text) {
+            String base64 = Base64.encodeBytes(this.text.getBytes(StandardCharsets.UTF_8));
+            json.put("text", base64);
+        }
+
         return json;
     }
 }

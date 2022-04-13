@@ -30,7 +30,6 @@ import cell.util.Base64;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 import cube.common.entity.ConversationType;
-import cube.common.entity.Message;
 import cube.dispatcher.Performer;
 import cube.dispatcher.hub.Controller;
 import cube.hub.data.ChannelCode;
@@ -52,6 +51,8 @@ public class SendMessageHandler extends HubHandler {
 
     public final static String CONTEXT_PATH = "/hub/message/";
 
+    private final long coolingTime = 500;
+
     public SendMessageHandler(Performer performer, Controller controller) {
         super(performer, controller);
     }
@@ -60,7 +61,7 @@ public class SendMessageHandler extends HubHandler {
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
         String code = this.getRequestPath(request);
 
-        if (!this.controller.verify(code)) {
+        if (!this.controller.verify(code, CONTEXT_PATH, this.coolingTime)) {
             this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
             this.complete();
             return;
@@ -127,6 +128,10 @@ public class SendMessageHandler extends HubHandler {
                     response.setStatus(HttpStatus.NOT_FOUND_404);
                     this.complete();
                 }
+            }
+            else if (data.has("fileCode")) {
+                String fileCode = data.getString("fileCode");
+
             }
             else {
                 response.setStatus(HttpStatus.FORBIDDEN_403);

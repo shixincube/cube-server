@@ -51,6 +51,8 @@ public class MessagesHandler extends HubHandler {
 
     public final static String CONTEXT_PATH = "/hub/messages/";
 
+    private final long coolingTime = 10;
+
     public MessagesHandler(Performer performer, Controller controller) {
         super(performer, controller);
     }
@@ -59,7 +61,7 @@ public class MessagesHandler extends HubHandler {
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
         String code = this.getRequestPath(request);
 
-        if (!this.controller.verify(code)) {
+        if (!this.controller.verify(code, CONTEXT_PATH, this.coolingTime)) {
             this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
             this.complete();
             return;

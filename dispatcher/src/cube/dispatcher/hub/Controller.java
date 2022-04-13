@@ -39,15 +39,17 @@ public class Controller {
         this.visitLogMap = new ConcurrentHashMap<>();
     }
 
-    public boolean verify(String channelCode) {
-        VisitLog visitLog = this.visitLogMap.get(channelCode);
+    public boolean verify(String channelCode, String path, long coolingTime) {
+        String key = channelCode + "_" + path;
+
+        VisitLog visitLog = this.visitLogMap.get(key);
         if (null == visitLog) {
             visitLog = new VisitLog();
-            this.visitLogMap.put(channelCode, visitLog);
+            this.visitLogMap.put(key, visitLog);
             return true;
         }
 
-        return visitLog.timing();
+        return visitLog.timing(coolingTime);
     }
 
     protected class VisitLog {
@@ -60,11 +62,11 @@ public class Controller {
             this.timingPoint1 = System.currentTimeMillis();
         }
 
-        protected synchronized boolean timing() {
+        protected synchronized boolean timing(long coolingTime) {
             this.timingPoint2 = this.timingPoint1;
             this.timingPoint1 = System.currentTimeMillis();
 
-            if (this.timingPoint1 - this.timingPoint2 < 500) {
+            if (this.timingPoint1 - this.timingPoint2 < coolingTime) {
                 return false;
             }
             else {

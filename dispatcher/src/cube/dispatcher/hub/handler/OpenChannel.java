@@ -53,6 +53,8 @@ public class OpenChannel extends HubHandler {
 
     public final static String CONTEXT_PATH = "/hub/open/";
 
+    private final long coolingTime = 500;
+
     public OpenChannel(Performer performer, Controller controller) {
         super(performer, controller);
     }
@@ -66,7 +68,7 @@ public class OpenChannel extends HubHandler {
             return;
         }
 
-        if (!this.controller.verify(code)) {
+        if (!this.controller.verify(code, CONTEXT_PATH, this.coolingTime)) {
             this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
             this.complete();
             return;

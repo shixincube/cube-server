@@ -48,6 +48,8 @@ public class GroupHandler extends HubHandler {
 
     public final static String CONTEXT_PATH = "/hub/group/";
 
+    private final long coolingTime = 10;
+
     public GroupHandler(Performer performer, Controller controller) {
         super(performer, controller);
     }
@@ -56,7 +58,7 @@ public class GroupHandler extends HubHandler {
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
         String code = this.getRequestPath(request);
 
-        if (!this.controller.verify(code)) {
+        if (!this.controller.verify(code, CONTEXT_PATH, this.coolingTime)) {
             this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
             this.complete();
             return;

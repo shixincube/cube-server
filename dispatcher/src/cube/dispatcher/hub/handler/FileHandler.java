@@ -77,12 +77,6 @@ public class FileHandler extends FileLabelHandler {
         String path = request.getPathInfo();
         String code = path.substring(1).trim();
 
-        if (!this.controller.verify(code)) {
-            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
-            this.complete();
-            return;
-        }
-
         ChannelCode channelCode = Helper.checkChannelCode(code, response, this.performer);
         if (null == channelCode) {
             this.complete();

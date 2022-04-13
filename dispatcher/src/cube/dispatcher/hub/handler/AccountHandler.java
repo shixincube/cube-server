@@ -46,6 +46,8 @@ public class AccountHandler extends HubHandler {
 
     public final static String CONTEXT_PATH = "/hub/account/";
 
+    private final long coolingTime = 500;
+
     public AccountHandler(Performer performer, Controller controller) {
         super(performer, controller);
     }
@@ -54,7 +56,7 @@ public class AccountHandler extends HubHandler {
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
         String code = this.getRequestPath(request);
 
-        if (!this.controller.verify(code)) {
+        if (!this.controller.verify(code, CONTEXT_PATH, this.coolingTime)) {
             this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
             this.complete();
             return;
