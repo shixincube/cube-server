@@ -142,6 +142,8 @@ public class FileHandler extends FileLabelHandler {
             // 生成文件标签
             FileLabel fileLabel = new FileLabel(DataHelper.DEFAULT_DOMAIN_NAME, fileCode,
                     DataHelper.DEFAULT_OWNER_ID, newFile);
+            // 需要重置文件名
+            fileLabel.setFileName(filename);
             fileLabel.setFileType(fileType);
             fileLabel.setMD5Code(hashCodes[0]);
             fileLabel.setSHA1Code(hashCodes[1]);
@@ -155,11 +157,13 @@ public class FileHandler extends FileLabelHandler {
             ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect, 60 * 1000);
             if (result.containsParam("event")) {
                 Event event = EventBuilder.build(result.getParamAsJson("event"));
+                FileLabelEvent fileLabelEvent = (FileLabelEvent) event;
+                FileLabel resultFileLabel = fileLabelEvent.getFileLabel();
                 // 将文件进行缓存
-                file = CacheCenter.getInstance().putFileLabel(fileLabel);
+                file = CacheCenter.getInstance().putFileLabel(resultFileLabel);
                 newFile.renameTo(file);
 
-                this.respondOk(response, fileLabel.toCompactJSON());
+                this.respondOk(response, resultFileLabel.toCompactJSON());
                 this.complete();
             }
             else {

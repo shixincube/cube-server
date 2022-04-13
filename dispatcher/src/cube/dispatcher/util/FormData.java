@@ -26,14 +26,10 @@
 
 package cube.dispatcher.util;
 
-import cell.util.Utils;
 import cell.util.collection.FlexibleByteBuffer;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -81,6 +77,7 @@ public class FormData {
         FileOutputStream fos = null;
 
         this.buf = new FlexibleByteBuffer(1024);
+        boolean isReturn = false;
         String boundary = null;
         int endBoundaryLength = 0;
         boolean segment = false;
@@ -95,58 +92,51 @@ public class FormData {
                 byte b = (byte) data;
 
                 if (read) {
-                    if (b == '\r') {
-                        byte next = (byte) fis.read();
-                        if (next == '\n') {
-                            byte[] bytes = new byte[endBoundaryLength];
-                            int length = 0;
-                            if ((length = fis.read(bytes)) > 0) {
-                                String line = new String(bytes, 0, length, StandardCharsets.UTF_8);
-                                if (line.contains(boundary)) {
-                                    // 结束
-                                    break;
-                                }
-                                else {
-                                    fos.write(b);
-                                    fos.write(next);
-                                    fos.write(bytes, 0, length);
-                                }
+                    // 第一位直接写入文件
+                    fos.write(b);
+
+                    int length = 0;
+                    byte[] bytes = new byte[endBoundaryLength];
+                    byte[] pending = null;
+                    byte[] last = null;
+
+                    while ((length = fis.read(bytes)) > 0) {
+                        if (length < endBoundaryLength) {
+                            // 结束
+                            this.buf.clear();
+                            if (null != pending) {
+                                this.buf.put(pending);
                             }
-                            else {
-                                fos.write(b);
-                                fos.write(next);
-                                break;
+                            if (null != last) {
+                                this.buf.put(last);
                             }
+                            this.buf.put(bytes, 0, length);
+                            this.buf.flip();
+
+                            // 剔除结束符
+                            fos.write(this.buf.array(), 0, this.buf.limit() - endBoundaryLength - (isReturn ? 2 : 1));
                         }
                         else {
-                            fos.write(b);
-                            fos.write(next);
-                        }
-                    }
-                    else if (b == '\n') {
-                        byte[] bytes = new byte[endBoundaryLength];
-                        int length = 0;
-                        if ((length = fis.read(bytes)) > 0) {
-                            String line = new String(bytes, 0, length, StandardCharsets.UTF_8);
-                            if (line.contains(boundary)) {
-                                // 结束
-                                break;
+                            if (null != pending) {
+                                fos.write(pending);
+                            }
+
+                            if (null == last) {
+                                last = new byte[length];
                             }
                             else {
-                                fos.write(b);
-                                fos.write(bytes, 0, length);
+                                if (null == pending) {
+                                    pending = new byte[length];
+                                }
+
+                                System.arraycopy(last, 0, pending, 0, length);
                             }
+
+                            System.arraycopy(bytes, 0, last, 0, length);
                         }
-                        else {
-                            fos.write(b);
-                            break;
-                        }
-                    }
-                    else {
-                        fos.write(b);
                     }
 
-                    continue;
+                    break;
                 }
 
                 if (b == '\r') {
@@ -156,6 +146,9 @@ public class FormData {
                         this.buf.put(b);
                         this.buf.put(next);
                         continue;
+                    }
+                    else {
+                        isReturn = true;
                     }
                 }
 

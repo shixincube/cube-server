@@ -170,6 +170,7 @@ public class FileLabel extends Entity {
     public FileLabel(String domainName, String fileCode, Long ownerId, File file) {
         super(Utils.generateSerialNumber(), domainName);
         this.uniqueKey = fileCode;
+        this.fileCode = fileCode;
         this.ownerId = ownerId;
         this.fileName = file.getName();
         this.fileSize = file.length();
@@ -233,6 +234,15 @@ public class FileLabel extends Entity {
      */
     public String getFileName() {
         return this.fileName;
+    }
+
+    /**
+     * 设置文件名。
+     *
+     * @param fileName 指定文件名。
+     */
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     /**
