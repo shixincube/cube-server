@@ -364,13 +364,10 @@ public final class ClientManager {
     public void quit(TalkContext talkContext) {
         ServerClient client = this.talkContextIndex.remove(talkContext.getSessionId());
         if (null != client) {
-            client.disable(new TimeoutCallback() {
-                @Override
-                public void on(ServerClient client) {
-                    clientMap.remove(client.getId());
-                    Logger.i(ClientManager.class, "Server client \"" + client.getId() + "\" timeout quit.");
-                }
-            });
+            // 删除
+            this.clientMap.remove(client.getId());
+
+            client.resetTalkContext(null);
         }
     }
 
@@ -597,7 +594,11 @@ public final class ClientManager {
                                         if (null != resultFile) {
                                             if (resultFile.exists()) {
                                                 // 传输文件数据
-                                                client.transmitStream(resultFile.getName(), resultFile);
+                                                try {
+                                                    client.transmitStream(resultFile.getName(), resultFile);
+                                                } catch (Exception e) {
+                                                    Logger.e(ClientManager.class, "client#transmitStream", e);
+                                                }
                                                 // 删除结果文件
                                                 resultFile.delete();
                                             }

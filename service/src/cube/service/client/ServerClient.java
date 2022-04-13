@@ -43,7 +43,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -65,8 +67,6 @@ public class ServerClient extends Entity {
     // Key : 实体唯一键
     protected Map<String, MessageSendEvent> messageSendEvents;
 
-    private Timer disableTimer;
-
     public ServerClient(Long id, Cellet cellet, TalkContext talkContext, ClientDescription desc) {
         super(id);
         this.cellet = cellet;
@@ -79,29 +79,10 @@ public class ServerClient extends Entity {
 
     public void resetTalkContext(TalkContext talkContext) {
         this.talkContext = talkContext;
-
-        if (null != this.disableTimer) {
-            this.disableTimer.cancel();
-            this.disableTimer = null;
-        }
     }
 
     public TalkContext getTalkContext() {
         return this.talkContext;
-    }
-
-    protected void disable(final TimeoutCallback callback) {
-        this.talkContext = null;
-
-        if (null == this.disableTimer) {
-            this.disableTimer = new Timer();
-            this.disableTimer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    callback.on(ServerClient.this);
-                }
-            }, 60 * 1000);
-        }
     }
 
     /**
@@ -243,6 +224,10 @@ public class ServerClient extends Entity {
     }
 
     public void transmitStream(String streamName, File file) {
+        if (null == this.talkContext) {
+            return;
+        }
+
         PrimitiveOutputStream stream = this.cellet.speakStream(this.talkContext, streamName);
         FileInputStream fis = null;
 

@@ -110,6 +110,11 @@ public class FileLabel extends Entity {
     private JSONObject context;
 
     /**
+     * 仅用于 Client 模块的本地文件描述。
+     */
+    private File file;
+
+    /**
      * 构造函数。
      *
      * @param domainName 域名称。
@@ -414,6 +419,14 @@ public class FileLabel extends Entity {
      */
     public void setContext(JSONObject context) {
         this.context = context;
+    }
+
+    public void setFile(File file) {
+        this.file = file;
+    }
+
+    public File getFile() {
+        return this.file;
     }
 
     @Override

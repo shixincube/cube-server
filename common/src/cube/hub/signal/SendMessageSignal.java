@@ -55,11 +55,6 @@ public class SendMessageSignal extends Signal {
 
     public SendMessageSignal(String channelCode,
                              ConversationType conversationType, String idOrName) {
-        this(channelCode, conversationType, idOrName, null);
-    }
-
-    public SendMessageSignal(String channelCode,
-                             ConversationType conversationType, String idOrName, String text) {
         super(NAME);
         setCode(channelCode);
 
@@ -69,8 +64,6 @@ public class SendMessageSignal extends Signal {
         else if (conversationType == ConversationType.Group) {
             this.groupName = idOrName;
         }
-
-        this.text = text;
     }
 
     public SendMessageSignal(JSONObject json) {
@@ -90,11 +83,17 @@ public class SendMessageSignal extends Signal {
             this.conversationType = ConversationType.Group;
         }
 
-        try {
-            byte[] bytes = Base64.decode(json.getString("text"));
-            this.text = new String(bytes, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (json.has("text")) {
+            try {
+                byte[] bytes = Base64.decode(json.getString("text"));
+                this.text = new String(bytes, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (json.has("fileCode")) {
+            this.fileCode = json.getString("fileCode");
         }
     }
 
@@ -116,6 +115,10 @@ public class SendMessageSignal extends Signal {
 
     public String getGroupName() {
         return this.groupName;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 
     public String getText() {
@@ -149,6 +152,10 @@ public class SendMessageSignal extends Signal {
         if (null != this.text) {
             String base64 = Base64.encodeBytes(this.text.getBytes(StandardCharsets.UTF_8));
             json.put("text", base64);
+        }
+
+        if (null != this.fileCode) {
+            json.put("fileCode", this.fileCode);
         }
 
         return json;
