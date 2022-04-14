@@ -47,6 +47,10 @@ public class OCROperation implements FileOperation, JSONable {
     public OCROperation() {
     }
 
+    public OCROperation(String language) {
+        this.language = language;
+    }
+
     public OCROperation(boolean singleTextLine) {
         this.singleTextLine = singleTextLine;
     }

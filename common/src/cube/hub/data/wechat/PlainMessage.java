@@ -80,6 +80,22 @@ public class PlainMessage extends Metadata {
         this.text = text;
     }
 
+    public PlainMessage(long sn, File file) {
+        super(sn);
+        this.datePrecision = DatePrecision.Unknown;
+        this.date = System.currentTimeMillis();
+        this.file = file;
+        this.fileMD5 = md5(file);
+    }
+
+    public PlainMessage(File file, long date, int datePrecision) {
+        super(Utils.generateSerialNumber());
+        this.datePrecision = datePrecision;
+        this.date = date;
+        this.file = file;
+        this.fileMD5 = md5(file);
+    }
+
     public PlainMessage(JSONObject json) {
         super(json);
         this.datePrecision = json.getInt("precision");
@@ -121,9 +137,8 @@ public class PlainMessage extends Metadata {
         return this.fileMD5;
     }
 
-    public void setFile(File file) {
-        this.file = file;
-        this.fileMD5 = md5(file);
+    public void setFileLabel(FileLabel fileLabel) {
+        this.fileLabel = fileLabel;
     }
 
     public FileLabel getFileLabel() {
