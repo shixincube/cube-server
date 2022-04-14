@@ -36,10 +36,42 @@ import org.json.JSONObject;
  */
 public class OCROperation implements FileOperation, JSONable {
 
+    public final static String LANG_CHINESE = "chi_sim";
+
+    public final static String LANG_ENGLISH = "eng";
+
+    private String language;
+
+    private boolean singleTextLine = false;
+
     public OCROperation() {
     }
 
+    public OCROperation(boolean singleTextLine) {
+        this.singleTextLine = singleTextLine;
+    }
+
+    public OCROperation(String language, boolean singleTextLine) {
+        this.language = language;
+        this.singleTextLine = singleTextLine;
+    }
+
     public OCROperation(JSONObject json) {
+        if (json.has("lang")) {
+            this.language = json.getString("lang");
+        }
+
+        if (json.has("singleLine")) {
+            this.singleTextLine = json.getBoolean("singleLine");
+        }
+    }
+
+    public String getLanguage() {
+        return this.language;
+    }
+
+    public boolean isSingleTextLine() {
+        return this.singleTextLine;
     }
 
     @Override
@@ -51,6 +83,12 @@ public class OCROperation implements FileOperation, JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("process", this.getProcessAction());
+
+        json.put("singleLine", this.singleTextLine);
+
+        if (null != this.language) {
+            json.put("lang", this.language);
+        }
         return json;
     }
 

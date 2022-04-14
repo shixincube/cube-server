@@ -38,7 +38,7 @@ public abstract class OpticalCharacterRecognition extends Processor {
 
     protected File outputText;
 
-    protected String language = "chi_sim+eng";
+    //protected String language = "chi_sim+eng";
 
     public OpticalCharacterRecognition(Path workPath) {
         super(workPath);

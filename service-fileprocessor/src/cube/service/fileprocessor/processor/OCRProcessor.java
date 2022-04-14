@@ -79,8 +79,15 @@ public class OCRProcessor extends OpticalCharacterRecognition {
         commandLine.add("tesseract");
         commandLine.add(this.inputImage.getAbsolutePath());
         commandLine.add(this.outputText.getAbsolutePath());
+
         commandLine.add("-l");
-        commandLine.add(this.language);
+        commandLine.add(processorContext.getLanguage());
+
+        if (processorContext.isSingleLine()) {
+            commandLine.add("--psm");
+            commandLine.add("7");
+        }
+
         commandLine.add("hocr");
 
         int status = -1;

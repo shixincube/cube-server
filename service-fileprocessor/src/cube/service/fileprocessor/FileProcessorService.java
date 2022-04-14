@@ -35,6 +35,7 @@ import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.file.*;
+import cube.file.operation.OCROperation;
 import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.*;
 import cube.service.fileprocessor.processor.video.SnapshotContext;
@@ -713,7 +714,7 @@ public class FileProcessorService extends AbstractModule {
                     OCRProcessor processor = new OCRProcessor(this.workPath);
                     processor.setInputImage(file);
                     // 创建上下文
-                    context = new OCRProcessorContext();
+                    context = new OCRProcessorContext((OCROperation) work.getFileOperation());
                     // 执行处理
                     processor.go(context);
 
@@ -886,7 +887,7 @@ public class FileProcessorService extends AbstractModule {
                 // 创建 OCR 处理器
                 OCRProcessor processor = createOCRProcessor(domain, fileCode);
                 if (null != processor) {
-                    OCRProcessorContext context = new OCRProcessorContext();
+                    OCRProcessorContext context = new OCRProcessorContext(new OCROperation());
                     processor.go(context);
                     return context.toJSON();
                 }

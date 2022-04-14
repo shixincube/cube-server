@@ -31,6 +31,7 @@ import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
 import cube.file.OCRFile;
 import cube.file.TesseractHocrFile;
+import cube.file.operation.OCROperation;
 import cube.util.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -44,15 +45,23 @@ import java.util.List;
  */
 public class OCRProcessorContext extends ProcessorContext {
 
+    private String language = "chi_sim+eng";
+
+    private boolean singleLine = false;
+
     private FileLabel imageFileLabel;
 
     private List<String> resultText;
 
     private OCRFile ocrFile;
 
-    public OCRProcessorContext() {
+    public OCRProcessorContext(OCROperation ocrOperation) {
         super();
         this.resultText = new ArrayList<>();
+        this.singleLine = ocrOperation.isSingleTextLine();
+        if (null != ocrOperation.getLanguage()) {
+            this.language = ocrOperation.getLanguage();
+        }
     }
 
     public OCRProcessorContext(JSONObject json) {
@@ -68,6 +77,14 @@ public class OCRProcessorContext extends ProcessorContext {
         if (json.has("image")) {
             this.imageFileLabel = new FileLabel(json.getJSONObject("image"));
         }
+    }
+
+    public String getLanguage() {
+        return this.language;
+    }
+
+    public boolean isSingleLine() {
+        return this.singleLine;
     }
 
     public void setImageFileLabel(FileLabel imageFileLabel) {
