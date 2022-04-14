@@ -61,6 +61,11 @@ public class FileHandler extends FileLabelHandler {
 
     public final static String CONTEXT_PATH = "/hub/file/";
 
+    /**
+     * 允许上传的最大文件大小。
+     */
+    private long maxFileSize = 50L * 1024 * 1024;
+
     private Performer performer;
 
     private Controller controller;
@@ -83,6 +88,9 @@ public class FileHandler extends FileLabelHandler {
             return;
         }
 
+        long totalSize = 0;
+        boolean oversize = false;
+
         File formFile = new File(CacheCenter.getInstance().getWorkPath().toFile(), code + ".form");
         FileOutputStream fos = null;
 
@@ -96,6 +104,13 @@ public class FileHandler extends FileLabelHandler {
             int length = 0;
             while ((length = is.read(bytes)) > 0) {
                 fos.write(bytes, 0, length);
+
+                totalSize += length;
+                if (totalSize > this.maxFileSize) {
+                    // 文件数据大小超过限制
+                    oversize = true;
+                    break;
+                }
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -103,6 +118,22 @@ public class FileHandler extends FileLabelHandler {
             if (null != fos) {
                 fos.close();
             }
+        }
+
+        if (oversize) {
+            // 删除表单文件
+            formFile.delete();
+
+            this.respond(response, HttpStatus.BAD_REQUEST_400);
+            this.complete();
+
+            // 关闭输入流
+            try {
+                request.getInputStream().close();
+            } catch (Exception e) {
+                // Nothing
+            }
+            return;
         }
 
         try {
