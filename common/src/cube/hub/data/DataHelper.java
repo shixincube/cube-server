@@ -26,12 +26,15 @@
 
 package cube.hub.data;
 
+import cell.util.Base64;
 import cube.common.entity.Contact;
 import cube.common.entity.FileAttachment;
 import cube.common.entity.Group;
 import cube.common.entity.Message;
 import cube.hub.data.wechat.PlainMessage;
 import org.json.JSONObject;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * 辅助函数。
@@ -103,7 +106,10 @@ public class DataHelper {
         if (plainMessage.isTextType()) {
             payload = new JSONObject();
             payload.put("type", "text");
-            payload.put("content", plainMessage.getText());
+            // 如果使用 Base64 格式，则标记 base64 为 true
+            payload.put("base64", true);
+            payload.put("content", Base64.encodeBytes(
+                    plainMessage.getText().getBytes(StandardCharsets.UTF_8)));
         }
         else if (plainMessage.isImageType()) {
             payload = new JSONObject();

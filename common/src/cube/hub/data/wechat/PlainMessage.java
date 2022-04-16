@@ -196,6 +196,35 @@ public class PlainMessage extends Metadata {
                 this.datePrecision = DatePrecision.Day;
                 this.date = calendar.getTimeInMillis();
             }
+            else if (segments.length == 2) {
+                // 处理后段
+                String md = segments[1];
+                String m = null;
+                String d = null;
+                if (md.length() == 4) {
+                    m = md.substring(0, 2);
+                    d = md.substring(2, 4);
+                }
+                else if (md.length() == 3) {
+                    m = md.substring(0, 1);
+                    d = md.substring(1, 3);
+                }
+                else if (md.length() == 2) {
+                    m = md.substring(0, 1);
+                    d= md.substring(1, 2);
+                }
+
+                Calendar calendar = Calendar.getInstance();
+                calendar.set(Calendar.YEAR, Integer.parseInt("20" + segments[0]));
+                if (null != m) {
+                    calendar.set(Calendar.MONTH, Integer.parseInt(m) - 1);
+                }
+                if (null != d) {
+                    calendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(d));
+                }
+                this.datePrecision = DatePrecision.Day;
+                this.date = calendar.getTimeInMillis();
+            }
             else {
                 segments = dateText.split(":");
                 if (segments.length == 2) {
