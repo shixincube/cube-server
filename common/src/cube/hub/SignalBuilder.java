@@ -73,6 +73,9 @@ public class SignalBuilder {
         else if (LogoutSignal.NAME.equals(name)) {
             return new LogoutSignal(signalJson);
         }
+        else if (AddFriendSignal.NAME.equals(name)) {
+            return new AddFriendSignal(signalJson);
+        }
         else if (PassBySignal.NAME.equals(name)) {
             return new PassBySignal(signalJson);
         }
