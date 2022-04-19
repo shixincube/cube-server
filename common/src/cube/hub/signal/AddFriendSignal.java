@@ -26,6 +26,7 @@
 
 package cube.hub.signal;
 
+import cube.common.entity.Contact;
 import org.json.JSONObject;
 
 /**
@@ -34,6 +35,8 @@ import org.json.JSONObject;
 public class AddFriendSignal extends Signal {
 
     public final static String NAME = "AddFriend";
+
+    private Contact account;
 
     private String searchKeyword;
 
@@ -47,19 +50,26 @@ public class AddFriendSignal extends Signal {
      */
     private String remarkName;
 
-    public AddFriendSignal(String searchKeyword) {
+    public AddFriendSignal(Contact account, String searchKeyword) {
         super(NAME);
+        this.account = account;
         this.searchKeyword = searchKeyword;
     }
 
     public AddFriendSignal(JSONObject json) {
         super(json);
+        this.account = new Contact(json.getJSONObject("account"));
+        this.searchKeyword = json.getString("searchKeyword");
         if (json.has("postscript")) {
             this.postscript = json.getString("postscript");
         }
         if (json.has("remarkName")) {
             this.remarkName = json.getString("remarkName");
         }
+    }
+
+    public Contact getAccount() {
+        return this.account;
     }
 
     public String getSearchKeyword() {
@@ -85,6 +95,7 @@ public class AddFriendSignal extends Signal {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        json.put("account", this.account.toJSON());
         json.put("searchKeyword", this.searchKeyword);
         if (null != this.postscript) {
             json.put("postscript", this.postscript);
