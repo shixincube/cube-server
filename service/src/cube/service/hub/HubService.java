@@ -327,8 +327,20 @@ public class HubService extends AbstractModule {
                         else if (signal instanceof SendMessageSignal) {
                             // 发送消息
                             SendMessageSignal sendMessageSignal = (SendMessageSignal) signal;
-                            Event resultEvent = WeChatHub.getInstance().transportSignal(channelCode,
-                                    sendMessageSignal);
+                            Event resultEvent = WeChatHub.getInstance().transportSignal(
+                                    channelCode, sendMessageSignal);
+                            if (null != resultEvent) {
+                                responder.respondDispatcher(sn, HubStateCode.Ok.code, resultEvent);
+                            }
+                            else {
+                                responder.respondDispatcher(sn, HubStateCode.Failure.code, signal);
+                            }
+                        }
+                        else if (signal instanceof AddFriendSignal) {
+                            // 添加好友
+                            AddFriendSignal addFriendSignal = (AddFriendSignal) signal;
+                            Event resultEvent = WeChatHub.getInstance().transportSignal(
+                                    channelCode, addFriendSignal);
                             if (null != resultEvent) {
                                 responder.respondDispatcher(sn, HubStateCode.Ok.code, resultEvent);
                             }

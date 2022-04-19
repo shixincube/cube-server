@@ -131,7 +131,7 @@ public class MessagesHandler extends HubHandler {
             signal.setGroupName(groupName);
         }
 
-        Event event = this.syncTransmit(request, response, signal);
+        Event event = this.syncTransmit(response, signal);
         if (null == event) {
             this.complete();
             return;

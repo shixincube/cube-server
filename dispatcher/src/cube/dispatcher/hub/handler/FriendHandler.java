@@ -26,15 +26,13 @@
 
 package cube.dispatcher.hub.handler;
 
-import cell.util.Base64;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
-import cube.common.entity.ConversationType;
 import cube.dispatcher.Performer;
 import cube.dispatcher.hub.Controller;
 import cube.hub.data.ChannelCode;
 import cube.hub.event.Event;
-import cube.hub.signal.SendMessageSignal;
+import cube.hub.signal.AddFriendSignal;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
 
@@ -45,21 +43,30 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 发送消息。
+ * 添加朋友。
  */
-public class SendMessageHandler extends HubHandler {
+public class FriendHandler extends HubHandler {
 
-    public final static String CONTEXT_PATH = "/hub/message/";
+    public final static String CONTEXT_PATH = "/hub/friend/";
 
-    private final long coolingTime = 500;
+    private final long coolingTime = 1000;
 
-    public SendMessageHandler(Performer performer, Controller controller) {
+    public FriendHandler(Performer performer, Controller controller) {
         super(performer, controller);
     }
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
-        String code = this.getRequestPath(request);
+        String path = this.getRequestPath(request);
+        String[] tmp = path.split("/");
+        if (tmp.length != 2) {
+            this.respond(response, HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
+        }
+
+        String action = tmp[0];
+        String code = tmp[1];
 
         if (!this.controller.verify(code, CONTEXT_PATH, this.coolingTime)) {
             this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
@@ -67,86 +74,73 @@ public class SendMessageHandler extends HubHandler {
             return;
         }
 
+        // 校验访问码
         ChannelCode channelCode = Helper.checkChannelCode(code, response, this.performer);
         if (null == channelCode) {
             this.complete();
             return;
         }
 
-        // 读取流
-        FlexibleByteBuffer buf = new FlexibleByteBuffer();
+        FlexibleByteBuffer buf = new FlexibleByteBuffer(256);
 
         try {
-            byte[] bytes = new byte[4096];
             InputStream is = request.getInputStream();
-
             int length = 0;
+            byte[] bytes = new byte[128];
             while ((length = is.read(bytes)) > 0) {
                 buf.put(bytes, 0, length);
             }
-
-            // 整理缓存
-            buf.flip();
         } catch (IOException e) {
             Logger.e(this.getClass(), "#doPost", e);
-            response.setStatus(HttpStatus.BAD_REQUEST_400);
+            this.respond(response, HttpStatus.INTERNAL_SERVER_ERROR_500);
             this.complete();
             return;
         }
 
-        String jsonString = new String(buf.array(), 0, buf.limit(), StandardCharsets.UTF_8);
+        // 整理
+        buf.flip();
+
+        JSONObject data = null;
         try {
-            JSONObject data = new JSONObject(jsonString);
-
-            SendMessageSignal signal = null;
-            if (data.has("partnerId")) {
-                signal = new SendMessageSignal(channelCode.code,
-                        ConversationType.Contact, data.getString("partnerId"));
-            }
-            else if (data.has("groupName")) {
-                signal = new SendMessageSignal(channelCode.code,
-                        ConversationType.Group, data.getString("groupName"));
-            }
-            else {
-                response.setStatus(HttpStatus.BAD_REQUEST_400);
-                this.complete();
-                return;
-            }
-
-            if (data.has("text")) {
-                String content = data.getString("text");
-                // 进行 Base64 解码
-                byte[] bytes = Base64.decode(content);
-                // 还原的原文本
-                content = new String(bytes, StandardCharsets.UTF_8);
-
-                // 设置文本内容
-                signal.setText(content);
-            }
-            else if (data.has("fileCode")) {
-                String fileCode = data.getString("fileCode");
-                // 设置文件码
-                signal.setFileCode(fileCode);
-            }
-            else {
-                response.setStatus(HttpStatus.FORBIDDEN_403);
-                this.complete();
-                return;
-            }
-
-            Event event = this.syncTransmit(response, signal);
-            if (null != event) {
-                this.respondOk(response, event.toJSON());
-                this.complete();
-            }
-            else {
-                response.setStatus(HttpStatus.NOT_FOUND_404);
-                this.complete();
-            }
+            data = new JSONObject(new String(buf.array(), 0, buf.limit(), StandardCharsets.UTF_8));
         } catch (Exception e) {
-            Logger.e(this.getClass(), "#doPost - " + request.getRemoteAddr(), e);
-            response.setStatus(HttpStatus.FORBIDDEN_403);
+            Logger.e(this.getClass(), "#doPost", e);
+            this.respond(response, HttpStatus.INTERNAL_SERVER_ERROR_500);
+            this.complete();
+            return;
+        }
+
+        if (action.equalsIgnoreCase("add")) {
+            this.doAdd(code, data, response);
+        }
+        else if (action.equalsIgnoreCase("remove")) {
+            this.doRemove(code, data, response);
+        }
+        else {
+            this.respond(response, HttpStatus.FORBIDDEN_403);
             this.complete();
         }
+    }
+
+    private void doAdd(String channelCode, JSONObject requestData, HttpServletResponse response) {
+        AddFriendSignal signal = new AddFriendSignal(channelCode, requestData.getString("searchKeyword"));
+        if (requestData.has("postscript")) {
+            signal.setPostscript(requestData.getString("postscript"));
+        }
+        if (requestData.has("remarkName")) {
+            signal.setRemarkName(requestData.getString("remarkName"));
+        }
+
+        Event event = syncTransmit(response, signal);
+        if (null != event) {
+            this.respondOk(response, event.toJSON());
+        }
+
+        this.complete();
+    }
+
+    private void doRemove(String channelCode, JSONObject requestData, HttpServletResponse response) {
+        this.respond(response, HttpStatus.BAD_REQUEST_400);
+        this.complete();
     }
 }

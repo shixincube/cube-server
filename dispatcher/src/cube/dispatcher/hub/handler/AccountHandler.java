@@ -69,7 +69,7 @@ public class AccountHandler extends HubHandler {
         }
 
         GetAccountSignal requestSignal = new GetAccountSignal(channelCode.code);
-        Event event = this.syncTransmit(request, response, requestSignal);
+        Event event = this.syncTransmit(response, requestSignal);
         if (null == event) {
             this.complete();
             return;

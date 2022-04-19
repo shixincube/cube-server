@@ -591,18 +591,21 @@ public class WeChatHub {
         // 获取账号 ID
         String accountId = this.service.getChannelManager().getAccountId(channelCode.code);
         if (null == accountId) {
+            Logger.w(this.getClass(), "#transportSignal - Not find account id in channel " + channelCode.code);
             return null;
         }
 
         // 查询账号
         Contact account = this.service.getChannelManager().queryAccount(accountId, channelCode.product);
         if (null == account) {
+            Logger.w(this.getClass(), "#transportSignal - Not find account in channel " + channelCode.code);
             return null;
         }
 
         // 获取听风者 ID
         Long pretenderId = this.service.getChannelManager().getPretenderId(channelCode.code);
         if (null == pretenderId) {
+            Logger.w(this.getClass(), "#transportSignal - Not find pretender in channel " + channelCode.code);
             return null;
         }
 
@@ -610,11 +613,16 @@ public class WeChatHub {
             // 设置账号数据
             ((SendMessageSignal) signal).setAccount(account);
         }
+        else if (signal instanceof AddFriendSignal) {
+            // 设置账号数据
+            ((AddFriendSignal) signal).setAccount(account);
+        }
 
         if (this.service.getSignalController().transmit(pretenderId, signal)) {
-            return new AckEvent();
+            return new AckEvent(channelCode, signal.getName());
         }
         else {
+            Logger.e(this.getClass(), "#transportSignal - send data to \"" + channelCode.code + "\" failed");
             return null;
         }
     }

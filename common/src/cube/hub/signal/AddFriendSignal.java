@@ -50,16 +50,19 @@ public class AddFriendSignal extends Signal {
      */
     private String remarkName;
 
-    public AddFriendSignal(Contact account, String searchKeyword) {
+    public AddFriendSignal(String channelCode, String searchKeyword) {
         super(NAME);
-        this.account = account;
+        setCode(channelCode);
         this.searchKeyword = searchKeyword;
     }
 
     public AddFriendSignal(JSONObject json) {
         super(json);
-        this.account = new Contact(json.getJSONObject("account"));
         this.searchKeyword = json.getString("searchKeyword");
+
+        if (json.has("account")) {
+            this.account = new Contact(json.getJSONObject("account"));
+        }
         if (json.has("postscript")) {
             this.postscript = json.getString("postscript");
         }
@@ -68,12 +71,16 @@ public class AddFriendSignal extends Signal {
         }
     }
 
-    public Contact getAccount() {
-        return this.account;
-    }
-
     public String getSearchKeyword() {
         return this.searchKeyword;
+    }
+
+    public void setAccount(Contact account) {
+        this.account = account;
+    }
+
+    public Contact getAccount() {
+        return this.account;
     }
 
     public void setPostscript(String postscript) {
@@ -95,8 +102,11 @@ public class AddFriendSignal extends Signal {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("account", this.account.toJSON());
         json.put("searchKeyword", this.searchKeyword);
+
+        if (null != this.account) {
+            json.put("account", this.account.toJSON());
+        }
         if (null != this.postscript) {
             json.put("postscript", this.postscript);
         }

@@ -85,7 +85,7 @@ public class GroupHandler extends HubHandler {
         }
 
         GetGroupSignal requestSignal = new GetGroupSignal(channelCode.code, groupName);
-        Event event = this.syncTransmit(request, response, requestSignal);
+        Event event = this.syncTransmit(response, requestSignal);
         if (null == event) {
             this.complete();
             return;

@@ -103,7 +103,7 @@ public class ContactBookHandler extends HubHandler {
 
         GetContactZoneSignal signal = new GetContactZoneSignal(code,
                 ContactZoneParticipantType.Contact, begin, end);
-        Event event = this.syncTransmit(request, response, signal);
+        Event event = this.syncTransmit(response, signal);
         if (null == event) {
             this.complete();
             return;

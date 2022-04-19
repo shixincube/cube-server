@@ -202,5 +202,11 @@ public class HubCellet extends AbstractCellet {
         sendMsgHandler.setContextPath(SendMessageHandler.CONTEXT_PATH);
         sendMsgHandler.setHandler(new SendMessageHandler(this.performer, this.controller));
         httpServer.addContextHandler(sendMsgHandler);
+
+        // 添加、删除朋友
+        ContextHandler friendHandler = new ContextHandler();
+        friendHandler.setContextPath(FriendHandler.CONTEXT_PATH);
+        friendHandler.setHandler(new FriendHandler(this.performer, this.controller));
+        httpServer.addContextHandler(friendHandler);
     }
 }

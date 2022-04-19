@@ -63,8 +63,7 @@ public abstract class HubHandler extends CrossDomainHandler {
         return path.substring(1).trim();
     }
 
-    protected Event syncTransmit(HttpServletRequest request, HttpServletResponse response,
-                       Signal signal) {
+    protected Event syncTransmit(HttpServletResponse response, Signal signal) {
         ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
         actionDialect.addParam("signal", signal.toJSON());
 
@@ -76,7 +75,7 @@ public abstract class HubHandler extends CrossDomainHandler {
 
         int stateCode = result.getParamAsInt("code");
         if (HubStateCode.Ok.code != stateCode) {
-            Logger.w(this.getClass(), "#doGet - state : " + stateCode);
+            Logger.w(this.getClass(), "#syncTransmit - state : " + stateCode);
             JSONObject data = new JSONObject();
             data.put("code", stateCode);
             this.respond(response, HttpStatus.UNAUTHORIZED_401, data);

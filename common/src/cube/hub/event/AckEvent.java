@@ -26,6 +26,7 @@
 
 package cube.hub.event;
 
+import cube.hub.data.ChannelCode;
 import org.json.JSONObject;
 
 /**
@@ -35,8 +36,12 @@ public class AckEvent extends WeChatEvent {
 
     public final static String NAME = "Ack";
 
-    public AckEvent() {
+    private String ackSignal;
+
+    public AckEvent(ChannelCode channelCode, String ackSignal) {
         super(NAME);
+        setCode(channelCode.code);
+        this.ackSignal = ackSignal;
     }
 
     public AckEvent(long sn) {
@@ -45,5 +50,21 @@ public class AckEvent extends WeChatEvent {
 
     public AckEvent(JSONObject json) {
         super(json);
+        if (json.has("ackSignal")) {
+            this.ackSignal = json.getString("ackSignal");
+        }
+    }
+
+    public String getAckSignal() {
+        return this.ackSignal;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        if (null != this.ackSignal) {
+            json.put("ackSignal", this.ackSignal);
+        }
+        return json;
     }
 }
