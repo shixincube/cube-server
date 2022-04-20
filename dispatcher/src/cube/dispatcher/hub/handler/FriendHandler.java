@@ -123,7 +123,7 @@ public class FriendHandler extends HubHandler {
     }
 
     private void doAdd(String channelCode, JSONObject requestData, HttpServletResponse response) {
-        AddFriendSignal signal = new AddFriendSignal(channelCode, requestData.getString("searchKeyword"));
+        AddFriendSignal signal = new AddFriendSignal(channelCode, requestData.getString("keyword"));
         if (requestData.has("postscript")) {
             signal.setPostscript(requestData.getString("postscript"));
         }
