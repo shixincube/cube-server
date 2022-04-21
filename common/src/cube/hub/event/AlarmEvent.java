@@ -39,9 +39,31 @@ public class AlarmEvent extends WeChatEvent {
 
     private JSONObject alarmData;
 
-    public AlarmEvent() {
+    public AlarmEvent(String alarmName, JSONObject alarmData) {
         super(NAME);
+        this.alarmName = alarmName;
+        this.alarmData = alarmData;
     }
 
-    
+    public AlarmEvent(JSONObject json) {
+        super(json);
+        this.alarmName = json.getString("alarmName");
+        this.alarmData = json.getJSONObject("alarmData");
+    }
+
+    public String getAlarmName() {
+        return this.alarmName;
+    }
+
+    public JSONObject getAlarmData() {
+        return this.alarmData;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("alarmName", this.alarmName);
+        json.put("alarmData", this.alarmData);
+        return json;
+    }
 }
