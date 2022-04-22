@@ -41,6 +41,7 @@ public class FormData {
 
     private static final String sContentType = "Content-Type".toLowerCase();
     private static final String sOctetStream = "octet-stream".toLowerCase();
+    private static final String sImage = "image".toLowerCase();
     private static final String sJson = "json".toLowerCase();
 
     private FlexibleByteBuffer buf;
@@ -157,13 +158,15 @@ public class FormData {
 
                     if (segment) {
                         String line = new String(this.buf.array(), 0, this.buf.limit());
-                        if (line.toLowerCase().contains("name=\"file\"") && line.toLowerCase().contains("filename")) {
+                        line = line.toLowerCase();
+                        if (line.contains("name=\"file\"") && line.contains("filename")) {
                             // 文件数据
                             segment = true;
                             int pos = line.lastIndexOf("filename");
                             this.fileName = line.substring(pos + 10, line.length() - 1);
                         }
-                        else if (line.toLowerCase().contains(sContentType) && line.toLowerCase().contains(sOctetStream)) {
+                        else if (line.contains(sContentType) &&
+                                (line.contains(sOctetStream) || line.contains(sImage))) {
                             // 文件类型
                             segment = false;
                             // 进入读取数据流程
@@ -315,7 +318,7 @@ public class FormData {
                         String lowerData = cdata.toLowerCase();
 
                         if (lowerData.contains(sContentType)) {
-                            if (lowerData.contains(sOctetStream)) {
+                            if (lowerData.contains(sOctetStream) || lowerData.contains(sImage)) {
                                 // 文件流
                                 // 跳过空行
                                 cursor += 2;

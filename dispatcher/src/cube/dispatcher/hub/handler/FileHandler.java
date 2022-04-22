@@ -113,7 +113,7 @@ public class FileHandler extends FileLabelHandler {
                 }
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Logger.e(this.getClass(), "", e);
         } finally {
             if (null != fos) {
                 fos.close();
@@ -196,7 +196,7 @@ public class FileHandler extends FileLabelHandler {
                 this.complete();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(this.getClass(), "", e);
         } finally {
             formFile.delete();
             CacheCenter.getInstance().unlock(code);
