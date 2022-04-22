@@ -93,6 +93,9 @@ public class EventBuilder {
         else if (AddFriendEvent.NAME.equals(name)) {
             event = new AddFriendEvent(eventJson);
         }
+        else if (AlarmEvent.NAME.equals(name)) {
+            event = new AlarmEvent(eventJson);
+        }
         else if (ScreenshotEvent.NAME.equals(name)) {
             event = new ScreenshotEvent(eventJson);
         }

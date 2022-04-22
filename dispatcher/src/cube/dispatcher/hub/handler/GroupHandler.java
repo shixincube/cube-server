@@ -26,6 +26,7 @@
 
 package cube.dispatcher.hub.handler;
 
+import cell.util.log.Logger;
 import cube.dispatcher.Performer;
 import cube.dispatcher.hub.Controller;
 import cube.hub.HubStateCode;
@@ -81,7 +82,15 @@ public class GroupHandler extends HubHandler {
         try {
             groupName = URLDecoder.decode(groupName, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#decode failed: " + groupName, e);
+            response.setStatus(HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
+        } catch (Exception e) {
+            Logger.w(this.getClass(), "#decode failed: " + groupName, e);
+            response.setStatus(HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
         }
 
         GetGroupSignal requestSignal = new GetGroupSignal(channelCode.code, groupName);

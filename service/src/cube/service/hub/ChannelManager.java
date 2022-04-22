@@ -278,6 +278,12 @@ public class ChannelManager {
             })
     };
 
+    private final StorageField[] alarmFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            })
+    };
+
     private final String channelCodeTable = "hub_channel_code";
 
     private final String allocatingTable = "hub_allocating";
