@@ -32,6 +32,7 @@ import cube.common.entity.FileLabel;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -55,6 +56,11 @@ public class OperationWorkflow implements JSONable {
      * 源文件的文件码。
      */
     private String sourceFileCode;
+
+    /**
+     * 源本地文件。
+     */
+    private File sourceFile;
 
     /**
      * 联系人 ID 。
@@ -154,6 +160,14 @@ public class OperationWorkflow implements JSONable {
 
     public void setSourceFileCode(String fileCode) {
         this.sourceFileCode = fileCode;
+    }
+
+    public File getSourceFile() {
+        return this.sourceFile;
+    }
+
+    public void setSourceFile(File sourceFile) {
+        this.sourceFile = sourceFile;
     }
 
     /**
