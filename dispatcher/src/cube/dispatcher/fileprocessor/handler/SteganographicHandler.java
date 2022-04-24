@@ -60,6 +60,8 @@ public class SteganographicHandler extends CrossDomainHandler {
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
+        // 进行隐写编码
+
         JSONObject data = null;
 
         try {
@@ -99,6 +101,42 @@ public class SteganographicHandler extends CrossDomainHandler {
         }
 
         Packet responsePacket = new Packet(resultDialect);
+        this.respondOk(response, responsePacket.data);
+        this.complete();
+    }
 
+    @Override
+    public void doGet(HttpServletRequest request, HttpServletResponse response) {
+        // 进行隐写解码
+
+        String fileCode = request.getParameter("fc");
+        if (null == fileCode || fileCode.length() < 8) {
+            this.respond(response, HttpStatus.BAD_REQUEST_400);
+            this.complete();
+            return;
+        }
+
+        String mask = request.getParameter("mask");
+        if (null == mask || mask.length() < 8) {
+            this.respond(response, HttpStatus.BAD_REQUEST_400);
+            this.complete();
+            return;
+        }
+
+        JSONObject packetPayload = new JSONObject();
+        packetPayload.put("fileCode", fileCode);
+        packetPayload.put("maskCode", mask);
+
+        Packet packet = new Packet(FileProcessorAction.Steganographic.name, packetPayload);
+        ActionDialect resultDialect = this.performer.syncTransmit(FileProcessorCellet.NAME, packet.toDialect());
+        if (null == resultDialect) {
+            this.respond(response, HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
+        }
+
+        Packet responsePacket = new Packet(resultDialect);
+        this.respondOk(response, responsePacket.data);
+        this.complete();
     }
 }

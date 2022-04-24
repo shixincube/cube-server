@@ -195,7 +195,10 @@ public final class StatisticsSystem {
     }
 
     public void stop() {
-        this.storage.close();
+        if (null != this.storage) {
+            this.storage.close();
+            this.storage = null;
+        }
 
         if (null != this.timer) {
             this.timer.cancel();

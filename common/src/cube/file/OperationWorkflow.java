@@ -106,7 +106,10 @@ public class OperationWorkflow implements JSONable {
     public OperationWorkflow(JSONObject json) {
         this.sn = json.getLong("sn");
         this.domain = json.getString("domain");
-        this.sourceFileCode = json.getString("source");
+
+        if (json.has("source")) {
+            this.sourceFileCode = json.getString("source");
+        }
 
         if (json.has("sourceFile")) {
             this.sourceFile = new File(json.getString("sourceFile"));
@@ -246,7 +249,10 @@ public class OperationWorkflow implements JSONable {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
         json.put("domain", this.domain);
-        json.put("source", this.sourceFileCode);
+
+        if (null != this.sourceFileCode) {
+            json.put("source", this.sourceFileCode);
+        }
 
         if (null != this.sourceFile) {
             json.put("sourceFile", this.sourceFile.getAbsolutePath());

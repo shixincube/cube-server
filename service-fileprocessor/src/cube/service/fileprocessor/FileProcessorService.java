@@ -52,6 +52,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -178,6 +179,15 @@ public class FileProcessorService extends AbstractModule {
                 }
             });
         }
+    }
+
+    /**
+     * 获取工作路径。
+     *
+     * @return
+     */
+    public Path getWorkPath() {
+        return this.workPath;
     }
 
     /**
@@ -609,33 +619,68 @@ public class FileProcessorService extends AbstractModule {
         String domainName = workflow.getDomain();
         // 源文件的文件码
         String fileCode = workflow.getSourceFileCode();
+        // 源文件
+        File localFile = workflow.getSourceFile();
+
+        String filename = null;
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#executeOperation - Start workflow : " + workflow.getSN() +
-                    " - @" + domainName + "/" + fileCode);
+            if (null != fileCode) {
+                Logger.d(this.getClass(), "#executeOperation - Start workflow : " + workflow.getSN() +
+                        " - @" + domainName + "/" + fileCode);
+            }
+            else {
+                Logger.d(this.getClass(), "#executeOperation - Start workflow : " + workflow.getSN() +
+                        " - @" + domainName + " " + localFile.getAbsolutePath());
+            }
         }
 
-        FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
-        FileLabel fileLabel = storageService.getFile(domainName, fileCode);
-        if (null == fileLabel) {
-            Logger.e(this.getClass(), "#executeOperation - (" + workflow.getSN()
-                    + ") Not find file : " + fileCode);
-            return false;
-        }
-
-        Path sourceFile = Paths.get(this.workPath.toString(),
-                fileCode + "." + fileLabel.getFileType().getPreferredExtension());
-
-        if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
-            String path = storageService.loadFileToDisk(domainName, fileCode);
-            if (null == path) {
+        Path sourceFile = null;
+        if (null != fileCode) {
+            FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+            FileLabel fileLabel = storageService.getFile(domainName, fileCode);
+            if (null == fileLabel) {
                 Logger.e(this.getClass(), "#executeOperation - (" + workflow.getSN()
-                        + ") Load file to disk failed : " + fileCode);
+                        + ") Not find file : " + fileCode);
                 return false;
             }
 
+            filename = fileLabel.getFileName();
+
+            sourceFile = Paths.get(this.workPath.toString(),
+                    fileCode + "." + fileLabel.getFileType().getPreferredExtension());
+
+            if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
+                String path = storageService.loadFileToDisk(domainName, fileCode);
+                if (null == path) {
+                    Logger.e(this.getClass(), "#executeOperation - (" + workflow.getSN()
+                            + ") Load file to disk failed : " + fileCode);
+                    return false;
+                }
+
+                try {
+                    Files.copy(Paths.get(path), sourceFile, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    Logger.e(this.getClass(), "#executeOperation - (" + workflow.getSN() + ")", e);
+                    return false;
+                }
+            }
+        }
+        else {
+            if (!localFile.exists()) {
+                Logger.e(this.getClass(),
+                        "#executeOperation - local file is no exists: " + localFile.getAbsolutePath());
+                return false;
+            }
+
+            filename = localFile.getName();
+
+            // 使用本地文件，目前仅供 Demo 使用
+            sourceFile = Paths.get(this.workPath.toString(), filename);
+
+            // 复制文件到工作目录
             try {
-                Files.copy(Paths.get(path), sourceFile);
+                Files.copy(Paths.get(localFile.getAbsolutePath()), sourceFile, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
                 Logger.e(this.getClass(), "#executeOperation - (" + workflow.getSN() + ")", e);
                 return false;
@@ -781,7 +826,7 @@ public class FileProcessorService extends AbstractModule {
                 // 扩展名
                 String ext = FileUtils.extractFileExtension(resultFile.getName());
                 // 矫正输出文件名
-                String finalName = FileUtils.extractFileName(fileLabel.getFileName()) + "_" +
+                String finalName = FileUtils.extractFileName(filename) + "_" +
                         TimeUtils.formatDateForPathSymbol(resultFile.lastModified()) + "." + ext;
                 File finalFile = new File(resultFile.getParent(), finalName);
                 resultFile.renameTo(finalFile);
@@ -789,7 +834,7 @@ public class FileProcessorService extends AbstractModule {
             }
             else {
                 // 矫正输出文件名
-                String finalName = FileUtils.extractFileName(fileLabel.getFileName()) + "_" +
+                String finalName = FileUtils.extractFileName(filename) + "_" +
                         TimeUtils.formatDateForPathSymbol(System.currentTimeMillis()) + ".zip";
 
                 resultFile = this.packFileSet(finalName, lastWork.getOutput());
@@ -831,6 +876,14 @@ public class FileProcessorService extends AbstractModule {
             listener.onWorkflowStopped(workflow);
         }
 
+        if (null != localFile) {
+            try {
+                Files.delete(sourceFile);
+            } catch (IOException e) {
+                // Nothing
+            }
+        }
+
         return true;
     }
 
@@ -853,7 +906,7 @@ public class FileProcessorService extends AbstractModule {
      * @param file
      * @return
      */
-    protected FileLabel writeFileToStorageService(Long contactId, String domainName, File file) {
+    public FileLabel writeFileToStorageService(Long contactId, String domainName, File file) {
         if (!file.exists()) {
             // 文件不存在
             return null;
