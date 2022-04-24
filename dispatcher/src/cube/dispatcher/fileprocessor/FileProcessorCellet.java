@@ -36,6 +36,7 @@ import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
 import cube.dispatcher.fileprocessor.handler.GetMediaSourceHandler;
 import cube.dispatcher.fileprocessor.handler.MediaStreamHandler;
+import cube.dispatcher.fileprocessor.handler.SteganographicHandler;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
 
@@ -80,16 +81,23 @@ public class FileProcessorCellet extends AbstractCellet {
         // 配置 HTTP/HTTPS 服务的句柄
         HttpServer httpServer = this.performer.getHttpServer();
 
-        // 添加句柄
+        // 媒体流处理句柄
         ContextHandler mediaListHandler = new ContextHandler();
         mediaListHandler.setContextPath(MediaStreamHandler.CONTEXT_PATH);
         mediaListHandler.setHandler(new MediaStreamHandler(this.performer));
         httpServer.addContextHandler(mediaListHandler);
 
+        // 获取媒体源句柄
         ContextHandler getMediaSourceHandler = new ContextHandler();
         getMediaSourceHandler.setContextPath(GetMediaSourceHandler.CONTEXT_PATH);
         getMediaSourceHandler.setHandler(new GetMediaSourceHandler(this.performer));
         httpServer.addContextHandler(getMediaSourceHandler);
+
+        // 隐写数据句柄
+        ContextHandler steganoHandler = new ContextHandler();
+        steganoHandler.setContextPath(SteganographicHandler.CONTEXT_PATH);
+        steganoHandler.setHandler(new SteganographicHandler(this.performer));
+        httpServer.addContextHandler(steganoHandler);
 
         MediaFileManager.getInstance().setPerformer(this.performer);
 

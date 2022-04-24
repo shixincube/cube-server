@@ -36,6 +36,7 @@ import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.fileprocessor.task.CancelWorkflowTask;
 import cube.service.fileprocessor.task.DetectObjectTask;
+import cube.service.fileprocessor.task.SteganographicTask;
 import cube.service.fileprocessor.task.SubmitWorkflowTask;
 
 import java.util.concurrent.ExecutorService;
@@ -94,6 +95,10 @@ public class FileProcessorServiceCellet extends AbstractCellet {
         }
         else if (FileProcessorAction.DetectObject.name.equals(action)) {
             this.executor.execute(new DetectObjectTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (FileProcessorAction.Steganographic.name.equals(action)) {
+            this.executor.execute(new SteganographicTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
     }

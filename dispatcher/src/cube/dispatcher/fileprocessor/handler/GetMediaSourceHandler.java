@@ -46,6 +46,7 @@ public class GetMediaSourceHandler extends CrossDomainHandler {
     private Performer performer;
 
     public GetMediaSourceHandler(Performer performer) {
+        super();
         this.performer = performer;
     }
 

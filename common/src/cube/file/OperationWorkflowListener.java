@@ -24,75 +24,24 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.file;
 
-public enum FileProcessorAction {
-
-    /**
-     * 获取媒体源地址。
-     */
-    GetMediaSource("getMediaSource"),
+/**
+ * 文件操作工作流监听器。
+ */
+public interface OperationWorkflowListener {
 
     /**
-     * 提交工作流。
+     * 工作流已开始执行时回调。
+     *
+     * @param workflow
      */
-    SubmitWorkflow("submitWorkflow"),
+    void onWorkflowStarted(OperationWorkflow workflow);
 
     /**
-     * 取消工作流。
+     * 工作流已执行结束时回调。
+     *
+     * @param workflow
      */
-    CancelWorkflow("cancelWorkflow"),
-
-    /**
-     * 工作流操作中。
-     */
-    WorkflowOperating("workflowOperating"),
-
-    /**
-     * 图像文件操作。
-     */
-    Image("image"),
-
-    /**
-     * 视频文件操作。
-     */
-    Video("video"),
-
-    /**
-     * 字符识别。
-     */
-    OCR("ocr"),
-
-    /**
-     * 生成缩略图。
-     */
-    Thumb("thumb"),
-
-    /**
-     * 对象检测。
-     */
-    DetectObject("detectObject"),
-
-    /**
-     * 对象检测应答。
-     */
-    DetectObjectAck("detectObjectAck"),
-
-    /**
-     * 隐写。
-     */
-    Steganographic("steganographic"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    FileProcessorAction(String name) {
-        this.name = name;
-    }
+    void onWorkflowStopped(OperationWorkflow workflow);
 }

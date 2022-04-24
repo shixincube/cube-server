@@ -65,7 +65,7 @@ public class SubmitWorkflowTask extends ClientTask {
         ActionDialect response = new ActionDialect(ClientAction.SubmitWorkflow.name);
         copyNotifier(response);
 
-        // 获取文件存储模块
+        // 获取文件处理器模块
         AbstractModule module = this.getFileProcessorModule();
         if (null == module) {
             response.addParam("code", FileProcessorStateCode.Failure.code);

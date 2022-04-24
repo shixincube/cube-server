@@ -26,8 +26,79 @@
 
 package cube.dispatcher.fileprocessor.handler;
 
+import cell.core.talk.dialect.ActionDialect;
+import cell.util.Base64;
+import cell.util.collection.FlexibleByteBuffer;
+import cell.util.log.Logger;
+import cube.common.Packet;
+import cube.common.action.FileProcessorAction;
+import cube.dispatcher.Performer;
+import cube.dispatcher.fileprocessor.FileProcessorCellet;
+import cube.util.CrossDomainHandler;
+import org.eclipse.jetty.http.HttpStatus;
+import org.json.JSONObject;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
 /**
- *
+ * 隐写数据。
  */
-public class SteganographicHandler {
+public class SteganographicHandler extends CrossDomainHandler {
+
+    public final static String CONTEXT_PATH = "/file/steganographic/";
+
+    private Performer performer;
+
+    public SteganographicHandler(Performer performer) {
+        super();
+        this.performer = performer;
+    }
+
+    @Override
+    public void doPost(HttpServletRequest request, HttpServletResponse response) {
+        JSONObject data = null;
+
+        try {
+            FlexibleByteBuffer buf = new FlexibleByteBuffer(256);
+
+            InputStream is = request.getInputStream();
+            int length = 0;
+            byte[] bytes = new byte[256];
+            while ((length = is.read(bytes)) > 0) {
+                buf.put(bytes, 0, length);
+            }
+
+            buf.flip();
+            data = new JSONObject(new String(buf.array(), 0, buf.limit(), StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            Logger.w(this.getClass(), "#doPost", e);
+            this.respond(response, HttpStatus.BAD_REQUEST_400);
+            this.complete();
+            return;
+        }
+
+        if (null == data || !data.has("content")) {
+            this.respond(response, HttpStatus.BAD_REQUEST_400);
+            this.complete();
+            return;
+        }
+
+        String base64Content = Base64.encodeBytes(data.getString("content").getBytes(StandardCharsets.UTF_8));
+        data.put("content", base64Content);
+
+        Packet packet = new Packet(FileProcessorAction.Steganographic.name, data);
+        ActionDialect resultDialect = this.performer.syncTransmit(FileProcessorCellet.NAME, packet.toDialect());
+        if (null == resultDialect) {
+            this.respond(response, HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
+        }
+
+        Packet responsePacket = new Packet(resultDialect);
+
+    }
 }

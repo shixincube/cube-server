@@ -31,20 +31,31 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.Base64;
+import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.action.FileProcessorAction;
+import cube.common.state.FileProcessorStateCode;
 import cube.file.OperationWork;
 import cube.file.OperationWorkflow;
+import cube.file.OperationWorkflowListener;
 import cube.file.operation.SteganographyOperation;
 import cube.service.ServiceTask;
 import cube.service.fileprocessor.FileProcessorService;
 import cube.service.fileprocessor.FileProcessorServiceCellet;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 /**
  * 隐写任务。
  */
 public class SteganographicTask extends ServiceTask {
+
+    private File presetFile = new File("storage/assets/zhong.png");
 
     public SteganographicTask(Cellet cellet, TalkContext talkContext, Primitive primitive,
                               ResponseTime responseTime) {
@@ -60,13 +71,54 @@ public class SteganographicTask extends ServiceTask {
         JSONObject data = packet.data;
 
         String content = data.getString("content");
+        // Base64 解码
+        try {
+            byte[] bytes = Base64.decode(content);
+            content = new String(bytes, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            Logger.e(this.getClass(), "", e);
+            // 应答
+            ActionDialect response = this.makeResponse(action, packet,
+                    FileProcessorAction.Steganographic.name, FileProcessorStateCode.Failure.code, data);
+            this.cellet.speak(this.talkContext, response);
+            markResponseTime();
+            return;
+        }
 
-        OperationWorkflow workflow = new OperationWorkflow();
+        Object mutex = new Object();
+
+        OperationWorkflow workflow = new OperationWorkflow(this.presetFile);
 
         SteganographyOperation operation = new SteganographyOperation(content);
         workflow.append(new OperationWork(operation));
 
         FileProcessorService service = ((FileProcessorServiceCellet) this.cellet).getService();
-        service.launchOperationWorkFlow(workflow);
+        service.launchOperationWorkFlow(workflow, new OperationWorkflowListener() {
+            @Override
+            public void onWorkflowStarted(OperationWorkflow workflow) {
+                // Nothing
+            }
+
+            @Override
+            public void onWorkflowStopped(OperationWorkflow workflow) {
+                synchronized (mutex) {
+                    mutex.notify();
+                }
+            }
+        });
+
+        synchronized (mutex) {
+            try {
+                mutex.wait(30 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // 应答
+        ActionDialect response = this.makeResponse(action, packet,
+                FileProcessorStateCode.Ok.code, workflow.toCompactJSON());
+        this.cellet.speak(this.talkContext, response);
+        markResponseTime();
     }
 }

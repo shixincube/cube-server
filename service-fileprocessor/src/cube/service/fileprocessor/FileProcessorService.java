@@ -574,7 +574,24 @@ public class FileProcessorService extends AbstractModule {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                executeOperation(workflow);
+                executeOperation(workflow, null);
+            }
+        });
+        return true;
+    }
+
+    /**
+     * 异步加载工作流。
+     *
+     * @param workflow
+     * @param listener
+     * @return 返回是否成功启动工作流。
+     */
+    public boolean launchOperationWorkFlow(OperationWorkflow workflow, OperationWorkflowListener listener) {
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                executeOperation(workflow, listener);
             }
         });
         return true;
@@ -584,9 +601,10 @@ public class FileProcessorService extends AbstractModule {
      * 加载操作工作流。
      *
      * @param workflow
+     * @param listener
      * @return 返回是否成功启动工作流。
      */
-    private boolean executeOperation(OperationWorkflow workflow) {
+    private boolean executeOperation(OperationWorkflow workflow, OperationWorkflowListener listener) {
         // 域
         String domainName = workflow.getDomain();
         // 源文件的文件码
@@ -605,7 +623,8 @@ public class FileProcessorService extends AbstractModule {
             return false;
         }
 
-        Path sourceFile = Paths.get(this.workPath.toString(), fileCode + "." + fileLabel.getFileType().getPreferredExtension());
+        Path sourceFile = Paths.get(this.workPath.toString(),
+                fileCode + "." + fileLabel.getFileType().getPreferredExtension());
 
         if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
             String path = storageService.loadFileToDisk(domainName, fileCode);
@@ -626,6 +645,11 @@ public class FileProcessorService extends AbstractModule {
         // 调用钩子
         WorkflowPluginContext pluginContext = new WorkflowPluginContext(workflow);
         this.pluginSystem.getWorkflowStartedHook().apply(pluginContext);
+
+        // 监听器回调
+        if (null != listener) {
+            listener.onWorkflowStarted(workflow);
+        }
 
         List<OperationWork> workList = workflow.getWorkList();
 
@@ -802,6 +826,10 @@ public class FileProcessorService extends AbstractModule {
         // 调用钩子
         pluginContext = new WorkflowPluginContext(workflow, resultFile);
         this.pluginSystem.getWorkflowStoppedHook().apply(pluginContext);
+
+        if (null != listener) {
+            listener.onWorkflowStopped(workflow);
+        }
 
         return true;
     }

@@ -97,10 +97,20 @@ public class OperationWorkflow implements JSONable {
         this.workList = new LinkedList<>();
     }
 
+    public OperationWorkflow(File file) {
+        this.sn = Utils.generateSerialNumber();
+        this.workList = new LinkedList<>();
+        this.sourceFile = file;
+    }
+
     public OperationWorkflow(JSONObject json) {
         this.sn = json.getLong("sn");
         this.domain = json.getString("domain");
         this.sourceFileCode = json.getString("source");
+
+        if (json.has("sourceFile")) {
+            this.sourceFile = new File(json.getString("sourceFile"));
+        }
 
         if (json.has("contactId")) {
             this.contactId = json.getLong("contactId");
@@ -237,6 +247,10 @@ public class OperationWorkflow implements JSONable {
         json.put("sn", this.sn);
         json.put("domain", this.domain);
         json.put("source", this.sourceFileCode);
+
+        if (null != this.sourceFile) {
+            json.put("sourceFile", this.sourceFile.getAbsolutePath());
+        }
 
         if (null != this.contactId) {
             json.put("contactId", this.contactId.longValue());
