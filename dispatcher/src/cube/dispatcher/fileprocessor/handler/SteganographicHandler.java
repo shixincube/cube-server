@@ -36,6 +36,7 @@ import cube.dispatcher.Performer;
 import cube.dispatcher.fileprocessor.FileProcessorCellet;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,6 +44,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * 隐写数据。
@@ -52,6 +55,8 @@ public class SteganographicHandler extends CrossDomainHandler {
     public final static String CONTEXT_PATH = "/file/steganographic/";
 
     private Performer performer;
+
+    private List<JSONObject> resultLog = new LinkedList<>();
 
     public SteganographicHandler(Performer performer) {
         super();
@@ -103,11 +108,43 @@ public class SteganographicHandler extends CrossDomainHandler {
         Packet responsePacket = new Packet(resultDialect);
         this.respondOk(response, responsePacket.data);
         this.complete();
+
+        // 记录处理
+        this.resultLog.add(responsePacket.data);
+        if (this.resultLog.size() > 20) {
+            this.resultLog.remove(0);
+        }
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
         // 进行隐写解码
+
+        String logs = request.getParameter("logs");
+        if (null != logs) {
+            int size = 1;
+            try {
+                size = Integer.parseInt(logs);
+            } catch (Exception e) {
+                // Nothing
+            }
+
+            JSONArray array = new JSONArray();
+            for (int i = this.resultLog.size() - 1; i >= 0; --i) {
+                JSONObject data = this.resultLog.get(i);
+                array.put(data);
+                if (array.length() >= size) {
+                    break;
+                }
+            }
+
+            JSONObject data = new JSONObject();
+            data.put("size", size);
+            data.put("logs", array);
+            this.respondOk(response, data);
+            this.complete();
+            return;
+        }
 
         String fileCode = request.getParameter("fc");
         if (null == fileCode || fileCode.length() < 8) {
