@@ -28,6 +28,8 @@ package cube.service.hub;
 
 import cell.util.log.Logger;
 import cube.common.entity.*;
+import cube.core.CacheKey;
+import cube.core.CacheValue;
 import cube.hub.Product;
 import cube.hub.data.ChannelCode;
 import cube.hub.data.DataHelper;
@@ -35,6 +37,8 @@ import cube.hub.data.wechat.PlainMessage;
 import cube.hub.event.*;
 import cube.hub.signal.Signal;
 import cube.hub.signal.*;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -430,6 +434,14 @@ public class WeChatHub {
             List<Message> messages = new ArrayList<>(conversation.getRecentMessages());
             conversation.getRecentMessages().clear();
 
+            String cacheKey = null;
+            if (conversation.getType() == ConversationType.Contact) {
+                cacheKey = this.buildCacheKey(accountId, (Contact) conversation.getPivotalEntity());
+            }
+            else if (conversation.getType() == ConversationType.Group) {
+                cacheKey = this.buildCacheKey(accountId, (Group) conversation.getPivotalEntity());
+            }
+
             for (int i = messages.size() - 1; i >= 0; --i) {
                 Message message = messages.get(i);
                 if (conversation.getType() == ConversationType.Contact) {
@@ -443,6 +455,17 @@ public class WeChatHub {
                             PlainMessage.create(message)));
                 }
             }
+
+            // 写入缓存
+            JSONArray cacheArray = new JSONArray();
+            for (Message message : conversation.getRecentMessages()) {
+                cacheArray.put(message.toJSON());
+            }
+            JSONObject cacheData = new JSONObject();
+            cacheData.put("messages", cacheArray);
+            cacheData.put("accountId", accountId);
+            this.service.getRealTimeCache().put(new CacheKey(cacheKey),
+                    new CacheValue(cacheData));
         }
 
         ConversationsEvent event = new ConversationsEvent(conversations);
@@ -648,5 +671,17 @@ public class WeChatHub {
         }
 
         return list;
+    }
+
+    private String buildCacheKey(String accountId, Contact contact) {
+        StringBuilder buf = new StringBuilder(accountId);
+        buf.append(contact.getName());
+        return buf.toString();
+    }
+
+    private String buildCacheKey(String accountId, Group group) {
+        StringBuilder buf = new StringBuilder(accountId);
+        buf.append(group.getName());
+        return buf.toString();
     }
 }

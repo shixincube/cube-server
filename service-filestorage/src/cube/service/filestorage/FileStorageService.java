@@ -192,11 +192,15 @@ public class FileStorageService extends AbstractModule {
 
     @Override
     public void stop() {
-        // 停止文件系统
-        this.fileSystem.stop();
+        if (null != this.fileSystem) {
+            // 停止文件系统
+            this.fileSystem.stop();
+        }
 
-        // 关闭存储
-        this.serviceStorage.close();
+        if (null != this.serviceStorage) {
+            // 关闭存储
+            this.serviceStorage.close();
+        }
     }
 
     @Override

@@ -29,10 +29,12 @@ package cube.service.hub;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.cache.SharedMemoryCache;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.FileLabel;
 import cube.common.entity.Message;
 import cube.core.AbstractModule;
+import cube.core.Cache;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.hub.*;
@@ -45,6 +47,7 @@ import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
 import cube.util.ConfigUtils;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -78,6 +81,8 @@ public class HubService extends AbstractModule {
     private Queue<Message> messageQueue;
     private boolean queueProcessing;
 
+    private Cache realTimeCache;
+
     public HubService(HubCellet cellet, ExecutorService executor) {
         this.cellet = cellet;
         this.executor = executor;
@@ -96,6 +101,15 @@ public class HubService extends AbstractModule {
 
     @Override
     public void start() {
+        JSONObject cacheConfig = new JSONObject();
+        try {
+            cacheConfig.put("configFile", "config/hub-cache.properties");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        this.realTimeCache = new SharedMemoryCache("HubCache");
+        this.realTimeCache.configure(cacheConfig);
+
         this.signalController = new SignalController(this.cellet);
         this.eventController = new EventController(this, this.workPath);
 
@@ -110,6 +124,8 @@ public class HubService extends AbstractModule {
         (new Thread() {
             @Override
             public void run() {
+                realTimeCache.start();
+
                 setupMessagingPlugin();
 
                 channelManager.start(executor);
@@ -127,6 +143,10 @@ public class HubService extends AbstractModule {
         if (null != this.channelManager) {
             this.channelManager.stop();
         }
+
+        if (null != this.realTimeCache) {
+            this.realTimeCache.stop();
+        }
     }
 
     @Override
@@ -136,6 +156,10 @@ public class HubService extends AbstractModule {
 
     @Override
     public void onTick(Module module, Kernel kernel) {
+    }
+
+    protected Cache getRealTimeCache() {
+        return this.realTimeCache;
     }
 
     public EventController getEventController() {

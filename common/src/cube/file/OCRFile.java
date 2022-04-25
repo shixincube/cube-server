@@ -26,6 +26,7 @@
 
 package cube.file;
 
+import cell.util.collection.FlexibleByteBuffer;
 import cube.common.JSONable;
 import cube.vision.BoundingBox;
 import org.json.JSONArray;
@@ -33,6 +34,7 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,29 +78,31 @@ public class OCRFile implements JSONable {
     }
 
     public OCRFile(File file) {
-        StringBuilder buf = new StringBuilder();
-        BufferedReader reader = null;
+        FlexibleByteBuffer buf = new FlexibleByteBuffer(2048);
+        FileInputStream fis = null;
 
         try {
-            reader = new BufferedReader(new FileReader(file));
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                buf.append(line);
+            fis = new FileInputStream(file);
+            int length = 0;
+            byte[] bytes = new byte[512];
+            while ((length = fis.read(bytes)) > 0) {
+                buf.put(bytes, 0, length);
             }
+            buf.flip();
 
-            JSONObject json = new JSONObject(buf.toString());
+            JSONObject json = new JSONObject(new String(buf.array(), 0, buf.limit(), StandardCharsets.UTF_8));
             JSONArray pageArray = json.getJSONArray("pages");
             for (int i = 0; i < pageArray.length(); ++i) {
                 this.pages.add(new Page(pageArray.getJSONObject(i)));
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            if (null != reader) {
+            if (null != fis) {
                 try {
-                    reader.close();
+                    fis.close();
                 } catch (IOException e) {
                 }
             }
