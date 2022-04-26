@@ -40,20 +40,40 @@ public class RollPollingSignal extends Signal {
 
     private ConversationType conversationType;
 
-    private String keyName;
+    private String conversationName;
 
-    public RollPollingSignal(String accountId, ConversationType conversationType, String name) {
+    public RollPollingSignal(String accountId, ConversationType conversationType, String conversationName) {
         super(NAME);
         this.accountId = accountId;
         this.conversationType = conversationType;
-        this.keyName = name;
+        this.conversationName = conversationName;
     }
 
-    
+    public RollPollingSignal(JSONObject json) {
+        super(json);
+        this.accountId = json.getString("accountId");
+        this.conversationType = ConversationType.parse(json.getInt("conversationType"));
+        this.conversationName = json.getString("conversationName");
+    }
+
+    public String getAccountId() {
+        return this.accountId;
+    }
+
+    public ConversationType getConversationType() {
+        return this.conversationType;
+    }
+
+    public String getConversationName() {
+        return this.conversationName;
+    }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        json.put("accountId", this.accountId);
+        json.put("conversationType", this.conversationType.code);
+        json.put("conversationName", this.conversationName);
         return json;
     }
 }

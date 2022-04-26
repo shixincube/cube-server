@@ -472,6 +472,10 @@ public class WeChatHub {
         return event;
     }
 
+    public List<Message> queryCachedMessage(ConversationType type, String name) {
+        return null;
+    }
+
     /**
      * 获取指定通道的消息列表。
      *

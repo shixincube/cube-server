@@ -64,6 +64,9 @@ public class SignalBuilder {
         else if (GetFileLabelSignal.NAME.equals(name)) {
             return new GetFileLabelSignal(signalJson);
         }
+        else if (RollPollingSignal.NAME.equals(name)) {
+            return new RollPollingSignal(signalJson);
+        }
         else if (SendMessageSignal.NAME.equals(name)) {
             return new SendMessageSignal(signalJson);
         }
