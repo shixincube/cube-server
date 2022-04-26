@@ -27,6 +27,7 @@
 package cube.hub.signal;
 
 import cube.common.entity.ConversationType;
+import org.json.JSONObject;
 
 /**
  * 轮询信令。
@@ -37,13 +38,22 @@ public class RollPollingSignal extends Signal {
 
     private String accountId;
 
-    private String keyName;
-
     private ConversationType conversationType;
 
-    public RollPollingSignal() {
+    private String keyName;
+
+    public RollPollingSignal(String accountId, ConversationType conversationType, String name) {
         super(NAME);
+        this.accountId = accountId;
+        this.conversationType = conversationType;
+        this.keyName = name;
     }
 
+    
 
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        return json;
+    }
 }

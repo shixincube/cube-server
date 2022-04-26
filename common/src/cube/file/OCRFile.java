@@ -27,6 +27,7 @@
 package cube.file;
 
 import cell.util.collection.FlexibleByteBuffer;
+import cell.util.log.Logger;
 import cube.common.JSONable;
 import cube.vision.BoundingBox;
 import org.json.JSONArray;
@@ -78,7 +79,7 @@ public class OCRFile implements JSONable {
     }
 
     public OCRFile(File file) {
-        FlexibleByteBuffer buf = new FlexibleByteBuffer(2048);
+        FlexibleByteBuffer buf = new FlexibleByteBuffer(4096);
         FileInputStream fis = null;
 
         try {
@@ -98,7 +99,7 @@ public class OCRFile implements JSONable {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(this.getClass(), "#OCRFile", e);
         } finally {
             if (null != fis) {
                 try {
