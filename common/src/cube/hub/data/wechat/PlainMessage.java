@@ -456,4 +456,60 @@ public class PlainMessage extends Metadata {
     public static PlainMessage create(Message message) {
         return new PlainMessage(message.getPayload());
     }
+
+    /**
+     * 提取原始的消息文本。
+     *
+     * @param json
+     * @return
+     */
+    public static String extractRawText(JSONObject json) {
+        if (json.has("text")) {
+            return json.getString("text");
+        }
+
+        return null;
+    }
+
+    /**
+     * 提取文件 MD5 信息。
+     *
+     * @param json
+     * @return
+     */
+    public static String extractFileMD5(JSONObject json) {
+        if (json.has("fileMD5")) {
+            return json.getString("fileMD5");
+        }
+
+        return null;
+    }
+
+    /**
+     * 提取文件码信息。
+     *
+     * @param json
+     * @return
+     */
+    public static String extractFileCode(JSONObject json) {
+        if (json.has("fileLabel")) {
+            return json.getJSONObject("fileLabel").getString("fileCode");
+        }
+
+        return null;
+    }
+
+    /**
+     * 提取发件人。
+     *
+     * @param json
+     * @return
+     */
+    public static Contact extractSender(JSONObject json) {
+        if (json.has("sender")) {
+            return new Contact(json.getJSONObject("sender"));
+        }
+
+        return null;
+    }
 }

@@ -284,7 +284,7 @@ public class WeChatHub {
      * @param event
      * @return
      */
-    public boolean submitMessages(SubmitMessagesEvent event) {
+    public synchronized boolean submitMessages(SubmitMessagesEvent event) {
         Contact account = event.getAccount();
         String accountId = account.getExternalId();
 
@@ -307,9 +307,9 @@ public class WeChatHub {
 
             // 获取当前已存储的消息
             List<Message> messageList = this.service.getChannelManager().getMessagesByPartner(channelCode,
-                    accountId, partnerId, 0, 20);
+                    accountId, partnerId, 0, 100);
             // 匹配新消息
-            List<Message> newMessageList = matchNewMessages(messageList, event.getMessages());
+            List<Message> newMessageList = this.matchNewMessages(messageList, event.getMessages());
 
             for (Message message : newMessageList) {
                 // 补充发件人 ID
@@ -328,9 +328,9 @@ public class WeChatHub {
         else if (null != group) {
             // 获取当前已存储的消息
             List<Message> messageList = this.service.getChannelManager().getMessagesByGroup(channelCode,
-                    accountId, group.getName(), 0, 20);
+                    accountId, group.getName(), 0, 100);
             // 匹配新消息
-            List<Message> newMessageList = matchNewMessages(messageList, event.getMessages());
+            List<Message> newMessageList = this.matchNewMessages(messageList, event.getMessages());
 
             for (Message message : newMessageList) {
                 this.service.getChannelManager().appendMessageByGroup(channelCode,
@@ -472,7 +472,15 @@ public class WeChatHub {
         return event;
     }
 
-    public List<Message> queryCachedMessage(ConversationType type, String name) {
+    /**
+     * 查询缓存里的消息。
+     *
+     * @param type
+     * @param name
+     * @return
+     */
+    public List<Message> queryCachedMessage(ChannelCode channelCode, ConversationType type, String name) {
+
         return null;
     }
 
@@ -659,22 +667,60 @@ public class WeChatHub {
             return currentList;
         }
 
-        ArrayList<PlainMessage> basePlainList = new ArrayList<>();
+        ArrayList<JSONObject> basePayloadList = new ArrayList<>();
+        ArrayList<Contact> baseSenderList = new ArrayList<>();
         for (Message message : baseList) {
-            basePlainList.add(PlainMessage.create(message));
+            JSONObject payload = message.getPayload();
+            basePayloadList.add(payload);
+            baseSenderList.add(PlainMessage.extractSender(payload));
         }
 
-        List<Message> list = new ArrayList<>();
+        List<Message> resultList = new ArrayList<>();
 
         for (Message message : currentList) {
-            PlainMessage plainMessage = PlainMessage.create(message);
-            if (!basePlainList.contains(plainMessage)) {
-                // 在基础列表里没有找到该消息
-                list.add(message);
+            // 消息内容是否已存在
+            boolean exists = false;
+
+            JSONObject currentPayload = message.getPayload();
+            Contact currentSender = PlainMessage.extractSender(currentPayload);
+            String currentText = PlainMessage.extractRawText(currentPayload);
+            String currentFileCode = PlainMessage.extractFileCode(currentPayload);
+
+            for (int i = 0, size = basePayloadList.size(); i < size; ++i) {
+                Contact baseSender = baseSenderList.get(i);
+                if (currentSender.getName().equals(baseSender.getName())) {
+                    // 同一个发件人
+                    JSONObject basePayload = basePayloadList.get(i);
+                    // 判断内容
+                    if (null != currentText) {
+                        String baseText = PlainMessage.extractRawText(basePayload);
+                        if (null != baseText && baseText.equals(currentText)) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    else if (null != currentFileCode) {
+                        String baseFileCode = PlainMessage.extractFileCode(basePayload);
+                        if (null != baseFileCode && baseFileCode.equals(currentFileCode)) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    else {
+                        Logger.e(this.getClass(), "#matchNewMessages - Message format error");
+                        exists = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!exists) {
+                // 消息不存在，是新消息
+                resultList.add(message);
             }
         }
 
-        return list;
+        return resultList;
     }
 
     private String buildCacheKey(String accountId, Contact contact) {
@@ -686,6 +732,12 @@ public class WeChatHub {
     private String buildCacheKey(String accountId, Group group) {
         StringBuilder buf = new StringBuilder(accountId);
         buf.append(group.getName());
+        return buf.toString();
+    }
+
+    private String buildCacheKey(String accountId, String name) {
+        StringBuilder buf = new StringBuilder(accountId);
+        buf.append(name);
         return buf.toString();
     }
 }
