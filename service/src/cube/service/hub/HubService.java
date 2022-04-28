@@ -55,6 +55,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 
@@ -283,7 +284,17 @@ public class HubService extends AbstractModule {
                     }
 
                     if (Product.WeChat == channelCode.product) {
-                        if (signal instanceof GetAccountSignal) {
+                        if (signal instanceof RollPollingSignal) {
+                            RollPollingSignal rollPollingSignal = (RollPollingSignal) signal;
+                            List<Message> messageList = WeChatHub.getInstance().queryCachedMessage(channelCode,
+                                    rollPollingSignal.getConversationType(),
+                                    rollPollingSignal.getConversationName());
+                            RollPollingEvent event = new RollPollingEvent(rollPollingSignal.getConversationType(),
+                                    rollPollingSignal.getConversationName(),
+                                    messageList);
+                            responder.respondDispatcher(sn, HubStateCode.Ok.code, event);
+                        }
+                        else if (signal instanceof GetAccountSignal) {
                             AccountEvent event = WeChatHub.getInstance().getAccount(channelCode);
                             if (null != event) {
                                 responder.respondDispatcher(sn, HubStateCode.Ok.code, event);

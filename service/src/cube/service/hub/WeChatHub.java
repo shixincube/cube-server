@@ -480,8 +480,26 @@ public class WeChatHub {
      * @return
      */
     public List<Message> queryCachedMessage(ChannelCode channelCode, ConversationType type, String name) {
+        List<Message> messageList = new ArrayList<>();
 
-        return null;
+        // 获取账号 ID
+        String accountId = this.service.getChannelManager().getAccountId(channelCode.code);
+        if (null == accountId) {
+            Logger.w(this.getClass(), "#queryCachedMessage - No account in channel: " + channelCode.code);
+            return messageList;
+        }
+
+        String cacheKey = this.buildCacheKey(accountId, type, name);
+
+        CacheValue cacheValue = this.service.getRealTimeCache().get(new CacheKey(cacheKey));
+        JSONObject value = cacheValue.get();
+        JSONArray list = value.getJSONArray("messages");
+
+        for (int i = 0; i < list.length(); ++i) {
+            Message message = new Message(list.getJSONObject(i));
+            messageList.add(message);
+        }
+        return messageList;
     }
 
     /**
@@ -726,18 +744,21 @@ public class WeChatHub {
     private String buildCacheKey(String accountId, Contact contact) {
         StringBuilder buf = new StringBuilder(accountId);
         buf.append(contact.getName());
+        buf.append(ConversationType.Contact.code);
         return buf.toString();
     }
 
     private String buildCacheKey(String accountId, Group group) {
         StringBuilder buf = new StringBuilder(accountId);
         buf.append(group.getName());
+        buf.append(ConversationType.Group.code);
         return buf.toString();
     }
 
-    private String buildCacheKey(String accountId, String name) {
+    private String buildCacheKey(String accountId, ConversationType type, String name) {
         StringBuilder buf = new StringBuilder(accountId);
         buf.append(name);
+        buf.append(type.code);
         return buf.toString();
     }
 }

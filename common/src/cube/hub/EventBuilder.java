@@ -51,7 +51,10 @@ public class EventBuilder {
 
         Event event = null;
 
-        if (SubmitMessagesEvent.NAME.equals(name)) {
+        if (RollPollingEvent.NAME.equals(name)) {
+            event = new RollPollingEvent(eventJson);
+        }
+        else if (SubmitMessagesEvent.NAME.equals(name)) {
             event = new SubmitMessagesEvent(eventJson);
         }
         else if (ContactDataEvent.NAME.equals(name)) {
