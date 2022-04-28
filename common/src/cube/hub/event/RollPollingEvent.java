@@ -86,7 +86,7 @@ public class RollPollingEvent extends WeChatEvent {
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = super.toJSON()
+        JSONObject json = super.toJSON();
         json.put("conversationType", this.conversationType.code);
         json.put("conversationName", this.conversationName);
 

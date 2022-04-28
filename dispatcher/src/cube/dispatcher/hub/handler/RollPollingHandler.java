@@ -26,10 +26,13 @@
 
 package cube.dispatcher.hub.handler;
 
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.entity.ConversationType;
 import cube.dispatcher.Performer;
 import cube.dispatcher.hub.Controller;
+import cube.dispatcher.hub.HubCellet;
+import cube.hub.HubAction;
 import cube.hub.data.ChannelCode;
 import cube.hub.signal.RollPollingSignal;
 import org.eclipse.jetty.http.HttpStatus;
@@ -90,6 +93,15 @@ public class RollPollingHandler extends HubHandler {
             return;
         }
 
-        //RollPollingSignal signal = new RollPollingSignal(code, )
+        RollPollingSignal signal = new RollPollingSignal(code, conversationType, name);
+        ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
+        actionDialect.addParam("signal", signal.toJSON());
+
+        ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect, 1 * 60 * 1000);
+        if (null == result) {
+            response.setStatus(HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
+        }
     }
 }
