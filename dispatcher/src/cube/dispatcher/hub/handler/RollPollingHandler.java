@@ -33,9 +33,11 @@ import cube.dispatcher.Performer;
 import cube.dispatcher.hub.Controller;
 import cube.dispatcher.hub.HubCellet;
 import cube.hub.HubAction;
+import cube.hub.HubStateCode;
 import cube.hub.data.ChannelCode;
 import cube.hub.signal.RollPollingSignal;
 import org.eclipse.jetty.http.HttpStatus;
+import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -100,6 +102,16 @@ public class RollPollingHandler extends HubHandler {
         ActionDialect result = this.performer.syncTransmit(HubCellet.NAME, actionDialect, 1 * 60 * 1000);
         if (null == result) {
             response.setStatus(HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
+        }
+
+        int stateCode = result.getParamAsInt("code");
+        if (HubStateCode.Ok.code != stateCode) {
+            Logger.w(this.getClass(), "#doGet - state : " + stateCode);
+            JSONObject data = new JSONObject();
+            data.put("code", stateCode);
+            this.respond(response, HttpStatus.UNAUTHORIZED_401, data);
             this.complete();
             return;
         }
