@@ -32,9 +32,11 @@ import cube.common.entity.ConversationType;
 import cube.dispatcher.Performer;
 import cube.dispatcher.hub.Controller;
 import cube.dispatcher.hub.HubCellet;
+import cube.hub.EventBuilder;
 import cube.hub.HubAction;
 import cube.hub.HubStateCode;
 import cube.hub.data.ChannelCode;
+import cube.hub.event.Event;
 import cube.hub.signal.RollPollingSignal;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
@@ -115,5 +117,17 @@ public class RollPollingHandler extends HubHandler {
             this.complete();
             return;
         }
+
+        if (!result.containsParam("event")) {
+            JSONObject data = new JSONObject();
+            data.put("code", HubStateCode.Failure.code);
+            this.respond(response, HttpStatus.NOT_FOUND_404, data);
+            this.complete();
+            return;
+        }
+
+        Event event = EventBuilder.build(result.getParamAsJson("event"));
+        this.respondOk(response, event.toCompactJSON());
+        this.complete();
     }
 }

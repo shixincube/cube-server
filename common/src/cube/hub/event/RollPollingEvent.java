@@ -98,4 +98,19 @@ public class RollPollingEvent extends WeChatEvent {
 
         return json;
     }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toCompactJSON();
+        json.put("conversationType", this.conversationType.code);
+        json.put("conversationName", this.conversationName);
+
+        JSONArray array = new JSONArray();
+        for (Message message : this.messageList) {
+            array.put(message.toJSON());
+        }
+        json.put("messageList", array);
+
+        return json;
+    }
 }
