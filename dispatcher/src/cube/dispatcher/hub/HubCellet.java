@@ -179,7 +179,13 @@ public class HubCellet extends AbstractCellet {
         convsHandler.setHandler(new ConversationsHandler(this.performer, this.controller));
         httpServer.addContextHandler(convsHandler);
 
-        // 获取消息记录数据
+        // 轮询消息数据
+        ContextHandler rollPollingHandler = new ContextHandler();
+        rollPollingHandler.setContextPath(RollPollingHandler.CONTEXT_PATH);
+        rollPollingHandler.setHandler(new RollPollingHandler(this.performer, this.controller));
+        httpServer.addContextHandler(rollPollingHandler);
+
+        // 获取消息数据
         ContextHandler messagesHandler = new ContextHandler();
         messagesHandler.setContextPath(MessagesHandler.CONTEXT_PATH);
         messagesHandler.setHandler(new MessagesHandler(this.performer, this.controller));
