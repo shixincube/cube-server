@@ -288,7 +288,8 @@ public class HubService extends AbstractModule {
                             RollPollingSignal rollPollingSignal = (RollPollingSignal) signal;
                             List<Message> messageList = WeChatHub.getInstance().queryCachedMessage(channelCode,
                                     rollPollingSignal.getConversationType(),
-                                    rollPollingSignal.getConversationName());
+                                    rollPollingSignal.getConversationName(),
+                                    rollPollingSignal.getLimit());
                             RollPollingEvent event = new RollPollingEvent(rollPollingSignal.getConversationType(),
                                     rollPollingSignal.getConversationName(),
                                     messageList);

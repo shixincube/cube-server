@@ -40,6 +40,8 @@ public class RollPollingSignal extends Signal {
 
     private String conversationName;
 
+    private int limit = 5;
+
     public RollPollingSignal(String code, ConversationType conversationType, String conversationName) {
         super(NAME);
         setCode(code);
@@ -51,6 +53,7 @@ public class RollPollingSignal extends Signal {
         super(json);
         this.conversationType = ConversationType.parse(json.getInt("conversationType"));
         this.conversationName = json.getString("conversationName");
+        this.limit = json.getInt("limit");
     }
 
     public ConversationType getConversationType() {
@@ -61,11 +64,20 @@ public class RollPollingSignal extends Signal {
         return this.conversationName;
     }
 
+    public void setLimit(int limit) {
+        this.limit = limit;
+    }
+
+    public int getLimit() {
+        return this.limit;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("conversationType", this.conversationType.code);
         json.put("conversationName", this.conversationName);
+        json.put("limit", this.limit);
         return json;
     }
 }

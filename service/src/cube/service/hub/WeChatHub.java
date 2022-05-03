@@ -40,10 +40,7 @@ import cube.hub.signal.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -479,8 +476,9 @@ public class WeChatHub {
      * @param name
      * @return
      */
-    public List<Message> queryCachedMessage(ChannelCode channelCode, ConversationType type, String name) {
-        List<Message> messageList = new ArrayList<>();
+    public List<Message> queryCachedMessage(ChannelCode channelCode, ConversationType type, String name,
+                                            int limit) {
+        LinkedList<Message> messageList = new LinkedList<>();
 
         // 获取账号 ID
         String accountId = this.service.getChannelManager().getAccountId(channelCode.code);
@@ -492,13 +490,21 @@ public class WeChatHub {
         String cacheKey = this.buildCacheKey(accountId, type, name);
 
         CacheValue cacheValue = this.service.getRealTimeCache().get(new CacheKey(cacheKey));
+        if (null == cacheValue) {
+            return messageList;
+        }
+
         JSONObject value = cacheValue.get();
         JSONArray list = value.getJSONArray("messages");
 
-        for (int i = 0; i < list.length(); ++i) {
+        for (int i = list.length() - 1; i >= 0; --i) {
             Message message = new Message(list.getJSONObject(i));
-            messageList.add(message);
+            messageList.addFirst(message);
+            if (messageList.size() >= limit) {
+                break;
+            }
         }
+
         return messageList;
     }
 

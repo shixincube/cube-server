@@ -78,6 +78,13 @@ public class RollPollingHandler extends HubHandler {
 
         String type = request.getParameter("type");
         String name = request.getParameter("name");
+        String numParam = request.getParameter("num");
+        if (null == type || null == name) {
+            this.respond(response, HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
+        }
+
         try {
             name = URLDecoder.decode(name, "UTF-8");
         } catch (UnsupportedEncodingException e) {
@@ -97,7 +104,18 @@ public class RollPollingHandler extends HubHandler {
             return;
         }
 
+        int num = 5;
+        if (null != numParam) {
+            try {
+                num = Integer.parseInt(numParam);
+            } catch (Exception e) {
+                // Nothing
+            }
+        }
+
         RollPollingSignal signal = new RollPollingSignal(code, conversationType, name);
+        signal.setLimit(num);
+
         ActionDialect actionDialect = new ActionDialect(HubAction.Channel.name);
         actionDialect.addParam("signal", signal.toJSON());
 
