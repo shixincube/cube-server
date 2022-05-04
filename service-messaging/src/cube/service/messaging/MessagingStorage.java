@@ -935,4 +935,13 @@ public class MessagingStorage implements Storagable {
             }
         }
     }
+
+    private String encrypt(String plaintext) {
+
+        return plaintext;
+    }
+
+    private String decrypt(String ciphertext) {
+        return ciphertext;
+    }
 }
