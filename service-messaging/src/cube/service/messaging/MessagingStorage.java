@@ -27,6 +27,7 @@
 package cube.service.messaging;
 
 import cell.core.talk.LiteralBase;
+import cell.util.Base64;
 import cell.util.log.Logger;
 import cube.common.Storagable;
 import cube.common.entity.*;
@@ -34,6 +35,7 @@ import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
+import cube.service.CipherMachine;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
@@ -41,6 +43,12 @@ import cube.util.SQLUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -221,6 +229,9 @@ public class MessagingStorage implements Storagable {
                     return;
                 }
 
+                // 加密 Payload
+                String payloadCiphertext = encrypt(message.getRemoteTimestamp(), message.getPayload().toString());
+
                 StorageField[] fields = new StorageField[] {
                         new StorageField("id", LiteralBase.LONG, message.getId()),
                         new StorageField("from", LiteralBase.LONG, message.getFrom()),
@@ -232,7 +243,7 @@ public class MessagingStorage implements Storagable {
                         new StorageField("state", LiteralBase.INT, message.getState().getCode()),
                         new StorageField("scope", LiteralBase.INT, message.getScope()),
                         new StorageField("device", LiteralBase.STRING, message.getSourceDevice().toJSON().toString()),
-                        new StorageField("payload", LiteralBase.STRING, message.getPayload().toString()),
+                        new StorageField("payload", LiteralBase.STRING, payloadCiphertext),
                         new StorageField("attachment", LiteralBase.STRING,
                                 (null != message.getAttachment()) ? message.getAttachment().toJSON().toString() : null)
                 };
@@ -323,12 +334,19 @@ public class MessagingStorage implements Storagable {
         JSONObject attachment = null;
         try {
             device = new JSONObject(map.get("device").getString());
-            payload = new JSONObject(map.get("payload").getString());
+
+            long rts = map.get("rts").getLong();
+            String payloadCiphertext = map.get("payload").getString();
+            // 解密
+            String payloadString = decrypt(rts, payloadCiphertext);
+            payload = new JSONObject(payloadString);
+
             if (!map.get("attachment").isNullValue()) {
                 attachment = new JSONObject(map.get("attachment").getString());
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(this.getClass(), "#read", e);
+            return null;
         }
 
         Message message = new Message(domain, map.get("id").getLong(), map.get("from").getLong(),
@@ -363,7 +381,13 @@ public class MessagingStorage implements Storagable {
             JSONObject attachment = null;
             try {
                 device = new JSONObject(map.get("device").getString());
-                payload = new JSONObject(map.get("payload").getString());
+
+                long rts = map.get("rts").getLong();
+                String payloadCiphertext = map.get("payload").getString();
+                // 解密
+                String payloadString = decrypt(rts, payloadCiphertext);
+                payload = new JSONObject(payloadString);
+
                 if (!map.get("attachment").isNullValue()) {
                     attachment = new JSONObject(map.get("attachment").getString());
                 }
@@ -415,7 +439,13 @@ public class MessagingStorage implements Storagable {
             JSONObject attachment = null;
             try {
                 device = new JSONObject(map.get("device").getString());
-                payload = new JSONObject(map.get("payload").getString());
+
+                long rts = map.get("rts").getLong();
+                String payloadCiphertext = map.get("payload").getString();
+                // 解密
+                String payloadString = decrypt(rts, payloadCiphertext);
+                payload = new JSONObject(payloadString);
+
                 if (!map.get("attachment").isNullValue()) {
                     attachment = new JSONObject(map.get("attachment").getString());
                 }
@@ -470,7 +500,13 @@ public class MessagingStorage implements Storagable {
             JSONObject attachment = null;
             try {
                 device = new JSONObject(map.get("device").getString());
-                payload = new JSONObject(map.get("payload").getString());
+
+                long rts = map.get("rts").getLong();
+                String payloadCiphertext = map.get("payload").getString();
+                // 解密
+                String payloadString = decrypt(rts, payloadCiphertext);
+                payload = new JSONObject(payloadString);
+
                 if (!map.get("attachment").isNullValue()) {
                     attachment = new JSONObject(map.get("attachment").getString());
                 }
@@ -535,7 +571,13 @@ public class MessagingStorage implements Storagable {
             JSONObject attachment = null;
             try {
                 device = new JSONObject(map.get("device").getString());
-                payload = new JSONObject(map.get("payload").getString());
+
+                long rts = map.get("rts").getLong();
+                String payloadCiphertext = map.get("payload").getString();
+                // 解密
+                String payloadString = decrypt(rts, payloadCiphertext);
+                payload = new JSONObject(payloadString);
+
                 if (!map.get("attachment").isNullValue()) {
                     attachment = new JSONObject(map.get("attachment").getString());
                 }
@@ -936,12 +978,70 @@ public class MessagingStorage implements Storagable {
         }
     }
 
-    private String encrypt(String plaintext) {
+    private String encrypt(long timestamp, String plaintext) {
+        String ciphertext = null;
 
-        return plaintext;
+        byte[] keyBytes = CipherMachine.getInstance().getCipher(timestamp);
+        try {
+            // 创建 Key
+//            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+//            keyGenerator.init(128, new SecureRandom(keyBytes));
+//            SecretKey secretKey = keyGenerator.generateKey();
+            SecretKey secretKey = new SecretKeySpec(keyBytes, "AES");
+
+            // AES 加密
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            byte[] result = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
+
+            // Base64 编码
+            ciphertext = Base64.encodeBytes(result);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+
+        return ciphertext;
     }
 
-    private String decrypt(String ciphertext) {
-        return ciphertext;
+    private String decrypt(long timestamp, String ciphertext) {
+        String plaintext = null;
+
+        byte[] keyBytes = CipherMachine.getInstance().getCipher(timestamp);
+        try {
+            // Base64 解码
+            byte[] bytes = Base64.decode(ciphertext.getBytes(StandardCharsets.UTF_8));
+
+            // 创建 Key
+            SecretKey secretKey = new SecretKeySpec(keyBytes, "AES");
+
+            // AES 解密
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, secretKey);
+            byte[] result = cipher.doFinal(bytes);
+
+            plaintext = new String(result, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            plaintext = ciphertext;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+
+        return plaintext;
     }
 }
