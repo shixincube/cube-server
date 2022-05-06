@@ -48,13 +48,15 @@ import java.net.URLDecoder;
 
 /**
  * 轮询句柄。
- * 参数：type
+ * 参数：type 会话类型
+ * 参数：name 会话名称
+ * 参数：num 指定查询数量
  */
 public class RollPollingHandler extends HubHandler {
 
     public final static String CONTEXT_PATH = "/hub/polling/";
 
-    private final long coolingTime = 100;
+    private final long coolingTime = 200;
 
     public RollPollingHandler(Performer performer, Controller controller) {
         super(performer, controller);
