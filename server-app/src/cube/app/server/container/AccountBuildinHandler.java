@@ -32,6 +32,7 @@ import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -71,7 +72,11 @@ public class AccountBuildinHandler extends ContextHandler {
                 }
             }
 
-            this.respond(response, HttpStatus.OK_200, buildinArray);
+            JSONObject data = new JSONObject();
+            data.put("list", buildinArray);
+            data.put("total", buildinArray.length());
+
+            this.respond(response, HttpStatus.OK_200, data);
         }
     }
 }

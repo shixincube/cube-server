@@ -73,6 +73,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
     public final static String NAME = "Contact";
 
+    public final static String DEFAULT_CONTACT_ZONE_NAME = "contacts";
+
     private final static ContactManager instance = new ContactManager();
 
     /**
@@ -876,6 +878,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     public ContactZone getContactZone(Contact contact, String zoneName) {
         ContactZone zone = this.storage.readContactZone(contact.getDomain().getName(), contact.getId(), zoneName);
+        if (null == zone && DEFAULT_CONTACT_ZONE_NAME.equals(zoneName)) {
+            // 没有创建默认联系人分区，创建
+            zone = this.createContactZone(contact, zoneName, DEFAULT_CONTACT_ZONE_NAME, true, null);
+        }
         return zone;
     }
 
