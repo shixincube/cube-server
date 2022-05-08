@@ -26,8 +26,12 @@
 
 package cube.app.server.container;
 
+import cube.app.server.Manager;
 import cube.app.server.account.Account;
 import cube.app.server.account.AccountManager;
+import cube.client.Client;
+import cube.common.entity.Contact;
+import cube.common.entity.ContactZone;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -77,6 +81,38 @@ public class AccountBuildinHandler extends ContextHandler {
             data.put("total", buildinArray.length());
 
             this.respond(response, HttpStatus.OK_200, data);
+            this.complete();
+        }
+
+        @Override
+        public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+            String id = request.getParameter("id");
+            String domain = request.getParameter("domain");
+            String zone = request.getParameter("zone");
+
+            if (null == id || null == domain || null == zone) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
+            ContactZone contactZone = null;
+
+            Client client = Manager.getInstance().getClient();
+
+            Contact contact = new Contact(Long.parseLong(id), domain);
+
+            Long[] idArray = new Long[] { 50001001L, 50001002L, 50001003L, 50001004L, 50001005L };
+            for (Long accountId : idArray) {
+                Account account = AccountManager.getInstance().getAccount(accountId);
+                if (null != account) {
+                    Contact participant = new Contact(account.id, domain, account.name);
+                    contactZone = client.addParticipantToZoneByForce(contact, zone, participant);
+                }
+            }
+
+            this.respond(response, HttpStatus.OK_200, contactZone.toCompactJSON());
+            this.complete();
         }
     }
 }

@@ -27,6 +27,7 @@
 package cube.app.server.container;
 
 import cell.util.log.Logger;
+import cube.app.server.Manager;
 import cube.app.server.account.AccountManager;
 import cube.util.ConfigUtils;
 import org.eclipse.jetty.server.Handler;
@@ -57,6 +58,19 @@ public class ContainerManager {
         Properties config = this.loadConfig();
 
         this.loadCubeConfig(config);
+
+        // 启动管理器
+        (new Thread() {
+            @Override
+            public void run() {
+                if (!Manager.getInstance().start(config)) {
+                    Logger.e(ContainerManager.class, "Cube client start failed");
+                }
+                else {
+                    Logger.i(ContainerManager.class, "Cube client started");
+                }
+            }
+        }).start();
 
         this.server = new Server(port);
 
@@ -92,6 +106,8 @@ public class ContainerManager {
     }
 
     public void destroy() {
+        Manager.getInstance().stop();
+
         AccountManager.getInstance().destroy();
     }
 

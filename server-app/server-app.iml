@@ -18,5 +18,14 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="common" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../cube-server-client/build/cube-server-client-1.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

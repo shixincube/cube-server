@@ -14,6 +14,7 @@
 	<property name="src.dir" value="src" />
 	<property name="lib.dir" value="../../cube-server-dependencies" />
 	<property name="common.dir" value="../build" />
+	<property name="client.dir" value="../../cube-server-client/build" />
 	<property name="doc.dir" value="doc" />
 
 	<property name="build.dir" value="build" />
@@ -27,6 +28,9 @@
 		<fileset dir="${common.dir}">
 			<include name="cube-common-*.jar" />
 			<exclude name="cube-server-app-*.jar" />
+		</fileset>
+		<fileset dir="${client.dir}">
+			<include name="*.jar" />
 		</fileset>
 		<pathelement path="${build.classes}" />
 	</path>
