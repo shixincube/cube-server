@@ -42,6 +42,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLDecoder;
 
 /**
  * 内置账号数据信息。
@@ -96,6 +97,9 @@ public class AccountBuildinHandler extends ContextHandler {
                 return;
             }
 
+            domain = URLDecoder.decode(domain, "UTF-8");
+            zone = URLDecoder.decode(zone, "UTF-8");
+
             ContactZone contactZone = null;
 
             Client client = Manager.getInstance().getClient();
@@ -111,7 +115,13 @@ public class AccountBuildinHandler extends ContextHandler {
                 }
             }
 
-            this.respond(response, HttpStatus.OK_200, contactZone.toCompactJSON());
+            if (null != contactZone) {
+                this.respond(response, HttpStatus.OK_200, contactZone.toCompactJSON());
+            }
+            else {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+            }
+
             this.complete();
         }
     }
