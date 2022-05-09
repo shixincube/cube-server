@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/common/common.iml" filepath="$PROJECT_DIR$/common/common.iml" />
       <module fileurl="file://$PROJECT_DIR$/console/console.iml" filepath="$PROJECT_DIR$/console/console.iml" />
       <module fileurl="file://$PROJECT_DIR$/dispatcher/dispatcher.iml" filepath="$PROJECT_DIR$/dispatcher/dispatcher.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ferryboat/ferryboat.iml" filepath="$PROJECT_DIR$/ferryboat/ferryboat.iml" />
       <module fileurl="file://$PROJECT_DIR$/server-app/server-app.iml" filepath="$PROJECT_DIR$/server-app/server-app.iml" />
       <module fileurl="file://$PROJECT_DIR$/service/service.iml" filepath="$PROJECT_DIR$/service/service.iml" />
       <module fileurl="file://$PROJECT_DIR$/service-conference/service-conference.iml" filepath="$PROJECT_DIR$/service-conference/service-conference.iml" />
