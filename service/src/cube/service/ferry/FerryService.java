@@ -31,6 +31,9 @@ import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 /**
  * 摆渡数据服务。
  */
@@ -38,18 +41,41 @@ public class FerryService extends AbstractModule {
 
     public final static String NAME = "Ferry";
 
+    private Timer timer;
+
     public FerryService() {
         super();
     }
 
     @Override
     public void start() {
+        if (null == this.timer) {
+            this.timer = new Timer();
+            this.timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    setup();
 
+                    (new Thread() {
+                        @Override
+                        public void run() {
+                            timer.cancel();
+                            timer = null;
+                        }
+                    }).start();
+                }
+            }, 10 * 1000);
+        }
     }
 
     @Override
     public void stop() {
+        if (null != this.timer) {
+            this.timer.cancel();
+            this.timer = null;
+        }
 
+        this.teardown();
     }
 
     @Override
@@ -67,6 +93,17 @@ public class FerryService extends AbstractModule {
     }
 
     public void checkOut() {
+
+    }
+
+    private void setup() {
+        AbstractModule messagingModule = this.getKernel().getModule("Messaging");
+        if (null != messagingModule) {
+            //messagingModule.getPluginSystem().register("PostPush", );
+        }
+    }
+
+    private void teardown() {
 
     }
 }

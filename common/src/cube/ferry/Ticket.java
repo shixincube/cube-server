@@ -26,14 +26,18 @@
 
 package cube.ferry;
 
-import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.TalkContext;
+import cube.common.Domain;
 
-/**
- * 摆渡数据包。
- */
-public class FerryPacket {
+public class Ticket {
 
-    public FerryPacket(ActionDialect dialect) {
+    public final Domain domain;
+
+    public final TalkContext talkContext;
+
+    public Ticket(String domainName, TalkContext talkContext) {
+        this.domain = new Domain(domainName);
+        this.talkContext = talkContext;
     }
 
 
