@@ -26,7 +26,15 @@
 
 package cube.ferryboat;
 
+import cell.core.talk.Primitive;
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
 import cube.core.AbstractCellet;
+import cube.ferry.FerryAction;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 数据摆渡单元。
@@ -35,19 +43,43 @@ public class FerryboatCellet extends AbstractCellet {
 
     private final static String NAME = "Ferry";
 
+    private ExecutorService executor;
+
     public FerryboatCellet() {
         super(NAME);
     }
 
     @Override
     public boolean install() {
+        this.executor = Executors.newCachedThreadPool();
+
         return true;
     }
 
     @Override
     public void uninstall() {
-
+        this.executor.shutdown();
     }
 
+    @Override
+    public void onListened(TalkContext talkContext, Primitive primitive) {
+        super.onListened(talkContext, primitive);
 
+        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
+        String action = dialect.getName();
+
+        if (FerryAction.CheckIn.name.equals(action)) {
+            Ferryboat.getInstance().checkIn(dialect, talkContext);
+        }
+        else if (FerryAction.CheckOut.name.equals(action)) {
+            Ferryboat.getInstance().checkOut(dialect, talkContext);
+        }
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                Ferryboat.getInstance().passBy(dialect);
+            }
+        });
+    }
 }
