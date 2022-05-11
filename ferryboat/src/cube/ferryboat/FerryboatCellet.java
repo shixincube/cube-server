@@ -26,8 +26,28 @@
 
 package cube.ferryboat;
 
+import cube.core.AbstractCellet;
+
 /**
  * 数据摆渡单元。
  */
-public class FerryboatCellet {
+public class FerryboatCellet extends AbstractCellet {
+
+    private final static String NAME = "Ferry";
+
+    public FerryboatCellet() {
+        super(NAME);
+    }
+
+    @Override
+    public boolean install() {
+        return true;
+    }
+
+    @Override
+    public void uninstall() {
+
+    }
+
+
 }

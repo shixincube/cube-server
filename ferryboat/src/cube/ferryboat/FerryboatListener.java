@@ -24,35 +24,31 @@
  * SOFTWARE.
  */
 
-package cube.service.ferry.plugin;
+package cube.ferryboat;
 
-import cube.common.entity.Message;
-import cube.plugin.Plugin;
-import cube.plugin.PluginContext;
-import cube.service.ferry.FerryService;
+import cell.api.Nucleus;
+import cell.carpet.CellListener;
 
 /**
- * 写消息插件。
+ * 监听器。
  */
-public class WriteMessagePlugin implements Plugin {
+public class FerryboatListener implements CellListener {
 
-    private FerryService service;
-
-    public WriteMessagePlugin(FerryService service) {
-        this.service = service;
+    public FerryboatListener() {
     }
 
     @Override
-    public void setup() {
+    public void cellPreinitialize(Nucleus nucleus) {
+
     }
 
     @Override
-    public void teardown() {
+    public void cellInitialized(Nucleus nucleus) {
+
     }
 
     @Override
-    public void onAction(PluginContext context) {
-        Message message = (Message) context.get("message");
+    public void cellDestroyed(Nucleus nucleus) {
 
     }
 }
