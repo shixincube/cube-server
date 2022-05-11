@@ -26,11 +26,17 @@
 
 package cube.service.ferry;
 
+import cell.core.talk.TalkContext;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
+import cube.ferry.FerryAdapter;
+import cube.ferry.Ticket;
 import cube.plugin.PluginSystem;
+import cube.service.ferry.plugin.WriteMessagePlugin;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -43,8 +49,13 @@ public class FerryService extends AbstractModule {
 
     private Timer timer;
 
+    private FerryAdapter adapter;
+
+    private List<Ticket> tickets;
+
     public FerryService() {
         super();
+        this.tickets = new LinkedList<>();
     }
 
     @Override
@@ -54,6 +65,10 @@ public class FerryService extends AbstractModule {
             this.timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
+                    // 启动适配器
+
+
+                    // 配置
                     setup();
 
                     (new Thread() {
@@ -76,6 +91,11 @@ public class FerryService extends AbstractModule {
         }
 
         this.teardown();
+
+        if (null != this.adapter) {
+            this.adapter.stop();
+            this.adapter = null;
+        }
     }
 
     @Override
@@ -88,7 +108,11 @@ public class FerryService extends AbstractModule {
 
     }
 
-    public void checkIn(String domainName) {
+    public FerryAdapter getAdapter() {
+        return this.adapter;
+    }
+
+    public void checkIn(String domainName, TalkContext talkContext) {
 
     }
 
@@ -99,7 +123,7 @@ public class FerryService extends AbstractModule {
     private void setup() {
         AbstractModule messagingModule = this.getKernel().getModule("Messaging");
         if (null != messagingModule) {
-            //messagingModule.getPluginSystem().register("PostPush", );
+            messagingModule.getPluginSystem().register("WriteMessage", new WriteMessagePlugin(this));
         }
     }
 

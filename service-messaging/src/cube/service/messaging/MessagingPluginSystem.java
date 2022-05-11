@@ -49,6 +49,14 @@ public class MessagingPluginSystem extends PluginSystem<MessagingHook> {
         return this.getHook(MessagingHook.Notify);
     }
 
+    public MessagingHook getWriteMessageHook() {
+        return this.getHook(MessagingHook.WriteMessage);
+    }
+
+    public MessagingHook getUpdateMessageHook() {
+        return this.getHook(MessagingHook.UpdateMessage);
+    }
+
     private void build() {
         MessagingHook hook = new MessagingHook(MessagingHook.PrePush);
         this.addHook(hook);
@@ -57,6 +65,12 @@ public class MessagingPluginSystem extends PluginSystem<MessagingHook> {
         this.addHook(hook);
 
         hook = new MessagingHook(MessagingHook.Notify);
+        this.addHook(hook);
+
+        hook = new MessagingHook(MessagingHook.WriteMessage);
+        this.addHook(hook);
+
+        hook = new MessagingHook(MessagingHook.UpdateMessage);
         this.addHook(hook);
     }
 }

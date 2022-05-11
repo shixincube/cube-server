@@ -360,6 +360,11 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 // FROM 副本写入存储
                 this.storage.write(fromCopy);
 
+                // 触发 Hook
+                MessagingHook writeHook = this.pluginSystem.getWriteMessageHook();
+                writeHook.apply(new MessagingPluginContext(toCopy));
+                writeHook.apply(new MessagingPluginContext(fromCopy));
+
                 // 在内存里记录状态
                 this.messageStateMap.put(new MessageKey(toCopy.getOwner(), toCopy.getId()),
                         new MessageStateBundle(toCopy.getId(), toCopy.getOwner(), MessageState.Sent));
@@ -417,6 +422,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                             // 写入存储
                             this.storage.write(copy);
 
+                            // Hook
+                            MessagingHook writeHook = this.pluginSystem.getWriteMessageHook();
+                            writeHook.apply(new MessagingPluginContext(copy));
+
                             // 在内存里记录状态
                             this.messageStateMap.put(new MessageKey(contactId, copy.getId()),
                                     new MessageStateBundle(copy.getId(), contactId, MessageState.Sent));
@@ -440,6 +449,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
                         // 写入存储
                         this.storage.write(copy);
+
+                        // Hook
+                        MessagingHook writeHook = this.pluginSystem.getWriteMessageHook();
+                        writeHook.apply(new MessagingPluginContext(copy));
 
                         // 在内存里记录状态
                         this.messageStateMap.put(new MessageKey(copy.getOwner(), copy.getId()),
@@ -496,6 +509,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
             // FROM 副本写入存储
             this.storage.write(fromCopy);
+
+            // Hook
+            MessagingHook writeHook = this.pluginSystem.getWriteMessageHook();
+            writeHook.apply(new MessagingPluginContext(fromCopy));
 
             this.messageStateMap.put(new MessageKey(fromCopy.getOwner(), fromCopy.getId()),
                     new MessageStateBundle(fromCopy.getId(), fromCopy.getOwner(), MessageState.Sent));
