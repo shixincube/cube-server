@@ -33,9 +33,9 @@ import cell.util.log.Logger;
 /**
  * 监听器。
  */
-public class FerryboatListener implements CellListener {
+public class FerryboatCellListener implements CellListener {
 
-    public FerryboatListener() {
+    public FerryboatCellListener() {
     }
 
     @Override

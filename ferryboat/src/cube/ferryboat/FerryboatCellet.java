@@ -41,12 +41,10 @@ import java.util.concurrent.Executors;
  */
 public class FerryboatCellet extends AbstractCellet {
 
-    private final static String NAME = "Ferry";
-
     private ExecutorService executor;
 
     public FerryboatCellet() {
-        super(NAME);
+        super(Ferryboat.NAME);
     }
 
     @Override

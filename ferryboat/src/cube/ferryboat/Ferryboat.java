@@ -29,6 +29,8 @@ package cube.ferryboat;
 import cell.api.Nucleus;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
+import cube.ferry.FerryPacket;
 import cube.ferry.Ticket;
 
 import java.util.Map;
@@ -39,9 +41,15 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Ferryboat {
 
+    public final static String NAME = "Ferry";
+
     private final static Ferryboat instance = new Ferryboat();
 
     private Nucleus nucleus;
+
+    private String address;
+
+    private int port;
 
     private FerryReceiver receiver;
 
@@ -61,9 +69,9 @@ public class Ferryboat {
         nucleus.getTalkService().addListener(this.receiver);
 
         // 连接服务器
-        String address = "127.0.0.1";
-        int port = 6000;
-        nucleus.getTalkService().call(address, port);
+        this.address = "127.0.0.1";
+        this.port = 6000;
+        nucleus.getTalkService().call(this.address, this.port);
     }
 
     public void checkIn(ActionDialect dialect, TalkContext talkContext) {
@@ -77,6 +85,13 @@ public class Ferryboat {
     }
 
     public void passBy(ActionDialect actionDialect) {
-
+        if (this.nucleus.getTalkService().isCalled(this.address, this.port)) {
+            FerryPacket packet = new FerryPacket(actionDialect);
+            this.nucleus.getTalkService().speak(NAME, packet.toDialect());
+        }
+        else {
+            Logger.w(this.getClass(), "#passBy - connection is error: "
+                    + this.address + ":" + this.port);
+        }
     }
 }

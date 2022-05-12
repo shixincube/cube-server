@@ -44,6 +44,8 @@ public class FerryCellet extends AbstractCellet {
 
     private ExecutorService executor;
 
+    private FerryService ferryService;
+
     public FerryCellet() {
         super(FerryService.NAME);
     }
@@ -52,8 +54,10 @@ public class FerryCellet extends AbstractCellet {
     public boolean install() {
         this.executor = Executors.newCachedThreadPool();
 
+        this.ferryService = new FerryService();
+
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
-        kernel.installModule(FerryService.NAME, new FerryService());
+        kernel.installModule(FerryService.NAME, this.ferryService);
 
         return true;
     }
@@ -73,6 +77,11 @@ public class FerryCellet extends AbstractCellet {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
 
+        if (FerryAction.CheckIn.name.equals(action)) {
 
+        }
+        else if (FerryAction.CheckOut.name.equals(action)) {
+
+        }
     }
 }

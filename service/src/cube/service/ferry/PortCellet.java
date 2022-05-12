@@ -24,34 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.ferry;
+package cube.service.ferry;
 
-import cell.core.talk.dialect.ActionDialect;
-import cell.util.Utils;
-
-/**
- * 摆渡数据包。
- */
-public class FerryPacket {
-
-    private long sn;
-
-    private ActionDialect dialect;
-
-    public FerryPacket(ActionDialect dialect) {
-        this.sn = Utils.generateSerialNumber();
-        this.dialect = dialect;
-    }
-
-    public long getSN() {
-        return this.sn;
-    }
-
-    public ActionDialect toDialect() {
-        if (!this.dialect.containsParam("sn")) {
-            this.dialect.addParam("sn", this.sn);
-        }
-
-        return this.dialect;
-    }
+public class PortCellet {
 }

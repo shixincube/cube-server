@@ -49,6 +49,7 @@ public class FerryReceiver implements TalkListener {
 
     @Override
     public void onListened(Speakable speakable, String cellet, Primitive primitive) {
+
     }
 
     @Override
@@ -58,31 +59,31 @@ public class FerryReceiver implements TalkListener {
 
     @Override
     public void onSpoke(Speakable speakable, String cellet, Primitive primitive) {
-
+        // Nothing
     }
 
     @Override
     public void onAck(Speakable speakable, String cellet, Primitive primitive) {
-
+        // Nothing
     }
 
     @Override
     public void onSpeakTimeout(Speakable speakable, String cellet, Primitive primitive) {
-
+        // Nothing
     }
 
     @Override
     public void onContacted(Speakable speakable) {
-
+        Logger.d(this.getClass(), "#onContacted");
     }
 
     @Override
     public void onQuitted(Speakable speakable) {
-
+        Logger.d(this.getClass(), "#onQuitted");
     }
 
     @Override
     public void onFailed(Speakable speakable, TalkError talkError) {
-
+        Logger.d(this.getClass(), "#onFailed");
     }
 }

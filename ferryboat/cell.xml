@@ -3,7 +3,7 @@
 <cell>
 	<!-- 容器监听器 -->
 	<listeners>
-		<class>cube.ferryboat.FerryboatListener</class>
+		<class>cube.ferryboat.FerryboatCellListener</class>
 	</listeners>
 
 	<!-- 内核参数配置 -->
