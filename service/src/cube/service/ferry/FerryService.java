@@ -127,10 +127,14 @@ public class FerryService extends AbstractModule {
         this.tickets.remove(domain);
     }
 
+    public boolean hasDomain(String domain) {
+        return this.tickets.containsKey(domain);
+    }
+
     public void pushToBoat(String domain, FerryPacket packet) {
         Ticket ticket = this.tickets.get(domain);
         if (null == ticket) {
-            Logger.e(this.getClass(), "#pushToHouse - Can NOT find domain talk context: " + domain);
+            Logger.w(this.getClass(), "#pushToHouse - Can NOT find domain talk context: " + domain);
             return;
         }
 

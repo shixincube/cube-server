@@ -26,7 +26,11 @@
 
 package cube.service.ferry.plugin;
 
+import cell.core.talk.dialect.ActionDialect;
 import cube.common.entity.Message;
+import cube.ferry.FerryAction;
+import cube.ferry.FerryPacket;
+import cube.ferry.FerryPort;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.ferry.FerryService;
@@ -54,5 +58,10 @@ public class WriteMessagePlugin implements Plugin {
     public void onAction(PluginContext context) {
         Message message = (Message) context.get("message");
 
+        ActionDialect actionDialect = new ActionDialect(FerryAction.Port.name);
+        actionDialect.addParam("port", FerryPort.WriteMessage);
+        actionDialect.addParam("message", message.toJSON());
+
+        this.service.pushToBoat(message.getDomain().getName(), new FerryPacket(actionDialect));
     }
 }
