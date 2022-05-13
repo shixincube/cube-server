@@ -38,6 +38,8 @@ public class FerryPacket {
 
     private ActionDialect dialect;
 
+    private String domain;
+
     public FerryPacket(ActionDialect dialect) {
         this.sn = Utils.generateSerialNumber();
         this.dialect = dialect;
@@ -47,9 +49,17 @@ public class FerryPacket {
         return this.sn;
     }
 
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
     public ActionDialect toDialect() {
         if (!this.dialect.containsParam("sn")) {
             this.dialect.addParam("sn", this.sn);
+        }
+
+        if (null != this.domain) {
+            this.dialect.addParam("domain", this.domain);
         }
 
         return this.dialect;

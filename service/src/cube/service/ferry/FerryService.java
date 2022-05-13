@@ -27,18 +27,19 @@
 package cube.service.ferry;
 
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.ferry.FerryAdapter;
+import cube.ferry.FerryPacket;
 import cube.ferry.Ticket;
 import cube.plugin.PluginSystem;
 import cube.service.ferry.plugin.WriteMessagePlugin;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 摆渡数据服务。
@@ -47,15 +48,18 @@ public class FerryService extends AbstractModule {
 
     public final static String NAME = "Ferry";
 
+    private final FerryCellet cellet;
+
     private Timer timer;
 
     private FerryAdapter adapter;
 
-    private List<Ticket> tickets;
+    private Map<String, Ticket> tickets;
 
-    public FerryService() {
+    public FerryService(FerryCellet cellet) {
         super();
-        this.tickets = new LinkedList<>();
+        this.cellet = cellet;
+        this.tickets = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -112,12 +116,27 @@ public class FerryService extends AbstractModule {
         return this.adapter;
     }
 
-    public void checkIn(String domainName, TalkContext talkContext) {
-
+    public void checkIn(ActionDialect dialect, TalkContext talkContext) {
+        String domain = dialect.getParamAsString("domain");
+        Ticket ticket = new Ticket(domain, talkContext);
+        this.tickets.put(domain, ticket);
     }
 
-    public void checkOut() {
+    public void checkOut(ActionDialect dialect, TalkContext talkContext) {
+        String domain = dialect.getParamAsString("domain");
+        this.tickets.remove(domain);
+    }
 
+    public void pushToBoat(String domain, FerryPacket packet) {
+        Ticket ticket = this.tickets.get(domain);
+        if (null == ticket) {
+            Logger.e(this.getClass(), "#pushToHouse - Can NOT find domain talk context: " + domain);
+            return;
+        }
+
+        // 向 Ferry 推送
+        packet.setDomain(domain);
+        this.cellet.speak(ticket.talkContext, packet.toDialect());
     }
 
     private void setup() {
@@ -128,6 +147,5 @@ public class FerryService extends AbstractModule {
     }
 
     private void teardown() {
-
     }
 }

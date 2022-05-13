@@ -81,7 +81,8 @@ public class Ferryboat {
     }
 
     public void checkOut(ActionDialect dialect, TalkContext talkContext) {
-
+        String domain = dialect.getParamAsString("domain");
+        this.ticketMap.remove(domain);
     }
 
     public void passBy(ActionDialect actionDialect) {
