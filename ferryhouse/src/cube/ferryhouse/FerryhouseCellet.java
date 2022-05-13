@@ -24,7 +24,26 @@
  * SOFTWARE.
  */
 
-package cube.service.ferry;
+package cube.ferryhouse;
 
-public class PortCellet {
+import cube.core.AbstractCellet;
+
+/**
+ * Ferryhouse Cellet 单元。
+ */
+public class FerryhouseCellet extends AbstractCellet {
+
+    public FerryhouseCellet() {
+        super(Ferryhouse.NAME);
+    }
+
+    @Override
+    public boolean install() {
+        return true;
+    }
+
+    @Override
+    public void uninstall() {
+
+    }
 }
