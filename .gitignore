@@ -51,3 +51,4 @@ service/storage/tmp
 dispatcher/cube-media-files
 service/storage/hub
 dispatcher/cube-hub-files
+tag_cube-ferryboat
