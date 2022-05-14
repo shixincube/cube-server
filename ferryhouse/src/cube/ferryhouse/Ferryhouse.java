@@ -26,12 +26,108 @@
 
 package cube.ferryhouse;
 
-public class Ferryhouse {
+import cell.api.Nucleus;
+import cell.api.Speakable;
+import cell.api.TalkListener;
+import cell.core.talk.Primitive;
+import cell.core.talk.PrimitiveInputStream;
+import cell.core.talk.TalkError;
+import cell.util.log.Logger;
+import cube.util.ConfigUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
+
+/**
+ * Ferry 客户端。
+ */
+public class Ferryhouse implements TalkListener {
 
     public final static String NAME = "Ferryhouse";
 
-    public Ferryhouse() {
+    private final static Ferryhouse instance = new Ferryhouse();
+
+    private Nucleus nucleus;
+
+    private String address;
+    private int port;
+
+    private Ferryhouse() {
     }
 
+    public static Ferryhouse getInstance() {
+        return Ferryhouse.instance;
+    }
 
+    public void config(Nucleus nucleus) {
+        this.nucleus = nucleus;
+
+        Properties properties = this.loadConfig();
+        if (null == properties) {
+            Logger.e(this.getClass(), "#config - Can NOT find config file");
+            return;
+        }
+
+        this.address = properties.getProperty("ferry.address");
+        this.port = Integer.parseInt(properties.getProperty("ferry.port", "7900").trim());
+
+        this.nucleus.getTalkService().addListener(this);
+        this.nucleus.getTalkService().call(this.address, this.port);
+    }
+
+    private Properties loadConfig() {
+        File file = new File("config/ferryhouse_dev.properties");
+        if (!file.exists()) {
+            file = new File("config/ferryhouse.properties");
+        }
+
+        try {
+            return ConfigUtils.readProperties(file.getAbsolutePath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    @Override
+    public void onListened(Speakable speakable, String cellet, Primitive primitive) {
+
+    }
+
+    @Override
+    public void onListened(Speakable speakable, String cellet, PrimitiveInputStream primitiveInputStream) {
+
+    }
+
+    @Override
+    public void onSpoke(Speakable speakable, String cellet, Primitive primitive) {
+        // Nothing
+    }
+
+    @Override
+    public void onAck(Speakable speakable, String cellet, Primitive primitive) {
+        // Nothing
+    }
+
+    @Override
+    public void onSpeakTimeout(Speakable speakable, String cellet, Primitive primitive) {
+        // Nothing
+    }
+
+    @Override
+    public void onContacted(Speakable speakable) {
+        Logger.d(this.getClass(), "#onContacted");
+    }
+
+    @Override
+    public void onQuitted(Speakable speakable) {
+        Logger.d(this.getClass(), "#onQuitted");
+    }
+
+    @Override
+    public void onFailed(Speakable speakable, TalkError talkError) {
+        Logger.d(this.getClass(), "onFailed - " + talkError.getErrorCode());
+    }
 }

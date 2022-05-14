@@ -39,6 +39,7 @@ public class FerryhouseCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
+
         return true;
     }
 

@@ -45,7 +45,12 @@ public class FerryhouseCellListener implements CellListener {
 
     @Override
     public void cellInitialized(Nucleus nucleus) {
-
+        (new Thread() {
+            @Override
+            public void run() {
+                Ferryhouse.getInstance().config(nucleus);
+            }
+        }).start();
     }
 
     @Override

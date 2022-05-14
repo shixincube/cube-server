@@ -24,50 +24,22 @@
  * SOFTWARE.
  */
 
-package cube.ferry;
-
-import cell.core.talk.dialect.ActionDialect;
-import cell.util.Utils;
+package cube.ferryhouse.tool;
 
 /**
- * 摆渡数据包。
+ *
  */
-public class FerryPacket {
+public class DomainTool {
 
-    public final static String MESSAGING = "Messaging";
+    private DomainTool() {
 
-    private long sn;
-
-    private ActionDialect dialect;
-
-    private String domain;
-
-    public FerryPacket(ActionDialect dialect) {
-        this.sn = Utils.generateSerialNumber();
-        this.dialect = dialect;
     }
 
-    public long getSN() {
-        return this.sn;
+    public static void createFile(String domain) {
+
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public String getDomain() {
-        return this.domain;
-    }
-
-    public ActionDialect toDialect() {
-        if (!this.dialect.containsParam("sn")) {
-            this.dialect.addParam("sn", this.sn);
-        }
-
-        if (null != this.domain) {
-            this.dialect.addParam("domain", this.domain);
-        }
-
-        return this.dialect;
+    public static String extractDomain() {
+        return null;
     }
 }

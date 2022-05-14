@@ -40,6 +40,7 @@ import cube.service.ferry.plugin.WriteMessagePlugin;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * 摆渡数据服务。
@@ -56,10 +57,16 @@ public class FerryService extends AbstractModule {
 
     private Map<String, Ticket> tickets;
 
+    private Queue<FerryPacket> pushQueue;
+
+    private Object pushMutex = new Object();
+    private boolean pushing = false;
+
     public FerryService(FerryCellet cellet) {
         super();
         this.cellet = cellet;
         this.tickets = new ConcurrentHashMap<>();
+        this.pushQueue = new ConcurrentLinkedQueue<>();
     }
 
     @Override
@@ -100,6 +107,9 @@ public class FerryService extends AbstractModule {
             this.adapter.stop();
             this.adapter = null;
         }
+
+        this.pushQueue.clear();
+        this.tickets.clear();
     }
 
     @Override
@@ -132,15 +142,43 @@ public class FerryService extends AbstractModule {
     }
 
     public void pushToBoat(String domain, FerryPacket packet) {
-        Ticket ticket = this.tickets.get(domain);
-        if (null == ticket) {
-            Logger.w(this.getClass(), "#pushToHouse - Can NOT find domain talk context: " + domain);
+        if (!this.tickets.containsKey(domain)) {
+            Logger.w(this.getClass(), "#pushToBoat - Can NOT find domain talk context: " + domain);
             return;
         }
 
-        // 向 Ferry 推送
+        // 设置 Domain
         packet.setDomain(domain);
-        this.cellet.speak(ticket.talkContext, packet.toDialect());
+
+        this.pushQueue.offer(packet);
+
+        synchronized (this.pushMutex) {
+            if (this.pushing) {
+                return;
+            }
+
+            this.pushing = true;
+        }
+
+        (new Thread() {
+            @Override
+            public void run() {
+                FerryPacket ferryPacket = pushQueue.poll();
+                while (null != ferryPacket) {
+                    Ticket ticket = tickets.get(ferryPacket.getDomain());
+                    if (null != ticket) {
+                        // 向 Ferry 推送数据
+                        cellet.speak(ticket.talkContext, ferryPacket.toDialect());
+                    }
+
+                    ferryPacket = pushQueue.poll();
+                }
+
+                synchronized (pushMutex) {
+                    pushing = false;
+                }
+            }
+        }).start();
     }
 
     private void setup() {
