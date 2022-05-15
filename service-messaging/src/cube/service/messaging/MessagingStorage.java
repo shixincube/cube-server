@@ -981,13 +981,10 @@ public class MessagingStorage implements Storagable {
     private String encrypt(long timestamp, String plaintext) {
         String ciphertext = null;
 
-        byte[] keyBytes = CipherMachine.getInstance().getCipher(timestamp);
+        byte[] keys = CipherMachine.getInstance().getCipher(timestamp);
         try {
             // 创建 Key
-//            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
-//            keyGenerator.init(128, new SecureRandom(keyBytes));
-//            SecretKey secretKey = keyGenerator.generateKey();
-            SecretKey secretKey = new SecretKeySpec(keyBytes, "AES");
+            SecretKey secretKey = new SecretKeySpec(keys, "AES");
 
             // AES 加密
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
@@ -1014,13 +1011,13 @@ public class MessagingStorage implements Storagable {
     private String decrypt(long timestamp, String ciphertext) {
         String plaintext = null;
 
-        byte[] keyBytes = CipherMachine.getInstance().getCipher(timestamp);
+        byte[] keys = CipherMachine.getInstance().getCipher(timestamp);
         try {
+            // 创建 Key
+            SecretKey secretKey = new SecretKeySpec(keys, "AES");
+
             // Base64 解码
             byte[] bytes = Base64.decode(ciphertext.getBytes(StandardCharsets.UTF_8));
-
-            // 创建 Key
-            SecretKey secretKey = new SecretKeySpec(keyBytes, "AES");
 
             // AES 解密
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");

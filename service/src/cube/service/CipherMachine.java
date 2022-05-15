@@ -37,15 +37,15 @@ import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.*;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.util.*;
 
 /**
@@ -83,6 +83,8 @@ public final class CipherMachine {
 
     private byte[] currentCipher;
 
+    private byte[] salt;
+
     private long cipherBeginningTime;
 
     private long cipherEndingTime;
@@ -90,6 +92,10 @@ public final class CipherMachine {
     private Timer timer;
 
     private CipherMachine() {
+        this.salt = new byte[] {
+                'X', 'U', 's', 'h', 'i', 'x', 'i', 'n',
+                'c', 'u', 'b', 'e', '.', 'c', 'o', 'm'
+        };
     }
 
     public static CipherMachine getInstance() {
@@ -170,6 +176,25 @@ public final class CipherMachine {
      * @param timestamp
      * @return
      */
+    public char[] getCipherWithChar(long timestamp) {
+        byte[] bytes = this.getCipher(timestamp);
+        if (null == bytes) {
+            return null;
+        }
+
+        char[] result = new char[bytes.length];
+        for (int i = 0; i < bytes.length; ++i) {
+            result[i] = (char) bytes[i];
+        }
+        return result;
+    }
+
+    /**
+     * 获取指定时间有效的密钥。
+     *
+     * @param timestamp
+     * @return
+     */
     public byte[] getCipher(long timestamp) {
         if (timestamp >= this.cipherBeginningTime && timestamp <= this.cipherEndingTime) {
             return this.currentCipher;
@@ -225,10 +250,20 @@ public final class CipherMachine {
     public byte[] encrypt(byte[] plaintext) {
         byte[] ciphertext = null;
 
-        SecretKeySpec skeySpec = new SecretKeySpec(this.currentCipher, "AES");
+        char[] keys = new char[this.currentCipher.length];
+        for (int i = 0; i < keys.length; ++i) {
+            keys[i] = (char) this.currentCipher[i];
+        }
+
         try {
+            // AES-128
+            KeySpec spec = new PBEKeySpec(keys, this.salt, 65536, 128);
+            SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            byte[] key = f.generateSecret(spec).getEncoded();
+            SecretKey secretKey = new SecretKeySpec(key, "AES");
+
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
             ciphertext = cipher.doFinal(plaintext);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -239,6 +274,8 @@ public final class CipherMachine {
         } catch (BadPaddingException e) {
             e.printStackTrace();
         } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
             e.printStackTrace();
         }
 
@@ -261,10 +298,20 @@ public final class CipherMachine {
     public byte[] decrypt(byte[] ciphertext) {
         byte[] plaintext = null;
 
-        SecretKeySpec skeySpec = new SecretKeySpec(this.currentCipher, "AES");
+        char[] keys = new char[this.currentCipher.length];
+        for (int i = 0; i < keys.length; ++i) {
+            keys[i] = (char) this.currentCipher[i];
+        }
+
         try {
+            // AES-128
+            KeySpec spec = new PBEKeySpec(keys, this.salt, 65536, 128);
+            SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            byte[] key = f.generateSecret(spec).getEncoded();
+            SecretKey secretKey = new SecretKeySpec(key, "AES");
+
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.DECRYPT_MODE, skeySpec);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey);
             plaintext = cipher.doFinal(ciphertext);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -275,6 +322,8 @@ public final class CipherMachine {
         } catch (BadPaddingException e) {
             e.printStackTrace();
         } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
             e.printStackTrace();
         }
 
@@ -326,7 +375,8 @@ public final class CipherMachine {
     private byte[] saveRandomCipher() {
         byte[] cipher = new byte[16];
         for (int i = 0; i < 16; ++i) {
-            cipher[i] = (byte) Utils.randomInt(0, 127);
+            // 使用可打印 ASCII 码
+            cipher[i] = (byte) Utils.randomInt(33, 126);
         }
 
         String string = Base64.encodeBytes(cipher);
