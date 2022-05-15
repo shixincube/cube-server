@@ -362,6 +362,16 @@ public class AuthService extends AbstractModule {
     }
 
     /**
+     * 是否存在指定的域。
+     *
+     * @param domainName
+     * @return
+     */
+    public boolean hasDomain(String domainName) {
+        return this.authStorage.existsDomain(domainName);
+    }
+
+    /**
      * 创建新的访问域。
      *
      * @param domainName 指定域名称。

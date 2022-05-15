@@ -153,6 +153,11 @@ public class AuthStorage implements Storagable {
         this.checkTokenTable();
     }
 
+    /**
+     * 列举所有域名称。
+     *
+     * @return
+     */
     public List<String> listDomains() {
         List<StorageField[]> result = this.storage.executeQuery(this.domainTable, new StorageField[] {
                 new StorageField("domain", LiteralBase.STRING)
@@ -173,6 +178,26 @@ public class AuthStorage implements Storagable {
         }
 
         return list;
+    }
+
+    /**
+     * 是否存在指定的域。
+     *
+     * @param domainName
+     * @return
+     */
+    public boolean existsDomain(String domainName) {
+        List<StorageField[]> result = this.storage.executeQuery(this.domainTable, new StorageField[] {
+                new StorageField("sn", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("domain", domainName)
+        });
+
+        if (result.isEmpty()) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

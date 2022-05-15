@@ -36,6 +36,7 @@ import cube.ferry.FerryAdapter;
 import cube.ferry.FerryPacket;
 import cube.ferry.Ticket;
 import cube.plugin.PluginSystem;
+import cube.service.auth.AuthService;
 import cube.service.ferry.plugin.WriteMessagePlugin;
 
 import java.util.Map;
@@ -136,6 +137,12 @@ public class FerryService extends AbstractModule {
 
         Ticket ticket = new Ticket(domain, talkContext);
         this.tickets.put(domain, ticket);
+
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        if (!authService.hasDomain(domain)) {
+            // 创建域
+            
+        }
     }
 
     public void checkOut(ActionDialect dialect, TalkContext talkContext) {

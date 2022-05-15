@@ -84,6 +84,7 @@ public class Ferryhouse implements TalkListener {
         try {
             JSONObject data = DomainTool.extractData(new File("config/licence"), "shixincube.com");
             if (null == data) {
+                Logger.e(this.getClass(), "#config - Licence file error");
                 System.exit(0);
                 return;
             }
