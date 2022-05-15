@@ -33,6 +33,7 @@ import cell.util.log.Logger;
 import cube.ferry.FerryPacket;
 import cube.ferry.Ticket;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -75,6 +76,8 @@ public class Ferryboat {
     }
 
     public void checkIn(ActionDialect dialect, TalkContext talkContext) {
+        Logger.i(this.getClass(), "#checkIn - " + talkContext.getSessionHost());
+
         String domain = dialect.getParamAsString("domain");
         Ticket ticket = new Ticket(domain, talkContext);
         this.ticketMap.put(domain, ticket);
@@ -83,6 +86,23 @@ public class Ferryboat {
     public void checkOut(ActionDialect dialect, TalkContext talkContext) {
         String domain = dialect.getParamAsString("domain");
         this.ticketMap.remove(domain);
+    }
+
+    public String checkOut(TalkContext talkContext) {
+        String domain = null;
+
+        Iterator<Map.Entry<String, Ticket>> iterator = this.ticketMap.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Ticket> e = iterator.next();
+            Ticket ticket = e.getValue();
+            if (ticket.sessionId == talkContext.getSessionId().longValue()) {
+                domain = e.getKey();
+                iterator.remove();
+                break;
+            }
+        }
+
+        return domain;
     }
 
     public void passBy(ActionDialect actionDialect) {

@@ -91,8 +91,11 @@ public class DomainTool {
             byte[] dataBytes = CipherUtils.decrypt(data, password.getBytes(StandardCharsets.UTF_8));
             String dataString = new String(dataBytes, StandardCharsets.UTF_8);
             return new JSONObject(dataString);
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
+            throw e;
+        } catch (Exception e) {
             e.printStackTrace();
+            return null;
         } finally {
             if (null != fis) {
                 try {
@@ -101,15 +104,27 @@ public class DomainTool {
                 }
             }
         }
-
-        return null;
     }
 
     public static void main(String[] args) {
         File outputFile = new File("config/licence");
+        System.out.println("Licence: " + outputFile.getAbsolutePath());
         try {
             DomainTool.createFile("demo.ferryhouse.cube", "shixincube.com",
                     outputFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            JSONObject data = DomainTool.extractData(outputFile, "shixincube.com");
+            System.out.println("Domain: " + data.getString("domain"));
         } catch (IOException e) {
             e.printStackTrace();
         }

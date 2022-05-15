@@ -26,15 +26,22 @@
 
 package cube.util;
 
+import cell.util.log.Logger;
+
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 
 /**
  * 一般加解密实用函数库。
  */
 public class CipherUtils {
+
+    private final static String DEFAULT_CIPHER_ALGORITHM = "AES/ECB/PKCS5Padding";
+
+    private final static String KEY_ALGORITHM = "AES";
 
     private final static byte[] sPaddingBytes = new byte[]{
             's', 'h', 'i', 'x', 'i', 'n', 'c', 'u', 'b', 'e', '.', 'c', 'o', 'm', '#', '#',
@@ -55,10 +62,10 @@ public class CipherUtils {
         byte[] ciphertext = null;
 
         try {
-            SecretKey secretKey = new SecretKeySpec(paddingKey(key), "AES");
+            SecretKey secretKey = getSecretKey(key);
 
             // AES 加密
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            Cipher cipher = Cipher.getInstance(DEFAULT_CIPHER_ALGORITHM);
             cipher.init(Cipher.ENCRYPT_MODE, secretKey);
             ciphertext = cipher.doFinal(plaintext);
         } catch (NoSuchAlgorithmException e) {
@@ -87,10 +94,10 @@ public class CipherUtils {
         byte[] plaintext = null;
 
         try {
-            SecretKey secretKey = new SecretKeySpec(paddingKey(key), "AES");
+            SecretKey secretKey = getSecretKey(key);
 
             // AES 解密
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            Cipher cipher = Cipher.getInstance(DEFAULT_CIPHER_ALGORITHM);
             cipher.init(Cipher.DECRYPT_MODE, secretKey);
             plaintext = cipher.doFinal(ciphertext);
         } catch (NoSuchAlgorithmException e) {
@@ -106,6 +113,26 @@ public class CipherUtils {
         }
 
         return plaintext;
+    }
+
+    private static SecretKeySpec getSecretKey(byte[] key) {
+        KeyGenerator kg = null;
+
+        try {
+            kg = KeyGenerator.getInstance(KEY_ALGORITHM);
+            SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+            secureRandom.setSeed(key);
+            // AES 要求密钥长度为 128
+            kg.init(128, secureRandom);
+            // 生成一个密钥
+            SecretKey secretKey = kg.generateKey();
+            // 转换为AES专用密钥
+            return new SecretKeySpec(secretKey.getEncoded(), KEY_ALGORITHM);
+        } catch (Exception e) {
+            Logger.e(CipherUtils.class, "#getSecretKey");
+        }
+
+        return null;
     }
 
     private static byte[] paddingKey(byte[] key) {

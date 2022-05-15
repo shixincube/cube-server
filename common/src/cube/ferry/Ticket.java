@@ -29,16 +29,20 @@ package cube.ferry;
 import cell.core.talk.TalkContext;
 import cube.common.Domain;
 
+/**
+ * 用于标记 Ferry 的描述。
+ */
 public class Ticket {
 
     public final Domain domain;
 
     public final TalkContext talkContext;
 
+    public final long sessionId;
+
     public Ticket(String domainName, TalkContext talkContext) {
         this.domain = new Domain(domainName);
         this.talkContext = talkContext;
+        this.sessionId = talkContext.getSessionId();
     }
-
-
 }

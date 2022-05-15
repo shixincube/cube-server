@@ -45,6 +45,6 @@ public class FerryhouseCellet extends AbstractCellet {
 
     @Override
     public void uninstall() {
-
+        Ferryhouse.getInstance().quit();
     }
 }

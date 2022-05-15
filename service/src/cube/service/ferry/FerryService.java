@@ -38,7 +38,10 @@ import cube.ferry.Ticket;
 import cube.plugin.PluginSystem;
 import cube.service.ferry.plugin.WriteMessagePlugin;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -128,12 +131,18 @@ public class FerryService extends AbstractModule {
 
     public void checkIn(ActionDialect dialect, TalkContext talkContext) {
         String domain = dialect.getParamAsString("domain");
+
+        Logger.d(this.getClass(), "#checkIn - " + domain);
+
         Ticket ticket = new Ticket(domain, talkContext);
         this.tickets.put(domain, ticket);
     }
 
     public void checkOut(ActionDialect dialect, TalkContext talkContext) {
         String domain = dialect.getParamAsString("domain");
+
+        Logger.d(this.getClass(), "#checkOut - " + domain);
+
         this.tickets.remove(domain);
     }
 

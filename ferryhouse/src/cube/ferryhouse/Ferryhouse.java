@@ -32,8 +32,12 @@ import cell.api.TalkListener;
 import cell.core.talk.Primitive;
 import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkError;
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.ferry.FerryAction;
+import cube.ferryhouse.tool.DomainTool;
 import cube.util.ConfigUtils;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +48,8 @@ import java.util.Properties;
  */
 public class Ferryhouse implements TalkListener {
 
+    public final static String FERRY = "Ferry";
+
     public final static String NAME = "Ferryhouse";
 
     private final static Ferryhouse instance = new Ferryhouse();
@@ -52,6 +58,8 @@ public class Ferryhouse implements TalkListener {
 
     private String address;
     private int port;
+
+    private String domain;
 
     private Ferryhouse() {
     }
@@ -72,8 +80,36 @@ public class Ferryhouse implements TalkListener {
         this.address = properties.getProperty("ferry.address");
         this.port = Integer.parseInt(properties.getProperty("ferry.port", "7900").trim());
 
+        // 读取许可证
+        try {
+            JSONObject data = DomainTool.extractData(new File("config/licence"), "shixincube.com");
+            if (null == data) {
+                System.exit(0);
+                return;
+            }
+
+            this.domain = data.getString("domain");
+        } catch (IOException e) {
+            Logger.e(this.getClass(), "#config - Can NOT find licence file");
+            System.exit(0);
+            return;
+        }
+
         this.nucleus.getTalkService().addListener(this);
         this.nucleus.getTalkService().call(this.address, this.port);
+    }
+
+    public void quit() {
+        ActionDialect dialect = new ActionDialect(FerryAction.CheckOut.name);
+        dialect.addParam("domain", this.domain);
+
+        this.nucleus.getTalkService().speak(FERRY, dialect);
+
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private Properties loadConfig() {
@@ -119,6 +155,10 @@ public class Ferryhouse implements TalkListener {
     @Override
     public void onContacted(Speakable speakable) {
         Logger.d(this.getClass(), "#onContacted");
+
+        ActionDialect dialect = new ActionDialect(FerryAction.CheckIn.name);
+        dialect.addParam("domain", this.domain);
+        speakable.speak(FERRY, dialect);
     }
 
     @Override

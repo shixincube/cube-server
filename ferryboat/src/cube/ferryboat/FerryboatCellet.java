@@ -26,6 +26,7 @@
 
 package cube.ferryboat;
 
+import cell.api.Servable;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
@@ -79,5 +80,22 @@ public class FerryboatCellet extends AbstractCellet {
                 Ferryboat.getInstance().passBy(dialect);
             }
         });
+    }
+
+    @Override
+    public void onQuitted(TalkContext talkContext, Servable server) {
+        super.onQuitted(talkContext, server);
+
+        String domain = Ferryboat.getInstance().checkOut(talkContext);
+        if (null != domain) {
+            ActionDialect dialect = new ActionDialect(FerryAction.CheckOut.name);
+            dialect.addParam("domain", domain);
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    Ferryboat.getInstance().passBy(dialect);
+                }
+            });
+        }
     }
 }
