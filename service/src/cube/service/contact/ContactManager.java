@@ -53,6 +53,8 @@ import cube.core.Kernel;
 import cube.plugin.PluginSystem;
 import cube.service.Director;
 import cube.service.auth.AuthService;
+import cube.service.auth.AuthServiceHook;
+import cube.service.contact.plugin.CreateDomainAppPlugin;
 import cube.service.contact.plugin.FilterContactNamePlugin;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
@@ -135,7 +137,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 同步超时时长。
      */
-    private long syncTimeout = 5000L;
+    private long syncTimeout = 5000;
 
     /**
      * 联系人事件队列。
@@ -238,6 +240,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
                 storage.execSelfChecking(authService.getDomainList());
 
+                // 插件注册
+                initPlugin(authService);
+
                 // 启动统计系统
                 statisticsSystem.start(storage.getStorageType(), storage.getConfig(), authService.getDomainList());
 
@@ -286,6 +291,27 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     @Override
     public void onTick(cube.core.Module module, Kernel kernel) {
         this.daemon.run();
+    }
+
+    private void initPlugin(AuthService authService) {
+        (new Thread() {
+            @Override
+            public void run() {
+                PluginSystem<?> pluginSystem = authService.getPluginSystem();
+                while (null == pluginSystem) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    pluginSystem = authService.getPluginSystem();
+                }
+
+                pluginSystem.register(AuthServiceHook.CreateDomainApp,
+                        new CreateDomainAppPlugin());
+            }
+        }).start();
     }
 
     /**
@@ -1764,6 +1790,17 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                     contact.getId().longValue(), contact.getDomain().getName());
             this.cellet.speak(talkContext, dialect);
         }
+    }
+
+    /**
+     * 刷新指定的域信息。
+     *
+     * @param authDomain
+     */
+    public void refreshAuthDomain(AuthDomain authDomain) {
+        List<String> list = new ArrayList<>();
+        list.add(authDomain.domainName);
+        this.storage.execSelfChecking(list);
     }
 
     @Override

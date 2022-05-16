@@ -24,44 +24,50 @@
  * SOFTWARE.
  */
 
-package cube.service.contact.plugin;
+package cube.service.ferry;
 
-import cube.plugin.Plugin;
-import cube.plugin.PluginContext;
+import cell.core.talk.LiteralBase;
+import cube.common.Storagable;
+import cube.core.Constraint;
+import cube.core.Storage;
+import cube.core.StorageField;
+import cube.storage.StorageFactory;
+import cube.storage.StorageType;
+import org.json.JSONObject;
+
+import java.util.List;
 
 /**
- * 过滤联系人名插件。
+ * Ferry 数据存储器。
  */
-public class FilterContactNamePlugin implements Plugin {
+public class FerryStorage implements Storagable {
 
-    public FilterContactNamePlugin() {
+    private final StorageField[] domainFields = new StorageField[]{
+            new StorageField("sn", LiteralBase.LONG, new Constraint[]{
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+    };
+
+    private final String endpointTable = "ferry_endpoint";
+
+    private Storage storage;
+
+    public FerryStorage(StorageType type, JSONObject config) {
+        this.storage = StorageFactory.getInstance().createStorage(type, "FerryStorage", config);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public void setup() {
-
+    public void open() {
+        this.storage.open();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public void teardown() {
-
+    public void close() {
+        this.storage.close();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public void onAction(PluginContext context) {
-//        ContactPluginContext ctx = (ContactPluginContext) context;
-//        Contact contact = ctx.getContact();
-//        String name = contact.getName();
-//        name = name.replace("时信", "**");
-//        contact.setName(name);
+    public void execSelfChecking(List<String> domainNameList) {
+
     }
 }

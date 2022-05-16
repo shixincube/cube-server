@@ -38,6 +38,9 @@ import cube.ferry.Ticket;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
 import cube.service.ferry.plugin.WriteMessagePlugin;
+import cube.storage.StorageType;
+import cube.util.ConfigUtils;
+import org.json.JSONObject;
 
 import java.util.Map;
 import java.util.Queue;
@@ -54,6 +57,8 @@ public class FerryService extends AbstractModule {
     public final static String NAME = "Ferry";
 
     private final FerryCellet cellet;
+
+    private FerryStorage storage;
 
     private Timer timer;
 
@@ -75,13 +80,29 @@ public class FerryService extends AbstractModule {
 
     @Override
     public void start() {
+        JSONObject config = ConfigUtils.readStorageConfig();
+        if (config.has(FerryService.NAME)) {
+            config = config.getJSONObject(FerryService.NAME);
+            if (config.getString("type").equalsIgnoreCase("SQLite")) {
+                this.storage = new FerryStorage(StorageType.SQLite, config);
+            }
+            else {
+                this.storage = new FerryStorage(StorageType.MySQL, config);
+            }
+        }
+        else {
+            config.put("file", "storage/Ferry.db");
+            this.storage = new FerryStorage(StorageType.SQLite, config);
+        }
+
         if (null == this.timer) {
             this.timer = new Timer();
             this.timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    // 启动适配器
-
+                    // 启动存储器
+                    storage.open();
+                    storage.execSelfChecking(null);
 
                     // 配置
                     setup();
@@ -114,6 +135,11 @@ public class FerryService extends AbstractModule {
 
         this.pushQueue.clear();
         this.tickets.clear();
+
+        if (null != this.storage) {
+            this.storage.close();
+            this.storage = null;
+        }
     }
 
     @Override
@@ -141,7 +167,7 @@ public class FerryService extends AbstractModule {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         if (!authService.hasDomain(domain)) {
             // 创建域
-            //authService.createDomainApp()
+//            authService.createDomainApp();
         }
     }
 

@@ -31,13 +31,16 @@ import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.cache.SharedMemoryCache;
 import cube.common.action.FileStorageAction;
+import cube.common.entity.AuthDomain;
 import cube.common.entity.FileLabel;
 import cube.core.*;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
+import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactManager;
 import cube.service.filestorage.hierarchy.FileHierarchy;
 import cube.service.filestorage.hierarchy.FileHierarchyManager;
+import cube.service.filestorage.plugin.CreateDomainAppPlugin;
 import cube.service.filestorage.recycle.RecycleBin;
 import cube.service.filestorage.system.DiskSystem;
 import cube.service.filestorage.system.FileDescriptor;
@@ -54,6 +57,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -182,6 +187,9 @@ public class FileStorageService extends AbstractModule {
 
         // 初始化存储
         this.initStorage();
+
+        // 初始化插件
+        this.initPlugin();
 
         // 创建文件层级管理器
         this.fileHierarchyManager = new FileHierarchyManager(this.serviceStorage, this);
@@ -485,6 +493,12 @@ public class FileStorageService extends AbstractModule {
         return this.fileSystem.loadFileToDisk(fileCode);
     }
 
+    public void refreshAuthDomain(AuthDomain authDomain) {
+        List<String> list = new ArrayList<>();
+        list.add(authDomain.domainName);
+        this.serviceStorage.execSelfChecking(list);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -657,6 +671,28 @@ public class FileStorageService extends AbstractModule {
                 if (fileSystem instanceof DiskSystem) {
                     ((DiskSystem) fileSystem).activateCluster(serviceStorage.getType(), serviceStorage.getConfig());
                 }
+            }
+        }).start();
+    }
+
+    private void initPlugin() {
+        (new Thread() {
+            @Override
+            public void run() {
+                AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
+                PluginSystem<?> pluginSystem = authService.getPluginSystem();
+                while (null == pluginSystem) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    pluginSystem = authService.getPluginSystem();
+                }
+
+                pluginSystem.register(AuthServiceHook.CreateDomainApp,
+                        new CreateDomainAppPlugin(FileStorageService.this));
             }
         }).start();
     }

@@ -24,44 +24,40 @@
  * SOFTWARE.
  */
 
-package cube.service.contact.plugin;
+package cube.service.messaging;
 
+import cube.common.entity.AuthDomain;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
+import cube.service.auth.AuthPluginContext;
 
 /**
- * 过滤联系人名插件。
+ * 插件。
  */
-public class FilterContactNamePlugin implements Plugin {
+public class ServicePlugin implements Plugin {
 
-    public FilterContactNamePlugin() {
+    private MessagingService service;
+
+    public ServicePlugin(MessagingService service) {
+        this.service = service;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void setup() {
-
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void teardown() {
-
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void onAction(PluginContext context) {
-//        ContactPluginContext ctx = (ContactPluginContext) context;
-//        Contact contact = ctx.getContact();
-//        String name = contact.getName();
-//        name = name.replace("时信", "**");
-//        contact.setName(name);
+        if (context instanceof AuthPluginContext) {
+            AuthPluginContext authPluginContext = (AuthPluginContext) context;
+            AuthDomain authDomain = authPluginContext.getDomain();
+            if (null != authDomain) {
+                this.service.refreshDomain(authDomain);
+            }
+        }
     }
 }

@@ -26,42 +26,36 @@
 
 package cube.service.contact.plugin;
 
+import cube.common.entity.AuthDomain;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
+import cube.service.auth.AuthPluginContext;
+import cube.service.contact.ContactManager;
 
 /**
- * 过滤联系人名插件。
+ * 创建域应用插件。
  */
-public class FilterContactNamePlugin implements Plugin {
+public class CreateDomainAppPlugin implements Plugin {
 
-    public FilterContactNamePlugin() {
+    public CreateDomainAppPlugin() {
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void setup() {
-
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void teardown() {
-
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void onAction(PluginContext context) {
-//        ContactPluginContext ctx = (ContactPluginContext) context;
-//        Contact contact = ctx.getContact();
-//        String name = contact.getName();
-//        name = name.replace("时信", "**");
-//        contact.setName(name);
+        if (context instanceof AuthPluginContext) {
+            AuthPluginContext apc = (AuthPluginContext) context;
+            AuthDomain authDomain = apc.getDomain();
+            if (null != authDomain) {
+                ContactManager.getInstance().refreshAuthDomain(authDomain);
+            }
+        }
     }
 }

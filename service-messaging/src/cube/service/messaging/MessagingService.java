@@ -49,6 +49,7 @@ import cube.core.Kernel;
 import cube.plugin.PluginSystem;
 import cube.service.Director;
 import cube.service.auth.AuthService;
+import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactManager;
 import cube.service.fileprocessor.FileProcessorService;
 import cube.service.filestorage.FileStorageService;
@@ -177,6 +178,28 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         }).start();
     }
 
+    private void initPlugin() {
+        (new Thread() {
+            @Override
+            public void run() {
+                AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
+                PluginSystem<?> pluginSystem = authService.getPluginSystem();
+                while (null == pluginSystem) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    pluginSystem = authService.getPluginSystem();
+                }
+
+                pluginSystem.register(AuthServiceHook.CreateDomainApp,
+                        new ServicePlugin(MessagingService.this));
+            }
+        }).start();
+    }
+
     /**
      * 启动服务。
      */
@@ -190,6 +213,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         this.initMessageCache();
 
         this.initMessageStorage();
+
+        this.initPlugin();
     }
 
     /**
@@ -1058,6 +1083,12 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 group.getId(), message.getId(),
                 message.getRemoteTimestamp(), ConversationType.Group,
                 ConversationState.Normal, ConversationRemindType.Normal);
+    }
+
+    protected void refreshDomain(AuthDomain authDomain) {
+        List<String> list = new ArrayList<>();
+        list.add(authDomain.domainName);
+        this.storage.execSelfChecking(list);
     }
 
     @Override
