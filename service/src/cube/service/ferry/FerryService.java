@@ -42,10 +42,7 @@ import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
-import java.util.Map;
-import java.util.Queue;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -167,6 +164,7 @@ public class FerryService extends AbstractModule {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         if (!authService.hasDomain(domain)) {
             // 创建域
+            List<FerryStorage.AccessPoint> list = this.storage.readAccessPoints();
 //            authService.createDomainApp();
         }
     }
