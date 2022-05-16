@@ -28,7 +28,9 @@ package cube.service.ferry;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.common.entity.IceServer;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
@@ -165,7 +167,18 @@ public class FerryService extends AbstractModule {
         if (!authService.hasDomain(domain)) {
             // 创建域
             List<FerryStorage.AccessPoint> list = this.storage.readAccessPoints();
-//            authService.createDomainApp();
+            if (!list.isEmpty()) {
+                FerryStorage.AccessPoint accessPoint = list.get(0);
+                List<IceServer> iceServers = new ArrayList<>();
+                iceServers.add(accessPoint.iceServer);
+                // 创建新的域
+                authService.createDomainApp(domain, Long.toString(System.currentTimeMillis()),
+                        Utils.randomString(16), accessPoint.mainEndpoint,
+                        accessPoint.httpEndpoint, accessPoint.httpsEndpoint, iceServers);
+            }
+            else {
+                Logger.e(this.getClass(), "#checkIn - No find domain access point");
+            }
         }
     }
 
