@@ -26,24 +26,16 @@
 
 package cube.service.auth;
 
-import cube.plugin.PluginSystem;
+import cube.plugin.Hook;
 
 /**
- * Auth 服务插件系统。
+ * 授权服务插件的 Hook 。
  */
-public class AuthServicePluginSystem extends PluginSystem<AuthServiceHook> {
+public class AuthServiceHook extends Hook {
 
-    public AuthServicePluginSystem() {
-        super();
-        this.build();
-    }
+    public final static String CreateDomainApp = "CreateDomainApp";
 
-    public AuthServiceHook getCreateDomainAppHook() {
-        return this.getHook(AuthServiceHook.CreateDomainApp);
-    }
-
-    private void build() {
-        AuthServiceHook hook = new AuthServiceHook(AuthServiceHook.CreateDomainApp);
-        this.addHook(hook);
+    public AuthServiceHook(String key) {
+        super(key);
     }
 }

@@ -26,24 +26,38 @@
 
 package cube.service.auth;
 
-import cube.plugin.PluginSystem;
+import cube.common.entity.AuthDomain;
+import cube.plugin.PluginContext;
 
 /**
- * Auth 服务插件系统。
+ * 插件上下文。
  */
-public class AuthServicePluginSystem extends PluginSystem<AuthServiceHook> {
+public class AuthPluginContext extends PluginContext {
 
-    public AuthServicePluginSystem() {
+    private AuthDomain domain;
+
+    public AuthPluginContext(AuthDomain domain) {
         super();
-        this.build();
+        this.domain = domain;
     }
 
-    public AuthServiceHook getCreateDomainAppHook() {
-        return this.getHook(AuthServiceHook.CreateDomainApp);
+    public AuthDomain getDomain() {
+        return this.domain;
     }
 
-    private void build() {
-        AuthServiceHook hook = new AuthServiceHook(AuthServiceHook.CreateDomainApp);
-        this.addHook(hook);
+    @Override
+    public Object get(String name) {
+        if (name.equals("domain")) {
+            return this.domain;
+        }
+
+        return null;
+    }
+
+    @Override
+    public void set(String name, Object value) {
+        if (name.equals("domain")) {
+            this.domain = (AuthDomain) value;
+        }
     }
 }

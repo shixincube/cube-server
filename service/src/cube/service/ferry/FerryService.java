@@ -141,7 +141,7 @@ public class FerryService extends AbstractModule {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         if (!authService.hasDomain(domain)) {
             // 创建域
-            
+            //authService.createDomainApp()
         }
     }
 

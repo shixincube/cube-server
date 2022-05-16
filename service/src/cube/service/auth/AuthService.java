@@ -55,6 +55,8 @@ public class AuthService extends AbstractModule {
 
     private boolean useFile = false;
 
+    private AuthServicePluginSystem pluginSystem;
+
     private AuthDomainFile authDomainFile;
 
     private PrimaryContentFile primaryContentFile;
@@ -104,6 +106,9 @@ public class AuthService extends AbstractModule {
             this.authStorage.open();
             this.authStorage.execSelfChecking(null);
         }
+
+        // 创建插件系统
+        this.pluginSystem = new AuthServicePluginSystem();
     }
 
     @Override
@@ -115,9 +120,8 @@ public class AuthService extends AbstractModule {
 
     @Override
     public PluginSystem<?> getPluginSystem() {
-        return null;
+        return this.pluginSystem;
     }
-
 
     @Override
     public void onTick(cube.core.Module module, Kernel kernel) {
@@ -384,7 +388,7 @@ public class AuthService extends AbstractModule {
      * @return 返回创建的域。如果域重复或者创建失败返回 {@code null} 值。
      */
     public AuthDomain createDomainApp(String domainName, String appKey, String appId, Endpoint mainEndpoint,
-                                       Endpoint httpEndpoint, Endpoint httpsEndpoint, List<IceServer> iceServers) {
+                                      Endpoint httpEndpoint, Endpoint httpsEndpoint, List<IceServer> iceServers) {
         // 判断是否有重复的 App
         AuthDomain authDomain = this.authStorage.getDomain(domainName, appKey);
         if (null != authDomain) {
@@ -406,6 +410,11 @@ public class AuthService extends AbstractModule {
         this.authStorage.addDomainApp(domainName, appId, appKey, mainEndpoint, httpEndpoint, httpsEndpoint, jsonArray);
 
         authDomain = new AuthDomain(domainName, appKey, appId, mainEndpoint, httpEndpoint, httpsEndpoint, jsonArray);
+
+        // Hook
+        AuthServiceHook hook = this.pluginSystem.getCreateDomainAppHook();
+        hook.apply(new AuthPluginContext(authDomain));
+
         return authDomain;
     }
 
