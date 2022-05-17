@@ -58,7 +58,7 @@ public class WriteMessagePlugin implements Plugin {
     public void onAction(PluginContext context) {
         Message message = (Message) context.get("message");
 
-        ActionDialect actionDialect = new ActionDialect(FerryAction.Port.name);
+        ActionDialect actionDialect = new ActionDialect(FerryAction.Ferry.name);
         actionDialect.addParam("port", FerryPort.WriteMessage);
         actionDialect.addParam("message", message.toJSON());
 

@@ -31,30 +31,37 @@ import cell.api.TalkListener;
 import cell.core.talk.Primitive;
 import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkError;
+import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
 import cube.ferry.Ticket;
 
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 连接后端服务的监听器。
  */
 public class FerryReceiver implements TalkListener {
 
+    private ExecutorService executor;
+
     private Map<String, Ticket> ticketMap;
 
-    public FerryReceiver(Map<String, Ticket> ticketMap) {
+    public FerryReceiver(ExecutorService executor, Map<String, Ticket> ticketMap) {
+        this.executor = executor;
         this.ticketMap = ticketMap;
     }
 
     @Override
     public void onListened(Speakable speakable, String cellet, Primitive primitive) {
+        ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
 
     }
 
     @Override
     public void onListened(Speakable speakable, String cellet, PrimitiveInputStream primitiveInputStream) {
-        Logger.d(this.getClass(), "#onListened");
+        Logger.d(this.getClass(), "#onListened(PrimitiveInputStream)");
     }
 
     @Override

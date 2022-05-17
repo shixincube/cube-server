@@ -42,9 +42,9 @@ public enum FerryAction {
     CheckOut("checkOut"),
 
     /**
-     * 送达数据。
+     * 摆渡数据。
      */
-    Port("port")
+    Ferry("ferry")
 
     ;
 

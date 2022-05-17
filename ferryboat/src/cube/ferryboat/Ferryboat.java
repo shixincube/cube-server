@@ -29,6 +29,7 @@ package cube.ferryboat;
 import cell.api.Nucleus;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
 import cube.ferry.FerryPacket;
 import cube.ferry.Ticket;
@@ -36,6 +37,7 @@ import cube.ferry.Ticket;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 管理器描述。
@@ -52,27 +54,42 @@ public class Ferryboat {
 
     private int port;
 
+    private ExecutorService executor;
+
     private FerryReceiver receiver;
 
     private Map<String, Ticket> ticketMap;
 
     private Ferryboat() {
         this.ticketMap = new ConcurrentHashMap<>();
-        this.receiver = new FerryReceiver(this.ticketMap);
     }
 
     public static Ferryboat getInstance() {
         return Ferryboat.instance;
     }
 
-    public void config(Nucleus nucleus) {
+    public void start(Nucleus nucleus) {
         this.nucleus = nucleus;
+
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
+
+        this.receiver = new FerryReceiver(this.executor, this.ticketMap);
+
         nucleus.getTalkService().addListener(this.receiver);
 
         // 连接服务器
         this.address = "127.0.0.1";
         this.port = 6000;
         nucleus.getTalkService().call(this.address, this.port);
+    }
+
+    public void stop() {
+        this.nucleus.getTalkService().removeListener(this.receiver);
+
+        if (null != this.executor) {
+            this.executor.shutdown();
+            this.executor = null;
+        }
     }
 
     public void checkIn(ActionDialect dialect, TalkContext talkContext) {

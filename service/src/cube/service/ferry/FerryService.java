@@ -178,8 +178,8 @@ public class FerryService extends AbstractModule {
                 List<IceServer> iceServers = new ArrayList<>();
                 iceServers.add(accessPoint.iceServer);
                 // 创建新的域
-                authService.createDomainApp(domain, Long.toString(System.currentTimeMillis()),
-                        Utils.randomString(16), accessPoint.mainEndpoint,
+                authService.createDomainApp(domain, Utils.randomString(16),
+                        Long.toString(System.currentTimeMillis()), accessPoint.mainEndpoint,
                         accessPoint.httpEndpoint, accessPoint.httpsEndpoint, iceServers);
             }
             else {

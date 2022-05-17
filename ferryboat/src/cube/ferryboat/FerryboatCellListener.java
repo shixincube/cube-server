@@ -50,7 +50,7 @@ public class FerryboatCellListener implements CellListener {
         (new Thread() {
             @Override
             public void run() {
-                Ferryboat.getInstance().config(nucleus);
+                Ferryboat.getInstance().start(nucleus);
             }
         }).start();
     }
@@ -58,5 +58,7 @@ public class FerryboatCellListener implements CellListener {
     @Override
     public void cellDestroyed(Nucleus nucleus) {
         Logger.i(this.getClass(), "#cellDestroyed");
+
+        Ferryboat.getInstance().stop();
     }
 }
