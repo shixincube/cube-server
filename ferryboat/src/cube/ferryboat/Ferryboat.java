@@ -56,6 +56,8 @@ public class Ferryboat {
 
     private ExecutorService executor;
 
+    private FerryboatCellet cellet;
+
     private FerryReceiver receiver;
 
     private Map<String, Ticket> ticketMap;
@@ -90,6 +92,14 @@ public class Ferryboat {
             this.executor.shutdown();
             this.executor = null;
         }
+    }
+
+    public void setCellet(FerryboatCellet cellet) {
+        this.cellet = cellet;
+    }
+
+    protected FerryboatCellet getCellet() {
+        return this.cellet;
     }
 
     public void checkIn(ActionDialect dialect, TalkContext talkContext) {

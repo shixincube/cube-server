@@ -34,6 +34,7 @@ import cell.core.talk.TalkError;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
+import cube.ferry.FerryAction;
 import cube.ferry.Ticket;
 
 import java.util.Map;
@@ -53,10 +54,30 @@ public class FerryReceiver implements TalkListener {
         this.ticketMap = ticketMap;
     }
 
+    private void ferry(ActionDialect actionDialect) {
+        String domain = actionDialect.getParamAsString("domain");
+        Ticket ticket = this.ticketMap.get(domain);
+        if (null == ticket) {
+            Logger.w(this.getClass(), "#ferry - Can NOT find domain talk context: " + domain);
+            return;
+        }
+
+        Ferryboat.getInstance().getCellet().speak(ticket.talkContext, actionDialect);
+    }
+
     @Override
     public void onListened(Speakable speakable, String cellet, Primitive primitive) {
-        ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
+        final ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
+        final String action = actionDialect.getName();
 
+        if (FerryAction.Ferry.name.equals(action)) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ferry(actionDialect);
+                }
+            });
+        }
     }
 
     @Override

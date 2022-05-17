@@ -52,6 +52,8 @@ public class FerryboatCellet extends AbstractCellet {
     public boolean install() {
         this.executor = Executors.newCachedThreadPool();
 
+        Ferryboat.getInstance().setCellet(this);
+
         return true;
     }
 

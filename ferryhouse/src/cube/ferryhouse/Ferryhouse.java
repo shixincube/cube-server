@@ -33,14 +33,18 @@ import cell.core.talk.Primitive;
 import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkError;
 import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
 import cube.ferry.FerryAction;
+import cube.ferry.FerryPort;
 import cube.ferryhouse.tool.DomainTool;
+import cube.storage.MySQLStorage;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Properties;
 
 /**
@@ -61,6 +65,8 @@ public class Ferryhouse implements TalkListener {
 
     private String domain;
 
+    private MessageFerry messageFerry;
+
     private Ferryhouse() {
     }
 
@@ -80,6 +86,14 @@ public class Ferryhouse implements TalkListener {
         this.address = properties.getProperty("ferry.address");
         this.port = Integer.parseInt(properties.getProperty("ferry.port", "7900").trim());
 
+        // 数据库
+        JSONObject mysqlConfig = new JSONObject();
+        mysqlConfig.put(MySQLStorage.CONFIG_HOST, properties.getProperty("mysql.host"));
+        mysqlConfig.put(MySQLStorage.CONFIG_PORT, Integer.parseInt(properties.getProperty("mysql.port", "3306")));
+        mysqlConfig.put(MySQLStorage.CONFIG_SCHEMA, properties.getProperty("mysql.schema"));
+        mysqlConfig.put(MySQLStorage.CONFIG_USER, properties.getProperty("mysql.user"));
+        mysqlConfig.put(MySQLStorage.CONFIG_PASSWORD, properties.getProperty("mysql.password"));
+
         // 读取许可证
         try {
             JSONObject data = DomainTool.extractData(new File("config/licence"), "shixincube.com");
@@ -96,8 +110,23 @@ public class Ferryhouse implements TalkListener {
             return;
         }
 
+        // 连接 Boat
         this.nucleus.getTalkService().addListener(this);
         this.nucleus.getTalkService().call(this.address, this.port);
+
+        ArrayList<String> domainList = new ArrayList<>();
+        domainList.add(this.domain);
+
+        this.messageFerry = new MessageFerry(mysqlConfig);
+
+        // 启动各个 Ferry
+        (new Thread() {
+            @Override
+            public void run() {
+                messageFerry.open();
+                messageFerry.execSelfChecking(domainList);
+            }
+        }).start();
     }
 
     public void quit() {
@@ -111,6 +140,8 @@ public class Ferryhouse implements TalkListener {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        this.messageFerry.close();
     }
 
     private Properties loadConfig() {
@@ -128,9 +159,21 @@ public class Ferryhouse implements TalkListener {
         return null;
     }
 
+    private void processFerry(ActionDialect actionDialect) {
+        String port = actionDialect.getParamAsString("port");
+        if (FerryPort.WriteMessage.equals(port)) {
+            this.messageFerry.writeMessage(actionDialect);
+        }
+    }
+
     @Override
     public void onListened(Speakable speakable, String cellet, Primitive primitive) {
+        ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
+        String action = actionDialect.getName();
 
+        if (FerryAction.Ferry.name.equals(action)) {
+            this.processFerry(actionDialect);
+        }
     }
 
     @Override
