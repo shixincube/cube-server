@@ -165,10 +165,16 @@ public class FerryService extends AbstractModule {
 
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         if (!authService.hasDomain(domain)) {
-            // 创建域
-            List<FerryStorage.AccessPoint> list = this.storage.readAccessPoints();
-            if (!list.isEmpty()) {
-                FerryStorage.AccessPoint accessPoint = list.get(0);
+            // 获取访问节点
+            FerryStorage.AccessPoint accessPoint = this.storage.readAccessPoint(domain);
+            if (null == accessPoint) {
+                List<FerryStorage.AccessPoint> list = this.storage.readAccessPoints();
+                if (!list.isEmpty()) {
+                    accessPoint = list.get(0);
+                }
+            }
+
+            if (null != accessPoint) {
                 List<IceServer> iceServers = new ArrayList<>();
                 iceServers.add(accessPoint.iceServer);
                 // 创建新的域

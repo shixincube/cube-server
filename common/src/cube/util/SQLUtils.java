@@ -98,7 +98,13 @@ public final class SQLUtils {
         buf.append(table);
 
         if (null != conditionals) {
-            buf.append(" WHERE ");
+            if (conditionals[0].needWhereSentence()) {
+                buf.append(" WHERE ");
+            }
+            else {
+                buf.append(" ");
+            }
+
             for (Conditional cond : conditionals) {
                 buf.append(cond.toString()).append(" ");
             }

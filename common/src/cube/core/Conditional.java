@@ -42,6 +42,11 @@ public class Conditional {
     private String sql;
 
     /**
+     * 是否包含 WHERE 句式。
+     */
+    protected boolean whereSentence = false;
+
+    /**
      * 构造函数。
      *
      * @param sql 指定 SQL 字符串。
@@ -50,9 +55,24 @@ public class Conditional {
         this.sql = sql;
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param sql 指定 SQL 字符串。
+     * @param whereSentence 是否需要 WHERE 句式。
+     */
+    protected Conditional(String sql, boolean whereSentence) {
+        this.sql = sql;
+        this.whereSentence = whereSentence;
+    }
+
     @Override
     public String toString() {
         return this.sql;
+    }
+
+    public boolean needWhereSentence() {
+        return this.whereSentence;
     }
 
     /**
@@ -172,10 +192,12 @@ public class Conditional {
 
         String table = field.getTableName();
         if (null != table) {
-            return new Conditional(Quote + table + Quote + "." + Quote + field.getName() + Quote + "=" + value);
+            return new Conditional(Quote + table + Quote + "." + Quote + field.getName() + Quote + "=" + value,
+                    true);
         }
         else {
-            return new Conditional(Quote + field.getName() + Quote + "=" + value);
+            return new Conditional(Quote + field.getName() + Quote + "=" + value,
+                    true);
         }
     }
 
@@ -191,7 +213,7 @@ public class Conditional {
         buf.append(Quote).append(leftJoinField.getTableName()).append(Quote + "." + Quote).append(leftJoinField.getName()).append(Quote);
         buf.append("=");
         buf.append(Quote).append(rightJoinField.getTableName()).append(Quote + "." + Quote).append(rightJoinField.getName()).append(Quote);
-        return new Conditional(buf.toString());
+        return new Conditional(buf.toString(), true);
     }
 
     /**
@@ -201,7 +223,8 @@ public class Conditional {
      * @return 返回条件句式实例。
      */
     public static Conditional createGreaterThan(StorageField field) {
-        return new Conditional(Quote + field.getName() + Quote + ">" + field.getValue().toString());
+        return new Conditional(Quote + field.getName() + Quote + ">" + field.getValue().toString(),
+                true);
     }
 
     /**
@@ -211,7 +234,8 @@ public class Conditional {
      * @return 返回条件句式实例。
      */
     public static Conditional createGreaterThanEqual(StorageField field) {
-        return new Conditional(Quote + field.getName() + Quote + ">=" + field.getValue().toString());
+        return new Conditional(Quote + field.getName() + Quote + ">=" + field.getValue().toString(),
+                true);
     }
 
     /**
@@ -221,7 +245,8 @@ public class Conditional {
      * @return 返回条件句式实例。
      */
     public static Conditional createLessThan(StorageField field) {
-        return new Conditional(Quote + field.getName() + Quote + "<" + field.getValue().toString());
+        return new Conditional(Quote + field.getName() + Quote + "<" + field.getValue().toString(),
+                true);
     }
 
     /**
@@ -231,7 +256,8 @@ public class Conditional {
      * @return 返回条件句式实例。
      */
     public static Conditional createLessThanEqual(StorageField field) {
-        return new Conditional(Quote + field.getName() + Quote + "<=" + field.getValue().toString());
+        return new Conditional(Quote + field.getName() + Quote + "<=" + field.getValue().toString(),
+                true);
     }
 
     /**
@@ -282,6 +308,22 @@ public class Conditional {
     public static Conditional createLike(String fieldName, String keyword) {
         StringBuilder buf = new StringBuilder();
         buf.append(Quote).append(fieldName).append(Quote).append(" LIKE '%").append(keyword).append("%'");
+        return new Conditional(buf.toString());
+    }
+
+    /**
+     * 创建 ORDER BY 条件。
+     *
+     * @param fieldName 字段名。
+     * @param desc 是否倒序。
+     * @return 返回条件句式实例。
+     */
+    public static Conditional createOrderBy(String fieldName, boolean desc) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("ORDER BY ").append(Quote).append(fieldName).append(Quote);
+        if (desc) {
+            buf.append(" DESC");
+        }
         return new Conditional(buf.toString());
     }
 }

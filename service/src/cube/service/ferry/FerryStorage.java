@@ -138,7 +138,11 @@ public class FerryStorage implements Storagable {
     public List<AccessPoint> readAccessPoints() {
         List<AccessPoint> list = new ArrayList<>();
 
-        List<StorageField[]> result = this.storage.executeQuery(this.accessPointTable, this.accessPointFields);
+        List<StorageField[]> result = this.storage.executeQuery(this.accessPointTable, this.accessPointFields,
+                new Conditional[] {
+                        Conditional.createOrderBy("priority", true)
+                });
+
         for (StorageField[] fields : result) {
             Map<String, StorageField> map = StorageFields.get(fields);
             AccessPoint accessPoint = new AccessPoint();
@@ -157,6 +161,38 @@ public class FerryStorage implements Storagable {
         return list;
     }
 
+    /**
+     * 读取指定域
+     * @param domainName
+     * @return
+     */
+    public AccessPoint readAccessPoint(String domainName) {
+        AccessPoint accessPoint = null;
+
+        List<StorageField[]> result = this.storage.executeQuery(this.accessPointTable, this.accessPointFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("domain", domainName),
+                        Conditional.createOrderBy("priority", true)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+        accessPoint = new AccessPoint();
+        accessPoint.mainEndpoint = new Endpoint(map.get("main_address").getString(),
+                map.get("main_port").getInt());
+        accessPoint.httpEndpoint = new Endpoint(map.get("http_address").getString(),
+                map.get("http_port").getInt());
+        accessPoint.httpsEndpoint = new Endpoint(map.get("https_address").getString(),
+                map.get("https_port").getInt());
+        accessPoint.iceServer = new IceServer(new JSONObject(map.get("ice_server").getString()));
+        accessPoint.priority = map.get("priority").getInt();
+        accessPoint.domainName = map.get("domain").getString();
+
+        return accessPoint;
+    }
+
     public void deleteAccessPoint(String domainName) {
 
     }
@@ -169,9 +205,9 @@ public class FerryStorage implements Storagable {
 
                 // 插入 Demo 数据
 
-                Endpoint main = new Endpoint("api.shixincube.com", 7000);
-                Endpoint http = new Endpoint("api.shixincube.com", 7010);
-                Endpoint https = new Endpoint("api.shixincube.com", 7017);
+                Endpoint main = new Endpoint("192.168.0.101", 7000);
+                Endpoint http = new Endpoint("192.168.0.101", 7010);
+                Endpoint https = new Endpoint("192.168.0.101", 7017);
                 IceServer iceServer = new IceServer("turn:52.83.195.35:3478", "cube", "cube887");
                 this.writeAccessPoint(main, http, https, iceServer, null);
             }

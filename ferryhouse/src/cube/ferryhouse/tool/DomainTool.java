@@ -110,7 +110,7 @@ public class DomainTool {
         File outputFile = new File("config/licence");
         System.out.println("Licence: " + outputFile.getAbsolutePath());
         try {
-            DomainTool.createFile("demo.ferryhouse.cube", "shixincube.com",
+            DomainTool.createFile("demo-ferryhouse-cube", "shixincube.com",
                     outputFile);
         } catch (IOException e) {
             e.printStackTrace();
