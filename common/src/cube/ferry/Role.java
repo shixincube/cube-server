@@ -27,45 +27,40 @@
 package cube.ferry;
 
 /**
- * 摆渡服务动作。
+ * 成员角色。
  */
-public enum FerryAction {
+public enum Role {
 
     /**
-     * 签入。
+     * 管理员。
      */
-    CheckIn("checkIn"),
+    Administrator(1),
 
     /**
-     * 签出。
+     * 普通成员。
      */
-    CheckOut("checkOut"),
+    Member(9),
 
     /**
-     * 摆渡数据。
+     * 未知角色。
      */
-    Ferry("ferry"),
-
-    /**
-     * 查询域。
-     */
-    QueryDomain("queryDomain"),
-
-    /**
-     * 加入域。
-     */
-    JoinDomain("joinDomain"),
-
-    /**
-     * 退出域。
-     */
-    QuitDomain("quitDomain")
+    Unknown(0)
 
     ;
 
-    public final String name;
+    public final int code;
 
-    FerryAction(String name) {
-        this.name = name;
+    Role(int code) {
+        this.code = code;
+    }
+
+    public static Role parse(int code) {
+        for (Role role : Role.values()) {
+            if (role.code == code) {
+                return role;
+            }
+        }
+
+        return Unknown;
     }
 }

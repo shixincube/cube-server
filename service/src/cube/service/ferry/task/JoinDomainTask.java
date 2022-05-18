@@ -24,48 +24,26 @@
  * SOFTWARE.
  */
 
-package cube.ferry;
+package cube.service.ferry.task;
+
+import cell.core.talk.Primitive;
+import cell.core.talk.TalkContext;
+import cube.benchmark.ResponseTime;
+import cube.service.ServiceTask;
+import cube.service.ferry.FerryCellet;
 
 /**
- * 摆渡服务动作。
+ * 加入域任务。
  */
-public enum FerryAction {
+public class JoinDomainTask extends ServiceTask {
 
-    /**
-     * 签入。
-     */
-    CheckIn("checkIn"),
+    public JoinDomainTask(FerryCellet cellet, TalkContext talkContext, Primitive primitive,
+                          ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
+    }
 
-    /**
-     * 签出。
-     */
-    CheckOut("checkOut"),
+    @Override
+    public void run() {
 
-    /**
-     * 摆渡数据。
-     */
-    Ferry("ferry"),
-
-    /**
-     * 查询域。
-     */
-    QueryDomain("queryDomain"),
-
-    /**
-     * 加入域。
-     */
-    JoinDomain("joinDomain"),
-
-    /**
-     * 退出域。
-     */
-    QuitDomain("quitDomain")
-
-    ;
-
-    public final String name;
-
-    FerryAction(String name) {
-        this.name = name;
     }
 }

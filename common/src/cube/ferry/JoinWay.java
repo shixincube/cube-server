@@ -27,45 +27,45 @@
 package cube.ferry;
 
 /**
- * 摆渡服务动作。
+ * 加入方式。
  */
-public enum FerryAction {
+public enum JoinWay {
 
     /**
-     * 签入。
+     * 使用二维码。
      */
-    CheckIn("checkIn"),
+    QRCode(1),
 
     /**
-     * 签出。
+     * 使用邀请码。
      */
-    CheckOut("checkOut"),
+    InvitationCode(2),
 
     /**
-     * 摆渡数据。
+     * 使用邀请二维码。
      */
-    Ferry("ferry"),
+    InvitationQRCode(3),
 
     /**
-     * 查询域。
+     * 未知。
      */
-    QueryDomain("queryDomain"),
-
-    /**
-     * 加入域。
-     */
-    JoinDomain("joinDomain"),
-
-    /**
-     * 退出域。
-     */
-    QuitDomain("quitDomain")
+    Unknown(0)
 
     ;
 
-    public final String name;
+    public final int code;
 
-    FerryAction(String name) {
-        this.name = name;
+    JoinWay(int code) {
+        this.code = code;
+    }
+
+    public static JoinWay parse(int code) {
+        for (JoinWay way : JoinWay.values()) {
+            if (way.code == code) {
+                return way;
+            }
+        }
+
+        return Unknown;
     }
 }

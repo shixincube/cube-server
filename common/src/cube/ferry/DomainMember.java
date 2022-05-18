@@ -26,46 +26,13 @@
 
 package cube.ferry;
 
+import cube.common.entity.Entity;
+
 /**
- * 摆渡服务动作。
+ * 域成员。
  */
-public enum FerryAction {
+public class DomainMember extends Entity {
 
-    /**
-     * 签入。
-     */
-    CheckIn("checkIn"),
-
-    /**
-     * 签出。
-     */
-    CheckOut("checkOut"),
-
-    /**
-     * 摆渡数据。
-     */
-    Ferry("ferry"),
-
-    /**
-     * 查询域。
-     */
-    QueryDomain("queryDomain"),
-
-    /**
-     * 加入域。
-     */
-    JoinDomain("joinDomain"),
-
-    /**
-     * 退出域。
-     */
-    QuitDomain("quitDomain")
-
-    ;
-
-    public final String name;
-
-    FerryAction(String name) {
-        this.name = name;
+    public DomainMember() {
     }
 }

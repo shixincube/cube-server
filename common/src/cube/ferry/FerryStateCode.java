@@ -24,25 +24,43 @@
  * SOFTWARE.
  */
 
-package cube.service.ferry.task;
-
-import cell.core.talk.Primitive;
-import cell.core.talk.TalkContext;
-import cube.benchmark.ResponseTime;
-import cube.service.ServiceTask;
-import cube.service.ferry.FerryCellet;
+package cube.ferry;
 
 /**
- * 签入任务。
+ * Ferry 模块状态码。
  */
-public class CheckInTask extends ServiceTask {
+public enum FerryStateCode {
 
-    public CheckInTask(FerryCellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
-        super(cellet, talkContext, primitive, responseTime);
-    }
+    /**
+     * 成功。
+     */
+    Ok(0),
 
-    @Override
-    public void run() {
+    /**
+     * 无效参数。
+     */
+    InvalidParameter(5),
 
+    /**
+     * 遇到故障。
+     */
+    Failure(9),
+
+    /**
+     * 无效域信息。
+     */
+    InvalidDomain(11),
+
+    /**
+     * 未知的状态。
+     */
+    Unknown(99)
+
+    ;
+
+    public final int code;
+
+    FerryStateCode(int code) {
+        this.code = code;
     }
 }

@@ -35,6 +35,7 @@ import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
+import cube.ferry.DomainMember;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
@@ -83,7 +84,35 @@ public class FerryStorage implements Storagable {
             })
     };
 
+    private final StorageField[] domainMemberFields = new StorageField[]{
+            new StorageField("sn", LiteralBase.LONG, new Constraint[]{
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            // 域
+            new StorageField("domain", LiteralBase.STRING, new Constraint[]{
+                    Constraint.NOT_NULL
+            }),
+            // 联系人 ID
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[]{
+                    Constraint.NOT_NULL
+            }),
+            // 加入方式
+            new StorageField("way", LiteralBase.INT, new Constraint[]{
+                    Constraint.NOT_NULL
+            }),
+            // 时间戳
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[]{
+                    Constraint.NOT_NULL
+            }),
+            // 角色
+            new StorageField("role", LiteralBase.INT, new Constraint[]{
+                    Constraint.NOT_NULL
+            })
+    };
+
     private final String accessPointTable = "ferry_access_point";
+
+    private final String domainMemberTable = "ferry_domain_member";
 
     private Storage storage;
 
@@ -104,6 +133,7 @@ public class FerryStorage implements Storagable {
     @Override
     public void execSelfChecking(List<String> domainNameList) {
         this.checkAccessPointTable();
+        this.checkDomainMemberTable();
     }
 
     /**
@@ -194,7 +224,11 @@ public class FerryStorage implements Storagable {
     }
 
     public void deleteAccessPoint(String domainName) {
+        // TODO
+    }
 
+    public List<DomainMember> queryMembers(String domainName) {
+        return null;
     }
 
     private void checkAccessPointTable() {
@@ -210,6 +244,15 @@ public class FerryStorage implements Storagable {
                 Endpoint https = new Endpoint("192.168.0.101", 7017);
                 IceServer iceServer = new IceServer("turn:52.83.195.35:3478", "cube", "cube887");
                 this.writeAccessPoint(main, http, https, iceServer, null);
+            }
+        }
+    }
+
+    private void checkDomainMemberTable() {
+        if (!this.storage.exist(this.domainMemberTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.domainMemberTable, this.domainMemberFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.domainMemberTable + "' successfully");
             }
         }
     }
