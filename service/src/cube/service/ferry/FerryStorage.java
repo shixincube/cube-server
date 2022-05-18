@@ -36,6 +36,8 @@ import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
 import cube.ferry.DomainMember;
+import cube.ferry.JoinWay;
+import cube.ferry.Role;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
@@ -107,6 +109,10 @@ public class FerryStorage implements Storagable {
             // 角色
             new StorageField("role", LiteralBase.INT, new Constraint[]{
                     Constraint.NOT_NULL
+            }),
+            // 状态
+            new StorageField("state", LiteralBase.INT, new Constraint[]{
+                    Constraint.DEFAULT_0
             })
     };
 
@@ -227,7 +233,67 @@ public class FerryStorage implements Storagable {
         // TODO
     }
 
+    /**
+     * 查询指定域的所有成员。
+     *
+     * @param domainName
+     * @return
+     */
     public List<DomainMember> queryMembers(String domainName) {
+        List<DomainMember> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.domainMemberTable, this.domainMemberFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("domain", domainName)
+                });
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> map = StorageFields.get(fields);
+            DomainMember member = new DomainMember(domainName, map.get("contact_id").getLong(),
+                    JoinWay.parse(map.get("way").getInt()), map.get("timestamp").getLong(),
+                    Role.parse(map.get("role").getInt()));
+            list.add(member);
+        }
+
+        return list;
+    }
+
+    /**
+     * 写入域成员数据。
+     *
+     * @param member
+     */
+    public void writeMember(DomainMember member) {
+        List<StorageField[]> result = this.storage.executeQuery(this.domainMemberTable,
+                new StorageField[] {
+                        new StorageField("sn", LiteralBase.LONG)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("domain", member.getDomain().getName()),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("contact_id", member.getContactId())
+                });
+        if (result.isEmpty()) {
+            // 插入
+            this.storage.executeInsert(this.domainMemberTable, new StorageField[] {
+                    new StorageField("domain", LiteralBase.STRING, member.getDomain().getName()),
+                    new StorageField("contact_id", LiteralBase.LONG, member.getContactId()),
+                    new StorageField("way", LiteralBase.INT, member.getJoinWay().code),
+                    new StorageField("timestamp", LiteralBase.LONG, System.currentTimeMillis()),
+                    new StorageField("role", LiteralBase.INT, member.getRole().code)
+            });
+        }
+        else {
+            // 更新
+            this.storage.executeUpdate(this.domainMemberTable, new StorageField[] {
+                    new StorageField("way", LiteralBase.INT, member.getJoinWay().code),
+                    new StorageField("role", LiteralBase.INT, member.getRole().code),
+                    new StorageField("state", LiteralBase.INT, member.getState())
+            }, new Conditional[] {
+                    Conditional.createEqualTo("sn", result.get(0)[0].getLong())
+            });
+        }
+    }
+
+    public DomainMember readMember(String domainName, Long contactId) {
         return null;
     }
 

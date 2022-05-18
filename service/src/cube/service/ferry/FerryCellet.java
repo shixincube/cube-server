@@ -73,6 +73,10 @@ public class FerryCellet extends AbstractCellet {
         this.executor.shutdown();
     }
 
+    public FerryService getFerryService() {
+        return this.ferryService;
+    }
+
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);

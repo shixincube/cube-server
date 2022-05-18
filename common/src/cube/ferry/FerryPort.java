@@ -31,6 +31,10 @@ package cube.ferry;
  */
 public class FerryPort {
 
+    public final static String JoinDomainMember = "JoinDomainMember";
+
+    public final static String QuitDomainMember = "QuitDomainMember";
+
     public final static String WriteMessage = "WriteMessage";
 
     private FerryPort() {

@@ -28,9 +28,18 @@ package cube.service.ferry.task;
 
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
 import cube.benchmark.ResponseTime;
+import cube.common.Packet;
+import cube.ferry.DomainMember;
+import cube.ferry.FerryStateCode;
 import cube.service.ServiceTask;
 import cube.service.ferry.FerryCellet;
+import cube.service.ferry.FerryService;
+import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  * 加入域任务。
@@ -44,6 +53,36 @@ public class JoinDomainTask extends ServiceTask {
 
     @Override
     public void run() {
+        ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
+        Packet packet = new Packet(action);
 
+        JSONObject data = packet.data;
+        if (!data.has("domain") || !data.has("contactId")) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FerryStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
+        }
+
+        FerryService service = ((FerryCellet) this.cellet).getFerryService();
+
+        String domain = data.getString("domain");
+        if (!service.isOnlineDomain(domain)) {
+            // 域对应的服务器不在线
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FerryStateCode.InvalidDomain.code, data));
+            markResponseTime();
+            return;
+        }
+
+        Long contactId = data.getLong("contactId");
+
+        List<DomainMember> list = service.listDomainMember(domain);
+        if (list.isEmpty()) {
+            // 首次绑定
+        }
+        else {
+            // 加入
+        }
     }
 }

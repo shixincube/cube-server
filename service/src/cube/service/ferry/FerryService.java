@@ -34,6 +34,7 @@ import cube.common.entity.IceServer;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
+import cube.ferry.DomainMember;
 import cube.ferry.FerryAdapter;
 import cube.ferry.FerryPacket;
 import cube.ferry.Ticket;
@@ -94,15 +95,19 @@ public class FerryService extends AbstractModule {
             this.storage = new FerryStorage(StorageType.SQLite, config);
         }
 
+        (new Thread() {
+            @Override
+            public void run() {
+                storage.open();
+                storage.execSelfChecking(null);
+            }
+        }).start();
+
         if (null == this.timer) {
             this.timer = new Timer();
             this.timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    // 启动存储器
-                    storage.open();
-                    storage.execSelfChecking(null);
-
                     // 配置
                     setup();
 
@@ -196,7 +201,13 @@ public class FerryService extends AbstractModule {
         this.tickets.remove(domain);
     }
 
-    public boolean hasDomain(String domain) {
+    /**
+     * 判断指定域是否在线。
+     *
+     * @param domain
+     * @return
+     */
+    public boolean isOnlineDomain(String domain) {
         return this.tickets.containsKey(domain);
     }
 
@@ -238,6 +249,18 @@ public class FerryService extends AbstractModule {
                 }
             }
         }).start();
+    }
+
+    public List<DomainMember> listDomainMember(String domainName) {
+        return this.storage.queryMembers(domainName);
+    }
+
+    public void addDomainMember(DomainMember domainMember) {
+
+    }
+
+    public void removeDomainMember(DomainMember domainMember) {
+        
     }
 
     private void setup() {

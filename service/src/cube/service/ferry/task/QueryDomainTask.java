@@ -32,10 +32,15 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.ferry.DomainMember;
 import cube.ferry.FerryStateCode;
 import cube.service.ServiceTask;
 import cube.service.ferry.FerryCellet;
+import cube.service.ferry.FerryService;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  * 查询域信息任务。
@@ -60,7 +65,21 @@ public class QueryDomainTask extends ServiceTask {
             return;
         }
 
+        FerryService service = ((FerryCellet) this.cellet).getFerryService();
+
         String domain = data.getString("domain");
-        
+        List<DomainMember> list = service.listDomainMember(domain);
+        JSONArray memberArray = new JSONArray();
+        for (DomainMember member : list) {
+            memberArray.put(member.toJSON());
+        }
+
+        JSONObject response = new JSONObject();
+        response.put("domain", domain);
+        response.put("members", memberArray);
+
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, FerryStateCode.Ok.code, response));
+        markResponseTime();
     }
 }
