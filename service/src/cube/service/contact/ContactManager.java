@@ -317,7 +317,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 添加管理器的监听器。
      *
-     * @param listener
+     * @param listener 监听器。
      */
     public void addListener(ContactManagerListener listener) {
         if (this.listeners.contains(listener)) {
@@ -329,7 +329,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 移除管理器的监听器。
      *
-     * @param listener
+     * @param listener 监听器。
      */
     public void removeListener(ContactManagerListener listener) {
         this.listeners.remove(listener);
@@ -672,6 +672,32 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 复制联系人到指定域。
+     *
+     * @param source 源联系人。
+     * @param destDomain 目标域。
+     * @return 返回是否复制数据成功。
+     */
+    public boolean copyContact(Contact source, String destDomain) {
+        Contact srcContact = this.getContact(source.getDomain().getName(), source.getId());
+        if (null == srcContact) {
+            return false;
+        }
+
+        ContactAppendix appendix = this.getAppendix(srcContact);
+
+        // 修改域
+        srcContact.setDomain(destDomain);
+        ContactAppendix srcAppendix = new ContactAppendix(srcContact, appendix.toJSON());
+
+        // 创建新联系人
+        this.createContact(srcContact.getId(), destDomain, srcContact.getName(), srcContact.getContext());
+        this.updateAppendix(srcAppendix);
+
+        return true;
+    }
+
+    /**
      * 获取令牌对应的联系人。
      *
      * @param tokenCode 指定令牌码。
@@ -1004,8 +1030,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                     participant.id, zoneName);
             if (null != peerZone) {
                 // 向对端的分区插入邀请人
-                ContactZoneParticipant inviter = new ContactZoneParticipant(contact.getId(), ContactZoneParticipantType.Contact,
-                        System.currentTimeMillis(), contact.getId(), participant.postscript, participant.state);
+                ContactZoneParticipant inviter = new ContactZoneParticipant(contact.getId(),
+                        ContactZoneParticipantType.Contact, System.currentTimeMillis(),
+                        contact.getId(), participant.postscript, participant.state);
                 peerZone.addParticipant(inviter);
                 // 重置时间戳
                 peerZone.resetTimestamp();
@@ -1086,7 +1113,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param participant
      * @return
      */
-    public ContactZoneParticipant modifyZoneParticipant(Contact contact, String zoneName, ContactZoneParticipant participant) {
+    public ContactZoneParticipant modifyZoneParticipant(Contact contact, String zoneName,
+                                                        ContactZoneParticipant participant) {
         ContactZone zone = this.storage.readContactZone(contact.getDomain().getName(), contact.getId(), zoneName);
         if (null == zone) {
             return null;
@@ -1101,15 +1129,18 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             ContactZone peerZone = this.storage.readContactZone(contact.getDomain().getName(), participant.id, zoneName);
             if (null != peerZone) {
                 // 修改对端的自己
-                ContactZoneParticipant selfInPeerZone = new ContactZoneParticipant(contact.getId(), ContactZoneParticipantType.Contact,
-                        timestamp, participant.id, participant.postscript, participant.state);
+                ContactZoneParticipant selfInPeerZone = new ContactZoneParticipant(contact.getId(),
+                        ContactZoneParticipantType.Contact, timestamp,
+                        participant.id, participant.postscript, participant.state);
                 this.storage.updateZoneParticipant(peerZone, selfInPeerZone);
 
                 // 绑定数据
-                ContactZoneBundle bundle = new ContactZoneBundle(peerZone, selfInPeerZone, ContactZoneBundle.ACTION_UPDATE);
+                ContactZoneBundle bundle = new ContactZoneBundle(peerZone, selfInPeerZone,
+                        ContactZoneBundle.ACTION_UPDATE);
 
                 String uKey = UniqueKey.make(participant.id, contact.getDomain().getName());
-                ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.ModifyZoneParticipant.name, bundle.toCompactJSON());
+                ModuleEvent event = new ModuleEvent(ContactManager.NAME,
+                        ContactAction.ModifyZoneParticipant.name, bundle.toCompactJSON());
                 this.contactsAdapter.publish(uKey, event.toJSON());
             }
         }
@@ -1284,7 +1315,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "Group dismissed : " + current.getUniqueKey() + " - \"" + current.getName() + "\"");
+            Logger.d(this.getClass(), "Group dismissed : " + current.getUniqueKey()
+                    + " - \"" + current.getName() + "\"");
         }
 
         return current;
@@ -1514,7 +1546,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             // 向群组内所有成员广播
             for (Long memberId : group.getMembers()) {
                 String uKey = UniqueKey.make(memberId, group.getDomain().getName());
-                ModuleEvent event = new ModuleEvent(ContactManager.NAME, ContactAction.GroupAppendixUpdated.name, appendix.packJSON(memberId));
+                ModuleEvent event = new ModuleEvent(ContactManager.NAME,
+                        ContactAction.GroupAppendixUpdated.name, appendix.packJSON(memberId));
                 this.contactsAdapter.publish(uKey, event.toJSON());
             }
         }

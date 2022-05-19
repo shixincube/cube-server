@@ -30,16 +30,15 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.common.entity.Contact;
 import cube.common.entity.IceServer;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
-import cube.ferry.DomainMember;
-import cube.ferry.FerryAdapter;
-import cube.ferry.FerryPacket;
-import cube.ferry.Ticket;
+import cube.ferry.*;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
+import cube.service.contact.ContactManager;
 import cube.service.ferry.plugin.WriteMessagePlugin;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
@@ -211,6 +210,12 @@ public class FerryService extends AbstractModule {
         return this.tickets.containsKey(domain);
     }
 
+    /**
+     * 向 Boat 推送数据。
+     *
+     * @param domain
+     * @param packet
+     */
     public void pushToBoat(String domain, FerryPacket packet) {
         if (!this.tickets.containsKey(domain)) {
             Logger.w(this.getClass(), "#pushToBoat - Can NOT find domain talk context: " + domain);
@@ -255,12 +260,20 @@ public class FerryService extends AbstractModule {
         return this.storage.queryMembers(domainName);
     }
 
-    public void addDomainMember(DomainMember domainMember) {
+    public void addDomainMember(Contact contact, DomainMember domainMember) {
+        // 写入新成员
+        this.storage.writeMember(domainMember);
 
+        // 复制数据到新的域
+        ContactManager.getInstance().copyContact(contact, domainMember.getDomain().getName());
+
+        FerryPacket ferryPacket = new FerryPacket(FerryPort.JoinDomainMember);
+        ferryPacket.getDialect().addParam("member", domainMember.toJSON());
+        this.pushToBoat(domainMember.getDomain().getName(), ferryPacket);
     }
 
     public void removeDomainMember(DomainMember domainMember) {
-        
+        // TODO
     }
 
     private void setup() {

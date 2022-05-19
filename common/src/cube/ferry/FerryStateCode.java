@@ -52,6 +52,11 @@ public enum FerryStateCode {
     InvalidDomain(11),
 
     /**
+     * 无效的令牌。
+     */
+    InvalidToken(12),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)

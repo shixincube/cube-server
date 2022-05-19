@@ -47,6 +47,12 @@ public class FerryPacket {
         this.dialect = dialect;
     }
 
+    public FerryPacket(String portName) {
+        this.sn = Utils.generateSerialNumber();
+        this.dialect = new ActionDialect(FerryAction.Ferry.name);
+        this.dialect.addParam("port", portName);
+    }
+
     public long getSN() {
         return this.sn;
     }
@@ -57,6 +63,10 @@ public class FerryPacket {
 
     public String getDomain() {
         return this.domain;
+    }
+
+    public ActionDialect getDialect() {
+        return this.dialect;
     }
 
     public ActionDialect toDialect() {

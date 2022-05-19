@@ -32,9 +32,13 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.Contact;
 import cube.ferry.DomainMember;
 import cube.ferry.FerryStateCode;
+import cube.ferry.JoinWay;
+import cube.ferry.Role;
 import cube.service.ServiceTask;
+import cube.service.contact.ContactManager;
 import cube.service.ferry.FerryCellet;
 import cube.service.ferry.FerryService;
 import org.json.JSONObject;
@@ -57,6 +61,23 @@ public class JoinDomainTask extends ServiceTask {
         Packet packet = new Packet(action);
 
         JSONObject data = packet.data;
+
+        String tokenCode = this.getTokenCode(action);
+        if (null == tokenCode) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FerryStateCode.InvalidToken.code, data));
+            markResponseTime();
+            return;
+        }
+
+        Contact contact = ContactManager.getInstance().getContact(tokenCode);
+        if (null == contact) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FerryStateCode.InvalidToken.code, data));
+            markResponseTime();
+            return;
+        }
+
         if (!data.has("domain") || !data.has("contactId")) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FerryStateCode.InvalidParameter.code, data));
@@ -76,13 +97,26 @@ public class JoinDomainTask extends ServiceTask {
         }
 
         Long contactId = data.getLong("contactId");
+        JoinWay joinWay = JoinWay.parse(data.getInt("way"));
 
+        DomainMember member = null;
         List<DomainMember> list = service.listDomainMember(domain);
         if (list.isEmpty()) {
             // 首次绑定
+            member = new DomainMember(domain, contactId, joinWay,
+                    System.currentTimeMillis(), Role.Administrator);
         }
         else {
             // 加入
+            member = new DomainMember(domain, contactId, joinWay,
+                    System.currentTimeMillis(), Role.Member);
         }
+
+        // 添加新成员
+        service.addDomainMember(contact, member);
+
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(action, packet, FerryStateCode.Ok.code, member.toJSON()));
+        markResponseTime();
     }
 }
