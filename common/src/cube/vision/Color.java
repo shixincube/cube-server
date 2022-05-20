@@ -39,6 +39,8 @@ public class Color {
 
     private int blue;
 
+    private int color = -1;
+
     public Color() {
     }
 
@@ -78,6 +80,17 @@ public class Color {
 
     public int blue() {
         return this.blue;
+    }
+
+    public int color() {
+        if (this.color == -1) {
+            int r = (this.red << 16) & 0x00FF0000;
+            int g = (this.green << 8) & 0x0000FF00;
+            int b = this.blue & 0x000000FF;
+            this.color = (r | g | b);
+        }
+
+        return this.color;
     }
 
     public String formatRGB() {

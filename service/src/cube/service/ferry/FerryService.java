@@ -30,6 +30,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.common.entity.AuthDomain;
 import cube.common.entity.Contact;
 import cube.common.entity.IceServer;
 import cube.core.AbstractModule;
@@ -254,6 +255,11 @@ public class FerryService extends AbstractModule {
                 }
             }
         }).start();
+    }
+
+    public AuthDomain getDomain(String domainName) {
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        return authService.getAuthDomain(domainName);
     }
 
     public List<DomainMember> listDomainMember(String domainName) {

@@ -32,6 +32,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.AuthDomain;
 import cube.ferry.DomainMember;
 import cube.ferry.FerryStateCode;
 import cube.service.ServiceTask;
@@ -66,8 +67,16 @@ public class QueryDomainTask extends ServiceTask {
         }
 
         FerryService service = ((FerryCellet) this.cellet).getFerryService();
-
         String domain = data.getString("domain");
+
+        AuthDomain authDomain = service.getDomain(domain);
+        if (null == authDomain) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FerryStateCode.InvalidDomain.code, data));
+            markResponseTime();
+            return;
+        }
+
         List<DomainMember> list = service.listDomainMember(domain);
         JSONArray memberArray = new JSONArray();
         for (DomainMember member : list) {
@@ -75,7 +84,7 @@ public class QueryDomainTask extends ServiceTask {
         }
 
         JSONObject response = new JSONObject();
-        response.put("domain", domain);
+        response.put("domain", authDomain.toJSON());
         response.put("members", memberArray);
 
         this.cellet.speak(this.talkContext,

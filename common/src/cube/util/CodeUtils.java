@@ -26,7 +26,21 @@
 
 package cube.util;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import cube.vision.Color;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 编码串辅助函数库。
@@ -61,13 +75,66 @@ public class CodeUtils {
         return string.split("\\.");
     }
 
+    /**
+     * 生成二维码图片。
+     *
+     * @param outputFile
+     * @param content
+     * @param imageWidth
+     * @param imageHeight
+     * @param color
+     * @return
+     */
+    public static boolean generateQRCode(File outputFile, String content,
+                                         int imageWidth, int imageHeight, Color color) {
+        Map<EncodeHintType, Object> hints = new HashMap<>();
+        // 设置内容编码
+        hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+        // 设置图片间隙
+        hints.put(EncodeHintType.MARGIN, 1);
+        // 设置纠错级别
+        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
+
+        try {
+            BitMatrix matrix = new MultiFormatWriter().encode(content,
+                    BarcodeFormat.QR_CODE, imageWidth, imageHeight, hints);
+            int width = matrix.getWidth();
+            int height = matrix.getHeight();
+
+            // 缓存图片
+            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            for (int x = 0; x < width; ++x) {
+                for (int y = 0; y < height; ++y) {
+                    int rgb = matrix.get(x, y) ? color.color() : 0xFFFFFF;
+                    image.setRGB(x, y, rgb);
+                }
+            }
+
+            String ext = FileUtils.extractFileExtension(outputFile.getName());
+            ImageIO.write(image, ext, outputFile);
+        } catch (WriterException e) {
+            e.printStackTrace();
+            return false;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
     public static void main(String[] args) {
         String string = "cube://domain.demo-ferryhouse-cube";
         String protocol = CodeUtils.extractProtocol(string);
         System.out.println("Protocol: " + protocol);
 
         String[] segments = CodeUtils.extractResourceSegments(string);
-        System.out.println(segments[0]);
-        System.out.println(segments[1]);
+        System.out.println("Segment: " + segments[0]);
+        System.out.println("Segment: " + segments[1]);
+
+        File qrFile = new File("service/storage/tmp/qrcode.jpg");
+        boolean success = CodeUtils.generateQRCode(qrFile, string, 400, 400,
+                new Color("#000000"));
+        System.out.println("Generate QRCode - " + success);
     }
 }
