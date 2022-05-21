@@ -103,9 +103,10 @@ public class Ferryboat {
     }
 
     public void checkIn(ActionDialect dialect, TalkContext talkContext) {
-        Logger.i(this.getClass(), "#checkIn - " + talkContext.getSessionHost());
-
         String domain = dialect.getParamAsString("domain");
+
+        Logger.i(this.getClass(), "#checkIn - " + domain + " - " + talkContext.getSessionHost());
+
         Ticket ticket = new Ticket(domain, talkContext);
         this.ticketMap.put(domain, ticket);
     }

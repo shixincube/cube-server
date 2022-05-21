@@ -103,6 +103,15 @@ public class FerryReceiver implements TalkListener {
     @Override
     public void onContacted(Speakable speakable) {
         Logger.d(this.getClass(), "#onContacted");
+
+        // 注册已经 Check-in 的 House
+        this.executor.execute(() -> {
+            for (Ticket ticket : ticketMap.values()) {
+                ActionDialect dialect = new ActionDialect(FerryAction.CheckIn.name);
+                dialect.addParam("domain", ticket.domain.getName());
+                Ferryboat.getInstance().passBy(dialect);
+            }
+        });
     }
 
     @Override

@@ -96,8 +96,17 @@ public class JoinDomainTask extends ServiceTask {
             return;
         }
 
-        Long contactId = data.getLong("contactId");
-        JoinWay joinWay = JoinWay.parse(data.getInt("way"));
+        Long contactId = null;
+        JoinWay joinWay = null;
+        try {
+            contactId = data.getLong("contactId");
+            joinWay = JoinWay.parse(data.getInt("way"));
+        } catch (Exception e) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FerryStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
+        }
 
         DomainMember member = null;
         List<DomainMember> list = service.listDomainMember(domain);

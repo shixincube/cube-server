@@ -104,6 +104,8 @@ public class Ferryhouse implements TalkListener {
             }
 
             this.domain = data.getString("domain");
+
+            Logger.i(this.getClass(), "Domain: " + this.domain);
         } catch (IOException e) {
             Logger.e(this.getClass(), "#config - Can NOT find licence file");
             System.exit(0);

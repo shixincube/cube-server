@@ -57,7 +57,7 @@ public class ContactAppendix extends Entity {
      * @param contact
      */
     public ContactAppendix(Contact contact) {
-        super();
+        super(contact.id, contact.getDomain().getName());
         this.uniqueKey = contact.getUniqueKey() + "_appendix";
         this.contact = contact;
         this.remarkNames = new HashMap<>();
