@@ -382,10 +382,13 @@ public class Performer implements TalkListener, Tickable {
      * 启动执行机，并对路由权重和范围进行初始化。
      */
     public void start(List<String> cellets) {
+        /* FIXME 20220521 不按照 Cellet 添加监听器
         for (String cellet : cellets) {
             this.talkService.setListener(cellet, this);
             Logger.i(this.getClass(), "Set cellet '" + cellet + "' listener");
-        }
+        }*/
+        // 添加全局监听
+        this.talkService.addListener(this);
 
         Iterator<Map.Entry<String, List<Director>>> iter = this.celletDirectorMap.entrySet().iterator();
         while (iter.hasNext()) {
