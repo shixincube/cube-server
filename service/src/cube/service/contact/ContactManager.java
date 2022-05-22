@@ -676,12 +676,12 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      *
      * @param source 源联系人。
      * @param destDomain 目标域。
-     * @return 返回是否复制数据成功。
+     * @return 返回新的联系人实例。
      */
-    public boolean copyContact(Contact source, String destDomain) {
+    public Contact copyContact(Contact source, String destDomain) {
         Contact srcContact = this.getContact(source.getDomain().getName(), source.getId());
         if (null == srcContact) {
-            return false;
+            return null;
         }
 
         ContactAppendix appendix = this.getAppendix(srcContact);
@@ -691,10 +691,11 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         ContactAppendix srcAppendix = new ContactAppendix(srcContact, appendix.toJSON());
 
         // 创建新联系人
-        this.createContact(srcContact.getId(), destDomain, srcContact.getName(), srcContact.getContext());
+        Contact newContact = this.createContact(srcContact.getId(), destDomain, srcContact.getName(),
+                srcContact.getContext());
         this.updateAppendix(srcAppendix);
 
-        return true;
+        return newContact;
     }
 
     /**
@@ -988,6 +989,31 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     public boolean containsParticipantInZone(Contact contact, String zoneName, Long participantId) {
         return this.storage.hasParticipantInZone(contact.getDomain().getName(), contact.getId(), zoneName, participantId);
+    }
+
+    /**
+     * 强制添加分区参与人。
+     *
+     * @param contact
+     * @param zone
+     * @param participant
+     */
+    public void addParticipantToZoneByForce(Contact contact, ContactZone zone, ContactZoneParticipant participant) {
+        if (zone.peerMode) {
+            // 对等模式
+            ContactZone peerZone = this.storage.readContactZone(contact.getDomain().getName(),
+                    participant.id, zone.name);
+            if (null != peerZone) {
+                ContactZoneParticipant inviter = new ContactZoneParticipant(contact.getId(),
+                        ContactZoneParticipantType.Contact, participant.timestamp,
+                        contact.getId(), participant.postscript, participant.state);
+                // 更新数据库
+                this.storage.addZoneParticipant(peerZone, inviter);
+            }
+        }
+
+        this.storage.addZoneParticipant(zone, participant);
+        zone.addParticipant(participant);
     }
 
     /**

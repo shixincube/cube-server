@@ -34,6 +34,7 @@ import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.ferry.FerryAction;
 import cube.service.ferry.task.JoinDomainTask;
+import cube.service.ferry.task.PingTask;
 import cube.service.ferry.task.QueryDomainTask;
 import cube.service.ferry.task.QuitDomainTask;
 
@@ -84,7 +85,23 @@ public class FerryCellet extends AbstractCellet {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
 
-        if (FerryAction.CheckIn.name.equals(action)) {
+        if (FerryAction.Ping.name.equals(action)) {
+            this.executor.execute(new PingTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (FerryAction.QueryDomain.name.equals(action)) {
+            this.executor.execute(new QueryDomainTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (FerryAction.JoinDomain.name.equals(action)) {
+            this.executor.execute(new JoinDomainTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (FerryAction.QuitDomain.name.equals(action)) {
+            this.executor.execute(new QuitDomainTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (FerryAction.CheckIn.name.equals(action)) {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -99,18 +116,6 @@ public class FerryCellet extends AbstractCellet {
                     ferryService.checkOut(dialect, talkContext);
                 }
             });
-        }
-        else if (FerryAction.QueryDomain.name.equals(action)) {
-            this.executor.execute(new QueryDomainTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (FerryAction.JoinDomain.name.equals(action)) {
-            this.executor.execute(new JoinDomainTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (FerryAction.QuitDomain.name.equals(action)) {
-            this.executor.execute(new QuitDomainTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
         }
     }
 }

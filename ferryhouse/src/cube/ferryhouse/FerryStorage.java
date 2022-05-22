@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * 消息摆渡机。
  */
-public class MessageFerry implements Storagable {
+public class FerryStorage implements Storagable {
 
     private final StorageField[] messageFields = new StorageField[] {
 
@@ -47,8 +47,9 @@ public class MessageFerry implements Storagable {
 
     private Storage storage;
 
-    public MessageFerry(JSONObject config) {
-        this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL, "MessageFerry", config);
+    public FerryStorage(JSONObject config) {
+        this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL,
+                "FerryStorage", config);
     }
 
     @Override

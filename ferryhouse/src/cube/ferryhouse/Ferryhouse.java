@@ -65,7 +65,7 @@ public class Ferryhouse implements TalkListener {
 
     private String domain;
 
-    private MessageFerry messageFerry;
+    private FerryStorage ferryStorage;
 
     private Ferryhouse() {
     }
@@ -119,14 +119,14 @@ public class Ferryhouse implements TalkListener {
         ArrayList<String> domainList = new ArrayList<>();
         domainList.add(this.domain);
 
-        this.messageFerry = new MessageFerry(mysqlConfig);
+        this.ferryStorage = new FerryStorage(mysqlConfig);
 
         // 启动各个 Ferry
         (new Thread() {
             @Override
             public void run() {
-                messageFerry.open();
-                messageFerry.execSelfChecking(domainList);
+                ferryStorage.open();
+                ferryStorage.execSelfChecking(domainList);
             }
         }).start();
     }
@@ -143,7 +143,7 @@ public class Ferryhouse implements TalkListener {
             e.printStackTrace();
         }
 
-        this.messageFerry.close();
+        this.ferryStorage.close();
     }
 
     private Properties loadConfig() {
@@ -164,7 +164,13 @@ public class Ferryhouse implements TalkListener {
     private void processFerry(ActionDialect actionDialect) {
         String port = actionDialect.getParamAsString("port");
         if (FerryPort.WriteMessage.equals(port)) {
-            this.messageFerry.writeMessage(actionDialect);
+            this.ferryStorage.writeMessage(actionDialect);
+        }
+        else if (FerryPort.TransferIntoMember.equals(port)) {
+
+        }
+        else if (FerryPort.TransferOutMember.equals(port)) {
+
         }
     }
 

@@ -30,9 +30,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.common.entity.AuthDomain;
-import cube.common.entity.Contact;
-import cube.common.entity.IceServer;
+import cube.common.entity.*;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
@@ -266,19 +264,43 @@ public class FerryService extends AbstractModule {
         return this.storage.queryMembers(domainName);
     }
 
-    public void addDomainMember(Contact contact, DomainMember domainMember) {
+    /**
+     * 将指定联系人转入为指定域成员。
+     *
+     * @param contact
+     * @param domainMember
+     * @param memberList
+     */
+    public void transferIntoDomainMember(Contact contact, DomainMember domainMember, List<DomainMember> memberList) {
         // 写入新成员
         this.storage.writeMember(domainMember);
 
         // 复制数据到新的域
-        ContactManager.getInstance().copyContact(contact, domainMember.getDomain().getName());
+        Contact newContact = ContactManager.getInstance().copyContact(contact, domainMember.getDomain().getName());
 
-        FerryPacket ferryPacket = new FerryPacket(FerryPort.JoinDomainMember);
+        FerryPacket ferryPacket = new FerryPacket(FerryPort.TransferIntoMember);
+        ferryPacket.setDomain(domainMember.getDomain().getName());
         ferryPacket.getDialect().addParam("member", domainMember.toJSON());
+        ferryPacket.getDialect().addParam("contact", newContact.toJSON());
         this.pushToBoat(domainMember.getDomain().getName(), ferryPacket);
+
+        // 创建通讯录
+        ContactZone zone = ContactManager.getInstance().createContactZone(newContact,
+                ContactManager.DEFAULT_CONTACT_ZONE_NAME,
+                ContactManager.DEFAULT_CONTACT_ZONE_NAME, true, null);
+
+        // 向通讯录内添加已加入的成员
+        for (DomainMember member : memberList) {
+            ContactZoneParticipant participant = new ContactZoneParticipant(member.getContactId(),
+                    ContactZoneParticipantType.Contact, System.currentTimeMillis(),
+                    newContact.getId(), null,
+                    ContactZoneParticipantState.Normal);
+            // 强制添加分区参与人
+            ContactManager.getInstance().addParticipantToZoneByForce(newContact, zone, participant);
+        }
     }
 
-    public void removeDomainMember(DomainMember domainMember) {
+    public void transferOutDomainMember(DomainMember domainMember) {
         // TODO
     }
 

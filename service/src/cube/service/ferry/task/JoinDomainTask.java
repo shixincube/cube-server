@@ -116,13 +116,23 @@ public class JoinDomainTask extends ServiceTask {
                     System.currentTimeMillis(), Role.Administrator);
         }
         else {
+            for (DomainMember dm : list) {
+                if (dm.getContactId().equals(contactId)) {
+                    // 已加入
+                    this.cellet.speak(this.talkContext,
+                            this.makeResponse(action, packet, FerryStateCode.Ok.code, dm.toJSON()));
+                    markResponseTime();
+                    return;
+                }
+            }
+
             // 加入
             member = new DomainMember(domain, contactId, joinWay,
                     System.currentTimeMillis(), Role.Member);
         }
 
-        // 添加新成员
-        service.addDomainMember(contact, member);
+        // 转入
+        service.transferIntoDomainMember(contact, member, list);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, FerryStateCode.Ok.code, member.toJSON()));

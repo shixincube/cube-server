@@ -59,7 +59,12 @@ public enum FerryAction {
     /**
      * 退出域。
      */
-    QuitDomain("quitDomain")
+    QuitDomain("quitDomain"),
+
+    /**
+     * 连通性验证。
+     */
+    Ping("ping")
 
     ;
 
