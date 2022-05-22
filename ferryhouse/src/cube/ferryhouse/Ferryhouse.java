@@ -35,6 +35,9 @@ import cell.core.talk.TalkError;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
+import cube.common.entity.Contact;
+import cube.common.entity.Message;
+import cube.ferry.DomainMember;
 import cube.ferry.FerryAction;
 import cube.ferry.FerryPort;
 import cube.ferryhouse.tool.DomainTool;
@@ -119,7 +122,7 @@ public class Ferryhouse implements TalkListener {
         ArrayList<String> domainList = new ArrayList<>();
         domainList.add(this.domain);
 
-        this.ferryStorage = new FerryStorage(mysqlConfig);
+        this.ferryStorage = new FerryStorage(this.domain, mysqlConfig);
 
         // 启动各个 Ferry
         (new Thread() {
@@ -164,13 +167,18 @@ public class Ferryhouse implements TalkListener {
     private void processFerry(ActionDialect actionDialect) {
         String port = actionDialect.getParamAsString("port");
         if (FerryPort.WriteMessage.equals(port)) {
-            this.ferryStorage.writeMessage(actionDialect);
+            Message message = new Message(actionDialect.getParamAsJson("message"));
+            this.ferryStorage.writeMessage(message);
         }
         else if (FerryPort.TransferIntoMember.equals(port)) {
+            DomainMember member = new DomainMember(actionDialect.getParamAsJson("member"));
+            this.ferryStorage.writeDomainMember(member);
 
+            Contact contact = new Contact(actionDialect.getParamAsJson("contact"));
+            this.ferryStorage.writeContact(contact);
         }
         else if (FerryPort.TransferOutMember.equals(port)) {
-
+            // TODO
         }
     }
 
