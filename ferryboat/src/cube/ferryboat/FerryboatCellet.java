@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.ferry.FerryAction;
 
@@ -80,6 +81,10 @@ public class FerryboatCellet extends AbstractCellet {
             @Override
             public void run() {
                 Ferryboat.getInstance().passBy(dialect);
+
+                if (action.equals(FerryAction.PingAck.name)) {
+                    Logger.d(FerryboatCellet.class, "Pass-by ping-ack: " + dialect.getParamAsInt("sn"));
+                }
             }
         });
     }

@@ -61,14 +61,31 @@ public class PingTask extends ServiceTask {
             return;
         }
 
+        boolean touch = false;
+        if (data.has("touch")) {
+            touch = data.getBoolean("touch");
+        }
+
         String domain = data.getString("domain");
         FerryService service = ((FerryCellet) this.cellet).getFerryService();
 
-        boolean online = service.isOnlineDomain(domain);
+        boolean online = false;
+        long duration = 0;
+
+        if (touch) {
+            FerryService.AckBundle ackBundle = service.touchFerryHouse(domain, 60 * 1000);
+            if (null != ackBundle) {
+                duration = ackBundle.end - ackBundle.start;
+            }
+        }
+        else {
+            online = service.isOnlineDomain(domain);
+        }
 
         JSONObject response = new JSONObject();
         response.put("domain", domain);
         response.put("online", online);
+        response.put("duration", duration);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, FerryStateCode.Ok.code, response));

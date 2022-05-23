@@ -66,6 +66,8 @@ public class FerryService extends AbstractModule {
 
     private Queue<FerryPacket> pushQueue;
 
+    private Map<Integer, AckBundle> ackBundles;
+
     private Object pushMutex = new Object();
     private boolean pushing = false;
 
@@ -74,6 +76,7 @@ public class FerryService extends AbstractModule {
         this.cellet = cellet;
         this.tickets = new ConcurrentHashMap<>();
         this.pushQueue = new ConcurrentLinkedQueue<>();
+        this.ackBundles = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -142,6 +145,13 @@ public class FerryService extends AbstractModule {
             this.storage.close();
             this.storage = null;
         }
+
+        for (AckBundle bundle : this.ackBundles.values()) {
+            synchronized (bundle) {
+                bundle.notify();
+            }
+        }
+        this.ackBundles.clear();
     }
 
     @Override
@@ -165,6 +175,14 @@ public class FerryService extends AbstractModule {
 
         Ticket ticket = new Ticket(domain, talkContext);
         this.tickets.put(domain, ticket);
+
+        if (null == this.getKernel() || !this.getKernel().hasModule(AuthService.NAME)) {
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         if (!authService.hasDomain(domain)) {
@@ -207,6 +225,58 @@ public class FerryService extends AbstractModule {
      */
     public boolean isOnlineDomain(String domain) {
         return this.tickets.containsKey(domain);
+    }
+
+    public AckBundle touchFerryHouse(String domain, long timeout) {
+        if (!this.tickets.containsKey(domain)) {
+            return null;
+        }
+
+        Ticket ticket = this.tickets.get(domain);
+
+        Integer sn = Utils.randomUnsigned();
+        ActionDialect actionDialect = new ActionDialect(FerryAction.Ping.name);
+        actionDialect.addParam("sn", sn.intValue());
+        actionDialect.addParam("domain", domain);
+        actionDialect.addParam("timeout", timeout);
+
+        AckBundle bundle = new AckBundle(actionDialect);
+        this.ackBundles.put(sn, bundle);
+
+        if (!this.cellet.speak(ticket.talkContext, actionDialect)) {
+            this.ackBundles.remove(sn);
+            return null;
+        }
+
+        synchronized (bundle) {
+            try {
+                bundle.wait(timeout);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        this.ackBundles.remove(sn);
+
+        return bundle;
+    }
+
+    public void notifyAckBundles(ActionDialect actionDialect) {
+        if (!actionDialect.containsParam("sn")) {
+            return;
+        }
+
+        Integer sn = actionDialect.getParamAsInt("sn");
+        AckBundle ackBundle = this.ackBundles.remove(sn);
+        if (null == ackBundle) {
+            return;
+        }
+
+        ackBundle.end = System.currentTimeMillis();
+
+        synchronized (ackBundle) {
+            ackBundle.notify();
+        }
     }
 
     /**
@@ -312,5 +382,22 @@ public class FerryService extends AbstractModule {
     }
 
     private void teardown() {
+    }
+
+    /**
+     * 应答数据绑定。
+     */
+    public class AckBundle {
+
+        public final long start;
+
+        public long end;
+
+        public final ActionDialect request;
+
+        public AckBundle(ActionDialect request) {
+            this.start = System.currentTimeMillis();
+            this.request = request;
+        }
     }
 }

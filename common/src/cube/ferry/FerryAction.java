@@ -64,7 +64,12 @@ public enum FerryAction {
     /**
      * 连通性验证。
      */
-    Ping("ping")
+    Ping("ping"),
+
+    /**
+     * 连通性应答。
+     */
+    PingAck("pingAck")
 
     ;
 

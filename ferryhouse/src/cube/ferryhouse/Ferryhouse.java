@@ -190,6 +190,13 @@ public class Ferryhouse implements TalkListener {
         if (FerryAction.Ferry.name.equals(action)) {
             this.processFerry(actionDialect);
         }
+        else if (FerryAction.Ping.name.equals(action)) {
+            int sn = actionDialect.getParamAsInt("sn");
+            ActionDialect response = new ActionDialect(FerryAction.PingAck.name);
+            response.addParam("sn", sn);
+            response.addParam("domain", this.domain);
+            this.nucleus.getTalkService().speak(FERRY, response);
+        }
     }
 
     @Override
@@ -216,9 +223,14 @@ public class Ferryhouse implements TalkListener {
     public void onContacted(Speakable speakable) {
         Logger.d(this.getClass(), "#onContacted");
 
-        ActionDialect dialect = new ActionDialect(FerryAction.CheckIn.name);
-        dialect.addParam("domain", this.domain);
-        speakable.speak(FERRY, dialect);
+        (new Thread() {
+            @Override
+            public void run() {
+                ActionDialect dialect = new ActionDialect(FerryAction.CheckIn.name);
+                dialect.addParam("domain", domain);
+                speakable.speak(FERRY, dialect);
+            }
+        }).start();
     }
 
     @Override

@@ -11,5 +11,6 @@
     <buildFile url="file://$PROJECT_DIR$/service-riskmgmt/build.xml" />
     <buildFile url="file://$PROJECT_DIR$/server-app/build.xml" />
     <buildFile url="file://$PROJECT_DIR$/ferryboat/build.xml" />
+    <buildFile url="file://$PROJECT_DIR$/ferryhouse/build.xml" />
   </component>
 </project>

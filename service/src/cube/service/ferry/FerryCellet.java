@@ -89,6 +89,14 @@ public class FerryCellet extends AbstractCellet {
             this.executor.execute(new PingTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (FerryAction.PingAck.name.equals(action)) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ferryService.notifyAckBundles(dialect);
+                }
+            });
+        }
         else if (FerryAction.QueryDomain.name.equals(action)) {
             this.executor.execute(new QueryDomainTask(this, talkContext, primitive,
                     this.markResponseTime(action)));

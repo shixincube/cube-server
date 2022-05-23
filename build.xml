@@ -22,6 +22,9 @@
 	<property name="project-service-multipointcomm.dir" value="service-multipointcomm" />
 	<property name="project-service-conference.dir" value="service-conference" />
 
+	<property name="project-ferryboat.dir" value="ferryboat" />
+	<property name="project-ferryhouse.dir" value="ferryhouse" />
+
 	<property name="build.dir" value="build" />
 
 	<property name="deploy.dir" value="deploy" />
@@ -75,7 +78,7 @@
 	</target>
 
 	<!-- =================================================================== -->
-	<!-- Builds project server app for debug                                    -->
+	<!-- Builds project server app for debug                                 -->
 	<!-- =================================================================== -->
 	<target name="build-server-app-debug">
 		<ant antfile="build.xml"
@@ -86,7 +89,7 @@
 	</target>
 
 	<!-- =================================================================== -->
-	<!-- Builds project server app for release                                  -->
+	<!-- Builds project server app for release                               -->
 	<!-- =================================================================== -->
 	<target name="build-server-app-release">
 		<ant antfile="build.xml"
@@ -191,6 +194,40 @@
 	</target>
 
 	<!-- =================================================================== -->
+	<!-- Builds ferry projects for debug                                     -->
+	<!-- =================================================================== -->
+	<target name="build-ferry-debug" depends="build-common-debug">
+		<ant antfile="build.xml"
+			 dir="${project-ferryboat.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-debug" />
+
+		<ant antfile="build.xml"
+			 dir="${project-ferryhouse.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-debug" />
+	</target>
+
+	<!-- =================================================================== -->
+	<!-- Builds ferry projects for release                                   -->
+	<!-- =================================================================== -->
+	<target name="build-ferry-release" depends="build-common-release">
+		<ant antfile="build.xml"
+			 dir="${project-ferryboat.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-release" />
+
+		<ant antfile="build.xml"
+			 dir="${project-ferryhouse.dir}"
+			 inheritall="false"
+			 inheritrefs="false"
+			 target="build-release" />
+	</target>
+
+	<!-- =================================================================== -->
 	<!-- Deploy all projects                                                 -->
 	<!-- =================================================================== -->
 	<target name="deploy" depends="clean-deploy">
@@ -266,14 +303,14 @@
 	<!-- =================================================================== -->
 	<!-- Builds all projects for debug                                       -->
 	<!-- =================================================================== -->
-	<target name="build-debug" depends="init,build-common-debug,build-dispatcher-debug,build-service-debug,build-console-debug,build-server-app-debug">
+	<target name="build-debug" depends="init,build-common-debug,build-dispatcher-debug,build-service-debug,build-ferry-debug,build-console-debug,build-server-app-debug">
 		<echo>Build all projects for debug.</echo>
 	</target>
 
 	<!-- =================================================================== -->
 	<!-- Builds all projects for release                                     -->
 	<!-- =================================================================== -->
-	<target name="build" depends="init,build-common-release,build-dispatcher-release,build-service-release,build-console-release,build-server-app-release">
+	<target name="build" depends="init,build-common-release,build-dispatcher-release,build-service-release,build-ferry-release,build-console-release,build-server-app-release">
 		<echo>Build all projects.</echo>
 	</target>
 

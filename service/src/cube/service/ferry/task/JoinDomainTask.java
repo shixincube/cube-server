@@ -30,6 +30,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
@@ -64,6 +65,8 @@ public class JoinDomainTask extends ServiceTask {
 
         String tokenCode = this.getTokenCode(action);
         if (null == tokenCode) {
+            Logger.w(this.getClass(), "No token parameter");
+
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FerryStateCode.InvalidToken.code, data));
             markResponseTime();
