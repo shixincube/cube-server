@@ -75,6 +75,7 @@ public class PingTask extends ServiceTask {
         if (touch) {
             FerryService.AckBundle ackBundle = service.touchFerryHouse(domain, 60 * 1000);
             if (null != ackBundle) {
+                online = true;
                 duration = ackBundle.end - ackBundle.start;
             }
         }

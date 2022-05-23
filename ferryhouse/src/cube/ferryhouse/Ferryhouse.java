@@ -146,6 +146,8 @@ public class Ferryhouse implements TalkListener {
             e.printStackTrace();
         }
 
+        this.nucleus.getTalkService().hangup(this.address, this.port, true);
+
         this.ferryStorage.close();
     }
 

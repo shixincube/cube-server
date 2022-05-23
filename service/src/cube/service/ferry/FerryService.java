@@ -26,10 +26,16 @@
 
 package cube.service.ferry;
 
+import cell.adapter.CelletAdapter;
+import cell.adapter.CelletAdapterFactory;
+import cell.adapter.CelletAdapterListener;
+import cell.core.net.Endpoint;
+import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.common.ModuleEvent;
 import cube.common.entity.*;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -50,7 +56,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * 摆渡数据服务。
  */
-public class FerryService extends AbstractModule {
+public class FerryService extends AbstractModule implements CelletAdapterListener {
 
     public final static String NAME = "Ferry";
 
@@ -60,7 +66,7 @@ public class FerryService extends AbstractModule {
 
     private Timer timer;
 
-    private FerryAdapter adapter;
+    private CelletAdapter contactsAdapter;
 
     private Map<String, Ticket> tickets;
 
@@ -99,6 +105,9 @@ public class FerryService extends AbstractModule {
         (new Thread() {
             @Override
             public void run() {
+                contactsAdapter = CelletAdapterFactory.getInstance().getAdapter("Contacts");
+                contactsAdapter.addListener(FerryService.this);
+
                 storage.open();
                 storage.execSelfChecking(null);
             }
@@ -131,12 +140,11 @@ public class FerryService extends AbstractModule {
             this.timer = null;
         }
 
-        this.teardown();
-
-        if (null != this.adapter) {
-            this.adapter.stop();
-            this.adapter = null;
+        if (null != this.contactsAdapter) {
+            this.contactsAdapter.removeListener(this);
         }
+
+        this.teardown();
 
         this.pushQueue.clear();
         this.tickets.clear();
@@ -162,10 +170,6 @@ public class FerryService extends AbstractModule {
     @Override
     public void onTick(Module module, Kernel kernel) {
 
-    }
-
-    public FerryAdapter getAdapter() {
-        return this.adapter;
     }
 
     public void checkIn(ActionDialect dialect, TalkContext talkContext) {
@@ -207,6 +211,9 @@ public class FerryService extends AbstractModule {
                 Logger.e(this.getClass(), "#checkIn - No find domain access point");
             }
         }
+
+        // 发送通知
+
     }
 
     public void checkOut(ActionDialect dialect, TalkContext talkContext) {
@@ -382,6 +389,39 @@ public class FerryService extends AbstractModule {
     }
 
     private void teardown() {
+    }
+
+    @Override
+    public void onDelivered(String topic, Endpoint endpoint, JSONObject jsonObject) {
+        if (FerryService.NAME.equals(ModuleEvent.extractModuleName(jsonObject))) {
+            ModuleEvent event = new ModuleEvent(jsonObject);
+
+        }
+    }
+
+    @Override
+    public void onDelivered(String topic, Endpoint endpoint, Primitive primitive) {
+        // Nothing
+    }
+
+    @Override
+    public void onDelivered(List<String> list, Endpoint endpoint, Primitive primitive) {
+        // Nothing
+    }
+
+    @Override
+    public void onDelivered(List<String> list, Endpoint endpoint, JSONObject jsonObject) {
+        // Nothing
+    }
+
+    @Override
+    public void onSubscribeFailed(String topic, Endpoint endpoint) {
+        // Nothing
+    }
+
+    @Override
+    public void onUnsubscribeFailed(String topic, Endpoint endpoint) {
+        // Nothing
     }
 
     /**
