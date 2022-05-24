@@ -161,6 +161,9 @@ public class ClientCellet extends AbstractCellet {
         else if (ClientAction.SubmitWorkflow.name.equals(action)) {
             this.executor.execute(new SubmitWorkflowTask(this, talkContext, actionDialect));
         }
+        else if (ClientAction.GetDomain.name.equals(action)) {
+            this.executor.execute(new GetDomainTask(this, talkContext, actionDialect));
+        }
         else if (ClientAction.GetLog.name.equals(action)) {
             this.executor.execute(new GetLogTask(this, talkContext, actionDialect));
         }

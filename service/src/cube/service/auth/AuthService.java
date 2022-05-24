@@ -290,11 +290,22 @@ public class AuthService extends AbstractModule {
     /**
      * 获取授权域。
      *
-     * @param domain
-     * @return
+     * @param domain 指定域名称。
+     * @return 返回授权域实例。
      */
     public AuthDomain getAuthDomain(String domain) {
         return this.authStorage.getDomain(domain, null);
+    }
+
+    /**
+     * 获取授权域。
+     *
+     * @param domain 指定域名称。
+     * @param appKey 指定域的 App Key 。
+     * @return 返回授权域实例。
+     */
+    public AuthDomain getAuthDomain(String domain, String appKey) {
+        return this.authStorage.getDomain(domain, appKey);
     }
 
     /**

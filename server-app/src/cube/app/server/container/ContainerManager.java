@@ -142,6 +142,8 @@ public class ContainerManager {
                 new CheckPhoneAvailableHandler(httpAllowOrigin, httpsAllowOrigin),
                 new SearchAccountHandler(httpAllowOrigin, httpsAllowOrigin),
 
+                new DomainInfoHandler(httpAllowOrigin, httpsAllowOrigin),
+
                 new HeartbeatHandler(httpAllowOrigin, httpsAllowOrigin),
                 new AccountBuildinHandler(httpAllowOrigin, httpsAllowOrigin),
 

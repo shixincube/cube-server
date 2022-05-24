@@ -212,8 +212,14 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             }
         }
 
-        // 发送通知
-
+        List<Contact> contacts = ContactManager.getInstance().getOnlineContactsInDomain(domain);
+        for (Contact contact : contacts) {
+            // 发送通知
+            JSONObject eventData = new JSONObject();
+            eventData.put("domain", domain);
+            ModuleEvent event = new ModuleEvent(NAME, FerryAction.Online.name, eventData);
+            this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());
+        }
     }
 
     public void checkOut(ActionDialect dialect, TalkContext talkContext) {
@@ -395,7 +401,13 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
     public void onDelivered(String topic, Endpoint endpoint, JSONObject jsonObject) {
         if (FerryService.NAME.equals(ModuleEvent.extractModuleName(jsonObject))) {
             ModuleEvent event = new ModuleEvent(jsonObject);
+            String eventName = event.getEventName();
+            if (FerryAction.Online.name.equals(eventName)) {
 
+            }
+            else if (FerryAction.Offline.name.equals(eventName)) {
+
+            }
         }
     }
 

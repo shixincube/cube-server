@@ -45,6 +45,8 @@ public enum ClientAction {
 
     NotifyEvent("NotifyEvent"),
 
+    GetDomain("GetDomain"),
+
     CreateDomainApp("CreateDomainApp"),
 
     ApplyToken("ApplyToken"),

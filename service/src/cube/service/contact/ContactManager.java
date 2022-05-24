@@ -768,6 +768,29 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 获取指定域里的所有在线联系人。
+     *
+     * @param domainName 指定域名称。
+     * @return 返回在线联系人列表。
+     */
+    public List<Contact> getOnlineContactsInDomain(String domainName) {
+        ArrayList<Contact> contacts = new ArrayList<>();
+
+        ContactTable table = this.onlineTables.get(domainName);
+        if (null == table) {
+            return contacts;
+        }
+
+        for (Contact contact : table.getOnlineContacts()) {
+            if (contact.getDomain().getName().equals(domainName)) {
+                contacts.add(contact);
+            }
+        }
+
+        return contacts;
+    }
+
+    /**
      * 获取所有的在线联系人。
      *
      * @return 返回所有的在线联系人。

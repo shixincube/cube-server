@@ -1,20 +1,20 @@
 /*
  * This source file is part of Cube.
- * <p>
+ *
  * The MIT License (MIT)
- * <p>
+ *
  * Copyright (c) 2020-2022 Cube Team.
- * <p>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p>
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * <p>
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,68 +24,36 @@
  * SOFTWARE.
  */
 
-package cube.ferry;
+package cube.service.client.task;
+
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cube.common.action.ClientAction;
+import cube.common.entity.AuthDomain;
+import cube.service.client.ClientCellet;
 
 /**
- * 摆渡服务动作。
+ * 获取域数据任务。
  */
-public enum FerryAction {
+public class GetDomainTask extends ClientTask {
 
-    /**
-     * 签入。
-     */
-    CheckIn("checkIn"),
+    public GetDomainTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
+        super(cellet, talkContext, actionDialect);
+    }
 
-    /**
-     * 签出。
-     */
-    CheckOut("checkOut"),
+    @Override
+    public void run() {
+        String domain = actionDialect.getParamAsString("domain");
+        String appKey = actionDialect.getParamAsString("appKey");
 
-    /**
-     * House 上线。
-     */
-    Online("online"),
+        ActionDialect result = new ActionDialect(ClientAction.GetDomain.name);
+        copyNotifier(result);
 
-    /**
-     * House 下线。
-     */
-    Offline("offline"),
+        AuthDomain authDomain = getAuthService().getAuthDomain(domain, appKey);
+        if (null != authDomain) {
+            result.addParam("authDomain", authDomain.toJSON());
+        }
 
-    /**
-     * 摆渡数据。
-     */
-    Ferry("ferry"),
-
-    /**
-     * 查询域。
-     */
-    QueryDomain("queryDomain"),
-
-    /**
-     * 加入域。
-     */
-    JoinDomain("joinDomain"),
-
-    /**
-     * 退出域。
-     */
-    QuitDomain("quitDomain"),
-
-    /**
-     * 连通性验证。
-     */
-    Ping("ping"),
-
-    /**
-     * 连通性应答。
-     */
-    PingAck("pingAck")
-
-    ;
-
-    public final String name;
-
-    FerryAction(String name) {
-        this.name = name;
+        cellet.speak(talkContext, result);
     }
 }
