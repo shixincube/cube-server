@@ -36,17 +36,20 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.ModuleEvent;
+import cube.common.Packet;
 import cube.common.entity.*;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.ferry.*;
 import cube.plugin.PluginSystem;
+import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
 import cube.service.ferry.plugin.WriteMessagePlugin;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -217,6 +220,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             // 发送通知
             JSONObject eventData = new JSONObject();
             eventData.put("domain", domain);
+            eventData.put("id", contact.getId().longValue());
             ModuleEvent event = new ModuleEvent(NAME, FerryAction.Online.name, eventData);
             this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());
         }
@@ -228,6 +232,16 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         Logger.d(this.getClass(), "#checkOut - " + domain);
 
         this.tickets.remove(domain);
+
+        List<Contact> contacts = ContactManager.getInstance().getOnlineContactsInDomain(domain);
+        for (Contact contact : contacts) {
+            // 发送通知
+            JSONObject eventData = new JSONObject();
+            eventData.put("domain", domain);
+            eventData.put("id", contact.getId().longValue());
+            ModuleEvent event = new ModuleEvent(NAME, FerryAction.Offline.name, eventData);
+            this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());
+        }
     }
 
     /**
@@ -397,16 +411,44 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
     private void teardown() {
     }
 
+    private void pushToContact(Contact contact, String actionName, JSONObject data) {
+        for (Device device : contact.getDeviceList()) {
+            TalkContext talkContext = device.getTalkContext();
+            if (null == talkContext) {
+                continue;
+            }
+
+            JSONObject payload = new JSONObject();
+            try {
+                payload.put("code", FerryStateCode.Ok.code);
+                payload.put("data", data);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            Packet packet = new Packet(actionName, payload);
+            ActionDialect dialect = Director.attachDirector(packet.toDialect(),
+                    contact.getId().longValue(), contact.getDomain().getName());
+            this.cellet.speak(talkContext, dialect);
+        }
+    }
+
     @Override
     public void onDelivered(String topic, Endpoint endpoint, JSONObject jsonObject) {
         if (FerryService.NAME.equals(ModuleEvent.extractModuleName(jsonObject))) {
             ModuleEvent event = new ModuleEvent(jsonObject);
             String eventName = event.getEventName();
-            if (FerryAction.Online.name.equals(eventName)) {
 
-            }
-            else if (FerryAction.Offline.name.equals(eventName)) {
-
+            if (FerryAction.Online.name.equals(eventName) ||
+                    FerryAction.Offline.name.equals(eventName)) {
+                String domainName = event.getData().getString("domain");
+                long contactId = event.getData().getLong("id");
+                Contact contact = ContactManager.getInstance().getOnlineContact(domainName, contactId);
+                if (null != contact) {
+                    JSONObject data = new JSONObject();
+                    data.put("domain", domainName);
+                    pushToContact(contact, eventName, data);
+                }
             }
         }
     }
