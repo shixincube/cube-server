@@ -30,3 +30,5 @@ PRGDIR=`dirname "$PRG"`
 sh "$PRGDIR"/start-service.sh
 
 sh "$PRGDIR"/start-dispatcher.sh
+
+sh "$PRGDIR"/start-ferryboat.sh

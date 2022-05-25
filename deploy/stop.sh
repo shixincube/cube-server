@@ -27,6 +27,8 @@ done
 
 PRGDIR=`dirname "$PRG"`
 
+sh "$PRGDIR"/stop-ferryboat.sh
+
 sh "$PRGDIR"/stop-dispatcher.sh
 
 sh "$PRGDIR"/stop-service.sh
