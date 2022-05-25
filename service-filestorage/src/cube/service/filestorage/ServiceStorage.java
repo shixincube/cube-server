@@ -710,7 +710,7 @@ public class ServiceStorage implements Storagable {
                             Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
                     }),
                     new StorageField("id", LiteralBase.LONG, new Constraint[] {
-                            Constraint.UNIQUE
+                            Constraint.NOT_NULL
                     }),
                     new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
                             Constraint.NOT_NULL
