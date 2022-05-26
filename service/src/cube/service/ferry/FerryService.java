@@ -191,6 +191,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             }
         }
 
+        DomainInfo domainInfo = this.getDomainInfo()
         // 更新记录
         this.storage.writeDomainInfo(domain, ticket.getLicenceBeginning(), ticket.getLicenceDuration(),
                 dialect.getParamAsString("address"));
@@ -356,9 +357,13 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         }).start();
     }
 
-    public AuthDomain getDomain(String domainName) {
+    public AuthDomain getAuthDomain(String domainName) {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         return authService.getAuthDomain(domainName);
+    }
+
+    public DomainInfo getDomainInfo(String domainName) {
+        return this.storage.readDomainInfo(domainName);
     }
 
     public List<DomainMember> listDomainMember(String domainName) {

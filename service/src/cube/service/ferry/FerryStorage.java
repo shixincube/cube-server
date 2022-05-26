@@ -35,6 +35,7 @@ import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
+import cube.ferry.DomainInfo;
 import cube.ferry.DomainMember;
 import cube.ferry.JoinWay;
 import cube.ferry.Role;
@@ -97,6 +98,9 @@ public class FerryStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("duration", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("limit", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("invitation_code", LiteralBase.STRING, new Constraint[] {
@@ -257,7 +261,17 @@ public class FerryStorage implements Storagable {
         // TODO
     }
 
-    public synchronized void writeDomainInfo(String domainName, long beginning, long duration, String address) {
+    /**
+     * 写入域信息。
+     *
+     * @param domainName
+     * @param beginning
+     * @param duration
+     * @param invitationCode
+     * @param address
+     */
+    public synchronized void writeDomainInfo(String domainName, long beginning, long duration,
+                                             String invitationCode, String address) {
         List<StorageField[]> result = this.storage.executeQuery(this.domainInfoTable, new StorageField[] {
                 new StorageField("sn", LiteralBase.LONG)
         }, new Conditional[] {
@@ -270,6 +284,8 @@ public class FerryStorage implements Storagable {
                     new StorageField("domain", domainName),
                     new StorageField("beginning", beginning),
                     new StorageField("duration", duration),
+                    new StorageField("limit", 20),
+                    new StorageField("invitationCode", invitationCode),
                     new StorageField("address", address)
             });
         }
@@ -278,11 +294,44 @@ public class FerryStorage implements Storagable {
             this.storage.executeUpdate(this.domainInfoTable, new StorageField[] {
                     new StorageField("beginning", beginning),
                     new StorageField("duration", duration),
+                    new StorageField("invitationCode", invitationCode),
                     new StorageField("address", address)
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", result.get(0)[0].getLong())
             });
         }
+    }
+
+    /**
+     * 读取域信息。
+     *
+     * @param domainName
+     * @return
+     */
+    public DomainInfo readDomainInfo(String domainName) {
+        List<StorageField[]> result = this.storage.executeQuery(this.domainInfoTable, this.domainInfoFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("domain", domainName)
+                });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+        long beginning = map.get("beginning").getLong();
+        long duration = map.get("duration").getLong();
+        int limit = map.get("limit").getInt();
+        DomainInfo domainInfo = new DomainInfo(domainName, beginning, duration, limit);
+
+        if (!map.get("address").isNullValue()) {
+            domainInfo.setAddress(map.get("address").getString());
+        }
+
+        if (!map.get("invitation_code").isNullValue()) {
+            domainInfo.setInvitationCode(map.get("invitation_code").getString());
+        }
+        return domainInfo;
     }
 
     /**
