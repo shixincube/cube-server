@@ -66,6 +66,7 @@ public class Ferryhouse implements TalkListener {
     private String address;
     private int port;
 
+    private JSONObject licence;
     private String domain;
 
     private FerryStorage ferryStorage;
@@ -99,14 +100,14 @@ public class Ferryhouse implements TalkListener {
 
         // 读取许可证
         try {
-            JSONObject data = DomainTool.extractData(new File("config/licence"), "shixincube.com");
-            if (null == data) {
+            this.licence = DomainTool.extractData(new File("config/licence"), "shixincube.com");
+            if (null == this.licence) {
                 Logger.e(this.getClass(), "#config - Licence file error");
                 System.exit(0);
                 return;
             }
 
-            this.domain = data.getString("domain");
+            this.domain = this.licence.getString("domain");
 
             Logger.i(this.getClass(), "Domain: " + this.domain);
         } catch (IOException e) {
@@ -203,7 +204,7 @@ public class Ferryhouse implements TalkListener {
 
     @Override
     public void onListened(Speakable speakable, String cellet, PrimitiveInputStream primitiveInputStream) {
-
+        // Nothing
     }
 
     @Override
@@ -230,6 +231,7 @@ public class Ferryhouse implements TalkListener {
             public void run() {
                 ActionDialect dialect = new ActionDialect(FerryAction.CheckIn.name);
                 dialect.addParam("domain", domain);
+                dialect.addParam("licence", licence);
                 speakable.speak(FERRY, dialect);
             }
         }).start();

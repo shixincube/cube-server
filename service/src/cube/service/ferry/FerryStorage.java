@@ -52,71 +52,94 @@ import java.util.Map;
  */
 public class FerryStorage implements Storagable {
 
-    private final StorageField[] accessPointFields = new StorageField[]{
-            new StorageField("sn", LiteralBase.LONG, new Constraint[]{
+    private final StorageField[] accessPointFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
-            new StorageField("main_address", LiteralBase.STRING, new Constraint[]{
+            new StorageField("main_address", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("main_port", LiteralBase.INT, new Constraint[]{
+            new StorageField("main_port", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("http_address", LiteralBase.STRING, new Constraint[]{
+            new StorageField("http_address", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("http_port", LiteralBase.INT, new Constraint[]{
+            new StorageField("http_port", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("https_address", LiteralBase.STRING, new Constraint[]{
+            new StorageField("https_address", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("https_port", LiteralBase.INT, new Constraint[]{
+            new StorageField("https_port", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("ice_server", LiteralBase.STRING, new Constraint[]{
+            new StorageField("ice_server", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 优先级，从低到高，依次为 1 - 3
-            new StorageField("priority", LiteralBase.INT, new Constraint[]{
+            new StorageField("priority", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("domain", LiteralBase.STRING, new Constraint[]{
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             })
     };
 
-    private final StorageField[] domainMemberFields = new StorageField[]{
-            new StorageField("sn", LiteralBase.LONG, new Constraint[]{
+    private final StorageField[] domainInfoFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("beginning", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("duration", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("invitation_code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("address", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            })
+    };
+
+    private final StorageField[] domainMemberFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
             // 域
-            new StorageField("domain", LiteralBase.STRING, new Constraint[]{
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 联系人 ID
-            new StorageField("contact_id", LiteralBase.LONG, new Constraint[]{
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 加入方式
-            new StorageField("way", LiteralBase.INT, new Constraint[]{
+            new StorageField("way", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 时间戳
-            new StorageField("timestamp", LiteralBase.LONG, new Constraint[]{
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 角色
-            new StorageField("role", LiteralBase.INT, new Constraint[]{
+            new StorageField("role", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // 状态
-            new StorageField("state", LiteralBase.INT, new Constraint[]{
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
                     Constraint.DEFAULT_0
             })
     };
 
     private final String accessPointTable = "ferry_access_point";
+
+    private final String domainInfoTable = "ferry_domain";
 
     private final String domainMemberTable = "ferry_domain_member";
 
@@ -139,6 +162,7 @@ public class FerryStorage implements Storagable {
     @Override
     public void execSelfChecking(List<String> domainNameList) {
         this.checkAccessPointTable();
+        this.checkDomainInfoTable();
         this.checkDomainMemberTable();
     }
 
@@ -233,6 +257,34 @@ public class FerryStorage implements Storagable {
         // TODO
     }
 
+    public synchronized void writeDomainInfo(String domainName, long beginning, long duration, String address) {
+        List<StorageField[]> result = this.storage.executeQuery(this.domainInfoTable, new StorageField[] {
+                new StorageField("sn", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("domain", domainName)
+        });
+
+        if (result.isEmpty()) {
+            // 插入
+            this.storage.executeInsert(this.domainInfoTable, new StorageField[] {
+                    new StorageField("domain", domainName),
+                    new StorageField("beginning", beginning),
+                    new StorageField("duration", duration),
+                    new StorageField("address", address)
+            });
+        }
+        else {
+            // 更新
+            this.storage.executeUpdate(this.domainInfoTable, new StorageField[] {
+                    new StorageField("beginning", beginning),
+                    new StorageField("duration", duration),
+                    new StorageField("address", address)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("sn", result.get(0)[0].getLong())
+            });
+        }
+    }
+
     /**
      * 查询指定域的所有成员。
      *
@@ -305,11 +357,20 @@ public class FerryStorage implements Storagable {
 
                 // 插入 Demo 数据
 
-                Endpoint main = new Endpoint("192.168.0.101", 7000);
-                Endpoint http = new Endpoint("192.168.0.101", 7010);
-                Endpoint https = new Endpoint("192.168.0.101", 7017);
+                Endpoint main = new Endpoint("192.168.0.200", 7000);
+                Endpoint http = new Endpoint("192.168.0.200", 7010);
+                Endpoint https = new Endpoint("192.168.0.200", 7017);
                 IceServer iceServer = new IceServer("turn:52.83.195.35:3478", "cube", "cube887");
                 this.writeAccessPoint(main, http, https, iceServer, null);
+            }
+        }
+    }
+
+    private void checkDomainInfoTable() {
+        if (!this.storage.exist(this.domainInfoTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.domainInfoTable, this.domainInfoFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.domainInfoTable + "' successfully");
             }
         }
     }

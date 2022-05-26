@@ -178,9 +178,9 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
     public void checkIn(ActionDialect dialect, TalkContext talkContext) {
         String domain = dialect.getParamAsString("domain");
 
-        Logger.d(this.getClass(), "#checkIn - " + domain);
+        Logger.d(this.getClass(), "#checkIn - " + domain + "@" + dialect.getParamAsString("address"));
 
-        Ticket ticket = new Ticket(domain, talkContext);
+        Ticket ticket = new Ticket(domain, dialect.getParamAsJson("licence"), talkContext);
         this.tickets.put(domain, ticket);
 
         if (null == this.getKernel() || !this.getKernel().hasModule(AuthService.NAME)) {
@@ -190,6 +190,10 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
                 e.printStackTrace();
             }
         }
+
+        // 更新记录
+        this.storage.writeDomainInfo(domain, ticket.getLicenceBeginning(), ticket.getLicenceDuration(),
+                dialect.getParamAsString("address"));
 
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         if (!authService.hasDomain(domain)) {

@@ -41,10 +41,11 @@ public class DomainTool {
     private DomainTool() {
     }
 
-    public static void createFile(String domain, String password, File output) throws IOException {
+    public static void createFile(String domain, long beginning, String password, File output) throws IOException {
         JSONObject data = new JSONObject();
         data.put("domain", domain);
-        data.put("duration", 30L * 24 * 60 * 60 * 1000);
+        data.put("beginning", beginning);
+        data.put("duration", 180L * 24 * 60 * 60 * 1000);
 
         String dataString = data.toString();
         byte[] dataBytes = CipherUtils.encrypt(dataString.getBytes(StandardCharsets.UTF_8),
@@ -110,7 +111,9 @@ public class DomainTool {
         File outputFile = new File("config/licence");
         System.out.println("Licence: " + outputFile.getAbsolutePath());
         try {
-            DomainTool.createFile("demo-ferryhouse-cube", "shixincube.com",
+            DomainTool.createFile("demo-ferryhouse-cube",
+                    System.currentTimeMillis(),
+                    "shixincube.com",
                     outputFile);
         } catch (IOException e) {
             e.printStackTrace();
