@@ -267,11 +267,9 @@ public class FerryStorage implements Storagable {
      * @param domainName
      * @param beginning
      * @param duration
-     * @param invitationCode
      * @param address
      */
-    public synchronized void writeDomainInfo(String domainName, long beginning, long duration,
-                                             String invitationCode, String address) {
+    public synchronized void writeDomainInfo(String domainName, long beginning, long duration, String address) {
         List<StorageField[]> result = this.storage.executeQuery(this.domainInfoTable, new StorageField[] {
                 new StorageField("sn", LiteralBase.LONG)
         }, new Conditional[] {
@@ -285,7 +283,6 @@ public class FerryStorage implements Storagable {
                     new StorageField("beginning", beginning),
                     new StorageField("duration", duration),
                     new StorageField("limit", 20),
-                    new StorageField("invitationCode", invitationCode),
                     new StorageField("address", address)
             });
         }
@@ -294,12 +291,25 @@ public class FerryStorage implements Storagable {
             this.storage.executeUpdate(this.domainInfoTable, new StorageField[] {
                     new StorageField("beginning", beginning),
                     new StorageField("duration", duration),
-                    new StorageField("invitationCode", invitationCode),
                     new StorageField("address", address)
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", result.get(0)[0].getLong())
             });
         }
+    }
+
+    /**
+     * 更新域的邀请码。
+     *
+     * @param domainName
+     * @param invitationCode
+     */
+    public void updateInvitationCode(String domainName, String invitationCode) {
+        this.storage.executeUpdate(this.domainInfoTable, new StorageField[] {
+                new StorageField("invitation_code", invitationCode)
+        }, new Conditional[] {
+                Conditional.createEqualTo("domain", domainName)
+        });
     }
 
     /**

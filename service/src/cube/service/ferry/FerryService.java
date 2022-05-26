@@ -191,10 +191,19 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             }
         }
 
-        DomainInfo domainInfo = this.getDomainInfo()
-        // 更新记录
-        this.storage.writeDomainInfo(domain, ticket.getLicenceBeginning(), ticket.getLicenceDuration(),
-                dialect.getParamAsString("address"));
+        DomainInfo domainInfo = this.getDomainInfo(domain);
+        if (null == domainInfo || null == domainInfo.getInvitationCode()) {
+            // 写入数据
+            this.storage.writeDomainInfo(domain, ticket.getLicenceBeginning(), ticket.getLicenceDuration(),
+                    dialect.getParamAsString("address"));
+            // 写入邀请码
+            this.storage.updateInvitationCode(domain, Utils.randomNumberString(6));
+        }
+        else {
+            // 更新数据
+            this.storage.writeDomainInfo(domain, ticket.getLicenceBeginning(), ticket.getLicenceDuration(),
+                    dialect.getParamAsString("address"));
+        }
 
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         if (!authService.hasDomain(domain)) {
