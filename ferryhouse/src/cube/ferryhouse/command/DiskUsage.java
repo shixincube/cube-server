@@ -24,41 +24,18 @@
  * SOFTWARE.
  */
 
-package cube.ferry;
+package cube.ferryhouse.command;
 
-import cell.core.talk.TalkContext;
-import cube.common.Domain;
-import org.json.JSONObject;
+import java.nio.file.Paths;
 
 /**
- * 用于标记 Ferry 的描述。
+ * 磁盘使用情况命令。
  */
-public class Ticket {
+public class DiskUsage extends Command {
 
-    public final Domain domain;
-
-    public final JSONObject licence;
-
-    public final TalkContext talkContext;
-
-    public final long sessionId;
-
-    public Ticket(String domainName, JSONObject licence, TalkContext talkContext) {
-        this.domain = new Domain(domainName);
-        this.licence = licence;
-        this.talkContext = talkContext;
-        this.sessionId = talkContext.getSessionId();
+    public DiskUsage() {
+        super(Paths.get(""));
     }
 
-    public long getLicenceBeginning() {
-        return this.licence.getLong("beginning");
-    }
-
-    public long getLicenceDuration() {
-        return this.licence.getLong("duration");
-    }
-
-    public int getLicenceLimit() {
-        return this.licence.getInt("limit");
-    }
+    
 }

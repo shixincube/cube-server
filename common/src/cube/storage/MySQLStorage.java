@@ -576,7 +576,7 @@ public class MySQLStorage extends AbstractStorage {
 
                         this.connections.remove(conn);
                     }
-                } catch (SQLException e) {
+                } catch (Exception e) {
                     Logger.d(this.getClass(), e.getMessage());
                     try {
                         conn.close();

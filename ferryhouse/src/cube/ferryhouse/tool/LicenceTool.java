@@ -36,9 +36,9 @@ import java.nio.charset.StandardCharsets;
 /**
  *
  */
-public class DomainTool {
+public class LicenceTool {
 
-    private DomainTool() {
+    private LicenceTool() {
     }
 
     public static void createFile(String domain, long beginning, String password, File output) throws IOException {
@@ -46,6 +46,7 @@ public class DomainTool {
         data.put("domain", domain);
         data.put("beginning", beginning);
         data.put("duration", 180L * 24 * 60 * 60 * 1000);
+        data.put("limit", 20);
 
         String dataString = data.toString();
         byte[] dataBytes = CipherUtils.encrypt(dataString.getBytes(StandardCharsets.UTF_8),
@@ -111,7 +112,7 @@ public class DomainTool {
         File outputFile = new File("config/licence");
         System.out.println("Licence: " + outputFile.getAbsolutePath());
         try {
-            DomainTool.createFile("demo-ferryhouse-cube",
+            LicenceTool.createFile("demo-ferryhouse-cube",
                     System.currentTimeMillis(),
                     "shixincube.com",
                     outputFile);
@@ -126,7 +127,7 @@ public class DomainTool {
         }
 
         try {
-            JSONObject data = DomainTool.extractData(outputFile, "shixincube.com");
+            JSONObject data = LicenceTool.extractData(outputFile, "shixincube.com");
             System.out.println("Domain: " + data.getString("domain"));
         } catch (IOException e) {
             e.printStackTrace();

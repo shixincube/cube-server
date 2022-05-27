@@ -267,9 +267,10 @@ public class FerryStorage implements Storagable {
      * @param domainName
      * @param beginning
      * @param duration
+     * @param limit
      * @param address
      */
-    public synchronized void writeDomainInfo(String domainName, long beginning, long duration, String address) {
+    public synchronized void writeDomainInfo(String domainName, long beginning, long duration, int limit, String address) {
         List<StorageField[]> result = this.storage.executeQuery(this.domainInfoTable, new StorageField[] {
                 new StorageField("sn", LiteralBase.LONG)
         }, new Conditional[] {
@@ -282,7 +283,7 @@ public class FerryStorage implements Storagable {
                     new StorageField("domain", domainName),
                     new StorageField("beginning", beginning),
                     new StorageField("duration", duration),
-                    new StorageField("limit", 20),
+                    new StorageField("limit", limit),
                     new StorageField("address", address)
             });
         }
@@ -291,6 +292,7 @@ public class FerryStorage implements Storagable {
             this.storage.executeUpdate(this.domainInfoTable, new StorageField[] {
                     new StorageField("beginning", beginning),
                     new StorageField("duration", duration),
+                    new StorageField("limit", limit),
                     new StorageField("address", address)
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", result.get(0)[0].getLong())

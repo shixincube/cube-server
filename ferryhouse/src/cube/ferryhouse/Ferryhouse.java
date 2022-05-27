@@ -40,7 +40,7 @@ import cube.common.entity.Message;
 import cube.ferry.DomainMember;
 import cube.ferry.FerryAction;
 import cube.ferry.FerryPort;
-import cube.ferryhouse.tool.DomainTool;
+import cube.ferryhouse.tool.LicenceTool;
 import cube.storage.MySQLStorage;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
@@ -100,7 +100,7 @@ public class Ferryhouse implements TalkListener {
 
         // 读取许可证
         try {
-            this.licence = DomainTool.extractData(new File("config/licence"), "shixincube.com");
+            this.licence = LicenceTool.extractData(new File("config/licence"), "shixincube.com");
             if (null == this.licence) {
                 Logger.e(this.getClass(), "#config - Licence file error");
                 System.exit(0);
@@ -131,6 +131,9 @@ public class Ferryhouse implements TalkListener {
             public void run() {
                 ferryStorage.open();
                 ferryStorage.execSelfChecking(domainList);
+
+                // 更新许可证数据
+                ferryStorage.writeLicence(licence);
             }
         }).start();
     }

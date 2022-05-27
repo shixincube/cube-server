@@ -43,7 +43,9 @@ import cube.storage.StorageType;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 消息摆渡机。
@@ -196,6 +198,31 @@ public class FerryStorage implements Storagable {
         checkContactTable();
         checkDomainMemberTable();
         checkMessageTable();
+    }
+
+    public void writeLicence(JSONObject licenceJson) {
+        HashMap<String, String> data = new HashMap<>();
+        data.put("domain", licenceJson.getString("domain"));
+        data.put("beginning", Long.toString(licenceJson.getLong("beginning")));
+        data.put("duration", Long.toString(licenceJson.getLong("duration")));
+        data.put("limit", Integer.toString(licenceJson.getInt("limit")));
+
+        for (Map.Entry<String, String> entry : data.entrySet()) {
+            String item = entry.getKey();
+            String value = entry.getValue();
+
+            if (!this.storage.executeUpdate(this.propertyTable, new StorageField[] {
+                    new StorageField("value", value)
+                }, new Conditional[] {
+                    Conditional.createEqualTo("item", item)
+                })) {
+                // 插入数据
+                this.storage.executeInsert(this.propertyTable, new StorageField[] {
+                        new StorageField("item", item),
+                        new StorageField("value", value)
+                });
+            }
+        }
     }
 
     public synchronized void writeContact(Contact contact) {
