@@ -26,9 +26,16 @@
 
 package cube.ferryhouse.test;
 
+import cube.ferryhouse.command.DiskUsage;
+
 public class TestCommand {
 
     public static void main(String[] args) {
-
+        DiskUsage diskUsage = new DiskUsage();
+        diskUsage.execute();
+        int total = diskUsage.getTotal();
+        int used = diskUsage.getUsed();
+        System.out.println("Total: " + total + diskUsage.getTotalUnit());
+        System.out.println("Used: " + used + diskUsage.getUsedUnit());
     }
 }

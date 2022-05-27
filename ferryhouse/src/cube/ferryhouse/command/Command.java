@@ -28,10 +28,7 @@ package cube.ferryhouse.command;
 
 import cell.util.log.Logger;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,22 +41,26 @@ public class Command {
 
     private AtomicBoolean running;
 
+    private final String shell;
+    private final String shellParam;
+
     private Path workPath;
 
-    public Command(Path workPath) {
+    public Command() {
         this.running = new AtomicBoolean(false);
-        this.workPath = workPath;
+        this.shell = "sh";
+        this.shellParam = "-c";
     }
 
-    public Path getWorkPath() {
-        return this.workPath;
+    public void setWorkPath(Path workPath) {
+        this.workPath = workPath;
     }
 
     public boolean isRunning() {
         return this.running.get();
     }
 
-    protected Runnable buildInputStreamWorker(InputStream inputStream, StringBuilder content) {
+    protected Runnable buildInputStreamWorker(InputStream inputStream, List<String> content) {
         Runnable worker = new Runnable() {
             @Override
             public void run() {
@@ -68,7 +69,7 @@ public class Command {
                 try {
                     reader = new BufferedReader(new InputStreamReader(inputStream));
                     while ((line = reader.readLine()) != null) {
-                        content.append(line);
+                        content.add(line);
                     }
                 } catch (Exception e) {
                     Logger.w(Command.class, "#buildInputStreamWorker", e);
@@ -87,17 +88,28 @@ public class Command {
         return worker;
     }
 
-    public boolean execute(String command, List<String> params, StringBuilder output) {
+    public boolean execute(String command, List<String> params) {
+        return this.execute(command, params, null);
+    }
+
+    public boolean execute(String command, List<String> params, List<String> output) {
         List<String> commandLine = new ArrayList<>();
         commandLine.add(command);
-        commandLine.addAll(params);
+        if (null != params) {
+            commandLine.addAll(params);
+        }
 
         int status = -1;
 
         Process process = null;
         ProcessBuilder pb = new ProcessBuilder(commandLine);
-        // 设置工作目录
-        pb.directory(getWorkPath().toFile());
+
+        if (null != this.workPath) {
+            pb.directory(this.workPath.toFile());
+        }
+        else {
+            pb.directory(new File(System.getProperty("user.home")));
+        }
 
         try {
             process = pb.start();
@@ -123,6 +135,8 @@ public class Command {
 
             process = null;
         }
+
+        this.running.set(false);
 
         return (0 == status || 1 == status);
     }
