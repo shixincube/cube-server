@@ -68,6 +68,27 @@ public class LicenceTool {
         }
     }
 
+    public static void writeFile(JSONObject data, String password, File output) throws IOException {
+        String dataString = data.toString();
+        byte[] dataBytes = CipherUtils.encrypt(dataString.getBytes(StandardCharsets.UTF_8),
+                password.getBytes(StandardCharsets.UTF_8));
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(output);
+            fos.write(dataBytes);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != fos) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+    }
+
     /**
      * 从文件提取数据。
      *

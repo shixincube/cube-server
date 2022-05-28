@@ -35,6 +35,8 @@ public class FerryPort {
 
     public final static String TransferOutMember = "transferOutMember";
 
+    public final static String ResetLicence = "ResetLicence";
+
     public final static String WriteMessage = "WriteMessage";
 
     private FerryPort() {

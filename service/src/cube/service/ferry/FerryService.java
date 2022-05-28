@@ -387,6 +387,19 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
      * @param memberList
      */
     public void transferIntoDomainMember(Contact contact, DomainMember domainMember, List<DomainMember> memberList) {
+        if (this.storage.countDomainMembers(domainMember.getDomain().getName()) == 0) {
+            // 更新授权文件的日期
+            DomainInfo domainInfo = this.getDomainInfo(domainMember.getDomain().getName());
+            domainInfo.setBeginning(System.currentTimeMillis());
+
+            FerryPacket packet = new FerryPacket(FerryPort.ResetLicence);
+            packet.setDomain(domainMember.getDomain().getName());
+            packet.getDialect().addParam("licence", domainInfo.toLicence());
+            this.pushToBoat(domainMember.getDomain().getName(), packet);
+
+            this.storage.writeDomainInfo(domainInfo);
+        }
+
         // 写入新成员
         this.storage.writeMember(domainMember);
 

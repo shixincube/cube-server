@@ -71,6 +71,10 @@ public class DomainInfo extends Entity {
         return this.beginning;
     }
 
+    public void setBeginning(long value) {
+        this.beginning = value;
+    }
+
     public long getDuration() {
         return this.duration;
     }
@@ -93,6 +97,15 @@ public class DomainInfo extends Entity {
 
     public String getInvitationCode() {
         return this.invitationCode;
+    }
+
+    public JSONObject toLicence() {
+        JSONObject data = new JSONObject();
+        data.put("domain", this.domain.getName());
+        data.put("beginning", this.beginning);
+        data.put("duration", this.duration);
+        data.put("limit", this.limit);
+        return data;
     }
 
     @Override

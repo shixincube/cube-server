@@ -261,6 +261,11 @@ public class FerryStorage implements Storagable {
         // TODO
     }
 
+    public void writeDomainInfo(DomainInfo domainInfo) {
+        this.writeDomainInfo(domainInfo.getDomain().getName(), domainInfo.getBeginning(),
+                domainInfo.getDuration(), domainInfo.getLimit(), domainInfo.getAddress());
+    }
+
     /**
      * 写入域信息。
      *
@@ -368,6 +373,22 @@ public class FerryStorage implements Storagable {
         }
 
         return list;
+    }
+
+    /**
+     * 域成员数量。
+     *
+     * @param domainName
+     * @return
+     */
+    public int countDomainMembers(String domainName) {
+        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(sn) FROM `"
+                + this.domainMemberTable + "` WHERE `domain`='" + domainName + "'");
+        if (result.isEmpty()) {
+            return -1;
+        }
+
+        return result.get(0)[0].getInt();
     }
 
     /**

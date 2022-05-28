@@ -170,6 +170,18 @@ public class Ferryhouse implements TalkListener {
         return null;
     }
 
+    private void writeLicence(JSONObject json) {
+        File outputFile = new File("config/licence");
+        try {
+            LicenceTool.writeFile(json, "shixincube.com", outputFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        this.ferryStorage.writeLicence(json);
+        this.licence = json;
+    }
+
     private void processFerry(ActionDialect actionDialect) {
         String port = actionDialect.getParamAsString("port");
         if (FerryPort.WriteMessage.equals(port)) {
@@ -185,6 +197,10 @@ public class Ferryhouse implements TalkListener {
         }
         else if (FerryPort.TransferOutMember.equals(port)) {
             // TODO
+        }
+        else if (FerryPort.ResetLicence.equals(port)) {
+            JSONObject licence = actionDialect.getParamAsJson("licence");
+            this.writeLicence(licence);
         }
     }
 
