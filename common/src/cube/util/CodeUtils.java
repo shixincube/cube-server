@@ -38,6 +38,8 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -65,7 +67,7 @@ public class CodeUtils {
         return new String(buf, 0, length, StandardCharsets.UTF_8);
     }
 
-    public static String[] extractResourceSegments(String codeString) {
+    public static String[] extractCubeResourceSegments(String codeString) {
         int index = codeString.indexOf("//");
         if (index < 0) {
             return null;
@@ -73,6 +75,19 @@ public class CodeUtils {
 
         String string = codeString.substring(index + 2);
         return string.split("\\.");
+    }
+
+    public static String extractURLLastPath(String codeString) {
+        String path = null;
+        try {
+            URL url = new URL(codeString);
+            path = url.getPath().trim();
+            int index = path.lastIndexOf("/");
+            path = path.substring(index + 1);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return path;
     }
 
     /**
@@ -124,17 +139,22 @@ public class CodeUtils {
     }
 
     public static void main(String[] args) {
-        String string = "cube://domain.demo-ferryhouse-cube";
+        String string = "https://box.shixincube.com/box/yueyangzijing-demo-1";
         String protocol = CodeUtils.extractProtocol(string);
         System.out.println("Protocol: " + protocol);
 
-        String[] segments = CodeUtils.extractResourceSegments(string);
-        System.out.println("Segment: " + segments[0]);
-        System.out.println("Segment: " + segments[1]);
+        if (protocol.equals("cube")) {
+            String[] segments = CodeUtils.extractCubeResourceSegments(string);
+            System.out.println("Segment: " + segments[0]);
+            System.out.println("Segment: " + segments[1]);
+        }
+        else {
+            System.out.println(CodeUtils.extractURLLastPath(string));
+        }
 
-        File qrFile = new File("service/storage/tmp/qrcode.jpg");
-        boolean success = CodeUtils.generateQRCode(qrFile, string, 400, 400,
-                new Color("#000000"));
-        System.out.println("Generate QRCode - " + success);
+//        File qrFile = new File("service/storage/tmp/qrcode.jpg");
+//        boolean success = CodeUtils.generateQRCode(qrFile, string, 400, 400,
+//                new Color("#000000"));
+//        System.out.println("Generate QRCode - " + success);
     }
 }

@@ -89,6 +89,18 @@
 	</target>
 
 	<!-- =================================================================== -->
+	<!-- Pack project files for deploy                                       -->
+	<!-- =================================================================== -->
+	<target name="pack">
+		<delete file="ferryhouse-${version.brand}.zip" failonerror="false" />
+		<delete file="deploy/libs/cube-ferryhouse-${version.brand}.jar" failonerror="false" />
+		<copy file="../build/cube-ferryhouse-${version.brand}.jar" tofile="deploy/libs/cube-ferryhouse-${version.brand}.jar" />
+		<zip destfile="ferryhouse-${version.brand}.zip" duplicate="preserve">
+			<zipfileset dir="deploy" includes="**/*.*" />
+		</zip>
+	</target>
+
+	<!-- =================================================================== -->
 	<!-- Generates API document                                              -->
 	<!-- =================================================================== -->
 	<target name="doc">
