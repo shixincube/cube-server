@@ -199,6 +199,7 @@ public class Ferryhouse implements TalkListener {
             // TODO
         }
         else if (FerryPort.ResetLicence.equals(port)) {
+            Logger.i(this.getClass(), "Reset licence - " + this.domain);
             JSONObject licence = actionDialect.getParamAsJson("licence");
             this.writeLicence(licence);
         }
