@@ -33,6 +33,12 @@ import org.json.JSONObject;
  * 域成员。
  */
 public class DomainMember extends Entity {
+    
+    public final static int NORMAL = 0;
+
+    public final static int QUIT = 1;
+
+    public final static int DISABLED = 2;
 
     private Long contactId;
 
@@ -44,13 +50,13 @@ public class DomainMember extends Entity {
 
     private int state;
 
-    public DomainMember(String domainName, Long contactId, JoinWay joinWay, long joinTime, Role role) {
+    public DomainMember(String domainName, Long contactId, JoinWay joinWay, long joinTime, Role role, int state) {
         super(contactId, domainName);
         this.contactId = contactId;
         this.joinWay = joinWay;
         this.joinTime = joinTime;
         this.role = role;
-        this.state = 0;
+        this.state = state;
     }
 
     public DomainMember(JSONObject json) {

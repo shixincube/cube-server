@@ -375,8 +375,16 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         return this.storage.readDomainInfo(domainName);
     }
 
+    public DomainMember getDomainMember(String domainName, Long contactId) {
+        return this.storage.readMember(domainName, contactId);
+    }
+
     public List<DomainMember> listDomainMember(String domainName) {
         return this.storage.queryMembers(domainName);
+    }
+
+    public List<DomainMember> listDomainMember(String domainName, int state) {
+        return this.storage.queryMembers(domainName, state);
     }
 
     /**
@@ -428,8 +436,22 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         }
     }
 
+    /**
+     * 指定成员转出域。
+     *
+     * @param domainMember
+     */
     public void transferOutDomainMember(DomainMember domainMember) {
-        // TODO
+        this.storage.updateMemberState(domainMember.getDomain().getName(),
+                domainMember.getContactId(), DomainMember.QUIT);
+
+        FerryPacket ferryPacket = new FerryPacket(FerryPort.TransferOutMember);
+        ferryPacket.setDomain(domainMember.getDomain().getName());
+        ferryPacket.getDialect().addParam("member", domainMember.toJSON());
+        this.pushToBoat(domainMember.getDomain().getName(), ferryPacket);
+
+        // 修改状态
+        domainMember.setState(DomainMember.QUIT);
     }
 
     private void setup() {

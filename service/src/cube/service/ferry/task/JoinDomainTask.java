@@ -112,11 +112,11 @@ public class JoinDomainTask extends ServiceTask {
         }
 
         DomainMember member = null;
-        List<DomainMember> list = service.listDomainMember(domain);
+        List<DomainMember> list = service.listDomainMember(domain, DomainMember.NORMAL);
         if (list.isEmpty()) {
             // 首次绑定
             member = new DomainMember(domain, contactId, joinWay,
-                    System.currentTimeMillis(), Role.Administrator);
+                    System.currentTimeMillis(), Role.Administrator, DomainMember.NORMAL);
         }
         else {
             for (DomainMember dm : list) {
@@ -131,7 +131,7 @@ public class JoinDomainTask extends ServiceTask {
 
             // 加入
             member = new DomainMember(domain, contactId, joinWay,
-                    System.currentTimeMillis(), Role.Member);
+                    System.currentTimeMillis(), Role.Member, DomainMember.NORMAL);
         }
 
         // 转入

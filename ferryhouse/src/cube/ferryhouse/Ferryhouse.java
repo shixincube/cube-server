@@ -189,20 +189,31 @@ public class Ferryhouse implements TalkListener {
             this.ferryStorage.writeMessage(message);
         }
         else if (FerryPort.TransferIntoMember.equals(port)) {
-            DomainMember member = new DomainMember(actionDialect.getParamAsJson("member"));
-            this.ferryStorage.writeDomainMember(member);
-
-            Contact contact = new Contact(actionDialect.getParamAsJson("contact"));
-            this.ferryStorage.writeContact(contact);
+            this.transferIntoMember(actionDialect);
         }
         else if (FerryPort.TransferOutMember.equals(port)) {
-            // TODO
+            this.transferOutMember(actionDialect);
         }
         else if (FerryPort.ResetLicence.equals(port)) {
             Logger.i(this.getClass(), "Reset licence - " + this.domain);
             JSONObject licence = actionDialect.getParamAsJson("licence");
             this.writeLicence(licence);
         }
+    }
+
+    private void transferIntoMember(ActionDialect actionDialect) {
+        DomainMember member = new DomainMember(actionDialect.getParamAsJson("member"));
+        this.ferryStorage.writeDomainMember(member);
+
+        Contact contact = new Contact(actionDialect.getParamAsJson("contact"));
+        this.ferryStorage.writeContact(contact);
+    }
+
+    private void transferOutMember(ActionDialect actionDialect) {
+        DomainMember member = new DomainMember(actionDialect.getParamAsJson("member"));
+        // 修改状态
+        member.setState(DomainMember.QUIT);
+        this.ferryStorage.writeDomainMember(member);
     }
 
     @Override

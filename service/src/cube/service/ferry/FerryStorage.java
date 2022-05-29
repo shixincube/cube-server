@@ -358,17 +358,40 @@ public class FerryStorage implements Storagable {
      * @return
      */
     public List<DomainMember> queryMembers(String domainName) {
+        return this.queryMembers(domainName, -1);
+    }
+
+    /**
+     * 查询指定域的成员。
+     *
+     * @param domainName
+     * @param state
+     * @return
+     */
+    public List<DomainMember> queryMembers(String domainName, int state) {
         List<DomainMember> list = new ArrayList<>();
 
+        Conditional[] conditionals = null;
+        if (state >= 0) {
+            conditionals = new Conditional[] {
+                    Conditional.createEqualTo("domain", domainName),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("state", state)
+            };
+        }
+        else {
+            conditionals = new Conditional[] {
+                    Conditional.createEqualTo("domain", domainName)
+            };
+        }
+
         List<StorageField[]> result = this.storage.executeQuery(this.domainMemberTable, this.domainMemberFields,
-                new Conditional[] {
-                        Conditional.createEqualTo("domain", domainName)
-                });
+                conditionals);
         for (StorageField[] fields : result) {
             Map<String, StorageField> map = StorageFields.get(fields);
             DomainMember member = new DomainMember(domainName, map.get("contact_id").getLong(),
                     JoinWay.parse(map.get("way").getInt()), map.get("timestamp").getLong(),
-                    Role.parse(map.get("role").getInt()));
+                    Role.parse(map.get("role").getInt()), map.get("state").getInt());
             list.add(member);
         }
 
@@ -412,7 +435,8 @@ public class FerryStorage implements Storagable {
                     new StorageField("contact_id", LiteralBase.LONG, member.getContactId()),
                     new StorageField("way", LiteralBase.INT, member.getJoinWay().code),
                     new StorageField("timestamp", LiteralBase.LONG, System.currentTimeMillis()),
-                    new StorageField("role", LiteralBase.INT, member.getRole().code)
+                    new StorageField("role", LiteralBase.INT, member.getRole().code),
+                    new StorageField("state", LiteralBase.INT, member.getState())
             });
         }
         else {
@@ -427,8 +451,46 @@ public class FerryStorage implements Storagable {
         }
     }
 
+    /**
+     * 读取指定域成员。
+     *
+     * @param domainName
+     * @param contactId
+     * @return
+     */
     public DomainMember readMember(String domainName, Long contactId) {
-        return null;
+        List<StorageField[]> result = this.storage.executeQuery(this.domainMemberTable, this.domainMemberFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("domain", domainName),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("contact_id", contactId.longValue())
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+        DomainMember member = new DomainMember(domainName, map.get("contact_id").getLong(),
+                JoinWay.parse(map.get("way").getInt()), map.get("timestamp").getLong(),
+                Role.parse(map.get("role").getInt()), map.get("state").getInt());
+        return member;
+    }
+
+    /**
+     * 更新域成员状态。
+     *
+     * @param domainName
+     * @param contactId
+     * @param state
+     */
+    public void updateMemberState(String domainName, Long contactId, int state) {
+        this.storage.executeUpdate(this.domainMemberTable, new StorageField[] {
+                new StorageField("state", state)
+        }, new Conditional[] {
+                Conditional.createEqualTo("domain", domainName),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("contact_id", contactId.longValue())
+        });
     }
 
     private void checkAccessPointTable() {

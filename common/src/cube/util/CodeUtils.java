@@ -77,6 +77,25 @@ public class CodeUtils {
         return string.split("\\.");
     }
 
+    public static boolean isBoxDomain(String codeString) {
+        try {
+            URL url = new URL(codeString);
+            if (url.getHost().equalsIgnoreCase("box.shixincube.com")) {
+                if (url.getPath().startsWith("/box")) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            return false;
+        }
+
+        return false;
+    }
+
+    public static String extractBoxDomain(String codeString) {
+        return extractURLLastPath(codeString);
+    }
+
     public static String extractURLLastPath(String codeString) {
         String path = null;
         try {
@@ -149,10 +168,11 @@ public class CodeUtils {
             System.out.println("Segment: " + segments[1]);
         }
         else {
-            System.out.println(CodeUtils.extractURLLastPath(string));
+            System.out.println("Box: " + CodeUtils.isBoxDomain(string));
+            System.out.println("Domain: " + CodeUtils.extractBoxDomain(string));
         }
 
-//        File qrFile = new File("service/storage/tmp/qrcode.jpg");
+//        File qrFile = new File("service/storage/tmp/qrcode-yyzj.jpg");
 //        boolean success = CodeUtils.generateQRCode(qrFile, string, 400, 400,
 //                new Color("#000000"));
 //        System.out.println("Generate QRCode - " + success);

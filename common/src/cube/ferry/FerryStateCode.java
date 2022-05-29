@@ -57,6 +57,11 @@ public enum FerryStateCode {
     InvalidToken(12),
 
     /**
+     * 未找到成员。
+     */
+    NotFindMember(14),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)
