@@ -69,9 +69,11 @@ public class CreateDomainAppTask extends ClientTask {
             }
         }
 
+        boolean ferry = actionDialect.getParamAsBool("ferry");
+
         // 创建域应用
         AuthDomain authDomain = getAuthService().createDomainApp(domainName, appKey, appId,
-                 mainEndpoint, httpEndpoint, httpsEndpoint, iceServers);
+                 mainEndpoint, httpEndpoint, httpsEndpoint, iceServers, ferry);
 
         ActionDialect result = new ActionDialect(ClientAction.CreateDomainApp.name);
         copyNotifier(result);

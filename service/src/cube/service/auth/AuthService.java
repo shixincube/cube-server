@@ -172,7 +172,7 @@ public class AuthService extends AbstractModule {
      * @return 返回令牌。
      */
     public AuthToken applyToken(String domain, String appKey, Long cid) {
-        return this.applyToken(domain, appKey, cid, 7L * 24L * 60L * 60L * 1000L);
+        return this.applyToken(domain, appKey, cid, 7L * 24 * 60 * 60 * 1000);
     }
 
     /**
@@ -198,7 +198,7 @@ public class AuthService extends AbstractModule {
                 // 创建描述
                 PrimaryDescription description = new PrimaryDescription("127.0.0.1", this.primaryContentFile.getContent(domain));
 
-                token = new AuthToken(code, domain, appKey, cid, now, expiry, description);
+                token = new AuthToken(code, domain, appKey, cid, now, expiry, description, authDomain.ferry);
 
                 // 本地缓存
                 this.authTokenMap.put(code, token);
@@ -224,7 +224,7 @@ public class AuthService extends AbstractModule {
                 PrimaryDescription description = authDomain.getPrimaryDescription();
 
                 // 创建令牌
-                token = new AuthToken(code, domain, appKey, cid, now, expiry, description);
+                token = new AuthToken(code, domain, appKey, cid, now, expiry, description, authDomain.ferry);
 
                 // 本地缓存
                 this.authTokenMap.put(code, token);
@@ -396,10 +396,12 @@ public class AuthService extends AbstractModule {
      * @param httpEndpoint 指定 HTTP 接入点。
      * @param httpsEndpoint 指定 HTTPS 接入点。
      * @param iceServers 指定 ICE 服务器列表。
+     * @param ferry 指定是否是摆渡域。
      * @return 返回创建的域。如果域重复或者创建失败返回 {@code null} 值。
      */
     public AuthDomain createDomainApp(String domainName, String appKey, String appId, Endpoint mainEndpoint,
-                                      Endpoint httpEndpoint, Endpoint httpsEndpoint, List<IceServer> iceServers) {
+                                      Endpoint httpEndpoint, Endpoint httpsEndpoint, List<IceServer> iceServers,
+                                      boolean ferry) {
         // 判断是否有重复的 App
         AuthDomain authDomain = this.authStorage.getDomain(domainName, appKey);
         if (null != authDomain) {
@@ -418,9 +420,11 @@ public class AuthService extends AbstractModule {
         }
 
         // 新增数据库记录
-        this.authStorage.addDomainApp(domainName, appId, appKey, mainEndpoint, httpEndpoint, httpsEndpoint, jsonArray);
+        this.authStorage.addDomainApp(domainName, appId, appKey, mainEndpoint,
+                httpEndpoint, httpsEndpoint, jsonArray, ferry);
 
-        authDomain = new AuthDomain(domainName, appKey, appId, mainEndpoint, httpEndpoint, httpsEndpoint, jsonArray);
+        authDomain = new AuthDomain(domainName, appKey, appId, mainEndpoint,
+                httpEndpoint, httpsEndpoint, jsonArray, ferry);
 
         // Hook
         AuthServiceHook hook = this.pluginSystem.getCreateDomainAppHook();

@@ -55,6 +55,8 @@ public class AuthDomain implements JSONable {
 
     public final JSONArray iceServers;
 
+    public final boolean ferry;
+
     public ConcurrentHashMap<String, AuthToken> tokens;
 
     private PrimaryDescription description;
@@ -69,9 +71,11 @@ public class AuthDomain implements JSONable {
      * @param httpEndpoint
      * @param httpsEndpoint
      * @param iceServers
+     * @param ferry
      */
     public AuthDomain(String domainName, String appKey, String appId, Endpoint mainEndpoint,
-                      Endpoint httpEndpoint, Endpoint httpsEndpoint, JSONArray iceServers) {
+                      Endpoint httpEndpoint, Endpoint httpsEndpoint, JSONArray iceServers,
+                      boolean ferry) {
         this.domainName = domainName;
         this.appKey = appKey;
         this.appId = appId;
@@ -79,6 +83,7 @@ public class AuthDomain implements JSONable {
         this.httpEndpoint = httpEndpoint;
         this.httpsEndpoint = httpsEndpoint;
         this.iceServers = iceServers;
+        this.ferry = ferry;
         this.tokens = null;
     }
 
@@ -88,8 +93,9 @@ public class AuthDomain implements JSONable {
      * @param domainName
      * @param appKey
      * @param array
+     * @param ferry
      */
-    public AuthDomain(String domainName, String appKey, JSONArray array) {
+    public AuthDomain(String domainName, String appKey, JSONArray array, boolean ferry) {
         this.domainName = domainName;
         this.appKey = appKey;
         this.appId = null;
@@ -97,6 +103,7 @@ public class AuthDomain implements JSONable {
         this.httpEndpoint = null;
         this.httpsEndpoint = null;
         this.iceServers = null;
+        this.ferry = ferry;
         this.tokens = new ConcurrentHashMap<>();
 
         try {
@@ -107,7 +114,7 @@ public class AuthDomain implements JSONable {
                 long issues = json.getLong("issues");
                 long expiry = json.getLong("expiry");
 
-                AuthToken token = new AuthToken(code, domainName, appKey, cid, issues, expiry);
+                AuthToken token = new AuthToken(code, domainName, appKey, cid, issues, expiry, ferry);
                 this.tokens.put(code, token);
             }
         } catch (JSONException e) {
@@ -128,6 +135,7 @@ public class AuthDomain implements JSONable {
         this.httpEndpoint = json.has("httpEndpoint") ? new Endpoint(json.getJSONObject("httpEndpoint")) : null;
         this.httpsEndpoint = json.has("httpsEndpoint") ? new Endpoint(json.getJSONObject("httpsEndpoint")) : null;
         this.iceServers = json.has("iceServers") ? json.getJSONArray("iceServers") : null;
+        this.ferry = json.has("ferry") && json.getBoolean("ferry");
     }
 
     public Endpoint getMainEndpoint() {
@@ -166,6 +174,10 @@ public class AuthDomain implements JSONable {
         return this.description;
     }
 
+    public boolean isFerry() {
+        return this.ferry;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -186,6 +198,7 @@ public class AuthDomain implements JSONable {
         if (null != this.iceServers) {
             json.put("iceServers", this.iceServers);
         }
+        json.put("ferry", this.ferry);
 
         return json;
     }

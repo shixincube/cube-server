@@ -94,6 +94,9 @@ public class AuthStorage implements Storagable {
             }),
             new StorageField("ice_servers", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("ferry", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
             })
     };
 
@@ -124,6 +127,9 @@ public class AuthStorage implements Storagable {
             }),
             new StorageField("primary_content", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("ferry", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
             })
     };
 
@@ -203,16 +209,17 @@ public class AuthStorage implements Storagable {
     /**
      * 添加域应用。
      *
-     * @param domain
-     * @param appId
-     * @param appKey
-     * @param main
-     * @param http
-     * @param https
-     * @param iceServers
+     * @param domain 域名称。
+     * @param appId App ID 。
+     * @param appKey App Key 。
+     * @param main 主访问节点。
+     * @param http HTTP 访问节点。
+     * @param https HTTPS 访问节点。
+     * @param iceServers Ice Server 服务器列表。
+     * @param ferry 是否 Ferry 属性。
      */
     public void addDomainApp(String domain, String appId, String appKey, Endpoint main, Endpoint http, Endpoint https,
-        JSONArray iceServers) {
+        JSONArray iceServers, boolean ferry) {
         this.storage.executeInsert(this.domainTable, new StorageField[] {
                 new StorageField("domain", LiteralBase.STRING, domain),
                 new StorageField("app_id", LiteralBase.STRING, appId),
@@ -223,7 +230,8 @@ public class AuthStorage implements Storagable {
                 new StorageField("http_port", LiteralBase.INT, http.getPort()),
                 new StorageField("https_address", LiteralBase.STRING, https.getHost()),
                 new StorageField("https_port", LiteralBase.INT, https.getPort()),
-                new StorageField("ice_servers", LiteralBase.STRING, iceServers.toString())
+                new StorageField("ice_servers", LiteralBase.STRING, iceServers.toString()),
+                new StorageField("ferry", LiteralBase.INT, ferry ? 1 : 0)
         });
     }
 
@@ -279,10 +287,11 @@ public class AuthStorage implements Storagable {
         Endpoint httpEndpoint = new Endpoint(map.get("http_address").getString(), map.get("http_port").getInt());
         Endpoint httpsEndpoint = new Endpoint(map.get("https_address").getString(), map.get("https_port").getInt());
         JSONArray iceServers = new JSONArray(map.get("ice_servers").getString());
+        boolean ferry = map.get("ferry").getInt() == 1;
 
         AuthDomain authDomain = new AuthDomain(domain, (null == appKey) ? map.get("app_key").getString() : appKey,
                 map.get("app_id").getString(),
-                mainEndpoint, httpEndpoint, httpsEndpoint, iceServers);
+                mainEndpoint, httpEndpoint, httpsEndpoint, iceServers, ferry);
 
         return authDomain;
     }
@@ -296,7 +305,8 @@ public class AuthStorage implements Storagable {
                 new StorageField("issues", LiteralBase.LONG, token.getIssues()),
                 new StorageField("cid", LiteralBase.LONG, token.getContactId()),
                 new StorageField("primary_content", LiteralBase.STRING,
-                        token.getDescription().toJSON().toString())
+                        token.getDescription().toJSON().toString()),
+                new StorageField("ferry", LiteralBase.INT, token.isFerry() ? 1 : 0)
         });
     }
 
@@ -315,7 +325,8 @@ public class AuthStorage implements Storagable {
 
         AuthToken token = new AuthToken(map.get("code").getString(), map.get("domain").getString(),
                 map.get("app_key").getString(), map.get("cid").getLong(), issues, expiry,
-                new PrimaryDescription(new JSONObject(map.get("primary_content").getString())));
+                new PrimaryDescription(new JSONObject(map.get("primary_content").getString())),
+                map.get("ferry").getInt() == 1);
         return token;
     }
 
@@ -330,8 +341,8 @@ public class AuthStorage implements Storagable {
     /**
      * 通过 CID 查询授权令牌。
      *
-     * @param cid
-     * @return
+     * @param cid 指定联系人 ID 。
+     * @return 返回授权令牌实例。
      */
     public AuthToken queryToken(Long cid) {
         List<StorageField[]> result = this.storage.executeQuery(this.tokenTable, this.tokenFields, new Conditional[] {
@@ -348,7 +359,8 @@ public class AuthStorage implements Storagable {
 
         AuthToken token = new AuthToken(map.get("code").getString(), map.get("domain").getString(),
                 map.get("app_key").getString(), map.get("cid").getLong(), issues, expiry,
-                new PrimaryDescription(new JSONObject(map.get("primary_content").getString())));
+                new PrimaryDescription(new JSONObject(map.get("primary_content").getString())),
+                map.get("ferry").getInt() == 1);
         return token;
     }
 
@@ -370,7 +382,8 @@ public class AuthStorage implements Storagable {
                         new Endpoint("127.0.0.1", 7000),
                         new Endpoint("127.0.0.1", 7010),
                         new Endpoint("127.0.0.1", 7017),
-                        iceServers);
+                        iceServers,
+                        false);
             }
         }
     }

@@ -222,7 +222,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
                 // 创建新的域
                 authService.createDomainApp(domain, Utils.randomString(16),
                         Long.toString(System.currentTimeMillis()), accessPoint.mainEndpoint,
-                        accessPoint.httpEndpoint, accessPoint.httpsEndpoint, iceServers);
+                        accessPoint.httpEndpoint, accessPoint.httpsEndpoint, iceServers, true);
             }
             else {
                 Logger.e(this.getClass(), "#checkIn - No find domain access point");

@@ -80,7 +80,7 @@ public class AuthDomainFile {
             for (int i = 0, size = array.length(); i < size; ++i) {
                 JSONObject item = array.getJSONObject(i);
                 AuthDomain authDomain = new AuthDomain(item.getString("domain"),
-                        item.getString("appKey"), item.getJSONArray("tokens"));
+                        item.getString("appKey"), item.getJSONArray("tokens"), false);
                 this.authDomainList.add(authDomain);
 
                 // 判断是否有超期记录，有则删除

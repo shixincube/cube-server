@@ -74,6 +74,11 @@ public class AuthToken implements JSONable {
     private PrimaryDescription description;
 
     /**
+     * 令牌所在域是否采用 Ferry 模式。
+     */
+    private boolean ferry;
+
+    /**
      * 构造函数。
      *
      * @param code 令牌的编码。
@@ -83,8 +88,10 @@ public class AuthToken implements JSONable {
      * @param issues 令牌发布日期。
      * @param expiry 令牌有效期。
      * @param description 令牌携带的描述。
+     * @param ferry 是否摆渡数据模式。
      */
-    public AuthToken(String code, String domain, String appKey, Long cid, Date issues, Date expiry, PrimaryDescription description) {
+    public AuthToken(String code, String domain, String appKey, Long cid,Date issues,
+                     Date expiry, PrimaryDescription description, boolean ferry) {
         this.code = code;
         this.domain = domain;
         this.appKey = appKey;
@@ -92,6 +99,7 @@ public class AuthToken implements JSONable {
         this.issues = issues.getTime();
         this.expiry = expiry.getTime();
         this.description = description;
+        this.ferry = ferry;
     }
 
     /**
@@ -103,14 +111,17 @@ public class AuthToken implements JSONable {
      * @param cid 关联的联系人 ID 。
      * @param issues 令牌发布日期。
      * @param expiry 令牌有效期。
+     * @param ferry 是否摆渡数据模式。
      */
-    public AuthToken(String code, String domain, String appKey, Long cid, long issues, long expiry) {
+    public AuthToken(String code, String domain, String appKey, Long cid,
+                     long issues, long expiry, boolean ferry) {
         this.code = code;
         this.domain = domain;
         this.appKey = appKey;
         this.cid = cid;
         this.issues = issues;
         this.expiry = expiry;
+        this.ferry = ferry;
     }
 
     /**
@@ -129,6 +140,7 @@ public class AuthToken implements JSONable {
             if (json.has("description")) {
                 this.description = new PrimaryDescription(json.getJSONObject("description"));
             }
+            this.ferry = json.has("ferry") && json.getBoolean("ferry");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -207,6 +219,15 @@ public class AuthToken implements JSONable {
     }
 
     /**
+     * 是否摆渡数据模式。
+     *
+     * @return 如果是数据摆渡模式返回 {@code true} 。
+     */
+    public boolean isFerry() {
+        return this.ferry;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -222,6 +243,7 @@ public class AuthToken implements JSONable {
             if (null != this.description) {
                 json.put("description", this.description.toJSON());
             }
+            json.put("ferry", this.ferry);
         } catch (JSONException e) {
             e.printStackTrace();
         }
