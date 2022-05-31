@@ -34,6 +34,7 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.ferry.DomainInfo;
 import cube.ferry.DomainMember;
 import cube.ferry.FerryStateCode;
 import cube.service.ServiceTask;
@@ -107,10 +108,15 @@ public class QuitDomainTask extends ServiceTask {
         }
 
         // 转出
-        service.transferOutDomainMember(domainMember);
+        DomainInfo domainInfo = service.transferOutDomainMember(domainMember);
+
+        JSONObject response = new JSONObject();
+        response.put("domain", service.getAuthDomain(domain).toJSON());
+        response.put("info", domainInfo.toJSON());
+        response.put("member", domainMember.toJSON());
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, FerryStateCode.Ok.code, domainMember.toJSON()));
+                this.makeResponse(action, packet, FerryStateCode.Ok.code, response));
         markResponseTime();
     }
 }

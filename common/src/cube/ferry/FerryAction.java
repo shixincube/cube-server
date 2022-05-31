@@ -33,11 +33,13 @@ public enum FerryAction {
 
     /**
      * 签入。
+     * (H->B)
      */
     CheckIn("checkIn"),
 
     /**
      * 签出。
+     * (H->B)
      */
     CheckOut("checkOut"),
 
@@ -53,6 +55,7 @@ public enum FerryAction {
 
     /**
      * 摆渡数据。
+     * (B->H)
      */
     Ferry("ferry"),
 

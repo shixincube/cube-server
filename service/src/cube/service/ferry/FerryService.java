@@ -366,25 +366,67 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         }).start();
     }
 
+    /**
+     * 获取指定域名称的访问域。
+     *
+     * @param domainName
+     * @return
+     */
     public AuthDomain getAuthDomain(String domainName) {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         return authService.getAuthDomain(domainName);
     }
 
+    /**
+     * 获取指定域的详细信息。
+     *
+     * @param domainName
+     * @return
+     */
     public DomainInfo getDomainInfo(String domainName) {
         return this.storage.readDomainInfo(domainName);
     }
 
+    /**
+     * 获取域内指定成员。
+     *
+     * @param domainName
+     * @param contactId
+     * @return
+     */
     public DomainMember getDomainMember(String domainName, Long contactId) {
         return this.storage.readMember(domainName, contactId);
     }
 
+    /**
+     * 列举域内所有成员。
+     *
+     * @param domainName
+     * @return
+     */
     public List<DomainMember> listDomainMember(String domainName) {
         return this.storage.queryMembers(domainName);
     }
 
+    /**
+     * 列举域内指定状态成员。
+     *
+     * @param domainName
+     * @param state
+     * @return
+     */
     public List<DomainMember> listDomainMember(String domainName, int state) {
         return this.storage.queryMembers(domainName, state);
+    }
+
+    /**
+     * 使用邀请码查找指定的域名称。
+     *
+     * @param invitationCode
+     * @return
+     */
+    public String getDomainNameByCode(String invitationCode) {
+        return this.storage.queryDomainName(invitationCode);
     }
 
     /**
@@ -393,8 +435,9 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
      * @param contact
      * @param domainMember
      * @param memberList
+     * @return 返回域信息。
      */
-    public void transferIntoDomainMember(Contact contact, DomainMember domainMember, List<DomainMember> memberList) {
+    public DomainInfo transferIntoDomainMember(Contact contact, DomainMember domainMember, List<DomainMember> memberList) {
         if (this.storage.countDomainMembers(domainMember.getDomain().getName()) == 0) {
             // 更新授权文件的日期
             DomainInfo domainInfo = this.getDomainInfo(domainMember.getDomain().getName());
@@ -434,14 +477,18 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             // 强制添加分区参与人
             ContactManager.getInstance().addParticipantToZoneByForce(newContact, zone, participant);
         }
+
+        // 返回域信息
+        return this.storage.readDomainInfo(domainMember.getDomain().getName());
     }
 
     /**
      * 指定成员转出域。
      *
      * @param domainMember
+     * @return 返回域信息。
      */
-    public void transferOutDomainMember(DomainMember domainMember) {
+    public DomainInfo transferOutDomainMember(DomainMember domainMember) {
         this.storage.updateMemberState(domainMember.getDomain().getName(),
                 domainMember.getContactId(), DomainMember.QUIT);
 
@@ -452,6 +499,8 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
         // 修改状态
         domainMember.setState(DomainMember.QUIT);
+
+        return this.storage.readDomainInfo(domainMember.getDomain().getName());
     }
 
     private void setup() {

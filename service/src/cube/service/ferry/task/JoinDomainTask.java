@@ -34,10 +34,7 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
-import cube.ferry.DomainMember;
-import cube.ferry.FerryStateCode;
-import cube.ferry.JoinWay;
-import cube.ferry.Role;
+import cube.ferry.*;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
 import cube.service.ferry.FerryCellet;
@@ -81,17 +78,33 @@ public class JoinDomainTask extends ServiceTask {
             return;
         }
 
-        if (!data.has("domain") || !data.has("contactId")) {
+        String domain = null;
+        Long contactId = null;
+
+        if (!data.has("contactId")) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FerryStateCode.InvalidParameter.code, data));
+            markResponseTime();
+            return;
+        }
+        contactId = data.getLong("contactId");
+
+        FerryService service = ((FerryCellet) this.cellet).getFerryService();
+
+        if (data.has("invitationCode")) {
+            domain = service.getDomainNameByCode(data.getString("invitationCode"));
+        }
+        else if (data.has("domain")) {
+            domain = data.getString("domain");
+        }
+        else {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FerryStateCode.InvalidParameter.code, data));
             markResponseTime();
             return;
         }
 
-        FerryService service = ((FerryCellet) this.cellet).getFerryService();
-
-        String domain = data.getString("domain");
-        if (!service.isOnlineDomain(domain)) {
+        if (null == domain || !service.isOnlineDomain(domain)) {
             // 域对应的服务器不在线
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FerryStateCode.InvalidDomain.code, data));
@@ -99,10 +112,8 @@ public class JoinDomainTask extends ServiceTask {
             return;
         }
 
-        Long contactId = null;
         JoinWay joinWay = null;
         try {
-            contactId = data.getLong("contactId");
             joinWay = JoinWay.parse(data.getInt("way"));
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
@@ -135,10 +146,15 @@ public class JoinDomainTask extends ServiceTask {
         }
 
         // 转入
-        service.transferIntoDomainMember(contact, member, list);
+        DomainInfo domainInfo = service.transferIntoDomainMember(contact, member, list);
+
+        JSONObject response = new JSONObject();
+        response.put("domain", service.getAuthDomain(domain).toJSON());
+        response.put("info", domainInfo.toJSON());
+        response.put("member", member.toJSON());
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, FerryStateCode.Ok.code, member.toJSON()));
+                this.makeResponse(action, packet, FerryStateCode.Ok.code, response));
         markResponseTime();
     }
 }

@@ -320,6 +320,26 @@ public class FerryStorage implements Storagable {
     }
 
     /**
+     * 查询指定邀请码对应的域名称。
+     *
+     * @param invitationCode
+     * @return
+     */
+    public String queryDomainName(String invitationCode) {
+        List<StorageField[]> result = this.storage.executeQuery(this.domainInfoTable, new StorageField[] {
+                new StorageField("domain", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo("invitation_code", invitationCode)
+        });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        return result.get(0)[0].getString();
+    }
+
+    /**
      * 读取域信息。
      *
      * @param domainName
