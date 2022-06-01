@@ -40,7 +40,6 @@ public class FerryboatCellListener implements CellListener {
 
     @Override
     public void cellPreinitialize(Nucleus nucleus) {
-
     }
 
     @Override

@@ -31,6 +31,8 @@ package cube.ferryhouse;
  */
 public class Preferences {
 
+    public final static String ITEM_CLEANUP_WHEN_REBOOT = "CleanupWhenReboot";
+
     public boolean cleanupWhenReboot = false;
 
     public Preferences() {

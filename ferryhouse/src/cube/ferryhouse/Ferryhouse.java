@@ -134,6 +134,10 @@ public class Ferryhouse implements TalkListener {
 
                 // 更新许可证数据
                 ferryStorage.writeLicence(licence);
+
+                // 从数据库加载偏好设置
+                Preferences preferences = loadPreferences();
+                refreshWithPreferences(preferences);
             }
         }).start();
     }
@@ -170,6 +174,16 @@ public class Ferryhouse implements TalkListener {
         return null;
     }
 
+    private Preferences loadPreferences() {
+        Preferences preferences = new Preferences();
+        String value = this.ferryStorage.readProperty(Preferences.ITEM_CLEANUP_WHEN_REBOOT);
+        if (null != value) {
+            preferences.cleanupWhenReboot = value.equalsIgnoreCase("true") || value.equals("1");
+        }
+
+        return preferences;
+    }
+
     private void writeLicence(JSONObject json) {
         File outputFile = new File("config/licence");
         try {
@@ -180,6 +194,13 @@ public class Ferryhouse implements TalkListener {
 
         this.ferryStorage.writeLicence(json);
         this.licence = json;
+    }
+
+    private void refreshWithPreferences(Preferences preferences) {
+        if (preferences.cleanupWhenReboot) {
+            // 清空所有数据
+            
+        }
     }
 
     private void processFerry(ActionDialect actionDialect) {

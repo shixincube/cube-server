@@ -225,6 +225,50 @@ public class FerryStorage implements Storagable {
         }
     }
 
+    /**
+     * 读取指定属性值。
+     *
+     * @param name
+     * @return
+     */
+    public String readProperty(String name) {
+        synchronized (this) {
+            List<StorageField[]> result = this.storage.executeQuery(this.propertyTable, new StorageField[] {
+                    new StorageField("value", LiteralBase.STRING)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("item", name)
+            });
+
+            if (result.isEmpty()) {
+                return null;
+            }
+
+            return result.get(0)[0].getString();
+        }
+    }
+
+    /**
+     * 写入指定属性值。
+     *
+     * @param name
+     * @param value
+     */
+    public void writeProperty(String name, String value) {
+        synchronized (this) {
+            if (!this.storage.executeUpdate(this.propertyTable, new StorageField[] {
+                    new StorageField("value", value)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("item", name)
+            })) {
+                // 插入数据
+                this.storage.executeInsert(this.propertyTable, new StorageField[] {
+                        new StorageField("item", name),
+                        new StorageField("value", value)
+                });
+            }
+        }
+    }
+
     public synchronized void writeContact(Contact contact) {
         List<StorageField[]> result = this.storage.executeQuery(this.contactTable, new StorageField[] {
                 new StorageField("id", LiteralBase.LONG)
