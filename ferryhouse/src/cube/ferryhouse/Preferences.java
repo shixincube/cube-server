@@ -24,17 +24,15 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.util;
+package cube.ferryhouse;
 
 /**
- * HTTP 配置信息。
+ * 偏好设置。
  */
-public class HttpConfig {
+public class Preferences {
 
-    public int httpPort = 0;
-    public int httpsPort = 0;
-    public String keystore = null;
-    public String storePassword = null;
-    public String managerPassword = null;
+    public static boolean cleanupOnReboot;
 
+    public Preferences() {
+    }
 }

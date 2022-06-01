@@ -24,48 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.util;
 
 /**
- * 会议服务动作。
+ * HTTP 配置信息。
  */
-public enum ConferenceAction {
+public class HttpConfig {
 
-    /**
-     * 查询指定条件的会议。
-     */
-    ListConferences("listConferences"),
+    public int httpPort = 0;
+    public int httpsPort = 0;
+    public String keystore = null;
+    public String storePassword = null;
+    public String managerPassword = null;
 
-    /**
-     * 创建会议。
-     */
-    CreateConference("createConference"),
-
-    /**
-     * 接受会议邀请。
-     */
-    AcceptInvitation("acceptInvitation"),
-
-    /**
-     * 拒绝会议邀请。
-     */
-    DeclineInvitation("declineInvitation"),
-
-    /**
-     * 清空所有数据。
-     */
-    Cleanup("cleanup"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    ConferenceAction(String name) {
-        this.name = name;
-    }
 }

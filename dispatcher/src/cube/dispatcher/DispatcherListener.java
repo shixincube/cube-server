@@ -31,9 +31,9 @@ import cell.api.Servable;
 import cell.carpet.CellListener;
 import cell.util.log.LogManager;
 import cell.util.log.Logger;
-import cube.dispatcher.util.HttpConfig;
 import cube.report.ReportService;
 import cube.util.ConfigUtils;
+import cube.util.HttpConfig;
 
 import java.io.File;
 import java.io.FileInputStream;
