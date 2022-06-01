@@ -77,6 +77,11 @@ public enum MessagingAction {
     UpdateConversation("updateConversation"),
 
     /**
+     * 清空所有数据。
+     */
+    Cleanup("cleanup"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

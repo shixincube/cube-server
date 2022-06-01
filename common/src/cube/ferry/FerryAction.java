@@ -60,6 +60,12 @@ public enum FerryAction {
     Ferry("ferry"),
 
     /**
+     * 反向操作。
+     * (H->B)
+     */
+    Tenet("tenet"),
+
+    /**
      * 查询域。
      */
     QueryDomain("queryDomain"),
@@ -82,7 +88,9 @@ public enum FerryAction {
     /**
      * 连通性应答。
      */
-    PingAck("pingAck")
+    PingAck("pingAck"),
+
+
 
     ;
 

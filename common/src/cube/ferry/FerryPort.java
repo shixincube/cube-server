@@ -28,16 +28,19 @@ package cube.ferry;
 
 /**
  * Port 动作描述。
+ * 主要用于 Ferry 和 Tenet 两个 Action 的数据操作。
  */
 public class FerryPort {
 
-    public final static String TransferIntoMember = "transferIntoMember";
+    public final static String TransferIntoMember = "TransferIntoMember";
 
-    public final static String TransferOutMember = "transferOutMember";
+    public final static String TransferOutMember = "TransferOutMember";
 
     public final static String ResetLicence = "ResetLicence";
 
     public final static String WriteMessage = "WriteMessage";
+
+    public final static String Cleanup = "Cleanup";
 
     private FerryPort() {
     }
