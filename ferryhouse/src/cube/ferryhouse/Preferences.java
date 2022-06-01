@@ -31,7 +31,7 @@ package cube.ferryhouse;
  */
 public class Preferences {
 
-    public static boolean cleanupOnReboot;
+    public boolean cleanupWhenReboot = false;
 
     public Preferences() {
     }

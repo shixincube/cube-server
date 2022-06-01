@@ -133,8 +133,12 @@ public class JoinDomainTask extends ServiceTask {
             for (DomainMember dm : list) {
                 if (dm.getContactId().equals(contactId)) {
                     // 已加入
+                    JSONObject response = new JSONObject();
+                    response.put("authDomain", service.getAuthDomain(domain).toJSON());
+                    response.put("domainInfo", service.getDomainInfo(domain).toJSON());
+                    response.put("member", dm.toJSON());
                     this.cellet.speak(this.talkContext,
-                            this.makeResponse(action, packet, FerryStateCode.Ok.code, dm.toJSON()));
+                            this.makeResponse(action, packet, FerryStateCode.Ok.code, response));
                     markResponseTime();
                     return;
                 }
@@ -149,8 +153,8 @@ public class JoinDomainTask extends ServiceTask {
         DomainInfo domainInfo = service.transferIntoDomainMember(contact, member, list);
 
         JSONObject response = new JSONObject();
-        response.put("domain", service.getAuthDomain(domain).toJSON());
-        response.put("info", domainInfo.toJSON());
+        response.put("authDomain", service.getAuthDomain(domain).toJSON());
+        response.put("domainInfo", domainInfo.toJSON());
         response.put("member", member.toJSON());
 
         this.cellet.speak(this.talkContext,

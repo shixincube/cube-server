@@ -229,6 +229,14 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             }
         }
 
+        if (!ContactManager.getInstance().isStarted()) {
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         List<Contact> contacts = ContactManager.getInstance().getOnlineContactsInDomain(domain);
         for (Contact contact : contacts) {
             // 发送通知

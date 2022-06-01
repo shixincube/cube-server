@@ -38,6 +38,8 @@ import cube.ferry.FerryAction;
 import cube.ferry.Ticket;
 
 import javax.websocket.OnOpen;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
@@ -116,16 +118,12 @@ public class FerryReceiver implements TalkListener {
         (new Thread() {
             @Override
             public void run() {
-                try {
-                    Thread.sleep(5 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
                 // 注册已经 Check-in 的 House
                 for (Ticket ticket : ticketMap.values()) {
                     ActionDialect dialect = new ActionDialect(FerryAction.CheckIn.name);
                     dialect.addParam("domain", ticket.domain.getName());
+                    dialect.addParam("licence", ticket.licence);
+                    dialect.addParam("address", ticket.talkContext.getSessionHost());
                     Ferryboat.getInstance().passBy(dialect);
                 }
             }

@@ -111,8 +111,8 @@ public class QuitDomainTask extends ServiceTask {
         DomainInfo domainInfo = service.transferOutDomainMember(domainMember);
 
         JSONObject response = new JSONObject();
-        response.put("domain", service.getAuthDomain(domain).toJSON());
-        response.put("info", domainInfo.toJSON());
+        response.put("authDomain", service.getAuthDomain(domain).toJSON());
+        response.put("domainInfo", domainInfo.toJSON());
         response.put("member", domainMember.toJSON());
 
         this.cellet.speak(this.talkContext,
