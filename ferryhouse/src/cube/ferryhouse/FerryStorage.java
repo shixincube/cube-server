@@ -380,6 +380,17 @@ public class FerryStorage implements Storagable {
         }
     }
 
+    /**
+     * 删除指定时间戳之前的消息。
+     *
+     * @param timestamp
+     */
+    public void deleteAllMessages(long timestamp) {
+        this.storage.executeDelete(this.messageTable, new Conditional[]{
+                Conditional.createLessThan(new StorageField("rts", LiteralBase.LONG, timestamp))
+        });
+    }
+
     private void checkPropertyTable() {
         if (!this.storage.exist(this.propertyTable)) {
             // 不存在，建新表

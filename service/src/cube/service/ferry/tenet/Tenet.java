@@ -1,20 +1,20 @@
 /*
  * This source file is part of Cube.
- *
+ * <p>
  * The MIT License (MIT)
- *
+ * <p>
  * Copyright (c) 2020-2022 Cube Team.
- *
+ * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * <p>
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *
+ * <p>
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,27 +24,43 @@
  * SOFTWARE.
  */
 
-package cube.common;
+package cube.service.ferry.tenet;
 
+import cube.common.JSONable;
 import org.json.JSONObject;
 
 /**
- * 可转 JSON 结构对象接口。
+ * 信条。
  */
-public interface JSONable {
+public abstract class Tenet implements JSONable {
 
-    /**
-     * 序列化为 JSON 格式。
-     *
-     * @return 返回 JSON 格式表示的数据。
-     */
-    JSONObject toJSON();
+    private String domain;
 
-    /**
-     * 序列化为简易/紧凑的 JSON 格式。
-     *
-     * @return 返回 JSON 格式表示的数据。
-     */
-    JSONObject toCompactJSON();
+    private String port;
 
+    public Tenet(String domain, String port) {
+        this.domain = domain;
+        this.port = port;
+    }
+
+    public String getDomain() {
+        return this.domain;
+    }
+
+    public String getPort() {
+        return this.port;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("domain", this.domain);
+        json.put("port", this.port);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
 }

@@ -47,6 +47,7 @@ import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
 import cube.service.ferry.plugin.WriteMessagePlugin;
+import cube.service.ferry.tenet.CleanupTenet;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONException;
@@ -113,6 +114,8 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
                 storage.open();
                 storage.execSelfChecking(null);
+
+                TenetManager.getInstance().start(storage);
             }
         }).start();
 
@@ -163,6 +166,8 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             }
         }
         this.ackBundles.clear();
+
+        TenetManager.getInstance().stop();
     }
 
     @Override
@@ -263,6 +268,16 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             eventData.put("id", contact.getId().longValue());
             ModuleEvent event = new ModuleEvent(NAME, FerryAction.Offline.name, eventData);
             this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());
+        }
+    }
+
+    public void triggerTenet(ActionDialect dialect) {
+        String domain = dialect.getParamAsString("domain");
+        String port = dialect.getParamAsString("port");
+        if (FerryPort.Cleanup.equals(port)) {
+            long timestamp = dialect.getParamAsLong("timestamp");
+            CleanupTenet tenet = new CleanupTenet(domain, timestamp);
+            TenetManager.getInstance().triggerTenet(tenet);
         }
     }
 

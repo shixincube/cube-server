@@ -48,7 +48,10 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Ferry 客户端。
@@ -71,7 +74,16 @@ public class Ferryhouse implements TalkListener {
 
     private FerryStorage ferryStorage;
 
+    private AtomicBoolean checkedIn;
+
+    /**
+     * 用于在设备接入网络后需要发送的数据。
+     */
+    private LinkedList<ActionDialect> preparedQueue;
+
     private Ferryhouse() {
+        this.checkedIn = new AtomicBoolean(false);
+        this.preparedQueue = new LinkedList<>();
     }
 
     public static Ferryhouse getInstance() {
@@ -199,7 +211,23 @@ public class Ferryhouse implements TalkListener {
     private void refreshWithPreferences(Preferences preferences) {
         if (preferences.cleanupWhenReboot) {
             // 清空所有数据
-            
+            long now = System.currentTimeMillis();
+            // 从数据库删除消息
+            // FIXME XJW this.ferryStorage.deleteAllMessages(now);
+
+            // 发送 Tenet
+            ActionDialect actionDialect = new ActionDialect(FerryAction.Tenet.name);
+            actionDialect.addParam("port", FerryPort.Cleanup);
+            actionDialect.addParam("domain", this.domain);
+            actionDialect.addParam("timestamp", now);
+            if (this.checkedIn.get()) {
+                this.nucleus.getTalkService().speak(FERRY, actionDialect);
+            }
+            else {
+                synchronized (this.preparedQueue) {
+                    this.preparedQueue.offer(actionDialect);
+                }
+            }
         }
     }
 
@@ -285,6 +313,17 @@ public class Ferryhouse implements TalkListener {
                 dialect.addParam("domain", domain);
                 dialect.addParam("licence", licence);
                 speakable.speak(FERRY, dialect);
+
+                checkedIn.set(true);
+
+                synchronized (preparedQueue) {
+                    while (!preparedQueue.isEmpty()) {
+                        ActionDialect actionDialect = preparedQueue.removeFirst();
+                        if (null != actionDialect) {
+                            speakable.speak(FERRY, actionDialect);
+                        }
+                    }
+                }
             }
         }).start();
     }
@@ -292,10 +331,14 @@ public class Ferryhouse implements TalkListener {
     @Override
     public void onQuitted(Speakable speakable) {
         Logger.d(this.getClass(), "#onQuitted");
+
+        this.checkedIn.set(false);
     }
 
     @Override
     public void onFailed(Speakable speakable, TalkError talkError) {
         Logger.d(this.getClass(), "onFailed - " + talkError.getErrorCode());
+
+        this.checkedIn.set(false);
     }
 }

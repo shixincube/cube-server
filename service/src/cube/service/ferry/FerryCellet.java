@@ -30,6 +30,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.ferry.FerryAction;
@@ -124,6 +125,17 @@ public class FerryCellet extends AbstractCellet {
                     ferryService.checkOut(dialect, talkContext);
                 }
             });
+        }
+        else if (FerryAction.Tenet.name.equals(action)) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ferryService.triggerTenet(dialect);
+                }
+            });
+        }
+        else {
+            Logger.w(this.getClass(), "Unknown action: " + action);
         }
     }
 }
