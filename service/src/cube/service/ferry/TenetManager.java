@@ -26,7 +26,14 @@
 
 package cube.service.ferry;
 
+import cell.adapter.CelletAdapter;
+import cube.common.UniqueKey;
+import cube.common.entity.Contact;
+import cube.ferry.DomainMember;
+import cube.service.contact.ContactManager;
 import cube.service.ferry.tenet.Tenet;
+
+import java.util.List;
 
 /**
  * 驱动终端的 Tenet 管理器。
@@ -35,7 +42,11 @@ public class TenetManager {
 
     private final static TenetManager instance = new TenetManager();
 
+    private FerryService service;
+
     private FerryStorage storage;
+
+    private CelletAdapter contactsAdapter;
 
     private TenetManager() {
     }
@@ -44,8 +55,10 @@ public class TenetManager {
         return TenetManager.instance;
     }
 
-    public void start(FerryStorage storage) {
+    public void start(FerryService service, FerryStorage storage, CelletAdapter contactsAdapter) {
+        this.service = service;
         this.storage = storage;
+        this.contactsAdapter = contactsAdapter;
     }
 
     public void stop() {
@@ -53,6 +66,12 @@ public class TenetManager {
     }
 
     public void triggerTenet(Tenet tenet) {
-        
+        List<DomainMember> list = this.storage.queryMembers(tenet.getDomain(), DomainMember.NORMAL);
+
+        // 向所有成员写入 Tenet
+
+
+//        for ()
+//        UniqueKey.make()
     }
 }

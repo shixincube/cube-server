@@ -115,7 +115,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
                 storage.open();
                 storage.execSelfChecking(null);
 
-                TenetManager.getInstance().start(storage);
+                TenetManager.getInstance().start(FerryService.this, storage, contactsAdapter);
             }
         }).start();
 

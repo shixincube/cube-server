@@ -141,11 +141,35 @@ public class FerryStorage implements Storagable {
             })
     };
 
+    private final StorageField[] tenetFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            // 域
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 联系人 ID
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // Port
+            new StorageField("port", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // JSON String
+            new StorageField("data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
     private final String accessPointTable = "ferry_access_point";
 
     private final String domainInfoTable = "ferry_domain";
 
     private final String domainMemberTable = "ferry_domain_member";
+
+    private final String tenetTable = "ferry_tenet";
 
     private Storage storage;
 
@@ -168,6 +192,7 @@ public class FerryStorage implements Storagable {
         this.checkAccessPointTable();
         this.checkDomainInfoTable();
         this.checkDomainMemberTable();
+        this.checkTenetTable();
     }
 
     /**
@@ -513,6 +538,10 @@ public class FerryStorage implements Storagable {
         });
     }
 
+    public void writeTenet() {
+
+    }
+
     private void checkAccessPointTable() {
         if (!this.storage.exist(this.accessPointTable)) {
             // 不存在，建新表
@@ -544,6 +573,15 @@ public class FerryStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.domainMemberTable, this.domainMemberFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.domainMemberTable + "' successfully");
+            }
+        }
+    }
+
+    private void checkTenetTable() {
+        if (!this.storage.exist(this.tenetTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.tenetTable, this.tenetFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.tenetTable + "' successfully");
             }
         }
     }

@@ -45,11 +45,13 @@ public enum FerryAction {
 
     /**
      * House 上线。
+     * (S->C)
      */
     Online("online"),
 
     /**
      * House 下线。
+     * (S->C)
      */
     Offline("offline"),
 
@@ -62,6 +64,7 @@ public enum FerryAction {
     /**
      * 反向操作。
      * (H->B)
+     * (S->C)
      */
     Tenet("tenet"),
 
