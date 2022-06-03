@@ -34,10 +34,7 @@ import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.ferry.FerryAction;
-import cube.service.ferry.task.JoinDomainTask;
-import cube.service.ferry.task.PingTask;
-import cube.service.ferry.task.QueryDomainTask;
-import cube.service.ferry.task.QuitDomainTask;
+import cube.service.ferry.task.*;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -97,6 +94,10 @@ public class FerryCellet extends AbstractCellet {
                     ferryService.notifyAckBundles(dialect);
                 }
             });
+        }
+        else if (FerryAction.TakeOutTenet.name.equals(action)) {
+            this.executor.execute(new TakeOutTenetTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (FerryAction.QueryDomain.name.equals(action)) {
             this.executor.execute(new QueryDomainTask(this, talkContext, primitive,
