@@ -37,6 +37,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.ModuleEvent;
 import cube.common.Packet;
+import cube.common.UniqueKey;
 import cube.common.entity.*;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -48,6 +49,7 @@ import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
 import cube.service.ferry.plugin.WriteMessagePlugin;
 import cube.service.ferry.tenet.CleanupTenet;
+import cube.service.ferry.tenet.Tenet;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONException;
@@ -271,13 +273,30 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         }
     }
 
+    /**
+     * 触发指定的信条。
+     *
+     * @param dialect
+     */
     public void triggerTenet(ActionDialect dialect) {
         String domain = dialect.getParamAsString("domain");
         String port = dialect.getParamAsString("port");
+
+        Tenet tenet = null;
+
         if (FerryPort.Cleanup.equals(port)) {
             long timestamp = dialect.getParamAsLong("timestamp");
-            CleanupTenet tenet = new CleanupTenet(domain, timestamp);
+            tenet = new CleanupTenet(domain, timestamp);
+            // TODO 操作 Messaging 服务
+            // TODO 操作 FileStorage 服务
+        }
+
+        if (null != tenet) {
+            // 触发信条
             TenetManager.getInstance().triggerTenet(tenet);
+        }
+        else {
+            Logger.e(this.getClass(), "Unknown tenet port: " + port + "@" + domain);
         }
     }
 
@@ -526,6 +545,17 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         return this.storage.readDomainInfo(domainMember.getDomain().getName());
     }
 
+    /**
+     * 取出信条。
+     *
+     * @param domainName
+     * @param contactId
+     * @return
+     */
+    public List<JSONObject> takeOutTenets(String domainName, Long contactId) {
+        return this.storage.readAndDeleteTenets(domainName, contactId);
+    }
+
     private void setup() {
         AbstractModule messagingModule = this.getKernel().getModule("Messaging");
         if (null != messagingModule) {
@@ -534,6 +564,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
     }
 
     private void teardown() {
+
     }
 
     private void pushToContact(Contact contact, String actionName, JSONObject data) {
@@ -564,7 +595,31 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             ModuleEvent event = new ModuleEvent(jsonObject);
             String eventName = event.getEventName();
 
-            if (FerryAction.Online.name.equals(eventName) ||
+            if (FerryAction.Tenet.name.equals(eventName)) {
+                Object[] key = UniqueKey.extract(topic);
+                if (null == key) {
+                    return;
+                }
+
+                // 取主键的 ID
+                Long id = (Long) key[0];
+                // 取主键的域
+                String domain = (String) key[1];
+
+                Contact contact = ContactManager.getInstance().getOnlineContact(domain, id);
+                if (null != contact) {
+                    // 推送给终端
+                    this.pushToContact(contact, FerryAction.Tenet.name, event.getData());
+
+                    // 从数据库删除
+                    try {
+                        this.storage.deleteTenets(domain, id);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            else if (FerryAction.Online.name.equals(eventName) ||
                     FerryAction.Offline.name.equals(eventName)) {
                 String domainName = event.getData().getString("domain");
                 long contactId = event.getData().getLong("id");

@@ -39,6 +39,7 @@ import cube.ferry.DomainInfo;
 import cube.ferry.DomainMember;
 import cube.ferry.JoinWay;
 import cube.ferry.Role;
+import cube.service.ferry.tenet.Tenet;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
@@ -155,6 +156,10 @@ public class FerryStorage implements Storagable {
             }),
             // Port
             new StorageField("port", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 时间戳
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             // JSON String
@@ -538,8 +543,70 @@ public class FerryStorage implements Storagable {
         });
     }
 
-    public void writeTenet() {
+    /**
+     * 写入信条。
+     *
+     * @param contactId
+     * @param tenet
+     */
+    public void writeTenet(Long contactId, Tenet tenet) {
+        this.storage.executeInsert(this.tenetTable, new StorageField[] {
+                new StorageField("domain", tenet.getDomain()),
+                new StorageField("contact_id", contactId.longValue()),
+                new StorageField("port", tenet.getPort()),
+                new StorageField("timestamp", tenet.getTimestamp()),
+                new StorageField("data", tenet.toJSON().toString())
+        });
+    }
 
+    /**
+     * 读取并删除信条。
+     *
+     * @param domainName
+     * @param contactId
+     * @return
+     */
+    public List<JSONObject> readAndDeleteTenets(String domainName, Long contactId) {
+        List<JSONObject> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.tenetTable,
+                new StorageField[] {
+                        new StorageField("data", LiteralBase.STRING)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("domain", domainName),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("contact_id", contactId.longValue())
+                });
+
+        if (result.isEmpty()) {
+            return list;
+        }
+
+        for (StorageField[] fields : result) {
+            list.add(new JSONObject(fields[0].getString()));
+        }
+
+        this.storage.executeDelete(this.tenetTable, new Conditional[] {
+                Conditional.createEqualTo("domain", domainName),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("contact_id", contactId.longValue())
+        });
+
+        return list;
+    }
+
+    /**
+     * 删除信条。
+     *
+     * @param domainName
+     * @param contactId
+     */
+    public void deleteTenets(String domainName, Long contactId) {
+        this.storage.executeDelete(this.tenetTable, new Conditional[] {
+                Conditional.createEqualTo("domain", domainName),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("contact_id", contactId.longValue())
+        });
     }
 
     private void checkAccessPointTable() {

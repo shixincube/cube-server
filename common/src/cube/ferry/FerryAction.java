@@ -69,6 +69,12 @@ public enum FerryAction {
     Tenet("tenet"),
 
     /**
+     * 取出信条。
+     * (C->S)
+     */
+    TakeOutTenet("takeOutTenet"),
+
+    /**
      * 查询域。
      */
     QueryDomain("queryDomain"),

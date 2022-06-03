@@ -34,28 +34,36 @@ import org.json.JSONObject;
  */
 public abstract class Tenet implements JSONable {
 
+    private final String port;
+
     private String domain;
 
-    private String port;
+    private long timestamp;
 
-    public Tenet(String domain, String port) {
-        this.domain = domain;
+    public Tenet(String port, String domain, long timestamp) {
         this.port = port;
-    }
-
-    public String getDomain() {
-        return this.domain;
+        this.domain = domain;
+        this.timestamp = timestamp;
     }
 
     public String getPort() {
         return this.port;
     }
 
+    public String getDomain() {
+        return this.domain;
+    }
+
+    public long getTimestamp() {
+        return this.timestamp;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("domain", this.domain);
         json.put("port", this.port);
+        json.put("domain", this.domain);
+        json.put("timestamp", this.timestamp);
         return json;
     }
 
