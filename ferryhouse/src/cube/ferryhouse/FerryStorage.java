@@ -56,6 +56,9 @@ public class FerryStorage implements Storagable {
      * 配置数据字段。
      */
     private final StorageField[] propertyFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.INT, new Constraint[]{
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
             new StorageField("item", LiteralBase.STRING, new Constraint[]{
                     Constraint.NOT_NULL
             }),
