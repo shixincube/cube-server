@@ -911,7 +911,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      */
     public void updateConversation(Conversation conversation) {
         conversation.resetTimestamp();
-        this.storage.updateConversation(conversation);
+        this.storage.writeConversation(conversation);
     }
 
     /**
@@ -1067,22 +1067,22 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     }
 
     private void updateConversations(Message fromCopy, Message toCopy) {
-        this.storage.updateConversation(fromCopy.getDomain().getName(), fromCopy.getOwner(),
+        this.storage.writeConversation(fromCopy.getDomain().getName(), fromCopy.getOwner(),
                 fromCopy.getTo(), fromCopy.getId(),
                 fromCopy.getRemoteTimestamp(), ConversationType.Contact,
-                ConversationState.Normal, ConversationRemindType.Normal);
+                ConversationState.Normal, ConversationRemindType.Normal, null);
 
-        this.storage.updateConversation(toCopy.getDomain().getName(), toCopy.getOwner(),
+        this.storage.writeConversation(toCopy.getDomain().getName(), toCopy.getOwner(),
                 toCopy.getFrom(), toCopy.getId(),
                 toCopy.getRemoteTimestamp(), ConversationType.Contact,
-                ConversationState.Normal, ConversationRemindType.Normal);
+                ConversationState.Normal, ConversationRemindType.Normal, null);
     }
 
     private void updateConversation(Group group, Message message) {
-        this.storage.updateConversation(message.getDomain().getName(), message.getOwner(),
+        this.storage.writeConversation(message.getDomain().getName(), message.getOwner(),
                 group.getId(), message.getId(),
                 message.getRemoteTimestamp(), ConversationType.Group,
-                ConversationState.Normal, ConversationRemindType.Normal);
+                ConversationState.Normal, ConversationRemindType.Normal, null);
     }
 
     protected void refreshDomain(AuthDomain authDomain) {

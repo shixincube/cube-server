@@ -115,6 +115,9 @@ public class MessagingStorage implements Storagable {
             new StorageField("recent_message_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("context", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
             new StorageField("avatar_name", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
@@ -789,6 +792,10 @@ public class MessagingStorage implements Storagable {
             // 实例化
             Conversation conversation = new Conversation(id, domain, timestamp, owner, type, state, pivotalId, reminding);
 
+            if (!map.get("context").isNullValue()) {
+                conversation.setContext(new JSONObject(map.get("context").getString()));
+            }
+
             // 查消息
             Long recentMessageId = map.get("recent_message_id").getLong();
             Message message = this.read(domain, owner, recentMessageId);
@@ -810,20 +817,20 @@ public class MessagingStorage implements Storagable {
     }
 
     /**
-     * 更新指定新信息的会话。
+     * 写入指定新信息的会话。
      *
-     * @param conversation
+     * @param conversation 指定待更新的会话。
      */
-    public void updateConversation(Conversation conversation) {
+    public void writeConversation(Conversation conversation) {
         long messageId = (null != conversation.getRecentMessage()) ? conversation.getRecentMessage().getId() : 0;
-        this.updateConversation(conversation.getDomain().getName(), conversation.getOwnerId(),
+        this.writeConversation(conversation.getDomain().getName(), conversation.getOwnerId(),
                 conversation.getPivotalId(), messageId,
                 conversation.getTimestamp(), conversation.getType(), conversation.getState(),
-                conversation.getRemindType());
+                conversation.getRemindType(), conversation.getContext());
     }
 
     /**
-     * 更新指定新信息的会话。
+     * 写入指定新信息的会话。
      *
      * @param domain
      * @param ownerId
@@ -833,10 +840,11 @@ public class MessagingStorage implements Storagable {
      * @param type
      * @param state
      * @param remindType
+     * @param context
      */
-    public void updateConversation(String domain, Long ownerId, Long pivotalId, long messageId,
+    public void writeConversation(String domain, Long ownerId, Long pivotalId, long messageId,
                                    long timestamp, ConversationType type, ConversationState state,
-                                   ConversationRemindType remindType) {
+                                   ConversationRemindType remindType, JSONObject context) {
         final String table = this.conversationTableNameMap.get(domain);
         this.executor.execute(new Runnable() {
             @Override
@@ -861,7 +869,8 @@ public class MessagingStorage implements Storagable {
                             new StorageField("type", type.code),
                             new StorageField("state", state.code),
                             new StorageField("reminding", remindType.code),
-                            new StorageField("recent_message_id", messageId)
+                            new StorageField("recent_message_id", messageId),
+                            new StorageField("context", (null != context) ? context.toString() : null)
                     });
                 }
                 else {
@@ -872,6 +881,7 @@ public class MessagingStorage implements Storagable {
                             new StorageField("state", state.code),
                             new StorageField("reminding", remindType.code),
                             new StorageField("recent_message_id", messageId),
+                            new StorageField("context", (null != context) ? context.toString() : null)
                     }, new Conditional[] {
                             Conditional.createEqualTo("sn", sn)
                     });

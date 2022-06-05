@@ -49,7 +49,7 @@ public abstract class AbstractContact extends Entity {
     private String name;
 
     /**
-     * 联系携带的上下文 JSON 数据。
+     * 联系人携带的上下文 JSON 数据。
      */
     private JSONObject context;
 

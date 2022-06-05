@@ -74,6 +74,11 @@ public class Conversation extends Entity {
     private int unreadCount;
 
     /**
+     * 上下文数据。
+     */
+    private JSONObject context;
+
+    /**
      * 头像名称。
      */
     private String avatarName;
@@ -190,6 +195,10 @@ public class Conversation extends Entity {
 
         this.unreadCount = json.has("unread") ? json.getInt("unread") : 0;
 
+        if (json.has("context")) {
+            this.context = json.getJSONObject("context");
+        }
+
         if (json.has("pivotalEntity")) {
             if (ConversationType.Contact == this.type) {
                 this.pivotalEntity = new Contact(json.getJSONObject("pivotalEntity"));
@@ -239,6 +248,14 @@ public class Conversation extends Entity {
 
     public ConversationRemindType getRemindType() {
         return this.remindType;
+    }
+
+    public JSONObject getContext() {
+        return this.context;
+    }
+
+    public void setContext(JSONObject context) {
+        this.context = context;
     }
 
     public AbstractContact getPivotalEntity() {
@@ -309,6 +326,10 @@ public class Conversation extends Entity {
         json.put("reminding", this.remindType.code);
         json.put("pivotal", this.pivotalId.longValue());
         json.put("unread", this.unreadCount);
+
+        if (null != this.context) {
+            json.put("context", this.context);
+        }
 
         if (null != this.pivotalEntity) {
             json.put("pivotalEntity", this.pivotalEntity.toCompactJSON());
