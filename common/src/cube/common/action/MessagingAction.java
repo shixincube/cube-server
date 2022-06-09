@@ -62,6 +62,11 @@ public enum MessagingAction {
     Read("read"),
 
     /**
+     * 焚毁消息内容。
+     */
+    Burn("burn"),
+
+    /**
      * 查询消息状态。
      */
     QueryState("queryState"),

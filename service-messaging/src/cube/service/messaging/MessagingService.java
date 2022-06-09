@@ -664,9 +664,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     /**
      * 删除消息。
      *
-     * @param domain
-     * @param contactId
-     * @param messageId
+     * @param domain 指定域。
+     * @param contactId 指定联系人 ID 。
+     * @param messageId 指定消息 ID 。
      */
     public void deleteMessage(String domain, Long contactId, Long messageId) {
         MessageKey messageKey = new MessageKey(contactId, messageId);
@@ -677,6 +677,19 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         }
 
         this.storage.writeMessageState(domain, contactId, messageId, MessageState.Deleted);
+    }
+
+    /**
+     * 焚毁消息。
+     *
+     * @param domain 指定域。
+     * @param contactId 指定联系人 ID 。
+     * @param messageId 指定消息 ID 。
+     * @param payload 指定消息新的负载。
+     */
+    public void burnMessage(String domain, Long contactId, Long messageId, JSONObject payload) {
+        // 从数据里擦除
+        this.storage.eraseMessagePayload(domain, contactId, messageId, payload);
     }
 
     /**

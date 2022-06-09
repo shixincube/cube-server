@@ -67,6 +67,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 联系人管理器。
@@ -162,6 +163,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     private List<ContactManagerListener> listeners;
 
     private ContactManager() {
+        super();
         this.listeners = new Vector<>();
     }
 
@@ -249,6 +251,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 for (ContactManagerListener listener : listeners) {
                     listener.onStarted(ContactManager.this);
                 }
+
+                started = true;
             }
         }).start();
     }
@@ -275,6 +279,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         for (ContactManagerListener listener : this.listeners) {
             listener.onStopped(this);
         }
+
+        this.started = false;
     }
 
     /**

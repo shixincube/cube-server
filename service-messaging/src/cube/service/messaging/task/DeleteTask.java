@@ -96,7 +96,6 @@ public class DeleteTask extends ServiceTask {
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, MessagingStateCode.Ok.code, data));
-
         markResponseTime();
     }
 }

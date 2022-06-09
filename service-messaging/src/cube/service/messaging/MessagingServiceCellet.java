@@ -89,6 +89,9 @@ public class MessagingServiceCellet extends AbstractCellet {
         else if (MessagingAction.Read.name.equals(action)) {
             this.executor.execute(new ReadTask(this, talkContext, primitive, this.markResponseTime(action)));
         }
+        else if (MessagingAction.Burn.name.equals(action)) {
+            this.executor.execute(new BurnTask(this, talkContext, primitive, this.markResponseTime(action)));
+        }
         else if (MessagingAction.Recall.name.equals(action)) {
             this.executor.execute(new RecallTask(this, talkContext, primitive, this.markResponseTime(action)));
         }

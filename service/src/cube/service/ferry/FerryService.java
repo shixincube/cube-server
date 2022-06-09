@@ -244,14 +244,32 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             }
         }
 
-        List<Contact> contacts = ContactManager.getInstance().getOnlineContactsInDomain(domain);
-        for (Contact contact : contacts) {
-            // 发送通知
-            JSONObject eventData = new JSONObject();
-            eventData.put("domain", domain);
-            eventData.put("id", contact.getId().longValue());
-            ModuleEvent event = new ModuleEvent(NAME, FerryAction.Online.name, eventData);
-            this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());
+        int count = 3;
+        while (!ContactManager.getInstance().isStarted()) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            --count;
+            if (count <= 0) {
+                break;
+            }
+        }
+
+        try {
+            List<Contact> contacts = ContactManager.getInstance().getOnlineContactsInDomain(domain);
+            for (Contact contact : contacts) {
+                // 发送通知
+                JSONObject eventData = new JSONObject();
+                eventData.put("domain", domain);
+                eventData.put("id", contact.getId().longValue());
+                ModuleEvent event = new ModuleEvent(NAME, FerryAction.Online.name, eventData);
+                this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());
+            }
+        } catch (Exception e) {
+            Logger.w(getClass(), "#checkIn", e);
         }
     }
 

@@ -344,7 +344,7 @@ public class MessagingStorage implements Storagable {
             String payloadString = decrypt(rts, payloadCiphertext);
             payload = new JSONObject(payloadString);
 
-            if (!map.get("attachment").isNullValue()) {
+            if (!map.get("attachment").isNullValue() && map.get("attachment").getString().length() > 2) {
                 attachment = new JSONObject(map.get("attachment").getString());
             }
         } catch (JSONException e) {
@@ -391,7 +391,7 @@ public class MessagingStorage implements Storagable {
                 String payloadString = decrypt(rts, payloadCiphertext);
                 payload = new JSONObject(payloadString);
 
-                if (!map.get("attachment").isNullValue()) {
+                if (!map.get("attachment").isNullValue() && map.get("attachment").getString().length() > 2) {
                     attachment = new JSONObject(map.get("attachment").getString());
                 }
             } catch (JSONException e) {
@@ -449,7 +449,7 @@ public class MessagingStorage implements Storagable {
                 String payloadString = decrypt(rts, payloadCiphertext);
                 payload = new JSONObject(payloadString);
 
-                if (!map.get("attachment").isNullValue()) {
+                if (!map.get("attachment").isNullValue() && map.get("attachment").getString().length() > 2) {
                     attachment = new JSONObject(map.get("attachment").getString());
                 }
             } catch (JSONException e) {
@@ -510,7 +510,7 @@ public class MessagingStorage implements Storagable {
                 String payloadString = decrypt(rts, payloadCiphertext);
                 payload = new JSONObject(payloadString);
 
-                if (!map.get("attachment").isNullValue()) {
+                if (!map.get("attachment").isNullValue() && map.get("attachment").getString().length() > 2) {
                     attachment = new JSONObject(map.get("attachment").getString());
                 }
             } catch (JSONException e) {
@@ -581,7 +581,7 @@ public class MessagingStorage implements Storagable {
                 String payloadString = decrypt(rts, payloadCiphertext);
                 payload = new JSONObject(payloadString);
 
-                if (!map.get("attachment").isNullValue()) {
+                if (!map.get("attachment").isNullValue() && map.get("attachment").getString().length() > 2) {
                     attachment = new JSONObject(map.get("attachment").getString());
                 }
             } catch (JSONException e) {
@@ -752,6 +752,51 @@ public class MessagingStorage implements Storagable {
 
         int state = result.get(0)[0].getInt();
         return MessageState.parse(state);
+    }
+
+    /**
+     * 擦除消息负载及其相关数据。
+     *
+     * @param domain 指定域。
+     * @param contactId 指定联系人 ID 。
+     * @param messageId 指定消息 ID 。
+     * @param payload 指定合规的新负载内容。
+     */
+    public void eraseMessagePayload(String domain, Long contactId, Long messageId, JSONObject payload) {
+        String table = this.messageTableNameMap.get(domain);
+        if (null == table) {
+            return;
+        }
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                // 查询 rts 数据，以便加密
+                List<StorageField[]> result = storage.executeQuery(table, new StorageField[] {
+                        new StorageField("rts", LiteralBase.LONG)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("id", messageId.longValue()),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("owner", contactId.longValue())
+                });
+
+                if (result.isEmpty()) {
+                    return;
+                }
+
+                long rts = result.get(0)[0].getLong();
+                String payloadCiphertext = encrypt(rts, payload.toString());
+
+                storage.executeUpdate(table, new StorageField[] {
+                        new StorageField("payload", payloadCiphertext),
+                        new StorageField("attachment", "")
+                }, new Conditional[] {
+                        Conditional.createEqualTo("id", messageId.longValue()),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("owner", contactId.longValue())
+                });
+            }
+        });
     }
 
     /**
