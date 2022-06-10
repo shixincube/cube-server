@@ -57,6 +57,11 @@ public enum MessageState {
     Read(20),
 
     /**
+     * 被拒绝阅读状态。
+     */
+    Forbidden(22),
+
+    /**
      * 已召回。
      */
     Recalled(30),
