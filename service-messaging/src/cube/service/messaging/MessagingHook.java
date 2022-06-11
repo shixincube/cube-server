@@ -43,6 +43,8 @@ public class MessagingHook extends Hook {
 
     public final static String UpdateMessage = "UpdateMessage";
 
+    public final static String DeleteMessage = "DeleteMessage";
+
     public MessagingHook(String key) {
         super(key);
     }

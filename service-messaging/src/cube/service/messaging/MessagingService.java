@@ -604,10 +604,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     /**
      * 撤回消息。
      *
-     * @param domain
-     * @param fromId
-     * @param messageId
-     * @return
+     * @param domain 指定域。
+     * @param fromId 指定消息发件人 ID 。
+     * @param messageId 指定消息 ID 。
+     * @return 返回是否撤回成功。
      */
     public boolean recallMessage(String domain, Long fromId, Long messageId) {
         long now = System.currentTimeMillis();
@@ -641,6 +641,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         // 修改该 ID 的所有消息的状态
         this.storage.writeMessageState(domain, messageId, MessageState.Recalled);
+
+        // 触发 Hook
+        MessagingHook hook = this.pluginSystem.getUpdateMessageHook();
+        hook.apply(new MessagingPluginContext(message));
 
         // 从存储器里读取出该 ID 的所有消息
         List<Message> msgList = this.storage.read(domain, messageId);
