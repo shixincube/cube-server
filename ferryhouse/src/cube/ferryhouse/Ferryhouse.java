@@ -193,10 +193,18 @@ public class Ferryhouse implements TalkListener {
         if (null != value) {
             preferences.synchronizeData = value.equalsIgnoreCase("true") || value.equals("1");
         }
+        else {
+            this.ferryStorage.writeProperty(Preferences.ITEM_SYNCH_DATA,
+                    preferences.synchronizeData ? "true" : "false");
+        }
 
         value = this.ferryStorage.readProperty(Preferences.ITEM_CLEANUP_WHEN_REBOOT);
         if (null != value) {
             preferences.cleanupWhenReboot = value.equalsIgnoreCase("true") || value.equals("1");
+        }
+        else {
+            this.ferryStorage.writeProperty(Preferences.ITEM_CLEANUP_WHEN_REBOOT,
+                    preferences.cleanupWhenReboot ? "true" : "false");
         }
 
         return preferences;
