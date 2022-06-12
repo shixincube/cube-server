@@ -89,6 +89,14 @@ public class FerryReceiver implements TalkListener {
                 }
             });
         }
+        else if (FerryAction.Synchronize.name.equals(action)) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ferry(actionDialect);
+                }
+            });
+        }
     }
 
     @Override

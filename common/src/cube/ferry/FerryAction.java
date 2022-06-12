@@ -44,6 +44,12 @@ public enum FerryAction {
     CheckOut("checkOut"),
 
     /**
+     * 同步数据。
+     * (H->B)
+     */
+    Synchronize("synchronize"),
+
+    /**
      * House 上线。
      * (S->C)
      */
@@ -98,8 +104,6 @@ public enum FerryAction {
      * 连通性应答。
      */
     PingAck("pingAck"),
-
-
 
     ;
 

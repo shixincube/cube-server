@@ -135,6 +135,14 @@ public class FerryCellet extends AbstractCellet {
                 }
             });
         }
+        else if (FerryAction.Synchronize.name.equals(action)) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ferryService.processSynchronize(dialect, talkContext);
+                }
+            });
+        }
         else {
             Logger.w(this.getClass(), "Unknown action: " + action);
         }

@@ -43,13 +43,13 @@ import cube.ferry.FerryPort;
 import cube.ferryhouse.tool.LicenceTool;
 import cube.storage.MySQLStorage;
 import cube.util.ConfigUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -188,7 +188,13 @@ public class Ferryhouse implements TalkListener {
 
     private Preferences loadPreferences() {
         Preferences preferences = new Preferences();
-        String value = this.ferryStorage.readProperty(Preferences.ITEM_CLEANUP_WHEN_REBOOT);
+
+        String value = this.ferryStorage.readProperty(Preferences.ITEM_SYNCH_DATA);
+        if (null != value) {
+            preferences.synchronizeData = value.equalsIgnoreCase("true") || value.equals("1");
+        }
+
+        value = this.ferryStorage.readProperty(Preferences.ITEM_CLEANUP_WHEN_REBOOT);
         if (null != value) {
             preferences.cleanupWhenReboot = value.equalsIgnoreCase("true") || value.equals("1");
         }
@@ -209,11 +215,25 @@ public class Ferryhouse implements TalkListener {
     }
 
     private void refreshWithPreferences(Preferences preferences) {
+        if (preferences.synchronizeData) {
+            // 发送 Synchronize
+            ActionDialect actionDialect = new ActionDialect(FerryAction.Synchronize.name);
+            actionDialect.addParam("domain", this.domain);
+            if (this.checkedIn.get()) {
+                this.nucleus.getTalkService().speak(FERRY, actionDialect);
+            }
+            else {
+                synchronized (this.preparedQueue) {
+                    this.preparedQueue.offer(actionDialect);
+                }
+            }
+        }
+
         if (preferences.cleanupWhenReboot) {
             // 清空所有数据
             long now = System.currentTimeMillis();
             // 从数据库删除消息
-            // FIXME XJW this.ferryStorage.deleteAllMessages(now);
+            this.ferryStorage.deleteAllMessages(now);
 
             // 发送 Tenet
             ActionDialect actionDialect = new ActionDialect(FerryAction.Tenet.name);
@@ -236,6 +256,18 @@ public class Ferryhouse implements TalkListener {
         if (FerryPort.WriteMessage.equals(port)) {
             Message message = new Message(actionDialect.getParamAsJson("message"));
             this.ferryStorage.writeMessage(message);
+        }
+        else if (FerryPort.UpdateMessage.equals(port)) {
+            Message message = new Message(actionDialect.getParamAsJson("message"));
+            this.ferryStorage.updateMessageState(message);
+        }
+        else if (FerryPort.DeleteMessage.equals(port)) {
+            Message message = new Message(actionDialect.getParamAsJson("message"));
+            this.ferryStorage.deleteMessage(message);
+        }
+        else if (FerryPort.BurnMessage.equals(port)) {
+            Message message = new Message(actionDialect.getParamAsJson("message"));
+            this.ferryStorage.updateMessagePayload(message);
         }
         else if (FerryPort.TransferIntoMember.equals(port)) {
             this.transferIntoMember(actionDialect);
@@ -265,6 +297,26 @@ public class Ferryhouse implements TalkListener {
         this.ferryStorage.writeDomainMember(member);
     }
 
+    private void processSynchronize(ActionDialect actionDialect) {
+        JSONObject data = actionDialect.getParamAsJson("data");
+        JSONArray memberArray = data.getJSONArray("members");
+        JSONArray contactArray = data.getJSONArray("contacts");
+
+        for (int i = 0; i < memberArray.length(); ++i) {
+            DomainMember member = new DomainMember(memberArray.getJSONObject(i));
+            if (!this.ferryStorage.existsDomainMember(member.getContactId())) {
+                this.ferryStorage.writeDomainMember(member);
+            }
+        }
+
+        for (int i = 0; i < contactArray.length(); ++i) {
+            Contact contact = new Contact(contactArray.getJSONObject(i));
+            if (!this.ferryStorage.existsContact(contact.getId())) {
+                this.ferryStorage.writeContact(contact);
+            }
+        }
+    }
+
     @Override
     public void onListened(Speakable speakable, String cellet, Primitive primitive) {
         ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
@@ -279,6 +331,9 @@ public class Ferryhouse implements TalkListener {
             response.addParam("sn", sn);
             response.addParam("domain", this.domain);
             this.nucleus.getTalkService().speak(FERRY, response);
+        }
+        else if (FerryAction.Synchronize.name.equals(action)) {
+            this.processSynchronize(actionDialect);
         }
     }
 
@@ -309,6 +364,7 @@ public class Ferryhouse implements TalkListener {
         (new Thread() {
             @Override
             public void run() {
+                // 执行 Chek-In
                 ActionDialect dialect = new ActionDialect(FerryAction.CheckIn.name);
                 dialect.addParam("domain", domain);
                 dialect.addParam("licence", licence);

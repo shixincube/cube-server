@@ -681,6 +681,17 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         }
 
         this.storage.writeMessageState(domain, contactId, messageId, MessageState.Deleted);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                Message message = getCompactMessage(domain, contactId, messageId);
+                if (null != message) {
+                    MessagingHook hook = pluginSystem.getDeleteMessageHook();
+                    hook.apply(new MessagingPluginContext(message));
+                }
+            }
+        });
     }
 
     /**
@@ -694,6 +705,18 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     public void burnMessage(String domain, Long contactId, Long messageId, JSONObject payload) {
         // 从数据里擦除
         this.storage.eraseMessagePayload(domain, contactId, messageId, payload);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                Message message = getCompactMessage(domain, contactId, messageId);
+                if (null != message) {
+                    message.setPayload(payload);
+                    MessagingHook hook = pluginSystem.getBurnMessageHook();
+                    hook.apply(new MessagingPluginContext(message));
+                }
+            }
+        });
     }
 
     /**
@@ -734,6 +757,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         // 修改状态
         message.setState(MessageState.Read);
 
+        // 触发 Hook
+        MessagingHook hook = this.pluginSystem.getUpdateMessageHook();
+        hook.apply(new MessagingPluginContext(message));
+
         // 更新存储
         this.storage.writeMessageState(domain, contactId, messageId, MessageState.Read);
 
@@ -753,6 +780,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
                 // 修改状态
                 senderMessage.setState(MessageState.Read);
+
+                // 触发 Hook
+                MessagingHook senderHook = this.pluginSystem.getUpdateMessageHook();
+                senderHook.apply(new MessagingPluginContext(senderMessage));
 
                 // 通知发件人
                 String fromKey = UniqueKey.make(message.getFrom(), domain);

@@ -465,6 +465,15 @@ public class Message extends Entity implements Comparable<Message> {
     }
 
     /**
+     * 设置消息负载数据。
+     *
+     * @param payload 指定负载数据。
+     */
+    public void setPayload(JSONObject payload) {
+        this.payload = payload;
+    }
+
+    /**
      * 获取消息负载数据。
      *
      * @return 返回 JSON 形式的负载数据。

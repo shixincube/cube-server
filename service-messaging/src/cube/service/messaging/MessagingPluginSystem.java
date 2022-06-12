@@ -57,6 +57,14 @@ public class MessagingPluginSystem extends PluginSystem<MessagingHook> {
         return this.getHook(MessagingHook.UpdateMessage);
     }
 
+    public MessagingHook getDeleteMessageHook() {
+        return this.getHook(MessagingHook.DeleteMessage);
+    }
+
+    public MessagingHook getBurnMessageHook() {
+        return this.getHook(MessagingHook.BurnMessage);
+    }
+
     private void build() {
         MessagingHook hook = new MessagingHook(MessagingHook.PrePush);
         this.addHook(hook);
@@ -71,6 +79,12 @@ public class MessagingPluginSystem extends PluginSystem<MessagingHook> {
         this.addHook(hook);
 
         hook = new MessagingHook(MessagingHook.UpdateMessage);
+        this.addHook(hook);
+
+        hook = new MessagingHook(MessagingHook.DeleteMessage);
+        this.addHook(hook);
+
+        hook = new MessagingHook(MessagingHook.BurnMessage);
         this.addHook(hook);
     }
 }

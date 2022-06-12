@@ -47,11 +47,15 @@ import cube.plugin.PluginSystem;
 import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
+import cube.service.ferry.plugin.BurnMessagePlugin;
+import cube.service.ferry.plugin.DeleteMessagePlugin;
+import cube.service.ferry.plugin.UpdateMessagePlugin;
 import cube.service.ferry.plugin.WriteMessagePlugin;
 import cube.service.ferry.tenet.CleanupTenet;
 import cube.service.ferry.tenet.Tenet;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -318,6 +322,31 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         }
     }
 
+    public void processSynchronize(ActionDialect dialect, TalkContext talkContext) {
+        String domainName = dialect.getParamAsString("domain");
+
+        List<DomainMember> memberList = this.storage.queryMembers(domainName);
+
+        JSONArray memberArray = new JSONArray();
+        JSONArray contactArray = new JSONArray();
+
+        for (DomainMember member : memberList) {
+            Contact contact = ContactManager.getInstance().getContact(domainName, member.getContactId());
+
+            memberArray.put(member.toJSON());
+            contactArray.put(contact.toJSON());
+        }
+
+        JSONObject data = new JSONObject();
+        data.put("members", memberArray);
+        data.put("contacts", contactArray);
+
+        ActionDialect response = new ActionDialect(FerryAction.Synchronize.name);
+        response.addParam("domain", domainName);
+        response.addParam("data", data);
+        this.cellet.speak(talkContext, response);
+    }
+
     /**
      * 判断指定域是否在线。
      *
@@ -578,6 +607,9 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         AbstractModule messagingModule = this.getKernel().getModule("Messaging");
         if (null != messagingModule) {
             messagingModule.getPluginSystem().register("WriteMessage", new WriteMessagePlugin(this));
+            messagingModule.getPluginSystem().register("UpdateMessage", new UpdateMessagePlugin(this));
+            messagingModule.getPluginSystem().register("DeleteMessage", new DeleteMessagePlugin(this));
+            messagingModule.getPluginSystem().register("BurnMessage", new BurnMessagePlugin(this));
         }
     }
 

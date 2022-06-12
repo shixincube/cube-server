@@ -40,6 +40,12 @@ public class FerryPort {
 
     public final static String WriteMessage = "WriteMessage";
 
+    public final static String UpdateMessage = "UpdateMessage";
+
+    public final static String DeleteMessage = "DeleteMessage";
+
+    public final static String BurnMessage = "BurnMessage";
+
     public final static String Cleanup = "Cleanup";
 
     private FerryPort() {

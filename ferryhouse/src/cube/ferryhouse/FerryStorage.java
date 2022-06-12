@@ -298,6 +298,16 @@ public class FerryStorage implements Storagable {
         }
     }
 
+    public boolean existsContact(Long contactId) {
+        List<StorageField[]> result = this.storage.executeQuery(this.contactTable, new StorageField[] {
+                new StorageField("id", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", contactId.longValue())
+        });
+
+        return !result.isEmpty();
+    }
+
     public synchronized void writeDomainMember(DomainMember member) {
         List<StorageField[]> result = this.storage.executeQuery(this.domainMemberTable, new StorageField[] {
                 new StorageField("sn", LiteralBase.LONG)
@@ -331,6 +341,16 @@ public class FerryStorage implements Storagable {
         }
     }
 
+    public boolean existsDomainMember(Long contactId) {
+        List<StorageField[]> result = this.storage.executeQuery(this.domainMemberTable, new StorageField[] {
+                new StorageField("sn", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("contact_id", contactId.longValue())
+        });
+
+        return !result.isEmpty();
+    }
+
     public synchronized void writeMessage(Message message) {
         List<StorageField[]> result = this.storage.executeQuery(this.messageTable, new StorageField[] {
                 new StorageField("sn", LiteralBase.LONG)
@@ -342,7 +362,7 @@ public class FerryStorage implements Storagable {
 
         String payload = message.getPayload().toString();
         byte[] ciphertext = Cryptology.getInstance().simpleEncrypt(payload.getBytes(StandardCharsets.UTF_8), this.key);
-        String cipher = Cryptology.getInstance().encodeBase64(ciphertext);
+        String ciphertextString = Cryptology.getInstance().encodeBase64(ciphertext);
 
         if (result.isEmpty()) {
             // 插入
@@ -357,7 +377,7 @@ public class FerryStorage implements Storagable {
                     new StorageField("state", message.getState().code),
                     new StorageField("scope", message.getScope()),
                     new StorageField("device", message.getSourceDevice().toJSON().toString()),
-                    new StorageField("payload", cipher),
+                    new StorageField("payload", ciphertextString),
                     new StorageField("attachment",
                             (null != message.getAttachment()) ? message.getAttachment().toJSON().toString() : null)
             });
@@ -374,13 +394,46 @@ public class FerryStorage implements Storagable {
                     new StorageField("state", message.getState().code),
                     new StorageField("scope", message.getScope()),
                     new StorageField("device", message.getSourceDevice().toJSON().toString()),
-                    new StorageField("payload", cipher),
+                    new StorageField("payload", ciphertextString),
                     new StorageField("attachment",
                             (null != message.getAttachment()) ? message.getAttachment().toJSON().toString() : null)
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", result.get(0)[0].getLong())
             });
         }
+    }
+
+    public synchronized void updateMessageState(Message message) {
+        this.storage.executeUpdate(this.messageTable, new StorageField[] {
+                new StorageField("state", message.getState().code)
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", message.getId().longValue()),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("owner", message.getOwner().longValue())
+        });
+    }
+
+    public synchronized void updateMessagePayload(Message message) {
+        String payload = message.getPayload().toString();
+        byte[] ciphertext = Cryptology.getInstance().simpleEncrypt(payload.getBytes(StandardCharsets.UTF_8), this.key);
+        String ciphertextString = Cryptology.getInstance().encodeBase64(ciphertext);
+
+        this.storage.executeUpdate(this.messageTable, new StorageField[] {
+                new StorageField("state", message.getState().code),
+                new StorageField("payload", ciphertextString)
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", message.getId().longValue()),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("owner", message.getOwner().longValue())
+        });
+    }
+
+    public synchronized void deleteMessage(Message message) {
+        this.storage.executeDelete(this.messageTable, new Conditional[] {
+                Conditional.createEqualTo("id", message.getId().longValue()),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("owner", message.getOwner().longValue())
+        });
     }
 
     /**
