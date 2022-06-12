@@ -26,6 +26,7 @@
 
 package cube.ferryhouse.tool;
 
+import cell.util.Base64;
 import cell.util.collection.FlexibleByteBuffer;
 import cube.util.CipherUtils;
 import org.json.JSONObject;
@@ -51,11 +52,13 @@ public class LicenceTool {
         String dataString = data.toString();
         byte[] dataBytes = CipherUtils.encrypt(dataString.getBytes(StandardCharsets.UTF_8),
                 password.getBytes(StandardCharsets.UTF_8));
+        // 密文转 Base64
+        String base64String = Base64.encodeBytes(dataBytes);
 
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(output);
-            fos.write(dataBytes);
+            fos.write(base64String.getBytes(StandardCharsets.UTF_8));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } finally {
@@ -72,11 +75,13 @@ public class LicenceTool {
         String dataString = data.toString();
         byte[] dataBytes = CipherUtils.encrypt(dataString.getBytes(StandardCharsets.UTF_8),
                 password.getBytes(StandardCharsets.UTF_8));
+        // 密文转 Base64
+        String base64String = Base64.encodeBytes(dataBytes);
 
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(output);
-            fos.write(dataBytes);
+            fos.write(base64String.getBytes(StandardCharsets.UTF_8));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } finally {
@@ -111,7 +116,10 @@ public class LicenceTool {
             byte[] data = new byte[buf.limit()];
             System.arraycopy(buf.array(), 0, data, 0, data.length);
 
-            byte[] dataBytes = CipherUtils.decrypt(data, password.getBytes(StandardCharsets.UTF_8));
+            // 从 Base64 还原
+            byte[] base64Bytes = Base64.decode(new String(data, StandardCharsets.UTF_8));
+
+            byte[] dataBytes = CipherUtils.decrypt(base64Bytes, password.getBytes(StandardCharsets.UTF_8));
             String dataString = new String(dataBytes, StandardCharsets.UTF_8);
             return new JSONObject(dataString);
         } catch (IOException e) {

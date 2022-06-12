@@ -44,4 +44,4 @@ echo -e "------------------------"
 echo -e "* Stop Cube App Server *"
 echo -e "------------------------"
 
-java -Xmx32m -classpath "$CLASSPATH" cube.app.server.Main stop
+java -Dfile.encoding=UTF-8 -Xmx32m -classpath "$CLASSPATH" cube.app.server.Main stop

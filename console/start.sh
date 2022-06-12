@@ -44,6 +44,6 @@ echo -e "================================================================"
 echo -e "Cube Console"
 echo -e "------------"
 
-java -Xmx512m -classpath "$CLASSPATH" cube.console.container.Main start
+java -Dfile.encoding=UTF-8 -Xmx512m -classpath "$CLASSPATH" cube.console.container.Main start
 
 echo -e "================================================================"

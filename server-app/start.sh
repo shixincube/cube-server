@@ -44,6 +44,6 @@ echo -e "================================================================"
 echo -e "Cube App Server"
 echo -e "---------------"
 
-java -Xmx512m -classpath "$CLASSPATH" cube.app.server.Main start
+java -Dfile.encoding=UTF-8 -Xmx512m -classpath "$CLASSPATH" cube.app.server.Main start
 
 echo -e "================================================================"
