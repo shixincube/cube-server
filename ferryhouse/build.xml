@@ -74,7 +74,8 @@
 	<target name="build-debug" depends="debug">
 		<delete file="../build/cube-ferryhouse-${version.brand}.jar" failonerror="false" />
 		<copy file="${build.jar}/cube-ferryhouse.jar" tofile="../build/cube-ferryhouse-${version.brand}.jar"/>
-		<echo>Build project for debug.</echo>
+		<copy file="${common.dir}/cube-common-${version.brand}.jar" todir="deploy/libs/"/>
+		<echo>Build FerryHouse for debug.</echo>
 		<echo>Copyright (C) 2022 Cube Team. All rights reserved.</echo>
 	</target>
 
@@ -84,7 +85,8 @@
 	<target name="build-release" depends="release">
 		<delete file="../build/cube-ferryhouse-${version.brand}.jar" failonerror="false" />
 		<copy file="${build.jar}/cube-ferryhouse.jar" tofile="../build/cube-ferryhouse-${version.brand}.jar"/>
-		<echo>Build project for release.</echo>
+		<copy file="${common.dir}/cube-common-${version.brand}.jar" todir="deploy/libs/"/>
+		<echo>Build FerryHouse for release.</echo>
 		<echo>Copyright (C) 2022 Cube Team. All rights reserved.</echo>
 	</target>
 
