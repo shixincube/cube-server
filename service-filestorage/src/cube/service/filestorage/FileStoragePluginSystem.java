@@ -26,5 +26,24 @@
 
 package cube.service.filestorage;
 
-public class FileStoragePluginSystem {
+import cube.plugin.PluginSystem;
+
+/**
+ * 文件存储服务插件系统。
+ */
+public class FileStoragePluginSystem extends PluginSystem<FileStorageHook> {
+
+    public FileStoragePluginSystem() {
+        super();
+        this.build();
+    }
+
+    public FileStorageHook getSaveFileHook() {
+        return this.getHook(FileStorageHook.SaveFile);
+    }
+
+    private void build() {
+        FileStorageHook hook = new FileStorageHook(FileStorageHook.SaveFile);
+        this.addHook(hook);
+    }
 }

@@ -121,6 +121,11 @@ public class FileStorageService extends AbstractModule {
     private DaemonTask daemonTask;
 
     /**
+     * 插件系统。
+     */
+    private FileStoragePluginSystem pluginSystem;
+
+    /**
      * 构造函数。
      *
      * @param executor 多线程执行器。
@@ -136,6 +141,9 @@ public class FileStorageService extends AbstractModule {
     public void start() {
         // 加载配置
         Properties properties = this.loadConfig();
+
+        // 实例化 PluginSystem
+        this.pluginSystem = new FileStoragePluginSystem();
 
         if (null != properties) {
             // 创建文件系统
@@ -209,11 +217,13 @@ public class FileStorageService extends AbstractModule {
             // 关闭存储
             this.serviceStorage.close();
         }
+
+        this.pluginSystem = null;
     }
 
     @Override
     public PluginSystem<?> getPluginSystem() {
-        return null;
+        return this.pluginSystem;
     }
 
     @Override

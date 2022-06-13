@@ -26,5 +26,21 @@
 
 package cube.service.filestorage;
 
-public class FileStorageHook {
+import cube.plugin.Hook;
+
+/**
+ * 文件存储服务插件钩子。
+ */
+public class FileStorageHook extends Hook {
+
+    public final static String SaveFile = "SaveFile";
+
+    /**
+     * 构造函数。
+     *
+     * @param key 钩子关键字。
+     */
+    public FileStorageHook(String key) {
+        super(key);
+    }
 }

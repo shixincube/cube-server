@@ -26,5 +26,26 @@
 
 package cube.service.filestorage;
 
-public class FileStoragePluginContext {
+import cube.plugin.PluginContext;
+
+/**
+ * 文件存储插件上下文。
+ */
+public class FileStoragePluginContext extends PluginContext {
+
+    public final static String KEY_FILE_LABEL = "fileLabel";
+
+    public FileStoragePluginContext() {
+
+    }
+
+    @Override
+    public Object get(String name) {
+        return null;
+    }
+
+    @Override
+    public void set(String name, Object value) {
+
+    }
 }

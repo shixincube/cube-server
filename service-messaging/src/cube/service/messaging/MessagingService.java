@@ -229,6 +229,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         }
 
         this.storage.close();
+
+        this.pluginSystem = null;
     }
 
     @Override
