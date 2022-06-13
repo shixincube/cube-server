@@ -339,6 +339,15 @@ public class FileStorageService extends AbstractModule {
         // 写入集群缓存
         this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
 
+        // 触发 Hook
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                FileStorageHook hook = pluginSystem.getSaveFileHook();
+                hook.apply(new FileStoragePluginContext(fileLabel));
+            }
+        });
+
         return fileLabel;
     }
 

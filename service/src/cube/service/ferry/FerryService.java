@@ -31,8 +31,10 @@ import cell.adapter.CelletAdapterFactory;
 import cell.adapter.CelletAdapterListener;
 import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
+import cell.core.talk.PrimitiveOutputStream;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.CachedQueueExecutor;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.ModuleEvent;
@@ -47,10 +49,7 @@ import cube.plugin.PluginSystem;
 import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
-import cube.service.ferry.plugin.BurnMessagePlugin;
-import cube.service.ferry.plugin.DeleteMessagePlugin;
-import cube.service.ferry.plugin.UpdateMessagePlugin;
-import cube.service.ferry.plugin.WriteMessagePlugin;
+import cube.service.ferry.plugin.*;
 import cube.service.ferry.tenet.CleanupTenet;
 import cube.service.ferry.tenet.Tenet;
 import cube.storage.StorageType;
@@ -59,9 +58,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 摆渡数据服务。
@@ -81,17 +84,21 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
     private Map<String, Ticket> tickets;
 
     private Queue<FerryPacket> pushQueue;
-
-    private Map<Integer, AckBundle> ackBundles;
-
     private Object pushMutex = new Object();
     private boolean pushing = false;
+
+    private Queue<StreamBundle> streamQueue;
+
+    private ExecutorService executor;
+
+    private Map<Integer, AckBundle> ackBundles;
 
     public FerryService(FerryCellet cellet) {
         super();
         this.cellet = cellet;
         this.tickets = new ConcurrentHashMap<>();
         this.pushQueue = new ConcurrentLinkedQueue<>();
+        this.streamQueue = new ConcurrentLinkedQueue<>();
         this.ackBundles = new ConcurrentHashMap<>();
     }
 
@@ -111,6 +118,8 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             config.put("file", "storage/Ferry.db");
             this.storage = new FerryStorage(StorageType.SQLite, config);
         }
+
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(4);
 
         (new Thread() {
             @Override
@@ -172,6 +181,11 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             }
         }
         this.ackBundles.clear();
+
+        if (null != this.executor) {
+            this.executor.shutdown();
+            this.executor = null;
+        }
 
         TenetManager.getInstance().stop();
     }
@@ -350,8 +364,8 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
     /**
      * 判断指定域是否在线。
      *
-     * @param domain
-     * @return
+     * @param domain 指定域名称。
+     * @return 返回是否在线。
      */
     public boolean isOnlineDomain(String domain) {
         return this.tickets.containsKey(domain);
@@ -417,7 +431,9 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
      */
     public void pushToBoat(String domain, FerryPacket packet) {
         if (!this.tickets.containsKey(domain)) {
-            Logger.w(this.getClass(), "#pushToBoat - Can NOT find domain talk context: " + domain);
+            if (Logger.isDebugLevel()) {
+                Logger.w(this.getClass(), "#pushToBoat - Can NOT find domain talk context: " + domain);
+            }
             return;
         }
 
@@ -453,6 +469,67 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
                 }
             }
         }).start();
+    }
+
+    /**
+     * 推送流给 Boat 。
+     *
+     * @param domain
+     * @param streamName
+     * @param inputStream
+     */
+    public void pushToBoat(String domain, String streamName, InputStream inputStream) {
+        if (!this.tickets.containsKey(domain)) {
+            if (Logger.isDebugLevel()) {
+                Logger.w(this.getClass(), "#pushToBoat(stream) - Can NOT find domain talk context: " + domain);
+            }
+            return;
+        }
+
+        TalkContext talkContext = this.tickets.get(domain).talkContext;
+
+        StreamBundle streamBundle = new StreamBundle(talkContext, streamName, inputStream);
+        // 添加到队列
+        this.streamQueue.offer(streamBundle);
+
+        // 发送 Mark
+        ActionDialect markAction = new ActionDialect(FerryAction.MarkFile.name);
+        markAction.addParam("code", streamName);
+        markAction.addParam("domain", domain);
+        this.cellet.speak(talkContext, markAction);
+
+        this.executor.execute(() -> {
+            StreamBundle bundle = streamQueue.poll();
+
+            while (null != bundle) {
+                PrimitiveOutputStream outputStream = cellet.speakStream(bundle.talkContext, bundle.streamName);
+                InputStream is = bundle.inputStream;
+
+                byte[] bytes = new byte[256];
+                int length = 0;
+                try {
+                    while ((length = inputStream.read(bytes)) > 0) {
+                        outputStream.write(bytes, 0, length);
+                    }
+                } catch (IOException e) {
+                    Logger.w(this.getClass(), "#pushToBoat(stream)", e);
+                } finally {
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        // Nothing
+                    }
+
+                    try {
+                        outputStream.close();
+                    } catch (IOException e) {
+                        // Nothing
+                    }
+                }
+
+                bundle = streamQueue.poll();
+            }
+        });
     }
 
     /**
@@ -611,6 +688,11 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             messagingModule.getPluginSystem().register("DeleteMessage", new DeleteMessagePlugin(this));
             messagingModule.getPluginSystem().register("BurnMessage", new BurnMessagePlugin(this));
         }
+
+        AbstractModule fileStorageModule = this.getKernel().getModule("FileStorage");
+        if (null != fileStorageModule) {
+            fileStorageModule.getPluginSystem().register("SaveFile", new SaveFilePlugin(this));
+        }
     }
 
     private void teardown() {
@@ -722,6 +804,21 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         public AckBundle(ActionDialect request) {
             this.start = System.currentTimeMillis();
             this.request = request;
+        }
+    }
+
+    public class StreamBundle {
+
+        public final TalkContext talkContext;
+
+        public final String streamName;
+
+        public final InputStream inputStream;
+
+        public StreamBundle(TalkContext talkContext, String streamName, InputStream inputStream) {
+            this.talkContext = talkContext;
+            this.streamName = streamName;
+            this.inputStream = inputStream;
         }
     }
 }

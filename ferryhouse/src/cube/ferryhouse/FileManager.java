@@ -24,37 +24,25 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage;
+package cube.ferryhouse;
 
 import cube.common.entity.FileLabel;
-import cube.plugin.PluginContext;
 
 /**
- * 文件存储插件上下文。
+ * 文件管理器。
  */
-public class FileStoragePluginContext extends PluginContext {
+public final class FileManager {
 
-    public final static String KEY_FILE_LABEL = "fileLabel";
+    private final static FileManager instance = new FileManager();
 
-    private FileLabel fileLabel;
-
-    public FileStoragePluginContext(FileLabel fileLabel) {
-        this.fileLabel = fileLabel;
+    private FileManager() {
     }
 
-    @Override
-    public Object get(String name) {
-        if (KEY_FILE_LABEL.equals(name)) {
-            return this.fileLabel;
-        }
-
-        return null;
+    public static FileManager getInstance() {
+        return FileManager.instance;
     }
 
-    @Override
-    public void set(String name, Object value) {
-        if (KEY_FILE_LABEL.equals(name) && value instanceof FileLabel) {
-            this.fileLabel = (FileLabel) value;
-        }
+    public void saveFile(FileLabel fileLabel) {
+
     }
 }

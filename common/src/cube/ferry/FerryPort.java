@@ -46,6 +46,8 @@ public class FerryPort {
 
     public final static String BurnMessage = "BurnMessage";
 
+    public final static String SaveFile = "SaveFile";
+
     public final static String Cleanup = "Cleanup";
 
     private FerryPort() {

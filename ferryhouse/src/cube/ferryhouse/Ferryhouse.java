@@ -36,6 +36,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
+import cube.common.entity.FileLabel;
 import cube.common.entity.Message;
 import cube.ferry.DomainMember;
 import cube.ferry.FerryAction;
@@ -276,6 +277,10 @@ public class Ferryhouse implements TalkListener {
         else if (FerryPort.BurnMessage.equals(port)) {
             Message message = new Message(actionDialect.getParamAsJson("message"));
             this.ferryStorage.updateMessagePayload(message);
+        }
+        else if (FerryPort.SaveFile.equals(port)) {
+            FileLabel fileLabel = new FileLabel(actionDialect.getParamAsJson("fileLabel"));
+            FileManager.getInstance().saveFile(fileLabel);
         }
         else if (FerryPort.TransferIntoMember.equals(port)) {
             this.transferIntoMember(actionDialect);

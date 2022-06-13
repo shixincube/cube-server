@@ -105,6 +105,12 @@ public enum FerryAction {
      */
     PingAck("pingAck"),
 
+    /**
+     * 标记文件标签。
+     * (S->B)
+     */
+    MarkFile("markFile")
+
     ;
 
     public final String name;
