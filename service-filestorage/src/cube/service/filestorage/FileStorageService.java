@@ -265,8 +265,9 @@ public class FileStorageService extends AbstractModule {
      *
      * @param fileCode
      * @param file
+     * @return 返回文件描述。
      */
-    public void writeFile(String fileCode, File file) {
+    public FileDescriptor writeFile(String fileCode, File file) {
         // 删除旧文件
         this.fileSystem.deleteFile(fileCode);
 
@@ -276,6 +277,8 @@ public class FileStorageService extends AbstractModule {
             // 缓存文件标识
             this.fileDescriptors.put(fileCode, descriptor);
         }
+
+        return descriptor;
     }
 
     /**
@@ -321,6 +324,55 @@ public class FileStorageService extends AbstractModule {
 
         // 获取外部访问的 URL 信息
         String[] urls = this.getFileURLs(fileLabel.getDomain().getName(), appKey);
+        if (null == urls) {
+            return null;
+        }
+
+        String queryString = "?fc=" + fileLabel.getFileCode();
+        fileLabel.setFileURLs(urls[0] + queryString, urls[1] + queryString);
+
+        // 设置有效期
+        if (0 == fileLabel.getExpiryTime()) {
+            fileLabel.setExpiryTime(fileLabel.getCompletedTime() + this.defaultFileDuration);
+        }
+
+        // 写入到存储器进行记录
+        this.serviceStorage.writeFileLabel(fileLabel, descriptor);
+
+        // 写入集群缓存
+        this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
+
+        // 触发 Hook
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                FileStorageHook hook = pluginSystem.getSaveFileHook();
+                hook.apply(new FileStoragePluginContext(fileLabel));
+            }
+        });
+
+        return fileLabel;
+    }
+
+    /**
+     * 保存本地文件的存储系统。
+     *
+     * @param fileLabel
+     * @param file
+     * @return
+     */
+    public FileLabel saveFile(FileLabel fileLabel, File file) {
+        FileDescriptor descriptor = this.writeFile(fileLabel.getFileCode(), file);
+        if (null == descriptor) {
+            Logger.w(this.getClass(), "#saveFile - write file failed");
+            return null;
+        }
+
+        // 设置直连 URL
+        fileLabel.setDirectURL(descriptor.getURL());
+
+        // 获取外部访问的 URL 信息
+        String[] urls = this.getFileURLs(fileLabel.getDomain().getName(), null);
         if (null == urls) {
             return null;
         }
@@ -591,6 +643,18 @@ public class FileStorageService extends AbstractModule {
                 String fileCode = data.getString("fileCode");
                 return this.loadFileToDisk(domain, fileCode);
             }
+            else if (FileStorageAction.SaveFile.name.equals(action)) {
+                String path = data.getString("path");
+                FileLabel fileLabel = new FileLabel(data.getJSONObject("fileLabel"));
+                FileLabel result = saveFile(fileLabel, new File(path));
+                if (null != result) {
+                    return result.toCompactJSON();
+                }
+            }
+        }
+        else if (event instanceof File) {
+            String filename = ((File) event).getName();
+            return this.writeFile(filename, (File) event);
         }
 
         return null;
@@ -600,6 +664,7 @@ public class FileStorageService extends AbstractModule {
      * 从授权模块获取指定域对应的文件访问地址。
      *
      * @param domain
+     * @param appKey
      * @return
      */
     private String[] getFileURLs(String domain, String appKey) {

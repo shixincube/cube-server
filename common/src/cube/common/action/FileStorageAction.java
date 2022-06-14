@@ -49,6 +49,11 @@ public enum FileStorageAction {
     LoadFile("loadFile"),
 
     /**
+     * 保存本地文件到系统。
+     */
+    SaveFile("saveFile"),
+
+    /**
      * 获取根目录信息。
      */
     GetRoot("getRoot"),

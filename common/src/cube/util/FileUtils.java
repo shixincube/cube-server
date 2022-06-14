@@ -103,11 +103,14 @@ public final class FileUtils {
         if (buf.length() < 64) {
             buf.append("_").append(contactId.toString());
         }
+        if (buf.length() < 64) {
+            buf.append("_").append(domain);
+        }
 
-        String keystr = buf.toString();
+        String keyStr = buf.toString();
 
         // 将 Key 串切割
-        List<byte[]> list = FileUtils.slice(keystr.getBytes(Charset.forName("UTF-8")), 64);
+        List<byte[]> list = FileUtils.slice(keyStr.getBytes(Charset.forName("UTF-8")), 64);
 
         // Hash
         String code = FileUtils.fastHash(list);
@@ -130,11 +133,14 @@ public final class FileUtils {
         if (buf.length() < 64) {
             buf.append("_").append(identification);
         }
+        if (buf.length() < 64) {
+            buf.append("_").append(domain);
+        }
 
-        String keystr = buf.toString();
+        String keyStr = buf.toString();
 
         // 将 Key 串切割
-        List<byte[]> list = FileUtils.slice(keystr.getBytes(Charset.forName("UTF-8")), 64);
+        List<byte[]> list = FileUtils.slice(keyStr.getBytes(Charset.forName("UTF-8")), 64);
 
         // Hash
         String code = FileUtils.fastHash(list);

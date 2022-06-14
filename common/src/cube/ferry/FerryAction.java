@@ -97,13 +97,20 @@ public enum FerryAction {
 
     /**
      * 连通性验证。
+     * (C->S->B->H)
      */
     Ping("ping"),
 
     /**
      * 连通性应答。
+     * (H->B->S->C)
      */
     PingAck("pingAck"),
+
+    /**
+     * 报告数据。
+     */
+    Report("report"),
 
     /**
      * 标记文件标签。

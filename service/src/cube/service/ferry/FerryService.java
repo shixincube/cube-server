@@ -53,11 +53,15 @@ import cube.service.ferry.plugin.*;
 import cube.service.ferry.tenet.CleanupTenet;
 import cube.service.ferry.tenet.Tenet;
 import cube.storage.StorageType;
+import cube.util.CodeUtils;
 import cube.util.ConfigUtils;
+import cube.util.FileUtils;
+import cube.vision.Color;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -218,6 +222,9 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
         DomainInfo domainInfo = this.getDomainInfo(domain);
         if (null == domainInfo || null == domainInfo.getInvitationCode()) {
+            // 创建访问二维码
+            FileLabel codeFile = this.makeQRCodeFile(domain);
+
             // 写入数据
             this.storage.writeDomainInfo(domain, ticket.getLicenceBeginning(), ticket.getLicenceDuration(),
                     ticket.getLicenceLimit(), dialect.getParamAsString("address"));
@@ -307,6 +314,40 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             ModuleEvent event = new ModuleEvent(NAME, FerryAction.Offline.name, eventData);
             this.contactsAdapter.publish(contact.getUniqueKey(), event.toJSON());
         }
+    }
+
+    private FileLabel makeQRCodeFile(String domainName) {
+        String string = "https://box.shixincube.com/box/" + domainName;
+        File qrFile = new File("storage/tmp/ferry_qrcode_" + domainName + ".jpg");
+        // 生成二维码文件
+        if (CodeUtils.generateQRCode(qrFile, string, 400, 400, new Color("#000000"))) {
+            AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+
+            // 生成文件码
+            String fileCode = FileUtils.makeFileCode(0L, domainName, qrFile.getName());
+
+            // 生成文件标签
+            FileLabel fileLabel = FileUtils.makeFileLabel(domainName, fileCode, 0L, qrFile);
+            // 10 年期
+            fileLabel.setExpiryTime(System.currentTimeMillis() + 10L * 365 * 24 * 60 * 60 * 1000);
+
+            JSONObject notifyData = new JSONObject();
+            notifyData.put("path", qrFile.getAbsolutePath());
+            notifyData.put("fileLabel", fileLabel.toJSON());
+            JSONObject result = (JSONObject) fileStorage.notify(notifyData);
+            if (null != result) {
+                // 删除文件
+                qrFile.delete();
+
+                return new FileLabel(result);
+            }
+        }
+
+        if (qrFile.exists()) {
+            qrFile.delete();
+        }
+
+        return null;
     }
 
     /**

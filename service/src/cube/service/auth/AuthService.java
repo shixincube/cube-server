@@ -312,6 +312,7 @@ public class AuthService extends AbstractModule {
      * 获取指定域的主描述内容。
      *
      * @param domain 指定域名称。
+     * @param appKey 指定 App Key 。
      * @return 返回指定域的主描述内容。
      */
     public JSONObject getPrimaryContent(String domain, String appKey) {

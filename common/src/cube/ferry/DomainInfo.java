@@ -28,6 +28,7 @@ package cube.ferry;
 
 import cell.util.Utils;
 import cube.common.entity.Entity;
+import cube.common.entity.FileLabel;
 import org.json.JSONObject;
 
 /**
@@ -44,6 +45,8 @@ public class DomainInfo extends Entity {
     private String address;
 
     private String invitationCode;
+
+    private FileLabel qrCodeFileLabel;
 
     public DomainInfo(String domainName, long beginning, long duration, int limit) {
         super(Utils.generateSerialNumber(), domainName);
