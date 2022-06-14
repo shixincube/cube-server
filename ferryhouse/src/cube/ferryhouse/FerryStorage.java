@@ -27,11 +27,11 @@
 package cube.ferryhouse;
 
 import cell.core.talk.LiteralBase;
-import cell.core.talk.dialect.ActionDialect;
 import cell.util.Cryptology;
 import cell.util.log.Logger;
 import cube.common.Storagable;
 import cube.common.entity.Contact;
+import cube.common.entity.FileLabel;
 import cube.common.entity.Message;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -39,7 +39,9 @@ import cube.core.Storage;
 import cube.core.StorageField;
 import cube.ferry.DomainMember;
 import cube.storage.StorageFactory;
+import cube.storage.StorageFields;
 import cube.storage.StorageType;
+import cube.util.FileType;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
@@ -160,6 +162,54 @@ public class FerryStorage implements Storagable {
             })
     };
 
+    private final StorageField[] fileLabelFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("owner_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("file_name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("file_size", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("last_modified", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("completed_time", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("expiry_time", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            new StorageField("file_type", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("md5", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("sha1", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("file_url", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("file_secure_url", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("direct_url", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            })
+    };
+
     private final String propertyTable = "property";
 
     private final String contactTable = "contact";
@@ -167,6 +217,8 @@ public class FerryStorage implements Storagable {
     private final String domainMemberTable = "domain_member";
 
     private final String messageTable = "message";
+
+    private final String fileLabelTable = "file_label";
 
     private Storage storage;
 
@@ -201,6 +253,7 @@ public class FerryStorage implements Storagable {
         checkContactTable();
         checkDomainMemberTable();
         checkMessageTable();
+        checkFileLabelTable();
     }
 
     public void writeLicence(JSONObject licenceJson) {
@@ -447,6 +500,89 @@ public class FerryStorage implements Storagable {
         });
     }
 
+    /**
+     * 写入文件标签数据。
+     *
+     * @param fileLabel
+     */
+    public void writeFileLabel(FileLabel fileLabel) {
+        List<StorageField[]> result = this.storage.executeQuery(this.fileLabelTable, new StorageField[] {
+                new StorageField("sn", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("file_code", fileLabel.getFileCode())
+        });
+
+        StorageField[] fields = new StorageField[] {
+                new StorageField("id", fileLabel.getId().longValue()),
+                new StorageField("file_code", fileLabel.getFileCode()),
+                new StorageField("owner_id", fileLabel.getOwnerId().longValue()),
+                new StorageField("file_name", fileLabel.getFileName()),
+                new StorageField("file_size", fileLabel.getFileSize()),
+                new StorageField("last_modified", fileLabel.getLastModified()),
+                new StorageField("completed_time", fileLabel.getCompletedTime()),
+                new StorageField("expiry_time", fileLabel.getExpiryTime()),
+                new StorageField("file_type", fileLabel.getFileType().getPreferredExtension()),
+                new StorageField("md5", fileLabel.getMD5Code()),
+                new StorageField("sha1", fileLabel.getSHA1Code()),
+                new StorageField("file_url", fileLabel.getFileURL()),
+                new StorageField("file_secure_url", fileLabel.getFileSecureURL()),
+                new StorageField("direct_url", fileLabel.getDirectURL())
+        };
+
+        if (result.isEmpty()) {
+            // 插入
+            this.storage.executeInsert(this.fileLabelTable, fields);
+        }
+        else {
+            // 更新
+            this.storage.executeUpdate(this.fileLabelTable, fields, new Conditional[] {
+                    Conditional.createEqualTo("sn", result.get(0)[0].getLong())
+            });
+        }
+    }
+
+    /**
+     * 读取文件标签。
+     *
+     * @param fileCode
+     * @return
+     */
+    public FileLabel readFileLabel(String fileCode) {
+        List<StorageField[]> result = this.storage.executeQuery(this.fileLabelTable, this.fileLabelFields, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("file_code", fileCode))
+        });
+
+        if (!result.isEmpty()) {
+            StorageField[] fields = result.get(0);
+
+            // 将字段转为映射关系，便于代码阅读
+            Map<String, StorageField> map = StorageFields.get(fields);
+
+            FileLabel label = new FileLabel(map.get("id").getLong(), this.domainName, map.get("file_code").getString(),
+                    map.get("owner_id").getLong(), map.get("file_name").getString(), map.get("file_size").getLong(),
+                    map.get("last_modified").getLong(), map.get("completed_time").getLong(), map.get("expiry_time").getLong());
+
+            label.setFileType(FileType.matchExtension(map.get("file_type").getString()));
+
+            if (!map.get("md5").isNullValue()) {
+                label.setMD5Code(map.get("md5").getString());
+            }
+
+            if (!map.get("sha1").isNullValue()) {
+                label.setSHA1Code(map.get("sha1").getString());
+            }
+
+            label.setFileURLs(map.get("file_url").getString(),
+                    (map.get("file_secure_url").isNullValue()) ? null : map.get("file_secure_url").getString());
+
+            label.setDirectURL(map.get("direct_url").isNullValue() ? null : map.get("direct_url").getString());
+
+            return label;
+        }
+
+        return null;
+    }
+
     private void checkPropertyTable() {
         if (!this.storage.exist(this.propertyTable)) {
             // 不存在，建新表
@@ -479,6 +615,15 @@ public class FerryStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.messageTable, this.messageFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.messageTable + "' successfully");
+            }
+        }
+    }
+
+    private void checkFileLabelTable() {
+        if (!this.storage.exist(this.fileLabelTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.fileLabelTable, this.fileLabelFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.fileLabelTable + "' successfully");
             }
         }
     }

@@ -82,6 +82,8 @@ public class Ferryhouse implements TalkListener {
      */
     private LinkedList<ActionDialect> preparedQueue;
 
+    private FileManager fileManager;
+
     private Ferryhouse() {
         this.checkedIn = new AtomicBoolean(false);
         this.preparedQueue = new LinkedList<>();
@@ -148,11 +150,17 @@ public class Ferryhouse implements TalkListener {
                 // 更新许可证数据
                 ferryStorage.writeLicence(licence);
 
+                fileManager = new FileManager(domain, ferryStorage);
+
                 // 从数据库加载偏好设置
                 Preferences preferences = loadPreferences();
                 refreshWithPreferences(preferences);
             }
         }).start();
+    }
+
+    public FileManager getFileManager() {
+        return this.fileManager;
     }
 
     public void quit() {
@@ -280,7 +288,7 @@ public class Ferryhouse implements TalkListener {
         }
         else if (FerryPort.SaveFile.equals(port)) {
             FileLabel fileLabel = new FileLabel(actionDialect.getParamAsJson("fileLabel"));
-            FileManager.getInstance().saveFile(fileLabel);
+            this.fileManager.saveFileLabel(fileLabel);
         }
         else if (FerryPort.TransferIntoMember.equals(port)) {
             this.transferIntoMember(actionDialect);
@@ -352,7 +360,8 @@ public class Ferryhouse implements TalkListener {
 
     @Override
     public void onListened(Speakable speakable, String cellet, PrimitiveInputStream primitiveInputStream) {
-        // Nothing
+        // 保存文件流
+        this.fileManager.saveFileInputStream(primitiveInputStream);
     }
 
     @Override

@@ -26,23 +26,117 @@
 
 package cube.ferryhouse;
 
+import cell.core.talk.PrimitiveInputStream;
+import cell.util.Cryptology;
+import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 文件管理器。
  */
 public final class FileManager {
 
-    private final static FileManager instance = new FileManager();
+    private String domainName;
 
-    private FileManager() {
+    private FerryStorage storage;
+
+    private Path filePath;
+
+    private final int maxThreadNum = 2;
+
+    private AtomicInteger threadCount = new AtomicInteger(0);
+
+    private Queue<PrimitiveInputStream> streamQueue = new ConcurrentLinkedQueue<>();
+
+    public FileManager(String domainName, FerryStorage ferryStorage) {
+        this.domainName = domainName;
+        this.storage = ferryStorage;
+
+        String path = Cryptology.getInstance().hashWithMD5AsString(domainName.getBytes(StandardCharsets.UTF_8));
+        this.filePath = Paths.get(path + "/files");
+        if (!Files.exists(this.filePath)) {
+            try {
+                Files.createDirectories(this.filePath);
+            } catch (IOException e) {
+            }
+        }
     }
 
-    public static FileManager getInstance() {
-        return FileManager.instance;
+    /**
+     * 保存文件标签。
+     *
+     * @param fileLabel
+     */
+    public void saveFileLabel(FileLabel fileLabel) {
+        this.storage.writeFileLabel(fileLabel);
     }
 
-    public void saveFile(FileLabel fileLabel) {
+    /**
+     * 保存文件流。
+     *
+     * @param primitiveInputStream
+     */
+    public void saveFileInputStream(PrimitiveInputStream primitiveInputStream) {
+        // 将流添加到队列
+        this.streamQueue.offer(primitiveInputStream);
 
+        if (this.threadCount.get() >= this.maxThreadNum) {
+            return;
+        }
+
+        this.threadCount.incrementAndGet();
+
+        (new Thread() {
+            @Override
+            public void run() {
+                PrimitiveInputStream inputStream = streamQueue.poll();
+                while (null != inputStream) {
+                    String filename = inputStream.getName();
+                    FileOutputStream fileOutputStream = null;
+                    try {
+                        fileOutputStream = new FileOutputStream(new File(filePath.toString(), filename));
+
+                        byte[] bytes = new byte[256];
+                        int length = 0;
+                        while ((length = inputStream.read(bytes)) > 0) {
+                            fileOutputStream.write(bytes, 0, length);
+                        }
+                    } catch (IOException e) {
+                        Logger.w(FileManager.class, "#saveFileInputStream", e);
+                    } finally {
+                        if (null != fileOutputStream) {
+                            try {
+                                fileOutputStream.close();
+                            } catch (IOException e) {
+                                // Nothing
+                            }
+                        }
+
+                        try {
+                            inputStream.close();
+                        } catch (IOException e) {
+                            // Nothing
+                        }
+                    }
+
+                    inputStream = streamQueue.poll();
+                }
+
+                // 更新线程数量计数
+                threadCount.decrementAndGet();
+            }
+        }).start();
     }
 }

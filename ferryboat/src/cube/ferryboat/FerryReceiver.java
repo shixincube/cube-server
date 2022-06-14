@@ -105,12 +105,14 @@ public class FerryReceiver implements TalkListener {
 
             byte[] bytes = new byte[256];
             int length = 0;
+            // 发送流
             PrimitiveOutputStream pos = Ferryboat.getInstance().getCellet().speakStream(ticket.talkContext,
                     primitiveInputStream.getName());
             try {
                 while ((length = primitiveInputStream.read(bytes)) > 0) {
-
+                    pos.write(bytes, 0, length);
                 }
+                pos.flush();
             } catch (IOException e) {
                 Logger.w(FerryReceiver.this.getClass(), "#processInputStream", e);
             } finally {
