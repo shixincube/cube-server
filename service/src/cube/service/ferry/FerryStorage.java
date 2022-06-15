@@ -30,6 +30,7 @@ import cell.core.net.Endpoint;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
+import cube.common.entity.FileLabel;
 import cube.common.entity.IceServer;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -105,6 +106,9 @@ public class FerryStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("invitation_code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("qrcode_file", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
             new StorageField("address", LiteralBase.STRING, new Constraint[] {
@@ -293,7 +297,8 @@ public class FerryStorage implements Storagable {
 
     public void writeDomainInfo(DomainInfo domainInfo) {
         this.writeDomainInfo(domainInfo.getDomain().getName(), domainInfo.getBeginning(),
-                domainInfo.getDuration(), domainInfo.getLimit(), domainInfo.getAddress());
+                domainInfo.getDuration(), domainInfo.getLimit(), domainInfo.getQRCodeFileLabel(),
+                domainInfo.getAddress());
     }
 
     /**
@@ -303,9 +308,11 @@ public class FerryStorage implements Storagable {
      * @param beginning
      * @param duration
      * @param limit
+     * @param qrCodeFile
      * @param address
      */
-    public synchronized void writeDomainInfo(String domainName, long beginning, long duration, int limit, String address) {
+    public synchronized void writeDomainInfo(String domainName, long beginning, long duration, int limit,
+                                             FileLabel qrCodeFile, String address) {
         List<StorageField[]> result = this.storage.executeQuery(this.domainInfoTable, new StorageField[] {
                 new StorageField("sn", LiteralBase.LONG)
         }, new Conditional[] {
@@ -319,6 +326,7 @@ public class FerryStorage implements Storagable {
                     new StorageField("beginning", beginning),
                     new StorageField("duration", duration),
                     new StorageField("limit", limit),
+                    new StorageField("qrcode_file", qrCodeFile.toJSON().toString()),
                     new StorageField("address", address)
             });
         }
@@ -328,6 +336,7 @@ public class FerryStorage implements Storagable {
                     new StorageField("beginning", beginning),
                     new StorageField("duration", duration),
                     new StorageField("limit", limit),
+                    new StorageField("qrcode_file", qrCodeFile.toJSON().toString()),
                     new StorageField("address", address)
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", result.get(0)[0].getLong())
@@ -389,7 +398,9 @@ public class FerryStorage implements Storagable {
         long beginning = map.get("beginning").getLong();
         long duration = map.get("duration").getLong();
         int limit = map.get("limit").getInt();
-        DomainInfo domainInfo = new DomainInfo(domainName, beginning, duration, limit);
+        String fileLabelJSONString = map.get("qrcode_file").getString();
+        FileLabel fileLabel = new FileLabel(new JSONObject(fileLabelJSONString));
+        DomainInfo domainInfo = new DomainInfo(domainName, beginning, duration, limit, fileLabel);
 
         if (!map.get("address").isNullValue()) {
             domainInfo.setAddress(map.get("address").getString());

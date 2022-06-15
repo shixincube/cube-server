@@ -40,6 +40,7 @@ import cell.util.log.Logger;
 import cube.common.ModuleEvent;
 import cube.common.Packet;
 import cube.common.UniqueKey;
+import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -68,7 +69,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * 摆渡数据服务。
@@ -221,20 +221,21 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         }
 
         DomainInfo domainInfo = this.getDomainInfo(domain);
-        if (null == domainInfo || null == domainInfo.getInvitationCode()) {
+        if (null == domainInfo) {
             // 创建访问二维码
             FileLabel codeFile = this.makeQRCodeFile(domain);
 
             // 写入数据
             this.storage.writeDomainInfo(domain, ticket.getLicenceBeginning(), ticket.getLicenceDuration(),
-                    ticket.getLicenceLimit(), dialect.getParamAsString("address"));
+                    ticket.getLicenceLimit(), codeFile, dialect.getParamAsString("address"));
             // 写入邀请码
             this.storage.updateInvitationCode(domain, Utils.randomNumberString(6));
         }
         else {
             // 更新数据
             this.storage.writeDomainInfo(domain, ticket.getLicenceBeginning(), ticket.getLicenceDuration(),
-                    ticket.getLicenceLimit(), dialect.getParamAsString("address"));
+                    ticket.getLicenceLimit(), domainInfo.getQRCodeFileLabel(),
+                    dialect.getParamAsString("address"));
         }
 
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
@@ -332,14 +333,19 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             fileLabel.setExpiryTime(System.currentTimeMillis() + 10L * 365 * 24 * 60 * 60 * 1000);
 
             JSONObject notifyData = new JSONObject();
+            notifyData.put("action", FileStorageAction.SaveFile.name);
             notifyData.put("path", qrFile.getAbsolutePath());
             notifyData.put("fileLabel", fileLabel.toJSON());
-            JSONObject result = (JSONObject) fileStorage.notify(notifyData);
-            if (null != result) {
-                // 删除文件
-                qrFile.delete();
+            try {
+                JSONObject result = (JSONObject) fileStorage.notify(notifyData);
+                if (null != result) {
+                    // 删除文件
+                    qrFile.delete();
 
-                return new FileLabel(result);
+                    return new FileLabel(result);
+                }
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#makeQRCodeFile", e);
             }
         }
 

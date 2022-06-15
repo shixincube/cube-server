@@ -48,11 +48,12 @@ public class DomainInfo extends Entity {
 
     private FileLabel qrCodeFileLabel;
 
-    public DomainInfo(String domainName, long beginning, long duration, int limit) {
+    public DomainInfo(String domainName, long beginning, long duration, int limit, FileLabel qrCodeFileLabel) {
         super(Utils.generateSerialNumber(), domainName);
         this.beginning = beginning;
         this.duration = duration;
         this.limit = limit;
+        this.qrCodeFileLabel = qrCodeFileLabel;
     }
 
     public DomainInfo(JSONObject json) {
@@ -67,6 +68,10 @@ public class DomainInfo extends Entity {
 
         if (json.has("invitationCode")) {
             this.invitationCode = json.getString("invitationCode");
+        }
+
+        if (json.has("qrCodeFileLabel")) {
+            this.qrCodeFileLabel = new FileLabel(json.getJSONObject("qrCodeFileLabel"));
         }
     }
 
@@ -102,6 +107,14 @@ public class DomainInfo extends Entity {
         return this.invitationCode;
     }
 
+    public void setQRCodeFileLabel(FileLabel fileLabel) {
+        this.qrCodeFileLabel = fileLabel;
+    }
+
+    public FileLabel getQRCodeFileLabel() {
+        return this.qrCodeFileLabel;
+    }
+
     public JSONObject toLicence() {
         JSONObject data = new JSONObject();
         data.put("domain", this.domain.getName());
@@ -124,6 +137,10 @@ public class DomainInfo extends Entity {
 
         if (null != this.invitationCode) {
             json.put("invitationCode", this.invitationCode);
+        }
+
+        if (null != this.qrCodeFileLabel) {
+            json.put("qrCodeFileLabel", this.qrCodeFileLabel.toJSON());
         }
 
         return json;
