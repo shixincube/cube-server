@@ -618,7 +618,8 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
      * @return
      */
     public List<DomainMember> listDomainMember(String domainName) {
-        return this.storage.queryMembers(domainName);
+        List<DomainMember> memberList = this.storage.queryMembers(domainName);
+        return this.checkRole(memberList);
     }
 
     /**
@@ -629,7 +630,49 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
      * @return
      */
     public List<DomainMember> listDomainMember(String domainName, int state) {
-        return this.storage.queryMembers(domainName, state);
+        List<DomainMember> memberList = this.storage.queryMembers(domainName, state);
+        return this.checkRole(memberList);
+    }
+
+    /**
+     * 检查角色。
+     *
+     * @param memberList
+     * @return
+     */
+    private List<DomainMember> checkRole(List<DomainMember> memberList) {
+        int adminCount = 0;
+        DomainMember first = null;
+        long timestamp = System.currentTimeMillis();
+        for (DomainMember member : memberList) {
+            if (member.getRole() == Role.Administrator) {
+                ++adminCount;
+            }
+
+            if (member.getJoinTime() < timestamp) {
+                first = member;
+                timestamp = member.getJoinTime();
+            }
+        }
+
+        if (adminCount == 1) {
+            return memberList;
+        }
+
+        for (DomainMember member : memberList) {
+            if (first.getContactId().equals(member.getContactId())) {
+                first.setRole(Role.Administrator);
+                this.storage.updateMemberRole(first);
+            }
+            else {
+                if (member.getRole() == Role.Administrator) {
+                    member.setRole(Role.Member);
+                    this.storage.updateMemberRole(member);
+                }
+            }
+        }
+
+        return memberList;
     }
 
     /**

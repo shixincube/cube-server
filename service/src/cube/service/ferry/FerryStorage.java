@@ -476,6 +476,21 @@ public class FerryStorage implements Storagable {
     }
 
     /**
+     * 更新成员角色。
+     *
+     * @param member
+     */
+    public void updateMemberRole(DomainMember member) {
+        this.storage.executeUpdate(this.domainMemberTable, new StorageField[] {
+                new StorageField("role", member.getRole().code)
+        }, new Conditional[] {
+                Conditional.createEqualTo("domain", member.getDomain().getName()),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("contact_id", member.getContactId())
+        });
+    }
+
+    /**
      * 写入域成员数据。
      *
      * @param member

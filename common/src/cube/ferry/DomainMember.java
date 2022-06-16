@@ -72,6 +72,10 @@ public class DomainMember extends Entity {
         return this.contactId;
     }
 
+    public long getJoinTime() {
+        return this.joinTime;
+    }
+
     public void setJoinWay(JoinWay joinWay) {
         this.joinWay = joinWay;
     }
