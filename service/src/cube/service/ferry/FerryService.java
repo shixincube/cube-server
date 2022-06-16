@@ -97,6 +97,8 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
     private Map<Integer, AckBundle> ackBundles;
 
+    private Map<String, BoxReport> boxReportMap;
+
     public FerryService(FerryCellet cellet) {
         super();
         this.cellet = cellet;
@@ -104,6 +106,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         this.pushQueue = new ConcurrentLinkedQueue<>();
         this.streamQueue = new ConcurrentLinkedQueue<>();
         this.ackBundles = new ConcurrentHashMap<>();
+        this.boxReportMap = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -192,6 +195,8 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         }
 
         TenetManager.getInstance().stop();
+
+        this.boxReportMap.clear();
     }
 
     @Override
@@ -452,7 +457,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         return bundle;
     }
 
-    public void notifyAckBundles(ActionDialect actionDialect) {
+    protected void notifyAckBundles(ActionDialect actionDialect) {
         if (!actionDialect.containsParam("sn")) {
             return;
         }
@@ -464,6 +469,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         }
 
         ackBundle.end = System.currentTimeMillis();
+        ackBundle.response = actionDialect;
 
         synchronized (ackBundle) {
             ackBundle.notify();
@@ -770,6 +776,69 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         return this.storage.readAndDeleteTenets(domainName, contactId);
     }
 
+    /**
+     *
+     * @param domainName
+     * @return
+     */
+    public BoxReport getBoxReport(String domainName) {
+        BoxReport report = this.boxReportMap.get(domainName);
+        if (null != report && System.currentTimeMillis() - report.getTimestamp() < 60 * 60 * 1000) {
+            return report;
+        }
+
+        // 向指定 House 获取报告
+        Ticket ticket = this.tickets.get(domainName);
+        if (null == ticket) {
+            Logger.i(this.getClass(), "#getBoxReport - Domain is offline: " + domainName);
+            return report;
+        }
+
+        Integer sn = Utils.randomUnsigned();
+
+        ActionDialect actionDialect = new ActionDialect(FerryAction.Report.name);
+        actionDialect.addParam("sn", sn.intValue());
+        actionDialect.addParam("domain", domainName);
+        this.cellet.speak(ticket.talkContext, actionDialect);
+
+        AckBundle bundle = new AckBundle(actionDialect);
+        this.ackBundles.put(sn, bundle);
+
+        if (!this.cellet.speak(ticket.talkContext, actionDialect)) {
+            this.ackBundles.remove(sn);
+            return report;
+        }
+
+        synchronized (bundle) {
+            try {
+                bundle.wait(60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        this.ackBundles.remove(sn);
+
+        if (null == bundle.response) {
+            Logger.i(this.getClass(), "#getBoxReport - House NO ack: " + domainName);
+            return report;
+        }
+
+        JSONObject reportJSON = bundle.response.getParamAsJson("report");
+        if (!reportJSON.has("domain")) {
+            Logger.i(this.getClass(), "#getBoxReport - House NO report: " + domainName);
+            return report;
+        }
+
+        // 序列化报告
+        report = new BoxReport(reportJSON);
+
+        // 更新缓存
+        this.boxReportMap.put(domainName, report);
+
+        return report;
+    }
+
     private void setup() {
         AbstractModule messagingModule = this.getKernel().getModule("Messaging");
         if (null != messagingModule) {
@@ -890,6 +959,8 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         public long end;
 
         public final ActionDialect request;
+
+        public ActionDialect response;
 
         public AckBundle(ActionDialect request) {
             this.start = System.currentTimeMillis();

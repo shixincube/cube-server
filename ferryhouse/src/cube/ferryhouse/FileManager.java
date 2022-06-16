@@ -30,6 +30,7 @@ import cell.core.talk.PrimitiveInputStream;
 import cell.util.Cryptology;
 import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
+import cube.ferry.BoxReport;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -138,5 +139,9 @@ public final class FileManager {
                 threadCount.decrementAndGet();
             }
         }).start();
+    }
+
+    public void calcUsage(BoxReport report) {
+
     }
 }

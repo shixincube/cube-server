@@ -38,6 +38,7 @@ import cell.util.log.Logger;
 import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 import cube.common.entity.Message;
+import cube.ferry.BoxReport;
 import cube.ferry.DomainMember;
 import cube.ferry.FerryAction;
 import cube.ferry.FerryPort;
@@ -161,6 +162,10 @@ public class Ferryhouse implements TalkListener {
 
     public FileManager getFileManager() {
         return this.fileManager;
+    }
+
+    public BoxReport generateReport() {
+        return null;
     }
 
     public void quit() {
@@ -351,6 +356,16 @@ public class Ferryhouse implements TalkListener {
             ActionDialect response = new ActionDialect(FerryAction.PingAck.name);
             response.addParam("sn", sn);
             response.addParam("domain", this.domain);
+            this.nucleus.getTalkService().speak(FERRY, response);
+        }
+        else if (FerryAction.Report.name.equals(action)) {
+            BoxReport report = this.generateReport();
+
+            int sn = actionDialect.getParamAsInt("sn");
+            ActionDialect response = new ActionDialect(FerryAction.ReportAck.name);
+            response.addParam("sn", sn);
+            response.addParam("domain", this.domain);
+            response.addParam("report", (null != report) ? report.toJSON() : new JSONObject());
             this.nucleus.getTalkService().speak(FERRY, response);
         }
         else if (FerryAction.Synchronize.name.equals(action)) {

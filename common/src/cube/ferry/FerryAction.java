@@ -109,8 +109,16 @@ public enum FerryAction {
 
     /**
      * 报告数据。
+     * (C-S)
+     * (B-H)
      */
     Report("report"),
+
+    /**
+     * 报告数据应答。
+     * (H->B->S)
+     */
+    ReportAck("reportAck"),
 
     /**
      * 标记文件标签。

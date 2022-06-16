@@ -30,20 +30,24 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.Contact;
+import cube.ferry.BoxReport;
 import cube.ferry.FerryStateCode;
 import cube.service.ServiceTask;
+import cube.service.contact.ContactManager;
 import cube.service.ferry.FerryCellet;
 import cube.service.ferry.FerryService;
 import org.json.JSONObject;
 
 /**
- * 连通性检测任务。
+ * 获取报告任务。
  */
-public class PingTask extends ServiceTask {
+public class ReportTask extends ServiceTask {
 
-    public PingTask(FerryCellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public ReportTask(FerryCellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -53,42 +57,37 @@ public class PingTask extends ServiceTask {
         Packet packet = new Packet(action);
 
         JSONObject data = packet.data;
-        if (!data.has("domain")) {
+
+        String tokenCode = this.getTokenCode(action);
+        if (null == tokenCode) {
+            Logger.w(this.getClass(), "No token parameter");
+
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FerryStateCode.InvalidToken.code, data));
+            markResponseTime();
+            return;
+        }
+
+        Contact contact = ContactManager.getInstance().getContact(tokenCode);
+        if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FerryStateCode.InvalidParameter.code, data));
             markResponseTime();
             return;
         }
 
-        boolean touch = false;
-        if (data.has("touch")) {
-            touch = data.getBoolean("touch");
-        }
-
-        String domain = data.getString("domain");
+        // 获取报告
         FerryService service = ((FerryCellet) this.cellet).getFerryService();
-
-        boolean online = false;
-        long duration = 0;
-
-        if (touch) {
-            FerryService.AckBundle ackBundle = service.touchFerryHouse(domain, 60 * 1000);
-            if (null != ackBundle) {
-                online = true;
-                duration = ackBundle.end - ackBundle.start;
-            }
+        BoxReport boxReport = service.getBoxReport(contact.getDomain().getName());
+        if (null == boxReport) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FerryStateCode.InvalidDomain.code, data));
+            markResponseTime();
+            return;
         }
-        else {
-            online = service.isOnlineDomain(domain);
-        }
-
-        JSONObject response = new JSONObject();
-        response.put("domain", domain);
-        response.put("online", online);
-        response.put("duration", duration);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, FerryStateCode.Ok.code, response));
+                this.makeResponse(action, packet, FerryStateCode.Ok.code, boxReport.toJSON()));
         markResponseTime();
     }
 }

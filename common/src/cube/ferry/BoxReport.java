@@ -28,15 +28,65 @@ package cube.ferry;
 
 import cell.util.Utils;
 import cube.common.entity.Entity;
+import org.json.JSONObject;
 
 /**
  * 报告。
  */
-public class FerryReport extends Entity {
+public class BoxReport extends Entity {
 
-    public FerryReport(String domainName) {
+    private long imageFilesUsedSize;
+
+    private long docFilesUsedSize;
+
+    private long videoFilesUsedSize;
+
+    private long audioFilesUsedSize;
+
+    private long packageFilesUsedSize;
+
+    private long otherFilesUsedSize;
+
+    /**
+     * 空闲磁盘空间。
+     */
+    private long freeDiskSize;
+
+    public BoxReport(String domainName) {
         super(Utils.randomUnsignedLong(), domainName);
     }
 
+    public BoxReport(JSONObject json) {
+        super(json);
+    }
 
+    public void setImageFilesUsedSize(long size) {
+        this.imageFilesUsedSize = size;
+    }
+
+    public void setDocFilesUsedSize(long size) {
+        this.docFilesUsedSize = size;
+    }
+
+    public void setVideoFilesUsedSize(long size) {
+        this.videoFilesUsedSize = size;
+    }
+
+    public void setAudioFilesUsedSize(long size) {
+        this.audioFilesUsedSize = size;
+    }
+
+    public void setPackageFilesUsedSize(long size) {
+        this.packageFilesUsedSize = size;
+    }
+
+    public void setOtherFilesUsedSize(long size) {
+        this.otherFilesUsedSize = size;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        return json;
+    }
 }

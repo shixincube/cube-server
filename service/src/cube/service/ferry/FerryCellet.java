@@ -95,6 +95,18 @@ public class FerryCellet extends AbstractCellet {
                 }
             });
         }
+        else if (FerryAction.Report.name.equals(action)) {
+            this.executor.execute(new ReportTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (FerryAction.ReportAck.name.equals(action)) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ferryService.notifyAckBundles(dialect);
+                }
+            });
+        }
         else if (FerryAction.TakeOutTenet.name.equals(action)) {
             this.executor.execute(new TakeOutTenetTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
