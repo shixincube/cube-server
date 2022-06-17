@@ -58,6 +58,13 @@ public class BoxReport extends Entity {
 
     public BoxReport(JSONObject json) {
         super(json);
+        this.freeDiskSize = json.getLong("freeDiskSize");
+        this.imageFilesUsedSize = json.getLong("imageFilesUsedSize");
+        this.docFilesUsedSize = json.getLong("docFilesUsedSize");
+        this.videoFilesUsedSize = json.getLong("videoFilesUsedSize");
+        this.audioFilesUsedSize = json.getLong("audioFilesUsedSize");
+        this.packageFilesUsedSize = json.getLong("packageFilesUsedSize");
+        this.otherFilesUsedSize = json.getLong("otherFilesUsedSize");
     }
 
     public void setFreeDiskSize(long size) {
@@ -72,24 +79,48 @@ public class BoxReport extends Entity {
         this.imageFilesUsedSize = size;
     }
 
+    public long getImageFilesUsedSize() {
+        return this.imageFilesUsedSize;
+    }
+
     public void setDocFilesUsedSize(long size) {
         this.docFilesUsedSize = size;
+    }
+
+    public long getDocFilesUsedSize() {
+        return this.docFilesUsedSize;
     }
 
     public void setVideoFilesUsedSize(long size) {
         this.videoFilesUsedSize = size;
     }
 
+    public long getVideoFilesUsedSize() {
+        return this.videoFilesUsedSize;
+    }
+
     public void setAudioFilesUsedSize(long size) {
         this.audioFilesUsedSize = size;
+    }
+
+    public long getAudioFilesUsedSize() {
+        return this.audioFilesUsedSize;
     }
 
     public void setPackageFilesUsedSize(long size) {
         this.packageFilesUsedSize = size;
     }
 
+    public long getPackageFilesUsedSize() {
+        return this.packageFilesUsedSize;
+    }
+
     public void setOtherFilesUsedSize(long size) {
         this.otherFilesUsedSize = size;
+    }
+
+    public long getOtherFilesUsedSize() {
+        return this.otherFilesUsedSize;
     }
 
     @Override
@@ -99,6 +130,9 @@ public class BoxReport extends Entity {
         json.put("imageFilesUsedSize", this.imageFilesUsedSize);
         json.put("docFilesUsedSize", this.docFilesUsedSize);
         json.put("videoFilesUsedSize", this.videoFilesUsedSize);
+        json.put("audioFilesUsedSize", this.audioFilesUsedSize);
+        json.put("packageFilesUsedSize", this.packageFilesUsedSize);
+        json.put("otherFilesUsedSize", this.otherFilesUsedSize);
         return json;
     }
 }

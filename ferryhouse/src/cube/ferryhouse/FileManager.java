@@ -143,6 +143,6 @@ public final class FileManager {
 
     public synchronized void calcUsage(BoxReport report) {
         List<FileLabel> fileLabels = this.storage.getAllFileLabels();
-
+        File[] files = this.filePath.toFile().listFiles();
     }
 }
