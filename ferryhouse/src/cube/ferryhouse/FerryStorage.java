@@ -45,6 +45,7 @@ import cube.util.FileType;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -581,6 +582,43 @@ public class FerryStorage implements Storagable {
         }
 
         return null;
+    }
+
+    /**
+     * 获取所有文件标签。
+     *
+     * @return
+     */
+    public List<FileLabel> getAllFileLabels() {
+        List<FileLabel> fileLabels = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.fileLabelTable, this.fileLabelFields);
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> map = StorageFields.get(fields);
+
+            FileLabel label = new FileLabel(map.get("id").getLong(), this.domainName, map.get("file_code").getString(),
+                    map.get("owner_id").getLong(), map.get("file_name").getString(), map.get("file_size").getLong(),
+                    map.get("last_modified").getLong(), map.get("completed_time").getLong(), map.get("expiry_time").getLong());
+
+            label.setFileType(FileType.matchExtension(map.get("file_type").getString()));
+
+            if (!map.get("md5").isNullValue()) {
+                label.setMD5Code(map.get("md5").getString());
+            }
+
+            if (!map.get("sha1").isNullValue()) {
+                label.setSHA1Code(map.get("sha1").getString());
+            }
+
+            label.setFileURLs(map.get("file_url").getString(),
+                    (map.get("file_secure_url").isNullValue()) ? null : map.get("file_secure_url").getString());
+
+            label.setDirectURL(map.get("direct_url").isNullValue() ? null : map.get("direct_url").getString());
+
+            fileLabels.add(label);
+        }
+
+        return fileLabels;
     }
 
     private void checkPropertyTable() {

@@ -60,6 +60,14 @@ public class BoxReport extends Entity {
         super(json);
     }
 
+    public void setFreeDiskSize(long size) {
+        this.freeDiskSize = size;
+    }
+
+    public long getFreeDiskSize() {
+        return this.freeDiskSize;
+    }
+
     public void setImageFilesUsedSize(long size) {
         this.imageFilesUsedSize = size;
     }
@@ -87,6 +95,10 @@ public class BoxReport extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        json.put("freeDiskSize", this.freeDiskSize);
+        json.put("imageFilesUsedSize", this.imageFilesUsedSize);
+        json.put("docFilesUsedSize", this.docFilesUsedSize);
+        json.put("videoFilesUsedSize", this.videoFilesUsedSize);
         return json;
     }
 }

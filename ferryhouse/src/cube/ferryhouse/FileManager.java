@@ -33,13 +33,13 @@ import cube.common.entity.FileLabel;
 import cube.ferry.BoxReport;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -141,7 +141,8 @@ public final class FileManager {
         }).start();
     }
 
-    public void calcUsage(BoxReport report) {
+    public synchronized void calcUsage(BoxReport report) {
+        List<FileLabel> fileLabels = this.storage.getAllFileLabels();
 
     }
 }

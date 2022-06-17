@@ -126,6 +126,11 @@ public class FileStorageService extends AbstractModule {
     private FileStoragePluginSystem pluginSystem;
 
     /**
+     * 文件链接管理器。
+     */
+    private FileLinkManager fileLinkManager;
+
+    /**
      * 构造函数。
      *
      * @param executor 多线程执行器。
