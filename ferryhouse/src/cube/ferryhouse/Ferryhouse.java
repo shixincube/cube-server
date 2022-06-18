@@ -164,8 +164,17 @@ public class Ferryhouse implements TalkListener {
         return this.fileManager;
     }
 
+    /**
+     * 生成报告。
+     * 
+     * @return
+     */
     public BoxReport generateReport() {
-        return null;
+        BoxReport boxReport = new BoxReport(this.domain);
+
+        this.fileManager.calcUsage(boxReport);
+
+        return boxReport;
     }
 
     public void quit() {

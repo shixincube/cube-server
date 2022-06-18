@@ -26,6 +26,9 @@
 
 package cube.ferryhouse.command;
 
+import cube.util.FileUtils;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,6 +69,22 @@ public class DiskUsage extends Command {
         return this.totalUnit;
     }
 
+    public long getTotalInBytes() {
+        long size = this.getTotal();
+        if (0 == size) {
+            return 0;
+        }
+
+        String unit = this.getTotalUnit();
+        if (unit.equalsIgnoreCase("G")) {
+            size *= FileUtils.GB;
+        }
+        else if (unit.equalsIgnoreCase("T")) {
+            size *= FileUtils.TB;
+        }
+        return size;
+    }
+
     public int getUsed() {
         if (0 == this.used) {
             this.parse();
@@ -75,6 +94,25 @@ public class DiskUsage extends Command {
 
     public String getUsedUnit() {
         return this.usedUnit;
+    }
+
+    public long getUsedInBytes() {
+        long size = this.getUsed();
+        if (0 == size) {
+            return 0;
+        }
+
+        String unit = this.getUsedUnit();
+        if (unit.equalsIgnoreCase("M")) {
+            size *= FileUtils.MB;
+        }
+        else if (unit.equalsIgnoreCase("G")) {
+            size *= FileUtils.GB;
+        }
+        else if (unit.equalsIgnoreCase("T")) {
+            size *= FileUtils.TB;
+        }
+        return size;
     }
 
     private void parse() {

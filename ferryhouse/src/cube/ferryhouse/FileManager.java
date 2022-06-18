@@ -31,6 +31,9 @@ import cell.util.Cryptology;
 import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
 import cube.ferry.BoxReport;
+import cube.ferryhouse.command.DiskUsage;
+import cube.util.FileType;
+import cube.util.FileUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -39,7 +42,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -142,7 +144,64 @@ public final class FileManager {
     }
 
     public synchronized void calcUsage(BoxReport report) {
-        List<FileLabel> fileLabels = this.storage.getAllFileLabels();
+        long imageTotalSize = 0;
+        long docTotalSize = 0;
+        long videoTotalSize = 0;
+        long audioTotalSize = 0;
+        long packageTotalSize = 0;
+        long otherTotalSize = 0;
+
         File[] files = this.filePath.toFile().listFiles();
+        if (null != files && files.length > 0) {
+            // 计算文件占用空间
+            for (File file : files) {
+                String fileCode = file.getName();
+                FileLabel fileLabel = this.storage.readFileLabel(fileCode);
+                if (null == fileLabel) {
+                    Logger.w(this.getClass(), "Can NOT find file in DB - " + fileCode);
+                    continue;
+                }
+
+                FileType fileType = fileLabel.getFileType();
+                if (FileUtils.isImageType(fileType)) {
+                    imageTotalSize += fileLabel.getFileSize();
+                }
+                else if (FileUtils.isDocumentType(fileType)) {
+                    docTotalSize += fileLabel.getFileSize();
+                }
+                else if (FileUtils.isVideoType(fileType)) {
+                    videoTotalSize += fileLabel.getFileSize();
+                }
+                else if (FileUtils.isAudioType(fileType)) {
+                    audioTotalSize += fileLabel.getFileSize();
+                }
+                else {
+                    if (fileType == FileType.ZIP || fileType == FileType.RAR ||
+                        fileType == FileType._7Z || fileType == FileType.Z || fileType == FileType.TAR) {
+                        packageTotalSize += fileLabel.getFileSize();
+                    }
+                    else {
+                        otherTotalSize += fileLabel.getFileSize();
+                    }
+                }
+            }
+        }
+
+        report.setImageFilesUsedSize(imageTotalSize);
+        report.setDocFilesUsedSize(docTotalSize);
+        report.setVideoFilesUsedSize(videoTotalSize);
+        report.setAudioFilesUsedSize(audioTotalSize);
+        report.setPackageFilesUsedSize(packageTotalSize);
+        report.setOtherFilesUsedSize(otherTotalSize);
+
+        DiskUsage command = new DiskUsage();
+        try {
+            command.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        long freeSize = command.getTotalInBytes() - command.getUsedInBytes();
+        report.setFreeDiskSize(freeSize);
     }
 }

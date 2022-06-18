@@ -64,10 +64,11 @@ public final class FileUtils {
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
     };
 
-    private final static long KB = 1024;
-    private final static long MB = 1024 * KB;
-    private final static long GB = 1024 * MB;
-    private final static long TB = 1024 * GB;
+    public final static long KB = 1024;
+    public final static long MB = (long)1024 * KB;
+    public final static long GB = (long)1024 * MB;
+    public final static long TB = (long)1024 * GB;
+    public final static long PB = (long)1024 * TB;
 
     private FileUtils() {
     }
@@ -328,8 +329,8 @@ public final class FileUtils {
     /**
      * 校验文件类型。
      *
-     * @param fileName
-     * @param data
+     * @param fileName 指定文件名。
+     * @param data 指定文件数据。
      * @return
      */
     public static FileType verifyFileType(String fileName, byte[] data) {
@@ -406,8 +407,8 @@ public final class FileUtils {
     /**
      * 是否是常用图片类型。
      *
-     * @param fileType
-     * @return
+     * @param fileType 文件类型。
+     * @return 如果是图片类型返回 {@code true} 。
      */
     public static boolean isImageType(FileType fileType) {
         switch (fileType) {
@@ -423,10 +424,31 @@ public final class FileUtils {
     }
 
     /**
+     * 是否是常用文档类型。
+     *
+     * @param fileType 文件类型。
+     * @return 如果是文档类型返回 {@code true} 。
+     */
+    public static boolean isDocumentType(FileType fileType) {
+        switch (fileType) {
+            case DOC:
+            case DOCX:
+            case PPT:
+            case PPTX:
+            case XLS:
+            case XLSX:
+            case PDF:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
      * 是否是常用的视频类型。
      *
-     * @param fileType
-     * @return
+     * @param fileType 文件类型。
+     * @return 如果是视频类型返回 {@code true} 。
      */
     public static boolean isVideoType(FileType fileType) {
         switch (fileType) {
@@ -437,6 +459,25 @@ public final class FileUtils {
             case AVI:
             case MKV:
             case TS:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * 是否是常用的音频类型。
+     *
+     * @param fileType 文件类型。
+     * @return 如果是音频类型返回 {@code true} 。
+     */
+    public static boolean isAudioType(FileType fileType) {
+        switch (fileType) {
+            case MP3:
+            case OGG:
+            case WAV:
+            case WMA:
+            case AAC:
                 return true;
             default:
                 return false;
