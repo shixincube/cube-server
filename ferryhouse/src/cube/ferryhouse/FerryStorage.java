@@ -38,17 +38,20 @@ import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
 import cube.ferry.DomainMember;
-import cube.storage.StorageFactory;
-import cube.storage.StorageFields;
-import cube.storage.StorageType;
+import cube.storage.*;
 import cube.util.FileType;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 消息摆渡机。
@@ -225,10 +228,14 @@ public class FerryStorage implements Storagable {
 
     private String domainName;
 
+    private String schema;
+
     private final byte[] key = new byte[8];
 
     public FerryStorage(String domainName, JSONObject config) {
         this.domainName = domainName;
+        this.schema = config.getString(MySQLStorage.CONFIG_SCHEMA);
+
         this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL,
                 "FerryStorage", config);
 
@@ -255,6 +262,38 @@ public class FerryStorage implements Storagable {
         checkDomainMemberTable();
         checkMessageTable();
         checkFileLabelTable();
+    }
+
+    /**
+     * 查询所有表占用磁盘空间大小。
+     *
+     * @return
+     */
+    public long queryAllTablesSize() {
+        AtomicLong total = new AtomicLong(0);
+
+        ((MySQLStorage) storage).execute(new ConnectionHandler() {
+            @Override
+            public void handle(Connection connection) {
+                try {
+                    String sql = "SELECT DATA_LENGTH,INDEX_LENGTH FROM information_schema.TABLES WHERE TABLE_SCHEMA='"
+                            + schema + "'";
+                    Statement statement = connection.createStatement();
+                    ResultSet resultSet = statement.executeQuery(sql);
+                    while (resultSet.next()) {
+                        total.addAndGet(resultSet.getLong("DATA_LENGTH"));
+                        total.addAndGet(resultSet.getLong("INDEX_LENGTH"));
+                    }
+
+                    statement.close();
+                    resultSet.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        return total.get();
     }
 
     public void writeLicence(JSONObject licenceJson) {

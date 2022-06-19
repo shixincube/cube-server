@@ -111,6 +111,12 @@ public class MySQLStorage extends AbstractStorage {
         return true;
     }
 
+    public void execute(ConnectionHandler handler) {
+        Connection connection = this.pool.get();
+        handler.handle(connection);
+        this.pool.returnConn(connection);
+    }
+
     @Override
     public boolean executeCreate(String table, StorageField[] fields) {
         for (StorageField field : fields) {
@@ -498,6 +504,8 @@ public class MySQLStorage extends AbstractStorage {
                 url.append("/");
                 url.append(this.config.has(CONFIG_SCHEMA) ? this.config.getString(CONFIG_SCHEMA) : "cube");
                 url.append("?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8");
+                url.append("&useInformationSchema=true");
+                url.append("&nullCatalogMeansCurrent=true");
 
                 try {
                    conn = DriverManager.getConnection(url.toString(),

@@ -35,6 +35,11 @@ import org.json.JSONObject;
  */
 public class BoxReport extends Entity {
 
+    /**
+     * 数据空间大小。
+     */
+    private long dataSpaceSize;
+
     private long imageFilesUsedSize;
 
     private long docFilesUsedSize;
@@ -58,6 +63,7 @@ public class BoxReport extends Entity {
 
     public BoxReport(JSONObject json) {
         super(json);
+        this.dataSpaceSize = json.getLong("dataSpaceSize");
         this.freeDiskSize = json.getLong("freeDiskSize");
         this.imageFilesUsedSize = json.getLong("imageFilesUsedSize");
         this.docFilesUsedSize = json.getLong("docFilesUsedSize");
@@ -65,6 +71,14 @@ public class BoxReport extends Entity {
         this.audioFilesUsedSize = json.getLong("audioFilesUsedSize");
         this.packageFilesUsedSize = json.getLong("packageFilesUsedSize");
         this.otherFilesUsedSize = json.getLong("otherFilesUsedSize");
+    }
+
+    public void setDataSpaceSize(long size) {
+        this.dataSpaceSize = size;
+    }
+
+    public long getDataSpaceSize() {
+        return this.dataSpaceSize;
     }
 
     public void setFreeDiskSize(long size) {
@@ -126,6 +140,7 @@ public class BoxReport extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        json.put("dataSpaceSize", this.dataSpaceSize);
         json.put("freeDiskSize", this.freeDiskSize);
         json.put("imageFilesUsedSize", this.imageFilesUsedSize);
         json.put("docFilesUsedSize", this.docFilesUsedSize);
@@ -134,5 +149,10 @@ public class BoxReport extends Entity {
         json.put("packageFilesUsedSize", this.packageFilesUsedSize);
         json.put("otherFilesUsedSize", this.otherFilesUsedSize);
         return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

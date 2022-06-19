@@ -166,11 +166,12 @@ public class Ferryhouse implements TalkListener {
 
     /**
      * 生成报告。
-     * 
+     *
      * @return
      */
     public BoxReport generateReport() {
         BoxReport boxReport = new BoxReport(this.domain);
+        boxReport.setDataSpaceSize(this.ferryStorage.queryAllTablesSize());
 
         this.fileManager.calcUsage(boxReport);
 
