@@ -201,7 +201,6 @@ public final class FileManager {
             e.printStackTrace();
         }
 
-        long freeSize = command.getTotalInBytes() - command.getUsedInBytes();
-        report.setFreeDiskSize(freeSize);
+        report.setFreeDiskSize(command.getAvailInBytes());
     }
 }

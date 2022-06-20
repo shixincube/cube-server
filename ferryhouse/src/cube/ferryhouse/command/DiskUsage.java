@@ -47,6 +47,10 @@ public class DiskUsage extends Command {
 
     private String usedUnit;
 
+    private int avail = 0;
+
+    private String availUnit;
+
     public DiskUsage() {
         super();
         this.output = new ArrayList<>();
@@ -103,7 +107,10 @@ public class DiskUsage extends Command {
         }
 
         String unit = this.getUsedUnit();
-        if (unit.equalsIgnoreCase("M")) {
+        if (unit.equalsIgnoreCase("K")) {
+            size *= FileUtils.KB;
+        }
+        else if (unit.equalsIgnoreCase("M")) {
             size *= FileUtils.MB;
         }
         else if (unit.equalsIgnoreCase("G")) {
@@ -115,9 +122,44 @@ public class DiskUsage extends Command {
         return size;
     }
 
+    public int getAvail() {
+        if (0 == this.avail) {
+            this.parse();
+        }
+        return this.avail;
+    }
+
+    public String getAvailUnit() {
+        return this.availUnit;
+    }
+
+    public long getAvailInBytes() {
+        long size = this.getAvail();
+        if (0 == size) {
+            return 0;
+        }
+
+        String unit = this.getAvailUnit();
+        if (unit.equalsIgnoreCase("K")) {
+            size *= FileUtils.KB;
+        }
+        else if (unit.equalsIgnoreCase("M")) {
+            size *= FileUtils.MB;
+        }
+        else if (unit.equalsIgnoreCase("G")) {
+            size *= FileUtils.GB;
+        }
+        else if (unit.equalsIgnoreCase("T")) {
+            size *= FileUtils.TB;
+        }
+
+        return size;
+    }
+
     private void parse() {
         List<String> segmentList = new ArrayList<>();
         for (String line : this.output) {
+            System.out.println("L: " + line);
             segmentList.clear();
 
             String[] segments = line.split(" ");
@@ -143,22 +185,59 @@ public class DiskUsage extends Command {
                 if (index < 0) {
                     this.totalUnit = "T";
                     index = size.indexOf(this.totalUnit);
+                    if (index < 0) {
+                        // 无单位描述
+                        this.totalUnit = "B";
+                        index = size.length();
+                    }
                 }
                 this.total = Integer.parseInt(size.substring(0, index));
 
                 // 已使用
                 size = segmentList.get(2);
-                this.usedUnit = "M";
+                this.usedUnit = "K";
                 index = size.indexOf(this.usedUnit);
                 if (index < 0) {
-                    this.usedUnit = "G";
+                    this.usedUnit = "M";
                     index = size.indexOf(this.usedUnit);
                     if (index < 0) {
-                        this.usedUnit = "T";
+                        this.usedUnit = "G";
                         index = size.indexOf(this.usedUnit);
+                        if (index < 0) {
+                            this.usedUnit = "T";
+                            index = size.indexOf(this.usedUnit);
+                            if (index < 0) {
+                                // 无单位描述
+                                this.usedUnit = "B";
+                                index = size.length();
+                            }
+                        }
                     }
                 }
                 this.used = Integer.parseInt(size.substring(0, index));
+
+                // 可用
+                size = segmentList.get(3);
+                this.availUnit = "K";
+                index = size.indexOf(this.availUnit);
+                if (index < 0) {
+                    this.availUnit = "M";
+                    index = size.indexOf(this.availUnit);
+                    if (index < 0) {
+                        this.availUnit = "G";
+                        index = size.indexOf(this.availUnit);
+                        if (index < 0) {
+                            this.availUnit = "T";
+                            index = size.indexOf(this.availUnit);
+                            if (index < 0) {
+                                // 无单位描述
+                                this.availUnit = "B";
+                                index = size.length();
+                            }
+                        }
+                    }
+                }
+                this.avail = Integer.parseInt(size.substring(0, index));
 
                 break;
             }

@@ -35,7 +35,9 @@ public class TestCommand {
         diskUsage.execute();
         int total = diskUsage.getTotal();
         int used = diskUsage.getUsed();
+        int avail = diskUsage.getAvail();
         System.out.println("Total: " + total + diskUsage.getTotalUnit());
         System.out.println("Used: " + used + diskUsage.getUsedUnit());
+        System.out.println("Avail: " + avail + diskUsage.getAvailUnit());
     }
 }
