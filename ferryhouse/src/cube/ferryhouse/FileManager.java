@@ -57,6 +57,8 @@ public final class FileManager {
 
     private Path filePath;
 
+    private long maxSpaceSize = 1024L * 1024 * 1024;
+
     private final int maxThreadNum = 2;
 
     private AtomicInteger threadCount = new AtomicInteger(0);
@@ -75,6 +77,10 @@ public final class FileManager {
             } catch (IOException e) {
             }
         }
+    }
+
+    public void setMaxSpaceSize(long value) {
+        this.maxSpaceSize = value;
     }
 
     /**
@@ -143,6 +149,18 @@ public final class FileManager {
         }).start();
     }
 
+    /**
+     * 清空文件数据。
+     */
+    public void cleanup() {
+        File[] files = this.filePath.toFile().listFiles();
+        if (null != files && files.length > 0) {
+            for (File file : files) {
+                file.delete();
+            }
+        }
+    }
+
     public synchronized void calcUsage(BoxReport report) {
         long imageTotalSize = 0;
         long docTotalSize = 0;
@@ -150,6 +168,13 @@ public final class FileManager {
         long audioTotalSize = 0;
         long packageTotalSize = 0;
         long otherTotalSize = 0;
+
+        int imageNum = 0;
+        int docNum = 0;
+        int videoNum = 0;
+        int audioNum = 0;
+        int packageNum = 0;
+        int otherNum = 0;
 
         File[] files = this.filePath.toFile().listFiles();
         if (null != files && files.length > 0) {
@@ -165,23 +190,29 @@ public final class FileManager {
                 FileType fileType = fileLabel.getFileType();
                 if (FileUtils.isImageType(fileType)) {
                     imageTotalSize += fileLabel.getFileSize();
+                    imageNum += 1;
                 }
                 else if (FileUtils.isDocumentType(fileType)) {
                     docTotalSize += fileLabel.getFileSize();
+                    docNum += 1;
                 }
                 else if (FileUtils.isVideoType(fileType)) {
                     videoTotalSize += fileLabel.getFileSize();
+                    videoNum += 1;
                 }
                 else if (FileUtils.isAudioType(fileType)) {
                     audioTotalSize += fileLabel.getFileSize();
+                    audioNum += 1;
                 }
                 else {
                     if (fileType == FileType.ZIP || fileType == FileType.RAR ||
                         fileType == FileType._7Z || fileType == FileType.Z || fileType == FileType.TAR) {
                         packageTotalSize += fileLabel.getFileSize();
+                        packageNum += 1;
                     }
                     else {
                         otherTotalSize += fileLabel.getFileSize();
+                        otherNum += 1;
                     }
                 }
             }
@@ -194,6 +225,13 @@ public final class FileManager {
         report.setPackageFilesUsedSize(packageTotalSize);
         report.setOtherFilesUsedSize(otherTotalSize);
 
+        report.setNumImageFiles(imageNum);
+        report.setNumDocFiles(docNum);
+        report.setNumVideoFiles(videoNum);
+        report.setNumAudioFiles(audioNum);
+        report.setNumPackageFiles(packageNum);
+        report.setNumOtherFiles(otherNum);
+
         DiskUsage command = new DiskUsage();
         try {
             command.execute();
@@ -201,6 +239,10 @@ public final class FileManager {
             e.printStackTrace();
         }
 
-        report.setFreeDiskSize(command.getAvailInBytes());
+        // 计算可用空间
+        long freeSize = this.maxSpaceSize - imageTotalSize - docTotalSize - videoTotalSize - audioTotalSize
+                - packageTotalSize - otherTotalSize;
+
+        report.setFreeDiskSize(Math.min(command.getAvailInBytes(), freeSize));
     }
 }

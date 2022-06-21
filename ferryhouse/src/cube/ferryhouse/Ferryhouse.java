@@ -175,6 +175,9 @@ public class Ferryhouse implements TalkListener {
 
         this.fileManager.calcUsage(boxReport);
 
+        // 消息总数
+        boxReport.setTotalMessages(this.ferryStorage.countMessages());
+
         return boxReport;
     }
 
@@ -210,30 +213,6 @@ public class Ferryhouse implements TalkListener {
         return null;
     }
 
-    private Preferences loadPreferences() {
-        Preferences preferences = new Preferences();
-
-        String value = this.ferryStorage.readProperty(Preferences.ITEM_SYNCH_DATA);
-        if (null != value) {
-            preferences.synchronizeData = value.equalsIgnoreCase("true") || value.equals("1");
-        }
-        else {
-            this.ferryStorage.writeProperty(Preferences.ITEM_SYNCH_DATA,
-                    preferences.synchronizeData ? "true" : "false");
-        }
-
-        value = this.ferryStorage.readProperty(Preferences.ITEM_CLEANUP_WHEN_REBOOT);
-        if (null != value) {
-            preferences.cleanupWhenReboot = value.equalsIgnoreCase("true") || value.equals("1");
-        }
-        else {
-            this.ferryStorage.writeProperty(Preferences.ITEM_CLEANUP_WHEN_REBOOT,
-                    preferences.cleanupWhenReboot ? "true" : "false");
-        }
-
-        return preferences;
-    }
-
     private void writeLicence(JSONObject json) {
         File outputFile = new File("config/licence");
         try {
@@ -244,6 +223,45 @@ public class Ferryhouse implements TalkListener {
 
         this.ferryStorage.writeLicence(json);
         this.licence = json;
+    }
+
+    private Preferences loadPreferences() {
+        Preferences preferences = new Preferences();
+
+        // 是否从云端同步数据到本地
+        String value = this.ferryStorage.readProperty(Preferences.ITEM_SYNCH_DATA);
+        if (null != value) {
+            preferences.synchronizeData = value.equalsIgnoreCase("true") || value.equals("1");
+        }
+        else {
+            this.ferryStorage.writeProperty(Preferences.ITEM_SYNCH_DATA,
+                    preferences.synchronizeData ? "true" : "false");
+        }
+
+        // 重启后是否清空数据
+        value = this.ferryStorage.readProperty(Preferences.ITEM_CLEANUP_WHEN_REBOOT);
+        if (null != value) {
+            preferences.cleanupWhenReboot = value.equalsIgnoreCase("true") || value.equals("1");
+        }
+        else {
+            this.ferryStorage.writeProperty(Preferences.ITEM_CLEANUP_WHEN_REBOOT,
+                    preferences.cleanupWhenReboot ? "true" : "false");
+        }
+
+        // 最大可用存储空间
+        value = this.ferryStorage.readProperty(Preferences.ITEM_MAX_STORAGE_SPACE_SIZE);
+        if (null != value) {
+            long size = Long.parseLong(value);
+            if (size > 0) {
+                preferences.maxStorageSpaceSize = size;
+            }
+        }
+        else {
+            this.ferryStorage.writeProperty(Preferences.ITEM_MAX_STORAGE_SPACE_SIZE,
+                    Long.toString(preferences.maxStorageSpaceSize));
+        }
+
+        return preferences;
     }
 
     private void refreshWithPreferences(Preferences preferences) {
@@ -266,6 +284,11 @@ public class Ferryhouse implements TalkListener {
             long now = System.currentTimeMillis();
             // 从数据库删除消息
             this.ferryStorage.deleteAllMessages(now);
+            // 从数据库删除文件记录
+            this.ferryStorage.deleteAllFileLabels(now);
+
+            // 删除文件
+            this.fileManager.cleanup();
 
             // 发送 Tenet
             ActionDialect actionDialect = new ActionDialect(FerryAction.Tenet.name);
@@ -281,6 +304,9 @@ public class Ferryhouse implements TalkListener {
                 }
             }
         }
+
+        // 设置最大存储空间
+        this.fileManager.setMaxSpaceSize(preferences.maxStorageSpaceSize);
     }
 
     private void processFerry(ActionDialect actionDialect) {

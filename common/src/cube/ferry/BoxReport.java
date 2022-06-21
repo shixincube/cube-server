@@ -57,6 +57,23 @@ public class BoxReport extends Entity {
      */
     private long freeDiskSize;
 
+    private int numImageFiles;
+
+    private int numDocFiles;
+
+    private int numVideoFiles;
+
+    private int numAudioFiles;
+
+    private int numPackageFiles;
+
+    private int numOtherFiles;
+
+    /**
+     * 消息数量。
+     */
+    private int totalMessages;
+
     public BoxReport(String domainName) {
         super(Utils.randomUnsignedLong(), domainName);
     }
@@ -71,6 +88,15 @@ public class BoxReport extends Entity {
         this.audioFilesUsedSize = json.getLong("audioFilesUsedSize");
         this.packageFilesUsedSize = json.getLong("packageFilesUsedSize");
         this.otherFilesUsedSize = json.getLong("otherFilesUsedSize");
+
+        this.numImageFiles = json.getInt("numImageFiles");
+        this.numDocFiles = json.getInt("numDocFiles");
+        this.numVideoFiles = json.getInt("numVideoFiles");
+        this.numAudioFiles = json.getInt("numAudioFiles");
+        this.numPackageFiles = json.getInt("numPackageFiles");
+        this.numOtherFiles = json.getInt("numOtherFiles");
+
+        this.totalMessages = json.getInt("totalMessages");
     }
 
     public void setDataSpaceSize(long size) {
@@ -137,6 +163,62 @@ public class BoxReport extends Entity {
         return this.otherFilesUsedSize;
     }
 
+    public void setNumImageFiles(int num) {
+        this.numImageFiles = num;
+    }
+
+    public int getNumImageFiles() {
+        return this.numImageFiles;
+    }
+
+    public void setNumDocFiles(int num) {
+        this.numDocFiles = num;
+    }
+
+    public int getNumDocFiles() {
+        return this.numDocFiles;
+    }
+
+    public void setNumVideoFiles(int num) {
+        this.numVideoFiles = num;
+    }
+
+    public int getNumVideoFiles() {
+        return this.numVideoFiles;
+    }
+
+    public void setNumAudioFiles(int num) {
+        this.numAudioFiles = num;
+    }
+
+    public int getNumAudioFiles() {
+        return this.numAudioFiles;
+    }
+
+    public void setNumPackageFiles(int num) {
+        this.numPackageFiles = num;
+    }
+
+    public int getNumPackageFiles() {
+        return this.numPackageFiles;
+    }
+
+    public void setNumOtherFiles(int num) {
+        this.numOtherFiles = num;
+    }
+
+    public int getNumOtherFiles() {
+        return this.numOtherFiles;
+    }
+
+    public void setTotalMessages(int total) {
+        this.totalMessages = total;
+    }
+
+    public int getTotalMessages() {
+        return this.totalMessages;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
@@ -148,6 +230,15 @@ public class BoxReport extends Entity {
         json.put("audioFilesUsedSize", this.audioFilesUsedSize);
         json.put("packageFilesUsedSize", this.packageFilesUsedSize);
         json.put("otherFilesUsedSize", this.otherFilesUsedSize);
+
+        json.put("numImageFiles", this.numImageFiles);
+        json.put("numDocFiles", this.numDocFiles);
+        json.put("numVideoFiles", this.numVideoFiles);
+        json.put("numAudioFiles", this.numAudioFiles);
+        json.put("numPackageFiles", this.numPackageFiles);
+        json.put("numOtherFiles", this.numOtherFiles);
+
+        json.put("totalMessages", this.totalMessages);
         return json;
     }
 

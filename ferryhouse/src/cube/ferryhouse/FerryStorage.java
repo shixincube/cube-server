@@ -33,6 +33,7 @@ import cube.common.Storagable;
 import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 import cube.common.entity.Message;
+import cube.common.entity.MessageState;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -521,6 +522,23 @@ public class FerryStorage implements Storagable {
         });
     }
 
+    /**
+     * 计算消息数量。
+     *
+     * @return
+     */
+    public int countMessages() {
+        String sql = "SELECT COUNT(DISTINCT(id)) FROM `" + this.messageTable + "`";
+//        sql += " WHERE state=" + MessageState.Sent.code + " OR state=" + MessageState.Read.code + " OR state=" +
+//                MessageState.Recalled.code;
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        if (result.isEmpty()) {
+            return 0;
+        }
+
+        return result.get(0)[0].getInt();
+    }
+
     public synchronized void deleteMessage(Message message) {
         this.storage.executeDelete(this.messageTable, new Conditional[] {
                 Conditional.createEqualTo("id", message.getId().longValue()),
@@ -535,8 +553,19 @@ public class FerryStorage implements Storagable {
      * @param timestamp
      */
     public void deleteAllMessages(long timestamp) {
-        this.storage.executeDelete(this.messageTable, new Conditional[]{
-                Conditional.createLessThan(new StorageField("rts", LiteralBase.LONG, timestamp))
+        this.storage.executeDelete(this.messageTable, new Conditional[] {
+                Conditional.createLessThan(new StorageField("rts", timestamp))
+        });
+    }
+
+    /**
+     * 删除指定时间戳之前的文件标签。
+     *
+     * @param timestamp
+     */
+    public void deleteAllFileLabels(long timestamp) {
+        this.storage.executeDelete(this.fileLabelTable, new Conditional[] {
+                Conditional.createLessThan(new StorageField("completed_time", timestamp))
         });
     }
 
