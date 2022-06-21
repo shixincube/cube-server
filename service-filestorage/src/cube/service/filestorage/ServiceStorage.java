@@ -95,8 +95,8 @@ public class ServiceStorage implements Storagable {
             new StorageField("system", LiteralBase.STRING),
             new StorageField("file_name", LiteralBase.STRING),
             new StorageField("url", LiteralBase.STRING),
-            new StorageField("descriptor", LiteralBase.STRING)
-            //new StorageField("reserved", LiteralBase.STRING)
+            new StorageField("descriptor", LiteralBase.STRING),
+            new StorageField("timestamp", LiteralBase.LONG)
     };
 
     /**
@@ -266,7 +266,8 @@ public class ServiceStorage implements Storagable {
                         new StorageField("system", LiteralBase.STRING, fileDescriptor.getFileSystem()),
                         new StorageField("file_name", LiteralBase.STRING, fileDescriptor.getFileName()),
                         new StorageField("url", LiteralBase.STRING, fileDescriptor.getURL()),
-                        new StorageField("descriptor", LiteralBase.STRING, fileDescriptor.getDescriptor().toString())
+                        new StorageField("descriptor", LiteralBase.STRING, fileDescriptor.getDescriptor().toString()),
+                        new StorageField("timestamp", LiteralBase.LONG, System.currentTimeMillis())
                 };
 
                 // 判断是否已经写入数据
@@ -364,6 +365,13 @@ public class ServiceStorage implements Storagable {
         boolean result = this.storage.executeDelete(labelTable, new Conditional[] {
                 Conditional.createEqualTo("file_code", fileCode)
         });
+
+        String descriptorTable = this.descriptorTableNameMap.get(domain);
+        if (null != descriptorTable) {
+            this.storage.executeDelete(descriptorTable, new Conditional[] {
+                    Conditional.createEqualTo("file_code", fileCode)
+            });
+        }
 
         String recyclebinTable = this.recyclebinTableNameMap.get(domain);
         this.storage.executeDelete(recyclebinTable, new Conditional[] {
@@ -789,8 +797,8 @@ public class ServiceStorage implements Storagable {
                     new StorageField("descriptor", LiteralBase.STRING, new Constraint[] {
                             Constraint.NOT_NULL
                     }),
-                    new StorageField("reserved", LiteralBase.STRING, new Constraint[] {
-                            Constraint.DEFAULT_NULL
+                    new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                            Constraint.NOT_NULL
                     })
             };
 
