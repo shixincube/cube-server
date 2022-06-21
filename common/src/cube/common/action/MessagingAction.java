@@ -47,9 +47,19 @@ public enum MessagingAction {
     Notify("notify"),
 
     /**
+     * 转发消息。
+     */
+    Forward("forward"),
+
+    /**
      * 撤回消息。
      */
-    Recall("recall"),
+    Retract("retract"),
+
+    /**
+     * 双向撤回消息。
+     */
+    RetractBoth("retractBoth"),
 
     /**
      * 删除消息。

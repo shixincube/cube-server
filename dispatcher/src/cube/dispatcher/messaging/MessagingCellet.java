@@ -88,7 +88,7 @@ public class MessagingCellet extends AbstractCellet {
         String action = dialect.getName();
 
         if (MessagingAction.Pull.name.equals(action) ||
-            MessagingAction.Recall.name.equals(action)) {
+            MessagingAction.Retract.name.equals(action)) {
             this.executor.execute(this.borrowTask(talkContext, primitive, false));
         }
         else {

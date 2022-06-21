@@ -62,9 +62,9 @@ public enum MessageState {
     Forbidden(22),
 
     /**
-     * 已召回。
+     * 已撤回。
      */
-    Recalled(30),
+    Retracted(30),
 
     /**
      * 已删除。
@@ -112,7 +112,7 @@ public enum MessageState {
             case 20:
                 return Read;
             case 30:
-                return Recalled;
+                return Retracted;
             case 40:
                 return Deleted;
             case 51:

@@ -34,7 +34,6 @@ import cell.util.CachedQueueExecutor;
 import cube.common.action.MessagingAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
-import cube.service.contact.task.GetContactZoneTask;
 import cube.service.messaging.task.*;
 
 import java.util.concurrent.ExecutorService;
@@ -92,8 +91,8 @@ public class MessagingServiceCellet extends AbstractCellet {
         else if (MessagingAction.Burn.name.equals(action)) {
             this.executor.execute(new BurnTask(this, talkContext, primitive, this.markResponseTime(action)));
         }
-        else if (MessagingAction.Recall.name.equals(action)) {
-            this.executor.execute(new RecallTask(this, talkContext, primitive, this.markResponseTime(action)));
+        else if (MessagingAction.Retract.name.equals(action)) {
+            this.executor.execute(new RetractTask(this, talkContext, primitive, this.markResponseTime(action)));
         }
         else if (MessagingAction.Delete.name.equals(action)) {
             this.executor.execute(new DeleteTask(this, talkContext, primitive, this.markResponseTime(action)));

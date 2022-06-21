@@ -639,10 +639,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         }
 
         // 更新消息状态
-        message.setState(MessageState.Recalled);
+        message.setState(MessageState.Retracted);
 
         // 修改该 ID 的所有消息的状态
-        this.storage.writeMessageState(domain, messageId, MessageState.Recalled);
+        this.storage.writeMessageState(domain, messageId, MessageState.Retracted);
 
         // 触发 Hook
         MessagingHook hook = this.pluginSystem.getUpdateMessageHook();
@@ -655,12 +655,12 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             MessageKey messageKey = new MessageKey(msg.getOwner(), messageId);
             MessageStateBundle stateBundle = this.messageStateMap.get(messageKey);
             if (null != stateBundle) {
-                stateBundle.state = MessageState.Recalled;
+                stateBundle.state = MessageState.Retracted;
             }
 
             String copyKey = UniqueKey.make(msg.getOwner(), domain);
-            // 发布 Recall 动作
-            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Recall.name, msg.toCompactJSON());
+            // 发布 Retract 动作
+            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Retract.name, msg.toCompactJSON());
             this.contactsAdapter.publish(copyKey, event.toJSON());
         }
 
@@ -1207,7 +1207,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                     }
                 }
             }
-            else if (event.getEventName().equals(MessagingAction.Recall.name)) {
+            else if (event.getEventName().equals(MessagingAction.Retract.name)) {
                 Message message = new Message(event.getData());
 
                 Long ownerId = message.getOwner();
@@ -1215,8 +1215,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 Contact contact = ContactManager.getInstance().getOnlineContact(message.getDomain().getName(), ownerId);
                 if (null != contact) {
                     for (Device device : contact.getDeviceList()) {
-                        if (notifyMessage(MessagingAction.Recall, device.getTalkContext(), ownerId, message)) {
-                            Logger.d(this.getClass(), "Recall message : '" + message.getId()
+                        if (notifyMessage(MessagingAction.Retract, device.getTalkContext(), ownerId, message)) {
+                            Logger.d(this.getClass(), "Retract message : '" + message.getId()
                                     + "' - '" + ownerId + "'");
                         }
                     }

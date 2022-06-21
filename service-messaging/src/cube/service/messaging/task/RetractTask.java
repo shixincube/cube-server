@@ -45,9 +45,9 @@ import org.json.JSONObject;
 /**
  * 撤回消息任务。
  */
-public class RecallTask extends ServiceTask {
+public class RetractTask extends ServiceTask {
 
-    public RecallTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public RetractTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 

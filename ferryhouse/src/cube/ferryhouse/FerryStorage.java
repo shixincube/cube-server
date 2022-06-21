@@ -530,7 +530,7 @@ public class FerryStorage implements Storagable {
     public int countMessages() {
         String sql = "SELECT COUNT(DISTINCT(id)) FROM `" + this.messageTable + "`";
 //        sql += " WHERE state=" + MessageState.Sent.code + " OR state=" + MessageState.Read.code + " OR state=" +
-//                MessageState.Recalled.code;
+//                MessageState.Retracted.code;
         List<StorageField[]> result = this.storage.executeQuery(sql);
         if (result.isEmpty()) {
             return 0;
