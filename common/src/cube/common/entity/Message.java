@@ -348,6 +348,14 @@ public class Message extends Entity implements Comparable<Message> {
     }
 
     /**
+     * 重置 ID 。
+     */
+    public void resetId() {
+        this.id = Utils.generateSerialNumber();
+        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
+    }
+
+    /**
      * 获取消息发送人。
      *
      * @return
@@ -411,6 +419,15 @@ public class Message extends Entity implements Comparable<Message> {
     }
 
     /**
+     * 设置消息来源群的 ID 。
+     *
+     * @param source 新的群 ID 。
+     */
+    public void setSource(Long source) {
+        this.source = source;
+    }
+
+    /**
      * 是否来自群组。
      *
      * @return 如果来源是群组返回 {@code true} 。
@@ -444,6 +461,15 @@ public class Message extends Entity implements Comparable<Message> {
      */
     public long getLocalTimestamp() {
         return this.localTimestamp;
+    }
+
+    /**
+     * 设置消息的本地时间戳。
+     *
+     * @param localTimestamp 指定本地时间戳。
+     */
+    public void setLocalTimestamp(long localTimestamp) {
+        this.localTimestamp = localTimestamp;
     }
 
     /**

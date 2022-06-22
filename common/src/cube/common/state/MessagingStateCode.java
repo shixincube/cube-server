@@ -87,6 +87,11 @@ public enum MessagingStateCode {
     GroupError(18),
 
     /**
+     * 数据丢失。
+     */
+    DataLost(20),
+
+    /**
      * 被对方阻止。
      */
     BeBlocked(30),

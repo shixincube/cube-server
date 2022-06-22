@@ -94,6 +94,9 @@ public class MessagingServiceCellet extends AbstractCellet {
         else if (MessagingAction.Retract.name.equals(action)) {
             this.executor.execute(new RetractTask(this, talkContext, primitive, this.markResponseTime(action)));
         }
+        else if (MessagingAction.Forward.name.equals(action)) {
+            this.executor.execute(new ForwardTask(this, talkContext, primitive, this.markResponseTime(action)));
+        }
         else if (MessagingAction.Delete.name.equals(action)) {
             this.executor.execute(new DeleteTask(this, talkContext, primitive, this.markResponseTime(action)));
         }
