@@ -30,6 +30,7 @@ import cell.core.net.Endpoint;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
+import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 import cube.common.entity.IceServer;
 import cube.core.Conditional;
@@ -473,6 +474,31 @@ public class FerryStorage implements Storagable {
         }
 
         return result.get(0)[0].getInt();
+    }
+
+    /**
+     * 判断指定联系人是否是指定域成员。
+     *
+     * @param domainName
+     * @param contact
+     * @return
+     */
+    public boolean isDomainMember(String domainName, Contact contact) {
+        List<StorageField[]> result = this.storage.executeQuery(this.domainMemberTable, new StorageField[] {
+                new StorageField("state", LiteralBase.INT)
+        }, new Conditional[] {
+                Conditional.createEqualTo("domain", domainName),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("contact_id", contact.getId().longValue())
+        });
+
+        if (result.isEmpty()) {
+            return false;
+        }
+        else {
+            int state = result.get(0)[0].getInt();
+            return (DomainMember.NORMAL == state);
+        }
     }
 
     /**

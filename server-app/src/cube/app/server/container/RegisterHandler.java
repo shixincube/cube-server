@@ -97,7 +97,7 @@ public class RegisterHandler extends ContextHandler {
                 }
             }
             else if (null != phone && null != password) {
-                Account account = AccountManager.getInstance().registerWithPhoneNumber(phone, password);
+                Account account = AccountManager.getInstance().registerWithPhoneNumber(phone, password, nickname, avatar);
                 if (null != account) {
                     responseData = new JSONObject();
                     responseData.put("code", StateCode.Success.code);

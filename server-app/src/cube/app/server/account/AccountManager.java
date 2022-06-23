@@ -302,7 +302,7 @@ public class AccountManager extends TimerTask {
             accountId = (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
         }
 
-        Account account = this.accountStorage.writeAccount(accountId, accountName, password, nickname, avatar);
+        Account account = this.accountStorage.writeAccountWithAccountName(accountId, accountName, password, nickname, avatar);
         return account;
     }
 
@@ -313,15 +313,15 @@ public class AccountManager extends TimerTask {
      * @param password
      * @return
      */
-    public Account registerWithPhoneNumber(String phoneNumber, String password) {
+    public Account registerWithPhoneNumber(String phoneNumber, String password, String nickname, String avatar) {
         Long accountId = this.useLuckyNumberId ? LuckyNumbers.make() : (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
         while (this.accountStorage.existsAccountId(accountId)) {
             accountId = (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
         }
 
-        String avatar = "default";
+        String avatarName = (null != avatar) ? avatar : "default";
 
-        Account account = this.accountStorage.writeAccount(accountId, phoneNumber, password, avatar);
+        Account account = this.accountStorage.writeAccountWithPhoneNumber(accountId, phoneNumber, password, nickname, avatarName);
         return account;
     }
 

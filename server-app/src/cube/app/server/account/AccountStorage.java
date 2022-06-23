@@ -212,13 +212,15 @@ public class AccountStorage extends AbstractStorage {
         return account;
     }
 
-    public Account writeAccount(Long accountId, String accountName, String password, String nickname, String avatar) {
+    public Account writeAccountWithAccountName(Long accountId, String accountName, String password, String nickname, String avatar) {
         long registration = System.currentTimeMillis();
+        String name = (null != nickname) ? nickname : "cube-" + Utils.randomString(10).toLowerCase();
+
         boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[]{
                 new StorageField("id", LiteralBase.LONG, accountId),
                 new StorageField("account", LiteralBase.STRING, accountName),
                 new StorageField("password", LiteralBase.STRING, password),
-                new StorageField("name", LiteralBase.STRING, nickname),
+                new StorageField("name", LiteralBase.STRING, name),
                 new StorageField("avatar", LiteralBase.STRING, avatar),
                 new StorageField("registration", LiteralBase.LONG, registration)
         });
@@ -234,16 +236,16 @@ public class AccountStorage extends AbstractStorage {
         return account;
     }
 
-    public Account writeAccount(Long accountId, String phoneNumber, String password, String avatar) {
+    public Account writeAccountWithPhoneNumber(Long accountId, String phoneNumber, String password, String nickname, String avatar) {
         long registration = System.currentTimeMillis();
-        String nickname = "cube-" + Utils.randomString(8).toLowerCase();
+        String name = (null != nickname) ? nickname : "cube-" + Utils.randomString(10).toLowerCase();
 
         boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[] {
                 new StorageField("id", LiteralBase.LONG, accountId),
                 new StorageField("account", LiteralBase.STRING, phoneNumber),
                 new StorageField("phone", LiteralBase.STRING, phoneNumber),
                 new StorageField("password", LiteralBase.STRING, password),
-                new StorageField("name", LiteralBase.STRING, nickname),
+                new StorageField("name", LiteralBase.STRING, name),
                 new StorageField("avatar", LiteralBase.STRING, avatar),
                 new StorageField("registration", LiteralBase.LONG, registration)
         });

@@ -30,10 +30,13 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.Contact;
 import cube.ferry.FerryStateCode;
 import cube.service.ServiceTask;
+import cube.service.contact.ContactManager;
 import cube.service.ferry.FerryCellet;
 import cube.service.ferry.FerryService;
 import org.json.JSONObject;
@@ -68,14 +71,40 @@ public class PingTask extends ServiceTask {
         String domain = data.getString("domain");
         FerryService service = ((FerryCellet) this.cellet).getFerryService();
 
+        boolean membership = false;
         boolean online = false;
         long duration = 0;
 
         if (touch) {
-            FerryService.AckBundle ackBundle = service.touchFerryHouse(domain, 60 * 1000);
+            // 获取当前联系人的令牌码
+            String tokenCode = this.getTokenCode(action);
+            if (null == tokenCode) {
+                Logger.w(this.getClass(), "No token parameter");
+
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, FerryStateCode.InvalidToken.code, data));
+                markResponseTime();
+                return;
+            }
+
+            // 获取令牌对应的联系人
+            Contact contact = ContactManager.getInstance().getContact(tokenCode);
+            if (null == contact) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, FerryStateCode.InvalidToken.code, data));
+                markResponseTime();
+                return;
+            }
+
+            FerryService.MembershipAckBundle ackBundle = service.touchFerryHouse(domain, contact, 60 * 1000);
             if (null != ackBundle) {
-                online = true;
-                duration = ackBundle.end - ackBundle.start;
+                // 成员关系
+                membership = ackBundle.membership;
+
+                if (ackBundle.membership && ackBundle.end > 0) {
+                    online = true;
+                    duration = ackBundle.end - ackBundle.start;
+                }
             }
         }
         else {
@@ -86,6 +115,7 @@ public class PingTask extends ServiceTask {
         response.put("domain", domain);
         response.put("online", online);
         response.put("duration", duration);
+        response.put("membership", membership);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, FerryStateCode.Ok.code, response));

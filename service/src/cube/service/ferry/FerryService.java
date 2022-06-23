@@ -423,9 +423,23 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         return this.tickets.containsKey(domain);
     }
 
-    public AckBundle touchFerryHouse(String domain, long timeout) {
+    /**
+     * 向 House 进行潜伏期探测。
+     *
+     * @param domain
+     * @param member
+     * @param timeout
+     * @return
+     */
+    public MembershipAckBundle touchFerryHouse(String domain, Contact member, long timeout) {
+        // 判断成员是否是该域成员
+        if (!this.storage.isDomainMember(domain, member)) {
+            Logger.i(this.getClass(), "#touchFerryHouse - Not member: " + domain + " - " + member.getId());
+            return new MembershipAckBundle(false);
+        }
+
         if (!this.tickets.containsKey(domain)) {
-            return null;
+            return new MembershipAckBundle(true);
         }
 
         Ticket ticket = this.tickets.get(domain);
@@ -436,12 +450,12 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         actionDialect.addParam("domain", domain);
         actionDialect.addParam("timeout", timeout);
 
-        AckBundle bundle = new AckBundle(actionDialect);
+        MembershipAckBundle bundle = new MembershipAckBundle(actionDialect);
         this.ackBundles.put(sn, bundle);
 
         if (!this.cellet.speak(ticket.talkContext, actionDialect)) {
             this.ackBundles.remove(sn);
-            return null;
+            return bundle;
         }
 
         synchronized (bundle) {
@@ -956,7 +970,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
         public final long start;
 
-        public long end;
+        public long end = 0;
 
         public final ActionDialect request;
 
@@ -965,6 +979,24 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         public AckBundle(ActionDialect request) {
             this.start = System.currentTimeMillis();
             this.request = request;
+        }
+    }
+
+    /**
+     * 成员关系绑定。
+     */
+    public class MembershipAckBundle extends AckBundle {
+
+        public final boolean membership;
+
+        public MembershipAckBundle(boolean membership) {
+            super(null);
+            this.membership = membership;
+        }
+
+        public MembershipAckBundle(ActionDialect request) {
+            super(request);
+            this.membership = true;
         }
     }
 
