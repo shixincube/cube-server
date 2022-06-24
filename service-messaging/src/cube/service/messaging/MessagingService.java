@@ -709,6 +709,33 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     }
 
     /**
+     * 双向撤回消息。
+     *
+     * @param domain
+     * @param messageId
+     */
+    public void retractBothMessage(String domain, Long messageId) {
+        // 更新消息状态
+        this.storage.writeMessageState(domain, messageId, MessageState.Retracted);
+
+        List<Message> messageList = this.storage.read(domain, messageId);
+        for (Message message : messageList) {
+            // 更新内存里的数据
+            MessageKey messageKey = new MessageKey(message.getOwner(), messageId);
+            MessageStateBundle stateBundle = this.messageStateMap.get(messageKey);
+            if (null != stateBundle) {
+                stateBundle.state = MessageState.Retracted;
+            }
+
+            String copyKey = UniqueKey.make(message.getOwner(), domain);
+            // 发布 Retract 动作
+            ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Retract.name,
+                    message.toCompactJSON());
+            this.contactsAdapter.publish(copyKey, event.toJSON());
+        }
+    }
+
+    /**
      * 删除消息。
      *
      * @param domain 指定域。

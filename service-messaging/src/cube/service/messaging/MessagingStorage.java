@@ -618,7 +618,7 @@ public class MessagingStorage implements Storagable {
             @Override
             public void run() {
                 StorageField[] fields = new StorageField[] {
-                        new StorageField("state", LiteralBase.INT, state.getCode())
+                        new StorageField("state", LiteralBase.INT, state.code)
                 };
 
                 storage.executeUpdate(table, fields, new Conditional[] {
@@ -643,7 +643,7 @@ public class MessagingStorage implements Storagable {
             @Override
             public void run() {
                 StorageField[] fields = new StorageField[] {
-                        new StorageField("state", state.code)
+                        new StorageField("state", LiteralBase.INT, state.code)
                 };
 
                 storage.executeUpdate(table, fields, new Conditional[] {
