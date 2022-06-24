@@ -102,27 +102,12 @@ public enum MessageState {
     }
 
     public static MessageState parse(int code) {
-        switch (code) {
-            case 5:
-                return Unsent;
-            case 9:
-                return Sending;
-            case 10:
-                return Sent;
-            case 20:
-                return Read;
-            case 30:
-                return Retracted;
-            case 40:
-                return Deleted;
-            case 51:
-                return SendBlocked;
-            case 52:
-                return ReceiveBlocked;
-            case 1:
-                return Fault;
-            default:
-                return Unknown;
+        for (MessageState state : MessageState.values()) {
+            if (state.code == code) {
+                return state;
+            }
         }
+
+        return MessageState.Unknown;
     }
 }

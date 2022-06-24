@@ -102,9 +102,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     private CelletAdapter contactsAdapter;
 
     /**
-     * 召回消息的时间限制。
+     * 撤回消息的时间限制。
      */
-    private long recallLimited = 3L * 60 * 1000;
+    private long retractLimited = 3 * 60 * 1000;
 
     /**
      * 消息模块的插件系统。
@@ -657,7 +657,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         String key = UniqueKey.make(fromId, domain);
 
         // 查询时限内的消息
-        List<SeriesItem> list = this.messageCache.query(key, now - this.recallLimited, now);
+        List<SeriesItem> list = this.messageCache.query(key, now - this.retractLimited, now);
         if (list.isEmpty()) {
             // 没有找到消息
             return false;
