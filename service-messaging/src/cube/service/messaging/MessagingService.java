@@ -713,12 +713,17 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      *
      * @param domain
      * @param messageId
+     * @return 返回是否被处理。
      */
-    public void retractBothMessage(String domain, Long messageId) {
+    public boolean retractBothMessage(String domain, Long messageId) {
+        List<Message> messageList = this.storage.read(domain, messageId);
+        if (messageList.isEmpty()) {
+            return false;
+        }
+
         // 更新消息状态
         this.storage.writeMessageState(domain, messageId, MessageState.Retracted);
 
-        List<Message> messageList = this.storage.read(domain, messageId);
         for (Message message : messageList) {
             // 更新内存里的数据
             MessageKey messageKey = new MessageKey(message.getOwner(), messageId);
@@ -727,12 +732,14 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 stateBundle.state = MessageState.Retracted;
             }
 
-            String copyKey = UniqueKey.make(message.getOwner(), domain);
+            String key = UniqueKey.make(message.getOwner(), domain);
             // 发布 Retract 动作
             ModuleEvent event = new ModuleEvent(MessagingService.NAME, MessagingAction.Retract.name,
                     message.toCompactJSON());
-            this.contactsAdapter.publish(copyKey, event.toJSON());
+            this.contactsAdapter.publish(key, event.toJSON());
         }
+
+        return true;
     }
 
     /**
