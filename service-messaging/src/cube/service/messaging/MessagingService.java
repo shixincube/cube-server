@@ -205,6 +205,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      */
     @Override
     public void start() {
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#start");
+        }
+
         this.contactsAdapter = CelletAdapterFactory.getInstance().getAdapter("Contacts");
         this.contactsAdapter.addListener(this);
 

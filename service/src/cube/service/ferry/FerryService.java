@@ -856,6 +856,25 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
     private void setup() {
         AbstractModule messagingModule = this.getKernel().getModule("Messaging");
         if (null != messagingModule) {
+            int count = 100;
+            while (null == messagingModule.getPluginSystem()) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                if (--count <= 0) {
+                    break;
+                }
+            }
+
+            if (null == messagingModule.getPluginSystem()) {
+                Logger.e(this.getClass(), "#setup - Can NOT get messaging service plugin system");
+                System.exit(1);
+                return;
+            }
+
             messagingModule.getPluginSystem().register("WriteMessage", new WriteMessagePlugin(this));
             messagingModule.getPluginSystem().register("UpdateMessage", new UpdateMessagePlugin(this));
             messagingModule.getPluginSystem().register("DeleteMessage", new DeleteMessagePlugin(this));
