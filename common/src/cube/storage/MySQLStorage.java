@@ -82,6 +82,7 @@ public class MySQLStorage extends AbstractStorage {
         }
 
         this.pool.close();
+        this.pool = null;
     }
 
     @Override
@@ -470,14 +471,14 @@ public class MySQLStorage extends AbstractStorage {
             this.connections = new ConcurrentLinkedQueue<>();
             this.count = new AtomicInteger(0);
             this.timer = new Timer();
-            this.timer.schedule(this, 60L * 1000L, 60L * 1000L);
+            this.timer.schedule(this, 60 * 1000, 60 * 1000);
         }
 
         protected Connection get() {
             if (this.count.get() >= this.maxConn) {
                 synchronized (this) {
                     try {
-                        this.wait(30000L);
+                        this.wait(30000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -546,6 +547,14 @@ public class MySQLStorage extends AbstractStorage {
         }
 
         protected void close() {
+            ArrayList<Connection> connList = new ArrayList<>(this.connections);
+            this.connections.clear();
+
+            synchronized (this) {
+                this.notifyAll();
+            }
+
+            this.timer.purge();
             this.timer.cancel();
 
             this.count.set(0);
@@ -554,15 +563,13 @@ public class MySQLStorage extends AbstractStorage {
                 this.notifyAll();
             }
 
-            for (Connection conn : this.connections) {
+            for (Connection conn : connList) {
                 try {
                     conn.close();
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
             }
-
-            this.connections.clear();
         }
 
         @Override
