@@ -56,7 +56,7 @@
 		</javac>
 		<delete file="${build.jar}/cube-service-riskmgmt.jar" failonerror="false" />
 		<jar destfile="${build.jar}/cube-service-riskmgmt.jar" basedir="${build.classes}"
-			 excludes="cube/service/riskmgmt/test/**, cube/service/riskmgmt/plugin/**"/>
+			 excludes="cube/service/riskmgmt/test/**, cube/service/riskmgmt/plugin/test/**"/>
 	</target>
 
 	<!-- =================================================================== -->
@@ -68,7 +68,7 @@
 		</javac>
 		<delete file="${build.jar}/cube-service-riskmgmt.jar" failonerror="false" />
 		<jar destfile="${build.jar}/cube-service-riskmgmt.jar" basedir="${build.classes}"
-			 excludes="cube/service/riskmgmt/test/**, cube/service/riskmgmt/plugin/**" />
+			 excludes="cube/service/riskmgmt/test/**, cube/service/riskmgmt/plugin/test/**" />
 	</target>
 
 	<!-- =================================================================== -->

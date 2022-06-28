@@ -26,6 +26,10 @@
 
 package cube.service.riskmgmt;
 
+import cell.core.talk.Primitive;
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 
@@ -53,5 +57,13 @@ public class RiskManagementCellet extends AbstractCellet {
     @Override
     public void uninstall() {
         this.riskManagement = null;
+    }
+
+    @Override
+    public void onListened(TalkContext talkContext, Primitive primitive) {
+        super.onListened(talkContext, primitive);
+
+        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
+        String action = dialect.getName();
     }
 }

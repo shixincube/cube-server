@@ -362,8 +362,13 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 message.setState(MessageState.Sent);
 
                 // Hook PrePush
+                MessagingPluginContext mpc = new MessagingPluginContext(message);
                 MessagingHook hook = this.pluginSystem.getPrePushHook();
-                hook.apply(new MessagingPluginContext(message));
+                hook.apply(mpc);
+                if (mpc.getStateCode() != MessagingStateCode.Ok) {
+                    message.setState(MessageState.SystemBlocked);
+                    return new PushResult(message, mpc.getStateCode());
+                }
 
                 String fromKey = UniqueKey.make(message.getFrom(), message.getDomain());
                 String toKey = UniqueKey.make(message.getTo(), message.getDomain());

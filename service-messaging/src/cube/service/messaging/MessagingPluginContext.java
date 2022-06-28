@@ -35,7 +35,9 @@ import cube.plugin.PluginContext;
  */
 public class MessagingPluginContext extends PluginContext {
 
-    public final static String KEY_MESSAGE = "message";
+    public final static String MESSAGE = "message";
+
+    public final static String STATE = "state";
 
     private Message message;
 
@@ -55,14 +57,13 @@ public class MessagingPluginContext extends PluginContext {
         return this.stateCode;
     }
 
-    public void setStateCode(MessagingStateCode stateCode) {
-        this.stateCode = stateCode;
-    }
-
     @Override
     public Object get(String name) {
-        if (name.equals(KEY_MESSAGE)) {
+        if (name.equals(MESSAGE)) {
             return this.message;
+        }
+        else if (name.equals(STATE)) {
+            return this.stateCode;
         }
         else {
             return null;
@@ -71,8 +72,11 @@ public class MessagingPluginContext extends PluginContext {
 
     @Override
     public void set(String name, Object value) {
-        if (name.equals(KEY_MESSAGE)) {
-            this.message = (null != value && value instanceof Message) ? (Message) value : null;
+        if (name.equals(MESSAGE)) {
+            this.message = (value instanceof Message) ? (Message) value : null;
+        }
+        else if (name.equals(STATE)) {
+            this.stateCode = (value instanceof MessagingStateCode) ? (MessagingStateCode) value : null;
         }
     }
 }

@@ -73,6 +73,9 @@
 		<cellet port="6000" jar="cellets/cube-service-conference-3.0.jar">
 			<class>cube.service.conference.ConferenceServiceCellet</class>
 		</cellet>
+		<cellet port="6000" jar="cellets/cube-service-riskmgmt-3.0.jar">
+			<class>cube.service.riskmgmt.RiskManagementCellet</class>
+		</cellet>
 	</cellets>
 
 	<!-- 适配器配置 -->

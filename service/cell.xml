@@ -74,10 +74,10 @@
 			<class>cube.service.signal.SignalCellet</class>
 		</cellet>
 		<cellet port="6000">
-			<class>cube.service.ferry.FerryCellet</class>
+			<class>cube.service.riskmgmt.RiskManagementCellet</class>
 		</cellet>
 		<cellet port="6000">
-			<class>cube.service.riskmgmt.RiskManagementCellet</class>
+			<class>cube.service.ferry.FerryCellet</class>
 		</cellet>
 	</cellets>
 

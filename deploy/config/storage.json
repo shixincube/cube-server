@@ -27,5 +27,10 @@
 	"RiskMgmt": {
 		"type": "SQLite",
 		"file": "storage/RiskMgmt.db"
+	},
+
+	"Ferry": {
+		"type": "SQLite",
+		"file": "storage/Ferry.db"
 	}
 }

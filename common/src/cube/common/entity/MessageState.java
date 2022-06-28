@@ -82,6 +82,11 @@ public enum MessageState {
     ReceiveBlocked(52),
 
     /**
+     * 被系统阻断发送。
+     */
+    SystemBlocked(53),
+
+    /**
      * 未知状态。
      */
     Unknown(0);
