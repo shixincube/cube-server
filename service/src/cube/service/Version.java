@@ -24,43 +24,34 @@
  * SOFTWARE.
  */
 
-package cube.ferryboat;
-
-import cell.api.Nucleus;
-import cell.carpet.CellListener;
-import cell.util.log.Logger;
+package cube.service;
 
 /**
- * 监听器。
+ * 版本信息。
  */
-public class FerryboatCellListener implements CellListener {
+public final class Version {
 
-    public FerryboatCellListener() {
-        Logger.i(this.getClass(), "--------------------------------");
-        Logger.i(this.getClass(), "Version " + Version.toVersionString());
-        Logger.i(this.getClass(), "--------------------------------");
+    public final static int MAJOR = 3;
+
+    public final static int MINOR = 0;
+
+    public final static int REVISION = 0;
+
+    private Version() {
     }
 
-    @Override
-    public void cellPreinitialize(Nucleus nucleus) {
-    }
-
-    @Override
-    public void cellInitialized(Nucleus nucleus) {
-        Logger.i(this.getClass(), "#cellInitialized");
-
-        (new Thread() {
-            @Override
-            public void run() {
-                Ferryboat.getInstance().start(nucleus);
-            }
-        }).start();
-    }
-
-    @Override
-    public void cellDestroyed(Nucleus nucleus) {
-        Logger.i(this.getClass(), "#cellDestroyed");
-
-        Ferryboat.getInstance().stop();
+    /**
+     * 转版本串。
+     *
+     * @return
+     */
+    public static String toVersionString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append(MAJOR);
+        buf.append(".");
+        buf.append(MINOR);
+        buf.append(".");
+        buf.append(REVISION);
+        return buf.toString();
     }
 }

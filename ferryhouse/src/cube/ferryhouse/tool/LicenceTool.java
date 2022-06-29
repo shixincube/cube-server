@@ -138,10 +138,10 @@ public class LicenceTool {
     }
 
     public static void main(String[] args) {
-        File outputFile = new File("config/licence");
+        File outputFile = new File("config/licence-first");
         System.out.println("Licence: " + outputFile.getAbsolutePath());
         try {
-            LicenceTool.createFile("demo-ferryhouse-cube",
+            LicenceTool.createFile("first-prototype-box",
                     System.currentTimeMillis(),
                     "shixincube.com",
                     outputFile);

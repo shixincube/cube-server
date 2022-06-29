@@ -1,20 +1,20 @@
 /*
  * This source file is part of Cube.
- * <p>
+ *
  * The MIT License (MIT)
- * <p>
+ *
  * Copyright (c) 2020-2022 Cube Team.
- * <p>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p>
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * <p>
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,43 +24,41 @@
  * SOFTWARE.
  */
 
-package cube.ferryboat;
+package cube.service.messaging.plugin;
 
-import cell.api.Nucleus;
-import cell.carpet.CellListener;
-import cell.util.log.Logger;
+import cube.common.entity.AuthDomain;
+import cube.plugin.Plugin;
+import cube.plugin.PluginContext;
+import cube.service.auth.AuthPluginContext;
+import cube.service.messaging.MessagingService;
 
 /**
- * 监听器。
+ * 插件。
  */
-public class FerryboatCellListener implements CellListener {
+public class CreateDomainAppPlugin implements Plugin {
 
-    public FerryboatCellListener() {
-        Logger.i(this.getClass(), "--------------------------------");
-        Logger.i(this.getClass(), "Version " + Version.toVersionString());
-        Logger.i(this.getClass(), "--------------------------------");
+    private MessagingService service;
+
+    public CreateDomainAppPlugin(MessagingService service) {
+        this.service = service;
     }
 
     @Override
-    public void cellPreinitialize(Nucleus nucleus) {
+    public void setup() {
     }
 
     @Override
-    public void cellInitialized(Nucleus nucleus) {
-        Logger.i(this.getClass(), "#cellInitialized");
+    public void teardown() {
+    }
 
-        (new Thread() {
-            @Override
-            public void run() {
-                Ferryboat.getInstance().start(nucleus);
+    @Override
+    public void onAction(PluginContext context) {
+        if (context instanceof AuthPluginContext) {
+            AuthPluginContext authPluginContext = (AuthPluginContext) context;
+            AuthDomain authDomain = authPluginContext.getDomain();
+            if (null != authDomain) {
+                this.service.refreshDomain(authDomain);
             }
-        }).start();
-    }
-
-    @Override
-    public void cellDestroyed(Nucleus nucleus) {
-        Logger.i(this.getClass(), "#cellDestroyed");
-
-        Ferryboat.getInstance().stop();
+        }
     }
 }

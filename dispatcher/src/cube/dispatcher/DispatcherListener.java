@@ -55,6 +55,9 @@ public class DispatcherListener implements CellListener {
     private List<String> cellets;
 
     public DispatcherListener() {
+        Logger.i(this.getClass(), "--------------------------------");
+        Logger.i(this.getClass(), "Version " + Version.toVersionString());
+        Logger.i(this.getClass(), "--------------------------------");
     }
 
     @Override

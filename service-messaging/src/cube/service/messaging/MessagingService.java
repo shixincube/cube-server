@@ -55,6 +55,7 @@ import cube.service.fileprocessor.FileProcessorService;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchy;
+import cube.service.messaging.plugin.CreateDomainAppPlugin;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONArray;
@@ -195,7 +196,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 }
 
                 pluginSystem.register(AuthServiceHook.CreateDomainApp,
-                        new ServicePlugin(MessagingService.this));
+                        new CreateDomainAppPlugin(MessagingService.this));
             }
         }).start();
     }
@@ -1224,7 +1225,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 ConversationState.Normal, ConversationRemindType.Normal, null);
     }
 
-    protected void refreshDomain(AuthDomain authDomain) {
+    public void refreshDomain(AuthDomain authDomain) {
         List<String> list = new ArrayList<>();
         list.add(authDomain.domainName);
         this.storage.execSelfChecking(list);

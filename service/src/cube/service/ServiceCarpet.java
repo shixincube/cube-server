@@ -57,6 +57,10 @@ public class ServiceCarpet implements CellListener {
     private Timer timer;
 
     public ServiceCarpet() {
+        Logger.i(this.getClass(), "--------------------------------");
+        Logger.i(this.getClass(), "Version " + Version.toVersionString());
+        Logger.i(this.getClass(), "--------------------------------");
+
         File path = new File("storage/");
         if (!path.exists()) {
             path.mkdirs();

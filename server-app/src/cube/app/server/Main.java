@@ -28,6 +28,7 @@ package cube.app.server;
 
 import cell.util.log.LogLevel;
 import cell.util.log.LogManager;
+import cell.util.log.Logger;
 import cube.app.server.container.ContainerManager;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -44,8 +45,12 @@ public class Main {
      * @param port
      */
     public static void start(int port) {
-        LogManager.getInstance().setLevel(LogLevel.DEBUG);
+        LogManager.getInstance().setLevel(LogLevel.INFO);
         LogManager.getInstance().addHandle(LogManager.createSystemOutHandle());
+
+        Logger.i(Main.class, "--------------------------------");
+        Logger.i(Main.class, "Version " + Version.toVersionString());
+        Logger.i(Main.class, "--------------------------------");
 
         ContainerManager containerManager = new ContainerManager();
 

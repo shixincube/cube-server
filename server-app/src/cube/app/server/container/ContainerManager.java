@@ -26,6 +26,8 @@
 
 package cube.app.server.container;
 
+import cell.util.log.LogLevel;
+import cell.util.log.LogManager;
 import cell.util.log.Logger;
 import cube.app.server.Manager;
 import cube.app.server.account.AccountManager;
@@ -58,6 +60,8 @@ public class ContainerManager {
         Properties config = this.loadConfig();
 
         this.loadCubeConfig(config);
+
+        this.loadOtherConfig(config);
 
         // 启动管理器
         (new Thread() {
@@ -120,6 +124,27 @@ public class ContainerManager {
         this.cubeConfig.put("address", properties.getProperty("cube.address"));
         this.cubeConfig.put("domain", properties.getProperty("cube.domain"));
         this.cubeConfig.put("appKey", properties.getProperty("cube.appKey"));
+    }
+
+    private void loadOtherConfig(Properties properties) {
+        if (properties.containsKey("log.level")) {
+            String level = properties.getProperty("log.level");
+            if (level.equalsIgnoreCase("DEBUG")) {
+                LogManager.getInstance().setLevel(LogLevel.DEBUG);
+            }
+            else if (level.equalsIgnoreCase("INFO")) {
+                LogManager.getInstance().setLevel(LogLevel.INFO);
+            }
+            else if (level.equalsIgnoreCase("WARNING")) {
+                LogManager.getInstance().setLevel(LogLevel.WARNING);
+            }
+            else if (level.equalsIgnoreCase("ERROR")) {
+                LogManager.getInstance().setLevel(LogLevel.ERROR);
+            }
+            else {
+                LogManager.getInstance().setLevel(LogLevel.INFO);
+            }
+        }
     }
 
     private HandlerList createHandlerList(Properties properties) {
