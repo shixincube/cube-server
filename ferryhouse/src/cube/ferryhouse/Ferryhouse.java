@@ -85,9 +85,12 @@ public class Ferryhouse implements TalkListener {
 
     private FileManager fileManager;
 
+    private AtomicBoolean ready;
+
     private Ferryhouse() {
         this.checkedIn = new AtomicBoolean(false);
         this.preparedQueue = new LinkedList<>();
+        this.ready = new AtomicBoolean(false);
     }
 
     public static Ferryhouse getInstance() {
@@ -156,6 +159,9 @@ public class Ferryhouse implements TalkListener {
                 // 从数据库加载偏好设置
                 Preferences preferences = loadPreferences();
                 refreshWithPreferences(preferences);
+
+                // 就绪
+                ready.set(true);
             }
         }).start();
     }
@@ -437,6 +443,15 @@ public class Ferryhouse implements TalkListener {
         (new Thread() {
             @Override
             public void run() {
+                while (!ready.get()) {
+                    // 等待就绪
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
                 // 执行 Chek-In
                 ActionDialect dialect = new ActionDialect(FerryAction.CheckIn.name);
                 dialect.addParam("domain", domain);
