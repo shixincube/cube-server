@@ -49,6 +49,8 @@ public enum ClientAction {
 
     CreateDomainApp("CreateDomainApp"),
 
+    UpdateDomain("UpdateDomain"),
+
     ApplyToken("ApplyToken"),
 
     ListOnlineContacts("ListOnlineContacts"),

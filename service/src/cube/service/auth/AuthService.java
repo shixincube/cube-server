@@ -434,6 +434,25 @@ public class AuthService extends AbstractModule {
         return authDomain;
     }
 
+    /**
+     * 更新指定域的接入点数据。
+     *
+     * @param domainName
+     * @param mainEndpoint
+     * @param httpEndpoint
+     * @param httpsEndpoint
+     * @return
+     */
+    public AuthDomain updateDomain(String domainName, Endpoint mainEndpoint,
+                                Endpoint httpEndpoint, Endpoint httpsEndpoint) {
+        if (this.authStorage.updateDomain(domainName, mainEndpoint, httpEndpoint, httpsEndpoint)) {
+            return this.getAuthDomain(domainName);
+        }
+        else {
+            return null;
+        }
+    }
+
     private JSONObject createPrimaryContent() {
         JSONObject result = new JSONObject();
 

@@ -206,7 +206,34 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
     @Override
     public void onTick(Module module, Kernel kernel) {
+        // Nothing
+    }
 
+    /**
+     * 创建访问点。
+     *
+     * @param domainName
+     * @param mainPoint
+     * @param httpPoint
+     * @param httpsPoint
+     * @param iceServer
+     */
+    public void createAccessPoint(String domainName, Endpoint mainPoint, Endpoint httpPoint,
+                                  Endpoint httpsPoint, IceServer iceServer) {
+        this.storage.writeAccessPoint(mainPoint, httpPoint, httpsPoint, iceServer, domainName);
+    }
+
+    /**
+     * 更新访问点。
+     *
+     * @param domainName
+     * @param mainPoint
+     * @param httpPoint
+     * @param httpsPoint
+     */
+    public void updateAccessPoint(String domainName, Endpoint mainPoint, Endpoint httpPoint,
+                                  Endpoint httpsPoint) {
+        this.storage.updateAccessPoint(domainName, mainPoint, httpPoint, httpsPoint);
     }
 
     public void checkIn(ActionDialect dialect, TalkContext talkContext) {
@@ -911,6 +938,32 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
                     contact.getId().longValue(), contact.getDomain().getName());
             this.cellet.speak(talkContext, dialect);
         }
+    }
+
+    @Override
+    public Object notify(Object data) {
+        if (data instanceof JSONObject) {
+            JSONObject jsonData = (JSONObject) data;
+            String action = jsonData.getString("action");
+
+            if (action.equals("createAccessPoint")) {
+                String domainName = jsonData.getString("domain");
+                Endpoint mainPoint = new Endpoint(jsonData.getJSONObject("main"));
+                Endpoint httpPoint = new Endpoint(jsonData.getJSONObject("http"));
+                Endpoint httpsPoint = new Endpoint(jsonData.getJSONObject("https"));
+                IceServer iceServer = new IceServer(jsonData.getJSONObject("iceServer"));
+                this.createAccessPoint(domainName, mainPoint, httpPoint, httpsPoint, iceServer);
+            }
+            else if (action.equals("updateAccessPoint")) {
+                String domainName = jsonData.getString("domain");
+                Endpoint mainPoint = new Endpoint(jsonData.getJSONObject("main"));
+                Endpoint httpPoint = new Endpoint(jsonData.getJSONObject("http"));
+                Endpoint httpsPoint = new Endpoint(jsonData.getJSONObject("https"));
+                this.updateAccessPoint(domainName, mainPoint, httpPoint, httpsPoint);
+            }
+        }
+
+        return null;
     }
 
     @Override

@@ -292,8 +292,27 @@ public class FerryStorage implements Storagable {
         return accessPoint;
     }
 
-    public void deleteAccessPoint(String domainName) {
-        // TODO
+    /**
+     * 更新接入点数据。
+     *
+     * @param domainName
+     * @param mainEndpoint
+     * @param httpEndpoint
+     * @param httpsEndpoint
+     * @return
+     */
+    public boolean updateAccessPoint(String domainName, Endpoint mainEndpoint, Endpoint httpEndpoint,
+                                  Endpoint httpsEndpoint) {
+        return this.storage.executeUpdate(this.accessPointTable, new StorageField[] {
+                new StorageField("main_address", mainEndpoint.getHost()),
+                new StorageField("main_port", mainEndpoint.getPort()),
+                new StorageField("http_address", httpEndpoint.getHost()),
+                new StorageField("http_port", httpEndpoint.getPort()),
+                new StorageField("https_address", httpsEndpoint.getHost()),
+                new StorageField("https_port", httpsEndpoint.getPort())
+        }, new Conditional[] {
+                Conditional.createEqualTo("domain", domainName)
+        });
     }
 
     public void writeDomainInfo(DomainInfo domainInfo) {

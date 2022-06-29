@@ -32,71 +32,48 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.action.ClientAction;
 import cube.common.entity.AuthDomain;
-import cube.common.entity.IceServer;
 import cube.service.client.ClientCellet;
-import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 创建域应用任务。
  */
-public class CreateDomainAppTask extends ClientTask {
+public class UpdateDomainInfoTask extends ClientTask {
 
-    public CreateDomainAppTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
+    public UpdateDomainInfoTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
         super(cellet, talkContext, actionDialect);
     }
 
     @Override
     public void run() {
         String domainName = actionDialect.getParamAsString("domainName");
-        String appKey = actionDialect.getParamAsString("appKey");
-        String appId = actionDialect.getParamAsString("appId");
         Endpoint mainEndpoint = new Endpoint(actionDialect.getParamAsJson("mainEndpoint"));
         Endpoint httpEndpoint = new Endpoint(actionDialect.getParamAsJson("httpEndpoint"));
         Endpoint httpsEndpoint = new Endpoint(actionDialect.getParamAsJson("httpsEndpoint"));
 
-        List<IceServer> iceServers = null;
-        if (actionDialect.containsParam("iceServers")) {
-            iceServers = new ArrayList<>();
-            JSONObject data = actionDialect.getParamAsJson("iceServers");
-            JSONArray array = data.getJSONArray("list");
-            for (int i = 0; i < array.length(); ++i) {
-                JSONObject iceJson = array.getJSONObject(i);
-                IceServer iceServer = new IceServer(iceJson);
-                iceServers.add(iceServer);
-            }
-        }
-
-        boolean ferry = actionDialect.getParamAsBool("ferry");
-
-        // 创建域应用
-        AuthDomain authDomain = getAuthService().createDomainApp(domainName, appKey, appId,
-                 mainEndpoint, httpEndpoint, httpsEndpoint, iceServers, ferry);
+        // 更新域信息
+        AuthDomain authDomain = getAuthService().updateDomain(domainName, mainEndpoint, httpEndpoint, httpsEndpoint);
 
         try {
-            if (ferry) {
-                IceServer iceServer = new IceServer(authDomain.iceServers.getJSONObject(0));
-
+            if (null != authDomain) {
                 // 创建访问点
                 JSONObject ferryActionData = new JSONObject();
-                ferryActionData.put("action", "createAccessPoint");
+                ferryActionData.put("action", "updateAccessPoint");
                 ferryActionData.put("domain", domainName);
                 ferryActionData.put("main", actionDialect.getParamAsJson("mainEndpoint"));
                 ferryActionData.put("http", actionDialect.getParamAsJson("httpEndpoint"));
                 ferryActionData.put("https", actionDialect.getParamAsJson("httpsEndpoint"));
-                ferryActionData.put("iceServer", iceServer.toJSON());
                 getFerryService().notify(ferryActionData);
             }
         } catch (Exception e) {
             Logger.w(this.getClass(), "Process ferry account point error", e);
         }
 
-        ActionDialect result = new ActionDialect(ClientAction.CreateDomainApp.name);
+        ActionDialect result = new ActionDialect(ClientAction.UpdateDomain.name);
         copyNotifier(result);
-        result.addParam("authDomain", authDomain.toJSON());
+        if (null != authDomain) {
+            result.addParam("authDomain", authDomain.toJSON());
+        }
 
         cellet.speak(talkContext, result);
     }

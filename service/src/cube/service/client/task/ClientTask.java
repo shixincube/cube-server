@@ -89,4 +89,8 @@ public abstract class ClientTask implements Runnable {
     protected AbstractModule getFileProcessorModule() {
         return cellet.getKernel().getModule("FileProcessor");
     }
+
+    protected AbstractModule getFerryService() {
+        return cellet.getKernel().getModule("Ferry");
+    }
 }

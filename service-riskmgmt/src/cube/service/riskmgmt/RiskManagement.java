@@ -34,6 +34,9 @@ import cube.service.auth.AuthService;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.contact.ContactManagerListener;
+import cube.service.messaging.MessagingHook;
+import cube.service.messaging.MessagingService;
+import cube.service.riskmgmt.plugin.MessagingPrePushPlugin;
 import cube.service.riskmgmt.plugin.ModifyContactNamePlugin;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
@@ -70,7 +73,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
 
     @Override
     public void start() {
-        this.executor = Executors.newFixedThreadPool(8);
+        this.executor = Executors.newFixedThreadPool(4);
 
         ContactManager.getInstance().addListener(this);
 
@@ -94,6 +97,8 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
                     mainStorage.execSelfChecking(authService.getDomainList());
 
                     loadSensitiveWordToMemory(authService.getDomainList());
+
+                    initPlugin();
                 }
             });
         }
@@ -157,5 +162,21 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
             List<SensitiveWord> list = this.mainStorage.readAllSensitiveWords(domain);
             this.sensitiveWordsMap.put(domain, list);
         }
+    }
+
+    private void initPlugin() {
+        MessagingService messagingService = (MessagingService) this.getKernel().getModule("Messaging");
+        PluginSystem<?> pluginSystem = messagingService.getPluginSystem();
+        while (null == pluginSystem) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            pluginSystem = messagingService.getPluginSystem();
+        }
+
+        pluginSystem.register(MessagingHook.PrePush, new MessagingPrePushPlugin());
     }
 }

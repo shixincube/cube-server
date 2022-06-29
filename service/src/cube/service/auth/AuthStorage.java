@@ -253,6 +253,28 @@ public class AuthStorage implements Storagable {
     }
 
     /**
+     * 更新指定域的接入点数据。
+     *
+     * @param domain
+     * @param main
+     * @param http
+     * @param https
+     * @return
+     */
+    public boolean updateDomain(String domain, Endpoint main, Endpoint http, Endpoint https) {
+        return this.storage.executeUpdate(this.domainTable, new StorageField[] {
+                new StorageField("address", main.getHost()),
+                new StorageField("port", main.getPort()),
+                new StorageField("http_address", http.getHost()),
+                new StorageField("http_port", http.getPort()),
+                new StorageField("https_address", https.getHost()),
+                new StorageField("https_port", https.getPort()),
+        }, new Conditional[] {
+                Conditional.createEqualTo("domain", domain),
+        });
+    }
+
+    /**
      * 获取访问域。
      *
      * @param domain

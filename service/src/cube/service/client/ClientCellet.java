@@ -152,9 +152,6 @@ public class ClientCellet extends AbstractCellet {
         else if (ClientAction.CreateContact.name.equals(action)) {
             this.executor.execute(new CreateContactTask(this, talkContext, actionDialect));
         }
-        else if (ClientAction.CreateDomainApp.name.equals(action)) {
-            this.executor.execute(new CreateDomainAppTask(this, talkContext, actionDialect));
-        }
         else if (ClientAction.ProcessFile.name.equals(action)) {
             this.executor.execute(new ProcessFileTask(this, talkContext, actionDialect));
         }
@@ -166,6 +163,12 @@ public class ClientCellet extends AbstractCellet {
         }
         else if (ClientAction.GetLog.name.equals(action)) {
             this.executor.execute(new GetLogTask(this, talkContext, actionDialect));
+        }
+        else if (ClientAction.UpdateDomain.name.equals(action)) {
+            this.executor.execute(new UpdateDomainInfoTask(this, talkContext, actionDialect));
+        }
+        else if (ClientAction.CreateDomainApp.name.equals(action)) {
+            this.executor.execute(new CreateDomainAppTask(this, talkContext, actionDialect));
         }
         else {
             this.executor.execute(new UnsupportedActionTask(this, talkContext, actionDialect));

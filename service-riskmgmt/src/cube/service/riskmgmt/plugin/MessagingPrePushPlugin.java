@@ -33,9 +33,9 @@ import cube.service.messaging.MessagingPluginContext;
 /**
  * 消息模块内容分析插件。
  */
-public class MessagingPlugin implements Plugin {
+public class MessagingPrePushPlugin implements Plugin {
 
-    public MessagingPlugin() {
+    public MessagingPrePushPlugin() {
     }
 
     @Override
@@ -51,5 +51,6 @@ public class MessagingPlugin implements Plugin {
     @Override
     public void onAction(PluginContext context) {
         MessagingPluginContext ctx = (MessagingPluginContext) context;
+
     }
 }
