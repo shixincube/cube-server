@@ -26,11 +26,18 @@
 
 package cube.service.ferry;
 
+import cube.ferry.DomainInfo;
+
 /**
  * 虚拟 Ferry House 。
  */
 public class VirtualFerryHouse {
 
-    public VirtualFerryHouse() {
+    private DomainInfo domainInfo;
+
+    public VirtualFerryHouse(DomainInfo domainInfo) {
+        this.domainInfo = domainInfo;
     }
+
+
 }

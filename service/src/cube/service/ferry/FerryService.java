@@ -77,16 +77,6 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
     public final static String NAME = "Ferry";
 
-    /**
-     * 一般状态。
-     */
-    public final static int STATE_NORMAL = 0;
-
-    /**
-     * 禁用状态。
-     */
-    public final static int STATE_DISABLED = 1;
-
     private final FerryCellet cellet;
 
     private FerryStorage storage;
@@ -96,6 +86,8 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
     private CelletAdapter contactsAdapter;
 
     private Map<String, Ticket> tickets;
+
+    private Map<String, VirtualFerryHouse> virtualHouses;
 
     private Queue<FerryPacket> pushQueue;
     private Object pushMutex = new Object();
@@ -113,6 +105,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         super();
         this.cellet = cellet;
         this.tickets = new ConcurrentHashMap<>();
+        this.virtualHouses = new ConcurrentHashMap<>();
         this.pushQueue = new ConcurrentLinkedQueue<>();
         this.streamQueue = new ConcurrentLinkedQueue<>();
         this.ackBundles = new ConcurrentHashMap<>();
@@ -186,6 +179,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
         this.pushQueue.clear();
         this.tickets.clear();
+        this.virtualHouses.clear();
 
         if (null != this.storage) {
             this.storage.close();
@@ -269,7 +263,8 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
             // 写入数据
             this.storage.writeDomainInfo(domain, ticket.getLicenceBeginning(), ticket.getLicenceDuration(),
-                    ticket.getLicenceLimit(), codeFile, dialect.getParamAsString("address"));
+                    ticket.getLicenceLimit(), codeFile, DomainInfo.STATE_NORMAL, FerryHouseFlag.STANDARD,
+                    dialect.getParamAsString("address"));
             // 写入邀请码
             this.storage.updateInvitationCode(domain, Utils.randomNumberString(6));
         }
@@ -277,6 +272,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             // 更新数据
             this.storage.writeDomainInfo(domain, ticket.getLicenceBeginning(), ticket.getLicenceDuration(),
                     ticket.getLicenceLimit(), domainInfo.getQRCodeFileLabel(),
+                    domainInfo.getState(), domainInfo.getFlag(),
                     dialect.getParamAsString("address"));
         }
 
@@ -476,8 +472,24 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         }
 
         if (!this.tickets.containsKey(domain)) {
-            // House 不在线
-            
+            // House 不在线，判断是否是可虚拟化
+            if (this.virtualHouses.containsKey(domain)) {
+                MembershipAckBundle result = new MembershipAckBundle(true);
+                result.end = System.currentTimeMillis() + 1;
+                return result;
+            }
+
+            DomainInfo domainInfo = this.getDomainInfo(domain);
+            int flag = domainInfo.getFlag();
+            if (FerryHouseFlag.isAllowVirtualMode(flag)) {
+                // 允许虚拟模式
+                VirtualFerryHouse virtualFerryHouse = new VirtualFerryHouse(domainInfo);
+                this.virtualHouses.put(domain, virtualFerryHouse);
+
+                MembershipAckBundle result = new MembershipAckBundle(true);
+                result.end = System.currentTimeMillis() + 1;
+                return result;
+            }
 
             return new MembershipAckBundle(true);
         }

@@ -24,12 +24,12 @@
  * SOFTWARE.
  */
 
-package cube.service.ferry;
+package cube.ferry;
 
 /**
- * Ferry 类型。
+ * Ferry House 的标识。
  */
-public final class FerryTypeFlag {
+public final class FerryHouseFlag {
 
     /**
      * 标准模式。
@@ -41,7 +41,7 @@ public final class FerryTypeFlag {
      */
     public final static int ALLOW_VIRTUAL_MODE = 1 << 1;
 
-    private FerryTypeFlag() {
+    private FerryHouseFlag() {
     }
 
     public static boolean isStandard(int flag) {

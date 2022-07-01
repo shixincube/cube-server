@@ -324,7 +324,7 @@ public class FerryStorage implements Storagable {
     public void writeDomainInfo(DomainInfo domainInfo) {
         this.writeDomainInfo(domainInfo.getDomain().getName(), domainInfo.getBeginning(),
                 domainInfo.getDuration(), domainInfo.getLimit(), domainInfo.getQRCodeFileLabel(),
-                domainInfo.getAddress());
+                domainInfo.getState(), domainInfo.getFlag(), domainInfo.getAddress());
     }
 
     /**
@@ -335,10 +335,12 @@ public class FerryStorage implements Storagable {
      * @param duration
      * @param limit
      * @param qrCodeFile
+     * @param state
+     * @param flag
      * @param address
      */
     public synchronized void writeDomainInfo(String domainName, long beginning, long duration, int limit,
-                                             FileLabel qrCodeFile, String address) {
+                                             FileLabel qrCodeFile, int state, int flag, String address) {
         List<StorageField[]> result = this.storage.executeQuery(this.domainInfoTable, new StorageField[] {
                 new StorageField("sn", LiteralBase.LONG)
         }, new Conditional[] {
@@ -353,6 +355,8 @@ public class FerryStorage implements Storagable {
                     new StorageField("duration", duration),
                     new StorageField("limit", limit),
                     new StorageField("qrcode_file", qrCodeFile.toJSON().toString()),
+                    new StorageField("state", state),
+                    new StorageField("flag", flag),
                     new StorageField("address", address)
             });
         }
@@ -363,6 +367,8 @@ public class FerryStorage implements Storagable {
                     new StorageField("duration", duration),
                     new StorageField("limit", limit),
                     new StorageField("qrcode_file", qrCodeFile.toJSON().toString()),
+                    new StorageField("state", state),
+                    new StorageField("flag", flag),
                     new StorageField("address", address)
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", result.get(0)[0].getLong())
@@ -426,7 +432,9 @@ public class FerryStorage implements Storagable {
         int limit = map.get("limit").getInt();
         String fileLabelJSONString = map.get("qrcode_file").getString();
         FileLabel fileLabel = new FileLabel(new JSONObject(fileLabelJSONString));
-        DomainInfo domainInfo = new DomainInfo(domainName, beginning, duration, limit, fileLabel);
+        int state = map.get("state").getInt();
+        int flag = map.get("flag").getInt();
+        DomainInfo domainInfo = new DomainInfo(domainName, beginning, duration, limit, fileLabel, state, flag);
 
         if (!map.get("address").isNullValue()) {
             domainInfo.setAddress(map.get("address").getString());

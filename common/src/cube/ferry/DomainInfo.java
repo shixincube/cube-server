@@ -36,6 +36,16 @@ import org.json.JSONObject;
  */
 public class DomainInfo extends Entity {
 
+    /**
+     * 一般状态。
+     */
+    public final static int STATE_NORMAL = 0;
+
+    /**
+     * 禁用状态。
+     */
+    public final static int STATE_DISABLED = 1;
+
     private long beginning;
 
     private long duration;
@@ -48,12 +58,19 @@ public class DomainInfo extends Entity {
 
     private FileLabel qrCodeFileLabel;
 
-    public DomainInfo(String domainName, long beginning, long duration, int limit, FileLabel qrCodeFileLabel) {
+    private int state;
+
+    private int flag;
+
+    public DomainInfo(String domainName, long beginning, long duration, int limit,
+                      FileLabel qrCodeFileLabel, int state, int flag) {
         super(Utils.generateSerialNumber(), domainName);
         this.beginning = beginning;
         this.duration = duration;
         this.limit = limit;
         this.qrCodeFileLabel = qrCodeFileLabel;
+        this.state = state;
+        this.flag = flag;
     }
 
     public DomainInfo(JSONObject json) {
@@ -72,6 +89,20 @@ public class DomainInfo extends Entity {
 
         if (json.has("qrCodeFileLabel")) {
             this.qrCodeFileLabel = new FileLabel(json.getJSONObject("qrCodeFileLabel"));
+        }
+
+        if (json.has("state")) {
+            this.state = json.getInt("state");
+        }
+        else {
+            this.state = STATE_NORMAL;
+        }
+
+        if (json.has("flag")) {
+            this.flag = json.getInt("flag");
+        }
+        else {
+            this.flag = FerryHouseFlag.STANDARD;
         }
     }
 
@@ -115,6 +146,14 @@ public class DomainInfo extends Entity {
         return this.qrCodeFileLabel;
     }
 
+    public int getState() {
+        return this.state;
+    }
+
+    public int getFlag() {
+        return this.flag;
+    }
+
     public JSONObject toLicence() {
         JSONObject data = new JSONObject();
         data.put("domain", this.domain.getName());
@@ -142,6 +181,10 @@ public class DomainInfo extends Entity {
         if (null != this.qrCodeFileLabel) {
             json.put("qrCodeFileLabel", this.qrCodeFileLabel.toJSON());
         }
+
+        json.put("state", this.state);
+
+        json.put("flag", this.flag);
 
         return json;
     }
