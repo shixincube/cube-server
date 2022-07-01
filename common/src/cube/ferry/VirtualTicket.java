@@ -24,20 +24,21 @@
  * SOFTWARE.
  */
 
-package cube.service.ferry;
-
-import cube.ferry.DomainInfo;
+package cube.ferry;
 
 /**
  * 虚拟 Ferry House 。
  */
-public class VirtualFerryHouse {
+public class VirtualTicket extends Ticket {
 
     private DomainInfo domainInfo;
 
-    public VirtualFerryHouse(DomainInfo domainInfo) {
+    public VirtualTicket(DomainInfo domainInfo) {
+        super(domainInfo.getDomain().getName(), domainInfo.toLicence(), null);
         this.domainInfo = domainInfo;
     }
 
-
+    public DomainInfo getDomainInfo() {
+        return this.domainInfo;
+    }
 }

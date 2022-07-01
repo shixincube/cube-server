@@ -47,7 +47,7 @@ public class Ticket {
         this.domain = new Domain(domainName);
         this.licence = licence;
         this.talkContext = talkContext;
-        this.sessionId = talkContext.getSessionId();
+        this.sessionId = (null != talkContext) ? talkContext.getSessionId() : 0;
     }
 
     public long getLicenceBeginning() {

@@ -69,6 +69,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 摆渡数据服务。
@@ -87,8 +88,6 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
     private Map<String, Ticket> tickets;
 
-    private Map<String, VirtualFerryHouse> virtualHouses;
-
     private Queue<FerryPacket> pushQueue;
     private Object pushMutex = new Object();
     private boolean pushing = false;
@@ -105,7 +104,6 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         super();
         this.cellet = cellet;
         this.tickets = new ConcurrentHashMap<>();
-        this.virtualHouses = new ConcurrentHashMap<>();
         this.pushQueue = new ConcurrentLinkedQueue<>();
         this.streamQueue = new ConcurrentLinkedQueue<>();
         this.ackBundles = new ConcurrentHashMap<>();
@@ -179,7 +177,6 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
         this.pushQueue.clear();
         this.tickets.clear();
-        this.virtualHouses.clear();
 
         if (null != this.storage) {
             this.storage.close();
@@ -453,7 +450,19 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
      * @return 返回是否在线。
      */
     public boolean isOnlineDomain(String domain) {
-        return this.tickets.containsKey(domain);
+        if (this.tickets.containsKey(domain)) {
+            return true;
+        }
+
+        DomainInfo domainInfo = this.getDomainInfo(domain);
+        int flag = domainInfo.getFlag();
+        if (FerryHouseFlag.isAllowVirtualMode(flag)) {
+            VirtualTicket virtualTicket = new VirtualTicket(domainInfo);
+            this.tickets.put(domain, virtualTicket);
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -464,7 +473,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
      * @param timeout
      * @return
      */
-    public MembershipAckBundle touchFerryHouse(String domain, Contact member, long timeout) {
+    public synchronized MembershipAckBundle touchFerryHouse(String domain, Contact member, long timeout) {
         // 判断成员是否是该域成员
         if (!this.storage.isDomainMember(domain, member)) {
             Logger.i(this.getClass(), "#touchFerryHouse - Not member: " + domain + " - " + member.getId());
@@ -473,18 +482,12 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
         if (!this.tickets.containsKey(domain)) {
             // House 不在线，判断是否是可虚拟化
-            if (this.virtualHouses.containsKey(domain)) {
-                MembershipAckBundle result = new MembershipAckBundle(true);
-                result.end = System.currentTimeMillis() + 1;
-                return result;
-            }
-
             DomainInfo domainInfo = this.getDomainInfo(domain);
             int flag = domainInfo.getFlag();
             if (FerryHouseFlag.isAllowVirtualMode(flag)) {
                 // 允许虚拟模式
-                VirtualFerryHouse virtualFerryHouse = new VirtualFerryHouse(domainInfo);
-                this.virtualHouses.put(domain, virtualFerryHouse);
+                VirtualTicket virtualTicket = new VirtualTicket(domainInfo);
+                this.tickets.put(domain, virtualTicket);
 
                 MembershipAckBundle result = new MembershipAckBundle(true);
                 result.end = System.currentTimeMillis() + 1;
@@ -495,6 +498,12 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         }
 
         Ticket ticket = this.tickets.get(domain);
+
+        if (ticket.sessionId == 0) {
+            MembershipAckBundle result = new MembershipAckBundle(true);
+            result.end = System.currentTimeMillis() + 1;
+            return result;
+        }
 
         Integer sn = Utils.randomUnsigned();
         ActionDialect actionDialect = new ActionDialect(FerryAction.Ping.name);
@@ -559,6 +568,13 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         // 设置 Domain
         packet.setDomain(domain);
 
+        if (this.tickets.get(domain).sessionId == 0) {
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#pushToBoat - Ticket is virtual: " + domain);
+            }
+            return;
+        }
+
         this.pushQueue.offer(packet);
 
         synchronized (this.pushMutex) {
@@ -575,7 +591,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
                 FerryPacket ferryPacket = pushQueue.poll();
                 while (null != ferryPacket) {
                     Ticket ticket = tickets.get(ferryPacket.getDomain());
-                    if (null != ticket) {
+                    if (null != ticket && null != ticket.talkContext) {
                         // 向 Ferry 推送数据
                         cellet.speak(ticket.talkContext, ferryPacket.toDialect());
                     }
@@ -605,7 +621,19 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
             return;
         }
 
-        TalkContext talkContext = this.tickets.get(domain).talkContext;
+        Ticket ticket = this.tickets.get(domain);
+
+        if (ticket.sessionId == 0) {
+            // 虚拟 House
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                Logger.w(this.getClass(), "#pushToBoat(stream)", e);
+            }
+            return;
+        }
+
+        TalkContext talkContext = ticket.talkContext;
 
         StreamBundle streamBundle = new StreamBundle(talkContext, streamName, inputStream);
         // 添加到队列
@@ -858,6 +886,12 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         if (null == ticket) {
             Logger.i(this.getClass(), "#getBoxReport - Domain is offline: " + domainName);
             return report;
+        }
+
+        if (ticket instanceof VirtualTicket) {
+            // 虚拟 House
+            VirtualTicket virtualTicket = (VirtualTicket) ticket;
+            return null;
         }
 
         Integer sn = Utils.randomUnsigned();
