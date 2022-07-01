@@ -112,6 +112,12 @@ public class FerryStorage implements Storagable {
             new StorageField("qrcode_file", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            new StorageField("flag", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_1
+            }),
             new StorageField("address", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             })

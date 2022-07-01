@@ -77,6 +77,16 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
     public final static String NAME = "Ferry";
 
+    /**
+     * 一般状态。
+     */
+    public final static int STATE_NORMAL = 0;
+
+    /**
+     * 禁用状态。
+     */
+    public final static int STATE_DISABLED = 1;
+
     private final FerryCellet cellet;
 
     private FerryStorage storage;
@@ -466,6 +476,9 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         }
 
         if (!this.tickets.containsKey(domain)) {
+            // House 不在线
+            
+
             return new MembershipAckBundle(true);
         }
 

@@ -158,7 +158,7 @@ public class CodeUtils {
     }
 
     public static void main(String[] args) {
-        String string = "https://box.shixincube.com/box/yueyangzijing-demo-1";
+        String string = "https://box.shixincube.com/box/first-prototype-box";
         String protocol = CodeUtils.extractProtocol(string);
         System.out.println("Protocol: " + protocol);
 
