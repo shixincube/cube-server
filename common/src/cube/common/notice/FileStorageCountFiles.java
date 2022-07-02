@@ -24,28 +24,21 @@
  * SOFTWARE.
  */
 
-package cube.app.server.notice;
+package cube.common.notice;
 
 /**
- * 通知类型。
+ * 计算文件数量。
  */
-public class NoticeType {
+public class FileStorageCountFiles extends NoticeData {
 
-    /**
-     * 仅显示一次的通知。
-     */
-    public final static int ONLY_ONCE = 1;
+    public final static String ACTION = "CountFiles";
 
-    /**
-     * 每日仅显示一次的通知。
-     */
-    public final static int ONLY_ONCE_A_DAY = 2;
+    public final static String DOMAIN = "domain";
 
-    /**
-     * 每次启动都显示的通知。
-     */
-    public final static int EVERY_TIME_START = 4;
-
-    private NoticeType() {
+    public FileStorageCountFiles(String domain) {
+        super(ACTION);
+        this.put(DOMAIN, domain);
     }
+
+
 }

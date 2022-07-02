@@ -237,6 +237,12 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         this.storage.updateAccessPoint(domainName, mainPoint, httpPoint, httpsPoint);
     }
 
+    /**
+     * Ferry House 签入。
+     *
+     * @param dialect
+     * @param talkContext
+     */
     public void checkIn(ActionDialect dialect, TalkContext talkContext) {
         String domain = dialect.getParamAsString("domain");
 

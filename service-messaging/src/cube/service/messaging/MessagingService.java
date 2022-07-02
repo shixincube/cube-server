@@ -43,7 +43,7 @@ import cube.common.Packet;
 import cube.common.UniqueKey;
 import cube.common.action.MessagingAction;
 import cube.common.entity.*;
-import cube.common.notify.MessagingCountMessages;
+import cube.common.notice.MessagingCountMessages;
 import cube.common.state.MessagingStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;

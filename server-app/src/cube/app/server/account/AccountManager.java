@@ -43,7 +43,7 @@ public class AccountManager extends TimerTask {
 
     private final static AccountManager instance = new AccountManager();
 
-    private final static long WEB_TIMEOUT = 5L * 60L * 1000L;
+    private final static long WEB_TIMEOUT = 5 * 60 * 1000;
 
     private final static long TOKEN_DURATION = 10 * 365 * 24 * 3600 * 1000L;
 
@@ -73,7 +73,7 @@ public class AccountManager extends TimerTask {
     }
 
     public void start() {
-        this.loadWithConfig();
+        this.loadConfig();
 
         this.initializing = true;
 
@@ -100,7 +100,7 @@ public class AccountManager extends TimerTask {
         }).start();
     }
 
-    private void loadWithConfig() {
+    private void loadConfig() {
         String[] configFiles = new String[] {
                 "server_dev.properties",
                 "server.properties"
@@ -408,6 +408,12 @@ public class AccountManager extends TimerTask {
         return this.onlineTokenMap.containsKey(tokenCode);
     }
 
+    /**
+     * 是否是有效的会话。
+     *
+     * @param tokenCode
+     * @return
+     */
     public boolean isValidToken(String tokenCode) {
         if (this.onlineTokenMap.containsKey(tokenCode)) {
             return true;

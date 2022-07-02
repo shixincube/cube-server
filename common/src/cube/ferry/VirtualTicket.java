@@ -26,13 +26,15 @@
 
 package cube.ferry;
 
-import cube.common.notify.MessagingCountMessages;
+import cube.common.notice.MessagingCountMessages;
 import cube.core.AbstractModule;
 
 /**
  * 虚拟 Ferry House 。
  */
 public class VirtualTicket extends Ticket {
+
+    private long maxDiskSize = 256L * 1024 * 1024 * 1024;
 
     private DomainInfo domainInfo;
 
@@ -63,7 +65,7 @@ public class VirtualTicket extends Ticket {
         BoxReport report = new BoxReport(this.domainInfo.getDomain().getName());
         report.setTotalMessages(result.getCount());
 
-        report.setFreeDiskSize(256 * 1024 * 1024);
+        report.setFreeDiskSize(this.maxDiskSize);
         return report;
     }
 }

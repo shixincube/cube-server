@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.common.notify;
+package cube.common.notice;
 
 import org.json.JSONObject;
 
