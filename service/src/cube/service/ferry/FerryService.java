@@ -891,7 +891,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         if (ticket instanceof VirtualTicket) {
             // 虚拟 House
             VirtualTicket virtualTicket = (VirtualTicket) ticket;
-            return null;
+            return virtualTicket.getBoxReport(this);
         }
 
         Integer sn = Utils.randomUnsigned();

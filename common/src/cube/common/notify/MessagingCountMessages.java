@@ -24,46 +24,40 @@
  * SOFTWARE.
  */
 
-package cube.ferry;
+package cube.common.notify;
 
-import cube.common.notify.MessagingCountMessages;
-import cube.core.AbstractModule;
+import org.json.JSONObject;
 
 /**
- * 虚拟 Ferry House 。
+ * 计算消息条目数。
  */
-public class VirtualTicket extends Ticket {
+public class MessagingCountMessages extends NoticeData {
 
-    private DomainInfo domainInfo;
+    public final static String ACTION = "CountMessages";
 
-    private BoxReport boxReport;
+    public final static String DOMAIN = "domain";
 
-    public VirtualTicket(DomainInfo domainInfo) {
-        super(domainInfo.getDomain().getName(), domainInfo.toLicence(), null);
-        this.domainInfo = domainInfo;
+    public final static String COUNT = "count";
+
+    public MessagingCountMessages(String domain) {
+        super(ACTION);
+        this.put(DOMAIN, domain);
+        this.put(COUNT, 0);
     }
 
-    public DomainInfo getDomainInfo() {
-        return this.domainInfo;
+    public MessagingCountMessages(JSONObject json) {
+        super(json, DOMAIN, COUNT);
     }
 
-    public BoxReport getBoxReport(AbstractModule module) {
-        if (null == this.boxReport) {
-            this.boxReport = this.buildReport(module);
-        }
-
-        return this.boxReport;
+    public String getDomain() {
+        return this.getString(DOMAIN);
     }
 
-    private BoxReport buildReport(AbstractModule module) {
-        AbstractModule messaging = module.getKernel().getModule("Messaging");
-        MessagingCountMessages count = new MessagingCountMessages(this.domainInfo.getDomain().getName());
-        MessagingCountMessages result = (MessagingCountMessages) messaging.notify(count);
+    public void setCount(int value) {
+        this.put(COUNT, value);
+    }
 
-        BoxReport report = new BoxReport(this.domainInfo.getDomain().getName());
-        report.setTotalMessages(result.getCount());
-
-        report.setFreeDiskSize(256 * 1024 * 1024);
-        return report;
+    public int getCount() {
+        return this.getInt(COUNT);
     }
 }

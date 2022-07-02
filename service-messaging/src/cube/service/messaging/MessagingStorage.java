@@ -160,42 +160,6 @@ public class MessagingStorage implements Storagable {
 
     @Override
     public void execSelfChecking(List<String> domainNameList) {
-        /*String table = "cube";
-
-        StorageField[] fields = new StorageField[] {
-                new StorageField("item", LiteralBase.STRING, new Constraint[] {
-                        Constraint.NOT_NULL
-                }),
-                new StorageField("desc", LiteralBase.STRING, new Constraint[] {
-                        Constraint.NOT_NULL
-                })
-        };
-
-        List<StorageField[]> result = this.storage.executeQuery(table, fields);
-        if (result.isEmpty()) {
-            // 数据库没有找到表，创建新表
-            if (this.storage.executeCreate(table, fields)) {
-                // 插入数据
-                StorageField[] data = new StorageField[] {
-                        new StorageField("item", LiteralBase.STRING, "version"),
-                        new StorageField("desc", LiteralBase.STRING, this.version)
-                };
-                this.storage.executeInsert(table, data);
-                Logger.i(this.getClass(), "Insert into 'cube' data");
-            }
-            else {
-                Logger.e(this.getClass(), "Create table 'cube' failed - " + this.storage.getName());
-            }
-        }
-        else {
-            // 校验版本
-            for (StorageField[] row : result) {
-                if (row[0].getString().equals("version")) {
-                    Logger.i(this.getClass(), "Message storage version " + row[1].getString());
-                }
-            }
-        }*/
-
         // 校验域对应的表
         for (String domain : domainNameList) {
             // 检查消息表
@@ -797,6 +761,27 @@ public class MessagingStorage implements Storagable {
                 });
             }
         });
+    }
+
+    /**
+     * 计算指定域的消息条目数。
+     *
+     * @param domain
+     * @return
+     */
+    public int countMessages(String domain) {
+        String table = this.messageTableNameMap.get(domain);
+        if (null == table) {
+            return 0 ;
+        }
+
+        String sql = "SELECT COUNT(DISTINCT(id)) FROM `" + table + "`";
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        if (result.isEmpty()) {
+            return 0;
+        }
+
+        return result.get(0)[0].getInt();
     }
 
     /**

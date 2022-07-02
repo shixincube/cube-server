@@ -43,6 +43,7 @@ import cube.common.Packet;
 import cube.common.UniqueKey;
 import cube.common.action.MessagingAction;
 import cube.common.entity.*;
+import cube.common.notify.MessagingCountMessages;
 import cube.common.state.MessagingStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -309,6 +310,12 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 }
                 data.put("messages", messageArray);
                 return data;
+            }
+            else if (MessagingCountMessages.ACTION.equals(action)) {
+                MessagingCountMessages countData = new MessagingCountMessages(data);
+                int count = this.storage.countMessages(countData.getDomain());
+                countData.setCount(count);
+                return countData;
             }
         }
 

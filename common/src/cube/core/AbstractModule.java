@@ -26,8 +26,6 @@
 
 package cube.core;
 
-import org.json.JSONObject;
-
 /**
  * 模块抽象层。
  */
