@@ -24,32 +24,28 @@
  * SOFTWARE.
  */
 
-package cube.app.server.notice;
+package cube.app.server.version;
 
 import cube.util.ConfigUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 /**
- * 通知管理器。
+ * 版本管理器。
  */
-public class NoticeManager {
+public class VersionManager {
 
-    public final static String GLOBAL_DOMAIN = "*";
+    private final static VersionManager instance = new VersionManager();
 
-    private final static NoticeManager instance = new NoticeManager();
+    private VersionStorage storage;
 
-    private NoticeStorage storage;
-
-    private NoticeManager() {
+    private VersionManager() {
     }
 
-    public static NoticeManager getInstance() {
-        return NoticeManager.instance;
+    public static VersionManager getInstance() {
+        return VersionManager.instance;
     }
 
     public void start() {
@@ -71,13 +67,8 @@ public class NoticeManager {
         }
     }
 
-    public List<Notice> getNotices(String domainName) {
-        List<Notice> result = new ArrayList<>();
-        List<Notice> list = this.storage.readNotices(domainName);
-        result.addAll(list);
-        list = this.storage.readNotices(GLOBAL_DOMAIN);
-        result.addAll(list);
-        return result;
+    public AppVersion getVersion(String device) {
+        return this.storage.getVersion(device);
     }
 
     private void loadConfig() {
@@ -98,7 +89,7 @@ public class NoticeManager {
         if (null != configFile) {
             try {
                 Properties properties = ConfigUtils.readProperties(configFile);
-                this.storage = new NoticeStorage(properties);
+                this.storage = new VersionStorage(properties);
             } catch (IOException e) {
                 e.printStackTrace();
             }

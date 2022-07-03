@@ -46,7 +46,7 @@ public class NoticeStorage extends AbstractStorage {
 
     public final static String TABLE_NOTICE = "notice";
 
-    private final StorageField[] noticeFields = new StorageField[]{
+    private final StorageField[] noticeFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTO_INCREMENT
             }),

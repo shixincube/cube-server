@@ -32,6 +32,7 @@ import cell.util.log.Logger;
 import cube.app.server.Manager;
 import cube.app.server.account.AccountManager;
 import cube.app.server.notice.NoticeManager;
+import cube.app.server.version.VersionManager;
 import cube.util.ConfigUtils;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -58,6 +59,7 @@ public class ContainerManager {
     public void launch(int port) {
         AccountManager.getInstance().start();
         NoticeManager.getInstance().start();
+        VersionManager.getInstance().start();
 
         Properties config = this.loadConfig();
 
@@ -114,6 +116,7 @@ public class ContainerManager {
     public void destroy() {
         Manager.getInstance().stop();
 
+        VersionManager.getInstance().destroy();
         NoticeManager.getInstance().destroy();
         AccountManager.getInstance().destroy();
     }
@@ -176,6 +179,7 @@ public class ContainerManager {
                 new AccountBuildinHandler(httpAllowOrigin, httpsAllowOrigin),
 
                 new NoticeHandler(httpAllowOrigin, httpsAllowOrigin),
+                new VersionHandler(httpAllowOrigin, httpsAllowOrigin),
 
                 new StopHandler(this.server, this),
                 new DefaultHandler()});
