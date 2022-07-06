@@ -32,6 +32,11 @@ package cube.common.entity;
 public class ChainNode extends Entity {
 
     /**
+     * 操作事件。
+     */
+    private String event;
+
+    /**
      * 操作人。
      */
     private Entity who;
@@ -47,11 +52,6 @@ public class ChainNode extends Entity {
     private long when;
 
     /**
-     * 操作事件。
-     */
-    private String event;
-
-    /**
      * 做了什么操作方式。
      */
     private TransmissionMethod method;
@@ -60,9 +60,18 @@ public class ChainNode extends Entity {
 
     private ChainNode next;
 
-    public ChainNode() {
-
+    public ChainNode(String event, Entity who, Entity what, long when) {
+        this.event = event;
+        this.who = who;
+        this.what = what;
+        this.when = when;
     }
 
+    public TransmissionMethod getMethod() {
+        return this.method;
+    }
 
+    public void setMethod(TransmissionMethod method) {
+        this.method = method;
+    }
 }

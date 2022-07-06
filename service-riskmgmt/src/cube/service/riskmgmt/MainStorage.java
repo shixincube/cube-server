@@ -29,6 +29,8 @@ package cube.service.riskmgmt;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
+import cube.common.entity.ChainNode;
+import cube.common.entity.TransmissionChain;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
@@ -51,6 +53,10 @@ public class MainStorage implements Storagable {
 
     private final String sensitiveWordTablePrefix = "risk_sensitive_word_";
 
+    private final String transChainKeyTablePrefix = "trans_chain_key_";
+
+    private final String transChainNodeTablePrefix = "trans_chain_node_";
+
     private final StorageField[] sensitiveWordFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
@@ -60,6 +66,54 @@ public class MainStorage implements Storagable {
             }),
             new StorageField("type", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] transChainKeyFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            new StorageField("chain_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("key", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("node_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] transChainNodeFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            new StorageField("chain_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("event", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("who", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("what", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("when", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("method", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("previous_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            new StorageField("next_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
             })
     };
 
@@ -122,6 +176,14 @@ public class MainStorage implements Storagable {
             list.add(new SensitiveWord(row[0].getString(), row[1].getInt()));
         }
         return list;
+    }
+
+    public TransmissionChain queryTransmissionChain(String key) {
+        return null;
+    }
+
+    public void addTransmissionChainNode(String key, ChainNode chainNode) {
+
     }
 
     private void checkSensitiveWordTable(String domain) {

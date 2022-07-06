@@ -26,8 +26,7 @@
 
 package cube.service.riskmgmt;
 
-import cube.common.entity.ChainNode;
-import cube.common.entity.Message;
+import cube.common.entity.*;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
@@ -45,7 +44,6 @@ import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -154,9 +152,30 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         return false;
     }
 
-    public void addFileChainNode(Message message) {
-        this.executor.execute(() -> {
+    public void addFileChainNode(String event, Message message) {
+        final String domain = message.getDomain().getName();
 
+        this.executor.execute(() -> {
+            Contact contact = ContactManager.getInstance().getContact(domain, message.getFrom());
+
+            AbstractContact target = null;
+            if (message.isFromGroup()) {
+                target = ContactManager.getInstance().getGroup(message.getSource(), domain);
+            }
+            else {
+                target = ContactManager.getInstance().getContact(domain, message.getTo());
+            }
+
+            FileAttachment attachment = message.getAttachment();
+            FileLabel fileLabel = attachment.getFileLabel(0);
+
+            // 创建节点
+            ChainNode node = new ChainNode(event, contact, fileLabel, message.getRemoteTimestamp());
+            // 设置传输方式
+            TransmissionMethod method = new TransmissionMethod(message, target);
+            node.setMethod(method);
+
+            this.mainStorage.addTransmissionChainNode(fileLabel.getFileCode(), node);
         });
     }
 

@@ -41,9 +41,10 @@ public class TransmissionMethod extends Entity {
      */
     private Entity target;
 
-    public TransmissionMethod(Entity main) {
+    public TransmissionMethod(Entity main, Entity target) {
         super();
         this.main = main;
+        this.target = target;
     }
 
 

@@ -37,6 +37,11 @@ public final class ChainNodeEvent {
     public final static String Transmit = "Transmit";
 
     /**
+     * 打开。
+     */
+    public final static String Open = "Open";
+
+    /**
      * 转发。
      */
     public final static String Forward = "Forward";

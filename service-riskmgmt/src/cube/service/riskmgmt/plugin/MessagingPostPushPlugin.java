@@ -26,6 +26,7 @@
 
 package cube.service.riskmgmt.plugin;
 
+import cube.common.entity.ChainNodeEvent;
 import cube.common.entity.FileAttachment;
 import cube.common.entity.Message;
 import cube.plugin.Plugin;
@@ -60,7 +61,7 @@ public class MessagingPostPushPlugin implements Plugin {
             FileAttachment fileAttachment = message.getAttachment();
             if (null != fileAttachment) {
                 // 有文件附件的消息
-                this.riskManagement.addFileChainNode(message);
+                this.riskManagement.addFileChainNode(ChainNodeEvent.Transmit, message);
             }
         }
     }

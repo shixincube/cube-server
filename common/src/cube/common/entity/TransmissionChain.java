@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -36,10 +37,15 @@ public class TransmissionChain extends Entity {
 
     private List<ChainNode> nodeList;
 
+    private List<String> keys;
+
     public TransmissionChain() {
         super();
         this.nodeList = new LinkedList<>();
+        this.keys = new ArrayList<>();
     }
 
+    public void addKey(String key) {
 
+    }
 }

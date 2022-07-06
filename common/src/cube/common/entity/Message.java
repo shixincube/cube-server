@@ -392,6 +392,15 @@ public class Message extends Entity implements Comparable<Message> {
     }
 
     /**
+     * 设置消息发件人 ID 。
+     *
+     * @param from 新的发件人 ID 。
+     */
+    public void setFrom(Long from) {
+        this.from = from;
+    }
+
+    /**
      * 获取消息收件人 ID 。
      *
      * @return 返回消息收件人 ID 。

@@ -647,6 +647,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         // 重置 ID
         message.resetId();
 
+        // 重新设置发件人
+        message.setFrom(formId);
+
         // 更新消息状态
         message.setState(MessageState.Sent);
 
