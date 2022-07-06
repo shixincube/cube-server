@@ -47,12 +47,10 @@ public class MessagingPrePushPlugin implements Plugin {
 
     @Override
     public void setup() {
-
     }
 
     @Override
     public void teardown() {
-
     }
 
     @Override

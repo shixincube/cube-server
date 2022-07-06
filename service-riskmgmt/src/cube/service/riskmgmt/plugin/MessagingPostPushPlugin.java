@@ -24,45 +24,44 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.service.riskmgmt.plugin;
+
+import cube.common.entity.FileAttachment;
+import cube.common.entity.Message;
+import cube.plugin.Plugin;
+import cube.plugin.PluginContext;
+import cube.service.messaging.MessagingPluginContext;
+import cube.service.riskmgmt.RiskManagement;
 
 /**
- * 链条节点。
+ * 消息模块文件操作插件。
  */
-public class ChainNode extends Entity {
+public class MessagingPostPushPlugin implements Plugin {
 
-    /**
-     * 操作人。
-     */
-    private Entity who;
+    private RiskManagement riskManagement;
 
-    /**
-     * 被操作的实体。
-     */
-    private Entity what;
-
-    /**
-     * 操作时间。
-     */
-    private long when;
-
-    /**
-     * 操作事件。
-     */
-    private String event;
-
-    /**
-     * 做了什么操作方式。
-     */
-    private TransmissionMethod method;
-
-    private ChainNode previous;
-
-    private ChainNode next;
-
-    public ChainNode() {
-
+    public MessagingPostPushPlugin(RiskManagement riskManagement) {
+        this.riskManagement = riskManagement;
     }
 
+    @Override
+    public void setup() {
+    }
 
+    @Override
+    public void teardown() {
+    }
+
+    @Override
+    public void onAction(PluginContext context) {
+        MessagingPluginContext ctx = (MessagingPluginContext) context;
+        Message message = ctx.getMessage();
+        if (null != message) {
+            FileAttachment fileAttachment = message.getAttachment();
+            if (null != fileAttachment) {
+                // 有文件附件的消息
+                this.riskManagement.addFileChainNode(message);
+            }
+        }
+    }
 }

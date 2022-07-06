@@ -26,6 +26,8 @@
 
 package cube.service.riskmgmt;
 
+import cube.common.entity.ChainNode;
+import cube.common.entity.Message;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
@@ -36,6 +38,7 @@ import cube.service.contact.ContactManager;
 import cube.service.contact.ContactManagerListener;
 import cube.service.messaging.MessagingHook;
 import cube.service.messaging.MessagingService;
+import cube.service.riskmgmt.plugin.MessagingPostPushPlugin;
 import cube.service.riskmgmt.plugin.MessagingPrePushPlugin;
 import cube.service.riskmgmt.plugin.ModifyContactNamePlugin;
 import cube.storage.StorageType;
@@ -122,7 +125,6 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
 
     @Override
     public void onTick(Module module, Kernel kernel) {
-
     }
 
     @Override
@@ -152,9 +154,10 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         return false;
     }
 
-    public List<SensitiveWord> recognizeSensitiveWord(String domain, String text) {
-        List<SensitiveWord> result = new ArrayList<>();
-        return result;
+    public void addFileChainNode(Message message) {
+        this.executor.execute(() -> {
+
+        });
     }
 
     private void loadSensitiveWordToMemory(List<String> domainList) {
@@ -178,5 +181,6 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         }
 
         pluginSystem.register(MessagingHook.PrePush, new MessagingPrePushPlugin(this));
+        pluginSystem.register(MessagingHook.PostPush, new MessagingPostPushPlugin(this));
     }
 }

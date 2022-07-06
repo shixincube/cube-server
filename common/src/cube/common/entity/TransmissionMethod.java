@@ -31,8 +31,19 @@ package cube.common.entity;
  */
 public class TransmissionMethod extends Entity {
 
-    public TransmissionMethod() {
+    /**
+     * 主体实体。
+     */
+    private Entity main;
+
+    /**
+     * 传输目标。
+     */
+    private Entity target;
+
+    public TransmissionMethod(Entity main) {
         super();
+        this.main = main;
     }
 
 

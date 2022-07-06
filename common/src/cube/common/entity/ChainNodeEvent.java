@@ -31,7 +31,50 @@ package cube.common.entity;
  */
 public final class ChainNodeEvent {
 
+    /**
+     * 发送。
+     */
     public final static String Transmit = "Transmit";
+
+    /**
+     * 转发。
+     */
+    public final static String Forward = "Forward";
+
+    /**
+     * 归档。
+     */
+    public final static String Archive = "Archive";
+
+    /**
+     * 删除。
+     */
+    public final static String Delete = "Delete";
+
+    /**
+     * 重命名。
+     */
+    public final static String Rename = "Rename";
+
+    /**
+     * 复制。
+     */
+    public final static String Copy = "Copy";
+
+    /**
+     * 分享。
+     */
+    public final static String Share = "share";
+
+    /**
+     * 浏览。
+     */
+    public final static String View = "View";
+
+    /**
+     * 提取。
+     */
+    public final static String Extract = "Extract";
 
     private ChainNodeEvent() {
     }
