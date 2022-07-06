@@ -145,7 +145,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
 
         String upperCase = text.toUpperCase();
         for (SensitiveWord sensitiveWord : list) {
-            if (upperCase.indexOf(sensitiveWord.word) >= 0) {
+            if (upperCase.contains(sensitiveWord.word)) {
                 return true;
             }
         }
@@ -177,6 +177,6 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
             pluginSystem = messagingService.getPluginSystem();
         }
 
-        pluginSystem.register(MessagingHook.PrePush, new MessagingPrePushPlugin());
+        pluginSystem.register(MessagingHook.PrePush, new MessagingPrePushPlugin(this));
     }
 }

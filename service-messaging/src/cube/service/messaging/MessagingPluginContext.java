@@ -57,6 +57,10 @@ public class MessagingPluginContext extends PluginContext {
         return this.stateCode;
     }
 
+    public void setStateCode(MessagingStateCode stateCode) {
+        this.stateCode = stateCode;
+    }
+
     @Override
     public Object get(String name) {
         if (name.equals(MESSAGE)) {

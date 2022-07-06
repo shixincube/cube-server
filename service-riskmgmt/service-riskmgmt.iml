@@ -20,5 +20,7 @@
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="service" />
     <orderEntry type="module" module-name="service-messaging" />
+    <orderEntry type="module" module-name="service-fileprocessor" />
+    <orderEntry type="module" module-name="service-filestorage" />
   </component>
 </module>
