@@ -88,8 +88,13 @@ public class FileStorageCellet extends AbstractCellet {
         // 添加句柄
         ContextHandler fileHandler = new ContextHandler();
         fileHandler.setContextPath("/filestorage/file/");
-        fileHandler.setHandler(new FileHandler(this.fileChunkStorage, performer));
+        fileHandler.setHandler(new FileHandler(this.fileChunkStorage, this.performer));
         httpServer.addContextHandler(fileHandler);
+
+        ContextHandler sharingHandler = new ContextHandler();
+        sharingHandler.setContextPath("/sharing/");
+        sharingHandler.setHandler(new FileSharingHandler(this.performer));
+        httpServer.addContextHandler(sharingHandler);
 
         return true;
     }

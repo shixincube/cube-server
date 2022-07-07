@@ -24,15 +24,33 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage;
+package cube.dispatcher.filestorage;
+
+import cube.dispatcher.Performer;
+import cube.util.CrossDomainHandler;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
- * 文件链接管理器。
+ * 文件分享句柄。
  */
-public class FileLinkManager {
+public class FileSharingHandler extends CrossDomainHandler {
 
-    public FileLinkManager() {
+    private Performer performer;
+
+    public FileSharingHandler(Performer performer) {
+        super();
+        this.performer = performer;
     }
 
+    @Override
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+        String pathInfo = request.getPathInfo();
 
+        complete();
+    }
 }

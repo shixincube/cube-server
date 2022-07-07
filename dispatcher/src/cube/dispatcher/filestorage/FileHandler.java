@@ -60,7 +60,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * 文件上传处理。
+ * 文件上传/下载处理。
  */
 public class FileHandler extends CrossDomainHandler {
 

@@ -128,7 +128,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 文件链接管理器。
      */
-    private FileLinkManager fileLinkManager;
+    private FileSharingManager sharingManager;
 
     /**
      * 构造函数。
@@ -140,6 +140,7 @@ public class FileStorageService extends AbstractModule {
         this.executor = executor;
         this.fileDescriptors = new ConcurrentHashMap<>();
         this.daemonTask = new DaemonTask(this);
+        this.sharingManager = new FileSharingManager(this);
     }
 
     @Override
@@ -209,10 +210,16 @@ public class FileStorageService extends AbstractModule {
 
         // 回收站
         this.recycleBin = new RecycleBin(this.serviceStorage);
+
+        // 启动分享管理器
+        this.sharingManager.start();
     }
 
     @Override
     public void stop() {
+        // 停止分享管理器
+        this.sharingManager.stop();
+
         if (null != this.fileSystem) {
             // 停止文件系统
             this.fileSystem.stop();
