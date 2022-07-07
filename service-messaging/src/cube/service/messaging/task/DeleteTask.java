@@ -35,6 +35,7 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -67,6 +68,9 @@ public class DeleteTask extends ServiceTask {
             return;
         }
 
+        // 设备
+        Device device = ContactManager.getInstance().getDevice(tokenCode);
+
         // 域
         String domain = contact.getDomain().getName();
 
@@ -92,7 +96,7 @@ public class DeleteTask extends ServiceTask {
 
         MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingService.NAME);
         // 标记消息删除
-        messagingService.deleteMessage(domain, contactId, messageId);
+        messagingService.deleteMessage(domain, contactId, messageId, device);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, MessagingStateCode.Ok.code, data));

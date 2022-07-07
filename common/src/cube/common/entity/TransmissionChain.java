@@ -32,20 +32,20 @@ import java.util.List;
 
 /**
  * 传输链。
+ * 传输链上可以同时追踪不同 SHA1 码的文件。
+ * 文件允许被修改，修改之后仍然在同一条链上追踪。
  */
 public class TransmissionChain extends Entity {
 
     private List<ChainNode> nodeList;
 
-    private List<String> keys;
+    private List<String> tracks;
 
     public TransmissionChain() {
         super();
         this.nodeList = new LinkedList<>();
-        this.keys = new ArrayList<>();
+        this.tracks = new ArrayList<>();
     }
 
-    public void addKey(String key) {
 
-    }
 }

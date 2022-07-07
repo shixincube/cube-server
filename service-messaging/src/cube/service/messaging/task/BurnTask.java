@@ -35,6 +35,7 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -68,6 +69,9 @@ public class BurnTask extends ServiceTask {
             return;
         }
 
+        // 设备
+        Device device = ContactManager.getInstance().getDevice(tokenCode);
+
         // 域
         String domain = contact.getDomain().getName();
 
@@ -95,7 +99,7 @@ public class BurnTask extends ServiceTask {
 
         MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingService.NAME);
         // 焚毁消息
-        messagingService.burnMessage(domain, contactId, messageId, payload);
+        messagingService.burnMessage(domain, contactId, messageId, payload, device);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, MessagingStateCode.Ok.code, data));

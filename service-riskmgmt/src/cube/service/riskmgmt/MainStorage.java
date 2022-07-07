@@ -31,6 +31,7 @@ import cell.util.log.Logger;
 import cube.common.Storagable;
 import cube.common.entity.ChainNode;
 import cube.common.entity.TransmissionChain;
+import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
@@ -53,7 +54,7 @@ public class MainStorage implements Storagable {
 
     private final String sensitiveWordTablePrefix = "risk_sensitive_word_";
 
-    private final String transChainKeyTablePrefix = "trans_chain_key_";
+    private final String transChainTrackTablePrefix = "trans_chain_track_";
 
     private final String transChainNodeTablePrefix = "trans_chain_node_";
 
@@ -69,14 +70,11 @@ public class MainStorage implements Storagable {
             })
     };
 
-    private final StorageField[] transChainKeyFields = new StorageField[] {
-            new StorageField("id", LiteralBase.LONG, new Constraint[] {
-                    Constraint.PRIMARY_KEY
+    private final StorageField[] transChainTrackFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
-            new StorageField("chain_id", LiteralBase.LONG, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("key", LiteralBase.STRING, new Constraint[] {
+            new StorageField("track", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
@@ -90,9 +88,6 @@ public class MainStorage implements Storagable {
     private final StorageField[] transChainNodeFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY
-            }),
-            new StorageField("chain_id", LiteralBase.LONG, new Constraint[] {
-                    Constraint.NOT_NULL
             }),
             new StorageField("event", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
@@ -123,10 +118,16 @@ public class MainStorage implements Storagable {
 
     private Map<String, String> sensitiveWordTableNameMap;
 
+    private Map<String, String> transChainTrackTableNameMap;
+
+    private Map<String, String> transChainNodeTableNameMap;
+
     public MainStorage(ExecutorService executor, StorageType type, JSONObject config) {
         this.executor = executor;
         this.storage = StorageFactory.getInstance().createStorage(type, "RickMgmtMainStorage", config);
         this.sensitiveWordTableNameMap = new HashMap<>();
+        this.transChainTrackTableNameMap = new HashMap<>();
+        this.transChainNodeTableNameMap = new HashMap<>();
     }
 
     @Override
@@ -143,6 +144,8 @@ public class MainStorage implements Storagable {
     public void execSelfChecking(List<String> domainNameList) {
         for (String domain : domainNameList) {
             this.checkSensitiveWordTable(domain);
+            this.checkChainTrackTable(domain);
+            this.checkChainNodeTable(domain);
         }
     }
 
@@ -182,8 +185,21 @@ public class MainStorage implements Storagable {
         return null;
     }
 
-    public void addTransmissionChainNode(String key, ChainNode chainNode) {
+    public void expandTransmissionChain(String currentKey, String newKey) {
 
+    }
+
+    public void addTransmissionChainNode(ChainNode chainNode) {
+        String domain = chainNode.getDomain().getName();
+        String table = this.transChainTrackTableNameMap.get(domain);
+        if (null == table) {
+            return;
+        }
+
+        synchronized (table) {
+            List<String> tracks = chainNode.getTracks();
+
+        }
     }
 
     private void checkSensitiveWordTable(String domain) {
@@ -203,6 +219,34 @@ public class MainStorage implements Storagable {
                     this.writeSensitiveWord(domain, word);
                 }
                 swbi = null;
+            }
+        }
+    }
+
+    private void checkChainTrackTable(String domain) {
+        String table = this.transChainTrackTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.transChainTrackTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.transChainTrackFields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkChainNodeTable(String domain) {
+        String table = this.transChainNodeTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.transChainNodeTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.transChainNodeFields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
         }
     }

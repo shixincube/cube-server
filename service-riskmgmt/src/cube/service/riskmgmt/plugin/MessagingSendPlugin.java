@@ -37,11 +37,11 @@ import cube.service.riskmgmt.RiskManagement;
 /**
  * 消息模块文件操作插件。
  */
-public class MessagingPostPushPlugin implements Plugin {
+public class MessagingSendPlugin implements Plugin {
 
     private RiskManagement riskManagement;
 
-    public MessagingPostPushPlugin(RiskManagement riskManagement) {
+    public MessagingSendPlugin(RiskManagement riskManagement) {
         this.riskManagement = riskManagement;
     }
 

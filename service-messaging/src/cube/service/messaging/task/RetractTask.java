@@ -35,6 +35,7 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
@@ -70,6 +71,9 @@ public class RetractTask extends ServiceTask {
         // 域
         String domain = contact.getDomain().getName();
 
+        // 设备
+        Device device = ContactManager.getInstance().getDevice(tokenCode);
+
         Long contactId = null;
         Long messageId = null;
         try {
@@ -92,7 +96,7 @@ public class RetractTask extends ServiceTask {
 
         MessagingService messagingService = (MessagingService) this.kernel.getModule(MessagingService.NAME);
         // 撤回消息
-        if (!messagingService.retractMessage(domain, contactId, messageId)) {
+        if (!messagingService.retractMessage(domain, contactId, messageId, device)) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.Failure.code, data));
         }

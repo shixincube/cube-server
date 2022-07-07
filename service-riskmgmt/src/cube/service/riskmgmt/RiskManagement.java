@@ -37,7 +37,7 @@ import cube.service.contact.ContactManager;
 import cube.service.contact.ContactManagerListener;
 import cube.service.messaging.MessagingHook;
 import cube.service.messaging.MessagingService;
-import cube.service.riskmgmt.plugin.MessagingPostPushPlugin;
+import cube.service.riskmgmt.plugin.MessagingSendPlugin;
 import cube.service.riskmgmt.plugin.MessagingPrePushPlugin;
 import cube.service.riskmgmt.plugin.ModifyContactNamePlugin;
 import cube.storage.StorageType;
@@ -156,6 +156,13 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         final String domain = message.getDomain().getName();
 
         this.executor.execute(() -> {
+            FileAttachment attachment = message.getAttachment();
+            FileLabel fileLabel = attachment.getFileLabel(0);
+            // 文件 SHA1 码
+            String track1 = fileLabel.getSHA1Code();
+            // 文件 MD5 码
+            String track2 = fileLabel.getMD5Code();
+
             Contact contact = ContactManager.getInstance().getContact(domain, message.getFrom());
 
             AbstractContact target = null;
@@ -166,16 +173,18 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
                 target = ContactManager.getInstance().getContact(domain, message.getTo());
             }
 
-            FileAttachment attachment = message.getAttachment();
-            FileLabel fileLabel = attachment.getFileLabel(0);
-
             // 创建节点
-            ChainNode node = new ChainNode(event, contact, fileLabel, message.getRemoteTimestamp());
-            // 设置传输方式
+            ChainNode node = new ChainNode(domain, event, contact, fileLabel, message.getRemoteTimestamp());
+            // 设置 Track
+            if (null != track1)
+                node.addTrack(track1);
+            if (null != track2)
+                node.addTrack(track2);
+            // 设置传输的方法
             TransmissionMethod method = new TransmissionMethod(message, target);
             node.setMethod(method);
 
-            this.mainStorage.addTransmissionChainNode(fileLabel.getFileCode(), node);
+            this.mainStorage.addTransmissionChainNode(node);
         });
     }
 
@@ -200,6 +209,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         }
 
         pluginSystem.register(MessagingHook.PrePush, new MessagingPrePushPlugin(this));
-        pluginSystem.register(MessagingHook.PostPush, new MessagingPostPushPlugin(this));
+        // 消息发送
+        pluginSystem.register(MessagingHook.SendMessage, new MessagingSendPlugin(this));
     }
 }

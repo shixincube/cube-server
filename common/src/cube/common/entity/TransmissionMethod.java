@@ -26,6 +26,8 @@
 
 package cube.common.entity;
 
+import org.json.JSONObject;
+
 /**
  * 传输方式。
  */
@@ -47,5 +49,18 @@ public class TransmissionMethod extends Entity {
         this.target = target;
     }
 
+    public Entity getMain() {
+        return this.main;
+    }
 
+    public Entity getTarget() {
+        return this.target;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+
+        return json;
+    }
 }

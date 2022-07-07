@@ -35,6 +35,7 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.entity.Message;
 import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
@@ -87,7 +88,9 @@ public class ReadTask extends ServiceTask {
 
         String tokenCode = this.getTokenCode(action);
         Contact contact = ContactManager.getInstance().getContact(tokenCode);
-        if (null == contact) {
+        // 设备
+        Device device = ContactManager.getInstance().getDevice(tokenCode);
+        if (null == contact || null == device) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, MessagingStateCode.NoContact.code, data));
             markResponseTime();
@@ -142,7 +145,7 @@ public class ReadTask extends ServiceTask {
 
         if (null != messageId) {
             // 标记消息已读
-            Message message = messagingService.markReadMessage(domain, contactId, messageId);
+            Message message = messagingService.markReadMessage(domain, contactId, messageId, device);
             if (null == message) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(action, packet, MessagingStateCode.Failure.code, data));

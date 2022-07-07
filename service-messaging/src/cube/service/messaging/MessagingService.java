@@ -370,7 +370,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 message.setState(MessageState.Sent);
 
                 // Hook PrePush
-                MessagingPluginContext mpc = new MessagingPluginContext(message);
+                MessagingPluginContext mpc = new MessagingPluginContext(message, sourceDevice);
                 MessagingHook hook = this.pluginSystem.getPrePushHook();
                 hook.apply(mpc);
                 if (mpc.getStateCode() != MessagingStateCode.Ok) {
@@ -406,8 +406,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
                 // 触发 Hook
                 MessagingHook writeHook = this.pluginSystem.getWriteMessageHook();
-                writeHook.apply(new MessagingPluginContext(toCopy));
-                writeHook.apply(new MessagingPluginContext(fromCopy));
+                writeHook.apply(new MessagingPluginContext(toCopy, sourceDevice));
+                writeHook.apply(new MessagingPluginContext(fromCopy, sourceDevice));
 
                 // 在内存里记录状态
                 this.messageStateMap.put(new MessageKey(toCopy.getOwner(), toCopy.getId()),
@@ -420,7 +420,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
                 // Hook PostPush
                 hook = this.pluginSystem.getPostPushHook();
-                hook.apply(new MessagingPluginContext(message));
+                hook.apply(new MessagingPluginContext(message, sourceDevice));
 
                 return new PushResult(message, MessagingStateCode.Ok);
             }
@@ -435,7 +435,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                         message.setState(MessageState.Sent);
 
                         // Hook PrePush
-                        MessagingPluginContext mpc = new MessagingPluginContext(message);
+                        MessagingPluginContext mpc = new MessagingPluginContext(message, sourceDevice);
                         MessagingHook hook = this.pluginSystem.getPrePushHook();
                         hook.apply(mpc);
                         if (mpc.getStateCode() != MessagingStateCode.Ok) {
@@ -473,7 +473,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
                             // Hook
                             MessagingHook writeHook = this.pluginSystem.getWriteMessageHook();
-                            writeHook.apply(new MessagingPluginContext(copy));
+                            writeHook.apply(new MessagingPluginContext(copy, sourceDevice));
 
                             // 在内存里记录状态
                             this.messageStateMap.put(new MessageKey(contactId, copy.getId()),
@@ -501,7 +501,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
                         // Hook
                         MessagingHook writeHook = this.pluginSystem.getWriteMessageHook();
-                        writeHook.apply(new MessagingPluginContext(copy));
+                        writeHook.apply(new MessagingPluginContext(copy, sourceDevice));
 
                         // 在内存里记录状态
                         this.messageStateMap.put(new MessageKey(copy.getOwner(), copy.getId()),
@@ -515,7 +515,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
                         // Hook PostPush
                         hook = this.pluginSystem.getPostPushHook();
-                        hook.apply(new MessagingPluginContext(message));
+                        hook.apply(new MessagingPluginContext(message, sourceDevice));
 
                         return new PushResult(message, MessagingStateCode.Ok);
                     }
@@ -561,7 +561,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
             // Hook
             MessagingHook writeHook = this.pluginSystem.getWriteMessageHook();
-            writeHook.apply(new MessagingPluginContext(fromCopy));
+            writeHook.apply(new MessagingPluginContext(fromCopy, sourceDevice));
 
             this.messageStateMap.put(new MessageKey(fromCopy.getOwner(), fromCopy.getId()),
                     new MessageStateBundle(fromCopy.getId(), fromCopy.getOwner(), MessageState.Sent));
@@ -675,9 +675,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * @param domain 指定域。
      * @param fromId 指定消息发件人 ID 。
      * @param messageId 指定消息 ID 。
+     * @param device 指定设备。
      * @return 返回是否撤回成功。
      */
-    public boolean retractMessage(String domain, Long fromId, Long messageId) {
+    public boolean retractMessage(String domain, Long fromId, Long messageId, Device device) {
         long now = System.currentTimeMillis();
         String key = UniqueKey.make(fromId, domain);
 
@@ -712,7 +713,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         // 触发 Hook
         MessagingHook hook = this.pluginSystem.getUpdateMessageHook();
-        hook.apply(new MessagingPluginContext(message));
+        hook.apply(new MessagingPluginContext(message, device));
 
         // 从存储器里读取出该 ID 的所有消息
         List<Message> msgList = this.storage.read(domain, messageId);
@@ -773,8 +774,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * @param domain 指定域。
      * @param contactId 指定联系人 ID 。
      * @param messageId 指定消息 ID 。
+     * @param device 指定设备。
      */
-    public void deleteMessage(String domain, Long contactId, Long messageId) {
+    public void deleteMessage(String domain, Long contactId, Long messageId, Device device) {
         MessageKey messageKey = new MessageKey(contactId, messageId);
 
         MessageStateBundle stateBundle = this.messageStateMap.get(messageKey);
@@ -790,7 +792,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 Message message = getCompactMessage(domain, contactId, messageId);
                 if (null != message) {
                     MessagingHook hook = pluginSystem.getDeleteMessageHook();
-                    hook.apply(new MessagingPluginContext(message));
+                    hook.apply(new MessagingPluginContext(message, device));
                 }
             }
         });
@@ -803,8 +805,9 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * @param contactId 指定联系人 ID 。
      * @param messageId 指定消息 ID 。
      * @param payload 指定消息新的负载。
+     * @param device 指定设备
      */
-    public void burnMessage(String domain, Long contactId, Long messageId, JSONObject payload) {
+    public void burnMessage(String domain, Long contactId, Long messageId, JSONObject payload, Device device) {
         // 从数据里擦除
         this.storage.eraseMessagePayload(domain, contactId, messageId, payload);
 
@@ -815,7 +818,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 if (null != message) {
                     message.setPayload(payload);
                     MessagingHook hook = pluginSystem.getBurnMessageHook();
-                    hook.apply(new MessagingPluginContext(message));
+                    hook.apply(new MessagingPluginContext(message, device));
                 }
             }
         });
@@ -840,9 +843,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * @param domain
      * @param contactId
      * @param messageId
+     * @param device
      * @return
      */
-    public Message markReadMessage(String domain, Long contactId, Long messageId) {
+    public Message markReadMessage(String domain, Long contactId, Long messageId, Device device) {
         Message message = this.storage.readCompact(domain, contactId, messageId);
         if (null == message) {
             // 没有找到消息
@@ -861,7 +865,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         // 触发 Hook
         MessagingHook hook = this.pluginSystem.getUpdateMessageHook();
-        hook.apply(new MessagingPluginContext(message));
+        hook.apply(new MessagingPluginContext(message, device));
 
         // 更新存储
         this.storage.writeMessageState(domain, contactId, messageId, MessageState.Read);
@@ -885,7 +889,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
                 // 触发 Hook
                 MessagingHook senderHook = this.pluginSystem.getUpdateMessageHook();
-                senderHook.apply(new MessagingPluginContext(senderMessage));
+                senderHook.apply(new MessagingPluginContext(senderMessage, device));
 
                 // 通知发件人
                 String fromKey = UniqueKey.make(message.getFrom(), domain);

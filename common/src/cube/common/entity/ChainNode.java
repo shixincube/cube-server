@@ -26,6 +26,11 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 链条节点。
  */
@@ -56,15 +61,38 @@ public class ChainNode extends Entity {
      */
     private TransmissionMethod method;
 
+    /**
+     * 追踪轨道。
+     */
+    private List<String> tracks;
+
     private ChainNode previous;
 
     private ChainNode next;
 
-    public ChainNode(String event, Entity who, Entity what, long when) {
+    public ChainNode(String domain, String event, Entity who, Entity what, long when) {
+        super(Utils.generateSerialNumber(), domain);
         this.event = event;
         this.who = who;
         this.what = what;
         this.when = when;
+        this.tracks = new ArrayList<>();
+    }
+
+    public String getEvent() {
+        return this.event;
+    }
+
+    public void addTrack(String track) {
+        if (this.tracks.contains(track)) {
+            return;
+        }
+
+        this.tracks.add(track);
+    }
+
+    public List<String> getTracks() {
+        return this.tracks;
     }
 
     public TransmissionMethod getMethod() {
