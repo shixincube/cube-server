@@ -39,10 +39,7 @@ import cube.common.entity.Message;
 import cube.common.state.MessagingStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
-import cube.service.messaging.MessagingHook;
-import cube.service.messaging.MessagingPluginContext;
-import cube.service.messaging.MessagingService;
-import cube.service.messaging.PushResult;
+import cube.service.messaging.*;
 import org.json.JSONException;
 
 /**
@@ -111,7 +108,7 @@ public class PushTask extends ServiceTask {
         // 进行插件 Hook 处理
         if (result.stateCode == MessagingStateCode.Ok) {
             // Hook
-            MessagingHook hook = (MessagingHook) messagingService.getPluginSystem().getHook(MessagingHook.SendMessage);
+            MessagingHook hook = ((MessagingPluginSystem) messagingService.getPluginSystem()).getSendMessageHook();
             MessagingPluginContext context = new MessagingPluginContext(response, device);
             hook.apply(context);
         }

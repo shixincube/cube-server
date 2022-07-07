@@ -26,7 +26,7 @@
 
 package cube.common.entity;
 
-import cell.util.Utils;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,12 +44,12 @@ public class ChainNode extends Entity {
     /**
      * 操作人。
      */
-    private Entity who;
+    private AbstractContact who;
 
     /**
      * 被操作的实体。
      */
-    private Entity what;
+    private FileLabel what;
 
     /**
      * 操作时间。
@@ -70,8 +70,8 @@ public class ChainNode extends Entity {
 
     private ChainNode next;
 
-    public ChainNode(String domain, String event, Entity who, Entity what, long when) {
-        super(Utils.generateSerialNumber(), domain);
+    public ChainNode(Long id, String domain, String event, AbstractContact who, FileLabel what, long when) {
+        super(id, domain);
         this.event = event;
         this.who = who;
         this.what = what;
@@ -81,6 +81,18 @@ public class ChainNode extends Entity {
 
     public String getEvent() {
         return this.event;
+    }
+
+    public AbstractContact getWho() {
+        return this.who;
+    }
+
+    public FileLabel getWhat() {
+        return this.what;
+    }
+
+    public long getWhen() {
+        return this.when;
     }
 
     public void addTrack(String track) {
@@ -101,5 +113,12 @@ public class ChainNode extends Entity {
 
     public void setMethod(TransmissionMethod method) {
         this.method = method;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("event", this.event);
+        return json;
     }
 }

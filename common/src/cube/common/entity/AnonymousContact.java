@@ -26,46 +26,30 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
 import org.json.JSONObject;
 
 /**
- * 传输方式。
+ * 匿名联系人。
  */
-public class TransmissionMethod extends Entity {
+public class AnonymousContact extends AbstractContact {
 
-    /**
-     * 消息实体。
-     */
-    private Message message;
+    private Device device;
 
-    /**
-     * 传输目标。
-     */
-    private AbstractContact target;
-
-    public TransmissionMethod(Message message, AbstractContact target) {
-        super();
-        this.message = message;
-        this.target = target;
+    public AnonymousContact(String domainName, Device device) {
+        super(Utils.generateSerialNumber(), domainName, "");
+        this.device = device;
     }
 
-    public Message getMessage() {
-        return this.message;
-    }
-
-    public AbstractContact getTarget() {
-        return this.target;
+    public Device getDevice() {
+        return this.device;
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        if (null != this.message) {
-            json.put("message", this.message.toJSON());
-        }
-        if (null != this.target) {
-            json.put("target", this.target.toJSON());
-        }
+        JSONObject json = super.toJSON();
+        json.put("device", this.device.toJSON());
+        json.put("type", "anonymous");
         return json;
     }
 

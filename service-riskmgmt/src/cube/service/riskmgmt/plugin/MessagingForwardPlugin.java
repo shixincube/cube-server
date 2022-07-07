@@ -24,53 +24,45 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.service.riskmgmt.plugin;
 
-import org.json.JSONObject;
+import cube.common.entity.ChainNodeEvent;
+import cube.common.entity.FileAttachment;
+import cube.common.entity.Message;
+import cube.plugin.Plugin;
+import cube.plugin.PluginContext;
+import cube.service.messaging.MessagingPluginContext;
+import cube.service.riskmgmt.RiskManagement;
 
 /**
- * 传输方式。
+ * 消息转发插件。
  */
-public class TransmissionMethod extends Entity {
+public class MessagingForwardPlugin implements Plugin {
 
-    /**
-     * 消息实体。
-     */
-    private Message message;
+    private RiskManagement riskManagement;
 
-    /**
-     * 传输目标。
-     */
-    private AbstractContact target;
-
-    public TransmissionMethod(Message message, AbstractContact target) {
-        super();
-        this.message = message;
-        this.target = target;
-    }
-
-    public Message getMessage() {
-        return this.message;
-    }
-
-    public AbstractContact getTarget() {
-        return this.target;
+    public MessagingForwardPlugin(RiskManagement riskManagement) {
+        this.riskManagement = riskManagement;
     }
 
     @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        if (null != this.message) {
-            json.put("message", this.message.toJSON());
-        }
-        if (null != this.target) {
-            json.put("target", this.target.toJSON());
-        }
-        return json;
+    public void setup() {
     }
 
     @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
+    public void teardown() {
+    }
+
+    @Override
+    public void onAction(PluginContext context) {
+        MessagingPluginContext ctx = (MessagingPluginContext) context;
+        Message message = ctx.getMessage();
+        if (null != message) {
+            FileAttachment fileAttachment = message.getAttachment();
+            if (null != fileAttachment) {
+                // 有文件附件的消息
+                this.riskManagement.addFileChainNode(ChainNodeEvent.Forward, message);
+            }
+        }
     }
 }

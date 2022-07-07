@@ -41,6 +41,8 @@ public class MessagingHook extends Hook {
 
     public final static String SendMessage = "SendMessage";
 
+    public final static String ForwardMessage = "ForwardMessage";
+
     public final static String WriteMessage = "WriteMessage";
 
     public final static String UpdateMessage = "UpdateMessage";

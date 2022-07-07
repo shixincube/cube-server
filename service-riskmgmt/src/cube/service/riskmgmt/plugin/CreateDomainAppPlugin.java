@@ -24,53 +24,41 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.service.riskmgmt.plugin;
 
-import org.json.JSONObject;
+import cube.common.entity.AuthDomain;
+import cube.plugin.Plugin;
+import cube.plugin.PluginContext;
+import cube.service.auth.AuthPluginContext;
+import cube.service.riskmgmt.RiskManagement;
 
 /**
- * 传输方式。
+ * 插件。
  */
-public class TransmissionMethod extends Entity {
+public class CreateDomainAppPlugin implements Plugin {
 
-    /**
-     * 消息实体。
-     */
-    private Message message;
+    private RiskManagement service;
 
-    /**
-     * 传输目标。
-     */
-    private AbstractContact target;
-
-    public TransmissionMethod(Message message, AbstractContact target) {
-        super();
-        this.message = message;
-        this.target = target;
-    }
-
-    public Message getMessage() {
-        return this.message;
-    }
-
-    public AbstractContact getTarget() {
-        return this.target;
+    public CreateDomainAppPlugin(RiskManagement service) {
+        this.service = service;
     }
 
     @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        if (null != this.message) {
-            json.put("message", this.message.toJSON());
-        }
-        if (null != this.target) {
-            json.put("target", this.target.toJSON());
-        }
-        return json;
+    public void setup() {
     }
 
     @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
+    public void teardown() {
+    }
+
+    @Override
+    public void onAction(PluginContext context) {
+        if (context instanceof AuthPluginContext) {
+            AuthPluginContext authPluginContext = (AuthPluginContext) context;
+            AuthDomain authDomain = authPluginContext.getDomain();
+            if (null != authDomain) {
+                this.service.refreshDomain(authDomain);
+            }
+        }
     }
 }

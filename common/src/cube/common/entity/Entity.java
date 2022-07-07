@@ -60,6 +60,8 @@ public abstract class Entity implements JSONable {
      * 构造函数。
      */
     public Entity() {
+        this.id = 0L;
+        this.domain = new Domain("");
         this.timestamp = System.currentTimeMillis();
     }
 

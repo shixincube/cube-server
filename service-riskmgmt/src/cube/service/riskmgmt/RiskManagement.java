@@ -26,24 +26,25 @@
 
 package cube.service.riskmgmt;
 
+import cell.util.Utils;
 import cube.common.entity.*;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
+import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.contact.ContactManagerListener;
 import cube.service.messaging.MessagingHook;
 import cube.service.messaging.MessagingService;
-import cube.service.riskmgmt.plugin.MessagingSendPlugin;
-import cube.service.riskmgmt.plugin.MessagingPrePushPlugin;
-import cube.service.riskmgmt.plugin.ModifyContactNamePlugin;
+import cube.service.riskmgmt.plugin.*;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -137,6 +138,12 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         this.modifyContactNamePlugin = null;
     }
 
+    public void refreshDomain(AuthDomain authDomain) {
+        List<String> list = new ArrayList<>();
+        list.add(authDomain.domainName);
+        this.mainStorage.execSelfChecking(list);
+    }
+
     public boolean hasSensitiveWord(String domain, String text) {
         List<SensitiveWord> list = this.sensitiveWordsMap.get(domain);
         if (null == list) {
@@ -174,7 +181,8 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
             }
 
             // 创建节点
-            ChainNode node = new ChainNode(domain, event, contact, fileLabel, message.getRemoteTimestamp());
+            ChainNode node = new ChainNode(Utils.generateSerialNumber(),
+                    domain, event, contact, fileLabel, message.getRemoteTimestamp());
             // 设置 Track
             if (null != track1)
                 node.addTrack(track1);
@@ -196,8 +204,23 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
     }
 
     private void initPlugin() {
-        MessagingService messagingService = (MessagingService) this.getKernel().getModule("Messaging");
-        PluginSystem<?> pluginSystem = messagingService.getPluginSystem();
+        AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
+        PluginSystem<?> pluginSystem = authService.getPluginSystem();
+        while (null == pluginSystem) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            pluginSystem = authService.getPluginSystem();
+        }
+
+        pluginSystem.register(AuthServiceHook.CreateDomainApp,
+                new CreateDomainAppPlugin(this));
+
+        MessagingService messagingService = (MessagingService) this.getKernel().getModule(MessagingService.NAME);
+        pluginSystem = messagingService.getPluginSystem();
         while (null == pluginSystem) {
             try {
                 Thread.sleep(100);
@@ -211,5 +234,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         pluginSystem.register(MessagingHook.PrePush, new MessagingPrePushPlugin(this));
         // 消息发送
         pluginSystem.register(MessagingHook.SendMessage, new MessagingSendPlugin(this));
+        // 消息转发
+        pluginSystem.register(MessagingHook.ForwardMessage, new MessagingForwardPlugin(this));
     }
 }

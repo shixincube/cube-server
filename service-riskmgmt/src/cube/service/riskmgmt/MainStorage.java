@@ -77,10 +77,10 @@ public class MainStorage implements Storagable {
             new StorageField("track", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+            new StorageField("node_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("node_id", LiteralBase.LONG, new Constraint[] {
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             })
     };
@@ -95,7 +95,13 @@ public class MainStorage implements Storagable {
             new StorageField("who", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("who_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("what", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("what_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("when", LiteralBase.LONG, new Constraint[] {
@@ -198,7 +204,40 @@ public class MainStorage implements Storagable {
 
         synchronized (table) {
             List<String> tracks = chainNode.getTracks();
+            for (String track : tracks) {
+                List<StorageField[]> result = this.storage.executeQuery(table, this.transChainTrackFields,
+                        new Conditional[] {
+                                Conditional.createEqualTo("track", track),
+                                Conditional.createAnd(),
+                                Conditional.createEqualTo("node_id", chainNode.getId().longValue())
+                        });
+                if (result.isEmpty()) {
+                    // 插入
+                    this.storage.executeInsert(table, new StorageField[] {
+                            new StorageField("track", track),
+                            new StorageField("node_id", chainNode.getId().longValue()),
+                            new StorageField("timestamp", chainNode.getTimestamp())
+                    });
+                }
+            }
+        }
 
+        table = this.transChainNodeTableNameMap.get(domain);
+        if (null == table) {
+            return;
+        }
+
+        synchronized (table) {
+            this.storage.executeInsert(table, new StorageField[] {
+                    new StorageField("id", chainNode.getId().longValue()),
+                    new StorageField("event", chainNode.getEvent()),
+                    new StorageField("who", chainNode.getWho().toJSON().toString()),
+                    new StorageField("who_id", chainNode.getWho().getId().longValue()),
+                    new StorageField("what", chainNode.getWhat().toJSON().toString()),
+                    new StorageField("what_id", chainNode.getWhat().getId().longValue()),
+                    new StorageField("when", chainNode.getWhen()),
+                    new StorageField("method", chainNode.getMethod().toJSON().toString())
+            });
         }
     }
 

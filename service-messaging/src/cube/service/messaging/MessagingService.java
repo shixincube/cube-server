@@ -629,16 +629,16 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      * 转发指定消息。
      *
      * @param domain 指定域。
-     * @param formId 指定消息发件人 ID 。
+     * @param ownerId 指定消息所有人 ID 。
      * @param messageId 指定消息 ID 。
      * @param device 指定源设备。
      * @param target 指定转发目标。
      * @return 返回推送消息结果。如果返回 {@code null} 值则未被转发。
      */
-    public PushResult forwardMessage(String domain, Long formId, Long messageId,
+    public PushResult forwardMessage(String domain, Long ownerId, Long messageId,
                                      Device device, AbstractContact target) {
         // 获取消息
-        Message message = this.storage.read(domain, formId, messageId);
+        Message message = this.storage.read(domain, ownerId, messageId);
         if (null == message) {
             Logger.w(this.getClass(), "Can NOT find message: " + messageId);
             return null;
@@ -648,21 +648,32 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         message.resetId();
 
         // 重新设置发件人
-        message.setFrom(formId);
+        message.setFrom(ownerId);
 
         // 更新消息状态
         message.setState(MessageState.Sent);
+
+        // Hook
+        MessagingHook hook = this.pluginSystem.getForwardMessageHook();
 
         if (target instanceof Contact) {
             message.setTo(target.getId());
             message.setSource(0L);
             message.setLocalTimestamp(System.currentTimeMillis());
+
+            MessagingPluginContext context = new MessagingPluginContext(message, device);
+            hook.apply(context);
+
             return this.pushMessage(message, device);
         }
         else if (target instanceof Group) {
             message.setTo(0L);
             message.setSource(target.getId());
             message.setLocalTimestamp(System.currentTimeMillis());
+
+            MessagingPluginContext context = new MessagingPluginContext(message, device);
+            hook.apply(context);
+
             return this.pushMessage(message, device);
         }
 
