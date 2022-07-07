@@ -159,7 +159,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         return false;
     }
 
-    public void addFileChainNode(String event, Message message) {
+    public void addFileChainNode(String event, Message message, Device device) {
         final String domain = message.getDomain().getName();
 
         this.executor.execute(() -> {
@@ -189,7 +189,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
             if (null != track2)
                 node.addTrack(track2);
             // 设置传输的方法
-            TransmissionMethod method = new TransmissionMethod(message, target);
+            TransmissionMethod method = new TransmissionMethod(message, target, device);
             node.setMethod(method);
 
             this.mainStorage.addTransmissionChainNode(node);
@@ -236,5 +236,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         pluginSystem.register(MessagingHook.SendMessage, new MessagingSendPlugin(this));
         // 消息转发
         pluginSystem.register(MessagingHook.ForwardMessage, new MessagingForwardPlugin(this));
+        // 消息删除
+        pluginSystem.register(MessagingHook.DeleteMessage, new MessagingDeletePlugin(this));
     }
 }

@@ -61,7 +61,7 @@ public class MessagingForwardPlugin implements Plugin {
             FileAttachment fileAttachment = message.getAttachment();
             if (null != fileAttachment) {
                 // 有文件附件的消息
-                this.riskManagement.addFileChainNode(ChainNodeEvent.Forward, message);
+                this.riskManagement.addFileChainNode(ChainNodeEvent.Forward, message, ctx.getDevice());
             }
         }
     }

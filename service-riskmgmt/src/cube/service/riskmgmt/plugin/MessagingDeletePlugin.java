@@ -24,52 +24,45 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.service.riskmgmt.plugin;
 
-import cell.util.Utils;
-import org.json.JSONObject;
+import cube.common.entity.ChainNodeEvent;
+import cube.common.entity.FileAttachment;
+import cube.common.entity.Message;
+import cube.plugin.Plugin;
+import cube.plugin.PluginContext;
+import cube.service.messaging.MessagingPluginContext;
+import cube.service.riskmgmt.RiskManagement;
 
 /**
- * 匿名联系人。
+ * 消息删除插件。
  */
-public class AnonymousContact extends AbstractContact {
+public class MessagingDeletePlugin implements Plugin {
 
-    private Device device;
+    private RiskManagement riskManagement;
 
-    public AnonymousContact(String domainName, Device device) {
-        super(Utils.generateSerialNumber(), domainName, "");
-        this.device = device;
-    }
-
-    public AnonymousContact(JSONObject json) {
-        super(json, null);
-        this.device = new Device(json.getJSONObject("device"));
-    }
-
-    public Device getDevice() {
-        return this.device;
+    public MessagingDeletePlugin(RiskManagement riskManagement) {
+        this.riskManagement = riskManagement;
     }
 
     @Override
-    public JSONObject toJSON() {
-        JSONObject json = super.toJSON();
-        json.put("device", this.device.toJSON());
-        json.put("type", "anonymous");
-        return json;
+    public void setup() {
     }
 
     @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
+    public void teardown() {
     }
 
-    /**
-     * 判断 JSON 数据结构是否是匿名联系人格式。
-     *
-     * @param json
-     * @return
-     */
-    public static boolean isAnonymous(JSONObject json) {
-        return (json.has("type") && json.getString("type").equals("anonymous"));
+    @Override
+    public void onAction(PluginContext context) {
+        MessagingPluginContext ctx = (MessagingPluginContext) context;
+        Message message = ctx.getMessage();
+        if (null != message) {
+            FileAttachment fileAttachment = message.getAttachment();
+            if (null != fileAttachment) {
+                // 有文件附件的消息
+                this.riskManagement.addFileChainNode(ChainNodeEvent.Delete, message, ctx.getDevice());
+            }
+        }
     }
 }

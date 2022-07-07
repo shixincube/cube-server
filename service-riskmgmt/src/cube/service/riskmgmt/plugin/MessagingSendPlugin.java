@@ -61,7 +61,7 @@ public class MessagingSendPlugin implements Plugin {
             FileAttachment fileAttachment = message.getAttachment();
             if (null != fileAttachment) {
                 // 有文件附件的消息
-                this.riskManagement.addFileChainNode(ChainNodeEvent.Transmit, message);
+                this.riskManagement.addFileChainNode(ChainNodeEvent.Transmit, message, ctx.getDevice());
             }
         }
     }

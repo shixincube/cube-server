@@ -661,8 +661,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             message.setSource(0L);
             message.setLocalTimestamp(System.currentTimeMillis());
 
-            MessagingPluginContext context = new MessagingPluginContext(message, device);
-            hook.apply(context);
+            hook.apply(new MessagingPluginContext(message, device));
 
             return this.pushMessage(message, device);
         }
@@ -671,8 +670,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             message.setSource(target.getId());
             message.setLocalTimestamp(System.currentTimeMillis());
 
-            MessagingPluginContext context = new MessagingPluginContext(message, device);
-            hook.apply(context);
+            hook.apply(new MessagingPluginContext(message, device));
 
             return this.pushMessage(message, device);
         }
@@ -800,7 +798,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                Message message = getCompactMessage(domain, contactId, messageId);
+                Message message = storage.read(domain, contactId, messageId);
                 if (null != message) {
                     MessagingHook hook = pluginSystem.getDeleteMessageHook();
                     hook.apply(new MessagingPluginContext(message, device));

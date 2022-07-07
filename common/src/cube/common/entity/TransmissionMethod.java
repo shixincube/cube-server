@@ -43,10 +43,41 @@ public class TransmissionMethod extends Entity {
      */
     private AbstractContact target;
 
-    public TransmissionMethod(Message message, AbstractContact target) {
+    /**
+     * 操作时使用的设备。
+     */
+    private Device device;
+
+    public TransmissionMethod(Message message, AbstractContact target, Device device) {
         super();
         this.message = message;
         this.target = target;
+        this.device = device;
+    }
+
+    public TransmissionMethod(JSONObject json) {
+        super();
+
+        if (json.has("message")) {
+            this.message = new Message(json.getJSONObject("message"));
+        }
+
+        if (json.has("target")) {
+            JSONObject data = json.getJSONObject("target");
+            if (Group.isGroup(data)) {
+                this.target = new Group(data);
+            }
+            else if (AnonymousContact.isAnonymous(data)) {
+                this.target = new AnonymousContact(data);
+            }
+            else {
+                this.target = new Contact(data);
+            }
+        }
+
+        if (json.has("device")) {
+            this.device = new Device(json.getJSONObject("device"));
+        }
     }
 
     public Message getMessage() {
@@ -57,6 +88,10 @@ public class TransmissionMethod extends Entity {
         return this.target;
     }
 
+    public Device getDevice() {
+        return this.device;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -65,6 +100,9 @@ public class TransmissionMethod extends Entity {
         }
         if (null != this.target) {
             json.put("target", this.target.toJSON());
+        }
+        if (null != this.device) {
+            json.put("device", this.device.toJSON());
         }
         return json;
     }
