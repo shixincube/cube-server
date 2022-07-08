@@ -27,13 +27,19 @@
 package cube.common.entity;
 
 import cell.util.Utils;
+import cube.util.FileUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 分享标签。
  */
 public class SharingTag extends Entity {
+
+    private String code;
 
     private SharingTagConfig config;
 
@@ -42,7 +48,66 @@ public class SharingTag extends Entity {
     public SharingTag(SharingTagConfig config) {
         super(Utils.generateSerialNumber(), config.getDomain());
         this.config = config;
+
+        StringBuilder buf = new StringBuilder();
+        buf.append(config.getFileLabel().getFileCode());
+        buf.append(config.getDomain().getName());
+        buf.append(this.id.toString());
+        buf.append(config.getContact().getId().toString());
+        this.code = FileUtils.fastHash(buf.toString());
+
+        this.visitTraceList = new ArrayList<>();
     }
 
+    public SharingTag(JSONObject json) {
+        super(json);
+        this.code = json.getString("code");
+        this.config = new SharingTagConfig(json.getJSONObject("config"));
 
+        this.visitTraceList = new ArrayList<>();
+        if (json.has("visitTraceList")) {
+            JSONArray array = json.getJSONArray("visitTraceList");
+            for (int i = 0; i < array.length(); ++i) {
+                this.visitTraceList.add(new VisitTrace(array.getJSONObject(i)));
+            }
+        }
+    }
+
+    public String getCode() {
+        return this.code;
+    }
+
+    public SharingTagConfig getConfig() {
+        return this.config;
+    }
+
+    public List<VisitTrace> getVisitTraceList() {
+        return this.visitTraceList;
+    }
+
+    public void addVisitTrace(VisitTrace visitTrace) {
+        this.visitTraceList.add(visitTrace);
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("code", this.code);
+        json.put("config", this.config.toJSON());
+
+        JSONArray array = new JSONArray();
+        for (VisitTrace visitTrace : this.visitTraceList) {
+            array.put(visitTrace.toJSON());
+        }
+        json.put("visitTraceList", array);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toCompactJSON();
+        json.put("code", this.code);
+        json.put("config", this.config.toJSON());
+        return json;
+    }
 }

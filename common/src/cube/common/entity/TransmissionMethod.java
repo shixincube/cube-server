@@ -64,15 +64,7 @@ public class TransmissionMethod extends Entity {
 
         if (json.has("target")) {
             JSONObject data = json.getJSONObject("target");
-            if (Group.isGroup(data)) {
-                this.target = new Group(data);
-            }
-            else if (AnonymousContact.isAnonymous(data)) {
-                this.target = new AnonymousContact(data);
-            }
-            else {
-                this.target = new Contact(data);
-            }
+            this.target = ContactHelper.create(data);
         }
 
         if (json.has("device")) {

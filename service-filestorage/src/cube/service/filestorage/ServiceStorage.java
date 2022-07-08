@@ -30,6 +30,8 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
 import cube.common.entity.FileLabel;
+import cube.common.entity.SharingTag;
+import cube.common.entity.VisitTrace;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -63,6 +65,10 @@ public class ServiceStorage implements Storagable {
     private final String hierarchyTablePrefix = "hierarchy_";
 
     private final String recyclebinTablePrefix = "recyclebin_";
+
+    private final String sharingTagTablePrefix = "sharing_tag_";
+
+    private final String visitTraceTablePrefix = "visit_trace_";
 
     /**
      * 文件标签字段。
@@ -119,6 +125,75 @@ public class ServiceStorage implements Storagable {
             //new StorageField("reserved", LiteralBase.STRING)
     };
 
+    private final StorageField[] sharingTagFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            new StorageField("code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("contact", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("expiry", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("password", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            })
+    };
+
+    private final StorageField[] visitTraceFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("time", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("ip", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("url", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("title", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("screen", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("referrer", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("language", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("userAgent", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("event", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("event_tag", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("event_param", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            })
+    };
+
     private ExecutorService executor;
 
     private Storage storage;
@@ -143,6 +218,16 @@ public class ServiceStorage implements Storagable {
      */
     private Map<String, String> recyclebinTableNameMap;
 
+    /**
+     * 分享标签表。
+     */
+    private Map<String, String> sharingTagTableNameMap;
+
+    /**
+     * 访问追踪数据表。
+     */
+    private Map<String, String> visitTraceTableNameMap;
+
     public ServiceStorage(ExecutorService executorService, StorageType type, JSONObject config) {
         this.executor = executorService;
         this.storage = StorageFactory.getInstance().createStorage(type, "FileStructStorage", config);
@@ -150,6 +235,8 @@ public class ServiceStorage implements Storagable {
         this.descriptorTableNameMap = new HashMap<>();
         this.hierarchyTableNameMap = new HashMap<>();
         this.recyclebinTableNameMap = new HashMap<>();
+        this.sharingTagTableNameMap = new HashMap<>();
+        this.visitTraceTableNameMap = new HashMap<>();
     }
 
     public StorageType getType() {
@@ -184,6 +271,9 @@ public class ServiceStorage implements Storagable {
 
             // 检查回收站表
             this.checkRecyclebinTable(domain);
+
+            this.checkSharingTagTable(domain);
+            this.checkVisitTraceTable(domain);
         }
     }
 
@@ -702,6 +792,38 @@ public class ServiceStorage implements Storagable {
         });
     }
 
+    public void writeSharingTag(SharingTag sharingTag) {
+        String table = this.sharingTagTableNameMap.get(sharingTag.getDomain().getName());
+        if (null == table) {
+            return;
+        }
+
+        this.executor.execute(() -> {
+            storage.executeInsert(table, new StorageField[] {
+                    new StorageField("id", sharingTag.getId()),
+                    new StorageField("code", sharingTag.getCode()),
+                    new StorageField("contact_id", sharingTag.getConfig().getContact().getId()),
+                    new StorageField("contact", sharingTag.getConfig().getContact().toJSON().toString()),
+                    new StorageField("file_code", sharingTag.getConfig().getFileLabel().getFileCode()),
+                    new StorageField("expiry", sharingTag.getConfig().getExpiryDate()),
+                    new StorageField("password", sharingTag.getConfig().getPassword())
+            });
+        });
+    }
+
+    public void writeVisitTrace(String domain, String code, VisitTrace visitTrace) {
+        String table = this.visitTraceTableNameMap.get(domain);
+        if (null == table) {
+            return;
+        }
+
+        this.executor.execute(() -> {
+            storage.executeInsert(table, new StorageField[] {
+
+            });
+        });
+    }
+
     private void checkLabelTable(String domain) {
         String table = this.labelTablePrefix + domain;
 
@@ -870,6 +992,34 @@ public class ServiceStorage implements Storagable {
             };
 
             if (this.storage.executeCreate(table, fields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkSharingTagTable(String domain) {
+        String table = this.sharingTagTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.sharingTagTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.sharingTagFields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkVisitTraceTable(String domain) {
+        String table = this.visitTraceTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.visitTraceTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.visitTraceFields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
         }
