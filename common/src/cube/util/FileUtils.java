@@ -330,14 +330,26 @@ public final class FileUtils {
      * 校验文件类型。
      *
      * @param fileName 指定文件名。
+     * @return
+     */
+    public static FileType verifyFileType(String fileName) {
+        return FileUtils.verifyFileType(fileName, null);
+    }
+
+    /**
+     * 校验文件类型。
+     *
+     * @param fileName 指定文件名。
      * @param data 指定文件数据。
      * @return
      */
     public static FileType verifyFileType(String fileName, byte[] data) {
-        // 通过数据进行判断
-        FileType dataType = FileType.extractFileType(data);
-        if (dataType != FileType.UNKNOWN && dataType != FileType.ZIP && dataType != FileType.GZIP) {
-            return dataType;
+        if (null != data) {
+            // 通过数据进行判断
+            FileType dataType = FileType.extractFileType(data);
+            if (dataType != FileType.UNKNOWN && dataType != FileType.ZIP && dataType != FileType.GZIP) {
+                return dataType;
+            }
         }
 
         // 判断扩展名类型

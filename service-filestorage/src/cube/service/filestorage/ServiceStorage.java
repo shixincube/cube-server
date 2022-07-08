@@ -56,8 +56,6 @@ import java.util.concurrent.ExecutorService;
  */
 public class ServiceStorage implements Storagable {
 
-    private final String version = "1.0";
-
     private final String labelTablePrefix = "label_";
 
     private final String descriptorTablePrefix = "descriptor_";
@@ -84,7 +82,6 @@ public class ServiceStorage implements Storagable {
             new StorageField("file_url", LiteralBase.STRING),
             new StorageField("file_secure_url", LiteralBase.STRING),
             new StorageField("direct_url", LiteralBase.STRING)
-            //new StorageField("reserved", LiteralBase.STRING)
     };
 
     /**

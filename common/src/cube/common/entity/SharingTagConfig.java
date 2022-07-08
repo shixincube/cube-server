@@ -24,40 +24,52 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage;
+package cube.common.entity;
 
-import cube.common.entity.SharingTag;
-import cube.common.entity.SharingTagConfig;
+import cube.common.Domain;
+import cube.common.JSONable;
+import org.json.JSONObject;
+
+import java.util.List;
 
 /**
- * 文件分享管理器。
- *
- * 一般访问 URI：
- * /sharing/{file_sharing_tag}
+ * 文件分享操作配置。
  */
-public class FileSharingManager {
+public class SharingTagConfig implements JSONable {
 
-    private FileStorageService service;
+    private Contact contact;
 
-    public FileSharingManager(FileStorageService service) {
-        this.service = service;
+    private FileLabel fileLabel;
+
+    private long expiryDate;
+
+    private String password;
+
+    private List<AbstractContact> includeList;
+
+    private List<AbstractContact> excludeList;
+
+    public SharingTagConfig(Contact contact, FileLabel fileLabel, int durationInDay) {
+        this.contact = contact;
+        this.fileLabel = fileLabel;
+        this.expiryDate = System.currentTimeMillis() + (durationInDay * 24L * 60 * 60 * 1000);
     }
 
-    public void start() {
-
+    public Domain getDomain() {
+        return this.contact.getDomain();
     }
 
-    public void stop() {
-
+    public Contact getContact() {
+        return this.contact;
     }
 
-    public SharingTag createSharingTag(SharingTagConfig config) {
-        SharingTag sharingTag = new SharingTag(config);
-
-        return sharingTag;
+    @Override
+    public JSONObject toJSON() {
+        return null;
     }
 
-    public SharingTag getSharingTag(String code) {
+    @Override
+    public JSONObject toCompactJSON() {
         return null;
     }
 }

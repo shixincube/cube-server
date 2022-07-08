@@ -510,6 +510,29 @@ public class Performer implements TalkListener, Tickable {
 
     /**
      * 向服务单元发送数据，不等待应答。
+     *
+     * @param celletName
+     * @param actionDialect
+     */
+    public void transmit(String celletName, ActionDialect actionDialect) {
+        long sn = actionDialect.containsParam("sn") ?
+                actionDialect.getParamAsLong("sn") : Utils.generateSerialNumber();
+
+        Director director = this.selectDirector();
+        if (null == director) {
+            Logger.e(this.getClass(), "Can not connect '" + celletName + "'");
+            return;
+        }
+
+        // 添加 P-KEY 记录
+        actionDialect.addParam(this.performerKey, createPerformer(sn));
+
+        director.speaker.speak(celletName, actionDialect);
+    }
+
+    /**
+     * 向服务单元发送数据，不等待应答。
+     *
      * @param talkContext
      * @param celletName
      * @param actionDialect

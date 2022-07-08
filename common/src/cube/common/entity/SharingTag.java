@@ -26,5 +26,23 @@
 
 package cube.common.entity;
 
-public class SharingTag {
+import cell.util.Utils;
+
+import java.util.List;
+
+/**
+ * 分享标签。
+ */
+public class SharingTag extends Entity {
+
+    private SharingTagConfig config;
+
+    private List<VisitTrace> visitTraceList;
+
+    public SharingTag(SharingTagConfig config) {
+        super(Utils.generateSerialNumber(), config.getDomain());
+        this.config = config;
+    }
+
+
 }

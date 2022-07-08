@@ -129,6 +129,11 @@ public enum FileStorageAction {
     Cleanup("cleanup"),
 
     /**
+     * 发送分享页面监测数据。
+     */
+    Trace("trace"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

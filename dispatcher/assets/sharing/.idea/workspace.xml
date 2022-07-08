@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="b1408c98-f6aa-434f-978c-a980e61d5e76" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../../../common/src/cube/common/action/FileStorageAction.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../common/src/cube/common/action/FileStorageAction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../common/src/cube/common/entity/SharingTag.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../common/src/cube/common/entity/SharingTag.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../common/src/cube/util/FileUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../common/src/cube/util/FileUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/cube/dispatcher/Performer.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/cube/dispatcher/Performer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/cube/dispatcher/filestorage/FileSharingHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/cube/dispatcher/filestorage/FileSharingHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileSharingManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileSharingManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileStorageService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileStorageService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileStorageServiceCellet.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileStorageServiceCellet.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/ServiceStorage.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/ServiceStorage.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTML File" />
+        <option value="CSS File" />
+        <option value="JavaScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
+  </component>
+  <component name="ProjectId" id="2BdsWqpNdAdRsZQkZLOD3jb4K9x" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="DefaultHtmlFileTemplate" value="HTML File" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="list.type.of.created.stylesheet" value="CSS" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/css" />
+    </key>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="b1408c98-f6aa-434f-978c-a980e61d5e76" name="Default Changelist" comment="" />
+      <created>1657247330451</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1657247330451</updated>
+      <workItem from="1657247331594" duration="6846000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+</project>

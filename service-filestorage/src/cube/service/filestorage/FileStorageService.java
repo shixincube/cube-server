@@ -33,6 +33,7 @@ import cube.cache.SharedMemoryCache;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.AuthDomain;
 import cube.common.entity.FileLabel;
+import cube.common.entity.VisitTrace;
 import cube.core.*;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
@@ -243,6 +244,15 @@ public class FileStorageService extends AbstractModule {
         this.daemonTask.run();
 
         this.fileHierarchyManager.onTick();
+    }
+
+    /**
+     * 获取存储器。
+     *
+     * @return
+     */
+    protected ServiceStorage getServiceStorage() {
+        return this.serviceStorage;
     }
 
     /**
@@ -580,6 +590,10 @@ public class FileStorageService extends AbstractModule {
         List<String> list = new ArrayList<>();
         list.add(authDomain.domainName);
         this.serviceStorage.execSelfChecking(list);
+    }
+
+    public void addTrace(VisitTrace visitTrace) {
+
     }
 
     /**
