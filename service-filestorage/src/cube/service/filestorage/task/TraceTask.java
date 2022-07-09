@@ -57,8 +57,7 @@ public class TraceTask extends ServiceTask {
         VisitTrace visitTrace = new VisitTrace(packet.data);
 
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-
-        service.addTrace(visitTrace);
+        service.getSharingManager().addVisitTrace(visitTrace);
 
         // 应答
         this.cellet.speak(this.talkContext,

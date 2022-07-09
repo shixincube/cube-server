@@ -265,6 +265,15 @@ public class FileStorageService extends AbstractModule {
     }
 
     /**
+     * 获取分享管理器。
+     *
+     * @return 返回分享管理器实例。
+     */
+    public FileSharingManager getSharingManager() {
+        return this.sharingManager;
+    }
+
+    /**
      * 向文件系统写入文件数据。
      *
      * @param fileCode
@@ -590,10 +599,6 @@ public class FileStorageService extends AbstractModule {
         List<String> list = new ArrayList<>();
         list.add(authDomain.domainName);
         this.serviceStorage.execSelfChecking(list);
-    }
-
-    public void addTrace(VisitTrace visitTrace) {
-
     }
 
     /**

@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cell.core.net.Endpoint;
 import cell.util.Utils;
 import cube.util.FileUtils;
 import org.json.JSONArray;
@@ -43,6 +44,10 @@ public class SharingTag extends Entity {
 
     private SharingTagConfig config;
 
+    private String httpURL;
+
+    private String httpsURL;
+
     private List<VisitTrace> visitTraceList;
 
     public SharingTag(SharingTagConfig config) {
@@ -59,10 +64,25 @@ public class SharingTag extends Entity {
         this.visitTraceList = new ArrayList<>();
     }
 
+    public SharingTag(Long id, String domain, String code, Contact contact, FileLabel fileLabel,
+                      long expiryDate, String password) {
+        super(id, domain);
+        this.code = code;
+        this.config = new SharingTagConfig(contact, fileLabel, expiryDate, password);
+        this.visitTraceList = new ArrayList<>();
+    }
+
     public SharingTag(JSONObject json) {
         super(json);
         this.code = json.getString("code");
         this.config = new SharingTagConfig(json.getJSONObject("config"));
+
+        if (json.has("httpURL")) {
+            this.httpURL = json.getString("httpURL");
+        }
+        if (json.has("httpsURL")) {
+            this.httpsURL = json.getString("httpsURL");
+        }
 
         this.visitTraceList = new ArrayList<>();
         if (json.has("visitTraceList")) {
@@ -81,6 +101,25 @@ public class SharingTag extends Entity {
         return this.config;
     }
 
+    public void resetContact(Contact contact) {
+        this.config.setContact(contact);
+    }
+
+    public void setHttpURL(String url) {
+        this.httpURL = url;
+    }
+
+    public void setHttpsURL(String url) {
+        this.httpsURL = url;
+    }
+
+    public void setURLs(Endpoint http, Endpoint https) {
+        this.httpURL = "http://" + http.getHost() + ":" + http.getPort() +
+                "/sharing/" + this.code;
+        this.httpsURL = "https://" + https.getHost() + ":" + https.getPort() +
+                "/sharing/" + this.code;
+    }
+
     public List<VisitTrace> getVisitTraceList() {
         return this.visitTraceList;
     }
@@ -95,6 +134,13 @@ public class SharingTag extends Entity {
         json.put("code", this.code);
         json.put("config", this.config.toJSON());
 
+        if (null != this.httpURL) {
+            json.put("httpURL", this.httpURL);
+        }
+        if (null != this.httpsURL) {
+            json.put("httpsURL", this.httpsURL);
+        }
+
         JSONArray array = new JSONArray();
         for (VisitTrace visitTrace : this.visitTraceList) {
             array.put(visitTrace.toJSON());
@@ -107,7 +153,15 @@ public class SharingTag extends Entity {
     public JSONObject toCompactJSON() {
         JSONObject json = super.toCompactJSON();
         json.put("code", this.code);
-        json.put("config", this.config.toJSON());
+        json.put("config", this.config.toCompactJSON());
+
+        if (null != this.httpURL) {
+            json.put("httpURL", this.httpURL);
+        }
+        if (null != this.httpsURL) {
+            json.put("httpsURL", this.httpsURL);
+        }
+
         return json;
     }
 }

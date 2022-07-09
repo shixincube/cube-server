@@ -30,23 +30,23 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
-import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.FileLabel;
+import cube.common.entity.Contact;
+import cube.common.entity.SharingTag;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
-import cube.service.auth.AuthService;
+import cube.service.contact.ContactManager;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 
 /**
- * 获取文件任务。
+ * 创建分享标签任务。
  */
-public class GetFileTask extends ServiceTask {
+public class CreateSharingTagTask extends ServiceTask {
 
-    public GetFileTask(FileStorageServiceCellet cellet, TalkContext talkContext,
-                       Primitive primitive, ResponseTime responseTime) {
+    public CreateSharingTagTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                                Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -65,9 +65,8 @@ public class GetFileTask extends ServiceTask {
             return;
         }
 
-        AuthService authService = (AuthService) this.kernel.getModule(AuthService.NAME);
-        AuthToken authToken = authService.getToken(tokenCode);
-        if (null == authToken) {
+        Contact contact = ContactManager.getInstance().getContact(tokenCode);
+        if (null == contact) {
             // 发生错误
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
@@ -75,39 +74,23 @@ public class GetFileTask extends ServiceTask {
             return;
         }
 
-        // 域
-        String domain = authToken.getDomain();
-
-        String fileCode = null;
-        try {
-            fileCode = packet.data.getString("fileCode");
-        } catch (Exception e) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.Failure.code, packet.data));
-            markResponseTime();
-            return;
-        }
+        // 读取参数
+        String fileCode = packet.data.getString("fileCode");
 
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
 
-        // 放置文件
-        FileLabel fileLabel = service.getFile(domain, fileCode);
-        if (null == fileLabel) {
-            // 判断是否正在放置文件
-            boolean hasDescriptor = service.hasFileDescriptor(fileCode);
-
+        SharingTag sharingTag = service.getSharingManager().createOrGetSharingTag(contact, fileCode);
+        if (null == sharingTag) {
             // 发生错误
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet,
-                            hasDescriptor ? FileStorageStateCode.Writing.code : FileStorageStateCode.NotFound.code,
-                            packet.data));
+                    this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
             markResponseTime();
             return;
         }
 
-        // 应答
+        // 返回数据
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, fileLabel.toJSON()));
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, sharingTag.toCompactJSON()));
         markResponseTime();
     }
 }

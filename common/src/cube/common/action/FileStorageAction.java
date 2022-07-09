@@ -129,6 +129,11 @@ public enum FileStorageAction {
     Cleanup("cleanup"),
 
     /**
+     * 创建分享标签。
+     */
+    CreateSharingTag("createSharingTag"),
+
+    /**
      * 发送分享页面监测数据。
      */
     Trace("trace"),

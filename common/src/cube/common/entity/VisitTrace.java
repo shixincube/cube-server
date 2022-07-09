@@ -149,6 +149,15 @@ public class VisitTrace implements JSONable {
         }
     }
 
+    public JSONObject getScreenJSON() {
+        JSONObject json = new JSONObject();
+        json.put("width", this.screenSize.width);
+        json.put("height", this.screenSize.height);
+        json.put("colorDepth", this.screenColorDepth);
+        json.put("orientation", this.screenOrientation);
+        return json;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

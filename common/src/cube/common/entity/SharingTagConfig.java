@@ -57,6 +57,13 @@ public class SharingTagConfig implements JSONable {
         this.expiryDate = System.currentTimeMillis() + (durationInDay * 24L * 60 * 60 * 1000);
     }
 
+    public SharingTagConfig(Contact contact, FileLabel fileLabel, long expiryDate, String password) {
+        this.contact = contact;
+        this.fileLabel = fileLabel;
+        this.expiryDate = expiryDate;
+        this.password = password;
+    }
+
     public SharingTagConfig(JSONObject json) {
         this.contact = new Contact(json.getJSONObject("contact"));
         this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
@@ -87,6 +94,10 @@ public class SharingTagConfig implements JSONable {
 
     public Domain getDomain() {
         return this.contact.getDomain();
+    }
+
+    public void setContact(Contact contact) {
+        this.contact = contact;
     }
 
     public Contact getContact() {

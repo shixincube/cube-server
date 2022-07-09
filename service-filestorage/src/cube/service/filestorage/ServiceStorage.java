@@ -29,6 +29,7 @@ package cube.service.filestorage;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
+import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 import cube.common.entity.SharingTag;
 import cube.common.entity.VisitTrace;
@@ -69,6 +70,8 @@ public class ServiceStorage implements Storagable {
     private final String sharingTagTablePrefix = "sharing_tag_";
 
     private final String visitTraceTablePrefix = "visit_trace_";
+
+    private final String sharingCodeTable = "sharing_code";
 
     /**
      * 文件标签字段。
@@ -194,6 +197,18 @@ public class ServiceStorage implements Storagable {
             })
     };
 
+    private final StorageField[] sharingCodeFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
     private ExecutorService executor;
 
     private Storage storage;
@@ -275,6 +290,8 @@ public class ServiceStorage implements Storagable {
             this.checkSharingTagTable(domain);
             this.checkVisitTraceTable(domain);
         }
+
+        this.checkSharingCodeTable();
     }
 
     /**
@@ -792,6 +809,20 @@ public class ServiceStorage implements Storagable {
         });
     }
 
+    public String querySharingCodeDomain(String code) {
+        List<StorageField[]> result = this.storage.executeQuery(this.sharingCodeTable, new StorageField[] {
+                        new StorageField("domain", LiteralBase.STRING)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("code", code)
+                });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        return result.get(0)[0].getString();
+    }
+
     public void writeSharingTag(SharingTag sharingTag) {
         String table = this.sharingTagTableNameMap.get(sharingTag.getDomain().getName());
         if (null == table) {
@@ -808,18 +839,70 @@ public class ServiceStorage implements Storagable {
                     new StorageField("expiry", sharingTag.getConfig().getExpiryDate()),
                     new StorageField("password", sharingTag.getConfig().getPassword())
             });
+
+            storage.executeInsert(sharingCodeTable, new StorageField[] {
+                    new StorageField("code", sharingTag.getCode()),
+                    new StorageField("domain", sharingTag.getDomain().getName())
+            });
         });
     }
 
-    public void writeVisitTrace(String domain, String code, VisitTrace visitTrace) {
-        String table = this.visitTraceTableNameMap.get(domain);
+    public SharingTag readSharingTag(String domain, Long contactId, String fileCode, long expiryDate) {
+        String table = this.sharingTagTableNameMap.get(domain);
         if (null == table) {
-            return;
+            return null;
         }
 
-        this.executor.execute(() -> {
-            storage.executeInsert(table, new StorageField[] {
+        List<StorageField[]> result = this.storage.executeQuery(table, this.sharingTagFields, new Conditional[] {
+                Conditional.createEqualTo("contact_id", contactId.longValue()),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("file_code", fileCode),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("expiry", expiryDate)
+        });
 
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        // 读取文件标签
+        FileLabel fileLabel = this.readFileLabel(domain, fileCode);
+        if (null == fileLabel) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+        Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
+
+        SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain,
+                map.get("code").getString(), contact, fileLabel, map.get("expiry").getLong(),
+                map.get("password").isNullValue() ? null : map.get("password").getString());
+
+        return sharingTag;
+    }
+
+    public void writeVisitTrace(String domain, String code, VisitTrace visitTrace) {
+        this.executor.execute(() -> {
+            String table = this.visitTraceTableNameMap.get(domain);
+            if (null == table) {
+                return;
+            }
+
+            storage.executeInsert(table, new StorageField[] {
+                    new StorageField("code", code),
+                    new StorageField("time", visitTrace.time),
+                    new StorageField("ip", visitTrace.ip),
+                    new StorageField("domain", visitTrace.domain),
+                    new StorageField("url", visitTrace.url),
+                    new StorageField("title", visitTrace.title),
+                    new StorageField("screen", visitTrace.getScreenJSON().toString()),
+                    new StorageField("referrer", visitTrace.referrer),
+                    new StorageField("language", visitTrace.language),
+                    new StorageField("userAgent", visitTrace.userAgent),
+                    new StorageField("event", visitTrace.event),
+                    new StorageField("event_tag", visitTrace.eventTag),
+                    new StorageField("event_param", (null != visitTrace.eventParam) ?
+                            visitTrace.eventParam.toString() : null)
             });
         });
     }
@@ -1021,6 +1104,15 @@ public class ServiceStorage implements Storagable {
             // 表不存在，建表
             if (this.storage.executeCreate(table, this.visitTraceFields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkSharingCodeTable() {
+        if (!this.storage.exist(this.sharingCodeTable)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(this.sharingCodeTable, this.sharingCodeFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.sharingCodeTable + "' successfully");
             }
         }
     }
