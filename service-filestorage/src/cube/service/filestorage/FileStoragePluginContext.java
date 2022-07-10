@@ -27,6 +27,8 @@
 package cube.service.filestorage;
 
 import cube.common.entity.FileLabel;
+import cube.common.entity.SharingTag;
+import cube.common.entity.VisitTrace;
 import cube.plugin.PluginContext;
 
 /**
@@ -34,18 +36,52 @@ import cube.plugin.PluginContext;
  */
 public class FileStoragePluginContext extends PluginContext {
 
-    public final static String KEY_FILE_LABEL = "fileLabel";
+    public final static String FILE_LABEL = "fileLabel";
+
+    public final static String SHARING_TAG = "sharingTag";
+
+    public final static String VISIT_TRACE = "visitTrace";
 
     private FileLabel fileLabel;
+
+    private SharingTag sharingTag;
+
+    private VisitTrace visitTrace;
 
     public FileStoragePluginContext(FileLabel fileLabel) {
         this.fileLabel = fileLabel;
     }
 
+    public FileStoragePluginContext(SharingTag sharingTag) {
+        this.sharingTag = sharingTag;
+    }
+
+    public FileStoragePluginContext(VisitTrace visitTrace) {
+        this.visitTrace = visitTrace;
+    }
+
+    public FileLabel getFileLabel() {
+        return this.fileLabel;
+    }
+
+    public SharingTag getSharingTag() {
+        return this.sharingTag;
+    }
+
+    public VisitTrace getVisitTrace() {
+        return this.visitTrace;
+    }
+
     @Override
     public Object get(String name) {
-        if (KEY_FILE_LABEL.equals(name)) {
+        if (FILE_LABEL.equals(name)) {
             return this.fileLabel;
+        }
+        else if (SHARING_TAG.equals(name)) {
+            return this.sharingTag;
+        }
+        else if (VISIT_TRACE.equals(name)) {
+            return this.visitTrace;
         }
 
         return null;
@@ -53,8 +89,14 @@ public class FileStoragePluginContext extends PluginContext {
 
     @Override
     public void set(String name, Object value) {
-        if (KEY_FILE_LABEL.equals(name) && value instanceof FileLabel) {
+        if (FILE_LABEL.equals(name) && value instanceof FileLabel) {
             this.fileLabel = (FileLabel) value;
+        }
+        else if (SHARING_TAG.equals(name) && value instanceof SharingTag) {
+            this.sharingTag = (SharingTag) value;
+        }
+        else if (VISIT_TRACE.equals(name) && value instanceof VisitTrace) {
+            this.visitTrace = (VisitTrace) value;
         }
     }
 }

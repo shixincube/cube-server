@@ -41,6 +41,8 @@ public class SharingTagConfig implements JSONable {
 
     private Contact contact;
 
+    private Device device;
+
     private FileLabel fileLabel;
 
     private long expiryDate;
@@ -51,14 +53,16 @@ public class SharingTagConfig implements JSONable {
 
     private List<AbstractContact> excludeList;
 
-    public SharingTagConfig(Contact contact, FileLabel fileLabel, int durationInDay) {
+    public SharingTagConfig(Contact contact, Device device, FileLabel fileLabel, int durationInDay) {
         this.contact = contact;
+        this.device = device;
         this.fileLabel = fileLabel;
         this.expiryDate = System.currentTimeMillis() + (durationInDay * 24L * 60 * 60 * 1000);
     }
 
-    public SharingTagConfig(Contact contact, FileLabel fileLabel, long expiryDate, String password) {
+    public SharingTagConfig(Contact contact, Device device, FileLabel fileLabel, long expiryDate, String password) {
         this.contact = contact;
+        this.device = device;
         this.fileLabel = fileLabel;
         this.expiryDate = expiryDate;
         this.password = password;
@@ -66,6 +70,7 @@ public class SharingTagConfig implements JSONable {
 
     public SharingTagConfig(JSONObject json) {
         this.contact = new Contact(json.getJSONObject("contact"));
+        this.device = new Device(json.getJSONObject("device"));
         this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
         this.expiryDate = json.getLong("expiryDate");
 
@@ -104,6 +109,10 @@ public class SharingTagConfig implements JSONable {
         return this.contact;
     }
 
+    public Device getDevice() {
+        return this.device;
+    }
+
     public FileLabel getFileLabel() {
         return this.fileLabel;
     }
@@ -120,6 +129,7 @@ public class SharingTagConfig implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("contact", this.contact.toJSON());
+        json.put("device", this.device.toJSON());
         json.put("fileLabel", this.fileLabel.toJSON());
         json.put("expiryDate", this.expiryDate);
 

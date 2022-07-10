@@ -26,23 +26,21 @@
 
 package cube.service.riskmgmt.plugin;
 
-import cube.common.entity.MonitoringEvent;
-import cube.common.entity.FileAttachment;
-import cube.common.entity.Message;
+import cube.common.entity.SharingTag;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
-import cube.service.messaging.MessagingPluginContext;
+import cube.service.filestorage.FileStoragePluginContext;
 import cube.service.riskmgmt.RiskManagement;
 
 /**
- * 消息转发插件。
+ * 创建文件分享标签插件。
  */
-public class MessagingForwardPlugin implements Plugin {
+public class FileCreateSharingTagPlugin implements Plugin {
 
-    private RiskManagement riskManagement;
+    private RiskManagement service;
 
-    public MessagingForwardPlugin(RiskManagement riskManagement) {
-        this.riskManagement = riskManagement;
+    public FileCreateSharingTagPlugin(RiskManagement service) {
+        this.service = service;
     }
 
     @Override
@@ -55,14 +53,8 @@ public class MessagingForwardPlugin implements Plugin {
 
     @Override
     public void onAction(PluginContext context) {
-        MessagingPluginContext ctx = (MessagingPluginContext) context;
-        Message message = ctx.getMessage();
-        if (null != message) {
-            FileAttachment fileAttachment = message.getAttachment();
-            if (null != fileAttachment) {
-                // 有文件附件的消息
-                this.riskManagement.addFileChainNode(MonitoringEvent.Forward, message, ctx.getDevice());
-            }
-        }
+        FileStoragePluginContext ctx = (FileStoragePluginContext) context;
+        SharingTag sharingTag = ctx.getSharingTag();
+        this.service.addFileChainNode(sharingTag);
     }
 }

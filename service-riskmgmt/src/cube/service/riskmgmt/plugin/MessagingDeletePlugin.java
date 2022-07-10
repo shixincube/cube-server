@@ -26,7 +26,7 @@
 
 package cube.service.riskmgmt.plugin;
 
-import cube.common.entity.ChainNodeEvent;
+import cube.common.entity.MonitoringEvent;
 import cube.common.entity.FileAttachment;
 import cube.common.entity.Message;
 import cube.plugin.Plugin;
@@ -61,7 +61,7 @@ public class MessagingDeletePlugin implements Plugin {
             FileAttachment fileAttachment = message.getAttachment();
             if (null != fileAttachment) {
                 // 有文件附件的消息
-                this.riskManagement.addFileChainNode(ChainNodeEvent.Delete, message, ctx.getDevice());
+                this.riskManagement.addFileChainNode(MonitoringEvent.Delete, message, ctx.getDevice());
             }
         }
     }

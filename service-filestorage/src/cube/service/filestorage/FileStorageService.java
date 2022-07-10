@@ -214,10 +214,14 @@ public class FileStorageService extends AbstractModule {
 
         // 启动分享管理器
         this.sharingManager.start();
+
+        this.started = true;
     }
 
     @Override
     public void stop() {
+        this.started = false;
+
         // 停止分享管理器
         this.sharingManager.stop();
 
@@ -271,6 +275,10 @@ public class FileStorageService extends AbstractModule {
      */
     public FileSharingManager getSharingManager() {
         return this.sharingManager;
+    }
+
+    protected ExecutorService getExecutor() {
+        return this.executor;
     }
 
     /**

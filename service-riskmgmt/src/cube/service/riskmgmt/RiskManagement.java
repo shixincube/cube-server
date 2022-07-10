@@ -27,6 +27,7 @@
 package cube.service.riskmgmt;
 
 import cell.util.Utils;
+import cell.util.log.Logger;
 import cube.common.entity.*;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -37,6 +38,8 @@ import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.contact.ContactManagerListener;
+import cube.service.filestorage.FileStorageHook;
+import cube.service.filestorage.FileStorageService;
 import cube.service.messaging.MessagingHook;
 import cube.service.messaging.MessagingService;
 import cube.service.riskmgmt.plugin.*;
@@ -188,10 +191,42 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
                 node.addTrack(track1);
             if (null != track2)
                 node.addTrack(track2);
+
             // 设置传输的方法
             TransmissionMethod method = new TransmissionMethod(message, target, device);
             node.setMethod(method);
 
+            // 写入数据库
+            this.mainStorage.addTransmissionChainNode(node);
+        });
+    }
+
+    public void addFileChainNode(SharingTag sharingTag) {
+        final String domain = sharingTag.getDomain().getName();
+        this.executor.execute(() -> {
+            String event = MonitoringEvent.Share;
+
+            FileLabel fileLabel = sharingTag.getConfig().getFileLabel();
+            // 文件 SHA1 码
+            String track1 = fileLabel.getSHA1Code();
+            // 文件 MD5 码
+            String track2 = fileLabel.getMD5Code();
+
+            // 创建节点
+            ChainNode node = new ChainNode(Utils.generateSerialNumber(),
+                    domain, event, sharingTag.getConfig().getContact(), fileLabel,
+                    sharingTag.getTimestamp());
+            // 设置 Track
+            if (null != track1)
+                node.addTrack(track1);
+            if (null != track2)
+                node.addTrack(track2);
+
+            // 设置传输的方法
+            TransmissionMethod method = new TransmissionMethod(sharingTag);
+            node.setMethod(method);
+
+            // 写入数据库
             this.mainStorage.addTransmissionChainNode(node);
         });
     }
@@ -219,18 +254,17 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         pluginSystem.register(AuthServiceHook.CreateDomainApp,
                 new CreateDomainAppPlugin(this));
 
+        // 消息服务
         MessagingService messagingService = (MessagingService) this.getKernel().getModule(MessagingService.NAME);
-        pluginSystem = messagingService.getPluginSystem();
-        while (null == pluginSystem) {
+        while (!messagingService.isStarted()) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            pluginSystem = messagingService.getPluginSystem();
         }
 
+        pluginSystem = messagingService.getPluginSystem();
         pluginSystem.register(MessagingHook.PrePush, new MessagingPrePushPlugin(this));
         // 消息发送
         pluginSystem.register(MessagingHook.SendMessage, new MessagingSendPlugin(this));
@@ -238,5 +272,20 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         pluginSystem.register(MessagingHook.ForwardMessage, new MessagingForwardPlugin(this));
         // 消息删除
         pluginSystem.register(MessagingHook.DeleteMessage, new MessagingDeletePlugin(this));
+
+        // 文件存储服务
+        FileStorageService fileStorage = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+        while (!fileStorage.isStarted()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        pluginSystem = fileStorage.getPluginSystem();
+        pluginSystem.register(FileStorageHook.CreateSharingTag, new FileCreateSharingTagPlugin(this));
+
+        Logger.i(this.getClass(), "#initPlugin - Registers all plugin");
     }
 }

@@ -33,6 +33,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.entity.SharingTag;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
@@ -66,7 +67,8 @@ public class CreateSharingTagTask extends ServiceTask {
         }
 
         Contact contact = ContactManager.getInstance().getContact(tokenCode);
-        if (null == contact) {
+        Device device = ContactManager.getInstance().getDevice(tokenCode);
+        if (null == contact || null == device) {
             // 发生错误
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
@@ -79,7 +81,8 @@ public class CreateSharingTagTask extends ServiceTask {
 
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
 
-        SharingTag sharingTag = service.getSharingManager().createOrGetSharingTag(contact, fileCode);
+        // 创建分享标签
+        SharingTag sharingTag = service.getSharingManager().createOrGetSharingTag(contact, device, fileCode);
         if (null == sharingTag) {
             // 发生错误
             this.cellet.speak(this.talkContext,

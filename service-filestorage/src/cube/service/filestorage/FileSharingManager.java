@@ -56,13 +56,22 @@ public class FileSharingManager {
         this.codeDomainMap.clear();
     }
 
-    public SharingTag createOrGetSharingTag(Contact contact, String fileCode) {
+    /**
+     * 创建分享标签。
+     *
+     * @param contact
+     * @param device
+     * @param fileCode
+     * @return
+     */
+    public SharingTag createOrGetSharingTag(Contact contact, Device device, String fileCode) {
         AuthService authService = (AuthService) this.service.getKernel().getModule(AuthService.NAME);
         AuthDomain authDomain = authService.getAuthDomain(contact.getDomain().getName());
 
         SharingTag tag = this.service.getServiceStorage().readSharingTag(contact.getDomain().getName(),
                 contact.getId(), fileCode, 0);
         if (null != tag) {
+            // 已存在该分享标签
             tag.resetContact(contact);
             // 设置 URLs
             tag.setURLs(authDomain.httpEndpoint, authDomain.httpsEndpoint);
@@ -76,12 +85,20 @@ public class FileSharingManager {
         }
 
         // 默认永久有效
-        SharingTagConfig config = new SharingTagConfig(contact, fileLabel, 0, null);
+        SharingTagConfig config = new SharingTagConfig(contact, device, fileLabel, 0, null);
         SharingTag sharingTag = new SharingTag(config);
         // 设置 URLs
         sharingTag.setURLs(authDomain.httpEndpoint, authDomain.httpsEndpoint);
 
+        // 写入数据库
         this.service.getServiceStorage().writeSharingTag(sharingTag);
+
+        final FileStoragePluginContext context = new FileStoragePluginContext(sharingTag);
+        this.service.getExecutor().execute(() -> {
+            FileStorageHook hook = ((FileStoragePluginSystem) this.service.getPluginSystem()).getCreateSharingTagHook();
+            hook.apply(context);
+        });
+
         return sharingTag;
     }
 
@@ -102,12 +119,18 @@ public class FileSharingManager {
         return sharingTag;
     }
 
-    public void addVisitTrace(VisitTrace trace) {
+    public void traceVisit(VisitTrace trace) {
         String code = this.extractCode(trace.url);
         SharingCodeDomain codeDomain = getDomainByCode(code);
 
         if (null != codeDomain) {
             this.service.getServiceStorage().writeVisitTrace(codeDomain.domain, code, trace);
+
+            final FileStoragePluginContext context = new FileStoragePluginContext(trace);
+            this.service.getExecutor().execute(() -> {
+                FileStorageHook hook = ((FileStoragePluginSystem) this.service.getPluginSystem()).getTraceHook();
+                hook.apply(context);
+            });
         }
         else {
             Logger.w(this.getClass(), "#addVisitTrace - Can NOT find domain by code: " + code);

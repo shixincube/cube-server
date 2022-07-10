@@ -29,10 +29,7 @@ package cube.service.filestorage;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
-import cube.common.entity.Contact;
-import cube.common.entity.FileLabel;
-import cube.common.entity.SharingTag;
-import cube.common.entity.VisitTrace;
+import cube.common.entity.*;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -142,6 +139,9 @@ public class ServiceStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("contact", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("device", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
@@ -842,6 +842,7 @@ public class ServiceStorage implements Storagable {
                     new StorageField("code", sharingTag.getCode()),
                     new StorageField("contact_id", sharingTag.getConfig().getContact().getId()),
                     new StorageField("contact", sharingTag.getConfig().getContact().toJSON().toString()),
+                    new StorageField("device", sharingTag.getConfig().getDevice().toJSON().toString()),
                     new StorageField("file_code", sharingTag.getConfig().getFileLabel().getFileCode()),
                     new StorageField("expiry", sharingTag.getConfig().getExpiryDate()),
                     new StorageField("password", sharingTag.getConfig().getPassword())
@@ -881,9 +882,10 @@ public class ServiceStorage implements Storagable {
 
         Map<String, StorageField> map = StorageFields.get(result.get(0));
         Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
+        Device device = new Device(new JSONObject(map.get("device").getString()));
 
         SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
-                map.get("code").getString(), contact, fileLabel, map.get("expiry").getLong(),
+                map.get("code").getString(), contact, device, fileLabel, map.get("expiry").getLong(),
                 map.get("password").isNullValue() ? null : map.get("password").getString());
 
         return sharingTag;
@@ -912,9 +914,10 @@ public class ServiceStorage implements Storagable {
         }
 
         Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
+        Device device = new Device(new JSONObject(map.get("device").getString()));
 
         SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
-                map.get("code").getString(), contact, fileLabel, map.get("expiry").getLong(),
+                map.get("code").getString(), contact, device, fileLabel, map.get("expiry").getLong(),
                 map.get("password").isNullValue() ? null : map.get("password").getString());
 
         return sharingTag;

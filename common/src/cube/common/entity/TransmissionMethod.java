@@ -44,6 +44,11 @@ public class TransmissionMethod extends Entity {
     private AbstractContact target;
 
     /**
+     * 分享标签。
+     */
+    private SharingTag sharingTag;
+
+    /**
      * 操作时使用的设备。
      */
     private Device device;
@@ -53,6 +58,11 @@ public class TransmissionMethod extends Entity {
         this.message = message;
         this.target = target;
         this.device = device;
+    }
+
+    public TransmissionMethod(SharingTag sharingTag) {
+        super();
+        this.sharingTag = sharingTag;
     }
 
     public TransmissionMethod(JSONObject json) {
@@ -70,6 +80,10 @@ public class TransmissionMethod extends Entity {
         if (json.has("device")) {
             this.device = new Device(json.getJSONObject("device"));
         }
+
+        if (json.has("sharingTag")) {
+            this.sharingTag = new SharingTag(json.getJSONObject("sharingTag"));
+        }
     }
 
     public Message getMessage() {
@@ -84,6 +98,10 @@ public class TransmissionMethod extends Entity {
         return this.device;
     }
 
+    public SharingTag getSharingTag() {
+        return this.sharingTag;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -95,6 +113,9 @@ public class TransmissionMethod extends Entity {
         }
         if (null != this.device) {
             json.put("device", this.device.toJSON());
+        }
+        if (null != this.sharingTag) {
+            json.put("sharingTag", this.sharingTag.toCompactJSON());
         }
         return json;
     }

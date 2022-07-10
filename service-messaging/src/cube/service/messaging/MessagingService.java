@@ -221,6 +221,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
         this.initMessageStorage();
 
         this.initPlugin();
+
+        this.started = true;
     }
 
     /**
@@ -228,6 +230,8 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      */
     @Override
     public void stop() {
+        this.started = false;
+
         this.messageCache.stop();
 
         if (null != this.contactsAdapter) {

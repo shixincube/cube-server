@@ -42,8 +42,22 @@ public class FileStoragePluginSystem extends PluginSystem<FileStorageHook> {
         return this.getHook(FileStorageHook.SaveFile);
     }
 
+    public FileStorageHook getCreateSharingTagHook() {
+        return this.getHook(FileStorageHook.CreateSharingTag);
+    }
+
+    public FileStorageHook getTraceHook() {
+        return this.getHook(FileStorageHook.Trace);
+    }
+
     private void build() {
         FileStorageHook hook = new FileStorageHook(FileStorageHook.SaveFile);
+        this.addHook(hook);
+
+        hook = new FileStorageHook(FileStorageHook.CreateSharingTag);
+        this.addHook(hook);
+
+        hook = new FileStorageHook(FileStorageHook.Trace);
         this.addHook(hook);
     }
 }
