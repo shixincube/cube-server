@@ -14,33 +14,7 @@ window.onload = function () {
         "referrer": document.referrer,
         "language": navigator.language,
         "userAgent": navigator.userAgent,
-        "event": "View",
-    };
-
-    submit(data);
-}
-
-function download(url) {
-    window.location.href = url;
-
-    const data = {
-        "domain": document.domain,
-        "url": document.URL,
-        "title": document.title,
-        "screen": {
-            "width": window.screen.width,
-            "height": window.screen.height,
-            "colorDepth": window.screen.colorDepth,
-            "orientation": (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation
-        },
-        "referrer": document.referrer,
-        "language": navigator.language,
-        "userAgent": navigator.userAgent,
-        "event": "Extract",
-        "eventTag": "button",
-        "eventParam": {
-            "url": url
-        }
+        "event": window.traceEvent
     };
 
     submit(data);

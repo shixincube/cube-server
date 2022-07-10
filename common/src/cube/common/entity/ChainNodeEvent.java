@@ -77,6 +77,16 @@ public final class ChainNodeEvent {
     public final static String View = "View";
 
     /**
+     * 浏览已丢失分享文件。
+     */
+    public final static String ViewLoss = "ViewLoss";
+
+    /**
+     * 浏览已过期分享文件。
+     */
+    public final static String ViewExpired = "ViewExpired";
+
+    /**
      * 提取。
      */
     public final static String Extract = "Extract";

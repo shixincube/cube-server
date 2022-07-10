@@ -2,14 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="b1408c98-f6aa-434f-978c-a980e61d5e76" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../../../common/src/cube/common/entity/VisitTrace.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../common/src/cube/common/entity/VisitTrace.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/script/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/script/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../src/cube/dispatcher/filestorage/FileHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/cube/dispatcher/filestorage/FileHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../src/cube/dispatcher/filestorage/FileSharingHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/cube/dispatcher/filestorage/FileSharingHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileSharingManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileSharingManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/task/GetSharingTagTask.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/task/GetSharingTagTask.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,9 +33,15 @@
     <property name="DefaultHtmlFileTemplate" value="HTML File" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/script" />
     <property name="list.type.of.created.stylesheet" value="CSS" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/script" />
+      <recent name="$PROJECT_DIR$/style" />
+      <recent name="$PROJECT_DIR$" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/css" />
     </key>
@@ -57,7 +57,8 @@
       <option name="presentableId" value="Default" />
       <updated>1657247330451</updated>
       <workItem from="1657247331594" duration="7282000" />
-      <workItem from="1657415692445" duration="3074000" />
+      <workItem from="1657415692445" duration="3313000" />
+      <workItem from="1657434149738" duration="2601000" />
     </task>
     <servers />
   </component>

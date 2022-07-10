@@ -67,6 +67,12 @@ public class FileSharingHandler extends CrossDomainHandler {
 
     private final String FILE_URI_PATH = "${file_uri_path}";
 
+    private final String STATE = "${state}";
+
+    private final String CONTENT = "${content}";
+
+    private final String EVENT = "${event}";
+
     private String fileRoot = "assets/sharing/";
 
     private Map<String, FlexibleByteBuffer> fileCache;
@@ -93,7 +99,7 @@ public class FileSharingHandler extends CrossDomainHandler {
         else if (pathInfo.length() > 16) {
             // 显示页面
             String code = extractCode(pathInfo);
-            processIndexHtml(code, response);
+            processPage(code, response);
         }
         else {
             respond(response, HttpStatus.FORBIDDEN_403);
@@ -190,7 +196,7 @@ public class FileSharingHandler extends CrossDomainHandler {
         response.setStatus(HttpStatus.OK_200);
     }
 
-    private void processIndexHtml(String code, HttpServletResponse response) {
+    private void processPage(String code, HttpServletResponse response) {
         JSONObject data = new JSONObject();
         data.put("code", code);
         Packet packet = new Packet(FileStorageAction.GetSharingTag.name, data);
@@ -200,17 +206,140 @@ public class FileSharingHandler extends CrossDomainHandler {
             return;
         }
 
+        File file = null;
+        long contentLength = 0;
+
         Packet resultPacket = new Packet(result);
         int stateCode = Packet.extractCode(resultPacket);
         if (FileStorageStateCode.Ok.code != stateCode) {
-            response.setStatus(HttpStatus.SERVICE_UNAVAILABLE_503);
-            return;
+            // 文件分享码不存在
+            file = new File(this.fileRoot, "page.html");
+            contentLength = processLossPageHtml(file, response);
+        }
+        else {
+            JSONObject tagJson = Packet.extractDataPayload(resultPacket);
+            SharingTag sharingTag = new SharingTag(tagJson);
+
+            // 判断分享码是否已过期
+            if (sharingTag.getConfig().getExpiryDate() > 0
+                    && System.currentTimeMillis() > sharingTag.getConfig().getExpiryDate()) {
+                // 已过期
+                file = new File(this.fileRoot, "page.html");
+                contentLength = processExpiredPageHtml(file, response);
+            }
+            else {
+                file = new File(this.fileRoot, "index.html");
+                contentLength = processIndexHtml(file, sharingTag, response);
+            }
         }
 
-        JSONObject tagJson = Packet.extractDataPayload(resultPacket);
-        SharingTag sharingTag = new SharingTag(tagJson);
+        FileType fileType = FileUtils.verifyFileType(file.getName());
+        response.setContentType(fileType.getMimeType());
+        response.setContentLengthLong(contentLength);
+        response.setStatus(HttpStatus.OK_200);
+    }
 
-        File file = new File(this.fileRoot, "index.html");
+    private long processLossPageHtml(File file, HttpServletResponse response) {
+        long contentLength = 0;
+
+        BufferedReader reader = null;
+        OutputStream os = null;
+
+        try {
+            os = response.getOutputStream();
+            reader = new BufferedReader(new FileReader(file));
+            String line = null;
+            while (null != (line = reader.readLine())) {
+                if (line.contains(TITLE)) {
+                    line = line.replace(TITLE, "文件不存在");
+                }
+                else if (line.contains(STATE)) {
+                    line = line.replace(STATE, "loss");
+                }
+                else if (line.contains(CONTENT)) {
+                    line = line.replace(CONTENT, "文件不存在或已删除");
+                }
+                else if (line.contains(EVENT)) {
+                    line = line.replace(EVENT, "ViewLoss");
+                }
+
+                byte[] bytes = line.getBytes(StandardCharsets.UTF_8);
+                contentLength += bytes.length;
+                os.write(bytes);
+            }
+        } catch (IOException e) {
+            Logger.w(this.getClass(), "#processLossPageHtml", e);
+        } finally {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
+
+            if (null != os) {
+                try {
+                    os.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        return contentLength;
+    }
+
+    private long processExpiredPageHtml(File file, HttpServletResponse response) {
+        long contentLength = 0;
+
+        BufferedReader reader = null;
+        OutputStream os = null;
+
+        try {
+            os = response.getOutputStream();
+            reader = new BufferedReader(new FileReader(file));
+            String line = null;
+            while (null != (line = reader.readLine())) {
+                if (line.contains(TITLE)) {
+                    line = line.replace(TITLE, "文件已过期");
+                }
+                else if (line.contains(STATE)) {
+                    line = line.replace(STATE, "expired");
+                }
+                else if (line.contains(CONTENT)) {
+                    line = line.replace(CONTENT, "文件已过期");
+                }
+                else if (line.contains(EVENT)) {
+                    line = line.replace(EVENT, "ViewExpired");
+                }
+
+                byte[] bytes = line.getBytes(StandardCharsets.UTF_8);
+                contentLength += bytes.length;
+                os.write(bytes);
+            }
+        } catch (IOException e) {
+            Logger.w(this.getClass(), "#processExpiredPageHtml", e);
+        } finally {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
+
+            if (null != os) {
+                try {
+                    os.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        return contentLength;
+    }
+
+    private long processIndexHtml(File file, SharingTag sharingTag, HttpServletResponse response) {
+        long contentLength = 0;
+
         BufferedReader reader = null;
         OutputStream os = null;
 
@@ -237,7 +366,9 @@ public class FileSharingHandler extends CrossDomainHandler {
                     line = line.replace(FILE_URI_PATH, uri);
                 }
 
-                os.write(line.getBytes(StandardCharsets.UTF_8));
+                byte[] bytes = line.getBytes(StandardCharsets.UTF_8);
+                contentLength += bytes.length;
+                os.write(bytes);
             }
         } catch (IOException e) {
             Logger.w(this.getClass(), "#processIndexHtml", e);
@@ -257,10 +388,7 @@ public class FileSharingHandler extends CrossDomainHandler {
             }
         }
 
-        FileType fileType = FileUtils.verifyFileType(file.getName());
-        response.setContentType(fileType.getMimeType());
-        response.setContentLengthLong(file.length());
-        response.setStatus(HttpStatus.OK_200);
+        return contentLength;
     }
 
     private String extractCode(String pathInfo) {

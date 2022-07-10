@@ -76,7 +76,7 @@ public class FileSharingManager {
         }
 
         // 默认永久有效
-        SharingTagConfig config = new SharingTagConfig(contact, fileLabel, 0);
+        SharingTagConfig config = new SharingTagConfig(contact, fileLabel, 0, null);
         SharingTag sharingTag = new SharingTag(config);
         // 设置 URLs
         sharingTag.setURLs(authDomain.httpEndpoint, authDomain.httpsEndpoint);
