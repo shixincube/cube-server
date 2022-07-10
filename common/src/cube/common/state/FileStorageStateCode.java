@@ -87,6 +87,11 @@ public enum FileStorageStateCode {
     DuplicationOfName(20),
 
     /**
+     * 数据过期。
+     */
+    DataExpired(21),
+
+    /**
      * 搜索条件错误。
      */
     SearchConditionError(25),

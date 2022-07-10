@@ -19,6 +19,32 @@ window.onload = function () {
     submit(data);
 }
 
+function download(url) {
+    window.location.href = url;
+
+    const data = {
+        "domain": document.domain,
+        "url": document.URL,
+        "title": document.title,
+        "screen": {
+            "width": window.screen.width,
+            "height": window.screen.height,
+            "colorDepth": window.screen.colorDepth,
+            "orientation": (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation
+        },
+        "referrer": document.referrer,
+        "language": navigator.language,
+        "userAgent": navigator.userAgent,
+        "event": "Extract",
+        "eventTag": "button",
+        "eventParam": {
+            "url": url
+        }
+    };
+
+    submit(data);
+}
+
 function submit(data) {
     var xhr = null;
     if (window.XMLHttpRequest) {
@@ -33,7 +59,6 @@ function submit(data) {
     xhr.onreadystatechange = function() {
         if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
             // 完成
-            alert('submit');
         }
     }
 
@@ -43,8 +68,4 @@ function submit(data) {
 
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.send(JSON.stringify(data));
-}
-
-function download(url) {
-    window.location.href = url;
 }

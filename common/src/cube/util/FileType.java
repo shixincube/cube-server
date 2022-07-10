@@ -91,6 +91,7 @@ public enum FileType {
     DAVMOUNT(new String[]{ "davmount" }, "application/davmount+xml"),
     DBK(new String[]{ "dbk" }, "application/docbook+xml"),
     DSSC(new String[]{ "dssc" }, "application/dssc+der"),
+    DLL(new String[]{ "dll" }, "application/octet-stream"),
     XDSSC(new String[]{ "xdssc" }, "application/dssc+xml"),
     ECMA(new String[]{ "ecma" }, "application/ecmascript"),
     EMMA(new String[]{ "emma" }, "application/emma+xml"),
@@ -170,7 +171,8 @@ public enum FileType {
     PKIPATH(new String[]{ "pkipath" }, "application/pkix-pkipath"),
     PKI(new String[]{ "pki" }, "application/pkixcmp"),
     PLS(new String[]{ "pls" }, "application/pls+xml"),
-    AI(new String[]{ "ai" }, "application/postscript"),
+//    AI(new String[]{ "ai" }, "application/postscript"),
+    AI(new String[]{ "ai" }, "application/octet-stream"),
     EPS(new String[]{ "eps" }, "application/postscript"),
     PS(new String[]{ "ps" }, "application/postscript"),
     CWW(new String[]{ "cww" }, "application/prs.cww"),
@@ -1041,6 +1043,9 @@ public enum FileType {
     SMV(new String[]{ "smv" }, "video/x-smv"),
     TS(new String[]{ "ts" }, "video/MP2T"),
     ICE(new String[]{ "ice" }, "x-conference/x-cooltalk"),
+    AE(new String[]{ "ae" }, "application/octet-stream"),
+    RP(new String[]{ "rp" }, "application/octet-stream"),
+    XMAP(new String[]{ "xmap" }, "application/octet-stream"),
 
     // 以上代码为机器自动生成
 

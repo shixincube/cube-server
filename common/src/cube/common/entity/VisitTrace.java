@@ -120,6 +120,16 @@ public class VisitTrace implements JSONable {
         this.referrer = clientTrace.getString("referrer");
         this.language = clientTrace.getString("language");
         this.userAgent = clientTrace.getString("userAgent");
+
+        if (clientTrace.has("event")) {
+            this.event = clientTrace.getString("event");
+        }
+        if (clientTrace.has("eventTag")) {
+            this.eventTag = clientTrace.getString("eventTag");
+        }
+        if (clientTrace.has("eventParam")) {
+            this.eventParam = clientTrace.getJSONObject("eventParam");
+        }
     }
 
     public VisitTrace(JSONObject json) {

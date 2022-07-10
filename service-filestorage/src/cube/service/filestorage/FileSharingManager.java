@@ -85,7 +85,7 @@ public class FileSharingManager {
         return sharingTag;
     }
 
-    public SharingTag getSharingTag(String code) {
+    public SharingTag getSharingTag(String code, boolean urls) {
         SharingCodeDomain codeDomain = this.getDomainByCode(code);
         if (null == codeDomain) {
             return null;
@@ -93,9 +93,11 @@ public class FileSharingManager {
 
         SharingTag sharingTag = this.service.getServiceStorage().readSharingTag(codeDomain.domain, code);
 
-        AuthService authService = (AuthService) this.service.getKernel().getModule(AuthService.NAME);
-        AuthDomain authDomain = authService.getAuthDomain(codeDomain.domain);
-        sharingTag.setURLs(authDomain.httpEndpoint, authDomain.httpsEndpoint);
+        if (urls) {
+            AuthService authService = (AuthService) this.service.getKernel().getModule(AuthService.NAME);
+            AuthDomain authDomain = authService.getAuthDomain(codeDomain.domain);
+            sharingTag.setURLs(authDomain.httpEndpoint, authDomain.httpsEndpoint);
+        }
 
         return sharingTag;
     }

@@ -27,6 +27,7 @@
 package cube.dispatcher.filestorage;
 
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.FileStorageAction;
@@ -46,6 +47,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 文件分享句柄。
@@ -56,6 +59,8 @@ public class FileSharingHandler extends CrossDomainHandler {
 
     private final String TITLE = "${title}";
 
+    private final String FILE_TYPE = "${file_type}";
+
     private final String FILE_NAME = "${file_name}";
 
     private final String FILE_SIZE = "${file_size}";
@@ -64,11 +69,14 @@ public class FileSharingHandler extends CrossDomainHandler {
 
     private String fileRoot = "assets/sharing/";
 
+    private Map<String, FlexibleByteBuffer> fileCache;
+
     private Performer performer;
 
     public FileSharingHandler(Performer performer) {
         super();
         this.performer = performer;
+        this.fileCache = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -83,6 +91,7 @@ public class FileSharingHandler extends CrossDomainHandler {
             respondFile(response, filename);
         }
         else if (pathInfo.length() > 16) {
+            // 显示页面
             String code = extractCode(pathInfo);
             processIndexHtml(code, response);
         }
@@ -114,39 +123,70 @@ public class FileSharingHandler extends CrossDomainHandler {
     }
 
     private void respondFile(HttpServletResponse response, String filename) {
-        File file = new File(this.fileRoot, filename);
-        FileInputStream fis = null;
         OutputStream os = null;
+        long contentLength = 0;
 
-        try {
-            fis = new FileInputStream(file);
-            os = response.getOutputStream();
-            byte[] buf = new byte[2048];
-            int length = 0;
-            while ((length = fis.read(buf)) > 0) {
-                os.write(buf, 0, length);
-            }
-        } catch (IOException e) {
-            Logger.w(this.getClass(), "#readFile", e);
-        } finally {
-            if (null != fis) {
-                try {
-                    fis.close();
-                } catch (IOException e) {
+        FlexibleByteBuffer cache = this.fileCache.get(filename);
+        if (null != cache) {
+            // 从缓存加载数据
+            try {
+                os = response.getOutputStream();
+                os.write(cache.array(), 0, cache.limit());
+            } catch (IOException e) {
+                Logger.w(this.getClass(), "#respondFile", e);
+            } finally {
+                if (null != os) {
+                    try {
+                        os.close();
+                    } catch (IOException e) {
+                    }
                 }
             }
 
-            if (null != os) {
-                try {
-                    os.close();
-                } catch (IOException e) {
+            contentLength = cache.limit();
+        }
+        else {
+            File file = new File(this.fileRoot, filename);
+            contentLength = file.length();
+            cache = new FlexibleByteBuffer((int) contentLength);
+
+            FileInputStream fis = null;
+            try {
+                fis = new FileInputStream(file);
+                os = response.getOutputStream();
+                byte[] buf = new byte[2048];
+                int length = 0;
+                while ((length = fis.read(buf)) > 0) {
+                    os.write(buf, 0, length);
+                    // 写入缓存
+                    cache.put(buf, 0, length);
+                }
+
+                // 整理
+                cache.flip();
+                this.fileCache.put(filename, cache);
+            } catch (IOException e) {
+                Logger.w(this.getClass(), "#respondFile", e);
+            } finally {
+                if (null != fis) {
+                    try {
+                        fis.close();
+                    } catch (IOException e) {
+                    }
+                }
+
+                if (null != os) {
+                    try {
+                        os.close();
+                    } catch (IOException e) {
+                    }
                 }
             }
         }
 
         FileType fileType = FileUtils.verifyFileType(filename);
         response.setContentType(fileType.getMimeType());
-        response.setContentLengthLong(file.length());
+        response.setContentLengthLong(contentLength);
         response.setStatus(HttpStatus.OK_200);
     }
 
@@ -181,6 +221,9 @@ public class FileSharingHandler extends CrossDomainHandler {
             while (null != (line = reader.readLine())) {
                 if (line.contains(TITLE)) {
                     line = line.replace(TITLE, sharingTag.getConfig().getFileLabel().getFileName());
+                }
+                else if (line.contains(FILE_TYPE)) {
+                    line = line.replace(FILE_TYPE, parseFileType(sharingTag.getConfig().getFileLabel().getFileType()));
                 }
                 else if (line.contains(FILE_NAME)) {
                     line = line.replace(FILE_NAME, sharingTag.getConfig().getFileLabel().getFileName());
@@ -228,6 +271,48 @@ public class FileSharingHandler extends CrossDomainHandler {
         }
         else {
             return pathInfo.substring(start);
+        }
+    }
+
+    private String parseFileType(FileType fileType) {
+        if (FileUtils.isImageType(fileType)) {
+            return "image";
+        }
+        else if (FileUtils.isAudioType(fileType)) {
+            return "audio";
+        }
+        else if (FileUtils.isVideoType(fileType)) {
+            return "video";
+        }
+
+        switch (fileType) {
+            case AE:
+            case AI:
+            case APK:
+            case DMG:
+            case PDF:
+            case PSD:
+            case RAR:
+            case RP:
+            case TXT:
+            case XMAP:
+                return fileType.getPreferredExtension();
+            case DOC:
+            case DOCX:
+                return "doc";
+            case EXE:
+            case DLL:
+                return "exe";
+            case PPT:
+            case PPTX:
+                return "ppt";
+            case LOG:
+                return "txt";
+            case XLS:
+            case XLSX:
+                return "xls";
+            default:
+                return "unknown";
         }
     }
 }

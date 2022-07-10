@@ -33,6 +33,7 @@ import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.FileLabel;
+import cube.common.entity.SharingTag;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.util.FormData;
@@ -188,65 +189,95 @@ public class FileHandler extends CrossDomainHandler {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        // Token Code
-        String token = request.getParameter("token");
-        // File Code
-        String fileCode = request.getParameter("fc");
+        // Sharing Code
+        String sharingCode = request.getParameter("sc");
 
-        if (null == token || null == fileCode) {
-            response.setStatus(HttpStatus.BAD_REQUEST_400);
-            this.complete();
-            return;
-        }
+        FileLabel fileLabel = null;
+        FileType type = null;
 
-        // Type
-        String typeDesc = request.getParameter("type");
-        FileType type = FileType.matchExtension(typeDesc);
-
-        // SN
-        Long sn = null;
-        if (null != request.getParameter("sn")) {
-            sn = Long.parseLong(request.getParameter("sn"));
-        }
-        else {
-            sn = Utils.generateSerialNumber();
-        }
-
-        JSONObject payload = new JSONObject();
-        try {
-            payload.put("fileCode", fileCode);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        Packet packet = new Packet(sn, FileStorageAction.GetFile.name, payload);
-        ActionDialect packetDialect = packet.toDialect();
-        packetDialect.addParam("token", token);
-
-        ActionDialect dialect = this.performer.syncTransmit(token, FileStorageCellet.NAME, packetDialect);
-        if (null == dialect) {
-            this.respond(response, HttpStatus.FORBIDDEN_403, packet.toJSON());
-            return;
-        }
-
-        Packet responsePacket = new Packet(dialect);
-
-        int code = -1;
-        JSONObject fileLabelJson = null;
-        try {
-            code = responsePacket.data.getInt("code");
-            if (code != FileStorageStateCode.Ok.code) {
-                // 状态错误
-                this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+        if (null != sharingCode) {
+            JSONObject payload = new JSONObject();
+            payload.put("code", sharingCode);
+            payload.put("urls", false);
+            Packet packet = new Packet(FileStorageAction.GetSharingTag.name, payload);
+            // 请求数据
+            ActionDialect dialect = this.performer.syncTransmit(FileStorageCellet.NAME, packet.toDialect());
+            if (null == dialect) {
+                response.setStatus(HttpStatus.BAD_REQUEST_400);
+                this.complete();
                 return;
             }
 
-            fileLabelJson = responsePacket.data.getJSONObject("data");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            Packet responsePacket = new Packet(dialect);
 
-        FileLabel fileLabel = new FileLabel(fileLabelJson);
+            int stateCode = Packet.extractCode(responsePacket);
+            if (stateCode != FileStorageStateCode.Ok.code) {
+                // 状态错误
+                this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+                this.complete();
+                return;
+            }
+
+            JSONObject tagJson = Packet.extractDataPayload(responsePacket);
+            SharingTag sharingTag = new SharingTag(tagJson);
+            // 文件标签
+            fileLabel = sharingTag.getConfig().getFileLabel();
+            // 文件类型
+            type = fileLabel.getFileType();
+        }
+        else {
+            // Token Code
+            String token = request.getParameter("token");
+            // File Code
+            String fileCode = request.getParameter("fc");
+
+            if (null == token || null == fileCode) {
+                response.setStatus(HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
+
+            // Type
+            String typeDesc = request.getParameter("type");
+            type = FileType.matchExtension(typeDesc);
+
+            // SN
+            Long sn = null;
+            if (null != request.getParameter("sn")) {
+                sn = Long.parseLong(request.getParameter("sn"));
+            }
+            else {
+                sn = Utils.generateSerialNumber();
+            }
+
+            JSONObject payload = new JSONObject();
+            payload.put("fileCode", fileCode);
+
+            Packet packet = new Packet(sn, FileStorageAction.GetFile.name, payload);
+            ActionDialect packetDialect = packet.toDialect();
+            packetDialect.addParam("token", token);
+
+            ActionDialect dialect = this.performer.syncTransmit(token, FileStorageCellet.NAME, packetDialect);
+            if (null == dialect) {
+                this.respond(response, HttpStatus.FORBIDDEN_403, packet.toJSON());
+                this.complete();
+                return;
+            }
+
+            Packet responsePacket = new Packet(dialect);
+
+            int stateCode = Packet.extractCode(responsePacket);
+            if (stateCode != FileStorageStateCode.Ok.code) {
+                // 状态错误
+                this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+                this.complete();
+                return;
+            }
+
+            JSONObject fileLabelJson = Packet.extractDataPayload(responsePacket);
+            // 文件标签
+            fileLabel = new FileLabel(fileLabelJson);
+        }
 
         if (fileLabel.getFileSize() > (long) this.bufferSize) {
             this.processByNonBlocking(request, response, fileLabel, type);

@@ -69,7 +69,7 @@ public final class ChainNodeEvent {
     /**
      * 分享。
      */
-    public final static String Share = "share";
+    public final static String Share = "Share";
 
     /**
      * 浏览。
