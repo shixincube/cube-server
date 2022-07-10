@@ -367,27 +367,27 @@ public final class FileUtils {
         String unit = null;
 
         if (sizeInBytes < KB) {
-            double d = (sizeInBytes / KB);
+            double d = ((double) sizeInBytes / (double) KB);
             value = String.format("%.2f", d);
             unit = "KB";
         }
         else if (sizeInBytes >= KB && sizeInBytes < MB) {
-            double d = (sizeInBytes / KB);
+            double d = ((double) sizeInBytes / (double) KB);
             value = String.format("%.2f", d);
             unit = "KB";
         }
         else if (sizeInBytes >= MB && sizeInBytes < GB) {
-            double d = (sizeInBytes / MB);
+            double d = ((double) sizeInBytes / (double) MB);
             value = String.format("%.2f", d);
             unit = "MB";
         }
         else if (sizeInBytes >= GB && sizeInBytes < TB) {
-            double d = (sizeInBytes / GB);
+            double d = ((double) sizeInBytes / (double) GB);
             value = String.format("%.2f", d);
             unit = "GB";
         }
         else {
-            double d = (sizeInBytes / TB);
+            double d = ((double) sizeInBytes / (double) TB);
             value = String.format("%.2f", d);
             unit = "TB";
         }

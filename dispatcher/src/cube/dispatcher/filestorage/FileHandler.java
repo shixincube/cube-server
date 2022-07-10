@@ -64,6 +64,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class FileHandler extends CrossDomainHandler {
 
+    public final static String PATH = "/filestorage/file/";
+
     private FileChunkStorage fileChunkStorage;
 
     private Performer performer;

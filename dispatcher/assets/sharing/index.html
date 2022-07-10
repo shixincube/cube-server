@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-<title>文件</title>
+<title>${title}</title>
 <link rel="stylesheet" href="style/index.css">
 </head>
 
@@ -14,15 +14,15 @@
         <img class="file-icon" src="image/file-icon-unknown.png"/>
     </div>
     <div class="item">
-        <p class="file-name">文件名</p>
+        <p class="file-name">${file_name}</p>
     </div>
     <div class="item">
-        <p class="file-size">文件大小</p>
+        <p class="file-size">文件大小：${file_size}</p>
     </div>
 </div>
 <div class="footer">
     <div class="item">
-        <button>接收文件</button>
+        <button onclick="javascript:download('${file_uri_path}');">接收文件</button>
     </div>
 </div>
 

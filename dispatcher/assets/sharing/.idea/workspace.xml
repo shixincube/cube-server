@@ -3,10 +3,11 @@
   <component name="ChangeListManager">
     <list default="true" id="b1408c98-f6aa-434f-978c-a980e61d5e76" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/../../../common/src/cube/common/entity/SharingTag.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../common/src/cube/common/entity/SharingTag.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../common/src/cube/common/entity/SharingTagConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../common/src/cube/common/entity/SharingTagConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../common/src/cube/common/entity/TransmissionMethod.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../common/src/cube/common/entity/TransmissionMethod.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../common/src/cube/common/entity/VisitTrace.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../common/src/cube/common/entity/VisitTrace.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/script/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/script/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/cube/dispatcher/filestorage/FileSharingHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/cube/dispatcher/filestorage/FileSharingHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileSharingManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileSharingManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/ServiceStorage.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/ServiceStorage.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -55,6 +56,7 @@
       <option name="presentableId" value="Default" />
       <updated>1657247330451</updated>
       <workItem from="1657247331594" duration="7282000" />
+      <workItem from="1657415692445" duration="1111000" />
     </task>
     <servers />
   </component>

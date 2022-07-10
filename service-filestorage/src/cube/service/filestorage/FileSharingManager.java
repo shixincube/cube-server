@@ -26,10 +26,11 @@
 
 package cube.service.filestorage;
 
-import cell.core.net.Endpoint;
 import cell.util.log.Logger;
 import cube.common.entity.*;
 import cube.service.auth.AuthService;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 文件分享管理器。
@@ -41,16 +42,18 @@ public class FileSharingManager {
 
     private FileStorageService service;
 
+    private ConcurrentHashMap<String, SharingCodeDomain> codeDomainMap;
+
     public FileSharingManager(FileStorageService service) {
         this.service = service;
     }
 
     public void start() {
-
+        this.codeDomainMap = new ConcurrentHashMap<>();
     }
 
     public void stop() {
-
+        this.codeDomainMap.clear();
     }
 
     public SharingTag createOrGetSharingTag(Contact contact, String fileCode) {
@@ -68,6 +71,7 @@ public class FileSharingManager {
 
         FileLabel fileLabel = this.service.getFile(contact.getDomain().getName(), fileCode);
         if (null == fileLabel) {
+            Logger.w(this.getClass(), "#createOrGetSharingTag - Can NOT find file: " + fileCode);
             return null;
         }
 
@@ -82,18 +86,46 @@ public class FileSharingManager {
     }
 
     public SharingTag getSharingTag(String code) {
-        return null;
+        SharingCodeDomain codeDomain = this.getDomainByCode(code);
+        if (null == codeDomain) {
+            return null;
+        }
+
+        SharingTag sharingTag = this.service.getServiceStorage().readSharingTag(codeDomain.domain, code);
+
+        AuthService authService = (AuthService) this.service.getKernel().getModule(AuthService.NAME);
+        AuthDomain authDomain = authService.getAuthDomain(codeDomain.domain);
+        sharingTag.setURLs(authDomain.httpEndpoint, authDomain.httpsEndpoint);
+
+        return sharingTag;
     }
 
     public void addVisitTrace(VisitTrace trace) {
         String code = this.extractCode(trace.url);
-        String domain = this.service.getServiceStorage().querySharingCodeDomain(code);
-        if (null != domain) {
-            this.service.getServiceStorage().writeVisitTrace(domain, code, trace);
+        SharingCodeDomain codeDomain = getDomainByCode(code);
+
+        if (null != codeDomain) {
+            this.service.getServiceStorage().writeVisitTrace(codeDomain.domain, code, trace);
         }
         else {
             Logger.w(this.getClass(), "#addVisitTrace - Can NOT find domain by code: " + code);
         }
+    }
+
+    private SharingCodeDomain getDomainByCode(String code) {
+        SharingCodeDomain codeDomain = this.codeDomainMap.get(code);
+        if (null != codeDomain) {
+            return codeDomain;
+        }
+
+        String domain = this.service.getServiceStorage().querySharingCodeDomain(code);
+        if (null == domain) {
+            return null;
+        }
+
+        codeDomain = new SharingCodeDomain(code, domain);
+        this.codeDomainMap.put(code, codeDomain);
+        return codeDomain;
     }
 
     private String extractCode(String url) {
@@ -104,6 +136,21 @@ public class FileSharingManager {
         }
         else {
             return url.substring(start + 8);
+        }
+    }
+
+    public class SharingCodeDomain {
+
+        public final String code;
+
+        public final String domain;
+
+        public final long timestamp;
+
+        public SharingCodeDomain(String code, String domain) {
+            this.code = code;
+            this.domain = domain;
+            this.timestamp = System.currentTimeMillis();
         }
     }
 }

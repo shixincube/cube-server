@@ -26,12 +26,16 @@
 
 package cube.dispatcher.filestorage;
 
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.FileStorageAction;
+import cube.common.entity.SharingTag;
 import cube.common.entity.VisitTrace;
+import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
+import cube.util.FileSize;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import org.eclipse.jetty.http.HttpStatus;
@@ -40,15 +44,23 @@ import org.json.JSONObject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 文件分享句柄。
  */
 public class FileSharingHandler extends CrossDomainHandler {
+
+    public final static String PATH = "/sharing/";
+
+    private final String TITLE = "${title}";
+
+    private final String FILE_NAME = "${file_name}";
+
+    private final String FILE_SIZE = "${file_size}";
+
+    private final String FILE_URI_PATH = "${file_uri_path}";
 
     private String fileRoot = "assets/sharing/";
 
@@ -71,8 +83,8 @@ public class FileSharingHandler extends CrossDomainHandler {
             respondFile(response, filename);
         }
         else if (pathInfo.length() > 16) {
-            String code = pathInfo.substring(1);
-            respondFile(response, "index.html");
+            String code = extractCode(pathInfo);
+            processIndexHtml(code, response);
         }
         else {
             respond(response, HttpStatus.FORBIDDEN_403);
@@ -136,5 +148,86 @@ public class FileSharingHandler extends CrossDomainHandler {
         response.setContentType(fileType.getMimeType());
         response.setContentLengthLong(file.length());
         response.setStatus(HttpStatus.OK_200);
+    }
+
+    private void processIndexHtml(String code, HttpServletResponse response) {
+        JSONObject data = new JSONObject();
+        data.put("code", code);
+        Packet packet = new Packet(FileStorageAction.GetSharingTag.name, data);
+        ActionDialect result = this.performer.syncTransmit(FileStorageCellet.NAME, packet.toDialect());
+        if (null == result) {
+            response.setStatus(HttpStatus.BAD_REQUEST_400);
+            return;
+        }
+
+        Packet resultPacket = new Packet(result);
+        int stateCode = Packet.extractCode(resultPacket);
+        if (FileStorageStateCode.Ok.code != stateCode) {
+            response.setStatus(HttpStatus.SERVICE_UNAVAILABLE_503);
+            return;
+        }
+
+        JSONObject tagJson = Packet.extractDataPayload(resultPacket);
+        SharingTag sharingTag = new SharingTag(tagJson);
+
+        File file = new File(this.fileRoot, "index.html");
+        BufferedReader reader = null;
+        OutputStream os = null;
+
+        try {
+            os = response.getOutputStream();
+            reader = new BufferedReader(new FileReader(file));
+            String line = null;
+            while (null != (line = reader.readLine())) {
+                if (line.contains(TITLE)) {
+                    line = line.replace(TITLE, sharingTag.getConfig().getFileLabel().getFileName());
+                }
+                else if (line.contains(FILE_NAME)) {
+                    line = line.replace(FILE_NAME, sharingTag.getConfig().getFileLabel().getFileName());
+                }
+                else if (line.contains(FILE_SIZE)) {
+                    FileSize size = FileUtils.scaleFileSize(sharingTag.getConfig().getFileLabel().getFileSize());
+                    line = line.replace(FILE_SIZE, size.toString());
+                }
+                else if (line.contains(FILE_URI_PATH)) {
+                    String uri = FileHandler.PATH + "?sc=" + sharingTag.getCode();
+                    line = line.replace(FILE_URI_PATH, uri);
+                }
+
+                os.write(line.getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (IOException e) {
+            Logger.w(this.getClass(), "#processIndexHtml", e);
+        } finally {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
+
+            if (null != os) {
+                try {
+                    os.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        FileType fileType = FileUtils.verifyFileType(file.getName());
+        response.setContentType(fileType.getMimeType());
+        response.setContentLengthLong(file.length());
+        response.setStatus(HttpStatus.OK_200);
+    }
+
+    private String extractCode(String pathInfo) {
+        int start = 1;
+        int end = pathInfo.substring(1).indexOf("/");
+        if (end > 0) {
+            return pathInfo.substring(start, start + end);
+        }
+        else {
+            return pathInfo.substring(start);
+        }
     }
 }

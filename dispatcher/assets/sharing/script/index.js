@@ -44,3 +44,7 @@ function submit(data) {
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.send(JSON.stringify(data));
 }
+
+function download(url) {
+    window.location.href = url;
+}

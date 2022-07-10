@@ -134,6 +134,11 @@ public enum FileStorageAction {
     CreateSharingTag("createSharingTag"),
 
     /**
+     * 获取分享标签。
+     */
+    GetSharingTag("getSharingTag"),
+
+    /**
      * 发送分享页面监测数据。
      */
     Trace("trace"),

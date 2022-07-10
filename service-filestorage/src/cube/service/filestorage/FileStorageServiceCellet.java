@@ -139,6 +139,10 @@ public class FileStorageServiceCellet extends AbstractCellet {
             this.executor.execute(new SearchFileTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (FileStorageAction.GetSharingTag.name.equals(action)) {
+            this.executor.execute(new GetSharingTagTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (FileStorageAction.CreateSharingTag.name.equals(action)) {
             this.executor.execute(new CreateSharingTagTask(this, talkContext, primitive,
                     this.markResponseTime(action)));

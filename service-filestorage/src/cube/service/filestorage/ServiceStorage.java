@@ -132,6 +132,9 @@ public class ServiceStorage implements Storagable {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY
             }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("code", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -205,6 +208,9 @@ public class ServiceStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             })
     };
@@ -832,6 +838,7 @@ public class ServiceStorage implements Storagable {
         this.executor.execute(() -> {
             storage.executeInsert(table, new StorageField[] {
                     new StorageField("id", sharingTag.getId()),
+                    new StorageField("timestamp", sharingTag.getTimestamp()),
                     new StorageField("code", sharingTag.getCode()),
                     new StorageField("contact_id", sharingTag.getConfig().getContact().getId()),
                     new StorageField("contact", sharingTag.getConfig().getContact().toJSON().toString()),
@@ -842,7 +849,8 @@ public class ServiceStorage implements Storagable {
 
             storage.executeInsert(sharingCodeTable, new StorageField[] {
                     new StorageField("code", sharingTag.getCode()),
-                    new StorageField("domain", sharingTag.getDomain().getName())
+                    new StorageField("domain", sharingTag.getDomain().getName()),
+                    new StorageField("timestamp", sharingTag.getTimestamp())
             });
         });
     }
@@ -874,7 +882,38 @@ public class ServiceStorage implements Storagable {
         Map<String, StorageField> map = StorageFields.get(result.get(0));
         Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
 
-        SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain,
+        SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
+                map.get("code").getString(), contact, fileLabel, map.get("expiry").getLong(),
+                map.get("password").isNullValue() ? null : map.get("password").getString());
+
+        return sharingTag;
+    }
+
+    public SharingTag readSharingTag(String domain, String code) {
+        String table = this.sharingTagTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, this.sharingTagFields, new Conditional[] {
+                Conditional.createEqualTo("code", code)
+        });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+
+        // 读取文件标签
+        FileLabel fileLabel = this.readFileLabel(domain, map.get("file_code").getString());
+        if (null == fileLabel) {
+            return null;
+        }
+
+        Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
+
+        SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
                 map.get("code").getString(), contact, fileLabel, map.get("expiry").getLong(),
                 map.get("password").isNullValue() ? null : map.get("password").getString());
 
