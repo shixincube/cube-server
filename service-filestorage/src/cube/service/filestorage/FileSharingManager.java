@@ -30,6 +30,7 @@ import cell.util.log.Logger;
 import cube.common.entity.*;
 import cube.service.auth.AuthService;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -117,6 +118,21 @@ public class FileSharingManager {
         }
 
         return sharingTag;
+    }
+
+    /**
+     * 列举分享标签。
+     *
+     * @param contact
+     * @return
+     */
+    public List<SharingTag> listSharingTags(Contact contact, int beginIndex, int endIndex) {
+        if (endIndex <= beginIndex) {
+            return null;
+        }
+
+        return this.service.getServiceStorage().listSharingTags(contact.getDomain().getName(),
+                contact.getId(), beginIndex, endIndex);
     }
 
     public void traceVisit(VisitTrace trace) {

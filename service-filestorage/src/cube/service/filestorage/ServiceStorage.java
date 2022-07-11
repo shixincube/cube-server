@@ -815,6 +815,12 @@ public class ServiceStorage implements Storagable {
         });
     }
 
+    /**
+     * 查询指定分享码对应的域。
+     *
+     * @param code
+     * @return
+     */
     public String querySharingCodeDomain(String code) {
         List<StorageField[]> result = this.storage.executeQuery(this.sharingCodeTable, new StorageField[] {
                         new StorageField("domain", LiteralBase.STRING)
@@ -829,6 +835,11 @@ public class ServiceStorage implements Storagable {
         return result.get(0)[0].getString();
     }
 
+    /**
+     * 写入分享标签。
+     *
+     * @param sharingTag
+     */
     public void writeSharingTag(SharingTag sharingTag) {
         String table = this.sharingTagTableNameMap.get(sharingTag.getDomain().getName());
         if (null == table) {
@@ -856,6 +867,15 @@ public class ServiceStorage implements Storagable {
         });
     }
 
+    /**
+     * 读取指定的分享标签。
+     *
+     * @param domain
+     * @param contactId
+     * @param fileCode
+     * @param expiryDate
+     * @return
+     */
     public SharingTag readSharingTag(String domain, Long contactId, String fileCode, long expiryDate) {
         String table = this.sharingTagTableNameMap.get(domain);
         if (null == table) {
@@ -891,6 +911,13 @@ public class ServiceStorage implements Storagable {
         return sharingTag;
     }
 
+    /**
+     * 读取指定的分享标签。
+     *
+     * @param domain
+     * @param code
+     * @return
+     */
     public SharingTag readSharingTag(String domain, String code) {
         String table = this.sharingTagTableNameMap.get(domain);
         if (null == table) {
@@ -921,6 +948,50 @@ public class ServiceStorage implements Storagable {
                 map.get("password").isNullValue() ? null : map.get("password").getString());
 
         return sharingTag;
+    }
+
+    /**
+     * 获取指定联系人的分享标签。
+     *
+     * @param domain
+     * @param contactId
+     * @param beginIndex
+     * @param endIndex
+     * @return
+     */
+    public List<SharingTag> listSharingTags(String domain, long contactId, int beginIndex, int endIndex) {
+        List<SharingTag> list = new ArrayList<>();
+
+        String table = this.sharingTagTableNameMap.get(domain);
+        if (null == table) {
+            return list;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, this.sharingTagFields, new Conditional[] {
+                Conditional.createEqualTo("contact_id", contactId),
+                Conditional.createLimit(beginIndex, endIndex - beginIndex + 1)
+        });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> map = StorageFields.get(fields);
+
+            // 读取文件标签
+            FileLabel fileLabel = this.readFileLabel(domain, map.get("file_code").getString());
+            if (null == fileLabel) {
+                continue;
+            }
+
+            Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
+            Device device = new Device(new JSONObject(map.get("device").getString()));
+
+            SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
+                    map.get("code").getString(), contact, device, fileLabel, map.get("expiry").getLong(),
+                    map.get("password").isNullValue() ? null : map.get("password").getString());
+
+            list.add(sharingTag);
+        }
+
+        return list;
     }
 
     public void writeVisitTrace(String domain, String code, VisitTrace visitTrace) {

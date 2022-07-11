@@ -69,7 +69,10 @@ public class SharingTagConfig implements JSONable {
     }
 
     public SharingTagConfig(JSONObject json) {
-        this.contact = new Contact(json.getJSONObject("contact"));
+        if (json.has("contact")) {
+            this.contact = new Contact(json.getJSONObject("contact"));
+        }
+
         this.device = new Device(json.getJSONObject("device"));
         this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
         this.expiryDate = json.getLong("expiryDate");
@@ -128,7 +131,10 @@ public class SharingTagConfig implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("contact", this.contact.toJSON());
+        if (null != this.contact) {
+            json.put("contact", this.contact.toJSON());
+        }
+
         json.put("device", this.device.toJSON());
         json.put("fileLabel", this.fileLabel.toJSON());
         json.put("expiryDate", this.expiryDate);
