@@ -80,10 +80,11 @@ public class ListSharingTagsTask extends ServiceTask {
 
         int beginIndex = packet.data.getInt("begin");
         int endIndex = packet.data.getInt("end");
+        boolean inExpiry = packet.data.has("inExpiry") && packet.data.getBoolean("inExpiry");
 
         // 获取服务
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-        List<SharingTag> list = service.getSharingManager().listSharingTags(contact, beginIndex, endIndex);
+        List<SharingTag> list = service.getSharingManager().listSharingTags(contact, inExpiry, beginIndex, endIndex);
         if (null == list) {
             // 发生错误
             this.cellet.speak(this.talkContext,
@@ -103,6 +104,7 @@ public class ListSharingTagsTask extends ServiceTask {
         result.put("list", array);
         result.put("begin", beginIndex);
         result.put("end", endIndex);
+        result.put("inExpiry", inExpiry);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));

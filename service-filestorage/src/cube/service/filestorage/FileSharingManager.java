@@ -126,13 +126,23 @@ public class FileSharingManager {
      * @param contact
      * @return
      */
-    public List<SharingTag> listSharingTags(Contact contact, int beginIndex, int endIndex) {
+
+    /**
+     * 列举分享标签。
+     *
+     * @param contact
+     * @param inExpiry 是否是在有效期内的分享。
+     * @param beginIndex
+     * @param endIndex
+     * @return
+     */
+    public List<SharingTag> listSharingTags(Contact contact, boolean inExpiry, int beginIndex, int endIndex) {
         if (endIndex <= beginIndex) {
             return null;
         }
 
         return this.service.getServiceStorage().listSharingTags(contact.getDomain().getName(),
-                contact.getId(), beginIndex, endIndex);
+                contact.getId(), inExpiry, beginIndex, endIndex);
     }
 
     public void traceVisit(VisitTrace trace) {

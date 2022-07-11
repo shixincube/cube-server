@@ -955,11 +955,12 @@ public class ServiceStorage implements Storagable {
      *
      * @param domain
      * @param contactId
+     * @param inExpiry
      * @param beginIndex
      * @param endIndex
      * @return
      */
-    public List<SharingTag> listSharingTags(String domain, long contactId, int beginIndex, int endIndex) {
+    public List<SharingTag> listSharingTags(String domain, long contactId, boolean inExpiry, int beginIndex, int endIndex) {
         List<SharingTag> list = new ArrayList<>();
 
         String table = this.sharingTagTableNameMap.get(domain);
@@ -967,11 +968,30 @@ public class ServiceStorage implements Storagable {
             return list;
         }
 
-        List<StorageField[]> result = this.storage.executeQuery(table, this.sharingTagFields, new Conditional[] {
-                Conditional.createEqualTo("contact_id", contactId),
-                Conditional.createLimit(beginIndex, endIndex - beginIndex + 1)
-        });
+        Conditional[] conditionals = null;
+        if (inExpiry) {
+            conditionals = new Conditional[] {
+                    Conditional.createEqualTo("contact_id", contactId),
+                    Conditional.createAnd(),
+                    Conditional.createBracket(new Conditional[] {
+                            Conditional.createEqualTo("expiry", (long) 0),
+                            Conditional.createOr(),
+                            Conditional.createGreaterThanEqual(new StorageField("expiry", System.currentTimeMillis()))
+                    }),
+                    Conditional.createLimit(beginIndex, endIndex - beginIndex + 1)
+            };
+        }
+        else {
+            conditionals = new Conditional[] {
+                    Conditional.createEqualTo("contact_id", contactId),
+                    Conditional.createAnd(),
+                    Conditional.createLessThan(new StorageField("expiry", System.currentTimeMillis())),
+                    Conditional.createLimit(beginIndex, endIndex - beginIndex + 1)
+            };
+        }
 
+        // 查库
+        List<StorageField[]> result = this.storage.executeQuery(table, this.sharingTagFields, conditionals);
         for (StorageField[] fields : result) {
             Map<String, StorageField> map = StorageFields.get(fields);
 
