@@ -147,6 +147,9 @@ public class ServiceStorage implements Storagable {
             new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("duration", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("expiry", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -855,7 +858,8 @@ public class ServiceStorage implements Storagable {
                     new StorageField("contact", sharingTag.getConfig().getContact().toJSON().toString()),
                     new StorageField("device", sharingTag.getConfig().getDevice().toJSON().toString()),
                     new StorageField("file_code", sharingTag.getConfig().getFileLabel().getFileCode()),
-                    new StorageField("expiry", sharingTag.getConfig().getExpiryDate()),
+                    new StorageField("duration", sharingTag.getConfig().getDuration()),
+                    new StorageField("expiry", sharingTag.getExpiryDate()),
                     new StorageField("password", sharingTag.getConfig().getPassword())
             });
 
@@ -873,43 +877,42 @@ public class ServiceStorage implements Storagable {
      * @param domain
      * @param contactId
      * @param fileCode
-     * @param expiryDate
      * @return
      */
-    public SharingTag readSharingTag(String domain, Long contactId, String fileCode, long expiryDate) {
-        String table = this.sharingTagTableNameMap.get(domain);
-        if (null == table) {
-            return null;
-        }
-
-        List<StorageField[]> result = this.storage.executeQuery(table, this.sharingTagFields, new Conditional[] {
-                Conditional.createEqualTo("contact_id", contactId.longValue()),
-                Conditional.createAnd(),
-                Conditional.createEqualTo("file_code", fileCode),
-                Conditional.createAnd(),
-                Conditional.createEqualTo("expiry", expiryDate)
-        });
-
-        if (result.isEmpty()) {
-            return null;
-        }
-
-        // 读取文件标签
-        FileLabel fileLabel = this.readFileLabel(domain, fileCode);
-        if (null == fileLabel) {
-            return null;
-        }
-
-        Map<String, StorageField> map = StorageFields.get(result.get(0));
-        Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
-        Device device = new Device(new JSONObject(map.get("device").getString()));
-
-        SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
-                map.get("code").getString(), contact, device, fileLabel, map.get("expiry").getLong(),
-                map.get("password").isNullValue() ? null : map.get("password").getString());
-
-        return sharingTag;
-    }
+//    public SharingTag readSharingTag(String domain, Long contactId, String fileCode) {
+//        String table = this.sharingTagTableNameMap.get(domain);
+//        if (null == table) {
+//            return null;
+//        }
+//
+//        List<StorageField[]> result = this.storage.executeQuery(table, this.sharingTagFields, new Conditional[] {
+//                Conditional.createEqualTo("contact_id", contactId.longValue()),
+//                Conditional.createAnd(),
+//                Conditional.createEqualTo("file_code", fileCode),
+//                Conditional.createAnd(),
+//                Conditional.createEqualTo("expiry", expiryDate)
+//        });
+//
+//        if (result.isEmpty()) {
+//            return null;
+//        }
+//
+//        // 读取文件标签
+//        FileLabel fileLabel = this.readFileLabel(domain, fileCode);
+//        if (null == fileLabel) {
+//            return null;
+//        }
+//
+//        Map<String, StorageField> map = StorageFields.get(result.get(0));
+//        Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
+//        Device device = new Device(new JSONObject(map.get("device").getString()));
+//
+//        SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
+//                map.get("code").getString(), contact, device, fileLabel, map.get("expiry").getLong(),
+//                map.get("password").isNullValue() ? null : map.get("password").getString());
+//
+//        return sharingTag;
+//    }
 
     /**
      * 读取指定的分享标签。
@@ -944,7 +947,8 @@ public class ServiceStorage implements Storagable {
         Device device = new Device(new JSONObject(map.get("device").getString()));
 
         SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
-                map.get("code").getString(), contact, device, fileLabel, map.get("expiry").getLong(),
+                map.get("code").getString(), map.get("expiry").getLong(),
+                contact, device, fileLabel, map.get("duration").getLong(),
                 map.get("password").isNullValue() ? null : map.get("password").getString());
 
         return sharingTag;
@@ -1005,7 +1009,8 @@ public class ServiceStorage implements Storagable {
             Device device = new Device(new JSONObject(map.get("device").getString()));
 
             SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
-                    map.get("code").getString(), contact, device, fileLabel, map.get("expiry").getLong(),
+                    map.get("code").getString(), map.get("expiry").getLong(),
+                    contact, device, fileLabel, map.get("duration").getLong(),
                     map.get("password").isNullValue() ? null : map.get("password").getString());
 
             list.add(sharingTag);

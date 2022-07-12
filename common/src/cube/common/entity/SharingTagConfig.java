@@ -45,7 +45,7 @@ public class SharingTagConfig implements JSONable {
 
     private FileLabel fileLabel;
 
-    private long expiryDate;
+    private long duration;
 
     private String password;
 
@@ -53,18 +53,11 @@ public class SharingTagConfig implements JSONable {
 
     private List<AbstractContact> excludeList;
 
-    public SharingTagConfig(Contact contact, Device device, FileLabel fileLabel, int durationInDay) {
+    public SharingTagConfig(Contact contact, Device device, FileLabel fileLabel, long duration, String password) {
         this.contact = contact;
         this.device = device;
         this.fileLabel = fileLabel;
-        this.expiryDate = System.currentTimeMillis() + (durationInDay * 24L * 60 * 60 * 1000);
-    }
-
-    public SharingTagConfig(Contact contact, Device device, FileLabel fileLabel, long expiryDate, String password) {
-        this.contact = contact;
-        this.device = device;
-        this.fileLabel = fileLabel;
-        this.expiryDate = expiryDate;
+        this.duration = duration;
         this.password = password;
     }
 
@@ -75,7 +68,7 @@ public class SharingTagConfig implements JSONable {
 
         this.device = new Device(json.getJSONObject("device"));
         this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
-        this.expiryDate = json.getLong("expiryDate");
+        this.duration = json.getLong("duration");
 
         if (json.has("password")) {
             this.password = json.getString("password");
@@ -120,8 +113,8 @@ public class SharingTagConfig implements JSONable {
         return this.fileLabel;
     }
 
-    public long getExpiryDate() {
-        return this.expiryDate;
+    public long getDuration() {
+        return this.duration;
     }
 
     public String getPassword() {
@@ -137,7 +130,7 @@ public class SharingTagConfig implements JSONable {
 
         json.put("device", this.device.toJSON());
         json.put("fileLabel", this.fileLabel.toJSON());
-        json.put("expiryDate", this.expiryDate);
+        json.put("duration", this.duration);
 
         if (null != this.password) {
             json.put("password", this.password);

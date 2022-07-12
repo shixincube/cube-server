@@ -44,6 +44,8 @@ public class SharingTag extends Entity {
 
     private SharingTagConfig config;
 
+    private long expiryDate;
+
     private String httpURL;
 
     private String httpsURL;
@@ -61,14 +63,22 @@ public class SharingTag extends Entity {
         buf.append(config.getContact().getId().toString());
         this.code = FileUtils.fastHash(buf.toString());
 
+        if (config.getDuration() > 0) {
+            this.expiryDate = this.timestamp + config.getDuration();
+        }
+        else {
+            this.expiryDate = 0;
+        }
+
         this.visitTraceList = new ArrayList<>();
     }
 
-    public SharingTag(Long id, String domain, long timestamp, String code, Contact contact,
-                      Device device, FileLabel fileLabel, long expiryDate, String password) {
+    public SharingTag(Long id, String domain, long timestamp, String code, long expiryDate,
+                      Contact contact, Device device, FileLabel fileLabel, long duration, String password) {
         super(id, domain, timestamp);
         this.code = code;
-        this.config = new SharingTagConfig(contact, device, fileLabel, expiryDate, password);
+        this.expiryDate = expiryDate;
+        this.config = new SharingTagConfig(contact, device, fileLabel, duration, password);
         this.visitTraceList = new ArrayList<>();
     }
 
@@ -76,6 +86,7 @@ public class SharingTag extends Entity {
         super(json);
         this.code = json.getString("code");
         this.config = new SharingTagConfig(json.getJSONObject("config"));
+        this.expiryDate = json.getLong("expiryDate");
 
         if (json.has("httpURL")) {
             this.httpURL = json.getString("httpURL");
@@ -95,6 +106,10 @@ public class SharingTag extends Entity {
 
     public String getCode() {
         return this.code;
+    }
+
+    public long getExpiryDate() {
+        return this.expiryDate;
     }
 
     public SharingTagConfig getConfig() {
@@ -132,6 +147,7 @@ public class SharingTag extends Entity {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("code", this.code);
+        json.put("expiryDate", this.expiryDate);
         json.put("config", this.config.toJSON());
 
         if (null != this.httpURL) {
@@ -153,6 +169,7 @@ public class SharingTag extends Entity {
     public JSONObject toCompactJSON() {
         JSONObject json = super.toCompactJSON();
         json.put("code", this.code);
+        json.put("expiryDate", this.expiryDate);
         json.put("config", this.config.toCompactJSON());
 
         if (null != this.httpURL) {

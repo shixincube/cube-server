@@ -221,8 +221,8 @@ public class FileSharingHandler extends CrossDomainHandler {
             SharingTag sharingTag = new SharingTag(tagJson);
 
             // 判断分享码是否已过期
-            if (sharingTag.getConfig().getExpiryDate() > 0
-                    && System.currentTimeMillis() > sharingTag.getConfig().getExpiryDate()) {
+            if (sharingTag.getExpiryDate() > 0
+                    && System.currentTimeMillis() > sharingTag.getExpiryDate()) {
                 // 已过期
                 file = new File(this.fileRoot, "page.html");
                 contentLength = processExpiredPageHtml(file, response);
