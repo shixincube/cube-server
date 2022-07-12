@@ -51,17 +51,17 @@ public class AccountBuildinHandler extends ContextHandler {
 
     private JSONArray buildinArray;
 
-    public AccountBuildinHandler(String httpOrigin, String httpsOrigin) {
+    public AccountBuildinHandler(String httpAllowOrigin, String httpsAllowOrigin) {
         super("/account/buildin/");
-        setHandler(new Handler(httpOrigin, httpsOrigin));
+        setHandler(new Handler(httpAllowOrigin, httpsAllowOrigin));
     }
 
     protected class Handler extends CrossDomainHandler {
 
-        public Handler(String httpOrigin, String httpsOrigin) {
+        public Handler(String httpAllowOrigin, String httpsAllowOrigin) {
             super();
-            setHttpAllowOrigin(httpOrigin);
-            setHttpsAllowOrigin(httpsOrigin);
+            setHttpAllowOrigin(httpAllowOrigin);
+            setHttpsAllowOrigin(httpsAllowOrigin);
         }
 
         @Override

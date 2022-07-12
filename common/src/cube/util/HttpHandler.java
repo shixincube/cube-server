@@ -78,7 +78,7 @@ public abstract class HttpHandler extends AbstractHandler {
             doOptions(request, response);
         }
 
-        response.setHeader("Server", "Cube 3.0");
+        response.setHeader("Cube Server", "Cube 3.0");
     }
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {

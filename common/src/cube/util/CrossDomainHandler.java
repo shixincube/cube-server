@@ -54,11 +54,21 @@ public class CrossDomainHandler extends HttpHandler {
 
     public void setHttpAllowOrigin(String origin) {
         this.httpAllowOrigin = origin;
+
+        if (null == origin) {
+            return;
+        }
+
         this.addAllowOrigin(origin);
     }
 
     public void setHttpsAllowOrigin(String origin) {
         this.httpsAllowOrigin = origin;
+
+        if (null == origin) {
+            return;
+        }
+
         this.addAllowOrigin(origin);
     }
 

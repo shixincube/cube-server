@@ -157,8 +157,8 @@ public class ContainerManager {
         String httpAllowOrigin = null;
         String httpsAllowOrigin = null;
         if (null != properties) {
-            httpAllowOrigin = properties.getProperty("http.allowOrigin");
-            httpsAllowOrigin = properties.getProperty("https.allowOrigin");
+            httpAllowOrigin = properties.getProperty("http.allowOrigin", null);
+            httpsAllowOrigin = properties.getProperty("https.allowOrigin", null);
         }
 
         HandlerList handlers = new HandlerList();
