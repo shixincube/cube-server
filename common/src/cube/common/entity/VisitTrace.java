@@ -132,6 +132,28 @@ public class VisitTrace implements JSONable {
         }
     }
 
+    public VisitTrace(long time, String ip, String domain, String url, String title, JSONObject screen,
+                      String referrer, String language, String userAgent, String event, String eventTag,
+                      JSONObject eventParam) {
+        this.time = time;
+        this.ip = ip;
+        this.domain = domain;
+        this.url = url;
+        this.title = title;
+
+        this.screenSize = new Size(screen.getInt("width"), screen.getInt("height"));
+        this.screenColorDepth = screen.getInt("colorDepth");
+        this.screenOrientation = screen.getString("orientation");
+
+        this.referrer = referrer;
+        this.language = language;
+        this.userAgent = userAgent;
+
+        this.event = event;
+        this.eventTag = eventTag;
+        this.eventParam = eventParam;
+    }
+
     public VisitTrace(JSONObject json) {
         this.time = json.getLong("time");
         this.ip = json.getString("ip");
@@ -173,8 +195,8 @@ public class VisitTrace implements JSONable {
         JSONObject json = new JSONObject();
         json.put("time", this.time);
         json.put("ip", this.ip);
-        json.put("domain", this.domain);
         json.put("url", this.url);
+        json.put("domain", this.domain);
         json.put("title", this.title);
 
         JSONObject screen = new JSONObject();
@@ -203,6 +225,32 @@ public class VisitTrace implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        json.put("time", this.time);
+        json.put("ip", this.ip);
+        json.put("url", this.url);
+
+        JSONObject screen = new JSONObject();
+        screen.put("width", this.screenSize.width);
+        screen.put("height", this.screenSize.height);
+        screen.put("colorDepth", this.screenColorDepth);
+        screen.put("orientation", this.screenOrientation);
+        json.put("screen", screen);
+
+        json.put("referrer", this.referrer);
+        json.put("language", this.language);
+        json.put("userAgent", this.userAgent);
+
+        if (null != this.event) {
+            json.put("event", this.event);
+        }
+        if (null != this.eventTag) {
+            json.put("eventTag", this.eventTag);
+        }
+        if (null != this.eventParam) {
+            json.put("eventParam", this.eventParam);
+        }
+
+        return json;
     }
 }

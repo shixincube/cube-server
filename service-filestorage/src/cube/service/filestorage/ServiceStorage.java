@@ -189,7 +189,7 @@ public class ServiceStorage implements Storagable {
             new StorageField("language", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("userAgent", LiteralBase.STRING, new Constraint[] {
+            new StorageField("user_agent", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("event", LiteralBase.STRING, new Constraint[] {
@@ -872,47 +872,30 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
-     * 读取指定的分享标签。
+     * 读取指定分享码所属的联系人 ID 。
      *
      * @param domain
-     * @param contactId
-     * @param fileCode
+     * @param sharingCode
      * @return
      */
-//    public SharingTag readSharingTag(String domain, Long contactId, String fileCode) {
-//        String table = this.sharingTagTableNameMap.get(domain);
-//        if (null == table) {
-//            return null;
-//        }
-//
-//        List<StorageField[]> result = this.storage.executeQuery(table, this.sharingTagFields, new Conditional[] {
-//                Conditional.createEqualTo("contact_id", contactId.longValue()),
-//                Conditional.createAnd(),
-//                Conditional.createEqualTo("file_code", fileCode),
-//                Conditional.createAnd(),
-//                Conditional.createEqualTo("expiry", expiryDate)
-//        });
-//
-//        if (result.isEmpty()) {
-//            return null;
-//        }
-//
-//        // 读取文件标签
-//        FileLabel fileLabel = this.readFileLabel(domain, fileCode);
-//        if (null == fileLabel) {
-//            return null;
-//        }
-//
-//        Map<String, StorageField> map = StorageFields.get(result.get(0));
-//        Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
-//        Device device = new Device(new JSONObject(map.get("device").getString()));
-//
-//        SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
-//                map.get("code").getString(), contact, device, fileLabel, map.get("expiry").getLong(),
-//                map.get("password").isNullValue() ? null : map.get("password").getString());
-//
-//        return sharingTag;
-//    }
+    public long readSharingContactId(String domain, String sharingCode) {
+        String table = this.sharingTagTableNameMap.get(domain);
+        if (null == table) {
+            return 0;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+                new StorageField("contact_id", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("code", sharingCode)
+        });
+
+        if (result.isEmpty()) {
+            return 0;
+        }
+
+        return result.get(0)[0].getLong();
+    }
 
     /**
      * 读取指定的分享标签。
@@ -1026,7 +1009,7 @@ public class ServiceStorage implements Storagable {
                 return;
             }
 
-            storage.executeInsert(table, new StorageField[] {
+            this.storage.executeInsert(table, new StorageField[] {
                     new StorageField("code", code),
                     new StorageField("time", visitTrace.time),
                     new StorageField("ip", visitTrace.ip),
@@ -1036,13 +1019,41 @@ public class ServiceStorage implements Storagable {
                     new StorageField("screen", visitTrace.getScreenJSON().toString()),
                     new StorageField("referrer", visitTrace.referrer),
                     new StorageField("language", visitTrace.language),
-                    new StorageField("userAgent", visitTrace.userAgent),
+                    new StorageField("user_agent", visitTrace.userAgent),
                     new StorageField("event", visitTrace.event),
                     new StorageField("event_tag", visitTrace.eventTag),
                     new StorageField("event_param", (null != visitTrace.eventParam) ?
                             visitTrace.eventParam.toString() : null)
             });
         });
+    }
+
+    public List<VisitTrace> listVisitTraces(String domain, String code, int beginIndex, int endIndex) {
+        List<VisitTrace> list = new ArrayList<>();
+
+        String table = this.visitTraceTableNameMap.get(domain);
+        if (null == table) {
+            return list;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, this.visitTraceFields, new Conditional[] {
+                Conditional.createEqualTo("code", code),
+                Conditional.createLimit(beginIndex, endIndex - beginIndex + 1)
+        });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> map = StorageFields.get(fields);
+            VisitTrace visitTrace = new VisitTrace(map.get("time").getLong(), map.get("ip").getString(),
+                    map.get("domain").getString(), map.get("url").getString(), map.get("title").getString(),
+                    new JSONObject(map.get("screen").getString()), map.get("referrer").getString(),
+                    map.get("language").getString(), map.get("user_agent").getString(),
+                    map.get("event").isNullValue() ? null : map.get("event").getString(),
+                    map.get("event_tag").isNullValue() ? null : map.get("event_tag").getString(),
+                    map.get("event_param").isNullValue() ? null : new JSONObject(map.get("event_param").getString()));
+            list.add(visitTrace);
+        }
+
+        return list;
     }
 
     private void checkLabelTable(String domain) {

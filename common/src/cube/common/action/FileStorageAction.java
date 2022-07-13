@@ -144,9 +144,14 @@ public enum FileStorageAction {
     ListSharingTags("listSharingTags"),
 
     /**
-     * 发送分享页面监测数据。
+     * 分享页面监测数据。
      */
     Trace("trace"),
+
+    /**
+     * 获取监测数据。
+     */
+    ListTraces("listTraces"),
 
     /**
      * 未知动作。

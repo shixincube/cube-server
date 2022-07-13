@@ -137,6 +137,31 @@ public class FileSharingManager {
                 contact.getId(), inExpiry, beginIndex, endIndex);
     }
 
+    /**
+     * 列举分享访问记录。
+     *
+     * @param contact
+     * @param sharingCode
+     * @param beginIndex
+     * @param endIndex
+     * @return
+     */
+    public List<VisitTrace> listSharingVisitTrace(Contact contact, String sharingCode, int beginIndex, int endIndex) {
+        if (endIndex <= beginIndex) {
+            return null;
+        }
+
+        // 校验分享码
+        long contactId = this.service.getServiceStorage().readSharingContactId(contact.getDomain().getName(),
+                sharingCode);
+        if (0 == contactId || contactId != contact.getId().longValue()) {
+            return null;
+        }
+
+        return this.service.getServiceStorage().listVisitTraces(contact.getDomain().getName(),
+                sharingCode, beginIndex, endIndex);
+    }
+
     public void traceVisit(VisitTrace trace) {
         String code = this.extractCode(trace.url);
         SharingCodeDomain codeDomain = getDomainByCode(code);

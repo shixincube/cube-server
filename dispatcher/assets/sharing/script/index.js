@@ -1,5 +1,7 @@
 // index.js
 
+window.sn = Date.now();
+
 window.onload = function () {
     const data = {
         "domain": document.domain,
@@ -15,6 +17,9 @@ window.onload = function () {
         "language": navigator.language,
         "userAgent": navigator.userAgent,
         "event": "View",
+        "eventParam": {
+            "sn": window.sn
+        }
     };
 
     submit(data);
@@ -39,6 +44,7 @@ function download(url) {
         "event": "Extract",
         "eventTag": "button",
         "eventParam": {
+            "sn": window.sn,
             "url": url
         }
     };
