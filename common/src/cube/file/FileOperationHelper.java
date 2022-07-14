@@ -71,6 +71,9 @@ public final class FileOperationHelper {
                 return new DetectObjectsOperation(json);
             }
         }
+        else if (FileProcessorAction.OfficeConvertTo.name.equals(process)) {
+            return new OfficeConvertToOperation(json);
+        }
         else if (FileProcessorAction.Video.name.equals(process)) {
             String operation = json.getString("operation");
             if (SnapshotOperation.Operation.equals(operation)) {

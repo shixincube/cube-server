@@ -155,6 +155,12 @@ public class ServiceStorage implements Storagable {
             }),
             new StorageField("password", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
+            }),
+            new StorageField("preview", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            new StorageField("download", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_1
             })
     };
 
@@ -860,7 +866,9 @@ public class ServiceStorage implements Storagable {
                     new StorageField("file_code", sharingTag.getConfig().getFileLabel().getFileCode()),
                     new StorageField("duration", sharingTag.getConfig().getDuration()),
                     new StorageField("expiry", sharingTag.getExpiryDate()),
-                    new StorageField("password", sharingTag.getConfig().getPassword())
+                    new StorageField("password", sharingTag.getConfig().getPassword()),
+                    new StorageField("preview", sharingTag.getConfig().isPreview() ? 1 : 0),
+                    new StorageField("download", sharingTag.getConfig().isDownloadAllowed() ? 1 : 0)
             });
 
             storage.executeInsert(sharingCodeTable, new StorageField[] {
@@ -932,7 +940,8 @@ public class ServiceStorage implements Storagable {
         SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
                 map.get("code").getString(), map.get("expiry").getLong(),
                 contact, device, fileLabel, map.get("duration").getLong(),
-                map.get("password").isNullValue() ? null : map.get("password").getString());
+                map.get("password").isNullValue() ? null : map.get("password").getString(),
+                map.get("preview").getInt() == 1, map.get("download").getInt() == 1);
 
         return sharingTag;
     }
@@ -994,7 +1003,8 @@ public class ServiceStorage implements Storagable {
             SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
                     map.get("code").getString(), map.get("expiry").getLong(),
                     contact, device, fileLabel, map.get("duration").getLong(),
-                    map.get("password").isNullValue() ? null : map.get("password").getString());
+                    map.get("password").isNullValue() ? null : map.get("password").getString(),
+                    map.get("preview").getInt() == 1, map.get("download").getInt() == 1);
 
             list.add(sharingTag);
         }

@@ -36,6 +36,7 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.file.*;
 import cube.file.operation.OCROperation;
+import cube.file.operation.OfficeConvertToOperation;
 import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.*;
 import cube.service.fileprocessor.processor.video.SnapshotContext;
@@ -84,7 +85,7 @@ public class FileProcessorService extends AbstractModule {
     /**
      * 文件有效期。超过有效期自动删除。
      */
-    private long fileExpires = 15L * 24 * 60 * 60 * 1000;
+    private long fileExpires = (long)15 * (long)24 * (long)60 * (long)60 * (long)1000;
 
     public FileProcessorService(ExecutorService executor, FileProcessorServiceCellet cellet) {
         super();
@@ -699,9 +700,9 @@ public class FileProcessorService extends AbstractModule {
         List<OperationWork> workList = workflow.getWorkList();
 
         // 设置入口文件
-        List<File> input = new ArrayList<>();
-        input.add(sourceFile.toFile());
-        workList.get(0).setInput(input);
+        List<File> inputList = new ArrayList<>();
+        inputList.add(sourceFile.toFile());
+        workList.get(0).setInputFiles(inputList);
 
         boolean interrupt = false;
         OperationWork prevWork = null;
@@ -711,22 +712,24 @@ public class FileProcessorService extends AbstractModule {
 
             prevWork = (i > 0) ? workList.get(i - 1) : null;
 
-            List<File> inputFile = (null != prevWork) ? prevWork.getOutput() : work.getInput();
+            // 作为工作流输入数据的文件列表
+            List<File> inputFiles = (null != prevWork) ? prevWork.getOutputFiles() : work.getInputFiles();
             if (null != prevWork) {
-                work.setInput(inputFile);
+                work.setInputFiles(inputFiles);
             }
 
             pluginContext = new WorkflowPluginContext(workflow, work);
             this.pluginSystem.getWorkBegunHook().apply(pluginContext);
 
+            // 需要执行的操作
             String process = work.getFileOperation().getProcessAction();
 
             if (FileProcessorAction.Image.name.equals(process)) {
                 // 设置当前工序的输出
-                List<File> output = new ArrayList<>(inputFile.size());
+                List<File> outputFiles = new ArrayList<>(inputFiles.size());
                 ImageProcessorContext context = null;
 
-                for (File file : inputFile) {
+                for (File file : inputFiles) {
                     // 创建处理器
                     ImageProcessor imageProcessor = new ImageProcessor(this.workPath);
                     imageProcessor.setImageFile(file);
@@ -736,7 +739,7 @@ public class FileProcessorService extends AbstractModule {
                     imageProcessor.go(context);
 
                     if (context.isSuccessful()) {
-                        output.add(context.getResult().file);
+                        outputFiles.add(context.getResult().file);
                     }
                     else {
                         interrupt = true;
@@ -745,8 +748,42 @@ public class FileProcessorService extends AbstractModule {
                 }
 
                 // 设置当前工序的输出
-                work.setOutput(output);
+                work.setOutputFiles(outputFiles);
                 work.setProcessResult(new FileProcessResult(context.toJSON()));
+            }
+            else if (FileProcessorAction.OfficeConvertTo.name.equals(process)) {
+                // 设置当前工序的输出
+                List<File> outputFiles = new ArrayList<>(inputFiles.size());
+
+                FileOperation fileOperation = work.getFileOperation();
+                if (fileOperation instanceof OfficeConvertToOperation) {
+                    OfficeConvertToOperation octo = (OfficeConvertToOperation) fileOperation;
+                    OfficeConvertToProcessorContext context = null;
+
+                    for (File file : inputFiles) {
+                        // 创建处理器
+                        OfficeConvertToProcessor processor = new OfficeConvertToProcessor(this.workPath, file);
+                        // 上下文
+                        context = new OfficeConvertToProcessorContext(octo);
+                        // 执行
+                        processor.go(context);
+
+                        if (context.isSuccessful()) {
+                            outputFiles.add(context.getResult().file);
+                        }
+                        else {
+                            interrupt = true;
+                            break;
+                        }
+                    }
+
+                    // 设置当前工序的输出
+                    work.setOutputFiles(outputFiles);
+                    work.setProcessResult(new FileProcessResult(context.toJSON()));
+                }
+                else {
+                    Logger.e(this.getClass(), "#executeOperation - Office operation instance error");
+                }
             }
             else if (FileProcessorAction.Video.name.equals(process)) {
                 // 创建处理器
@@ -754,7 +791,7 @@ public class FileProcessorService extends AbstractModule {
                 if (fileOperation instanceof SnapshotOperation) {
                     SnapshotProcessor processor = new SnapshotProcessor(this.workPath, (SnapshotOperation) fileOperation);
                     // 设置待处理文件
-                    processor.setInputFile(inputFile.get(0));
+                    processor.setInputFile(inputFiles.get(0));
                     // 创建上下文
                     SnapshotContext context = new SnapshotContext();
                     context.packToZip = false;  // 分帧文件不打包
@@ -764,7 +801,7 @@ public class FileProcessorService extends AbstractModule {
 
                     if (context.isSuccessful()) {
                         // 设置当前工序的输出
-                        work.setOutput(context.getOutputFiles());
+                        work.setOutputFiles(context.getOutputFiles());
                         work.setProcessResult(new FileProcessResult(context.toJSON()));
                     }
                     else {
@@ -775,10 +812,10 @@ public class FileProcessorService extends AbstractModule {
             }
             else if (FileProcessorAction.OCR.name.equals(process)) {
                 // 设置当前工序的输出
-                List<File> output = new ArrayList<>(inputFile.size());
+                List<File> outputFiles = new ArrayList<>(inputFiles.size());
                 OCRProcessorContext context = null;
 
-                for (File file : inputFile) {
+                for (File file : inputFiles) {
                     // 创建处理器
                     OCRProcessor processor = new OCRProcessor(this.workPath);
                     processor.setInputImage(file);
@@ -788,7 +825,7 @@ public class FileProcessorService extends AbstractModule {
                     processor.go(context);
 
                     if (context.isSuccessful()) {
-                        output.add(context.getResult().file);
+                        outputFiles.add(context.getResult().file);
                     }
                     else {
                         interrupt = true;
@@ -797,7 +834,7 @@ public class FileProcessorService extends AbstractModule {
                 }
 
                 // 设置当前工序的输出
-                work.setOutput(output);
+                work.setOutputFiles(outputFiles);
                 work.setProcessResult(new FileProcessResult(context.toJSON()));
             }
 
@@ -821,8 +858,8 @@ public class FileProcessorService extends AbstractModule {
             }
 
             // 结果文件打包
-            if (lastWork.getOutput().size() == 1) {
-                resultFile = lastWork.getOutput().get(0);
+            if (lastWork.getOutputFiles().size() == 1) {
+                resultFile = lastWork.getOutputFiles().get(0);
                 // 扩展名
                 String ext = FileUtils.extractFileExtension(resultFile.getName());
                 // 矫正输出文件名
@@ -837,10 +874,10 @@ public class FileProcessorService extends AbstractModule {
                 String finalName = FileUtils.extractFileName(filename) + "_" +
                         TimeUtils.formatDateForPathSymbol(System.currentTimeMillis()) + ".zip";
 
-                resultFile = this.packFileSet(finalName, lastWork.getOutput());
+                resultFile = this.packFileSet(finalName, lastWork.getOutputFiles());
                 if (resultFile.exists()) {
                     // 清空结果文件
-                    for (File file : lastWork.getOutput()) {
+                    for (File file : lastWork.getOutputFiles()) {
                         file.delete();
                     }
                 }
@@ -854,7 +891,7 @@ public class FileProcessorService extends AbstractModule {
             // 删除过程文件
             for (int i = 0, len = workList.size() - 1; i < len; ++i) {
                 OperationWork work = workList.get(i);
-                List<File> output = work.getOutput();
+                List<File> output = work.getOutputFiles();
                 for (File file : output) {
                     if (file.exists()) {
                         file.delete();

@@ -46,6 +46,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -362,7 +363,9 @@ public class FileSharingHandler extends CrossDomainHandler {
                     line = line.replace(FILE_SIZE, size.toString());
                 }
                 else if (line.contains(FILE_URI_PATH)) {
-                    String uri = FileHandler.PATH + "?sc=" + sharingTag.getCode();
+//                    String uri = FileHandler.PATH + "?sc=" + sharingTag.getCode();
+                    String filename = URLEncoder.encode(sharingTag.getConfig().getFileLabel().getFileName(), "UTF-8");
+                    String uri = FileHandler.PATH + filename + "?sc=" + sharingTag.getCode();
                     line = line.replace(FILE_URI_PATH, uri);
                 }
 

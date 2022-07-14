@@ -80,12 +80,14 @@ public class CreateSharingTagTask extends ServiceTask {
         String fileCode = packet.data.getString("fileCode");
         long duration = packet.data.has("duration") ? packet.data.getLong("duration") : 0;
         String password = packet.data.has("password") ? packet.data.getString("password") : null;
+        boolean preview = packet.data.has("preview") ? packet.data.getBoolean("preview") : false;
+        boolean download = packet.data.has("download") ? packet.data.getBoolean("download") : true;
 
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
 
         // 创建分享标签
         SharingTag sharingTag = service.getSharingManager().createSharingTag(contact, device,
-                fileCode, duration, password);
+                fileCode, duration, password, preview, download);
         if (null == sharingTag) {
             // 发生错误
             this.cellet.speak(this.talkContext,

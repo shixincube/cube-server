@@ -24,71 +24,36 @@
  * SOFTWARE.
  */
 
-package cube.file;
+package cube.service.fileprocessor.processor;
 
-import cube.common.JSONable;
+import cube.file.operation.OfficeConvertToOperation;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.util.List;
-
 /**
- * 文件操作工作。
+ * 文档转换处理器上下文。
  */
-public class OperationWork implements JSONable {
+public class OfficeConvertToProcessorContext extends ProcessorContext {
 
-    private FileOperation fileOperation;
+    private OfficeConvertToOperation operation;
 
-    private List<File> inputList;
-
-    private List<File> outputList;
-
-    private FileProcessResult processResult;
-
-    public OperationWork(FileOperation fileOperation) {
-        this.fileOperation = fileOperation;
+    public OfficeConvertToProcessorContext(OfficeConvertToOperation operation) {
+        super();
+        this.operation = operation;
     }
 
-    public OperationWork(JSONObject json) {
-        this.fileOperation = FileOperationHelper.parseFileOperation(json.getJSONObject("operation"));
+    public OfficeConvertToProcessorContext(JSONObject json) {
+        super(json);
+        this.operation = new OfficeConvertToOperation(json.getJSONObject("operation"));
     }
 
-    public void setOperation(FileOperation fileOperation) {
-        this.fileOperation = fileOperation;
-    }
-
-    public FileOperation getFileOperation() {
-        return this.fileOperation;
-    }
-
-    public void setInputFiles(List<File> files) {
-        this.inputList = files;
-    }
-
-    public List<File> getInputFiles() {
-        return this.inputList;
-    }
-
-    public void setOutputFiles(List<File> files) {
-        this.outputList = files;
-    }
-
-    public List<File> getOutputFiles() {
-        return this.outputList;
-    }
-
-    public void setProcessResult(FileProcessResult result) {
-        this.processResult = result;
-    }
-
-    public FileProcessResult getProcessResult() {
-        return this.processResult;
+    public OfficeConvertToOperation getOperation() {
+        return this.operation;
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("operation", this.fileOperation.toJSON());
+        JSONObject json = super.toJSON(this.operation.getProcessAction());
+        json.put("operation", this.operation.toJSON());
         return json;
     }
 

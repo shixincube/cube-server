@@ -65,9 +65,12 @@ public class FileSharingManager {
      * @param fileCode
      * @param duration
      * @param password
+     * @param preview
+     * @param download
      * @return
      */
-    public SharingTag createSharingTag(Contact contact, Device device, String fileCode, long duration, String password) {
+    public SharingTag createSharingTag(Contact contact, Device device, String fileCode, long duration,
+                                       String password, boolean preview, boolean download) {
         AuthService authService = (AuthService) this.service.getKernel().getModule(AuthService.NAME);
         AuthDomain authDomain = authService.getAuthDomain(contact.getDomain().getName());
 
@@ -78,7 +81,8 @@ public class FileSharingManager {
         }
 
         // 默认永久有效
-        SharingTagConfig config = new SharingTagConfig(contact, device, fileLabel, duration, password);
+        SharingTagConfig config = new SharingTagConfig(contact, device, fileLabel, duration,
+                password, preview, download);
         SharingTag sharingTag = new SharingTag(config);
         // 设置 URLs
         sharingTag.setURLs(authDomain.httpEndpoint, authDomain.httpsEndpoint);
@@ -93,6 +97,10 @@ public class FileSharingManager {
         });
 
         return sharingTag;
+    }
+
+    private void processFilePreview(FileLabel fileLabel) {
+
     }
 
     public SharingTag getSharingTag(String code, boolean urls) {

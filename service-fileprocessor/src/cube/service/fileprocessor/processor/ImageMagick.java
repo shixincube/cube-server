@@ -38,6 +38,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 相关 PDF 操作需要解除限制
+ * "/etc/ImageMagick-6/policy.xml"
+ * 注释 “disable ghostscript format types” 相关
+ */
 public final class ImageMagick {
 
     private ImageMagick() {
@@ -345,6 +350,8 @@ public final class ImageMagick {
             return false;
         }
     }
+
+
 
     private static int execute(File workPath, List<String> commandLine) {
         int status = -1;

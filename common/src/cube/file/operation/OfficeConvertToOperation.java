@@ -24,76 +24,50 @@
  * SOFTWARE.
  */
 
-package cube.file;
+package cube.file.operation;
 
-import cube.common.JSONable;
+import cube.common.action.FileProcessorAction;
+import cube.file.FileOperation;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.util.List;
-
 /**
- * 文件操作工作。
+ * 办公文档转换操作。
  */
-public class OperationWork implements JSONable {
+public class OfficeConvertToOperation implements FileOperation {
 
-    private FileOperation fileOperation;
+    public final static String OUTPUT_FORMAT_PDF = "pdf";
 
-    private List<File> inputList;
+    public final static String OUTPUT_FORMAT_TEXT = "txt";
 
-    private List<File> outputList;
+    private String outputFormat;
 
-    private FileProcessResult processResult;
-
-    public OperationWork(FileOperation fileOperation) {
-        this.fileOperation = fileOperation;
+    public OfficeConvertToOperation(String outputFormat) {
+        this.outputFormat = outputFormat;
     }
 
-    public OperationWork(JSONObject json) {
-        this.fileOperation = FileOperationHelper.parseFileOperation(json.getJSONObject("operation"));
+    public OfficeConvertToOperation(JSONObject json) {
+        this.outputFormat = json.getString("format");
     }
 
-    public void setOperation(FileOperation fileOperation) {
-        this.fileOperation = fileOperation;
-    }
-
-    public FileOperation getFileOperation() {
-        return this.fileOperation;
-    }
-
-    public void setInputFiles(List<File> files) {
-        this.inputList = files;
-    }
-
-    public List<File> getInputFiles() {
-        return this.inputList;
-    }
-
-    public void setOutputFiles(List<File> files) {
-        this.outputList = files;
-    }
-
-    public List<File> getOutputFiles() {
-        return this.outputList;
-    }
-
-    public void setProcessResult(FileProcessResult result) {
-        this.processResult = result;
-    }
-
-    public FileProcessResult getProcessResult() {
-        return this.processResult;
+    public String getOutputFormat() {
+        return this.outputFormat;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("operation", this.fileOperation.toJSON());
+        json.put("process", this.getProcessAction());
+        json.put("format", this.outputFormat);
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         return this.toJSON();
+    }
+
+    @Override
+    public String getProcessAction() {
+        return FileProcessorAction.OfficeConvertTo.name;
     }
 }

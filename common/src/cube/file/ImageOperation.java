@@ -26,7 +26,6 @@
 
 package cube.file;
 
-import cube.common.JSONable;
 import cube.common.action.FileProcessorAction;
 import org.json.JSONObject;
 
@@ -35,7 +34,7 @@ import java.io.File;
 /**
  * 图片操作。
  */
-public abstract class ImageOperation implements FileOperation, JSONable {
+public abstract class ImageOperation implements FileOperation {
 
     private File inputFile;
 

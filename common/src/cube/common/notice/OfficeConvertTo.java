@@ -24,83 +24,24 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.common.notice;
+
+import cube.common.action.FileProcessorAction;
 
 /**
- * 文件处理动作。
+ * 文档转换。
  */
-public enum FileProcessorAction {
+public class OfficeConvertTo extends NoticeData {
 
-    /**
-     * 获取媒体源地址。
-     */
-    GetMediaSource("getMediaSource"),
+    public final static String ACTION = FileProcessorAction.OfficeConvertTo.name;
 
-    /**
-     * 提交工作流。
-     */
-    SubmitWorkflow("submitWorkflow"),
+    public final static String DOMAIN = "domain";
 
-    /**
-     * 取消工作流。
-     */
-    CancelWorkflow("cancelWorkflow"),
+    public final static String FILE_CODE = "fileCode";
 
-    /**
-     * 工作流操作中。
-     */
-    WorkflowOperating("workflowOperating"),
-
-    /**
-     * 图像文件操作。
-     */
-    Image("image"),
-
-    /**
-     * 视频文件操作。
-     */
-    Video("video"),
-
-    /**
-     * 字符识别。
-     */
-    OCR("ocr"),
-
-    /**
-     * 生成缩略图。
-     */
-    Thumb("thumb"),
-
-    /**
-     * 办公文档转换。
-     */
-    OfficeConvertTo("officeConvertTo"),
-
-    /**
-     * 对象检测。
-     */
-    DetectObject("detectObject"),
-
-    /**
-     * 对象检测应答。
-     */
-    DetectObjectAck("detectObjectAck"),
-
-    /**
-     * 隐写。
-     */
-    Steganographic("steganographic"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    FileProcessorAction(String name) {
-        this.name = name;
+    public OfficeConvertTo(String domain, String fileCode) {
+        super(ACTION);
+        this.put(DOMAIN, domain);
+        this.put(FILE_CODE, fileCode);
     }
 }

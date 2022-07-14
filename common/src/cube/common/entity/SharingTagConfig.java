@@ -49,16 +49,29 @@ public class SharingTagConfig implements JSONable {
 
     private String password;
 
+    /**
+     * 是否支持预览。
+     */
+    private boolean preview;
+
+    /**
+     * 是否允许下载。
+     */
+    private boolean download;
+
     private List<AbstractContact> includeList;
 
     private List<AbstractContact> excludeList;
 
-    public SharingTagConfig(Contact contact, Device device, FileLabel fileLabel, long duration, String password) {
+    public SharingTagConfig(Contact contact, Device device, FileLabel fileLabel, long duration, String password,
+                            boolean preview, boolean download) {
         this.contact = contact;
         this.device = device;
         this.fileLabel = fileLabel;
         this.duration = duration;
         this.password = password;
+        this.preview = preview;
+        this.download = !preview || download;
     }
 
     public SharingTagConfig(JSONObject json) {
@@ -73,6 +86,9 @@ public class SharingTagConfig implements JSONable {
         if (json.has("password")) {
             this.password = json.getString("password");
         }
+
+        this.preview = json.getBoolean("preview");
+        this.download = json.getBoolean("download");
 
         if (json.has("includeList")) {
             this.includeList = new ArrayList<>();
@@ -121,6 +137,14 @@ public class SharingTagConfig implements JSONable {
         return this.password;
     }
 
+    public boolean isPreview() {
+        return this.preview;
+    }
+
+    public boolean isDownloadAllowed() {
+        return this.download;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -135,6 +159,9 @@ public class SharingTagConfig implements JSONable {
         if (null != this.password) {
             json.put("password", this.password);
         }
+
+        json.put("preview", this.preview);
+        json.put("download", this.download);
 
         if (null != this.includeList) {
             JSONArray array = new JSONArray();

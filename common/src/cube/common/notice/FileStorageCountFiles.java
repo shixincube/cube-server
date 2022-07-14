@@ -39,6 +39,4 @@ public class FileStorageCountFiles extends NoticeData {
         super(ACTION);
         this.put(DOMAIN, domain);
     }
-
-
 }

@@ -74,11 +74,12 @@ public class SharingTag extends Entity {
     }
 
     public SharingTag(Long id, String domain, long timestamp, String code, long expiryDate,
-                      Contact contact, Device device, FileLabel fileLabel, long duration, String password) {
+                      Contact contact, Device device, FileLabel fileLabel, long duration,
+                      String password, boolean preview, boolean download) {
         super(id, domain, timestamp);
         this.code = code;
         this.expiryDate = expiryDate;
-        this.config = new SharingTagConfig(contact, device, fileLabel, duration, password);
+        this.config = new SharingTagConfig(contact, device, fileLabel, duration, password, preview, download);
         this.visitTraceList = new ArrayList<>();
     }
 
