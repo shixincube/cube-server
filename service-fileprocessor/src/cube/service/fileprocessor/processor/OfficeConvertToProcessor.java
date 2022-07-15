@@ -31,13 +31,19 @@ import cube.file.operation.OfficeConvertToOperation;
 import cube.util.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 /**
  * Office 文档转换。
  */
 public class OfficeConvertToProcessor extends LibreOffice {
+
+    private static String NotFindFileSubstitutePath = "assets/CanNotFindFile.pdf";
 
     private File inputFile;
 
@@ -62,18 +68,29 @@ public class OfficeConvertToProcessor extends LibreOffice {
             success = this.callConvertTo(OfficeConvertToOperation.OUTPUT_FORMAT_PDF, this.inputFile.getName(), ctx);
         }
 
-        File outputFile = null;
+        // 判断输出文件是否存在
+        // 输出文件名
+        String outputFilename = FileUtils.extractFileName(this.inputFile.getName())
+                + "." + OfficeConvertToOperation.OUTPUT_FORMAT_PDF;
+        File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
+        if (!outputFile.exists()) {
+            // 文件不存在
+            success = false;
+        }
 
-        if (success) {
-            // 判断输出文件是否存在
-            // 输出文件名
-            String outputFilename = FileUtils.extractFileName(this.inputFile.getName())
-                    + "." + OfficeConvertToOperation.OUTPUT_FORMAT_PDF;
-            outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-            if (!outputFile.exists()) {
-                // 文件不存在
-                success = false;
+        // 没有成功生成文件
+        if (!success) {
+            File substitute = new File(NotFindFileSubstitutePath);
+            // 将替身拷贝到工作目录
+            try {
+                Files.copy(Paths.get(substitute.getAbsolutePath()), Paths.get(outputFile.getAbsolutePath()),
+                        StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+            // 再次判断文件是否存在
+            outputFile = new File(outputFile.getAbsolutePath());
+            success = outputFile.exists();
         }
 
         if (success) {

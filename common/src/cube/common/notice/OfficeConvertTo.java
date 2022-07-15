@@ -27,6 +27,7 @@
 package cube.common.notice;
 
 import cube.common.action.FileProcessorAction;
+import org.json.JSONObject;
 
 /**
  * 文档转换。
@@ -39,12 +40,18 @@ public class OfficeConvertTo extends NoticeData {
 
     public final static String FILE_CODE = "fileCode";
 
+    public final static String PARAMETER = "parameter";
+
     public final static String FORMAT = "format";
 
     public OfficeConvertTo(String domain, String fileCode, String format) {
         super(ACTION);
         this.put(DOMAIN, domain);
         this.put(FILE_CODE, fileCode);
-        this.put(FORMAT, format);
+
+        JSONObject parameter = new JSONObject();
+        parameter.put(FORMAT, format);
+
+        this.put(PARAMETER, parameter);
     }
 }

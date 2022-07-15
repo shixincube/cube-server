@@ -81,6 +81,10 @@ public class ClientCellet extends AbstractCellet {
         return (Daemon) this.getNucleus().getParameter("daemon");
     }
 
+    public ExecutorService getExecutor() {
+        return this.executor;
+    }
+
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);

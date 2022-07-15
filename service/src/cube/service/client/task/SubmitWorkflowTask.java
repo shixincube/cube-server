@@ -37,17 +37,25 @@ import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.service.client.ClientCellet;
 import cube.service.client.ClientManager;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 提交工作流任务。
  */
 public class SubmitWorkflowTask extends ClientTask {
+
+    private Queue<StreamBundle> bundleQueue = new ConcurrentLinkedQueue<>();
+
+    private AtomicBoolean queueWorking = new AtomicBoolean(false);
 
     public SubmitWorkflowTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
         super(cellet, talkContext, actionDialect);
@@ -83,15 +91,19 @@ public class SubmitWorkflowTask extends ClientTask {
 
         // 是否需要回传文件
         JSONObject responseData = (JSONObject) result;
-        if (responseData.has("processResult")) {
-            // 需要回送流
-            ProcessResult prs = new ProcessResult(responseData.getJSONObject("processResult"));
+        if (responseData.has("resultList")) {
+            // 需要回送文件流
+            JSONArray array = responseData.getJSONArray("resultList");
+            for (int i = 0; i < array.length(); ++i) {
+                // 处理结果
+                ProcessResult prs = new ProcessResult(array.getJSONObject(i));
 
-            if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#run - transmit stream to client : " + prs.streamName);
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "#run - transmit stream to client : " + prs.streamName);
+                }
+
+                this.transmitFile(prs.fullPath, prs.streamName, true);
             }
-
-            this.transmitFile(prs.fullPath, prs.streamName, true);
         }
         else {
             if (Logger.isDebugLevel()) {
@@ -105,45 +117,75 @@ public class SubmitWorkflowTask extends ClientTask {
     }
 
     private void transmitFile(String fullPath, String streamName, boolean deleteAfterCompletion) {
-        final PrimitiveOutputStream stream = cellet.speakStream(talkContext, streamName);
-        (new Thread() {
+        StreamBundle streamBundle = new StreamBundle(fullPath, streamName, deleteAfterCompletion);
+        this.bundleQueue.offer(streamBundle);
+
+        if (this.queueWorking.get()) {
+            return;
+        }
+
+        this.queueWorking.set(true);
+
+        this.cellet.getExecutor().execute(new Runnable() {
             @Override
             public void run() {
-                FileInputStream fis = null;
+                StreamBundle bundle = null;
 
-                File file = new File(fullPath);
+                while (null != (bundle = bundleQueue.poll())) {
+                    PrimitiveOutputStream stream = cellet.speakStream(talkContext, bundle.streamName);
+                    FileInputStream fis = null;
 
-                try {
-                    fis = new FileInputStream(file);
-                    byte[] bytes = new byte[4096];
-                    int length = 0;
-                    while ((length = fis.read(bytes)) > 0) {
-                        stream.write(bytes, 0, length);
-                    }
+                    File file = new File(bundle.fullPath);
 
-                    stream.flush();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (null != fis) {
+                    try {
+                        fis = new FileInputStream(file);
+                        byte[] bytes = new byte[4096];
+                        int length = 0;
+                        while ((length = fis.read(bytes)) > 0) {
+                            stream.write(bytes, 0, length);
+                        }
+
+                        stream.flush();
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } finally {
+                        if (null != fis) {
+                            try {
+                                fis.close();
+                            } catch (IOException e) {
+                            }
+                        }
+
                         try {
-                            fis.close();
+                            stream.close();
                         } catch (IOException e) {
                         }
                     }
 
-                    try {
-                        stream.close();
-                    } catch (IOException e) {
+                    if (bundle.deleteAfterCompletion) {
+                        file.delete();
                     }
                 }
 
-                if (deleteAfterCompletion) {
-                    file.delete();
-                }
+                queueWorking.set(false);
             }
-        }).start();
+        });
+    }
+
+    protected class StreamBundle {
+
+        protected String fullPath;
+
+        protected String streamName;
+
+        protected boolean deleteAfterCompletion;
+
+        public StreamBundle(String fullPath, String streamName, boolean deleteAfterCompletion) {
+            this.fullPath = fullPath;
+            this.streamName = streamName;
+            this.deleteAfterCompletion = deleteAfterCompletion;
+        }
     }
 }

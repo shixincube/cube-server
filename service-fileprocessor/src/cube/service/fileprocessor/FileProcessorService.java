@@ -1036,7 +1036,7 @@ public class FileProcessorService extends AbstractModule {
             else if (FileProcessorAction.OfficeConvertTo.name.equals(action)) {
                 String domain = data.getString(OfficeConvertTo.DOMAIN);
                 String fileCode = data.getString(OfficeConvertTo.FILE_CODE);
-                String format = data.getString(OfficeConvertTo.FORMAT);
+                String format = data.getJSONObject(OfficeConvertTo.PARAMETER).getString(OfficeConvertTo.FORMAT);
 
                 OfficeConvertToProcessor processor = createOfficeConvertToProcessor(domain, fileCode);
                 if (null != processor) {
