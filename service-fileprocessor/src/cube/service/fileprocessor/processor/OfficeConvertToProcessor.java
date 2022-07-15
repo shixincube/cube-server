@@ -27,10 +27,12 @@
 package cube.service.fileprocessor.processor;
 
 import cube.common.entity.ProcessResult;
+import cube.file.operation.OfficeConvertToOperation;
 import cube.util.FileUtils;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * Office 文档转换。
@@ -47,17 +49,26 @@ public class OfficeConvertToProcessor extends LibreOffice {
     @Override
     public void go(ProcessorContext context) {
         OfficeConvertToProcessorContext ctx = (OfficeConvertToProcessorContext) context;
-        String outputFormat = ctx.getOperation().getOutputFormat();
+        final String outputFormat = ctx.getOperation().getOutputFormat();
 
-        // 执行命令
-        boolean success = this.callConvertTo(outputFormat, this.inputFile.getName(), ctx);
+        boolean success = false;
+        if (OfficeConvertToOperation.OUTPUT_FORMAT_PDF.equals(outputFormat)) {
+            // 执行命令
+            success = this.callConvertTo(OfficeConvertToOperation.OUTPUT_FORMAT_PDF, this.inputFile.getName(), ctx);
+        }
+        else if (OfficeConvertToOperation.OUTPUT_FORMAT_PNG.equals(outputFormat)) {
+            // 执行命令
+            // 先转 PDF
+            success = this.callConvertTo(OfficeConvertToOperation.OUTPUT_FORMAT_PDF, this.inputFile.getName(), ctx);
+        }
 
         File outputFile = null;
 
         if (success) {
             // 判断输出文件是否存在
             // 输出文件名
-            String outputFilename = FileUtils.extractFileName(this.inputFile.getName()) + "." + outputFormat;
+            String outputFilename = FileUtils.extractFileName(this.inputFile.getName())
+                    + "." + OfficeConvertToOperation.OUTPUT_FORMAT_PDF;
             outputFile = new File(this.getWorkPath().toFile(), outputFilename);
             if (!outputFile.exists()) {
                 // 文件不存在
@@ -65,12 +76,27 @@ public class OfficeConvertToProcessor extends LibreOffice {
             }
         }
 
-        // 处理结果
-        ctx.setSuccessful(success);
-
         if (success) {
-            ProcessResult result = new ProcessResult(outputFile);
-            ctx.setResult(result);
+            if (OfficeConvertToOperation.OUTPUT_FORMAT_PNG.equals(outputFormat)) {
+                // 将 PDF 转为图片
+                List<File> files = ImageMagick.pdf2png(this.getWorkPath().toFile(), outputFile.getName());
+                if (null == files || files.isEmpty()) {
+                    success = false;
+                }
+                else {
+                    for (File file : files) {
+                        ProcessResult result = new ProcessResult(file);
+                        ctx.addResult(result);
+                    }
+                }
+            }
+            else {
+                ProcessResult result = new ProcessResult(outputFile);
+                ctx.addResult(result);
+            }
         }
+
+        // 设置结果
+        ctx.setSuccessful(success);
     }
 }

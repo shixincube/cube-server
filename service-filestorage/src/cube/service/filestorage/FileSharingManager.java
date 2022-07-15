@@ -28,7 +28,13 @@ package cube.service.filestorage;
 
 import cell.util.log.Logger;
 import cube.common.entity.*;
+import cube.common.notice.OfficeConvertTo;
+import cube.core.AbstractModule;
+import cube.file.operation.OfficeConvertToOperation;
 import cube.service.auth.AuthService;
+import cube.util.FileType;
+import cube.util.FileUtils;
+import org.json.JSONObject;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,6 +46,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * /sharing/{file_sharing_tag}
  */
 public class FileSharingManager {
+
+    private final String fileProcessorModule = "FileProcessor";
 
     private FileStorageService service;
 
@@ -76,7 +84,7 @@ public class FileSharingManager {
 
         FileLabel fileLabel = this.service.getFile(contact.getDomain().getName(), fileCode);
         if (null == fileLabel) {
-            Logger.w(this.getClass(), "#createOrGetSharingTag - Can NOT find file: " + fileCode);
+            Logger.w(this.getClass(), "#createSharingTag - Can NOT find file: " + fileCode);
             return null;
         }
 
@@ -99,8 +107,21 @@ public class FileSharingManager {
         return sharingTag;
     }
 
-    private void processFilePreview(FileLabel fileLabel) {
+    private void processFilePreview(Contact contact, FileLabel fileLabel) {
+        if (FileUtils.isDocumentType(fileLabel.getFileType())) {
+            if (fileLabel.getFileType() == FileType.PDF) {
 
+            }
+            else {
+                OfficeConvertTo officeConvertTo = new OfficeConvertTo(contact.getDomain().getName(),
+                        fileLabel.getFileCode(), OfficeConvertToOperation.OUTPUT_FORMAT_PNG);
+                AbstractModule fileProcess = this.service.getKernel().getModule(this.fileProcessorModule);
+                Object result = fileProcess.notify(officeConvertTo);
+                if (result instanceof JSONObject) {
+                    //
+                }
+            }
+        }
     }
 
     public SharingTag getSharingTag(String code, boolean urls) {

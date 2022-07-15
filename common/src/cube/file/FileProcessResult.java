@@ -34,7 +34,6 @@ import cube.file.operation.ReverseColorOperation;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,9 +54,7 @@ public class FileProcessResult {
 
     private List<String> logs;
 
-    private ProcessResult result;
-
-    private File resultFile;
+    private List<ProcessResult> resultList;
 
     public FileProcessResult(JSONObject json) {
         this.process = json.getString("process");
@@ -75,8 +72,13 @@ public class FileProcessResult {
             this.submitWorkflowResult = new SubmitWorkflowResult(json);
         }
 
-        if (json.has("processResult")) {
-            this.result = new ProcessResult(json.getJSONObject("processResult"));
+        if (json.has("resultList")) {
+            JSONArray array = json.getJSONArray("resultList");
+            this.resultList = new ArrayList<>(array.length());
+            for (int i = 0; i < array.length(); ++i) {
+                ProcessResult result = new ProcessResult(json.getJSONObject("resultList"));
+                this.resultList.add(result);
+            }
         }
 
         if (json.has("logs")) {
@@ -94,19 +96,11 @@ public class FileProcessResult {
     }
 
     public boolean hasResult() {
-        return (null != this.result);
+        return (null != this.resultList);
     }
 
-    public ProcessResult getResult() {
-        return this.result;
-    }
-
-    public void setResultFile(File file) {
-        this.resultFile = file;
-    }
-
-    public File getResultFile() {
-        return this.resultFile;
+    public List<ProcessResult> getResultList() {
+        return this.resultList;
     }
 
     public SubmitWorkflowResult getSubmitWorkflowResult() {

@@ -37,6 +37,8 @@ public class OfficeConvertToOperation implements FileOperation {
 
     public final static String OUTPUT_FORMAT_PDF = "pdf";
 
+    public final static String OUTPUT_FORMAT_PNG = "png";
+
     public final static String OUTPUT_FORMAT_TEXT = "txt";
 
     private String outputFormat;

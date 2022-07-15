@@ -94,7 +94,7 @@ public class ImageProcessor extends Processor {
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
                 ProcessResult result = new ProcessResult(outputFile);
-                ctx.setResult(result);
+                ctx.addResult(result);
             }
         }
         else if (GrayscaleOperation.Operation.equals(imageOperation.getOperation())) {
@@ -114,7 +114,7 @@ public class ImageProcessor extends Processor {
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
                 ProcessResult result = new ProcessResult(outputFile);
-                ctx.setResult(result);
+                ctx.addResult(result);
             }
         }
         else if (BrightnessOperation.Operation.equals(imageOperation.getOperation())) {
@@ -134,7 +134,7 @@ public class ImageProcessor extends Processor {
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
                 ProcessResult result = new ProcessResult(outputFile);
-                ctx.setResult(result);
+                ctx.addResult(result);
             }
         }
         else if (SharpeningOperation.Operation.equals(imageOperation.getOperation())) {
@@ -154,7 +154,7 @@ public class ImageProcessor extends Processor {
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
                 ProcessResult result = new ProcessResult(outputFile);
-                ctx.setResult(result);
+                ctx.addResult(result);
             }
         }
         else if (ReplaceColorOperation.Operation.equals(imageOperation.getOperation())) {
@@ -176,7 +176,7 @@ public class ImageProcessor extends Processor {
                 if (success) {
                     File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
                     ProcessResult result = new ProcessResult(outputFile);
-                    ctx.setResult(result);
+                    ctx.addResult(result);
                 }
             }
             else {
@@ -218,7 +218,7 @@ public class ImageProcessor extends Processor {
                     File tmpFile = new File(this.getWorkPath().toFile(), tmpInputFilename);
                     tmpFile.renameTo(outputFile);
                     ProcessResult result = new ProcessResult(outputFile);
-                    ctx.setResult(result);
+                    ctx.addResult(result);
                 }
             }
         }
@@ -239,7 +239,7 @@ public class ImageProcessor extends Processor {
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
                 ProcessResult result = new ProcessResult(outputFile);
-                ctx.setResult(result);
+                ctx.addResult(result);
             }
         }
         else if (ReverseColorOperation.Operation.equals(imageOperation.getOperation())) {
@@ -260,7 +260,7 @@ public class ImageProcessor extends Processor {
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
                 ProcessResult result = new ProcessResult(outputFile);
-                ctx.setResult(result);
+                ctx.addResult(result);
             }
         }
         else if (SteganographyOperation.Operation.equals(imageOperation.getOperation())) {
@@ -297,7 +297,7 @@ public class ImageProcessor extends Processor {
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
                 ProcessResult result = new ProcessResult(outputFile);
-                ctx.setResult(result);
+                ctx.addResult(result);
             }
         }
     }

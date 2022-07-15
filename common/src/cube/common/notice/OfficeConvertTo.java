@@ -39,9 +39,12 @@ public class OfficeConvertTo extends NoticeData {
 
     public final static String FILE_CODE = "fileCode";
 
-    public OfficeConvertTo(String domain, String fileCode) {
+    public final static String FORMAT = "format";
+
+    public OfficeConvertTo(String domain, String fileCode, String format) {
         super(ACTION);
         this.put(DOMAIN, domain);
         this.put(FILE_CODE, fileCode);
+        this.put(FORMAT, format);
     }
 }

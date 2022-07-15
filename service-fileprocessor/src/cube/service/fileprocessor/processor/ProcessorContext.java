@@ -28,6 +28,7 @@ package cube.service.fileprocessor.processor;
 
 import cube.common.JSONable;
 import cube.common.entity.ProcessResult;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -42,15 +43,21 @@ public abstract class ProcessorContext implements JSONable {
 
     private List<String> stdOutput;
 
-    private ProcessResult result;
+    private List<ProcessResult> resultList;
 
     protected ProcessorContext() {
+        this.resultList = new ArrayList<>();
     }
 
     protected ProcessorContext(JSONObject json) {
         this.successful = json.getBoolean("success");
-        if (json.has("processResult")) {
-            this.result = new ProcessResult(json.getJSONObject("processResult"));
+        this.resultList = new ArrayList<>();
+
+        if (json.has("resultList")) {
+            JSONArray array = json.getJSONArray("resultList");
+            for (int i = 0; i < array.length(); ++i) {
+                this.resultList.add(new ProcessResult(array.getJSONObject(i)));
+            }
         }
     }
 
@@ -62,12 +69,12 @@ public abstract class ProcessorContext implements JSONable {
         return this.successful;
     }
 
-    public void setResult(ProcessResult result) {
-        this.result = result;
+    public void addResult(ProcessResult result) {
+        this.resultList.add(result);
     }
 
-    public ProcessResult getResult() {
-        return this.result;
+    public List<ProcessResult> getResultList() {
+        return this.resultList;
     }
 
     public synchronized void appendStdOutput(String line) {
@@ -88,8 +95,12 @@ public abstract class ProcessorContext implements JSONable {
         json.put("process", process);
         json.put("success", this.successful);
 
-        if (null != this.result) {
-            json.put("processResult", this.result.toJSON());
+        if (!this.resultList.isEmpty()) {
+            JSONArray array = new JSONArray();
+            for (ProcessResult result : this.resultList) {
+                array.put(result.toJSON());
+            }
+            json.put("resultList", array);
         }
 
         return json;

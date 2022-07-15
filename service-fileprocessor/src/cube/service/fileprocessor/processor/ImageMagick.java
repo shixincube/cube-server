@@ -351,7 +351,46 @@ public final class ImageMagick {
         }
     }
 
+    /**
+     * PDF 转 PNG 。
+     * @param workPath
+     * @param inputFilename
+     * @return
+     */
+    public static List<File> pdf2png(File workPath, String inputFilename) {
+        // convert -density 192 file.pdf -quality 100 -alpha remove file.png
+        String name = FileUtils.extractFileName(inputFilename);
+        String outputFilename = name + ".png";
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add("convert");
+        commandLine.add("-density");
+        commandLine.add("192");
+        commandLine.add(inputFilename);
+        commandLine.add("-quality");
+        commandLine.add("100");
+        commandLine.add("-alpha");
+        commandLine.add("remove");
+        commandLine.add(outputFilename);
 
+        int status = execute(workPath, commandLine);
+        if (-1 != status) {
+            List<File> files = new ArrayList<>();
+            for (int i = 0; i < 100; ++i) {
+                String filename = name + "-" + i + ".png";
+                File file = new File(workPath, filename);
+                if (!file.exists()) {
+                    break;
+                }
+
+                files.add(file);
+            }
+
+            return files;
+        }
+        else {
+            return null;
+        }
+    }
 
     private static int execute(File workPath, List<String> commandLine) {
         int status = -1;

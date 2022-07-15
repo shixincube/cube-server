@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * LO Writer
+ * Libre Office 操作处理器。
  */
 public abstract class LibreOffice extends Processor {
 

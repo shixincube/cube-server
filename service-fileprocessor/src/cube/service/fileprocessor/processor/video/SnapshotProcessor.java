@@ -129,7 +129,7 @@ public class SnapshotProcessor extends VideoProcessor {
 
             if (outputFile.exists()) {
                 ProcessResult result = new ProcessResult(outputFile);
-                snapshotContext.setResult(result);
+                snapshotContext.addResult(result);
             }
         }
     }

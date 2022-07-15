@@ -31,6 +31,8 @@ import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
 import cube.common.entity.FileThumbnail;
 import cube.common.entity.Image;
+import cube.common.entity.ProcessResult;
+import cube.common.notice.OfficeConvertTo;
 import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -485,6 +487,42 @@ public class FileProcessorService extends AbstractModule {
         return imageProcessor;
     }
 
+    public OfficeConvertToProcessor createOfficeConvertToProcessor(String domainName, String fileCode) {
+        FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+        FileLabel fileLabel = storageService.getFile(domainName, fileCode);
+        if (null == fileLabel) {
+            return null;
+        }
+
+        if (!FileUtils.isDocumentType(fileLabel.getFileType())) {
+            // 指定的文件不是图片格式
+            Logger.w(this.getClass(), "File is NOT document : " + fileLabel.getFileName());
+            return null;
+        }
+
+        Path inputFile = Paths.get(this.workPath.toString(), fileCode + "." + fileLabel.getFileType().getPreferredExtension());
+
+        if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
+            // 文件在工作目录里不存在，加载到本地磁盘
+            String path = storageService.loadFileToDisk(domainName, fileCode);
+            if (null == path) {
+                return null;
+            }
+
+            // 复制到指定路径
+            try {
+                Files.copy(Paths.get(path), inputFile);
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#createImageProcessor", e);
+                return null;
+            }
+        }
+
+        // 创建处理器
+        OfficeConvertToProcessor processor = new OfficeConvertToProcessor(this.workPath, inputFile.toFile());
+        return processor;
+    }
+
     /**
      * 创建指定的 OCR 处理器。
      *
@@ -739,7 +777,9 @@ public class FileProcessorService extends AbstractModule {
                     imageProcessor.go(context);
 
                     if (context.isSuccessful()) {
-                        outputFiles.add(context.getResult().file);
+                        for (ProcessResult result : context.getResultList()) {
+                            outputFiles.add(result.file);
+                        }
                     }
                     else {
                         interrupt = true;
@@ -769,7 +809,9 @@ public class FileProcessorService extends AbstractModule {
                         processor.go(context);
 
                         if (context.isSuccessful()) {
-                            outputFiles.add(context.getResult().file);
+                            for (ProcessResult result : context.getResultList()) {
+                                outputFiles.add(result.file);
+                            }
                         }
                         else {
                             interrupt = true;
@@ -825,7 +867,9 @@ public class FileProcessorService extends AbstractModule {
                     processor.go(context);
 
                     if (context.isSuccessful()) {
-                        outputFiles.add(context.getResult().file);
+                        for (ProcessResult result : context.getResultList()) {
+                            outputFiles.add(result.file);
+                        }
                     }
                     else {
                         interrupt = true;
@@ -985,6 +1029,22 @@ public class FileProcessorService extends AbstractModule {
                     ImageProcessorContext context = new ImageProcessorContext(
                             (ImageOperation) FileOperationHelper.parseFileOperation(data.getJSONObject("parameter")));
                     processor.go(context);
+                    // 返回上下文描述
+                    return context.toJSON();
+                }
+            }
+            else if (FileProcessorAction.OfficeConvertTo.name.equals(action)) {
+                String domain = data.getString(OfficeConvertTo.DOMAIN);
+                String fileCode = data.getString(OfficeConvertTo.FILE_CODE);
+                String format = data.getString(OfficeConvertTo.FORMAT);
+
+                OfficeConvertToProcessor processor = createOfficeConvertToProcessor(domain, fileCode);
+                if (null != processor) {
+                    // 创建上下文
+                    OfficeConvertToOperation operation = new OfficeConvertToOperation(format);
+                    OfficeConvertToProcessorContext context = new OfficeConvertToProcessorContext(operation);
+                    processor.go(context);
+                    // 返回上下文描述
                     return context.toJSON();
                 }
             }
