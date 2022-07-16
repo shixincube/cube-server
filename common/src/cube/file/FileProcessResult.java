@@ -34,6 +34,7 @@ import cube.file.operation.ReverseColorOperation;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +56,8 @@ public class FileProcessResult {
     private List<String> logs;
 
     private List<ProcessResult> resultList;
+
+    private List<File> localFileList;
 
     public FileProcessResult(JSONObject json) {
         this.process = json.getString("process");
@@ -117,6 +120,20 @@ public class FileProcessResult {
 
     public OCRProcessResult getOCRResult() {
         return this.ocrResult;
+    }
+
+    public void addLocalFile(File file) {
+        synchronized (this) {
+            if (null == this.localFileList) {
+                this.localFileList = new ArrayList<>();
+            }
+
+            this.localFileList.add(file);
+        }
+    }
+
+    public List<File> getLocalFileList() {
+        return this.localFileList;
     }
 
     /**

@@ -461,6 +461,10 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         }
 
         DomainInfo domainInfo = this.getDomainInfo(domain);
+        if (null == domainInfo) {
+            return false;
+        }
+
         int flag = domainInfo.getFlag();
         if (FerryHouseFlag.isAllowVirtualMode(flag)) {
             VirtualTicket virtualTicket = new VirtualTicket(domainInfo);

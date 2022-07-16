@@ -375,14 +375,21 @@ public final class ImageMagick {
         int status = execute(workPath, commandLine);
         if (-1 != status) {
             List<File> files = new ArrayList<>();
-            for (int i = 0; i < 100; ++i) {
-                String filename = name + "-" + i + ".png";
-                File file = new File(workPath, filename);
-                if (!file.exists()) {
-                    break;
-                }
 
+            File file = new File(workPath, outputFilename);
+            if (file.exists()) {
                 files.add(file);
+            }
+            else {
+                for (int i = 0; i < 100; ++i) {
+                    String filename = name + "-" + i + ".png";
+                    file = new File(workPath, filename);
+                    if (!file.exists()) {
+                        break;
+                    }
+
+                    files.add(file);
+                }
             }
 
             return files;

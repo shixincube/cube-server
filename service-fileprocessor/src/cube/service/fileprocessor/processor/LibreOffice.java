@@ -26,6 +26,8 @@
 
 package cube.service.fileprocessor.processor;
 
+import cell.util.log.Logger;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -78,7 +80,7 @@ public abstract class LibreOffice extends Processor {
                 e.printStackTrace();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(this.getClass(), "#call", e);
         } finally {
             if (null != process) {
                 process.destroy();

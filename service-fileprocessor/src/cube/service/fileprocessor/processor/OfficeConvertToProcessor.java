@@ -28,6 +28,7 @@ package cube.service.fileprocessor.processor;
 
 import cube.common.entity.ProcessResult;
 import cube.file.operation.OfficeConvertToOperation;
+import cube.util.FileType;
 import cube.util.FileUtils;
 
 import java.io.File;
@@ -43,7 +44,8 @@ import java.util.List;
  */
 public class OfficeConvertToProcessor extends LibreOffice {
 
-    private static String NotFindFileSubstitutePath = "assets/CanNotFindFile.pdf";
+    private static String NotFindSubstituteLandscapePath = "assets/CanNotFindFile_Landscape.pdf";
+    private static String NotFindSubstitutePortraitPath = "assets/CanNotFindFile_Portrait.pdf";
 
     private File inputFile;
 
@@ -80,7 +82,14 @@ public class OfficeConvertToProcessor extends LibreOffice {
 
         // 没有成功生成文件
         if (!success) {
-            File substitute = new File(NotFindFileSubstitutePath);
+            File substitute = null;
+            FileType fileType = FileUtils.extractFileExtensionType(this.inputFile.getName());
+            if (fileType == FileType.DOC || fileType == FileType.DOCX) {
+                substitute =  new File(NotFindSubstitutePortraitPath);
+            }
+            else {
+                substitute =  new File(NotFindSubstituteLandscapePath);
+            }
             // 将替身拷贝到工作目录
             try {
                 Files.copy(Paths.get(substitute.getAbsolutePath()), Paths.get(outputFile.getAbsolutePath()),
