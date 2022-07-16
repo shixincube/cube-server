@@ -26,7 +26,7 @@
 
 package cube.service.fileprocessor.processor;
 
-import cube.common.entity.ProcessResult;
+import cube.common.entity.FileResult;
 import cube.file.operation.OfficeConvertToOperation;
 import cube.util.FileType;
 import cube.util.FileUtils;
@@ -111,13 +111,13 @@ public class OfficeConvertToProcessor extends LibreOffice {
                 }
                 else {
                     for (File file : files) {
-                        ProcessResult result = new ProcessResult(file);
+                        FileResult result = new FileResult(file);
                         ctx.addResult(result);
                     }
                 }
             }
             else {
-                ProcessResult result = new ProcessResult(outputFile);
+                FileResult result = new FileResult(outputFile);
                 ctx.addResult(result);
             }
         }

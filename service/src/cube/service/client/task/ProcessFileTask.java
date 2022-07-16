@@ -31,7 +31,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.action.ClientAction;
-import cube.common.entity.ProcessResult;
+import cube.common.entity.FileResult;
 import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.service.client.ClientCellet;
@@ -99,7 +99,7 @@ public class ProcessFileTask extends ClientTask {
             // 需要回送流
             JSONArray array = responseData.getJSONArray("resultList");
             for (int i = 0; i < array.length(); ++i) {
-                ProcessResult prs = new ProcessResult(array.getJSONObject(i));
+                FileResult prs = new FileResult(array.getJSONObject(i));
 
                 if (Logger.isDebugLevel()) {
                     Logger.d(this.getClass(), "#run - transmit stream to client : " + prs.streamName);

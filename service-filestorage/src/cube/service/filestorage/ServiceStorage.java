@@ -66,6 +66,8 @@ public class ServiceStorage implements Storagable {
 
     private final String sharingTagTablePrefix = "sharing_tag_";
 
+    private final String sharingTagPreviewTablePrefix = "sharing_tag_preview_";
+
     private final String visitTraceTablePrefix = "visit_trace_";
 
     private final String sharingCodeTable = "sharing_code";
@@ -164,6 +166,26 @@ public class ServiceStorage implements Storagable {
             })
     };
 
+    private final StorageField[] sharingTagPreviewFields = new StorageField[]{
+            new StorageField("sn", LiteralBase.LONG, new Constraint[]{
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            // 标签 ID
+            new StorageField("tag_id", LiteralBase.LONG, new Constraint[]{
+                    Constraint.NOT_NULL
+            }),
+            // 标签码
+            new StorageField("tag_code", LiteralBase.STRING, new Constraint[]{
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("file_code", LiteralBase.STRING, new Constraint[]{
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("file_label", LiteralBase.STRING, new Constraint[]{
+                    Constraint.NOT_NULL
+            })
+    };
+
     private final StorageField[] visitTraceFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
@@ -254,6 +276,11 @@ public class ServiceStorage implements Storagable {
     private Map<String, String> sharingTagTableNameMap;
 
     /**
+     * 分享预览文件标签表。
+     */
+    private Map<String, String> sharingTagPreviewTableNameMap;
+
+    /**
      * 访问追踪数据表。
      */
     private Map<String, String> visitTraceTableNameMap;
@@ -266,6 +293,7 @@ public class ServiceStorage implements Storagable {
         this.hierarchyTableNameMap = new HashMap<>();
         this.recyclebinTableNameMap = new HashMap<>();
         this.sharingTagTableNameMap = new HashMap<>();
+        this.sharingTagPreviewTableNameMap = new HashMap<>();
         this.visitTraceTableNameMap = new HashMap<>();
     }
 
@@ -303,6 +331,7 @@ public class ServiceStorage implements Storagable {
             this.checkRecyclebinTable(domain);
 
             this.checkSharingTagTable(domain);
+            this.checkSharingTagPreviewTable(domain);
             this.checkVisitTraceTable(domain);
         }
 
@@ -1248,6 +1277,20 @@ public class ServiceStorage implements Storagable {
         if (!this.storage.exist(table)) {
             // 表不存在，建表
             if (this.storage.executeCreate(table, this.sharingTagFields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkSharingTagPreviewTable(String domain) {
+        String table = this.sharingTagPreviewTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.sharingTagPreviewTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.sharingTagPreviewFields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
         }

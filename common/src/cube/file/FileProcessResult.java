@@ -28,7 +28,7 @@ package cube.file;
 
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
-import cube.common.entity.ProcessResult;
+import cube.common.entity.FileResult;
 import cube.file.operation.EliminateColorOperation;
 import cube.file.operation.ReverseColorOperation;
 import org.json.JSONArray;
@@ -45,6 +45,8 @@ public class FileProcessResult {
 
     public final String process;
 
+    public final boolean success;
+
     private SubmitWorkflowResult submitWorkflowResult;
 
     private ImageProcessResult imageResult;
@@ -55,12 +57,13 @@ public class FileProcessResult {
 
     private List<String> logs;
 
-    private List<ProcessResult> resultList;
+    private List<FileResult> resultList;
 
     private List<File> localFileList;
 
     public FileProcessResult(JSONObject json) {
         this.process = json.getString("process");
+        this.success = json.has("success") ? json.getBoolean("success") : false;
 
         if (FileProcessorAction.Image.name.equals(this.process)) {
             this.imageResult = new ImageProcessResult(json);
@@ -79,7 +82,7 @@ public class FileProcessResult {
             JSONArray array = json.getJSONArray("resultList");
             this.resultList = new ArrayList<>(array.length());
             for (int i = 0; i < array.length(); ++i) {
-                ProcessResult result = new ProcessResult(json.getJSONObject("resultList"));
+                FileResult result = new FileResult(array.getJSONObject(i));
                 this.resultList.add(result);
             }
         }
@@ -102,7 +105,7 @@ public class FileProcessResult {
         return (null != this.resultList);
     }
 
-    public List<ProcessResult> getResultList() {
+    public List<FileResult> getResultList() {
         return this.resultList;
     }
 

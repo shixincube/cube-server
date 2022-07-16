@@ -394,7 +394,7 @@ public class FileStorageService extends AbstractModule {
     }
 
     /**
-     * 保存本地文件的存储系统。
+     * 保存本地文件到存储系统。
      *
      * @param fileLabel
      * @param file

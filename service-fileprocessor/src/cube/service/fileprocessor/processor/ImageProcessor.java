@@ -27,7 +27,7 @@
 package cube.service.fileprocessor.processor;
 
 import cube.common.entity.FileLabel;
-import cube.common.entity.ProcessResult;
+import cube.common.entity.FileResult;
 import cube.common.entity.TextConstraint;
 import cube.file.ImageOperation;
 import cube.file.operation.*;
@@ -93,7 +93,7 @@ public class ImageProcessor extends Processor {
             ctx.setSuccessful(success);
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResult result = new ProcessResult(outputFile);
+                FileResult result = new FileResult(outputFile);
                 ctx.addResult(result);
             }
         }
@@ -113,7 +113,7 @@ public class ImageProcessor extends Processor {
             ctx.setSuccessful(success);
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResult result = new ProcessResult(outputFile);
+                FileResult result = new FileResult(outputFile);
                 ctx.addResult(result);
             }
         }
@@ -133,7 +133,7 @@ public class ImageProcessor extends Processor {
             ctx.setSuccessful(success);
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResult result = new ProcessResult(outputFile);
+                FileResult result = new FileResult(outputFile);
                 ctx.addResult(result);
             }
         }
@@ -153,7 +153,7 @@ public class ImageProcessor extends Processor {
             ctx.setSuccessful(success);
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResult result = new ProcessResult(outputFile);
+                FileResult result = new FileResult(outputFile);
                 ctx.addResult(result);
             }
         }
@@ -175,7 +175,7 @@ public class ImageProcessor extends Processor {
                 ctx.setSuccessful(success);
                 if (success) {
                     File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                    ProcessResult result = new ProcessResult(outputFile);
+                    FileResult result = new FileResult(outputFile);
                     ctx.addResult(result);
                 }
             }
@@ -217,7 +217,7 @@ public class ImageProcessor extends Processor {
                     // 修改文件名
                     File tmpFile = new File(this.getWorkPath().toFile(), tmpInputFilename);
                     tmpFile.renameTo(outputFile);
-                    ProcessResult result = new ProcessResult(outputFile);
+                    FileResult result = new FileResult(outputFile);
                     ctx.addResult(result);
                 }
             }
@@ -238,7 +238,7 @@ public class ImageProcessor extends Processor {
             ctx.setSuccessful(success);
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResult result = new ProcessResult(outputFile);
+                FileResult result = new FileResult(outputFile);
                 ctx.addResult(result);
             }
         }
@@ -259,7 +259,7 @@ public class ImageProcessor extends Processor {
 
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResult result = new ProcessResult(outputFile);
+                FileResult result = new FileResult(outputFile);
                 ctx.addResult(result);
             }
         }
@@ -296,7 +296,7 @@ public class ImageProcessor extends Processor {
 
             if (success) {
                 File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-                ProcessResult result = new ProcessResult(outputFile);
+                FileResult result = new FileResult(outputFile);
                 ctx.addResult(result);
             }
         }

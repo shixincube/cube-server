@@ -30,12 +30,14 @@ import cell.util.log.Logger;
 import cube.common.entity.*;
 import cube.common.notice.OfficeConvertTo;
 import cube.core.AbstractModule;
+import cube.file.FileProcessResult;
 import cube.file.operation.OfficeConvertToOperation;
 import cube.service.auth.AuthService;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -88,15 +90,17 @@ public class FileSharingManager {
             return null;
         }
 
-        // 默认永久有效
+        // 创建配置信息
         SharingTagConfig config = new SharingTagConfig(contact, device, fileLabel, duration,
                 password, preview, download);
         SharingTag sharingTag = new SharingTag(config);
         // 设置 URLs
         sharingTag.setURLs(authDomain.httpEndpoint, authDomain.httpsEndpoint);
 
-        // 写入数据库
-        this.service.getServiceStorage().writeSharingTag(sharingTag);
+        if (preview) {
+            // 需要生成预览
+            List<FileLabel> previewFiles = this.processFilePreview(contact, fileLabel);
+        }
 
         final FileStoragePluginContext context = new FileStoragePluginContext(sharingTag);
         this.service.getExecutor().execute(() -> {
@@ -104,24 +108,54 @@ public class FileSharingManager {
             hook.apply(context);
         });
 
+        // 写入数据库
+        this.service.getServiceStorage().writeSharingTag(sharingTag);
+
         return sharingTag;
     }
 
-    private void processFilePreview(Contact contact, FileLabel fileLabel) {
+    private List<FileLabel> processFilePreview(Contact contact, FileLabel fileLabel) {
+        List<FileLabel> fileLabels = new ArrayList<>();
+        String domainName = contact.getDomain().getName();
+
         if (FileUtils.isDocumentType(fileLabel.getFileType())) {
             if (fileLabel.getFileType() == FileType.PDF) {
 
             }
             else {
-                OfficeConvertTo officeConvertTo = new OfficeConvertTo(contact.getDomain().getName(),
+                OfficeConvertTo officeConvertTo = new OfficeConvertTo(domainName,
                         fileLabel.getFileCode(), OfficeConvertToOperation.OUTPUT_FORMAT_PNG);
                 AbstractModule fileProcess = this.service.getKernel().getModule(this.fileProcessorModule);
                 Object result = fileProcess.notify(officeConvertTo);
                 if (result instanceof JSONObject) {
-                    //
+                    FileProcessResult processResult = new FileProcessResult((JSONObject) result);
+                    if (processResult.success) {
+                        for (FileResult fr : processResult.getResultList()) {
+                            // 生成文件码
+                            String fileCode = FileUtils.makeFileCode(contact.getId(), domainName, fr.fileName);
+                            // 生成文件标签
+                            FileLabel label = FileUtils.makeFileLabel(domainName, fileCode, contact.getId(), fr.file);
+                            // 将文件保存到存储
+                            FileLabel newLabel = this.service.saveFile(label, fr.file);
+                            fileLabels.add(newLabel);
+                        }
+                    }
+                    else {
+                        Logger.w(this.getClass(), "#processFilePreview - Make preview file failed: "
+                                + fileLabel.getFileCode());
+                    }
+                }
+                else {
+                    Logger.w(this.getClass(), "#processFilePreview - File processor module error: "
+                            + fileLabel.getFileCode());
                 }
             }
         }
+        else if (FileUtils.isImageType(fileLabel.getFileType())) {
+            // TODO
+        }
+
+        return fileLabels;
     }
 
     public SharingTag getSharingTag(String code, boolean urls) {

@@ -32,7 +32,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.action.ClientAction;
 import cube.common.action.FileProcessorAction;
-import cube.common.entity.ProcessResult;
+import cube.common.entity.FileResult;
 import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.service.client.ClientCellet;
@@ -96,7 +96,7 @@ public class SubmitWorkflowTask extends ClientTask {
             JSONArray array = responseData.getJSONArray("resultList");
             for (int i = 0; i < array.length(); ++i) {
                 // 处理结果
-                ProcessResult prs = new ProcessResult(array.getJSONObject(i));
+                FileResult prs = new FileResult(array.getJSONObject(i));
 
                 if (Logger.isDebugLevel()) {
                     Logger.d(this.getClass(), "#run - transmit stream to client : " + prs.streamName);

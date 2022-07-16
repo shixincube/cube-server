@@ -27,7 +27,7 @@
 package cube.service.fileprocessor.processor;
 
 import cube.common.JSONable;
-import cube.common.entity.ProcessResult;
+import cube.common.entity.FileResult;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -43,7 +43,7 @@ public abstract class ProcessorContext implements JSONable {
 
     private List<String> stdOutput;
 
-    private List<ProcessResult> resultList;
+    private List<FileResult> resultList;
 
     protected ProcessorContext() {
         this.resultList = new ArrayList<>();
@@ -56,7 +56,7 @@ public abstract class ProcessorContext implements JSONable {
         if (json.has("resultList")) {
             JSONArray array = json.getJSONArray("resultList");
             for (int i = 0; i < array.length(); ++i) {
-                this.resultList.add(new ProcessResult(array.getJSONObject(i)));
+                this.resultList.add(new FileResult(array.getJSONObject(i)));
             }
         }
     }
@@ -69,11 +69,11 @@ public abstract class ProcessorContext implements JSONable {
         return this.successful;
     }
 
-    public void addResult(ProcessResult result) {
+    public void addResult(FileResult result) {
         this.resultList.add(result);
     }
 
-    public List<ProcessResult> getResultList() {
+    public List<FileResult> getResultList() {
         return this.resultList;
     }
 
@@ -97,7 +97,7 @@ public abstract class ProcessorContext implements JSONable {
 
         if (!this.resultList.isEmpty()) {
             JSONArray array = new JSONArray();
-            for (ProcessResult result : this.resultList) {
+            for (FileResult result : this.resultList) {
                 array.put(result.toJSON());
             }
             json.put("resultList", array);

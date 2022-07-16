@@ -50,6 +50,8 @@ public class SharingTag extends Entity {
 
     private String httpsURL;
 
+    private List<FileLabel> previewList;
+
     private List<VisitTrace> visitTraceList;
 
     public SharingTag(SharingTagConfig config) {
@@ -69,8 +71,6 @@ public class SharingTag extends Entity {
         else {
             this.expiryDate = 0;
         }
-
-        this.visitTraceList = new ArrayList<>();
     }
 
     public SharingTag(Long id, String domain, long timestamp, String code, long expiryDate,
@@ -80,7 +80,6 @@ public class SharingTag extends Entity {
         this.code = code;
         this.expiryDate = expiryDate;
         this.config = new SharingTagConfig(contact, device, fileLabel, duration, password, preview, download);
-        this.visitTraceList = new ArrayList<>();
     }
 
     public SharingTag(JSONObject json) {
@@ -96,8 +95,16 @@ public class SharingTag extends Entity {
             this.httpsURL = json.getString("httpsURL");
         }
 
-        this.visitTraceList = new ArrayList<>();
+        if (json.has("previewList")) {
+            this.previewList = new ArrayList<>();
+            JSONArray array = json.getJSONArray("previewList");
+            for (int i = 0; i < array.length(); ++i) {
+                this.previewList.add(new FileLabel(array.getJSONObject(i)));
+            }
+        }
+
         if (json.has("visitTraceList")) {
+            this.visitTraceList = new ArrayList<>();
             JSONArray array = json.getJSONArray("visitTraceList");
             for (int i = 0; i < array.length(); ++i) {
                 this.visitTraceList.add(new VisitTrace(array.getJSONObject(i)));
@@ -136,6 +143,19 @@ public class SharingTag extends Entity {
                 "/sharing/" + this.code;
     }
 
+    public void setPreviewList(List<FileLabel> list) {
+        if (null == this.previewList) {
+            this.previewList = new ArrayList<>();
+        }
+
+        this.previewList.clear();
+        this.previewList.addAll(list);
+    }
+
+    public List<FileLabel> getPreviewList() {
+        return this.previewList;
+    }
+
     public List<VisitTrace> getVisitTraceList() {
         return this.visitTraceList;
     }
@@ -158,11 +178,22 @@ public class SharingTag extends Entity {
             json.put("httpsURL", this.httpsURL);
         }
 
-        JSONArray array = new JSONArray();
-        for (VisitTrace visitTrace : this.visitTraceList) {
-            array.put(visitTrace.toJSON());
+        if (null != this.previewList) {
+            JSONArray array = new JSONArray();
+            for (FileLabel fileLabel : this.previewList) {
+                array.put(fileLabel.toJSON());
+            }
+            json.put("previewList", array);
         }
-        json.put("visitTraceList", array);
+
+        if (null != this.visitTraceList) {
+            JSONArray array = new JSONArray();
+            for (VisitTrace visitTrace : this.visitTraceList) {
+                array.put(visitTrace.toJSON());
+            }
+            json.put("visitTraceList", array);
+        }
+
         return json;
     }
 
@@ -178,6 +209,14 @@ public class SharingTag extends Entity {
         }
         if (null != this.httpsURL) {
             json.put("httpsURL", this.httpsURL);
+        }
+
+        if (null != this.previewList) {
+            JSONArray array = new JSONArray();
+            for (FileLabel fileLabel : this.previewList) {
+                array.put(fileLabel.toJSON());
+            }
+            json.put("previewList", array);
         }
 
         return json;

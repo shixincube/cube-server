@@ -31,7 +31,7 @@ import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
 import cube.common.entity.FileThumbnail;
 import cube.common.entity.Image;
-import cube.common.entity.ProcessResult;
+import cube.common.entity.FileResult;
 import cube.common.notice.OfficeConvertTo;
 import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
@@ -777,7 +777,7 @@ public class FileProcessorService extends AbstractModule {
                     imageProcessor.go(context);
 
                     if (context.isSuccessful()) {
-                        for (ProcessResult result : context.getResultList()) {
+                        for (FileResult result : context.getResultList()) {
                             outputFiles.add(result.file);
                         }
                     }
@@ -809,7 +809,7 @@ public class FileProcessorService extends AbstractModule {
                         processor.go(context);
 
                         if (context.isSuccessful()) {
-                            for (ProcessResult result : context.getResultList()) {
+                            for (FileResult result : context.getResultList()) {
                                 outputFiles.add(result.file);
                             }
                         }
@@ -867,7 +867,7 @@ public class FileProcessorService extends AbstractModule {
                     processor.go(context);
 
                     if (context.isSuccessful()) {
-                        for (ProcessResult result : context.getResultList()) {
+                        for (FileResult result : context.getResultList()) {
                             outputFiles.add(result.file);
                         }
                     }
