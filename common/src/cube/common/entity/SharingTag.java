@@ -144,6 +144,10 @@ public class SharingTag extends Entity {
     }
 
     public void setPreviewList(List<FileLabel> list) {
+        if (null == list || list.isEmpty()) {
+            return;
+        }
+
         if (null == this.previewList) {
             this.previewList = new ArrayList<>();
         }

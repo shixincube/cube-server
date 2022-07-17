@@ -905,6 +905,10 @@ public class ServiceStorage implements Storagable {
                     new StorageField("domain", sharingTag.getDomain().getName()),
                     new StorageField("timestamp", sharingTag.getTimestamp())
             });
+
+            // 写入预览文件
+            writeSharingPreview(sharingTag.getDomain().getName(), sharingTag.getId(), sharingTag.getCode(),
+                    sharingTag.getPreviewList());
         });
     }
 
@@ -972,6 +976,10 @@ public class ServiceStorage implements Storagable {
                 map.get("password").isNullValue() ? null : map.get("password").getString(),
                 map.get("preview").getInt() == 1, map.get("download").getInt() == 1);
 
+        // 预览文件列表
+        List<FileLabel> previewList = readSharingPreview(domain, code);
+        sharingTag.setPreviewList(previewList);
+
         return sharingTag;
     }
 
@@ -1035,7 +1043,59 @@ public class ServiceStorage implements Storagable {
                     map.get("password").isNullValue() ? null : map.get("password").getString(),
                     map.get("preview").getInt() == 1, map.get("download").getInt() == 1);
 
+            // 预览文件列表
+            List<FileLabel> previewList = readSharingPreview(domain, sharingTag.getCode());
+            sharingTag.setPreviewList(previewList);
+
             list.add(sharingTag);
+        }
+
+        return list;
+    }
+
+    private void writeSharingPreview(String domain, long tagId, String tagCode, List<FileLabel> previewList) {
+        if (null == previewList) {
+            return;
+        }
+
+        String table = this.sharingTagPreviewTableNameMap.get(domain);
+        if (null == table) {
+            return;
+        }
+
+        this.storage.executeDelete(table, new Conditional[] {
+                Conditional.createEqualTo("tag_id", tagId),
+                Conditional.createOr(),
+                Conditional.createEqualTo("tag_code", tagCode)
+        });
+
+        for (FileLabel fileLabel : previewList) {
+            this.storage.executeInsert(table, new StorageField[] {
+                    new StorageField("tag_id", tagId),
+                    new StorageField("tag_code", tagCode),
+                    new StorageField("file_code", fileLabel.getFileCode()),
+                    new StorageField("file_label", fileLabel.toJSON().toString())
+            });
+        }
+    }
+
+    private List<FileLabel> readSharingPreview(String domain, String code) {
+        String table = this.sharingTagPreviewTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        List<FileLabel> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+                new StorageField("file_label", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo("tag_code", code)
+        });
+
+        for (StorageField[] fields : result) {
+            JSONObject json = new JSONObject(fields[0].getString());
+            list.add(new FileLabel(json));
         }
 
         return list;

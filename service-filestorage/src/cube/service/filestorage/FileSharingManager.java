@@ -100,6 +100,7 @@ public class FileSharingManager {
         if (preview) {
             // 需要生成预览
             List<FileLabel> previewFiles = this.processFilePreview(contact, fileLabel);
+            sharingTag.setPreviewList(previewFiles);
         }
 
         final FileStoragePluginContext context = new FileStoragePluginContext(sharingTag);
