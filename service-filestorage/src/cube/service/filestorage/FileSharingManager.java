@@ -123,36 +123,31 @@ public class FileSharingManager {
         String domainName = contact.getDomain().getName();
 
         if (FileUtils.isDocumentType(fileLabel.getFileType())) {
-            if (fileLabel.getFileType() == FileType.PDF) {
-
-            }
-            else {
-                OfficeConvertTo officeConvertTo = new OfficeConvertTo(domainName,
-                        fileLabel.getFileCode(), OfficeConvertToOperation.OUTPUT_FORMAT_PNG);
-                AbstractModule fileProcess = this.service.getKernel().getModule(this.fileProcessorModule);
-                Object result = fileProcess.notify(officeConvertTo);
-                if (result instanceof JSONObject) {
-                    FileProcessResult processResult = new FileProcessResult((JSONObject) result);
-                    if (processResult.success) {
-                        for (FileResult fr : processResult.getResultList()) {
-                            // 生成文件码
-                            String fileCode = FileUtils.makeFileCode(contact.getId(), domainName, fr.fileName);
-                            // 生成文件标签
-                            FileLabel label = FileUtils.makeFileLabel(domainName, fileCode, contact.getId(), fr.file);
-                            // 将文件保存到存储
-                            FileLabel newLabel = this.service.saveFile(label, fr.file);
-                            fileLabels.add(newLabel);
-                        }
-                    }
-                    else {
-                        Logger.w(this.getClass(), "#processFilePreview - Make preview file failed: "
-                                + fileLabel.getFileCode());
+            OfficeConvertTo officeConvertTo = new OfficeConvertTo(domainName,
+                    fileLabel.getFileCode(), OfficeConvertToOperation.OUTPUT_FORMAT_PNG);
+            AbstractModule fileProcess = this.service.getKernel().getModule(this.fileProcessorModule);
+            Object result = fileProcess.notify(officeConvertTo);
+            if (result instanceof JSONObject) {
+                FileProcessResult processResult = new FileProcessResult((JSONObject) result);
+                if (processResult.success) {
+                    for (FileResult fr : processResult.getResultList()) {
+                        // 生成文件码
+                        String fileCode = FileUtils.makeFileCode(contact.getId(), domainName, fr.fileName);
+                        // 生成文件标签
+                        FileLabel label = FileUtils.makeFileLabel(domainName, fileCode, contact.getId(), fr.file);
+                        // 将文件保存到存储
+                        FileLabel newLabel = this.service.saveFile(label, fr.file);
+                        fileLabels.add(newLabel);
                     }
                 }
                 else {
-                    Logger.w(this.getClass(), "#processFilePreview - File processor module error: "
+                    Logger.w(this.getClass(), "#processFilePreview - Make preview file failed: "
                             + fileLabel.getFileCode());
                 }
+            }
+            else {
+                Logger.w(this.getClass(), "#processFilePreview - File processor module error: "
+                        + fileLabel.getFileCode());
             }
         }
         else if (FileUtils.isImageType(fileLabel.getFileType())) {

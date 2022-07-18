@@ -60,31 +60,47 @@ public class OfficeConvertToProcessor extends LibreOffice {
         final String outputFormat = ctx.getOperation().getOutputFormat();
 
         boolean success = false;
-        if (OfficeConvertToOperation.OUTPUT_FORMAT_PDF.equals(outputFormat)) {
-            // 执行命令
-            success = this.callConvertTo(OfficeConvertToOperation.OUTPUT_FORMAT_PDF, this.inputFile.getName(), ctx);
-        }
-        else if (OfficeConvertToOperation.OUTPUT_FORMAT_PNG.equals(outputFormat)) {
-            // 执行命令
-            // 先转 PDF
-            success = this.callConvertTo(OfficeConvertToOperation.OUTPUT_FORMAT_PDF, this.inputFile.getName(), ctx);
-        }
 
-        // 判断输出文件是否存在
-        // 输出文件名
-        String outputFilename = FileUtils.extractFileName(this.inputFile.getName())
-                + "." + OfficeConvertToOperation.OUTPUT_FORMAT_PDF;
-        File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
-        if (!outputFile.exists()) {
-            // 文件不存在
-            success = false;
+        File outputFile = null;
+        FileType fileType = FileUtils.extractFileExtensionType(this.inputFile.getName());
+
+        if (fileType == FileType.DOC || fileType == FileType.DOCX
+                || fileType == FileType.PPT || fileType == FileType.PPTX
+                || fileType == FileType.XLS || fileType == FileType.XLSX) {
+            if (OfficeConvertToOperation.OUTPUT_FORMAT_PDF.equals(outputFormat)) {
+                // 执行命令
+                success = this.callConvertTo(OfficeConvertToOperation.OUTPUT_FORMAT_PDF, this.inputFile.getName(), ctx);
+            }
+            else if (OfficeConvertToOperation.OUTPUT_FORMAT_PNG.equals(outputFormat)) {
+                // 执行命令
+                // 先转 PDF
+                success = this.callConvertTo(OfficeConvertToOperation.OUTPUT_FORMAT_PDF, this.inputFile.getName(), ctx);
+            }
+
+            // 判断输出文件是否存在
+            // 输出文件名
+            String outputFilename = FileUtils.extractFileName(this.inputFile.getName())
+                    + "." + OfficeConvertToOperation.OUTPUT_FORMAT_PDF;
+            outputFile = new File(this.getWorkPath().toFile(), outputFilename);
+            if (!outputFile.exists()) {
+                // 文件不存在
+                success = false;
+            }
+        }
+        else if (fileType == FileType.PDF) {
+            outputFile = this.inputFile;
+            success = outputFile.exists();
+        }
+        else {
+            // 设置结果
+            ctx.setSuccessful(success);
+            return;
         }
 
         // 没有成功生成文件
         if (!success) {
             File substitute = null;
-            FileType fileType = FileUtils.extractFileExtensionType(this.inputFile.getName());
-            if (fileType == FileType.DOC || fileType == FileType.DOCX) {
+            if (fileType == FileType.DOC || fileType == FileType.DOCX || fileType == FileType.PDF) {
                 substitute =  new File(NotFindSubstitutePortraitPath);
             }
             else {

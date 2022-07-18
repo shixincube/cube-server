@@ -26,7 +26,6 @@ body {
 
 .preview {
     width: 100%;
-    height: 800px;
     padding: 0;
     margin: 0;
 }
@@ -47,6 +46,10 @@ body {
     max-height: 100%;
     display: block;
     margin: auto;
+}
+
+.page-head {
+    height: 44px;
 }
 .page-tail {
     height: 74px;
@@ -99,7 +102,7 @@ body {
     text-align: center;
     vertical-align: middle;
     font-size: 14px;
-    margin: 12px 0px 10px 0px;
+    margin: 12px 10px 10px 10px;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
