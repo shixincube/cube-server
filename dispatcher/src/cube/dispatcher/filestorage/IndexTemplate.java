@@ -52,6 +52,8 @@ public class IndexTemplate {
 
     private static final String MAIN_TOGGLE = "${main_toggle}";
 
+    private static final String DOWNLOAD_TOGGLE = "${download_toggle}";
+
     private static final String FILE_TYPE = "${file_type}";
 
     private static final String FILE_NAME = "${file_name}";
@@ -85,6 +87,10 @@ public class IndexTemplate {
         else if (line.contains(MAIN_TOGGLE)) {
             line = line.replace(MAIN_TOGGLE,
                     sharingTag.getConfig().isPreview() ? CSS_STYLE_VALUE_NONE : CSS_STYLE_VALUE_BLOCK);
+        }
+        else if (line.contains(DOWNLOAD_TOGGLE)) {
+            line = line.replace(DOWNLOAD_TOGGLE,
+                    sharingTag.getConfig().isDownloadAllowed() ? CSS_STYLE_VALUE_BLOCK : CSS_STYLE_VALUE_NONE);
         }
         else if (line.contains(FILE_TYPE)) {
             line = line.replace(FILE_TYPE, parseFileType(sharingTag.getConfig().getFileLabel().getFileType()));
