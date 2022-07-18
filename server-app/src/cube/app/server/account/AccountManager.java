@@ -253,6 +253,19 @@ public class AccountManager extends TimerTask {
     }
 
     /**
+     * 使用小程序 JS Code 进行登录。
+     *
+     * @param appId
+     * @param secret
+     * @param jsCode
+     * @param device
+     * @return
+     */
+    public Token loginWithAppletJSCode(String appId, String secret, String jsCode, String device) {
+        return null;
+    }
+
+    /**
      * 账号登出。
      *
      * @param token

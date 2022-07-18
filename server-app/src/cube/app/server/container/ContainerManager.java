@@ -31,6 +31,8 @@ import cell.util.log.LogManager;
 import cell.util.log.Logger;
 import cube.app.server.Manager;
 import cube.app.server.account.AccountManager;
+import cube.app.server.applet.WeChatApplet;
+import cube.app.server.applet.WeChatAppletAPI;
 import cube.app.server.notice.NoticeManager;
 import cube.app.server.version.VersionManager;
 import cube.util.ConfigUtils;
@@ -60,6 +62,7 @@ public class ContainerManager {
         AccountManager.getInstance().start();
         NoticeManager.getInstance().start();
         VersionManager.getInstance().start();
+        WeChatApplet.getInstance().start();
 
         Properties config = this.loadConfig();
 
@@ -116,6 +119,7 @@ public class ContainerManager {
     public void destroy() {
         Manager.getInstance().stop();
 
+        WeChatApplet.getInstance().destroy();
         VersionManager.getInstance().destroy();
         NoticeManager.getInstance().destroy();
         AccountManager.getInstance().destroy();

@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="b1408c98-f6aa-434f-978c-a980e61d5e76" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../server-app/src/cube/app/server/applet/WeChatAppletAPI.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../server-app/src/cube/app/server/applet/WeChatAppletAPI.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,7 +60,7 @@
       <workItem from="1657434149738" duration="2601000" />
       <workItem from="1658101861160" duration="6606000" />
       <workItem from="1658132367551" duration="441000" />
-      <workItem from="1658137036623" duration="38000" />
+      <workItem from="1658137036623" duration="257000" />
     </task>
     <servers />
   </component>

@@ -26,12 +26,24 @@
 
 package cube.app.server.applet;
 
-import org.json.JSONObject;
+import cube.app.server.util.AbstractStorage;
+
+import java.util.Properties;
 
 /**
- * 微信小程序 Applet API 。
+ * 小程序对应的存储器。
  */
-public interface WeChatAppletAPI {
+public class AppletStorage extends AbstractStorage {
 
-    JSONObject code2session(String appId, String secret, String jsCode);
+    public AppletStorage(Properties properties) {
+        super("AppletStorage", properties);
+    }
+
+    public void open() {
+
+    }
+
+    public void close() {
+
+    }
 }

@@ -24,14 +24,10 @@
  * SOFTWARE.
  */
 
-package cube.app.server.applet;
-
-import org.json.JSONObject;
+package cube.app.server.applet.container;
 
 /**
- * 微信小程序 Applet API 。
+ *
  */
-public interface WeChatAppletAPI {
-
-    JSONObject code2session(String appId, String secret, String jsCode);
+public class AuthCode2SessionHandler {
 }
