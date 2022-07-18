@@ -23,6 +23,17 @@ window.onload = function () {
     };
 
     submit(data);
+
+    resizePreview();
+}
+
+window.onresize = function () {
+    resizePreview();
+}
+
+function resizePreview() {
+    var preview = document.querySelector('.preview');
+    preview.style.height = document.body.clientHeight + 'px';
 }
 
 function download(url) {

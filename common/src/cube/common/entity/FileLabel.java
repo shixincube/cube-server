@@ -27,7 +27,6 @@
 package cube.common.entity;
 
 import cell.util.Utils;
-import cube.common.Domain;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import org.json.JSONObject;
@@ -383,6 +382,26 @@ public class FileLabel extends Entity {
      */
     public String getFileURL() {
         return this.fileURL;
+    }
+
+    /**
+     * 重置 URL 地址。
+     *
+     * @param urlHost
+     * @param urlsHost
+     */
+    public void resetURLsAddress(String urlHost, String urlsHost) {
+        if (null != this.fileURL) {
+            String host = this.fileURL.substring(7);
+            host = host.substring(0, host.indexOf(":"));
+            this.fileURL = this.fileURL.replace(host, urlHost);
+        }
+
+        if (null != this.fileSecureURL) {
+            String host = this.fileSecureURL.substring(8);
+            host = host.substring(0, host.indexOf(":"));
+            this.fileSecureURL = this.fileSecureURL.replace(host, urlsHost);
+        }
     }
 
     /**

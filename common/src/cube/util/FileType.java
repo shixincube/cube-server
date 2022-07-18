@@ -108,7 +108,7 @@ public enum FileType {
     JAR(new String[]{ "jar" }, "application/java-archive"),
     SER(new String[]{ "ser" }, "application/java-serialized-object"),
     CLASS(new String[]{ "class" }, "application/java-vm"),
-    JS(new String[]{ "js" }, "application/javascript"),
+    JS(new String[]{ "js" }, "text/javascript"),
     JSON(new String[]{ "json" }, "application/json"),
     JSONML(new String[]{ "jsonml" }, "application/jsonml+json"),
     LOSTXML(new String[]{ "lostxml" }, "application/lost+xml"),

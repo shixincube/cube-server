@@ -55,28 +55,43 @@ public class GetFileTask extends ServiceTask {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
-        // 获取令牌码
-        String tokenCode = this.getTokenCode(action);
-        if (null == tokenCode) {
-            // 发生错误
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
-            markResponseTime();
-            return;
-        }
-
-        AuthService authService = (AuthService) this.kernel.getModule(AuthService.NAME);
-        AuthToken authToken = authService.getToken(tokenCode);
-        if (null == authToken) {
-            // 发生错误
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
-            markResponseTime();
-            return;
-        }
-
         // 域
-        String domain = authToken.getDomain();
+        String domain = null;
+
+        if (action.containsParam("token")) {
+            // 获取令牌码
+            String tokenCode = this.getTokenCode(action);
+            if (null == tokenCode) {
+                // 发生错误
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+                markResponseTime();
+                return;
+            }
+
+            AuthService authService = (AuthService) this.kernel.getModule(AuthService.NAME);
+            AuthToken authToken = authService.getToken(tokenCode);
+            if (null == authToken) {
+                // 发生错误
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+                markResponseTime();
+                return;
+            }
+
+            // 域
+            domain = authToken.getDomain();
+        }
+        else {
+            if (!packet.data.has("domain")) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, FileStorageStateCode.Failure.code, packet.data));
+                markResponseTime();
+                return;
+            }
+
+            domain = packet.data.getString("domain");
+        }
 
         String fileCode = null;
         try {

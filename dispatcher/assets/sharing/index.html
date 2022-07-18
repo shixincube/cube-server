@@ -8,8 +8,18 @@
 </head>
 
 <body>
+<div class="header" style="display:${preview_toggle};">
+    <div class="title">${file_name}</div>
+</div>
 
-<div class="main">
+<div class="preview" style="display:${preview_toggle};">
+    <div class="container">
+        ${preview_pages}
+        <div class="page-tail"></div>
+    </div>
+</div>
+
+<div class="main" style="display:${main_toggle};">
     <div>
         <img class="file-icon" src="image/file-icon-${file_type}.png"/>
     </div>
@@ -20,9 +30,10 @@
         <p class="file-size">文件大小：${file_size}</p>
     </div>
 </div>
+
 <div class="footer">
-    <div class="item">
-        <button onclick="javascript:download('${file_uri_path}');">接收文件</button>
+    <div class="operation">
+        <button class="download" onclick="javascript:download('${file_uri_path}');">接收文件</button>
     </div>
 </div>
 

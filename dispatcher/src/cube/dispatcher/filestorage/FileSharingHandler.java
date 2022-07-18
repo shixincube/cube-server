@@ -36,7 +36,6 @@ import cube.common.entity.VisitTrace;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
-import cube.util.FileSize;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import org.eclipse.jetty.http.HttpStatus;
@@ -46,7 +45,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -59,14 +57,6 @@ public class FileSharingHandler extends CrossDomainHandler {
     public final static String PATH = "/sharing/";
 
     private final String TITLE = "${title}";
-
-    private final String FILE_TYPE = "${file_type}";
-
-    private final String FILE_NAME = "${file_name}";
-
-    private final String FILE_SIZE = "${file_size}";
-
-    private final String FILE_URI_PATH = "${file_uri_path}";
 
     private final String STATE = "${state}";
 
@@ -100,7 +90,7 @@ public class FileSharingHandler extends CrossDomainHandler {
         else if (pathInfo.length() > 16) {
             // 显示页面
             String code = extractCode(pathInfo);
-            processPage(code, response);
+            processPage(code, request, response);
         }
         else {
             respond(response, HttpStatus.FORBIDDEN_403);
@@ -197,7 +187,7 @@ public class FileSharingHandler extends CrossDomainHandler {
         response.setStatus(HttpStatus.OK_200);
     }
 
-    private void processPage(String code, HttpServletResponse response) {
+    private void processPage(String code, HttpServletRequest request, HttpServletResponse response) {
         JSONObject data = new JSONObject();
         data.put("code", code);
         Packet packet = new Packet(FileStorageAction.GetSharingTag.name, data);
@@ -230,7 +220,7 @@ public class FileSharingHandler extends CrossDomainHandler {
             }
             else {
                 file = new File(this.fileRoot, "index.html");
-                contentLength = processIndexHtml(file, sharingTag, response);
+                contentLength = processIndexHtml(file, sharingTag, request, response);
             }
         }
 
@@ -338,36 +328,21 @@ public class FileSharingHandler extends CrossDomainHandler {
         return contentLength;
     }
 
-    private long processIndexHtml(File file, SharingTag sharingTag, HttpServletResponse response) {
+    private long processIndexHtml(File file, SharingTag sharingTag, HttpServletRequest request, HttpServletResponse response) {
         long contentLength = 0;
 
         BufferedReader reader = null;
         OutputStream os = null;
+
+        IndexTemplate template = new IndexTemplate(sharingTag, request.isSecure());
 
         try {
             os = response.getOutputStream();
             reader = new BufferedReader(new FileReader(file));
             String line = null;
             while (null != (line = reader.readLine())) {
-                if (line.contains(TITLE)) {
-                    line = line.replace(TITLE, sharingTag.getConfig().getFileLabel().getFileName());
-                }
-                else if (line.contains(FILE_TYPE)) {
-                    line = line.replace(FILE_TYPE, parseFileType(sharingTag.getConfig().getFileLabel().getFileType()));
-                }
-                else if (line.contains(FILE_NAME)) {
-                    line = line.replace(FILE_NAME, sharingTag.getConfig().getFileLabel().getFileName());
-                }
-                else if (line.contains(FILE_SIZE)) {
-                    FileSize size = FileUtils.scaleFileSize(sharingTag.getConfig().getFileLabel().getFileSize());
-                    line = line.replace(FILE_SIZE, size.toString());
-                }
-                else if (line.contains(FILE_URI_PATH)) {
-//                    String uri = FileHandler.PATH + "?sc=" + sharingTag.getCode();
-                    String filename = URLEncoder.encode(sharingTag.getConfig().getFileLabel().getFileName(), "UTF-8");
-                    String uri = FileHandler.PATH + filename + "?sc=" + sharingTag.getCode();
-                    line = line.replace(FILE_URI_PATH, uri);
-                }
+                // 匹配行
+                line = template.matchLine(line);
 
                 byte[] bytes = line.getBytes(StandardCharsets.UTF_8);
                 contentLength += bytes.length;
@@ -402,48 +377,6 @@ public class FileSharingHandler extends CrossDomainHandler {
         }
         else {
             return pathInfo.substring(start);
-        }
-    }
-
-    private String parseFileType(FileType fileType) {
-        if (FileUtils.isImageType(fileType)) {
-            return "image";
-        }
-        else if (FileUtils.isAudioType(fileType)) {
-            return "audio";
-        }
-        else if (FileUtils.isVideoType(fileType)) {
-            return "video";
-        }
-
-        switch (fileType) {
-            case AE:
-            case AI:
-            case APK:
-            case DMG:
-            case PDF:
-            case PSD:
-            case RAR:
-            case RP:
-            case TXT:
-            case XMAP:
-                return fileType.getPreferredExtension();
-            case DOC:
-            case DOCX:
-                return "doc";
-            case EXE:
-            case DLL:
-                return "exe";
-            case PPT:
-            case PPTX:
-                return "ppt";
-            case LOG:
-                return "txt";
-            case XLS:
-            case XLSX:
-                return "xls";
-            default:
-                return "unknown";
         }
     }
 }

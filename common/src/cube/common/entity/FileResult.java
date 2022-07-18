@@ -59,6 +59,7 @@ public class FileResult implements JSONable {
         this.streamName = json.getString("streamName");
         this.fileName = json.getString("fileName");
         this.fileSize = json.getLong("fileSize");
+        this.file = new File(this.fullPath);
     }
 
     @Override

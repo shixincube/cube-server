@@ -27,6 +27,7 @@
 package cube.dispatcher.filestorage;
 
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Base64;
 import cell.util.Utils;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
@@ -55,7 +56,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -228,10 +231,17 @@ public class FileHandler extends CrossDomainHandler {
         else {
             // Token Code
             String token = request.getParameter("token");
+            // Domain
+            String domain = request.getParameter("domain");
             // File Code
             String fileCode = request.getParameter("fc");
 
-            if (null == token || null == fileCode) {
+            if (null == token && null == domain) {
+                response.setStatus(HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
+            else if (null == fileCode) {
                 response.setStatus(HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
@@ -252,19 +262,36 @@ public class FileHandler extends CrossDomainHandler {
 
             JSONObject payload = new JSONObject();
             payload.put("fileCode", fileCode);
+            if (null != domain) {
+                domain = URLDecoder.decode(domain, "UTF-8");
+                domain = new String(Base64.decode(domain), StandardCharsets.UTF_8);
+                payload.put("domain", domain);
+            }
 
             Packet packet = new Packet(sn, FileStorageAction.GetFile.name, payload);
             ActionDialect packetDialect = packet.toDialect();
-            packetDialect.addParam("token", token);
 
-            ActionDialect dialect = this.performer.syncTransmit(token, FileStorageCellet.NAME, packetDialect);
-            if (null == dialect) {
-                this.respond(response, HttpStatus.FORBIDDEN_403, packet.toJSON());
-                this.complete();
-                return;
+            ActionDialect responseDialect = null;
+
+            if (null != token) {
+                packetDialect.addParam("token", token);
+                responseDialect = this.performer.syncTransmit(token, FileStorageCellet.NAME, packetDialect);
+                if (null == responseDialect) {
+                    this.respond(response, HttpStatus.FORBIDDEN_403, packet.toJSON());
+                    this.complete();
+                    return;
+                }
+            }
+            else {
+                responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
+                if (null == responseDialect) {
+                    this.respond(response, HttpStatus.FORBIDDEN_403, packet.toJSON());
+                    this.complete();
+                    return;
+                }
             }
 
-            Packet responsePacket = new Packet(dialect);
+            Packet responsePacket = new Packet(responseDialect);
 
             int stateCode = Packet.extractCode(responsePacket);
             if (stateCode != FileStorageStateCode.Ok.code) {

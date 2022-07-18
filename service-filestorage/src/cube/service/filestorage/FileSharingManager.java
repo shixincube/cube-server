@@ -53,6 +53,8 @@ public class FileSharingManager {
 
     private FileStorageService service;
 
+    private AuthService authService;
+
     private ConcurrentHashMap<String, SharingCodeDomain> codeDomainMap;
 
     public FileSharingManager(FileStorageService service) {
@@ -61,6 +63,7 @@ public class FileSharingManager {
 
     public void start() {
         this.codeDomainMap = new ConcurrentHashMap<>();
+        this.authService = (AuthService) this.service.getKernel().getModule(AuthService.NAME);
     }
 
     public void stop() {
@@ -197,8 +200,27 @@ public class FileSharingManager {
             return null;
         }
 
-        return this.service.getServiceStorage().listSharingTags(contact.getDomain().getName(),
+        List<SharingTag> list = this.service.getServiceStorage().listSharingTags(contact.getDomain().getName(),
                 contact.getId(), inExpiry, beginIndex, endIndex);
+
+        AuthDomain authDomain = this.authService.getAuthDomain(contact.getDomain().getName());
+
+        for (SharingTag tag : list) {
+            // 重置 URL 地址
+            tag.getConfig().getFileLabel().resetURLsAddress(authDomain.httpEndpoint.getHost(),
+                    authDomain.httpsEndpoint.getHost());
+
+            List<FileLabel> fileLabelList = tag.getPreviewList();
+            if (null != fileLabelList) {
+                for (FileLabel fileLabel : fileLabelList) {
+                    // 重置 URL 地址
+                    fileLabel.resetURLsAddress(authDomain.httpEndpoint.getHost(),
+                            authDomain.httpsEndpoint.getHost());
+                }
+            }
+        }
+
+        return list;
     }
 
     /**
