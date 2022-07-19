@@ -42,6 +42,8 @@ public class SharingTag extends Entity {
 
     private String code;
 
+    private Contact parent;
+
     private SharingTagConfig config;
 
     private long expiryDate;
@@ -57,6 +59,7 @@ public class SharingTag extends Entity {
     public SharingTag(SharingTagConfig config) {
         super(Utils.generateSerialNumber(), config.getDomain());
         this.config = config;
+        this.parent = config.getContact();
 
         StringBuilder buf = new StringBuilder();
         buf.append(config.getFileLabel().getFileCode());
@@ -80,6 +83,7 @@ public class SharingTag extends Entity {
         this.code = code;
         this.expiryDate = expiryDate;
         this.config = new SharingTagConfig(contact, device, fileLabel, duration, password, preview, download);
+        this.parent = this.config.getContact();
     }
 
     public SharingTag(JSONObject json) {
@@ -138,7 +142,7 @@ public class SharingTag extends Entity {
 
     public void setURLs(Endpoint http, Endpoint https) {
         this.httpURL = "http://" + http.getHost() + ":" + http.getPort() +
-                "/sharing/" + this.code;
+                "/sharing/" + this.code + "?p=";
         this.httpsURL = "https://" + https.getHost() + ":" + https.getPort() +
                 "/sharing/" + this.code;
     }

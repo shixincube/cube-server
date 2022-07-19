@@ -371,7 +371,12 @@ public class FileSharingHandler extends CrossDomainHandler {
 
     private String extractCode(String pathInfo) {
         int start = 1;
-        int end = pathInfo.substring(1).indexOf("/");
+        String path = pathInfo.substring(1);
+        int end = path.indexOf("/");
+        if (end < 0) {
+            end = path.indexOf("?");
+        }
+
         if (end > 0) {
             return pathInfo.substring(start, start + end);
         }

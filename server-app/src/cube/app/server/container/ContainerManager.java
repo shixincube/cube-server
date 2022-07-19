@@ -172,6 +172,7 @@ public class ContainerManager {
 
                 new LoginHandler(httpAllowOrigin, httpsAllowOrigin),
                 new LogoutHandler(httpAllowOrigin, httpsAllowOrigin),
+                new BindHandler(httpAllowOrigin, httpsAllowOrigin),
                 new AccountInfoHandler(httpAllowOrigin, httpsAllowOrigin),
                 new RegisterHandler(httpAllowOrigin, httpsAllowOrigin),
                 new CheckPhoneAvailableHandler(httpAllowOrigin, httpsAllowOrigin),
