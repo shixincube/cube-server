@@ -24,10 +24,21 @@
  * SOFTWARE.
  */
 
-package cube.app.server.applet.container;
+package cube.app.server.account;
+
+import java.io.File;
 
 /**
- *
+ * 验证码。
  */
-public class AuthCode2SessionHandler {
+public class Captcha {
+
+    public final String code;
+
+    public final File file;
+
+    public Captcha(String code, File file) {
+        this.code = code;
+        this.file = file;
+    }
 }

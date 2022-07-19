@@ -184,6 +184,7 @@ public class ContainerManager {
 
                 new NoticeHandler(httpAllowOrigin, httpsAllowOrigin),
                 new VersionHandler(httpAllowOrigin, httpsAllowOrigin),
+                new CaptchaHandler(httpAllowOrigin, httpsAllowOrigin),
 
                 new StopHandler(this.server, this),
                 new DefaultHandler()});

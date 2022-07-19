@@ -213,8 +213,13 @@ public class AccountStorage extends AbstractStorage {
     }
 
     public Account writeAccountWithAccountName(Long accountId, String accountName, String password, String nickname, String avatar) {
+        if (this.existsAccountName(accountName)) {
+            // 账号名重复
+            return null;
+        }
+
         long registration = System.currentTimeMillis();
-        String name = (null != nickname) ? nickname : "cube-" + Utils.randomString(10).toLowerCase();
+        String name = (null != nickname) ? nickname : "Cube-" + Utils.randomString(10).toLowerCase();
 
         boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[]{
                 new StorageField("id", LiteralBase.LONG, accountId),
@@ -237,8 +242,13 @@ public class AccountStorage extends AbstractStorage {
     }
 
     public Account writeAccountWithPhoneNumber(Long accountId, String phoneNumber, String password, String nickname, String avatar) {
+        if (this.existsPhoneNumber(phoneNumber)) {
+            // 手机号码重复
+            return null;
+        }
+
         long registration = System.currentTimeMillis();
-        String name = (null != nickname) ? nickname : "cube-" + Utils.randomString(10).toLowerCase();
+        String name = (null != nickname) ? nickname : "Cube-" + Utils.randomString(10).toLowerCase();
 
         boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[] {
                 new StorageField("id", LiteralBase.LONG, accountId),
@@ -268,7 +278,7 @@ public class AccountStorage extends AbstractStorage {
      * @return
      */
     public Account writeAccount(Account account) {
-        if (this.existsAccountId(account.id)) {
+        if (this.existsAccount(account.id, account.account, account.phone)) {
             return account;
         }
 
@@ -295,8 +305,33 @@ public class AccountStorage extends AbstractStorage {
         });
     }
 
+    public boolean existsAccount(long accountId, String accountName, String phoneNumber) {
+        List<StorageField[]> result = this.storage.executeQuery(TABLE_ACCOUNT, new StorageField[] {
+                new StorageField("state", LiteralBase.INT)
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", accountId),
+                Conditional.createOr(),
+                Conditional.createEqualTo("account", accountName),
+                Conditional.createOr(),
+                Conditional.createEqualTo("phone", phoneNumber),
+        });
+        return (!result.isEmpty());
+    }
+
     public boolean existsAccountId(Long accountId) {
         String sql = "SELECT `state` FROM " + TABLE_ACCOUNT + " WHERE `id`=" + accountId;
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        return (!result.isEmpty());
+    }
+
+    public boolean existsAccountName(String accountName) {
+        String sql = "SELECT `state` FROM " + TABLE_ACCOUNT + " WHERE `account`=" + accountName;
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        return (!result.isEmpty());
+    }
+
+    public boolean existsPhoneNumber(String phoneNumber) {
+        String sql = "SELECT `state` FROM " + TABLE_ACCOUNT + " WHERE `phone`=" + phoneNumber;
         List<StorageField[]> result = this.storage.executeQuery(sql);
         return (!result.isEmpty());
     }

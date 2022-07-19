@@ -26,6 +26,7 @@
 
 package cube.app.server.applet;
 
+import cube.util.ConfigUtils;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpMethod;
@@ -33,6 +34,9 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,6 +46,11 @@ public class WeChatApplet implements WeChatAppletAPI {
 
     private final static WeChatApplet instance = new WeChatApplet();
 
+    private String appletAppId;
+    private String appletAppSecret;
+
+    private AppletStorage storage;
+
     private WeChatApplet() {
     }
 
@@ -50,20 +59,37 @@ public class WeChatApplet implements WeChatAppletAPI {
     }
 
     public void start() {
+        this.loadConfig();
 
+        this.storage.open();
     }
 
     public void destroy() {
+        this.storage.close();
+    }
 
+    /**
+     * 使用 js code 查询对应的账号 ID 。
+     *
+     * @param jsCode
+     * @return
+     */
+    public long checkAccount(String jsCode) {
+        JSONObject sessionJson = code2session(jsCode);
+        if (null == sessionJson) {
+            return 0;
+        }
+
+        return this.storage.queryAccountIdByOpenId(sessionJson.getString("openid"));
     }
 
     @Override
-    public JSONObject code2session(String appId, String secret, String jsCode) {
+    public JSONObject code2session(String jsCode) {
         StringBuilder buf = new StringBuilder("https://api.weixin.qq.com/sns/jscode2session");
         buf.append("?appid=");
-        buf.append(appId);
+        buf.append(this.appletAppId);
         buf.append("&secret=");
-        buf.append(secret);
+        buf.append(this.appletAppSecret);
         buf.append("&js_code=");
         buf.append(jsCode);
         buf.append("&grant_type=authorization_code");
@@ -92,5 +118,34 @@ public class WeChatApplet implements WeChatAppletAPI {
         }
 
         return result;
+    }
+
+    private void loadConfig() {
+        String[] configFiles = new String[] {
+                "server_dev.properties",
+                "server.properties"
+        };
+
+        String configFile = null;
+        for (String filename : configFiles) {
+            File file = new File(filename);
+            if (file.exists()) {
+                configFile = filename;
+                break;
+            }
+        }
+
+        if (null != configFile) {
+            try {
+                Properties properties = ConfigUtils.readProperties(configFile);
+                this.storage = new AppletStorage(properties);
+
+                // 加载 Applet 信息
+                this.appletAppId = properties.getProperty("applet.appId");
+                this.appletAppSecret = properties.getProperty("applet.appSecret");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

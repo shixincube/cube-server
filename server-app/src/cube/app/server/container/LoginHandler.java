@@ -26,8 +26,8 @@
 
 package cube.app.server.container;
 
-import cube.app.server.account.StateCode;
 import cube.app.server.account.AccountManager;
+import cube.app.server.account.StateCode;
 import cube.app.server.account.Token;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
@@ -87,6 +87,10 @@ public class LoginHandler extends ContextHandler {
 
                     token = AccountManager.getInstance().login(tokenCode);
                 }
+                else if (data.has("jsCode")) {
+                    // 小程序登录
+                    token = AccountManager.getInstance().loginWithAppletJSCode(data.getString("jsCode"), device);
+                }
 
                 JSONObject responseData = new JSONObject();
 
@@ -99,7 +103,7 @@ public class LoginHandler extends ContextHandler {
                     responseData.put("creation", token.creation);
                     responseData.put("expire", token.expire);
 
-                    int maxAge = (int)(token.expire / 1000L);
+                    int maxAge = (int)(token.expire / 1000);
                     setCookie(response, COOKIE_NAME, token.code, maxAge);
                 }
 

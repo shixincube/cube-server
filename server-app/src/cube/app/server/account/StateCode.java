@@ -67,6 +67,11 @@ public enum StateCode {
     DataError(9),
 
     /**
+     * 无效验证码。
+     */
+    InvalidCaptcha(11),
+
+    /**
      * 其他状态。
      */
     Other(99);

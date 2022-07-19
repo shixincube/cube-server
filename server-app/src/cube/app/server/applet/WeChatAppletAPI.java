@@ -33,5 +33,5 @@ import org.json.JSONObject;
  */
 public interface WeChatAppletAPI {
 
-    JSONObject code2session(String appId, String secret, String jsCode);
+    JSONObject code2session(String jsCode);
 }

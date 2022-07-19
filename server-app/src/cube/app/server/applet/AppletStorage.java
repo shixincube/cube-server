@@ -26,8 +26,14 @@
 
 package cube.app.server.applet;
 
+import cell.core.talk.LiteralBase;
+import cell.util.log.Logger;
 import cube.app.server.util.AbstractStorage;
+import cube.core.Conditional;
+import cube.core.Constraint;
+import cube.core.StorageField;
 
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -35,15 +41,63 @@ import java.util.Properties;
  */
 public class AppletStorage extends AbstractStorage {
 
+    public final static String TABLE_APPLET_SESSION = "applet_session";
+
+    private final StorageField[] appletSessionFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("js_code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("openid", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("session_key", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("unionid", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("account_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("time", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
     public AppletStorage(Properties properties) {
         super("AppletStorage", properties);
     }
 
     public void open() {
+        this.storage.open();
 
+        if (!this.storage.exist(TABLE_APPLET_SESSION)) {
+            this.storage.executeCreate(TABLE_APPLET_SESSION, this.appletSessionFields);
+        }
+
+        Logger.i(this.getClass(), "Open");
     }
 
     public void close() {
+        this.storage.close();
 
+        Logger.i(this.getClass(), "Close");
+    }
+
+    public long queryAccountIdByOpenId(String openId) {
+        List<StorageField[]> result = this.storage.executeQuery(TABLE_APPLET_SESSION, new StorageField[] {
+                new StorageField("account_id", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("openid", openId)
+        });
+
+        if (result.isEmpty()) {
+            return 0;
+        }
+
+        return result.get(0)[0].getLong();
     }
 }

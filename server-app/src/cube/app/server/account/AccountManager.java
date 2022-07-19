@@ -28,13 +28,21 @@ package cube.app.server.account;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
+import com.google.code.kaptcha.impl.DefaultKaptcha;
+import com.google.code.kaptcha.util.Config;
+import cube.app.server.applet.WeChatApplet;
 import cube.app.server.util.LuckyNumbers;
 import cube.util.ConfigUtils;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 用户管理器。
@@ -63,9 +71,23 @@ public class AccountManager extends TimerTask {
 
     private AccountCache accountCache;
 
+    private ExecutorService executor;
+
+    /**
+     * 验证码队列。
+     */
+    private Queue<Captcha> captchaQueue;
+
+    /**
+     * 被激活使用的验证码。
+     */
+    private List<String> activeCaptchaList;
+
     private AccountManager() {
         this.onlineIdMap = new ConcurrentHashMap<>();
         this.onlineTokenMap = new ConcurrentHashMap<>();
+        this.captchaQueue = new ConcurrentLinkedQueue<>();
+        this.activeCaptchaList = new ArrayList<>();
     }
 
     public final static AccountManager getInstance() {
@@ -73,6 +95,8 @@ public class AccountManager extends TimerTask {
     }
 
     public void start() {
+        this.executor = Executors.newFixedThreadPool(2);
+
         this.loadConfig();
 
         this.initializing = true;
@@ -82,22 +106,28 @@ public class AccountManager extends TimerTask {
         this.timer = new Timer();
         this.timer.schedule(this, 30 * 1000, 60 * 1000);
 
-        (new Thread() {
+        this.executor.execute(new Runnable() {
             @Override
             public void run() {
-            if (null != accountStorage) {
-                accountStorage.open();
+                if (null != accountStorage) {
+                    accountStorage.open();
 
-                BuildInData buildInData = new BuildInData();
-                for (Account account : buildInData.accountList) {
-                    accountStorage.writeAccount(account);
+                    BuildInData buildInData = new BuildInData();
+                    for (Account account : buildInData.accountList) {
+                        accountStorage.writeAccount(account);
+                    }
+                    buildInData = null;
                 }
-                buildInData = null;
-            }
 
-            initializing = false;
+                // 预先创建验证码文件
+                for (int i = 0; i < 10; ++i) {
+                    Captcha captcha = createCaptcha();
+                    captchaQueue.offer(captcha);
+                }
+
+                initializing = false;
             }
-        }).start();
+        });
     }
 
     private void loadConfig() {
@@ -142,6 +172,13 @@ public class AccountManager extends TimerTask {
         if (null != this.accountStorage) {
             this.accountStorage.close();
         }
+
+        // 删除不使用的验证码图片
+        for (Captcha captcha : this.captchaQueue) {
+            captcha.file.delete();
+        }
+
+        this.executor.shutdown();
     }
 
     /**
@@ -255,14 +292,28 @@ public class AccountManager extends TimerTask {
     /**
      * 使用小程序 JS Code 进行登录。
      *
-     * @param appId
-     * @param secret
      * @param jsCode
      * @param device
      * @return
      */
-    public Token loginWithAppletJSCode(String appId, String secret, String jsCode, String device) {
-        return null;
+    public Token loginWithAppletJSCode(String jsCode, String device) {
+        long accountId = WeChatApplet.getInstance().checkAccount(jsCode);
+        if (accountId <= 0) {
+            return null;
+        }
+
+        Account account = getAccount(accountId);
+
+        long now = System.currentTimeMillis();
+        Token token = new Token(accountId, Utils.randomString(32), device,
+                now, now + TOKEN_DURATION);
+
+        // 写入令牌
+        token = this.accountStorage.writeToken(token);
+
+        this.addOnlineAccount(account, device, token);
+
+        return token;
     }
 
     /**
@@ -301,6 +352,29 @@ public class AccountManager extends TimerTask {
     }
 
     /**
+     * 注册账号。
+     *
+     * @param accountName
+     * @param phoneNumber
+     * @param password
+     * @param nickname
+     * @param avatar
+     * @return
+     */
+    public Account register(String accountName, String phoneNumber, String password, String nickname, String avatar) {
+        if (null == nickname || nickname.length() == 0) {
+            nickname = "Cube-" + Utils.randomString(8);
+        }
+
+        long accountId = this.useLuckyNumberId ? LuckyNumbers.make() :
+                (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
+        Account account = new Account(accountId, accountName, phoneNumber, password, nickname, avatar, Account.STATE_NORMAL);
+        account = this.accountStorage.writeAccount(account);
+
+        return account;
+    }
+
+    /**
      * 使用账号名进行注册。
      *
      * @param accountName
@@ -310,12 +384,14 @@ public class AccountManager extends TimerTask {
      * @return
      */
     public Account registerWithAccountName(String accountName, String password, String nickname, String avatar) {
-        Long accountId = this.useLuckyNumberId ? LuckyNumbers.make() : (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
+        Long accountId = this.useLuckyNumberId ? LuckyNumbers.make() :
+                (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
         while (this.accountStorage.existsAccountId(accountId)) {
             accountId = (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
         }
 
-        Account account = this.accountStorage.writeAccountWithAccountName(accountId, accountName, password, nickname, avatar);
+        Account account = this.accountStorage.writeAccountWithAccountName(accountId,
+                accountName, password, nickname, avatar);
         return account;
     }
 
@@ -327,14 +403,16 @@ public class AccountManager extends TimerTask {
      * @return
      */
     public Account registerWithPhoneNumber(String phoneNumber, String password, String nickname, String avatar) {
-        Long accountId = this.useLuckyNumberId ? LuckyNumbers.make() : (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
+        Long accountId = this.useLuckyNumberId ? LuckyNumbers.make() :
+                (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
         while (this.accountStorage.existsAccountId(accountId)) {
             accountId = (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
         }
 
         String avatarName = (null != avatar) ? avatar : "default";
 
-        Account account = this.accountStorage.writeAccountWithPhoneNumber(accountId, phoneNumber, password, nickname, avatarName);
+        Account account = this.accountStorage.writeAccountWithPhoneNumber(accountId, phoneNumber,
+                password, nickname, avatarName);
         return account;
     }
 
@@ -356,6 +434,108 @@ public class AccountManager extends TimerTask {
      */
     public Account searchAccountWithPhoneNumber(String phoneNumber) {
         return this.accountStorage.readAccountByPhoneNumber(phoneNumber);
+    }
+
+    /**
+     * 获取有效的验证码图片文件。
+     *
+     * @return
+     */
+    public File consumeCaptcha() {
+        if (this.captchaQueue.size() <= 3) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    while (captchaQueue.size() < 10) {
+                        captchaQueue.offer(createCaptcha());
+                    }
+                }
+            });
+        }
+
+        Captcha captcha = this.captchaQueue.poll();
+        if (null == captcha) {
+            return null;
+        }
+
+        synchronized (this.activeCaptchaList) {
+            this.activeCaptchaList.add(captcha.code);
+        }
+        return captcha.file;
+    }
+
+    /**
+     * 校验验证码。
+     *
+     * @param code
+     * @return
+     */
+    public boolean checkCaptchaCode(String code) {
+        synchronized (this.activeCaptchaList) {
+            for (int i = 0; i < this.activeCaptchaList.size(); ++i) {
+                String cc = this.activeCaptchaList.get(i);
+                if (cc.equalsIgnoreCase(code)) {
+                    this.activeCaptchaList.remove(i);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 创建验证码。
+     *
+     * @return
+     */
+    private Captcha createCaptcha() {
+        DefaultKaptcha dk = new DefaultKaptcha();
+        Properties properties = new Properties();
+
+        // 图片边框
+        properties.setProperty("kaptcha.border", "yes");
+        // 边框颜色
+        properties.setProperty("kaptcha.border.color", "110,110,110");
+        // 字体颜色
+        properties.setProperty("kaptcha.textproducer.font.color", "black");
+        // 背景颜色，渐变开始颜色
+        properties.setProperty("kaptcha.background.clear.from", "210,210,210");
+        // 背景颜色，渐变结束颜色
+        properties.setProperty("kaptcha.background.clear.to", "white");
+        // 图片宽
+        properties.setProperty("kaptcha.image.width", "140");
+        // 图片高
+        properties.setProperty("kaptcha.image.height", "31");
+        // 字体大小
+        properties.setProperty("kaptcha.textproducer.font.size", "30");
+        // Session key
+        properties.setProperty("kaptcha.session.key", "code");
+        // 验证码长度
+        properties.setProperty("kaptcha.textproducer.char.length", "4");
+        // 字体
+        properties.setProperty("kaptcha.textproducer.font.names", "宋体,楷体,微软雅黑");
+        // 加鱼眼效果
+        //properties.setProperty("kaptcha.obscurificator.impl", "com.google.code.kaptcha.impl.FishEyeGimpy");
+        // 加水纹效果
+        //properties.setProperty("kaptcha.obscurificator.impl", "com.google.code.kaptcha.impl.WaterRipple");
+        // 加阴影效果
+        properties.setProperty("kaptcha.obscurificator.impl", "com.google.code.kaptcha.impl.ShadowGimpy");
+        // 配置
+        Config config = new Config(properties);
+        dk.setConfig(config);
+
+        String text = Utils.randomString(4);
+        BufferedImage image = dk.createImage(text);
+
+        File output = new File("data/captcha_" + text + ".jpg");
+        try {
+            ImageIO.write(image, "jpg", output);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new Captcha(text, output);
     }
 
     /**
@@ -440,6 +620,12 @@ public class AccountManager extends TimerTask {
         return true;
     }
 
+    /**
+     * 获取账号。
+     *
+     * @param accountId
+     * @return
+     */
     public Account getAccount(Long accountId) {
         return this.accountCache.getAccount(accountId);
     }

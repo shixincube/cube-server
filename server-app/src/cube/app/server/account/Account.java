@@ -35,6 +35,8 @@ import org.json.JSONObject;
  */
 public class Account implements JSONable {
 
+    public final static int STATE_NORMAL = 0;
+
     public final long id;
 
     public final String account;
@@ -65,6 +67,7 @@ public class Account implements JSONable {
         this.name = name;
         this.avatar = avatar;
         this.state = state;
+        this.registration = this.timestamp;
     }
 
     @Override

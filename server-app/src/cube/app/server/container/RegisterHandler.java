@@ -37,7 +37,6 @@ import org.json.JSONObject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.swing.plaf.nimbus.State;
 import java.io.IOException;
 
 /**
@@ -65,6 +64,8 @@ public class RegisterHandler extends ContextHandler {
             String password = null;
             String nickname = null;
             String avatar = null;
+            String captcha = null;
+            String device = null;
 
             JSONObject data = this.readBodyAsJSONObject(request);
             if (data.has("account")) {
@@ -82,9 +83,42 @@ public class RegisterHandler extends ContextHandler {
             if (data.has("avatar")) {
                 avatar = data.getString("avatar");
             }
+            if (data.has("captcha")) {
+                captcha = data.getString("captcha");
+            }
+            if (data.has("device")) {
+                device = data.getString("device");
+            }
 
             JSONObject responseData = null;
-            if (null != accountName && null != password && null != nickname && null != avatar) {
+            if (null != device) {
+                if (device.equalsIgnoreCase("Web") && null != captcha) {
+                    // 校验验证码
+                    if (AccountManager.getInstance().checkCaptchaCode(captcha)) {
+                        // 验证码有效
+                        Account account = AccountManager.getInstance().register(accountName, phone, password, nickname, avatar);
+                        if (null != account) {
+                            responseData = new JSONObject();
+                            responseData.put("code", StateCode.Success.code);
+                            responseData.put("account", account.toCompactJSON());
+                        }
+                        else {
+                            responseData = new JSONObject();
+                            responseData.put("code", StateCode.InvalidAccount.code);
+                        }
+                    }
+                    else {
+                        // 无效验证码
+                        responseData = new JSONObject();
+                        responseData.put("code", StateCode.InvalidCaptcha.code);
+                    }
+                }
+                else {
+                    responseData = new JSONObject();
+                    responseData.put("code", StateCode.NotAllowed.code);
+                }
+            }
+            else if (null != accountName && null != password && null != nickname && null != avatar) {
                 Account account = AccountManager.getInstance().registerWithAccountName(accountName, password, nickname, avatar);
                 if (null != account) {
                     responseData = new JSONObject();

@@ -32,7 +32,7 @@ if [ $DIRLEN -eq 0 ]; then
 fi
 
 # Add on extra jar files to CLASSPATH
-CLASSPATH="$CLASSPATH":"$PRGDIR"/../deploy/bin/cell.jar:"$PRGDIR"/../build/cube-server-app-3.0.jar
+CLASSPATH="$CLASSPATH":"$PRGDIR"/../deploy/bin/cell.jar:"$PRGDIR"/libs/kaptcha-2.3.2.jar:"$PRGDIR"/../build/cube-server-app-3.0.jar
 # Scan libs path
 for file in ` ls "$PRGDIR"/../deploy/libs `
 do
