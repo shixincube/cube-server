@@ -26,6 +26,7 @@
 
 package cube.app.server.container;
 
+import cube.app.server.account.AccountManager;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
@@ -39,8 +40,6 @@ import java.io.IOException;
  * 账号登录。
  */
 public class BindHandler extends ContextHandler {
-
-    public final static String COOKIE_NAME = "CubeAppToken";
 
     public BindHandler(String httpOrigin, String httpsOrigin) {
         super("/account/bind/");
@@ -63,6 +62,9 @@ public class BindHandler extends ContextHandler {
             String device = data.has("device") ? data.getString("device") : null;
             String jsCode = data.has("jsCode") ? data.getString("jsCode") : null;
             String phone = data.has("phone") ? data.getString("phone") : null;
+            String account = data.has("account") ? data.getString("account") : null;
+
+            AccountManager.getInstance();
         }
     }
 }

@@ -420,6 +420,36 @@ public class AccountManager extends TimerTask {
     }
 
     /**
+     * 绑定小程序账号。
+     *
+     * @param jsCode
+     * @param phoneNumber
+     * @param accountName
+     * @param device
+     * @return
+     */
+    public Account bindAppletAccount(String jsCode, String phoneNumber, String accountName, String device) {
+        Account account = null;
+        if (null != phoneNumber) {
+            account = this.accountStorage.readAccountByPhoneNumber(phoneNumber);
+        }
+        else if (null != accountName) {
+            account = this.accountStorage.readAccountByAccountName(accountName);
+        }
+
+        if (null == account) {
+            // 账号不存在
+            return null;
+        }
+
+        if (WeChatApplet.getInstance().bind(jsCode, account, device)) {
+            return account;
+        }
+
+        return null;
+    }
+
+    /**
      * 搜索指定账号 ID 的账号。
      *
      * @param accountId

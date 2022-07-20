@@ -212,6 +212,23 @@ public class AccountStorage extends AbstractStorage {
         return account;
     }
 
+    public Account readAccountByAccountName(String accountName) {
+        String sql = "SELECT * FROM " + TABLE_ACCOUNT + " WHERE `account`='" + accountName + "'";
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> dataMap = StorageFields.get(result.get(0));
+        Account account = new Account(dataMap.get("id").getLong(), dataMap.get("account").getString(),
+                dataMap.get("phone").getString(), dataMap.get("password").getString(), dataMap.get("name").getString(),
+                dataMap.get("avatar").getString(), dataMap.get("state").getInt());
+        account.registration = dataMap.get("registration").getLong();
+        account.region = dataMap.get("region").getString();
+        account.department = dataMap.get("department").getString();
+        return account;
+    }
+
     public Account writeAccountWithAccountName(Long accountId, String accountName, String password, String nickname, String avatar) {
         if (this.existsAccountName(accountName)) {
             // 账号名重复

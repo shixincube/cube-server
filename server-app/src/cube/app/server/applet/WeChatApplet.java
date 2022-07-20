@@ -26,6 +26,7 @@
 
 package cube.app.server.applet;
 
+import cube.app.server.account.Account;
 import cube.util.ConfigUtils;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -81,6 +82,38 @@ public class WeChatApplet implements WeChatAppletAPI {
         }
 
         return this.storage.queryAccountIdByOpenId(sessionJson.getString("openid"));
+    }
+
+    /**
+     * 将 js code 对应的 Open ID 与指定账号进行绑定。
+     *
+     * @param jsCode
+     * @param account
+     * @param device
+     * @return
+     */
+    public boolean bind(String jsCode, Account account, String device) {
+        JSONObject sessionJson = code2session(jsCode);
+        if (null == sessionJson) {
+            return false;
+        }
+
+        long accountId = this.storage.queryAccountIdByOpenId(sessionJson.getString("openid"));
+        if (accountId > 0) {
+            // 已经有账号
+            if (account.id == accountId) {
+                // 账号一致
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        this.storage.writeAccountSession(account.id, device, sessionJson.getString("openid"),
+                sessionJson.getString("session_key"), sessionJson.getString("unionid"));
+
+        return true;
     }
 
     @Override

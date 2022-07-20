@@ -47,9 +47,6 @@ public class AppletStorage extends AbstractStorage {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
-            new StorageField("js_code", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
             new StorageField("openid", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -61,6 +58,9 @@ public class AppletStorage extends AbstractStorage {
             }),
             new StorageField("account_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("device", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             }),
             new StorageField("time", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
@@ -99,5 +99,16 @@ public class AppletStorage extends AbstractStorage {
         }
 
         return result.get(0)[0].getLong();
+    }
+
+    public void writeAccountSession(long accountId, String device, String openId, String sessionKey, String unionId) {
+        this.storage.executeInsert(TABLE_APPLET_SESSION, new StorageField[] {
+                new StorageField("openid", openId),
+                new StorageField("session_key", sessionKey),
+                new StorageField("unionid", unionId),
+                new StorageField("account_id", accountId),
+                new StorageField("device", device),
+                new StorageField("time", System.currentTimeMillis())
+        });
     }
 }
