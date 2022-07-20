@@ -62,16 +62,22 @@ public class IndexTemplate {
 
     private static final String FILE_URI_PATH = "${file_uri_path}";
 
+    private static final String SHARING_URL = "${sharing_url}";
+
     private final static String CSS_STYLE_VALUE_NONE = "none";
     private final static String CSS_STYLE_VALUE_BLOCK = "block";
+    private final static String CSS_STYLE_VALUE_INLINE_BLOCK = "inline-block";
 
     private SharingTag sharingTag;
 
     private boolean secure;
 
-    public IndexTemplate(SharingTag sharingTag, boolean secure) {
+    private String pageTraceString;
+
+    public IndexTemplate(SharingTag sharingTag, boolean secure, String pageTraceString) {
         this.sharingTag = sharingTag;
         this.secure = secure;
+        this.pageTraceString = pageTraceString;
     }
 
     public String matchLine(String input) {
@@ -90,7 +96,7 @@ public class IndexTemplate {
         }
         else if (line.contains(DOWNLOAD_TOGGLE)) {
             line = line.replace(DOWNLOAD_TOGGLE,
-                    sharingTag.getConfig().isDownloadAllowed() ? CSS_STYLE_VALUE_BLOCK : CSS_STYLE_VALUE_NONE);
+                    sharingTag.getConfig().isDownloadAllowed() ? CSS_STYLE_VALUE_INLINE_BLOCK : CSS_STYLE_VALUE_NONE);
         }
         else if (line.contains(FILE_TYPE)) {
             line = line.replace(FILE_TYPE, parseFileType(sharingTag.getConfig().getFileLabel().getFileType()));
@@ -109,6 +115,15 @@ public class IndexTemplate {
                 line = line.replace(FILE_URI_PATH, uri);
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+        else if (line.contains(SHARING_URL)) {
+            if (null != this.pageTraceString) {
+                line = line.replace(SHARING_URL, this.secure ? SharingTag.makeURLs(sharingTag, this.pageTraceString)[1]
+                        : SharingTag.makeURLs(sharingTag, this.pageTraceString)[0]);
+            }
+            else {
+                line = line.replace(SHARING_URL, this.secure ? sharingTag.getHttpsURL() : sharingTag.getHttpURL());
             }
         }
         else if (line.contains(PREVIEW_PAGES)) {

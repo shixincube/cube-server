@@ -8,6 +8,7 @@
 </head>
 
 <body>
+<div class="link"><input id="sharing_url" type="text" value="${sharing_url}" /></div>
 <div class="header" style="display:${preview_toggle};">
     <div class="title">${file_name}</div>
 </div>
@@ -32,9 +33,22 @@
     </div>
 </div>
 
-<div class="footer" style="display:${download_toggle};">
+<div class="footer">
     <div class="operation">
-        <button class="download" onclick="javascript:download('${file_uri_path}');">接收文件</button>
+        <div class="col" style="display:${download_toggle};">
+            <button class="btn" onclick="javascript:download('${file_uri_path}');">接收文件</button>
+        </div>
+        <div class="col-blank" style="display:${download_toggle};">
+        </div>
+        <div class="col">
+            <button class="btn" onclick="javascript:copy();">复制链接</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast">
+    <div class="toast-content">
+        <div>分享链接已复制到剪贴板</div>
     </div>
 </div>
 

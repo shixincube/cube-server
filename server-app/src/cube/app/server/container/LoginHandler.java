@@ -29,6 +29,7 @@ package cube.app.server.container;
 import cube.app.server.account.AccountManager;
 import cube.app.server.account.StateCode;
 import cube.app.server.account.Token;
+import cube.common.entity.Trace;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -45,7 +46,8 @@ import java.io.IOException;
  */
 public class LoginHandler extends ContextHandler {
 
-    public final static String COOKIE_NAME = "CubeAppToken";
+    private final static String COOKIE_NAME_TOKEN = "CubeAppToken";
+    private final static String COOKIE_NAME_TRACE = "CubeTrace";
 
     public LoginHandler(String httpOrigin, String httpsOrigin) {
         super("/account/login/");
@@ -98,13 +100,17 @@ public class LoginHandler extends ContextHandler {
                     responseData.put("code", StateCode.InvalidAccount.code);
                 }
                 else {
+                    String trace = (new Trace(token.accountId)).toString();
+
                     responseData.put("code", StateCode.Success.code);
                     responseData.put("token", token.code);
+                    responseData.put("trace", trace);
                     responseData.put("creation", token.creation);
                     responseData.put("expire", token.expire);
 
                     int maxAge = (int)(token.expire / 1000);
-                    setCookie(response, COOKIE_NAME, token.code, maxAge);
+                    setCookie(response, COOKIE_NAME_TOKEN, token.code, maxAge);
+                    setCookie(response, COOKIE_NAME_TRACE, trace, maxAge);
                 }
 
                 // 应答
@@ -120,7 +126,7 @@ public class LoginHandler extends ContextHandler {
 
                 String tokenCode = null;
                 for (Cookie cookie : request.getCookies()) {
-                    if (COOKIE_NAME.equals(cookie.getName())) {
+                    if (COOKIE_NAME_TOKEN.equals(cookie.getName())) {
                         tokenCode = cookie.getValue().trim();
                         break;
                     }
@@ -135,12 +141,16 @@ public class LoginHandler extends ContextHandler {
                     responseData.put("token", tokenCode);
 
                     // 作废 Cookie
-                    setCookie(response, COOKIE_NAME, "?", 1);
+                    setCookie(response, COOKIE_NAME_TOKEN, "?", 1);
+                    setCookie(response, COOKIE_NAME_TRACE, "?", 1);
                 }
                 else {
+                    String trace = (new Trace(token.accountId)).toString();
+
                     responseData = new JSONObject();
                     responseData.put("code", StateCode.Success.code);
                     responseData.put("token", token.code);
+                    responseData.put("trace", trace);
                     responseData.put("creation", token.creation);
                     responseData.put("expire", token.expire);
                 }

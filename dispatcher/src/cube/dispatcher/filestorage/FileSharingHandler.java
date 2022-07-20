@@ -42,6 +42,7 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
@@ -53,6 +54,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * 文件分享句柄。
  */
 public class FileSharingHandler extends CrossDomainHandler {
+
+    private final static boolean CACHE_FILE = true;
 
     public final static String PATH = "/sharing/";
 
@@ -73,7 +76,9 @@ public class FileSharingHandler extends CrossDomainHandler {
     public FileSharingHandler(Performer performer) {
         super();
         this.performer = performer;
-        this.fileCache = new ConcurrentHashMap<>();
+        if (CACHE_FILE) {
+            this.fileCache = new ConcurrentHashMap<>();
+        }
     }
 
     @Override
@@ -123,7 +128,7 @@ public class FileSharingHandler extends CrossDomainHandler {
         OutputStream os = null;
         long contentLength = 0;
 
-        FlexibleByteBuffer cache = this.fileCache.get(filename);
+        FlexibleByteBuffer cache = CACHE_FILE ? this.fileCache.get(filename) : null;
         if (null != cache) {
             // 从缓存加载数据
             try {
@@ -161,7 +166,10 @@ public class FileSharingHandler extends CrossDomainHandler {
 
                 // 整理
                 cache.flip();
-                this.fileCache.put(filename, cache);
+
+                if (null != this.fileCache) {
+                    this.fileCache.put(filename, cache);
+                }
             } catch (IOException e) {
                 Logger.w(this.getClass(), "#respondFile", e);
             } finally {
@@ -331,11 +339,22 @@ public class FileSharingHandler extends CrossDomainHandler {
 
     private long processIndexHtml(File file, SharingTag sharingTag, HttpServletRequest request, HttpServletResponse response) {
         long contentLength = 0;
+        String pageTraceString = null;
+
+        Cookie[] cookies = request.getCookies();
+        if (null != cookies && cookies.length > 0) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equalsIgnoreCase("CubeTrace")) {
+                    pageTraceString = cookie.getValue().trim();
+                    break;
+                }
+            }
+        }
 
         BufferedReader reader = null;
         OutputStream os = null;
 
-        IndexTemplate template = new IndexTemplate(sharingTag, request.isSecure());
+        IndexTemplate template = new IndexTemplate(sharingTag, request.isSecure(), pageTraceString);
 
         try {
             os = response.getOutputStream();

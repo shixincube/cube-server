@@ -44,7 +44,9 @@ window.onload = function () {
 }
 
 window.onresize = function () {
-    resizePreview();
+    setTimeout(function() {
+        resizePreview();
+    }, 1000);
 }
 
 function resizePreview() {
@@ -79,6 +81,34 @@ function download(url) {
     };
 
     submit(data);
+}
+
+function copy() {
+    var el = document.getElementById('sharing_url');
+    el.focus();
+    el.select();
+    document.execCommand('copy');
+
+    showToast();
+}
+
+function showToast() {
+    var toast = document.getElementById('toast');
+    toast.style.display = 'block';
+    toast.style.animation = 'toast-show-anim 0.5s';
+
+    setTimeout(function () {
+        hideToast();
+    }, 3000);
+}
+
+function hideToast() {
+    var toast = document.getElementById('toast');
+    toast.style.animation = 'toast-hide-anim 0.5s';
+
+    setTimeout(function () {
+        toast.style.display = 'none';
+    }, 500);
 }
 
 function submit(data) {

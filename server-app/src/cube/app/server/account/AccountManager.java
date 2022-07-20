@@ -55,7 +55,10 @@ public class AccountManager extends TimerTask {
 
     private final static long TOKEN_DURATION = 10 * 365 * 24 * 3600 * 1000L;
 
-    private final boolean useLuckyNumberId = true;
+    /**
+     * 是否优先生成幸运号作为 ID 。
+     */
+    private final boolean useLuckyNumberId = false;
 
     private boolean initializing = false;
 

@@ -50,13 +50,14 @@ public class SharingTag extends Entity {
 
     private long expiryDate;
 
+    private String httpHostInfo;
+    private String httpsHostInfo;
+
     private String httpURL;
 
     private String httpsURL;
 
     private List<FileLabel> previewList;
-
-    private List<VisitTrace> visitTraceList;
 
     public SharingTag(SharingTagConfig config) {
         super(Utils.generateSerialNumber(), config.getDomain());
@@ -108,19 +109,18 @@ public class SharingTag extends Entity {
             this.httpsURL = json.getString("httpsURL");
         }
 
+        if (json.has("httpHostInfo")) {
+            this.httpHostInfo = json.getString("httpHostInfo");
+        }
+        if (json.has("httpsHostInfo")) {
+            this.httpsHostInfo = json.getString("httpsHostInfo");
+        }
+
         if (json.has("previewList")) {
             this.previewList = new ArrayList<>();
             JSONArray array = json.getJSONArray("previewList");
             for (int i = 0; i < array.length(); ++i) {
                 this.previewList.add(new FileLabel(array.getJSONObject(i)));
-            }
-        }
-
-        if (json.has("visitTraceList")) {
-            this.visitTraceList = new ArrayList<>();
-            JSONArray array = json.getJSONArray("visitTraceList");
-            for (int i = 0; i < array.length(); ++i) {
-                this.visitTraceList.add(new VisitTrace(array.getJSONObject(i)));
             }
         }
 
@@ -149,22 +149,25 @@ public class SharingTag extends Entity {
         this.config.setContact(contact);
     }
 
-    public void setHttpURL(String url) {
-        this.httpURL = url;
-    }
-
-    public void setHttpsURL(String url) {
-        this.httpsURL = url;
-    }
-
     public void setURLs(Endpoint http, Endpoint https) {
+        this.httpHostInfo = http.getHost() + ":" + http.getPort();
+        this.httpsHostInfo = https.getHost() + ":" + https.getPort();
+
         String parameter = "?s=" + this.sharer.toString() + "&p=" + this.parent.toString();
 
-        this.httpURL = "http://" + http.getHost() + ":" + http.getPort() +
+        this.httpURL = "http://" + this.httpHostInfo +
                 "/sharing/" + this.code + parameter;
 
-        this.httpsURL = "https://" + https.getHost() + ":" + https.getPort() +
+        this.httpsURL = "https://" + this.httpsHostInfo +
                 "/sharing/" + this.code + parameter;
+    }
+
+    public String getHttpURL() {
+        return this.httpURL;
+    }
+
+    public String getHttpsURL() {
+        return this.httpsURL;
     }
 
     public void setPreviewList(List<FileLabel> list) {
@@ -184,14 +187,6 @@ public class SharingTag extends Entity {
         return this.previewList;
     }
 
-    public List<VisitTrace> getVisitTraceList() {
-        return this.visitTraceList;
-    }
-
-    public void addVisitTrace(VisitTrace visitTrace) {
-        this.visitTraceList.add(visitTrace);
-    }
-
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
@@ -204,6 +199,13 @@ public class SharingTag extends Entity {
         }
         if (null != this.httpsURL) {
             json.put("httpsURL", this.httpsURL);
+        }
+
+        if (null != this.httpHostInfo) {
+            json.put("httpHostInfo", this.httpHostInfo);
+        }
+        if (null != this.httpsHostInfo) {
+            json.put("httpsHostInfo", this.httpsHostInfo);
         }
 
         if (null != this.sharer) {
@@ -219,14 +221,6 @@ public class SharingTag extends Entity {
                 array.put(fileLabel.toJSON());
             }
             json.put("previewList", array);
-        }
-
-        if (null != this.visitTraceList) {
-            JSONArray array = new JSONArray();
-            for (VisitTrace visitTrace : this.visitTraceList) {
-                array.put(visitTrace.toJSON());
-            }
-            json.put("visitTraceList", array);
         }
 
         return json;
@@ -246,6 +240,13 @@ public class SharingTag extends Entity {
             json.put("httpsURL", this.httpsURL);
         }
 
+        if (null != this.httpHostInfo) {
+            json.put("httpHostInfo", this.httpHostInfo);
+        }
+        if (null != this.httpsHostInfo) {
+            json.put("httpsHostInfo", this.httpsHostInfo);
+        }
+
         if (null != this.sharer) {
             json.put("sharer", this.sharer.toJSON());
         }
@@ -262,5 +263,13 @@ public class SharingTag extends Entity {
         }
 
         return json;
+    }
+
+    public static String[] makeURLs(SharingTag tag, String sharer) {
+        String parameter = "?s=" + sharer + "&p=" + tag.sharer.toString();
+
+        String httpURL = "http://" + tag.httpHostInfo + "/sharing/" + tag.code + parameter;
+        String httpsURL = "https://" + tag.httpsHostInfo + "/sharing/" + tag.code + parameter;
+        return new String[]{ httpURL, httpsURL };
     }
 }
