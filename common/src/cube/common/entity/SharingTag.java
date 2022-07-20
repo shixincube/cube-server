@@ -42,7 +42,9 @@ public class SharingTag extends Entity {
 
     private String code;
 
-    private Contact parent;
+    private Trace sharer;
+
+    private Trace parent;
 
     private SharingTagConfig config;
 
@@ -59,7 +61,9 @@ public class SharingTag extends Entity {
     public SharingTag(SharingTagConfig config) {
         super(Utils.generateSerialNumber(), config.getDomain());
         this.config = config;
-        this.parent = config.getContact();
+
+        this.sharer = new Trace(config.getContact());
+        this.parent = new Trace(config.getContact());
 
         StringBuilder buf = new StringBuilder();
         buf.append(config.getFileLabel().getFileCode());
@@ -83,7 +87,9 @@ public class SharingTag extends Entity {
         this.code = code;
         this.expiryDate = expiryDate;
         this.config = new SharingTagConfig(contact, device, fileLabel, duration, password, preview, download);
-        this.parent = this.config.getContact();
+
+        this.sharer = new Trace(this.config.getContact());
+        this.parent = new Trace(this.config.getContact());
     }
 
     public SharingTag(JSONObject json) {
@@ -91,6 +97,9 @@ public class SharingTag extends Entity {
         this.code = json.getString("code");
         this.config = new SharingTagConfig(json.getJSONObject("config"));
         this.expiryDate = json.getLong("expiryDate");
+
+        this.sharer = new Trace(this.config.getContact());
+        this.parent = new Trace(this.config.getContact());
 
         if (json.has("httpURL")) {
             this.httpURL = json.getString("httpURL");
@@ -113,6 +122,14 @@ public class SharingTag extends Entity {
             for (int i = 0; i < array.length(); ++i) {
                 this.visitTraceList.add(new VisitTrace(array.getJSONObject(i)));
             }
+        }
+
+        if (json.has("sharer")) {
+            this.sharer = new Trace(json.getJSONObject("sharer"));
+        }
+
+        if (json.has("parent")) {
+            this.parent = new Trace(json.getJSONObject("parent"));
         }
     }
 
