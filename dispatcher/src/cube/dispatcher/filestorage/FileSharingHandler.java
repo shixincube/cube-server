@@ -87,7 +87,7 @@ public class FileSharingHandler extends CrossDomainHandler {
             String filename = pathInfo.substring(1);
             respondFile(response, filename);
         }
-        else if (pathInfo.length() > 16) {
+        else if (pathInfo.length() > 32) {
             // 显示页面
             String code = extractCode(pathInfo);
             processPage(code, request, response);
@@ -190,6 +190,7 @@ public class FileSharingHandler extends CrossDomainHandler {
     private void processPage(String code, HttpServletRequest request, HttpServletResponse response) {
         JSONObject data = new JSONObject();
         data.put("code", code);
+        data.put("refresh", true);
         Packet packet = new Packet(FileStorageAction.GetSharingTag.name, data);
         ActionDialect result = this.performer.syncTransmit(FileStorageCellet.NAME, packet.toDialect());
         if (null == result) {

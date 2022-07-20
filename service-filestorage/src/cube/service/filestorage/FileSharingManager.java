@@ -33,7 +33,6 @@ import cube.core.AbstractModule;
 import cube.file.FileProcessResult;
 import cube.file.operation.OfficeConvertToOperation;
 import cube.service.auth.AuthService;
-import cube.util.FileType;
 import cube.util.FileUtils;
 import org.json.JSONObject;
 
@@ -157,7 +156,7 @@ public class FileSharingManager {
         return fileLabels;
     }
 
-    public SharingTag getSharingTag(String code, boolean urls) {
+    public SharingTag getSharingTag(String code, boolean refresh) {
         SharingCodeDomain codeDomain = this.getDomainByCode(code);
         if (null == codeDomain) {
             return null;
@@ -165,10 +164,24 @@ public class FileSharingManager {
 
         SharingTag sharingTag = this.service.getServiceStorage().readSharingTag(codeDomain.domain, code);
 
-        if (urls) {
+        if (refresh) {
             AuthService authService = (AuthService) this.service.getKernel().getModule(AuthService.NAME);
             AuthDomain authDomain = authService.getAuthDomain(codeDomain.domain);
+            // 设置标签的 URLs
             sharingTag.setURLs(authDomain.httpEndpoint, authDomain.httpsEndpoint);
+
+            // 重置 URL 地址
+            sharingTag.getConfig().getFileLabel().resetURLsAddress(authDomain.httpEndpoint.getHost(),
+                    authDomain.httpsEndpoint.getHost());
+
+            List<FileLabel> fileLabelList = sharingTag.getPreviewList();
+            if (null != fileLabelList) {
+                for (FileLabel fileLabel : fileLabelList) {
+                    // 重置 URL 地址
+                    fileLabel.resetURLsAddress(authDomain.httpEndpoint.getHost(),
+                            authDomain.httpsEndpoint.getHost());
+                }
+            }
         }
 
         return sharingTag;
@@ -201,6 +214,8 @@ public class FileSharingManager {
         AuthDomain authDomain = this.authService.getAuthDomain(contact.getDomain().getName());
 
         for (SharingTag tag : list) {
+            tag.setURLs(authDomain.httpEndpoint, authDomain.httpsEndpoint);
+
             // 重置 URL 地址
             tag.getConfig().getFileLabel().resetURLsAddress(authDomain.httpEndpoint.getHost(),
                     authDomain.httpsEndpoint.getHost());
@@ -279,7 +294,12 @@ public class FileSharingManager {
 
     private String extractCode(String url) {
         int start = url.indexOf("sharing/");
-        int end = url.substring(start + 8).indexOf("/");
+        String param = url.substring(start + 8);
+        int end = param.indexOf("/");
+        if (end < 0) {
+            end = param.indexOf("?");
+        }
+
         if (end > 0) {
             return url.substring(start + 8, start + 8 + end);
         }

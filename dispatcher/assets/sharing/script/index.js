@@ -1,8 +1,22 @@
 // index.js
 
 window.sn = Date.now();
+var sharer = '';
+var parent = '';
 
 window.onload = function () {
+    var query = window.location.search.substring(1);
+    var vars = query.split("&");
+    for (var i = 0; i < vars.length; ++i) {
+        var pair = vars[i].split("=");
+        if (pair[0] == 's') {
+            sharer = pair[1];
+        }
+        else if (pair[0] == 'p') {
+            parent = pair[1];
+        }
+    }
+
     const data = {
         "domain": document.domain,
         "url": document.URL,
@@ -18,7 +32,9 @@ window.onload = function () {
         "userAgent": navigator.userAgent,
         "event": "View",
         "eventParam": {
-            "sn": window.sn
+            "sn": window.sn,
+            "sharer": sharer,
+            "parent": parent
         }
     };
 
@@ -56,7 +72,9 @@ function download(url) {
         "eventTag": "button",
         "eventParam": {
             "sn": window.sn,
-            "url": url
+            "url": url,
+            "sharer": sharer,
+            "parent": parent
         }
     };
 

@@ -158,10 +158,13 @@ public class SharingTag extends Entity {
     }
 
     public void setURLs(Endpoint http, Endpoint https) {
+        String parameter = "?s=" + this.sharer.toString() + "&p=" + this.parent.toString();
+
         this.httpURL = "http://" + http.getHost() + ":" + http.getPort() +
-                "/sharing/" + this.code + "?p=";
+                "/sharing/" + this.code + parameter;
+
         this.httpsURL = "https://" + https.getHost() + ":" + https.getPort() +
-                "/sharing/" + this.code;
+                "/sharing/" + this.code + parameter;
     }
 
     public void setPreviewList(List<FileLabel> list) {
@@ -203,6 +206,13 @@ public class SharingTag extends Entity {
             json.put("httpsURL", this.httpsURL);
         }
 
+        if (null != this.sharer) {
+            json.put("sharer", this.sharer.toJSON());
+        }
+        if (null != this.parent) {
+            json.put("parent", this.parent.toJSON());
+        }
+
         if (null != this.previewList) {
             JSONArray array = new JSONArray();
             for (FileLabel fileLabel : this.previewList) {
@@ -234,6 +244,13 @@ public class SharingTag extends Entity {
         }
         if (null != this.httpsURL) {
             json.put("httpsURL", this.httpsURL);
+        }
+
+        if (null != this.sharer) {
+            json.put("sharer", this.sharer.toJSON());
+        }
+        if (null != this.parent) {
+            json.put("parent", this.parent.toJSON());
         }
 
         if (null != this.previewList) {

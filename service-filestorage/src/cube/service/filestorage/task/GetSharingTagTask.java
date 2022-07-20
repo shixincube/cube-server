@@ -55,10 +55,10 @@ public class GetSharingTagTask extends ServiceTask {
 
         // 读取参数
         String sharingCode = packet.data.getString("code");
-        boolean urls = packet.data.has("urls") && packet.data.getBoolean("urls");
+        boolean refresh = packet.data.has("refresh") && packet.data.getBoolean("refresh");
 
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-        SharingTag sharingTag = service.getSharingManager().getSharingTag(sharingCode, urls);
+        SharingTag sharingTag = service.getSharingManager().getSharingTag(sharingCode, refresh);
         if (null == sharingTag) {
             // 发生错误
             this.cellet.speak(this.talkContext,

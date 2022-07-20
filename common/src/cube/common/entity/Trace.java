@@ -77,6 +77,7 @@ public class Trace implements JSONable {
         else {
             json.put("contactId", this.contactId);
         }
+        json.put("string", this.toString());
         return json;
     }
 

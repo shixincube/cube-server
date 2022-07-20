@@ -228,6 +228,12 @@ public class ServiceStorage implements Storagable {
             }),
             new StorageField("event_param", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
+            }),
+            new StorageField("sharer", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            new StorageField("parent", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
             })
     };
 
@@ -1122,7 +1128,9 @@ public class ServiceStorage implements Storagable {
                     new StorageField("event", visitTrace.event),
                     new StorageField("event_tag", visitTrace.eventTag),
                     new StorageField("event_param", (null != visitTrace.eventParam) ?
-                            visitTrace.eventParam.toString() : null)
+                            visitTrace.eventParam.toString() : null),
+                    new StorageField("sharer", visitTrace.getSharerId()),
+                    new StorageField("parent", visitTrace.getParentId())
             });
         });
     }

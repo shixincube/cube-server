@@ -190,6 +190,32 @@ public class VisitTrace implements JSONable {
         return json;
     }
 
+    public long getSharerId() {
+        if (null != this.eventParam) {
+            String idString = this.eventParam.getString("sharer");
+            try {
+                return Trace.parseString(idString);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return 0;
+    }
+
+    public long getParentId() {
+        if (null != this.eventParam) {
+            String idString = this.eventParam.getString("parent");
+            try {
+                return Trace.parseString(idString);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return 0;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
