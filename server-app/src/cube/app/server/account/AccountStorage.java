@@ -52,6 +52,9 @@ public class AccountStorage extends AbstractStorage {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY
             }),
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("account", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -169,8 +172,9 @@ public class AccountStorage extends AbstractStorage {
         }
 
         Map<String, StorageField> dataMap = StorageFields.get(result.get(0));
-        Account account = new Account(dataMap.get("id").getLong(), dataMap.get("account").getString(),
-                dataMap.get("phone").getString(), dataMap.get("password").getString(), dataMap.get("name").getString(),
+        Account account = new Account(dataMap.get("id").getLong(), dataMap.get("domain").getString(),
+                dataMap.get("account").getString(), dataMap.get("phone").getString(),
+                dataMap.get("password").getString(), dataMap.get("name").getString(),
                 dataMap.get("avatar").getString(), dataMap.get("state").getInt());
         account.registration = dataMap.get("registration").getLong();
         account.region = dataMap.get("region").getString();
@@ -179,15 +183,17 @@ public class AccountStorage extends AbstractStorage {
     }
 
     public Account readAccount(String accountName, String password) {
-        String sql = "SELECT * FROM " + TABLE_ACCOUNT + " WHERE `account`='" + accountName + "' AND `password`='" + password + "'";
+        String sql = "SELECT * FROM " + TABLE_ACCOUNT +
+                " WHERE `account`='" + accountName + "' AND `password`='" + password.toLowerCase() + "'";
         List<StorageField[]> result = this.storage.executeQuery(sql);
         if (result.isEmpty()) {
             return null;
         }
 
         Map<String, StorageField> dataMap = StorageFields.get(result.get(0));
-        Account account = new Account(dataMap.get("id").getLong(), dataMap.get("account").getString(),
-                dataMap.get("phone").getString(), dataMap.get("password").getString(), dataMap.get("name").getString(),
+        Account account = new Account(dataMap.get("id").getLong(), dataMap.get("domain").getString(),
+                dataMap.get("account").getString(), dataMap.get("phone").getString(),
+                dataMap.get("password").getString(), dataMap.get("name").getString(),
                 dataMap.get("avatar").getString(), dataMap.get("state").getInt());
         account.registration = dataMap.get("registration").getLong();
         account.region = dataMap.get("region").getString();
@@ -203,8 +209,9 @@ public class AccountStorage extends AbstractStorage {
         }
 
         Map<String, StorageField> dataMap = StorageFields.get(result.get(0));
-        Account account = new Account(dataMap.get("id").getLong(), dataMap.get("account").getString(),
-                dataMap.get("phone").getString(), dataMap.get("password").getString(), dataMap.get("name").getString(),
+        Account account = new Account(dataMap.get("id").getLong(), dataMap.get("domain").getString(),
+                dataMap.get("account").getString(), dataMap.get("phone").getString(),
+                dataMap.get("password").getString(), dataMap.get("name").getString(),
                 dataMap.get("avatar").getString(), dataMap.get("state").getInt());
         account.registration = dataMap.get("registration").getLong();
         account.region = dataMap.get("region").getString();
@@ -220,8 +227,9 @@ public class AccountStorage extends AbstractStorage {
         }
 
         Map<String, StorageField> dataMap = StorageFields.get(result.get(0));
-        Account account = new Account(dataMap.get("id").getLong(), dataMap.get("account").getString(),
-                dataMap.get("phone").getString(), dataMap.get("password").getString(), dataMap.get("name").getString(),
+        Account account = new Account(dataMap.get("id").getLong(), dataMap.get("domain").getString(),
+                dataMap.get("account").getString(), dataMap.get("phone").getString(),
+                dataMap.get("password").getString(), dataMap.get("name").getString(),
                 dataMap.get("avatar").getString(), dataMap.get("state").getInt());
         account.registration = dataMap.get("registration").getLong();
         account.region = dataMap.get("region").getString();
@@ -229,7 +237,8 @@ public class AccountStorage extends AbstractStorage {
         return account;
     }
 
-    public Account writeAccountWithAccountName(Long accountId, String accountName, String password, String nickname, String avatar) {
+    public Account writeAccountWithAccountName(long accountId, String domain, String accountName, String password,
+                                               String nickname, String avatar) {
         if (this.existsAccountName(accountName)) {
             // 账号名重复
             return null;
@@ -240,8 +249,9 @@ public class AccountStorage extends AbstractStorage {
 
         boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[]{
                 new StorageField("id", LiteralBase.LONG, accountId),
+                new StorageField("domain", LiteralBase.STRING, domain),
                 new StorageField("account", LiteralBase.STRING, accountName),
-                new StorageField("password", LiteralBase.STRING, password),
+                new StorageField("password", LiteralBase.STRING, password.toLowerCase()),
                 new StorageField("name", LiteralBase.STRING, name),
                 new StorageField("avatar", LiteralBase.STRING, avatar),
                 new StorageField("registration", LiteralBase.LONG, registration)
@@ -251,14 +261,15 @@ public class AccountStorage extends AbstractStorage {
             return null;
         }
 
-        Account account = new Account(accountId, accountName, "", password, nickname, avatar, 0);
+        Account account = new Account(accountId, domain, accountName, "", password, nickname, avatar, 0);
         account.registration = registration;
         account.region = "--";
         account.department = "--";
         return account;
     }
 
-    public Account writeAccountWithPhoneNumber(Long accountId, String phoneNumber, String password, String nickname, String avatar) {
+    public Account writeAccountWithPhoneNumber(long accountId, String domain, String phoneNumber, String password,
+                                               String nickname, String avatar) {
         if (this.existsPhoneNumber(phoneNumber)) {
             // 手机号码重复
             return null;
@@ -269,9 +280,10 @@ public class AccountStorage extends AbstractStorage {
 
         boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[] {
                 new StorageField("id", LiteralBase.LONG, accountId),
+                new StorageField("domain", LiteralBase.STRING, domain),
                 new StorageField("account", LiteralBase.STRING, phoneNumber),
                 new StorageField("phone", LiteralBase.STRING, phoneNumber),
-                new StorageField("password", LiteralBase.STRING, password),
+                new StorageField("password", LiteralBase.STRING, password.toLowerCase()),
                 new StorageField("name", LiteralBase.STRING, name),
                 new StorageField("avatar", LiteralBase.STRING, avatar),
                 new StorageField("registration", LiteralBase.LONG, registration)
@@ -281,7 +293,7 @@ public class AccountStorage extends AbstractStorage {
             return null;
         }
 
-        Account account = new Account(accountId, phoneNumber, phoneNumber, password, nickname, avatar, 0);
+        Account account = new Account(accountId, domain, phoneNumber, phoneNumber, password, nickname, avatar, 0);
         account.registration = registration;
         account.region = "--";
         account.department = "--";
@@ -301,9 +313,10 @@ public class AccountStorage extends AbstractStorage {
 
         boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[] {
                 new StorageField("id", account.id),
+                new StorageField("domain", account.domain),
                 new StorageField("account", account.account),
                 new StorageField("phone", account.phone),
-                new StorageField("password", account.password),
+                new StorageField("password", account.password.toLowerCase()),
                 new StorageField("name", account.name),
                 new StorageField("avatar", account.avatar),
                 new StorageField("registration", account.registration),
@@ -313,7 +326,7 @@ public class AccountStorage extends AbstractStorage {
         return result ? account : null;
     }
 
-    public void updateAccount(Long accountId, String nickname, String avatar) {
+    public void updateAccount(long accountId, String nickname, String avatar) {
         this.storage.executeUpdate(TABLE_ACCOUNT, new StorageField[] {
                 new StorageField("name", LiteralBase.STRING, nickname),
                 new StorageField("avatar", LiteralBase.STRING, avatar)

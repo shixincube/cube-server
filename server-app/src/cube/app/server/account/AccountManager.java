@@ -357,6 +357,7 @@ public class AccountManager extends TimerTask {
     /**
      * 注册账号。
      *
+     * @param domain
      * @param accountName
      * @param phoneNumber
      * @param password
@@ -364,14 +365,15 @@ public class AccountManager extends TimerTask {
      * @param avatar
      * @return
      */
-    public Account register(String accountName, String phoneNumber, String password, String nickname, String avatar) {
+    public Account register(String domain, String accountName, String phoneNumber, String password, String nickname, String avatar) {
         if (null == nickname || nickname.length() == 0) {
             nickname = "Cube-" + Utils.randomString(8);
         }
 
         long accountId = this.useLuckyNumberId ? LuckyNumbers.make() :
                 (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
-        Account account = new Account(accountId, accountName, phoneNumber, password, nickname, avatar, Account.STATE_NORMAL);
+        Account account = new Account(accountId, domain, accountName, phoneNumber, password, nickname, avatar,
+                Account.STATE_NORMAL);
         account = this.accountStorage.writeAccount(account);
 
         return account;
@@ -380,20 +382,21 @@ public class AccountManager extends TimerTask {
     /**
      * 使用账号名进行注册。
      *
+     * @param domain
      * @param accountName
      * @param password
      * @param nickname
      * @param avatar
      * @return
      */
-    public Account registerWithAccountName(String accountName, String password, String nickname, String avatar) {
+    public Account registerWithAccountName(String domain, String accountName, String password, String nickname, String avatar) {
         Long accountId = this.useLuckyNumberId ? LuckyNumbers.make() :
                 (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
         while (this.accountStorage.existsAccountId(accountId)) {
             accountId = (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
         }
 
-        Account account = this.accountStorage.writeAccountWithAccountName(accountId,
+        Account account = this.accountStorage.writeAccountWithAccountName(accountId, domain,
                 accountName, password, nickname, avatar);
         return account;
     }
@@ -401,11 +404,14 @@ public class AccountManager extends TimerTask {
     /**
      * 使用手机号码注册。
      *
+     * @param domain
      * @param phoneNumber
      * @param password
+     * @param nickname
+     * @param avatar
      * @return
      */
-    public Account registerWithPhoneNumber(String phoneNumber, String password, String nickname, String avatar) {
+    public Account registerWithPhoneNumber(String domain, String phoneNumber, String password, String nickname, String avatar) {
         Long accountId = this.useLuckyNumberId ? LuckyNumbers.make() :
                 (long) Utils.randomInt(20000000, Integer.MAX_VALUE - 1);
         while (this.accountStorage.existsAccountId(accountId)) {
@@ -414,7 +420,7 @@ public class AccountManager extends TimerTask {
 
         String avatarName = (null != avatar) ? avatar : "default";
 
-        Account account = this.accountStorage.writeAccountWithPhoneNumber(accountId, phoneNumber,
+        Account account = this.accountStorage.writeAccountWithPhoneNumber(accountId, domain, phoneNumber,
                 password, nickname, avatarName);
         return account;
     }
@@ -558,7 +564,7 @@ public class AccountManager extends TimerTask {
         Config config = new Config(properties);
         dk.setConfig(config);
 
-        String text = Utils.randomString(4);
+        String text = Utils.randomNumberString(4);
         BufferedImage image = dk.createImage(text);
 
         File output = new File("data/captcha_" + text + ".jpg");

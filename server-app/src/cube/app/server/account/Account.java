@@ -39,6 +39,8 @@ public class Account implements JSONable {
 
     public final long id;
 
+    public final String domain;
+
     public final String account;
 
     public final String phone;
@@ -59,8 +61,10 @@ public class Account implements JSONable {
 
     protected long timestamp = System.currentTimeMillis();
 
-    public Account(long id, String account, String phone, String password, String name, String avatar, int state) {
+    public Account(long id, String domain, String account, String phone, String password,
+                   String name, String avatar, int state) {
         this.id = id;
+        this.domain = domain;
         this.account = account;
         this.phone = phone;
         this.password = password;
@@ -74,6 +78,7 @@ public class Account implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("id", this.id);
+        json.put("domain", this.domain);
 //        json.put("account", this.account);
         json.put("phone", PhoneNumbers.desensitize(this.phone));
         json.put("name", this.name);
@@ -96,6 +101,7 @@ public class Account implements JSONable {
     public JSONObject toFullJSON() {
         JSONObject json = new JSONObject();
         json.put("id", this.id);
+        json.put("domain", this.domain);
 //        json.put("account", this.account);
         json.put("phone", this.phone);
         json.put("name", this.name);

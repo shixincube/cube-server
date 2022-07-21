@@ -37,7 +37,7 @@ public final class BuildInData {
     public final List<Account> accountList = new ArrayList<>();
 
     public BuildInData() {
-        Account account = new Account(50001001, "cube1", "13199887766",
+        Account account = new Account(50001001,"shixincube.com", "cube1", "13199887766",
                 "c7af98d321febe62e04d45e8806852e0",
                 "李国诚", "avatar01", 0);
         account.region = "北京";
@@ -45,7 +45,7 @@ public final class BuildInData {
         account.registration = System.currentTimeMillis();
         this.accountList.add(account);
 
-        account = new Account(50001002, "cube2", "13288776655",
+        account = new Account(50001002, "shixincube.com", "cube2", "13288776655",
                 "c7af98d321febe62e04d45e8806852e0",
                 "王沛珊", "avatar13", 0);
         account.region = "武汉";
@@ -53,7 +53,7 @@ public final class BuildInData {
         account.registration = System.currentTimeMillis();
         this.accountList.add(account);
 
-        account = new Account(50001003, "cube3", "13377665544",
+        account = new Account(50001003, "shixincube.com", "cube3", "13377665544",
                 "c7af98d321febe62e04d45e8806852e0",
                 "郝思雁", "avatar15", 0);
         account.region = "上海";
@@ -61,7 +61,7 @@ public final class BuildInData {
         account.registration = System.currentTimeMillis();
         this.accountList.add(account);
 
-        account = new Account(50001004, "cube4", "13466554433",
+        account = new Account(50001004, "shixincube.com", "cube4", "13466554433",
                 "c7af98d321febe62e04d45e8806852e0",
                 "高海光", "avatar09", 0);
         account.region = "成都";
@@ -69,7 +69,7 @@ public final class BuildInData {
         account.registration = System.currentTimeMillis();
         this.accountList.add(account);
 
-        account = new Account(50001005, "cube5", "13555443322",
+        account = new Account(50001005, "shixincube.com", "cube5", "13555443322",
                 "c7af98d321febe62e04d45e8806852e0",
                 "张明宇", "avatar12", 0);
         account.region = "广州";

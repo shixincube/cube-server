@@ -59,6 +59,7 @@ public class RegisterHandler extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+            String domain = null;
             String accountName = null;
             String phone = null;
             String password = null;
@@ -68,6 +69,9 @@ public class RegisterHandler extends ContextHandler {
             String device = null;
 
             JSONObject data = this.readBodyAsJSONObject(request);
+            if (data.has("domain")) {
+                domain = data.getString("domain");
+            }
             if (data.has("account")) {
                 accountName = data.getString("account");
             }
@@ -92,11 +96,12 @@ public class RegisterHandler extends ContextHandler {
 
             JSONObject responseData = null;
             if (null != device) {
-                if (device.equalsIgnoreCase("Web") && null != captcha) {
+                if (device.indexOf("Web") == 0 && null != captcha) {
                     // 校验验证码
                     if (AccountManager.getInstance().checkCaptchaCode(captcha)) {
                         // 验证码有效
-                        Account account = AccountManager.getInstance().register(accountName, phone, password, nickname, avatar);
+                        Account account = AccountManager.getInstance().register(domain, accountName,
+                                phone, password, nickname, avatar);
                         if (null != account) {
                             responseData = new JSONObject();
                             responseData.put("code", StateCode.Success.code);
@@ -119,7 +124,7 @@ public class RegisterHandler extends ContextHandler {
                 }
             }
             else if (null != accountName && null != password && null != nickname && null != avatar) {
-                Account account = AccountManager.getInstance().registerWithAccountName(accountName, password, nickname, avatar);
+                Account account = AccountManager.getInstance().registerWithAccountName(domain, accountName, password, nickname, avatar);
                 if (null != account) {
                     responseData = new JSONObject();
                     responseData.put("code", StateCode.Success.code);
@@ -131,7 +136,7 @@ public class RegisterHandler extends ContextHandler {
                 }
             }
             else if (null != phone && null != password) {
-                Account account = AccountManager.getInstance().registerWithPhoneNumber(phone, password, nickname, avatar);
+                Account account = AccountManager.getInstance().registerWithPhoneNumber(domain, phone, password, nickname, avatar);
                 if (null != account) {
                     responseData = new JSONObject();
                     responseData.put("code", StateCode.Success.code);

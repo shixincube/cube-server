@@ -26,7 +26,11 @@
 
 package cube.app.server.container;
 
+import cube.app.server.account.Account;
 import cube.app.server.account.AccountManager;
+import cube.app.server.account.StateCode;
+import cube.app.server.account.Token;
+import cube.common.entity.Trace;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
@@ -63,8 +67,44 @@ public class BindHandler extends ContextHandler {
             String jsCode = data.has("jsCode") ? data.getString("jsCode") : null;
             String phone = data.has("phone") ? data.getString("phone") : null;
             String account = data.has("account") ? data.getString("account") : null;
+            String password = data.has("password") ? data.getString("password") : null;
 
-            AccountManager.getInstance();
+            // 尝试绑定账号
+            Account current = AccountManager.getInstance().bindAppletAccount(jsCode, phone, account, device);
+            if (null == current) {
+                // 绑定失败
+                JSONObject responseData = new JSONObject();
+                responseData.put("code", StateCode.NotFindAccount);
+                this.respondOk(response, responseData);
+                return;
+            }
+
+            Token token = null;
+
+            if (null != account) {
+                token = AccountManager.getInstance().loginWithAccount(account, password, device);
+            }
+            else if (null != phone) {
+                token = AccountManager.getInstance().loginWithPhoneNumber(phone, password, device);
+            }
+
+            if (null != token) {
+                String trace = (new Trace(token.accountId)).toString();
+
+                JSONObject responseData = new JSONObject();
+                responseData.put("code", StateCode.Success.code);
+                responseData.put("token", token.code);
+                responseData.put("trace", trace);
+                responseData.put("creation", token.creation);
+                responseData.put("expire", token.expire);
+
+                this.respondOk(response, responseData);
+            }
+            else {
+                JSONObject responseData = new JSONObject();
+                responseData.put("code", StateCode.InvalidToken.code);
+                this.respondOk(response, responseData);
+            }
         }
     }
 }
