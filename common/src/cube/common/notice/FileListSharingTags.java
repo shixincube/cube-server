@@ -24,74 +24,33 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.common.notice;
+
+import cube.common.action.FileStorageAction;
 
 /**
- * 客户端相关操作动作描述。
+ * 批量获取分享标签。
  */
-public enum ClientAction {
+public class FileListSharingTags extends NoticeData {
 
-    Login("Login"),
+    public final static String ACTION = FileStorageAction.ListSharingTags.name;
 
-    Logout("Logout"),
+    public final static String CONTACT_ID = "contactId";
 
-    GetLog("GetLog"),
+    public final static String DOMAIN = "domain";
 
-    GetAuthToken("GetAuthToken"),
+    public final static String BEGIN = "begin";
 
-    AddEventListener("AddEventListener"),
+    public final static String END = "end";
 
-    RemoveEventListener("RemoveEventListener"),
+    public final static String VALID = "valid";
 
-    NotifyEvent("NotifyEvent"),
-
-    GetDomain("GetDomain"),
-
-    CreateDomainApp("CreateDomainApp"),
-
-    UpdateDomain("UpdateDomain"),
-
-    ApplyToken("ApplyToken"),
-
-    ListOnlineContacts("ListOnlineContacts"),
-
-    GetContact("GetContact"),
-
-    GetGroup("GetGroup"),
-
-    CreateContact("CreateContact"),
-
-    UpdateContact("UpdateContact"),
-
-    PushMessage("PushMessage"),
-
-    QueryMessages("QueryMessages"),
-
-    MarkReadMessages("MarkReadMessages"),
-
-    ModifyContactZone("ModifyContactZone"),
-
-    GetFile("GetFile"),
-
-    PutFile("PutFile"),
-
-    DeleteFile("DeleteFile"),
-
-    FindFile("FindFile"),
-
-    ListSharingTags("ListSharingTags"),
-
-    ProcessFile("ProcessFile"),
-
-    SubmitWorkflow("SubmitWorkflow"),
-
-    CancelWorkflow("CancelWorkflow"),
-
-    Cube("Cube");
-
-    public final String name;
-
-    ClientAction(String name) {
-        this.name = name;
+    public FileListSharingTags(long contactId, String domain, int begin, int end, boolean valid) {
+        super(ACTION);
+        this.put(CONTACT_ID, contactId);
+        this.put(DOMAIN, domain);
+        this.put(BEGIN, begin);
+        this.put(END, end);
+        this.put(VALID, valid);
     }
 }

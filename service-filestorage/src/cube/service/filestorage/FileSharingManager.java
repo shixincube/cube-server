@@ -198,18 +198,18 @@ public class FileSharingManager {
      * 列举分享标签。
      *
      * @param contact
-     * @param inExpiry 是否是在有效期内的分享。
+     * @param valid 是否是在有效期内的分享。
      * @param beginIndex
      * @param endIndex
      * @return
      */
-    public List<SharingTag> listSharingTags(Contact contact, boolean inExpiry, int beginIndex, int endIndex) {
+    public List<SharingTag> listSharingTags(Contact contact, boolean valid, int beginIndex, int endIndex) {
         if (endIndex <= beginIndex) {
             return null;
         }
 
         List<SharingTag> list = this.service.getServiceStorage().listSharingTags(contact.getDomain().getName(),
-                contact.getId(), inExpiry, beginIndex, endIndex);
+                contact.getId(), valid, beginIndex, endIndex);
 
         AuthDomain authDomain = this.authService.getAuthDomain(contact.getDomain().getName());
 

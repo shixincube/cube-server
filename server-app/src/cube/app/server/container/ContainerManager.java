@@ -33,6 +33,7 @@ import cube.app.server.Manager;
 import cube.app.server.account.AccountManager;
 import cube.app.server.applet.WeChatApplet;
 import cube.app.server.applet.WeChatAppletAPI;
+import cube.app.server.container.file.ListSharingTagHandler;
 import cube.app.server.notice.NoticeManager;
 import cube.app.server.version.VersionManager;
 import cube.util.ConfigUtils;
@@ -186,6 +187,8 @@ public class ContainerManager {
                 new NoticeHandler(httpAllowOrigin, httpsAllowOrigin),
                 new VersionHandler(httpAllowOrigin, httpsAllowOrigin),
                 new CaptchaHandler(httpAllowOrigin, httpsAllowOrigin),
+
+                new ListSharingTagHandler(httpAllowOrigin, httpsAllowOrigin),
 
                 new StopHandler(this.server, this),
                 new DefaultHandler()});

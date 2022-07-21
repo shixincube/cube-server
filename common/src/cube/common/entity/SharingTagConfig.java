@@ -184,6 +184,11 @@ public class SharingTagConfig implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = this.toJSON();
+        if (json.has("contact")) {
+            json.remove("contact");
+            json.put("contact", this.contact.toBasicJSON());
+        }
+        return json;
     }
 }

@@ -994,12 +994,12 @@ public class ServiceStorage implements Storagable {
      *
      * @param domain
      * @param contactId
-     * @param inExpiry
+     * @param valid
      * @param beginIndex
      * @param endIndex
      * @return
      */
-    public List<SharingTag> listSharingTags(String domain, long contactId, boolean inExpiry, int beginIndex, int endIndex) {
+    public List<SharingTag> listSharingTags(String domain, long contactId, boolean valid, int beginIndex, int endIndex) {
         List<SharingTag> list = new ArrayList<>();
 
         String table = this.sharingTagTableNameMap.get(domain);
@@ -1008,7 +1008,7 @@ public class ServiceStorage implements Storagable {
         }
 
         Conditional[] conditionals = null;
-        if (inExpiry) {
+        if (valid) {
             conditionals = new Conditional[] {
                     Conditional.createEqualTo("contact_id", contactId),
                     Conditional.createAnd(),

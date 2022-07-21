@@ -26,14 +26,22 @@
 
 package cube.app.server.container.file;
 
+import cube.app.server.Manager;
+import cube.app.server.account.Account;
+import cube.app.server.account.AccountManager;
+import cube.client.Client;
+import cube.common.entity.SharingTag;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -61,6 +69,33 @@ public class ListSharingTagHandler extends ContextHandler {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 return;
             }
+
+            String tokenCode = data.get("token");
+
+            int begin = Integer.parseInt(data.get("begin"));
+            int end = Integer.parseInt(data.get("end"));
+            boolean valid = !data.containsKey("valid") || data.get("valid").equals("1") || data.get("valid").equals("true");
+
+            Account account = AccountManager.getInstance().getOnlineAccount(tokenCode);
+            if (null == account) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                return;
+            }
+
+            JSONObject responseData = new JSONObject();
+            responseData.put("begin", begin);
+            responseData.put("end", end);
+            responseData.put("valid", valid);
+
+            Client client = Manager.getInstance().getClient();
+            List<SharingTag> list = client.getFileProcessor().listSharingTags(account.id, account.domain, begin, end, valid);
+            JSONArray array = new JSONArray();
+            for (SharingTag tag : list) {
+                array.put(tag.toCompactJSON());
+            }
+            responseData.put("list", array);
+
+            this.respondOk(response, responseData);
         }
     }
 }
