@@ -39,6 +39,9 @@ import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 import org.json.JSONObject;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /**
  * 追踪任务。
  */
@@ -56,8 +59,18 @@ public class TraceTask extends ServiceTask {
 
         VisitTrace visitTrace = new VisitTrace(packet.data);
 
-        FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-        service.getSharingManager().traceVisit(visitTrace);
+        try {
+            URI uri = new URI(visitTrace.url);
+            String path = uri.getPath();
+
+            // 通过 path 判断模块
+            if (path.startsWith("/sharing")) {
+                FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
+                service.getSharingManager().traceVisit(visitTrace);
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
 
         // 应答
         this.cellet.speak(this.talkContext,

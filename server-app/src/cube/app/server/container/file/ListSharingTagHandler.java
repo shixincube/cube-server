@@ -29,6 +29,7 @@ package cube.app.server.container.file;
 import cube.app.server.Manager;
 import cube.app.server.account.Account;
 import cube.app.server.account.AccountManager;
+import cube.app.server.util.DefenseStrategy;
 import cube.client.Client;
 import cube.common.entity.SharingTag;
 import cube.util.CrossDomainHandler;
@@ -49,8 +50,11 @@ import java.util.Map;
  */
 public class ListSharingTagHandler extends ContextHandler {
 
+    private DefenseStrategy strategy;
+
     public ListSharingTagHandler(String httpOrigin, String httpsOrigin) {
         super("/file/list/sharing/");
+        this.strategy = new DefenseStrategy(1000);
         setHandler(new Handler(httpOrigin, httpsOrigin));
     }
 
@@ -67,10 +71,17 @@ public class ListSharingTagHandler extends ContextHandler {
             Map<String, String> data = this.parseQueryStringParams(request);
             if (!data.containsKey("token")) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
                 return;
             }
 
             String tokenCode = data.get("token");
+
+            if (!strategy.verify(tokenCode)) {
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                this.complete();
+                return;
+            }
 
             int begin = Integer.parseInt(data.get("begin"));
             int end = Integer.parseInt(data.get("end"));
@@ -79,6 +90,7 @@ public class ListSharingTagHandler extends ContextHandler {
             Account account = AccountManager.getInstance().getOnlineAccount(tokenCode);
             if (null == account) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
                 return;
             }
 
@@ -96,6 +108,7 @@ public class ListSharingTagHandler extends ContextHandler {
             responseData.put("list", array);
 
             this.respondOk(response, responseData);
+            this.complete();
         }
     }
 }

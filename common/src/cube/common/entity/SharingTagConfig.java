@@ -79,7 +79,10 @@ public class SharingTagConfig implements JSONable {
             this.contact = new Contact(json.getJSONObject("contact"));
         }
 
-        this.device = new Device(json.getJSONObject("device"));
+        if (json.has("device")) {
+            this.device = new Device(json.getJSONObject("device"));
+        }
+
         this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
         this.duration = json.getLong("duration");
 
@@ -152,7 +155,10 @@ public class SharingTagConfig implements JSONable {
             json.put("contact", this.contact.toJSON());
         }
 
-        json.put("device", this.device.toJSON());
+        if (null != this.device) {
+            json.put("device", this.device.toJSON());
+        }
+
         json.put("fileLabel", this.fileLabel.toJSON());
         json.put("duration", this.duration);
 
@@ -188,6 +194,9 @@ public class SharingTagConfig implements JSONable {
         if (json.has("contact")) {
             json.remove("contact");
             json.put("contact", this.contact.toBasicJSON());
+        }
+        if (json.has("device")) {
+            json.remove("device");
         }
         return json;
     }

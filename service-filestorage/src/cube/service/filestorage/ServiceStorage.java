@@ -68,7 +68,7 @@ public class ServiceStorage implements Storagable {
 
     private final String sharingTagPreviewTablePrefix = "sharing_tag_preview_";
 
-    private final String visitTraceTablePrefix = "visit_trace_";
+    private final String visitTraceTablePrefix = "sharing_trace_";
 
     private final String sharingCodeTable = "sharing_code";
 
@@ -211,14 +211,20 @@ public class ServiceStorage implements Storagable {
             new StorageField("screen", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("referrer", LiteralBase.STRING, new Constraint[] {
+//            new StorageField("referrer", LiteralBase.STRING, new Constraint[] {
+//                    Constraint.NOT_NULL
+//            }),
+            new StorageField("language", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("language", LiteralBase.STRING, new Constraint[] {
+            new StorageField("platform", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("user_agent", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("agent", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             }),
             new StorageField("event", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL

@@ -35,6 +35,8 @@ import org.json.JSONObject;
  */
 public class VisitTrace implements JSONable {
 
+    public final static String PLATFORM_BROWSER = "browser";
+
     /**
      * 访问时间。
      */
