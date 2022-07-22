@@ -1,6 +1,21 @@
 // index.js
 
 window.onload = function () {
+    var sharer = '';
+    var parent = '';
+
+    var query = window.location.search.substring(1);
+    var vars = query.split("&");
+    for (var i = 0; i < vars.length; ++i) {
+        var pair = vars[i].split("=");
+        if (pair[0] == 's') {
+            sharer = pair[1];
+        }
+        else if (pair[0] == 'p') {
+            parent = pair[1];
+        }
+    }
+
     const data = {
         "domain": document.domain,
         "url": document.URL,
@@ -11,10 +26,13 @@ window.onload = function () {
             "colorDepth": window.screen.colorDepth,
             "orientation": (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation
         },
-        "referrer": document.referrer,
         "language": navigator.language,
         "userAgent": navigator.userAgent,
-        "event": window.traceEvent
+        "event": window.traceEvent,
+        "eventParam": {
+            "sharer": sharer,
+            "parent": parent
+        }
     };
 
     submit(data);
@@ -39,7 +57,7 @@ function submit(data) {
 
     xhr.method = "POST";
     xhr.responseType = "json";
-    xhr.open("POST", "/sharing/trace", true);
+    xhr.open("POST", "/sharing/trace/browser", true);
 
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.send(JSON.stringify(data));

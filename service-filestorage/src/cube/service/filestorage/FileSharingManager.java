@@ -263,6 +263,7 @@ public class FileSharingManager {
         SharingCodeDomain codeDomain = getDomainByCode(code);
 
         if (null != codeDomain) {
+            // 写入记录
             this.service.getServiceStorage().writeVisitTrace(codeDomain.domain, code, trace);
 
             final FileStoragePluginContext context = new FileStoragePluginContext(trace);

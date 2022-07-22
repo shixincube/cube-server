@@ -63,7 +63,7 @@ public class TraceTask extends ServiceTask {
             URI uri = new URI(visitTrace.url);
             String path = uri.getPath();
 
-            // 通过 path 判断模块
+            // 通过 path 判断行为
             if (path.startsWith("/sharing")) {
                 FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
                 service.getSharingManager().traceVisit(visitTrace);

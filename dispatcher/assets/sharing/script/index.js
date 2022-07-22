@@ -27,7 +27,6 @@ window.onload = function () {
             "colorDepth": window.screen.colorDepth,
             "orientation": (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation
         },
-        "referrer": document.referrer,
         "language": navigator.language,
         "userAgent": navigator.userAgent,
         "event": "View",
@@ -67,7 +66,6 @@ function download(url) {
             "colorDepth": window.screen.colorDepth,
             "orientation": (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation
         },
-        "referrer": document.referrer,
         "language": navigator.language,
         "userAgent": navigator.userAgent,
         "event": "Extract",
@@ -130,7 +128,7 @@ function submit(data) {
 
     xhr.method = "POST";
     xhr.responseType = "json";
-    xhr.open("POST", "/sharing/trace", true);
+    xhr.open("POST", "/sharing/trace/browser", true);
 
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.send(JSON.stringify(data));

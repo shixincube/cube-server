@@ -35,7 +35,14 @@ import org.json.JSONObject;
  */
 public class VisitTrace implements JSONable {
 
-    public final static String PLATFORM_BROWSER = "browser";
+    public final static String PLATFORM_BROWSER = "Browser";
+
+    public final static String PLATFORM_APPLET_WECHAT = "AppletWeChat";
+
+    /**
+     * 平台。数据来源的平台描述。
+     */
+    public String platform;
 
     /**
      * 访问时间。
@@ -78,14 +85,14 @@ public class VisitTrace implements JSONable {
     public String screenOrientation;
 
     /**
-     * Referrer
-     */
-    public String referrer;
-
-    /**
-     * 浏览器信息。
+     * 用户代理描述。
      */
     public String userAgent;
+
+    /**
+     * 平台代理描述。
+     */
+    public JSONObject agent;
 
     /**
      * 客户端语言。
@@ -107,9 +114,11 @@ public class VisitTrace implements JSONable {
      */
     public JSONObject eventParam;
 
-    public VisitTrace(long time, String ip, JSONObject clientTrace) {
+    public VisitTrace(String platform, long time, String ip, JSONObject clientTrace) {
+        this.platform = platform;
         this.time = time;
         this.ip = ip;
+
         this.domain = clientTrace.getString("domain");
         this.url = clientTrace.getString("url");
         this.title = clientTrace.getString("title");
@@ -119,9 +128,15 @@ public class VisitTrace implements JSONable {
         this.screenColorDepth = screen.getInt("colorDepth");
         this.screenOrientation = screen.getString("orientation");
 
-        this.referrer = clientTrace.getString("referrer");
         this.language = clientTrace.getString("language");
-        this.userAgent = clientTrace.getString("userAgent");
+
+        if (clientTrace.has("userAgent")) {
+            this.userAgent = clientTrace.getString("userAgent");
+        }
+
+        if (clientTrace.has("agent")) {
+            this.agent = clientTrace.getJSONObject("agent");
+        }
 
         if (clientTrace.has("event")) {
             this.event = clientTrace.getString("event");
@@ -134,9 +149,10 @@ public class VisitTrace implements JSONable {
         }
     }
 
-    public VisitTrace(long time, String ip, String domain, String url, String title, JSONObject screen,
-                      String referrer, String language, String userAgent, String event, String eventTag,
-                      JSONObject eventParam) {
+    public VisitTrace(String platform, long time, String ip, String domain, String url, String title,
+                      JSONObject screen, String language, String userAgent, JSONObject agent,
+                      String event, String eventTag, JSONObject eventParam) {
+        this.platform = platform;
         this.time = time;
         this.ip = ip;
         this.domain = domain;
@@ -147,9 +163,10 @@ public class VisitTrace implements JSONable {
         this.screenColorDepth = screen.getInt("colorDepth");
         this.screenOrientation = screen.getString("orientation");
 
-        this.referrer = referrer;
         this.language = language;
+
         this.userAgent = userAgent;
+        this.agent = agent;
 
         this.event = event;
         this.eventTag = eventTag;
@@ -157,6 +174,7 @@ public class VisitTrace implements JSONable {
     }
 
     public VisitTrace(JSONObject json) {
+        this.platform = json.getString("platform");
         this.time = json.getLong("time");
         this.ip = json.getString("ip");
         this.domain = json.getString("domain");
@@ -168,9 +186,15 @@ public class VisitTrace implements JSONable {
         this.screenColorDepth = screen.getInt("colorDepth");
         this.screenOrientation = screen.getString("orientation");
 
-        this.referrer = json.getString("referrer");
         this.language = json.getString("language");
-        this.userAgent = json.getString("userAgent");
+
+        if (json.has("userAgent")) {
+            this.userAgent = json.getString("userAgent");
+        }
+
+        if (json.has("agent")) {
+            this.agent = json.getJSONObject("agent");
+        }
 
         if (json.has("event")) {
             this.event = json.getString("event");
@@ -221,6 +245,7 @@ public class VisitTrace implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("platform", this.platform);
         json.put("time", this.time);
         json.put("ip", this.ip);
         json.put("url", this.url);
@@ -234,9 +259,15 @@ public class VisitTrace implements JSONable {
         screen.put("orientation", this.screenOrientation);
         json.put("screen", screen);
 
-        json.put("referrer", this.referrer);
         json.put("language", this.language);
-        json.put("userAgent", this.userAgent);
+
+        if (null != this.userAgent) {
+            json.put("userAgent", this.userAgent);
+        }
+
+        if (null != this.agent) {
+            json.put("agent", this.agent);
+        }
 
         if (null != this.event) {
             json.put("event", this.event);
@@ -253,32 +284,6 @@ public class VisitTrace implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        json.put("time", this.time);
-        json.put("ip", this.ip);
-        json.put("url", this.url);
-
-        JSONObject screen = new JSONObject();
-        screen.put("width", this.screenSize.width);
-        screen.put("height", this.screenSize.height);
-        screen.put("colorDepth", this.screenColorDepth);
-        screen.put("orientation", this.screenOrientation);
-        json.put("screen", screen);
-
-        json.put("referrer", this.referrer);
-        json.put("language", this.language);
-        json.put("userAgent", this.userAgent);
-
-        if (null != this.event) {
-            json.put("event", this.event);
-        }
-        if (null != this.eventTag) {
-            json.put("eventTag", this.eventTag);
-        }
-        if (null != this.eventParam) {
-            json.put("eventParam", this.eventParam);
-        }
-
-        return json;
+        return this.toJSON();
     }
 }

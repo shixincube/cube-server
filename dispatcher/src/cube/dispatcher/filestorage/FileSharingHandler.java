@@ -109,19 +109,27 @@ public class FileSharingHandler extends CrossDomainHandler {
             throws IOException, ServletException {
         String pathInfo = request.getPathInfo();
 
-        if (pathInfo.equalsIgnoreCase("/trace")) {
+        if (pathInfo.indexOf("/trace/browser") == 0) {
             JSONObject bodyJSON = readBodyAsJSONObject(request);
 
             String ip = request.getRemoteAddr();
             long time = System.currentTimeMillis();
 
-            VisitTrace visitTrace = new VisitTrace(time, ip, bodyJSON);
+            VisitTrace visitTrace = new VisitTrace(VisitTrace.PLATFORM_BROWSER, time, ip, bodyJSON);
 
             Packet packet = new Packet(FileStorageAction.Trace.name, visitTrace.toJSON());
             this.performer.transmit(FileStorageCellet.NAME, packet.toDialect());
 
             this.respond(response, HttpStatus.OK_200);
         }
+        else if (pathInfo.indexOf("/trace/applet/wechat") == 0) {
+
+        }
+        else {
+            this.respond(response, HttpStatus.BAD_REQUEST_400);
+        }
+
+        this.complete();
     }
 
     private void respondFile(HttpServletResponse response, String filename) {

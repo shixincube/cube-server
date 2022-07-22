@@ -193,6 +193,9 @@ public class ServiceStorage implements Storagable {
             new StorageField("code", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("platform", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("time", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -211,17 +214,11 @@ public class ServiceStorage implements Storagable {
             new StorageField("screen", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-//            new StorageField("referrer", LiteralBase.STRING, new Constraint[] {
-//                    Constraint.NOT_NULL
-//            }),
             new StorageField("language", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("platform", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
             new StorageField("user_agent", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
+                    Constraint.DEFAULT_NULL
             }),
             new StorageField("agent", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
@@ -1122,15 +1119,16 @@ public class ServiceStorage implements Storagable {
 
             this.storage.executeInsert(table, new StorageField[] {
                     new StorageField("code", code),
+                    new StorageField("platform", visitTrace.platform),
                     new StorageField("time", visitTrace.time),
                     new StorageField("ip", visitTrace.ip),
                     new StorageField("domain", visitTrace.domain),
                     new StorageField("url", visitTrace.url),
                     new StorageField("title", visitTrace.title),
                     new StorageField("screen", visitTrace.getScreenJSON().toString()),
-                    new StorageField("referrer", visitTrace.referrer),
                     new StorageField("language", visitTrace.language),
                     new StorageField("user_agent", visitTrace.userAgent),
+                    new StorageField("agent", (null != visitTrace.agent) ? visitTrace.agent.toString() : null),
                     new StorageField("event", visitTrace.event),
                     new StorageField("event_tag", visitTrace.eventTag),
                     new StorageField("event_param", (null != visitTrace.eventParam) ?
@@ -1156,10 +1154,11 @@ public class ServiceStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> map = StorageFields.get(fields);
-            VisitTrace visitTrace = new VisitTrace(map.get("time").getLong(), map.get("ip").getString(),
-                    map.get("domain").getString(), map.get("url").getString(), map.get("title").getString(),
-                    new JSONObject(map.get("screen").getString()), map.get("referrer").getString(),
-                    map.get("language").getString(), map.get("user_agent").getString(),
+            VisitTrace visitTrace = new VisitTrace(map.get("platform").getString(), map.get("time").getLong(),
+                    map.get("ip").getString(), map.get("domain").getString(), map.get("url").getString(), map.get("title").getString(),
+                    new JSONObject(map.get("screen").getString()), map.get("language").getString(),
+                    map.get("user_agent").isNullValue() ? null : map.get("user_agent").getString(),
+                    map.get("agent").isNullValue() ? null : new JSONObject(map.get("agent").getString()),
                     map.get("event").isNullValue() ? null : map.get("event").getString(),
                     map.get("event_tag").isNullValue() ? null : map.get("event_tag").getString(),
                     map.get("event_param").isNullValue() ? null : new JSONObject(map.get("event_param").getString()));
