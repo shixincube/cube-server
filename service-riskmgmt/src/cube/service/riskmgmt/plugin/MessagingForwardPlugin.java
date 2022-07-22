@@ -26,7 +26,7 @@
 
 package cube.service.riskmgmt.plugin;
 
-import cube.common.entity.MonitoringEvent;
+import cube.common.entity.TraceEvent;
 import cube.common.entity.FileAttachment;
 import cube.common.entity.Message;
 import cube.plugin.Plugin;
@@ -61,7 +61,7 @@ public class MessagingForwardPlugin implements Plugin {
             FileAttachment fileAttachment = message.getAttachment();
             if (null != fileAttachment) {
                 // 有文件附件的消息
-                this.riskManagement.addFileChainNode(MonitoringEvent.Forward, message, ctx.getDevice());
+                this.riskManagement.addFileChainNode(TraceEvent.Forward, message, ctx.getDevice());
             }
         }
     }

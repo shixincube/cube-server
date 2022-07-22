@@ -199,7 +199,7 @@ public class ServiceStorage implements Storagable {
             new StorageField("time", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("ip", LiteralBase.STRING, new Constraint[] {
+            new StorageField("address", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("domain", LiteralBase.STRING, new Constraint[] {
@@ -1121,7 +1121,7 @@ public class ServiceStorage implements Storagable {
                     new StorageField("code", code),
                     new StorageField("platform", visitTrace.platform),
                     new StorageField("time", visitTrace.time),
-                    new StorageField("ip", visitTrace.ip),
+                    new StorageField("address", visitTrace.address),
                     new StorageField("domain", visitTrace.domain),
                     new StorageField("url", visitTrace.url),
                     new StorageField("title", visitTrace.title),
@@ -1155,7 +1155,7 @@ public class ServiceStorage implements Storagable {
         for (StorageField[] fields : result) {
             Map<String, StorageField> map = StorageFields.get(fields);
             VisitTrace visitTrace = new VisitTrace(map.get("platform").getString(), map.get("time").getLong(),
-                    map.get("ip").getString(), map.get("domain").getString(), map.get("url").getString(), map.get("title").getString(),
+                    map.get("address").getString(), map.get("domain").getString(), map.get("url").getString(), map.get("title").getString(),
                     new JSONObject(map.get("screen").getString()), map.get("language").getString(),
                     map.get("user_agent").isNullValue() ? null : map.get("user_agent").getString(),
                     map.get("agent").isNullValue() ? null : new JSONObject(map.get("agent").getString()),

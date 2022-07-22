@@ -54,6 +54,7 @@ public class ListSharingTagHandler extends ContextHandler {
 
     public ListSharingTagHandler(String httpOrigin, String httpsOrigin) {
         super("/file/list/sharing/");
+        // 冷却时间 1000ms
         this.strategy = new DefenseStrategy(1000);
         setHandler(new Handler(httpOrigin, httpsOrigin));
     }

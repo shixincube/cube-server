@@ -32,7 +32,6 @@ import cell.util.log.Logger;
 import cube.app.server.Manager;
 import cube.app.server.account.AccountManager;
 import cube.app.server.applet.WeChatApplet;
-import cube.app.server.applet.WeChatAppletAPI;
 import cube.app.server.container.file.ListSharingTagHandler;
 import cube.app.server.notice.NoticeManager;
 import cube.app.server.version.VersionManager;
@@ -83,6 +82,11 @@ public class ContainerManager {
                 }
             }
         }).start();
+
+        // 优先使用配置文件端口
+        if (config.containsKey("port")) {
+            port = Integer.parseInt(config.getProperty("port", Integer.toString(port)));
+        }
 
         this.server = new Server(port);
 
@@ -170,6 +174,7 @@ public class ContainerManager {
 
         handlers.setHandlers(new Handler[] {
                 new CubeConfigHandler(httpAllowOrigin, httpsAllowOrigin, this.cubeConfig),
+                new TraceHandler(httpAllowOrigin, httpsAllowOrigin, this.cubeConfig),
 
                 new LoginHandler(httpAllowOrigin, httpsAllowOrigin),
                 new LogoutHandler(httpAllowOrigin, httpsAllowOrigin),

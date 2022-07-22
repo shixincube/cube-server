@@ -204,7 +204,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
     public void addFileChainNode(SharingTag sharingTag) {
         final String domain = sharingTag.getDomain().getName();
         this.executor.execute(() -> {
-            String event = MonitoringEvent.Share;
+            String event = TraceEvent.Share;
 
             FileLabel fileLabel = sharingTag.getConfig().getFileLabel();
             // 文件 SHA1 码

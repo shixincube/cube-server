@@ -29,7 +29,7 @@ package cube.common.entity;
 /**
  * 节点事件。
  */
-public final class MonitoringEvent {
+public final class TraceEvent {
 
     /**
      * 发送。
@@ -91,6 +91,6 @@ public final class MonitoringEvent {
      */
     public final static String Extract = "Extract";
 
-    private MonitoringEvent() {
+    private TraceEvent() {
     }
 }

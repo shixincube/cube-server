@@ -39,6 +39,7 @@ import cube.util.CrossDomainHandler;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import org.eclipse.jetty.http.HttpStatus;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.servlet.ServletException;
@@ -112,18 +113,50 @@ public class FileSharingHandler extends CrossDomainHandler {
         if (pathInfo.indexOf("/trace/browser") == 0) {
             JSONObject bodyJSON = readBodyAsJSONObject(request);
 
+            if (null == bodyJSON) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
+
             String ip = request.getRemoteAddr();
             long time = System.currentTimeMillis();
 
-            VisitTrace visitTrace = new VisitTrace(VisitTrace.PLATFORM_BROWSER, time, ip, bodyJSON);
+            try {
+                VisitTrace visitTrace = new VisitTrace(VisitTrace.PLATFORM_BROWSER, time, ip, bodyJSON);
 
-            Packet packet = new Packet(FileStorageAction.Trace.name, visitTrace.toJSON());
-            this.performer.transmit(FileStorageCellet.NAME, packet.toDialect());
+                Packet packet = new Packet(FileStorageAction.Trace.name, visitTrace.toJSON());
+                this.performer.transmit(FileStorageCellet.NAME, packet.toDialect());
 
-            this.respond(response, HttpStatus.OK_200);
+                this.respond(response, HttpStatus.OK_200);
+            } catch (JSONException e) {
+                // 数据格式错误
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+            }
         }
         else if (pathInfo.indexOf("/trace/applet/wechat") == 0) {
+            JSONObject bodyJSON = readBodyAsJSONObject(request);
 
+            if (null == bodyJSON) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
+
+            String address = request.getRemoteAddr();
+            long time = System.currentTimeMillis();
+
+            try {
+                VisitTrace visitTrace = new VisitTrace(VisitTrace.PLATFORM_APPLET_WECHAT, time, address, bodyJSON);
+
+                Packet packet = new Packet(FileStorageAction.Trace.name, visitTrace.toJSON());
+                this.performer.transmit(FileStorageCellet.NAME, packet.toDialect());
+
+                this.respond(response, HttpStatus.OK_200);
+            } catch (JSONException e) {
+                // 数据格式错误
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+            }
         }
         else {
             this.respond(response, HttpStatus.BAD_REQUEST_400);

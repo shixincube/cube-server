@@ -40,7 +40,7 @@ window.onload = function () {
     submit(data);
 
     resizePreview();
-}
+};
 
 window.onresize = function () {
     setTimeout(function() {
@@ -124,7 +124,7 @@ function submit(data) {
         if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
             // 完成
         }
-    }
+    };
 
     xhr.method = "POST";
     xhr.responseType = "json";

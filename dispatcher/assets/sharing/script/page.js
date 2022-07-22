@@ -36,7 +36,7 @@ window.onload = function () {
     };
 
     submit(data);
-}
+};
 
 function submit(data) {
     var xhr = null;
@@ -53,7 +53,7 @@ function submit(data) {
         if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
             // 完成
         }
-    }
+    };
 
     xhr.method = "POST";
     xhr.responseType = "json";

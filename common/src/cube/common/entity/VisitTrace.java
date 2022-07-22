@@ -28,6 +28,7 @@ package cube.common.entity;
 
 import cube.common.JSONable;
 import cube.vision.Size;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -50,9 +51,9 @@ public class VisitTrace implements JSONable {
     public long time;
 
     /**
-     * 访问 IP 。
+     * 访问地址 。
      */
-    public String ip;
+    public String address;
 
     /**
      * 域名。
@@ -114,10 +115,10 @@ public class VisitTrace implements JSONable {
      */
     public JSONObject eventParam;
 
-    public VisitTrace(String platform, long time, String ip, JSONObject clientTrace) {
+    public VisitTrace(String platform, long time, String address, JSONObject clientTrace) throws JSONException {
         this.platform = platform;
         this.time = time;
-        this.ip = ip;
+        this.address = clientTrace.has("address") ? clientTrace.getString("address") : address;
 
         this.domain = clientTrace.getString("domain");
         this.url = clientTrace.getString("url");
@@ -149,12 +150,12 @@ public class VisitTrace implements JSONable {
         }
     }
 
-    public VisitTrace(String platform, long time, String ip, String domain, String url, String title,
+    public VisitTrace(String platform, long time, String address, String domain, String url, String title,
                       JSONObject screen, String language, String userAgent, JSONObject agent,
                       String event, String eventTag, JSONObject eventParam) {
         this.platform = platform;
         this.time = time;
-        this.ip = ip;
+        this.address = address;
         this.domain = domain;
         this.url = url;
         this.title = title;
@@ -176,7 +177,7 @@ public class VisitTrace implements JSONable {
     public VisitTrace(JSONObject json) {
         this.platform = json.getString("platform");
         this.time = json.getLong("time");
-        this.ip = json.getString("ip");
+        this.address = json.getString("address");
         this.domain = json.getString("domain");
         this.url = json.getString("url");
         this.title = json.getString("title");
@@ -247,7 +248,7 @@ public class VisitTrace implements JSONable {
         JSONObject json = new JSONObject();
         json.put("platform", this.platform);
         json.put("time", this.time);
-        json.put("ip", this.ip);
+        json.put("address", this.address);
         json.put("url", this.url);
         json.put("domain", this.domain);
         json.put("title", this.title);
