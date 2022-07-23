@@ -24,76 +24,33 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.common.notice;
+
+import cube.common.action.FileStorageAction;
 
 /**
- * 客户端相关操作动作描述。
+ * 批量获取访问记录。
  */
-public enum ClientAction {
+public class FileListTraces extends NoticeData {
 
-    Login("Login"),
+    public final static String ACTION = FileStorageAction.ListTraces.name;
 
-    Logout("Logout"),
+    public final static String CONTACT_ID = "contactId";
 
-    GetLog("GetLog"),
+    public final static String DOMAIN = "domain";
 
-    GetAuthToken("GetAuthToken"),
+    public final static String SHARING_CODE = "sharingCode";
 
-    AddEventListener("AddEventListener"),
+    public final static String BEGIN = "begin";
 
-    RemoveEventListener("RemoveEventListener"),
+    public final static String END = "end";
 
-    NotifyEvent("NotifyEvent"),
-
-    GetDomain("GetDomain"),
-
-    CreateDomainApp("CreateDomainApp"),
-
-    UpdateDomain("UpdateDomain"),
-
-    ApplyToken("ApplyToken"),
-
-    ListOnlineContacts("ListOnlineContacts"),
-
-    GetContact("GetContact"),
-
-    GetGroup("GetGroup"),
-
-    CreateContact("CreateContact"),
-
-    UpdateContact("UpdateContact"),
-
-    PushMessage("PushMessage"),
-
-    QueryMessages("QueryMessages"),
-
-    MarkReadMessages("MarkReadMessages"),
-
-    ModifyContactZone("ModifyContactZone"),
-
-    GetFile("GetFile"),
-
-    PutFile("PutFile"),
-
-    DeleteFile("DeleteFile"),
-
-    FindFile("FindFile"),
-
-    ListSharingTags("ListSharingTags"),
-
-    ListSharingTraces("ListSharingTraces"),
-
-    ProcessFile("ProcessFile"),
-
-    SubmitWorkflow("SubmitWorkflow"),
-
-    CancelWorkflow("CancelWorkflow"),
-
-    Cube("Cube");
-
-    public final String name;
-
-    ClientAction(String name) {
-        this.name = name;
+    public FileListTraces(long contactId, String domain, String sharingCode, int begin, int end) {
+        super(ACTION);
+        this.put(CONTACT_ID, contactId);
+        this.put(DOMAIN, domain);
+        this.put(SHARING_CODE, sharingCode);
+        this.put(BEGIN, begin);
+        this.put(END, end);
     }
 }

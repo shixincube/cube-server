@@ -31,6 +31,9 @@ import cube.vision.Size;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /**
  * 访问文件分享页记录。
  */
@@ -218,7 +221,7 @@ public class VisitTrace implements JSONable {
     }
 
     public long getSharerId() {
-        if (null != this.eventParam) {
+        if (null != this.eventParam && this.eventParam.has("sharer")) {
             String idString = this.eventParam.getString("sharer");
             try {
                 return Trace.parseString(idString);
@@ -227,17 +230,53 @@ public class VisitTrace implements JSONable {
             }
         }
 
+        try {
+            URI uri = new URI(this.url);
+            String query = uri.getQuery();
+            String[] array = query.split("&");
+            for (String param : array) {
+                String[] pair = param.split("=");
+                if (pair.length == 2) {
+                    if (pair[0].trim().equalsIgnoreCase("s")) {
+                        return Trace.parseString(pair[1].trim());
+                    }
+                }
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return 0;
     }
 
     public long getParentId() {
-        if (null != this.eventParam) {
+        if (null != this.eventParam && this.eventParam.has("parent")) {
             String idString = this.eventParam.getString("parent");
             try {
                 return Trace.parseString(idString);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+
+        try {
+            URI uri = new URI(this.url);
+            String query = uri.getQuery();
+            String[] array = query.split("&");
+            for (String param : array) {
+                String[] pair = param.split("=");
+                if (pair.length == 2) {
+                    if (pair[0].trim().equalsIgnoreCase("p")) {
+                        return Trace.parseString(pair[1].trim());
+                    }
+                }
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return 0;
@@ -279,6 +318,9 @@ public class VisitTrace implements JSONable {
         if (null != this.eventParam) {
             json.put("eventParam", this.eventParam);
         }
+
+        json.put("sharerId", this.getSharerId());
+        json.put("parentId", this.getParentId());
 
         return json;
     }

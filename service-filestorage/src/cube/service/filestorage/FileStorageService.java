@@ -31,10 +31,9 @@ import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.cache.SharedMemoryCache;
 import cube.common.action.FileStorageAction;
-import cube.common.entity.AuthDomain;
-import cube.common.entity.Contact;
-import cube.common.entity.FileLabel;
-import cube.common.entity.SharingTag;
+import cube.common.entity.*;
+import cube.common.notice.FileListSharingTags;
+import cube.common.notice.FileListTraces;
 import cube.core.*;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
@@ -692,10 +691,18 @@ public class FileStorageService extends AbstractModule {
                 }
             }
             else if (FileStorageAction.ListSharingTags.name.equals(action)) {
-                Contact contact = ContactManager.getInstance().getContact(data.getString("domain"),
-                        data.getLong("contactId"));
-                List<SharingTag> result = this.sharingManager.listSharingTags(contact, data.getBoolean("valid"),
-                        data.getInt("begin"), data.getInt("end"));
+                Contact contact = ContactManager.getInstance().getContact(data.getString(FileListSharingTags.DOMAIN),
+                        data.getLong(FileListSharingTags.CONTACT_ID));
+                List<SharingTag> result = this.sharingManager.listSharingTags(contact,
+                        data.getBoolean(FileListSharingTags.VALID),
+                        data.getInt(FileListSharingTags.BEGIN), data.getInt(FileListSharingTags.END));
+                return result;
+            }
+            else if (FileStorageAction.ListTraces.name.equals(action)) {
+                Contact contact = ContactManager.getInstance().getContact(data.getString(FileListTraces.DOMAIN),
+                        data.getLong(FileListTraces.CONTACT_ID));
+                List<VisitTrace> result = this.sharingManager.listSharingVisitTrace(contact, data.getString(FileListTraces.SHARING_CODE),
+                        data.getInt(FileListTraces.BEGIN), data.getInt(FileListTraces.END));
                 return result;
             }
         }

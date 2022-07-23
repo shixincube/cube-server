@@ -43,7 +43,7 @@ public class TestTrace {
 
         JSONObject data = new JSONObject();
         data.put("domain", "192.168.1.121");
-        data.put("url", "http://172.16.7.66:7010/sharing/YaODOGiNhkhvhfEWAENYFoqbJWWkJwXT?s=a92929293929293092&p=9691919192919192091");
+        data.put("url", "http://192.168.0.110:7010/sharing/YaODOGiNhkhvhfEWAENYFoqbJWWkJwXT?s=a92929293929293092&p=9691919192919192091");
         data.put("title", "Test-HIT-CIR_Sharing_Protocol.doc");
 
         JSONObject screen = new JSONObject("{\"orientation\":\"landscape-primary\",\"width\":1680,\"colorDepth\":30,\"height\":1050}");
