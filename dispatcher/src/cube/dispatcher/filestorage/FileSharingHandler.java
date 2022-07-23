@@ -119,11 +119,11 @@ public class FileSharingHandler extends CrossDomainHandler {
                 return;
             }
 
-            String ip = request.getRemoteAddr();
+            String address = request.getRemoteAddr();
             long time = System.currentTimeMillis();
 
             try {
-                VisitTrace visitTrace = new VisitTrace(VisitTrace.PLATFORM_BROWSER, time, ip, bodyJSON);
+                VisitTrace visitTrace = new VisitTrace(VisitTrace.PLATFORM_BROWSER, time, address, bodyJSON);
 
                 Packet packet = new Packet(FileStorageAction.Trace.name, visitTrace.toJSON());
                 this.performer.transmit(FileStorageCellet.NAME, packet.toDialect());

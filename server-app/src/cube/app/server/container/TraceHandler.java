@@ -118,7 +118,10 @@ public class TraceHandler extends ContextHandler {
                     returnClient(client);
                 }
 
-                this.respond(response, HttpStatus.OK_200, new JSONObject());
+                JSONObject responseData = new JSONObject();
+                responseData.put("time", System.currentTimeMillis());
+
+                this.respond(response, HttpStatus.OK_200, responseData);
                 this.complete();
             }
             else {

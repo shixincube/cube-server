@@ -72,9 +72,12 @@ public class TraceTask extends ServiceTask {
             e.printStackTrace();
         }
 
+        JSONObject data = new JSONObject();
+        data.put("time", visitTrace.time);
+
         // 应答
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, new JSONObject()));
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, data));
         markResponseTime();
     }
 }
