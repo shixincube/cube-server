@@ -291,12 +291,22 @@ public class Performer implements TalkListener, Tickable {
     }
 
     /**
-     * 选择节点。随机方式。
+     * 选择节点。选择权重最大的节点。
      *
      * @return
      */
     private synchronized Director selectDirector() {
-        return this.directorList.get(Utils.randomInt(0, this.directorList.size() - 1));
+        Director selected = null;
+
+        int weight = 0;
+        for (Director director : this.directorList) {
+            if (director.scope.weight > weight) {
+                weight = director.scope.weight;
+                selected = director;
+            }
+        }
+
+        return selected;
     }
 
     /**
