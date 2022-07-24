@@ -241,6 +241,10 @@ public class DiskSystem implements FileSystem {
         try {
             if (Files.exists(file)) {
                 Files.delete(file);
+
+                // 从集群系统中删除
+                this.diskCluster.removeFile(fileName);
+
                 return true;
             }
         } catch (IOException e) {

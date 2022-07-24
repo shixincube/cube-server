@@ -148,6 +148,19 @@ public class DiskCluster implements Storagable  {
     }
 
     /**
+     * 移除文件记录。
+     *
+     * @param fileCode
+     */
+    public void removeFile(String fileCode) {
+        String table = this.clusterFileTable;
+
+        this.storage.executeDelete(table, new Conditional[] {
+                Conditional.createEqualTo("file_code", fileCode)
+        });
+    }
+
+    /**
      * 加载指定文件码的文件数据到输出流。
      *
      * @param fileCode
