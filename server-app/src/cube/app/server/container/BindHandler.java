@@ -69,16 +69,6 @@ public class BindHandler extends ContextHandler {
             String account = data.has("account") ? data.getString("account") : null;
             String password = data.has("password") ? data.getString("password") : null;
 
-            // 尝试绑定账号
-            Account current = AccountManager.getInstance().bindAppletAccount(jsCode, phone, account, device);
-            if (null == current) {
-                // 绑定失败
-                JSONObject responseData = new JSONObject();
-                responseData.put("code", StateCode.NotFindAccount);
-                this.respondOk(response, responseData);
-                return;
-            }
-
             Token token = null;
 
             if (null != account) {
@@ -89,6 +79,16 @@ public class BindHandler extends ContextHandler {
             }
 
             if (null != token) {
+                // 尝试绑定账号
+                Account current = AccountManager.getInstance().bindAppletAccount(jsCode, phone, account, device);
+                if (null == current) {
+                    // 绑定失败
+                    JSONObject responseData = new JSONObject();
+                    responseData.put("code", StateCode.InvalidAccount.code);
+                    this.respondOk(response, responseData);
+                    return;
+                }
+
                 String trace = (new Trace(token.accountId)).toString();
 
                 JSONObject responseData = new JSONObject();
@@ -102,7 +102,7 @@ public class BindHandler extends ContextHandler {
             }
             else {
                 JSONObject responseData = new JSONObject();
-                responseData.put("code", StateCode.InvalidToken.code);
+                responseData.put("code", StateCode.NotFindAccount.code);
                 this.respondOk(response, responseData);
             }
         }

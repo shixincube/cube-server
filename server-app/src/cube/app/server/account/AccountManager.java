@@ -445,14 +445,17 @@ public class AccountManager extends TimerTask {
 
         if (null == account) {
             // 账号不存在
+            Logger.w(this.getClass(), "#bindAppletAccount - Can NOT find account");
             return null;
         }
 
         if (WeChatApplet.getInstance().bind(jsCode, account, device)) {
             return account;
         }
-
-        return null;
+        else {
+            Logger.e(this.getClass(), "#bindAppletAccount - Bind applet account failed");
+            return null;
+        }
     }
 
     /**

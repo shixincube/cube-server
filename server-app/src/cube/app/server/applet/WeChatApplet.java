@@ -26,6 +26,7 @@
 
 package cube.app.server.applet;
 
+import cell.util.log.Logger;
 import cube.app.server.account.Account;
 import cube.util.ConfigUtils;
 import org.eclipse.jetty.client.HttpClient;
@@ -76,12 +77,21 @@ public class WeChatApplet implements WeChatAppletAPI {
      * @return
      */
     public long checkAccount(String jsCode) {
-        JSONObject sessionJson = code2session(jsCode);
-        if (null == sessionJson) {
-            return 0;
+        long accountId = this.storage.queryAccountIdByJsCode(jsCode);
+        if (-1 == accountId) {
+            // 没有记录，从微信服务器获取 Open ID
+            JSONObject sessionJson = this.code2session(jsCode);
+            if (null != sessionJson && sessionJson.has("openid")) {
+                this.storage.writeSessionCode(jsCode, sessionJson.getString("openid"),
+                        sessionJson.getString("session_key"),
+                        sessionJson.has("unionid") ? sessionJson.getString("unionid") : null);
+            }
+            else {
+                Logger.w(this.getClass(), "#checkAccount - Get session from WeChat server failed: " + jsCode);
+            }
         }
 
-        return this.storage.queryAccountIdByOpenId(sessionJson.getString("openid"));
+        return accountId;
     }
 
     /**
@@ -93,28 +103,39 @@ public class WeChatApplet implements WeChatAppletAPI {
      * @return
      */
     public boolean bind(String jsCode, Account account, String device) {
-        JSONObject sessionJson = code2session(jsCode);
-        if (null == sessionJson) {
-            return false;
+        long accountId = this.storage.queryAccountIdByJsCode(jsCode);
+        if (-1 == accountId) {
+            JSONObject sessionJson = this.code2session(jsCode);
+            if (null != sessionJson && sessionJson.has("openid")) {
+                // 写 Open ID
+                this.storage.writeSessionCode(jsCode, sessionJson.getString("openid"),
+                        sessionJson.getString("session_key"),
+                        sessionJson.has("unionid") ? sessionJson.getString("unionid") : null);
+                // 写账号
+                this.storage.writeAccountSession(accountId, device, jsCode);
+                return true;
+            }
+            else {
+                String errmsg = sessionJson.has("errmsg") ? sessionJson.getString("errmsg") : "";
+                Logger.w(this.getClass(), "#bind - WeChat API respond error: " + errmsg);
+                return false;
+            }
         }
-
-        long accountId = this.storage.queryAccountIdByOpenId(sessionJson.getString("openid"));
-        if (accountId > 0) {
-            // 已经有账号
-            if (account.id == accountId) {
+        else if (0 == accountId) {
+            // 已经有 Open ID 记录
+            this.storage.writeAccountSession(account.id, device, jsCode);
+            return true;
+        }
+        else {
+            if (accountId == account.id) {
                 // 账号一致
                 return true;
             }
             else {
+                Logger.w(this.getClass(), "#bind - Account id error: " + account.id + " - " + accountId);
                 return false;
             }
         }
-
-        this.storage.writeAccountSession(account.id, device, sessionJson.getString("openid"),
-                sessionJson.getString("session_key"),
-                sessionJson.has("unionid") ? sessionJson.getString("unionid") : null);
-
-        return true;
     }
 
     @Override
@@ -141,6 +162,9 @@ public class WeChatApplet implements WeChatAppletAPI {
 
             if (HttpStatus.OK_200 == response.getStatus()) {
                 result = new JSONObject(response.getContentAsString().trim());
+            }
+            else {
+                Logger.i(this.getClass(), "#code2session - Response status: " + response.getStatus());
             }
         } catch (Exception e) {
             e.printStackTrace();
