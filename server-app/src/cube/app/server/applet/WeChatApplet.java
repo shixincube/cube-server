@@ -111,7 +111,8 @@ public class WeChatApplet implements WeChatAppletAPI {
         }
 
         this.storage.writeAccountSession(account.id, device, sessionJson.getString("openid"),
-                sessionJson.getString("session_key"), sessionJson.getString("unionid"));
+                sessionJson.getString("session_key"),
+                sessionJson.has("unionid") ? sessionJson.getString("unionid") : null);
 
         return true;
     }

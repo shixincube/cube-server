@@ -54,7 +54,7 @@ public class AppletStorage extends AbstractStorage {
                     Constraint.NOT_NULL
             }),
             new StorageField("unionid", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
+                    Constraint.DEFAULT_NULL
             }),
             new StorageField("account_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
@@ -105,7 +105,7 @@ public class AppletStorage extends AbstractStorage {
         this.storage.executeInsert(TABLE_APPLET_SESSION, new StorageField[] {
                 new StorageField("openid", openId),
                 new StorageField("session_key", sessionKey),
-                new StorageField("unionid", unionId),
+                new StorageField("unionid", LiteralBase.STRING, unionId),
                 new StorageField("account_id", accountId),
                 new StorageField("device", device),
                 new StorageField("time", System.currentTimeMillis())

@@ -153,6 +153,10 @@ public abstract class HttpHandler extends AbstractHandler {
 
         for (String pair : array) {
             String[] param = pair.split("=");
+            if (param.length != 2) {
+                continue;
+            }
+
             String value = param[1];
             try {
                 value = URLDecoder.decode(param[1], "UTF-8");

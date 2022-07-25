@@ -308,7 +308,7 @@ public class AccountStorage extends AbstractStorage {
      */
     public Account writeAccount(Account account) {
         if (this.existsAccount(account.id, account.account, account.phone)) {
-            return account;
+            return null;
         }
 
         boolean result = this.storage.executeInsert(TABLE_ACCOUNT, new StorageField[] {
