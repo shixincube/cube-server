@@ -352,6 +352,56 @@ public final class ImageMagick {
     }
 
     /**
+     * 在图片上覆盖贴片水印效果。
+     *
+     * @param workPath
+     * @param text
+     * @param textConstraint
+     * @param imageFile
+     * @param outputFile
+     * @return
+     */
+    public static boolean coverWatermark(File workPath, String text, TextConstraint textConstraint,
+                                         String imageFile, String outputFile) {
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add("convert");
+        commandLine.add("-size");
+        commandLine.add("200x200");
+        commandLine.add("xc:none");
+        commandLine.add("-fill");
+        commandLine.add("'rgba(" + textConstraint.color.red() + ","
+                + textConstraint.color.green() + ","
+                + textConstraint.color.blue() + ",0.75)'");
+        commandLine.add("-font");
+        commandLine.add(null == textConstraint.font ?
+                "'" + Paths.get("").toAbsolutePath().toString() + "/assets/STHeiti.ttc'" : textConstraint.font);
+        commandLine.add("-pointsize");
+        commandLine.add("26");
+        commandLine.add("-gravity");
+        commandLine.add("center");
+        commandLine.add("-draw");
+        commandLine.add("'rotate -45 text 0,0 \"" + text + "\"'");
+        commandLine.add("miff:-");
+        commandLine.add("|");
+        commandLine.add("composite");
+        commandLine.add("-tile");
+        commandLine.add("-dissolve");
+        commandLine.add("40");
+        commandLine.add("-");
+        commandLine.add(imageFile);
+        commandLine.add(outputFile);
+
+        int status = execute(workPath, commandLine);
+        if (-1 != status) {
+            File file = new File(workPath, outputFile);
+            return awaits(file);
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
      * PDF 转 PNG 。
      * @param workPath
      * @param inputFilename

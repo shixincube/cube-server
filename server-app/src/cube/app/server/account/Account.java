@@ -93,7 +93,6 @@ public class Account implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = this.toJSON();
-//        json.remove("account");
         json.remove("registration");
         return json;
     }
@@ -102,7 +101,7 @@ public class Account implements JSONable {
         JSONObject json = new JSONObject();
         json.put("id", this.id);
         json.put("domain", this.domain);
-//        json.put("account", this.account);
+        json.put("account", this.account);
         json.put("phone", this.phone);
         json.put("name", this.name);
         json.put("avatar", this.avatar);
