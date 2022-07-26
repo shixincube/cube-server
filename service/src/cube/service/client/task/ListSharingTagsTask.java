@@ -30,7 +30,8 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.common.action.ClientAction;
 import cube.common.entity.SharingTag;
-import cube.common.notice.FileListSharingTags;
+import cube.common.notice.ListSharingTags;
+import cube.common.notice.NoticeData;
 import cube.common.state.FileStorageStateCode;
 import cube.core.AbstractModule;
 import cube.service.client.ClientCellet;
@@ -50,7 +51,7 @@ public class ListSharingTagsTask extends ClientTask {
 
     @Override
     public void run() {
-        JSONObject notification = this.actionDialect.getParamAsJson("parameter");
+        JSONObject notification = this.actionDialect.getParamAsJson(NoticeData.PARAMETER);
 
         ActionDialect response = new ActionDialect(ClientAction.ListSharingTags.name);
         copyNotifier(response);
@@ -72,9 +73,9 @@ public class ListSharingTagsTask extends ClientTask {
             array.put(tag.toCompactJSON());
         }
         data.put("list", array);
-        data.put("begin", notification.getInt(FileListSharingTags.BEGIN));
-        data.put("end", notification.getInt(FileListSharingTags.END));
-        data.put("valid", notification.getBoolean(FileListSharingTags.VALID));
+        data.put("begin", notification.getInt(ListSharingTags.BEGIN));
+        data.put("end", notification.getInt(ListSharingTags.END));
+        data.put("valid", notification.getBoolean(ListSharingTags.VALID));
 
         response.addParam("code", FileStorageStateCode.Ok.code);
         response.addParam("data", data);

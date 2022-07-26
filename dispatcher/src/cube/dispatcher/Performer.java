@@ -459,6 +459,16 @@ public class Performer implements TalkListener, Tickable {
     }
 
     /**
+     * 指定的令牌是否在当前节点建立连接。
+     *
+     * @param tokenCode
+     * @return
+     */
+    public boolean existsTokenCode(String tokenCode) {
+        return this.tokenDeviceMap.containsKey(tokenCode);
+    }
+
+    /**
      * 获取指定令牌对应的会话上下文。
      *
      * @param tokenCode

@@ -360,6 +360,16 @@ public class AuthStorage implements Storagable {
         });
     }
 
+    public boolean existsToken(String tokenCode) {
+        List<StorageField[]> result = this.storage.executeQuery(this.tokenTable, new StorageField[] {
+                new StorageField("cid", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("code", tokenCode)
+        });
+
+        return !result.isEmpty();
+    }
+
     /**
      * 通过 CID 查询授权令牌。
      *

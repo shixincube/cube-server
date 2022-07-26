@@ -262,6 +262,7 @@ public class FileHandler extends CrossDomainHandler {
 
             JSONObject payload = new JSONObject();
             payload.put("fileCode", fileCode);
+
             if (null != domain) {
                 domain = URLDecoder.decode(domain, "UTF-8");
                 domain = new String(Base64.decode(domain), StandardCharsets.UTF_8);
@@ -275,7 +276,14 @@ public class FileHandler extends CrossDomainHandler {
 
             if (null != token) {
                 packetDialect.addParam("token", token);
-                responseDialect = this.performer.syncTransmit(token, FileStorageCellet.NAME, packetDialect);
+
+                if (this.performer.existsTokenCode(token)) {
+                    responseDialect = this.performer.syncTransmit(token, FileStorageCellet.NAME, packetDialect);
+                }
+                else {
+                    responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
+                }
+
                 if (null == responseDialect) {
                     this.respond(response, HttpStatus.FORBIDDEN_403, packet.toJSON());
                     this.complete();

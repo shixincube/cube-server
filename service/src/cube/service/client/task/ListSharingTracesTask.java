@@ -29,10 +29,9 @@ package cube.service.client.task;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.common.action.ClientAction;
-import cube.common.entity.SharingTag;
 import cube.common.entity.VisitTrace;
-import cube.common.notice.FileListSharingTags;
-import cube.common.notice.FileListTraces;
+import cube.common.notice.ListSharingTraces;
+import cube.common.notice.NoticeData;
 import cube.common.state.FileStorageStateCode;
 import cube.core.AbstractModule;
 import cube.service.client.ClientCellet;
@@ -52,7 +51,7 @@ public class ListSharingTracesTask extends ClientTask {
 
     @Override
     public void run() {
-        JSONObject notification = this.actionDialect.getParamAsJson("parameter");
+        JSONObject notification = this.actionDialect.getParamAsJson(NoticeData.PARAMETER);
 
         ActionDialect response = new ActionDialect(ClientAction.ListSharingTraces.name);
         copyNotifier(response);
@@ -74,9 +73,9 @@ public class ListSharingTracesTask extends ClientTask {
             array.put(trace.toCompactJSON());
         }
         data.put("list", array);
-        data.put(FileListTraces.BEGIN, notification.getInt(FileListTraces.BEGIN));
-        data.put(FileListTraces.END, notification.getInt(FileListTraces.END));
-        data.put(FileListTraces.SHARING_CODE, notification.getBoolean(FileListTraces.SHARING_CODE));
+        data.put(ListSharingTraces.BEGIN, notification.getInt(ListSharingTraces.BEGIN));
+        data.put(ListSharingTraces.END, notification.getInt(ListSharingTraces.END));
+        data.put(ListSharingTraces.SHARING_CODE, notification.getBoolean(ListSharingTraces.SHARING_CODE));
 
         response.addParam("code", FileStorageStateCode.Ok.code);
         response.addParam("data", data);

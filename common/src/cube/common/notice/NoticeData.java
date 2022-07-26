@@ -33,6 +33,8 @@ import org.json.JSONObject;
  */
 public class NoticeData extends JSONObject {
 
+    public final static String PARAMETER = "parameter";
+
     public NoticeData(String action) {
         super();
         this.put("action", action);

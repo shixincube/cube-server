@@ -39,6 +39,8 @@ public enum ClientAction {
 
     GetAuthToken("GetAuthToken"),
 
+    InjectAuthToken("InjectAuthToken"),
+
     AddEventListener("AddEventListener"),
 
     RemoveEventListener("RemoveEventListener"),

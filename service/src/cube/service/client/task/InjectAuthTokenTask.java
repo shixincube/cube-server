@@ -28,33 +28,48 @@ package cube.service.client.task;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.auth.AuthToken;
+import cube.auth.PrimaryDescription;
 import cube.common.action.ClientAction;
-import cube.common.entity.AuthDomain;
+import cube.common.state.AuthStateCode;
+import cube.service.auth.AuthService;
 import cube.service.client.ClientCellet;
+import org.json.JSONObject;
 
 /**
- * 获取域数据任务。
+ * 注入访问令牌任务。
  */
-public class GetDomainTask extends ClientTask {
+public class InjectAuthTokenTask extends ClientTask {
 
-    public GetDomainTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
+    public InjectAuthTokenTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
         super(cellet, talkContext, actionDialect);
     }
 
     @Override
     public void run() {
-        String domain = actionDialect.getParamAsString("domain");
-        String appKey = actionDialect.containsParam("appKey") ?
-                actionDialect.getParamAsString("appKey") : null;
+        ActionDialect response = new ActionDialect(ClientAction.InjectAuthToken.name);
+        copyNotifier(response);
 
-        ActionDialect result = new ActionDialect(ClientAction.GetDomain.name);
-        copyNotifier(result);
+        JSONObject tokenJson = this.actionDialect.getParamAsJson("token");
+        AuthToken authToken = new AuthToken(tokenJson);
 
-        AuthDomain authDomain = getAuthService().getAuthDomain(domain, appKey);
-        if (null != authDomain) {
-            result.addParam("authDomain", authDomain.toJSON());
+        AuthService authService = this.getAuthService();
+
+        PrimaryDescription primaryDescription = authService.getPrimaryDescription(authToken.getDomain(), authToken.getAppKey());
+        if (null == primaryDescription) {
+            response.addParam("code", AuthStateCode.InvalidParameter.code);
+            cellet.speak(talkContext, response);
+            return;
         }
 
-        cellet.speak(talkContext, result);
+        // 设置描述
+        authToken.setDescription(primaryDescription);
+
+        // 注入指定令牌
+        authService.injectToken(authToken);
+
+        response.addParam("code", AuthStateCode.Ok.code);
+        response.addParam("token", authToken.toJSON());
+        cellet.speak(talkContext, response);
     }
 }

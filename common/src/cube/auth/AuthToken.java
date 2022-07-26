@@ -218,6 +218,10 @@ public class AuthToken implements JSONable {
         return this.description;
     }
 
+    public void setDescription(PrimaryDescription primaryDescription) {
+        this.description = primaryDescription;
+    }
+
     /**
      * 是否摆渡数据模式。
      *

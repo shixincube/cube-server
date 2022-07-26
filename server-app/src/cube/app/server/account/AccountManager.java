@@ -30,8 +30,11 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import com.google.code.kaptcha.impl.DefaultKaptcha;
 import com.google.code.kaptcha.util.Config;
+import cube.app.server.Manager;
 import cube.app.server.applet.WeChatApplet;
 import cube.app.server.util.LuckyNumbers;
+import cube.auth.AuthToken;
+import cube.common.entity.AuthDomain;
 import cube.util.ConfigUtils;
 
 import javax.imageio.ImageIO;
@@ -432,9 +435,11 @@ public class AccountManager extends TimerTask {
      * @param phoneNumber
      * @param accountName
      * @param device
+     * @param token
      * @return
      */
-    public Account bindAppletAccount(String jsCode, String phoneNumber, String accountName, String device) {
+    public Account bindAppletAccount(String jsCode, String phoneNumber, String accountName, String device,
+                                     Token token) {
         Account account = null;
         if (null != phoneNumber) {
             account = this.accountStorage.readAccountByPhoneNumber(phoneNumber);
@@ -450,7 +455,19 @@ public class AccountManager extends TimerTask {
         }
 
         if (WeChatApplet.getInstance().bind(jsCode, account, device)) {
-            return account;
+            AuthDomain authDomain = Manager.getInstance().getClient().getDomain(account.domain);
+            // 创建令牌
+            AuthToken authToken = new AuthToken(token.code, account.domain, authDomain.appKey, account.id,
+                    token.creation, token.expire, false);
+            // 向 Cube 服务器注入令牌
+            AuthToken result = Manager.getInstance().getClient().injectAuthToken(authToken);
+            if (null != result) {
+                return account;
+            }
+            else {
+                Logger.e(this.getClass(), "#bindAppletAccount - Inject auth token failed");
+                return null;
+            }
         }
         else {
             Logger.e(this.getClass(), "#bindAppletAccount - Bind applet account failed");

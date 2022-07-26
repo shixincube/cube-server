@@ -29,28 +29,13 @@ package cube.common.notice;
 import cube.common.action.FileStorageAction;
 
 /**
- * 批量获取访问记录。
+ * 获取文件的分享标签。
  */
-public class FileListTraces extends NoticeData {
+public class GetSharingTag extends NoticeData {
 
-    public final static String ACTION = FileStorageAction.ListTraces.name;
+    public final static String ACTION = FileStorageAction.GetSharingTag.name;
 
-    public final static String CONTACT_ID = "contactId";
-
-    public final static String DOMAIN = "domain";
-
-    public final static String SHARING_CODE = "sharingCode";
-
-    public final static String BEGIN = "begin";
-
-    public final static String END = "end";
-
-    public FileListTraces(long contactId, String domain, String sharingCode, int begin, int end) {
+    public GetSharingTag() {
         super(ACTION);
-        this.put(CONTACT_ID, contactId);
-        this.put(DOMAIN, domain);
-        this.put(SHARING_CODE, sharingCode);
-        this.put(BEGIN, begin);
-        this.put(END, end);
     }
 }

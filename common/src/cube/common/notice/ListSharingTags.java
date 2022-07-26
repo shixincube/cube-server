@@ -24,37 +24,33 @@
  * SOFTWARE.
  */
 
-package cube.service.client.task;
+package cube.common.notice;
 
-import cell.core.talk.TalkContext;
-import cell.core.talk.dialect.ActionDialect;
-import cube.common.action.ClientAction;
-import cube.common.entity.AuthDomain;
-import cube.service.client.ClientCellet;
+import cube.common.action.FileStorageAction;
 
 /**
- * 获取域数据任务。
+ * 批量获取分享标签。
  */
-public class GetDomainTask extends ClientTask {
+public class ListSharingTags extends NoticeData {
 
-    public GetDomainTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
-        super(cellet, talkContext, actionDialect);
-    }
+    public final static String ACTION = FileStorageAction.ListSharingTags.name;
 
-    @Override
-    public void run() {
-        String domain = actionDialect.getParamAsString("domain");
-        String appKey = actionDialect.containsParam("appKey") ?
-                actionDialect.getParamAsString("appKey") : null;
+    public final static String CONTACT_ID = "contactId";
 
-        ActionDialect result = new ActionDialect(ClientAction.GetDomain.name);
-        copyNotifier(result);
+    public final static String DOMAIN = "domain";
 
-        AuthDomain authDomain = getAuthService().getAuthDomain(domain, appKey);
-        if (null != authDomain) {
-            result.addParam("authDomain", authDomain.toJSON());
-        }
+    public final static String BEGIN = "begin";
 
-        cellet.speak(talkContext, result);
+    public final static String END = "end";
+
+    public final static String VALID = "valid";
+
+    public ListSharingTags(long contactId, String domain, int begin, int end, boolean valid) {
+        super(ACTION);
+        this.put(CONTACT_ID, contactId);
+        this.put(DOMAIN, domain);
+        this.put(BEGIN, begin);
+        this.put(END, end);
+        this.put(VALID, valid);
     }
 }

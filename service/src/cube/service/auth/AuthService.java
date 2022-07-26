@@ -265,6 +265,21 @@ public class AuthService extends AbstractModule {
     }
 
     /**
+     * 注入令牌。
+     *
+     * @param token
+     * @return
+     */
+    public void injectToken(AuthToken token) {
+        if (this.authStorage.existsToken(token.getCode())) {
+            this.authStorage.updateToken(token);
+        }
+        else {
+            this.authStorage.writeToken(token);
+        }
+    }
+
+    /**
      * 通过编码获取令牌。
      *
      * @param code 指定令牌码。
@@ -318,15 +333,15 @@ public class AuthService extends AbstractModule {
     }
 
     /**
-     * 获取指定域的主描述内容。
+     * 获取指定域的主描述。
      *
      * @param domain 指定域名称。
      * @param appKey 指定 App Key 。
-     * @return 返回指定域的主描述内容。
+     * @return 返回指定域的主描述。
      */
-    public JSONObject getPrimaryContent(String domain, String appKey) {
+    public PrimaryDescription getPrimaryDescription(String domain, String appKey) {
         if (this.useFile) {
-            return this.primaryContentFile.getContent(domain);
+             return new PrimaryDescription("127.0.0.1", this.primaryContentFile.getContent(domain));
         }
         else {
             AuthDomainSet authDomainSet = this.authDomainMap.get(domain);
@@ -341,7 +356,7 @@ public class AuthService extends AbstractModule {
                 if (null == authDomain) {
                     return null;
                 }
-                return authDomain.getPrimaryDescription().getPrimaryContent();
+                return authDomain.getPrimaryDescription();
             }
 
             AuthDomain authDomain = authDomainSet.getAuthDomain(appKey);
@@ -353,7 +368,7 @@ public class AuthService extends AbstractModule {
             }
 
             if (null != authDomain) {
-                return authDomain.getPrimaryDescription().getPrimaryContent();
+                return authDomain.getPrimaryDescription();
             }
 
             return null;

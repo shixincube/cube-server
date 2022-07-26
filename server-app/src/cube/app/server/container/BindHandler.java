@@ -80,7 +80,7 @@ public class BindHandler extends ContextHandler {
 
             if (null != token) {
                 // 尝试绑定账号
-                Account current = AccountManager.getInstance().bindAppletAccount(jsCode, phone, account, device);
+                Account current = AccountManager.getInstance().bindAppletAccount(jsCode, phone, account, device, token);
                 if (null == current) {
                     // 绑定失败
                     JSONObject responseData = new JSONObject();

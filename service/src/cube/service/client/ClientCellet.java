@@ -100,6 +100,9 @@ public class ClientCellet extends AbstractCellet {
         else if (ClientAction.GetAuthToken.name.equals(action)) {
             this.executor.execute(new GetAuthTokenTask(this, talkContext, actionDialect));
         }
+        else if (ClientAction.InjectAuthToken.name.equals(action)) {
+            this.executor.execute(new InjectAuthTokenTask(this, talkContext, actionDialect));
+        }
         else if (ClientAction.PushMessage.name.equals(action)) {
             this.executor.execute(new PushMessageTask(this, talkContext, actionDialect));
         }

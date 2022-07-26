@@ -29,11 +29,12 @@ package cube.service.filestorage;
 import cell.core.talk.PrimitiveInputStream;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
+import cube.auth.PrimaryDescription;
 import cube.cache.SharedMemoryCache;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
-import cube.common.notice.FileListSharingTags;
-import cube.common.notice.FileListTraces;
+import cube.common.notice.ListSharingTags;
+import cube.common.notice.ListSharingTraces;
 import cube.core.*;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
@@ -691,18 +692,18 @@ public class FileStorageService extends AbstractModule {
                 }
             }
             else if (FileStorageAction.ListSharingTags.name.equals(action)) {
-                Contact contact = ContactManager.getInstance().getContact(data.getString(FileListSharingTags.DOMAIN),
-                        data.getLong(FileListSharingTags.CONTACT_ID));
+                Contact contact = ContactManager.getInstance().getContact(data.getString(ListSharingTags.DOMAIN),
+                        data.getLong(ListSharingTags.CONTACT_ID));
                 List<SharingTag> result = this.sharingManager.listSharingTags(contact,
-                        data.getBoolean(FileListSharingTags.VALID),
-                        data.getInt(FileListSharingTags.BEGIN), data.getInt(FileListSharingTags.END));
+                        data.getBoolean(ListSharingTags.VALID),
+                        data.getInt(ListSharingTags.BEGIN), data.getInt(ListSharingTags.END));
                 return result;
             }
             else if (FileStorageAction.ListTraces.name.equals(action)) {
-                Contact contact = ContactManager.getInstance().getContact(data.getString(FileListTraces.DOMAIN),
-                        data.getLong(FileListTraces.CONTACT_ID));
-                List<VisitTrace> result = this.sharingManager.listSharingVisitTrace(contact, data.getString(FileListTraces.SHARING_CODE),
-                        data.getInt(FileListTraces.BEGIN), data.getInt(FileListTraces.END));
+                Contact contact = ContactManager.getInstance().getContact(data.getString(ListSharingTraces.DOMAIN),
+                        data.getLong(ListSharingTraces.CONTACT_ID));
+                List<VisitTrace> result = this.sharingManager.listSharingVisitTrace(contact, data.getString(ListSharingTraces.SHARING_CODE),
+                        data.getInt(ListSharingTraces.BEGIN), data.getInt(ListSharingTraces.END));
                 return result;
             }
         }
@@ -723,7 +724,11 @@ public class FileStorageService extends AbstractModule {
      */
     private String[] getFileURLs(String domain, String appKey) {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
-        JSONObject primary = authService.getPrimaryContent(domain, appKey);
+        PrimaryDescription description = authService.getPrimaryDescription(domain, appKey);
+        if (null == description) {
+            return null;
+        }
+        JSONObject primary = description.getPrimaryContent();
         if (null == primary) {
             return null;
         }
