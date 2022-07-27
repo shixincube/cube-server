@@ -30,6 +30,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
@@ -84,28 +85,32 @@ public class ListSharingTagsTask extends ServiceTask {
 
         // 获取服务
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-        List<SharingTag> list = service.getSharingManager().listSharingTags(contact, valid, beginIndex, endIndex);
-        if (null == list) {
-            // 发生错误
+        try {
+            List<SharingTag> list = service.getSharingManager().listSharingTags(contact, valid, beginIndex, endIndex);
+            if (null == list) {
+                // 发生错误
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
+                markResponseTime();
+                return;
+            }
+
+            JSONArray array = new JSONArray();
+            for (SharingTag sharingTag : list) {
+                array.put(sharingTag.toCompactJSON());
+            }
+
+            JSONObject result = new JSONObject();
+            result.put("list", array);
+            result.put("begin", beginIndex);
+            result.put("end", endIndex);
+            result.put("valid", valid);
+
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
+                    this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
             markResponseTime();
-            return;
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "List sharing tag", e);
         }
-
-        JSONArray array = new JSONArray();
-        for (SharingTag sharingTag : list) {
-            array.put(sharingTag.toCompactJSON());
-        }
-
-        JSONObject result = new JSONObject();
-        result.put("list", array);
-        result.put("begin", beginIndex);
-        result.put("end", endIndex);
-        result.put("valid", valid);
-
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
-        markResponseTime();
     }
 }
