@@ -217,6 +217,21 @@ public class Conditional {
     }
 
     /**
+     * 创建不等于运算。
+     *
+     * @param fieldName 字段名。
+     * @param value 长整型字段值。
+     * @return 返回条件句式实例。
+     */
+    public static Conditional createUnequalTo(String fieldName, long value) {
+        StringBuilder buf = new StringBuilder();
+        buf.append(Quote).append(fieldName).append(Quote);
+        buf.append("<>");
+        buf.append(value);
+        return new Conditional(buf.toString(), true);
+    }
+
+    /**
      * 创建大于运算。
      *
      * @param field 字段描述。

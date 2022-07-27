@@ -111,6 +111,10 @@ public class ListSharingTagsTask extends ServiceTask {
             markResponseTime();
         } catch (Exception e) {
             Logger.e(this.getClass(), "List sharing tag", e);
+
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Failure.code, packet.data));
+            markResponseTime();
         }
     }
 }

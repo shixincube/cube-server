@@ -1027,7 +1027,11 @@ public class ServiceStorage implements Storagable {
             conditionals = new Conditional[] {
                     Conditional.createEqualTo("contact_id", contactId),
                     Conditional.createAnd(),
-                    Conditional.createLessThan(new StorageField("expiry", System.currentTimeMillis())),
+                    Conditional.createBracket(new Conditional[] {
+                            Conditional.createUnequalTo("expiry", (long) 0),
+                            Conditional.createAnd(),
+                            Conditional.createLessThan(new StorageField("expiry", System.currentTimeMillis()))
+                    }),
                     Conditional.createLimit(beginIndex, endIndex - beginIndex + 1)
             };
         }
