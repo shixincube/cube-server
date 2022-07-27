@@ -34,6 +34,7 @@ import cell.util.log.LogHandle;
 import cell.util.log.LogLevel;
 import cell.util.log.Logger;
 import cube.common.Packet;
+import cube.common.action.AuthAction;
 import cube.common.action.ContactAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
@@ -67,6 +68,10 @@ public class Daemon extends TimerTask implements LogHandle {
      * 最近一次报告时间。
      */
     private long lastReportTime = 0;
+
+    private long latencyInterval = 30 * 1000;
+
+    private long lastLatency = 0;
 
     /**
      * 日志记录。
@@ -151,6 +156,30 @@ public class Daemon extends TimerTask implements LogHandle {
 
         // 提交日志报告
         this.submitLogReport();
+
+        if (now - this.lastLatency >= this.latencyInterval) {
+            latency();
+            this.lastLatency = now;
+        }
+    }
+
+    private void latency() {
+        for (Director director : this.performer.directorList) {
+            JSONObject payload = new JSONObject();
+            payload.put("launch", System.currentTimeMillis());
+            Packet packet = new Packet(AuthAction.Latency.name, payload);
+
+            ActionDialect response = this.performer.syncTransmit(director, "Auth", packet.toDialect(), 10 * 1000);
+            if (null != response) {
+                Packet responsePacket = new Packet(response);
+                long remoteTime = responsePacket.data.getJSONObject("data").getLong("time");
+                Logger.i(this.getClass(), "Latency - " + director.endpoint.toString() + " : "
+                        + (System.currentTimeMillis() - remoteTime) + " ms");
+            }
+            else {
+                Logger.w(this.getClass(), "Latency - Service is not available : " + director.endpoint.toString());
+            }
+        }
     }
 
     private ActionDialect createDeviceTimeout(Contact contact, Device device, long failureTime, long timeout) {

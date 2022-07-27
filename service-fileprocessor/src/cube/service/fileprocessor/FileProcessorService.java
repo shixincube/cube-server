@@ -32,6 +32,7 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.FileThumbnail;
 import cube.common.entity.Image;
 import cube.common.entity.FileResult;
+import cube.common.notice.MakeThumb;
 import cube.common.notice.OfficeConvertTo;
 import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
@@ -1032,6 +1033,13 @@ public class FileProcessorService extends AbstractModule {
                     // 返回上下文描述
                     return context.toJSON();
                 }
+            }
+            else if (FileProcessorAction.Thumb.name.equals(action)) {
+                // 创建图片缩略图
+                String domain = data.getString(MakeThumb.DOMAIN);
+                String fileCode = data.getString(MakeThumb.FILE_CODE);
+                int quality = data.getInt(MakeThumb.QUALITY);
+                //this.makeThumbnail(domain, fileCode, )
             }
             else if (FileProcessorAction.OfficeConvertTo.name.equals(action)) {
                 String domain = data.getString(OfficeConvertTo.DOMAIN);

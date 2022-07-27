@@ -150,7 +150,7 @@ public class FileSharingManager {
             }
         }
         else if (FileUtils.isImageType(fileLabel.getFileType())) {
-            // TODO
+
         }
 
         return fileLabels;

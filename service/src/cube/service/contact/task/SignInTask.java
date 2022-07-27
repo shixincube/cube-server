@@ -59,6 +59,8 @@ public class SignInTask extends ServiceTask {
         Packet packet = new Packet(action);
 
         if (packet.data.has("code")) {
+            Logger.i(this.getClass(), "SignIn with code");
+
             // 获取令牌码
             String tokenCode = packet.data.getString("code");
 
@@ -78,6 +80,8 @@ public class SignInTask extends ServiceTask {
                     this.makeResponse(action, packet, ContactStateCode.Ok.code, contact.toJSON(device)));
         }
         else {
+            Logger.i(this.getClass(), "SignIn with self");
+
             JSONObject contactJson = null;
             JSONObject authTokenJson = null;
             try {

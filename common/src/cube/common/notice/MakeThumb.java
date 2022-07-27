@@ -24,43 +24,31 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.common.notice;
+
+import cube.common.action.FileProcessorAction;
 
 /**
- * 授权服务动作。
+ * 生成图片缩略图。
  */
-public enum AuthAction {
+public class MakeThumb extends NoticeData {
 
-    /**
-     * 申请令牌。
-     */
-    ApplyToken("applyToken"),
+    public final static String ACTION = FileProcessorAction.Thumb.name;
 
-    /**
-     * 获取指定 Code 的令牌。
-     */
-    GetToken("getToken"),
+    public final static String DOMAIN = "domain";
 
-    /**
-     * 获取访问域。
-     */
-    GetDomain("getDomain"),
+    public final static String FILE_CODE = "fileCode";
 
-    /**
-     * 潜伏期。
-     */
-    Latency("latency"),
+    public final static String QUALITY = "quality";
 
-    /**
-     * 未知动作。
-     */
-    Unknown("")
+    public MakeThumb(String domain, String fileCode) {
+        this(domain, fileCode, 70);
+    }
 
-    ;
-
-    public final String name;
-
-    AuthAction(String name) {
-        this.name = name;
+    public MakeThumb(String domain, String fileCode, int quality) {
+        super(ACTION);
+        this.put(DOMAIN, domain);
+        this.put(FILE_CODE, fileCode);
+        this.put(QUALITY, quality);
     }
 }

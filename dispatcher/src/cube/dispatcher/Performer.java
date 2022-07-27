@@ -82,7 +82,7 @@ public class Performer implements TalkListener, Tickable {
     /**
      * 服务主机列表。
      */
-    private List<Director> directorList;
+    protected List<Director> directorList;
 
     /**
      * Cellet 对应的 Director 列表。
@@ -796,7 +796,7 @@ public class Performer implements TalkListener, Tickable {
         return this.syncTransmit(this.selectDirector(), celletName, actionDialect, timeout);
     }
 
-    private ActionDialect syncTransmit(Director director, String celletName, ActionDialect actionDialect, long timeout) {
+    protected ActionDialect syncTransmit(Director director, String celletName, ActionDialect actionDialect, long timeout) {
         long sn = actionDialect.containsParam("sn") ?
                 actionDialect.getParamAsLong("sn") : Utils.generateSerialNumber();
 
