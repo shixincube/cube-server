@@ -33,6 +33,7 @@ import cube.auth.PrimaryDescription;
 import cube.cache.SharedMemoryCache;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
+import cube.common.notice.GetSharingTag;
 import cube.common.notice.ListSharingTags;
 import cube.common.notice.ListSharingTraces;
 import cube.core.*;
@@ -368,8 +369,11 @@ public class FileStorageService extends AbstractModule {
             return null;
         }
 
-        String queryString = "?fc=" + fileLabel.getFileCode();
-        fileLabel.setFileURLs(urls[0] + queryString, urls[1] + queryString);
+        StringBuilder queryString = new StringBuilder("?fc=");
+        queryString.append(fileLabel.getFileCode());
+        queryString.append("&type=");
+        queryString.append(fileLabel.getFileType().getPreferredExtension());
+        fileLabel.setFileURLs(urls[0] + queryString.toString(), urls[1] + queryString.toString());
 
         // 设置有效期
         if (0 == fileLabel.getExpiryTime()) {
@@ -690,6 +694,11 @@ public class FileStorageService extends AbstractModule {
                 if (null != result) {
                     return result.toCompactJSON();
                 }
+            }
+            else if (FileStorageAction.GetSharingTag.name.equals(action)) {
+                String sharingCode = data.getString(GetSharingTag.SHARING_CODE);
+                SharingTag sharingTag = this.sharingManager.getSharingTag(sharingCode, true);
+                return sharingTag;
             }
             else if (FileStorageAction.ListSharingTags.name.equals(action)) {
                 Contact contact = ContactManager.getInstance().getContact(data.getString(ListSharingTags.DOMAIN),

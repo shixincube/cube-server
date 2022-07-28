@@ -32,11 +32,8 @@ import cube.app.server.util.AbstractStorage;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.StorageField;
-import cube.storage.StorageFields;
-import org.json.JSONObject;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -112,29 +109,32 @@ public class AppletStorage extends AbstractStorage {
         return result.get(0)[0].getLong();
     }
 
-    public JSONObject querySession(String jsCode) {
+    /**
+     * 查询账号 ID 。
+     *
+     * @param openid
+     * @param jsCode
+     * @return
+     */
+    public long queryAccountIdByOpenId(String openid, String jsCode) {
         List<StorageField[]> result = this.storage.executeQuery(TABLE_APPLET_SESSION, new StorageField[] {
-                new StorageField("openid", LiteralBase.STRING),
-                new StorageField("session_key", LiteralBase.STRING),
-                new StorageField("unionid", LiteralBase.STRING)
+                new StorageField("account_id", LiteralBase.LONG)
         }, new Conditional[] {
-                Conditional.createEqualTo("js_code", jsCode)
+                Conditional.createEqualTo("openid", openid)
         });
 
         if (result.isEmpty()) {
-            return null;
+            return -1;
         }
 
-        Map<String, StorageField> map = StorageFields.get(result.get(0));
+        // 更新 JS Code
+        this.storage.executeUpdate(TABLE_APPLET_SESSION, new StorageField[] {
+                new StorageField("js_code", jsCode)
+        }, new Conditional[] {
+                Conditional.createEqualTo("openid", openid)
+        });
 
-        JSONObject json = new JSONObject();
-        json.put("openid", map.get("openid").getString());
-        json.put("session_key", map.get("session_key").getString());
-        if (!map.get("unionid").isNullValue()) {
-            json.put("unionid", map.get("unionid").getString());
-        }
-
-        return json;
+        return result.get(0)[0].getLong();
     }
 
     public synchronized void writeSessionCode(String jsCode, String openId, String sessionKey, String unionId) {

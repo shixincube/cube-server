@@ -156,6 +156,13 @@ public class FileSharingManager {
         return fileLabels;
     }
 
+    /**
+     * 获取指定的分享标签。
+     *
+     * @param code
+     * @param refresh
+     * @return
+     */
     public SharingTag getSharingTag(String code, boolean refresh) {
         SharingCodeDomain codeDomain = this.getDomainByCode(code);
         if (null == codeDomain) {

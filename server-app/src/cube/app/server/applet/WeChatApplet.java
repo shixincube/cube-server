@@ -82,9 +82,13 @@ public class WeChatApplet implements WeChatAppletAPI {
             // 没有记录，从微信服务器获取 Open ID
             JSONObject sessionJson = this.code2session(jsCode);
             if (null != sessionJson && sessionJson.has("openid")) {
-                this.storage.writeSessionCode(jsCode, sessionJson.getString("openid"),
-                        sessionJson.getString("session_key"),
-                        sessionJson.has("unionid") ? sessionJson.getString("unionid") : null);
+                // 查找 openid
+                accountId = this.storage.queryAccountIdByOpenId(sessionJson.getString("openid"), jsCode);
+                if (-1 == accountId) {
+                    this.storage.writeSessionCode(jsCode, sessionJson.getString("openid"),
+                            sessionJson.getString("session_key"),
+                            sessionJson.has("unionid") ? sessionJson.getString("unionid") : null);
+                }
             }
             else {
                 Logger.w(this.getClass(), "#checkAccount - Get session from WeChat server failed: " + jsCode);

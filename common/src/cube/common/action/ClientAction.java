@@ -85,6 +85,8 @@ public enum ClientAction {
 
     ListSharingTraces("ListSharingTraces"),
 
+    GetSharingTag("GetSharingTag"),
+
     ProcessFile("ProcessFile"),
 
     SubmitWorkflow("SubmitWorkflow"),

@@ -26,6 +26,7 @@
 
 package cube.app.server.container.file;
 
+import cell.util.log.Logger;
 import cube.app.server.Manager;
 import cube.app.server.account.Account;
 import cube.app.server.account.AccountManager;
@@ -46,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * 批量获取分享标签。
  */
 public class ListSharingTagHandler extends ContextHandler {
 
@@ -54,8 +55,8 @@ public class ListSharingTagHandler extends ContextHandler {
 
     public ListSharingTagHandler(String httpOrigin, String httpsOrigin) {
         super("/file/list/sharing/");
-        // 冷却时间 1000ms
-        this.strategy = new DefenseStrategy(1000);
+        // 冷却时间 500ms
+        this.strategy = new DefenseStrategy(500);
         setHandler(new Handler(httpOrigin, httpsOrigin));
     }
 
@@ -87,6 +88,16 @@ public class ListSharingTagHandler extends ContextHandler {
             int begin = Integer.parseInt(data.get("begin"));
             int end = Integer.parseInt(data.get("end"));
             boolean valid = !data.containsKey("valid") || data.get("valid").equals("1") || data.get("valid").equals("true");
+
+            // 参数校验
+            if (end - begin > 9) {
+                Logger.w(this.getClass(), "#doGet - Parameter index range out-of-limit: " + (end - begin));
+            }
+            else if (end - begin > 29) {
+                this.respond(response, HttpStatus.LENGTH_REQUIRED_411);
+                this.complete();
+                return;
+            }
 
             Account account = AccountManager.getInstance().getOnlineAccount(tokenCode);
             if (null == account) {

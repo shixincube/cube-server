@@ -35,7 +35,10 @@ public class GetSharingTag extends NoticeData {
 
     public final static String ACTION = FileStorageAction.GetSharingTag.name;
 
-    public GetSharingTag() {
+    public final static String SHARING_CODE = "sharingCode";
+
+    public GetSharingTag(String sharingCode) {
         super(ACTION);
+        this.put(SHARING_CODE, sharingCode);
     }
 }
