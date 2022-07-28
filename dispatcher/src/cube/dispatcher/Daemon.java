@@ -178,6 +178,13 @@ public class Daemon extends TimerTask implements LogHandle {
             }
             else {
                 Logger.w(this.getClass(), "Latency - Service is not available : " + director.endpoint.toString());
+                // 重连
+                (new Thread() {
+                    @Override
+                    public void run() {
+                        performer.restart();
+                    }
+                }).start();
             }
         }
     }

@@ -83,6 +83,12 @@ public class ListSharingTagsTask extends ServiceTask {
         int endIndex = packet.data.getInt("end");
         boolean valid = packet.data.has("valid") && packet.data.getBoolean("valid");
 
+        // 校验参数
+        int d = endIndex - beginIndex;
+        if (d > 9) {
+            endIndex = beginIndex + 9;
+        }
+
         // 获取服务
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
         try {
