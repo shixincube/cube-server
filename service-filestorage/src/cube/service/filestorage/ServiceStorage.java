@@ -993,6 +993,33 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
+     * 计算分享标签数量。
+     * @param domain
+     * @param contactId
+     * @param valid
+     * @return
+     */
+    public int countSharingTag(String domain, long contactId, boolean valid) {
+        String table = this.sharingTagTableNameMap.get(domain);
+        if (null == table) {
+            return 0;
+        }
+
+        String sql = null;
+        if (valid) {
+            sql = "SELECT COUNT(id) FROM `" + table
+                    + "` WHERE `contact_id`=" + contactId + " AND (`expiry`=0 OR `expiry`>" + System.currentTimeMillis() + ")";
+        }
+        else {
+            sql = "SELECT COUNT(id) FROM `" + table
+                    + "` WHERE `contact_id`=" + contactId + " AND (`expiry`<>0 AND `expiry`<" + System.currentTimeMillis() + ")";
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        return result.get(0)[0].getInt();
+    }
+
+    /**
      * 获取指定联系人的分享标签。
      *
      * @param domain

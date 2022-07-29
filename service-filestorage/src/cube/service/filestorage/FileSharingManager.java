@@ -39,6 +39,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 文件分享管理器。
@@ -56,12 +57,15 @@ public class FileSharingManager {
 
     private ConcurrentHashMap<String, SharingCodeDomain> codeDomainMap;
 
+    private ConcurrentHashMap<String, SharingTagTotal> sharingTagTotalMap;
+
     public FileSharingManager(FileStorageService service) {
         this.service = service;
     }
 
     public void start() {
         this.codeDomainMap = new ConcurrentHashMap<>();
+        this.sharingTagTotalMap = new ConcurrentHashMap<>();
         this.authService = (AuthService) this.service.getKernel().getModule(AuthService.NAME);
     }
 
@@ -316,6 +320,10 @@ public class FileSharingManager {
         }
     }
 
+
+    /**
+     * 分享码对应的域。
+     */
     public class SharingCodeDomain {
 
         public final String code;
@@ -328,6 +336,20 @@ public class FileSharingManager {
             this.code = code;
             this.domain = domain;
             this.timestamp = System.currentTimeMillis();
+        }
+    }
+
+
+    /**
+     * 分享标签总数。
+     */
+    public class SharingTagTotal {
+
+        public final AtomicInteger valid = new AtomicInteger(0);
+
+        public final AtomicInteger invalid = new AtomicInteger(0);
+
+        public SharingTagTotal() {
         }
     }
 }
