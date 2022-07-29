@@ -26,7 +26,12 @@
 
 package cube.app.server.container.file;
 
+import cube.app.server.Manager;
+import cube.app.server.account.Account;
+import cube.app.server.account.AccountManager;
 import cube.app.server.util.DefenseStrategy;
+import cube.client.Client;
+import cube.common.entity.SharingTag;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -38,7 +43,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- *
+ * 分享标签句柄。
  */
 public class SharingTagHandler extends ContextHandler {
 
@@ -61,7 +66,7 @@ public class SharingTagHandler extends ContextHandler {
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             Map<String, String> data = this.parseQueryStringParams(request);
-            if (!data.containsKey("token")) {
+            if (!data.containsKey("token") || !data.containsKey("sc")) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
@@ -75,7 +80,25 @@ public class SharingTagHandler extends ContextHandler {
                 return;
             }
 
+            Account account = AccountManager.getInstance().getOnlineAccount(tokenCode);
+            if (null == account) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
 
+            String sharingCode = data.get("sc");
+            Client client = Manager.getInstance().getClient();
+            SharingTag sharingTag = client.getFileProcessor().getSharingTag(sharingCode);
+
+            if (null == sharingCode) {
+                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.complete();
+                return;
+            }
+
+            this.respondOk(response, sharingTag.toCompactJSON());
+            this.complete();
         }
     }
 }

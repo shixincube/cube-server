@@ -64,7 +64,7 @@ public class GetSharingTagTask extends ClientTask {
         SharingTag sharingTag = (SharingTag) result;
 
         response.addParam("code", FileStorageStateCode.Ok.code);
-        response.addParam("data", sharingTag.toJSON());
+        response.addParam("data", sharingTag.toCompactJSON());
 
         this.cellet.speak(this.talkContext, response);
     }

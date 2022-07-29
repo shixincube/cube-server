@@ -257,7 +257,7 @@ public class SharingTag extends Entity {
         if (null != this.previewList) {
             JSONArray array = new JSONArray();
             for (FileLabel fileLabel : this.previewList) {
-                array.put(fileLabel.toJSON());
+                array.put(fileLabel.toCompactJSON());
             }
             json.put("previewList", array);
         }

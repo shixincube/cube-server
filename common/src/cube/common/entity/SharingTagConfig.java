@@ -195,6 +195,12 @@ public class SharingTagConfig implements JSONable {
             json.remove("contact");
             json.put("contact", this.contact.toBasicJSON());
         }
+
+        if (json.has("fileLabel")) {
+            json.remove("fileLabel");
+            json.put("fileLabel", this.fileLabel.toCompactJSON());
+        }
+
         if (json.has("device")) {
             json.remove("device");
         }
