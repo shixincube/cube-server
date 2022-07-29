@@ -201,7 +201,8 @@ public class FileHandler extends CrossDomainHandler {
         if (null != sharingCode) {
             JSONObject payload = new JSONObject();
             payload.put("code", sharingCode);
-            payload.put("urls", false);
+            payload.put("refresh", false);
+            payload.put("full", true);
             Packet packet = new Packet(FileStorageAction.GetSharingTag.name, payload);
             // 请求数据
             ActionDialect dialect = this.performer.syncTransmit(FileStorageCellet.NAME, packet.toDialect());
@@ -237,12 +238,12 @@ public class FileHandler extends CrossDomainHandler {
             String fileCode = request.getParameter("fc");
 
             if (null == token && null == domain) {
-                response.setStatus(HttpStatus.BAD_REQUEST_400);
+                response.setStatus(HttpStatus.FORBIDDEN_403);
                 this.complete();
                 return;
             }
             else if (null == fileCode) {
-                response.setStatus(HttpStatus.BAD_REQUEST_400);
+                response.setStatus(HttpStatus.FORBIDDEN_403);
                 this.complete();
                 return;
             }
@@ -285,7 +286,7 @@ public class FileHandler extends CrossDomainHandler {
                 }
 
                 if (null == responseDialect) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403, packet.toJSON());
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
                     this.complete();
                     return;
                 }
@@ -293,7 +294,7 @@ public class FileHandler extends CrossDomainHandler {
             else {
                 responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
                 if (null == responseDialect) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403, packet.toJSON());
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
                     this.complete();
                     return;
                 }
@@ -303,8 +304,9 @@ public class FileHandler extends CrossDomainHandler {
 
             int stateCode = Packet.extractCode(responsePacket);
             if (stateCode != FileStorageStateCode.Ok.code) {
+                Logger.w(this.getClass(), "#doGet - Service state code : " + stateCode);
                 // 状态错误
-                this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+                this.respond(response, HttpStatus.NOT_FOUND_404, packet.toJSON());
                 this.complete();
                 return;
             }

@@ -56,6 +56,7 @@ public class GetSharingTagTask extends ServiceTask {
         // 读取参数
         String sharingCode = packet.data.getString("code");
         boolean refresh = packet.data.has("refresh") && packet.data.getBoolean("refresh");
+        boolean full = packet.data.has("full") && packet.data.getBoolean("full");
 
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
         SharingTag sharingTag = service.getSharingManager().getSharingTag(sharingCode, refresh);
@@ -69,7 +70,8 @@ public class GetSharingTagTask extends ServiceTask {
 
         // 返回数据
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, sharingTag.toCompactJSON()));
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code,
+                        full ? sharingTag.toJSON() : sharingTag.toCompactJSON()));
         markResponseTime();
     }
 }

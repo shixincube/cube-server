@@ -252,7 +252,7 @@ public class AccountManager extends TimerTask {
         }
 
         long now = System.currentTimeMillis();
-        Token token = new Token(account.id, Utils.randomString(32), device,
+        Token token = new Token(account.id, account.domain, Utils.randomString(32), device,
                 now, now + TOKEN_DURATION);
 
         // 写入令牌
@@ -284,7 +284,7 @@ public class AccountManager extends TimerTask {
         }
 
         long now = System.currentTimeMillis();
-        Token token = new Token(account.id, Utils.randomString(32), device,
+        Token token = new Token(account.id, account.domain, Utils.randomString(32), device,
                 now, now + TOKEN_DURATION);
 
         // 写入令牌
@@ -311,7 +311,7 @@ public class AccountManager extends TimerTask {
         Account account = getAccount(accountId);
 
         long now = System.currentTimeMillis();
-        Token token = new Token(accountId, Utils.randomString(32), device,
+        Token token = new Token(accountId, account.domain, Utils.randomString(32), device,
                 now, now + TOKEN_DURATION);
 
         // 写入令牌
@@ -473,6 +473,25 @@ public class AccountManager extends TimerTask {
             Logger.e(this.getClass(), "#bindAppletAccount - Bind applet account failed");
             return null;
         }
+    }
+
+    /**
+     * 异步方式注入令牌。
+     *
+     * @param token
+     */
+    public void asyncInject(Token token) {
+        this.executor.execute(() -> {
+            AuthDomain authDomain = Manager.getInstance().getClient().getDomain(token.domain);
+            // 创建令牌
+            AuthToken authToken = new AuthToken(token.code, token.domain, authDomain.appKey, token.accountId,
+                    token.creation, token.expire, true);
+            // 向 Cube 服务器注入令牌
+            AuthToken result = Manager.getInstance().getClient().injectAuthToken(authToken);
+            if (null == result) {
+                Logger.e(this.getClass(), "#asyncInject - Inject auth token failed");
+            }
+        });
     }
 
     /**

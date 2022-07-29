@@ -35,6 +35,8 @@ public class Token {
 
     public final long accountId;
 
+    public final String domain;
+
     public final String code;
 
     public final String device;
@@ -45,18 +47,20 @@ public class Token {
 
     public long timestamp = System.currentTimeMillis();
 
-    public Token(long accountId, String code, String device, long creation, long expire) {
+    public Token(long accountId, String domain, String code, String device, long creation, long expire) {
         this.id = -1;
         this.accountId = accountId;
+        this.domain = domain;
         this.code = code;
         this.device = device;
         this.creation = creation;
         this.expire = expire;
     }
 
-    public Token(long id, long accountId, String code, String device, long creation, long expire) {
+    public Token(long id, long accountId, String domain, String code, String device, long creation, long expire) {
         this.id = id;
         this.accountId = accountId;
+        this.domain = domain;
         this.code = code;
         this.device = device;
         this.creation = creation;

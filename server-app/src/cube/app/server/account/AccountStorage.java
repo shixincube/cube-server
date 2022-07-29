@@ -91,6 +91,9 @@ public class AccountStorage extends AbstractStorage {
             new StorageField("account_id", LiteralBase.LONG, new Constraint[]{
                     Constraint.NOT_NULL
             }),
+            new StorageField("domain", LiteralBase.LONG, new Constraint[]{
+                    Constraint.NOT_NULL
+            }),
             new StorageField("token", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -138,6 +141,7 @@ public class AccountStorage extends AbstractStorage {
 
         Map<String, StorageField> dataMap = StorageFields.get(result.get(0));
         Token token = new Token(dataMap.get("id").getLong(), dataMap.get("account_id").getLong(),
+                dataMap.get("domain").getString(),
                 dataMap.get("token").getString(), dataMap.get("device").getString(),
                 dataMap.get("creation").getLong(), dataMap.get("expire").getLong());
         return token;
@@ -147,6 +151,7 @@ public class AccountStorage extends AbstractStorage {
         if (token.id < 0) {
             this.storage.executeInsert(TABLE_TOKEN, new StorageField[] {
                     new StorageField("account_id", LiteralBase.LONG, token.accountId),
+                    new StorageField("domain", LiteralBase.STRING, token.domain),
                     new StorageField("token", LiteralBase.STRING, token.code),
                     new StorageField("device", LiteralBase.STRING, token.device),
                     new StorageField("creation", LiteralBase.LONG, token.creation),

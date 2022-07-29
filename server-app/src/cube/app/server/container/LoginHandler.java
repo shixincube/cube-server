@@ -26,9 +26,12 @@
 
 package cube.app.server.container;
 
+import cell.util.log.Logger;
+import cube.app.server.Manager;
 import cube.app.server.account.AccountManager;
 import cube.app.server.account.StateCode;
 import cube.app.server.account.Token;
+import cube.auth.AuthToken;
 import cube.common.entity.Trace;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
@@ -100,6 +103,9 @@ public class LoginHandler extends ContextHandler {
                     responseData.put("code", StateCode.InvalidAccount.code);
                 }
                 else {
+                    // 向 Cube 服务器注入令牌
+                    AccountManager.getInstance().asyncInject(token);
+
                     String trace = (new Trace(token.accountId)).toString();
 
                     responseData.put("code", StateCode.Success.code);

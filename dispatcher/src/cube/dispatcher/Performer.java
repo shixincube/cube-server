@@ -306,6 +306,10 @@ public class Performer implements TalkListener, Tickable {
             }
         }
 
+        if (null == selected) {
+            selected = this.directorList.get(0);
+        }
+
         return selected;
     }
 
