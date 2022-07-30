@@ -199,11 +199,51 @@ public class FileSharingManager {
     }
 
     /**
-     * 列举分享标签。
+     * 获取分享标签的数量。
      *
      * @param contact
+     * @param valid
      * @return
      */
+    public int countSharingTags(Contact contact, boolean valid) {
+        String key = contact.getUniqueKey();
+        SharingTagTotal total = this.sharingTagTotalMap.get(key);
+        if (null == total) {
+            int numValid = this.service.getServiceStorage().countSharingTag(contact.getDomain().getName(),
+                    contact.getId(), true);
+            int numInvalid = this.service.getServiceStorage().countSharingTag(contact.getDomain().getName(),
+                    contact.getId(), false);
+            total = new SharingTagTotal(numValid, numInvalid);
+            this.sharingTagTotalMap.put(key, total);
+        }
+
+        return valid ? total.valid.get() : total.invalid.get();
+    }
+
+    private void refreshSharingTagTotal(Contact contact) {
+        String key = contact.getUniqueKey();
+        SharingTagTotal total = this.sharingTagTotalMap.get(key);
+        if (null == total) {
+            int numValid = this.service.getServiceStorage().countSharingTag(contact.getDomain().getName(),
+                    contact.getId(), true);
+            int numInvalid = this.service.getServiceStorage().countSharingTag(contact.getDomain().getName(),
+                    contact.getId(), false);
+            total = new SharingTagTotal(numValid, numInvalid);
+            this.sharingTagTotalMap.put(key, total);
+        }
+        else {
+            long now = System.currentTimeMillis();
+            if (now - total.timestamp > 1000) {
+                int numValid = this.service.getServiceStorage().countSharingTag(contact.getDomain().getName(),
+                        contact.getId(), true);
+                int numInvalid = this.service.getServiceStorage().countSharingTag(contact.getDomain().getName(),
+                        contact.getId(), false);
+                total.valid.set(numValid);
+                total.invalid.set(numInvalid);
+                total.timestamp = now;
+            }
+        }
+    }
 
     /**
      * 列举分享标签。
@@ -240,6 +280,9 @@ public class FileSharingManager {
                 }
             }
         }
+
+        // 刷新数量数据
+        this.refreshSharingTagTotal(contact);
 
         return list;
     }
@@ -345,11 +388,15 @@ public class FileSharingManager {
      */
     public class SharingTagTotal {
 
-        public final AtomicInteger valid = new AtomicInteger(0);
+        public final AtomicInteger valid;
 
-        public final AtomicInteger invalid = new AtomicInteger(0);
+        public final AtomicInteger invalid;
 
-        public SharingTagTotal() {
+        public long timestamp = System.currentTimeMillis();
+
+        public SharingTagTotal(int valid, int invalid) {
+            this.valid = new AtomicInteger(valid);
+            this.invalid = new AtomicInteger(invalid);
         }
     }
 }

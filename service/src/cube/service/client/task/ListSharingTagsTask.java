@@ -30,6 +30,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.common.action.ClientAction;
 import cube.common.entity.SharingTag;
+import cube.common.notice.CountSharingTags;
 import cube.common.notice.ListSharingTags;
 import cube.common.notice.NoticeData;
 import cube.common.state.FileStorageStateCode;
@@ -65,6 +66,19 @@ public class ListSharingTagsTask extends ClientTask {
             return;
         }
 
+        // 查询的是否是有效期内的
+        boolean valid = notification.getBoolean(ListSharingTags.VALID);
+
+        // 获取总数量
+        int total = 0;
+        CountSharingTags countNotice = new CountSharingTags(notification.getString(ListSharingTags.DOMAIN),
+                notification.getLong(ListSharingTags.CONTACT_ID));
+        Object numResult = module.notify(countNotice);
+        if (null != numResult) {
+            JSONObject numJson = (JSONObject) numResult;
+            total = valid ? CountSharingTags.parseValidNumber(numJson) : CountSharingTags.parseInvalidNumber(numJson);
+        }
+
         List<SharingTag> sharingTagList = (List<SharingTag>) result;
 
         JSONObject data = new JSONObject();
@@ -73,9 +87,10 @@ public class ListSharingTagsTask extends ClientTask {
             array.put(tag.toCompactJSON());
         }
         data.put("list", array);
+        data.put("total", total);
         data.put("begin", notification.getInt(ListSharingTags.BEGIN));
         data.put("end", notification.getInt(ListSharingTags.END));
-        data.put("valid", notification.getBoolean(ListSharingTags.VALID));
+        data.put("valid", valid);
 
         response.addParam("code", FileStorageStateCode.Ok.code);
         response.addParam("data", data);

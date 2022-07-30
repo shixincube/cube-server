@@ -108,6 +108,7 @@ public class ListSharingTagsTask extends ServiceTask {
 
             JSONObject result = new JSONObject();
             result.put("list", array);
+            result.put("total", service.getSharingManager().countSharingTags(contact, valid));
             result.put("begin", beginIndex);
             result.put("end", endIndex);
             result.put("valid", valid);
