@@ -1199,6 +1199,24 @@ public class ServiceStorage implements Storagable {
         return list;
     }
 
+    /**
+     * 计算记录数量。
+     *
+     * @param domain
+     * @param code
+     * @return
+     */
+    public int countVisitTraces(String domain, String code) {
+        String table = this.visitTraceTableNameMap.get(domain);
+        if (null == table) {
+            return 0;
+        }
+
+        String sql = "SELECT COUNT(sn) FROM `" + table + "` WHERE `code`='" + code + "'";
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        return result.get(0)[0].getInt();
+    }
+
     private void checkLabelTable(String domain) {
         String table = this.labelTablePrefix + domain;
 

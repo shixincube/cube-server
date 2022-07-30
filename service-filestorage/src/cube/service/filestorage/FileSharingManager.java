@@ -312,6 +312,16 @@ public class FileSharingManager {
                 sharingCode, beginIndex, endIndex);
     }
 
+    /**
+     *
+     * @param contact
+     * @param sharingCode
+     * @return
+     */
+    public int countSharingVisitTrace(Contact contact, String sharingCode) {
+        return this.service.getServiceStorage().countVisitTraces(contact.getDomain().getName(), sharingCode);
+    }
+
     public void traceVisit(VisitTrace trace) {
         String code = this.extractCode(trace.url);
         SharingCodeDomain codeDomain = getDomainByCode(code);

@@ -100,6 +100,7 @@ public class ListTracesTask extends ServiceTask {
 
         JSONObject result = new JSONObject();
         result.put("list", array);
+        result.put("total", service.getSharingManager().countSharingVisitTrace(contact, sharingCode));
         result.put("begin", beginIndex);
         result.put("end", endIndex);
         result.put("sharingCode", sharingCode);

@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cell.util.log.Logger;
 import cube.common.JSONable;
 import cube.vision.Size;
 import org.json.JSONException;
@@ -243,9 +244,9 @@ public class VisitTrace implements JSONable {
                 }
             }
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#getSharerId", e);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#getSharerId", e);
         }
 
         return 0;
@@ -274,9 +275,9 @@ public class VisitTrace implements JSONable {
                 }
             }
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#getParentId", e);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.w(this.getClass(), "#getParentId", e);
         }
 
         return 0;
