@@ -704,9 +704,12 @@ public class FileStorageService extends AbstractModule {
             else if (FileStorageAction.ListSharingTags.name.equals(action)) {
                 Contact contact = ContactManager.getInstance().getContact(data.getString(ListSharingTags.DOMAIN),
                         data.getLong(ListSharingTags.CONTACT_ID));
+                // 数据排序
+                boolean desc = data.getString(ListSharingTags.ORDER).equalsIgnoreCase(ConfigUtils.ORDER_DESC);
                 List<SharingTag> result = this.sharingManager.listSharingTags(contact,
                         data.getBoolean(ListSharingTags.VALID),
-                        data.getInt(ListSharingTags.BEGIN), data.getInt(ListSharingTags.END));
+                        data.getInt(ListSharingTags.BEGIN), data.getInt(ListSharingTags.END),
+                        desc);
                 return result;
             }
             else if (FileStorageAction.ListTraces.name.equals(action)) {

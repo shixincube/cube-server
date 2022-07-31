@@ -252,15 +252,17 @@ public class FileSharingManager {
      * @param valid 是否是在有效期内的分享。
      * @param beginIndex
      * @param endIndex
+     * @param descending 是否降序。
      * @return
      */
-    public List<SharingTag> listSharingTags(Contact contact, boolean valid, int beginIndex, int endIndex) {
+    public List<SharingTag> listSharingTags(Contact contact, boolean valid,
+                                            int beginIndex, int endIndex, boolean descending) {
         if (endIndex <= beginIndex) {
             return null;
         }
 
         List<SharingTag> list = this.service.getServiceStorage().listSharingTags(contact.getDomain().getName(),
-                contact.getId(), valid, beginIndex, endIndex);
+                contact.getId(), valid, beginIndex, endIndex, descending);
 
         AuthDomain authDomain = this.authService.getAuthDomain(contact.getDomain().getName());
 

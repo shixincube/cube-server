@@ -1027,9 +1027,11 @@ public class ServiceStorage implements Storagable {
      * @param valid
      * @param beginIndex
      * @param endIndex
+     * @param descending 是否降序。
      * @return
      */
-    public List<SharingTag> listSharingTags(String domain, long contactId, boolean valid, int beginIndex, int endIndex) {
+    public List<SharingTag> listSharingTags(String domain, long contactId, boolean valid, int beginIndex, int endIndex,
+                                            boolean descending) {
         List<SharingTag> list = new ArrayList<>();
 
         String table = this.sharingTagTableNameMap.get(domain);
@@ -1047,6 +1049,7 @@ public class ServiceStorage implements Storagable {
                             Conditional.createOr(),
                             Conditional.createGreaterThanEqual(new StorageField("expiry", System.currentTimeMillis()))
                     }),
+                    Conditional.createOrderBy("timestamp", descending),
                     Conditional.createLimit(beginIndex, endIndex - beginIndex + 1)
             };
         }
@@ -1059,6 +1062,7 @@ public class ServiceStorage implements Storagable {
                             Conditional.createAnd(),
                             Conditional.createLessThan(new StorageField("expiry", System.currentTimeMillis()))
                     }),
+                    Conditional.createOrderBy("timestamp", descending),
                     Conditional.createLimit(beginIndex, endIndex - beginIndex + 1)
             };
         }

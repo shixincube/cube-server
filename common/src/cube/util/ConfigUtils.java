@@ -51,6 +51,16 @@ import java.util.stream.Collectors;
  */
 public final class ConfigUtils {
 
+    /**
+     * 升序。
+     */
+    public final static String ORDER_ASC = "asc";
+
+    /**
+     * 降序。
+     */
+    public final static String ORDER_DESC = "desc";
+
     private ConfigUtils() {
     }
 

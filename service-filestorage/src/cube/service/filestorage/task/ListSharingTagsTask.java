@@ -40,6 +40,7 @@ import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
+import cube.util.ConfigUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -82,6 +83,7 @@ public class ListSharingTagsTask extends ServiceTask {
         int beginIndex = packet.data.getInt("begin");
         int endIndex = packet.data.getInt("end");
         boolean valid = packet.data.has("valid") && packet.data.getBoolean("valid");
+        boolean desc = !packet.data.has("order") || packet.data.getString("order").equalsIgnoreCase(ConfigUtils.ORDER_DESC);
 
         // 校验参数
         int d = endIndex - beginIndex;
@@ -92,7 +94,7 @@ public class ListSharingTagsTask extends ServiceTask {
         // 获取服务
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
         try {
-            List<SharingTag> list = service.getSharingManager().listSharingTags(contact, valid, beginIndex, endIndex);
+            List<SharingTag> list = service.getSharingManager().listSharingTags(contact, valid, beginIndex, endIndex, desc);
             if (null == list) {
                 // 发生错误
                 this.cellet.speak(this.talkContext,

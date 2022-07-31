@@ -27,6 +27,7 @@
 package cube.common.notice;
 
 import cube.common.action.FileStorageAction;
+import cube.util.ConfigUtils;
 
 /**
  * 批量获取分享标签。
@@ -45,6 +46,8 @@ public class ListSharingTags extends NoticeData {
 
     public final static String VALID = "valid";
 
+    public final static String ORDER = "order";
+
     public ListSharingTags(long contactId, String domain, int begin, int end, boolean valid) {
         super(ACTION);
         this.put(CONTACT_ID, contactId);
@@ -52,5 +55,6 @@ public class ListSharingTags extends NoticeData {
         this.put(BEGIN, begin);
         this.put(END, end);
         this.put(VALID, valid);
+        this.put(ORDER, ConfigUtils.ORDER_DESC);
     }
 }
