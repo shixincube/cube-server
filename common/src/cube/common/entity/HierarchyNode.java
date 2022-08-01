@@ -227,9 +227,13 @@ public class HierarchyNode extends Entity {
      * @return 连接成功返回 {@code true} 。
      */
     public boolean link(Entity entity) {
+        if (null == entity || null == entity.getUniqueKey()) {
+            return false;
+        }
+
         synchronized (this.relatedKeys) {
             if (this.relatedKeys.contains(entity.getUniqueKey())) {
-                return false;
+                return true;
             }
 
             this.relatedKeys.add(entity.getUniqueKey());

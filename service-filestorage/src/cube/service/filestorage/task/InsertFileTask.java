@@ -130,7 +130,7 @@ public class InsertFileTask extends ServiceTask {
         }
 
         // 更新文件有效期，更新为永久有效
-        service.updateFileExpiryTime(fileLabel, 0L);
+        service.updateFileExpiryTime(fileLabel, 0);
 
         JSONObject response = new JSONObject();
         response.put("directory", directory.toCompactJSON());
