@@ -171,8 +171,7 @@ public abstract class HttpHandler extends AbstractHandler {
 
     public void setCookie(HttpServletResponse response, String name, String value, int maxAge) {
         try {
-            response.addHeader("Set-Cookie", name + "=" + URLEncoder.encode(value, "UTF-8") + "; max-age=" + maxAge +
-                    "; SameSite=None; Secure" );
+            response.addHeader("Set-Cookie", name + "=" + URLEncoder.encode(value, "UTF-8") + "; max-age=" + maxAge);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }

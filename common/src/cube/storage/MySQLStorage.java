@@ -512,7 +512,7 @@ public class MySQLStorage extends AbstractStorage {
                    conn = DriverManager.getConnection(url.toString(),
                             this.config.getString(CONFIG_USER), this.config.getString(CONFIG_PASSWORD));
                 } catch (SQLException e) {
-                    Logger.e(this.getClass(), "#open", e);
+                    Logger.e(this.getClass(), "#open - " + url.toString(), e);
                 }
             }
 

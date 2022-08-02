@@ -234,6 +234,10 @@ public class VisitTrace implements JSONable {
         try {
             URI uri = new URI(this.url);
             String query = uri.getQuery();
+            if (null == query) {
+                return 0;
+            }
+
             String[] array = query.split("&");
             for (String param : array) {
                 String[] pair = param.split("=");
@@ -265,6 +269,10 @@ public class VisitTrace implements JSONable {
         try {
             URI uri = new URI(this.url);
             String query = uri.getQuery();
+            if (null == query) {
+                return 0;
+            }
+
             String[] array = query.split("&");
             for (String param : array) {
                 String[] pair = param.split("=");

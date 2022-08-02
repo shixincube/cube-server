@@ -135,6 +135,7 @@ body {
     top: 0;
     left: 0;
     z-index: 0;
+    visibility: hidden;
 }
 
 .toast {
@@ -148,6 +149,7 @@ body {
     right: 0;
     bottom: 0;
     display: none;
+    z-index: 999;
 }
 .toast-content {
     text-align: center;
