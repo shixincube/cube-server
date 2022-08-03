@@ -31,7 +31,7 @@ import cube.app.server.account.Account;
 import cube.app.server.account.AccountManager;
 import cube.app.server.util.DefenseStrategy;
 import cube.client.Client;
-import cube.common.entity.SharingTag;
+import cube.common.entity.VisitTrace;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -70,7 +70,7 @@ public class ListSharingTraceHandler extends ContextHandler {
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             Map<String, String> data = this.parseQueryStringParams(request);
-            if (!data.containsKey("token")) {
+            if (!data.containsKey("token") || !data.containsKey("code")) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
@@ -86,7 +86,7 @@ public class ListSharingTraceHandler extends ContextHandler {
 
             int begin = Integer.parseInt(data.get("begin"));
             int end = Integer.parseInt(data.get("end"));
-            boolean valid = !data.containsKey("valid") || data.get("valid").equals("1") || data.get("valid").equals("true");
+            String code = data.get("code");
 
             Account account = AccountManager.getInstance().getOnlineAccount(tokenCode);
             if (null == account) {
@@ -98,15 +98,18 @@ public class ListSharingTraceHandler extends ContextHandler {
             JSONObject responseData = new JSONObject();
             responseData.put("begin", begin);
             responseData.put("end", end);
-            responseData.put("valid", valid);
+            responseData.put("sharingCode", code);
 
             Client client = Manager.getInstance().getClient();
-            List<SharingTag> list = client.getFileProcessor().listSharingTags(account.id, account.domain, begin, end, valid);
+            List<VisitTrace> list = client.getFileProcessor().listVisitTrace(account.id, account.domain, code, begin, end);
             JSONArray array = new JSONArray();
-            for (SharingTag tag : list) {
-                array.put(tag.toCompactJSON());
+            for (VisitTrace trace : list) {
+                array.put(trace.toCompactJSON());
             }
             responseData.put("list", array);
+
+            // 总数
+            responseData.put("total", client.getFileProcessor().getVisitTraceTotal(code));
 
             this.respondOk(response, responseData);
             this.complete();

@@ -30,6 +30,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.common.action.ClientAction;
 import cube.common.entity.VisitTrace;
+import cube.common.notice.CountSharingVisitTraces;
 import cube.common.notice.ListSharingTraces;
 import cube.common.notice.NoticeData;
 import cube.common.state.FileStorageStateCode;
@@ -43,9 +44,9 @@ import java.util.List;
 /**
  * 批量获取分享痕迹记录。
  */
-public class ListSharingTracesTask extends ClientTask {
+public class ListSharingVisitTracesTask extends ClientTask {
 
-    public ListSharingTracesTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
+    public ListSharingVisitTracesTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
         super(cellet, talkContext, actionDialect);
     }
 
@@ -75,7 +76,15 @@ public class ListSharingTracesTask extends ClientTask {
         data.put("list", array);
         data.put(ListSharingTraces.BEGIN, notification.getInt(ListSharingTraces.BEGIN));
         data.put(ListSharingTraces.END, notification.getInt(ListSharingTraces.END));
-        data.put(ListSharingTraces.SHARING_CODE, notification.getBoolean(ListSharingTraces.SHARING_CODE));
+        data.put(ListSharingTraces.SHARING_CODE, notification.getString(ListSharingTraces.SHARING_CODE));
+
+        // 总数
+        CountSharingVisitTraces countSharingVisitTraces = new CountSharingVisitTraces(
+                notification.getString(ListSharingTraces.DOMAIN),
+                notification.getLong(ListSharingTraces.CONTACT_ID),
+                notification.getString(ListSharingTraces.SHARING_CODE));
+        result = module.notify(countSharingVisitTraces);
+        data.put("total", ((JSONObject)result).getInt(CountSharingVisitTraces.TOTAL));
 
         response.addParam("code", FileStorageStateCode.Ok.code);
         response.addParam("data", data);

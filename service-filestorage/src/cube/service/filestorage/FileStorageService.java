@@ -33,10 +33,7 @@ import cube.auth.PrimaryDescription;
 import cube.cache.SharedMemoryCache;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
-import cube.common.notice.CountSharingTags;
-import cube.common.notice.GetSharingTag;
-import cube.common.notice.ListSharingTags;
-import cube.common.notice.ListSharingTraces;
+import cube.common.notice.*;
 import cube.core.*;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
@@ -726,6 +723,14 @@ public class FileStorageService extends AbstractModule {
                 result.put(CountSharingTags.VALID_NUMBER, this.sharingManager.countSharingTags(contact, true));
                 result.put(CountSharingTags.INVALID_NUMBER, this.sharingManager.countSharingTags(contact, false));
                 return result;
+            }
+            else if (CountSharingVisitTraces.ACTION.equals(action)) {
+                Contact contact = ContactManager.getInstance().getContact(data.getString(CountSharingVisitTraces.DOMAIN),
+                        data.getLong(CountSharingVisitTraces.CONTACT_ID));
+                data.put(CountSharingVisitTraces.TOTAL,
+                        this.sharingManager.countSharingVisitTrace(contact,
+                                data.getString(CountSharingVisitTraces.SHARING_CODE)));
+                return data;
             }
         }
         else if (event instanceof File) {
