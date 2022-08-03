@@ -163,6 +163,9 @@ public class ServiceStorage implements Storagable {
             }),
             new StorageField("download", LiteralBase.INT, new Constraint[] {
                     Constraint.DEFAULT_1
+            }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
             })
     };
 
@@ -983,7 +986,8 @@ public class ServiceStorage implements Storagable {
                 map.get("code").getString(), map.get("expiry").getLong(),
                 contact, device, fileLabel, map.get("duration").getLong(),
                 map.get("password").isNullValue() ? null : map.get("password").getString(),
-                map.get("preview").getInt() == 1, map.get("download").getInt() == 1);
+                map.get("preview").getInt() == 1, map.get("download").getInt() == 1,
+                map.get("state").getInt());
 
         // 预览文件列表
         List<FileLabel> previewList = readSharingPreview(domain, code);
@@ -1085,7 +1089,8 @@ public class ServiceStorage implements Storagable {
                     map.get("code").getString(), map.get("expiry").getLong(),
                     contact, device, fileLabel, map.get("duration").getLong(),
                     map.get("password").isNullValue() ? null : map.get("password").getString(),
-                    map.get("preview").getInt() == 1, map.get("download").getInt() == 1);
+                    map.get("preview").getInt() == 1, map.get("download").getInt() == 1,
+                    map.get("state").getInt());
 
             // 预览文件列表
             List<FileLabel> previewList = readSharingPreview(domain, sharingTag.getCode());
@@ -1174,7 +1179,17 @@ public class ServiceStorage implements Storagable {
         });
     }
 
-    public List<VisitTrace> listVisitTraces(String domain, String code, int beginIndex, int endIndex) {
+    /**
+     * 批量获取指定分享人的分享访问记录。
+     *
+     * @param domain
+     * @param contactId
+     * @param code
+     * @param beginIndex
+     * @param endIndex
+     * @return
+     */
+    public List<VisitTrace> listVisitTraces(String domain, long contactId, String code, int beginIndex, int endIndex) {
         List<VisitTrace> list = new ArrayList<>();
 
         String table = this.visitTraceTableNameMap.get(domain);
@@ -1184,6 +1199,8 @@ public class ServiceStorage implements Storagable {
 
         List<StorageField[]> result = this.storage.executeQuery(table, this.visitTraceFields, new Conditional[] {
                 Conditional.createEqualTo("code", code),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("sharer", contactId),
                 Conditional.createOrderBy("time", true),
                 Conditional.createLimit(beginIndex, endIndex - beginIndex + 1)
         });
@@ -1198,6 +1215,53 @@ public class ServiceStorage implements Storagable {
                     map.get("event").isNullValue() ? null : map.get("event").getString(),
                     map.get("event_tag").isNullValue() ? null : map.get("event_tag").getString(),
                     map.get("event_param").isNullValue() ? null : new JSONObject(map.get("event_param").getString()));
+            visitTrace.sharerId = map.get("sharer").getLong();
+            visitTrace.parentId = map.get("parent").getLong();
+            list.add(visitTrace);
+        }
+
+        return list;
+    }
+
+    /**
+     * 查询下一级访问痕迹。
+     *
+     * @param domain
+     * @param code
+     * @param parentId
+     * @return
+     */
+    public List<VisitTrace> querySublevelVisitTrace(String domain, String code, long parentId) {
+        List<VisitTrace> list = new ArrayList<>();
+
+        String table = this.visitTraceTableNameMap.get(domain);
+        if (null == table) {
+            return list;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, this.visitTraceFields, new Conditional[] {
+                Conditional.createEqualTo("code", code),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("parent", parentId),
+                Conditional.createOrderBy("time", true)
+        });
+
+        if (result.isEmpty()) {
+            return list;
+        }
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> map = StorageFields.get(fields);
+            VisitTrace visitTrace = new VisitTrace(map.get("platform").getString(), map.get("time").getLong(),
+                    map.get("address").getString(), map.get("domain").getString(), map.get("url").getString(), map.get("title").getString(),
+                    new JSONObject(map.get("screen").getString()), map.get("language").getString(),
+                    map.get("user_agent").isNullValue() ? null : map.get("user_agent").getString(),
+                    map.get("agent").isNullValue() ? null : new JSONObject(map.get("agent").getString()),
+                    map.get("event").isNullValue() ? null : map.get("event").getString(),
+                    map.get("event_tag").isNullValue() ? null : map.get("event_tag").getString(),
+                    map.get("event_param").isNullValue() ? null : new JSONObject(map.get("event_param").getString()));
+            visitTrace.sharerId = map.get("sharer").getLong();
+            visitTrace.parentId = map.get("parent").getLong();
             list.add(visitTrace);
         }
 

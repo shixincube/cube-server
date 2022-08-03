@@ -34,6 +34,8 @@ import org.json.JSONObject;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 访问文件分享页记录。
@@ -118,6 +120,21 @@ public class VisitTrace implements JSONable {
      * 事件参数。
      */
     public JSONObject eventParam;
+
+    /**
+     * 发起分享的联系人 ID 。
+     */
+    public long sharerId = 0;
+
+    /**
+     * 上一级分享人的 ID 。
+     */
+    public long parentId = 0;
+
+    /**
+     * 下一级列表。
+     */
+    private List<VisitTrace> sublevelList;
 
     public VisitTrace(String platform, long time, String address, JSONObject clientTrace) throws JSONException {
         this.platform = platform;
@@ -222,12 +239,17 @@ public class VisitTrace implements JSONable {
     }
 
     public long getSharerId() {
+        if (0 != this.sharerId) {
+            return this.sharerId;
+        }
+
         if (null != this.eventParam && this.eventParam.has("sharer")) {
             String idString = this.eventParam.getString("sharer");
             try {
-                return Trace.parseString(idString);
+                this.sharerId = Trace.parseString(idString);
+                return this.sharerId;
             } catch (Exception e) {
-                e.printStackTrace();
+                Logger.w(this.getClass(), "#getSharerId", e);
             }
         }
 
@@ -243,7 +265,8 @@ public class VisitTrace implements JSONable {
                 String[] pair = param.split("=");
                 if (pair.length == 2) {
                     if (pair[0].trim().equalsIgnoreCase("s")) {
-                        return Trace.parseString(pair[1].trim());
+                        this.sharerId = Trace.parseString(pair[1].trim());
+                        break;
                     }
                 }
             }
@@ -253,16 +276,21 @@ public class VisitTrace implements JSONable {
             Logger.w(this.getClass(), "#getSharerId", e);
         }
 
-        return 0;
+        return this.sharerId;
     }
 
     public long getParentId() {
+        if (0 != this.parentId) {
+            return this.parentId;
+        }
+
         if (null != this.eventParam && this.eventParam.has("parent")) {
             String idString = this.eventParam.getString("parent");
             try {
-                return Trace.parseString(idString);
+                this.parentId = Trace.parseString(idString);
+                return this.parentId;
             } catch (Exception e) {
-                e.printStackTrace();
+                Logger.w(this.getClass(), "#getParentId", e);
             }
         }
 
@@ -278,7 +306,8 @@ public class VisitTrace implements JSONable {
                 String[] pair = param.split("=");
                 if (pair.length == 2) {
                     if (pair[0].trim().equalsIgnoreCase("p")) {
-                        return Trace.parseString(pair[1].trim());
+                        this.parentId = Trace.parseString(pair[1].trim());
+                        break;
                     }
                 }
             }
@@ -288,7 +317,21 @@ public class VisitTrace implements JSONable {
             Logger.w(this.getClass(), "#getParentId", e);
         }
 
-        return 0;
+        return this.parentId;
+    }
+
+    public void addSublevel(List<VisitTrace> visitTraces) {
+        synchronized (this) {
+            if (null == this.sublevelList) {
+                this.sublevelList = new ArrayList<>();
+            }
+
+            this.sublevelList.addAll(visitTraces);
+        }
+    }
+
+    public List<VisitTrace> getSublevelList() {
+        return this.sublevelList;
     }
 
     @Override

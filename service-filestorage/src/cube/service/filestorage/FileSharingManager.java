@@ -33,6 +33,7 @@ import cube.core.AbstractModule;
 import cube.file.FileProcessResult;
 import cube.file.operation.OfficeConvertToOperation;
 import cube.service.auth.AuthService;
+import cube.service.contact.ContactManager;
 import cube.util.FileUtils;
 import org.json.JSONObject;
 
@@ -199,7 +200,18 @@ public class FileSharingManager {
     }
 
     /**
-     * 获取分享标签的数量。
+     * 变更分享标签状态。
+     *
+     * @param code
+     * @param state
+     * @return
+     */
+    public SharingTag changeSharingTagState(String code, int state) {
+        return null;
+    }
+
+    /**
+     * 计算分享标签的数量。
      *
      * @param contact
      * @param valid
@@ -250,8 +262,8 @@ public class FileSharingManager {
      *
      * @param contact
      * @param valid 是否是在有效期内的分享。
-     * @param beginIndex
-     * @param endIndex
+     * @param beginIndex 数据起始索引。
+     * @param endIndex 数据结束索引。
      * @param descending 是否降序。
      * @return
      */
@@ -310,8 +322,28 @@ public class FileSharingManager {
             return null;
         }
 
-        return this.service.getServiceStorage().listVisitTraces(contact.getDomain().getName(),
+        return this.service.getServiceStorage().listVisitTraces(contact.getDomain().getName(), contact.getId(),
                 sharingCode, beginIndex, endIndex);
+    }
+
+    /**
+     * 列举下一级分享访问记录。
+     *
+     * @param parent
+     * @param sharingCode
+     * @return
+     */
+    public List<VisitTrace> listSublevelSharingVisitTrace(Contact parent, String sharingCode) {
+        List<VisitTrace> result = this.service.getServiceStorage().querySublevelVisitTrace(
+                parent.getDomain().getName(), sharingCode, parent.getId());
+
+        for (VisitTrace visitTrace : result) {
+            Contact sharer = ContactManager.getInstance().getContact(parent.getDomain().getName(), visitTrace.sharerId);
+            List<VisitTrace> list = listSublevelSharingVisitTrace(sharer, sharingCode);
+            visitTrace.addSublevel(list);
+        }
+
+        return result;
     }
 
     /**

@@ -40,6 +40,16 @@ import java.util.List;
  */
 public class SharingTag extends Entity {
 
+    /**
+     * 一般状态。
+     */
+    public final static int STATE_NORMAL = 0;
+
+    /**
+     * 已取消状态。
+     */
+    public final static int STATE_CANCEL = 1;
+
     private String code;
 
     private Trace sharer;
@@ -58,6 +68,8 @@ public class SharingTag extends Entity {
     private String httpsURL;
 
     private List<FileLabel> previewList;
+
+    private int state = STATE_NORMAL;
 
     public SharingTag(SharingTagConfig config) {
         super(Utils.generateSerialNumber(), config.getDomain());
@@ -83,7 +95,7 @@ public class SharingTag extends Entity {
 
     public SharingTag(Long id, String domain, long timestamp, String code, long expiryDate,
                       Contact contact, Device device, FileLabel fileLabel, long duration,
-                      String password, boolean preview, boolean download) {
+                      String password, boolean preview, boolean download, int state) {
         super(id, domain, timestamp);
         this.code = code;
         this.expiryDate = expiryDate;
@@ -91,6 +103,8 @@ public class SharingTag extends Entity {
 
         this.sharer = new Trace(this.config.getContact());
         this.parent = new Trace(this.config.getContact());
+
+        this.state = state;
     }
 
     public SharingTag(JSONObject json) {
@@ -185,6 +199,10 @@ public class SharingTag extends Entity {
 
     public List<FileLabel> getPreviewList() {
         return this.previewList;
+    }
+
+    public int getState() {
+        return this.state;
     }
 
     @Override
