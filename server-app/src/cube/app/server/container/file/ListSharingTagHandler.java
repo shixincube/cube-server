@@ -91,7 +91,7 @@ public class ListSharingTagHandler extends ContextHandler {
 
             // 参数校验
             if (end - begin > 9) {
-                Logger.w(this.getClass(), "#doGet - Parameter index range out-of-limit: " + (end - begin));
+                Logger.d(this.getClass(), "#doGet - Parameter index range out-of-limit (not recommend): " + begin + "-" + end);
             }
             else if (end - begin > 29) {
                 this.respond(response, HttpStatus.LENGTH_REQUIRED_411);
@@ -116,11 +116,15 @@ public class ListSharingTagHandler extends ContextHandler {
             // 总数量
             responseData.put("total", client.getFileProcessor().getSharingTagTotal(account.id, valid));
 
-            List<SharingTag> list = client.getFileProcessor().listSharingTags(account.id, account.domain, begin, end, valid);
             JSONArray array = new JSONArray();
-            for (SharingTag tag : list) {
-                array.put(tag.toCompactJSON());
+
+            List<SharingTag> list = client.getFileProcessor().listSharingTags(account.id, account.domain, begin, end, valid);
+            if (null != list) {
+                for (SharingTag tag : list) {
+                    array.put(tag.toCompactJSON());
+                }
             }
+
             responseData.put("list", array);
 
             this.respondOk(response, responseData);

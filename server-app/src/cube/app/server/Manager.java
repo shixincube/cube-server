@@ -60,7 +60,9 @@ public class Manager {
 
         this.client = new Client(address, account, password);
         if (!this.client.waitReady()) {
-            this.client.destroy();
+            if (null != this.client) {
+                this.client.destroy();
+            }
             return false;
         }
 

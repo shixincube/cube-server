@@ -132,9 +132,9 @@ public class VisitTrace implements JSONable {
     public long parentId = 0;
 
     /**
-     * 下一级列表。
+     * 下一级节点。
      */
-    private List<VisitTrace> sublevelList;
+    private List<VisitTrace> sublevelNodes;
 
     public VisitTrace(String platform, long time, String address, JSONObject clientTrace) throws JSONException {
         this.platform = platform;
@@ -320,18 +320,18 @@ public class VisitTrace implements JSONable {
         return this.parentId;
     }
 
-    public void addSublevel(List<VisitTrace> visitTraces) {
+    public void addSublevel(List<VisitTrace> traces) {
         synchronized (this) {
-            if (null == this.sublevelList) {
-                this.sublevelList = new ArrayList<>();
+            if (null == this.sublevelNodes) {
+                this.sublevelNodes = new ArrayList<>();
             }
 
-            this.sublevelList.addAll(visitTraces);
+            this.sublevelNodes.addAll(traces);
         }
     }
 
-    public List<VisitTrace> getSublevelList() {
-        return this.sublevelList;
+    public List<VisitTrace> getSublevelNodes() {
+        return this.sublevelNodes;
     }
 
     @Override

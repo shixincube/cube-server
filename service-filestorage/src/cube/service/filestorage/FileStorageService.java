@@ -558,20 +558,18 @@ public class FileStorageService extends AbstractModule {
      */
     public boolean deleteLocalFile(String domainName, FileLabel fileLabel) {
         // 从文件系统删除
-        if (this.fileSystem.deleteFile(fileLabel.getFileCode())) {
-            // 从缓存移除
-            this.fileLabelCache.remove(new CacheKey(fileLabel.getFileCode()));
-
-            // 从数据库里删除
-            this.serviceStorage.deleteFile(domainName, fileLabel.getFileCode());
-
-            return true;
-        }
-        else {
+        if (!this.fileSystem.deleteFile(fileLabel.getFileCode())) {
             Logger.i(this.getClass(), "#deleteFile - Not exists file: " +
                     fileLabel.getFileCode() + " - " + fileLabel.getFileName());
-            return false;
         }
+
+        // 从缓存移除
+        this.fileLabelCache.remove(new CacheKey(fileLabel.getFileCode()));
+
+        // 从数据库里删除
+        this.serviceStorage.deleteFile(domainName, fileLabel.getFileCode());
+
+        return true;
     }
 
     /**

@@ -1231,7 +1231,7 @@ public class ServiceStorage implements Storagable {
      * @param parentId
      * @return
      */
-    public List<VisitTrace> querySublevelVisitTrace(String domain, String code, long parentId) {
+    public List<VisitTrace> queryVisitTraceByParent(String domain, String code, long parentId) {
         List<VisitTrace> list = new ArrayList<>();
 
         String table = this.visitTraceTableNameMap.get(domain);

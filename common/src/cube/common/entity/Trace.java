@@ -42,6 +42,11 @@ public class Trace implements JSONable {
 
     private long contactId = 0;
 
+    /**
+     * 子列表。
+     */
+    private List<Trace> children;
+
     public Trace(Contact contact) {
         this.contact = contact;
     }
@@ -66,6 +71,20 @@ public class Trace implements JSONable {
         else {
             return this.contactId;
         }
+    }
+
+    public void addChildren(List<Trace> traces) {
+        synchronized (this) {
+            if (null == this.children) {
+                this.children = new ArrayList<>();
+            }
+
+            this.children.addAll(traces);
+        }
+    }
+
+    public List<Trace> getChildren() {
+        return this.children;
     }
 
     @Override

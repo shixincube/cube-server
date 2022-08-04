@@ -327,20 +327,26 @@ public class FileSharingManager {
     }
 
     /**
-     * 列举下一级分享访问记录。
+     * 遍历全部下一级分享访问记录。
      *
      * @param parent
      * @param sharingCode
      * @return
      */
-    public List<VisitTrace> listSublevelSharingVisitTrace(Contact parent, String sharingCode) {
-        List<VisitTrace> result = this.service.getServiceStorage().querySublevelVisitTrace(
+    public List<VisitTrace> traverseSublevelVisitTrace(Contact parent, String sharingCode) {
+        List<VisitTrace> result = this.service.getServiceStorage().queryVisitTraceByParent(
                 parent.getDomain().getName(), sharingCode, parent.getId());
+
+        if (result.isEmpty()) {
+            return result;
+        }
 
         for (VisitTrace visitTrace : result) {
             Contact sharer = ContactManager.getInstance().getContact(parent.getDomain().getName(), visitTrace.sharerId);
-            List<VisitTrace> list = listSublevelSharingVisitTrace(sharer, sharingCode);
-            visitTrace.addSublevel(list);
+            List<VisitTrace> list = traverseSublevelVisitTrace(sharer, sharingCode);
+            if (!list.isEmpty()) {
+                visitTrace.addSublevel(list);
+            }
         }
 
         return result;

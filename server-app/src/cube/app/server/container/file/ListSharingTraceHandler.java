@@ -100,12 +100,16 @@ public class ListSharingTraceHandler extends ContextHandler {
             responseData.put("end", end);
             responseData.put("sharingCode", code);
 
+            JSONArray array = new JSONArray();
+
             Client client = Manager.getInstance().getClient();
             List<VisitTrace> list = client.getFileProcessor().listVisitTrace(account.id, account.domain, code, begin, end);
-            JSONArray array = new JSONArray();
-            for (VisitTrace trace : list) {
-                array.put(trace.toCompactJSON());
+            if (null != list) {
+                for (VisitTrace trace : list) {
+                    array.put(trace.toCompactJSON());
+                }
             }
+
             responseData.put("list", array);
 
             // 总数
