@@ -156,6 +156,9 @@ public class ClientCellet extends AbstractCellet {
         else if (ClientAction.ListSharingTraces.name.equals(action)) {
             this.executor.execute(new ListSharingVisitTracesTask(this, talkContext, actionDialect));
         }
+        else if (ClientAction.TraverseVisitTrace.name.equals(action)) {
+            this.executor.execute(new TraverseVisitTraceTask(this, talkContext, actionDialect));
+        }
         else if (ClientAction.UpdateContact.name.equals(action)) {
             this.executor.execute(new UpdateContactTask(this, talkContext, actionDialect));
         }

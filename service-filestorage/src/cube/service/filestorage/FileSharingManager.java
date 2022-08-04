@@ -333,26 +333,14 @@ public class FileSharingManager {
      * @param sharingCode
      * @return
      */
-    public List<VisitTrace> traverseSublevelVisitTrace(Contact parent, String sharingCode) {
+    public List<VisitTrace> traverseVisitTrace(Contact parent, String sharingCode) {
         List<VisitTrace> result = this.service.getServiceStorage().queryVisitTraceByParent(
                 parent.getDomain().getName(), sharingCode, parent.getId());
-
-        if (result.isEmpty()) {
-            return result;
-        }
-
-        for (VisitTrace visitTrace : result) {
-            Contact sharer = ContactManager.getInstance().getContact(parent.getDomain().getName(), visitTrace.sharerId);
-            List<VisitTrace> list = traverseSublevelVisitTrace(sharer, sharingCode);
-            if (!list.isEmpty()) {
-                visitTrace.addSublevel(list);
-            }
-        }
-
         return result;
     }
 
     /**
+     * 计算分享记录访问数量。
      *
      * @param contact
      * @param sharingCode

@@ -82,6 +82,12 @@ public class ListTracesTask extends ServiceTask {
         int beginIndex = packet.data.getInt("begin");
         int endIndex = packet.data.getInt("end");
 
+        // 校验参数
+        int d = endIndex - beginIndex;
+        if (d > 9) {
+            endIndex = beginIndex + 9;
+        }
+
         // 获取服务
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
         List<VisitTrace> list = service.getSharingManager().listSharingVisitTrace(contact, sharingCode, beginIndex, endIndex);

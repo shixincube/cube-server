@@ -35,6 +35,7 @@ import cube.app.server.applet.WeChatApplet;
 import cube.app.server.container.file.ListSharingTagHandler;
 import cube.app.server.container.file.ListSharingTraceHandler;
 import cube.app.server.container.file.SharingTagHandler;
+import cube.app.server.container.file.TraverseVisitTraceHandler;
 import cube.app.server.notice.NoticeManager;
 import cube.app.server.version.VersionManager;
 import cube.util.ConfigUtils;
@@ -198,6 +199,7 @@ public class ContainerManager {
                 new ListSharingTagHandler(httpAllowOrigin, httpsAllowOrigin),
                 new ListSharingTraceHandler(httpAllowOrigin, httpsAllowOrigin),
                 new SharingTagHandler(httpAllowOrigin, httpsAllowOrigin),
+                new TraverseVisitTraceHandler(httpAllowOrigin, httpsAllowOrigin),
 
                 new StopHandler(this.server, this),
                 new DefaultHandler()});

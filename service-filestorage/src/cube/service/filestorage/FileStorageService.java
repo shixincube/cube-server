@@ -730,6 +730,12 @@ public class FileStorageService extends AbstractModule {
                                 data.getString(CountSharingVisitTraces.SHARING_CODE)));
                 return data;
             }
+            else if (TraverseVisitTrace.ACTION.equals(action)) {
+                Contact contact = ContactManager.getInstance().getContact(data.getString(TraverseVisitTrace.DOMAIN),
+                        data.getLong(TraverseVisitTrace.CONTACT_ID));
+                // Traverse visit trace
+                return this.sharingManager.traverseVisitTrace(contact, data.getString(TraverseVisitTrace.SHARING_CODE));
+            }
         }
         else if (event instanceof File) {
             String filename = ((File) event).getName();
