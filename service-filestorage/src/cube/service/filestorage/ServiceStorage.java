@@ -235,6 +235,12 @@ public class ServiceStorage implements Storagable {
             new StorageField("event_param", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            new StorageField("contact_domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
             new StorageField("sharer", LiteralBase.LONG, new Constraint[] {
                     Constraint.DEFAULT_0
             }),
@@ -1173,6 +1179,8 @@ public class ServiceStorage implements Storagable {
                     new StorageField("event_tag", visitTrace.eventTag),
                     new StorageField("event_param", (null != visitTrace.eventParam) ?
                             visitTrace.eventParam.toString() : null),
+                    new StorageField("contact_id", visitTrace.contactId),
+                    new StorageField("contact_domain", visitTrace.contactDomain),
                     new StorageField("sharer", visitTrace.getSharerId()),
                     new StorageField("parent", visitTrace.getParentId())
             });
@@ -1215,6 +1223,8 @@ public class ServiceStorage implements Storagable {
                     map.get("event").isNullValue() ? null : map.get("event").getString(),
                     map.get("event_tag").isNullValue() ? null : map.get("event_tag").getString(),
                     map.get("event_param").isNullValue() ? null : new JSONObject(map.get("event_param").getString()));
+            visitTrace.contactId = map.get("contact_id").getLong();
+            visitTrace.contactDomain = map.get("contact_domain").isNullValue() ? null : map.get("contact_domain").getString();
             visitTrace.sharerId = map.get("sharer").getLong();
             visitTrace.parentId = map.get("parent").getLong();
             list.add(visitTrace);
@@ -1243,6 +1253,8 @@ public class ServiceStorage implements Storagable {
                 Conditional.createEqualTo("code", code),
                 Conditional.createAnd(),
                 Conditional.createEqualTo("parent", parentId),
+                Conditional.createAnd(),
+                Conditional.createUnequalTo("sharer", parentId),
                 Conditional.createOrderBy("time", true)
         });
 

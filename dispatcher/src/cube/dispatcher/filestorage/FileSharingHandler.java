@@ -56,7 +56,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class FileSharingHandler extends CrossDomainHandler {
 
-    private final static boolean CACHE_FILE = true;
+    private final static boolean CACHE_FILE = false;
 
     public final static String PATH = "/sharing/";
 

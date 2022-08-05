@@ -350,11 +350,32 @@ public class FileSharingManager {
         return this.service.getServiceStorage().countVisitTraces(contact.getDomain().getName(), sharingCode);
     }
 
+    /**
+     * 记录访问痕迹。
+     *
+     * @param trace
+     */
     public void traceVisit(VisitTrace trace) {
         String code = this.extractCode(trace.url);
         SharingCodeDomain codeDomain = getDomainByCode(code);
 
         if (null != codeDomain) {
+            // 解析 Event Param
+            if (null != trace.eventParam) {
+                if (trace.eventParam.has("token")) {
+                    String token = trace.eventParam.getString("token");
+                    Contact contact = ContactManager.getInstance().getContact(token);
+                    if (null != contact) {
+                        trace.contactId = contact.getId();
+                        trace.contactDomain = contact.getDomain().getName();
+                    }
+                }
+                else if (trace.eventParam.has("id") && trace.eventParam.has("domain")) {
+
+                }
+            }
+
+
             // 写入记录
             this.service.getServiceStorage().writeVisitTrace(codeDomain.domain, code, trace);
 

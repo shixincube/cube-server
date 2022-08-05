@@ -64,18 +64,24 @@ public class DaemonTask implements Runnable {
             }
         }
 
-        if (now - this.lastCheckFileLabelTimestamp > 24L * 60 * 60 * 1000) {
-            AuthService authService = (AuthService) this.service.getKernel().getModule(AuthService.NAME);
-            for (String domainName : authService.getDomainList()) {
-                // 获取超期的文件标签
-                List<FileLabel> fileLabelList = this.service.serviceStorage.listFileLabel(domainName, now);
-                for (FileLabel fileLabel : fileLabelList) {
-                    // 删除本地文件
-                    this.service.deleteLocalFile(domainName, fileLabel);
-                }
-            }
-
+        if (now - this.lastCheckFileLabelTimestamp > 12L * 60 * 60 * 1000) {
+            // 更新时间戳
             this.lastCheckFileLabelTimestamp = now;
+
+            (new Thread() {
+                @Override
+                public void run() {
+                    AuthService authService = (AuthService) service.getKernel().getModule(AuthService.NAME);
+                    for (String domainName : authService.getDomainList()) {
+                        // 获取超期的文件标签
+                        List<FileLabel> fileLabelList = service.serviceStorage.listFileLabel(domainName, now);
+                        for (FileLabel fileLabel : fileLabelList) {
+                            // 删除本地文件
+                            service.deleteLocalFile(domainName, fileLabel);
+                        }
+                    }
+                }
+            }).start();
         }
     }
 }

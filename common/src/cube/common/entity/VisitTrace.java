@@ -122,6 +122,16 @@ public class VisitTrace implements JSONable {
     public JSONObject eventParam;
 
     /**
+     * 触发该记录的联系人的 ID 。
+     */
+    public long contactId = 0;
+
+    /**
+     * 触发该记录的联系人的域。
+     */
+    public String contactDomain = null;
+
+    /**
      * 发起分享的联系人 ID 。
      */
     public long sharerId = 0;
@@ -226,6 +236,13 @@ public class VisitTrace implements JSONable {
         }
         if (json.has("eventParam")) {
             this.eventParam = json.getJSONObject("eventParam");
+        }
+
+        if (json.has("contactId")) {
+            this.contactId = json.getLong("contactId");
+        }
+        if (json.has("contactDomain")) {
+            this.contactDomain = json.getString("contactDomain");
         }
     }
 
@@ -369,6 +386,12 @@ public class VisitTrace implements JSONable {
         }
         if (null != this.eventParam) {
             json.put("eventParam", this.eventParam);
+        }
+
+        json.put("contactId", this.contactId);
+
+        if (null != this.contactDomain) {
+            json.put("contactDomain", this.contactDomain);
         }
 
         json.put("sharerId", this.getSharerId());

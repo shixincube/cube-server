@@ -152,7 +152,7 @@ public class SharingTagConfig implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         if (null != this.contact) {
-            json.put("contact", this.contact.toJSON());
+            json.put("contact", this.contact.toBasicJSON());
         }
 
         if (null != this.device) {

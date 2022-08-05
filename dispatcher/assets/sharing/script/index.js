@@ -3,6 +3,7 @@
 window.sn = Date.now();
 var sharer = '';
 var parent = '';
+var token = '';
 
 window.onload = function () {
     var query = window.location.search.substring(1);
@@ -15,6 +16,12 @@ window.onload = function () {
         else if (pair[0] == 'p') {
             parent = pair[1];
         }
+    }
+
+    // 尝试读取 Cookie
+    var cookie = readCookie('CubeAppToken');
+    if (null != cookie && cookie.length >= 32) {
+        token = cookie;
     }
 
     const data = {
@@ -33,7 +40,8 @@ window.onload = function () {
         "eventParam": {
             "sn": window.sn,
             "sharer": sharer,
-            "parent": parent
+            "parent": parent,
+            "token": token
         }
     };
 
@@ -69,12 +77,13 @@ function download(url) {
         "language": navigator.language,
         "userAgent": navigator.userAgent,
         "event": "Extract",
-        "eventTag": "button",
+        "eventTag": "download",
         "eventParam": {
             "sn": window.sn,
             "url": url,
             "sharer": sharer,
-            "parent": parent
+            "parent": parent,
+            "token": token
         }
     };
 
@@ -132,4 +141,20 @@ function submit(data) {
 
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.send(JSON.stringify(data));
+}
+
+function readCookie(cname) {
+    var name = cname + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for (var i = 0; i <ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return null;
 }

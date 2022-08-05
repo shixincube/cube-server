@@ -185,18 +185,18 @@ public class Trace implements JSONable {
         return Long.parseLong(buf.toString());
     }
 
-//    public static void main(String[] args) {
-//        Contact contact = new Contact(11240809, "domain");
-//        Trace trace = new Trace(contact);
-//        try {
-//            for (int i = 0; i < 10; ++i) {
-//                String s = trace.toString();
-//                System.out.print(s);
-//                System.out.print(" - ");
-//                System.out.println(Trace.parseString(s));
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
+    public static void main(String[] args) {
+        Contact contact = new Contact(1841514683, "domain");
+        Trace trace = new Trace(contact);
+        try {
+            for (int i = 0; i < 2; ++i) {
+                String s = trace.toString();
+                System.out.print(s);
+                System.out.print(" - ");
+                System.out.println(Trace.parseString(s));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
