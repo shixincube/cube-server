@@ -562,7 +562,9 @@ public class ServiceStorage implements Storagable {
         }
 
         List<StorageField[]> result = this.storage.executeQuery(labelTable, this.labelFields, new Conditional[] {
-                Conditional.createLessThan(new StorageField("expiry_time", LiteralBase.LONG, expiryTime))
+                Conditional.createLessThan(new StorageField("expiry_time", expiryTime)),
+                Conditional.createAnd(),
+                Conditional.createUnequalTo("expiry_time", 0)
         });
 
         for (StorageField[] fields : result) {
