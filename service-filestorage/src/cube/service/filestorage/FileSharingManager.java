@@ -371,10 +371,10 @@ public class FileSharingManager {
                     }
                 }
                 else if (trace.eventParam.has("id") && trace.eventParam.has("domain")) {
-
+                    trace.contactId = trace.eventParam.getLong("id");
+                    trace.contactDomain = trace.eventParam.getString("domain");
                 }
             }
-
 
             // 写入记录
             this.service.getServiceStorage().writeVisitTrace(codeDomain.domain, code, trace);
