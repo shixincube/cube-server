@@ -83,11 +83,14 @@ public class FileSharingManager {
      * @param duration
      * @param password
      * @param preview
+     * @param previewWatermark
      * @param download
+     * @param traceDownload
      * @return
      */
     public SharingTag createSharingTag(Contact contact, Device device, String fileCode, long duration,
-                                       String password, boolean preview, boolean download) {
+                                       String password, boolean preview, String previewWatermark,
+                                       boolean download, boolean traceDownload) {
         AuthService authService = (AuthService) this.service.getKernel().getModule(AuthService.NAME);
         AuthDomain authDomain = authService.getAuthDomain(contact.getDomain().getName());
 
@@ -99,14 +102,14 @@ public class FileSharingManager {
 
         // 创建配置信息
         SharingTagConfig config = new SharingTagConfig(contact, device, fileLabel, duration,
-                password, preview, download);
+                password, preview, download, traceDownload);
         SharingTag sharingTag = new SharingTag(config);
         // 设置 URLs
         sharingTag.setURLs(authDomain.httpEndpoint, authDomain.httpsEndpoint);
 
         if (preview) {
             // 需要生成预览
-            List<FileLabel> previewFiles = this.processFilePreview(contact, fileLabel);
+            List<FileLabel> previewFiles = this.processFilePreview(contact, fileLabel, previewWatermark);
             sharingTag.setPreviewList(previewFiles);
         }
 
@@ -122,7 +125,7 @@ public class FileSharingManager {
         return sharingTag;
     }
 
-    private List<FileLabel> processFilePreview(Contact contact, FileLabel fileLabel) {
+    private List<FileLabel> processFilePreview(Contact contact, FileLabel fileLabel, String watermark) {
         List<FileLabel> fileLabels = new ArrayList<>();
         String domainName = contact.getDomain().getName();
 

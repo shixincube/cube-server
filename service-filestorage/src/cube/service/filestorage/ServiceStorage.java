@@ -164,6 +164,9 @@ public class ServiceStorage implements Storagable {
             new StorageField("download", LiteralBase.INT, new Constraint[] {
                     Constraint.DEFAULT_1
             }),
+            new StorageField("trace_download", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_1
+            }),
             new StorageField("state", LiteralBase.INT, new Constraint[] {
                     Constraint.DEFAULT_0
             })
@@ -917,7 +920,8 @@ public class ServiceStorage implements Storagable {
                     new StorageField("expiry", sharingTag.getExpiryDate()),
                     new StorageField("password", sharingTag.getConfig().getPassword()),
                     new StorageField("preview", sharingTag.getConfig().isPreview() ? 1 : 0),
-                    new StorageField("download", sharingTag.getConfig().isDownloadAllowed() ? 1 : 0)
+                    new StorageField("download", sharingTag.getConfig().isDownloadAllowed() ? 1 : 0),
+                    new StorageField("trace_download", sharingTag.getConfig().isTraceDownload() ? 1 : 0)
             });
 
             storage.executeInsert(sharingCodeTable, new StorageField[] {
@@ -995,6 +999,7 @@ public class ServiceStorage implements Storagable {
                 contact, device, fileLabel, map.get("duration").getLong(),
                 map.get("password").isNullValue() ? null : map.get("password").getString(),
                 map.get("preview").getInt() == 1, map.get("download").getInt() == 1,
+                map.get("trace_download").getInt() == 1,
                 map.get("state").getInt());
 
         // 预览文件列表
@@ -1098,6 +1103,7 @@ public class ServiceStorage implements Storagable {
                     contact, device, fileLabel, map.get("duration").getLong(),
                     map.get("password").isNullValue() ? null : map.get("password").getString(),
                     map.get("preview").getInt() == 1, map.get("download").getInt() == 1,
+                    map.get("trace_download").getInt() == 1,
                     map.get("state").getInt());
 
             // 预览文件列表

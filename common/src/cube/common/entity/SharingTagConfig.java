@@ -59,12 +59,17 @@ public class SharingTagConfig implements JSONable {
      */
     private boolean download;
 
+    /**
+     * 是否追踪下载。
+     */
+    private boolean traceDownload = true;
+
     private List<AbstractContact> includeList;
 
     private List<AbstractContact> excludeList;
 
     public SharingTagConfig(Contact contact, Device device, FileLabel fileLabel, long duration, String password,
-                            boolean preview, boolean download) {
+                            boolean preview, boolean download, boolean traceDownload) {
         this.contact = contact;
         this.device = device;
         this.fileLabel = fileLabel;
@@ -72,6 +77,7 @@ public class SharingTagConfig implements JSONable {
         this.password = password;
         this.preview = preview;
         this.download = !preview || download;
+        this.traceDownload = traceDownload;
     }
 
     public SharingTagConfig(JSONObject json) {
@@ -92,6 +98,7 @@ public class SharingTagConfig implements JSONable {
 
         this.preview = json.getBoolean("preview");
         this.download = json.getBoolean("download");
+        this.traceDownload = json.getBoolean("traceDownload");
 
         if (json.has("includeList")) {
             this.includeList = new ArrayList<>();
@@ -148,6 +155,10 @@ public class SharingTagConfig implements JSONable {
         return this.download;
     }
 
+    public boolean isTraceDownload() {
+        return this.traceDownload;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -168,6 +179,7 @@ public class SharingTagConfig implements JSONable {
 
         json.put("preview", this.preview);
         json.put("download", this.download);
+        json.put("traceDownload", this.traceDownload);
 
         if (null != this.includeList) {
             JSONArray array = new JSONArray();
@@ -191,10 +203,6 @@ public class SharingTagConfig implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = this.toJSON();
-        if (json.has("contact")) {
-            json.remove("contact");
-            json.put("contact", this.contact.toBasicJSON());
-        }
 
         if (json.has("fileLabel")) {
             json.remove("fileLabel");
