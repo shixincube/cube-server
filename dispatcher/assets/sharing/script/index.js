@@ -16,6 +16,9 @@ window.onload = function () {
         else if (pair[0] == 'p') {
             parent = pair[1];
         }
+        else if (pair[0] == 't') {
+            token = pair[1];
+        }
     }
 
     // 尝试读取 Cookie
@@ -62,7 +65,18 @@ function resizePreview() {
 }
 
 function download(url) {
-    window.location.href = url;
+    if (sharingTag.config.traceDownload) {
+        if (token.length < 1) {
+            // 需要登录
+            showToast('您需要登录之后才能下载该文件<br/>3秒后跳转到登录界面');
+            setTimeout(function() {
+                var jump = encodeURI(document.URL);
+                var href = appLoginURL + ((appLoginURL.indexOf('?') > 0) ? '&' : '?') + "jump=" + jump;
+                window.location.href = href;
+            }, 3200);
+            return;
+        }
+    }
 
     const data = {
         "domain": document.domain,
@@ -87,7 +101,9 @@ function download(url) {
         }
     };
 
-    submit(data);
+    submit(data, function() {
+        window.location.href = url;
+    });
 }
 
 function copy() {
@@ -96,29 +112,42 @@ function copy() {
     el.select();
     document.execCommand('copy');
 
-    showToast();
+    showToast('分享链接已复制到剪贴板');
 }
 
-function showToast() {
+var toastTimer  = 0;
+
+function showToast(text, closeDelay) {
+    if (toastTimer > 0) {
+        clearTimeout(toastTimer);
+    }
+
     var toast = document.getElementById('toast');
-    toast.style.display = 'block';
+    toast.style.display = 'table';
     toast.style.animation = 'toast-show-anim 0.5s';
 
-    setTimeout(function () {
+    if (undefined !== text) {
+        var textEl = document.querySelector('.toast-text');
+        textEl.innerHTML = text;
+    }
+
+    toastTimer = setTimeout(function () {
+        toastTimer = 0;
         hideToast();
-    }, 3000);
+    }, (undefined !== closeDelay) ? closeDelay : 3000);
 }
 
 function hideToast() {
     var toast = document.getElementById('toast');
     toast.style.animation = 'toast-hide-anim 0.5s';
 
-    setTimeout(function () {
+    toastTimer = setTimeout(function () {
+        toastTimer = 0;
         toast.style.display = 'none';
     }, 500);
 }
 
-function submit(data) {
+function submit(data, complete) {
     var xhr = null;
     if (window.XMLHttpRequest) {
         // code for IE7+, Firefox, Chrome, Opera, Safari
@@ -131,7 +160,9 @@ function submit(data) {
 
     xhr.onreadystatechange = function() {
         if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-            // 完成
+            if (undefined !== complete) {
+                complete();
+            }
         }
     };
 

@@ -167,6 +167,11 @@ public class DispatcherListener implements CellListener {
         // 加载 HTTP 配置
         HttpConfig httpConfig = this.loadHttpConfig(properties);
         performer.configHttpServer(httpConfig);
+
+        // 配置 App
+        if (properties.containsKey("app.login")) {
+            Performer.APP_LOGIN_URL = properties.getProperty("app.login").trim();
+        }
     }
 
     private HttpConfig loadHttpConfig(Properties properties) {

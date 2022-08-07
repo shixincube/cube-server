@@ -61,6 +61,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Performer implements TalkListener, Tickable {
 
+    public static String APP_LOGIN_URL = "https://127.0.0.1:8080/index.html";
+
     private final String performerKey = "_performer";
 
     private final String directorKey = "_director";

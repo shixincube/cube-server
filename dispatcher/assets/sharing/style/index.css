@@ -152,6 +152,7 @@ body {
     z-index: 999;
 }
 .toast-content {
+    display: table;
     text-align: center;
     vertical-align: middle;
     border-radius: 10px;
@@ -159,16 +160,15 @@ body {
     height: 100px;
     background: #202020;
     margin: auto;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
 }
-.toast-content div {
+.toast-text {
+    display: table-cell;
     text-align: center;
-    padding-top: 40px;
+    vertical-align: middle;
     font-size: 14px;
     color: #F5F5F5;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 @keyframes toast-show-anim

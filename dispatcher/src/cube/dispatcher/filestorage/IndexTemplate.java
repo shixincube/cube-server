@@ -29,6 +29,7 @@ package cube.dispatcher.filestorage;
 import cell.util.Base64;
 import cube.common.entity.FileLabel;
 import cube.common.entity.SharingTag;
+import cube.dispatcher.Performer;
 import cube.util.FileSize;
 import cube.util.FileType;
 import cube.util.FileUtils;
@@ -63,6 +64,8 @@ public class IndexTemplate {
     private static final String FILE_URI_PATH = "${file_uri_path}";
 
     private static final String SHARING_URL = "${sharing_url}";
+
+    private static final String SCRIPT_CONTENT = "${script_content}";
 
     private final static String CSS_STYLE_VALUE_NONE = "none";
     private final static String CSS_STYLE_VALUE_BLOCK = "block";
@@ -126,6 +129,9 @@ public class IndexTemplate {
                 line = line.replace(SHARING_URL, this.secure ? sharingTag.getHttpsURL() : sharingTag.getHttpURL());
             }
         }
+        else if (line.contains(SCRIPT_CONTENT)) {
+            line = line.replace(SCRIPT_CONTENT, makeScriptContent());
+        }
         else if (line.contains(PREVIEW_PAGES)) {
             List<FileLabel> list = sharingTag.getPreviewList();
             if (sharingTag.getConfig().isPreview() && null != list) {
@@ -145,6 +151,17 @@ public class IndexTemplate {
         }
 
         return line;
+    }
+
+    private String makeScriptContent() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("var sharingTag=");
+        buf.append(this.sharingTag.toCompactJSON().toString());
+        buf.append(";");
+        buf.append("var appLoginURL='");
+        buf.append(Performer.APP_LOGIN_URL);
+        buf.append("';");
+        return buf.toString();
     }
 
     private String getFileURL(String domain, FileLabel fileLabel) {

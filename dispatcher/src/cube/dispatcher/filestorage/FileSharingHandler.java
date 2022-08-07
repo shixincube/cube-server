@@ -90,6 +90,7 @@ public class FileSharingHandler extends CrossDomainHandler {
         if (pathInfo.indexOf(".css") > 0 || pathInfo.indexOf(".js") > 0 ||
             pathInfo.indexOf(".jpg") > 0 || pathInfo.equals(".jpeg") ||
             pathInfo.indexOf(".png") > 0) {
+            // 加载文件
             String filename = pathInfo.substring(1);
             respondFile(response, filename);
         }
