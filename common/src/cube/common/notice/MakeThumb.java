@@ -42,7 +42,7 @@ public class MakeThumb extends NoticeData {
     public final static String QUALITY = "quality";
 
     public MakeThumb(String domain, String fileCode) {
-        this(domain, fileCode, 70);
+        this(domain, fileCode, 80);
     }
 
     public MakeThumb(String domain, String fileCode, int quality) {

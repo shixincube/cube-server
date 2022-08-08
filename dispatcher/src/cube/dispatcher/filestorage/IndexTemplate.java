@@ -173,8 +173,9 @@ public class IndexTemplate {
         }
 
         StringBuilder buf = new StringBuilder(this.secure ? fileLabel.getFileSecureURL() : fileLabel.getFileURL());
-        buf.append("&type=" + fileLabel.getFileType().getPreferredExtension());
-        buf.append("&domain=" + domainParam);
+//        buf.append("&type=" + fileLabel.getFileType().getPreferredExtension());
+        buf.append("&domain=");
+        buf.append(domainParam);
         return buf.toString();
     }
 

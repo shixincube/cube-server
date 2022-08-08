@@ -44,10 +44,6 @@ public class ImageProcessorContext extends ProcessorContext {
         this.imageOperation = imageOperation;
     }
 
-    public ImageProcessorContext(JSONObject json) {
-        super(json);
-    }
-
     public ImageOperation getImageOperation() {
         return this.imageOperation;
     }

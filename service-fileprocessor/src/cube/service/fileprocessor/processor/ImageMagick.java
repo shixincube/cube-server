@@ -374,9 +374,9 @@ public final class ImageMagick {
                 + textConstraint.color.blue() + ",0.75)'");
         commandLine.add("-font");
         commandLine.add(null == textConstraint.font ?
-                "'" + Paths.get("").toAbsolutePath().toString() + "/assets/STHeiti.ttc'" : textConstraint.font);
+               "'" + Paths.get("").toAbsolutePath().toString() + "/assets/STHeiti.ttc'" : textConstraint.font);
         commandLine.add("-pointsize");
-        commandLine.add("26");
+        commandLine.add(Integer.toString(textConstraint.pointSize));
         commandLine.add("-gravity");
         commandLine.add("center");
         commandLine.add("-draw");
@@ -390,6 +390,18 @@ public final class ImageMagick {
         commandLine.add("-");
         commandLine.add(imageFile);
         commandLine.add(outputFile);
+
+        StringBuilder command = new StringBuilder();
+        for (String c : commandLine) {
+            command.append(c);
+            command.append(" ");
+        }
+        command.deleteCharAt(command.length() - 1);
+
+        commandLine.clear();
+        commandLine.add("/bin/bash");
+        commandLine.add("-c");
+        commandLine.add(command.toString());
 
         int status = execute(workPath, commandLine);
         if (-1 != status) {

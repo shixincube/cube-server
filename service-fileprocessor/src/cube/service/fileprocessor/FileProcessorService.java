@@ -49,6 +49,7 @@ import cube.service.fileprocessor.processor.video.VideoProcessor;
 import cube.service.fileprocessor.processor.video.VideoProcessorBuilder;
 import cube.service.filestorage.FileStorageService;
 import cube.util.*;
+import cube.vision.Size;
 import net.coobird.thumbnailator.Thumbnails;
 import org.json.JSONObject;
 
@@ -296,7 +297,7 @@ public class FileProcessorService extends AbstractModule {
             srcHeight = image.height;
 
             // 生成缩略图
-            Image thumbImage = ImageTools.thumbnail(input.getAbsolutePath(), outputFile, quality);
+            Image thumbImage = ImageTools.thumbnail(input.getAbsolutePath(), new Size(srcWidth, srcHeight), outputFile, quality);
 
             if (null == thumbImage) {
                 Logger.w(this.getClass(), "#makeThumbnail - Can NOT make thumbnail image : " + input.getAbsolutePath());
@@ -459,12 +460,13 @@ public class FileProcessorService extends AbstractModule {
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
         FileLabel fileLabel = storageService.getFile(domainName, fileCode);
         if (null == fileLabel) {
+            Logger.w(this.getClass(), "#createImageProcessor - Can NOT find file label : " + fileCode);
             return null;
         }
 
         if (!FileUtils.isImageType(fileLabel.getFileType())) {
             // 指定的文件不是图片格式
-            Logger.w(this.getClass(), "File is NOT image : " + fileLabel.getFileName());
+            Logger.w(this.getClass(), "#createImageProcessor - File is NOT image : " + fileLabel.getFileName());
             return null;
         }
 

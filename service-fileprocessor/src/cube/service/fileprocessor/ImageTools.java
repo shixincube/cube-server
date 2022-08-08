@@ -30,6 +30,7 @@ import cell.util.log.Logger;
 import cube.common.entity.Image;
 import cube.util.FileType;
 import cube.util.FileUtils;
+import cube.vision.Size;
 import net.coobird.thumbnailator.Thumbnails;
 
 import javax.imageio.ImageIO;
@@ -38,6 +39,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 /**
  * 图片工具。
@@ -46,7 +48,7 @@ public final class ImageTools {
 
     public static String WORKING_PATH = "storage/tmp/";
 
-    private static boolean USE_IMAGEMAGICK = false;
+    private static boolean USE_IMAGEMAGICK = true;
 
     private ImageTools() {
     }
@@ -155,16 +157,35 @@ public final class ImageTools {
      * 生成缩略图。
      *
      * @param inputFile
+     * @param inputImageSize
      * @param outputFile
      * @return
      */
-    public static Image thumbnail(String inputFile, String outputFile, int quality) {
+    public static Image thumbnail(String inputFile, Size inputImageSize, String outputFile, int quality) {
         if (USE_IMAGEMAGICK) {
-            ProcessBuilder pb = new ProcessBuilder("convert", inputFile, "-sample", Integer.toString(quality), outputFile + ".jpg");
+            // 创建命令
+            ArrayList<String> command = new ArrayList<>();
+            command.add("convert");
+            command.add(inputFile);
+
+            if (inputImageSize.width > 1200 || inputImageSize.height > 1200) {
+                command.add("-sample");
+                command.add("1200");
+                command.add("-quality");
+                command.add("90");
+            }
+            else {
+                command.add("-quality");
+                command.add(Integer.toString(quality));
+            }
+
+            command.add(outputFile + ".jpg");
+
+            ProcessBuilder pb = new ProcessBuilder(command);
 
             Process process = null;
             BufferedReader stdError = null;
-            int status = 1;
+            int status = -1;
 
             try {
                 String line = null;

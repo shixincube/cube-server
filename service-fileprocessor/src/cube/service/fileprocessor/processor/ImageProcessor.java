@@ -309,15 +309,17 @@ public class ImageProcessor extends Processor {
                 outputFilename = makeOutputFilename("watermark");
             }
 
+            File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
+            outputFile.delete();
+
             // 使用 ImageMagick 操作
             success = ImageMagick.coverWatermark(this.getWorkPath().toFile(), operation.getText(),
                     operation.getTextConstraint(), this.imageFile.getName(), outputFilename);
-
             // 处理结果
             ctx.setSuccessful(success);
 
             if (success) {
-                File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
+                outputFile = new File(this.getWorkPath().toFile(), outputFilename);
                 FileResult result = new FileResult(outputFile);
                 ctx.addResult(result);
             }

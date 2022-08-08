@@ -30,14 +30,18 @@ import cell.util.log.Logger;
 import cube.common.entity.*;
 import cube.common.notice.MakeThumb;
 import cube.common.notice.OfficeConvertTo;
+import cube.common.notice.ProcessImage;
 import cube.core.AbstractModule;
 import cube.file.FileProcessResult;
 import cube.file.operation.OfficeConvertToOperation;
+import cube.file.operation.WatermarkOperation;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
 import cube.util.FileUtils;
+import cube.vision.Color;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -171,6 +175,56 @@ public class FileSharingManager {
                 FileThumbnail thumbnail = (FileThumbnail) result;
                 fileLabels.add(thumbnail.getFileLabel());
             }
+            else {
+                Logger.w(this.getClass(), "#processFilePreview - Make image thumb failed: "
+                        + fileLabel.getFileCode());
+            }
+        }
+
+        // 覆盖水印
+        if (!fileLabels.isEmpty() && null != watermark) {
+            List<FileLabel> watermarkList = new ArrayList<>();
+            // 依次创建水印
+            for (FileLabel label : fileLabels) {
+                // 文本约束
+                TextConstraint constraint = new TextConstraint();
+                constraint.pointSize = 26;
+                constraint.color = new Color(128, 128, 128);
+                // 图片加水印
+                WatermarkOperation operation = new WatermarkOperation(watermark, constraint);
+                ProcessImage processImage = new ProcessImage(label, operation);
+                AbstractModule fileProcess = this.service.getKernel().getModule(this.fileProcessorModule);
+                Object result = fileProcess.notify(processImage);
+                if (null != result) {
+                    JSONObject resultJson = (JSONObject) result;
+                    FileProcessResult processResult = new FileProcessResult(resultJson);
+                    if (processResult.hasResult()) {
+                        // 水印文件
+                        File file = processResult.getResultList().get(0).file;
+                        // 创建文件码
+                        String fileCode = FileUtils.makeFileCode(contact.getId(), domainName, file.getName());
+                        // 创建标签
+                        FileLabel watermarkFileLabel = FileUtils.makeFileLabel(domainName, fileCode, contact.getId(), file);
+                        // 保存标签
+                        watermarkFileLabel = this.service.saveFile(watermarkFileLabel, file);
+                        if (null != watermarkFileLabel) {
+                            watermarkList.add(watermarkFileLabel);
+                            // 删除临时文件
+                            file.delete();
+                        }
+                        else {
+                            Logger.w(this.getClass(), "#processFilePreview - Save file to storage failed: "
+                                    + domainName + " - " + contact.getId() + " - " + file.getName());
+                        }
+                    }
+                }
+
+                // 删除中间文件
+                this.service.deleteLocalFile(domainName, label);
+            }
+
+            fileLabels.clear();
+            fileLabels.addAll(watermarkList);
         }
 
         return fileLabels;
