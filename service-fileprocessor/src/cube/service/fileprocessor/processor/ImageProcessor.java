@@ -300,6 +300,28 @@ public class ImageProcessor extends Processor {
                 ctx.addResult(result);
             }
         }
+        else if (WatermarkOperation.Operation.equals(imageOperation.getOperation())) {
+            // 覆盖水印
+            WatermarkOperation operation = (WatermarkOperation) imageOperation;
+            boolean success = false;
+
+            if (null == outputFilename) {
+                outputFilename = makeOutputFilename("watermark");
+            }
+
+            // 使用 ImageMagick 操作
+            success = ImageMagick.coverWatermark(this.getWorkPath().toFile(), operation.getText(),
+                    operation.getTextConstraint(), this.imageFile.getName(), outputFilename);
+
+            // 处理结果
+            ctx.setSuccessful(success);
+
+            if (success) {
+                File outputFile = new File(this.getWorkPath().toFile(), outputFilename);
+                FileResult result = new FileResult(outputFile);
+                ctx.addResult(result);
+            }
+        }
     }
 
     private String makeOutputFilename(String suffix) {

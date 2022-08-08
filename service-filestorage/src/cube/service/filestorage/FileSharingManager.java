@@ -28,6 +28,7 @@ package cube.service.filestorage;
 
 import cell.util.log.Logger;
 import cube.common.entity.*;
+import cube.common.notice.MakeThumb;
 import cube.common.notice.OfficeConvertTo;
 import cube.core.AbstractModule;
 import cube.file.FileProcessResult;
@@ -163,7 +164,13 @@ public class FileSharingManager {
             }
         }
         else if (FileUtils.isImageType(fileLabel.getFileType())) {
-
+            MakeThumb makeThumb = new MakeThumb(fileLabel.getDomain().getName(), fileLabel.getFileCode(), 80);
+            AbstractModule fileProcess = this.service.getKernel().getModule(this.fileProcessorModule);
+            Object result = fileProcess.notify(makeThumb);
+            if (null != result) {
+                FileThumbnail thumbnail = (FileThumbnail) result;
+                fileLabels.add(thumbnail.getFileLabel());
+            }
         }
 
         return fileLabels;

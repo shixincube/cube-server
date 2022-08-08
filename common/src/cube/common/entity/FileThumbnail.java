@@ -95,6 +95,10 @@ public class FileThumbnail extends Entity {
         }
     }
 
+    public FileLabel getFileLabel() {
+        return this.fileLabel;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (this == object) {

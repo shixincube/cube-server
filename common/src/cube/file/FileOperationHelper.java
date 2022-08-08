@@ -67,6 +67,9 @@ public final class FileOperationHelper {
             else if (SteganographyOperation.Operation.equals(operation)) {
                 return new SteganographyOperation(json);
             }
+            else if (WatermarkOperation.Operation.equals(operation)) {
+                return new WatermarkOperation(json);
+            }
             else if (DetectObjectsOperation.Operation.equals(operation)) {
                 return new DetectObjectsOperation(json);
             }

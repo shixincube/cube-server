@@ -29,11 +29,12 @@ package cube.service.fileprocessor;
 import cell.util.log.Logger;
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
+import cube.common.entity.FileResult;
 import cube.common.entity.FileThumbnail;
 import cube.common.entity.Image;
-import cube.common.entity.FileResult;
 import cube.common.notice.MakeThumb;
 import cube.common.notice.OfficeConvertTo;
+import cube.common.notice.ProcessImage;
 import cube.common.state.FileProcessorStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -1021,14 +1022,15 @@ public class FileProcessorService extends AbstractModule {
             String action = data.getString("action");
 
             if (FileProcessorAction.Image.name.equals(action)) {
-                String domain = data.getString("domain");
-                String fileCode = data.getString("fileCode");
+                String domain = data.getString(ProcessImage.DOMAIN);
+                String fileCode = data.getString(ProcessImage.FILE_CODE);
                 // 创建图像处理器
                 ImageProcessor processor = createImageProcessor(domain, fileCode);
                 if (null != processor) {
                     // 创建上下文
                     ImageProcessorContext context = new ImageProcessorContext(
-                            (ImageOperation) FileOperationHelper.parseFileOperation(data.getJSONObject("parameter")));
+                            (ImageOperation) FileOperationHelper.parseFileOperation(
+                                    data.getJSONObject(ProcessImage.PARAMETER)));
                     processor.go(context);
                     // 返回上下文描述
                     return context.toJSON();
@@ -1039,7 +1041,8 @@ public class FileProcessorService extends AbstractModule {
                 String domain = data.getString(MakeThumb.DOMAIN);
                 String fileCode = data.getString(MakeThumb.FILE_CODE);
                 int quality = data.getInt(MakeThumb.QUALITY);
-                //this.makeThumbnail(domain, fileCode, )
+                FileThumbnail thumbnail = this.makeThumbnail(domain, fileCode, quality);
+                return thumbnail;
             }
             else if (FileProcessorAction.OfficeConvertTo.name.equals(action)) {
                 String domain = data.getString(OfficeConvertTo.DOMAIN);
