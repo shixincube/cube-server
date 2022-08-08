@@ -151,6 +151,10 @@ public class SharingTagConfig implements JSONable {
         return this.preview;
     }
 
+    public void setPreview(boolean value) {
+        this.preview = value;
+    }
+
     public boolean isDownloadAllowed() {
         return this.download;
     }

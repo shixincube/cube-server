@@ -81,8 +81,8 @@ public class SharingTag extends Entity {
         StringBuilder buf = new StringBuilder();
         buf.append(config.getFileLabel().getFileCode());
         buf.append(config.getDomain().getName());
-        buf.append(this.id.toString());
         buf.append(config.getContact().getId().toString());
+        buf.append(this.id.toString());
         this.code = FileUtils.fastHash(buf.toString());
 
         if (config.getDuration() > 0) {

@@ -31,12 +31,16 @@ import cell.util.Base64;
 import cell.util.Utils;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.common.Packet;
+import cube.common.action.AuthAction;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.FileLabel;
 import cube.common.entity.SharingTag;
+import cube.common.state.AuthStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
+import cube.dispatcher.auth.AuthCellet;
 import cube.dispatcher.util.FormData;
 import cube.util.CrossDomainHandler;
 import cube.util.FileType;
@@ -224,6 +228,43 @@ public class FileHandler extends CrossDomainHandler {
 
             JSONObject tagJson = Packet.extractDataPayload(responsePacket);
             SharingTag sharingTag = new SharingTag(tagJson);
+
+            // 识别权限
+            if (sharingTag.getConfig().isTraceDownload()) {
+                // 需要用户进行登录
+                String token = request.getParameter("token");
+                if (null == token) {
+                    Logger.d(this.getClass(), "Need token to download: " + sharingTag.getCode());
+                    response.setStatus(HttpStatus.FORBIDDEN_403);
+                    this.complete();
+                    return;
+                }
+
+                // 校验令牌
+                payload = new JSONObject();
+                payload.put("code", token);
+                packet = new Packet(AuthAction.GetToken.name, payload);
+                dialect = this.performer.syncTransmit(AuthCellet.NAME, packet.toDialect());
+                if (null == dialect) {
+                    response.setStatus(HttpStatus.NOT_FOUND_404);
+                    this.complete();
+                    return;
+                }
+
+                responsePacket = new Packet(dialect);
+                if (Packet.extractCode(responsePacket) == AuthStateCode.Ok.code) {
+                    // 存在合法令牌
+                    AuthToken authToken = new AuthToken(Packet.extractDataPayload(responsePacket));
+                    if (authToken.getExpiry() < System.currentTimeMillis()) {
+                        // 令牌过期
+                        Logger.d(this.getClass(), "Token have expired - " + authToken.getCode());
+                        response.setStatus(HttpStatus.NOT_ACCEPTABLE_406);
+                        this.complete();
+                        return;
+                    }
+                }
+            }
+
             // 文件标签
             fileLabel = sharingTag.getConfig().getFileLabel();
             // 文件类型

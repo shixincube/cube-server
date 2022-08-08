@@ -102,6 +102,9 @@ function download(url) {
     };
 
     submit(data, function() {
+        if (token.length > 1) {
+            url = url + '&token=' + token;
+        }
         window.location.href = url;
     });
 }
