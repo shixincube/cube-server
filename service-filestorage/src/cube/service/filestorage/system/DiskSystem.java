@@ -239,12 +239,11 @@ public class DiskSystem implements FileSystem {
     public boolean deleteFile(String fileName) {
         Path file = Paths.get(this.managingPath.toString(), fileName);
         try {
+            // 从集群系统中删除
+            this.diskCluster.removeFile(fileName);
+
             if (Files.exists(file)) {
                 Files.delete(file);
-
-                // 从集群系统中删除
-                this.diskCluster.removeFile(fileName);
-
                 return true;
             }
         } catch (IOException e) {

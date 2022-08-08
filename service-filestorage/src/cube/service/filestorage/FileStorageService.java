@@ -556,10 +556,10 @@ public class FileStorageService extends AbstractModule {
      * @param fileLabel
      * @return
      */
-    public boolean deleteLocalFile(String domainName, FileLabel fileLabel) {
+    public boolean deleteFile(String domainName, FileLabel fileLabel) {
         // 从文件系统删除
         if (!this.fileSystem.deleteFile(fileLabel.getFileCode())) {
-            Logger.i(this.getClass(), "#deleteFile - Not exists file: " +
+            Logger.w(this.getClass(), "#deleteFile - Delete file failed: " +
                     fileLabel.getFileCode() + " - " + fileLabel.getFileName());
         }
 
@@ -673,8 +673,8 @@ public class FileStorageService extends AbstractModule {
                 String fileCode = data.getString("fileCode");
                 FileLabel fileLabel = this.getFile(domain, fileCode);
                 if (null != fileLabel) {
-                    // 删除本地文件
-                    this.deleteLocalFile(domain, fileLabel);
+                    // 删除文件
+                    this.deleteFile(domain, fileLabel);
                     return fileLabel.toCompactJSON();
                 }
             }

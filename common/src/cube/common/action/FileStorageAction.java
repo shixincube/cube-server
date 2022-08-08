@@ -134,6 +134,16 @@ public enum FileStorageAction {
     CreateSharingTag("createSharingTag"),
 
     /**
+     * 取消分享标签。
+     */
+    CancelSharingTag("cancelSharingTag"),
+
+    /**
+     * 删除分享标签。
+     */
+    DeleteSharingTag("deleteSharingTag"),
+
+    /**
      * 获取分享标签。
      */
     GetSharingTag("getSharingTag"),

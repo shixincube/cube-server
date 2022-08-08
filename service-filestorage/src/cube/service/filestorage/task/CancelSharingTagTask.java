@@ -42,11 +42,11 @@ import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 
 /**
- * 创建分享标签任务。
+ * 取消分享标签任务。
  */
-public class CreateSharingTagTask extends ServiceTask {
+public class CancelSharingTagTask extends ServiceTask {
 
-    public CreateSharingTagTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+    public CancelSharingTagTask(FileStorageServiceCellet cellet, TalkContext talkContext,
                                 Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
@@ -67,8 +67,7 @@ public class CreateSharingTagTask extends ServiceTask {
         }
 
         Contact contact = ContactManager.getInstance().getContact(tokenCode);
-        Device device = ContactManager.getInstance().getDevice(tokenCode);
-        if (null == contact || null == device) {
+        if (null == contact) {
             // 发生错误
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
@@ -77,19 +76,12 @@ public class CreateSharingTagTask extends ServiceTask {
         }
 
         // 读取参数
-        String fileCode = packet.data.getString("fileCode");
-        long duration = packet.data.has("duration") ? packet.data.getLong("duration") : 0;
-        String password = packet.data.has("password") ? packet.data.getString("password") : null;
-        boolean preview = packet.data.has("preview") ? packet.data.getBoolean("preview") : false;
-        String previewWatermark = packet.data.has("watermark") ? packet.data.getString("watermark") : null;
-        boolean download = packet.data.has("download") ? packet.data.getBoolean("download") : true;
-        boolean traceDownload = packet.data.has("traceDownload") ? packet.data.getBoolean("traceDownload") : true;
+        String sharingCode = packet.data.getString("sharingCode");
 
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
 
-        // 创建分享标签
-        SharingTag sharingTag = service.getSharingManager().createSharingTag(contact, device,
-                fileCode, duration, password, preview, previewWatermark, download, traceDownload);
+        // 取消分享标签
+        SharingTag sharingTag = service.getSharingManager().cancelSharingTag(contact, sharingCode);
         if (null == sharingTag) {
             // 发生错误
             this.cellet.speak(this.talkContext,

@@ -220,7 +220,7 @@ public class FileSharingManager {
                 }
 
                 // 删除中间文件
-                this.service.deleteLocalFile(domainName, label);
+                this.service.deleteFile(domainName, label);
             }
 
             fileLabels.clear();
@@ -228,6 +228,26 @@ public class FileSharingManager {
         }
 
         return fileLabels;
+    }
+
+    /**
+     * 取消分享标签。
+     *
+     * @param contact
+     * @param code
+     * @return
+     */
+    public SharingTag cancelSharingTag(Contact contact, String code) {
+        // 取消标签
+        List<FileLabel> previewList = this.service.getServiceStorage().cancelSharingTag(contact.getDomain().getName(), code);
+        if (null != previewList) {
+            // 删除预览图
+            for (FileLabel fileLabel : previewList) {
+                this.service.deleteFile(contact.getDomain().getName(), fileLabel);
+            }
+        }
+
+        return this.service.getServiceStorage().readSharingTag(contact.getDomain().getName(), code);
     }
 
     /**

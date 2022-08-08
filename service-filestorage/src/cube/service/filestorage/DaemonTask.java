@@ -77,7 +77,7 @@ public class DaemonTask implements Runnable {
                         List<FileLabel> fileLabelList = service.serviceStorage.listFileLabel(domainName, now);
                         for (FileLabel fileLabel : fileLabelList) {
                             // 删除本地文件
-                            service.deleteLocalFile(domainName, fileLabel);
+                            service.deleteFile(domainName, fileLabel);
                         }
                     }
                 }

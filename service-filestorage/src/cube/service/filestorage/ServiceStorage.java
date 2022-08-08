@@ -921,7 +921,8 @@ public class ServiceStorage implements Storagable {
                     new StorageField("password", sharingTag.getConfig().getPassword()),
                     new StorageField("preview", sharingTag.getConfig().isPreview() ? 1 : 0),
                     new StorageField("download", sharingTag.getConfig().isDownloadAllowed() ? 1 : 0),
-                    new StorageField("trace_download", sharingTag.getConfig().isTraceDownload() ? 1 : 0)
+                    new StorageField("trace_download", sharingTag.getConfig().isTraceDownload() ? 1 : 0),
+                    new StorageField("state", sharingTag.getState())
             });
 
             storage.executeInsert(sharingCodeTable, new StorageField[] {
@@ -1010,6 +1011,28 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
+     * 取消指定的分享标签。
+     *
+     * @param domain
+     * @param code
+     * @return 返回预览图文件标签。
+     */
+    public List<FileLabel> cancelSharingTag(String domain, String code) {
+        String table = this.sharingTagTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        this.storage.executeUpdate(table, new StorageField[] {
+                new StorageField("state", SharingTag.STATE_CANCEL)
+        }, new Conditional[] {
+                Conditional.createEqualTo("code", code)
+        });
+
+        return this.deleteSharingPreview(domain, code);
+    }
+
+    /**
      * 计算分享标签数量。
      * @param domain
      * @param contactId
@@ -1025,11 +1048,13 @@ public class ServiceStorage implements Storagable {
         String sql = null;
         if (valid) {
             sql = "SELECT COUNT(id) FROM `" + table
-                    + "` WHERE `contact_id`=" + contactId + " AND (`expiry`=0 OR `expiry`>" + System.currentTimeMillis() + ")";
+                    + "` WHERE `contact_id`=" + contactId + " AND `state`=0"
+                    + " AND (`expiry`=0 OR `expiry`>" + System.currentTimeMillis() + ")";
         }
         else {
             sql = "SELECT COUNT(id) FROM `" + table
-                    + "` WHERE `contact_id`=" + contactId + " AND (`expiry`<>0 AND `expiry`<" + System.currentTimeMillis() + ")";
+                    + "` WHERE `contact_id`=" + contactId + " AND `state`=0"
+                    + " AND (`expiry`<>0 AND `expiry`<" + System.currentTimeMillis() + ")";
         }
 
         List<StorageField[]> result = this.storage.executeQuery(sql);
@@ -1061,6 +1086,8 @@ public class ServiceStorage implements Storagable {
             conditionals = new Conditional[] {
                     Conditional.createEqualTo("contact_id", contactId),
                     Conditional.createAnd(),
+                    Conditional.createEqualTo("state", 0),
+                    Conditional.createAnd(),
                     Conditional.createBracket(new Conditional[] {
                             Conditional.createEqualTo("expiry", (long) 0),
                             Conditional.createOr(),
@@ -1073,6 +1100,8 @@ public class ServiceStorage implements Storagable {
         else {
             conditionals = new Conditional[] {
                     Conditional.createEqualTo("contact_id", contactId),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("state", 0),
                     Conditional.createAnd(),
                     Conditional.createBracket(new Conditional[] {
                             Conditional.createUnequalTo("expiry", (long) 0),
@@ -1160,6 +1189,33 @@ public class ServiceStorage implements Storagable {
             JSONObject json = new JSONObject(fields[0].getString());
             list.add(new FileLabel(json));
         }
+
+        return list;
+    }
+
+    /**
+     * 删除预览图文件。
+     *
+     * @param domain
+     * @param code
+     * @return
+     */
+    private List<FileLabel> deleteSharingPreview(String domain, String code) {
+        String table = this.sharingTagPreviewTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        List<FileLabel> list = readSharingPreview(domain, code);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                storage.executeDelete(table, new Conditional[] {
+                        Conditional.createEqualTo("tag_code", code)
+                });
+            }
+        });
 
         return list;
     }
