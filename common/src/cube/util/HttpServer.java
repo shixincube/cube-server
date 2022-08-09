@@ -30,6 +30,7 @@ import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import java.io.FileNotFoundException;
@@ -58,6 +59,8 @@ public class HttpServer {
 
     private List<ContextHandler> handlers;
 
+    private HandlerList handlerList;
+
     public HttpServer() {
         this.handlers = new ArrayList<>();
     }
@@ -85,11 +88,24 @@ public class HttpServer {
         this.handlers.add(handler);
     }
 
+    public void setHandler(HandlerList handlerList) {
+        this.handlerList = handlerList;
+    }
+
     /**
      * 启动服务器。
      */
     public void start() {
         this.start(this.plainPort, this.securePort);
+    }
+
+    /**
+     * 启动服务。
+     *
+     * @param joinThread
+     */
+    public void start(boolean joinThread) {
+        this.start(this.plainPort, this.securePort, joinThread);
     }
 
     /**
@@ -109,6 +125,17 @@ public class HttpServer {
      * @param securePort
      */
     public void start(int plainPort, int securePort) {
+        this.start(plainPort, securePort, false);
+    }
+
+    /**
+     * 启动服务器。
+     *
+     * @param plainPort
+     * @param securePort
+     * @param joinThread
+     */
+    public void start(int plainPort, int securePort, boolean joinThread) {
         if (null != this.server) {
             return;
         }
@@ -168,16 +195,30 @@ public class HttpServer {
         // 设置处理句柄
         this.server.setHandler(contexts);
 
-        (new Thread() {
-            @Override
-            public void run() {
-                try {
-                    server.start();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        if (null != this.handlerList) {
+            this.server.setHandler(this.handlerList);
+        }
+
+        if (joinThread) {
+            try {
+                this.server.start();
+                this.server.join();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }).start();
+        }
+        else {
+            (new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        server.start();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        }
     }
 
     /**
@@ -195,5 +236,13 @@ public class HttpServer {
         }
 
         this.server = null;
+    }
+
+    public int getPlainPort() {
+        return this.plainPort;
+    }
+
+    public int getSecurePort() {
+        return this.securePort;
     }
 }

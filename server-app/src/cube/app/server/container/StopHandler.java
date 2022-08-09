@@ -27,10 +27,9 @@
 package cube.app.server.container;
 
 import cell.util.log.Logger;
+import cube.util.HttpServer;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.server.handler.ContextHandler;
 
@@ -44,11 +43,11 @@ import java.io.IOException;
  */
 public class StopHandler extends ContextHandler {
 
-    private Server server;
+    private HttpServer server;
 
     private ContainerManager manager;
 
-    public StopHandler(Server server, ContainerManager manager) {
+    public StopHandler(HttpServer server, ContainerManager manager) {
         super("/stop");
         this.setHandler(new Handler());
         this.server = server;
@@ -75,14 +74,14 @@ public class StopHandler extends ContextHandler {
                     manager.destroy();
 
                     try {
-                        Thread.sleep(1000L);
+                        Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
 
                     try {
-                        ServerConnector conn = (ServerConnector) server.getConnectors()[0];
-                        Logger.i(StopHandler.class, "Stop Cube App Server # " + conn.getPort());
+                        Logger.i(StopHandler.class, "Stop Cube App Server # "
+                                + server.getPlainPort() + "/" + server.getSecurePort());
                         server.stop();
                     } catch (Exception e) {
                         e.printStackTrace();

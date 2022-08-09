@@ -48,10 +48,8 @@ public class Main {
 
     /**
      * 启动服务器。
-     *
-     * @param port
      */
-    public static void start(int port) {
+    public static void start() {
         LogManager.getInstance().setLevel(LogLevel.INFO);
         LogManager.getInstance().addHandle(LogManager.createSystemOutHandle());
 
@@ -79,7 +77,7 @@ public class Main {
         ContainerManager containerManager = new ContainerManager();
 
         // 启动容器
-        containerManager.launch(port);
+        containerManager.launch();
 
         LogManager.getInstance().removeAllHandles();
         fileLogger.close();
@@ -116,7 +114,7 @@ public class Main {
     public static void main(String[] args) {
         if (args.length == 1) {
             if (args[0].equalsIgnoreCase("start")) {
-                Main.start(7777);
+                Main.start();
             }
             else if (args[0].equalsIgnoreCase("stop")) {
                 Main.stop(7777);

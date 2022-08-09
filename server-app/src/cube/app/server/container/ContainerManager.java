@@ -39,13 +39,15 @@ import cube.app.server.container.file.TraverseVisitTraceHandler;
 import cube.app.server.notice.NoticeManager;
 import cube.app.server.version.VersionManager;
 import cube.util.ConfigUtils;
+import cube.util.HttpConfig;
+import cube.util.HttpServer;
 import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -54,14 +56,16 @@ import java.util.Properties;
  */
 public class ContainerManager {
 
-    private Server server;
+    private HttpServer server;
 
     private JSONObject cubeConfig;
+
+    private HttpConfig httpConfig;
 
     public ContainerManager() {
     }
 
-    public void launch(int port) {
+    public void launch() {
         AccountManager.getInstance().start();
         NoticeManager.getInstance().start();
         VersionManager.getInstance().start();
@@ -69,6 +73,7 @@ public class ContainerManager {
 
         Properties config = this.loadConfig();
 
+        this.loadHttpConfig(config);
         this.loadCubeConfig(config);
 
         this.loadOtherConfig(config);
@@ -86,16 +91,21 @@ public class ContainerManager {
             }
         }).start();
 
-        // 优先使用配置文件端口
-        if (config.containsKey("port")) {
-            port = Integer.parseInt(config.getProperty("port", Integer.toString(port)));
+        this.server = new HttpServer();
+        try {
+            this.server.setKeystorePath(this.httpConfig.keystore);
+        } catch (FileNotFoundException e) {
+            Logger.w(this.getClass(), "#launch", e);
+            return;
         }
+        this.server.setKeystorePassword(this.httpConfig.storePassword, this.httpConfig.managerPassword);
+        this.server.setPort(this.httpConfig.httpPort, this.httpConfig.httpsPort);
 
-        this.server = new Server(port);
-
+        // 设置句柄
         this.server.setHandler(createHandlerList(config));
 
-        Logger.i(ContainerManager.class, "Start cube app server # " + port);
+        Logger.i(ContainerManager.class, "Start cube app server # "
+                + this.httpConfig.httpPort + "/" + this.httpConfig.httpsPort);
 
         System.out.println("" +
                 "                                             \n" +
@@ -116,12 +126,8 @@ public class ContainerManager {
 
         System.out.println();
 
-        try {
-            this.server.start();
-            this.server.join();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // 加入主线程
+        this.server.start(true);
     }
 
     public void destroy() {
@@ -135,6 +141,16 @@ public class ContainerManager {
 
     public JSONObject getCubeConfig() {
         return this.cubeConfig;
+    }
+
+    private HttpConfig loadHttpConfig(Properties properties) {
+        this.httpConfig = new HttpConfig();
+        this.httpConfig.httpPort = Integer.parseInt(properties.getProperty("http.port", "7777"));
+        this.httpConfig.httpsPort = Integer.parseInt(properties.getProperty("https.port", "8140"));
+        this.httpConfig.keystore = properties.getProperty("keystore");
+        this.httpConfig.storePassword = properties.getProperty("storePassword");
+        this.httpConfig.managerPassword = properties.getProperty("managerPassword");
+        return this.httpConfig;
     }
 
     private void loadCubeConfig(Properties properties) {
