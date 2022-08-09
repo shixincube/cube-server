@@ -380,7 +380,7 @@ public final class ImageMagick {
         commandLine.add("-gravity");
         commandLine.add("center");
         commandLine.add("-draw");
-        commandLine.add("'rotate -45 text 0,0 \"" + text + "\"'");
+        commandLine.add("'rotate -35 text 0,0 \"" + text + "\"'");
         commandLine.add("miff:-");
         commandLine.add("|");
         commandLine.add("composite");
@@ -403,14 +403,10 @@ public final class ImageMagick {
         commandLine.add("-c");
         commandLine.add(command.toString());
 
-        int status = execute(workPath, commandLine);
-        if (-1 != status) {
-            File file = new File(workPath, outputFile);
-            return awaits(file);
-        }
-        else {
-            return false;
-        }
+        // 执行命令
+        execute(workPath, commandLine);
+        File file = new File(workPath, outputFile);
+        return awaits(file, 3000);
     }
 
     /**
@@ -499,6 +495,22 @@ public final class ImageMagick {
             }
         }
 
+        return file.exists();
+    }
+
+    private static boolean awaits(File file, long timeout) {
+        long start = System.currentTimeMillis();
+        while (!file.exists()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            if (System.currentTimeMillis() - start > timeout) {
+                break;
+            }
+        }
         return file.exists();
     }
 }

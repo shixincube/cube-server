@@ -342,6 +342,10 @@ public class ImageProcessor extends Processor {
                 outputFilename = FileUtils.extractFileName(this.imageFile.getName()) + "_" + suffix + ".png";
             }
         }
+
+        // 将文件名中间的空格转为下划线
+        outputFilename = outputFilename.replaceAll(" ", "_");
+
         return outputFilename;
     }
 }

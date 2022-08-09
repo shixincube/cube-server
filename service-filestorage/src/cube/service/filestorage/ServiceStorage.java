@@ -1280,7 +1280,8 @@ public class ServiceStorage implements Storagable {
         for (StorageField[] fields : result) {
             Map<String, StorageField> map = StorageFields.get(fields);
             VisitTrace visitTrace = new VisitTrace(map.get("platform").getString(), map.get("time").getLong(),
-                    map.get("address").getString(), map.get("domain").getString(), map.get("url").getString(), map.get("title").getString(),
+                    map.get("address").getString(), map.get("domain").getString(), map.get("url").getString(),
+                    map.get("title").getString(),
                     new JSONObject(map.get("screen").getString()), map.get("language").getString(),
                     map.get("user_agent").isNullValue() ? null : map.get("user_agent").getString(),
                     map.get("agent").isNullValue() ? null : new JSONObject(map.get("agent").getString()),
@@ -1329,13 +1330,16 @@ public class ServiceStorage implements Storagable {
         for (StorageField[] fields : result) {
             Map<String, StorageField> map = StorageFields.get(fields);
             VisitTrace visitTrace = new VisitTrace(map.get("platform").getString(), map.get("time").getLong(),
-                    map.get("address").getString(), map.get("domain").getString(), map.get("url").getString(), map.get("title").getString(),
+                    map.get("address").getString(), map.get("domain").getString(), map.get("url").getString(),
+                    map.get("title").getString(),
                     new JSONObject(map.get("screen").getString()), map.get("language").getString(),
                     map.get("user_agent").isNullValue() ? null : map.get("user_agent").getString(),
                     map.get("agent").isNullValue() ? null : new JSONObject(map.get("agent").getString()),
                     map.get("event").isNullValue() ? null : map.get("event").getString(),
                     map.get("event_tag").isNullValue() ? null : map.get("event_tag").getString(),
                     map.get("event_param").isNullValue() ? null : new JSONObject(map.get("event_param").getString()));
+            visitTrace.contactId = map.get("contact_id").getLong();
+            visitTrace.contactDomain = map.get("contact_domain").isNullValue() ? null : map.get("contact_domain").getString();
             visitTrace.sharerId = map.get("sharer").getLong();
             visitTrace.parentId = map.get("parent").getLong();
             list.add(visitTrace);

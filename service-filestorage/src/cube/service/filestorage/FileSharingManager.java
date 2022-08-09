@@ -216,11 +216,23 @@ public class FileSharingManager {
                             Logger.w(this.getClass(), "#processFilePreview - Save file to storage failed: "
                                     + domainName + " - " + contact.getId() + " - " + file.getName());
                         }
+
+                        // 删除中间文件
+                        this.service.deleteFile(domainName, label);
+                    }
+                    else {
+                        Logger.w(this.getClass(), "#processFilePreview - Make watermark result is error: "
+                                + domainName + " - " + contact.getId() + " - " + label.getFileName());
+                        // 创建水印失败，使用原文件
+                        watermarkList.add(label);
                     }
                 }
-
-                // 删除中间文件
-                this.service.deleteFile(domainName, label);
+                else {
+                    Logger.w(this.getClass(), "#processFilePreview - Make watermark file failed: "
+                            + domainName + " - " + contact.getId() + " - " + label.getFileName());
+                    // 创建水印失败，使用原文件
+                    watermarkList.add(label);
+                }
             }
 
             fileLabels.clear();

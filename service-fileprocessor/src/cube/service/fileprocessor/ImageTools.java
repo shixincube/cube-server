@@ -57,7 +57,7 @@ public final class ImageTools {
         ProcessBuilder pb = new ProcessBuilder("convert", "-help");
 
         Process process = null;
-        int status = 1;
+        int status = -1;
 
         try {
             process = pb.start();
@@ -73,7 +73,7 @@ public final class ImageTools {
             }
         }
 
-        if (status == 0) {
+        if (status == 1 || status == 0) {
             USE_IMAGEMAGICK = true;
             Logger.i(ImageTools.class, "Use ImageMagick for processing image data");
         }
@@ -225,9 +225,15 @@ public final class ImageTools {
             }
         }
         else {
+            int size = inputImageSize.width;
+            if (inputImageSize.width > 1000 || inputImageSize.height > 1000) {
+                size = 1000;
+            }
+
             try {
                 Thumbnails.of(new File(inputFile))
                         .outputQuality(((float)quality) / 100.0f)
+                        .size(size, size)
                         .toFile(outputFile + ".jpg");
             } catch (IOException e) {
                 e.printStackTrace();
