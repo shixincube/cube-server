@@ -146,6 +146,10 @@ public class SharingTag extends Entity {
         if (json.has("parent")) {
             this.parent = new Trace(json.getJSONObject("parent"));
         }
+
+        if (json.has("state")) {
+            this.state = json.getInt("state");
+        }
     }
 
     public String getCode() {
@@ -212,6 +216,7 @@ public class SharingTag extends Entity {
         json.put("code", this.code);
         json.put("expiryDate", this.expiryDate);
         json.put("config", this.config.toJSON());
+        json.put("state", this.state);
 
         if (null != this.httpURL) {
             json.put("httpURL", this.httpURL);
@@ -251,6 +256,7 @@ public class SharingTag extends Entity {
         json.put("code", this.code);
         json.put("expiryDate", this.expiryDate);
         json.put("config", this.config.toCompactJSON());
+        json.put("state", this.state);
 
         if (null != this.httpURL) {
             json.put("httpURL", this.httpURL);

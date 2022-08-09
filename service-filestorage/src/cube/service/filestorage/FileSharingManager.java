@@ -247,7 +247,12 @@ public class FileSharingManager {
             }
         }
 
-        return this.service.getServiceStorage().readSharingTag(contact.getDomain().getName(), code);
+        SharingTag sharingTag = this.service.getServiceStorage().readSharingTag(contact.getDomain().getName(), code);
+        List<FileLabel> list = sharingTag.getPreviewList();
+        if (null != list) {
+            list.clear();
+        }
+        return sharingTag;
     }
 
     /**
