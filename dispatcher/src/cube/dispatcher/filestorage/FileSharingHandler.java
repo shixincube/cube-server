@@ -180,6 +180,9 @@ public class FileSharingHandler extends CrossDomainHandler {
     }
 
     private void respondFile(HttpServletResponse response, String filename) {
+        FileType fileType = FileUtils.verifyFileType(filename);
+        response.setContentType(fileType.getMimeType());
+
         OutputStream os = null;
         long contentLength = 0;
 
@@ -244,8 +247,6 @@ public class FileSharingHandler extends CrossDomainHandler {
             }
         }
 
-        FileType fileType = FileUtils.verifyFileType(filename);
-        response.setContentType(fileType.getMimeType());
         response.setContentLengthLong(contentLength);
         response.setStatus(HttpStatus.OK_200);
     }

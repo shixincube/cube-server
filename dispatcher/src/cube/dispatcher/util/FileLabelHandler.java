@@ -154,6 +154,9 @@ public class FileLabelHandler extends CrossDomainHandler {
         if (null != clientResponse && clientResponse.getStatus() == HttpStatus.OK_200) {
             InputStream content = listener.getInputStream();
 
+            // 填充 Header
+            fillHeaders(response, fileLabel, fileLabel.getFileSize(), type);
+
             // Async output
             AsyncContext async = request.startAsync();
             ServletOutputStream output = response.getOutputStream();
@@ -189,8 +192,6 @@ public class FileLabelHandler extends CrossDomainHandler {
             // 设置数据写入监听器
             output.setWriteListener(dataStream);
 
-            // 填充 Header
-            fillHeaders(response, fileLabel, fileLabel.getFileSize(), type);
             response.setStatus(HttpStatus.OK_200);
         }
         else {

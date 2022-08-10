@@ -73,6 +73,8 @@ public class ServerReportHandler extends ContextHandler {
             String query = URLDecoder.decode(httpServletRequest.getQueryString(), "UTF-8");
             Map<String, String> params = Utils.parseQueryStringParams(query);
 
+            httpServletResponse.setContentType("application/json");
+
             String name = params.get("name");
             String report = params.get("report");
             long time = Long.parseLong(params.get("time"));
@@ -123,7 +125,6 @@ public class ServerReportHandler extends ContextHandler {
                 }
             }
 
-            httpServletResponse.setContentType("application/json");
             httpServletResponse.setStatus(HttpStatus.OK_200);
             request.setHandled(true);
         }

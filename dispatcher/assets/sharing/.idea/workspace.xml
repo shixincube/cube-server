@@ -5,7 +5,6 @@
       <change beforePath="$PROJECT_DIR$/../../../common/src/cube/util/CrossDomainHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../common/src/cube/util/CrossDomainHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/script/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/script/index.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/style/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/style/index.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -71,7 +70,7 @@
       <workItem from="1659836269616" duration="6297000" />
       <workItem from="1659919461743" duration="1402000" />
       <workItem from="1660027318516" duration="131000" />
-      <workItem from="1660100295853" duration="3818000" />
+      <workItem from="1660100295853" duration="6177000" />
     </task>
     <servers />
   </component>

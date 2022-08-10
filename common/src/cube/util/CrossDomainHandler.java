@@ -91,6 +91,8 @@ public class CrossDomainHandler extends HttpHandler {
         this.target = target;
         this.baseRequest = baseRequest;
 
+        response.setHeader("Server", "Cube 3.0");
+
         this.allowCrossDomain(response);
 
         String method = request.getMethod().toUpperCase();
@@ -103,8 +105,6 @@ public class CrossDomainHandler extends HttpHandler {
         else if (method.equals("OPTIONS")) {
             doOptions(request, response);
         }
-
-        response.setHeader("Server", "Cube 3.0");
     }
 
     public void doOptions(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
