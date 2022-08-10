@@ -48,6 +48,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -70,6 +73,8 @@ public class FileSharingHandler extends CrossDomainHandler {
 
     private String fileRoot = "assets/sharing/";
 
+    private Path qrCodeFilePath = Paths.get("qrcode-files/");
+
     private Map<String, FlexibleByteBuffer> fileCache;
 
     private Performer performer;
@@ -79,6 +84,14 @@ public class FileSharingHandler extends CrossDomainHandler {
         this.performer = performer;
         if (CACHE_FILE) {
             this.fileCache = new ConcurrentHashMap<>();
+        }
+
+        if (!Files.exists(this.qrCodeFilePath)) {
+            try {
+                Files.createDirectories(this.qrCodeFilePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -396,7 +409,7 @@ public class FileSharingHandler extends CrossDomainHandler {
         BufferedReader reader = null;
         OutputStream os = null;
 
-        IndexTemplate template = new IndexTemplate(sharingTag, request.isSecure(), pageTraceString);
+        IndexTemplate template = new IndexTemplate(this.qrCodeFilePath, sharingTag, request.isSecure(), pageTraceString);
 
         try {
             os = response.getOutputStream();

@@ -109,6 +109,16 @@ function download(url) {
     });
 }
 
+function qrcode() {
+    var el = document.querySelector('.qrcode');
+    if (el.style.display == 'block') {
+        el.style.display = 'none';
+    }
+    else {
+        el.style.display = 'block';
+    }
+}
+
 function copy() {
     var el = document.getElementById('sharing_url');
     el.focus();

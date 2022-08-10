@@ -30,14 +30,18 @@ import cell.util.Base64;
 import cube.common.entity.FileLabel;
 import cube.common.entity.SharingTag;
 import cube.dispatcher.Performer;
+import cube.util.CodeUtils;
 import cube.util.FileSize;
 import cube.util.FileType;
 import cube.util.FileUtils;
+import cube.vision.Color;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
 import java.util.List;
 
 /**
@@ -67,6 +71,8 @@ public class IndexTemplate {
 
     private static final String SCRIPT_CONTENT = "${script_content}";
 
+    private static final String QRCODE_IMAGE_BASE64 = "${qrcode_image_base64}";
+
     private final static String CSS_STYLE_VALUE_NONE = "none";
     private final static String CSS_STYLE_VALUE_BLOCK = "block";
     private final static String CSS_STYLE_VALUE_INLINE_BLOCK = "inline-block";
@@ -77,7 +83,10 @@ public class IndexTemplate {
 
     private String pageTraceString;
 
-    public IndexTemplate(SharingTag sharingTag, boolean secure, String pageTraceString) {
+    private Path qrCodeFilePath;
+
+    public IndexTemplate(Path qrCodeFilePath, SharingTag sharingTag, boolean secure, String pageTraceString) {
+        this.qrCodeFilePath = qrCodeFilePath;
         this.sharingTag = sharingTag;
         this.secure = secure;
         this.pageTraceString = pageTraceString;
@@ -119,6 +128,10 @@ public class IndexTemplate {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+        else if (line.contains(QRCODE_IMAGE_BASE64)) {
+            String base64 = this.getQRCodeImageBase64();
+            line = line.replace(QRCODE_IMAGE_BASE64, (null == base64) ? "" : base64);
         }
         else if (line.contains(SHARING_URL)) {
             if (null != this.pageTraceString) {
@@ -219,5 +232,49 @@ public class IndexTemplate {
             default:
                 return "unknown";
         }
+    }
+
+    private String getQRCodeImageBase64() {
+        String base64 = null;
+        File file = new File(this.qrCodeFilePath.toFile(), this.sharingTag.getCode() + ".base64");
+        if (!file.exists()) {
+            // 创建二维码图片
+            File qrCodeFile = new File(this.qrCodeFilePath.toFile(), this.sharingTag.getCode() + ".png");
+            CodeUtils.generateQRCode(qrCodeFile,
+                    this.secure ? this.sharingTag.getHttpsURL() : this.sharingTag.getHttpURL(),
+                    300, 300, new Color(0, 0, 0));
+
+            if (qrCodeFile.exists()) {
+                byte[] data = null;
+                try {
+                    data = Files.readAllBytes(Paths.get(qrCodeFile.getAbsolutePath()));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                // 删除图片文件
+                qrCodeFile.delete();
+
+                // 将文件数据编码为 Base64
+                base64 = Base64.encodeBytes(data);
+                try {
+                    Files.write(Paths.get(file.getAbsolutePath()),
+                            base64.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        if (null == base64) {
+            try {
+                byte[] data = Files.readAllBytes(Paths.get(file.getAbsolutePath()));
+                base64 = new String(data, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return base64;
     }
 }

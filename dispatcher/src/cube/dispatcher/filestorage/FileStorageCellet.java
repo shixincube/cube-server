@@ -113,10 +113,6 @@ public class FileStorageCellet extends AbstractCellet {
         this.executor.execute(this.borrowTask(talkContext, primitive, true));
     }
 
-    public void uploadFile(File file) {
-
-    }
-
     protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive, boolean sync) {
         PassThroughTask task = this.taskQueue.poll();
         if (null == task) {

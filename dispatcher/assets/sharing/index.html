@@ -38,8 +38,11 @@
         <div class="col" style="display:${download_toggle};">
             <button class="btn" onclick="javascript:download('${file_uri_path}');">下载文件</button>
         </div>
-        <div class="col-blank" style="display:${download_toggle};">
+        <div class="col-blank" style="display:${download_toggle};"></div>
+        <div class="col">
+            <button class="btn" onclick="javascript:qrcode();">二维码</button>
         </div>
+        <div class="col-blank"></div>
         <div class="col">
             <button class="btn" onclick="javascript:copy();">复制链接</button>
         </div>
@@ -49,6 +52,13 @@
 <div id="toast" class="toast">
     <div class="toast-content">
         <div class="toast-text">分享链接已复制到剪贴板</div>
+    </div>
+</div>
+
+<div id="qrcode" class="qrcode">
+    <div class="qrcode-container">
+        <img src="data:image/png;base64,${qrcode_image_base64}"/>
+        <p><span>手机下载请扫二维码</span></p>
     </div>
 </div>
 

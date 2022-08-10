@@ -134,7 +134,7 @@ public class CrossDomainHandler extends HttpHandler {
         }
 
         // 允许的方法
-        response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        response.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
         // 告诉请求端，哪些自定义的头字段可以被允许添加
         response.setHeader("Access-Control-Allow-Headers", "Content-Type,Content-Encoding,Content-Length,X-Requested-With");
         // 允许跨域请求的最长时间，指定时间内不需要发送预请求过来。
