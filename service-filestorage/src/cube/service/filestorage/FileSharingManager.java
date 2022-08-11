@@ -114,7 +114,7 @@ public class FileSharingManager {
 
         if (preview) {
             // 需要生成预览
-            List<FileLabel> previewFiles = this.processFilePreview(contact, fileLabel, previewWatermark);
+            List<FileLabel> previewFiles = this.processFilePreview(sharingTag, contact, fileLabel, previewWatermark);
             if (null != previewFiles && !previewFiles.isEmpty()) {
                 sharingTag.setPreviewList(previewFiles);
             }
@@ -135,11 +135,13 @@ public class FileSharingManager {
         return sharingTag;
     }
 
-    private List<FileLabel> processFilePreview(Contact contact, FileLabel fileLabel, String watermark) {
+    private List<FileLabel> processFilePreview(SharingTag sharingTag, Contact contact, FileLabel fileLabel,
+                                               String watermark) {
         List<FileLabel> fileLabels = new ArrayList<>();
         String domainName = contact.getDomain().getName();
 
         if (FileUtils.isDocumentType(fileLabel.getFileType())) {
+            // 文档转 PNG 图片
             OfficeConvertTo officeConvertTo = new OfficeConvertTo(domainName,
                     fileLabel.getFileCode(), OfficeConvertToOperation.OUTPUT_FORMAT_PNG);
             AbstractModule fileProcess = this.service.getKernel().getModule(this.fileProcessorModule);
@@ -149,7 +151,8 @@ public class FileSharingManager {
                 if (processResult.success) {
                     for (FileResult fr : processResult.getResultList()) {
                         // 生成文件码
-                        String fileCode = FileUtils.makeFileCode(contact.getId(), domainName, fr.fileName);
+                        String fileName = sharingTag.getId().toString() + fr.fileName;
+                        String fileCode = FileUtils.makeFileCode(contact.getId(), domainName, fileName);
                         // 生成文件标签
                         FileLabel label = FileUtils.makeFileLabel(domainName, fileCode, contact.getId(), fr.file);
                         // 将文件保存到存储
@@ -202,7 +205,8 @@ public class FileSharingManager {
                         // 水印文件
                         File file = processResult.getResultList().get(0).file;
                         // 创建文件码
-                        String fileCode = FileUtils.makeFileCode(contact.getId(), domainName, file.getName());
+                        String fileCode = FileUtils.makeFileCode(contact.getId(), domainName,
+                                sharingTag.getId().toString() + file.getName());
                         // 创建标签
                         FileLabel watermarkFileLabel = FileUtils.makeFileLabel(domainName, fileCode, contact.getId(), file);
                         // 保存标签

@@ -126,6 +126,29 @@ function copy() {
     document.execCommand('copy');
 
     showToast('分享链接已复制到剪贴板');
+
+    const data = {
+        "domain": document.domain,
+        "url": document.URL,
+        "title": document.title,
+        "screen": {
+            "width": window.screen.width,
+            "height": window.screen.height,
+            "colorDepth": window.screen.colorDepth,
+            "orientation": (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation
+        },
+        "language": navigator.language,
+        "userAgent": navigator.userAgent,
+        "event": "Share",
+        "eventParam": {
+            "sn": window.sn,
+            "sharer": sharer,
+            "parent": parent,
+            "token": token
+        }
+    };
+
+    submit(data);
 }
 
 var toastTimer  = 0;
