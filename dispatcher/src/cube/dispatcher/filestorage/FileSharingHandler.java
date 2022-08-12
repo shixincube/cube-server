@@ -63,6 +63,8 @@ public class FileSharingHandler extends CrossDomainHandler {
 
     public final static String PATH = "/sharing/";
 
+    private final static String QRCODE_PATH = "/qrcode/";
+
     private final String TITLE = "${title}";
 
     private final String STATE = "${state}";
@@ -106,6 +108,11 @@ public class FileSharingHandler extends CrossDomainHandler {
             // 加载文件
             String filename = pathInfo.substring(1);
             respondFile(response, filename);
+        }
+        else if (pathInfo.indexOf(QRCODE_PATH) == 0) {
+            // 返回二维码图片
+            String code = extractCode(pathInfo);
+            this.processQRCode(code, request, response);
         }
         else if (pathInfo.length() > 32) {
             // 显示页面
@@ -251,6 +258,47 @@ public class FileSharingHandler extends CrossDomainHandler {
         response.setStatus(HttpStatus.OK_200);
     }
 
+    private void processQRCode(String code, HttpServletRequest request, HttpServletResponse response) {
+        JSONObject data = new JSONObject();
+        data.put("code", code);
+        data.put("refresh", true);
+        Packet packet = new Packet(FileStorageAction.GetSharingTag.name, data);
+        ActionDialect result = this.performer.syncTransmit(FileStorageCellet.NAME, packet.toDialect());
+        if (null == result) {
+            response.setStatus(HttpStatus.BAD_REQUEST_400);
+            return;
+        }
+
+        Packet resultPacket = new Packet(result);
+        int stateCode = Packet.extractCode(resultPacket);
+        if (FileStorageStateCode.Ok.code != stateCode) {
+            response.setStatus(HttpStatus.NOT_FOUND_404);
+            return;
+        }
+
+        JSONObject tagJson = Packet.extractDataPayload(resultPacket);
+        SharingTag sharingTag = new SharingTag(tagJson);
+        byte[] qrCodeData = QRCodeHelper.getQRCodeImageData(this.qrCodeFilePath, sharingTag.getCode(),
+                request.isSecure() ? sharingTag.getHttpsURL() : sharingTag.getHttpURL());
+
+        response.setContentType("image/png");
+        response.setContentLength(qrCodeData.length);
+
+        try {
+            response.getOutputStream().write(qrCodeData);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        response.setStatus(HttpStatus.OK_200);
+
+        try {
+            response.getOutputStream().close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void processPage(String code, HttpServletRequest request, HttpServletResponse response) {
         JSONObject data = new JSONObject();
         data.put("code", code);
@@ -270,6 +318,9 @@ public class FileSharingHandler extends CrossDomainHandler {
         if (FileStorageStateCode.Ok.code != stateCode) {
             // 文件分享码不存在
             file = new File(this.fileRoot, "page.html");
+            // Content-Type
+            FileType fileType = FileUtils.verifyFileType(file.getName());
+            response.setContentType(fileType.getMimeType());
             contentLength = processLossPageHtml(file, response);
         }
         else {
@@ -281,16 +332,20 @@ public class FileSharingHandler extends CrossDomainHandler {
                     && System.currentTimeMillis() > sharingTag.getExpiryDate()) {
                 // 已过期
                 file = new File(this.fileRoot, "page.html");
+                // Content-Type
+                FileType fileType = FileUtils.verifyFileType(file.getName());
+                response.setContentType(fileType.getMimeType());
                 contentLength = processExpiredPageHtml(file, response);
             }
             else {
                 file = new File(this.fileRoot, "index.html");
+                // Content-Type
+                FileType fileType = FileUtils.verifyFileType(file.getName());
+                response.setContentType(fileType.getMimeType());
                 contentLength = processIndexHtml(file, sharingTag, request, response);
             }
         }
 
-        FileType fileType = FileUtils.verifyFileType(file.getName());
-        response.setContentType(fileType.getMimeType());
         response.setContentLengthLong(contentLength);
         response.setStatus(HttpStatus.OK_200);
     }
@@ -447,7 +502,15 @@ public class FileSharingHandler extends CrossDomainHandler {
 
     private String extractCode(String pathInfo) {
         int start = 1;
-        String path = pathInfo.substring(1);
+        String path = null;
+        if (pathInfo.indexOf(QRCODE_PATH) == 0) {
+            path = pathInfo.substring(QRCODE_PATH.length() - 1);
+            start = QRCODE_PATH.length();
+        }
+        else {
+            path = pathInfo.substring(1);
+        }
+
         int end = path.indexOf("/");
         if (end < 0) {
             end = path.indexOf("?");
