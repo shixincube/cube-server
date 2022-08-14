@@ -8,6 +8,14 @@ if (undefined === window.screen) {
     };
 }
 
+var screenOrientation = null;
+if (undefined === screen.orientation) {
+    screenOrientation = 'unknown';
+}
+else {
+    screenOrientation = (undefined === screen.orientation.type) ? screen.orientation : screen.orientation.type;
+}
+
 window.onload = function () {
     var sharer = '';
     var parent = '';
@@ -32,7 +40,7 @@ window.onload = function () {
             "width": window.screen.width,
             "height": window.screen.height,
             "colorDepth": window.screen.colorDepth,
-            "orientation": (screen.orientation || { type: 'unknown' }).type || screen.mozOrientation || screen.msOrientation
+            "orientation": screenOrientation
         },
         "language": navigator.language,
         "userAgent": navigator.userAgent,
