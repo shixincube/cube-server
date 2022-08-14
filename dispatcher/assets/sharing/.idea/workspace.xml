@@ -3,9 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="b1408c98-f6aa-434f-978c-a980e61d5e76" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/script/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/script/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileSharingManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileSharingManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/script/page.js" beforeDir="false" afterPath="$PROJECT_DIR$/script/page.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/style/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/style/index.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -74,6 +74,7 @@
       <workItem from="1660175125993" duration="127000" />
       <workItem from="1660193196428" duration="18000" />
       <workItem from="1660201330162" duration="918000" />
+      <workItem from="1660478223742" duration="817000" />
     </task>
     <servers />
   </component>

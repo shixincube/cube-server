@@ -5,6 +5,14 @@ var sharer = '';
 var parent = '';
 var token = '';
 
+if (undefined === window.screen) {
+    window.screen = {
+        width: 0,
+        height: 0,
+        colorDepth: 0
+    };
+}
+
 window.onload = function () {
     var query = window.location.search.substring(1);
     var vars = query.split("&");
@@ -35,7 +43,7 @@ window.onload = function () {
             "width": window.screen.width,
             "height": window.screen.height,
             "colorDepth": window.screen.colorDepth,
-            "orientation": (screen.orientation || {}).type || screen.mozOrientation || screen.msOrientation
+            "orientation": (screen.orientation || { type: 'unknown' }).type || screen.mozOrientation || screen.msOrientation
         },
         "language": navigator.language,
         "userAgent": navigator.userAgent,
@@ -61,7 +69,7 @@ window.onresize = function () {
 
 function resizePreview() {
     var preview = document.querySelector('.preview');
-    preview.style.height = document.body.clientHeight + 'px';
+    preview.style.height = (parseInt(document.body.clientHeight) - 43) + 'px';
 }
 
 function download(url) {
