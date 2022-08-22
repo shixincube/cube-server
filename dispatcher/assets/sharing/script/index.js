@@ -66,6 +66,7 @@ window.onload = function () {
 
     submit(data);
 
+    initUI();
     resizePreview();
 };
 
@@ -78,6 +79,13 @@ window.onresize = function () {
 function resizePreview() {
     var preview = document.querySelector('.preview');
     preview.style.height = (parseInt(document.body.clientHeight) - 43) + 'px';
+}
+
+function initUI() {
+    if (undefined !== sharingTag.password) {
+        var inputEl = document.querySelector('.password-input');
+
+    }
 }
 
 function download(url) {

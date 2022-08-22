@@ -142,6 +142,32 @@ img {
     visibility: hidden;
 }
 
+.password-input {
+    margin-top: 40px;
+    width: 100%;
+    text-align: center;
+    vertical-align: middle;
+    visibility: hidden;
+}
+.password-input .title {
+    font-size: 14px;
+}
+.password-input .container {
+    display: block;
+}
+.password-input .container div {
+    display: inline-block;
+    padding: 2px 6px 2px 6px;
+}
+.password-input .container div input {
+    width: 20px;
+    height: 36px;
+    font-size: 20px;
+    text-align: center;
+    border: 1px #bbb solid;
+    border-radius: 3px;
+}
+
 .toast {
     text-align: center;
     width: 100%;
