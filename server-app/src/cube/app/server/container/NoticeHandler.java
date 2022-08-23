@@ -62,7 +62,7 @@ public class NoticeHandler extends ContextHandler {
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             Map<String, String> data = this.parseQueryStringParams(request);
-            if (!data.containsKey("token") || !data.containsKey("domain")) {
+            if (null == data || !data.containsKey("token") || !data.containsKey("domain")) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 return;
             }

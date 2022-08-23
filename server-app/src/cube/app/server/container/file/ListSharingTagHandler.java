@@ -71,7 +71,7 @@ public class ListSharingTagHandler extends ContextHandler {
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             Map<String, String> data = this.parseQueryStringParams(request);
-            if (!data.containsKey("token")) {
+            if (null == data || !data.containsKey("token")) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;

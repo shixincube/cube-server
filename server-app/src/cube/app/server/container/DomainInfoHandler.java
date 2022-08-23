@@ -59,7 +59,7 @@ public class DomainInfoHandler extends ContextHandler {
         public void doGet(HttpServletRequest request, HttpServletResponse response)
                 throws IOException, ServletException {
             Map<String, String> data = this.parseQueryStringParams(request);
-            if (!data.containsKey("domain") || !data.containsKey("appKey")) {
+            if (null == data || !data.containsKey("domain") || !data.containsKey("appKey")) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 return;
             }

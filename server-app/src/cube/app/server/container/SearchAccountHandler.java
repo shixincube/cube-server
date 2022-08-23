@@ -61,6 +61,10 @@ public class SearchAccountHandler extends ContextHandler {
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             Map<String, String> data = this.parseQueryStringParams(request);
+            if (null == data) {
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                return;
+            }
 
             Account account = null;
             if (data.containsKey("token") && data.containsKey("id")) {

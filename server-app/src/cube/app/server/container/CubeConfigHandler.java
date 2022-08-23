@@ -64,6 +64,11 @@ public class CubeConfigHandler extends ContextHandler {
         public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             // 判断 Token 是否有效
             Map<String, String> data = this.parseQueryStringParams(request);
+            if (null == data) {
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                return;
+            }
+
             String token = data.containsKey("t") ? data.get("t") : data.get("token");
 
             if (null == token) {

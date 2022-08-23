@@ -66,7 +66,7 @@ public class SharingTagHandler extends ContextHandler {
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             Map<String, String> data = this.parseQueryStringParams(request);
-            if (!data.containsKey("token") || !data.containsKey("sc")) {
+            if (null == data || !data.containsKey("token") || !data.containsKey("sc")) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;

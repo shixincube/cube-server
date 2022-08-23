@@ -148,6 +148,10 @@ public abstract class HttpHandler extends AbstractHandler {
 
     public Map<String, String> parseQueryStringParams(HttpServletRequest request) {
         String queryString = request.getQueryString();
+        if (null == queryString) {
+            return null;
+        }
+
         Map<String, String> result = new HashMap<>();
         String[] array = queryString.split("&");
 
