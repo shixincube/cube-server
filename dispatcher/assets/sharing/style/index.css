@@ -143,11 +143,18 @@ img {
 }
 
 .password-input {
-    margin-top: 40px;
     width: 100%;
     text-align: center;
     vertical-align: middle;
     visibility: hidden;
+}
+.password-input .panel {
+    padding-top: 20px;
+    padding-bottom: 30px;
+    width: 300px;
+    background: #EEEEEE;
+    border-radius: 8px;
+    display: inline-block;
 }
 .password-input .title {
     font-size: 14px;
@@ -160,7 +167,7 @@ img {
     padding: 2px 6px 2px 6px;
 }
 .password-input .container div input {
-    width: 20px;
+    width: 24px;
     height: 36px;
     font-size: 20px;
     text-align: center;

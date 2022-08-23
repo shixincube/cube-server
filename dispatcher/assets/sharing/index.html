@@ -33,14 +33,16 @@
     </div>
     <div class="item">
         <div class="password-input">
-            <div class="title">请输入访问码</div>
-            <div class="container">
-                <div><input id="code_1" type="text" /></div>
-                <div><input id="code_2" type="text" /></div>
-                <div><input id="code_3" type="text" /></div>
-                <div><input id="code_4" type="text" /></div>
-                <div><input id="code_5" type="text" /></div>
-                <div><input id="code_6" type="text" /></div>
+            <div class="panel">
+                <div class="title">请输入访问码</div>
+                <div class="container">
+                    <div><input id="code_1" type="text" /></div>
+                    <div><input id="code_2" type="text" /></div>
+                    <div><input id="code_3" type="text" /></div>
+                    <div><input id="code_4" type="text" /></div>
+                    <div><input id="code_5" type="text" /></div>
+                    <div><input id="code_6" type="text" /></div>
+                </div>
             </div>
         </div>
     </div>
@@ -48,10 +50,10 @@
 
 <div class="footer">
     <div class="operation">
-        <div class="col" style="display:${download_toggle};">
+        <div class="col download-col" style="display:${download_toggle};">
             <button class="btn" onclick="javascript:download('${file_uri_path}');">下载文件</button>
         </div>
-        <div class="col-blank" style="display:${download_toggle};"></div>
+        <div class="col-blank download-col" style="display:${download_toggle};"></div>
         <div class="col">
             <button class="btn" onclick="javascript:qrcode();">二维码</button>
         </div>

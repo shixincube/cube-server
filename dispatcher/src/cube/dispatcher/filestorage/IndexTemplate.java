@@ -96,16 +96,31 @@ public class IndexTemplate {
             line = line.replace(TITLE, sharingTag.getConfig().getFileLabel().getFileName());
         }
         else if (line.contains(PREVIEW_TOGGLE)) {
-            line = line.replace(PREVIEW_TOGGLE,
-                    sharingTag.getConfig().isPreview() ? CSS_STYLE_VALUE_BLOCK : CSS_STYLE_VALUE_NONE);
+            if (this.sharingTag.getConfig().hasPassword()) {
+                line = line.replace(PREVIEW_TOGGLE, CSS_STYLE_VALUE_NONE);
+            }
+            else {
+                line = line.replace(PREVIEW_TOGGLE,
+                        sharingTag.getConfig().isPreview() ? CSS_STYLE_VALUE_BLOCK : CSS_STYLE_VALUE_NONE);
+            }
         }
         else if (line.contains(MAIN_TOGGLE)) {
-            line = line.replace(MAIN_TOGGLE,
-                    sharingTag.getConfig().isPreview() ? CSS_STYLE_VALUE_NONE : CSS_STYLE_VALUE_BLOCK);
+            if (this.sharingTag.getConfig().hasPassword()) {
+                line = line.replace(MAIN_TOGGLE, CSS_STYLE_VALUE_BLOCK);
+            }
+            else {
+                line = line.replace(MAIN_TOGGLE,
+                        sharingTag.getConfig().isPreview() ? CSS_STYLE_VALUE_NONE : CSS_STYLE_VALUE_BLOCK);
+            }
         }
         else if (line.contains(DOWNLOAD_TOGGLE)) {
-            line = line.replace(DOWNLOAD_TOGGLE,
-                    sharingTag.getConfig().isDownloadAllowed() ? CSS_STYLE_VALUE_INLINE_BLOCK : CSS_STYLE_VALUE_NONE);
+            if (this.sharingTag.getConfig().hasPassword()) {
+                line = line.replace(DOWNLOAD_TOGGLE, CSS_STYLE_VALUE_NONE);
+            }
+            else {
+                line = line.replace(DOWNLOAD_TOGGLE,
+                        sharingTag.getConfig().isDownloadAllowed() ? CSS_STYLE_VALUE_INLINE_BLOCK : CSS_STYLE_VALUE_NONE);
+            }
         }
         else if (line.contains(FILE_TYPE)) {
             line = line.replace(FILE_TYPE, parseFileType(sharingTag.getConfig().getFileLabel().getFileType()));
@@ -167,7 +182,7 @@ public class IndexTemplate {
     private String makeScriptContent() {
         StringBuilder buf = new StringBuilder();
         buf.append("var sharingTag=");
-        buf.append(this.sharingTag.toCompactJSON().toString());
+        buf.append(this.sharingTag.toJSONForClient().toString());
         buf.append(";");
         buf.append("var appLoginURL='");
         buf.append(Performer.APP_LOGIN_URL);

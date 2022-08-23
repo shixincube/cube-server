@@ -147,6 +147,10 @@ public class SharingTagConfig implements JSONable {
         return this.password;
     }
 
+    public boolean hasPassword() {
+        return (null != this.password);
+    }
+
     public boolean isPreview() {
         return this.preview;
     }

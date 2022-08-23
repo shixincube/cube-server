@@ -65,6 +65,8 @@ public class FileSharingHandler extends CrossDomainHandler {
 
     private final static String QRCODE_PATH = "/qrcode/";
 
+    private final static String CHECK_PASSWORD_PATH = "/check/";
+
     private final String TITLE = "${title}";
 
     private final String STATE = "${state}";
@@ -178,6 +180,43 @@ public class FileSharingHandler extends CrossDomainHandler {
                 // 数据格式错误
                 this.respond(response, HttpStatus.FORBIDDEN_403);
             }
+        }
+        else if (pathInfo.indexOf(CHECK_PASSWORD_PATH) == 0) {
+            JSONObject bodyJSON = readBodyAsJSONObject(request);
+            JSONObject data = new JSONObject();
+            data.put("code", bodyJSON.getString("code"));
+            data.put("refresh", false);
+            Packet packet = new Packet(FileStorageAction.GetSharingTag.name, data);
+            ActionDialect result = this.performer.syncTransmit(FileStorageCellet.NAME, packet.toDialect());
+            if (null == result) {
+                response.setStatus(HttpStatus.SERVICE_UNAVAILABLE_503);
+                this.complete();
+                return;
+            }
+
+            Packet resultPacket = new Packet(result);
+            int stateCode = Packet.extractCode(resultPacket);
+            if (FileStorageStateCode.Ok.code != stateCode) {
+                response.setStatus(HttpStatus.NOT_FOUND_404);
+                this.complete();
+                return;
+            }
+
+            JSONObject tagJson = Packet.extractDataPayload(resultPacket);
+            SharingTag sharingTag = new SharingTag(tagJson);
+            if (!sharingTag.getConfig().hasPassword()) {
+                response.setStatus(HttpStatus.NOT_ACCEPTABLE_406);
+                this.complete();
+                return;
+            }
+
+            if (!sharingTag.getConfig().getPassword().equals(bodyJSON.get("password"))) {
+                response.setStatus(HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
+
+            this.respond(response, HttpStatus.OK_200);
         }
         else {
             this.respond(response, HttpStatus.BAD_REQUEST_400);

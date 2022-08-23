@@ -290,6 +290,19 @@ public class SharingTag extends Entity {
         return json;
     }
 
+    public JSONObject toJSONForClient() {
+        JSONObject json = this.toCompactJSON();
+        JSONObject config = json.getJSONObject("config");
+        if (config.has("password")) {
+            config.remove("password");
+            config.put("hasPassword", true);
+        }
+        else {
+            config.put("hasPassword", false);
+        }
+        return json;
+    }
+
     public static String[] makeURLs(SharingTag tag, String sharer) {
         String parameter = "?s=" + sharer + "&p=" + tag.sharer.toString();
 

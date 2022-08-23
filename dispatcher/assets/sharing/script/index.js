@@ -82,9 +82,110 @@ function resizePreview() {
 }
 
 function initUI() {
-    if (undefined !== sharingTag.password) {
-        var inputEl = document.querySelector('.password-input');
+    var inputElArray = [];
 
+    if (sharingTag.config.hasPassword) {
+        var getPassword = function() {
+            var values = [];
+            for (var i = 0; i < 6; ++i) {
+                var value = inputElArray[i].value;
+                if (value.length == 0) {
+                    return null;
+                }
+
+                values.push(value);
+            }
+
+            return values.join('');
+        }
+
+        var enableInput = function(enabled) {
+            inputElArray.forEach(function(el) {
+                el.disabled = !enabled;
+            });
+        }
+
+        var resetInput = function() {
+            inputElArray.forEach(function(el) {
+                el.value = '';
+            });
+            inputElArray[0].focus();
+        }
+
+        var submitCheck = function(password) {
+            showToast('正在校验访问码……', 10000);
+            enableInput(false);
+
+            // 提交密码
+            checkPassword(password, function(valid) {
+                enableInput(true);
+
+                if (valid) {
+                    hideToast();
+                    showValidPage();
+                }
+                else {
+                    showToast('访问码错误，请重新输入', 3000);
+                    resetInput();
+                }
+            });
+        }
+
+        var keyUp = function(e) {
+            var id = e.target.id;
+            var value = e.target.value;
+            if (value.length == 0) {
+                return;
+            }
+            else if (value.length > 1) {
+                value = value.substring(value.length - 1, value.length);
+                e.target.value = value;
+            }
+
+            var sn = parseInt(id.split("_")[1]);
+
+            if (sn == 6) {
+                var password = getPassword();
+                submitCheck(password);
+            }
+            else {
+                var password = getPassword();
+                if (null != password) {
+                    submitCheck(password);
+                    return;
+                }
+
+                // 焦点切换到下一个
+                inputElArray[sn].focus();
+            }
+        }
+
+        var el = document.querySelector('.password-input');
+        el.style.visibility = 'visible';
+        for (var i = 1; i <= 6; ++i) {
+            var inputEl = document.getElementById('code_' + i);
+            inputEl.onkeyup = keyUp;
+            inputEl.value = '';
+            inputElArray.push(inputEl);
+        }
+
+        inputElArray[0].focus();
+    }
+}
+
+function showValidPage() {
+    document.querySelector('.password-input').style.visibility = 'hidden';
+
+    if (undefined !== sharingTag.previewList) {
+        document.querySelector('.header').style.display = 'block';
+        document.querySelector('.preview').style.display = 'block';
+        document.querySelector('.main').style.display = 'none';
+    }
+
+    if (sharingTag.config.download) {
+        document.querySelectorAll('.download-col').forEach(function(el) {
+            el.style.display = 'inline-block';
+        });
     }
 }
 
@@ -205,6 +306,40 @@ function hideToast() {
         toastTimer = 0;
         toast.style.display = 'none';
     }, 500);
+}
+
+function checkPassword(password, complete) {
+    var data = {
+        domain: sharingTag.domain,
+        code: sharingTag.code,
+        password: password
+    };
+
+    var xhr = null;
+    if (window.XMLHttpRequest) {
+        xhr = new XMLHttpRequest();
+    }
+    else {
+        xhr = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200) {
+                complete(true)
+            }
+            else {
+                complete(false);
+            }
+        }
+    };
+
+    xhr.method = "POST";
+    xhr.responseType = "json";
+    xhr.open("POST", "/sharing/check/", true);
+
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.send(JSON.stringify(data));
 }
 
 function submit(data, complete) {
