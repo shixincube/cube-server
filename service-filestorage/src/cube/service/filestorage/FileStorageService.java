@@ -38,6 +38,7 @@ import cube.core.*;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
+import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.filestorage.hierarchy.FileHierarchy;
 import cube.service.filestorage.hierarchy.FileHierarchyManager;
@@ -384,10 +385,10 @@ public class FileStorageService extends AbstractModule {
         // 写入集群缓存
         this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
 
-        // 触发 Hook
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
+                // 触发 Hook
                 FileStorageHook hook = pluginSystem.getSaveFileHook();
                 hook.apply(new FileStoragePluginContext(fileLabel));
             }
@@ -879,6 +880,17 @@ public class FileStorageService extends AbstractModule {
 
                 pluginSystem.register(AuthServiceHook.CreateDomainApp,
                         new CreateDomainAppPlugin(FileStorageService.this));
+
+                // 监听联系人登录
+                while (!ContactManager.getInstance().isStarted()) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+//                ContactManager.getInstance().getPluginSystem().register(ContactHook.SignIn, new );
             }
         }).start();
     }

@@ -34,6 +34,7 @@ import cube.service.filestorage.system.FileDescriptor;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 守护任务。
@@ -43,7 +44,7 @@ public class DaemonTask implements Runnable {
     /**
      * 文件描述符的超时时长。
      */
-    private final long fileDescriptorTimeout = 60 * 60 * 1000L;
+    private final long fileDescriptorTimeout = 60 * 60 * 1000;
 
     private FileStorageService service;
 
@@ -54,6 +55,15 @@ public class DaemonTask implements Runnable {
     public DaemonTask(FileStorageService service) {
         this.service = service;
         this.lastCheckFileLabelTimestamp = System.currentTimeMillis();
+        this.managedContacts = new ConcurrentHashMap<>();
+    }
+
+    public void addManagedContact(Contact contact) {
+        this.managedContacts.put(contact.getId(), contact);
+    }
+
+    public void removeManagedContact(Contact contact) {
+        this.managedContacts.remove(contact.getId());
     }
 
     @Override
@@ -87,5 +97,7 @@ public class DaemonTask implements Runnable {
                 }
             }).start();
         }
+
+
     }
 }
