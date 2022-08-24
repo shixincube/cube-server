@@ -134,11 +134,17 @@ img {
     font-size: 14px;
 }
 
-.link {
+.clipboard-area {
     position: absolute;
     top: 0;
     left: 0;
     z-index: 0;
+    width: 1px;
+    height: 1px;
+}
+.clipboard-area textarea {
+    width: 1px;
+    height: 1px;
     visibility: hidden;
 }
 
@@ -149,9 +155,9 @@ img {
     visibility: hidden;
 }
 .password-input .panel {
+    width: 300px;
     padding-top: 20px;
     padding-bottom: 30px;
-    width: 300px;
     background: #EEEEEE;
     border-radius: 8px;
     display: inline-block;
@@ -164,12 +170,12 @@ img {
 }
 .password-input .container div {
     display: inline-block;
-    padding: 2px 6px 2px 6px;
+    padding: 2px 2px 2px 2px;
 }
 .password-input .container div input {
-    width: 24px;
-    height: 36px;
-    font-size: 20px;
+    width: 20px;
+    height: 32px;
+    font-size: 18px;
     text-align: center;
     border: 1px #bbb solid;
     border-radius: 3px;

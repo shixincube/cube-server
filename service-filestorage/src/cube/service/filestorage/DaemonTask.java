@@ -26,12 +26,14 @@
 
 package cube.service.filestorage;
 
+import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 import cube.service.auth.AuthService;
 import cube.service.filestorage.system.FileDescriptor;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 守护任务。
@@ -46,6 +48,8 @@ public class DaemonTask implements Runnable {
     private FileStorageService service;
 
     private long lastCheckFileLabelTimestamp;
+
+    private Map<Long, Contact> managedContacts;
 
     public DaemonTask(FileStorageService service) {
         this.service = service;

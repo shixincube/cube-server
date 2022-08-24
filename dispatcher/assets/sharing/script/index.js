@@ -133,6 +133,18 @@ function initUI() {
 
         var keyUp = function(e) {
             var id = e.target.id;
+            var sn = parseInt(id.split("_")[1]);
+
+            if (e.keyCode == 8) {
+                // Back 键处理
+                if (sn > 1) {
+                    // 删除上一个输入框内容
+                    inputElArray[sn - 2].value = '';
+                    inputElArray[sn - 2].focus();
+                }
+                return;
+            }
+
             var value = e.target.value;
             if (value.length == 0) {
                 return;
@@ -141,8 +153,6 @@ function initUI() {
                 value = value.substring(value.length - 1, value.length);
                 e.target.value = value;
             }
-
-            var sn = parseInt(id.split("_")[1]);
 
             if (sn == 6) {
                 var password = getPassword();
@@ -246,11 +256,25 @@ function qrcode() {
 
 function copy() {
     var el = document.getElementById('sharing_url');
-    el.focus();
-    el.select();
-    document.execCommand('copy');
+    if (!navigator.clipboard) {
+        el.style.visibility = 'visible';
+        el.focus();
+        el.select();
+        var successful = document.execCommand('copy');
+        if (successful) {
+            showToast('分享链接已复制到剪贴板');
+        }
+        el.style.visibility = 'hidden';
+    }
+    else {
+        var text = el.innerHTML;
+        navigator.clipboard.writeText(text).then(function() {
+            showToast('分享链接已复制到剪贴板');
+        }, function(error) {
+            // Nothing
+        });
+    }
 
-    showToast('分享链接已复制到剪贴板');
 
     const data = {
         "domain": document.domain,

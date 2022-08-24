@@ -147,13 +147,22 @@ public class IndexTemplate {
             line = line.replace(QRCODE_IMAGE_BASE64, (null == base64) ? "" : base64);
         }
         else if (line.contains(SHARING_URL)) {
+            StringBuilder sharingString = new StringBuilder("[文件] ");
+            sharingString.append(this.sharingTag.getConfig().getFileLabel().getFileName());
+            sharingString.append("\r\n");
+
             if (null != this.pageTraceString) {
-                line = line.replace(SHARING_URL, this.secure ? SharingTag.makeURLs(sharingTag, this.pageTraceString)[1]
+                sharingString.append(this.secure ? SharingTag.makeURLs(sharingTag, this.pageTraceString)[1]
                         : SharingTag.makeURLs(sharingTag, this.pageTraceString)[0]);
             }
             else {
-                line = line.replace(SHARING_URL, this.secure ? sharingTag.getHttpsURL() : sharingTag.getHttpURL());
+                sharingString.append(this.secure ? sharingTag.getHttpsURL() : sharingTag.getHttpURL());
             }
+
+            sharingString.append("\r\n");
+            sharingString.append("【来自司派讯盒的文件分享链接】");
+
+            line = line.replace(SHARING_URL, sharingString.toString());
         }
         else if (line.contains(SCRIPT_CONTENT)) {
             line = line.replace(SCRIPT_CONTENT, makeScriptContent());

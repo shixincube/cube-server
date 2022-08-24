@@ -2,13 +2,17 @@
 <html lang="zh-cn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>${title}</title>
 <link rel="stylesheet" href="style/index.css">
 </head>
 
 <body>
-<div class="link"><input id="sharing_url" type="text" value="${sharing_url}" /></div>
+<div class="clipboard-area">
+    <textarea id="sharing_url">${sharing_url}</textarea>
+</div>
+
 <div class="header" style="display:${preview_toggle};">
     <div class="title">${file_name}</div>
 </div>

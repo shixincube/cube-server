@@ -635,6 +635,32 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
+     * 统计指定联系人已使用的文件空间大小。
+     * @param domain
+     * @param contactId
+     * @return 如果统计出错返回 {@code -1} 值。
+     */
+    public long countSpaceSize(String domain, long contactId) {
+        String table = this.labelTableNameMap.get(domain);
+        if (null == table) {
+            return -1;
+        }
+
+        long total = 0;
+        StringBuilder sql = new StringBuilder("SELECT SUM(`file_size`) FROM `");
+        sql.append(table);
+        sql.append("` WHERE `owner_id`=");
+        sql.append(contactId);
+
+        List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+        if (!result.isEmpty()) {
+            total = result.get(0)[0].getLong();
+        }
+
+        return total;
+    }
+
+    /**
      * 写入节点数据。
      *
      * @param domain

@@ -340,7 +340,7 @@ public class FileStorageService extends AbstractModule {
             }
 
             try {
-                Thread.sleep(10L);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -604,6 +604,19 @@ public class FileStorageService extends AbstractModule {
         return this.fileSystem.loadFileToDisk(fileCode);
     }
 
+    /**
+     * 计算指定联系人已使用的文件空间大小。
+     * @param contact
+     * @return
+     */
+    public long countFileSpaceSize(Contact contact) {
+        return this.serviceStorage.countSpaceSize(contact.getDomain().getName(), contact.getId());
+    }
+
+    /**
+     * 刷新新的访问域到数据库。
+     * @param authDomain
+     */
     public void refreshAuthDomain(AuthDomain authDomain) {
         List<String> list = new ArrayList<>();
         list.add(authDomain.domainName);
