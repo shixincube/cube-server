@@ -27,10 +27,12 @@
 package cube.service.filestorage;
 
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.entity.FileLabel;
 import cube.service.auth.AuthService;
 import cube.service.filestorage.system.FileDescriptor;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -50,20 +52,31 @@ public class DaemonTask implements Runnable {
 
     private long lastCheckFileLabelTimestamp;
 
-    private Map<Long, Contact> managedContacts;
+    private List<ManagedContact> managedContacts;
 
     public DaemonTask(FileStorageService service) {
         this.service = service;
         this.lastCheckFileLabelTimestamp = System.currentTimeMillis();
-        this.managedContacts = new ConcurrentHashMap<>();
+        this.managedContacts = new ArrayList<>();
     }
 
-    public void addManagedContact(Contact contact) {
-        this.managedContacts.put(contact.getId(), contact);
+    public void addManagedContact(Contact contact, Device device) {
+        this.removeManagedContact(contact, device);
+
+        synchronized (this.managedContacts) {
+            this.managedContacts.add(new ManagedContact(contact, device));
+        }
     }
 
-    public void removeManagedContact(Contact contact) {
-        this.managedContacts.remove(contact.getId());
+    public void removeManagedContact(Contact contact, Device device) {
+        synchronized (this.managedContacts) {
+            for (ManagedContact mc : this.managedContacts) {
+                if (mc.contact.getId().equals(contact.getId()) && mc.device.equals(device)) {
+                    this.managedContacts.remove(mc);
+                    break;
+                }
+            }
+        }
     }
 
     @Override
@@ -98,6 +111,40 @@ public class DaemonTask implements Runnable {
             }).start();
         }
 
+        synchronized (this.managedContacts) {
+            for (ManagedContact managedContact : this.managedContacts) {
+                if (!managedContact.notified) {
+                    long size = this.service.getServiceStorage().countSpaceSize(managedContact.contact.getDomain().getName(),
+                            managedContact.contact.getId());
+                    // 设置空间数值
+                    managedContact.spaceSize = size;
 
+                    this.service.notifyPerformance(managedContact.contact, managedContact.device, size);
+                    managedContact.notified = true;
+                }
+            }
+        }
+    }
+
+
+    /**
+     * 被管理的联系人。
+     */
+    protected class ManagedContact {
+
+        protected long timestamp = System.currentTimeMillis();
+
+        protected boolean notified = false;
+
+        protected Contact contact;
+
+        protected Device device;
+
+        protected long spaceSize;
+
+        protected ManagedContact(Contact contact, Device device) {
+            this.contact = contact;
+            this.device = device;
+        }
     }
 }

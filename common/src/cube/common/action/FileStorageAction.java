@@ -29,6 +29,11 @@ package cube.common.action;
 public enum FileStorageAction {
 
     /**
+     * 相关配置参数。
+     */
+    Performance("performance"),
+
+    /**
      * 上传文件。
      */
     UploadFile("uploadFile"),

@@ -27,15 +27,19 @@
 package cube.service.filestorage;
 
 import cell.core.talk.PrimitiveInputStream;
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
 import cube.cache.SharedMemoryCache;
+import cube.common.Packet;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
 import cube.common.notice.*;
+import cube.common.state.FileStorageStateCode;
 import cube.core.*;
 import cube.plugin.PluginSystem;
+import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactHook;
@@ -43,6 +47,8 @@ import cube.service.contact.ContactManager;
 import cube.service.filestorage.hierarchy.FileHierarchy;
 import cube.service.filestorage.hierarchy.FileHierarchyManager;
 import cube.service.filestorage.plugin.CreateDomainAppPlugin;
+import cube.service.filestorage.plugin.SignInPlugin;
+import cube.service.filestorage.plugin.SignOutPlugin;
 import cube.service.filestorage.recycle.RecycleBin;
 import cube.service.filestorage.system.DiskSystem;
 import cube.service.filestorage.system.FileDescriptor;
@@ -81,6 +87,13 @@ public class FileStorageService extends AbstractModule {
      * 文件大小门限。
      */
     private long fileSizeThreshold = 500L * 1024 * 1024;
+
+    /**
+     * 每个联系人的最大存储空间。
+     */
+    private long maxSpaceSizeEachContact = (long) 1024 * 1024 * 1024;
+
+    private FileStorageServiceCellet cellet;
 
     /**
      * 文件系统。
@@ -137,8 +150,9 @@ public class FileStorageService extends AbstractModule {
      *
      * @param executor 多线程执行器。
      */
-    public FileStorageService(ExecutorService executor) {
+    public FileStorageService(FileStorageServiceCellet cellet, ExecutorService executor) {
         super();
+        this.cellet = cellet;
         this.executor = executor;
         this.fileDescriptors = new ConcurrentHashMap<>();
         this.daemonTask = new DaemonTask(this);
@@ -181,6 +195,10 @@ public class FileStorageService extends AbstractModule {
             this.fileLabelCache = this.getKernel().installCache(
                     properties.getProperty("label.cache.name", "FileLabelCache"),
                         cacheConfig);
+
+            // 最大存储空间
+            this.maxSpaceSizeEachContact = Long.parseLong(properties.getProperty("max.space.size",
+                    Long.toString(this.maxSpaceSizeEachContact)));
         }
         else {
             Logger.e(this.getClass(), "Load config file failed");
@@ -247,7 +265,6 @@ public class FileStorageService extends AbstractModule {
     @Override
     public void onTick(cube.core.Module module, Kernel kernel) {
         this.daemonTask.run();
-
         this.fileHierarchyManager.onTick();
     }
 
@@ -278,8 +295,31 @@ public class FileStorageService extends AbstractModule {
         return this.sharingManager;
     }
 
+    public DaemonTask getDaemonTask() {
+        return this.daemonTask;
+    }
+
     protected ExecutorService getExecutor() {
         return this.executor;
+    }
+
+    protected long getMaxSpaceSizeEachContact() {
+        return this.maxSpaceSizeEachContact;
+    }
+
+    protected void notifyPerformance(Contact contact, Device device, long fileSpaceSize) {
+        JSONObject data = new JSONObject();
+        data.put("spaceSize", fileSpaceSize);
+        data.put("maxSpaceSize", this.maxSpaceSizeEachContact);
+
+        JSONObject payload = new JSONObject();
+        payload.put("code", FileStorageStateCode.Ok.code);
+        payload.put("data", data);
+
+        Packet packet = new Packet(FileStorageAction.Performance.name, payload);
+        ActionDialect dialect = Director.attachDirector(packet.toDialect(),
+                contact.getId(), contact.getDomain().getName());
+        this.cellet.speak(device.getTalkContext(), dialect);
     }
 
     /**
@@ -890,7 +930,10 @@ public class FileStorageService extends AbstractModule {
                     }
                 }
 
-//                ContactManager.getInstance().getPluginSystem().register(ContactHook.SignIn, new );
+                ContactManager.getInstance().getPluginSystem().register(ContactHook.SignIn,
+                        new SignInPlugin(FileStorageService.this));
+                ContactManager.getInstance().getPluginSystem().register(ContactHook.SignOut,
+                        new SignOutPlugin(FileStorageService.this));
             }
         }).start();
     }

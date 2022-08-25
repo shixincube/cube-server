@@ -55,7 +55,7 @@ public class FileStorageServiceCellet extends AbstractCellet {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
 
         Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
-        kernel.installModule(this.getName(), new FileStorageService(this.executor));
+        kernel.installModule(this.getName(), new FileStorageService(this, this.executor));
 
         return true;
     }

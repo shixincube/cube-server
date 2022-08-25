@@ -28,6 +28,7 @@ package cube.service.filestorage.plugin;
 
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
+import cube.service.contact.ContactPluginContext;
 import cube.service.filestorage.FileStorageService;
 
 /**
@@ -35,21 +36,27 @@ import cube.service.filestorage.FileStorageService;
  */
 public class SignOutPlugin implements Plugin {
 
+    private FileStorageService service;
+
     public SignOutPlugin(FileStorageService service) {
+        this.service = service;
     }
 
     @Override
     public void setup() {
-
+        // Nothing
     }
 
     @Override
     public void teardown() {
-
+        // Nothing
     }
 
     @Override
     public void onAction(PluginContext context) {
-
+        if (context instanceof ContactPluginContext) {
+            ContactPluginContext ctx = (ContactPluginContext) context;
+            this.service.getDaemonTask().removeManagedContact(ctx.getContact(), ctx.getDevice());
+        }
     }
 }
