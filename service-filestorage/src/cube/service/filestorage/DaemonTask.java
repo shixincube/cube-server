@@ -63,9 +63,17 @@ public class DaemonTask implements Runnable {
     public void addManagedContact(Contact contact, Device device) {
         this.removeManagedContact(contact, device);
 
+        ManagedContact managedContact = new ManagedContact(contact, device);
         synchronized (this.managedContacts) {
-            this.managedContacts.add(new ManagedContact(contact, device));
+            this.managedContacts.add(managedContact);
         }
+
+        long size = this.service.getServiceStorage().countSpaceSize(contact.getDomain().getName(),
+                contact.getId());
+        managedContact.spaceSize = size;
+
+        this.service.notifyPerformance(managedContact.contact, managedContact.device, size);
+        managedContact.notified = true;
     }
 
     public void removeManagedContact(Contact contact, Device device) {
@@ -113,15 +121,7 @@ public class DaemonTask implements Runnable {
 
         synchronized (this.managedContacts) {
             for (ManagedContact managedContact : this.managedContacts) {
-                if (!managedContact.notified) {
-                    long size = this.service.getServiceStorage().countSpaceSize(managedContact.contact.getDomain().getName(),
-                            managedContact.contact.getId());
-                    // 设置空间数值
-                    managedContact.spaceSize = size;
 
-                    this.service.notifyPerformance(managedContact.contact, managedContact.device, size);
-                    managedContact.notified = true;
-                }
             }
         }
     }
