@@ -146,7 +146,7 @@ public class MoveFileTask extends ServiceTask {
         JSONObject response = new JSONObject();
         response.put("srcDirectory", srcDirectory.toCompactJSON());
         response.put("destDirectory", destDirectory.toCompactJSON());
-        response.put("file", fileLabel.toJSON());
+        response.put("file", fileLabel.toCompactJSON());
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, FileStorageStateCode.Ok.code, response));
