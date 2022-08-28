@@ -44,12 +44,12 @@ import cube.service.filestorage.hierarchy.FileHierarchy;
 import org.json.JSONObject;
 
 /**
- * 向指定目录插入文件。
+ * 移动文件到指定目录。
  */
-public class InsertFileTask extends ServiceTask {
+public class MoveFileTask extends ServiceTask {
 
-    public InsertFileTask(FileStorageServiceCellet cellet, TalkContext talkContext,
-                          Primitive primitive, ResponseTime responseTime) {
+    public MoveFileTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                        Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -74,8 +74,8 @@ public class InsertFileTask extends ServiceTask {
         String domain = authToken.getDomain();
 
         // 检查数据
-        if (!packet.data.has("root") || !packet.data.has("dirId")
-            || !packet.data.has("fileCode")) {
+        if (!packet.data.has("root") || !packet.data.has("srcDirId")
+                || !packet.data.has("destDirId") || !packet.data.has("fileCode")) {
             // 发生错误
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
@@ -86,8 +86,9 @@ public class InsertFileTask extends ServiceTask {
         // 获取服务
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
 
-        Long rootId = packet.data.getLong("root");
-        Long dirId = packet.data.getLong("dirId");
+        long rootId = packet.data.getLong("root");
+        long srcDirId = packet.data.getLong("srcDirId");
+        long destDirId = packet.data.getLong("destDirId");
         String fileCode = packet.data.getString("fileCode");
 
         // 获取指定 ID 对应的文件层级描述
@@ -100,9 +101,19 @@ public class InsertFileTask extends ServiceTask {
             return;
         }
 
-        // 获取指定目录
-        Directory directory = fileHierarchy.getDirectory(dirId);
-        if (null == directory) {
+        // 获取源目录
+        Directory srcDirectory = fileHierarchy.getDirectory(srcDirId);
+        if (null == srcDirectory) {
+            // 发生错误
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+            markResponseTime();
+            return;
+        }
+
+        // 获取目标目录
+        Directory destDirectory = fileHierarchy.getDirectory(destDirId);
+        if (null == destDirectory) {
             // 发生错误
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
@@ -120,8 +131,8 @@ public class InsertFileTask extends ServiceTask {
             return;
         }
 
-        // 添加文件标签
-        if (!directory.addFile(fileLabel)) {
+        // 添加到目标目录
+        if (!destDirectory.addFile(fileLabel)) {
             // 文件重复
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.DuplicationOfName.code, packet.data));
@@ -129,11 +140,12 @@ public class InsertFileTask extends ServiceTask {
             return;
         }
 
-        // 更新文件有效期，对于插入目录结构里的文件将有效期修改为永久有效
-        service.updateFileExpiryTime(fileLabel, 0);
+        // 从源目录移除
+        srcDirectory.removeFile(fileLabel);
 
         JSONObject response = new JSONObject();
-        response.put("directory", directory.toCompactJSON());
+        response.put("srcDirectory", srcDirectory.toCompactJSON());
+        response.put("destDirectory", destDirectory.toCompactJSON());
         response.put("file", fileLabel.toJSON());
 
         this.cellet.speak(this.talkContext,

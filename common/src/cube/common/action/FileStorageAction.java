@@ -94,6 +94,11 @@ public enum FileStorageAction {
     InsertFile("insertFile"),
 
     /**
+     * 移动文件到其他目录。
+     */
+    MoveFile("moveFile"),
+
+    /**
      * 删除文件。
      */
     DeleteFile("deleteFile"),
