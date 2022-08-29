@@ -29,10 +29,17 @@ package cube.service.filestorage.hierarchy;
 import cube.common.entity.FileLabel;
 
 /**
- * 递归目录句柄。
+ * 递归目录里的文件句柄。
  */
-public interface RecurseHandler {
+public interface RecurseFileHandler {
 
-    public boolean handle(Directory directory, FileLabel fileLabel);
+    /**
+     * 数据回调。
+     *
+     * @param directory
+     * @param fileLabel
+     * @return 返回 {@code false} 退出递归。
+     */
+    boolean handle(Directory directory, FileLabel fileLabel);
 
 }

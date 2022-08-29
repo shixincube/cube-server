@@ -136,28 +136,67 @@ public class FileSearcher {
 
         // 从根目录开始进行递归
         AtomicInteger index = new AtomicInteger(0);
-        FileHierarchyTool.recurseFile(this.root, new RecurseHandler() {
-            @Override
-            public boolean handle(Directory directory, FileLabel fileLabel) {
-                if (result.size() >= num) {
-                    return false;
-                }
 
-                if (filter.containsFileType(fileLabel)) {
-                    // 文件类型匹配
-                    int curIndex = index.get();
-                    if (curIndex >= begin && curIndex <= end) {
-                        result.add(new IndexingItem(FileSearcher.makeKey(directory, fileLabel),
-                                directory, fileLabel));
+        if (!filter.nameKeywords.isEmpty()) {
+            // 匹配目录
+            FileHierarchyTool.recurseDirectory(this.root, new RecurseDirectoryHandler() {
+                @Override
+                public boolean handle(Directory directory) {
+                    if (result.size() >= num) {
+                        return false;
                     }
 
-                    // 更新索引
-                    index.incrementAndGet();
-                }
+                    if (filter.containsDirectoryName(directory)) {
+                        int curIndex = index.get();
+                        if (curIndex >= begin && curIndex <= end) {
+                            result.add(new IndexingItem(FileSearcher.makeKey(directory),
+                                    directory));
+                        }
 
-                return true;
-            }
-        });
+                        // 更新索引
+                        index.incrementAndGet();
+                    }
+
+                    return true;
+                }
+            });
+        }
+
+        if (result.size() < num) {
+            FileHierarchyTool.recurseFile(this.root, new RecurseFileHandler() {
+                @Override
+                public boolean handle(Directory directory, FileLabel fileLabel) {
+                    if (result.size() >= num) {
+                        return false;
+                    }
+
+                    if (filter.containsFileType(fileLabel)) {
+                        // 文件类型匹配
+                        int curIndex = index.get();
+                        if (curIndex >= begin && curIndex <= end) {
+                            result.add(new IndexingItem(FileSearcher.makeKey(directory, fileLabel),
+                                    directory, fileLabel));
+                        }
+
+                        // 更新索引
+                        index.incrementAndGet();
+                    }
+                    else if (filter.containsFileName(fileLabel)) {
+                        // 文件名匹配
+                        int curIndex = index.get();
+                        if (curIndex >= begin && curIndex <= end) {
+                            result.add(new IndexingItem(FileSearcher.makeKey(directory, fileLabel),
+                                    directory, fileLabel));
+                        }
+
+                        // 更新索引
+                        index.incrementAndGet();
+                    }
+
+                    return true;
+                }
+            });
+        }
 
         // 排序
         Collections.sort(result);
@@ -172,8 +211,12 @@ public class FileSearcher {
         return directory.getId().toString() + fileLabel.getFileCode();
     }
 
+    protected static String makeKey(Directory directory) {
+        return directory.getId().toString();
+    }
+
     /**
-     *
+     * 已索引项目。
      */
     public class IndexingItem implements Comparable<IndexingItem>, JSONable {
 
@@ -183,23 +226,52 @@ public class FileSearcher {
 
         protected FileLabel fileLabel;
 
+        protected IndexingItem(String key, Directory directory) {
+            this.key = key;
+            this.directory = directory;
+            this.fileLabel = null;
+        }
+
         protected IndexingItem(String key, Directory directory, FileLabel fileLabel) {
             this.key = key;
             this.directory = directory;
             this.fileLabel = fileLabel;
         }
 
+        protected boolean isDirectory() {
+            return (null == this.fileLabel);
+        }
+
         @Override
-        public int compareTo(IndexingItem o) {
+        public int compareTo(IndexingItem other) {
             // 时间倒序
-            if (this.fileLabel.getLastModified() < o.fileLabel.getLastModified()) {
-                return 1;
+            if (null != this.fileLabel && null != other.fileLabel) {
+                if (this.fileLabel.getLastModified() < other.fileLabel.getLastModified()) {
+                    return 1;
+                }
+                else if (this.fileLabel.getLastModified() > other.fileLabel.getLastModified()) {
+                    return -1;
+                }
+                else {
+                    return 0;
+                }
             }
-            else if (this.fileLabel.getLastModified() > o.fileLabel.getLastModified()) {
+            else if (null == this.fileLabel && null != other.fileLabel) {
                 return -1;
             }
+            else if (null != this.fileLabel && null == other.fileLabel) {
+                return 1;
+            }
             else {
-                return 0;
+                if (this.directory.getLastModified() < other.directory.getLastModified()) {
+                    return 1;
+                }
+                else if (this.directory.getLastModified() > other.directory.getLastModified()) {
+                    return -1;
+                }
+                else {
+                    return 0;
+                }
             }
         }
 
@@ -219,7 +291,11 @@ public class FileSearcher {
             }
 
             json.put("directory", dir);
-            json.put("file", this.fileLabel.toCompactJSON());
+
+            if (null != this.fileLabel) {
+                json.put("file", this.fileLabel.toCompactJSON());
+            }
+
             return json;
         }
 
