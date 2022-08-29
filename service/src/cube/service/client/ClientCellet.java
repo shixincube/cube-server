@@ -112,6 +112,9 @@ public class ClientCellet extends AbstractCellet {
         else if (ClientAction.GetGroup.name.equals(action)) {
             this.executor.execute(new GetGroupTask(this, talkContext, actionDialect));
         }
+        else if (ClientAction.NewContact.name.equals(action)) {
+            this.executor.execute(new NewContactTask(this, talkContext, actionDialect));
+        }
         else if (ClientAction.AddEventListener.name.equals(action)) {
             this.executor.execute(() -> {
                 ClientManager.getInstance().addEventListener(actionDialect.getParamAsLong("id"),

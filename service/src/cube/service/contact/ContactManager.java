@@ -627,6 +627,21 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 创建新的联系人。
+     *
+     * @param contact
+     * @return
+     */
+    public Contact newContact(Contact contact) {
+        this.storage.writeContact(contact);
+
+        String key = UniqueKey.make(contact.getId(), contact.getDomain().getName());
+        this.contactCache.applyPut(key, contact.toJSON());
+
+        return contact;
+    }
+
+    /**
      * 更新联系人。
      *
      * @param domain 指定域名称。

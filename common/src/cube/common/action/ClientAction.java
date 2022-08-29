@@ -57,6 +57,8 @@ public enum ClientAction {
 
     ListOnlineContacts("ListOnlineContacts"),
 
+    NewContact("NewContact"),
+
     GetContact("GetContact"),
 
     GetGroup("GetGroup"),

@@ -272,6 +272,10 @@ public class StorageField {
      * @return 返回 int 类型值。
      */
     public long getLong() {
+        if (null == this.value) {
+            return 0;
+        }
+
         if (this.value instanceof Long) {
             return (Long) this.value;
         }

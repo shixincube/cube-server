@@ -35,6 +35,7 @@ import cube.app.server.applet.WeChatApplet;
 import cube.app.server.util.LuckyNumbers;
 import cube.auth.AuthToken;
 import cube.common.entity.AuthDomain;
+import cube.common.entity.Contact;
 import cube.util.ConfigUtils;
 
 import javax.imageio.ImageIO;
@@ -347,15 +348,15 @@ public class AccountManager extends TimerTask {
         return StateCode.Success;
     }
 
-    /**
+    /*
      * 注册账号。
      *
      * @param account
      * @return
      */
-    public Account register(Account account) {
-        return this.accountStorage.writeAccount(account);
-    }
+//    public Account register(Account account) {
+//        return this.accountStorage.writeAccount(account);
+//    }
 
     /**
      * 注册账号。
@@ -379,6 +380,11 @@ public class AccountManager extends TimerTask {
                 Account.STATE_NORMAL);
         account = this.accountStorage.writeAccount(account);
 
+        // 注入联系人
+        Contact contact = new Contact(accountId, domain, nickname);
+        contact.setContext(account.toJSON());
+        Manager.getInstance().getClient().injectContact(contact);
+
         return account;
     }
 
@@ -401,6 +407,12 @@ public class AccountManager extends TimerTask {
 
         Account account = this.accountStorage.writeAccountWithAccountName(accountId, domain,
                 accountName, password, nickname, avatar);
+
+        // 注入联系人
+        Contact contact = new Contact(accountId, domain, nickname);
+        contact.setContext(account.toJSON());
+        Manager.getInstance().getClient().injectContact(contact);
+
         return account;
     }
 
@@ -425,6 +437,12 @@ public class AccountManager extends TimerTask {
 
         Account account = this.accountStorage.writeAccountWithPhoneNumber(accountId, domain, phoneNumber,
                 password, nickname, avatarName);
+
+        // 注入联系人
+        Contact contact = new Contact(accountId, domain, nickname);
+        contact.setContext(account.toJSON());
+        Manager.getInstance().getClient().injectContact(contact);
+
         return account;
     }
 
