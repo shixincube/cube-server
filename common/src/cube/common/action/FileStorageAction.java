@@ -99,6 +99,11 @@ public enum FileStorageAction {
     MoveFile("moveFile"),
 
     /**
+     * 文件重命名。
+     */
+    RenameFile("renameFile"),
+
+    /**
      * 删除文件。
      */
     DeleteFile("deleteFile"),

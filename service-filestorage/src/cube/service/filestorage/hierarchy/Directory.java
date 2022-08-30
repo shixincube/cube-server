@@ -290,6 +290,16 @@ public class Directory implements JSONable {
     }
 
     /**
+     * 是否存在同名文件。
+     *
+     * @param fileLabel 指定文件标签。
+     * @return 如果目录里存在同名文件，则返回 {@code true} 。
+     */
+    public boolean existsFileWithFilename(FileLabel fileLabel) {
+        return this.fileHierarchy.existsFile(this, fileLabel.getFileName());
+    }
+
+    /**
      * 添加文件到目录。
      *
      * @param fileLabel 指定文件标签。

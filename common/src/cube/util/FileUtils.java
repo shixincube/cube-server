@@ -98,7 +98,7 @@ public final class FileUtils {
      */
     public static String makeFileCode(Long contactId, String domain, String fileName) {
         StringBuilder buf = new StringBuilder(contactId.toString());
-        buf.append("_").append(domain).append("_").append(fileName);
+        buf.append(domain).append(fileName).append(System.currentTimeMillis());
 
         // 补空位
         if (buf.length() < 64) {
@@ -128,7 +128,7 @@ public final class FileUtils {
      */
     public static String makeFileCode(String identification, String domain, String fileName) {
         StringBuilder buf = new StringBuilder(identification);
-        buf.append("_").append(domain).append("_").append(fileName);
+        buf.append(domain).append(fileName).append(System.currentTimeMillis());
 
         // 补空位
         if (buf.length() < 64) {

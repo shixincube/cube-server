@@ -120,11 +120,19 @@ public class InsertFileTask extends ServiceTask {
             return;
         }
 
-        // 添加文件标签
-        if (!directory.addFile(fileLabel)) {
-            // 文件重复
+        if (directory.existsFileWithFilename(fileLabel)) {
+            // 文件名重复
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.DuplicationOfName.code, packet.data));
+            markResponseTime();
+            return;
+        }
+
+        // 添加文件标签
+        if (!directory.addFile(fileLabel)) {
+            // 文件码错误
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.FileLabelError.code, packet.data));
             markResponseTime();
             return;
         }

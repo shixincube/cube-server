@@ -590,6 +590,26 @@ public class FileHierarchy {
     }
 
     /**
+     * 是否存在同名文件。
+     *
+     * @param directory
+     * @param filename
+     * @return
+     */
+    protected boolean existsFile(Directory directory, String filename) {
+        for (String fileCode : directory.node.getRelatedKeys()) {
+            FileLabel fileLabel = this.listener.onQueryFileLabel(this, directory, fileCode);
+            if (null != fileLabel) {
+                if (fileLabel.getFileName().equals(filename)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * 添加文件标签到目录。
      *
      * @param directory 指定目录。
