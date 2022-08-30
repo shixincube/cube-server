@@ -591,9 +591,10 @@ public class FileHierarchy {
      *
      * @param directory 指定目录。
      * @param fileLabel 指定文件标签。
+     * @param silent 指定是否对修改保持静默，静默时仅改变文件的节点结构，不修改其他数据。
      * @return 添加成功返回 {@code true} ，否则返回 {@code false} 。
      */
-    protected boolean addFileLabel(Directory directory, FileLabel fileLabel) {
+    protected boolean addFileLabel(Directory directory, FileLabel fileLabel, boolean silent) {
         if (!directory.node.link(fileLabel)) {
             // 链接失败
             return false;
@@ -604,11 +605,13 @@ public class FileHierarchy {
         // 更新时间戳
         this.timestamp = System.currentTimeMillis();
 
-        this.listener.onFileLabelAdd(this, directory, fileLabel);
+        if (!silent) {
+            this.listener.onFileLabelAdd(this, directory, fileLabel);
 
-        // 更新大小
-        long size = directory.node.getContext().getLong(KEY_SIZE);
-        directory.node.getContext().put(KEY_SIZE, size + fileLabel.getFileSize());
+            // 更新大小
+            long size = directory.node.getContext().getLong(KEY_SIZE);
+            directory.node.getContext().put(KEY_SIZE, size + fileLabel.getFileSize());
+        }
 
         // 更新时间戳
         directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
@@ -623,9 +626,10 @@ public class FileHierarchy {
      *
      * @param directory 指定目录。
      * @param fileLabel 指定文件标签。
+     * @param silent 指定是否对修改保持静默，静默时仅改变文件的节点结构，不修改其他数据。
      * @return 移除成功返回 {@code true} 。
      */
-    protected boolean removeFileLabel(Directory directory, FileLabel fileLabel) {
+    protected boolean removeFileLabel(Directory directory, FileLabel fileLabel, boolean silent) {
         if (!directory.node.unlink(fileLabel)) {
             // 解除链接失败
             return false;
@@ -636,13 +640,15 @@ public class FileHierarchy {
         // 更新时间戳
         this.timestamp = System.currentTimeMillis();
 
-        ArrayList<FileLabel> fileLabels = new ArrayList<>(1);
-        fileLabels.add(fileLabel);
-        this.listener.onFileLabelRemove(this, directory, fileLabels);
+        if (!silent) {
+            ArrayList<FileLabel> fileLabels = new ArrayList<>(1);
+            fileLabels.add(fileLabel);
+            this.listener.onFileLabelRemove(this, directory, fileLabels);
 
-        // 更新大小
-        long size = directory.node.getContext().getLong(KEY_SIZE);
-        directory.node.getContext().put(KEY_SIZE, size - fileLabel.getFileSize());
+            // 更新大小
+            long size = directory.node.getContext().getLong(KEY_SIZE);
+            directory.node.getContext().put(KEY_SIZE, size - fileLabel.getFileSize());
+        }
 
         // 更新时间戳
         directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);

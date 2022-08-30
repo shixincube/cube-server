@@ -132,7 +132,7 @@ public class MoveFileTask extends ServiceTask {
         }
 
         // 添加到目标目录
-        if (!destDirectory.addFile(fileLabel)) {
+        if (!destDirectory.addFileWithSilent(fileLabel)) {
             // 文件重复
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.DuplicationOfName.code, packet.data));
@@ -141,7 +141,7 @@ public class MoveFileTask extends ServiceTask {
         }
 
         // 从源目录移除
-        srcDirectory.removeFile(fileLabel);
+        srcDirectory.removeFileWithSilent(fileLabel);
 
         JSONObject response = new JSONObject();
         response.put("srcDirectory", srcDirectory.toCompactJSON());

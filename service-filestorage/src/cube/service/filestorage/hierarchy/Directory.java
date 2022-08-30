@@ -30,7 +30,6 @@ import cube.common.Domain;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
-import cube.service.Director;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -297,7 +296,17 @@ public class Directory implements JSONable {
      * @return 添加成功返回 {@code true} 。
      */
     public boolean addFile(FileLabel fileLabel) {
-        return this.fileHierarchy.addFileLabel(this, fileLabel);
+        return this.fileHierarchy.addFileLabel(this, fileLabel, false);
+    }
+
+    /**
+     * 静默方式添加文件。
+     *
+     * @param fileLabel
+     * @return
+     */
+    public boolean addFileWithSilent(FileLabel fileLabel) {
+        return this.fileHierarchy.addFileLabel(this, fileLabel, true);
     }
 
     /**
@@ -307,7 +316,17 @@ public class Directory implements JSONable {
      * @return 移除成功返回 {@code true} 。
      */
     public boolean removeFile(FileLabel fileLabel) {
-        return this.fileHierarchy.removeFileLabel(this, fileLabel);
+        return this.fileHierarchy.removeFileLabel(this, fileLabel, false);
+    }
+
+    /**
+     * 静默方式移除文件。
+     *
+     * @param fileLabel
+     * @return
+     */
+    public boolean removeFileWithSilent(FileLabel fileLabel) {
+        return this.fileHierarchy.removeFileLabel(this, fileLabel, true);
     }
 
     /**
