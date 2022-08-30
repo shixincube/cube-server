@@ -105,6 +105,10 @@ public class SearchFilter {
      * @return
      */
     public boolean containsFileType(FileLabel fileLabel) {
+        if (this.fileTypes.isEmpty()) {
+            return false;
+        }
+
         if (this.fileTypes.contains(fileLabel.getFileType())) {
             return true;
         }
@@ -119,7 +123,7 @@ public class SearchFilter {
      * @return
      */
     public boolean containsFileName(FileLabel fileLabel) {
-        String filename = FileUtils.extractFileName(fileLabel.getFileName().toLowerCase());
+        String filename = FileUtils.extractFileName(fileLabel.getFileName()).toLowerCase();
         for (String word : this.lowerCaseNameKeywords) {
             if (filename.contains(word)) {
                 return true;

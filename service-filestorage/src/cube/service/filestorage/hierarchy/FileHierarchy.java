@@ -56,7 +56,7 @@ public class FileHierarchy {
     /**
      * 该文件层级允许存入的文件的总大小。
      */
-    private long capacity = 1L * 1024L * 1024L * 1024L;
+    private long capacity = 1l * 1024 * 1024 * 1024;
 
     /**
      * 用于读写节点的缓存。
@@ -269,10 +269,10 @@ public class FileHierarchy {
         this.timestamp = now;
 
         // 创建目录
-        HierarchyNode dirNode = (null != directoryId)
+        HierarchyNode newDirNode = (null != directoryId)
                 ?  new HierarchyNode(directoryId, directory.node) : new HierarchyNode(directory.node);
         try {
-            JSONObject context = dirNode.getContext();
+            JSONObject context = newDirNode.getContext();
             context.put(KEY_DIR_NAME, directoryName);
             context.put(KEY_CREATION, now);
             context.put(KEY_LAST_MODIFIED, now);
@@ -283,15 +283,18 @@ public class FileHierarchy {
         }
 
         // 添加为子节点
-        directory.node.addChild(dirNode);
+        directory.node.addChild(newDirNode);
 
-        HierarchyNodes.save(this.cache, dirNode);
+        HierarchyNodes.save(this.cache, newDirNode);
         HierarchyNodes.save(this.cache, directory.node);
 
-        Directory dir = new Directory(this, dirNode);
-        this.directories.put(dir.getId(), dir);
+        Directory newDir = new Directory(this, newDirNode);
+        this.directories.put(newDir.getId(), newDir);
 
-        return dir;
+        // 更新子目录记录
+        directory.getDirectories();
+
+        return newDir;
     }
 
     /**
