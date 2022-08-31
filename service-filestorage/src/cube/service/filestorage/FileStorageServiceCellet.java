@@ -119,6 +119,10 @@ public class FileStorageServiceCellet extends AbstractCellet {
             this.executor.execute(new MoveFileTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (FileStorageAction.RenameFile.name.equals(action)) {
+            this.executor.execute(new RenameFileTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (FileStorageAction.DeleteFile.name.equals(action)) {
             this.executor.execute(new DeleteFileTask(this, talkContext, primitive,
                     this.markResponseTime(action)));

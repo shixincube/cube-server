@@ -82,6 +82,11 @@ public enum FileStorageStateCode {
     Writing(17),
 
     /**
+     * 没有目录。
+     */
+    NoDirectory(18),
+
+    /**
      * 重名。
      */
     DuplicationOfName(20),

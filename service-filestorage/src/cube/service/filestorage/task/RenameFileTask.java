@@ -41,14 +41,13 @@ import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchy;
-import org.json.JSONObject;
 
 /**
- * 向指定目录插入文件。
+ * 重命名文件。
  */
-public class InsertFileTask extends ServiceTask {
+public class RenameFileTask extends ServiceTask {
 
-    public InsertFileTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+    public RenameFileTask(FileStorageServiceCellet cellet, TalkContext talkContext,
                           Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
@@ -73,79 +72,68 @@ public class InsertFileTask extends ServiceTask {
         // 域
         String domain = authToken.getDomain();
 
-        // 检查数据
+        // 读取参数
         if (!packet.data.has("root") || !packet.data.has("dirId")
-            || !packet.data.has("fileCode")) {
+                || !packet.data.has("fileCode") || !packet.data.has("fileName")) {
             // 发生错误
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
+                    this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
             markResponseTime();
             return;
         }
+
+        long rootId = packet.data.getLong("root");
+        long dirId = packet.data.getLong("dirId");
+        String fileCode = packet.data.getString("fileCode");
+        String fileName = packet.data.getString("fileName");
 
         // 获取服务
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
 
-        Long rootId = packet.data.getLong("root");
-        Long dirId = packet.data.getLong("dirId");
-        String fileCode = packet.data.getString("fileCode");
-
-        // 获取指定 ID 对应的文件层级描述
+        // 获取指定 ROOT ID 对应的文件层级描述
         FileHierarchy fileHierarchy = service.getFileHierarchy(domain, rootId);
         if (null == fileHierarchy) {
             // 发生错误
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+                    this.makeResponse(action, packet, FileStorageStateCode.NoDirectory.code, packet.data));
             markResponseTime();
             return;
         }
 
-        // 获取指定目录
+        // 查找指定 ID 的目录
         Directory directory = fileHierarchy.getDirectory(dirId);
         if (null == directory) {
             // 发生错误
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+                    this.makeResponse(action, packet, FileStorageStateCode.NoDirectory.code, packet.data));
             markResponseTime();
             return;
         }
 
-        // 获取指定文件
-        FileLabel fileLabel = service.getFile(domain, fileCode);
-        if (null == fileLabel) {
-            // 发生错误
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.FileLabelError.code, packet.data));
-            markResponseTime();
-            return;
-        }
-
-        if (directory.existsFileWithFilename(fileLabel.getFileName())) {
-            // 文件名重复
+        // 判断文件是否重名
+        if (directory.existsFileWithFilename(fileName)) {
+            // 文件重名
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.DuplicationOfName.code, packet.data));
             markResponseTime();
             return;
         }
 
-        // 添加文件标签
-        if (!directory.addFile(fileLabel)) {
-            // 文件码错误
+        // 获取文件
+        FileLabel fileLabel = service.getFile(domain, fileCode);
+        if (null == fileLabel) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.FileLabelError.code, packet.data));
+                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
             markResponseTime();
             return;
         }
 
-        // 更新文件有效期，对于插入目录结构里的文件将有效期修改为永久有效
-        service.updateFileExpiryTime(fileLabel, 0);
+        // 重命名
+        service.updateFileName(fileLabel, fileName);
 
-        JSONObject response = new JSONObject();
-        response.put("directory", directory.toCompactJSON());
-        response.put("file", fileLabel.toJSON());
-
+        // 成功
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, response));
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, fileLabel.toCompactJSON()));
         markResponseTime();
     }
 }

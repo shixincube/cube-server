@@ -522,6 +522,23 @@ public class FileStorageService extends AbstractModule {
     }
 
     /**
+     * 更新文件名。
+     *
+     * @param fileLabel
+     * @param newFileName
+     */
+    public void updateFileName(FileLabel fileLabel, String newFileName) {
+        fileLabel.setFileName(newFileName);
+        fileLabel.setLastModified(System.currentTimeMillis());
+
+        // 更新存储
+        this.serviceStorage.updateFileLabel(fileLabel);
+
+        // 更新集群存储
+        this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
+    }
+
+    /**
      * 文件是否存在文件系统里。
      *
      * @param fileCode

@@ -292,11 +292,11 @@ public class Directory implements JSONable {
     /**
      * 是否存在同名文件。
      *
-     * @param fileLabel 指定文件标签。
+     * @param fileName 指定文件名。
      * @return 如果目录里存在同名文件，则返回 {@code true} 。
      */
-    public boolean existsFileWithFilename(FileLabel fileLabel) {
-        return this.fileHierarchy.existsFile(this, fileLabel.getFileName());
+    public boolean existsFileWithFilename(String fileName) {
+        return this.fileHierarchy.existsFile(this, fileName);
     }
 
     /**

@@ -268,6 +268,15 @@ public class FileLabel extends Entity {
     }
 
     /**
+     * 设置文件最后一次修改时间。
+     *
+     * @param value 指定文件最后一次修改时间。
+     */
+    public void setLastModified(long value) {
+        this.lastModified = value;
+    }
+
+    /**
      * 获取文件完成存储的时间。
      *
      * @return 返回文件完成存储的时间。
