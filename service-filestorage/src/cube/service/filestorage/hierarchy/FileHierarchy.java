@@ -31,6 +31,7 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
 import cube.common.entity.HierarchyNodes;
 import cube.core.Cache;
+import cube.util.FileUtils;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -600,7 +601,8 @@ public class FileHierarchy {
         for (String fileCode : directory.node.getRelatedKeys()) {
             FileLabel fileLabel = this.listener.onQueryFileLabel(this, directory, fileCode);
             if (null != fileLabel) {
-                if (fileLabel.getFileName().equals(filename)) {
+                String fileNameOnly = FileUtils.extractFileName(fileLabel.getFileName());
+                if (fileNameOnly.equals(filename)) {
                     return true;
                 }
             }

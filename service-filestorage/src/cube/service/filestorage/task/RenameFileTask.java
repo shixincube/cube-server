@@ -110,7 +110,7 @@ public class RenameFileTask extends ServiceTask {
             return;
         }
 
-        // 判断文件是否重名
+        // 判断文件是否重名，这里的文件名不包含扩展名
         if (directory.existsFileWithFilename(fileName)) {
             // 文件重名
             this.cellet.speak(this.talkContext,
@@ -128,8 +128,8 @@ public class RenameFileTask extends ServiceTask {
             return;
         }
 
-        // 重命名
-        service.updateFileName(fileLabel, fileName);
+        // 重命名，这里的文件名不包含扩展名
+        fileLabel = service.updateFileName(fileLabel, fileName);
 
         // 成功
         this.cellet.speak(this.talkContext,

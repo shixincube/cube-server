@@ -55,6 +55,7 @@ import cube.service.filestorage.system.FileDescriptor;
 import cube.service.filestorage.system.FileSystem;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
+import cube.util.FileUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -526,9 +527,14 @@ public class FileStorageService extends AbstractModule {
      *
      * @param fileLabel
      * @param newFileName
+     * @return
      */
-    public void updateFileName(FileLabel fileLabel, String newFileName) {
-        fileLabel.setFileName(newFileName);
+    public FileLabel updateFileName(FileLabel fileLabel, String newFileName) {
+        // 获取原文件的扩展名
+        String extName = FileUtils.extractFileExtension(fileLabel.getFileName());
+        // 设置新文件名，包含扩展名
+        fileLabel.setFileName(newFileName + "." + extName);
+
         fileLabel.setLastModified(System.currentTimeMillis());
 
         // 更新存储
@@ -536,6 +542,8 @@ public class FileStorageService extends AbstractModule {
 
         // 更新集群存储
         this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
+
+        return fileLabel;
     }
 
     /**
