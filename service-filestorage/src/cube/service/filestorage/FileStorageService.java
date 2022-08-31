@@ -671,12 +671,35 @@ public class FileStorageService extends AbstractModule {
     }
 
     /**
-     * 计算指定联系人已使用的文件空间大小。
+     * 检查新增大小是否超出空间上限。
+     *
      * @param contact
+     * @param increment
      * @return
      */
-    public long countFileSpaceSize(Contact contact) {
-        return this.serviceStorage.countSpaceSize(contact.getDomain().getName(), contact.getId());
+    public boolean checkFileSpaceSize(Contact contact, long increment) {
+        long spaceSize = 0;
+        DaemonTask.ManagedContact mc = this.daemonTask.getManagedContact(contact);
+        if (null != mc) {
+            if (System.currentTimeMillis() - mc.timestamp > 5 * 60 * 1000) {
+                mc.spaceSize = this.serviceStorage.countSpaceSize(contact.getDomain().getName(), contact.getId());
+                mc.notified = false;
+            }
+
+            spaceSize = mc.spaceSize;
+        }
+        else {
+            spaceSize = this.serviceStorage.countSpaceSize(contact.getDomain().getName(), contact.getId());
+        }
+
+        if (spaceSize + increment > this.maxSpaceSizeEachContact) {
+            // 大于上限
+            return false;
+        }
+        else {
+            // 小于上限
+            return true;
+        }
     }
 
     /**

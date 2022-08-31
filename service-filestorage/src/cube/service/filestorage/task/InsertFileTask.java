@@ -33,14 +33,17 @@ import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
 import cube.service.auth.AuthService;
+import cube.service.contact.ContactManager;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchy;
+import cube.util.FileUtils;
 import org.json.JSONObject;
 
 /**
@@ -120,10 +123,21 @@ public class InsertFileTask extends ServiceTask {
             return;
         }
 
-        if (directory.existsFileWithFilename(fileLabel.getFileName())) {
+        // 判断文件名重名，这里的文件名不包含扩展名
+        if (directory.existsFileWithFilename(FileUtils.extractFileName(fileLabel.getFileName()))) {
             // 文件名重复
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.DuplicationOfName.code, packet.data));
+            markResponseTime();
+            return;
+        }
+
+        // 判断存储空间是否超上限
+        Contact contact = ContactManager.getInstance().getContact(tokenCode);
+        if (!service.checkFileSpaceSize(contact, fileLabel.getFileSize())) {
+            // 超越上限
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.SpaceSizeOverflow.code, packet.data));
             markResponseTime();
             return;
         }

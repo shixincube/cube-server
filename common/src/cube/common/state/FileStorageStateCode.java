@@ -97,6 +97,11 @@ public enum FileStorageStateCode {
     DataExpired(21),
 
     /**
+     * 存储空间溢出。
+     */
+    SpaceSizeOverflow(23),
+
+    /**
      * 搜索条件错误。
      */
     SearchConditionError(25),

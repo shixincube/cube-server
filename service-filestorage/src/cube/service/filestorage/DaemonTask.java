@@ -87,6 +87,18 @@ public class DaemonTask implements Runnable {
         }
     }
 
+    protected ManagedContact getManagedContact(Contact contact) {
+        synchronized (this.managedContacts) {
+            for (ManagedContact mc : this.managedContacts) {
+                if (mc.contact.getId().equals(contact.getId())) {
+                    return mc;
+                }
+            }
+        }
+
+        return null;
+    }
+
     @Override
     public void run() {
         long now = System.currentTimeMillis();
@@ -99,7 +111,7 @@ public class DaemonTask implements Runnable {
             }
         }
 
-        if (now - this.lastCheckFileLabelTimestamp > 12L * 60 * 60 * 1000) {
+        if (now - this.lastCheckFileLabelTimestamp > 12l * 60 * 60 * 1000) {
             // 更新时间戳
             this.lastCheckFileLabelTimestamp = now;
 
@@ -117,12 +129,6 @@ public class DaemonTask implements Runnable {
                     }
                 }
             }).start();
-        }
-
-        synchronized (this.managedContacts) {
-            for (ManagedContact managedContact : this.managedContacts) {
-
-            }
         }
     }
 
