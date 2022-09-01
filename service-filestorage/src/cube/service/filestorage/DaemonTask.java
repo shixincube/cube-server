@@ -64,16 +64,16 @@ public class DaemonTask implements Runnable {
         this.removeManagedContact(contact, device);
 
         ManagedContact managedContact = new ManagedContact(contact, device);
-        synchronized (this.managedContacts) {
-            this.managedContacts.add(managedContact);
-        }
-
         long size = this.service.getServiceStorage().countSpaceSize(contact.getDomain().getName(),
                 contact.getId());
         managedContact.spaceSize = size;
 
         this.service.notifyPerformance(managedContact.contact, managedContact.device, size);
         managedContact.notified = true;
+
+        synchronized (this.managedContacts) {
+            this.managedContacts.add(managedContact);
+        }
     }
 
     public void removeManagedContact(Contact contact, Device device) {
@@ -129,6 +129,15 @@ public class DaemonTask implements Runnable {
                     }
                 }
             }).start();
+        }
+
+        synchronized (this.managedContacts) {
+            for (ManagedContact mc : this.managedContacts) {
+                if (!mc.notified) {
+                    mc.notified = true;
+                    this.service.notifyPerformance(mc.contact, mc.device, mc.spaceSize);
+                }
+            }
         }
     }
 
