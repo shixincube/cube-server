@@ -47,6 +47,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -60,6 +61,8 @@ public class FileChunkStorage {
     private Performer performer;
 
     private Path workingPath;
+
+    private ConcurrentSkipListSet<FileChunkTag> chunkTags;
 
     /**
      * 文件码对应的文件块存储。
@@ -96,6 +99,7 @@ public class FileChunkStorage {
             }
         }
 
+        this.chunkTags = new ConcurrentSkipListSet<>();
         this.fileChunkStores = new ConcurrentHashMap<>();
         this.passingChunkInputStreams = new ConcurrentHashMap<>();
     }
@@ -117,7 +121,8 @@ public class FileChunkStorage {
      * @return
      */
     public String append(FileChunk chunk) {
-        String fileCode = FileUtils.makeFileCode(chunk.contactId, chunk.domain, chunk.fileName);
+        // 匹配文件码
+        String fileCode = this.matchFileCode(chunk);
 
         FileChunkStore store = null;
 
@@ -251,6 +256,43 @@ public class FileChunkStorage {
         this.cellet.speak(talkContext, DispatcherTask.appendState(dialect));
     }
 
+    /**
+     * 匹配文件区块对应的文件码。
+     *
+     * @param chunk
+     * @return
+     */
+    private String matchFileCode(FileChunk chunk) {
+        FileChunkTag current = null;
+
+        for (FileChunkTag tag : this.chunkTags) {
+            if (tag.contactId == chunk.contactId && tag.domain.equals(chunk.domain) &&
+                tag.fileName.equals(chunk.fileName)) {
+                current = tag;
+                break;
+            }
+        }
+
+        if (null != current) {
+            return current.fileCode;
+        }
+
+        // 生成文件码
+        String fileCode = FileUtils.makeFileCode(chunk.contactId, chunk.domain, chunk.fileName);
+        current = new FileChunkTag(chunk, fileCode);
+        this.chunkTags.add(current);
+        return current.fileCode;
+    }
+
+    private void removeChunkTag(String fileCode) {
+        for (FileChunkTag tag : this.chunkTags) {
+            if (tag.fileCode.equals(fileCode)) {
+                this.chunkTags.remove(tag);
+                break;
+            }
+        }
+    }
+
 
     /**
      * 文件块列表。
@@ -320,6 +362,9 @@ public class FileChunkStorage {
         }
 
         protected void close() {
+            // 移除 Chunk Tag
+            removeChunkTag(this.fileCode);
+
             synchronized (this.chunks) {
                 for (FileChunk chunk : this.chunks) {
                     chunk.clear();

@@ -30,6 +30,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -96,6 +97,8 @@ public class InsertFileTask extends ServiceTask {
         // 获取指定 ID 对应的文件层级描述
         FileHierarchy fileHierarchy = service.getFileHierarchy(domain, rootId);
         if (null == fileHierarchy) {
+            Logger.w(InsertFileTask.class, "Can NOT find root hierarchy: " + rootId);
+
             // 发生错误
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
@@ -106,6 +109,8 @@ public class InsertFileTask extends ServiceTask {
         // 获取指定目录
         Directory directory = fileHierarchy.getDirectory(dirId);
         if (null == directory) {
+            Logger.w(InsertFileTask.class, "Can NOT find child directory: " + rootId + " / " + dirId);
+
             // 发生错误
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
