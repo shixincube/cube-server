@@ -113,7 +113,7 @@ public class ServiceStorage implements Storagable {
             new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY
             }),
-            new StorageField("max_space_size", LiteralBase.INT, new Constraint[] {
+            new StorageField("max_space_size", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("upload_threshold", LiteralBase.INT, new Constraint[] {
@@ -663,7 +663,33 @@ public class ServiceStorage implements Storagable {
         return fileCode;
     }
 
-    
+    /**
+     * 读取偏好配置。
+     * 
+     * @param domain
+     * @param contactId
+     * @return
+     */
+    public FileStoragePerformance readPerformance(String domain, long contactId) {
+        String table = this.performanceTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, this.performanceFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+        FileStoragePerformance performance = new FileStoragePerformance(contactId, map.get("max_space_size").getLong(),
+                map.get("upload_threshold").getInt(), map.get("download_threshold").getInt());
+
+        return performance;
+    }
 
     /**
      * 统计指定联系人已使用的文件空间大小。
