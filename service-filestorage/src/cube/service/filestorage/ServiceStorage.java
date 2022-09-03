@@ -62,6 +62,8 @@ public class ServiceStorage implements Storagable {
 
     private final String hierarchyTablePrefix = "hierarchy_";
 
+    private final String performanceTablePrefix = "file_performance_";
+
     private final String recyclebinTablePrefix = "recyclebin_";
 
     private final String sharingTagTablePrefix = "sharing_tag_";
@@ -102,6 +104,24 @@ public class ServiceStorage implements Storagable {
             new StorageField("url", LiteralBase.STRING),
             new StorageField("descriptor", LiteralBase.STRING),
             new StorageField("timestamp", LiteralBase.LONG)
+    };
+
+    /**
+     * 联系人文件存储服务偏好配置。
+     */
+    private final StorageField[] performanceFields = new StorageField[] {
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            new StorageField("max_space_size", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("upload_threshold", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("download_threshold", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
     };
 
     /**
@@ -282,6 +302,11 @@ public class ServiceStorage implements Storagable {
     private Map<String, String> descriptorTableNameMap;
 
     /**
+     * 服务偏好设置表。
+     */
+    private Map<String, String> performanceTableNameMap;
+
+    /**
      * 层级表。
      */
     private Map<String, String> hierarchyTableNameMap;
@@ -311,6 +336,7 @@ public class ServiceStorage implements Storagable {
         this.storage = StorageFactory.getInstance().createStorage(type, "FileStructStorage", config);
         this.labelTableNameMap = new HashMap<>();
         this.descriptorTableNameMap = new HashMap<>();
+        this.performanceTableNameMap = new HashMap<>();
         this.hierarchyTableNameMap = new HashMap<>();
         this.recyclebinTableNameMap = new HashMap<>();
         this.sharingTagTableNameMap = new HashMap<>();
@@ -344,6 +370,9 @@ public class ServiceStorage implements Storagable {
 
             // 检查描述符表
             this.checkDescriptorTable(domain);
+
+            // 检测偏好配置表
+            this.checkPerformanceTable(domain);
 
             // 检查层级表
             this.checkHierarchyTable(domain);
@@ -633,6 +662,8 @@ public class ServiceStorage implements Storagable {
 
         return fileCode;
     }
+
+    
 
     /**
      * 统计指定联系人已使用的文件空间大小。
@@ -1490,6 +1521,20 @@ public class ServiceStorage implements Storagable {
             };
 
             if (this.storage.executeCreate(table, fields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkPerformanceTable(String domain) {
+        String table = this.performanceTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.performanceTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.performanceFields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
         }
