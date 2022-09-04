@@ -87,12 +87,22 @@ public class FileStorageService extends AbstractModule {
     /**
      * 文件大小门限。
      */
-    private long fileSizeThreshold = 500L * 1024 * 1024;
+    private long fileSizeThreshold = 500 * 1024 * 1024;
 
     /**
      * 每个联系人的最大存储空间。
      */
     private long maxSpaceSizeEachContact = (long) 1024 * 1024 * 1024;
+
+    /**
+     * 默认客户端上传速率阀值。
+     */
+    private long defaultUploadThreshold = 1024 * 1024;
+
+    /**
+     * 默认客户端下载速率阀值。
+     */
+    private long defaultDownloadThreshold = 1024 * 1024;
 
     private FileStorageServiceCellet cellet;
 
@@ -200,6 +210,12 @@ public class FileStorageService extends AbstractModule {
             // 最大存储空间
             this.maxSpaceSizeEachContact = Long.parseLong(properties.getProperty("max.space.size",
                     Long.toString(this.maxSpaceSizeEachContact)));
+
+            // 阀值参数
+            this.defaultUploadThreshold = Long.parseLong(properties.getProperty("threshold.upload",
+                    Long.toString(this.defaultUploadThreshold)));
+            this.defaultDownloadThreshold = Long.parseLong(properties.getProperty("threshold.download",
+                    Long.toString(this.defaultDownloadThreshold)));
         }
         else {
             Logger.e(this.getClass(), "Load config file failed");
@@ -304,18 +320,21 @@ public class FileStorageService extends AbstractModule {
         return this.executor;
     }
 
-    protected long getMaxSpaceSizeEachContact() {
-        return this.maxSpaceSizeEachContact;
-    }
-
     protected void notifyPerformance(Contact contact, Device device, long fileSpaceSize) {
-        JSONObject data = new JSONObject();
-        data.put("spaceSize", fileSpaceSize);
-        data.put("maxSpaceSize", this.maxSpaceSizeEachContact);
+        FileStoragePerformance performance = this.serviceStorage.readPerformance(contact.getDomain().getName(),
+                contact.getId());
+        if (null == performance) {
+            performance = new FileStoragePerformance(contact.getId(), this.maxSpaceSizeEachContact,
+                    this.defaultUploadThreshold, this.defaultDownloadThreshold);
+            this.serviceStorage.writePerformance(contact.getDomain().getName(), performance);
+        }
+
+        // 设置当前空间大小
+        performance.setSpaceSize(fileSpaceSize);
 
         JSONObject payload = new JSONObject();
         payload.put("code", FileStorageStateCode.Ok.code);
-        payload.put("data", data);
+        payload.put("data", performance.toJSON());
 
         Packet packet = new Packet(FileStorageAction.Performance.name, payload);
         ActionDialect dialect = Director.attachDirector(packet.toDialect(),

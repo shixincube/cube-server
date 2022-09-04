@@ -116,10 +116,10 @@ public class ServiceStorage implements Storagable {
             new StorageField("max_space_size", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("upload_threshold", LiteralBase.INT, new Constraint[] {
+            new StorageField("upload_threshold", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("download_threshold", LiteralBase.INT, new Constraint[] {
+            new StorageField("download_threshold", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             })
     };
@@ -665,7 +665,7 @@ public class ServiceStorage implements Storagable {
 
     /**
      * 读取偏好配置。
-     * 
+     *
      * @param domain
      * @param contactId
      * @return
@@ -686,9 +686,48 @@ public class ServiceStorage implements Storagable {
 
         Map<String, StorageField> map = StorageFields.get(result.get(0));
         FileStoragePerformance performance = new FileStoragePerformance(contactId, map.get("max_space_size").getLong(),
-                map.get("upload_threshold").getInt(), map.get("download_threshold").getInt());
+                map.get("upload_threshold").getLong(), map.get("download_threshold").getLong());
 
         return performance;
+    }
+
+    /**
+     * 写入偏好配置。
+     *
+     * @param domain
+     * @param performance
+     */
+    public void writePerformance(String domain, FileStoragePerformance performance) {
+        String table = this.performanceTableNameMap.get(domain);
+        if (null == table) {
+            return;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+                new StorageField("contact_id", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("contact_id", performance.getContactId())
+        });
+
+        if (result.isEmpty()) {
+            // 插入
+            this.storage.executeInsert(table, new StorageField[] {
+                    new StorageField("contact_id", performance.getContactId()),
+                    new StorageField("max_space_size", performance.getMaxSpaceSize()),
+                    new StorageField("upload_threshold", performance.getUploadThreshold()),
+                    new StorageField("download_threshold", performance.getDownloadThreshold())
+            });
+        }
+        else {
+            // 更新
+            this.storage.executeUpdate(table, new StorageField[] {
+                    new StorageField("max_space_size", performance.getMaxSpaceSize()),
+                    new StorageField("upload_threshold", performance.getUploadThreshold()),
+                    new StorageField("download_threshold", performance.getDownloadThreshold())
+            }, new Conditional[] {
+                    Conditional.createEqualTo("contact_id", performance.getContactId())
+            });
+        }
     }
 
     /**

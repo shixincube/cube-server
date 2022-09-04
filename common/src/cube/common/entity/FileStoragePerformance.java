@@ -38,18 +38,38 @@ public class FileStoragePerformance implements JSONable {
 
     private long maxSpaceSize;
 
-    private int uploadThreshold;
+    private long uploadThreshold;
 
-    private int downloadThreshold;
+    private long downloadThreshold;
 
     private long spaceSize;
 
     public FileStoragePerformance(long contactId, long maxSpaceSize,
-                                  int uploadThreshold, int downloadThreshold) {
+                                  long uploadThreshold, long downloadThreshold) {
         this.contactId = contactId;
         this.maxSpaceSize = maxSpaceSize;
         this.uploadThreshold = uploadThreshold;
         this.downloadThreshold = downloadThreshold;
+    }
+
+    public long getContactId() {
+        return this.contactId;
+    }
+
+    public long getMaxSpaceSize() {
+        return this.maxSpaceSize;
+    }
+
+    public long getUploadThreshold() {
+        return this.uploadThreshold;
+    }
+
+    public long getDownloadThreshold() {
+        return this.downloadThreshold;
+    }
+
+    public long getSpaceSize() {
+        return this.spaceSize;
     }
 
     public void setSpaceSize(long spaceSize) {
