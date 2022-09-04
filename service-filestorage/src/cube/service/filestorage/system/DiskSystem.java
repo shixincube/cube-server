@@ -131,14 +131,14 @@ public class DiskSystem implements FileSystem {
     }
 
     @Override
-    public FileDescriptor writeFile(String fileName, File file) {
+    public FileDescriptor writeFile(String fileCode, File file) {
         synchronized (this.writingFiles) {
-            if (!this.writingFiles.contains(fileName)) {
-                this.writingFiles.add(fileName);
+            if (!this.writingFiles.contains(fileCode)) {
+                this.writingFiles.add(fileCode);
             }
         }
 
-        Path target = Paths.get(this.managingPath.toString(), fileName);
+        Path target = Paths.get(this.managingPath.toString(), fileCode);
         long size = 0;
         try {
             Files.copy(Paths.get(file.getPath()), target, StandardCopyOption.REPLACE_EXISTING);
@@ -146,17 +146,17 @@ public class DiskSystem implements FileSystem {
         } catch (IOException e) {
             Logger.e(this.getClass(), "#writeFile(String,File)", e);
             synchronized (this.writingFiles) {
-                this.writingFiles.remove(fileName);
+                this.writingFiles.remove(fileCode);
             }
             return null;
         }
 
         if (null != this.diskCluster) {
-            this.diskCluster.addFile(fileName);
+            this.diskCluster.addFile(fileCode);
         }
 
-        FileDescriptor descriptor = new FileDescriptor("disk", fileName, this.url + fileName);
-        descriptor.attr("file", fileName);
+        FileDescriptor descriptor = new FileDescriptor("disk", fileCode, this.url + fileCode);
+        descriptor.attr("file", fileCode);
         descriptor.attr("path", target.toString());
         descriptor.attr("size", size);
 
@@ -165,21 +165,21 @@ public class DiskSystem implements FileSystem {
         }
 
         synchronized (this.writingFiles) {
-            this.writingFiles.remove(fileName);
+            this.writingFiles.remove(fileCode);
         }
 
         return descriptor;
     }
 
     @Override
-    public FileDescriptor writeFile(String fileName, InputStream inputStream) {
+    public FileDescriptor writeFile(String fileCode, InputStream inputStream) {
         synchronized (this.writingFiles) {
-            if (!this.writingFiles.contains(fileName)) {
-                this.writingFiles.add(fileName);
+            if (!this.writingFiles.contains(fileCode)) {
+                this.writingFiles.add(fileCode);
             }
         }
 
-        Path target = Paths.get(this.managingPath.toAbsolutePath().toString(), fileName);
+        Path target = Paths.get(this.managingPath.toAbsolutePath().toString(), fileCode);
 
         long size = 0;
         FileOutputStream fos = null;
@@ -196,7 +196,7 @@ public class DiskSystem implements FileSystem {
         } catch (IOException e) {
             Logger.e(this.getClass(), "#writeFile(String,InputStream)", e);
             synchronized (this.writingFiles) {
-                this.writingFiles.remove(fileName);
+                this.writingFiles.remove(fileCode);
             }
             return null;
         } finally {
@@ -209,11 +209,11 @@ public class DiskSystem implements FileSystem {
         }
 
         if (null != this.diskCluster) {
-            this.diskCluster.addFile(fileName);
+            this.diskCluster.addFile(fileCode);
         }
 
-        FileDescriptor descriptor = new FileDescriptor("disk", fileName, this.url + fileName);
-        descriptor.attr("file", fileName);
+        FileDescriptor descriptor = new FileDescriptor("disk", fileCode, this.url + fileCode);
+        descriptor.attr("file", fileCode);
         descriptor.attr("path", target.toString());
         descriptor.attr("size", size);
 
@@ -222,25 +222,25 @@ public class DiskSystem implements FileSystem {
         }
 
         synchronized (this.writingFiles) {
-            this.writingFiles.remove(fileName);
+            this.writingFiles.remove(fileCode);
         }
 
         return descriptor;
     }
 
     @Override
-    public boolean isWriting(String fileName) {
+    public boolean isWriting(String fileCode) {
         synchronized (this.writingFiles) {
-            return this.writingFiles.contains(fileName);
+            return this.writingFiles.contains(fileCode);
         }
     }
 
     @Override
-    public boolean deleteFile(String fileName) {
-        Path file = Paths.get(this.managingPath.toString(), fileName);
+    public boolean deleteFile(String fileCode) {
+        Path file = Paths.get(this.managingPath.toString(), fileCode);
         try {
             // 从集群系统中删除
-            this.diskCluster.removeFile(fileName);
+            this.diskCluster.removeFile(fileCode);
 
             if (Files.exists(file)) {
                 Files.delete(file);
@@ -254,25 +254,25 @@ public class DiskSystem implements FileSystem {
     }
 
     @Override
-    public boolean existsFile(String fileName) {
-        Path file = Paths.get(this.managingPath.toString(), fileName);
+    public boolean existsFile(String fileCode) {
+        Path file = Paths.get(this.managingPath.toString(), fileCode);
         return Files.exists(file);
     }
 
     @Override
-    public String loadFileToDisk(String fileName) {
-        if (this.existsFile(fileName)) {
-            Path path = Paths.get(this.managingPath.toString(), fileName);
+    public String loadFileToDisk(String fileCode) {
+        if (this.existsFile(fileCode)) {
+            Path path = Paths.get(this.managingPath.toString(), fileCode);
             return path.toAbsolutePath().toString();
         }
         else if (null != this.diskCluster) {
             // 从集群加载数据
-            File file = new File(this.managingPath.toFile(), fileName);
+            File file = new File(this.managingPath.toFile(), fileCode);
             FileOutputStream fos = null;
 
             try {
                 fos = new FileOutputStream(file);
-                this.diskCluster.loadFile(fileName, fos);
+                this.diskCluster.loadFile(fileCode, fos);
             } catch (IOException e) {
                 Logger.e(this.getClass(), "#loadFileToDisk", e);
             } finally {

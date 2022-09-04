@@ -47,50 +47,51 @@ public interface FileSystem {
     /**
      * 写入文件。
      *
+     * @param fileCode 指定文件码。
      * @param file
      * @return
      */
-    public FileDescriptor writeFile(String fileName, File file);
+    public FileDescriptor writeFile(String fileCode, File file);
 
     /**
      * 写入文件。
      *
-     * @param fileName
+     * @param fileCode 指定文件码。
      * @param inputStream
      * @return
      */
-    public FileDescriptor writeFile(String fileName, InputStream inputStream);
+    public FileDescriptor writeFile(String fileCode, InputStream inputStream);
 
     /**
-     * 指定名称的文件是否正在写入。
+     * 指定文件码的文件是否正在写入。
      *
-     * @param fileName
+     * @param fileCode
      * @return
      */
-    public boolean isWriting(String fileName);
+    public boolean isWriting(String fileCode);
 
     /**
      * 删除文件。
      *
-     * @param fileName
+     * @param fileCode
      * @return
      */
-    public boolean deleteFile(String fileName);
+    public boolean deleteFile(String fileCode);
 
     /**
      * 文件是否存在。
      *
-     * @param fileName
+     * @param fileCode
      * @return
      */
-    public boolean existsFile(String fileName);
+    public boolean existsFile(String fileCode);
 
     /**
      * 将文件读取到磁盘。
      *
-     * @param fileName
+     * @param fileCode
      * @return 返回文件所在的磁盘目录。
      */
-    public String loadFileToDisk(String fileName);
+    public String loadFileToDisk(String fileCode);
 
 }

@@ -48,32 +48,32 @@ public class FastDFSSystem implements FileSystem {
     }
 
     @Override
-    public FileDescriptor writeFile(String fileName, File file) {
+    public FileDescriptor writeFile(String fileCode, File file) {
         return null;
     }
 
     @Override
-    public FileDescriptor writeFile(String fileName, InputStream inputStream) {
+    public FileDescriptor writeFile(String fileCode, InputStream inputStream) {
         return null;
     }
 
     @Override
-    public boolean isWriting(String fileName) {
+    public boolean isWriting(String fileCode) {
         return false;
     }
 
     @Override
-    public boolean deleteFile(String fileName) {
+    public boolean deleteFile(String fileCode) {
         return false;
     }
 
     @Override
-    public boolean existsFile(String fileName) {
+    public boolean existsFile(String fileCode) {
         return false;
     }
 
     @Override
-    public String loadFileToDisk(String fileName) {
+    public String loadFileToDisk(String fileCode) {
         return null;
     }
 }
