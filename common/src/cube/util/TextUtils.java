@@ -29,12 +29,31 @@ package cube.util;
 import cube.common.entity.TextConstraint;
 import cube.vision.Size;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * 文本实用函数库。
  */
 public final class TextUtils {
 
+    // Pattern.compile("^-?[0-9]+");
+    private static final Pattern sPatternNumeric = Pattern.compile("^-?\\d+(\\.\\d+)?$");
+
     private TextUtils() {
+    }
+
+    /**
+     * 判断字符串是否全是数字。
+     * @param str
+     * @return
+     */
+    public static boolean isNumeric(String str) {
+        Matcher isNum = sPatternNumeric.matcher(str);
+        if (!isNum.matches()) {
+            return false;
+        }
+        return true;
     }
 
     /**

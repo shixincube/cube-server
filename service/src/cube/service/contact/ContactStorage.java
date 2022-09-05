@@ -38,6 +38,7 @@ import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.SQLUtils;
+import cube.util.TextUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -1682,7 +1683,7 @@ public class ContactStorage implements Storagable {
      * @return 如果没有匹配的数据返回 {@code null} 值。
      */
     public List<Contact> searchContacts(String domain, String keyword) {
-        List<Contact> result = null;
+        List<Contact> result = new ArrayList<>();
         String table = this.contactTableNameMap.get(domain);
 
         List<StorageField[]> list = this.storage.executeQuery(table, new StorageField[] {
@@ -1690,23 +1691,37 @@ public class ContactStorage implements Storagable {
                     new StorageField("name", LiteralBase.STRING),
                     new StorageField("context", LiteralBase.STRING)
             }, new Conditional[] {
-                    Conditional.createLike("id", keyword),
-                    Conditional.createOr(),
                     Conditional.createLike("name", keyword)
             });
 
-        if (list.isEmpty()) {
-            return null;
+        if (!list.isEmpty()) {
+            for (StorageField[] field : list) {
+                Contact contact = new Contact(field[0].getLong(), domain, field[1].getString());
+                if (!field[2].isNullValue()) {
+                    contact.setContext(new JSONObject(field[2].getString()));
+                }
+                result.add(contact);
+            }
         }
 
-        result = new ArrayList<>(list.size());
+        if (TextUtils.isNumeric(keyword)) {
+            list = this.storage.executeQuery(table, new StorageField[] {
+                    new StorageField("id", LiteralBase.LONG),
+                    new StorageField("name", LiteralBase.STRING),
+                    new StorageField("context", LiteralBase.STRING)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("id", Long.parseLong(keyword))
+            });
 
-        for (StorageField[] field : list) {
-            Contact contact = new Contact(field[0].getLong(), domain, field[1].getString());
-            if (!field[2].isNullValue()) {
-                contact.setContext(new JSONObject(field[2].getString()));
+            if (!list.isEmpty()) {
+                for (StorageField[] field : list) {
+                    Contact contact = new Contact(field[0].getLong(), domain, field[1].getString());
+                    if (!field[2].isNullValue()) {
+                        contact.setContext(new JSONObject(field[2].getString()));
+                    }
+                    result.add(contact);
+                }
             }
-            result.add(contact);
         }
 
         return result;
@@ -1731,8 +1746,6 @@ public class ContactStorage implements Storagable {
                     }),
                     Conditional.createAnd(),
                     Conditional.createBracket(new Conditional[] {
-                            Conditional.createLike("id", keyword),
-                            Conditional.createOr(),
                             Conditional.createLike("name", keyword)
                     })
             }

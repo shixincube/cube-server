@@ -3,12 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="b1408c98-f6aa-434f-978c-a980e61d5e76" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/script/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/script/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/style/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/style/index.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/DaemonTask.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/DaemonTask.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileStorageService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileStorageService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/ServiceStorage.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/ServiceStorage.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -82,6 +76,7 @@
       <workItem from="1661163842772" duration="3186000" />
       <workItem from="1661218118357" duration="5602000" />
       <workItem from="1661309893697" duration="2261000" />
+      <workItem from="1662339208942" duration="897000" />
     </task>
     <servers />
   </component>
