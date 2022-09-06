@@ -105,7 +105,7 @@ public class Conditional {
             buf.append(cond.sql).append(" ");
         }
         buf.append(")");
-        return new Conditional(buf.toString());
+        return new Conditional(buf.toString(), true);
     }
 
     /**
@@ -323,7 +323,7 @@ public class Conditional {
     public static Conditional createLike(String fieldName, String keyword) {
         StringBuilder buf = new StringBuilder();
         buf.append(Quote).append(fieldName).append(Quote).append(" LIKE '%").append(keyword).append("%'");
-        return new Conditional(buf.toString());
+        return new Conditional(buf.toString(), true);
     }
 
     /**

@@ -95,7 +95,9 @@ public final class SQLUtils {
         }
 
         buf.append(" FROM ");
+        buf.append(Quote);
         buf.append(table);
+        buf.append(Quote);
 
         if (null != conditionals) {
             if (conditionals[0].needWhereSentence()) {
