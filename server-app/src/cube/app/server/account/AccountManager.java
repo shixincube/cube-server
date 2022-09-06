@@ -121,7 +121,25 @@ public class AccountManager extends TimerTask {
 
                     BuildInData buildInData = new BuildInData();
                     for (Account account : buildInData.accountList) {
-                        accountStorage.writeAccount(account);
+                        if (null != accountStorage.writeAccount(account)) {
+                            final Account currentAccount = account;
+                            (new Thread() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        Thread.sleep(5000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                    Contact contact = new Contact(currentAccount.id, currentAccount.domain, currentAccount.name);
+                                    contact.setContext(currentAccount.toJSON());
+                                    Manager.getInstance().getClient().injectContact(contact);
+
+                                    Logger.i(AccountManager.class, "#start#injectContact: " + currentAccount.id);
+                                }
+                            }).start();
+                        }
                     }
                     buildInData = null;
                 }
