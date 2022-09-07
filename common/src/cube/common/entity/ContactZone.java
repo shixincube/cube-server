@@ -117,9 +117,11 @@ public class ContactZone extends Entity {
             return;
         }
 
-        if (!this.participants.contains(participant)) {
-            this.participants.add(participant);
+        if (this.participants.contains(participant)) {
+            this.participants.remove(participant);
         }
+
+        this.participants.add(participant);
     }
 
     public void removeParticipant(Long id) {
