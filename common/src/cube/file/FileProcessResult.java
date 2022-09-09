@@ -31,6 +31,7 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.FileResult;
 import cube.file.operation.EliminateColorOperation;
 import cube.file.operation.ReverseColorOperation;
+import cube.file.operation.SnapshotOperation;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

@@ -41,6 +41,7 @@ import cube.core.Kernel;
 import cube.file.*;
 import cube.file.operation.OCROperation;
 import cube.file.operation.OfficeConvertToOperation;
+import cube.file.operation.SnapshotOperation;
 import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.*;
 import cube.service.fileprocessor.processor.video.SnapshotContext;
@@ -840,7 +841,7 @@ public class FileProcessorService extends AbstractModule {
                     processor.setInputFile(inputFiles.get(0));
                     // 创建上下文
                     SnapshotContext context = new SnapshotContext();
-                    context.packToZip = false;  // 分帧文件不打包
+                    context.packToZip = true;  // 分帧文件打包
                     context.copyToWorkPath = true;  // 将输出结果复制到工作目录
                     // 执行处理
                     processor.go(context);

@@ -26,7 +26,7 @@
 
 package cube.service.fileprocessor.processor.video;
 
-import cube.file.SnapshotOperation;
+import cube.file.operation.SnapshotOperation;
 import cube.util.FileType;
 import cube.util.TimeOffset;
 import org.json.JSONArray;

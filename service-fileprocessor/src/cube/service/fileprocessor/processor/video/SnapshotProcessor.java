@@ -28,7 +28,7 @@ package cube.service.fileprocessor.processor.video;
 
 import cell.util.log.Logger;
 import cube.common.entity.FileResult;
-import cube.file.SnapshotOperation;
+import cube.file.operation.SnapshotOperation;
 import cube.service.fileprocessor.processor.ProcessorContext;
 import cube.util.FileUtils;
 import cube.util.TimeUtils;

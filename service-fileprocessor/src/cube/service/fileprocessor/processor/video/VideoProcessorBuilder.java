@@ -26,7 +26,7 @@
 
 package cube.service.fileprocessor.processor.video;
 
-import cube.file.SnapshotOperation;
+import cube.file.operation.SnapshotOperation;
 import org.json.JSONObject;
 
 import java.nio.file.Path;

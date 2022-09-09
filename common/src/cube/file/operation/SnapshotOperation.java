@@ -24,8 +24,9 @@
  * SOFTWARE.
  */
 
-package cube.file;
+package cube.file.operation;
 
+import cube.file.VideoOperation;
 import cube.util.FileType;
 import cube.util.TimeOffset;
 import org.json.JSONArray;
@@ -55,7 +56,7 @@ public class SnapshotOperation extends VideoOperation {
         super();
         this.timeOffset = new TimeOffset(0, 0, 0);
         this.duration = new TimeOffset(0, 0, 0,0);
-        this.rate = 0.5;
+        this.rate = 1;
         this.outputType = FileType.JPEG;
     }
 
@@ -78,6 +79,8 @@ public class SnapshotOperation extends VideoOperation {
     public String getOperation() {
         return SnapshotOperation.Operation;
     }
+
+
 
     @Override
     public JSONObject toJSON() {
