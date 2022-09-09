@@ -24,46 +24,27 @@
  * SOFTWARE.
  */
 
-package cube.service.fileprocessor.processor.video;
+package cube.file.operation;
 
-import cube.common.entity.FileLabel;
-import cube.service.fileprocessor.processor.FFmpeg;
-import cube.service.fileprocessor.processor.ProcessorContext;
-import cube.util.FileUtils;
-
-import java.io.File;
-import java.nio.file.Path;
+import cube.file.VideoOperation;
+import cube.util.FileType;
 
 /**
- * 视频处理器。
+ * 提取视频中的音频通道。
  */
-public abstract class VideoProcessor extends FFmpeg {
+public class ExtractAudioOperation extends VideoOperation {
 
-    protected File inputFile;
+    public final static String Operation = "ExtractAudio";
 
-    protected FileLabel inputFileLabel;
+    public FileType outputType;
 
-    public VideoProcessor(Path workPath) {
-        super(workPath);
+    public ExtractAudioOperation() {
+        super();
+        this.outputType = FileType.MP3;
     }
 
-    public void setInputFile(File file, FileLabel fileLabel) {
-        this.inputFile = file;
-        this.inputFileLabel = fileLabel;
+    @Override
+    public String getOperation() {
+        return ExtractAudioOperation.Operation;
     }
-
-    public void setInputFile(File file) {
-        this.inputFile = file;
-    }
-
-    protected String getFilename() {
-        if (null != this.inputFileLabel) {
-            return FileUtils.extractFileName(this.inputFileLabel.getFileName());
-        }
-        else {
-            return FileUtils.extractFileName(this.inputFile.getName());
-        }
-    }
-
-    public abstract void go(ProcessorContext context);
 }

@@ -67,7 +67,7 @@ public class SnapshotContext extends VideoProcessorContext {
     public SnapshotContext() {
         this.timeOffset = new TimeOffset(0, 0, 0);
         this.duration = new TimeOffset(0, 0, 0,0);
-        this.rate = 0.5;
+        this.rate = 1;
         this.outputType = FileType.JPEG;
     }
 

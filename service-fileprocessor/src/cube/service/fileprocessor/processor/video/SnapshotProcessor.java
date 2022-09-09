@@ -56,19 +56,6 @@ public class SnapshotProcessor extends VideoProcessor {
         this.snapshotOperation = operation;
     }
 
-    public SnapshotOperation getSnapshotOperation() {
-        return this.snapshotOperation;
-    }
-
-    private String getFilename() {
-        if (null != this.inputFileLabel) {
-            return FileUtils.extractFileName(this.inputFileLabel.getFileName());
-        }
-        else {
-            return FileUtils.extractFileName(this.inputFile.getName());
-        }
-    }
-
     private void postHandle(File path, SnapshotContext snapshotContext) {
         if (!path.isDirectory()) {
             return;
@@ -145,6 +132,8 @@ public class SnapshotProcessor extends VideoProcessor {
         this.snapshotOperation.setInputFile(this.inputFile);
 
         SnapshotContext snapshotContext = (SnapshotContext) context;
+        // 分帧数据是否打包
+        snapshotContext.packToZip = this.snapshotOperation.packToZip;
         // 设置参数
         snapshotContext.setVideoOperation(this.snapshotOperation);
 

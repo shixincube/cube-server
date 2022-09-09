@@ -26,44 +26,43 @@
 
 package cube.service.fileprocessor.processor.video;
 
-import cube.common.entity.FileLabel;
-import cube.service.fileprocessor.processor.FFmpeg;
+import cell.util.log.Logger;
+import cube.file.operation.ExtractAudioOperation;
 import cube.service.fileprocessor.processor.ProcessorContext;
-import cube.util.FileUtils;
 
-import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 
 /**
- * 视频处理器。
+ * 提取音频处理器。
  */
-public abstract class VideoProcessor extends FFmpeg {
+public class ExtractAudioProcessor extends VideoProcessor {
 
-    protected File inputFile;
+    private ExtractAudioOperation operation;
 
-    protected FileLabel inputFileLabel;
-
-    public VideoProcessor(Path workPath) {
+    public ExtractAudioProcessor(Path workPath, ExtractAudioOperation operation) {
         super(workPath);
+        this.operation = operation;
     }
 
-    public void setInputFile(File file, FileLabel fileLabel) {
-        this.inputFile = file;
-        this.inputFileLabel = fileLabel;
-    }
+    @Override
+    public void go(ProcessorContext context) {
+        ExtractAudioContext extractAudioContext = (ExtractAudioContext) context;
 
-    public void setInputFile(File file) {
-        this.inputFile = file;
-    }
+        String outputName = this.getFilename();
 
-    protected String getFilename() {
-        if (null != this.inputFileLabel) {
-            return FileUtils.extractFileName(this.inputFileLabel.getFileName());
+        ArrayList<String> params = new ArrayList<>();
+        params.add("-i");
+        params.add(this.inputFile.getName());
+        params.add("-vn");
+        params.add("-acodec");
+        params.add("copy");
+        params.add(outputName + "." + this.operation.outputType.getPreferredExtension());
+
+        boolean result = this.call(params, extractAudioContext);
+        if (!result) {
+            Logger.w(this.getClass(), "#go - ffmpeg command failed");
+            return;
         }
-        else {
-            return FileUtils.extractFileName(this.inputFile.getName());
-        }
     }
-
-    public abstract void go(ProcessorContext context);
 }

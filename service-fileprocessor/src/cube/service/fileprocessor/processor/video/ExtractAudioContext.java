@@ -26,44 +26,11 @@
 
 package cube.service.fileprocessor.processor.video;
 
-import cube.common.entity.FileLabel;
-import cube.service.fileprocessor.processor.FFmpeg;
-import cube.service.fileprocessor.processor.ProcessorContext;
-import cube.util.FileUtils;
-
-import java.io.File;
-import java.nio.file.Path;
-
 /**
- * 视频处理器。
+ * 提取视频音频数据处理器的上下文。
  */
-public abstract class VideoProcessor extends FFmpeg {
+public class ExtractAudioContext extends VideoProcessorContext {
 
-    protected File inputFile;
-
-    protected FileLabel inputFileLabel;
-
-    public VideoProcessor(Path workPath) {
-        super(workPath);
+    public ExtractAudioContext() {
     }
-
-    public void setInputFile(File file, FileLabel fileLabel) {
-        this.inputFile = file;
-        this.inputFileLabel = fileLabel;
-    }
-
-    public void setInputFile(File file) {
-        this.inputFile = file;
-    }
-
-    protected String getFilename() {
-        if (null != this.inputFileLabel) {
-            return FileUtils.extractFileName(this.inputFileLabel.getFileName());
-        }
-        else {
-            return FileUtils.extractFileName(this.inputFile.getName());
-        }
-    }
-
-    public abstract void go(ProcessorContext context);
 }

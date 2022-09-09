@@ -50,7 +50,9 @@ public class SnapshotOperation extends VideoOperation {
 
     public FileType outputType;
 
-    private List<TimeOffset> timeOffsets;
+    public boolean packToZip = true;
+
+//    private List<TimeOffset> timeOffsets;
 
     public SnapshotOperation() {
         super();
@@ -61,26 +63,26 @@ public class SnapshotOperation extends VideoOperation {
     }
 
     public SnapshotOperation(JSONObject json) {
+        super();
         this.timeOffset = new TimeOffset(json.getJSONObject("timeOffset"));
         this.duration = new TimeOffset(json.getJSONObject("duration"));
         this.rate = json.getDouble("rate");
         this.outputType = FileType.matchExtension(json.getString("outputType"));
+        this.packToZip = json.getBoolean("packToZip");
 
-        if (json.has("timingPoints")) {
+        /*if (json.has("timingPoints")) {
             this.timeOffsets = new ArrayList<>();
             JSONArray array = json.getJSONArray("timingPoints");
             for (int i = 0; i < array.length(); ++i) {
                 this.timeOffsets.add(new TimeOffset(array.getJSONObject(i)));
             }
-        }
+        }*/
     }
 
     @Override
     public String getOperation() {
         return SnapshotOperation.Operation;
     }
-
-
 
     @Override
     public JSONObject toJSON() {
@@ -89,6 +91,7 @@ public class SnapshotOperation extends VideoOperation {
         json.put("duration", this.duration.toJSON());
         json.put("rate", this.rate);
         json.put("outputType", this.outputType.getPreferredExtension());
+        json.put("packToZip", this.packToZip);
         return json;
     }
 }

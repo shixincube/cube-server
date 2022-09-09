@@ -841,7 +841,6 @@ public class FileProcessorService extends AbstractModule {
                     processor.setInputFile(inputFiles.get(0));
                     // 创建上下文
                     SnapshotContext context = new SnapshotContext();
-                    context.packToZip = true;  // 分帧文件打包
                     context.copyToWorkPath = true;  // 将输出结果复制到工作目录
                     // 执行处理
                     processor.go(context);
