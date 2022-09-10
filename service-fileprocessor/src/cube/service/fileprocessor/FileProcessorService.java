@@ -44,10 +44,7 @@ import cube.file.operation.OfficeConvertToOperation;
 import cube.file.operation.SnapshotOperation;
 import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.*;
-import cube.service.fileprocessor.processor.video.SnapshotContext;
-import cube.service.fileprocessor.processor.video.SnapshotProcessor;
-import cube.service.fileprocessor.processor.video.VideoProcessor;
-import cube.service.fileprocessor.processor.video.VideoProcessorBuilder;
+import cube.service.fileprocessor.processor.video.*;
 import cube.service.filestorage.FileStorageService;
 import cube.util.*;
 import cube.vision.Size;
@@ -855,6 +852,7 @@ public class FileProcessorService extends AbstractModule {
                         break;
                     }
                 }
+
             }
             else if (FileProcessorAction.OCR.name.equals(process)) {
                 // 设置当前工序的输出
@@ -1067,9 +1065,16 @@ public class FileProcessorService extends AbstractModule {
                 // 创建视频处理器
                 VideoProcessor processor = createVideoProcessor(domain, fileCode, data.getJSONObject("parameter"));
                 if (null != processor) {
-                    SnapshotContext context = new SnapshotContext();
-                    processor.go(context);
-                    return context.toJSON();
+                    if (processor instanceof SnapshotProcessor) {
+                        SnapshotContext context = new SnapshotContext();
+                        processor.go(context);
+                        return context.toJSON();
+                    }
+                    else if (processor instanceof ExtractAudioProcessor) {
+                        ExtractAudioContext context = new ExtractAudioContext();
+                        processor.go(context);
+                        return context.toJSON();
+                    }
                 }
             }
             else if (FileProcessorAction.OCR.name.equals(action)) {

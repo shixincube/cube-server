@@ -26,6 +26,7 @@
 
 package cube.service.fileprocessor.processor.video;
 
+import cube.file.operation.ExtractAudioOperation;
 import cube.file.operation.SnapshotOperation;
 import org.json.JSONObject;
 
@@ -49,6 +50,11 @@ public final class VideoProcessorBuilder {
             SnapshotOperation snapshotOperation = new SnapshotOperation(operationJson);
             SnapshotProcessor snapshot = new SnapshotProcessor(workPath, snapshotOperation);
             processor = snapshot;
+        }
+        else if (ExtractAudioOperation.Operation.equals(operation)) {
+            ExtractAudioOperation extractAudioOperation = new ExtractAudioOperation(operationJson);
+            ExtractAudioProcessor extractAudio = new ExtractAudioProcessor(workPath, extractAudioOperation);
+            processor = extractAudio;
         }
 
         return processor;

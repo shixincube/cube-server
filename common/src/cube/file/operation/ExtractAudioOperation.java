@@ -28,6 +28,7 @@ package cube.file.operation;
 
 import cube.file.VideoOperation;
 import cube.util.FileType;
+import org.json.JSONObject;
 
 /**
  * 提取视频中的音频通道。
@@ -43,8 +44,20 @@ public class ExtractAudioOperation extends VideoOperation {
         this.outputType = FileType.MP3;
     }
 
+    public ExtractAudioOperation(JSONObject json) {
+        super();
+        this.outputType = FileType.matchExtension(json.getString("outputType"));
+    }
+
     @Override
     public String getOperation() {
         return ExtractAudioOperation.Operation;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("outputType", this.outputType.getPreferredExtension());
+        return json;
     }
 }
