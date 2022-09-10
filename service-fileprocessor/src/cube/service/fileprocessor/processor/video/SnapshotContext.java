@@ -77,6 +77,9 @@ public class SnapshotContext extends VideoProcessorContext {
         this.duration = value.duration;
         this.rate = value.rate;
         this.outputType = value.outputType;
+
+        // 分帧数据是否打包
+        this.packToZip = value.packToZip;
     }
 
     public void setOutputFiles(List<File> outputFileList) {

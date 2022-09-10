@@ -129,11 +129,9 @@ public class SnapshotProcessor extends VideoProcessor {
 
         long time = System.currentTimeMillis();
 
-        this.snapshotOperation.setInputFile(this.inputFile);
-
         SnapshotContext snapshotContext = (SnapshotContext) context;
-        // 分帧数据是否打包
-        snapshotContext.packToZip = this.snapshotOperation.packToZip;
+        // 当前上下文的输入文件
+        snapshotContext.setInputFile(this.inputFile);
         // 设置参数
         snapshotContext.setVideoOperation(this.snapshotOperation);
 

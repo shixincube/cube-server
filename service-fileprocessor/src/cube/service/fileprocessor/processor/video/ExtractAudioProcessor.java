@@ -27,9 +27,11 @@
 package cube.service.fileprocessor.processor.video;
 
 import cell.util.log.Logger;
+import cube.common.entity.FileResult;
 import cube.file.operation.ExtractAudioOperation;
 import cube.service.fileprocessor.processor.ProcessorContext;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
@@ -49,7 +51,9 @@ public class ExtractAudioProcessor extends VideoProcessor {
     public void go(ProcessorContext context) {
         ExtractAudioContext extractAudioContext = (ExtractAudioContext) context;
 
-        String outputName = this.getFilename();
+        long time = System.currentTimeMillis();
+
+        String outputName = this.getFilename() + "." + this.operation.outputType.getPreferredExtension();
 
         ArrayList<String> params = new ArrayList<>();
         params.add("-i");
@@ -57,12 +61,24 @@ public class ExtractAudioProcessor extends VideoProcessor {
         params.add("-vn");
         params.add("-acodec");
         params.add("copy");
-        params.add(outputName + "." + this.operation.outputType.getPreferredExtension());
+        params.add(outputName);
 
         boolean result = this.call(params, extractAudioContext);
         if (!result) {
             Logger.w(this.getClass(), "#go - ffmpeg command failed");
             return;
         }
+
+        extractAudioContext.setElapsedTime(System.currentTimeMillis() - time);
+        extractAudioContext.setSuccessful(true);
+
+        // 后处理
+        File file = new File(getWorkPath().toFile(), outputName);
+        this.postHandle(file, extractAudioContext);
+    }
+
+    private void postHandle(File file, ExtractAudioContext context) {
+        FileResult result = new FileResult(file);
+        context.addResult(result);
     }
 }

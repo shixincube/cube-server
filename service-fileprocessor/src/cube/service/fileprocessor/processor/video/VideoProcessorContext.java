@@ -31,12 +31,16 @@ import cube.file.VideoOperation;
 import cube.service.fileprocessor.processor.ProcessorContext;
 import org.json.JSONObject;
 
+import java.io.File;
+
 /**
  * 视频处理器上下文。
  */
 public abstract class VideoProcessorContext extends ProcessorContext {
 
     private VideoOperation videoOperation;
+
+    private File inputFile;
 
     private long elapsedTime;
 
@@ -46,6 +50,14 @@ public abstract class VideoProcessorContext extends ProcessorContext {
     public VideoProcessorContext(JSONObject json) {
         super(json);
         this.elapsedTime = json.getLong("elapsed");
+    }
+
+    public void setInputFile(File file) {
+        this.inputFile = file;
+    }
+
+    public File getInputFile() {
+        return this.inputFile;
     }
 
     public void setVideoOperation(VideoOperation value) {
