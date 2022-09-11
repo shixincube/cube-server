@@ -30,6 +30,7 @@ import cell.util.log.Logger;
 import cube.common.entity.FileResult;
 import cube.file.operation.ExtractAudioOperation;
 import cube.service.fileprocessor.processor.ProcessorContext;
+import cube.util.FileType;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -51,17 +52,42 @@ public class ExtractAudioProcessor extends VideoProcessor {
     public void go(ProcessorContext context) {
         ExtractAudioContext extractAudioContext = (ExtractAudioContext) context;
 
+        extractAudioContext.setVideoOperation(this.operation);
+
         long time = System.currentTimeMillis();
 
-        String outputName = this.getFilename() + "." + this.operation.outputType.getPreferredExtension();
+        String outputName = this.getFilename() + "_" + System.currentTimeMillis() + "." + this.operation.outputType.getPreferredExtension();
+        File outputFile = new File(this.getWorkPath().toFile(), outputName);
+        if (outputFile.exists()) {
+            outputFile.delete();
+        }
 
         ArrayList<String> params = new ArrayList<>();
         params.add("-i");
         params.add(this.inputFile.getName());
         params.add("-vn");
-        params.add("-acodec");
-        params.add("copy");
+        switch (this.operation.outputType) {
+            case MP3:
+                // -b:a 192k -ar 44100 -ac 2 -acodec libmp3lame
+                params.add("-acodec");
+                params.add("libmp3lame");
+                break;
+            case WAV:
+                params.add("-acodec");
+                params.add("pcm_s16le");
+                break;
+            default:
+                params.add("-acodec");
+                params.add("copy");
+                break;
+        }
         params.add(outputName);
+
+        System.out.println("XJW -------------------");
+        for (String s : params) {
+            System.out.print(s + " ");
+        }
+        System.out.println("");
 
         boolean result = this.call(params, extractAudioContext);
         if (!result) {
