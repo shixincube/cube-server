@@ -83,12 +83,6 @@ public class ExtractAudioProcessor extends VideoProcessor {
         }
         params.add(outputName);
 
-        System.out.println("XJW -------------------");
-        for (String s : params) {
-            System.out.print(s + " ");
-        }
-        System.out.println("");
-
         boolean result = this.call(params, extractAudioContext);
         if (!result) {
             Logger.w(this.getClass(), "#go - ffmpeg command failed");
