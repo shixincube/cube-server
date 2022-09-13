@@ -26,6 +26,8 @@
 
 package cube.service.fileprocessor.processor;
 
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -46,6 +48,79 @@ public abstract class FFmpeg extends Processor {
 
     public boolean isRunning() {
         return this.running.get();
+    }
+
+    /**
+     * 探测媒体文件属性。
+     *
+     * @param filePath
+     * @return
+     */
+    protected JSONObject probe(String filePath) {
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add("ffprobe");
+        commandLine.add("-v");
+        commandLine.add("quiet");
+        commandLine.add("-show_format");
+        commandLine.add("-show_streams");
+        commandLine.add("-print_format");
+        commandLine.add("json");
+        commandLine.add(filePath);
+
+        Process process = null;
+        ProcessBuilder pb = new ProcessBuilder(commandLine);
+        // 设置工作目录
+        pb.directory(getWorkPath().toFile());
+
+        ProcessorContext context = new ProcessorContext() {
+            @Override
+            public JSONObject toJSON() {
+                List<String> lines = getStdOutput();
+                if (null != lines) {
+                    StringBuilder buf = new StringBuilder();
+                    for (String line : lines) {
+                        buf.append(line.trim()).append("\n");
+                    }
+
+                    return new JSONObject(buf.toString());
+                }
+                else {
+                    return null;
+                }
+            }
+
+            @Override
+            public JSONObject toCompactJSON() {
+                return this.toJSON();
+            }
+        };
+
+        int status = -1;
+        try {
+            process = pb.start();
+
+            this.running.set(true);
+
+            Runnable worker = this.buildInputStreamWorker(process.getInputStream(), context);
+            worker.run();
+
+            try {
+                status = process.waitFor();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != process) {
+                process.destroy();
+            }
+
+            process = null;
+        }
+
+        this.running.set(false);
+        return context.toJSON();
     }
 
     protected boolean call(List<String> params, ProcessorContext context) {
@@ -83,6 +158,7 @@ public abstract class FFmpeg extends Processor {
             process = null;
         }
 
+        this.running.set(false);
         return (0 == status || 1 == status);
     }
 }

@@ -28,9 +28,10 @@ package cube.service.fileprocessor.processor.video;
 
 import cell.util.log.Logger;
 import cube.common.entity.FileResult;
+import cube.file.misc.MediaAttribute;
 import cube.file.operation.ExtractAudioOperation;
 import cube.service.fileprocessor.processor.ProcessorContext;
-import cube.util.FileType;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -99,6 +100,14 @@ public class ExtractAudioProcessor extends VideoProcessor {
 
     private void postHandle(File file, ExtractAudioContext context) {
         FileResult result = new FileResult(file);
+
+        // 读取文件属性
+        JSONObject attrJson = this.probe(file.getName());
+        if (null != attrJson) {
+            MediaAttribute attribute = new MediaAttribute(attrJson);
+            result.mediaAttribute = attribute;
+        }
+
         context.addResult(result);
     }
 }

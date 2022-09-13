@@ -64,7 +64,7 @@ public class FileProcessResult {
 
     public FileProcessResult(JSONObject json) {
         this.process = json.getString("process");
-        this.success = json.has("success") ? json.getBoolean("success") : false;
+        this.success = json.has("success") && json.getBoolean("success");
 
         if (FileProcessorAction.Image.name.equals(this.process)) {
             this.imageResult = new ImageProcessResult(json);
@@ -133,6 +133,13 @@ public class FileProcessResult {
             }
 
             this.localFileList.add(file);
+
+            for (FileResult result : this.resultList) {
+                if (result.fileName.equals(file.getName())) {
+                    result.resetFile(file);
+                    break;
+                }
+            }
         }
     }
 

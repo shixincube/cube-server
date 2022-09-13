@@ -33,5 +33,4 @@ public class ExtractAudioContext extends VideoProcessorContext {
 
     public ExtractAudioContext() {
     }
-
 }
