@@ -1394,7 +1394,7 @@ public class ServiceStorage implements Storagable {
         List<StorageField[]> result = this.storage.executeQuery(table, this.visitTraceFields, new Conditional[] {
                 Conditional.createEqualTo("code", code),
                 Conditional.createAnd(),
-                Conditional.createEqualTo("sharer", contactId),
+                Conditional.createEqualTo("parent", contactId),
                 Conditional.createOrderBy("time", true),
                 Conditional.createLimit(beginIndex, endIndex - beginIndex + 1)
         });

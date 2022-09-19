@@ -84,14 +84,14 @@ public class AccountStorage extends AbstractStorage {
             })
     };
 
-    private final StorageField[] tokenFields = new StorageField[]{
-            new StorageField("id", LiteralBase.LONG, new Constraint[]{
+    private final StorageField[] tokenFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
-            new StorageField("account_id", LiteralBase.LONG, new Constraint[]{
+            new StorageField("account_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("domain", LiteralBase.LONG, new Constraint[]{
+            new StorageField("domain", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("token", LiteralBase.STRING, new Constraint[] {
@@ -106,6 +106,26 @@ public class AccountStorage extends AbstractStorage {
             new StorageField("expire", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             })
+    };
+
+    private final StorageField[] preferenceFields = new StorageField[] {
+            // 账号 ID
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            // 个人存储空间大小
+            new StorageField("storage_size", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 空间大小生效日期
+            new StorageField("storage_size_effective", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 空间大小到期日期
+            new StorageField("storage_size_expiry", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+
     };
 
     public AccountStorage(Properties properties) {

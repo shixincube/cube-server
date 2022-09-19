@@ -42,6 +42,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +84,12 @@ public class DiskCluster implements Storagable  {
 
     private String contextPath = "/files/";
 
+    private String masterHost;
+
+    private int masterPort;
+
+    private String masterContextPath = "/transfer/";
+
     public DiskCluster(String localHost, int localPort, StorageType type, JSONObject config) {
         this.localHost = localHost;
         this.localPort = localPort;
@@ -112,12 +120,30 @@ public class DiskCluster implements Storagable  {
         this.contextPath = value;
     }
 
+    public void setMaster(String host, int port) {
+        this.masterHost = host;
+        this.masterPort = port;
+    }
+
+    public boolean useMaster() {
+        return (null != this.masterHost && 0 != this.masterPort);
+    }
+
     /**
      * 添加文件信息。
      *
      * @param fileCode
      */
     public void addFile(String fileCode) {
+        this.updateCluster(fileCode, this.localHost, this.localPort);
+    }
+
+    /**
+     * 添加文件信息。
+     *
+     * @param fileCode
+     */
+    private void updateCluster(String fileCode, String host, int port) {
         String table = this.clusterFileTable;
 
         List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
@@ -130,16 +156,16 @@ public class DiskCluster implements Storagable  {
             // 插入新数据
             this.storage.executeInsert(table, new StorageField[] {
                     new StorageField("file_code", fileCode),
-                    new StorageField("host", this.localHost),
-                    new StorageField("port", this.localPort),
+                    new StorageField("host", host),
+                    new StorageField("port", port),
                     new StorageField("timestamp", System.currentTimeMillis())
             });
         }
         else {
             // 更新数据
             this.storage.executeUpdate(table, new StorageField[] {
-                    new StorageField("host", this.localHost),
-                    new StorageField("port", this.localPort),
+                    new StorageField("host", host),
+                    new StorageField("port", port),
                     new StorageField("timestamp", System.currentTimeMillis())
             }, new Conditional[] {
                     Conditional.createEqualTo("file_code", fileCode)
@@ -202,7 +228,7 @@ public class DiskCluster implements Storagable  {
             int code = connection.getResponseCode();
             if (code == HttpURLConnection.HTTP_OK) {
                 InputStream is = connection.getInputStream();
-                byte[] bytes = new byte[4096];
+                byte[] bytes = new byte[10240];
                 int length = 0;
                 while ((length = is.read(bytes)) > 0) {
                     outputStream.write(bytes, 0, length);
@@ -217,5 +243,83 @@ public class DiskCluster implements Storagable  {
                 connection.disconnect();
             }
         }
+    }
+
+    public long saveFile(String fileCode, InputStream inputStream) {
+        long size = 0;
+
+        StringBuilder urlString = new StringBuilder("http://");
+        urlString.append(this.masterHost);
+        urlString.append(":");
+        urlString.append(this.masterPort);
+        urlString.append(this.masterContextPath);
+        urlString.append("?fc=");
+        urlString.append(fileCode);
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#saveFile: URL - " + urlString.toString());
+        }
+
+        HttpURLConnection connection = null;
+
+        URL url = null;
+        try {
+            url = new URL(urlString.toString());
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("Charset", "UTF-8");
+            connection.setRequestProperty("Content-Type", "application/octet-stream");
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            connection.setUseCaches(false);
+            connection.setRequestMethod("POST");
+            connection.setConnectTimeout(5000);
+
+            connection.connect();
+
+            OutputStream os = connection.getOutputStream();
+            byte[] buf = new byte[10240];
+            int length = 0;
+            while ((length = inputStream.read(buf)) > 0) {
+                os.write(buf, 0, length);
+                // 更新大小
+                size += length;
+            }
+            os.flush();
+            // 关闭流
+            os.close();
+
+            int code = connection.getResponseCode();
+            if (code == HttpURLConnection.HTTP_OK) {
+                // 结果
+                length = connection.getInputStream().read(buf);
+                if (length > 0) {
+                    JSONObject json = new JSONObject(new String(buf, 0, length));
+                    long responseSize = json.getLong("size");
+                    if (responseSize != size) {
+                        Logger.w(this.getClass(), "#saveFile - data size error: " + size + " - " + responseSize);
+                    }
+                }
+            }
+            else {
+                Logger.w(this.getClass(), "#saveFile - status code: " + code);
+                size = 0;
+            }
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (ProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != connection) {
+                connection.disconnect();
+            }
+        }
+
+        if (size > 0) {
+            this.updateCluster(fileCode, this.masterHost, this.masterPort);
+        }
+
+        return size;
     }
 }

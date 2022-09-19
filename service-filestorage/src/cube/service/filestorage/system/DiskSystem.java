@@ -29,17 +29,19 @@ package cube.service.filestorage.system;
 import cell.core.net.Endpoint;
 import cell.util.log.Logger;
 import cube.storage.StorageType;
+import cube.util.CrossDomainHandler;
 import cube.util.HttpServer;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.util.resource.PathResource;
 import org.eclipse.jetty.util.resource.Resource;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -64,9 +66,15 @@ public class DiskSystem implements FileSystem {
 
     private List<String> writingFiles;
 
+    private Endpoint masterEndpoint;
+
     private DiskCluster diskCluster;
 
     public DiskSystem(String managingPath, String host, int port) {
+        this(managingPath, host, port, null, 0);
+    }
+
+    public DiskSystem(String managingPath, String host, int port, String masterHost, int masterPort) {
         this.managingPath = Paths.get(managingPath);
         if (!Files.exists(this.managingPath)) {
             try {
@@ -77,6 +85,14 @@ public class DiskSystem implements FileSystem {
         }
 
         this.endpoint = new Endpoint(host, port);
+
+        if (null != masterHost && 0 != masterPort) {
+            this.masterEndpoint = new Endpoint(masterHost, masterPort);
+
+            if (Logger.isDebugLevel()) {
+                Logger.i(DiskSystem.class, "Disk cluster use master node: " + this.masterEndpoint.toString());
+            }
+        }
 
         this.url = "http://" + host + ":" + port + this.contextPath;
 
@@ -99,6 +115,8 @@ public class DiskSystem implements FileSystem {
         context.setHandler(resourceHandler);
 
         this.httpServer.addContextHandler(context);
+
+        this.httpServer.addContextHandler(new TransferHandler());
 
         this.httpServer.start(this.endpoint.getPort());
     }
@@ -126,6 +144,11 @@ public class DiskSystem implements FileSystem {
 
         this.diskCluster = new DiskCluster(this.endpoint.getHost(), this.endpoint.getPort(), type, config);
         this.diskCluster.setContextPath(this.contextPath);
+
+        if (null != this.masterEndpoint) {
+            this.diskCluster.setMaster(this.masterEndpoint.getHost(), this.masterEndpoint.getPort());
+        }
+
         this.diskCluster.open();
         this.diskCluster.execSelfChecking(null);
     }
@@ -138,26 +161,49 @@ public class DiskSystem implements FileSystem {
             }
         }
 
-        Path target = Paths.get(this.managingPath.toString(), fileCode);
         long size = 0;
-        try {
-            Files.copy(Paths.get(file.getPath()), target, StandardCopyOption.REPLACE_EXISTING);
-            size = Files.size(target);
-        } catch (IOException e) {
-            Logger.e(this.getClass(), "#writeFile(String,File)", e);
-            synchronized (this.writingFiles) {
-                this.writingFiles.remove(fileCode);
-            }
-            return null;
-        }
-
-        if (null != this.diskCluster) {
-            this.diskCluster.addFile(fileCode);
-        }
-
         FileDescriptor descriptor = new FileDescriptor("disk", fileCode, this.url + fileCode);
+
+        if (null != this.diskCluster && this.diskCluster.useMaster()) {
+            FileInputStream fis = null;
+            try {
+                fis = new FileInputStream(file);
+                // 存储到集群
+                size = this.diskCluster.saveFile(fileCode, fis);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } finally {
+                if (null != fis) {
+                    try {
+                        fis.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+        }
+        else {
+            Path target = Paths.get(this.managingPath.toString(), fileCode);
+
+            try {
+                Files.copy(Paths.get(file.getPath()), target, StandardCopyOption.REPLACE_EXISTING);
+                size = Files.size(target);
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#writeFile(String,File)", e);
+                synchronized (this.writingFiles) {
+                    this.writingFiles.remove(fileCode);
+                }
+                return null;
+            }
+
+            if (null != this.diskCluster) {
+                this.diskCluster.addFile(fileCode);
+            }
+
+            // 本地路径
+            descriptor.attr("path", target.toString());
+        }
+
         descriptor.attr("file", fileCode);
-        descriptor.attr("path", target.toString());
         descriptor.attr("size", size);
 
         if (Logger.isDebugLevel()) {
@@ -179,46 +225,55 @@ public class DiskSystem implements FileSystem {
             }
         }
 
-        Path target = Paths.get(this.managingPath.toAbsolutePath().toString(), fileCode);
-
         long size = 0;
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(target.toFile());
+        FileDescriptor descriptor = new FileDescriptor("disk", fileCode, this.url + fileCode);
 
-            byte[] buf = new byte[64 * 1024];
-            int length = 0;
-            while ((length = inputStream.read(buf)) > 0) {
-                fos.write(buf, 0, length);
-                size += length;
-            }
-            fos.flush();
-        } catch (IOException e) {
-            Logger.e(this.getClass(), "#writeFile(String,InputStream)", e);
-            synchronized (this.writingFiles) {
-                this.writingFiles.remove(fileCode);
-            }
-            return null;
-        } finally {
-            if (null != fos) {
-                try {
-                    fos.close();
-                } catch (IOException e) {
+        if (null != this.diskCluster && this.diskCluster.useMaster()) {
+            // 文件存储到集群
+            size = this.diskCluster.saveFile(fileCode, inputStream);
+        }
+        else {
+            Path target = Paths.get(this.managingPath.toAbsolutePath().toString(), fileCode);
+
+            FileOutputStream fos = null;
+            try {
+                fos = new FileOutputStream(target.toFile());
+
+                byte[] buf = new byte[64 * 1024];
+                int length = 0;
+                while ((length = inputStream.read(buf)) > 0) {
+                    fos.write(buf, 0, length);
+                    size += length;
+                }
+                fos.flush();
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#writeFile(String,InputStream)", e);
+                synchronized (this.writingFiles) {
+                    this.writingFiles.remove(fileCode);
+                }
+                return null;
+            } finally {
+                if (null != fos) {
+                    try {
+                        fos.close();
+                    } catch (IOException e) {
+                    }
                 }
             }
+
+            if (null != this.diskCluster) {
+                this.diskCluster.addFile(fileCode);
+            }
+
+            // 本地路径
+            descriptor.attr("path", target.toString());
         }
 
-        if (null != this.diskCluster) {
-            this.diskCluster.addFile(fileCode);
-        }
-
-        FileDescriptor descriptor = new FileDescriptor("disk", fileCode, this.url + fileCode);
         descriptor.attr("file", fileCode);
-        descriptor.attr("path", target.toString());
         descriptor.attr("size", size);
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "Write file : " + descriptor);
+            Logger.d(this.getClass(), "Write file stream : " + descriptor);
         }
 
         synchronized (this.writingFiles) {
@@ -288,6 +343,73 @@ public class DiskSystem implements FileSystem {
         }
         else {
             return null;
+        }
+    }
+
+    /**
+     * 传输 Handler 。
+     */
+    private class TransferHandler extends ContextHandler {
+
+        public TransferHandler() {
+            super("/transfer/");
+            setHandler(new Handler());
+        }
+
+        private class Handler extends CrossDomainHandler {
+
+            private Handler() {
+                super();
+            }
+
+            @Override
+            public void doPost(HttpServletRequest request, HttpServletResponse response)
+                    throws IOException, ServletException {
+                String fileCode = request.getParameter("fc");
+                if (null == fileCode) {
+                    Logger.w(TransferHandler.class, "#doPost - Read file code parameter error");
+                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.complete();
+                    return;
+                }
+
+                if (Logger.isDebugLevel()) {
+                    Logger.d(TransferHandler.class, "#doPost - " + fileCode);
+                }
+
+                InputStream inputStream = request.getInputStream();
+
+                Path target = Paths.get(managingPath.toAbsolutePath().toString(), fileCode);
+
+                long size = 0;
+                FileOutputStream fos = null;
+                try {
+                    fos = new FileOutputStream(target.toFile());
+
+                    byte[] buf = new byte[10240];
+                    int length = 0;
+                    while ((length = inputStream.read(buf)) > 0) {
+                        fos.write(buf, 0, length);
+                        size += length;
+                    }
+                    fos.flush();
+                } catch (IOException e) {
+                    Logger.e(this.getClass(), "#doPost()", e);
+                } finally {
+                    if (null != fos) {
+                        try {
+                            fos.close();
+                        } catch (IOException e) {
+                        }
+                    }
+                }
+
+                JSONObject responseData = new JSONObject();
+                responseData.put("fileCode", fileCode);
+                responseData.put("size", size);
+                this.respondOk(response, responseData);
+                this.complete();
+            }
         }
     }
 }

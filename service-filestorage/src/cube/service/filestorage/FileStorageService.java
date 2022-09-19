@@ -186,7 +186,10 @@ public class FileStorageService extends AbstractModule {
                 String host = properties.getProperty("disk.host", "127.0.0.1");
                 int port = Integer.parseInt(properties.getProperty("disk.port", "6080"));
 
-                this.fileSystem = new DiskSystem(path, host, port);
+                String masterHost = properties.getProperty("disk.master.host", "127.0.0.1");
+                int masterPort = Integer.parseInt(properties.getProperty("disk.master.port", "0"));
+
+                this.fileSystem = new DiskSystem(path, host, port, masterHost, masterPort);
             }
             else {
                 Logger.w(this.getClass(), "Unsupported file system: " + filesystem);
