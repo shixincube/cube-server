@@ -404,4 +404,13 @@ public class VisitTrace implements JSONable {
     public JSONObject toCompactJSON() {
         return this.toJSON();
     }
+
+    public JSONObject toMiniJSON() {
+        JSONObject json = new JSONObject();
+        json.put("platform", this.platform);
+        json.put("time", this.time);
+        json.put("address", this.address);
+        json.put("contactId", this.contactId);
+        return json;
+    }
 }

@@ -26,10 +26,12 @@
 
 package cube.common.entity;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 链条节点。
@@ -40,11 +42,6 @@ public class ChainNode extends Entity {
      * 操作事件。
      */
     private String event;
-
-    /**
-     * 事件数量。
-     */
-    private int eventTotal;
 
     /**
      * 操作人。
@@ -86,6 +83,16 @@ public class ChainNode extends Entity {
      */
     private List<ChainNode> children;
 
+    /**
+     * 数量。
+     */
+    private int total;
+
+    /**
+     * 访问追踪。
+     */
+    private VisitTrace visitTrace;
+
     public ChainNode(Long id, String domain, String event, AbstractContact who, FileLabel what, long when) {
         super(id, domain);
         this.event = event;
@@ -104,19 +111,18 @@ public class ChainNode extends Entity {
     public ChainNode(long id, String domain, String event) {
         super(id, domain);
         this.event = event;
-        this.eventTotal = 0;
+
+    }
+
+    public ChainNode(VisitTrace visitTrace) {
+        super();
+        this.visitTrace = visitTrace;
+        this.event = visitTrace.event;
+        this.total = 1;
     }
 
     public String getEvent() {
         return this.event;
-    }
-
-    public int getEventTotal() {
-        return this.eventTotal;
-    }
-
-    public void setEventTotal(int total) {
-        this.eventTotal = total;
     }
 
     public AbstractContact getWho() {
@@ -151,6 +157,38 @@ public class ChainNode extends Entity {
         this.method = method;
     }
 
+    public void addChildren(List<ChainNode> list) {
+        if (null == this.children) {
+            this.children = new ArrayList<>();
+        }
+
+        this.children.addAll(list);
+    }
+
+    public void addChild(ChainNode node) {
+        if (null == this.children) {
+            this.children = new ArrayList<>();
+        }
+
+        this.children.add(node);
+    }
+
+    public List<ChainNode> getChildren() {
+        if (null == this.children) {
+            this.children = new ArrayList<>();
+        }
+
+        return this.children;
+    }
+
+    public int incrementTotal() {
+        return ++this.total;
+    }
+
+    public VisitTrace getVisitTrace() {
+        return this.visitTrace;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o instanceof ChainNode) {
@@ -174,7 +212,20 @@ public class ChainNode extends Entity {
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
         json.put("event", this.event);
-        json.put("eventTotal", this.eventTotal);
+        json.put("total", this.total);
+
+        if (null != this.visitTrace) {
+            json.put("visitTrace", this.visitTrace.toMiniJSON());
+        }
+
+        JSONArray array = new JSONArray();
+        if (null != this.children) {
+            for (ChainNode child : this.children) {
+                array.put(child.toCompactJSON());
+            }
+        }
+        json.put("children", array);
+
         return json;
     }
 }

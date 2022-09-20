@@ -28,6 +28,7 @@ package cube.service.filestorage;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
+import com.sun.org.apache.xerces.internal.dom.ChildNode;
 import cube.common.entity.*;
 import cube.common.notice.MakeThumb;
 import cube.common.notice.OfficeConvertTo;
@@ -527,13 +528,31 @@ public class FileSharingManager {
 
         for (VisitTrace visitTrace : traceList) {
             if (visitTrace.event.equals(TraceEvent.View)) {
-                viewNode.setEventTotal(viewNode.getEventTotal() + 1);
+                ChainNode child = this.findNode(viewNode.getChildren(), visitTrace);
+                if (null == child) {
+                    viewNode.addChild(new ChainNode(visitTrace));
+                }
+                else {
+                    child.incrementTotal();
+                }
             }
             else if (visitTrace.event.equals(TraceEvent.Extract)) {
-                extractNode.setEventTotal(extractNode.getEventTotal() + 1);
+                ChainNode child = this.findNode(extractNode.getChildren(), visitTrace);
+                if (null == child) {
+                    extractNode.addChild(new ChainNode(visitTrace));
+                }
+                else {
+                    child.incrementTotal();
+                }
             }
             else if (visitTrace.event.equals(TraceEvent.Share)) {
-                shareNode.setEventTotal(shareNode.getEventTotal() + 1);
+                ChainNode child = this.findNode(shareNode.getChildren(), visitTrace);
+                if (null == child) {
+                    shareNode.addChild(new ChainNode(visitTrace));
+                }
+                else {
+                    child.incrementTotal();
+                }
             }
         }
 
@@ -541,9 +560,48 @@ public class FileSharingManager {
         chain.addNode(extractNode);
         chain.addNode(shareNode);
 
-//        this.service.getServiceStorage().queryVisitTraceByParent();
+        // 二链计算
+
+        ChainNode fissionNode = new ChainNode(Utils.generateSerialNumber(), contact.getDomain().getName(),
+                "Fission");
+
+        traceList = this.service.getServiceStorage().queryVisitTraceByParent(contact.getDomain().getName(),
+                sharingCode, contact.getId());
+        List<ChainNode> nodeList = this.compressNodes(traceList);
+        fissionNode.addChildren(nodeList);
+
+        chain.addNode(fissionNode);
 
         return chain;
+    }
+
+    private List<ChainNode> compressNodes(List<VisitTrace> visitTraceList) {
+        List<ChainNode> list = new ArrayList<>();
+        for (VisitTrace visitTrace : visitTraceList) {
+            ChainNode node = this.findNode(list, visitTrace);
+            if (null == node) {
+                node = new ChainNode(visitTrace);
+                list.add(node);
+            }
+            else {
+                node.incrementTotal();
+            }
+        }
+        return list;
+    }
+
+    private ChainNode findNode(List<ChainNode> list, VisitTrace targetTrace) {
+        for (ChainNode node : list) {
+            VisitTrace trace = node.getVisitTrace();
+            if (null == trace) {
+                continue;
+            }
+
+            if (targetTrace.event.equals(trace.event) && targetTrace.address.equals(trace.address)) {
+                return node;
+            }
+        }
+        return null;
     }
 
     private SharingCodeDomain getDomainByCode(String code) {
