@@ -26,6 +26,9 @@
 
 package cube.common.entity;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,15 +40,36 @@ import java.util.List;
  */
 public class TransmissionChain extends Entity {
 
+    private String traceCode;
+
     private List<ChainNode> nodeList;
 
-    private List<String> tracks;
-
-    public TransmissionChain() {
+    public TransmissionChain(String traceCode) {
         super();
+        this.traceCode = traceCode;
         this.nodeList = new LinkedList<>();
-        this.tracks = new ArrayList<>();
     }
 
+    public void addNode(ChainNode node) {
+        this.nodeList.add(node);
+    }
 
+    @Override
+    public JSONObject toJSON() {
+        return this.toCompactJSON();
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        json.put("traceCode", this.traceCode);
+
+        JSONArray nodes = new JSONArray();
+        for (ChainNode node : this.nodeList) {
+            nodes.put(node.toCompactJSON());
+        }
+        json.put("nodes", nodes);
+
+        return json;
+    }
 }

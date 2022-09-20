@@ -26,6 +26,7 @@
 
 package cube.service.filestorage;
 
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.entity.*;
 import cube.common.notice.MakeThumb;
@@ -496,8 +497,53 @@ public class FileSharingManager {
             });
         }
         else {
-            Logger.w(this.getClass(), "#addVisitTrace - Can NOT find domain by code: " + code);
+            Logger.w(this.getClass(), "#traceVisit - Can NOT find domain by code: " + code);
         }
+    }
+
+    /**
+     * 计算指定分享码的追踪链。
+     *
+     * @param contact
+     * @param sharingCode
+     * @param traceDepth
+     * @return
+     */
+    public TransmissionChain calcTraceChain(Contact contact, String sharingCode, int traceDepth) {
+        TransmissionChain chain = new TransmissionChain(sharingCode);
+
+        // 浏览记录
+        ChainNode viewNode = new ChainNode(Utils.generateSerialNumber(), contact.getDomain().getName(),
+                TraceEvent.View);
+        // 下载记录
+        ChainNode extractNode = new ChainNode(Utils.generateSerialNumber(), contact.getDomain().getName(),
+                TraceEvent.Extract);
+        // 复制链接记录
+        ChainNode shareNode = new ChainNode(Utils.generateSerialNumber(), contact.getDomain().getName(),
+                TraceEvent.Share);
+
+        List<VisitTrace> traceList = this.service.getServiceStorage().queryVisitTraceBySharer(
+                contact.getDomain().getName(), sharingCode, contact.getId());
+
+        for (VisitTrace visitTrace : traceList) {
+            if (visitTrace.event.equals(TraceEvent.View)) {
+                viewNode.setEventTotal(viewNode.getEventTotal() + 1);
+            }
+            else if (visitTrace.event.equals(TraceEvent.Extract)) {
+                extractNode.setEventTotal(extractNode.getEventTotal() + 1);
+            }
+            else if (visitTrace.event.equals(TraceEvent.Share)) {
+                shareNode.setEventTotal(shareNode.getEventTotal() + 1);
+            }
+        }
+
+        chain.addNode(viewNode);
+        chain.addNode(extractNode);
+        chain.addNode(shareNode);
+
+//        this.service.getServiceStorage().queryVisitTraceByParent();
+
+        return chain;
     }
 
     private SharingCodeDomain getDomainByCode(String code) {

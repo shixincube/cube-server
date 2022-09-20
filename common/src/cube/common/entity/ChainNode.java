@@ -42,6 +42,11 @@ public class ChainNode extends Entity {
     private String event;
 
     /**
+     * 事件数量。
+     */
+    private int eventTotal;
+
+    /**
      * 操作人。
      */
     private AbstractContact who;
@@ -66,9 +71,20 @@ public class ChainNode extends Entity {
      */
     private List<String> tracks;
 
+    /**
+     * 相邻前向节点。
+     */
     private ChainNode previous;
 
+    /**
+     * 相邻后向节点。
+     */
     private ChainNode next;
+
+    /**
+     * 子节点。
+     */
+    private List<ChainNode> children;
 
     public ChainNode(Long id, String domain, String event, AbstractContact who, FileLabel what, long when) {
         super(id, domain);
@@ -79,8 +95,28 @@ public class ChainNode extends Entity {
         this.tracks = new ArrayList<>();
     }
 
+    public ChainNode(long id, String domain, ChainNode previous, ChainNode next) {
+        super(id, domain);
+        this.previous = previous;
+        this.next = next;
+    }
+
+    public ChainNode(long id, String domain, String event) {
+        super(id, domain);
+        this.event = event;
+        this.eventTotal = 0;
+    }
+
     public String getEvent() {
         return this.event;
+    }
+
+    public int getEventTotal() {
+        return this.eventTotal;
+    }
+
+    public void setEventTotal(int total) {
+        this.eventTotal = total;
     }
 
     public AbstractContact getWho() {
@@ -116,9 +152,29 @@ public class ChainNode extends Entity {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (o instanceof ChainNode) {
+            ChainNode other = (ChainNode) o;
+            if (other.id.equals(this.id)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("event", this.event);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        json.put("event", this.event);
+        json.put("eventTotal", this.eventTotal);
         return json;
     }
 }

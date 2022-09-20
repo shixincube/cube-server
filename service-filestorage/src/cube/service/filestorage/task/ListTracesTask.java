@@ -33,6 +33,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.TransmissionChain;
 import cube.common.entity.VisitTrace;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
@@ -59,7 +60,7 @@ public class ListTracesTask extends ServiceTask {
         ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
-        if (!packet.data.has("sharingCode") || !packet.data.has("begin") || !packet.data.has("end")) {
+        if (!packet.data.has("sharingCode")) {
             // 参数错误
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
@@ -79,40 +80,60 @@ public class ListTracesTask extends ServiceTask {
         }
 
         String sharingCode = packet.data.getString("sharingCode");
-        int beginIndex = packet.data.getInt("begin");
-        int endIndex = packet.data.getInt("end");
 
-        // 校验参数
-        int d = endIndex - beginIndex;
-        if (d > 9) {
-            endIndex = beginIndex + 9;
+        if (packet.data.has("begin") && packet.data.has("end")) {
+            int beginIndex = packet.data.getInt("begin");
+            int endIndex = packet.data.getInt("end");
+
+            // 校验参数
+            int d = endIndex - beginIndex;
+            if (d > 9) {
+                endIndex = beginIndex + 9;
+            }
+
+            // 获取服务
+            FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
+            List<VisitTrace> list = service.getSharingManager().listSharingVisitTrace(contact, sharingCode, beginIndex, endIndex);
+            if (null == list) {
+                // 发生错误
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
+                markResponseTime();
+                return;
+            }
+
+            JSONArray array = new JSONArray();
+            for (VisitTrace trace : list) {
+                array.put(trace.toCompactJSON());
+            }
+
+            JSONObject result = new JSONObject();
+            result.put("list", array);
+            result.put("total", service.getSharingManager().countSharingVisitTrace(contact, sharingCode));
+            result.put("begin", beginIndex);
+            result.put("end", endIndex);
+            result.put("sharingCode", sharingCode);
+
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
+            markResponseTime();
         }
+        else if (packet.data.has("trace")) {
+            // 追踪深度
+            int trace = packet.data.getInt("trace");
 
-        // 获取服务
-        FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-        List<VisitTrace> list = service.getSharingManager().listSharingVisitTrace(contact, sharingCode, beginIndex, endIndex);
-        if (null == list) {
-            // 发生错误
+            // 获取服务
+            FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
+            TransmissionChain chain = service.getSharingManager().calcTraceChain(contact, sharingCode, trace);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.Ok.code, chain.toCompactJSON()));
+            markResponseTime();
+        }
+        else {
+            // 参数错误
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.Forbidden.code, packet.data));
             markResponseTime();
-            return;
         }
-
-        JSONArray array = new JSONArray();
-        for (VisitTrace trace : list) {
-            array.put(trace.toCompactJSON());
-        }
-
-        JSONObject result = new JSONObject();
-        result.put("list", array);
-        result.put("total", service.getSharingManager().countSharingVisitTrace(contact, sharingCode));
-        result.put("begin", beginIndex);
-        result.put("end", endIndex);
-        result.put("sharingCode", sharingCode);
-
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
-        markResponseTime();
     }
 }

@@ -1373,6 +1373,23 @@ public class ServiceStorage implements Storagable {
         });
     }
 
+    private VisitTrace makeVisitTrace(Map<String, StorageField> map) {
+        VisitTrace visitTrace = new VisitTrace(map.get("platform").getString(), map.get("time").getLong(),
+                map.get("address").getString(), map.get("domain").getString(), map.get("url").getString(),
+                map.get("title").getString(),
+                new JSONObject(map.get("screen").getString()), map.get("language").getString(),
+                map.get("user_agent").isNullValue() ? null : map.get("user_agent").getString(),
+                map.get("agent").isNullValue() ? null : new JSONObject(map.get("agent").getString()),
+                map.get("event").isNullValue() ? null : map.get("event").getString(),
+                map.get("event_tag").isNullValue() ? null : map.get("event_tag").getString(),
+                map.get("event_param").isNullValue() ? null : new JSONObject(map.get("event_param").getString()));
+        visitTrace.contactId = map.get("contact_id").getLong();
+        visitTrace.contactDomain = map.get("contact_domain").isNullValue() ? null : map.get("contact_domain").getString();
+        visitTrace.sharerId = map.get("sharer").getLong();
+        visitTrace.parentId = map.get("parent").getLong();
+        return visitTrace;
+    }
+
     /**
      * 批量获取指定分享人的分享访问记录。
      *
@@ -1401,19 +1418,38 @@ public class ServiceStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> map = StorageFields.get(fields);
-            VisitTrace visitTrace = new VisitTrace(map.get("platform").getString(), map.get("time").getLong(),
-                    map.get("address").getString(), map.get("domain").getString(), map.get("url").getString(),
-                    map.get("title").getString(),
-                    new JSONObject(map.get("screen").getString()), map.get("language").getString(),
-                    map.get("user_agent").isNullValue() ? null : map.get("user_agent").getString(),
-                    map.get("agent").isNullValue() ? null : new JSONObject(map.get("agent").getString()),
-                    map.get("event").isNullValue() ? null : map.get("event").getString(),
-                    map.get("event_tag").isNullValue() ? null : map.get("event_tag").getString(),
-                    map.get("event_param").isNullValue() ? null : new JSONObject(map.get("event_param").getString()));
-            visitTrace.contactId = map.get("contact_id").getLong();
-            visitTrace.contactDomain = map.get("contact_domain").isNullValue() ? null : map.get("contact_domain").getString();
-            visitTrace.sharerId = map.get("sharer").getLong();
-            visitTrace.parentId = map.get("parent").getLong();
+            VisitTrace visitTrace = this.makeVisitTrace(map);
+            list.add(visitTrace);
+        }
+
+        return list;
+    }
+
+    /**
+     * 按照指定的 Sharer 查询记录。
+     * @param domain
+     * @param code
+     * @param sharerId
+     * @return
+     */
+    public List<VisitTrace> queryVisitTraceBySharer(String domain, String code, long sharerId) {
+        List<VisitTrace> list = new ArrayList<>();
+
+        String table = this.visitTraceTableNameMap.get(domain);
+        if (null == table) {
+            return list;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, this.visitTraceFields, new Conditional[] {
+                Conditional.createEqualTo("code", code),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("sharer", sharerId),
+                Conditional.createOrderBy("time", true)
+        });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> map = StorageFields.get(fields);
+            VisitTrace visitTrace = this.makeVisitTrace(map);
             list.add(visitTrace);
         }
 
@@ -1451,19 +1487,7 @@ public class ServiceStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> map = StorageFields.get(fields);
-            VisitTrace visitTrace = new VisitTrace(map.get("platform").getString(), map.get("time").getLong(),
-                    map.get("address").getString(), map.get("domain").getString(), map.get("url").getString(),
-                    map.get("title").getString(),
-                    new JSONObject(map.get("screen").getString()), map.get("language").getString(),
-                    map.get("user_agent").isNullValue() ? null : map.get("user_agent").getString(),
-                    map.get("agent").isNullValue() ? null : new JSONObject(map.get("agent").getString()),
-                    map.get("event").isNullValue() ? null : map.get("event").getString(),
-                    map.get("event_tag").isNullValue() ? null : map.get("event_tag").getString(),
-                    map.get("event_param").isNullValue() ? null : new JSONObject(map.get("event_param").getString()));
-            visitTrace.contactId = map.get("contact_id").getLong();
-            visitTrace.contactDomain = map.get("contact_domain").isNullValue() ? null : map.get("contact_domain").getString();
-            visitTrace.sharerId = map.get("sharer").getLong();
-            visitTrace.parentId = map.get("parent").getLong();
+            VisitTrace visitTrace = this.makeVisitTrace(map);
             list.add(visitTrace);
         }
 
