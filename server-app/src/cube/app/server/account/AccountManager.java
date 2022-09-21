@@ -42,6 +42,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -89,6 +90,16 @@ public class AccountManager extends TimerTask {
      * 被激活使用的验证码。
      */
     private List<String> activeCaptchaList;
+
+    /**
+     * 账号管理外链。
+     */
+    private String accountExternalURL;
+
+    /**
+     * 升级引导页面。
+     */
+    private String upgradeExternalURL;
 
     private AccountManager() {
         this.onlineIdMap = new ConcurrentHashMap<>();
@@ -757,6 +768,22 @@ public class AccountManager extends TimerTask {
         this.accountStorage.updateAccount(accountId, account.name, account.avatar);
 
         return account;
+    }
+
+    public void setAccountExternalURL(String url) {
+        this.accountExternalURL = url;
+    }
+
+    public String getAccountExternalURL() {
+        return this.accountExternalURL;
+    }
+
+    public void setUpgradeExternalURL(String url) {
+        this.upgradeExternalURL = url;
+    }
+
+    public String getUpgradeExternalURL() {
+        return this.upgradeExternalURL;
     }
 
     @Override

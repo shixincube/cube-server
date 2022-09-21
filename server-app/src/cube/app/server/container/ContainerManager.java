@@ -179,6 +179,13 @@ public class ContainerManager {
                 LogManager.getInstance().setLevel(LogLevel.INFO);
             }
         }
+
+        if (properties.containsKey("url.account")) {
+            AccountManager.getInstance().setAccountExternalURL(properties.getProperty("url.account"));
+        }
+        if (properties.containsKey("url.upgrade")) {
+            AccountManager.getInstance().setUpgradeExternalURL(properties.getProperty("url.upgrade"));
+        }
     }
 
     private HandlerList createHandlerList(Properties properties) {
@@ -202,6 +209,11 @@ public class ContainerManager {
                 new RegisterHandler(httpAllowOrigin, httpsAllowOrigin),
                 new CheckPhoneAvailableHandler(httpAllowOrigin, httpsAllowOrigin),
                 new SearchAccountHandler(httpAllowOrigin, httpsAllowOrigin),
+
+                // 账号升级
+                new UpgradeHandler(httpAllowOrigin, httpsAllowOrigin),
+                // 账号管理
+                new ManagementHandler(httpAllowOrigin, httpsAllowOrigin),
 
                 new DomainInfoHandler(httpAllowOrigin, httpsAllowOrigin),
 
