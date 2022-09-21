@@ -560,13 +560,26 @@ public class FileSharingManager {
         chain.addNode(extractNode);
         chain.addNode(shareNode);
 
-        // 二链计算
-
+        // 计算二链
         ChainNode fissionNode = new ChainNode(Utils.generateSerialNumber(), contact.getDomain().getName(),
                 "Fission");
 
         traceList = this.service.getServiceStorage().queryVisitTraceByParent(contact.getDomain().getName(),
                 sharingCode, contact.getId());
+        // 进行数据分类
+        for (VisitTrace visitTrace : traceList) {
+            /*
+            // 浏览记录
+            ChainNode viewNode = new ChainNode(Utils.generateSerialNumber(), contact.getDomain().getName(),
+                    TraceEvent.View);
+            // 下载记录
+            ChainNode extractNode = new ChainNode(Utils.generateSerialNumber(), contact.getDomain().getName(),
+                    TraceEvent.Extract);
+            // 复制链接记录
+            ChainNode shareNode = new ChainNode(Utils.generateSerialNumber(), contact.getDomain().getName(),
+                    TraceEvent.Share);
+             */
+        }
         List<ChainNode> nodeList = this.compressNodes(traceList);
         fissionNode.addChildren(nodeList);
 
