@@ -26,6 +26,10 @@
 
 package cube.service.filestorage;
 
+import cube.common.entity.Contact;
+import cube.common.entity.SharingReport;
+import cube.common.entity.TraceEvent;
+
 /**
  * 报告数据计算器。
  */
@@ -33,10 +37,24 @@ public class SharingReportor {
 
     private ServiceStorage storage;
 
-    private String sharingCode;
-
-    public SharingReportor(ServiceStorage storage, String sharingCode) {
+    public SharingReportor(ServiceStorage storage) {
+        this.storage = storage;
     }
 
+    public SharingReport countRecord(Contact contact) {
+        int numTag = this.storage.countSharingTag(contact.getDomain().getName(), contact.getId(), true);
+        int numEventView = this.storage.countTraceEvent(contact.getDomain().getName(), contact.getId(),
+                TraceEvent.View);
+        int numEventExtract = this.storage.countTraceEvent(contact.getDomain().getName(), contact.getId(),
+                TraceEvent.Extract);
+        int numEventShare = this.storage.countTraceEvent(contact.getDomain().getName(), contact.getId(),
+                TraceEvent.Share);
 
+        SharingReport report = new SharingReport(SharingReport.CountRecord);
+        report.totalSharingTag = numTag;
+        report.totalEventView = numEventView;
+        report.totalEventExtract = numEventExtract;
+        report.totalEventShare = numEventShare;
+        return report;
+    }
 }

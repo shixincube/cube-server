@@ -588,6 +588,10 @@ public class FileSharingManager {
         return chain;
     }
 
+    public SharingReportor createSharingReportor() {
+        return new SharingReportor(this.service.serviceStorage);
+    }
+
     private List<ChainNode> compressNodes(List<VisitTrace> visitTraceList) {
         List<ChainNode> list = new ArrayList<>();
         for (VisitTrace visitTrace : visitTraceList) {

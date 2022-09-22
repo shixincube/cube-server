@@ -164,6 +164,11 @@ public enum FileStorageAction {
     GetSharingTag("getSharingTag"),
 
     /**
+     * 获取分享报告数据。
+     */
+    GetSharingReport("getSharingReport"),
+
+    /**
      * 罗列当前联系人的所有分享标签。
      */
     ListSharingTags("listSharingTags"),

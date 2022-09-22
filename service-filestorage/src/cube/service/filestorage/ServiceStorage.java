@@ -1512,6 +1512,25 @@ public class ServiceStorage implements Storagable {
         return result.get(0)[0].getInt();
     }
 
+    /**
+     * 计算联系人分享出去的所有链接指定事件的数量。
+     * @param domain
+     * @param contactId
+     * @param event
+     * @return
+     */
+    public int countTraceEvent(String domain, long contactId, String event) {
+        String table = this.visitTraceTableNameMap.get(domain);
+        if (null == table) {
+            return 0;
+        }
+
+        String sql = "SELECT COUNT(sn) FROM `" + table + "` WHERE `event`='" +
+                    event + "' AND `parent`=" + contactId;
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        return result.get(0)[0].getInt();
+    }
+
     private void checkLabelTable(String domain) {
         String table = this.labelTablePrefix + domain;
 
