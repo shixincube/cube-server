@@ -44,6 +44,7 @@ import cube.util.FileType;
 import cube.util.SQLUtils;
 import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -1529,6 +1530,38 @@ public class ServiceStorage implements Storagable {
                     event + "' AND `parent`=" + contactId;
         List<StorageField[]> result = this.storage.executeQuery(sql);
         return result.get(0)[0].getInt();
+    }
+
+    /**
+     * 查询指定事件对应的分享码数量。
+     * @param domain
+     * @param countId
+     * @param event
+     * @return
+     */
+    public Map<String, Integer> queryCodeCountByEvent(String domain, long countId, String event) {
+        Map<String, Integer> map = new HashMap<>();
+
+        String table = this.visitTraceTableNameMap.get(domain);
+        if (null == table) {
+            return map;
+        }
+
+        String sql = "SELECT DISTINCT(code) FROM `" + table + "` WHERE `event`='" + event + "' AND `parent`="
+                + countId;
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        if (!result.isEmpty()) {
+            for (StorageField[] fields : result) {
+                String code = fields[0].getString();
+                // 查询指定 code 对应事件的数量
+                sql = "SELECT COUNT(sn) FROM `" + table + "` WHERE `event`='" + event + "' AND `parent`="
+                        + countId + " AND `code`='" + code + "'";
+                List<StorageField[]> countResult = this.storage.executeQuery(sql);
+                int count = countResult.get(0)[0].getInt();
+                map.put(code, count);
+            }
+        }
+        return map;
     }
 
     private void checkLabelTable(String domain) {

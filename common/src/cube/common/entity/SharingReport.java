@@ -26,7 +26,14 @@
 
 package cube.common.entity;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 分享数据报告。
@@ -34,6 +41,8 @@ import org.json.JSONObject;
 public class SharingReport extends Entity {
 
     public final static String CountRecord = "CountRecord";
+
+    public final static String TopCountRecord = "TopCountRecord";
 
     private String name;
 
@@ -45,13 +54,66 @@ public class SharingReport extends Entity {
 
     public int totalEventShare = -1;
 
+    public Map<String, SharingTag> sharingTagMap;
+
+    public List<SharingTagPair> topViewList;
+
+    public List<SharingTagPair> topExtractList;
+
     public SharingReport(String name) {
         super();
         this.name = name;
+        this.sharingTagMap = new ConcurrentHashMap<>();
     }
 
     public String getName() {
         return this.name;
+    }
+
+    public void addTopViewRecords(Map<String, Integer> records, int topNum) {
+        if (null == this.topViewList) {
+            this.topViewList = new ArrayList<>();
+        }
+
+        for (Map.Entry<String, Integer> e : records.entrySet()) {
+            SharingTagPair pair = new SharingTagPair(e.getKey(), e.getValue());
+            this.topViewList.add(pair);
+        }
+
+        // 排序
+        this.topViewList.sort(new Comparator<SharingTagPair>() {
+            @Override
+            public int compare(SharingTagPair stp1, SharingTagPair stp2) {
+                return stp2.total - stp1.total;
+            }
+        });
+
+        if (this.topViewList.size() > topNum) {
+            this.topViewList = this.topViewList.subList(0, topNum - 1);
+        }
+    }
+
+    public void addTopExtractRecords(Map<String, Integer> records, int topNum) {
+        if (null == this.topExtractList) {
+            this.topExtractList = new ArrayList<>();
+        }
+
+        for (Map.Entry<String, Integer> e : records.entrySet()) {
+            SharingTagPair pair = new SharingTagPair(e.getKey(), e.getValue());
+            this.topExtractList.add(pair);
+        }
+
+        // 排序
+        this.topExtractList.sort(new Comparator<SharingTagPair>() {
+            @Override
+            public int compare(SharingTagPair stp1, SharingTagPair stp2) {
+                return stp2.total - stp1.total;
+            }
+        });
+
+        if (this.topExtractList.size() > topNum) {
+            this.topExtractList = this.topExtractList.subList(0, topNum - 1);
+        }
     }
 
     public SharingReport merge(SharingReport other) {
@@ -68,6 +130,13 @@ public class SharingReport extends Entity {
             this.totalEventShare = other.totalEventShare;
         }
 
+        if (null != other.topViewList) {
+            this.topViewList = other.topViewList;
+        }
+        if (null != other.topExtractList) {
+            this.topExtractList = other.topExtractList;
+        }
+
         return this;
     }
 
@@ -78,6 +147,42 @@ public class SharingReport extends Entity {
         json.put("totalEventView", this.totalEventView);
         json.put("totalEventExtract", this.totalEventExtract);
         json.put("totalEventShare", this.totalEventShare);
+
+        if (null != this.topViewList) {
+            JSONArray array = new JSONArray();
+            for (SharingTagPair pair : this.topViewList) {
+                array.put(pair);
+            }
+            json.put("topView", array);
+        }
+
+        if (null != this.topExtractList) {
+            JSONArray array = new JSONArray();
+            for (SharingTagPair pair : this.topExtractList) {
+                array.put(pair);
+            }
+            json.put("topExtract", array);
+        }
+
         return json;
+    }
+
+    protected class SharingTagPair {
+
+        protected String sharingCode;
+
+        protected int total;
+
+        protected SharingTagPair(String sharingCode, int total) {
+            this.sharingCode = sharingCode;
+            this.total = total;
+        }
+
+        protected JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("code", this.sharingCode);
+            json.put("total", this.total);
+            return json;
+        }
     }
 }

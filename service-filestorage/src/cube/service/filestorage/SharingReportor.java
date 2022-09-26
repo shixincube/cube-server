@@ -30,6 +30,8 @@ import cube.common.entity.Contact;
 import cube.common.entity.SharingReport;
 import cube.common.entity.TraceEvent;
 
+import java.util.Map;
+
 /**
  * 报告数据计算器。
  */
@@ -55,6 +57,20 @@ public class SharingReportor {
         report.totalEventView = numEventView;
         report.totalEventExtract = numEventExtract;
         report.totalEventShare = numEventShare;
+        return report;
+    }
+
+    public SharingReport topRecords(Contact contact, int topNum) {
+        SharingReport report = new SharingReport(SharingReport.TopCountRecord);
+
+        Map<String, Integer> viewCountMap = this.storage.queryCodeCountByEvent(contact.getDomain().getName(),
+                contact.getId(), TraceEvent.View);
+        report.addTopViewRecords(viewCountMap, topNum);
+
+        Map<String, Integer> extractCountMap = this.storage.queryCodeCountByEvent(contact.getDomain().getName(),
+                contact.getId(), TraceEvent.Extract);
+        report.addTopExtractRecords(extractCountMap, topNum);
+
         return report;
     }
 }

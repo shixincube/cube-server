@@ -34,13 +34,15 @@ import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
 import cube.common.entity.SharingReport;
-import cube.common.entity.SharingTag;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 import cube.service.filestorage.SharingReportor;
+import org.json.JSONArray;
+
+import java.util.ArrayList;
 
 /**
  * 获取分享报告任务。
@@ -68,8 +70,18 @@ public class GetSharingReportTask extends ServiceTask {
             return;
         }
 
-        String reportName = packet.data.getString("name");
-        if (null == reportName) {
+        ArrayList<String> reportNames = new ArrayList<>();
+
+        if (packet.data.has("name")) {
+            reportNames.add(packet.data.getString("name"));
+        }
+        else if (packet.data.has("names")) {
+            JSONArray array = packet.data.getJSONArray("names");
+            for (int i = 0; i < array.length(); ++i) {
+                reportNames.add(array.getString(i));
+            }
+        }
+        else {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.InvalidParameter.code, packet.data));
             markResponseTime();
@@ -80,16 +92,33 @@ public class GetSharingReportTask extends ServiceTask {
         // 创建报告机
         SharingReportor reportor = service.getSharingManager().createSharingReportor();
 
-        if (reportName.equalsIgnoreCase(SharingReport.CountRecord)) {
-            // 生成报告
-            SharingReport report = reportor.countRecord(contact);
+        ArrayList<SharingReport> reportList = new ArrayList<>();
+        for (String reportName : reportNames) {
+            if (reportName.equalsIgnoreCase(SharingReport.CountRecord)) {
+                // 生成报告
+                SharingReport report = reportor.countRecord(contact);
+                reportList.add(report);
+            }
+            else if (reportName.equalsIgnoreCase(SharingReport.TopCountRecord)) {
+                // 生成报告
+                SharingReport report = reportor.topRecords(contact, 10);
+                reportList.add(report);
+            }
+        }
+
+        if (reportList.isEmpty()) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.Ok.code, report.toJSON()));
+                    this.makeResponse(action, packet, FileStorageStateCode.Failure.code, packet.data));
             markResponseTime();
         }
         else {
+            SharingReport report = reportList.get(0);
+            for (int i = 1; i < reportList.size(); ++i) {
+                report.merge(reportList.get(i));
+            }
+
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.Failure.code, packet.data));
+                    this.makeResponse(action, packet, FileStorageStateCode.Ok.code, report.toJSON()));
             markResponseTime();
         }
     }
