@@ -1564,6 +1564,65 @@ public class ServiceStorage implements Storagable {
         return map;
     }
 
+    /**
+     * 查询事件时间线数据。
+     * @param domain
+     * @param countId
+     * @param event
+     * @param beginTime
+     * @param endTime
+     * @return
+     */
+    public List<TimePoint> queryEventTimeline(String domain, long countId, String event,
+                                                 long beginTime, long endTime) {
+        List<TimePoint> list = new ArrayList<>();
+        String table = this.visitTraceTableNameMap.get(domain);
+        if (null == table) {
+            return list;
+        }
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT `code`,`time`,`address` FROM `").append(table).append("`");
+        sql.append(" WHERE `event`='").append(event).append("'");
+        sql.append(" AND `parent`=").append(countId);
+        sql.append(" AND `time`>").append(beginTime);
+        sql.append(" AND `time`<=").append(endTime);
+
+        List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+        if (result.isEmpty()) {
+            return list;
+        }
+
+        for (StorageField[] fields : result) {
+            String code = fields[0].getString();
+            long time = fields[1].getLong();
+            String address = fields[2].getString();
+
+            TimePoint point = new TimePoint(time, code);
+            point.event = event;
+            point.address = address;
+            list.add(point);
+        }
+
+        return list;
+    }
+
+    protected class TimePoint {
+
+        public long time;
+
+        public String code;
+
+        public String event;
+
+        public String address;
+
+        public TimePoint(long time, String code) {
+            this.time = time;
+            this.code = code;
+        }
+    }
+
     private void checkLabelTable(String domain) {
         String table = this.labelTablePrefix + domain;
 

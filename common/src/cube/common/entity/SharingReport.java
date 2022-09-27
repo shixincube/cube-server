@@ -29,10 +29,7 @@ package cube.common.entity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -43,6 +40,8 @@ public class SharingReport extends Entity {
     public final static String CountRecord = "CountRecord";
 
     public final static String TopCountRecord = "TopCountRecord";
+
+    public final static String HistoryEventRecord = "HistoryEventRecord";
 
     private String name;
 
@@ -59,6 +58,8 @@ public class SharingReport extends Entity {
     public List<SharingTagPair> topViewList;
 
     public List<SharingTagPair> topExtractList;
+
+    public Map<String, List<JSONObject>> eventTimeMap;
 
     public SharingReport(String name) {
         super();
@@ -116,6 +117,22 @@ public class SharingReport extends Entity {
         }
     }
 
+    public void addEventToTimeline(long time, String event, int total) {
+        if (null == this.eventTimeMap) {
+            this.eventTimeMap = new HashMap<>();
+        }
+
+        List<JSONObject> list = this.eventTimeMap.get(event);
+        if (null == list) {
+            list = new ArrayList<>();
+            this.eventTimeMap.put(event, list);
+        }
+        JSONObject data = new JSONObject();
+        data.put("time", time);
+        data.put("total", total);
+        list.add(data);
+    }
+
     public SharingReport merge(SharingReport other) {
         if (other.totalSharingTag != -1) {
             this.totalSharingTag = other.totalSharingTag;
@@ -143,10 +160,18 @@ public class SharingReport extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("totalSharingTag", this.totalSharingTag);
-        json.put("totalEventView", this.totalEventView);
-        json.put("totalEventExtract", this.totalEventExtract);
-        json.put("totalEventShare", this.totalEventShare);
+        if (this.totalSharingTag != -1) {
+            json.put("totalSharingTag", this.totalSharingTag);
+        }
+        if (this.totalEventView != -1) {
+            json.put("totalEventView", this.totalEventView);
+        }
+        if (this.totalEventExtract != -1) {
+            json.put("totalEventExtract", this.totalEventExtract);
+        }
+        if (this.totalEventShare != -1) {
+            json.put("totalEventShare", this.totalEventShare);
+        }
 
         if (null != this.topViewList) {
             JSONArray array = new JSONArray();
@@ -162,6 +187,18 @@ public class SharingReport extends Entity {
                 array.put(pair.toJSON());
             }
             json.put("topExtract", array);
+        }
+
+        if (null != this.eventTimeMap) {
+            for (Map.Entry<String, List<JSONObject>> e : this.eventTimeMap.entrySet()) {
+                List<JSONObject> list = e.getValue();
+                JSONArray array = new JSONArray();
+                for (JSONObject data : list) {
+                    array.put(data);
+                }
+
+                json.put("timeline" + e.getKey(), array);
+            }
         }
 
         return json;
@@ -183,6 +220,18 @@ public class SharingReport extends Entity {
             json.put("code", this.sharingCode);
             json.put("total", this.total);
             return json;
+        }
+    }
+
+    protected class TimeNode {
+
+        public long time;
+
+        public Map<String, Integer> eventTotal;
+
+        protected TimeNode(long time) {
+            this.time = time;
+            this.eventTotal = new HashMap<>();
         }
     }
 }

@@ -41,8 +41,10 @@ import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 import cube.service.filestorage.SharingReportor;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 /**
  * 获取分享报告任务。
@@ -96,12 +98,26 @@ public class GetSharingReportTask extends ServiceTask {
         for (String reportName : reportNames) {
             if (reportName.equalsIgnoreCase(SharingReport.CountRecord)) {
                 // 生成报告
-                SharingReport report = reportor.countRecord(contact);
+                SharingReport report = reportor.reportCountRecord(contact);
                 reportList.add(report);
             }
             else if (reportName.equalsIgnoreCase(SharingReport.TopCountRecord)) {
                 // 生成报告
-                SharingReport report = reportor.topRecords(contact, 10);
+                SharingReport report = reportor.reportTopNRecords(contact, 10);
+                reportList.add(report);
+            }
+            else if (reportName.equalsIgnoreCase(SharingReport.HistoryEventRecord)) {
+                int duration = 7;
+                int unit = Calendar.DATE;
+
+                if (packet.data.has("option")) {
+                    JSONObject option = packet.data.getJSONObject("option");
+                    duration = option.getInt("duration");
+                    unit = option.getInt("unit");
+                }
+
+                // 生成报告
+                SharingReport report = reportor.reportHistoryTotal(contact, duration, unit);
                 reportList.add(report);
             }
         }

@@ -35,7 +35,9 @@ import java.util.regex.Pattern;
 /**
  * IP 查询。
  */
-public class IPSeeker {
+public final class IPSeeker {
+
+    private static IPSeeker instance = null;
 
     private static final int INDEX_RECORD_LENGTH = 7;
     private static final byte REDIRECT_MODE_1 = 0x01;
@@ -47,7 +49,7 @@ public class IPSeeker {
     private final long indexTail;
     private final String databaseVersion;
 
-    public IPSeeker() throws IOException {
+    private IPSeeker() throws IOException {
         final InputStream in = new FileInputStream("assets/ip-db.dat");
         final ByteArrayOutputStream out = new ByteArrayOutputStream(11 * 1024 * 1024); // 11MB
         final byte[] buffer = new byte[4096];
@@ -89,6 +91,18 @@ public class IPSeeker {
 
     public IPSeeker(final Path file) throws IOException {
         this(Files.readAllBytes(file));
+    }
+
+    public synchronized static IPSeeker getInstance() {
+        if (null == IPSeeker.instance) {
+            try {
+                IPSeeker.instance = new IPSeeker();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return IPSeeker.instance;
     }
 
     public IPEntry findIP(final String ip) {

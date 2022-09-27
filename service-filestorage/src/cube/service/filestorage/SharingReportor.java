@@ -26,11 +26,13 @@
 
 package cube.service.filestorage;
 
+import cell.util.log.Logger;
 import cube.common.entity.Contact;
 import cube.common.entity.SharingReport;
 import cube.common.entity.TraceEvent;
 
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 报告数据计算器。
@@ -43,7 +45,7 @@ public class SharingReportor {
         this.storage = storage;
     }
 
-    public SharingReport countRecord(Contact contact) {
+    public SharingReport reportCountRecord(Contact contact) {
         int numTag = this.storage.countSharingTag(contact.getDomain().getName(), contact.getId(), true);
         int numEventView = this.storage.countTraceEvent(contact.getDomain().getName(), contact.getId(),
                 TraceEvent.View);
@@ -60,7 +62,7 @@ public class SharingReportor {
         return report;
     }
 
-    public SharingReport topRecords(Contact contact, int topNum) {
+    public SharingReport reportTopNRecords(Contact contact, int topNum) {
         SharingReport report = new SharingReport(SharingReport.TopCountRecord);
 
         Map<String, Integer> viewCountMap = this.storage.queryCodeCountByEvent(contact.getDomain().getName(),
@@ -70,6 +72,72 @@ public class SharingReportor {
         Map<String, Integer> extractCountMap = this.storage.queryCodeCountByEvent(contact.getDomain().getName(),
                 contact.getId(), TraceEvent.Extract);
         report.addTopExtractRecords(extractCountMap, topNum);
+
+        return report;
+    }
+
+    public SharingReport reportHistoryTotal(Contact contact, int duration, int durationUnit) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DATE),
+                0, 0, 0);
+        long endTime = calendar.getTimeInMillis();
+
+        switch (durationUnit) {
+            case Calendar.DATE:
+                calendar.add(Calendar.DATE, -duration);
+                break;
+            case Calendar.MONTH:
+                calendar.add(Calendar.MONTH, -duration);
+                break;
+            case Calendar.YEAR:
+                calendar.add(Calendar.YEAR, -duration);
+                break;
+            default:
+                break;
+        }
+        long beginTime = calendar.getTimeInMillis();
+
+        List<Long> separators = new ArrayList<>();
+        long time = beginTime;
+        while (time < endTime) {
+            time += 24 * 60 * 60 * 1000;
+            separators.add(time - 1000);
+        }
+
+        SharingReport report = new SharingReport(SharingReport.HistoryEventRecord);
+
+        // IP 数据
+        HashMap<String, AtomicInteger> ipMap = new HashMap<>();
+        // OS 数据
+        HashMap<String, AtomicInteger> osMap = new HashMap<>();
+        // 浏览器数据
+        HashMap<String, AtomicInteger> swMap = new HashMap<>();
+
+        long begin = beginTime;
+        for (Long separateTime : separators) {
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#reportHistoryTotal - time interval: "
+                        + (new Date(begin)).toString() + " - " + (new Date(separateTime)).toString());
+            }
+
+            List<ServiceStorage.TimePoint> list = this.storage.queryEventTimeline(contact.getDomain().getName(),
+                    contact.getId(), TraceEvent.View, begin, separateTime);
+            // 添加记录
+            report.addEventToTimeline(begin, TraceEvent.View, list.size());
+
+
+            list = this.storage.queryEventTimeline(contact.getDomain().getName(),
+                    contact.getId(), TraceEvent.Extract, begin, separateTime);
+            // 添加记录
+            report.addEventToTimeline(begin, TraceEvent.Extract, list.size());
+
+            list = this.storage.queryEventTimeline(contact.getDomain().getName(),
+                    contact.getId(), TraceEvent.Share, begin, separateTime);
+            // 添加记录
+            report.addEventToTimeline(begin, TraceEvent.Share, list.size());
+
+            begin = separateTime + 1000;
+        }
 
         return report;
     }

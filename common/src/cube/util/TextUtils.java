@@ -28,6 +28,7 @@ package cube.util;
 
 import cube.common.entity.TextConstraint;
 import cube.vision.Size;
+import org.json.JSONObject;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,6 +55,11 @@ public final class TextUtils {
             return false;
         }
         return true;
+    }
+
+    public static JSONObject parseUserAgent(String text) {
+        JSONObject json = new JSONObject();
+        return json;
     }
 
     /**
