@@ -151,7 +151,7 @@ public class SharingReport extends Entity {
         if (null != this.topViewList) {
             JSONArray array = new JSONArray();
             for (SharingTagPair pair : this.topViewList) {
-                array.put(pair);
+                array.put(pair.toJSON());
             }
             json.put("topView", array);
         }
@@ -159,7 +159,7 @@ public class SharingReport extends Entity {
         if (null != this.topExtractList) {
             JSONArray array = new JSONArray();
             for (SharingTagPair pair : this.topExtractList) {
-                array.put(pair);
+                array.put(pair.toJSON());
             }
             json.put("topExtract", array);
         }
