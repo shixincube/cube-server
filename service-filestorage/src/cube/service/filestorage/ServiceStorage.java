@@ -1582,7 +1582,7 @@ public class ServiceStorage implements Storagable {
         }
 
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT `code`,`time`,`address` FROM `").append(table).append("`");
+        sql.append("SELECT `code`,`time`,`address`,`user_agent`,`agent` FROM `").append(table).append("`");
         sql.append(" WHERE `event`='").append(event).append("'");
         sql.append(" AND `parent`=").append(countId);
         sql.append(" AND `time`>").append(beginTime);
@@ -1596,11 +1596,12 @@ public class ServiceStorage implements Storagable {
         for (StorageField[] fields : result) {
             String code = fields[0].getString();
             long time = fields[1].getLong();
-            String address = fields[2].getString();
 
             TimePoint point = new TimePoint(time, code);
             point.event = event;
-            point.address = address;
+            point.address = fields[2].getString();
+            point.userAgent = fields[3].isNullValue() ? null : fields[3].getString();
+            point.agent = fields[4].isNullValue() ? null : fields[4].getString();
             list.add(point);
         }
 
@@ -1616,6 +1617,10 @@ public class ServiceStorage implements Storagable {
         public String event;
 
         public String address;
+
+        public String userAgent;
+
+        public String agent;
 
         public TimePoint(long time, String code) {
             this.time = time;

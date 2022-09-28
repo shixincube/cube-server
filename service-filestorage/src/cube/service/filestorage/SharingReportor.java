@@ -30,6 +30,9 @@ import cell.util.log.Logger;
 import cube.common.entity.Contact;
 import cube.common.entity.SharingReport;
 import cube.common.entity.TraceEvent;
+import cube.util.IPSeeker;
+import cube.util.TextUtils;
+import org.json.JSONObject;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -107,11 +110,11 @@ public class SharingReportor {
         SharingReport report = new SharingReport(SharingReport.HistoryEventRecord);
 
         // IP 数据
-        HashMap<String, AtomicInteger> ipMap = new HashMap<>();
+        Map<String, AtomicInteger> ipMap = new HashMap<>();
         // OS 数据
-        HashMap<String, AtomicInteger> osMap = new HashMap<>();
+        Map<String, AtomicInteger> osMap = new HashMap<>();
         // 浏览器数据
-        HashMap<String, AtomicInteger> swMap = new HashMap<>();
+        Map<String, AtomicInteger> swMap = new HashMap<>();
 
         long begin = beginTime;
         for (Long separateTime : separators) {
@@ -125,20 +128,79 @@ public class SharingReportor {
             // 添加记录
             report.addEventToTimeline(begin, TraceEvent.View, list.size());
 
+            for (ServiceStorage.TimePoint tp : list) {
+                mergeTimePoint(tp, ipMap, osMap, swMap);
+            }
 
             list = this.storage.queryEventTimeline(contact.getDomain().getName(),
                     contact.getId(), TraceEvent.Extract, begin, separateTime);
             // 添加记录
             report.addEventToTimeline(begin, TraceEvent.Extract, list.size());
 
+            for (ServiceStorage.TimePoint tp : list) {
+                mergeTimePoint(tp, ipMap, osMap, swMap);
+            }
+
             list = this.storage.queryEventTimeline(contact.getDomain().getName(),
                     contact.getId(), TraceEvent.Share, begin, separateTime);
             // 添加记录
             report.addEventToTimeline(begin, TraceEvent.Share, list.size());
 
+            for (ServiceStorage.TimePoint tp : list) {
+                mergeTimePoint(tp, ipMap, osMap, swMap);
+            }
+
             begin = separateTime + 1000;
         }
 
+        for (Map.Entry<String, AtomicInteger> entry : ipMap.entrySet()) {
+            report.addIPTotal(entry.getKey(), entry.getValue().get());
+        }
+        for (Map.Entry<String, AtomicInteger> entry : osMap.entrySet()) {
+            report.addOSTotal(entry.getKey(), entry.getValue().get());
+        }
+        for (Map.Entry<String, AtomicInteger> entry : swMap.entrySet()) {
+            report.addSWTotal(entry.getKey(), entry.getValue().get());
+        }
+
         return report;
+    }
+
+    private void mergeTimePoint(ServiceStorage.TimePoint timePoint, Map<String, AtomicInteger> ipMap,
+                                Map<String, AtomicInteger> osMap,
+                                Map<String, AtomicInteger> swMap) {
+        String ipLocation = IPSeeker.getInstance().findIP(timePoint.address).getMainInfo();
+        if (ipLocation.length() == 0) {
+            ipLocation = timePoint.address;
+        }
+        if (ipMap.containsKey(ipLocation)) {
+            ipMap.get(ipLocation).incrementAndGet();
+        }
+        else {
+            ipMap.put(ipLocation, new AtomicInteger(1));
+        }
+
+        if (null != timePoint.userAgent) {
+            JSONObject us = TextUtils.parseUserAgent(timePoint.userAgent);
+            String osName = us.getString("osName");
+            String swName = us.getString("browserName");
+
+            if (osMap.containsKey(osName)) {
+                osMap.get(osName).incrementAndGet();
+            }
+            else {
+                osMap.put(osName, new AtomicInteger(1));
+            }
+
+            if (swMap.containsKey(swName)) {
+                swMap.get(swName).incrementAndGet();
+            }
+            else {
+                swMap.put(swName, new AtomicInteger(1));
+            }
+        }
+        else if (null != timePoint.agent) {
+            // TODO
+        }
     }
 }

@@ -61,6 +61,10 @@ public class SharingReport extends Entity {
 
     public Map<String, List<JSONObject>> eventTimeMap;
 
+    public List<JSONObject> ipTotalStatistics;
+    public List<JSONObject> osTotalStatistics;
+    public List<JSONObject> swTotalStatistics;
+
     public SharingReport(String name) {
         super();
         this.name = name;
@@ -133,6 +137,39 @@ public class SharingReport extends Entity {
         list.add(data);
     }
 
+    public void addIPTotal(String ipAddress, int total) {
+        if (null == this.ipTotalStatistics) {
+            this.ipTotalStatistics = new ArrayList<>();
+        }
+
+        JSONObject data = new JSONObject();
+        data.put("name", ipAddress);
+        data.put("value", total);
+        this.ipTotalStatistics.add(data);
+    }
+
+    public void addOSTotal(String osName, int total) {
+        if (null == this.osTotalStatistics) {
+            this.osTotalStatistics = new ArrayList<>();
+        }
+
+        JSONObject data = new JSONObject();
+        data.put("name", osName);
+        data.put("value", total);
+        this.osTotalStatistics.add(data);
+    }
+
+    public void addSWTotal(String swName, int total) {
+        if (null == this.swTotalStatistics) {
+            this.swTotalStatistics = new ArrayList<>();
+        }
+
+        JSONObject data = new JSONObject();
+        data.put("name", swName);
+        data.put("value", total);
+        this.swTotalStatistics.add(data);
+    }
+
     public SharingReport merge(SharingReport other) {
         if (other.totalSharingTag != -1) {
             this.totalSharingTag = other.totalSharingTag;
@@ -199,6 +236,51 @@ public class SharingReport extends Entity {
 
                 json.put("timeline" + e.getKey(), array);
             }
+        }
+
+        if (null != this.ipTotalStatistics) {
+            this.ipTotalStatistics.sort(new Comparator<JSONObject>() {
+                @Override
+                public int compare(JSONObject o1, JSONObject o2) {
+                    return o2.getInt("value") - o1.getInt("value");
+                }
+            });
+
+            JSONArray array = new JSONArray();
+            for (JSONObject data : this.ipTotalStatistics) {
+                array.put(data);
+            }
+            json.put("ipTotalStatistics", array);
+        }
+
+        if (null != this.osTotalStatistics) {
+            this.osTotalStatistics.sort(new Comparator<JSONObject>() {
+                @Override
+                public int compare(JSONObject o1, JSONObject o2) {
+                    return o2.getInt("value") - o1.getInt("value");
+                }
+            });
+
+            JSONArray array = new JSONArray();
+            for (JSONObject data : this.osTotalStatistics) {
+                array.put(data);
+            }
+            json.put("osTotalStatistics", array);
+        }
+
+        if (null != this.swTotalStatistics) {
+            this.swTotalStatistics.sort(new Comparator<JSONObject>() {
+                @Override
+                public int compare(JSONObject o1, JSONObject o2) {
+                    return o2.getInt("value") - o1.getInt("value");
+                }
+            });
+
+            JSONArray array = new JSONArray();
+            for (JSONObject data : this.swTotalStatistics) {
+                array.put(data);
+            }
+            json.put("swTotalStatistics", array);
         }
 
         return json;

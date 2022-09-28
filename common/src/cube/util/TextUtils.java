@@ -41,6 +41,8 @@ public final class TextUtils {
     // Pattern.compile("^-?[0-9]+");
     private static final Pattern sPatternNumeric = Pattern.compile("^-?\\d+(\\.\\d+)?$");
 
+    private static final Pattern sBrowserNameSafari = Pattern.compile("Version\\/([\\d.]+).*Safari");
+
     private TextUtils() {
     }
 
@@ -57,8 +59,65 @@ public final class TextUtils {
         return true;
     }
 
-    public static JSONObject parseUserAgent(String text) {
+    /**
+     * 解析浏览器的 User Agent 串。
+     * @param userAgent
+     * @return
+     */
+    public static JSONObject parseUserAgent(String userAgent) {
+        String browserName = "Unknown";
+        String osName = "Unknown";
+
+        if (userAgent.contains("Firefox")) {
+            browserName = "Firefox";
+        }
+        else if (userAgent.contains("WeChat")) {
+            browserName = "WeChat";
+        }
+        else if (userAgent.contains("MicroMessenger")) {
+            browserName = "WeChat";
+        }
+        else if (userAgent.contains("MetaSr")) {
+            browserName = "Sougou";
+        }
+        else if (userAgent.contains("QQBrowser")) {
+            browserName = "QQBrowser";
+        }
+        else if (userAgent.contains("MSIE")) {
+            browserName = "MSIE";
+        }
+        else if (userAgent.contains("Edge")) {
+            browserName = "Edge";
+        }
+        else if (userAgent.contains("Presto")) {
+            browserName = "Opera";
+        }
+        else if (userAgent.contains("Chrome")) {
+            browserName = "Chrome";
+        }
+        else if (sBrowserNameSafari.matcher(userAgent).find()) {
+            browserName = "Safari";
+        }
+
+        if (userAgent.contains("iPhone")) {
+            osName = "iPhone";
+        }
+        else if (userAgent.contains("iPad")) {
+            osName = "iPad";
+        }
+        else if (userAgent.contains("Android")) {
+            osName = "Android";
+        }
+        else if (userAgent.contains("Windows")) {
+            osName = "Windows";
+        }
+        else if (userAgent.contains("Macintosh")) {
+            osName = "Mac";
+        }
+
         JSONObject json = new JSONObject();
+        json.put("browserName", browserName);
+        json.put("osName", osName);
         return json;
     }
 
@@ -119,5 +178,18 @@ public final class TextUtils {
         }
 
         return areas;
+    }
+
+    public static void main(String[] args) {
+        String[] data = {
+                "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Safari/605.1.15"
+        };
+
+        for (String ua : data) {
+            JSONObject result = TextUtils.parseUserAgent(ua);
+            System.out.println("----------------------------------------");
+            System.out.println(result.toString(4));
+        }
     }
 }
