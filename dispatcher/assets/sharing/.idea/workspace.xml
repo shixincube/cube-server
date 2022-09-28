@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="b1408c98-f6aa-434f-978c-a980e61d5e76" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../../../common/src/cube/common/entity/ChainNode.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../common/src/cube/common/entity/ChainNode.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileSharingManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../service-filestorage/src/cube/service/filestorage/FileSharingManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../common/src/cube/common/entity/VisitTrace.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../common/src/cube/common/entity/VisitTrace.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/cube/dispatcher/filestorage/FileChunkTag.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/cube/dispatcher/filestorage/FileChunkTag.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/cube/dispatcher/filestorage/FileHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/cube/dispatcher/filestorage/FileHandler.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,6 +82,7 @@
       <workItem from="1662339208942" duration="897000" />
       <workItem from="1663550862410" duration="541000" />
       <workItem from="1663658593130" duration="241000" />
+      <workItem from="1664348723765" duration="101000" />
     </task>
     <servers />
   </component>

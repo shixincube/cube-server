@@ -304,7 +304,7 @@ public class SharingTag extends Entity {
     }
 
     public static String[] makeURLs(SharingTag tag, String sharer) {
-        String parameter = "?s=" + sharer + "&p=" + tag.sharer.toString();
+        String parameter = "?s=" + sharer + "&p=" + tag.sharer.toString() + "&e=x";
 
         String httpURL = "http://" + tag.httpHostInfo + "/sharing/" + tag.code + parameter;
         String httpsURL = "https://" + tag.httpsHostInfo + "/sharing/" + tag.code + parameter;

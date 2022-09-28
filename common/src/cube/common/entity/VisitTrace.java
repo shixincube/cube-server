@@ -323,7 +323,11 @@ public class VisitTrace implements JSONable {
                 String[] pair = param.split("=");
                 if (pair.length == 2) {
                     if (pair[0].trim().equalsIgnoreCase("p")) {
-                        this.parentId = Trace.parseString(pair[1].trim());
+                        String str = pair[1].trim();
+                        if (str.indexOf("%") > 0) {
+                            str = str.substring(0, str.indexOf("%"));
+                        }
+                        this.parentId = Trace.parseString(str);
                         break;
                     }
                 }

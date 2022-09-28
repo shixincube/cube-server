@@ -29,7 +29,7 @@ package cube.dispatcher.filestorage;
 /**
  * 区块标签。
  */
-public class FileChunkTag {
+public class FileChunkTag implements Comparable<FileChunkTag> {
 
     protected long contactId;
 
@@ -68,5 +68,17 @@ public class FileChunkTag {
         }
 
         return this.hashCode;
+    }
+
+    @Override
+    public int compareTo(FileChunkTag other) {
+        if (other.contactId == this.contactId &&
+                other.domain.equals(this.domain) &&
+                other.fileName.equals(this.fileName)) {
+            return 0;
+        }
+        else {
+            return this.hashCode() - other.hashCode();
+        }
     }
 }
