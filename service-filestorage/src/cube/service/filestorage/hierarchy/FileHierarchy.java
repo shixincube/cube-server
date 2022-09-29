@@ -53,11 +53,13 @@ public class FileHierarchy {
     protected final static String KEY_HIDDEN = "hidden";
     /** 目录内文件占用的空间大小。 */
     protected final static String KEY_SIZE = "size";
+    /** 目录内的文件总大小。 */
+    protected final static String KEY_FILE_TOTAL_SIZE = "fileSize";
 
     /**
      * 该文件层级允许存入的文件的总大小。
      */
-    private long capacity = 1l * 1024 * 1024 * 1024;
+    private long capacity = 1l * 1024l * 1024l * 1024l;
 
     /**
      * 用于读写节点的缓存。
@@ -591,6 +593,17 @@ public class FileHierarchy {
     }
 
     /**
+     * 设置目录内的文件的总大小。
+     *
+     * @param directory 指定目录。
+     * @param totalSize 指定文件总大小。
+     */
+    protected void setFileTotalSize(Directory directory, long totalSize) {
+        directory.node.getContext().put(KEY_FILE_TOTAL_SIZE, totalSize);
+        HierarchyNodes.save(this.cache, directory.node);
+    }
+
+    /**
      * 是否存在同名文件。
      *
      * @param directory
@@ -634,13 +647,15 @@ public class FileHierarchy {
             this.listener.onFileLabelAdd(this, directory, fileLabel);
 
             // 更新大小
-            long size = directory.node.getContext().getLong(KEY_SIZE);
+            long size = directory.node.getContext().getLong(KEY_FILE_TOTAL_SIZE);
+            directory.node.getContext().put(KEY_FILE_TOTAL_SIZE, size + fileLabel.getFileSize());
+            size = directory.node.getContext().getLong(KEY_SIZE);
             directory.node.getContext().put(KEY_SIZE, size + fileLabel.getFileSize());
         }
 
         // 更新时间戳
         directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
-
+        // 保存数据
         HierarchyNodes.save(this.cache, directory.node);
 
         return true;
@@ -671,13 +686,14 @@ public class FileHierarchy {
             this.listener.onFileLabelRemove(this, directory, fileLabels);
 
             // 更新大小
-            long size = directory.node.getContext().getLong(KEY_SIZE);
+            long size = directory.node.getContext().getLong(KEY_FILE_TOTAL_SIZE);
+            directory.node.getContext().put(KEY_FILE_TOTAL_SIZE, size - fileLabel.getFileSize());
+            size = directory.node.getContext().getLong(KEY_SIZE);
             directory.node.getContext().put(KEY_SIZE, size - fileLabel.getFileSize());
         }
 
         // 更新时间戳
         directory.node.getContext().put(KEY_LAST_MODIFIED, this.timestamp);
-
         HierarchyNodes.save(this.cache, directory.node);
 
         return true;
@@ -740,7 +756,9 @@ public class FileHierarchy {
         this.timestamp = System.currentTimeMillis();
 
         // 更新大小
-        long size = directory.node.getContext().getLong(KEY_SIZE);
+        long size = directory.node.getContext().getLong(KEY_FILE_TOTAL_SIZE);
+        directory.node.getContext().put(KEY_FILE_TOTAL_SIZE, size - totalSize);
+        size = directory.node.getContext().getLong(KEY_SIZE);
         directory.node.getContext().put(KEY_SIZE, size - totalSize);
 
         // 更新时间戳

@@ -31,13 +31,14 @@ import cube.common.UniqueKey;
 import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
 import cube.common.entity.HierarchyNodes;
-import cube.service.filestorage.ServiceStorage;
 import cube.service.filestorage.FileStorageService;
+import cube.service.filestorage.ServiceStorage;
 import cube.util.FileUtils;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 文件层级管理器。
@@ -47,7 +48,9 @@ public class FileHierarchyManager implements FileHierarchyListener {
     /**
      * 对象的生命周期。
      */
-    private long fileHierarchyDuration = 24L * 60L * 60L * 1000L;
+    private long fileHierarchyDuration = 24L * 60 * 60 * 1000;
+
+    private long spaceSizeCheckDuration = 4 * 60 * 60 * 1000;
 
     /**
      * 所有联系人的基础文件层级。
@@ -106,6 +109,33 @@ public class FileHierarchyManager implements FileHierarchyListener {
         return root;
     }
 
+    public long countFileTotalSize(String domainName, long contactIdOrGroupId) {
+        FileHierarchy fileHierarchy = this.getFileHierarchy(contactIdOrGroupId, domainName);
+        if (System.currentTimeMillis() - fileHierarchy.getRoot().getLastModified() < 60 * 60 * 1000) {
+            // 更新时间小于1小时
+            return fileHierarchy.getRoot().getSize();
+        }
+
+        AtomicLong total = new AtomicLong(0);
+
+        FileHierarchyTool.recurseDirectory(fileHierarchy.getRoot(), new RecurseDirectoryHandler() {
+            @Override
+            public boolean handle(Directory directory) {
+                int begin = 0;
+                int end = 49;
+                List<FileLabel> list = directory.listFiles(begin, end);
+                while (!list.isEmpty()) {
+                    for (FileLabel fileLabel : list) {
+                        total.addAndGet(fileLabel.getFileSize());
+                    }
+                }
+                return true;
+            }
+        });
+
+        return total.get();
+    }
+
     /**
      * 周期回调。用于维护过期的数据。
      */
@@ -115,6 +145,63 @@ public class FileHierarchyManager implements FileHierarchyListener {
         Iterator<FileHierarchy> fhiter = this.roots.values().iterator();
         while (fhiter.hasNext()) {
             FileHierarchy hierarchy = fhiter.next();
+
+            // 矫正容量
+            if (now - hierarchy.getRoot().getLastModified() > this.spaceSizeCheckDuration) {
+                // 矫正目录里的文件总大小
+                FileHierarchyTool.recurseDirectory(hierarchy.getRoot(), new RecurseDirectoryHandler() {
+                    @Override
+                    public boolean handle(Directory directory) {
+                        // 没有子目录的目录
+                        long size = 0;
+                        int begin = 0;
+                        int end = 49;
+                        List<FileLabel> list = directory.listFiles(begin, end);
+                        while (!list.isEmpty()) {
+                            for (FileLabel fileLabel : list) {
+                                size += fileLabel.getFileSize();
+                            }
+
+                            begin = end;
+                            end += 50;
+                            list = directory.listFiles(begin, end);
+                        }
+
+                        // 重置文件总大小
+                        hierarchy.setFileTotalSize(directory, size);
+
+                        // 重置当前目录的大小
+                        if (0 == directory.numDirectories()) {
+                            // 叶子节点设置目录大小
+                            hierarchy.setDirectorySize(directory, size);
+                        }
+                        else {
+                            // 非叶子节点仅更新内存里的数据，以便后续计算
+                            directory.setSize(size);
+                        }
+
+                        return true;
+                    }
+                });
+
+                // 矫正总大小，从叶子向上遍历
+                FileHierarchyTool.recurseDirectory(hierarchy.getRoot(), new RecurseDirectoryHandler() {
+                    @Override
+                    public boolean handle(Directory directory) {
+                        if (0 == directory.numDirectories()) {
+                            long dirSize = directory.getSize();
+                            Directory parent = directory.getParent();
+                            while (null != parent) {
+                                long size = parent.getSize();
+                                hierarchy.setDirectorySize(parent, size + dirSize);
+                                parent = parent.getParent();
+                            }
+                        }
+                        return true;
+                    }
+                });
+            }
+
             // 容量校验
             if (hierarchy.getRoot().getSize() > hierarchy.getCapacity()) {
                 // 容量越界
@@ -146,6 +233,11 @@ public class FileHierarchyManager implements FileHierarchyListener {
      */
     @Override
     public void onFileLabelAdd(FileHierarchy fileHierarchy, Directory directory, FileLabel fileLabel) {
+        if (directory.isHidden()) {
+            // 隐藏目录不计算大小
+            return;
+        }
+
         // 更新容量
         long fileSize = fileLabel.getFileSize();
 
@@ -168,6 +260,11 @@ public class FileHierarchyManager implements FileHierarchyListener {
             fileSize += fileLabel.getFileSize();
             // 将数据放入回收站
             this.fileStorageService.getRecycleBin().put(fileHierarchy.getRoot(), directory, fileLabel);
+        }
+
+        if (directory.isHidden()) {
+            // 隐藏目录不影响父目录空间计算
+            return;
         }
 
         Directory parent = directory.getParent();

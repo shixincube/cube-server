@@ -732,12 +732,12 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
-     * 统计指定联系人已使用的文件空间大小。
+     * 统计指定联系人所属的所有文件大小。
      * @param domain
      * @param contactId
      * @return 如果统计出错返回 {@code -1} 值。
      */
-    public long countSpaceSize(String domain, long contactId) {
+    public long countFileTotalSize(String domain, long contactId) {
         String table = this.labelTableNameMap.get(domain);
         if (null == table) {
             return -1;

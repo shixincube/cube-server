@@ -74,7 +74,10 @@ public class Directory implements JSONable {
                 context.put(FileHierarchy.KEY_HIDDEN, false);
             }
             if (!context.has(FileHierarchy.KEY_SIZE)) {
-                context.put(FileHierarchy.KEY_SIZE, 0L);
+                context.put(FileHierarchy.KEY_SIZE, (long)0);
+            }
+            if (!context.has(FileHierarchy.KEY_FILE_TOTAL_SIZE)) {
+                context.put(FileHierarchy.KEY_FILE_TOTAL_SIZE, (long)0);
             }
         }
     }
@@ -140,6 +143,19 @@ public class Directory implements JSONable {
      */
     public long getSize() {
         return this.node.getContext().getLong(FileHierarchy.KEY_SIZE);
+    }
+
+    public void setSize(long size) {
+        this.node.getContext().put(FileHierarchy.KEY_SIZE, size);
+    }
+
+    /**
+     * 获取目录内的文件总大小。
+     *
+     * @return 返回目录内的文件总大小。
+     */
+    public long getFileTotalSize() {
+        return this.node.getContext().getLong(FileHierarchy.KEY_FILE_TOTAL_SIZE);
     }
 
     /**

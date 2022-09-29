@@ -64,7 +64,7 @@ public class DaemonTask implements Runnable {
         this.removeManagedContact(contact, device);
 
         ManagedContact managedContact = new ManagedContact(contact, device);
-        long size = this.service.getServiceStorage().countSpaceSize(contact.getDomain().getName(),
+        long size = this.service.getFileHierarchyManager().countFileTotalSize(contact.getDomain().getName(),
                 contact.getId());
         managedContact.spaceSize = size;
 
@@ -111,7 +111,7 @@ public class DaemonTask implements Runnable {
             }
         }
 
-        if (now - this.lastCheckFileLabelTimestamp > 12l * 60 * 60 * 1000) {
+        if (now - this.lastCheckFileLabelTimestamp > 12L * 60 * 60 * 1000) {
             // 更新时间戳
             this.lastCheckFileLabelTimestamp = now;
 
