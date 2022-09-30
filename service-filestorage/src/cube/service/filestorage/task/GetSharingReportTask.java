@@ -120,6 +120,20 @@ public class GetSharingReportTask extends ServiceTask {
                 SharingReport report = reportor.reportHistoryTotal(contact, duration, unit);
                 reportList.add(report);
             }
+            else if (reportName.equalsIgnoreCase(SharingReport.VisitorRecord)) {
+                int duration = 7;
+                int unit = Calendar.DATE;
+
+                if (packet.data.has("option")) {
+                    JSONObject option = packet.data.getJSONObject("option");
+                    duration = option.getInt("duration");
+                    unit = option.getInt("unit");
+                }
+
+                // 生成报告
+                SharingReport report = reportor.reportVisitorEventTimeline(contact, duration, unit);
+                reportList.add(report);
+            }
         }
 
         if (reportList.isEmpty()) {

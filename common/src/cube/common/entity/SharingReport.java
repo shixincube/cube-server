@@ -68,9 +68,9 @@ public class SharingReport extends Entity {
     public List<JSONObject> swTotalStatistics;
 
     /**
-     * 访客事件列表。
+     * 访客事件。
      */
-    public List<Map<Long, VisitorEvent>> visitorEventList;
+    public Map<Long, VisitorEvent> visitorEventMap;
 
     public SharingReport(String name) {
         super();
@@ -180,11 +180,22 @@ public class SharingReport extends Entity {
     /**
      * 追加访问数据。
      * @param contactId
+     * @param sharingCode
      * @param event
      * @param increment
      */
-    public void appendVisitorEvent(Long contactId, String event, int increment) {
+    public void appendVisitorEvent(Long contactId, String sharingCode, String event, int increment) {
+        if (null == this.visitorEventMap) {
+            this.visitorEventMap = new HashMap<>();
+        }
 
+        VisitorEvent visitorEvent = this.visitorEventMap.get(contactId);
+        if (null == visitorEvent) {
+            visitorEvent = new VisitorEvent();
+            this.visitorEventMap.put(contactId, visitorEvent);
+        }
+
+        visitorEvent.appendEvent(sharingCode, event, increment);
     }
 
     public SharingReport merge(SharingReport other) {
@@ -300,6 +311,17 @@ public class SharingReport extends Entity {
             json.put("swTotalStatistics", array);
         }
 
+        if (null != this.visitorEventMap) {
+            JSONArray array = new JSONArray();
+            for (Map.Entry<Long, SharingReport.VisitorEvent> entry : this.visitorEventMap.entrySet()) {
+                JSONObject data = new JSONObject();
+                data.put("contactId", entry.getKey().longValue());
+                data.put("eventTotals", entry.getValue().toJSONArray());
+                array.put(data);
+            }
+            json.put("visitorEvents", array);
+        }
+
         return json;
     }
 
@@ -342,10 +364,51 @@ public class SharingReport extends Entity {
             this.fileEventTotal = new HashMap<>();
         }
 
+        public void appendEvent(String sharingCode, String event, int increment) {
+            FileEventTotal total = this.fileEventTotal.get(sharingCode);
+            if (null == total) {
+                total = new FileEventTotal(sharingCode);
+                this.fileEventTotal.put(sharingCode, total);
+            }
+
+            if (TraceEvent.View.equals(event)) {
+                total.viewEventTotal += increment;
+            }
+            else if (TraceEvent.Extract.equals(event)) {
+                total.extractEventTotal += increment;
+            }
+            else if (TraceEvent.Share.equals(event)) {
+                total.shareEventTotal += increment;
+            }
+        }
+
+        public JSONArray toJSONArray() {
+            JSONArray array = new JSONArray();
+            for (Map.Entry<String, FileEventTotal> entry : this.fileEventTotal.entrySet()) {
+                array.put(entry.getValue().toJSON());
+            }
+            return array;
+        }
+
         protected class FileEventTotal {
-            public int viewEventTotal;
-            public int extractEventTotal;
-            public int shareEventTotal;
+            public String sharingCode;
+
+            public int viewEventTotal = 0;
+            public int extractEventTotal = 0;
+            public int shareEventTotal = 0;
+
+            public FileEventTotal(String sharingCode) {
+                this.sharingCode = sharingCode;
+            }
+
+            public JSONObject toJSON() {
+                JSONObject json = new JSONObject();
+                json.put("sharingCode", this.sharingCode);
+                json.put("viewEventTotal", this.viewEventTotal);
+                json.put("extractEventTotal", this.extractEventTotal);
+                json.put("shareEventTotal", this.shareEventTotal);
+                return json;
+            }
         }
     }
 }

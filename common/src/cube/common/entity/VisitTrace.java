@@ -47,6 +47,11 @@ public class VisitTrace implements JSONable {
     public final static String PLATFORM_APPLET_WECHAT = "AppletWeChat";
 
     /**
+     * 追踪码。
+     */
+    public String code;
+
+    /**
      * 平台。数据来源的平台描述。
      */
     public String platform;
@@ -244,6 +249,10 @@ public class VisitTrace implements JSONable {
         if (json.has("contactDomain")) {
             this.contactDomain = json.getString("contactDomain");
         }
+    }
+
+    public String getCode() {
+        return this.code;
     }
 
     public JSONObject getScreenJSON() {

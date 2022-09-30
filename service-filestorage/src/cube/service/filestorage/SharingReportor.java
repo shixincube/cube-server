@@ -30,6 +30,7 @@ import cell.util.log.Logger;
 import cube.common.entity.Contact;
 import cube.common.entity.SharingReport;
 import cube.common.entity.TraceEvent;
+import cube.common.entity.VisitTrace;
 import cube.util.IPSeeker;
 import cube.util.TextUtils;
 import org.json.JSONObject;
@@ -220,5 +221,45 @@ public class SharingReportor {
         else if (null != timePoint.agent) {
             // TODO
         }
+    }
+
+    /**
+     *
+     * @param contact
+     * @param duration
+     * @param durationUnit
+     * @return
+     */
+    public SharingReport reportVisitorEventTimeline(Contact contact, int duration, int durationUnit) {
+        SharingReport report = new SharingReport(SharingReport.VisitorRecord);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DATE),
+                0, 0, 0);
+        long endTime = calendar.getTimeInMillis();
+
+        switch (durationUnit) {
+            case Calendar.DATE:
+                calendar.add(Calendar.DATE, -duration);
+                break;
+            case Calendar.MONTH:
+                calendar.add(Calendar.MONTH, -duration);
+                break;
+            case Calendar.YEAR:
+                calendar.add(Calendar.YEAR, -duration);
+                break;
+            default:
+                break;
+        }
+        long beginTime = calendar.getTimeInMillis();
+
+        List<VisitTrace> list = this.storage.listVisitTrace(contact.getDomain().getName(), contact.getId(),
+                beginTime, endTime);
+        for (VisitTrace visitTrace : list) {
+            long contactId = visitTrace.contactId;
+            report.appendVisitorEvent(contactId, visitTrace.getCode(), visitTrace.event, 1);
+        }
+
+        return report;
     }
 }

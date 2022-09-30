@@ -1388,6 +1388,7 @@ public class ServiceStorage implements Storagable {
         visitTrace.contactDomain = map.get("contact_domain").isNullValue() ? null : map.get("contact_domain").getString();
         visitTrace.sharerId = map.get("sharer").getLong();
         visitTrace.parentId = map.get("parent").getLong();
+        visitTrace.code = map.get("code").getString();
         return visitTrace;
     }
 
@@ -1415,6 +1416,42 @@ public class ServiceStorage implements Storagable {
                 Conditional.createEqualTo("parent", contactId),
                 Conditional.createOrderBy("time", true),
                 Conditional.createLimit(beginIndex, endIndex - beginIndex + 1)
+        });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> map = StorageFields.get(fields);
+            VisitTrace visitTrace = this.makeVisitTrace(map);
+            list.add(visitTrace);
+        }
+
+        return list;
+    }
+
+    /**
+     * 批量获取指定分享人的分享访问记录。
+     *
+     * @param domain
+     * @param contactId
+     * @param beginTime
+     * @param endTime
+     * @return
+     */
+    public List<VisitTrace> listVisitTrace(String domain, long contactId, long beginTime, long endTime) {
+        List<VisitTrace> list = new ArrayList<>();
+
+        String table = this.visitTraceTableNameMap.get(domain);
+        if (null == table) {
+            return list;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, this.visitTraceFields, new Conditional[] {
+                Conditional.createBracket(new Conditional[] {
+                        Conditional.createGreaterThanEqual(new StorageField("time", beginTime)),
+                        Conditional.createAnd(),
+                        Conditional.createLessThan(new StorageField("time", endTime))
+                }),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("parent", contactId)
         });
 
         for (StorageField[] fields : result) {
