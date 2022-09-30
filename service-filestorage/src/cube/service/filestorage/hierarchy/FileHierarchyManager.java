@@ -50,7 +50,7 @@ public class FileHierarchyManager implements FileHierarchyListener {
      */
     private long fileHierarchyDuration = 24L * 60 * 60 * 1000;
 
-    private long spaceSizeCheckDuration = 4 * 60 * 60 * 1000;
+    private long spaceSizeCheckDuration = 12L * 60 * 60 * 1000;
 
     /**
      * 所有联系人的基础文件层级。

@@ -79,6 +79,13 @@ public class SharingReportor {
         return report;
     }
 
+    /**
+     * 报告历史访问数据总数。
+     * @param contact
+     * @param duration
+     * @param durationUnit
+     * @return
+     */
     public SharingReport reportHistoryTotal(Contact contact, int duration, int durationUnit) {
         Calendar calendar = Calendar.getInstance();
         calendar.set(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DATE),
@@ -101,10 +108,21 @@ public class SharingReportor {
         long beginTime = calendar.getTimeInMillis();
 
         List<Long> separators = new ArrayList<>();
-        long time = beginTime;
-        while (time < endTime) {
-            time += 24 * 60 * 60 * 1000;
-            separators.add(time - 1000);
+        if (durationUnit == Calendar.DATE || (duration <= 3 && durationUnit == Calendar.MONTH)) {
+            long time = beginTime;
+            while (time < endTime) {
+                time += 24 * 60 * 60 * 1000;
+                separators.add(time - 1000);
+            }
+        }
+        else {
+            long time = beginTime;
+            while (time < endTime) {
+                // 按月分隔数据
+                calendar.add(Calendar.MONTH, 1);
+                time = calendar.getTimeInMillis();
+                separators.add(time - 1000);
+            }
         }
 
         SharingReport report = new SharingReport(SharingReport.HistoryEventRecord);
