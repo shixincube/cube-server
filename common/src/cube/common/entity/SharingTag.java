@@ -172,7 +172,7 @@ public class SharingTag extends Entity {
         this.httpHostInfo = http.getHost() + ":" + http.getPort();
         this.httpsHostInfo = https.getHost() + ":" + https.getPort();
 
-        String parameter = "?s=" + this.sharer.toString() + "&p=" + this.parent.toString();
+        String parameter = "?s=" + this.sharer.toString() + "&p=" + this.parent.toString() + "&e=x";
 
         this.httpURL = "http://" + this.httpHostInfo +
                 "/sharing/" + this.code + parameter;

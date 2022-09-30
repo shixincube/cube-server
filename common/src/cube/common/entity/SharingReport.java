@@ -43,6 +43,8 @@ public class SharingReport extends Entity {
 
     public final static String HistoryEventRecord = "HistoryEventRecord";
 
+    public final static String VisitorRecord = "VisitorRecord";
+
     private String name;
 
     public int totalSharingTag = -1;
@@ -64,6 +66,11 @@ public class SharingReport extends Entity {
     public List<JSONObject> ipTotalStatistics;
     public List<JSONObject> osTotalStatistics;
     public List<JSONObject> swTotalStatistics;
+
+    /**
+     * 访客事件列表。
+     */
+    public List<Map<Long, VisitorEvent>> visitorEventList;
 
     public SharingReport(String name) {
         super();
@@ -168,6 +175,16 @@ public class SharingReport extends Entity {
         data.put("name", swName);
         data.put("value", total);
         this.swTotalStatistics.add(data);
+    }
+
+    /**
+     * 追加访问数据。
+     * @param contactId
+     * @param event
+     * @param increment
+     */
+    public void appendVisitorEvent(Long contactId, String event, int increment) {
+
     }
 
     public SharingReport merge(SharingReport other) {
@@ -314,6 +331,21 @@ public class SharingReport extends Entity {
         protected TimeNode(long time) {
             this.time = time;
             this.eventTotal = new HashMap<>();
+        }
+    }
+
+    protected class VisitorEvent {
+
+        public Map<String, FileEventTotal> fileEventTotal;
+
+        public VisitorEvent() {
+            this.fileEventTotal = new HashMap<>();
+        }
+
+        protected class FileEventTotal {
+            public int viewEventTotal;
+            public int extractEventTotal;
+            public int shareEventTotal;
         }
     }
 }
