@@ -1185,6 +1185,15 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
+     * 计算分享标签的文件类型数量。
+     * @param valid
+     * @return
+     */
+    public Map<String, Integer> countSharingFileType(boolean valid) {
+        return null;
+    }
+
+    /**
      * 获取指定联系人的分享标签。
      *
      * @param domain
