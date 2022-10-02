@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 文件码存储器。
@@ -1186,11 +1187,55 @@ public class ServiceStorage implements Storagable {
 
     /**
      * 计算分享标签的文件类型数量。
+     * @param domain
+     * @param contactId
      * @param valid
      * @return
      */
-    public Map<String, Integer> countSharingFileType(boolean valid) {
-        return null;
+    public Map<String, AtomicInteger> countSharingFileType(String domain, long contactId, boolean valid) {
+        Map<String, AtomicInteger> data = new HashMap<>();
+
+        String table = this.sharingTagTableNameMap.get(domain);
+        if (null == table) {
+            return data;
+        }
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT DISTINCT(file_code) FROM `").append(table).append("`");
+        sql.append(" WHERE `contact_id`=").append(contactId);
+        sql.append(" AND `state`=0");
+        if (valid) {
+            sql.append(" AND (`expiry`=0 OR `expiry`>").append(System.currentTimeMillis()).append(")");
+        }
+        else {
+            sql.append(" AND (`expiry`<>0 AND `expiry`<").append(System.currentTimeMillis()).append(")");
+        }
+        List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+        if (result.isEmpty()) {
+            return data;
+        }
+
+        // 从 File Label 查询文件类型
+        table = this.labelTableNameMap.get(domain);
+        for (StorageField[] fields : result) {
+            // 文件码
+            String fileCode = fields[0].getString();
+
+            sql = new StringBuilder();
+            sql.append("SELECT `file_type` FROM `").append(table).append("`");
+            sql.append(" WHERE `file_code`='").append(fileCode).append("'");
+            List<StorageField[]> fileTypeResult = this.storage.executeQuery(sql.toString());
+            String fileType = fileTypeResult.get(0)[0].getString();
+
+            AtomicInteger count = data.get(fileType);
+            if (null == count) {
+                count = new AtomicInteger(0);
+                data.put(fileType, count);
+            }
+            count.incrementAndGet();
+        }
+
+        return data;
     }
 
     /**
