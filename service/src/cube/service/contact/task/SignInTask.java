@@ -121,6 +121,8 @@ public class SignInTask extends ServiceTask {
             // 设置终端的对应关系
             Contact newContact = ContactManager.getInstance().signIn(contact, authToken, activeDevice);
             if (null == newContact) {
+                Logger.w(this.getClass(), "SignIn contact error, please chek auth token: " + tokenCode);
+
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(action, packet, ContactStateCode.IllegalOperation.code, packet.data));
                 markResponseTime();

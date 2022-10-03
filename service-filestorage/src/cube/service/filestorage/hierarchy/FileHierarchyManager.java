@@ -35,10 +35,10 @@ import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.ServiceStorage;
 import cube.util.FileUtils;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 文件层级管理器。
@@ -111,29 +111,7 @@ public class FileHierarchyManager implements FileHierarchyListener {
 
     public long countFileTotalSize(String domainName, long contactIdOrGroupId) {
         FileHierarchy fileHierarchy = this.getFileHierarchy(contactIdOrGroupId, domainName);
-        if (System.currentTimeMillis() - fileHierarchy.getRoot().getLastModified() < 60 * 60 * 1000) {
-            // 更新时间小于1小时
-            return fileHierarchy.getRoot().getSize();
-        }
-
-        AtomicLong total = new AtomicLong(0);
-
-        FileHierarchyTool.recurseDirectory(fileHierarchy.getRoot(), new RecurseDirectoryHandler() {
-            @Override
-            public boolean handle(Directory directory) {
-                int begin = 0;
-                int end = 49;
-                List<FileLabel> list = directory.listFiles(begin, end);
-                while (!list.isEmpty()) {
-                    for (FileLabel fileLabel : list) {
-                        total.addAndGet(fileLabel.getFileSize());
-                    }
-                }
-                return true;
-            }
-        });
-
-        return total.get();
+        return fileHierarchy.getRoot().getSize();
     }
 
     /**
@@ -142,64 +120,15 @@ public class FileHierarchyManager implements FileHierarchyListener {
     public void onTick() {
         long now = System.currentTimeMillis();
 
+        List<FileHierarchy> needCheckList = new ArrayList<>();
+
         Iterator<FileHierarchy> fhiter = this.roots.values().iterator();
         while (fhiter.hasNext()) {
             FileHierarchy hierarchy = fhiter.next();
 
             // 矫正容量
             if (now - hierarchy.getRoot().getLastModified() > this.spaceSizeCheckDuration) {
-                // 矫正目录里的文件总大小
-                FileHierarchyTool.recurseDirectory(hierarchy.getRoot(), new RecurseDirectoryHandler() {
-                    @Override
-                    public boolean handle(Directory directory) {
-                        // 没有子目录的目录
-                        long size = 0;
-                        int begin = 0;
-                        int end = 49;
-                        List<FileLabel> list = directory.listFiles(begin, end);
-                        while (!list.isEmpty()) {
-                            for (FileLabel fileLabel : list) {
-                                size += fileLabel.getFileSize();
-                            }
-
-                            begin = end;
-                            end += 50;
-                            list = directory.listFiles(begin, end);
-                        }
-
-                        // 重置文件总大小
-                        hierarchy.setFileTotalSize(directory, size);
-
-                        // 重置当前目录的大小
-                        if (0 == directory.numDirectories()) {
-                            // 叶子节点设置目录大小
-                            hierarchy.setDirectorySize(directory, size);
-                        }
-                        else {
-                            // 非叶子节点仅更新内存里的数据，以便后续计算
-                            directory.setSize(size);
-                        }
-
-                        return true;
-                    }
-                });
-
-                // 矫正总大小，从叶子向上遍历
-                FileHierarchyTool.recurseDirectory(hierarchy.getRoot(), new RecurseDirectoryHandler() {
-                    @Override
-                    public boolean handle(Directory directory) {
-                        if (0 == directory.numDirectories()) {
-                            long dirSize = directory.getSize();
-                            Directory parent = directory.getParent();
-                            while (null != parent) {
-                                long size = parent.getSize();
-                                hierarchy.setDirectorySize(parent, size + dirSize);
-                                parent = parent.getParent();
-                            }
-                        }
-                        return true;
-                    }
-                });
+                needCheckList.add(hierarchy);
             }
 
             // 容量校验
@@ -214,6 +143,74 @@ public class FileHierarchyManager implements FileHierarchyListener {
                 // 到期，从内存里移除
                 fhiter.remove();
             }
+        }
+
+        if (!needCheckList.isEmpty()) {
+            if (Logger.isDebugLevel()) {
+                Logger.d(FileHierarchyManager.class, "Check file hierarchy size (" + needCheckList.size() + ")");
+            }
+
+            (new Thread() {
+                @Override
+                public void run() {
+                    while (!needCheckList.isEmpty()) {
+                        FileHierarchy hierarchy = needCheckList.remove(0);
+
+                        // 矫正目录里的文件总大小
+                        FileHierarchyTool.recurseDirectory(hierarchy.getRoot(), new RecurseDirectoryHandler() {
+                            @Override
+                            public boolean handle(Directory directory) {
+                                // 没有子目录的目录
+                                long size = 0;
+                                int begin = 0;
+                                int end = 49;
+                                List<FileLabel> list = directory.listFiles(begin, end);
+                                while (!list.isEmpty()) {
+                                    for (FileLabel fileLabel : list) {
+                                        size += fileLabel.getFileSize();
+                                    }
+
+                                    begin = end;
+                                    end += 50;
+                                    list = directory.listFiles(begin, end);
+                                }
+
+                                // 重置文件总大小
+                                hierarchy.setFileTotalSize(directory, size);
+
+                                // 重置当前目录的大小
+                                if (0 == directory.numDirectories()) {
+                                    // 叶子节点设置目录大小
+                                    hierarchy.setDirectorySize(directory, size);
+                                }
+                                else {
+                                    // 非叶子节点仅更新内存里的数据，以便后续计算
+                                    directory.setSize(size);
+                                }
+
+                                return true;
+                            }
+                        });
+
+                        // 矫正总大小，从叶子向上遍历
+                        FileHierarchyTool.recurseDirectory(hierarchy.getRoot(), new RecurseDirectoryHandler() {
+                            @Override
+                            public boolean handle(Directory directory) {
+                                if (0 == directory.numDirectories()) {
+                                    long dirSize = directory.getSize();
+                                    Directory parent = directory.getParent();
+                                    while (null != parent) {
+                                        long size = parent.getSize();
+                                        hierarchy.setDirectorySize(parent, size + dirSize);
+                                        parent = parent.getParent();
+                                    }
+                                }
+                                return true;
+                            }
+                        });
+                    }
+                }
+            }).start();
         }
     }
 

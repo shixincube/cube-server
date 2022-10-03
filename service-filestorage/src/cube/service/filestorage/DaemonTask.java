@@ -68,8 +68,13 @@ public class DaemonTask implements Runnable {
                 contact.getId());
         managedContact.spaceSize = size;
 
-        this.service.notifyPerformance(managedContact.contact, managedContact.device, size);
-        managedContact.notified = true;
+        this.service.getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                service.notifyPerformance(managedContact.contact, managedContact.device, size);
+                managedContact.notified = true;
+            }
+        });
 
         synchronized (this.managedContacts) {
             this.managedContacts.add(managedContact);
