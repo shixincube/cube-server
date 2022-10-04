@@ -1225,14 +1225,16 @@ public class ServiceStorage implements Storagable {
             sql.append("SELECT `file_type` FROM `").append(table).append("`");
             sql.append(" WHERE `file_code`='").append(fileCode).append("'");
             List<StorageField[]> fileTypeResult = this.storage.executeQuery(sql.toString());
-            String fileType = fileTypeResult.get(0)[0].getString();
+            if (!fileTypeResult.isEmpty()) {
+                String fileType = fileTypeResult.get(0)[0].getString();
 
-            AtomicInteger count = data.get(fileType);
-            if (null == count) {
-                count = new AtomicInteger(0);
-                data.put(fileType, count);
+                AtomicInteger count = data.get(fileType);
+                if (null == count) {
+                    count = new AtomicInteger(0);
+                    data.put(fileType, count);
+                }
+                count.incrementAndGet();
             }
-            count.incrementAndGet();
         }
 
         return data;

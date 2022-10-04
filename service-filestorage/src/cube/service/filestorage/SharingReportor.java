@@ -272,10 +272,18 @@ public class SharingReportor {
             report.addValidFileType(entry.getKey(), entry.getValue().get());
         }
 
+        if (null == report.validFileTypeList) {
+            report.validFileTypeList = new ArrayList<>();
+        }
+
         map = this.storage.countSharingFileType(contact.getDomain().getName(),
                 contact.getId(), false);
         for (Map.Entry<String, AtomicInteger> entry : map.entrySet()) {
             report.addExpiredFileType(entry.getKey(), entry.getValue().get());
+        }
+
+        if (null == report.expiredFileTypeList) {
+            report.expiredFileTypeList = new ArrayList<>();
         }
 
         return report;

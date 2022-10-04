@@ -287,6 +287,9 @@ public class FileSharingManager {
         }
 
         SharingTag sharingTag = this.service.getServiceStorage().readSharingTag(codeDomain.domain, code);
+        if (null == sharingTag) {
+            return null;
+        }
 
         if (refresh) {
             AuthService authService = (AuthService) this.service.getKernel().getModule(AuthService.NAME);
