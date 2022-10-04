@@ -134,6 +134,11 @@ public class GetSharingReportTask extends ServiceTask {
                 SharingReport report = reportor.reportVisitorEventTimeline(contact, duration, unit);
                 reportList.add(report);
             }
+            else if (reportName.equalsIgnoreCase(SharingReport.FileTypeTotalRecord)) {
+                // 生成报告
+                SharingReport report = reportor.reportFileTypeTotals(contact);
+                reportList.add(report);
+            }
         }
 
         if (reportList.isEmpty()) {

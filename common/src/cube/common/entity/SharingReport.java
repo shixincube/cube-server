@@ -45,6 +45,8 @@ public class SharingReport extends Entity {
 
     public final static String VisitorRecord = "VisitorRecord";
 
+    public final static String FileTypeTotalRecord = "FileTypeTotalRecord";
+
     private String name;
 
     public int totalSharingTag = -1;
@@ -71,6 +73,10 @@ public class SharingReport extends Entity {
      * 访客事件。
      */
     public Map<Long, VisitorEvent> visitorEventMap;
+
+    public List<JSONObject> validFileTypeList;
+
+    public List<JSONObject> expiredFileTypeList;
 
     public SharingReport(String name) {
         super();
@@ -198,6 +204,28 @@ public class SharingReport extends Entity {
         visitorEvent.appendEvent(sharingCode, event, increment);
     }
 
+    public void addValidFileType(String fileType, int total) {
+        if (null == this.validFileTypeList) {
+            this.validFileTypeList = new ArrayList<>();
+        }
+
+        JSONObject json = new JSONObject();
+        json.put("fileType", fileType);
+        json.put("total", total);
+        this.validFileTypeList.add(json);
+    }
+
+    public void addExpiredFileType(String fileType, int total) {
+        if (null == this.expiredFileTypeList) {
+            this.expiredFileTypeList = new ArrayList<>();
+        }
+
+        JSONObject json = new JSONObject();
+        json.put("fileType", fileType);
+        json.put("total", total);
+        this.expiredFileTypeList.add(json);
+    }
+
     public SharingReport merge(SharingReport other) {
         if (other.totalSharingTag != -1) {
             this.totalSharingTag = other.totalSharingTag;
@@ -225,6 +253,8 @@ public class SharingReport extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("name", this.name);
+
         if (this.totalSharingTag != -1) {
             json.put("totalSharingTag", this.totalSharingTag);
         }
@@ -320,6 +350,34 @@ public class SharingReport extends Entity {
                 array.put(data);
             }
             json.put("visitorEvents", array);
+        }
+
+        if (null != this.validFileTypeList) {
+            this.validFileTypeList.sort(new Comparator<JSONObject>() {
+                @Override
+                public int compare(JSONObject data1, JSONObject data2) {
+                    return data1.getInt("total") - data2.getInt("total");
+                }
+            });
+            JSONArray array = new JSONArray();
+            for (JSONObject data : this.validFileTypeList) {
+                array.put(data);
+            }
+            json.put("validFileTypeTotals", array);
+        }
+
+        if (null != this.expiredFileTypeList) {
+            this.expiredFileTypeList.sort(new Comparator<JSONObject>() {
+                @Override
+                public int compare(JSONObject data1, JSONObject data2) {
+                    return data1.getInt("total") - data2.getInt("total");
+                }
+            });
+            JSONArray array = new JSONArray();
+            for (JSONObject data : this.expiredFileTypeList) {
+                array.put(data);
+            }
+            json.put("expiredFileTypeTotals", array);
         }
 
         return json;

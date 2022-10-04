@@ -262,4 +262,22 @@ public class SharingReportor {
 
         return report;
     }
+
+    public SharingReport reportFileTypeTotals(Contact contact) {
+        SharingReport report = new SharingReport(SharingReport.FileTypeTotalRecord);
+
+        Map<String, AtomicInteger> map = this.storage.countSharingFileType(contact.getDomain().getName(),
+                contact.getId(), true);
+        for (Map.Entry<String, AtomicInteger> entry : map.entrySet()) {
+            report.addValidFileType(entry.getKey(), entry.getValue().get());
+        }
+
+        map = this.storage.countSharingFileType(contact.getDomain().getName(),
+                contact.getId(), false);
+        for (Map.Entry<String, AtomicInteger> entry : map.entrySet()) {
+            report.addExpiredFileType(entry.getKey(), entry.getValue().get());
+        }
+
+        return report;
+    }
 }
