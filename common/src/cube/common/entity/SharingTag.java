@@ -50,6 +50,11 @@ public class SharingTag extends Entity {
      */
     public final static int STATE_CANCEL = 1;
 
+    /**
+     * 已删除状态。
+     */
+    public final static int STATE_DELETE = 2;
+
     private String code;
 
     private Trace sharer;

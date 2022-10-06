@@ -1157,6 +1157,28 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
+     * 删除指定的分享标签。
+     *
+     * @param domain
+     * @param code
+     * @return 返回预览图文件标签。
+     */
+    public List<FileLabel> deleteSharingTag(String domain, String code) {
+        String table = this.sharingTagTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        this.storage.executeUpdate(table, new StorageField[] {
+                new StorageField("state", SharingTag.STATE_DELETE)
+        }, new Conditional[] {
+                Conditional.createEqualTo("code", code)
+        });
+
+        return this.deleteSharingPreview(domain, code);
+    }
+
+    /**
      * 计算分享标签数量。
      * @param domain
      * @param contactId

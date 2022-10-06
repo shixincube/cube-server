@@ -274,6 +274,31 @@ public class FileSharingManager {
     }
 
     /**
+     * 删除分享标签。
+     *
+     * @param contact
+     * @param code
+     * @return
+     */
+    public SharingTag deleteSharingTag(Contact contact, String code) {
+        // 删除标签
+        List<FileLabel> previewList = this.service.getServiceStorage().deleteSharingTag(contact.getDomain().getName(), code);
+        if (null != previewList) {
+            // 删除预览图
+            for (FileLabel fileLabel : previewList) {
+                this.service.deleteFile(contact.getDomain().getName(), fileLabel);
+            }
+        }
+
+        SharingTag sharingTag = this.service.getServiceStorage().readSharingTag(contact.getDomain().getName(), code);
+        List<FileLabel> list = sharingTag.getPreviewList();
+        if (null != list) {
+            list.clear();
+        }
+        return sharingTag;
+    }
+
+    /**
      * 获取指定的分享标签。
      *
      * @param code
