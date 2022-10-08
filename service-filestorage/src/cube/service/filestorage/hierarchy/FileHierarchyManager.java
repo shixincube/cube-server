@@ -196,6 +196,10 @@ public class FileHierarchyManager implements FileHierarchyListener {
                         FileHierarchyTool.recurseDirectory(hierarchy.getRoot(), new RecurseDirectoryHandler() {
                             @Override
                             public boolean handle(Directory directory) {
+                                if (directory.isHidden()) {
+                                    return true;
+                                }
+
                                 if (0 == directory.numDirectories()) {
                                     long dirSize = directory.getSize();
                                     Directory parent = directory.getParent();
