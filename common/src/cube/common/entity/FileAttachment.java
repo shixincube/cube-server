@@ -155,15 +155,23 @@ public class FileAttachment implements JSONable {
     }
 
     public boolean isImageType(int index) {
-        if (index < this.anchorList.size()) {
-            FileAnchor anchor = this.anchorList.get(index);
-            FileType type = FileUtils.extractFileExtensionType(anchor.fileName);
-            if (FileType.JPEG == type || FileType.PNG == type || FileType.BMP == type || FileType.GIF == type) {
-                return true;
-            }
+        FileType type = null;
+
+        if (index < this.labelList.size()) {
+            FileLabel fileLabel = this.labelList.get(index);
+            type = fileLabel.getFileType();
         }
 
-        return false;
+        if (null == type && index < this.anchorList.size()) {
+            FileAnchor anchor = this.anchorList.get(index);
+            type = FileUtils.extractFileExtensionType(anchor.fileName);
+        }
+
+        if (null == type) {
+            return false;
+        }
+
+        return (FileType.JPEG == type || FileType.PNG == type || FileType.BMP == type || FileType.GIF == type);
     }
 
     /**

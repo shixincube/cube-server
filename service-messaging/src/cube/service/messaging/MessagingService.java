@@ -1164,6 +1164,28 @@ public final class MessagingService extends AbstractModule implements CelletAdap
                 return false;
             }
 
+            // 是否生成缩略图
+            boolean genThumb = fileAttachment.isImageType(i);
+            if (genThumb && (null == fileLabel.getContext()) && this.getKernel().hasModule(FileProcessorService.NAME)) {
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "Make thumb : " + message.getFrom() + " - "
+                            + fileAttachment.getFileCode(i));
+                }
+
+                int quality = 60;
+
+                FileProcessorService processor = (FileProcessorService) this.getKernel().getModule(
+                        FileProcessorService.NAME);
+
+                // 生成缩略图
+                FileThumbnail thumbnail = processor.makeThumbnail(domainName, fileLabel, quality);
+
+                // 将缩略图作为文件标签的上下文数据
+                if (null != thumbnail) {
+                    fileLabel.setContext(thumbnail.toJSON());
+                }
+            }
+
             FileHierarchy fileHierarchy = null;
             if (message.getSource().longValue() > 0) {
                 // 存入群组的隐藏目录里
@@ -1201,33 +1223,6 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
             // 向消息附件追加文件标签
             fileAttachment.addFileLabel(fileLabel);
-
-//        if (Logger.isDebugLevel()) {
-//            Logger.d(this.getClass(), "Process attachment [Set file label] : " + message.getFrom() + " - "
-//                    + message.getAttachment().getFileCode());
-//        }
-
-            // 是否生成缩略图
-            boolean genThumb = fileAttachment.isImageType(i);
-            if (genThumb && this.getKernel().hasModule(FileProcessorService.NAME)) {
-                if (Logger.isDebugLevel()) {
-                    Logger.d(this.getClass(), "Make thumb : " + message.getFrom() + " - "
-                            + fileAttachment.getFileCode(i));
-                }
-
-                int quality = 60;
-
-                FileProcessorService processor = (FileProcessorService) this.getKernel().getModule(
-                        FileProcessorService.NAME);
-
-                // 生成缩略图
-                FileThumbnail thumbnail = processor.makeThumbnail(domainName, fileLabel, quality);
-
-                // 将缩略图作为文件标签的上下文数据
-                if (null != thumbnail) {
-                    fileLabel.setContext(thumbnail.toJSON());
-                }
-            }
         }
 
         return true;

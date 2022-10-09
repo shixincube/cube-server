@@ -786,6 +786,26 @@ public class Performer implements TalkListener, Tickable {
     /**
      * 向服务单元发送数据，并阻塞当前线程直到应答或超时。
      *
+     * @param talkContext
+     * @param celletName
+     * @param actionDialect
+     * @param blockTimeout
+     * @return
+     */
+    public ActionDialect syncTransmit(TalkContext talkContext, String celletName, ActionDialect actionDialect,
+                                      long blockTimeout) {
+        Director director = this.selectDirector(talkContext, celletName);
+        if (null == director) {
+            Logger.e(this.getClass(), "Can not connect '" + celletName + "'");
+            return null;
+        }
+
+        return this.syncTransmit(director, celletName, actionDialect, blockTimeout);
+    }
+
+    /**
+     * 向服务单元发送数据，并阻塞当前线程直到应答或超时。
+     *
      * @param tokenCode
      * @param celletName
      * @param actionDialect

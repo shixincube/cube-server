@@ -28,7 +28,9 @@ package cube.dispatcher.filestorage;
 
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.CachedQueueExecutor;
+import cube.common.action.FileStorageAction;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
 import cube.util.HttpServer;
@@ -110,7 +112,14 @@ public class FileStorageCellet extends AbstractCellet {
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
 
-        this.executor.execute(this.borrowTask(talkContext, primitive, true));
+        String action = primitive.getStuff(0).getValueAsString();
+        if (FileStorageAction.CreateSharingTag.equals(action)) {
+            MarathonTask task = new MarathonTask(this, talkContext, primitive, this.performer);
+            task.start();
+        }
+        else {
+            this.executor.execute(this.borrowTask(talkContext, primitive, true));
+        }
     }
 
     protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive, boolean sync) {

@@ -394,6 +394,15 @@ public class FileLabel extends Entity {
     }
 
     /**
+     * 获取上下文数据。
+     *
+     * @return 返回上下文数据。
+     */
+    public JSONObject getContext() {
+        return this.context;
+    }
+
+    /**
      * 重置 URL 地址。
      *
      * @param urlHost
