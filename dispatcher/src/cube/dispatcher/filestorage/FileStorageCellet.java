@@ -113,7 +113,7 @@ public class FileStorageCellet extends AbstractCellet {
         super.onListened(talkContext, primitive);
 
         String action = primitive.getStuff(0).getValueAsString();
-        if (FileStorageAction.CreateSharingTag.equals(action)) {
+        if (FileStorageAction.CreateSharingTag.name.equals(action)) {
             MarathonTask task = new MarathonTask(this, talkContext, primitive, this.performer);
             task.start();
         }
