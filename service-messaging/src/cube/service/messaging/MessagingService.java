@@ -1142,7 +1142,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             int count = 12;
             while (!fileStorageService.existsFileData(fileAttachment.getFileCode(i))) {
                 try {
-                    Thread.sleep(500L);
+                    Thread.sleep(500);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

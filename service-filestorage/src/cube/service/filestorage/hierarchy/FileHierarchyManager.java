@@ -160,6 +160,10 @@ public class FileHierarchyManager implements FileHierarchyListener {
                         FileHierarchyTool.recurseDirectory(hierarchy.getRoot(), new RecurseDirectoryHandler() {
                             @Override
                             public boolean handle(Directory directory) {
+                                if (directory.isHidden()) {
+                                    return true;
+                                }
+
                                 // 没有子目录的目录
                                 long size = 0;
                                 int begin = 0;

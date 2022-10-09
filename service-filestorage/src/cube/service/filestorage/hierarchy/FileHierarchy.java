@@ -281,6 +281,7 @@ public class FileHierarchy {
             context.put(KEY_LAST_MODIFIED, now);
             context.put(KEY_HIDDEN, false);
             context.put(KEY_SIZE, 0);
+            context.put(KEY_FILE_TOTAL_SIZE, 0);
         } catch (Exception e) {
             e.printStackTrace();
         }
