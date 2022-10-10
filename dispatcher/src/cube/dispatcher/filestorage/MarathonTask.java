@@ -30,6 +30,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.common.StateCode;
+import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
 import org.json.JSONObject;
@@ -52,29 +53,34 @@ public class MarathonTask extends DispatcherTask {
         super(cellet, talkContext, primitive, performer);
     }
 
-    public void start() {
+    public boolean start() {
+        if (sNumThreads.get() >= sMaxThreads) {
+            return false;
+        }
+
+        sNumThreads.incrementAndGet();
+
         (new Thread() {
             @Override
             public void run() {
-                while (sNumThreads.get() >= sMaxThreads) {
-                    try {
-                        Thread.sleep(200);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                sNumThreads.incrementAndGet();
-
                 try {
                     MarathonTask.this.run();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
 
+                MarathonTask.this.markResponseTime();
+
                 sNumThreads.decrementAndGet();
             }
         }).start();
+
+        return true;
+    }
+
+    public void responseBusy() {
+        ActionDialect response = this.makeResponse(new JSONObject(), StateCode.SystemBusy, "Busy");
+        this.cellet.speak(this.talkContext, response);
     }
 
     @Override

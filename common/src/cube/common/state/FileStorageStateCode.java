@@ -42,6 +42,11 @@ public enum FileStorageStateCode {
     InvalidParameter(5),
 
     /**
+     * 系统忙。
+     */
+    Busy(8),
+
+    /**
      * 遇到故障。
      */
     Failure(9),

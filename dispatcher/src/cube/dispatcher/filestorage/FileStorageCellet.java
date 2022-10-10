@@ -28,7 +28,6 @@ package cube.dispatcher.filestorage;
 
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
-import cell.core.talk.dialect.ActionDialect;
 import cell.util.CachedQueueExecutor;
 import cube.common.action.FileStorageAction;
 import cube.core.AbstractCellet;
@@ -36,7 +35,6 @@ import cube.dispatcher.Performer;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
 
-import java.io.File;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
@@ -115,7 +113,11 @@ public class FileStorageCellet extends AbstractCellet {
         String action = primitive.getStuff(0).getValueAsString();
         if (FileStorageAction.CreateSharingTag.name.equals(action)) {
             MarathonTask task = new MarathonTask(this, talkContext, primitive, this.performer);
-            task.start();
+            task.responseTime = this.markResponseTime(task.getAction().getName());
+            if (!task.start()) {
+                // 应答系统忙
+                task.responseBusy();
+            }
         }
         else {
             this.executor.execute(this.borrowTask(talkContext, primitive, true));

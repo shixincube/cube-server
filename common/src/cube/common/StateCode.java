@@ -54,6 +54,11 @@ public final class StateCode {
     public final static int NoAuthToken = 1501;
 
     /**
+     * 系统忙。
+     */
+    public final static int SystemBusy = 1502;
+
+    /**
      * 请求服务超时。
      */
     public final static int ServiceTimeout = 2001;
