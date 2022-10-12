@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MarathonTask extends DispatcherTask {
 
-    public final static int sMaxThreads = 8;
+    public final static int sMaxThreads = 16;
 
     private final static AtomicInteger sNumThreads = new AtomicInteger(0);
 
