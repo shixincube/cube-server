@@ -332,7 +332,8 @@ public class FileStorageService extends AbstractModule {
                 contact.getId());
         if (null == performance) {
             performance = new FileStoragePerformance(contact.getId(), this.maxSpaceSizeEachContact,
-                    this.defaultUploadThreshold, this.defaultDownloadThreshold);
+                    this.defaultUploadThreshold, this.defaultDownloadThreshold,
+                    0, true, true);
             this.serviceStorage.writePerformance(contact.getDomain().getName(), performance);
         }
 

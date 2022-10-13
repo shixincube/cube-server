@@ -123,6 +123,15 @@ public class ServiceStorage implements Storagable {
             }),
             new StorageField("download_threshold", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("max_sharing_num", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            new StorageField("sharing_watermark_enabled", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_1
+            }),
+            new StorageField("sharing_preview_enabled", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_1
             })
     };
 
@@ -688,7 +697,10 @@ public class ServiceStorage implements Storagable {
 
         Map<String, StorageField> map = StorageFields.get(result.get(0));
         FileStoragePerformance performance = new FileStoragePerformance(contactId, map.get("max_space_size").getLong(),
-                map.get("upload_threshold").getLong(), map.get("download_threshold").getLong());
+                map.get("upload_threshold").getLong(), map.get("download_threshold").getLong(),
+                map.get("max_sharing_num").getInt(),
+                map.get("sharing_watermark_enabled").getInt() == 1,
+                map.get("sharing_preview_enabled").getInt() == 1);
 
         return performance;
     }

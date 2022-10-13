@@ -36,24 +36,43 @@ public class FileStoragePerformance implements JSONable {
 
     private long contactId;
 
+    private long spaceSize;
+
     private long maxSpaceSize;
 
     private long uploadThreshold;
 
     private long downloadThreshold;
 
-    private long spaceSize;
+    private int maxSharingNum = 0;
+
+    private boolean sharingWatermarkEnabled = true;
+
+    private boolean sharingPreviewEnabled = true;
 
     public FileStoragePerformance(long contactId, long maxSpaceSize,
-                                  long uploadThreshold, long downloadThreshold) {
+                                  long uploadThreshold, long downloadThreshold,
+                                  int maxSharingNum, boolean sharingWatermarkEnabled,
+                                  boolean sharingPreviewEnabled) {
         this.contactId = contactId;
         this.maxSpaceSize = maxSpaceSize;
         this.uploadThreshold = uploadThreshold;
         this.downloadThreshold = downloadThreshold;
+        this.maxSharingNum = maxSharingNum;
+        this.sharingWatermarkEnabled = sharingWatermarkEnabled;
+        this.sharingPreviewEnabled = sharingPreviewEnabled;
     }
 
     public long getContactId() {
         return this.contactId;
+    }
+
+    public long getSpaceSize() {
+        return this.spaceSize;
+    }
+
+    public void setSpaceSize(long spaceSize) {
+        this.spaceSize = spaceSize;
     }
 
     public long getMaxSpaceSize() {
@@ -68,22 +87,29 @@ public class FileStoragePerformance implements JSONable {
         return this.downloadThreshold;
     }
 
-    public long getSpaceSize() {
-        return this.spaceSize;
+    public int getMaxSharingNum() {
+        return this.maxSharingNum;
     }
 
-    public void setSpaceSize(long spaceSize) {
-        this.spaceSize = spaceSize;
+    public boolean isSharingWatermarkEnabled() {
+        return this.sharingWatermarkEnabled;
+    }
+
+    public boolean isSharingPreviewEnabled() {
+        return this.sharingPreviewEnabled;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("contactId", this.contactId);
+        json.put("spaceSize", this.spaceSize);
         json.put("maxSpaceSize", this.maxSpaceSize);
         json.put("uploadThreshold", this.uploadThreshold);
         json.put("downloadThreshold", this.downloadThreshold);
-        json.put("spaceSize", this.spaceSize);
+        json.put("maxSharingNum", this.maxSharingNum);
+        json.put("sharingWatermarkEnabled", this.sharingWatermarkEnabled);
+        json.put("sharingPreviewEnabled", this.sharingPreviewEnabled);
         return json;
     }
 
