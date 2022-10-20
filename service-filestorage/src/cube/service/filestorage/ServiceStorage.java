@@ -729,7 +729,10 @@ public class ServiceStorage implements Storagable {
                     new StorageField("contact_id", performance.getContactId()),
                     new StorageField("max_space_size", performance.getMaxSpaceSize()),
                     new StorageField("upload_threshold", performance.getUploadThreshold()),
-                    new StorageField("download_threshold", performance.getDownloadThreshold())
+                    new StorageField("download_threshold", performance.getDownloadThreshold()),
+                    new StorageField("max_sharing_num", performance.getMaxSharingNum()),
+                    new StorageField("sharing_watermark_enabled", performance.isSharingWatermarkEnabled() ? 1 : 0),
+                    new StorageField("sharing_preview_enabled", performance.isSharingPreviewEnabled() ? 1 : 0)
             });
         }
         else {
@@ -737,7 +740,10 @@ public class ServiceStorage implements Storagable {
             this.storage.executeUpdate(table, new StorageField[] {
                     new StorageField("max_space_size", performance.getMaxSpaceSize()),
                     new StorageField("upload_threshold", performance.getUploadThreshold()),
-                    new StorageField("download_threshold", performance.getDownloadThreshold())
+                    new StorageField("download_threshold", performance.getDownloadThreshold()),
+                    new StorageField("max_sharing_num", performance.getMaxSharingNum()),
+                    new StorageField("sharing_watermark_enabled", performance.isSharingWatermarkEnabled() ? 1 : 0),
+                    new StorageField("sharing_preview_enabled", performance.isSharingPreviewEnabled() ? 1 : 0)
             }, new Conditional[] {
                     Conditional.createEqualTo("contact_id", performance.getContactId())
             });
