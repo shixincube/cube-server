@@ -35,7 +35,6 @@ import cube.cache.SharedMemoryCache;
 import cube.common.Packet;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
-import cube.common.notice.*;
 import cube.common.state.FileStorageStateCode;
 import cube.core.*;
 import cube.plugin.PluginSystem;
@@ -147,6 +146,11 @@ public class FileStorageService extends AbstractModule {
     private DaemonTask daemonTask;
 
     /**
+     * 通知器。
+     */
+    private Notifier notifier;
+
+    /**
      * 插件系统。
      */
     private FileStoragePluginSystem pluginSystem;
@@ -168,6 +172,7 @@ public class FileStorageService extends AbstractModule {
         this.fileDescriptors = new ConcurrentHashMap<>();
         this.daemonTask = new DaemonTask(this);
         this.sharingManager = new FileSharingManager(this);
+        this.notifier = new Notifier(this);
     }
 
     @Override
@@ -348,6 +353,20 @@ public class FileStorageService extends AbstractModule {
         ActionDialect dialect = Director.attachDirector(packet.toDialect(),
                 contact.getId(), contact.getDomain().getName());
         this.cellet.speak(device.getTalkContext(), dialect);
+    }
+
+    protected FileStoragePerformance getPerformance(Contact contact) {
+        return this.serviceStorage.readPerformance(contact.getDomain().getName(),
+                contact.getId());
+    }
+
+    protected FileStoragePerformance updatePerformance(Contact contact, FileStoragePerformance performance) {
+        if (contact.getId().longValue() != performance.getContactId()) {
+            return null;
+        }
+
+        this.serviceStorage.writePerformance(contact.getDomain().getName(), performance);
+        return performance;
     }
 
     /**
@@ -759,113 +778,7 @@ public class FileStorageService extends AbstractModule {
             return event;
         }
         else if (event instanceof JSONObject) {
-            JSONObject data = (JSONObject) event;
-            String action = data.getString("action");
-
-            if (FileStorageAction.GetFile.name.equals(action)) {
-                // 获取文件标签
-                String domain = data.getString("domain");
-                String fileCode = data.getString("fileCode");
-                FileLabel fileLabel = this.getFile(domain, fileCode);
-                if (null != fileLabel) {
-                    JSONObject response = fileLabel.toJSON();
-                    if (data.getBoolean("transmitting")) {
-                        // 加载文件到本地
-                        String fullPath = this.loadFileToDisk(domain, fileCode);
-                        if (null != fullPath) {
-                            response.put("fullPath", fullPath);
-                        }
-                    }
-                    return response;
-                }
-            }
-            else if (FileStorageAction.PutFile.name.equals(action)) {
-                JSONObject jsonData = data.getJSONObject("fileLabel");
-                FileLabel label = this.putFile(new FileLabel(jsonData));
-                if (null != label) {
-                    return label.toJSON();
-                }
-            }
-            else if (FileStorageAction.FindFile.name.equals(action)) {
-                String domain = data.getString("domain");
-                long contactId = data.getLong("contactId");
-                String fileName = data.getString("fileName");
-                long lastModified = data.getLong("lastModified");
-                long fileSize = data.getLong("fileSize");
-                // 查找文件
-                FileLabel fileLabel = this.findFile(domain, contactId, fileName, lastModified, fileSize);
-                if (null != fileLabel) {
-                    return fileLabel.toCompactJSON();
-                }
-            }
-            else if (FileStorageAction.DeleteFile.name.equals(action)) {
-                String domain = data.getString("domain");
-                String fileCode = data.getString("fileCode");
-                FileLabel fileLabel = this.getFile(domain, fileCode);
-                if (null != fileLabel) {
-                    // 删除文件
-                    this.deleteFile(domain, fileLabel);
-                    return fileLabel.toCompactJSON();
-                }
-            }
-            else if (FileStorageAction.LoadFile.name.equals(action)) {
-                String domain = data.getString("domain");
-                String fileCode = data.getString("fileCode");
-                return this.loadFileToDisk(domain, fileCode);
-            }
-            else if (FileStorageAction.SaveFile.name.equals(action)) {
-                String path = data.getString("path");
-                FileLabel fileLabel = new FileLabel(data.getJSONObject("fileLabel"));
-                FileLabel result = saveFile(fileLabel, new File(path));
-                if (null != result) {
-                    return result.toCompactJSON();
-                }
-            }
-            else if (FileStorageAction.GetSharingTag.name.equals(action)) {
-                String sharingCode = data.getString(GetSharingTag.SHARING_CODE);
-                SharingTag sharingTag = this.sharingManager.getSharingTag(sharingCode, true);
-                return sharingTag;
-            }
-            else if (FileStorageAction.ListSharingTags.name.equals(action)) {
-                Contact contact = ContactManager.getInstance().getContact(data.getString(ListSharingTags.DOMAIN),
-                        data.getLong(ListSharingTags.CONTACT_ID));
-                // 数据排序
-                boolean desc = data.getString(ListSharingTags.ORDER).equalsIgnoreCase(ConfigUtils.ORDER_DESC);
-                List<SharingTag> result = this.sharingManager.listSharingTags(contact,
-                        data.getBoolean(ListSharingTags.VALID),
-                        data.getInt(ListSharingTags.BEGIN), data.getInt(ListSharingTags.END),
-                        desc);
-                return result;
-            }
-            else if (FileStorageAction.ListTraces.name.equals(action)) {
-                Contact contact = ContactManager.getInstance().getContact(data.getString(ListSharingTraces.DOMAIN),
-                        data.getLong(ListSharingTraces.CONTACT_ID));
-                List<VisitTrace> result = this.sharingManager.listSharingVisitTrace(contact, data.getString(ListSharingTraces.SHARING_CODE),
-                        data.getInt(ListSharingTraces.BEGIN), data.getInt(ListSharingTraces.END));
-                return result;
-            }
-            else if (CountSharingTags.ACTION.equals(action)) {
-                Contact contact = ContactManager.getInstance().getContact(data.getString(CountSharingTags.DOMAIN),
-                        data.getLong(CountSharingTags.CONTACT_ID));
-                JSONObject result = new JSONObject();
-                result.put(CountSharingTags.VALID_NUMBER, this.sharingManager.countSharingTags(contact, true));
-                result.put(CountSharingTags.INVALID_NUMBER, this.sharingManager.countSharingTags(contact, false));
-                return result;
-            }
-            else if (CountSharingVisitTraces.ACTION.equals(action)) {
-                Contact contact = ContactManager.getInstance().getContact(data.getString(CountSharingVisitTraces.DOMAIN),
-                        data.getLong(CountSharingVisitTraces.CONTACT_ID));
-                data.put(CountSharingVisitTraces.TOTAL,
-                        this.sharingManager.countSharingVisitTrace(contact,
-                                data.getString(CountSharingVisitTraces.SHARING_CODE)));
-                return data;
-            }
-            else if (TraverseVisitTrace.ACTION.equals(action)) {
-                Contact contact = ContactManager.getInstance().getContact(data.getString(TraverseVisitTrace.DOMAIN),
-                        data.getLong(TraverseVisitTrace.CONTACT_ID));
-                // Traverse visit trace
-                return this.sharingManager.traverseVisitTrace(contact, data.getString(TraverseVisitTrace.SHARING_CODE));
-            }
+            return this.notifier.deliver((JSONObject) event);
         }
         else if (event instanceof File) {
             String filename = ((File) event).getName();

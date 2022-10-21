@@ -35,10 +35,6 @@ public class ListSharingTraces extends NoticeData {
 
     public final static String ACTION = FileStorageAction.ListTraces.name;
 
-    public final static String CONTACT_ID = "contactId";
-
-    public final static String DOMAIN = "domain";
-
     public final static String SHARING_CODE = "sharingCode";
 
     public final static String BEGIN = "begin";

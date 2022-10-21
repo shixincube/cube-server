@@ -33,6 +33,10 @@ import org.json.JSONObject;
  */
 public class NoticeData extends JSONObject {
 
+    public final static String CONTACT_ID = "contactId";
+
+    public final static String DOMAIN = "domain";
+
     public final static String PARAMETER = "parameter";
 
     public NoticeData(String action) {

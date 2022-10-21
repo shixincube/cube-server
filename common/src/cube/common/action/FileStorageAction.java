@@ -34,6 +34,11 @@ public enum FileStorageAction {
     Performance("performance"),
 
     /**
+     * 更新配置参数。
+     */
+    UpdatePerformance("updatePerformance"),
+
+    /**
      * 上传文件。
      */
     UploadFile("uploadFile"),

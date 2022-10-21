@@ -97,6 +97,8 @@ public enum ClientAction {
 
     CancelWorkflow("CancelWorkflow"),
 
+    UpdateFilePerf("UpdateFilePerf"),
+
     Cube("Cube");
 
     public final String name;
