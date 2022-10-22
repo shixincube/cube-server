@@ -97,6 +97,8 @@ public enum ClientAction {
 
     CancelWorkflow("CancelWorkflow"),
 
+    GetFilePerf("GetFilePerf"),
+
     UpdateFilePerf("UpdateFilePerf"),
 
     Cube("Cube");

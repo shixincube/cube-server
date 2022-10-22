@@ -104,6 +104,13 @@ public class Notifier {
                     data.getInt(ListSharingTraces.BEGIN), data.getInt(ListSharingTraces.END));
             return result;
         }
+        else if (FileStorageAction.Performance.name.equals(action)) {
+            Contact contact = new Contact(data.getLong("contactId"), data.getString("domain"));
+            FileStoragePerformance performance = this.service.getPerformance(contact);
+            if (null != performance) {
+                return performance.toJSON();
+            }
+        }
         else if (FileStorageAction.UpdatePerformance.name.equals(action)) {
             // 更新配置数据
             Contact contact = new Contact(data.getJSONObject("contact"));

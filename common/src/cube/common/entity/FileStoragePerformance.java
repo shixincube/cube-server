@@ -55,6 +55,7 @@ public class FileStoragePerformance implements JSONable {
                                   int maxSharingNum, boolean sharingWatermarkEnabled,
                                   boolean sharingPreviewEnabled) {
         this.contactId = contactId;
+        this.spaceSize = -1;
         this.maxSpaceSize = maxSpaceSize;
         this.uploadThreshold = uploadThreshold;
         this.downloadThreshold = downloadThreshold;
@@ -114,13 +115,17 @@ public class FileStoragePerformance implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("contactId", this.contactId);
-        json.put("spaceSize", this.spaceSize);
         json.put("maxSpaceSize", this.maxSpaceSize);
         json.put("uploadThreshold", this.uploadThreshold);
         json.put("downloadThreshold", this.downloadThreshold);
         json.put("maxSharingNum", this.maxSharingNum);
         json.put("sharingWatermarkEnabled", this.sharingWatermarkEnabled);
         json.put("sharingPreviewEnabled", this.sharingPreviewEnabled);
+
+        if (this.spaceSize >= 0) {
+            json.put("spaceSize", this.spaceSize);
+        }
+
         return json;
     }
 
