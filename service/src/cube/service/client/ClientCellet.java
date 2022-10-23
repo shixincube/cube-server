@@ -165,6 +165,9 @@ public class ClientCellet extends AbstractCellet {
         else if (ClientAction.GetFilePerf.name.equals(action)) {
             this.executor.execute(new GetFileStoragePrefTask(this, talkContext, actionDialect));
         }
+        else if (ClientAction.UpdateFilePerf.name.equals(action)) {
+            this.executor.execute(new UpdateFileStoragePrefTask(this, talkContext, actionDialect));
+        }
         else if (ClientAction.UpdateContact.name.equals(action)) {
             this.executor.execute(new UpdateContactTask(this, talkContext, actionDialect));
         }

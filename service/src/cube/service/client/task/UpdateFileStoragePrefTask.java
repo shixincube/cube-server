@@ -36,11 +36,11 @@ import cube.service.client.ClientCellet;
 import org.json.JSONObject;
 
 /**
- * 获取文件存储的联系人性能。
+ * 更新文件存储的联系人性能。
  */
-public class GetFileStoragePrefTask extends ClientTask {
+public class UpdateFileStoragePrefTask extends ClientTask {
 
-    public GetFileStoragePrefTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
+    public UpdateFileStoragePrefTask(ClientCellet cellet, TalkContext talkContext, ActionDialect actionDialect) {
         super(cellet, talkContext, actionDialect);
     }
 
@@ -48,13 +48,15 @@ public class GetFileStoragePrefTask extends ClientTask {
     public void run() {
         String domain = this.actionDialect.getParamAsString("domain");
         long contactId = this.actionDialect.getParamAsLong("contactId");
+        JSONObject prefJson = this.actionDialect.getParamAsJson("performance");
 
         JSONObject notification = new JSONObject();
-        notification.put("action", FileStorageAction.Performance.name);
+        notification.put("action", FileStorageAction.UpdatePerformance.name);
         notification.put("domain", domain);
         notification.put("contactId", contactId);
+        notification.put("performance", prefJson);
 
-        ActionDialect response = new ActionDialect(ClientAction.GetFilePerf.name);
+        ActionDialect response = new ActionDialect(ClientAction.UpdateFilePerf.name);
         copyNotifier(response);
 
         // 获取文件信息

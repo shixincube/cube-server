@@ -113,8 +113,8 @@ public class Notifier {
         }
         else if (FileStorageAction.UpdatePerformance.name.equals(action)) {
             // 更新配置数据
-            Contact contact = new Contact(data.getJSONObject("contact"));
-            FileStoragePerformance performance = new FileStoragePerformance(data.getJSONObject("data"));
+            Contact contact = new Contact(data.getLong("contactId"), data.getString("domain"));
+            FileStoragePerformance performance = new FileStoragePerformance(data.getJSONObject("performance"));
             FileStoragePerformance result = this.service.updatePerformance(contact, performance);
             return (null != result) ? result.toJSON() : null;
         }

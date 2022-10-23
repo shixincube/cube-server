@@ -91,24 +91,48 @@ public class FileStoragePerformance implements JSONable {
         return this.maxSpaceSize;
     }
 
+    public void setMaxSpaceSize(long value) {
+        this.maxSpaceSize = value;
+    }
+
     public long getUploadThreshold() {
         return this.uploadThreshold;
+    }
+
+    public void setUploadThreshold(long value) {
+        this.uploadThreshold = value;
     }
 
     public long getDownloadThreshold() {
         return this.downloadThreshold;
     }
 
+    public void setDownloadThreshold(long value) {
+        this.downloadThreshold = value;
+    }
+
     public int getMaxSharingNum() {
         return this.maxSharingNum;
+    }
+
+    public void setMaxSharingNum(int value) {
+        this.maxSharingNum = value;
     }
 
     public boolean isSharingWatermarkEnabled() {
         return this.sharingWatermarkEnabled;
     }
 
+    public void setSharingWatermarkEnabled(boolean value) {
+        this.sharingWatermarkEnabled = value;
+    }
+
     public boolean isSharingPreviewEnabled() {
         return this.sharingPreviewEnabled;
+    }
+
+    public void setSharingPreviewEnabled(boolean value) {
+        this.sharingPreviewEnabled = value;
     }
 
     @Override
