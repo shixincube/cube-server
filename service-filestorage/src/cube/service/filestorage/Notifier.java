@@ -97,11 +97,23 @@ public class Notifier {
                     desc);
             return result;
         }
-        else if (FileStorageAction.ListTraces.name.equals(action)) {
-            Contact contact = ContactManager.getInstance().getContact(data.getString(ListSharingTraces.DOMAIN),
-                    data.getLong(ListSharingTraces.CONTACT_ID));
-            List<VisitTrace> result = this.service.getSharingManager().listSharingVisitTrace(contact, data.getString(ListSharingTraces.SHARING_CODE),
-                    data.getInt(ListSharingTraces.BEGIN), data.getInt(ListSharingTraces.END));
+        else if (FileStorageAction.ListSharingTraces.name.equals(action)) {
+            List<VisitTrace> result = null;
+            if (data.has(ListSharingTraces.BEGIN) && data.has(ListSharingTraces.END)) {
+                // 查找指定分享码的访问记录
+                Contact contact = ContactManager.getInstance().getContact(data.getString(ListSharingTraces.DOMAIN),
+                        data.getLong(ListSharingTraces.CONTACT_ID));
+                result = this.service.getSharingManager().listSharingVisitTrace(contact,
+                        data.getString(ListSharingTraces.SHARING_CODE),
+                        data.getInt(ListSharingTraces.BEGIN), data.getInt(ListSharingTraces.END));
+            }
+            else if (data.has(ListSharingTraces.BEGIN_TIME) && data.has(ListSharingTraces.END_TIME)) {
+                // 按照时间查询分享记录
+                result = this.service.getServiceStorage().searchVisitTraces(data.getString(ListSharingTraces.DOMAIN),
+                        data.getLong(ListSharingTraces.CONTACT_ID),
+                        data.getLong(ListSharingTraces.BEGIN_TIME),
+                        data.getLong(ListSharingTraces.END_TIME));
+            }
             return result;
         }
         else if (FileStorageAction.Performance.name.equals(action)) {

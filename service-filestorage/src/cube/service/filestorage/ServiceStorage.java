@@ -1524,7 +1524,7 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
-     * 批量获取指定分享人的分享访问记录。
+     * 按照时间检索指定分享人的分享访问记录。
      *
      * @param domain
      * @param contactId
@@ -1532,7 +1532,7 @@ public class ServiceStorage implements Storagable {
      * @param endTime
      * @return
      */
-    public List<VisitTrace> listVisitTrace(String domain, long contactId, long beginTime, long endTime) {
+    public List<VisitTrace> searchVisitTraces(String domain, long contactId, long beginTime, long endTime) {
         List<VisitTrace> list = new ArrayList<>();
 
         String table = this.visitTraceTableNameMap.get(domain);

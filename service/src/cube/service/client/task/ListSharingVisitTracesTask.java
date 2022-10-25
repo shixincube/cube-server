@@ -55,7 +55,7 @@ public class ListSharingVisitTracesTask extends ClientTask {
         JSONObject notification = this.actionDialect.getParamAsJson(NoticeData.PARAMETER);
 
         ActionDialect response = new ActionDialect(ClientAction.ListSharingTraces.name);
-        copyNotifier(response);
+        JSONObject notifier = copyNotifier(response);
 
         // 获取文件存储模块
         AbstractModule module = this.getFileStorageModule();
@@ -66,25 +66,45 @@ public class ListSharingVisitTracesTask extends ClientTask {
             return;
         }
 
-        List<VisitTrace> sharingTagList = (List<VisitTrace>) result;
+        boolean assignSharingCode = notification.has(ListSharingTraces.SHARING_CODE);
+
+        List<VisitTrace> visitTraceList = (List<VisitTrace>) result;
 
         JSONObject data = new JSONObject();
-        JSONArray array = new JSONArray();
-        for (VisitTrace trace : sharingTagList) {
-            array.put(trace.toCompactJSON());
-        }
-        data.put("list", array);
-        data.put(ListSharingTraces.BEGIN, notification.getInt(ListSharingTraces.BEGIN));
-        data.put(ListSharingTraces.END, notification.getInt(ListSharingTraces.END));
-        data.put(ListSharingTraces.SHARING_CODE, notification.getString(ListSharingTraces.SHARING_CODE));
 
-        // 总数
-        CountSharingVisitTraces countSharingVisitTraces = new CountSharingVisitTraces(
-                notification.getString(ListSharingTraces.DOMAIN),
-                notification.getLong(ListSharingTraces.CONTACT_ID),
-                notification.getString(ListSharingTraces.SHARING_CODE));
-        result = module.notify(countSharingVisitTraces);
-        data.put("total", ((JSONObject)result).getInt(CountSharingVisitTraces.TOTAL));
+        if (assignSharingCode) {
+            JSONArray array = new JSONArray();
+            for (VisitTrace trace : visitTraceList) {
+                array.put(trace.toCompactJSON());
+            }
+            data.put("list", array);
+            data.put(ListSharingTraces.BEGIN, notification.getInt(ListSharingTraces.BEGIN));
+            data.put(ListSharingTraces.END, notification.getInt(ListSharingTraces.END));
+            data.put(ListSharingTraces.SHARING_CODE, notification.getString(ListSharingTraces.SHARING_CODE));
+
+            // 总数
+            CountSharingVisitTraces countSharingVisitTraces = new CountSharingVisitTraces(
+                    notification.getString(ListSharingTraces.DOMAIN),
+                    notification.getLong(ListSharingTraces.CONTACT_ID),
+                    notification.getString(ListSharingTraces.SHARING_CODE));
+            result = module.notify(countSharingVisitTraces);
+            data.put("total", ((JSONObject)result).getInt(CountSharingVisitTraces.TOTAL));
+        }
+        else {
+            data.put("total", visitTraceList.size());
+            data.put(ListSharingTraces.BEGIN_TIME, notification.getLong(ListSharingTraces.BEGIN_TIME));
+            data.put(ListSharingTraces.END_TIME, notification.getLong(ListSharingTraces.END_TIME));
+
+            // 按照时间查询的数据进行异步发送
+            this.cellet.getExecutor().execute(() -> {
+                for (VisitTrace visitTrace : visitTraceList) {
+                    ActionDialect responseData = new ActionDialect(ClientAction.ListSharingTraces.name);
+                    responseData.addParam(NoticeData.ASYNC_NOTIFIER, notifier);
+                    responseData.addParam("data", visitTrace.toCompactJSON());
+                    this.cellet.speak(this.talkContext, responseData);
+                }
+            });
+        }
 
         response.addParam("code", FileStorageStateCode.Ok.code);
         response.addParam("data", data);

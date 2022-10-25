@@ -174,7 +174,7 @@ public enum FileStorageAction {
     GetSharingReport("getSharingReport"),
 
     /**
-     * 罗列当前联系人的所有分享标签。
+     * 列表当前联系人的所有分享标签。
      */
     ListSharingTags("listSharingTags"),
 
@@ -186,7 +186,7 @@ public enum FileStorageAction {
     /**
      * 获取监测数据。
      */
-    ListTraces("listTraces"),
+    ListSharingTraces("listSharingTraces"),
 
     /**
      * 未知动作。

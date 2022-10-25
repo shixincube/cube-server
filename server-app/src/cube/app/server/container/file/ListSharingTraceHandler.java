@@ -103,7 +103,7 @@ public class ListSharingTraceHandler extends ContextHandler {
             JSONArray array = new JSONArray();
 
             Client client = Manager.getInstance().getClient();
-            List<VisitTrace> list = client.getFileProcessor().listVisitTrace(account.id, account.domain, code, begin, end);
+            List<VisitTrace> list = client.getFileStorage().listVisitTrace(account.id, account.domain, code, begin, end);
             if (null != list) {
                 for (VisitTrace trace : list) {
                     array.put(trace.toCompactJSON());
@@ -113,7 +113,7 @@ public class ListSharingTraceHandler extends ContextHandler {
             responseData.put("list", array);
 
             // 总数
-            responseData.put("total", client.getFileProcessor().getVisitTraceTotal(code));
+            responseData.put("total", client.getFileStorage().getVisitTraceTotal(code));
 
             this.respondOk(response, responseData);
             this.complete();

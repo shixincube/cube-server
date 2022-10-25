@@ -33,6 +33,8 @@ import org.json.JSONObject;
  */
 public class NoticeData extends JSONObject {
 
+    public final static String ASYNC_NOTIFIER = "_async_notifier";
+
     public final static String CONTACT_ID = "contactId";
 
     public final static String DOMAIN = "domain";

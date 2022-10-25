@@ -65,12 +65,17 @@ public abstract class ClientTask implements Runnable {
         return null;
     }
 
-    protected void copyNotifier(ActionDialect destination) {
+    protected JSONObject copyNotifier(ActionDialect destination) {
         if (actionDialect.containsParam("_notifier")) {
             destination.addParam("_notifier", actionDialect.getParamAsJson("_notifier"));
+            return actionDialect.getParamAsJson("_notifier");
         }
         else if (actionDialect.containsParam("_performer")) {
             destination.addParam("_performer", actionDialect.getParamAsJson("_performer"));
+            return actionDialect.getParamAsJson("_performer");
+        }
+        else {
+            return null;
         }
     }
 

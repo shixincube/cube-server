@@ -253,7 +253,8 @@ public class SharingReportor {
         }
         long beginTime = calendar.getTimeInMillis();
 
-        List<VisitTrace> list = this.storage.listVisitTrace(contact.getDomain().getName(), contact.getId(),
+        // 按照时间检索
+        List<VisitTrace> list = this.storage.searchVisitTraces(contact.getDomain().getName(), contact.getId(),
                 beginTime, endTime);
         for (VisitTrace visitTrace : list) {
             long contactId = visitTrace.contactId;

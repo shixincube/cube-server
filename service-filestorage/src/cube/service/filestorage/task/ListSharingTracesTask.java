@@ -46,12 +46,12 @@ import org.json.JSONObject;
 import java.util.List;
 
 /**
- * 列举分享标签任务。
+ * 列表分享标签访问记录。
  */
-public class ListTracesTask extends ServiceTask {
+public class ListSharingTracesTask extends ServiceTask {
 
-    public ListTracesTask(FileStorageServiceCellet cellet, TalkContext talkContext,
-                          Primitive primitive, ResponseTime responseTime) {
+    public ListSharingTracesTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                                 Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
