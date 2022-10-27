@@ -27,11 +27,9 @@
 package cube.app.server.container;
 
 import cube.app.server.account.AccountManager;
-import cube.app.server.account.StateCode;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.json.JSONObject;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
