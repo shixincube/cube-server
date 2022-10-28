@@ -44,15 +44,25 @@ public class GetContactTask extends ClientTask {
 
     @Override
     public void run() {
-        String domain = actionDialect.getParamAsString("domain");
-        Long contactId = actionDialect.getParamAsLong("contactId");
+        Contact contact = null;
+        if (actionDialect.containsParam("domain") && actionDialect.containsParam("contactId")) {
+            String domain = actionDialect.getParamAsString("domain");
+            Long contactId = actionDialect.getParamAsLong("contactId");
 
-        // 获取联系人
-        Contact contact = ContactManager.getInstance().getContact(domain, contactId);
+            // 获取联系人
+            contact = ContactManager.getInstance().getContact(domain, contactId);
+        }
+        else if (actionDialect.containsParam("token")) {
+            // 获取联系人
+            contact = ContactManager.getInstance().getContact(actionDialect.getParamAsString("token"));
+        }
 
         ActionDialect result = new ActionDialect(ClientAction.GetContact.name);
         copyNotifier(result);
-        result.addParam("contact", contact.toJSON());
+
+        if (null != contact) {
+            result.addParam("contact", contact.toJSON());
+        }
 
         cellet.speak(talkContext, result);
     }
