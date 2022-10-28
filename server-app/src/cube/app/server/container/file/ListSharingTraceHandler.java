@@ -103,7 +103,7 @@ public class ListSharingTraceHandler extends ContextHandler {
             JSONArray array = new JSONArray();
 
             Client client = Manager.getInstance().getClient();
-            List<VisitTrace> list = client.getFileStorage().listVisitTrace(account.id, account.domain, code, begin, end);
+            List<VisitTrace> list = client.getFileStorage().listVisitTraces(account.id, account.domain, code, begin, end);
             if (null != list) {
                 for (VisitTrace trace : list) {
                     array.put(trace.toCompactJSON());

@@ -89,7 +89,7 @@ public class SharingTagHandler extends ContextHandler {
 
             String sharingCode = data.get("sc");
             Client client = Manager.getInstance().getClient();
-            SharingTag sharingTag = client.getFileProcessor().getSharingTag(sharingCode);
+            SharingTag sharingTag = client.getFileStorage().getSharingTag(sharingCode);
 
             if (null == sharingCode) {
                 this.respond(response, HttpStatus.NOT_FOUND_404);

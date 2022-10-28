@@ -114,11 +114,11 @@ public class ListSharingTagHandler extends ContextHandler {
             Client client = Manager.getInstance().getClient();
 
             // 总数量
-            responseData.put("total", client.getFileProcessor().getSharingTagTotal(account.id, valid));
+            responseData.put("total", client.getFileStorage().getCachedSharingTagTotal(account.id, valid));
 
             JSONArray array = new JSONArray();
 
-            List<SharingTag> list = client.getFileProcessor().listSharingTags(account.id, account.domain, begin, end, valid);
+            List<SharingTag> list = client.getFileStorage().listSharingTags(account.id, account.domain, begin, end, valid);
             if (null != list) {
                 for (SharingTag tag : list) {
                     array.put(tag.toCompactJSON());
