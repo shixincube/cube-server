@@ -56,6 +56,9 @@ public class DisconnectTask extends DispatcherTask {
             return;
         }
 
+        // 移除
+        this.performer.removeContact(contact, contact.getDevice(this.talkContext));
+
         // 打包
         Packet packet = new Packet(ContactAction.Disconnect.name, contact.toJSON());
 

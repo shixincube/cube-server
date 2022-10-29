@@ -62,6 +62,16 @@ public enum ContactStateCode {
     NoSignIn(12),
 
     /**
+     * 重复签入。
+     */
+    DuplicateSignIn(13),
+
+    /**
+     * 未找到联系人。
+     */
+    NotFindContact(14),
+
+    /**
      * 未找到群组。
      */
     NotFindGroup(15),

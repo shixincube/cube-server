@@ -316,6 +316,16 @@ public class Performer implements TalkListener, Tickable {
     }
 
     /**
+     * 联系人设备是否已存在。
+     *
+     * @param device
+     * @return 返回已存在的设备。
+     */
+    public Device existsDevice(Device device) {
+        return this.tokenDeviceMap.get(device.getToken());
+    }
+
+    /**
      * 更新联系人。
      *
      * @param contact 指定联系人。

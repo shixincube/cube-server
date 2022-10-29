@@ -56,7 +56,7 @@ public class SignInTask extends DispatcherTask {
             // 无令牌码
             ActionDialect response = this.makeResponse(new JSONObject(), StateCode.NoAuthToken, "No token code");
             this.cellet.speak(this.talkContext, response);
-            ((ContactCellet)this.cellet).returnSignInTask(this);
+            ((ContactCellet) this.cellet).returnSignInTask(this);
             return;
         }
 
@@ -103,7 +103,7 @@ public class SignInTask extends DispatcherTask {
                 // 没有令牌信息
                 ActionDialect response = this.makeResponse(new JSONObject(), StateCode.InvalidParameter, "Parameter error");
                 this.cellet.speak(this.talkContext, response);
-                ((ContactCellet)this.cellet).returnSignInTask(this);
+                ((ContactCellet) this.cellet).returnSignInTask(this);
                 return;
             }
 
@@ -111,6 +111,18 @@ public class SignInTask extends DispatcherTask {
             Contact contact = new Contact(contactJson, this.talkContext);
             Device device = contact.getDevice(this.talkContext);
             device.setToken(tokenCode);
+
+            // 判断重复登录
+            Device onlineDevice = this.performer.existsDevice(device);
+            if (null != onlineDevice) {
+                // 通知之前的终端关闭
+                JSONObject payload = new JSONObject();
+                payload.put("code", ContactStateCode.DuplicateSignIn.code);
+                payload.put("data", contact.toCompactJSON());
+                ActionDialect response = this.makeResponse(payload, StateCode.OK, "");
+                this.cellet.speak(onlineDevice.getTalkContext(), response);
+            }
+
             this.performer.updateContact(contact, device);
 
             ActionDialect response = this.performer.syncTransmit(this.talkContext, this.cellet.getName(), this.getAction());
