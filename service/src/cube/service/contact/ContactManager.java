@@ -414,7 +414,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         // Hook sign-in
         ContactHook hook = this.pluginSystem.getSignInHook();
-        hook.apply(new ContactPluginContext(contact, activeDevice));
+        hook.apply(new ContactPluginContext(ContactHook.SignIn, contact, activeDevice));
 
         this.contactCache.apply(contact.getUniqueKey(), new LockFuture() {
             @Override
@@ -471,7 +471,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         // Hook sign-in
         ContactHook hook = this.pluginSystem.getSignInHook();
-        hook.apply(new ContactPluginContext(contact, activeDevice));
+        hook.apply(new ContactPluginContext(ContactHook.SignIn, contact, activeDevice));
 
         this.contactCache.apply(contact.getUniqueKey(), new LockFuture() {
             @Override
@@ -512,7 +512,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     public Contact signOut(final Contact contact, String tokenCode, Device activeDevice) {
         // Hook 调用插件
         ContactHook hook = this.pluginSystem.getSignOutHook();
-        hook.apply(new ContactPluginContext(contact, activeDevice));
+        hook.apply(new ContactPluginContext(ContactHook.SignOut, contact, activeDevice));
 
         final Object mutex = new Object();
         LockFuture future = this.contactCache.apply(contact.getUniqueKey(), new LockFuture() {
@@ -588,7 +588,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
             // 调用插件 Hook
             ContactHook hook = this.pluginSystem.getComebackHook();
-            hook.apply(new ContactPluginContext(onlineContact, tokenDevice.device));
+            hook.apply(new ContactPluginContext(ContactHook.Comeback, onlineContact, tokenDevice.device));
 
             return onlineContact;
         }
@@ -888,7 +888,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
                 // 调用插件 Hook
                 ContactHook hook = this.pluginSystem.getDeviceTimeoutHook();
-                hook.apply(new ContactPluginContext(contact, device));
+                hook.apply(new ContactPluginContext(ContactHook.DeviceTimeout, contact, device));
             }
         }
     }
@@ -912,7 +912,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         if (null != name) {
             ContactHook hook = this.pluginSystem.getModifyContactNameHook();
-            ContactPluginContext pluginContext = new ContactPluginContext(contact);
+            ContactPluginContext pluginContext = new ContactPluginContext(ContactHook.ModifyContactName, contact);
             // 设置新名称
             pluginContext.setNewName(name);
             // 调用插件
@@ -927,7 +927,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         if (null != context) {
             ContactHook hook = this.pluginSystem.getModifyContactContextHook();
-            ContactPluginContext pluginContext = new ContactPluginContext(contact);
+            ContactPluginContext pluginContext = new ContactPluginContext(ContactHook.ModifyContactContext, contact);
             // 设置新上下文
             pluginContext.setNewContext(context);
             // 调用插件

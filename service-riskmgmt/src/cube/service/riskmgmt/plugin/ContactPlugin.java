@@ -26,20 +26,21 @@
 
 package cube.service.riskmgmt.plugin;
 
-import cube.common.entity.AuthDomain;
+import cube.common.entity.ContactBehavior;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
-import cube.service.auth.AuthPluginContext;
+import cube.service.contact.ContactHook;
+import cube.service.contact.ContactPluginContext;
 import cube.service.riskmgmt.RiskManagement;
 
 /**
  * 创建域应用插件。
  */
-public class CreateDomainAppPlugin implements Plugin {
+public class ContactPlugin implements Plugin {
 
     private RiskManagement service;
 
-    public CreateDomainAppPlugin(RiskManagement service) {
+    public ContactPlugin(RiskManagement service) {
         this.service = service;
     }
 
@@ -53,11 +54,14 @@ public class CreateDomainAppPlugin implements Plugin {
 
     @Override
     public void onAction(PluginContext context) {
-        if (context instanceof AuthPluginContext) {
-            AuthPluginContext authPluginContext = (AuthPluginContext) context;
-            AuthDomain authDomain = authPluginContext.getDomain();
-            if (null != authDomain) {
-                this.service.refreshDomain(authDomain);
+        if (context instanceof ContactPluginContext) {
+            ContactPluginContext ctx = (ContactPluginContext) context;
+            String hook = ctx.getHookName();
+            if (ContactHook.SignIn.equals(hook) || ContactHook.SignOut.equals(hook)) {
+                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), hook);
+                behavior.setDevice(ctx.getDevice());
+                // 添加记录
+                this.service.recordContactBehavior(behavior);
             }
         }
     }

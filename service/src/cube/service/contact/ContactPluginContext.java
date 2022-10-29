@@ -38,7 +38,9 @@ import org.json.JSONObject;
  */
 public class ContactPluginContext extends PluginContext implements JSONable {
 
-    private Contact contact;
+    private final String hookName;
+
+    private final Contact contact;
 
     private Device device;
 
@@ -46,15 +48,21 @@ public class ContactPluginContext extends PluginContext implements JSONable {
 
     private JSONObject newContext;
 
-    public ContactPluginContext(Contact contact) {
+    public ContactPluginContext(String hookName, Contact contact) {
         super();
+        this.hookName = hookName;
         this.contact = contact;
     }
 
-    public ContactPluginContext(Contact contact, Device device) {
+    public ContactPluginContext(String hookName, Contact contact, Device device) {
         super();
+        this.hookName = hookName;
         this.contact = contact;
         this.device = device;
+    }
+
+    public String getHookName() {
+        return this.hookName;
     }
 
     public Contact getContact() {

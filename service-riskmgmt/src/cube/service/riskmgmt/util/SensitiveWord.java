@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.service.riskmgmt;
+package cube.service.riskmgmt.util;
 
 /**
  * 敏感词。

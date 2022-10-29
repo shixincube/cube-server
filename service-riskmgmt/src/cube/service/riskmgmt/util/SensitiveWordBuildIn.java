@@ -26,10 +26,6 @@
 
 package cube.service.riskmgmt.util;
 
-import cube.service.riskmgmt.SensitiveWord;
-
-import java.util.ArrayList;
-
 /**
  * 内置的敏感词数据。
  */

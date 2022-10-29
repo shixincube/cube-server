@@ -30,11 +30,13 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
 import cube.common.entity.ChainNode;
+import cube.common.entity.ContactBehavior;
 import cube.common.entity.TransmissionChain;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
+import cube.service.riskmgmt.util.SensitiveWord;
 import cube.service.riskmgmt.util.SensitiveWordBuildIn;
 import cube.storage.StorageFactory;
 import cube.storage.StorageType;
@@ -52,11 +54,34 @@ import java.util.concurrent.ExecutorService;
  */
 public class MainStorage implements Storagable {
 
+    private final String contactBehaviorPrefix = "contact_behavior_";
+
     private final String sensitiveWordTablePrefix = "risk_sensitive_word_";
 
     private final String transChainTrackTablePrefix = "trans_chain_track_";
 
     private final String transChainNodeTablePrefix = "trans_chain_node_";
+
+    private final StorageField[] contactBehaviorFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("behavior", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("contact", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("device", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            })
+    };
 
     private final StorageField[] sensitiveWordFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
@@ -122,15 +147,15 @@ public class MainStorage implements Storagable {
 
     private Storage storage;
 
+    private Map<String, String> contactBehaviorTableNameMap;
     private Map<String, String> sensitiveWordTableNameMap;
-
     private Map<String, String> transChainTrackTableNameMap;
-
     private Map<String, String> transChainNodeTableNameMap;
 
     public MainStorage(ExecutorService executor, StorageType type, JSONObject config) {
         this.executor = executor;
         this.storage = StorageFactory.getInstance().createStorage(type, "RickMgmtMainStorage", config);
+        this.contactBehaviorTableNameMap = new HashMap<>();
         this.sensitiveWordTableNameMap = new HashMap<>();
         this.transChainTrackTableNameMap = new HashMap<>();
         this.transChainNodeTableNameMap = new HashMap<>();
@@ -149,10 +174,28 @@ public class MainStorage implements Storagable {
     @Override
     public void execSelfChecking(List<String> domainNameList) {
         for (String domain : domainNameList) {
+            this.checkContactBehaviorTable(domain);
             this.checkSensitiveWordTable(domain);
             this.checkChainTrackTable(domain);
             this.checkChainNodeTable(domain);
         }
+    }
+
+    public void addContactBehavior(ContactBehavior contactBehavior) {
+        final String table = this.contactBehaviorTableNameMap.get(contactBehavior.getDomain().getName());
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                storage.executeInsert(table, new StorageField[] {
+                        new StorageField("contact_id", contactBehavior.getContact().getId().longValue()),
+                        new StorageField("behavior", contactBehavior.getBehavior()),
+                        new StorageField("timestamp", contactBehavior.getTimestamp()),
+                        new StorageField("contact", contactBehavior.getContact().toJSON().toString()),
+                        new StorageField("device", (null == contactBehavior.getDevice()) ? null :
+                                contactBehavior.getDevice().toJSON().toString())
+                });
+            }
+        });
     }
 
     public void writeSensitiveWord(String domain, SensitiveWord sensitiveWord) {
@@ -238,6 +281,20 @@ public class MainStorage implements Storagable {
                     new StorageField("when", chainNode.getWhen()),
                     new StorageField("method", chainNode.getMethod().toJSON().toString())
             });
+        }
+    }
+
+    private void checkContactBehaviorTable(String domain) {
+        String table = this.contactBehaviorPrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.contactBehaviorTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.contactBehaviorFields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
         }
     }
 

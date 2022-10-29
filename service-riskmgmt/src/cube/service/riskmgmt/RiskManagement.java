@@ -43,6 +43,7 @@ import cube.service.filestorage.FileStorageService;
 import cube.service.messaging.MessagingHook;
 import cube.service.messaging.MessagingService;
 import cube.service.riskmgmt.plugin.*;
+import cube.service.riskmgmt.util.SensitiveWord;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
@@ -78,7 +79,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
 
     @Override
     public void start() {
-        this.executor = Executors.newFixedThreadPool(4);
+        this.executor = Executors.newCachedThreadPool();
 
         ContactManager.getInstance().addListener(this);
 
@@ -145,6 +146,10 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         List<String> list = new ArrayList<>();
         list.add(authDomain.domainName);
         this.mainStorage.execSelfChecking(list);
+    }
+
+    public void recordContactBehavior(ContactBehavior behavior) {
+        this.mainStorage.addContactBehavior(behavior);
     }
 
     public boolean hasSensitiveWord(String domain, String text) {
@@ -239,6 +244,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
     }
 
     private void initPlugin() {
+        // 授权服务
         AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
         PluginSystem<?> pluginSystem = authService.getPluginSystem();
         while (null == pluginSystem) {
@@ -253,6 +259,19 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
 
         pluginSystem.register(AuthServiceHook.CreateDomainApp,
                 new CreateDomainAppPlugin(this));
+
+        // 联系人服务
+        while (!ContactManager.getInstance().isStarted()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        pluginSystem = ContactManager.getInstance().getPluginSystem();
+        ContactPlugin contactPlugin = new ContactPlugin(this);
+        pluginSystem.register(ContactHook.SignIn, contactPlugin);
+        pluginSystem.register(ContactHook.SignOut, contactPlugin);
 
         // 消息服务
         MessagingService messagingService = (MessagingService) this.getKernel().getModule(MessagingService.NAME);
