@@ -108,6 +108,10 @@ public final class SQLUtils {
             }
 
             for (Conditional cond : conditionals) {
+                if (null == cond) {
+                    continue;
+                }
+
                 buf.append(cond.toString()).append(" ");
             }
         }
@@ -148,6 +152,10 @@ public final class SQLUtils {
         if (null != conditionals) {
             buf.append(" WHERE ");
             for (Conditional cond : conditionals) {
+                if (null == cond) {
+                    continue;
+                }
+
                 buf.append(cond.toString()).append(" ");
             }
         }
@@ -305,6 +313,11 @@ public final class SQLUtils {
 
         buf.append(" WHERE ");
         for (Conditional conditional : conditionals) {
+            if (null == conditional) {
+                // 跳过 null 值
+                continue;
+            }
+
             buf.append(conditional.toString());
             buf.append(" ");
         }
@@ -324,6 +337,10 @@ public final class SQLUtils {
         buf.append(table);
         buf.append(" WHERE ");
         for (Conditional conditional : conditionals) {
+            if (null == conditional) {
+                continue;
+            }
+
             buf.append(conditional.toString());
             buf.append(" ");
         }

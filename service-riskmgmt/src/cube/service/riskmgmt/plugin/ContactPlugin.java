@@ -63,6 +63,18 @@ public class ContactPlugin implements Plugin {
                 // 添加记录
                 this.service.recordContactBehavior(behavior);
             }
+            else if (ContactHook.DeviceTimeout.equals(hook)) {
+                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactHook.SignOut);
+                behavior.setDevice(ctx.getDevice());
+                // 添加记录
+                this.service.recordContactBehavior(behavior);
+            }
+            else if (ContactHook.Comeback.equals(hook)) {
+                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactHook.SignIn);
+                behavior.setDevice(ctx.getDevice());
+                // 添加记录
+                this.service.recordContactBehavior(behavior);
+            }
         }
     }
 }

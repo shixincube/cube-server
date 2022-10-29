@@ -56,6 +56,9 @@ public class RiskManagementCellet extends AbstractCellet {
 
     @Override
     public void uninstall() {
+        Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
+        kernel.uninstallModule(RiskManagement.NAME);
+
         this.riskManagement = null;
     }
 

@@ -30,6 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
 import cube.common.entity.ChainNode;
+import cube.common.entity.Contact;
 import cube.common.entity.ContactBehavior;
 import cube.common.entity.TransmissionChain;
 import cube.core.Conditional;
@@ -39,6 +40,7 @@ import cube.core.StorageField;
 import cube.service.riskmgmt.util.SensitiveWord;
 import cube.service.riskmgmt.util.SensitiveWordBuildIn;
 import cube.storage.StorageFactory;
+import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.SQLUtils;
 import org.json.JSONObject;
@@ -181,7 +183,7 @@ public class MainStorage implements Storagable {
         }
     }
 
-    public void addContactBehavior(ContactBehavior contactBehavior) {
+    public void writeContactBehavior(ContactBehavior contactBehavior) {
         final String table = this.contactBehaviorTableNameMap.get(contactBehavior.getDomain().getName());
         this.executor.execute(new Runnable() {
             @Override
@@ -196,6 +198,33 @@ public class MainStorage implements Storagable {
                 });
             }
         });
+    }
+
+    public List<ContactBehavior> readContactBehaviors(String domain, long contactId, long beginTime,
+                                                      long endTime, String behavior) {
+        List<ContactBehavior> list = new ArrayList<>();
+
+        final String table = this.contactBehaviorTableNameMap.get(domain);
+        List<StorageField[]> result = this.storage.executeQuery(table, this.contactBehaviorFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createGreaterThanEqual(new StorageField("timestamp", beginTime)),
+                        Conditional.createAnd(),
+                        Conditional.createLessThan(new StorageField("timestamp", endTime)),
+                        (null != behavior) ? Conditional.createAnd() : null,
+                        (null != behavior) ? Conditional.createEqualTo("behavior", behavior) : null,
+                        Conditional.createOrderBy("timestamp", false)
+                });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> map = StorageFields.get(fields);
+            Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
+            ContactBehavior contactBehavior = new ContactBehavior(contact, map.get("behavior").getString());
+            list.add(contactBehavior);
+        }
+
+        return list;
     }
 
     public void writeSensitiveWord(String domain, SensitiveWord sensitiveWord) {

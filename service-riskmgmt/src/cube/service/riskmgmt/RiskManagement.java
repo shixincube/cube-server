@@ -28,7 +28,10 @@ package cube.service.riskmgmt;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.common.action.RiskManagementAction;
 import cube.common.entity.*;
+import cube.common.notice.ListContactBehaviors;
+import cube.common.notice.NoticeData;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
@@ -148,8 +151,28 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         this.mainStorage.execSelfChecking(list);
     }
 
+    /**
+     * 记录联系人行为。
+     *
+     * @param behavior
+     */
     public void recordContactBehavior(ContactBehavior behavior) {
-        this.mainStorage.addContactBehavior(behavior);
+        this.mainStorage.writeContactBehavior(behavior);
+    }
+
+    /**
+     * 获取指定联系人在起止时间段内的行为记录列表。
+     *
+     * @param domain
+     * @param contactId
+     * @param beginTime
+     * @param endTime
+     * @param behavior
+     * @return
+     */
+    public List<ContactBehavior> listContactBehaviors(String domain, long contactId, long beginTime, long endTime,
+                                                      String behavior) {
+        return this.mainStorage.readContactBehaviors(domain, contactId, beginTime, endTime, behavior);
     }
 
     public boolean hasSensitiveWord(String domain, String text) {
@@ -236,6 +259,26 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         });
     }
 
+    @Override
+    public Object notify(Object data) {
+        if (data instanceof JSONObject) {
+            JSONObject jsonData = (JSONObject) data;
+            String action = jsonData.getString(NoticeData.ACTION);
+
+            if (RiskManagementAction.ListContactBehaviors.name.equals(action)) {
+                String domain = jsonData.getString(ListContactBehaviors.DOMAIN);
+                long contactId = jsonData.getLong(ListContactBehaviors.CONTACT_ID);
+                long beginTime = jsonData.getLong(ListContactBehaviors.BEGIN_TIME);
+                long endTime = jsonData.getLong(ListContactBehaviors.END_TIME);
+                String behavior = jsonData.has(ListContactBehaviors.BEHAVIOR) ?
+                        jsonData.getString(ListContactBehaviors.BEHAVIOR) : null;
+                return this.listContactBehaviors(domain, contactId, beginTime, endTime, behavior);
+            }
+        }
+
+        return null;
+    }
+
     private void loadSensitiveWordToMemory(List<String> domainList) {
         for (String domain : domainList) {
             List<SensitiveWord> list = this.mainStorage.readAllSensitiveWords(domain);
@@ -272,6 +315,8 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         ContactPlugin contactPlugin = new ContactPlugin(this);
         pluginSystem.register(ContactHook.SignIn, contactPlugin);
         pluginSystem.register(ContactHook.SignOut, contactPlugin);
+        pluginSystem.register(ContactHook.Comeback, contactPlugin);
+        pluginSystem.register(ContactHook.DeviceTimeout, contactPlugin);
 
         // 消息服务
         MessagingService messagingService = (MessagingService) this.getKernel().getModule(MessagingService.NAME);

@@ -101,6 +101,8 @@ public enum ClientAction {
 
     UpdateFilePerf("UpdateFilePerf"),
 
+    ListContactBehaviors("ListContactBehaviors"),
+
     Cube("Cube");
 
     public final String name;

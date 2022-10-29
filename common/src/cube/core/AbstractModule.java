@@ -96,7 +96,7 @@ public abstract class AbstractModule implements Module {
      * @param data
      * @return
      */
-    public Object notify(Object data) {
-        return data;
+    public <T> T notify(Object data) {
+        return (T) data;
     }
 }
