@@ -1813,7 +1813,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         Contact activeContact = table.add(contact, activeDevice, token);
 
         // 记录令牌对应关系
-        this.tokenContactMap.put(token.getCode().toString(), new TokenDevice(activeContact, activeDevice));
+        this.tokenContactMap.put(token.getCode(), new TokenDevice(activeContact, activeDevice));
 
         // 绑定令牌
         token.setContactId(contact.getId());

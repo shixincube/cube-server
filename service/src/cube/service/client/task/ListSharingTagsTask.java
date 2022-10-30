@@ -55,12 +55,12 @@ public class ListSharingTagsTask extends ClientTask {
         JSONObject notification = this.actionDialect.getParamAsJson(NoticeData.PARAMETER);
 
         ActionDialect response = new ActionDialect(ClientAction.ListSharingTags.name);
-        copyNotifier(response);
+        JSONObject notifier = copyNotifier(response);
 
         // 获取文件存储模块
         AbstractModule module = this.getFileStorageModule();
-        Object result = module.notify(notification);
-        if (null == result) {
+        List<SharingTag> sharingTagList = module.notify(notification);
+        if (null == sharingTagList) {
             response.addParam("code", FileStorageStateCode.Failure.code);
             this.cellet.speak(talkContext, response);
             return;
@@ -69,31 +69,47 @@ public class ListSharingTagsTask extends ClientTask {
         // 查询的是否是有效期内的
         boolean valid = notification.getBoolean(ListSharingTags.VALID);
 
-        // 获取总数量
-        int total = 0;
-        CountSharingTags countNotice = new CountSharingTags(notification.getString(ListSharingTags.DOMAIN),
-                notification.getLong(ListSharingTags.CONTACT_ID));
-        Object numResult = module.notify(countNotice);
-        if (null != numResult) {
-            JSONObject numJson = (JSONObject) numResult;
-            total = valid ? CountSharingTags.parseValidNumber(numJson) : CountSharingTags.parseInvalidNumber(numJson);
+        if (notification.has(ListSharingTags.BEGIN) && notification.has(ListSharingTags.END)) {
+            // 获取总数量
+            int total = 0;
+            CountSharingTags countNotice = new CountSharingTags(notification.getString(ListSharingTags.DOMAIN),
+                    notification.getLong(ListSharingTags.CONTACT_ID));
+            Object numResult = module.notify(countNotice);
+            if (null != numResult) {
+                JSONObject numJson = (JSONObject) numResult;
+                total = valid ? CountSharingTags.parseValidNumber(numJson) : CountSharingTags.parseInvalidNumber(numJson);
+            }
+
+            JSONObject data = new JSONObject();
+            JSONArray array = new JSONArray();
+            for (SharingTag tag : sharingTagList) {
+                array.put(tag.toCompactJSON());
+            }
+            data.put("list", array);
+            data.put("total", total);
+            data.put("begin", notification.getInt(ListSharingTags.BEGIN));
+            data.put("end", notification.getInt(ListSharingTags.END));
+            data.put("valid", valid);
+
+            response.addParam("code", FileStorageStateCode.Ok.code);
+            response.addParam("data", data);
         }
+        else {
+            notification.put("total", sharingTagList.size());
 
-        List<SharingTag> sharingTagList = (List<SharingTag>) result;
+            // 按照时间查询的数据进行异步发送
+            this.cellet.getExecutor().execute(() -> {
+                for (SharingTag tag : sharingTagList) {
+                    ActionDialect responseData = new ActionDialect(ClientAction.ListSharingTags.name);
+                    responseData.addParam(NoticeData.ASYNC_NOTIFIER, notifier);
+                    responseData.addParam("data", tag.toCompactJSON());
+                    this.cellet.speak(this.talkContext, responseData);
+                }
+            });
 
-        JSONObject data = new JSONObject();
-        JSONArray array = new JSONArray();
-        for (SharingTag tag : sharingTagList) {
-            array.put(tag.toCompactJSON());
+            response.addParam("code", FileStorageStateCode.Ok.code);
+            response.addParam("data", notification);
         }
-        data.put("list", array);
-        data.put("total", total);
-        data.put("begin", notification.getInt(ListSharingTags.BEGIN));
-        data.put("end", notification.getInt(ListSharingTags.END));
-        data.put("valid", valid);
-
-        response.addParam("code", FileStorageStateCode.Ok.code);
-        response.addParam("data", data);
 
         this.cellet.speak(this.talkContext, response);
     }

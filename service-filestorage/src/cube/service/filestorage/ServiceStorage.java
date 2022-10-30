@@ -1338,7 +1338,18 @@ public class ServiceStorage implements Storagable {
             };
         }
 
+        // 查库
+        List<StorageField[]> result = this.storage.executeQuery(table, this.sharingTagFields, conditionals);
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> map = StorageFields.get(fields);
 
+            SharingTag sharingTag = this.makeSharingTag(domain, map);
+            if (null == sharingTag) {
+                continue;
+            }
+
+            list.add(sharingTag);
+        }
 
         return list;
     }

@@ -65,6 +65,6 @@ public class ListSharingTags extends NoticeData {
         this.put(BEGIN_TIME, beginTime);
         this.put(END_TIME, endTime);
         this.put(VALID, valid);
-        this.put(ORDER, ConfigUtils.ORDER_DESC);
+        this.put(ORDER, ConfigUtils.ORDER_ASC);
     }
 }

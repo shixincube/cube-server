@@ -30,7 +30,6 @@ import cube.common.entity.Contact;
 import cube.common.entity.Device;
 
 /**
-
  * 令牌设备描述。
  */
 public class TokenDevice {

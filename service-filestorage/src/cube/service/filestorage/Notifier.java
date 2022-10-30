@@ -87,15 +87,29 @@ public class Notifier {
             return sharingTag;
         }
         else if (FileStorageAction.ListSharingTags.name.equals(action)) {
+            // 分享标签清单
+            List<SharingTag> result = null;
+            if (data.has(ListSharingTags.BEGIN) && data.has(ListSharingTags.END)) {
+                // 按照索引查询
+                Contact contact = ContactManager.getInstance().getContact(data.getString(ListSharingTags.DOMAIN),
+                        data.getLong(ListSharingTags.CONTACT_ID));
+                // 数据排序
+                boolean desc = data.getString(ListSharingTags.ORDER).equalsIgnoreCase(ConfigUtils.ORDER_DESC);
+                result = this.service.getSharingManager().listSharingTags(contact,
+                        data.getBoolean(ListSharingTags.VALID),
+                        data.getInt(ListSharingTags.BEGIN), data.getInt(ListSharingTags.END),
+                        desc);
+            }
+            else if (data.has(ListSharingTags.BEGIN_TIME) && data.has(ListSharingTags.END_TIME)) {
+                // 数据排序
+                boolean desc = data.getString(ListSharingTags.ORDER).equalsIgnoreCase(ConfigUtils.ORDER_DESC);
+                result = this.service.getServiceStorage().searchSharingTags(data.getString(ListSharingTags.DOMAIN),
+                        data.getLong(ListSharingTags.CONTACT_ID),
+                        data.getBoolean(ListSharingTags.VALID),
+                        data.getLong(ListSharingTags.BEGIN_TIME),
+                        data.getLong(ListSharingTags.END_TIME), desc);
+            }
 
-            Contact contact = ContactManager.getInstance().getContact(data.getString(ListSharingTags.DOMAIN),
-                    data.getLong(ListSharingTags.CONTACT_ID));
-            // 数据排序
-            boolean desc = data.getString(ListSharingTags.ORDER).equalsIgnoreCase(ConfigUtils.ORDER_DESC);
-            List<SharingTag> result = this.service.getSharingManager().listSharingTags(contact,
-                    data.getBoolean(ListSharingTags.VALID),
-                    data.getInt(ListSharingTags.BEGIN), data.getInt(ListSharingTags.END),
-                    desc);
             return result;
         }
         else if (FileStorageAction.ListSharingTraces.name.equals(action)) {
