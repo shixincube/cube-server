@@ -109,10 +109,19 @@ public class FileHierarchyManager implements FileHierarchyListener {
         return root;
     }
 
+    /**
+     * 计算文件总数量。
+     *
+     * @param domainName
+     * @param contactIdOrGroupId
+     * @return
+     */
     public long countFileTotalSize(String domainName, long contactIdOrGroupId) {
         FileHierarchy fileHierarchy = this.getFileHierarchy(contactIdOrGroupId, domainName);
         return fileHierarchy.getRoot().getSize();
     }
+
+    
 
     /**
      * 周期回调。用于维护过期的数据。

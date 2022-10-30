@@ -79,6 +79,11 @@ public class Directory implements JSONable {
             if (!context.has(FileHierarchy.KEY_FILE_TOTAL_SIZE)) {
                 context.put(FileHierarchy.KEY_FILE_TOTAL_SIZE, (long)0);
             }
+            if (!context.has(FileHierarchy.KEY_ROOT)) {
+                context.put(FileHierarchy.KEY_ROOT,
+                        (null != fileHierarchy.getRoot()) ? fileHierarchy.getRoot().getId().longValue()
+                                : node.getId().longValue());
+            }
         }
     }
 

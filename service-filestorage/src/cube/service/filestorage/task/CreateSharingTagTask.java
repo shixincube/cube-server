@@ -71,7 +71,7 @@ public class CreateSharingTagTask extends ServiceTask {
         Device device = ContactManager.getInstance().getDevice(tokenCode);
         if (null == contact || null == device) {
             if (null == device) {
-                Logger.w(CreateSharingTagTask.class, "Device is null: " + contact.getId());
+                Logger.w(CreateSharingTagTask.class, "Device is null, token: " + tokenCode);
             }
 
             // 发生错误

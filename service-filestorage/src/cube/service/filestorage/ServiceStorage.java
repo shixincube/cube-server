@@ -29,6 +29,7 @@ package cube.service.filestorage;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
+import cube.common.UniqueKey;
 import cube.common.entity.*;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -51,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 文件码存储器。
@@ -144,6 +146,9 @@ public class ServiceStorage implements Storagable {
             }),
             new StorageField("node_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.UNIQUE
+            }),
+            new StorageField("root_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
             }),
             new StorageField("last_modified", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
@@ -784,14 +789,33 @@ public class ServiceStorage implements Storagable {
         return total;
     }
 
-    public List<JSONObject> listHierarchyNodes(String domain, long beginTime, long endTime) {
+    /**
+     * 过滤指定 ROOT 里时间段内的节点数据。
+     *
+     * @param domain
+     * @param rootId
+     * @param beginTime
+     * @param endTime
+     * @return
+     */
+    public List<JSONObject> filterHierarchyNode(String domain, long rootId, long beginTime, long endTime) {
         List<JSONObject> list = new ArrayList<>();
         String table = this.hierarchyTableNameMap.get(domain);
         if (null == table) {
             return list;
         }
 
+        List<StorageField[]> result = this.storage.executeQuery(table, this.hierarchyFields, new Conditional[] {
+                Conditional.createEqualTo("root_id", rootId),
+                Conditional.createAnd(),
+                Conditional.createGreaterThanEqual(new StorageField("last_modified", beginTime)),
+                Conditional.createAnd(),
+                Conditional.createLessThan(new StorageField("last_modified", endTime))
+        });
 
+        for (StorageField[] fields : result) {
+            list.add(new JSONObject(fields[4].getString()));
+        }
 
         return list;
     }
@@ -811,6 +835,7 @@ public class ServiceStorage implements Storagable {
 
         StorageField[] fields = new StorageField[] {
                 new StorageField("node_id", nodeId),
+                new StorageField("root_id", json.getJSONObject("context").getLong("root")),
                 new StorageField("last_modified", json.getJSONObject("context").getLong("lastModified")),
                 new StorageField("data", json.toString())
         };
@@ -849,7 +874,26 @@ public class ServiceStorage implements Storagable {
         });
 
         if (!result.isEmpty()) {
-            JSONObject data = new JSONObject(result.get(0)[3].getString());
+            JSONObject data = new JSONObject(result.get(0)[4].getString());
+
+            // 兼容低版本数据库结构
+            AtomicLong rootId = new AtomicLong(result.get(0)[2].getLong());
+            if (0 == rootId.get()) {
+                if (data.has("parent")) {
+                    rootId.set(UniqueKey.extractId(data.getString("parent")));
+                }
+                else {
+                    rootId.set(nodeId);
+                }
+                this.executor.execute(() -> {
+                    storage.executeUpdate(table, new StorageField[] {
+                            new StorageField("root_id", rootId.get())
+                    }, new Conditional[] {
+                            Conditional.createEqualTo("sn", result.get(0)[0].getLong())
+                    });
+                });
+            }
+
             return data;
         }
 

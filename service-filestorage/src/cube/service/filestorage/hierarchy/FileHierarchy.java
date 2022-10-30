@@ -43,6 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class FileHierarchy {
 
+    /** 目录的根目录 ID 。 */
+    protected final static String KEY_ROOT = "root";
     /** 目录创建时间。 */
     protected final static String KEY_CREATION = "creation";
     /** 目录最后一次修改时间。 */
@@ -276,6 +278,7 @@ public class FileHierarchy {
                 ?  new HierarchyNode(directoryId, directory.node) : new HierarchyNode(directory.node);
         try {
             JSONObject context = newDirNode.getContext();
+            context.put(KEY_ROOT, this.root.node.getId().longValue());
             context.put(KEY_DIR_NAME, directoryName);
             context.put(KEY_CREATION, now);
             context.put(KEY_LAST_MODIFIED, now);
