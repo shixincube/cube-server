@@ -87,6 +87,7 @@ public class Notifier {
             return sharingTag;
         }
         else if (FileStorageAction.ListSharingTags.name.equals(action)) {
+
             Contact contact = ContactManager.getInstance().getContact(data.getString(ListSharingTags.DOMAIN),
                     data.getLong(ListSharingTags.CONTACT_ID));
             // 数据排序
@@ -98,6 +99,7 @@ public class Notifier {
             return result;
         }
         else if (FileStorageAction.ListSharingTraces.name.equals(action)) {
+            // 访问记录
             List<VisitTrace> result = null;
             if (data.has(ListSharingTraces.BEGIN) && data.has(ListSharingTraces.END)) {
                 // 查找指定分享码的访问记录

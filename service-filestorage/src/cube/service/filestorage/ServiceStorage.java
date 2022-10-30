@@ -139,9 +139,18 @@ public class ServiceStorage implements Storagable {
      * 层级表字段。
      */
     private final StorageField[] hierarchyFields = new StorageField[] {
-            new StorageField("node_id", LiteralBase.LONG),
-            new StorageField("data", LiteralBase.STRING)
-            //new StorageField("reserved", LiteralBase.STRING)
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("node_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.UNIQUE
+            }),
+            new StorageField("last_modified", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
     };
 
     /**
@@ -155,7 +164,6 @@ public class ServiceStorage implements Storagable {
             new StorageField("original_id", LiteralBase.LONG),
             new StorageField("file_code", LiteralBase.STRING),
             new StorageField("data", LiteralBase.STRING)
-            //new StorageField("reserved", LiteralBase.STRING)
     };
 
     private final StorageField[] sharingTagFields = new StorageField[] {
@@ -776,6 +784,18 @@ public class ServiceStorage implements Storagable {
         return total;
     }
 
+    public List<JSONObject> listHierarchyNodes(String domain, long beginTime, long endTime) {
+        List<JSONObject> list = new ArrayList<>();
+        String table = this.hierarchyTableNameMap.get(domain);
+        if (null == table) {
+            return list;
+        }
+
+
+
+        return list;
+    }
+
     /**
      * 写入节点数据。
      *
@@ -783,21 +803,22 @@ public class ServiceStorage implements Storagable {
      * @param nodeId
      * @param json
      */
-    public void writeHierarchyNode(String domain, Long nodeId, JSONObject json) {
+    public void writeHierarchyNode(String domain, long nodeId, JSONObject json) {
         String table = this.hierarchyTableNameMap.get(domain);
         if (null == table) {
             return;
         }
 
         StorageField[] fields = new StorageField[] {
-                new StorageField("node_id", LiteralBase.LONG, nodeId),
-                new StorageField("data", LiteralBase.STRING, json.toString())
+                new StorageField("node_id", nodeId),
+                new StorageField("last_modified", json.getJSONObject("context").getLong("lastModified")),
+                new StorageField("data", json.toString())
         };
 
         List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
                 new StorageField("sn", LiteralBase.LONG)
         }, new Conditional[] {
-                Conditional.createEqualTo(new StorageField("node_id", LiteralBase.LONG, nodeId))
+                Conditional.createEqualTo(new StorageField("node_id", nodeId))
         });
 
         if (result.isEmpty()) {
@@ -805,7 +826,7 @@ public class ServiceStorage implements Storagable {
         }
         else {
             this.storage.executeUpdate(table, fields, new Conditional[] {
-                    Conditional.createEqualTo(new StorageField("node_id", LiteralBase.LONG, nodeId))
+                    Conditional.createEqualTo(new StorageField("node_id", nodeId))
             });
         }
     }
@@ -817,18 +838,18 @@ public class ServiceStorage implements Storagable {
      * @param nodeId
      * @return
      */
-    public JSONObject readHierarchyNode(String domain, Long nodeId) {
+    public JSONObject readHierarchyNode(String domain, long nodeId) {
         String table = this.hierarchyTableNameMap.get(domain);
         if (null == table) {
             return null;
         }
 
         List<StorageField[]> result = this.storage.executeQuery(table, this.hierarchyFields, new Conditional[] {
-                Conditional.createEqualTo(new StorageField("node_id", LiteralBase.LONG, nodeId))
+                Conditional.createEqualTo(new StorageField("node_id", nodeId))
         });
 
         if (!result.isEmpty()) {
-            JSONObject data = new JSONObject(result.get(0)[1].getString());
+            JSONObject data = new JSONObject(result.get(0)[3].getString());
             return data;
         }
 
@@ -841,14 +862,14 @@ public class ServiceStorage implements Storagable {
      * @param domain
      * @param nodeId
      */
-    public void deleteHierarchyNode(String domain, Long nodeId) {
+    public void deleteHierarchyNode(String domain, long nodeId) {
         String table = this.hierarchyTableNameMap.get(domain);
         if (null == table) {
             return;
         }
 
         this.storage.executeDelete(table, new Conditional[] {
-                Conditional.createEqualTo(new StorageField("node_id", LiteralBase.LONG, nodeId))
+                Conditional.createEqualTo(new StorageField("node_id", nodeId))
         });
     }
 
@@ -1128,27 +1149,7 @@ public class ServiceStorage implements Storagable {
 
         Map<String, StorageField> map = StorageFields.get(result.get(0));
 
-        // 读取文件标签
-        FileLabel fileLabel = this.readFileLabel(domain, map.get("file_code").getString());
-        if (null == fileLabel) {
-            return null;
-        }
-
-        Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
-        Device device = new Device(new JSONObject(map.get("device").getString()));
-
-        SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
-                map.get("code").getString(), map.get("expiry").getLong(),
-                contact, device, fileLabel, map.get("duration").getLong(),
-                map.get("password").isNullValue() ? null : map.get("password").getString(),
-                map.get("preview").getInt() == 1, map.get("download").getInt() == 1,
-                map.get("trace_download").getInt() == 1,
-                map.get("state").getInt());
-
-        // 预览文件列表
-        List<FileLabel> previewList = readSharingPreview(domain, code);
-        sharingTag.setPreviewList(previewList);
-
+        SharingTag sharingTag = this.makeSharingTag(domain, map);
         return sharingTag;
     }
 
@@ -1281,6 +1282,68 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
+     * 按照时间戳检索分享标签。
+     *
+     * @param domain
+     * @param contactId
+     * @param valid
+     * @param beginTime
+     * @param endTime
+     * @param descending
+     * @return
+     */
+    public List<SharingTag> searchSharingTags(String domain, long contactId, boolean valid, long beginTime, long endTime,
+                                              boolean descending) {
+        List<SharingTag> list = new ArrayList<>();
+        String table = this.sharingTagTableNameMap.get(domain);
+        if (null == table) {
+            return list;
+        }
+
+        Conditional[] conditionals = null;
+        if (valid) {
+            conditionals = new Conditional[] {
+                    Conditional.createEqualTo("contact_id", contactId),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("state", 0),
+                    Conditional.createAnd(),
+                    Conditional.createBracket(new Conditional[] {
+                            Conditional.createEqualTo("expiry", (long) 0),
+                            Conditional.createOr(),
+                            Conditional.createGreaterThanEqual(new StorageField("expiry", System.currentTimeMillis()))
+                    }),
+                    Conditional.createAnd(),
+                    Conditional.createGreaterThanEqual(new StorageField("timestamp", beginTime)),
+                    Conditional.createAnd(),
+                    Conditional.createLessThan(new StorageField("timestamp", endTime)),
+                    Conditional.createOrderBy("timestamp", descending)
+            };
+        }
+        else {
+            conditionals = new Conditional[] {
+                    Conditional.createEqualTo("contact_id", contactId),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("state", 0),
+                    Conditional.createAnd(),
+                    Conditional.createBracket(new Conditional[] {
+                            Conditional.createUnequalTo("expiry", (long) 0),
+                            Conditional.createAnd(),
+                            Conditional.createLessThan(new StorageField("expiry", System.currentTimeMillis()))
+                    }),
+                    Conditional.createAnd(),
+                    Conditional.createGreaterThanEqual(new StorageField("timestamp", beginTime)),
+                    Conditional.createAnd(),
+                    Conditional.createLessThan(new StorageField("timestamp", endTime)),
+                    Conditional.createOrderBy("timestamp", descending)
+            };
+        }
+
+
+
+        return list;
+    }
+
+    /**
      * 获取指定联系人的分享标签。
      *
      * @param domain
@@ -1337,26 +1400,10 @@ public class ServiceStorage implements Storagable {
         for (StorageField[] fields : result) {
             Map<String, StorageField> map = StorageFields.get(fields);
 
-            // 读取文件标签
-            FileLabel fileLabel = this.readFileLabel(domain, map.get("file_code").getString());
-            if (null == fileLabel) {
+            SharingTag sharingTag = this.makeSharingTag(domain, map);
+            if (null == sharingTag) {
                 continue;
             }
-
-            Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
-            Device device = new Device(new JSONObject(map.get("device").getString()));
-
-            SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
-                    map.get("code").getString(), map.get("expiry").getLong(),
-                    contact, device, fileLabel, map.get("duration").getLong(),
-                    map.get("password").isNullValue() ? null : map.get("password").getString(),
-                    map.get("preview").getInt() == 1, map.get("download").getInt() == 1,
-                    map.get("trace_download").getInt() == 1,
-                    map.get("state").getInt());
-
-            // 预览文件列表
-            List<FileLabel> previewList = readSharingPreview(domain, sharingTag.getCode());
-            sharingTag.setPreviewList(previewList);
 
             list.add(sharingTag);
         }
@@ -1468,6 +1515,31 @@ public class ServiceStorage implements Storagable {
                     new StorageField("parent", visitTrace.getParentId())
             });
         });
+    }
+
+    private SharingTag makeSharingTag(String domain, Map<String, StorageField> map) {
+        // 读取文件标签
+        FileLabel fileLabel = this.readFileLabel(domain, map.get("file_code").getString());
+        if (null == fileLabel) {
+            return null;
+        }
+
+        Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
+        Device device = new Device(new JSONObject(map.get("device").getString()));
+
+        SharingTag sharingTag = new SharingTag(map.get("id").getLong(), domain, map.get("timestamp").getLong(),
+                map.get("code").getString(), map.get("expiry").getLong(),
+                contact, device, fileLabel, map.get("duration").getLong(),
+                map.get("password").isNullValue() ? null : map.get("password").getString(),
+                map.get("preview").getInt() == 1, map.get("download").getInt() == 1,
+                map.get("trace_download").getInt() == 1,
+                map.get("state").getInt());
+
+        // 预览文件列表
+        List<FileLabel> previewList = readSharingPreview(domain, sharingTag.getCode());
+        sharingTag.setPreviewList(previewList);
+
+        return sharingTag;
     }
 
     private VisitTrace makeVisitTrace(Map<String, StorageField> map) {
@@ -1886,22 +1958,7 @@ public class ServiceStorage implements Storagable {
 
         if (!this.storage.exist(table)) {
             // 表不存在，建表
-            StorageField[] fields = new StorageField[] {
-                    new StorageField("sn", LiteralBase.LONG, new Constraint[] {
-                            Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
-                    }),
-                    new StorageField("node_id", LiteralBase.LONG, new Constraint[] {
-                            Constraint.UNIQUE
-                    }),
-                    new StorageField("data", LiteralBase.STRING, new Constraint[] {
-                            Constraint.NOT_NULL
-                    }),
-                    new StorageField("reserved", LiteralBase.STRING, new Constraint[] {
-                            Constraint.DEFAULT_NULL
-                    })
-            };
-
-            if (this.storage.executeCreate(table, fields)) {
+            if (this.storage.executeCreate(table, this.hierarchyFields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
         }

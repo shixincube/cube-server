@@ -69,12 +69,12 @@ public enum FileStorageAction {
     GetRoot("getRoot"),
 
     /**
-     * 罗列目录清单。
+     * 列表目录清单。
      */
     ListDirs("listDirs"),
 
     /**
-     * 罗列文件清单。
+     * 列表文件清单。
      */
     ListFiles("listFiles"),
 

@@ -8,6 +8,9 @@ import org.json.JSONObject;
  */
 public class ContactBehavior extends Entity {
 
+    public final static String BEHAVIOR_SIGNIN = "SignIn";
+    public final static String BEHAVIOR_SIGNOUT = "SignOut";
+
     private Contact contact;
 
     private String behavior;

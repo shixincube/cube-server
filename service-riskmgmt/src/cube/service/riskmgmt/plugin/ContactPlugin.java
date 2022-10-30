@@ -57,20 +57,26 @@ public class ContactPlugin implements Plugin {
         if (context instanceof ContactPluginContext) {
             ContactPluginContext ctx = (ContactPluginContext) context;
             String hook = ctx.getHookName();
-            if (ContactHook.SignIn.equals(hook) || ContactHook.SignOut.equals(hook)) {
-                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), hook);
+            if (ContactHook.SignIn.equals(hook)) {
+                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.BEHAVIOR_SIGNIN);
                 behavior.setDevice(ctx.getDevice());
                 // 添加记录
                 this.service.recordContactBehavior(behavior);
             }
             else if (ContactHook.DeviceTimeout.equals(hook)) {
-                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactHook.SignOut);
+                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.BEHAVIOR_SIGNOUT);
                 behavior.setDevice(ctx.getDevice());
                 // 添加记录
                 this.service.recordContactBehavior(behavior);
             }
             else if (ContactHook.Comeback.equals(hook)) {
-                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactHook.SignIn);
+                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.BEHAVIOR_SIGNIN);
+                behavior.setDevice(ctx.getDevice());
+                // 添加记录
+                this.service.recordContactBehavior(behavior);
+            }
+            else if (ContactHook.SignOut.equals(hook)) {
+                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.BEHAVIOR_SIGNOUT);
                 behavior.setDevice(ctx.getDevice());
                 // 添加记录
                 this.service.recordContactBehavior(behavior);

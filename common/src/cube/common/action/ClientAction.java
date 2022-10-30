@@ -83,6 +83,8 @@ public enum ClientAction {
 
     FindFile("FindFile"),
 
+    ListFiles("ListFiles"),
+
     ListSharingTags("ListSharingTags"),
 
     GetSharingTag("GetSharingTag"),
