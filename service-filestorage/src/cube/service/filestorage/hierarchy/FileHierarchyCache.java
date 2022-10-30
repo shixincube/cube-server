@@ -36,7 +36,7 @@ import org.json.JSONObject;
  */
 public class FileHierarchyCache extends AbstractCache {
 
-    private ServiceStorage structStorage;
+    protected ServiceStorage structStorage;
 
     public FileHierarchyCache(ServiceStorage structStorage) {
         super("FileHierarchyCache", "FileHierarchyCache");

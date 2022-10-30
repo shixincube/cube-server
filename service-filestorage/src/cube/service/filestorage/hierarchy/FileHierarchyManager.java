@@ -121,7 +121,19 @@ public class FileHierarchyManager implements FileHierarchyListener {
         return fileHierarchy.getRoot().getSize();
     }
 
-    
+    /**
+     * TODO
+     * @param domainName
+     * @param contactId
+     * @param beginTime
+     * @param endTime
+     * @return
+     */
+    public List<FileLabel> listFiles(String domainName, long contactId, long beginTime, long endTime) {
+        List<FileLabel> list = new ArrayList<>();
+//        this.fileHierarchyCache.structStorage;
+        return list;
+    }
 
     /**
      * 周期回调。用于维护过期的数据。
