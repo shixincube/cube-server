@@ -81,6 +81,13 @@ public class Notifier {
                 return result.toCompactJSON();
             }
         }
+        else if (FileStorageAction.ListFiles.name.equals(action)) {
+            // 批量获取文件
+            List<FileLabel> list = this.service.getFileHierarchyManager().listFiles(data.getString(NoticeData.DOMAIN),
+                    data.getLong(NoticeData.CONTACT_ID),
+                    data.getLong(ListFiles.BEGIN_TIME), data.getLong(ListFiles.END_TIME));
+            return list;
+        }
         else if (FileStorageAction.GetSharingTag.name.equals(action)) {
             String sharingCode = data.getString(GetSharingTag.SHARING_CODE);
             SharingTag sharingTag = this.service.getSharingManager().getSharingTag(sharingCode, true);

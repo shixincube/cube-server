@@ -688,6 +688,31 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
+     * 读取指定文件的完成时间。
+     *
+     * @param domain
+     * @param fileCode
+     * @return
+     */
+    public long readFileCompletedTime(String domain, String fileCode) {
+        String table = this.labelTableNameMap.get(domain);
+        if (null == table) {
+            return -1;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+                new StorageField("completed_time", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("file_code", fileCode)
+        });
+        if (result.isEmpty()) {
+            return -1;
+        }
+
+        return result.get(0)[0].getLong();
+    }
+
+    /**
      * 读取偏好配置。
      *
      * @param domain
@@ -798,7 +823,7 @@ public class ServiceStorage implements Storagable {
      * @param endTime
      * @return
      */
-    public List<JSONObject> filterHierarchyNode(String domain, long rootId, long beginTime, long endTime) {
+    public List<JSONObject> filterHierarchyNodes(String domain, long rootId, long beginTime, long endTime) {
         List<JSONObject> list = new ArrayList<>();
         String table = this.hierarchyTableNameMap.get(domain);
         if (null == table) {

@@ -150,6 +150,9 @@ public class ClientCellet extends AbstractCellet {
         else if (ClientAction.FindFile.name.equals(action)) {
             this.executor.execute(new FindFileTask(this, talkContext, actionDialect));
         }
+        else if (ClientAction.ListFiles.name.equals(action)) {
+            this.executor.execute(new ListFilesTask(this, talkContext, actionDialect));
+        }
         else if (ClientAction.GetSharingTag.name.equals(action)) {
             this.executor.execute(new GetSharingTagTask(this, talkContext, actionDialect));
         }

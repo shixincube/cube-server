@@ -34,6 +34,7 @@ import cube.common.entity.HierarchyNodes;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.ServiceStorage;
 import cube.util.FileUtils;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -122,7 +123,8 @@ public class FileHierarchyManager implements FileHierarchyListener {
     }
 
     /**
-     * TODO
+     * 获取指定时间戳内的文件。
+     *
      * @param domainName
      * @param contactId
      * @param beginTime
@@ -131,7 +133,25 @@ public class FileHierarchyManager implements FileHierarchyListener {
      */
     public List<FileLabel> listFiles(String domainName, long contactId, long beginTime, long endTime) {
         List<FileLabel> list = new ArrayList<>();
-//        this.fileHierarchyCache.structStorage;
+        // 检索符合时间范围的节点
+        List<JSONObject> nodeJsonList = this.fileHierarchyCache.structStorage.filterHierarchyNodes(domainName,
+                contactId, beginTime, endTime);
+        for (JSONObject nodeJson : nodeJsonList) {
+            HierarchyNode node = new HierarchyNode(nodeJson);
+            for (String fileCode : node.getRelatedKeys()) {
+                // 读取上传时间
+                long time = this.fileHierarchyCache.structStorage.readFileCompletedTime(domainName, fileCode);
+                if (time < 0) {
+                    continue;
+                }
+
+                if (time >= beginTime && time < endTime) {
+                    // 满足时间戳条件
+                    FileLabel fileLabel = this.fileHierarchyCache.structStorage.readFileLabel(domainName, fileCode);
+                    list.add(fileLabel);
+                }
+            }
+        }
         return list;
     }
 
