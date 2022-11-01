@@ -376,9 +376,9 @@ public class AuthStorage implements Storagable {
      * @param cid 指定联系人 ID 。
      * @return 返回授权令牌实例。
      */
-    public AuthToken queryToken(Long cid) {
+    public AuthToken queryToken(long cid) {
         List<StorageField[]> result = this.storage.executeQuery(this.tokenTable, this.tokenFields, new Conditional[] {
-                Conditional.createEqualTo("cid", cid.longValue())
+                Conditional.createEqualTo("cid", cid)
         });
         if (result.isEmpty()) {
             return null;

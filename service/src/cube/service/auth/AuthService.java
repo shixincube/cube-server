@@ -193,7 +193,7 @@ public class AuthService extends AbstractModule {
      * @param durationInMillis 指定令牌的有效时长，单位：毫秒。
      * @return 返回令牌。
      */
-    public AuthToken applyToken(String domain, String appKey, Long cid, long durationInMillis) {
+    public AuthToken applyToken(String domain, String appKey, long cid, long durationInMillis) {
         AuthToken token = null;
 
         if (this.useFile) {
@@ -224,25 +224,39 @@ public class AuthService extends AbstractModule {
             // 读取该 App 的访问域
             AuthDomain authDomain = this.authStorage.getDomain(domain, appKey);
             if (null != authDomain) {
-                String code = Utils.randomString(32);
+                if (cid > 0) {
+                    // 查询令牌
+                    token = this.authStorage.queryToken(cid);
 
-                Date now = new Date();
-                Date expiry = new Date(now.getTime() + durationInMillis);
+                    if (null != token) {
+                        if (token.getExpiry() < System.currentTimeMillis()) {
+                            // 已过期的令牌
+                            token = null;
+                        }
+                    }
+                }
 
-                // 创建描述
-                PrimaryDescription description = authDomain.getPrimaryDescription();
+                if (null == token) {
+                    String code = Utils.randomString(32);
 
-                // 创建令牌
-                token = new AuthToken(code, domain, appKey, cid, now, expiry, description, authDomain.ferry);
+                    Date now = new Date();
+                    Date expiry = new Date(now.getTime() + durationInMillis);
 
-                // 本地缓存
-                this.authTokenMap.put(code, token);
+                    // 创建描述
+                    PrimaryDescription description = authDomain.getPrimaryDescription();
 
-                // 将 Code 写入令牌池
-                this.tokenCache.put(new CacheKey(code), new CacheValue(token.toJSON()));
+                    // 创建令牌
+                    token = new AuthToken(code, domain, appKey, cid, now, expiry, description, authDomain.ferry);
 
-                // 更新存储
-                this.authStorage.writeToken(token);
+                    // 本地缓存
+                    this.authTokenMap.put(code, token);
+
+                    // 将 Code 写入令牌池
+                    this.tokenCache.put(new CacheKey(code), new CacheValue(token.toJSON()));
+
+                    // 更新存储
+                    this.authStorage.writeToken(token);
+                }
             }
         }
 
