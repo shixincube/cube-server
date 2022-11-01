@@ -91,7 +91,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 每个联系人的最大存储空间。
      */
-    private long maxSpaceSizeEachContact = (long) 1024 * 1024 * 1024;
+    private long defaultMaxSpaceSizeForContact = (long) 1024 * 1024 * 1024;
 
     /**
      * 默认客户端上传速率阀值。
@@ -216,8 +216,8 @@ public class FileStorageService extends AbstractModule {
                         cacheConfig);
 
             // 最大存储空间
-            this.maxSpaceSizeEachContact = Long.parseLong(properties.getProperty("max.space.size",
-                    Long.toString(this.maxSpaceSizeEachContact)));
+            this.defaultMaxSpaceSizeForContact = Long.parseLong(properties.getProperty("max.space.size",
+                    Long.toString(this.defaultMaxSpaceSizeForContact)));
 
             // 阀值参数
             this.defaultUploadThreshold = Long.parseLong(properties.getProperty("threshold.upload",
@@ -336,7 +336,7 @@ public class FileStorageService extends AbstractModule {
         FileStoragePerformance performance = this.serviceStorage.readPerformance(contact.getDomain().getName(),
                 contact.getId());
         if (null == performance) {
-            performance = new FileStoragePerformance(contact.getId(), this.maxSpaceSizeEachContact,
+            performance = new FileStoragePerformance(contact.getId(), this.defaultMaxSpaceSizeForContact,
                     this.defaultUploadThreshold, this.defaultDownloadThreshold,
                     0, true, true);
             this.serviceStorage.writePerformance(contact.getDomain().getName(), performance);
@@ -356,8 +356,16 @@ public class FileStorageService extends AbstractModule {
     }
 
     protected FileStoragePerformance getPerformance(Contact contact) {
-        return this.serviceStorage.readPerformance(contact.getDomain().getName(),
+        FileStoragePerformance performance = this.serviceStorage.readPerformance(contact.getDomain().getName(),
                 contact.getId());
+        if (null == performance) {
+            // 没有配置性能，进行配置
+            performance = new FileStoragePerformance(contact.getId(), this.defaultMaxSpaceSizeForContact,
+                    this.defaultUploadThreshold, this.defaultDownloadThreshold,
+                    0, true, true);
+            this.serviceStorage.writePerformance(contact.getDomain().getName(), performance);
+        }
+        return performance;
     }
 
     protected FileStoragePerformance updatePerformance(Contact contact, FileStoragePerformance performance) {
@@ -739,7 +747,8 @@ public class FileStorageService extends AbstractModule {
             spaceSize = this.fileHierarchyManager.countFileTotalSize(contact.getDomain().getName(), contact.getId());
         }
 
-        if (spaceSize + increment > this.maxSpaceSizeEachContact) {
+        FileStoragePerformance performance = this.getPerformance(contact);
+        if (spaceSize + increment > performance.getMaxSpaceSize()) {
             // 大于上限
             return false;
         }
