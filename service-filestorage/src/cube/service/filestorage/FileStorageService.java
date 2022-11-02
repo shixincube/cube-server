@@ -365,6 +365,13 @@ public class FileStorageService extends AbstractModule {
                     0, true, true);
             this.serviceStorage.writePerformance(contact.getDomain().getName(), performance);
         }
+
+        if (null != performance) {
+            long size = this.fileHierarchyManager.countFileTotalSize(contact.getDomain().getName(),
+                    contact.getId());
+            performance.setSpaceSize(size);
+        }
+
         return performance;
     }
 
