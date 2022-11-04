@@ -155,7 +155,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
     }
 
     @Override
-    public PluginSystem<?> getPluginSystem() {
+    public PluginSystem getPluginSystem() {
         return null;
     }
 

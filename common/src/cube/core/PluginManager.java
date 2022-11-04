@@ -81,7 +81,7 @@ public class PluginManager {
             // 注册插件
             for (PluginDesc desc : list) {
                 Module module = this.kernel.getModule(desc.module);
-                PluginSystem<?> ps = module.getPluginSystem();
+                PluginSystem ps = module.getPluginSystem();
                 if (null == ps) {
                     continue;
                 }
@@ -98,7 +98,7 @@ public class PluginManager {
 
     public void stop() {
         for (AbstractModule module : this.kernel.getModules()) {
-            PluginSystem<?> pluginSystem = module.getPluginSystem();
+            PluginSystem pluginSystem = module.getPluginSystem();
             if (null == pluginSystem) {
                 // 跳过没有插件系统的模块
                 continue;

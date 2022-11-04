@@ -125,7 +125,7 @@ public class FileProcessorService extends AbstractModule {
     }
 
     @Override
-    public PluginSystem<?> getPluginSystem() {
+    public ProcessorPluginSystem getPluginSystem() {
         return this.pluginSystem;
     }
 

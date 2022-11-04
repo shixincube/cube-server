@@ -119,7 +119,7 @@ public class AuthService extends AbstractModule {
     }
 
     @Override
-    public PluginSystem<?> getPluginSystem() {
+    public AuthServicePluginSystem getPluginSystem() {
         return this.pluginSystem;
     }
 

@@ -125,7 +125,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
     }
 
     @Override
-    public PluginSystem<?> getPluginSystem() {
+    public PluginSystem getPluginSystem() {
         return null;
     }
 
@@ -289,7 +289,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
     private void initPlugin() {
         // 授权服务
         AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
-        PluginSystem<?> pluginSystem = authService.getPluginSystem();
+        PluginSystem pluginSystem = authService.getPluginSystem();
         while (null == pluginSystem) {
             try {
                 Thread.sleep(100);

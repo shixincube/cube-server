@@ -149,7 +149,7 @@ public final class ClientManager {
                 }
 
                 if (null != messagingModule) {
-                    PluginSystem<?> pluginSystem = null;
+                    PluginSystem pluginSystem = null;
 
                     while (null == (pluginSystem = messagingModule.getPluginSystem())) {
                         try {
@@ -178,7 +178,7 @@ public final class ClientManager {
                 }
 
                 if (null != fileProcessor) {
-                    PluginSystem<?> pluginSystem = null;
+                    PluginSystem pluginSystem = null;
 
                     while (null == (pluginSystem = fileProcessor.getPluginSystem())) {
                         try {
@@ -205,7 +205,7 @@ public final class ClientManager {
         this.executor.shutdown();
     }
 
-    private void setupContactPlugin(PluginSystem<?> pluginSystem) {
+    private void setupContactPlugin(PluginSystem pluginSystem) {
         pluginSystem.register(ContactHook.SignIn, new Plugin() {
             @Override
             public void onAction(PluginContext context) {
@@ -253,7 +253,7 @@ public final class ClientManager {
         });
     }
 
-    private void setupMessagingPlugin(PluginSystem<?> pluginSystem) {
+    private void setupMessagingPlugin(PluginSystem pluginSystem) {
         pluginSystem.register("PostPush", new Plugin() {
             @Override
             public void setup() {
@@ -271,7 +271,7 @@ public final class ClientManager {
         });
     }
 
-    private void setupFileProcessorPlugin(PluginSystem<?> pluginSystem) {
+    private void setupFileProcessorPlugin(PluginSystem pluginSystem) {
         pluginSystem.register("WorkflowStarted", new Plugin() {
             @Override
             public void setup() {}

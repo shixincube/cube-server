@@ -54,6 +54,7 @@ import cube.plugin.PluginSystem;
 import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
+import cube.service.auth.AuthServicePluginSystem;
 import cube.service.contact.plugin.CreateDomainAppPlugin;
 import cube.service.contact.plugin.FilterContactNamePlugin;
 import cube.storage.StorageType;
@@ -67,7 +68,6 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 联系人管理器。
@@ -287,7 +287,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * {@inheritDoc}
      */
     @Override
-    public PluginSystem<?> getPluginSystem() {
+    public ContactPluginSystem getPluginSystem() {
         return this.pluginSystem;
     }
 
@@ -303,7 +303,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         (new Thread() {
             @Override
             public void run() {
-                PluginSystem<?> pluginSystem = authService.getPluginSystem();
+                AuthServicePluginSystem pluginSystem = authService.getPluginSystem();
                 while (null == pluginSystem) {
                     try {
                         Thread.sleep(100);

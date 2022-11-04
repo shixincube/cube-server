@@ -293,6 +293,8 @@ public class FileHierarchyManager implements FileHierarchyListener {
             fileHierarchy.setDirectorySize(parent, size + fileSize);
             parent = parent.getParent();
         }
+
+        this.fileStorageService.getPluginSystem().getNewFileHook();
     }
 
     /**

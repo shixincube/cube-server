@@ -55,7 +55,7 @@ public interface Module {
      *
      * @return 返回模块的插件系统实例。
      */
-    public PluginSystem<?> getPluginSystem();
+    public <T extends PluginSystem> T getPluginSystem();
 
     /**
      * 获取指定名称的缓存器。

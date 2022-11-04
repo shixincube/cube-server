@@ -18,11 +18,23 @@ public class ContactBehavior extends Entity {
      */
     public final static String BEHAVIOR_SIGNOUT = "SignOut";
 
+    /**
+     * 云存储里创建新文件。
+     */
+    public final static String BEHAVIOR_NEW_FILE = "NewFile";
+
+    /**
+     * 云存储里删除文件。
+     */
+    public final static String BEHAVIOR_DELETE_FILE = "DeleteFile";
+
     private Contact contact;
 
     private String behavior;
 
     private Device device;
+
+    private JSONObject parameter;
 
     /**
      * 构造函数。
@@ -47,6 +59,9 @@ public class ContactBehavior extends Entity {
         this.behavior = json.getString("behavior");
         if (json.has("device")) {
             this.device = new Device(json.getJSONObject("device"));
+        }
+        if (json.has("parameter")) {
+            this.parameter = json.getJSONObject("parameter");
         }
     }
 
@@ -87,6 +102,24 @@ public class ContactBehavior extends Entity {
     }
 
     /**
+     * 获取行为描述的参数。
+     *
+     * @return 返回行为描述的参数。
+     */
+    public JSONObject getParameter() {
+        return this.parameter;
+    }
+
+    /**
+     * 设置行为描述的参数。
+     *
+     * @param parameter 指定 JSON 格式的参数。
+     */
+    public void setParameter(JSONObject parameter) {
+        this.parameter = parameter;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -96,6 +129,9 @@ public class ContactBehavior extends Entity {
         json.put("behavior", this.behavior);
         if (null != this.device) {
             json.put("device", this.device.toJSON());
+        }
+        if (null != this.parameter) {
+            json.put("parameter", this.parameter);
         }
         return json;
     }
@@ -110,6 +146,9 @@ public class ContactBehavior extends Entity {
         json.put("behavior", this.behavior);
         if (null != this.device) {
             json.put("device", this.device.toCompactJSON());
+        }
+        if (null != this.parameter) {
+            json.put("parameter", this.parameter);
         }
         return json;
     }

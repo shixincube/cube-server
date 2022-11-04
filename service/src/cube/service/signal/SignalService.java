@@ -85,7 +85,7 @@ public class SignalService extends AbstractModule implements CelletAdapterListen
     }
 
     @Override
-    public PluginSystem<?> getPluginSystem() {
+    public PluginSystem getPluginSystem() {
         return null;
     }
 

@@ -151,7 +151,7 @@ public class HubService extends AbstractModule {
     }
 
     @Override
-    public PluginSystem<?> getPluginSystem() {
+    public <T extends PluginSystem> T getPluginSystem() {
         return null;
     }
 
@@ -478,7 +478,7 @@ public class HubService extends AbstractModule {
             return;
         }
 
-        PluginSystem<?> pluginSystem = null;
+        PluginSystem pluginSystem = null;
 
         while (null == (pluginSystem = messagingModule.getPluginSystem())) {
             try {

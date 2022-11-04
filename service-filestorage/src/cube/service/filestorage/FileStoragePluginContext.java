@@ -27,9 +27,11 @@
 package cube.service.filestorage;
 
 import cube.common.entity.FileLabel;
+import cube.common.entity.Folder;
 import cube.common.entity.SharingTag;
 import cube.common.entity.VisitTrace;
 import cube.plugin.PluginContext;
+import cube.service.filestorage.hierarchy.Directory;
 
 /**
  * 文件存储插件上下文。
@@ -38,17 +40,26 @@ public class FileStoragePluginContext extends PluginContext {
 
     public final static String FILE_LABEL = "fileLabel";
 
+    public final static String DIRECTORY = "directory";
+
     public final static String SHARING_TAG = "sharingTag";
 
     public final static String VISIT_TRACE = "visitTrace";
 
     private FileLabel fileLabel;
 
+    private Directory directory;
+
     private SharingTag sharingTag;
 
     private VisitTrace visitTrace;
 
     public FileStoragePluginContext(FileLabel fileLabel) {
+        this.fileLabel = fileLabel;
+    }
+
+    public FileStoragePluginContext(Directory directory, FileLabel fileLabel) {
+        this.directory = directory;
         this.fileLabel = fileLabel;
     }
 
@@ -64,6 +75,10 @@ public class FileStoragePluginContext extends PluginContext {
         return this.fileLabel;
     }
 
+    public Directory getDirectory() {
+        return this.directory;
+    }
+
     public SharingTag getSharingTag() {
         return this.sharingTag;
     }
@@ -76,6 +91,9 @@ public class FileStoragePluginContext extends PluginContext {
     public Object get(String name) {
         if (FILE_LABEL.equals(name)) {
             return this.fileLabel;
+        }
+        else if (DIRECTORY.equals(name)) {
+            return this.directory;
         }
         else if (SHARING_TAG.equals(name)) {
             return this.sharingTag;
@@ -91,6 +109,9 @@ public class FileStoragePluginContext extends PluginContext {
     public void set(String name, Object value) {
         if (FILE_LABEL.equals(name) && value instanceof FileLabel) {
             this.fileLabel = (FileLabel) value;
+        }
+        else if (DIRECTORY.equals(name) && value instanceof Directory) {
+            this.directory = (Directory) value;
         }
         else if (SHARING_TAG.equals(name) && value instanceof SharingTag) {
             this.sharingTag = (SharingTag) value;

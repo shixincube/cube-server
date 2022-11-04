@@ -29,10 +29,7 @@ package cube.service.riskmgmt;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
-import cube.common.entity.ChainNode;
-import cube.common.entity.Contact;
-import cube.common.entity.ContactBehavior;
-import cube.common.entity.TransmissionChain;
+import cube.common.entity.*;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -81,6 +78,9 @@ public class MainStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("device", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("parameter", LiteralBase.STRING, new Constraint[]{
                     Constraint.DEFAULT_NULL
             })
     };
@@ -194,7 +194,9 @@ public class MainStorage implements Storagable {
                         new StorageField("timestamp", contactBehavior.getTimestamp()),
                         new StorageField("contact", contactBehavior.getContact().toJSON().toString()),
                         new StorageField("device", (null == contactBehavior.getDevice()) ? null :
-                                contactBehavior.getDevice().toJSON().toString())
+                                contactBehavior.getDevice().toJSON().toString()),
+                        new StorageField("parameter", (null == contactBehavior.getParameter()) ? null :
+                                contactBehavior.getParameter().toString())
                 });
             }
         });
@@ -220,7 +222,17 @@ public class MainStorage implements Storagable {
         for (StorageField[] fields : result) {
             Map<String, StorageField> map = StorageFields.get(fields);
             Contact contact = new Contact(new JSONObject(map.get("contact").getString()));
+            // 创建行为
             ContactBehavior contactBehavior = new ContactBehavior(contact, map.get("behavior").getString());
+            contactBehavior.setTimestamp(map.get("timestamp").getLong());
+            if (!map.get("device").isNullValue()) {
+                Device device = new Device(new JSONObject(map.get("device")));
+                contactBehavior.setDevice(device);
+            }
+            if (!map.get("parameter").isNullValue()) {
+                contactBehavior.setParameter(new JSONObject(map.get("parameter")));
+            }
+
             list.add(contactBehavior);
         }
 

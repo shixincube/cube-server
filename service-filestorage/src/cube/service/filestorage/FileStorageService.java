@@ -78,6 +78,8 @@ public class FileStorageService extends AbstractModule {
 
     public final static String NAME = "FileStorage";
 
+    private static FileStorageService sInstance;
+
     /**
      * 默认的文件有效时长。
      */
@@ -167,12 +169,17 @@ public class FileStorageService extends AbstractModule {
      */
     public FileStorageService(FileStorageServiceCellet cellet, ExecutorService executor) {
         super();
+        FileStorageService.sInstance = this;
         this.cellet = cellet;
         this.executor = executor;
         this.fileDescriptors = new ConcurrentHashMap<>();
         this.daemonTask = new DaemonTask(this);
         this.sharingManager = new FileSharingManager(this);
         this.notifier = new Notifier(this);
+    }
+
+    public static FileStorageService getInstance() {
+        return FileStorageService.sInstance;
     }
 
     @Override
@@ -283,7 +290,7 @@ public class FileStorageService extends AbstractModule {
     }
 
     @Override
-    public PluginSystem<?> getPluginSystem() {
+    public FileStoragePluginSystem getPluginSystem() {
         return this.pluginSystem;
     }
 
@@ -910,7 +917,7 @@ public class FileStorageService extends AbstractModule {
             @Override
             public void run() {
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
-                PluginSystem<?> pluginSystem = authService.getPluginSystem();
+                PluginSystem pluginSystem = authService.getPluginSystem();
                 while (null == pluginSystem) {
                     try {
                         Thread.sleep(100);

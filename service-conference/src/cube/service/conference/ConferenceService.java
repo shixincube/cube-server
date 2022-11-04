@@ -273,7 +273,7 @@ public class ConferenceService extends AbstractModule {
     }
 
     @Override
-    public PluginSystem<?> getPluginSystem() {
+    public <T extends PluginSystem> T getPluginSystem() {
         return null;
     }
 

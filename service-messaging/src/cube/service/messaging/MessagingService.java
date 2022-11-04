@@ -185,7 +185,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
             @Override
             public void run() {
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
-                PluginSystem<?> pluginSystem = authService.getPluginSystem();
+                PluginSystem pluginSystem = authService.getPluginSystem();
                 while (null == pluginSystem) {
                     try {
                         Thread.sleep(100);
@@ -244,7 +244,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
     }
 
     @Override
-    public PluginSystem<?> getPluginSystem() {
+    public MessagingPluginSystem getPluginSystem() {
         return this.pluginSystem;
     }
 
