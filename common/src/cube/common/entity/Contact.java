@@ -299,7 +299,7 @@ public class Contact extends AbstractContact {
     /**
      * 设置附录。
      *
-     * @param appendix
+     * @param appendix 指定联系人附录。
      */
     public void setAppendix(ContactAppendix appendix) {
         this.appendix = appendix;
@@ -308,7 +308,7 @@ public class Contact extends AbstractContact {
     /**
      * 获取附录。
      *
-     * @return
+     * @return 返回联系人附录。
      */
     public ContactAppendix getAppendix() {
         return this.appendix;
@@ -360,8 +360,8 @@ public class Contact extends AbstractContact {
     /**
      * 在格式数据里增加指定设备。
      *
-     * @param device
-     * @return
+     * @param device 指定设备。
+     * @return 返回包含该设备的数据结构。
      */
     public JSONObject toJSON(Device device) {
         JSONObject json = this.toJSON();

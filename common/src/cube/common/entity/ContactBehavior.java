@@ -8,7 +8,14 @@ import org.json.JSONObject;
  */
 public class ContactBehavior extends Entity {
 
+    /**
+     * 联系人签入系统。
+     */
     public final static String BEHAVIOR_SIGNIN = "SignIn";
+
+    /**
+     * 联系人签出系统。
+     */
     public final static String BEHAVIOR_SIGNOUT = "SignOut";
 
     private Contact contact;
@@ -17,12 +24,23 @@ public class ContactBehavior extends Entity {
 
     private Device device;
 
+    /**
+     * 构造函数。
+     *
+     * @param contact 联系人。
+     * @param behavior 行为描述。
+     */
     public ContactBehavior(Contact contact, String behavior) {
         super(Utils.generateSerialNumber(), contact.getDomain());
         this.contact = contact;
         this.behavior = behavior;
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param json 结构 JSON 。
+     */
     public ContactBehavior(JSONObject json) {
         super(json);
         this.contact = new Contact(json.getJSONObject("contact"));
@@ -59,10 +77,18 @@ public class ContactBehavior extends Entity {
         return this.device;
     }
 
+    /**
+     * 设置设备。
+     *
+     * @param device 指定设备。
+     */
     public void setDevice(Device device) {
         this.device = device;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
@@ -74,6 +100,9 @@ public class ContactBehavior extends Entity {
         return json;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = super.toCompactJSON();
