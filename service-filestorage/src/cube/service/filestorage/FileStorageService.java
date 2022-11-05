@@ -335,7 +335,7 @@ public class FileStorageService extends AbstractModule {
         return this.fileHierarchyManager;
     }
 
-    protected ExecutorService getExecutor() {
+    public ExecutorService getExecutor() {
         return this.executor;
     }
 
