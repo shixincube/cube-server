@@ -31,8 +31,6 @@ import cube.common.UniqueKey;
 import cube.common.entity.FileLabel;
 import cube.common.entity.HierarchyNode;
 import cube.common.entity.HierarchyNodes;
-import cube.service.filestorage.FileStorageHook;
-import cube.service.filestorage.FileStoragePluginContext;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.ServiceStorage;
 import cube.util.FileUtils;
@@ -295,11 +293,6 @@ public class FileHierarchyManager implements FileHierarchyListener {
             fileHierarchy.setDirectorySize(parent, size + fileSize);
             parent = parent.getParent();
         }
-
-        this.fileStorageService.getExecutor().execute(() -> {
-            FileStorageHook hook = this.fileStorageService.getPluginSystem().getNewFileHook();
-            hook.apply(new FileStoragePluginContext(directory, fileLabel));
-        });
     }
 
     /**

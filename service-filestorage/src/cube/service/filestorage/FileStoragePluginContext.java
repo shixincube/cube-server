@@ -26,10 +26,7 @@
 
 package cube.service.filestorage;
 
-import cube.common.entity.FileLabel;
-import cube.common.entity.Folder;
-import cube.common.entity.SharingTag;
-import cube.common.entity.VisitTrace;
+import cube.common.entity.*;
 import cube.plugin.PluginContext;
 import cube.service.filestorage.hierarchy.Directory;
 
@@ -50,6 +47,10 @@ public class FileStoragePluginContext extends PluginContext {
 
     private Directory directory;
 
+    private Contact contact;
+
+    private Device device;
+
     private SharingTag sharingTag;
 
     private VisitTrace visitTrace;
@@ -58,9 +59,11 @@ public class FileStoragePluginContext extends PluginContext {
         this.fileLabel = fileLabel;
     }
 
-    public FileStoragePluginContext(Directory directory, FileLabel fileLabel) {
+    public FileStoragePluginContext(Directory directory, FileLabel fileLabel, Contact contact, Device device) {
         this.directory = directory;
         this.fileLabel = fileLabel;
+        this.contact = contact;
+        this.device = device;
     }
 
     public FileStoragePluginContext(SharingTag sharingTag) {
@@ -77,6 +80,14 @@ public class FileStoragePluginContext extends PluginContext {
 
     public Directory getDirectory() {
         return this.directory;
+    }
+
+    public Contact getContact() {
+        return this.contact;
+    }
+
+    public Device getDevice() {
+        return this.device;
     }
 
     public SharingTag getSharingTag() {

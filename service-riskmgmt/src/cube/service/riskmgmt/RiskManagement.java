@@ -38,12 +38,16 @@ import cube.core.Module;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
+import cube.service.auth.AuthServicePluginSystem;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.contact.ContactManagerListener;
+import cube.service.contact.ContactPluginSystem;
 import cube.service.filestorage.FileStorageHook;
+import cube.service.filestorage.FileStoragePluginSystem;
 import cube.service.filestorage.FileStorageService;
 import cube.service.messaging.MessagingHook;
+import cube.service.messaging.MessagingPluginSystem;
 import cube.service.messaging.MessagingService;
 import cube.service.riskmgmt.plugin.*;
 import cube.service.riskmgmt.util.SensitiveWord;
@@ -289,18 +293,17 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
     private void initPlugin() {
         // 授权服务
         AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
-        PluginSystem pluginSystem = authService.getPluginSystem();
-        while (null == pluginSystem) {
+        AuthServicePluginSystem authPluginSystem = authService.getPluginSystem();
+        while (null == authPluginSystem) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
-            pluginSystem = authService.getPluginSystem();
+            authPluginSystem = authService.getPluginSystem();
         }
-
-        pluginSystem.register(AuthServiceHook.CreateDomainApp,
+        authPluginSystem.register(AuthServiceHook.CreateDomainApp,
                 new CreateDomainAppPlugin(this));
 
         // 联系人服务
@@ -311,31 +314,12 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
                 e.printStackTrace();
             }
         }
-        pluginSystem = ContactManager.getInstance().getPluginSystem();
+        ContactPluginSystem contactPluginSystem = ContactManager.getInstance().getPluginSystem();
         ContactPlugin contactPlugin = new ContactPlugin(this);
-        pluginSystem.register(ContactHook.SignIn, contactPlugin);
-        pluginSystem.register(ContactHook.SignOut, contactPlugin);
-        pluginSystem.register(ContactHook.Comeback, contactPlugin);
-        pluginSystem.register(ContactHook.DeviceTimeout, contactPlugin);
-
-        // 消息服务
-        MessagingService messagingService = (MessagingService) this.getKernel().getModule(MessagingService.NAME);
-        while (!messagingService.isStarted()) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        pluginSystem = messagingService.getPluginSystem();
-        pluginSystem.register(MessagingHook.PrePush, new MessagingPrePushPlugin(this));
-        // 消息发送
-        pluginSystem.register(MessagingHook.SendMessage, new MessagingSendPlugin(this));
-        // 消息转发
-        pluginSystem.register(MessagingHook.ForwardMessage, new MessagingForwardPlugin(this));
-        // 消息删除
-        pluginSystem.register(MessagingHook.DeleteMessage, new MessagingDeletePlugin(this));
+        contactPluginSystem.register(ContactHook.SignIn, contactPlugin);
+        contactPluginSystem.register(ContactHook.SignOut, contactPlugin);
+        contactPluginSystem.register(ContactHook.Comeback, contactPlugin);
+        contactPluginSystem.register(ContactHook.DeviceTimeout, contactPlugin);
 
         // 文件存储服务
         FileStorageService fileStorage = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
@@ -346,9 +330,29 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
                 e.printStackTrace();
             }
         }
+        FileStoragePluginSystem filePluginSystem = fileStorage.getPluginSystem();
+        FileStoragePlugin fileStoragePlugin = new FileStoragePlugin(this);
+        filePluginSystem.register(FileStorageHook.NewFile, fileStoragePlugin);
+        filePluginSystem.register(FileStorageHook.DeleteFile, fileStoragePlugin);
+        filePluginSystem.register(FileStorageHook.CreateSharingTag, new FileCreateSharingTagPlugin(this));
 
-        pluginSystem = fileStorage.getPluginSystem();
-        pluginSystem.register(FileStorageHook.CreateSharingTag, new FileCreateSharingTagPlugin(this));
+        // 消息服务
+        MessagingService messagingService = (MessagingService) this.getKernel().getModule(MessagingService.NAME);
+        while (!messagingService.isStarted()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        MessagingPluginSystem messagingPluginSystem = messagingService.getPluginSystem();
+        messagingPluginSystem.register(MessagingHook.PrePush, new MessagingPrePushPlugin(this));
+        // 消息发送
+        messagingPluginSystem.register(MessagingHook.SendMessage, new MessagingSendPlugin(this));
+        // 消息转发
+        messagingPluginSystem.register(MessagingHook.ForwardMessage, new MessagingForwardPlugin(this));
+        // 消息删除
+        messagingPluginSystem.register(MessagingHook.DeleteMessage, new MessagingDeletePlugin(this));
 
         Logger.i(this.getClass(), "#initPlugin - Registers all plugin");
     }

@@ -35,11 +35,14 @@ import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
+import cube.service.filestorage.FileStorageHook;
+import cube.service.filestorage.FileStoragePluginContext;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 import cube.service.filestorage.hierarchy.Directory;
@@ -166,5 +169,10 @@ public class InsertFileTask extends ServiceTask {
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, FileStorageStateCode.Ok.code, response));
         markResponseTime();
+
+        // 调用 Hook
+        Device device = ContactManager.getInstance().getDevice(tokenCode);
+        FileStorageHook hook = service.getPluginSystem().getNewFileHook();
+        hook.apply(new FileStoragePluginContext(directory, fileLabel, contact, device));
     }
 }
