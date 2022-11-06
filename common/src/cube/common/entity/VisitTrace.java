@@ -113,6 +113,7 @@ public class VisitTrace implements JSONable {
 
     /**
      * 事件。
+     * @see TraceEvent
      */
     public String event;
 
