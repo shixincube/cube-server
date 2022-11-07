@@ -277,6 +277,8 @@ public class FileHandler extends CrossDomainHandler {
             String domain = request.getParameter("domain");
             // File Code
             String fileCode = request.getParameter("fc");
+            // Device
+            String device = request.getParameter("device");
 
             if (null == token && null == domain) {
                 response.setStatus(HttpStatus.FORBIDDEN_403);
@@ -313,6 +315,11 @@ public class FileHandler extends CrossDomainHandler {
 
             Packet packet = new Packet(sn, FileStorageAction.GetFile.name, payload);
             ActionDialect packetDialect = packet.toDialect();
+
+            if (null != device) {
+                // 设置设备信息用于判定是否产生下载事件
+                packetDialect.addParam("device", device);
+            }
 
             ActionDialect responseDialect = null;
 
