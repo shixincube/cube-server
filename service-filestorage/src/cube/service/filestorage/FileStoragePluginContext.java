@@ -59,6 +59,12 @@ public class FileStoragePluginContext extends PluginContext {
         this.fileLabel = fileLabel;
     }
 
+    public FileStoragePluginContext(FileLabel fileLabel, Contact contact, Device device) {
+        this.fileLabel = fileLabel;
+        this.contact = contact;
+        this.device = device;
+    }
+
     public FileStoragePluginContext(Directory directory, FileLabel fileLabel, Contact contact, Device device) {
         this.directory = directory;
         this.fileLabel = fileLabel;

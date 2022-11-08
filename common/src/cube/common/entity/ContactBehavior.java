@@ -28,6 +28,11 @@ public class ContactBehavior extends Entity {
      */
     public final static String BEHAVIOR_DELETE_FILE = "DeleteFile";
 
+    /**
+     * 联系人从服务器下载文件。
+     */
+    public final static String BEHAVIOR_DOWNLOAD_FILE = "DownloadFile";
+
     private Contact contact;
 
     private String behavior;

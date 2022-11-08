@@ -31,7 +31,18 @@ public class FileStoragePlugin implements Plugin {
     public void onAction(PluginContext context) {
         if (context instanceof FileStoragePluginContext) {
             FileStoragePluginContext ctx = (FileStoragePluginContext) context;
-            if (ctx.getKey().equals(FileStorageHook.NewFile)) {
+            if (ctx.getKey().equals(FileStorageHook.DownloadFile)) {
+                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.BEHAVIOR_DOWNLOAD_FILE);
+                // 设备
+                behavior.setDevice(ctx.getDevice());
+                // 参数
+                JSONObject parameter = new JSONObject();
+                parameter.put("file", ctx.getFileLabel().toCompactJSON());
+                behavior.setParameter(parameter);
+                // 添加记录
+                this.service.recordContactBehavior(behavior);
+            }
+            else if (ctx.getKey().equals(FileStorageHook.NewFile)) {
                 ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.BEHAVIOR_NEW_FILE);
                 behavior.setDevice(ctx.getDevice());
                 JSONObject parameter = new JSONObject();

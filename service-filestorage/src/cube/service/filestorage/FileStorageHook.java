@@ -39,6 +39,8 @@ public class FileStorageHook extends Hook {
 
     public final static String DeleteFile = "DeleteFile";
 
+    public final static String DownloadFile = "DownloadFile";
+
     public final static String CreateSharingTag = "CreateSharingTag";
 
     public final static String Trace = "Trace";

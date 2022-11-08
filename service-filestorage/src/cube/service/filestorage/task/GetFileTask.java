@@ -33,10 +33,15 @@ import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
 import cube.service.auth.AuthService;
+import cube.service.contact.ContactManager;
+import cube.service.filestorage.FileStorageHook;
+import cube.service.filestorage.FileStoragePluginContext;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
 
@@ -58,9 +63,11 @@ public class GetFileTask extends ServiceTask {
         // 域
         String domain = null;
 
+        String tokenCode = null;
+
         if (action.containsParam("token")) {
             // 获取令牌码
-            String tokenCode = this.getTokenCode(action);
+            tokenCode = this.getTokenCode(action);
             if (null == tokenCode) {
                 // 发生错误
                 this.cellet.speak(this.talkContext,
@@ -124,5 +131,23 @@ public class GetFileTask extends ServiceTask {
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, FileStorageStateCode.Ok.code, fileLabel.toJSON()));
         markResponseTime();
+
+        // 如果有设备信息记录下载事件
+        String deviceName = action.containsParam("device") ?
+                action.getParamAsString("device") : null;
+        if (null != deviceName && null != tokenCode) {
+            recordDownload(service, tokenCode, fileLabel);
+        }
+    }
+
+    private void recordDownload(FileStorageService service, String tokenCode,
+                                FileLabel fileLabel) {
+        Device device = ContactManager.getInstance().getDevice(tokenCode);
+        Contact contact = ContactManager.getInstance().getContact(tokenCode);
+
+        if (null != contact && null != device) {
+            FileStorageHook hook = service.getPluginSystem().getDownloadFileHook();
+            hook.apply(new FileStoragePluginContext(fileLabel, contact, device));
+        }
     }
 }

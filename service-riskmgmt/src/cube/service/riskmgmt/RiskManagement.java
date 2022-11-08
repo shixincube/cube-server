@@ -334,6 +334,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         FileStoragePlugin fileStoragePlugin = new FileStoragePlugin(this);
         filePluginSystem.register(FileStorageHook.NewFile, fileStoragePlugin);
         filePluginSystem.register(FileStorageHook.DeleteFile, fileStoragePlugin);
+        filePluginSystem.register(FileStorageHook.DownloadFile, fileStoragePlugin);
         filePluginSystem.register(FileStorageHook.CreateSharingTag, new FileCreateSharingTagPlugin(this));
 
         // 消息服务

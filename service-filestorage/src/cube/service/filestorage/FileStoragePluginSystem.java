@@ -50,6 +50,8 @@ public class FileStoragePluginSystem extends PluginSystem<FileStorageHook> {
         return this.getHook(FileStorageHook.DeleteFile);
     }
 
+    public FileStorageHook getDownloadFileHook() { return this.getHook(FileStorageHook.DownloadFile); }
+
     public FileStorageHook getCreateSharingTagHook() {
         return this.getHook(FileStorageHook.CreateSharingTag);
     }
@@ -66,6 +68,9 @@ public class FileStoragePluginSystem extends PluginSystem<FileStorageHook> {
         this.addHook(hook);
 
         hook = new FileStorageHook(FileStorageHook.DeleteFile);
+        this.addHook(hook);
+
+        hook = new FileStorageHook(FileStorageHook.DownloadFile);
         this.addHook(hook);
 
         hook = new FileStorageHook(FileStorageHook.CreateSharingTag);
