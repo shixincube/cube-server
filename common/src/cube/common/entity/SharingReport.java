@@ -37,14 +37,29 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class SharingReport extends Entity {
 
+    /**
+     * 计数报告。
+     */
     public final static String CountRecord = "CountRecord";
 
+    /**
+     * 数量排行榜。
+     */
     public final static String TopCountRecord = "TopCountRecord";
 
+    /**
+     * 历史事件记录。
+     */
     public final static String HistoryEventRecord = "HistoryEventRecord";
 
+    /**
+     * 访问者记录。
+     */
     public final static String VisitorRecord = "VisitorRecord";
 
+    /**
+     * 文件类型统计记录。
+     */
     public final static String FileTypeTotalRecord = "FileTypeTotalRecord";
 
     private String name;
