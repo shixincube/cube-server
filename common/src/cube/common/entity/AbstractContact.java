@@ -50,6 +50,8 @@ public abstract class AbstractContact extends Entity {
 
     /**
      * 联系人携带的上下文 JSON 数据。
+     * Cube 使用 JSON 格式的上下文数据来扩展联系人的数据。
+     * 例如，头像、徽标、等级等信息都应当使用该数据字段进行存储。
      */
     private JSONObject context;
 
@@ -68,7 +70,7 @@ public abstract class AbstractContact extends Entity {
     /**
      * 构造函数。
      *
-     * @param externalId
+     * @param externalId 外部描述 ID 。
      */
     public AbstractContact(String externalId) {
         super(Utils.generateSerialNumber(), "");
@@ -79,9 +81,9 @@ public abstract class AbstractContact extends Entity {
     /**
      * 构造函数。
      *
-     * @param id
-     * @param domainName
-     * @param name
+     * @param id 联系人 ID 。
+     * @param domainName 域名称。
+     * @param name 联系人名称。
      */
     public AbstractContact(Long id, String domainName, String name) {
         super(id, domainName);
@@ -91,10 +93,10 @@ public abstract class AbstractContact extends Entity {
     /**
      * 构造函数。
      *
-     * @param id
-     * @param domainName
-     * @param name
-     * @param timestamp
+     * @param id 联系人 ID 。
+     * @param domainName 域名称。
+     * @param name 联系人名称。
+     * @param timestamp 数据时间戳。
      */
     public AbstractContact(Long id, String domainName, String name, long timestamp) {
         super(id, domainName, timestamp);
@@ -104,9 +106,9 @@ public abstract class AbstractContact extends Entity {
     /**
      * 构造函数。
      *
-     * @param id
-     * @param domain
-     * @param name
+     * @param id 联系人 ID 。
+     * @param domain 域。
+     * @param name 联系人名称。
      */
     public AbstractContact(Long id, Domain domain, String name) {
         super(id, domain);
@@ -116,8 +118,8 @@ public abstract class AbstractContact extends Entity {
     /**
      * 构造函数。
      *
-     * @param json
-     * @param domain
+     * @param json JSON 数据。
+     * @param domain 域名称。
      */
     public AbstractContact(JSONObject json, String domain) {
         super(json);
@@ -139,7 +141,7 @@ public abstract class AbstractContact extends Entity {
     /**
      * 重置 ID 。
      *
-     * @param newId
+     * @param newId 新的联系人 ID 。
      */
     public void resetId(Long newId) {
         this.id = newId;
@@ -149,7 +151,7 @@ public abstract class AbstractContact extends Entity {
     /**
      * 获取外部 ID 。
      *
-     * @return
+     * @return 返回外部 ID 。
      */
     public String getExternalId() {
         return this.externalId;
@@ -157,8 +159,8 @@ public abstract class AbstractContact extends Entity {
 
     /**
      * 设置外部 ID 。
-     * @param externalId
      *
+     * @param externalId 字符串形式的外部 ID 。
      */
     public void setExternalId(String externalId) {
         this.externalId = externalId;
@@ -190,6 +192,8 @@ public abstract class AbstractContact extends Entity {
 
     /**
      * 获取联系人上下文数据。
+     * Cube 使用 JSON 格式的上下文数据来扩展联系人的数据。
+     * 例如，头像、徽标、等级等信息都应当使用该数据字段进行存储。
      *
      * @return 返回联系人上下文数据。
      */
@@ -199,6 +203,8 @@ public abstract class AbstractContact extends Entity {
 
     /**
      * 设置联系人上下文数据。
+     * Cube 使用 JSON 格式的上下文数据来扩展联系人的数据。
+     * 例如，头像、徽标、等级等信息都应当使用该数据字段进行存储。
      *
      * @param context 联系人上下文数据。
      */

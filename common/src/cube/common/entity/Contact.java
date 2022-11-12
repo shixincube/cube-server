@@ -298,6 +298,7 @@ public class Contact extends AbstractContact {
 
     /**
      * 设置附录。
+     * @see ContactAppendix
      *
      * @param appendix 指定联系人附录。
      */
@@ -307,6 +308,7 @@ public class Contact extends AbstractContact {
 
     /**
      * 获取附录。
+     * @see ContactAppendix
      *
      * @return 返回联系人附录。
      */
