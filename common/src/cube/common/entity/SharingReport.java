@@ -64,20 +64,44 @@ public class SharingReport extends Entity {
 
     private String name;
 
+    /**
+     * 分享标签总数量。
+     */
     public int totalSharingTag = -1;
 
+    /**
+     * 浏览事件总数。
+     */
     public int totalEventView = -1;
 
+    /**
+     * 下载事件总数。
+     */
     public int totalEventExtract = -1;
 
+    /**
+     * 分享事件总数。
+     */
     public int totalEventShare = -1;
 
+    /**
+     * 存储分享标签的映射，以分享码为主键。
+     */
     public Map<String, SharingTag> sharingTagMap;
 
+    /**
+     * 浏览文件排行列表。
+     */
     public List<SharingTagPair> topViewList;
 
+    /**
+     * 下载文件排行列表。
+     */
     public List<SharingTagPair> topExtractList;
 
+    /**
+     * 按照时间顺序统计的各个事件发生的次数列表。
+     */
     public Map<String, List<JSONObject>> eventTimeMap;
 
     public List<JSONObject> ipTotalStatistics;
@@ -89,8 +113,14 @@ public class SharingReport extends Entity {
      */
     public Map<Long, VisitorEvent> visitorEventMap;
 
+    /**
+     * 有效的分享标签文件类型列表。
+     */
     public List<JSONObject> validFileTypeList;
 
+    /**
+     * 无效的分享标签文件类型列表。
+     */
     public List<JSONObject> expiredFileTypeList;
 
     public SharingReport(String name) {
