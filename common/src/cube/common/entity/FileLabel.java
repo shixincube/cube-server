@@ -35,6 +35,8 @@ import java.io.File;
 
 /**
  * 文件标签。
+ * Cube 使用<b>文件标签</b>来表示一个文件。包括文件的基础属性和访问属性。
+ * 例如：文件名、文件大小和访问文件的 URL 信息等。
  */
 public class FileLabel extends Entity {
 
