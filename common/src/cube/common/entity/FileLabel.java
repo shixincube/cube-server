@@ -407,8 +407,8 @@ public class FileLabel extends Entity {
     /**
      * 重置 URL 地址。
      *
-     * @param urlHost
-     * @param urlsHost
+     * @param urlHost URL 地址描述。
+     * @param urlsHost 安全的 URL 地址描述。
      */
     public void resetURLsAddress(String urlHost, String urlsHost) {
         if (null != this.fileURL) {
@@ -460,10 +460,20 @@ public class FileLabel extends Entity {
         this.context = context;
     }
 
+    /**
+     * 设置文件。
+     *
+     * @param file 文件实例。
+     */
     public void setFile(File file) {
         this.file = file;
     }
 
+    /**
+     * 获取文件实例。
+     *
+     * @return 返回文件实例。
+     */
     public File getFile() {
         return this.file;
     }
