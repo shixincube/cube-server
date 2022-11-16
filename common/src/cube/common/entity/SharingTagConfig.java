@@ -45,8 +45,14 @@ public class SharingTagConfig implements JSONable {
 
     private FileLabel fileLabel;
 
+    /**
+     * 分享标签的持续有效时长。
+     */
     private long duration;
 
+    /**
+     * 分享标签密码。
+     */
     private String password;
 
     /**
