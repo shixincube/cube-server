@@ -125,50 +125,110 @@ public class SharingTagConfig implements JSONable {
         }
     }
 
+    /**
+     * 获取域信息。
+     *
+     * @return 返回域信息。
+     */
     public Domain getDomain() {
         return this.contact.getDomain();
     }
 
+    /**
+     * 设置标签所属的联系人。
+     *
+     * @param contact 标签所属的联系人。
+     */
     public void setContact(Contact contact) {
         this.contact = contact;
     }
 
+    /**
+     * 获取标签所属的联系人。
+     *
+     * @return 返回标签所属的联系人。
+     */
     public Contact getContact() {
         return this.contact;
     }
 
+    /**
+     * 获取创建分享标签的设备。
+     *
+     * @return 返回创建分享标签的设备。
+     */
     public Device getDevice() {
         return this.device;
     }
 
+    /**
+     * 获取分享标签对应的文件。
+     *
+     * @return 返回分享标签对应的文件。
+     */
     public FileLabel getFileLabel() {
         return this.fileLabel;
     }
 
+    /**
+     * 获取分享的有效时长。
+     *
+     * @return 获取分享的有效时长，单位：毫秒。
+     */
     public long getDuration() {
         return this.duration;
     }
 
+    /**
+     * 获取查看分享的密码。
+     *
+     * @return 返回分享密码。
+     */
     public String getPassword() {
         return this.password;
     }
 
+    /**
+     * 该分享标签是否设置了密码。
+     *
+     * @return 如果设置了密码返回 {@code true} ，否则返回 {@code false} 。
+     */
     public boolean hasPassword() {
         return (null != this.password);
     }
 
+    /**
+     * 是否为文件创建预览图。
+     *
+     * @return 如果创建了预览图返回 {@code true} 。
+     */
     public boolean isPreview() {
         return this.preview;
     }
 
+    /**
+     * 设置是否为文件创建预览图。
+     *
+     * @param value 创建预览图设置 {@code true} 。
+     */
     public void setPreview(boolean value) {
         this.preview = value;
     }
 
+    /**
+     * 是否允许下载文件。
+     *
+     * @return 如果允许下载文件返回 {@code true} 。
+     */
     public boolean isDownloadAllowed() {
         return this.download;
     }
 
+    /**
+     * 是否强制追踪下载事件，如果返回 {@code true} 表示需要登录系统才能下载文件。
+     *
+     * @return 如果返回 {@code true} 表示需要登录系统才能下载文件。
+     */
     public boolean isTraceDownload() {
         return this.traceDownload;
     }
