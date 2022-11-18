@@ -157,10 +157,20 @@ public class SharingTag extends Entity {
         }
     }
 
+    /**
+     * 获取分享码。
+     *
+     * @return 返回分享码。
+     */
     public String getCode() {
         return this.code;
     }
 
+    /**
+     * 获取到期日期。
+     *
+     * @return 返回绝对时间表示的到期日期。
+     */
     public long getExpiryDate() {
         return this.expiryDate;
     }
