@@ -200,7 +200,7 @@ public class SharingTag extends Entity {
         this.httpsURL = "https://" + this.httpsHostInfo +
                 "/sharing/" + this.code + parameter;
     }
-    
+
     public String getHttpURL() {
         return this.httpURL;
     }
