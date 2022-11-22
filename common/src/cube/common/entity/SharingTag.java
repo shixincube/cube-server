@@ -209,6 +209,11 @@ public class SharingTag extends Entity {
         return this.httpsURL;
     }
 
+    /**
+     * 设置预览图列表。
+     *
+     * @param list 指定预览图列表。
+     */
     public void setPreviewList(List<FileLabel> list) {
         if (null == list || list.isEmpty()) {
             return;
