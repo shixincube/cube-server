@@ -41,6 +41,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class AuthDomain implements JSONable {
 
+    /**
+     * 域名称。
+     */
     public final String domainName;
 
     public final String appKey;
