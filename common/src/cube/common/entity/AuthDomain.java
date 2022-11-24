@@ -46,10 +46,19 @@ public class AuthDomain implements JSONable {
      */
     public final String domainName;
 
+    /**
+     * App Key 。
+     */
     public final String appKey;
 
+    /**
+     * App ID 。
+     */
     public final String appId;
 
+    /**
+     * 主接入点。
+     */
     public final Endpoint mainEndpoint;
 
     public final Endpoint httpEndpoint;
