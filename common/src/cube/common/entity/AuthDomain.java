@@ -67,6 +67,9 @@ public class AuthDomain implements JSONable {
 
     public final JSONArray iceServers;
 
+    /**
+     * 是否工作在摆渡数据模式。
+     */
     public final boolean ferry;
 
     public ConcurrentHashMap<String, AuthToken> tokens;
