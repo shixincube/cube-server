@@ -36,17 +36,17 @@ public interface Storagable {
     /**
      * 开启存储。
      */
-    public void open();
+    void open();
 
     /**
      * 关闭存储。
      */
-    public void close();
+    void close();
 
     /**
      * 执行自检。
      *
      * @param domainNameList 存储需要支持的域的域名称列表。
      */
-    public void execSelfChecking(List<String> domainNameList);
+    void execSelfChecking(List<String> domainNameList);
 }
