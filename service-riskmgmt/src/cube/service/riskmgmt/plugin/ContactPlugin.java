@@ -34,7 +34,7 @@ import cube.service.contact.ContactPluginContext;
 import cube.service.riskmgmt.RiskManagement;
 
 /**
- * 创建域应用插件。
+ * 联系人插件。
  */
 public class ContactPlugin implements Plugin {
 
