@@ -37,8 +37,14 @@ public class Account implements JSONable {
 
     public final static int STATE_NORMAL = 0;
 
+    /**
+     * 账号 ID 。
+     */
     public final long id;
 
+    /**
+     * 账号域。
+     */
     public final String domain;
 
     public final String account;
