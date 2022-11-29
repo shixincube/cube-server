@@ -47,14 +47,29 @@ public class Account implements JSONable {
      */
     public final String domain;
 
+    /**
+     * 账号。
+     */
     public final String account;
 
+    /**
+     * 电话号码。
+     */
     public final String phone;
 
+    /**
+     * 密码。
+     */
     public final String password;
 
+    /**
+     * 显示名。
+     */
     public String name;
 
+    /**
+     * 头像。
+     */
     public String avatar;
 
     public final int state;
