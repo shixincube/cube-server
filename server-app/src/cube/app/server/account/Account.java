@@ -72,6 +72,9 @@ public class Account implements JSONable {
      */
     public String avatar;
 
+    /**
+     * 账号状态。
+     */
     public final int state;
 
     public String region;
