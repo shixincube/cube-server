@@ -84,16 +84,16 @@ public class FileSharingManager {
     /**
      * 创建分享标签。
      *
-     * @param contact
-     * @param device
-     * @param fileCode
-     * @param duration
-     * @param password
-     * @param preview
-     * @param previewWatermark
-     * @param download
-     * @param traceDownload
-     * @return
+     * @param contact 联系人。
+     * @param device 创建分享的设备。
+     * @param fileCode 文件码。
+     * @param duration 有效时长。
+     * @param password 访问密码。
+     * @param preview 是否生成预览图。
+     * @param previewWatermark 预览图是否使用水印。
+     * @param download 是否允许下载原文件。
+     * @param traceDownload 是否追踪下载行为。
+     * @return 返回创建的分享标签。
      */
     public SharingTag createSharingTag(Contact contact, Device device, String fileCode, long duration,
                                        String password, boolean preview, String previewWatermark,
