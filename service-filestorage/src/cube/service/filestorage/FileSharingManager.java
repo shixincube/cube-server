@@ -251,9 +251,9 @@ public class FileSharingManager {
     /**
      * 取消分享标签。
      *
-     * @param contact
-     * @param code
-     * @return
+     * @param contact 指定操作的联系人。
+     * @param code 指定分享码。
+     * @return 返回已取消的分享码。
      */
     public SharingTag cancelSharingTag(Contact contact, String code) {
         // 取消标签
@@ -276,9 +276,9 @@ public class FileSharingManager {
     /**
      * 删除分享标签。
      *
-     * @param contact
-     * @param code
-     * @return
+     * @param contact 指定操作的联系人。
+     * @param code 指定分享码。
+     * @return 返回已删除的分享码。
      */
     public SharingTag deleteSharingTag(Contact contact, String code) {
         // 删除标签
@@ -301,9 +301,9 @@ public class FileSharingManager {
     /**
      * 获取指定的分享标签。
      *
-     * @param code
-     * @param refresh
-     * @return
+     * @param code 指定分享码。
+     * @param refresh 是否刷新 URL 地址信息。
+     * @return 返回分享标签。
      */
     public SharingTag getSharingTag(String code, boolean refresh) {
         SharingCodeDomain codeDomain = this.getDomainByCode(code);
@@ -337,17 +337,6 @@ public class FileSharingManager {
         }
 
         return sharingTag;
-    }
-
-    /**
-     * 变更分享标签状态。
-     *
-     * @param code
-     * @param state
-     * @return
-     */
-    public SharingTag changeSharingTagState(String code, int state) {
-        return null;
     }
 
     /**
