@@ -32,24 +32,56 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 具备基础访问过滤能力的处理器。
+ */
 public class FilterHandler extends CrossDomainHandler {
+
+    private final static Map<String, HostRecord> sHostRecordMap = new ConcurrentHashMap<>();
 
     private volatile boolean completed = false;
 
-    private int minInterval = 0;
     private long lastTimestamp = 0;
+
+    private int minInterval = 0;
+
+    /**
+     * 单个访问IP每秒允许被访问次数。
+     */
+    private int numPerSecondForOneHost = 0;
 
     public FilterHandler() {
         super();
     }
 
-    protected boolean isCompleted() {
-        return this.completed;
+    protected boolean isCompleted(HttpServletRequest request) {
+        if (this.completed) {
+            return this.completed;
+        }
+
+        Object value = request.getAttribute("_completed");
+        if (null == value) {
+            return false;
+        }
+
+        return ((Boolean) value).booleanValue();
     }
 
     public void setMinInterval(int value) {
         this.minInterval = value;
+    }
+
+    public void setNumPerSecondForOneHost(int value) {
+        if (value < 0) {
+            return;
+        }
+
+        this.numPerSecondForOneHost = value;
     }
 
     @Override
@@ -60,6 +92,9 @@ public class FilterHandler extends CrossDomainHandler {
         if (this.checkMinInterval(response)) {
             return;
         }
+
+        // 检查每秒访问次数
+        this.checkNumPerSecondForOneHost(request, response);
     }
 
     @Override
@@ -70,6 +105,9 @@ public class FilterHandler extends CrossDomainHandler {
         if (this.checkMinInterval(response)) {
             return;
         }
+
+        // 检查每秒访问次数
+        this.checkNumPerSecondForOneHost(request, response);
     }
 
     private boolean checkMinInterval(HttpServletResponse response) {
@@ -86,5 +124,85 @@ public class FilterHandler extends CrossDomainHandler {
         }
 
         return this.completed;
+    }
+
+    private boolean checkNumPerSecondForOneHost(HttpServletRequest request, HttpServletResponse response) {
+        if (0 == this.numPerSecondForOneHost) {
+            return false;
+        }
+
+        long now = System.currentTimeMillis();
+
+        String host = request.getRemoteHost();
+        HostRecord hostRecord = sHostRecordMap.get(host);
+        if (null == hostRecord) {
+            hostRecord = new HostRecord(host);
+            hostRecord.firstTimestamp = now;
+            sHostRecordMap.put(host, hostRecord);
+        }
+
+        hostRecord.lastTimestamp = now;
+
+        // 计算一秒内的访问次数
+        int count = hostRecord.countLastOneSecond(now);
+        if (count > this.numPerSecondForOneHost) {
+            // 最近一秒内的访问次数大于限制
+            this.respond(response, HttpStatus.SERVICE_UNAVAILABLE_503);
+            this.complete();
+            request.setAttribute("_completed", true);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+
+    private class HostRecord {
+
+        protected String address;
+
+        protected long firstTimestamp;
+
+        protected long lastTimestamp;
+
+        protected List<Long> timestampList = new LinkedList<>();
+
+        protected HostRecord(String address) {
+            this.address = address;
+        }
+
+        protected int countLastOneSecond(long now) {
+            synchronized (this.timestampList) {
+                if (this.timestampList.isEmpty()) {
+                    return 0;
+                }
+
+                int count = 0;
+
+                int posIndex = -1;
+
+                for (int i = this.timestampList.size() - 1; i >= 0; --i) {
+                    long time = this.timestampList.get(i);
+                    if (now - time <= 1000) {
+                        ++count;
+                    }
+                    else {
+                        posIndex = i;
+                        break;
+                    }
+                }
+
+                if (posIndex >= 0) {
+                    for (int i = 0; i < posIndex; ++i) {
+                        this.timestampList.remove(0);
+                    }
+                }
+
+                this.timestampList.add(now);
+
+                return count;
+            }
+        }
     }
 }
