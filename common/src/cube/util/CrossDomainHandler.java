@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 支持跨域的处理器。
+ * 支持跨域的 HTTP 处理器。
  */
 public class CrossDomainHandler extends HttpHandler {
 

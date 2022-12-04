@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 具备基础访问过滤能力的处理器。
+ * 具备基础访问过滤能力的 HTTP 处理器。
  */
 public class FilterHandler extends CrossDomainHandler {
 
