@@ -394,7 +394,7 @@ public class FileSharingManager {
      * @param beginIndex 数据起始索引。
      * @param endIndex 数据结束索引。
      * @param descending 是否降序。
-     * @return
+     * @return 返回分享标签列表。
      */
     public List<SharingTag> listSharingTags(Contact contact, boolean valid,
                                             int beginIndex, int endIndex, boolean descending) {
