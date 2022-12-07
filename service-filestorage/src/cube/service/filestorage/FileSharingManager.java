@@ -389,7 +389,7 @@ public class FileSharingManager {
     /**
      * 列举分享标签。
      *
-     * @param contact
+     * @param contact 标签的联系人。
      * @param valid 是否是在有效期内的分享。
      * @param beginIndex 数据起始索引。
      * @param endIndex 数据结束索引。
