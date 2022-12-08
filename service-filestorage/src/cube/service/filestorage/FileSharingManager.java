@@ -433,11 +433,11 @@ public class FileSharingManager {
     /**
      * 列举分享访问记录。
      *
-     * @param contact
-     * @param sharingCode
-     * @param beginIndex
-     * @param endIndex
-     * @return
+     * @param contact 联系人。
+     * @param sharingCode 分享码。
+     * @param beginIndex 查询起始位置索引。
+     * @param endIndex 查询结束位置索引。
+     * @return 返回满足条件的查询结果列表。
      */
     public List<VisitTrace> listSharingVisitTrace(Contact contact, String sharingCode, int beginIndex, int endIndex) {
         if (endIndex <= beginIndex) {
