@@ -458,9 +458,9 @@ public class FileSharingManager {
     /**
      * 遍历全部下一级分享访问记录。
      *
-     * @param parent
-     * @param sharingCode
-     * @return
+     * @param parent 访问记录的父级联系人。
+     * @param sharingCode 分享码。
+     * @return 返回访问记录列表。
      */
     public List<VisitTrace> traverseVisitTrace(Contact parent, String sharingCode) {
         List<VisitTrace> result = this.service.getServiceStorage().queryVisitTraceByParent(
