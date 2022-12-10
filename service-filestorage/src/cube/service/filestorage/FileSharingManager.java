@@ -471,9 +471,9 @@ public class FileSharingManager {
     /**
      * 计算分享记录访问数量。
      *
-     * @param contact
-     * @param sharingCode
-     * @return
+     * @param contact 记录所属联系人。
+     * @param sharingCode 分享码。
+     * @return 返回分享码的访问数量。
      */
     public int countSharingVisitTrace(Contact contact, String sharingCode) {
         return this.service.getServiceStorage().countVisitTraces(contact.getDomain().getName(), sharingCode);
