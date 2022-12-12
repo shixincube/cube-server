@@ -482,7 +482,7 @@ public class FileSharingManager {
     /**
      * 记录访问痕迹。
      *
-     * @param trace
+     * @param trace 访问痕迹。
      */
     public void traceVisit(VisitTrace trace) {
         String code = this.extractCode(trace.url);
