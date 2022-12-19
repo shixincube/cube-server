@@ -40,9 +40,9 @@ public class FileSize {
     /**
      * 构造函数。
      *
-     * @param size
-     * @param value
-     * @param unit
+     * @param size 文件大小。
+     * @param value 数值。
+     * @param unit 数值对应的单位。
      */
     public FileSize(long size, String value, String unit) {
         this.size = size;
