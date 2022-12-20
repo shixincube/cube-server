@@ -522,9 +522,9 @@ public class FileSharingManager {
     /**
      * 计算指定分享码的追踪链。
      *
-     * @param contact
-     * @param sharingCode
-     * @param traceDepth
+     * @param contact 联系人。
+     * @param sharingCode 分享码。
+     * @param traceDepth 遍历深度。
      * @return
      */
     public TransmissionChain calcTraceChain(Contact contact, String sharingCode, int traceDepth) {
