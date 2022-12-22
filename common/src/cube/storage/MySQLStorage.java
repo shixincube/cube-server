@@ -452,6 +452,7 @@ public class MySQLStorage extends AbstractStorage {
 
     /**
      * 连接池。
+     * 连接池会采用定时保活策略维持链接。
      */
     protected class ConnectionPool extends TimerTask {
 
