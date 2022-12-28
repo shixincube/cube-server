@@ -654,6 +654,11 @@ public class FileSharingManager {
         return codeDomain;
     }
 
+    /**
+     * 提取 URL 串里的分享码。
+     * @param url 指定 URL 串。
+     * @return 返回分享码。
+     */
     private String extractCode(String url) {
         int start = url.indexOf("sharing/");
         String param = url.substring(start + 8);
