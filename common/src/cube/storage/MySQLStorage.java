@@ -449,6 +449,30 @@ public class MySQLStorage extends AbstractStorage {
         return result;
     }
 
+    @Override
+    public boolean execute(String sql) {
+        Connection connection = this.pool.get();
+        Statement statement = null;
+
+        try {
+            statement = connection.createStatement();
+            return statement.execute(sql);
+        } catch (SQLException e) {
+            Logger.w(this.getClass(), "#execute - SQL: " + sql, e);
+        } finally {
+            if (null != statement) {
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                }
+            }
+
+            this.pool.returnConn(connection);
+        }
+
+        return false;
+    }
+
 
     /**
      * 连接池。

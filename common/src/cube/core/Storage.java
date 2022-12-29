@@ -93,4 +93,5 @@ public interface Storage {
 
     public List<StorageField[]> executeQuery(String sql);
 
+    public boolean execute(String sql);
 }

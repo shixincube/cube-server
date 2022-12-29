@@ -423,4 +423,25 @@ public class SQLiteStorage extends AbstractStorage {
 
         return result;
     }
+
+    @Override
+    public boolean execute(String sql) {
+        Statement statement = null;
+
+        try {
+            statement = this.connection.createStatement();
+            return statement.execute(sql);
+        } catch (SQLException e) {
+            Logger.w(this.getClass(), "#execute - SQL: " + sql, e);
+        } finally {
+            if (null != statement) {
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+
+        return false;
+    }
 }
