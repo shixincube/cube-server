@@ -525,7 +525,7 @@ public class FileSharingManager {
      * @param contact 联系人。
      * @param sharingCode 分享码。
      * @param traceDepth 遍历深度。
-     * @return
+     * @return 返回传输链。
      */
     public TransmissionChain calcTraceChain(Contact contact, String sharingCode, int traceDepth) {
         TransmissionChain chain = new TransmissionChain(sharingCode);
