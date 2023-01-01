@@ -11,6 +11,9 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.List;
 
+/**
+ * 处理来自服务器客户端的通知动作。
+ */
 public class Notifier {
 
     private final FileStorageService service;
