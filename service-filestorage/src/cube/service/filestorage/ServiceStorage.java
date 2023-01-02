@@ -60,22 +60,49 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ServiceStorage implements Storagable {
 
+    /**
+     * 文件标签表。
+     */
     private final String labelTablePrefix = "label_";
 
+    /**
+     * 文件描述符表。
+     */
     private final String descriptorTablePrefix = "descriptor_";
 
+    /**
+     * 文件层级结构节点表。
+     */
     private final String hierarchyTablePrefix = "hierarchy_";
 
+    /**
+     * 文件系统偏好配置表。
+     */
     private final String performanceTablePrefix = "file_performance_";
 
+    /**
+     * 回收站表。
+     */
     private final String recyclebinTablePrefix = "recyclebin_";
 
+    /**
+     * 分享标签表。
+     */
     private final String sharingTagTablePrefix = "sharing_tag_";
 
+    /**
+     * 分享标签的预览图表。
+     */
     private final String sharingTagPreviewTablePrefix = "sharing_tag_preview_";
 
+    /**
+     * 分享追踪记录表。
+     */
     private final String visitTraceTablePrefix = "sharing_trace_";
 
+    /**
+     * 分享码表。
+     */
     private final String sharingCodeTable = "sharing_code";
 
     /**
