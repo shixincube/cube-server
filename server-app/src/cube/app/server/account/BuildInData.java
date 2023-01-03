@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2022 Cube Team.
+ * Copyright (c) 2020-2023 Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,8 @@ public final class BuildInData {
     public final List<Account> accountList = new ArrayList<>();
 
     public BuildInData() {
+        // Password: shixincube
+
         Account account = new Account(50001001,"shixincube.com", "cube1", "13199887766",
                 "c7af98d321febe62e04d45e8806852e0",
                 "李国诚", "avatar01", 0);
