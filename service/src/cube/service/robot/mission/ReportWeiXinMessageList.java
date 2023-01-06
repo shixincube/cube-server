@@ -24,17 +24,11 @@
  * SOFTWARE.
  */
 
-package cube.service.robot;
+package cube.service.robot.mission;
 
-import cube.robot.Account;
-import cube.robot.Task;
+public class ReportWeiXinMessageList extends AbstractMission {
 
-import java.util.List;
-
-public interface Roboengine {
-
-    Task getTask(String taskName);
-
-    List<Account> getOnlineAccounts();
-
+    public ReportWeiXinMessageList() {
+        super(null);
+    }
 }

@@ -27,12 +27,15 @@
 package cube.service.robot;
 
 import cube.robot.Account;
+import cube.robot.Task;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -69,6 +72,40 @@ public class RoboengineImpl implements Roboengine {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public Task getTask(String taskName) {
+        String codedName = null;
+        try {
+            codedName = URLEncoder.encode(taskName, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        String url = "http://" + this.host + ":" + this.port + "/task/get/" + this.token
+                + "/?name=" + codedName;
+
+        Task task = null;
+
+        try {
+            ContentResponse response = this.client.GET(url);
+            if (response.getStatus() != HttpStatus.OK_200) {
+                return null;
+            }
+
+            JSONObject data = new JSONObject(response.getContentAsString());
+            task = new Task(data);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+
+        return task;
     }
 
     @Override

@@ -26,15 +26,15 @@
 
 package cube.service.robot;
 
-import cell.util.Utils;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
+import cube.service.robot.mission.AbstractMission;
+import cube.service.robot.mission.ReportDouYinAccountData;
 import cube.util.ConfigUtils;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.Properties;
 
 /**
@@ -79,6 +79,11 @@ public class RobotService extends AbstractModule {
 
     @Override
     public void onTick(Module module, Kernel kernel) {
-        System.out.println("#onTick: " + Utils.gsDateFormat.format(new Date()));
+
+    }
+
+    private void checkTasks() {
+        AbstractMission task = new ReportDouYinAccountData();
+
     }
 }

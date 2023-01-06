@@ -24,17 +24,9 @@
  * SOFTWARE.
  */
 
-package cube.service.robot;
+package cube.service.robot.mission;
 
-import cube.robot.Account;
-import cube.robot.Task;
+public final class TaskNames {
 
-import java.util.List;
-
-public interface Roboengine {
-
-    Task getTask(String taskName);
-
-    List<Account> getOnlineAccounts();
-
+    public final static String ReportDouYinAccountData = "Cube_抖音账号数据";
 }

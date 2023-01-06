@@ -24,17 +24,25 @@
  * SOFTWARE.
  */
 
-package cube.service.robot;
+package cube.service.robot.mission;
 
-import cube.robot.Account;
 import cube.robot.Task;
 
-import java.util.List;
+public abstract class AbstractMission {
 
-public interface Roboengine {
+    protected String taskName;
 
-    Task getTask(String taskName);
+    protected Task task;
 
-    List<Account> getOnlineAccounts();
+    public AbstractMission(String taskName) {
+        this.taskName = taskName;
+    }
 
+    public String getTaskName() {
+        return this.taskName;
+    }
+
+    public void setTask(Task task) {
+        this.task = task;
+    }
 }
