@@ -33,10 +33,7 @@ import cube.mq.AdapterMQ;
 import cube.util.ProcessManager;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -57,7 +54,7 @@ public final class Kernel {
     /**
      * 存储模块的映射。
      */
-    private ConcurrentHashMap<String, AbstractModule> moduleMap;
+    private LinkedHashMap<String, AbstractModule> moduleMap;
 
     /**
      * 存储缓存的映射。
@@ -89,7 +86,7 @@ public final class Kernel {
      */
     public Kernel(Nucleus nucleus) {
         this.nucleus = nucleus;
-        this.moduleMap = new ConcurrentHashMap<>();
+        this.moduleMap = new LinkedHashMap<>();
         this.cacheMap = new ConcurrentHashMap<>();
         this.mqMap = new ConcurrentHashMap<>();
         this.nodeName = UUID.randomUUID().toString();
@@ -197,7 +194,9 @@ public final class Kernel {
      * @param module 模块实例。
      */
     public void installModule(String name, AbstractModule module) {
-        this.moduleMap.put(name, module);
+        synchronized (this.moduleMap) {
+            this.moduleMap.put(name, module);
+        }
     }
 
     /**
@@ -206,9 +205,11 @@ public final class Kernel {
      * @param name 模块名称。
      */
     public void uninstallModule(String name) {
-        AbstractModule module = this.moduleMap.remove(name);
-        if (null != module) {
-            module.stop();
+        synchronized (this.moduleMap) {
+            AbstractModule module = this.moduleMap.remove(name);
+            if (null != module) {
+                module.stop();
+            }
         }
     }
 
@@ -219,7 +220,9 @@ public final class Kernel {
      * @return 返回对应模块的实例。
      */
     public AbstractModule getModule(String name) {
-        return this.moduleMap.get(name);
+        synchronized (this.moduleMap) {
+            return this.moduleMap.get(name);
+        }
     }
 
     /**
@@ -228,7 +231,9 @@ public final class Kernel {
      * @return 返回所有模块的列表。
      */
     public List<AbstractModule> getModules() {
-        return new ArrayList<>(this.moduleMap.values());
+        synchronized (this.moduleMap) {
+            return new ArrayList<>(this.moduleMap.values());
+        }
     }
 
     /**
@@ -238,7 +243,9 @@ public final class Kernel {
      * @return 返回是否安装了指定模块。
      */
     public boolean hasModule(String name) {
-        return this.moduleMap.containsKey(name);
+        synchronized (this.moduleMap) {
+            return this.moduleMap.containsKey(name);
+        }
     }
 
     /**

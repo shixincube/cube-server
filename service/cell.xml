@@ -71,6 +71,9 @@
 			<class>cube.service.hub.HubCellet</class>
 		</cellet>
 		<cellet port="6000">
+			<class>cube.service.robot.RobotCellet</class>
+		</cellet>
+		<cellet port="6000">
 			<class>cube.service.signal.SignalCellet</class>
 		</cellet>
 		<cellet port="6000">

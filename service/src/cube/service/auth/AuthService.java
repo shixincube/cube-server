@@ -28,6 +28,7 @@ package cube.service.auth;
 
 import cell.core.net.Endpoint;
 import cell.util.Utils;
+import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
 import cube.common.action.ClientAction;
@@ -156,6 +157,7 @@ public class AuthService extends AbstractModule {
             }
 
             if (null == this.authStorage) {
+                Logger.e(AuthService.class, "The storage is not initialized");
                 return null;
             }
 
