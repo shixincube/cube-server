@@ -33,8 +33,31 @@ import java.util.List;
 
 public interface Roboengine {
 
+    /**
+     * 获取任务。
+     *
+     * @param taskName
+     * @return
+     */
     Task getTask(String taskName);
 
+    /**
+     * 创建任务。
+     *
+     * @param taskName
+     * @param timeInMillis
+     * @param timeFlag
+     * @param mainFile
+     * @param taskFile
+     * @return
+     */
+    Task createTask(String taskName, long timeInMillis, int timeFlag, String mainFile, String taskFile);
+
+    /**
+     * 获取在线账号列表。
+     *
+     * @return
+     */
     List<Account> getOnlineAccounts();
 
 }

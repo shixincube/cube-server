@@ -26,9 +26,8 @@
 
 package cube.service.robot.mission;
 
-public class ReportWeiXinMessageList extends AbstractMission {
+public class ReportWeiXinMessageList {
 
     public ReportWeiXinMessageList() {
-        super(null);
     }
 }

@@ -30,6 +30,7 @@ import cube.robot.Account;
 import cube.robot.Task;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -60,6 +61,7 @@ public class RoboengineImpl implements Roboengine {
         this.token = token;
 
         try {
+            this.client.setConnectTimeout(5000);
             this.client.start();
         } catch (Exception e) {
             e.printStackTrace();
@@ -106,6 +108,38 @@ public class RoboengineImpl implements Roboengine {
         }
 
         return task;
+    }
+
+    @Override
+    public Task createTask(String taskName, long timeInMillis, int timeFlag, String mainFile, String taskFile) {
+        String url = "http://" + this.host + ":" + this.port + "/task/new/" + this.token;
+
+        JSONObject task = new JSONObject();
+        task.put("taskName", taskName);
+        task.put("timeInMillis", timeInMillis);
+        task.put("timeFlag", timeFlag);
+        task.put("mainFile", mainFile);
+        task.put("taskFile", taskFile);
+        StringContentProvider provider = new StringContentProvider(task.toString());
+
+        Task result = null;
+        try {
+            ContentResponse response = this.client.POST(url).content(provider).send();
+            if (response.getStatus() != HttpStatus.OK_200) {
+                return null;
+            }
+
+            task = new JSONObject(response.getContentAsString());
+            result = new Task(task);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        return result;
     }
 
     @Override

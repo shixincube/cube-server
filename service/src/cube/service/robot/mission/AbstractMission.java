@@ -32,17 +32,46 @@ public abstract class AbstractMission {
 
     protected String taskName;
 
+    protected long timeInMillis = 0;
+    protected int timeFlag = 0;
+    protected String mainFile;
+    protected String taskFile;
+
     protected Task task;
 
-    public AbstractMission(String taskName) {
+    public AbstractMission(String taskName, String mainFile, String taskFile) {
         this.taskName = taskName;
+        this.mainFile = mainFile;
+        this.taskFile = taskFile;
     }
 
     public String getTaskName() {
         return this.taskName;
     }
 
+    public long getTimeInMillis() {
+        return this.timeInMillis;
+    }
+
+    public int getTimeFlag() {
+        return this.timeFlag;
+    }
+
+    public String getMainFile() {
+        return this.mainFile;
+    }
+
+    public String getTaskFile() {
+        return this.taskFile;
+    }
+
     public void setTask(Task task) {
         this.task = task;
     }
+
+    public Task getTask() {
+        return this.task;
+    }
+
+    public abstract void checkMission();
 }

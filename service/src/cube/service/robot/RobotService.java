@@ -30,6 +30,7 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
+import cube.robot.Task;
 import cube.service.robot.mission.AbstractMission;
 import cube.service.robot.mission.ReportDouYinAccountData;
 import cube.util.ConfigUtils;
@@ -59,6 +60,13 @@ public class RobotService extends AbstractModule {
 
             this.roboengine = new RoboengineImpl();
             this.roboengine.start(apiHost, apiPort, apiToken);
+
+            (new Thread() {
+                @Override
+                public void run() {
+                    checkMissions();
+                }
+            }).start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -82,8 +90,13 @@ public class RobotService extends AbstractModule {
 
     }
 
-    private void checkTasks() {
-        AbstractMission task = new ReportDouYinAccountData();
+    public boolean fulfill() {
 
+        return true;
+    }
+
+    private void checkMissions() {
+        ReportDouYinAccountData mission = new ReportDouYinAccountData(this.roboengine);
+        mission.checkMission();
     }
 }

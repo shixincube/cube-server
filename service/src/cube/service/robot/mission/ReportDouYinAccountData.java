@@ -26,9 +26,36 @@
 
 package cube.service.robot.mission;
 
+import cell.util.log.Logger;
+import cube.robot.Task;
+import cube.service.robot.Roboengine;
+
 public class ReportDouYinAccountData extends AbstractMission {
 
-    public ReportDouYinAccountData() {
-        super(TaskNames.ReportDouYinAccountData);
+    private Roboengine roboengine;
+
+    public ReportDouYinAccountData(Roboengine roboengine) {
+        super(TaskNames.ReportDouYinAccountData,
+                "CubeReportDouYinAccountData.js",
+                "CubeReportDouYinAccountData.zip");
+        this.roboengine = roboengine;
+    }
+
+    @Override
+    public void checkMission() {
+        Task task = this.roboengine.getTask(getTaskName());
+        if (null == task) {
+            // 尝试创建任务
+            task = this.roboengine.createTask(getTaskName(), getTimeInMillis(),
+                    getTimeFlag(), getMainFile(), getTaskFile());
+        }
+
+        if (null == task) {
+            Logger.e(ReportDouYinAccountData.class,
+                    "#checkMission - No task data in Roboengine, task name: " + getTaskName());
+            return;
+        }
+
+        setTask(task);
     }
 }
