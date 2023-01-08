@@ -30,10 +30,9 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
-import cube.robot.Task;
-import cube.service.robot.mission.AbstractMission;
 import cube.service.robot.mission.ReportDouYinAccountData;
 import cube.util.ConfigUtils;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -93,6 +92,10 @@ public class RobotService extends AbstractModule {
     public boolean fulfill() {
 
         return true;
+    }
+
+    public void recordEvent(String name, JSONObject data) {
+
     }
 
     private void checkMissions() {

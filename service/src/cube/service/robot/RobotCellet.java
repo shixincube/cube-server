@@ -26,8 +26,14 @@
 
 package cube.service.robot;
 
+import cell.core.talk.Primitive;
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cell.core.talk.dialect.DialectFactory;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.robot.RobotAction;
+import org.json.JSONObject;
 
 /**
  * 机器人 Cellet 服务。
@@ -57,5 +63,19 @@ public class RobotCellet extends AbstractCellet {
         kernel.uninstallModule(RobotService.NAME);
 
         this.service = null;
+    }
+
+    @Override
+    public void onListened(TalkContext talkContext, Primitive primitive) {
+        super.onListened(talkContext, primitive);
+
+        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
+        String action = dialect.getName();
+
+        if (RobotAction.Event.name.equals(action)) {
+            String name = dialect.getParamAsString("name");
+            JSONObject data = dialect.getParamAsJson("data");
+            this.service.recordEvent(name, data);
+        }
     }
 }

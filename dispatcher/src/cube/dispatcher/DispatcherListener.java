@@ -172,6 +172,14 @@ public class DispatcherListener implements CellListener {
         if (properties.containsKey("app.login")) {
             Performer.APP_LOGIN_URL = properties.getProperty("app.login").trim();
         }
+
+        // 配置 Robot
+        if (properties.containsKey("robot.api")) {
+            Performer.ROBOT_API_URL = properties.getProperty("robot.api").trim();
+        }
+        if (properties.containsKey("robot.callback")) {
+            Performer.ROBOT_CALLBACK_URL = properties.getProperty("robot.callback").trim();
+        }
     }
 
     private HttpConfig loadHttpConfig(Properties properties) {
