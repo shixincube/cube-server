@@ -26,16 +26,20 @@
 
 package cube.service.robot;
 
+import cell.core.talk.TalkContext;
+import cell.util.log.Logger;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
+import cube.service.client.ClientManager;
+import cube.service.client.ServerClient;
 import cube.service.robot.mission.ReportDouYinAccountData;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * 机器人服务。
@@ -44,9 +48,17 @@ public class RobotService extends AbstractModule {
 
     public final static String NAME = "Robot";
 
+    private final static String EVENT_REPORT = "Report";
+
     private RoboengineImpl roboengine;
 
+    /**
+     * 客户端监听事件名映射。
+     */
+    private Map<String, List<ServerClient>> eventNameClientMap;
+
     public RobotService() {
+        this.eventNameClientMap = new HashMap<>();
     }
 
     @Override
@@ -89,13 +101,61 @@ public class RobotService extends AbstractModule {
 
     }
 
-    public boolean fulfill() {
+    public boolean registerListener(String name, TalkContext talkContext) {
+        ServerClient client = ClientManager.getInstance().getClient(talkContext);
+        if (null == client) {
+            return false;
+        }
+
+        synchronized (this.eventNameClientMap) {
+            List<ServerClient> list = this.eventNameClientMap.get(name);
+            if (null == list) {
+                list = new ArrayList<>();
+                list.add(client);
+                this.eventNameClientMap.put(name, list);
+            }
+            else {
+                if (!list.contains(client)) {
+                    list.add(client);
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public boolean deregisterListener(String name, TalkContext talkContext) {
+        ServerClient client = ClientManager.getInstance().getClient(talkContext);
+        if (null == client) {
+            return false;
+        }
+
+        synchronized (this.eventNameClientMap) {
+            List<ServerClient> list = this.eventNameClientMap.get(name);
+            if (null != list) {
+                list.remove(client);
+            }
+        }
 
         return true;
     }
 
     public void recordEvent(String name, JSONObject data) {
+        if (EVENT_REPORT.equals(name)) {
+            try {
+                
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "#recordEvent - event: " + name, e);
+            }
+        }
+        else {
+            Logger.w(this.getClass(), "#recordEvent - Unknown event: " + name);
+        }
+    }
 
+    public boolean fulfill() {
+
+        return true;
     }
 
     private void checkMissions() {

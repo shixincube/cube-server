@@ -26,31 +26,27 @@
 
 package cube.robot;
 
+import cube.common.JSONable;
+import org.json.JSONObject;
+
 /**
- * Robot 动作。
+ * Roboengine 的设备描述。
  */
-public enum RobotAction {
+public class Device implements JSONable {
 
-    /**
-     * 触发事件。
-     */
-    Event("event"),
+    private JSONObject data;
 
-    /**
-     * 注册监听器。
-     */
-    RegisterListener("registerListener"),
+    public Device(JSONObject data) {
+        this.data = data;
+    }
 
-    /**
-     * 注销监听器。
-     */
-    DeregisterListener("deregisterListener")
+    @Override
+    public JSONObject toJSON() {
+        return this.data;
+    }
 
-    ;
-
-    public final String name;
-
-    RobotAction(String name) {
-        this.name = name;
+    @Override
+    public JSONObject toCompactJSON() {
+        return toJSON();
     }
 }

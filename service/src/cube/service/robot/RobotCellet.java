@@ -33,6 +33,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.robot.RobotAction;
+import cube.robot.RobotStateCode;
 import org.json.JSONObject;
 
 /**
@@ -76,6 +77,34 @@ public class RobotCellet extends AbstractCellet {
             String name = dialect.getParamAsString("name");
             JSONObject data = dialect.getParamAsJson("data");
             this.service.recordEvent(name, data);
+        }
+        else if (RobotAction.RegisterListener.name.equals(action)) {
+            String name = dialect.getParamAsString("name");
+            int code = RobotStateCode.Unknown.code;
+
+            if (this.service.registerListener(name, talkContext)) {
+                code = RobotStateCode.Ok.code;
+            }
+            else {
+                code = RobotStateCode.Failure.code;
+            }
+
+            Responder responder = new Responder(dialect, this, talkContext);
+            responder.respond(code, new JSONObject());
+        }
+        else if (RobotAction.DeregisterListener.name.equals(action)) {
+            String name = dialect.getParamAsString("name");
+            int code = RobotStateCode.Unknown.code;
+
+            if (this.service.deregisterListener(name, talkContext)) {
+                code = RobotStateCode.Ok.code;
+            }
+            else {
+                code = RobotStateCode.Failure.code;
+            }
+
+            Responder responder = new Responder(dialect, this, talkContext);
+            responder.respond(code, new JSONObject());
         }
     }
 }

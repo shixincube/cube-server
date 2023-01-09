@@ -27,30 +27,70 @@
 package cube.robot;
 
 /**
- * Robot 动作。
+ * Robot 模块状态码。
  */
-public enum RobotAction {
+public enum RobotStateCode {
 
     /**
-     * 触发事件。
+     * 成功。
      */
-    Event("event"),
+    Ok(0),
 
     /**
-     * 注册监听器。
+     * 无效参数。
      */
-    RegisterListener("registerListener"),
+    InvalidParameter(5),
 
     /**
-     * 注销监听器。
+     * 遇到故障。
      */
-    DeregisterListener("deregisterListener")
+    Failure(9),
+
+    /**
+     * 无效域信息。
+     */
+    InvalidDomain(11),
+
+    /**
+     * 未授权。
+     */
+    Unauthorized(12),
+
+    /**
+     * 不支持的操作。
+     */
+    Unsupported(13),
+
+    /**
+     * 数据过期。
+     */
+    Expired(15),
+
+    /**
+     * 控制器错误。
+     */
+    ControllerError(17),
+
+    /**
+     * 未知的状态。
+     */
+    Unknown(99)
 
     ;
 
-    public final String name;
+    public final int code;
 
-    RobotAction(String name) {
-        this.name = name;
+    RobotStateCode(int code) {
+        this.code = code;
+    }
+
+    public static RobotStateCode parse(int code) {
+        for (RobotStateCode stateCode : RobotStateCode.values()) {
+            if (stateCode.code == code) {
+                return stateCode;
+            }
+        }
+
+        return RobotStateCode.Unknown;
     }
 }
