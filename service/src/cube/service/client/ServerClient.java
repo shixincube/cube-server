@@ -223,6 +223,14 @@ public class ServerClient extends Entity {
         this.cellet.speak(this.talkContext, actionDialect);
     }
 
+    public void transmit(ActionDialect actionDialect) {
+        if (null == this.talkContext) {
+            return;
+        }
+
+        this.cellet.speak(this.talkContext, actionDialect);
+    }
+
     public void transmitStream(String streamName, File file) {
         if (null == this.talkContext) {
             return;

@@ -51,7 +51,7 @@ public class RobotCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.service = new RobotService();
+        this.service = new RobotService(this);
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.installModule(RobotService.NAME, this.service);
 
@@ -74,11 +74,13 @@ public class RobotCellet extends AbstractCellet {
         String action = dialect.getName();
 
         if (RobotAction.Event.name.equals(action)) {
+            // 来自 Dispatcher 的事件
             String name = dialect.getParamAsString("name");
             JSONObject data = dialect.getParamAsJson("data");
-            this.service.recordEvent(name, data);
+            this.service.transferEvent(name, data);
         }
         else if (RobotAction.RegisterListener.name.equals(action)) {
+            // 来自 Client 的操作
             String name = dialect.getParamAsString("name");
             int code = RobotStateCode.Unknown.code;
 
@@ -93,6 +95,7 @@ public class RobotCellet extends AbstractCellet {
             responder.respond(code, new JSONObject());
         }
         else if (RobotAction.DeregisterListener.name.equals(action)) {
+            // 来自 Client 的操作
             String name = dialect.getParamAsString("name");
             int code = RobotStateCode.Unknown.code;
 

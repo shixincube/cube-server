@@ -27,11 +27,14 @@
 package cube.service.robot;
 
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
+import cube.robot.Report;
+import cube.robot.RobotAction;
 import cube.service.client.ClientManager;
 import cube.service.client.ServerClient;
 import cube.service.robot.mission.ReportDouYinAccountData;
@@ -50,6 +53,8 @@ public class RobotService extends AbstractModule {
 
     private final static String EVENT_REPORT = "Report";
 
+    private final RobotCellet cellet;
+
     private RoboengineImpl roboengine;
 
     /**
@@ -57,7 +62,8 @@ public class RobotService extends AbstractModule {
      */
     private Map<String, List<ServerClient>> eventNameClientMap;
 
-    public RobotService() {
+    public RobotService(RobotCellet cellet) {
+        this.cellet = cellet;
         this.eventNameClientMap = new HashMap<>();
     }
 
@@ -104,6 +110,7 @@ public class RobotService extends AbstractModule {
     public boolean registerListener(String name, TalkContext talkContext) {
         ServerClient client = ClientManager.getInstance().getClient(talkContext);
         if (null == client) {
+            Logger.w(this.getClass(), "#registerListener - Can NOT find server client: " + talkContext.getSessionHost());
             return false;
         }
 
@@ -121,12 +128,17 @@ public class RobotService extends AbstractModule {
             }
         }
 
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#registerListener - register " + name + " from " + talkContext.getSessionHost());
+        }
+
         return true;
     }
 
     public boolean deregisterListener(String name, TalkContext talkContext) {
         ServerClient client = ClientManager.getInstance().getClient(talkContext);
         if (null == client) {
+            Logger.w(this.getClass(), "#deregisterListener - Can NOT find server client: " + talkContext.getSessionHost());
             return false;
         }
 
@@ -137,13 +149,36 @@ public class RobotService extends AbstractModule {
             }
         }
 
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#deregisterListener - deregister " + name + " from " + talkContext.getSessionHost());
+        }
+
         return true;
     }
 
-    public void recordEvent(String name, JSONObject data) {
+    public void transferEvent(String name, JSONObject data) {
         if (EVENT_REPORT.equals(name)) {
             try {
-                
+                synchronized (this.eventNameClientMap) {
+                    List<ServerClient> list = this.eventNameClientMap.get(name);
+                    if (null != list && !list.isEmpty()) {
+                        Iterator<ServerClient> iter = list.iterator();
+                        while (iter.hasNext()) {
+                            ServerClient client = iter.next();
+
+                            TalkContext context = client.getTalkContext();
+                            if (null == context) {
+                                iter.remove();
+                                continue;
+                            }
+
+                            ActionDialect dialect = new ActionDialect(RobotAction.Event.name);
+                            dialect.addParam("name", name);
+                            dialect.addParam("data", data);
+                            this.cellet.speak(context, dialect);
+                        }
+                    }
+                }
             } catch (Exception e) {
                 Logger.w(this.getClass(), "#recordEvent - event: " + name, e);
             }
