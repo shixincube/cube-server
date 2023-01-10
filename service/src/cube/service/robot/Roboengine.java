@@ -31,7 +31,17 @@ import cube.robot.Task;
 
 import java.util.List;
 
+/**
+ * Roboengine 接口 API 。
+ */
 public interface Roboengine {
+
+    /**
+     * 服务器是否在线。
+     *
+     * @return
+     */
+    boolean isServerOnline();
 
     /**
      * 获取任务。

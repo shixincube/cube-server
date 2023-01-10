@@ -30,11 +30,15 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.robot.RobotAction;
 import cube.robot.RobotStateCode;
 import org.json.JSONObject;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 机器人 Cellet 服务。
@@ -44,6 +48,8 @@ public class RobotCellet extends AbstractCellet {
     public final static String NAME = "Robot";
 
     private RobotService service;
+
+    private ExecutorService executor;
 
     public RobotCellet() {
         super(NAME);
@@ -55,6 +61,8 @@ public class RobotCellet extends AbstractCellet {
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.installModule(RobotService.NAME, this.service);
 
+        this.executor = Executors.newSingleThreadExecutor();
+
         return true;
     }
 
@@ -64,6 +72,8 @@ public class RobotCellet extends AbstractCellet {
         kernel.uninstallModule(RobotService.NAME);
 
         this.service = null;
+
+        this.executor.shutdown();
     }
 
     @Override
@@ -81,33 +91,51 @@ public class RobotCellet extends AbstractCellet {
         }
         else if (RobotAction.RegisterListener.name.equals(action)) {
             // 来自 Client 的操作
-            String name = dialect.getParamAsString("name");
-            int code = RobotStateCode.Unknown.code;
+            final String name = dialect.getParamAsString("name");
 
-            if (this.service.registerListener(name, talkContext)) {
-                code = RobotStateCode.Ok.code;
-            }
-            else {
-                code = RobotStateCode.Failure.code;
-            }
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    int code = RobotStateCode.Unknown.code;
 
-            Responder responder = new Responder(dialect, this, talkContext);
-            responder.respond(code, new JSONObject());
+                    if (service.registerListener(name, talkContext)) {
+                        code = RobotStateCode.Ok.code;
+                    }
+                    else {
+                        code = RobotStateCode.Failure.code;
+                    }
+
+                    Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
+                    boolean result = responder.respond(code, new JSONObject());
+                    if (!result) {
+                        Logger.w(RobotCellet.class, "#onListened - respond failed: " + name);
+                    }
+                }
+            });
         }
         else if (RobotAction.DeregisterListener.name.equals(action)) {
             // 来自 Client 的操作
-            String name = dialect.getParamAsString("name");
-            int code = RobotStateCode.Unknown.code;
+            final String name = dialect.getParamAsString("name");
 
-            if (this.service.deregisterListener(name, talkContext)) {
-                code = RobotStateCode.Ok.code;
-            }
-            else {
-                code = RobotStateCode.Failure.code;
-            }
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    int code = RobotStateCode.Unknown.code;
 
-            Responder responder = new Responder(dialect, this, talkContext);
-            responder.respond(code, new JSONObject());
+                    if (service.deregisterListener(name, talkContext)) {
+                        code = RobotStateCode.Ok.code;
+                    }
+                    else {
+                        code = RobotStateCode.Failure.code;
+                    }
+
+                    Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
+                    boolean result = responder.respond(code, new JSONObject());
+                    if (!result) {
+                        Logger.w(RobotCellet.class, "#onListened - respond failed: " + name);
+                    }
+                }
+            });
         }
     }
 }

@@ -76,11 +76,11 @@ public class RobotService extends AbstractModule {
             String apiToken = config.getProperty("api.token", "");
 
             this.roboengine = new RoboengineImpl();
-            this.roboengine.start(apiHost, apiPort, apiToken);
-
             (new Thread() {
                 @Override
                 public void run() {
+                    roboengine.start(apiHost, apiPort, apiToken);
+                    Logger.i(RobotService.class, "Roboengine agent started");
                     checkMissions();
                 }
             }).start();
@@ -180,11 +180,11 @@ public class RobotService extends AbstractModule {
                     }
                 }
             } catch (Exception e) {
-                Logger.w(this.getClass(), "#recordEvent - event: " + name, e);
+                Logger.w(this.getClass(), "#transferEvent - event: " + name, e);
             }
         }
         else {
-            Logger.w(this.getClass(), "#recordEvent - Unknown event: " + name);
+            Logger.w(this.getClass(), "#transferEvent - Unknown event: " + name);
         }
     }
 
@@ -194,6 +194,11 @@ public class RobotService extends AbstractModule {
     }
 
     private void checkMissions() {
+        if (!this.roboengine.isServerOnline()) {
+            Logger.w(this.getClass(), "Roboengine server is NOT online");
+            return;
+        }
+
         ReportDouYinAccountData mission = new ReportDouYinAccountData(this.roboengine);
         mission.checkMission();
     }

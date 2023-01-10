@@ -77,6 +77,25 @@ public class RoboengineImpl implements Roboengine {
     }
 
     @Override
+    public boolean isServerOnline() {
+        String url = "http://" + this.host + ":" + this.port + "/account/get/" + this.token + "?id=0";
+        try {
+            ContentResponse response = this.client.GET(url);
+            if (response.getStatus() == HttpStatus.NOT_FOUND_404 || response.getStatus() == HttpStatus.OK_200) {
+                return true;
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            return false;
+        } catch (TimeoutException e) {
+            return false;
+        }
+
+        return false;
+    }
+
+    @Override
     public Task getTask(String taskName) {
         String codedName = null;
         try {

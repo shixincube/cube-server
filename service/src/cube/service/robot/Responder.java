@@ -63,14 +63,14 @@ public class Responder {
         return this.talkContext.getSessionHost();
     }
 
-    public void respond(int code, JSONObject data) {
+    public boolean respond(int code, JSONObject data) {
         ActionDialect actionDialect = new ActionDialect(this.name);
         if (null != this.notifier) {
             actionDialect.addParam(NotifierParamName, this.notifier);
         }
         actionDialect.addParam("code", code);
         actionDialect.addParam("data", data);
-        this.cellet.speak(this.talkContext, actionDialect);
+        return this.cellet.speak(this.talkContext, actionDialect);
     }
 
     public void respondDispatcher(long sn, int code) {
