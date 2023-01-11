@@ -26,7 +26,6 @@
 
 package cube.robot;
 
-import cell.core.talk.TalkContext;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
@@ -63,9 +62,9 @@ public class Account implements JSONable {
 
     public JSONObject lastDevice;
 
-    public TalkContext talkContext;
-
     public boolean online = false;
+
+    public boolean taskRunning = false;
 
     public Account(long id, String name, String password, boolean isAdmin, String avatar,
                    String fullName, long creationTime, int state) {
@@ -87,14 +86,26 @@ public class Account implements JSONable {
         this.fullName = json.getString("fullName");
         this.creationTime = json.getLong("creationTime");
         this.state = json.getInt("state");
+        this.online = json.getBoolean("online");
+
         if (json.has("lastLoginTime")) {
             this.lastLoginTime = json.getLong("lastLoginTime");
         }
+
+        if (json.has("lastAddress")) {
+            this.lastAddress = json.getString("lastAddress");
+        }
+
         if (json.has("lastDevice")) {
             this.lastDevice = json.getJSONObject("lastDevice");
         }
+
         if (json.has("token")) {
             this.token = json.getString("token");
+        }
+
+        if (json.has("taskRunning")) {
+            this.taskRunning = json.getBoolean("taskRunning");
         }
     }
 
@@ -110,15 +121,21 @@ public class Account implements JSONable {
         json.put("state", this.state);
         json.put("online", this.online);
         json.put("lastLoginTime", this.lastLoginTime);
+
         if (null != this.lastAddress) {
             json.put("lastAddress", this.lastAddress);
         }
+
         if (null != this.lastDevice) {
             json.put("lastDevice", this.lastDevice);
         }
+
         if (null != this.token) {
             json.put("token", this.token);
         }
+
+        json.put("taskRunning", this.taskRunning);
+
         return json;
     }
 

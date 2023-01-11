@@ -37,6 +37,7 @@ import cube.robot.Report;
 import cube.robot.RobotAction;
 import cube.service.client.ClientManager;
 import cube.service.client.ServerClient;
+import cube.service.robot.mission.AbstractMission;
 import cube.service.robot.mission.ReportDouYinAccountData;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
@@ -188,8 +189,15 @@ public class RobotService extends AbstractModule {
         }
     }
 
-    public boolean fulfill() {
-
+    /**
+     * 已立即执行方式执行任务。
+     * 指定任务将随机选择机器人进行任务执行。
+     *
+     * @param mission
+     * @return
+     */
+    public boolean fulfill(AbstractMission mission) {
+        
         return true;
     }
 
