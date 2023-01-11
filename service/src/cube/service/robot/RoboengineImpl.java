@@ -169,13 +169,14 @@ public class RoboengineImpl implements Roboengine {
         try {
             ContentResponse response = this.client.GET(url);
             if (response.getStatus() != HttpStatus.OK_200) {
-                return null;
+                return list;
             }
 
             JSONArray array = new JSONArray(response.getContentAsString());
             for (int i = 0; i < array.length(); ++i) {
                 JSONObject item = array.getJSONObject(i);
-
+                Account account = new Account(item);
+                list.add(account);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();

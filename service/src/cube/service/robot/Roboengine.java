@@ -63,8 +63,6 @@ public interface Roboengine {
      */
     Task createTask(String taskName, long timeInMillis, int timeFlag, String mainFile, String taskFile);
 
-
-
     /**
      * 获取在线账号列表。
      *

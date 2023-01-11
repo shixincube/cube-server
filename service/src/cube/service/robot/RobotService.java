@@ -28,11 +28,13 @@ package cube.service.robot;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
+import cube.robot.Account;
 import cube.robot.Report;
 import cube.robot.RobotAction;
 import cube.service.client.ClientManager;
@@ -197,7 +199,28 @@ public class RobotService extends AbstractModule {
      * @return
      */
     public boolean fulfill(AbstractMission mission) {
+        // 查找可用设备
+        List<Account> list = this.roboengine.getOnlineAccounts();
+        if (list.isEmpty()) {
+            Logger.i(this.getClass(), "No online accounts");
+            return false;
+        }
+
+        // 找到空闲的账号
+        Account account = null;
+        for (Account item : list) {
+            if (!item.taskRunning) {
+                account = item;
+                break;
+            }
+        }
+
+        if (null == account) {
+            account = list.get(Utils.randomInt(0, list.size() - 1));
+        }
+
         
+
         return true;
     }
 
