@@ -44,7 +44,12 @@ public enum RobotAction {
     /**
      * 注销监听器。
      */
-    DeregisterListener("deregisterListener")
+    DeregisterListener("deregisterListener"),
+
+    /**
+     * 执行任务。
+     */
+    Fulfill("fulfill")
 
     ;
 

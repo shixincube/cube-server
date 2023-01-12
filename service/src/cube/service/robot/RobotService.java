@@ -35,12 +35,13 @@ import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
 import cube.robot.Account;
-import cube.robot.Report;
 import cube.robot.RobotAction;
+import cube.robot.Schedule;
 import cube.service.client.ClientManager;
 import cube.service.client.ServerClient;
 import cube.service.robot.mission.AbstractMission;
 import cube.service.robot.mission.ReportDouYinAccountData;
+import cube.robot.TaskNames;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
@@ -191,6 +192,23 @@ public class RobotService extends AbstractModule {
         }
     }
 
+    public AbstractMission createMission(String name) {
+        if (TaskNames.ReportDouYinAccountData.equals(name)) {
+            return new ReportDouYinAccountData(this.roboengine);
+        }
+
+        return null;
+    }
+
+    public boolean fulfill(String missionName) {
+        AbstractMission mission = this.createMission(missionName);
+        if (null == mission) {
+            return false;
+        }
+
+        return this.fulfill(mission);
+    }
+
     /**
      * 已立即执行方式执行任务。
      * 指定任务将随机选择机器人进行任务执行。
@@ -199,6 +217,14 @@ public class RobotService extends AbstractModule {
      * @return
      */
     public boolean fulfill(AbstractMission mission) {
+        // 检查
+        mission.checkMission();
+
+        if (!mission.isTaskReady()) {
+            Logger.i(this.getClass(), "The task is NOT ready");
+            return false;
+        }
+
         // 查找可用设备
         List<Account> list = this.roboengine.getOnlineAccounts();
         if (list.isEmpty()) {
@@ -219,7 +245,11 @@ public class RobotService extends AbstractModule {
             account = list.get(Utils.randomInt(0, list.size() - 1));
         }
 
-        
+        // 查询计划表
+        Schedule schedule = this.roboengine.querySchedule(account.id, mission.getTask().id);
+        if (null == schedule) {
+            System.out.println("XJW");
+        }
 
         return true;
     }

@@ -73,5 +73,9 @@ public abstract class AbstractMission {
         return this.task;
     }
 
+    public boolean isTaskReady() {
+        return (null != this.task);
+    }
+
     public abstract void checkMission();
 }

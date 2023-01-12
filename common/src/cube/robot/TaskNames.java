@@ -24,8 +24,11 @@
  * SOFTWARE.
  */
 
-package cube.service.robot.mission;
+package cube.robot;
 
+/**
+ * 任务名称辅助函数库。
+ */
 public final class TaskNames {
 
     public final static String ReportDouYinAccountData = "Cube_抖音账号数据";

@@ -63,6 +63,19 @@ public class Schedule implements JSONable {
         this.state = state;
     }
 
+    public Schedule(JSONObject json) {
+        this.sn = json.getLong("sn");
+        this.taskId = json.getLong("taskId");
+        this.accountId = json.getLong("accountId");
+        this.publishTime = json.getLong("publishTime");
+        this.releaseTime = json.getLong("releaseTime");
+        this.pushTime = json.getLong("pushTime");
+        this.state = json.getInt("state");
+        if (json.has("task")) {
+            this.task = new Task(json.getJSONObject("task"));
+        }
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

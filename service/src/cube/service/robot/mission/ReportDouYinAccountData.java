@@ -28,6 +28,7 @@ package cube.service.robot.mission;
 
 import cell.util.log.Logger;
 import cube.robot.Task;
+import cube.robot.TaskNames;
 import cube.service.robot.Roboengine;
 
 public class ReportDouYinAccountData extends AbstractMission {

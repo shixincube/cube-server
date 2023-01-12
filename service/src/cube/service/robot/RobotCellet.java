@@ -89,6 +89,20 @@ public class RobotCellet extends AbstractCellet {
             JSONObject data = dialect.getParamAsJson("data");
             this.service.transferEvent(name, data);
         }
+        else if (RobotAction.Fulfill.name.equals(action)) {
+            // 来自 Client 的操作
+            final String name = dialect.getParamAsString("name");
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    boolean success = service.fulfill(name);
+                    Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
+                    responder.respond(success ? RobotStateCode.Ok.code : RobotStateCode.Failure.code,
+                            new JSONObject());
+                }
+            });
+        }
         else if (RobotAction.RegisterListener.name.equals(action)) {
             // 来自 Client 的操作
             final String name = dialect.getParamAsString("name");

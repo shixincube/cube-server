@@ -27,6 +27,7 @@
 package cube.service.robot;
 
 import cube.robot.Account;
+import cube.robot.Schedule;
 import cube.robot.Task;
 
 import java.util.List;
@@ -62,6 +63,15 @@ public interface Roboengine {
      * @return
      */
     Task createTask(String taskName, long timeInMillis, int timeFlag, String mainFile, String taskFile);
+
+    /**
+     * 查询任务计划表。
+     *
+     * @param accountId
+     * @param taskId
+     * @return
+     */
+    Schedule querySchedule(long accountId, long taskId);
 
     /**
      * 获取在线账号列表。

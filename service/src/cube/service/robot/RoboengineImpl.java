@@ -27,6 +27,7 @@
 package cube.service.robot;
 
 import cube.robot.Account;
+import cube.robot.Schedule;
 import cube.robot.Task;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -159,6 +160,33 @@ public class RoboengineImpl implements Roboengine {
         }
 
         return result;
+    }
+
+    @Override
+    public Schedule querySchedule(long accountId, long taskId) {
+        Schedule schedule = null;
+
+        String url = "http://" + this.host + ":" + this.port + "/schedule/query/" + this.token
+                + "?accountId=" + accountId + "&taskId=" + taskId;
+
+        try {
+            ContentResponse response = this.client.GET(url);
+            if (response.getStatus() == HttpStatus.OK_200) {
+                JSONArray array = new JSONArray(response.getContentAsString());
+                if (array.length() > 0) {
+                    JSONObject data = array.getJSONObject(0);
+                    schedule = new Schedule(data);
+                }
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+
+        return schedule;
     }
 
     @Override
