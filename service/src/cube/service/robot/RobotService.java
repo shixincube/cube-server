@@ -249,6 +249,7 @@ public class RobotService extends AbstractModule {
         Schedule schedule = this.roboengine.querySchedule(account.id, mission.getTask().id);
         if (null == schedule) {
             System.out.println("XJW");
+            
         }
 
         return true;

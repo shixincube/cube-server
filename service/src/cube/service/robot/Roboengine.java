@@ -74,6 +74,16 @@ public interface Roboengine {
     Schedule querySchedule(long accountId, long taskId);
 
     /**
+     * 创建新计划表。
+     *
+     * @param taskId
+     * @param accountId
+     * @param releaseTime
+     * @return
+     */
+    Schedule newSchedule(long taskId, long accountId, long releaseTime);
+
+    /**
      * 获取在线账号列表。
      *
      * @return
