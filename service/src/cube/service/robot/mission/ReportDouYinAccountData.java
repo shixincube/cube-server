@@ -31,6 +31,13 @@ import cube.robot.Task;
 import cube.robot.TaskNames;
 import cube.service.robot.Roboengine;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class ReportDouYinAccountData extends AbstractMission {
 
     private Roboengine roboengine;
@@ -58,5 +65,27 @@ public class ReportDouYinAccountData extends AbstractMission {
         }
 
         setTask(task);
+    }
+
+    @Override
+    public boolean uploadScriptFiles() {
+        Path tmpPath = Paths.get(sWorkingPath.toString() + "/tmp/");
+        if (!Files.exists(tmpPath)) {
+            try {
+                Files.createDirectories(tmpPath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        Path outputFile = Paths.get(tmpPath.toString() + "/" + this.taskFile);
+
+        this.packScriptFiles(new String[] {
+                this.mainFile,
+                "modules/StopApp.js"
+        }, outputFile);
+
+        // 上传数据
+        return this.roboengine.uploadScript(this.taskFile, outputFile);
     }
 }

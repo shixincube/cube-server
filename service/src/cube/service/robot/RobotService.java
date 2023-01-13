@@ -37,11 +37,11 @@ import cube.plugin.PluginSystem;
 import cube.robot.Account;
 import cube.robot.RobotAction;
 import cube.robot.Schedule;
+import cube.robot.TaskNames;
 import cube.service.client.ClientManager;
 import cube.service.client.ServerClient;
 import cube.service.robot.mission.AbstractMission;
 import cube.service.robot.mission.ReportDouYinAccountData;
-import cube.robot.TaskNames;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
@@ -248,11 +248,22 @@ public class RobotService extends AbstractModule {
         // 查询计划表
         Schedule schedule = this.roboengine.querySchedule(account.id, mission.getTask().id);
         if (null == schedule) {
-            System.out.println("XJW");
-            
+            schedule = this.roboengine.newSchedule(mission.getTask().id, account.id, System.currentTimeMillis());
+            if (null == schedule) {
+                Logger.w(this.getClass(), "New schedule failed - task: " + mission.getTask().id
+                    + " , account: " + account.id);
+                return false;
+            }
         }
 
-        return true;
+        // 上传任务脚本文件
+        if (!mission.uploadScriptFiles()) {
+            Logger.w(this.getClass(), "Upload script file failed");
+            return false;
+        }
+
+        // 推送
+        return this.roboengine.pushSchedule(schedule);
     }
 
     private void checkMissions() {

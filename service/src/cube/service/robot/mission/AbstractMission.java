@@ -27,8 +27,23 @@
 package cube.service.robot.mission;
 
 import cube.robot.Task;
+import cube.util.ZipUtils;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 抽象任务。
+ */
 public abstract class AbstractMission {
+
+    public final static Path sWorkingPath = Paths.get("assets/robot/");
 
     protected String taskName;
 
@@ -77,5 +92,30 @@ public abstract class AbstractMission {
         return (null != this.task);
     }
 
+    protected Path packScriptFiles(String[] inputFiles, Path outputFile) {
+        try {
+            List<File> fileList = new ArrayList<>();
+            for (String filename : inputFiles) {
+                fileList.add(new File(sWorkingPath.toFile(), filename));
+            }
+
+            // 删除旧文件
+            if (Files.exists(outputFile)) {
+                Files.delete(outputFile);
+            }
+
+            FileOutputStream fos = null;
+            fos = new FileOutputStream(outputFile.toFile());
+            ZipUtils.toZip(fileList, fos);
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return outputFile;
+    }
+
     public abstract void checkMission();
+
+    public abstract boolean uploadScriptFiles();
 }

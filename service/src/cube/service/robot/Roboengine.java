@@ -30,6 +30,7 @@ import cube.robot.Account;
 import cube.robot.Schedule;
 import cube.robot.Task;
 
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -84,10 +85,25 @@ public interface Roboengine {
     Schedule newSchedule(long taskId, long accountId, long releaseTime);
 
     /**
+     * 立即推送计划表给对应的设备。
+     *
+     * @param schedule
+     * @return
+     */
+    boolean pushSchedule(Schedule schedule);
+
+    /**
      * 获取在线账号列表。
      *
      * @return
      */
     List<Account> getOnlineAccounts();
 
+    /**
+     * 上传脚本。
+     *
+     * @param file
+     * @return
+     */
+    boolean uploadScript(String filename, Path file);
 }

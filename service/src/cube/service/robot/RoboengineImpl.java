@@ -36,8 +36,10 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -190,6 +192,63 @@ public class RoboengineImpl implements Roboengine {
     }
 
     @Override
+    public Schedule newSchedule(long taskId, long accountId, long releaseTime) {
+        Schedule schedule = null;
+
+        String url = "http://" + this.host + ":" + this.port + "/schedule/new/" + this.token;
+
+        JSONObject data = new JSONObject();
+        data.put("taskId", taskId);
+        data.put("accountId", accountId);
+        data.put("releaseTime", releaseTime);
+
+        StringContentProvider provider = new StringContentProvider(data.toString());
+
+        try {
+            ContentResponse response = this.client.POST(url).content(provider).send();
+            if (response.getStatus() != HttpStatus.OK_200) {
+                return schedule;
+            }
+
+            JSONObject responseJson = new JSONObject(response.getContentAsString());
+            schedule = new Schedule(responseJson);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        return schedule;
+    }
+
+    @Override
+    public boolean pushSchedule(Schedule schedule) {
+        String url = "http://" + this.host + ":" + this.port + "/schedule/push/" + this.token;
+
+        JSONObject data = new JSONObject();
+        data.put("sn", schedule.sn);
+
+        StringContentProvider provider = new StringContentProvider(data.toString());
+
+        try {
+            ContentResponse response = this.client.POST(url).content(provider).send();
+            if (response.getStatus() != HttpStatus.OK_200) {
+                return false;
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            return false;
+        } catch (ExecutionException e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
     public List<Account> getOnlineAccounts() {
         String url = "http://" + this.host + ":" + this.port + "/account/online/" + this.token;
 
@@ -215,5 +274,34 @@ public class RoboengineImpl implements Roboengine {
         }
 
         return list;
+    }
+
+    @Override
+    public boolean uploadScript(String filename, Path file) {
+        String fileName = filename;
+        try {
+            fileName = URLEncoder.encode(filename, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        String url = "http://" + this.host + ":" + this.port + "/script/upload/" + this.token + "?filename=" + fileName;
+
+        try {
+            ContentResponse response = this.client.POST(url).file(file).send();
+            if (response.getStatus() != HttpStatus.OK_200) {
+                return false;
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            return false;
+        } catch (ExecutionException e) {
+            return false;
+        } catch (IOException e) {
+            return false;
+        }
+
+        return true;
     }
 }
