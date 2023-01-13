@@ -32,12 +32,15 @@ import cube.robot.TaskNames;
 import cube.service.robot.Roboengine;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * 报告抖音账号数据。
+ * 参数：
+ * word {String}
+ */
 public class ReportDouYinAccountData extends AbstractMission {
 
     private Roboengine roboengine;
@@ -82,6 +85,8 @@ public class ReportDouYinAccountData extends AbstractMission {
 
         this.packScriptFiles(new String[] {
                 this.mainFile,
+                "modules/DouYinAuthorList.js",
+                "modules/DouYinVideoInfo.js",
                 "modules/StopApp.js"
         }, outputFile);
 

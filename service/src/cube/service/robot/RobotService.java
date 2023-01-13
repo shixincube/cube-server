@@ -200,13 +200,13 @@ public class RobotService extends AbstractModule {
         return null;
     }
 
-    public boolean fulfill(String missionName) {
+    public boolean fulfill(String missionName, JSONObject parameter) {
         AbstractMission mission = this.createMission(missionName);
         if (null == mission) {
             return false;
         }
 
-        return this.fulfill(mission);
+        return this.fulfill(mission, parameter);
     }
 
     /**
@@ -216,7 +216,10 @@ public class RobotService extends AbstractModule {
      * @param mission
      * @return
      */
-    public boolean fulfill(AbstractMission mission) {
+    public boolean fulfill(AbstractMission mission, JSONObject parameter) {
+        // 设置参数
+        mission.setParameter(parameter);
+
         // 检查
         mission.checkMission();
 

@@ -92,11 +92,13 @@ public class RobotCellet extends AbstractCellet {
         else if (RobotAction.Fulfill.name.equals(action)) {
             // 来自 Client 的操作
             final String name = dialect.getParamAsString("name");
+            final JSONObject parameter = dialect.containsParam("parameter")
+                    ? dialect.getParamAsJson("parameter") : new JSONObject();
 
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    boolean success = service.fulfill(name);
+                    boolean success = service.fulfill(name, parameter);
                     Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
                     responder.respond(success ? RobotStateCode.Ok.code : RobotStateCode.Failure.code,
                             new JSONObject());
