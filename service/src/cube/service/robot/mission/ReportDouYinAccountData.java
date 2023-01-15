@@ -85,7 +85,6 @@ public class ReportDouYinAccountData extends AbstractMission {
 
         this.packScriptFiles(new String[] {
                 this.mainFile,
-                "modules/DouYinAuthorList.js",
                 "modules/DouYinVideoInfo.js",
                 "modules/StopApp.js"
         }, outputFile);

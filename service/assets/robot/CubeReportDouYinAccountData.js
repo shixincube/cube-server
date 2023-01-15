@@ -1,7 +1,6 @@
 // 采集抖音指定账号数据
 
 const parameter = require('CubeReportDouYinAccountDataParameter');
-const authorList = require('DouYinAuthorList');
 const videoInfo = require('DouYinVideoInfo');
 
 const word = parameter.word;
@@ -117,12 +116,14 @@ if (null != el) {
     click(x, y);
 
     var data = {
-        "name": word,
+        "word": word,
+        "name": "",
         "verification": "",
         "likeCount": "",
         "followCount": "",
         "fansCount": "",
         "intro": "",
+        "ipLocation": "",
         "numWorks": 0,  // 作品数
         "works": []
     };
@@ -132,12 +133,45 @@ if (null != el) {
     el = $.descContains(word).findOne(5000);
     if (null != el) {
         // 按照层级关系定位
-        $.className('android.view.ViewGroup');
+        el = $.className('android.view.ViewGroup').findOnce();  // 11
+        //console.log('' + el.childCount());//11
+
+        var nameLayout = el.child(3);
+        data.name = nameLayout.child(0).text();
+        if (nameLayout.childCount() > 1) {
+            data.verification = nameLayout.child(1).child(1).text();
+        }
+
+        // 描述信息
+        var descLayout = el.child(6);   // LinearLayout
+        var descContentLayout = descLayout.child(0);    // RelativeLayout
+        // 获赞
+        var likeCountLayout = descContentLayout.child(0);   // RelativeLayout
+        data.likeCount = likeCountLayout.child(0).text();   // TextView
+        // 关注
+        var followCountLayout = descContentLayout.child(1); // RelativeLayout
+        data.followCount = followCountLayout.child(0).text();   // TextView
+        // 粉丝
+        var fansCountLayout = descContentLayout.child(2);   // RelativeLayout
+        data.fansCount = fansCountLayout.child(0).text();   // TextView
+
+        // 简介
+        var introLayout = el.child(7);    // LinearLayout - 4
+        data.intro = introLayout.child(2).child(0).text();
+        if (introLayout.childCount() > 4) {
+            // 获取 IP 属地
+            data.ipLocation = introLayout.child(4).child(0).child(0).text();
+        }
+
+
     }
+
+    report.submit('CubeReportDouYinAccountData', 'Result', word, data);
 }
 
 require('StopApp')('抖音');
 
 sleep(1000);
 
-launchApp('Roboengine');
+back();
+//launchApp('Roboengine');
