@@ -910,11 +910,15 @@ public class Performer implements TalkListener, Tickable {
     }
 
     public void addTickable(Tickable tickable) {
-        if (!this.tickableList.contains(tickable)) {
+        if (this.tickableList.contains(tickable)) {
             return;
         }
 
         this.tickableList.add(tickable);
+    }
+
+    public void removeTickable(Tickable tickable) {
+        this.tickableList.remove(tickable);
     }
 
     /**

@@ -164,7 +164,7 @@ if (null != el) {
         }
 
         // 浏览作品
-        
+
     }
 
     report.submit('CubeReportDouYinAccountData', 'Result', word, data);

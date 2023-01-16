@@ -105,6 +105,9 @@ public final class MediaFileManager implements Tickable {
         if (!enabled) {
             Logger.w(this.getClass(), "HLS tools is NOT enabled");
         }
+        else {
+            Logger.i(this.getClass(), "HLS tools is enabled");
+        }
     }
 
     public void setPerformer(Performer performer) {

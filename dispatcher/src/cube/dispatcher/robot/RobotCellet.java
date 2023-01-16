@@ -29,6 +29,7 @@ package cube.dispatcher.robot;
 import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.util.Tickable;
 import cube.util.HttpServer;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -40,7 +41,7 @@ import org.json.JSONObject;
 /**
  * Robot Cellet 服务单元。
  */
-public class RobotCellet extends AbstractCellet {
+public class RobotCellet extends AbstractCellet implements Tickable {
 
     public final static String NAME = "Robot";
 
@@ -49,6 +50,10 @@ public class RobotCellet extends AbstractCellet {
      */
     private Performer performer;
 
+    private boolean registered = false;
+
+    private int tickCount = 0;
+
     public RobotCellet() {
         super(NAME);
     }
@@ -56,6 +61,7 @@ public class RobotCellet extends AbstractCellet {
     @Override
     public boolean install() {
         this.performer = (Performer) this.getNucleus().getParameter("performer");
+        this.performer.addTickable(this);
 
         setupHandler();
 
@@ -66,6 +72,8 @@ public class RobotCellet extends AbstractCellet {
 
     @Override
     public void uninstall() {
+        this.performer.removeTickable(this);
+
         deregisterCallback();
     }
 
@@ -90,9 +98,11 @@ public class RobotCellet extends AbstractCellet {
             StringContentProvider provider = new StringContentProvider(data.toString());
             ContentResponse response = client.POST(Performer.ROBOT_API_URL).content(provider).send();
             if (response.getStatus() != HttpStatus.OK_200) {
+                registered = false;
                 Logger.w(this.getClass(), "#registerCallback - register callback URL failed: " + response.getStatus());
             }
             else {
+                registered = true;
                 Logger.i(this.getClass(), "#registerCallback - register callback: " + Performer.ROBOT_CALLBACK_URL);
             }
         } catch (Exception e) {
@@ -125,6 +135,8 @@ public class RobotCellet extends AbstractCellet {
             else {
                 Logger.i(this.getClass(), "#deregisterCallback - deregister callback: " + Performer.ROBOT_CALLBACK_URL);
             }
+
+            registered = false;
         } catch (Exception e) {
             Logger.e(this.getClass(), "#deregisterCallback", e);
         } finally {
@@ -133,6 +145,21 @@ public class RobotCellet extends AbstractCellet {
                     client.stop();
                 } catch (Exception e) {
                 }
+            }
+        }
+    }
+
+    @Override
+    public void onTick(long now) {
+        ++this.tickCount;
+        if (this.tickCount >= Integer.MAX_VALUE) {
+            this.tickCount = 1;
+        }
+
+        if (this.tickCount % 3 == 0) {
+            // 每30秒执行一次
+            if (!this.registered) {
+                this.registerCallback();
             }
         }
     }
