@@ -4,6 +4,7 @@ const parameter = require('CubeReportDouYinAccountDataParameter');
 const videoInfo = require('DouYinVideoInfo');
 
 const word = parameter.word;
+const maxNumVideo = (undefined === parameter.maxNumVideo) ? 10 : parameter.maxNumVideo;
 
 if (undefined === word) {
     console.log('参数错误，没有设置 word 参数');
@@ -130,6 +131,7 @@ if (null != el) {
 
     // 等待详情界面
     sleep(2000);
+    // 是否显示
     el = $.descContains(word).findOne(5000);
     if (null != el) {
         // 按照层级关系定位
@@ -163,8 +165,55 @@ if (null != el) {
             data.ipLocation = introLayout.child(4).child(0).child(0).text();
         }
 
-        // 浏览作品
+        // 作品数
+        var numWorksLayout = el.child(9);   // HorizontalScrollView
+        var text = numWorksLayout.child(0).child(0).child(0).child(0).child(0).text();
+        data.numWorks = parseInt(text.split(' ')[1]);
 
+        // 计算滑动位置
+        var cx = Math.floor(device.width * 0.5);
+        var cy = Math.floor(device.height * 0.5);
+        var y1 = cy + 400;
+        var y2 = cy - 400;
+        // 界面向上滑动以便完整显示第一个视频的视图
+        swipe(cx + random(-5, 5), y1, cx + random(-5, 5), y2, random(700, 800));
+
+        // 浏览作品
+        var firstVideo = $.id('container').findOnce();
+        if (null != firstVideo) {
+            location = firstVideo.bounds();
+            var x = location.centerX();
+            var y = location.centerY();
+            if (x > 0 && y > 0) {
+                // 打开视频
+                click(x, y);
+
+                sleep(1000);
+
+                // 浏览视频数量
+                var watchVideoCount = Math.min(maxNumVideo, data.numWorks);
+                while (watchVideoCount > 0) {
+                    var videoView = $.id('viewpager').findOne(3000);
+                    if (null == videoView) {
+                        break;
+                    }
+
+                    var video = videoInfo.getInfo();
+                    var snapshot = report.submitScreenSnapshot('CubeReportDouYinAccountData', word);
+                    if (null != snapshot) {
+                        video.snapshot = snapshot;
+                    }
+                    data.works.push(video);
+
+                    sleep(1000);
+
+                    --watchVideoCount;
+
+                    swipe(cx + random(-5, 5), y1, cx + random(-5, 5), y2, random(650, 700));
+                    sleep(500);
+                }
+            }
+        }
     }
 
     report.submit('CubeReportDouYinAccountData', 'Result', word, data);
