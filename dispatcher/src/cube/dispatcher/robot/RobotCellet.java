@@ -38,6 +38,10 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 /**
  * Robot Cellet 服务单元。
  */
@@ -162,5 +166,49 @@ public class RobotCellet extends AbstractCellet implements Tickable {
                 this.registerCallback();
             }
         }
+
+        if (this.tickCount % 6 == 0) {
+            // 检查 Roboengine 服务是否可用
+            checkRoboengine();
+        }
+    }
+
+    private boolean checkRoboengine() {
+        HttpClient client = new HttpClient();
+
+        try {
+            client.start();
+
+            JSONObject data = new JSONObject();
+
+            StringContentProvider provider = new StringContentProvider(data.toString());
+            ContentResponse response = client.POST(Performer.ROBOT_API_URL).content(provider).send();
+            Logger.d(this.getClass(), "#checkRoboengine - " + response.getStatus());
+        } catch (ExecutionException e) {
+            this.registered = false;
+            Logger.w(this.getClass(), "#checkRoboengine - Roboengine unavailable", e);
+            return false;
+        } catch (TimeoutException e) {
+            this.registered = false;
+            Logger.w(this.getClass(), "#checkRoboengine - Roboengine unavailable", e);
+            return false;
+        } catch (InterruptedException e) {
+            this.registered = false;
+            Logger.w(this.getClass(), "#checkRoboengine - Roboengine unavailable", e);
+            return false;
+        } catch (Exception e) {
+            this.registered = false;
+            Logger.w(this.getClass(), "#checkRoboengine - Roboengine unavailable", e);
+            return false;
+        } finally {
+            if (client.isStarted()) {
+                try {
+                    client.stop();
+                } catch (Exception e) {
+                }
+            }
+        }
+
+        return true;
     }
 }
