@@ -210,7 +210,7 @@ if (null != el) {
                     --watchVideoCount;
 
                     swipe(cx + random(-5, 5), y1, cx + random(-5, 5), y2, random(650, 700));
-                    sleep(500);
+                    sleep(1000);
                 }
             }
         }

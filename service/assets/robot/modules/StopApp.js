@@ -27,7 +27,13 @@ module.exports = function(appName) {
                     //el = $.text('强行停止').findOne(1000);  // 华为是"强行停止"按钮
                     var c = $.className('Button').find();
                     if (c.nonEmpty()) {
-
+                        for (var i = 0; i < c.size(); ++i) {
+                            var child = c.get(i);
+                            if (child.text() == '强行停止') {
+                                el = child;
+                                break;
+                            }
+                        }
                     }
                 }
 
