@@ -31,18 +31,24 @@ import cube.robot.Schedule;
 import cube.robot.Task;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.client.util.InputStreamResponseListener;
 import org.eclipse.jetty.client.util.StringContentProvider;
+import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class RoboengineImpl implements Roboengine {
@@ -300,6 +306,59 @@ public class RoboengineImpl implements Roboengine {
             return false;
         } catch (IOException e) {
             return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean downloadReportFile(String filename, OutputStream outputStream) {
+        String fileName = filename;
+        try {
+            fileName = URLEncoder.encode(filename, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        String url = "http://" + this.host + ":" + this.port + "/report/download/" + this.token + "?filename=" + fileName;
+        InputStreamResponseListener listener = new InputStreamResponseListener();
+
+        this.client.newRequest(url)
+                .method(HttpMethod.GET)
+                .timeout(10, TimeUnit.SECONDS)
+                .send(listener);
+
+        Response clientResponse = null;
+        try {
+            clientResponse = listener.get(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            return false;
+        } catch (ExecutionException e) {
+            return false;
+        } catch (TimeoutException e) {
+            return false;
+        }
+
+        if (null != clientResponse && clientResponse.getStatus() == HttpStatus.OK_200) {
+            InputStream content = listener.getInputStream();
+
+            byte[] bytes = new byte[1024];
+            int length = 0;
+            try {
+                while ((length = content.read(bytes)) > 0) {
+                    outputStream.write(bytes, 0, length);
+                }
+
+                outputStream.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return true;

@@ -61,7 +61,7 @@ public class RobotCellet extends AbstractCellet {
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.installModule(RobotService.NAME, this.service);
 
-        this.executor = Executors.newSingleThreadExecutor();
+        this.executor = Executors.newCachedThreadPool();
 
         return true;
     }
@@ -102,6 +102,17 @@ public class RobotCellet extends AbstractCellet {
                     Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
                     responder.respond(success ? RobotStateCode.Ok.code : RobotStateCode.Failure.code,
                             new JSONObject());
+                }
+            });
+        }
+        else if (RobotAction.GetReportFile.name.equals(action)) {
+            // 来自 Client 的操作
+            final String filename = dialect.getParamAsString("filename");
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    service.downloadReportFile(filename, talkContext);
                 }
             });
         }

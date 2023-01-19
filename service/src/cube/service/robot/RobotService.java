@@ -26,6 +26,8 @@
 
 package cube.service.robot;
 
+import cell.core.talk.Primitive;
+import cell.core.talk.PrimitiveOutputStream;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
@@ -45,7 +47,11 @@ import cube.service.robot.mission.ReportDouYinAccountData;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -200,6 +206,14 @@ public class RobotService extends AbstractModule {
         return null;
     }
 
+    /**
+     * 以立即执行方式执行任务。
+     * 指定任务将随机选择机器人进行任务执行。
+     *
+     * @param missionName
+     * @param parameter
+     * @return
+     */
     public boolean fulfill(String missionName, JSONObject parameter) {
         AbstractMission mission = this.createMission(missionName);
         if (null == mission) {
@@ -210,7 +224,7 @@ public class RobotService extends AbstractModule {
     }
 
     /**
-     * 已立即执行方式执行任务。
+     * 以立即执行方式执行任务。
      * 指定任务将随机选择机器人进行任务执行。
      *
      * @param mission
@@ -267,6 +281,26 @@ public class RobotService extends AbstractModule {
 
         // 推送
         return this.roboengine.pushSchedule(schedule);
+    }
+
+    /**
+     * 下载报告文件。
+     *
+     * @param filename
+     * @param context
+     * @return
+     */
+    public boolean downloadReportFile(String filename, TalkContext context) {
+        PrimitiveOutputStream pos = this.cellet.speakStream(context, filename);
+        boolean result = this.roboengine.downloadReportFile(filename, pos);
+        if (!result) {
+            try {
+                pos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return result;
     }
 
     private void checkMissions() {

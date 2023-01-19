@@ -49,7 +49,12 @@ public enum RobotAction {
     /**
      * 执行任务。
      */
-    Fulfill("fulfill")
+    Fulfill("fulfill"),
+
+    /**
+     * 获取报告文件。
+     */
+    GetReportFile("getReportFile")
 
     ;
 

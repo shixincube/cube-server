@@ -30,6 +30,7 @@ import cube.robot.Account;
 import cube.robot.Schedule;
 import cube.robot.Task;
 
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -102,8 +103,18 @@ public interface Roboengine {
     /**
      * 上传脚本。
      *
-     * @param file
+     * @param filename 文件名。
+     * @param file 文件。
      * @return
      */
     boolean uploadScript(String filename, Path file);
+
+    /**
+     * 下载报告文件。
+     *
+     * @param filename
+     * @param outputStream
+     * @return
+     */
+    boolean downloadReportFile(String filename, OutputStream outputStream);
 }
