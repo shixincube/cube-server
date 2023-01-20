@@ -69,20 +69,9 @@ module.exports = {
             result.relevantContent = el.text();
         }
 
+        // 视频链接地址
+        
+
         return result;
-    },
-
-    submitInfo: function() {
-        var info = this.getInfo();
-        if (info.author.length === 0) {
-            return;
-        }
-
-        var reportContent = info;
-        reportContent["app"] = 'com.ss.android.ugc.aweme';
-        reportContent["appName"] = '抖音';
-
-        // 提交数据
-        report.submit('com.ss.android.ugc.aweme', 'DailyAuto', 'VideoInfo', reportContent);
     }
 }
