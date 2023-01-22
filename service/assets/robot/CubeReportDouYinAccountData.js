@@ -188,7 +188,7 @@ if (null != el) {
                 // 打开视频
                 click(x, y);
 
-                sleep(1000);
+                sleep(2000);
 
                 // 浏览视频数量
                 var watchVideoCount = Math.min(maxNumVideo, data.numWorks);
@@ -209,8 +209,8 @@ if (null != el) {
 
                     --watchVideoCount;
 
-                    swipe(cx + random(-5, 5), y1, cx + random(-5, 5), y2, random(650, 700));
-                    sleep(1000);
+                    swipe(cx + random(-5, 5), y1, cx + random(-5, 5), y2, random(500, 600));
+                    sleep(2000);
                 }
             }
         }

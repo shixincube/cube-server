@@ -16,7 +16,8 @@ module.exports = {
             "comment": "",
             "collect": "",
             "share": "",
-            "relevantContent": ""
+            "relevantContent": "",
+            "link": ""
         };
 
         var el = $.id('title').findOnce();
@@ -56,12 +57,16 @@ module.exports = {
             result.collect = tmp.substring(2);
         }
 
+        var location = null;
+
         regex = "分享\\S*，按钮";
         el = $.descMatches(regex).findOne(1000);
         if (null != el) {
             var desc = el.desc();
             var tmp = desc.split('，')[0];
             result.share = tmp.substring(2);
+
+            location = el.child(0).bounds();
         }
 
         el = $.id('content').findOnce();
@@ -70,7 +75,38 @@ module.exports = {
         }
 
         // 视频链接地址
-        
+        if (null != location) {
+            var x = location.centerX();
+            var y = location.centerY();
+            if (x > 0 && y > 0) {
+                // 点击"分享"按钮，弹出菜单
+                click(x, y);
+
+                sleep(1000);
+
+                $.text('分享到').findOne(2000);
+
+                el = $.text('复制链接').findOnce();
+                location = el.bounds();
+                x = location.centerX();
+                y = location.centerY() - 20;
+                // 点击复制链接图标
+                if (x > 0 && y > 0) {
+                    click(x, y);
+                    // 等待链接复制
+                    sleep(2000);
+                    // 获取剪贴板内容
+                    result.link = getClip();
+                    if (result.link.length == 0) {
+                        sleep(1000);
+                        result.link = getClip();
+                    }
+                }
+                else {
+                    log('点击"复制链接"时未获取到按钮的正确 bounds');
+                }
+            }
+        }
 
         return result;
     }
