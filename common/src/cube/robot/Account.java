@@ -34,8 +34,14 @@ import org.json.JSONObject;
  */
 public class Account implements JSONable {
 
+    /**
+     * 账号状态，一般状态。
+     */
     public final static int STATE_NORMAL = 0;
 
+    /**
+     * 账号状态，被禁用状态。
+     */
     public final static int STATE_FORBIDDEN = 3;
 
     /**
@@ -43,30 +49,69 @@ public class Account implements JSONable {
      */
     public long id;
 
+    /**
+     * 账号名。
+     */
     public String name;
 
+    /**
+     * 账号密码。
+     */
     public String password;
 
+    /**
+     * 是否是管理员账号。
+     */
     public boolean isAdmin;
 
+    /**
+     * 账号头像。
+     */
     public String avatar;
 
+    /**
+     * 账号全名。
+     */
     public String fullName;
 
+    /**
+     * 账号创建时间戳。
+     */
     public long creationTime;
 
+    /**
+     * 账号状态。
+     */
     public int state;
 
+    /**
+     * 账号的令牌。
+     */
     public String token;
 
+    /**
+     * 账号最近一次登录时的 IP 地址。
+     */
     public String lastAddress;
 
+    /**
+     * 账号最近一次的登录时间。
+     */
     public long lastLoginTime;
 
+    /**
+     * 账号最近一次的登录设备信息。
+     */
     public JSONObject lastDevice;
 
+    /**
+     * 账号是否在线。
+     */
     public boolean online = false;
 
+    /**
+     * 当前是否有实时任务正在运行。
+     */
     public boolean taskRunning = false;
 
     public Account(long id, String name, String password, boolean isAdmin, String avatar,

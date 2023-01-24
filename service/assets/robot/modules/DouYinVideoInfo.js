@@ -8,6 +8,9 @@ module.exports = {
     // 分享 - android.widget.LinearLayout | desc 分享1.0万，按钮
     // 相关搜索 - id : content
 
+    // 分享按钮位置
+    shareButtonLocation: null,
+
     getInfo: function() {
         var result = {
             "author": "",
@@ -66,7 +69,13 @@ module.exports = {
             var tmp = desc.split('，')[0];
             result.share = tmp.substring(2);
 
-            location = el.child(0).bounds();
+            if (null == this.shareButtonLocation) {
+                location = el.bounds();
+                this.shareButtonLocation = location;
+            }
+            else {
+                location = this.shareButtonLocation;
+            }
         }
 
         el = $.id('content').findOnce();
@@ -79,14 +88,25 @@ module.exports = {
             var x = location.centerX();
             var y = location.centerY();
             if (x > 0 && y > 0) {
+                sleep(1000);
+
                 // 点击"分享"按钮，弹出菜单
                 click(x, y);
 
                 sleep(1000);
 
-                $.text('分享到').findOne(2000);
+                el = $.text('分享到').findOne(2000);
+                if (null == el) {
+                    log('点击"分享"按钮后，未检测到菜单');
+                    return result;
+                }
 
                 el = $.text('复制链接').findOnce();
+                if (null == el) {
+                    log('未检测到"复制链接"');
+                    return result;
+                }
+
                 location = el.bounds();
                 x = location.centerX();
                 y = location.centerY() - 20;

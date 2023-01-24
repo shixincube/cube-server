@@ -176,7 +176,8 @@ if (null != el) {
         var y1 = cy + 400;
         var y2 = cy - 400;
         // 界面向上滑动以便完整显示第一个视频的视图
-        swipe(cx + random(-5, 5), y1, cx + random(-5, 5), y2, random(700, 800));
+        swipe(cx, cy, cx, y2, random(600, 800));
+        sleep(1000);
 
         // 浏览作品
         var firstVideo = $.id('container').findOnce();
@@ -205,12 +206,10 @@ if (null != el) {
                     }
                     data.works.push(video);
 
-                    sleep(1000);
-
                     --watchVideoCount;
 
-                    swipe(cx + random(-5, 5), y1, cx + random(-5, 5), y2, random(500, 600));
-                    sleep(2000);
+                    swipe(cx + random(-5, 5), y1, cx + random(-5, 5), y2, random(600, 700));
+                    sleep(5000);
                 }
             }
         }
