@@ -38,6 +38,9 @@ public class Account implements JSONable {
 
     public final static int STATE_FORBIDDEN = 3;
 
+    /**
+     * 账号 ID 。
+     */
     public long id;
 
     public String name;
