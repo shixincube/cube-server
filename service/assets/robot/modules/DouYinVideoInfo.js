@@ -8,9 +8,6 @@ module.exports = {
     // 分享 - android.widget.LinearLayout | desc 分享1.0万，按钮
     // 相关搜索 - id : content
 
-    // 分享按钮位置
-    shareButtonLocation: null,
-
     getInfo: function() {
         var result = {
             "author": "",
@@ -69,13 +66,7 @@ module.exports = {
             var tmp = desc.split('，')[0];
             result.share = tmp.substring(2);
 
-            if (null == this.shareButtonLocation) {
-                location = el.bounds();
-                this.shareButtonLocation = location;
-            }
-            else {
-                location = this.shareButtonLocation;
-            }
+            location = el.bounds();
         }
 
         el = $.id('content').findOnce();
@@ -87,6 +78,7 @@ module.exports = {
         if (null != location) {
             var x = location.centerX();
             var y = location.centerY();
+            console.log("XJW: x=" + x + " , y=" + y);
             if (x > 0 && y > 0) {
                 sleep(1000);
 

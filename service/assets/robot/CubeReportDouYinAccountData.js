@@ -194,6 +194,8 @@ if (null != el) {
                 // 浏览视频数量
                 var watchVideoCount = Math.min(maxNumVideo, data.numWorks);
                 while (watchVideoCount > 0) {
+                    sleep(2000);
+
                     var videoView = $.id('viewpager').findOne(3000);
                     if (null == videoView) {
                         break;
@@ -209,7 +211,7 @@ if (null != el) {
                     --watchVideoCount;
 
                     swipe(cx + random(-5, 5), y1, cx + random(-5, 5), y2, random(600, 700));
-                    sleep(5000);
+                    sleep(1000);
                 }
             }
         }
