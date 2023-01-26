@@ -43,6 +43,7 @@ import cube.robot.TaskNames;
 import cube.service.client.ClientManager;
 import cube.service.client.ServerClient;
 import cube.service.robot.mission.AbstractMission;
+import cube.service.robot.mission.MonitorWeiXin;
 import cube.service.robot.mission.ReportDouYinAccountData;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
@@ -202,6 +203,9 @@ public class RobotService extends AbstractModule {
         if (TaskNames.ReportDouYinAccountData.equals(name)) {
             return new ReportDouYinAccountData(this.roboengine);
         }
+        else if (TaskNames.MonitorWeiXin.equals(name)) {
+            return new MonitorWeiXin(this.roboengine);
+        }
 
         return null;
     }
@@ -309,7 +313,12 @@ public class RobotService extends AbstractModule {
             return;
         }
 
-        ReportDouYinAccountData mission = new ReportDouYinAccountData(this.roboengine);
+        AbstractMission mission = new ReportDouYinAccountData(this.roboengine);
         mission.checkMission();
+
+        mission = new MonitorWeiXin(this.roboengine);
+        mission.checkMission();
+
+        Logger.i(this.getClass(), "All missions have been checked");
     }
 }

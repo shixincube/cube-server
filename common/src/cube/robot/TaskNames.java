@@ -32,4 +32,6 @@ package cube.robot;
 public final class TaskNames {
 
     public final static String ReportDouYinAccountData = "Cube_抖音账号数据";
+
+    public final static String MonitorWeiXin = "Cube_微信数据监测";
 }

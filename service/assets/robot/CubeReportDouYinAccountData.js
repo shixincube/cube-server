@@ -189,12 +189,12 @@ if (null != el) {
                 // 打开视频
                 click(x, y);
 
-                sleep(2000);
+                sleep(1000);
 
                 // 浏览视频数量
                 var watchVideoCount = Math.min(maxNumVideo, data.numWorks);
                 while (watchVideoCount > 0) {
-                    sleep(2000);
+                    sleep(4000);
 
                     var videoView = $.id('viewpager').findOne(3000);
                     if (null == videoView) {
@@ -209,6 +209,9 @@ if (null != el) {
                     data.works.push(video);
 
                     --watchVideoCount;
+                    if (watchVideoCount <= 0) {
+                        break;
+                    }
 
                     swipe(cx + random(-5, 5), y1, cx + random(-5, 5), y2, random(600, 700));
                     sleep(1000);
