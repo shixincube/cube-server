@@ -287,6 +287,10 @@ public class RobotService extends AbstractModule {
         return this.roboengine.pushSchedule(schedule);
     }
 
+    public boolean fulfill(long accountId, AbstractMission mission, JSONObject parameter) {
+        return false;
+    }
+
     /**
      * 下载报告文件。
      *

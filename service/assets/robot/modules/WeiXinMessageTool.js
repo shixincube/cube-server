@@ -7,7 +7,16 @@ module.exports = {
             wid: ''
         };
 
-
+        var coll = $.className('android.widget.ListView').find();
+        if (coll.nonEmpty()) {
+            // 定位到顶部的 ListView
+            var el = coll.get(2);
+            // 定位到账号名
+            var con = el.child(0).child(1).child(0).child(1); // LinearLayout
+            account.name = con.child(0).child(0).text();
+            account.wid = con.child(1).child(0).text();
+            account.wid = account.wid.substring(4);
+        }
 
         return account;
     },

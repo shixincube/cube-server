@@ -16,26 +16,37 @@ const dataReport = {
     conversations: []
 };
 
-const tabChat = $.text('微信').findOne(5000);
-const tabContacts = $.text('通讯录').findOne(2000);
-const tabDiscover = $.text('发现').findOne(2000);
-const tabProfile = $.text('我').findOnce();
+var tabChat = $.text('微信').findOne(5000);
+var tabContacts = $.text('通讯录').findOne(2000);
+var tabDiscover = $.text('发现').findOne(2000);
+var tabProfile = $.text('我').findOnce();
 
 const ignoreConversations = ignoreList.getIgnoreConversations();
 
 if (null != tabChat && null != tabContacts && null != tabDiscover && null != tabProfile) {
+    // 修正标签按钮元素
+    // 定位到底部的标签 View
+    var coll = $.className('android.view.ViewGroup').find();
+    var con = coll.get(1);
+    con = con.child(0).child(0).child(0).child(1);  // RelativeLayout
+    con = con.child(0); // LinearLayout
+    tabChat = con.child(0);
+    tabContacts = con.child(1);
+    tabDiscover = con.child(2);
+    tabProfile = con.child(3);
+
     // 已启动
     var location = null;
 
     // 读取账号数据
     location = tabProfile.bounds();
-    click(location.centerX(), location.top);
+    click(location.centerX(), location.centerY());
     sleep(1000);
     dataReport.account = messageTool.getAccount();
 
     // 读取消息列表
     location = tabChat.bounds();
-    click(location.centerX(), location.top);
+    click(location.centerX(), location.centerY());
     sleep(1000);
     const listView = $.className('android.widget.ListView').findOnce();
     for (var i = 0; i < listView.childCount(); ++i) {
@@ -51,10 +62,8 @@ if (null != tabChat && null != tabContacts && null != tabDiscover && null != tab
                     var avatarNode = node.child(0);
                     if (avatarNode.childCount() != 2) {
                         // 没有提示气泡
-                        /*
-                        D/GlobalConsole: 21:13:53.108 [D] XJW ：android.widget.RelativeLayout
-                        D/GlobalConsole: 21:13:53.139 [D] XJW ：android.widget.RelativeLayout
-                        */
+                        // XJW ：android.widget.RelativeLayout
+                        // XJW ：android.widget.RelativeLayout
                         //log('XJW ：' + avatarNode.className());
                         //continue;
                     }
@@ -64,7 +73,6 @@ if (null != tabChat && null != tabContacts && null != tabDiscover && null != tab
                     var x = location.centerX();
                     var y = location.centerY();
                     node = node.child(0).child(0).child(0);
-                    // log('TEST: ' + node.text());
                     var name = node.text();
                     if (ignoreConversations.indexOf(name) >= 0) {
                         // 跳过忽略的会话
