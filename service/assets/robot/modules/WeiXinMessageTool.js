@@ -58,12 +58,24 @@ module.exports = {
 
             if (!findDateDesc) {
                 // 滑动
-                log('XJW: ' + cx + ' - ' + y2 + ' ->' + y1);
+                log('XJW: ' + cx + ' - ' + y2 + ' -> ' + y1);
                 swipe(cx, y2, cx, y1, 500);
                 ++swipeCount;
                 sleep(1000);
 
                 listView = $.className('androidx.recyclerview.widget.RecyclerView').findOnce();
+            }
+            else {
+                break;
+            }
+        }
+
+        while (swipeCount > 0) {
+            for (var i = 0; i < listView.childCount(); ++i) {
+                node = listView.child(i);
+                if (node.className() == 'android.widget.RelativeLayout') {
+                    
+                }
             }
         }
 
