@@ -21,7 +21,14 @@ module.exports = {
         return account;
     },
 
-    getMessageList: function() {
+    /**
+     * 获取消息列表。
+     * @param accountName 当前微信账号。
+     * @param conversationName 消息会话名称。
+     * @param handleFile 是否上传文件。
+     * @returns {null|[]}
+     */
+    getMessageList: function(accountName, conversationName, handleFile) {
         var listView = $.className('androidx.recyclerview.widget.RecyclerView').findOne(3000);
         if (null == listView) {
             return null;
@@ -89,7 +96,8 @@ module.exports = {
                         // 发送人
                         message.sender = contentView.child(0).text();
                         // 消息内容
-                        this.extractContent(message, contentView.child(1), false); // RelativeLayout or LinearLayout
+                        this.extractContent(message, contentView.child(1), handleFile,
+                            conversationName, message.sender); // RelativeLayout or LinearLayout
                     }
                     else if (node.childCount() == 2) {
                         // 带时间戳的消息内容
@@ -112,7 +120,8 @@ module.exports = {
                             message.sender = msgLayout.child(0).text();
 
                             // 尝试获取消息内容
-                            this.extractContent(message, msgLayout.child(1), false);
+                            this.extractContent(message, msgLayout.child(1), handleFile,
+                                conversationName, message.sender);
                         }
                     }
 
@@ -132,7 +141,7 @@ module.exports = {
         return list;
     },
 
-    extractContent: function(message, parentLayout, handleFile) {
+    extractContent: function(message, parentLayout, handleFile, conversationName, senderName) {
         if (parentLayout.className() == 'android.widget.RelativeLayout') {
             var node = parentLayout.child(0);
             if (node.className() == 'android.widget.TextView') {
@@ -149,7 +158,7 @@ module.exports = {
                 }
 
                 if (handleFile) {
-                    this.processFile(node);
+                    this.processFile(conversationName, senderName, node);
                 }
             }
         }
@@ -161,7 +170,7 @@ module.exports = {
         }
     },
 
-    processFile: function(node) {
+    processFile: function(conversationName, senderName, node) {
         // 点击打开文件
         var location = node.bounds();
         click(location.centerX(), location.centerY());
@@ -193,10 +202,11 @@ module.exports = {
         if (files.exists(path)) {
             var array = files.listDir(path);
             array.forEach(function(item) {
-                
+                if (files.isFile(path + item)) {
+                    var filename = report.submitFile('CubeWeiXinMonitor', conversationName, senderName, path + item);
+                    log('XJW: ' + conversationName + ' - ' + senderName + ' - ' + filename);
+                }
             });
         }
-
-        //report.submit('CubeWeiXinMonitor', 'Result');
     }
 }

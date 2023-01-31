@@ -89,7 +89,7 @@ if (null != tabChat && null != tabContacts && null != tabDiscover && null != tab
 
                     $.desc('返回').findOne(3000);
 
-                    var messageList = messageTool.getMessageList();
+                    var messageList = messageTool.getMessageList(dataReport.account.name, name, true);
                     if (null != messageList) {
                         data.messages = messageList;
                     }
