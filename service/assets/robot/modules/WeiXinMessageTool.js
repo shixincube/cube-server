@@ -134,7 +134,7 @@ module.exports = {
             --swipeCount;
 
             if (swipeCount > 0) {
-                listView = $.className('androidx.recyclerview.widget.RecyclerView').findOnce();
+                listView = $.className('androidx.recyclerview.widget.RecyclerView').findOne(2000);
             }
         }
 
@@ -158,7 +158,10 @@ module.exports = {
                 }
 
                 if (handleFile) {
-                    this.processFile(conversationName, senderName, node);
+                    var filename = this.processFile(conversationName, senderName, node);
+                    if (null != filename) {
+                        message.filename = filename;
+                    }
                 }
             }
         }
@@ -170,15 +173,22 @@ module.exports = {
         }
     },
 
+    /**
+     *
+     * @param conversationName
+     * @param senderName
+     * @param node
+     * @returns {string} 返回上传的文件名。
+     */
     processFile: function(conversationName, senderName, node) {
         // 点击打开文件
         var location = node.bounds();
         click(location.centerX(), location.centerY());
         sleep(3000);    // 等待文件加载
 
-        var el = $.desc('更多').findOne(2000);
+        var el = $.desc('更多').findOne(3000);
         if (null == el) {
-            return;
+            return null;
         }
 
         // 弹出更多操作菜单
@@ -188,8 +198,10 @@ module.exports = {
 
         el = $.text('保存').findOne(1000);
         if (null == el) {
-            return;
+            return null;
         }
+
+        var filename = null;
 
         // 点击保存
         location = el.bounds();
@@ -200,13 +212,30 @@ module.exports = {
 
         var path = files.getSdcardPath() + '/Download/WeiXin/';
         if (files.exists(path)) {
+            // 找到最新的一个文件，也就是时间戳值最大的文件
+            var curFilePath = null;
+            var curLast = 0;
             var array = files.listDir(path);
             array.forEach(function(item) {
                 if (files.isFile(path + item)) {
-                    var filename = report.submitFile('CubeWeiXinMonitor', conversationName, senderName, path + item);
-                    log('XJW: ' + conversationName + ' - ' + senderName + ' - ' + filename);
+                    var last = files.lastModified(path + item);
+                    if (last > curLast) {
+                        curLast = last;
+                        curFilePath = path + item;
+                    }
                 }
             });
+
+            if (null != curFilePath) {
+                // 提交文件
+                filename = report.submitFile('CubeWeiXinMonitor', conversationName, senderName, curFilePath);
+            }
         }
+
+        // 回到消息列表界面
+        back();
+        sleep(2000);
+
+        return filename;
     }
 }
