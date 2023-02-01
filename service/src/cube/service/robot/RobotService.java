@@ -26,7 +26,7 @@
 
 package cube.service.robot;
 
-import cell.core.talk.Primitive;
+import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.PrimitiveOutputStream;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
@@ -49,10 +49,9 @@ import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -118,6 +117,13 @@ public class RobotService extends AbstractModule {
 
     }
 
+    /**
+     * 注册监听器。
+     *
+     * @param name
+     * @param talkContext
+     * @return
+     */
     public boolean registerListener(String name, TalkContext talkContext) {
         ServerClient client = ClientManager.getInstance().getClient(talkContext);
         if (null == client) {
@@ -146,6 +152,13 @@ public class RobotService extends AbstractModule {
         return true;
     }
 
+    /**
+     * 注销监听器。
+     *
+     * @param name
+     * @param talkContext
+     * @return
+     */
     public boolean deregisterListener(String name, TalkContext talkContext) {
         ServerClient client = ClientManager.getInstance().getClient(talkContext);
         if (null == client) {
@@ -199,7 +212,7 @@ public class RobotService extends AbstractModule {
         }
     }
 
-    public AbstractMission createMission(String name) {
+    private AbstractMission createMission(String name) {
         if (TaskNames.ReportDouYinAccountData.equals(name)) {
             return new ReportDouYinAccountData(this.roboengine);
         }
@@ -232,6 +245,7 @@ public class RobotService extends AbstractModule {
      * 指定任务将随机选择机器人进行任务执行。
      *
      * @param mission
+     * @param parameter
      * @return
      */
     public boolean fulfill(AbstractMission mission, JSONObject parameter) {
@@ -309,6 +323,37 @@ public class RobotService extends AbstractModule {
             }
         }
         return result;
+    }
+
+    protected void processUploadFile(PrimitiveInputStream stream) {
+        String filePath = stream.getName();
+        filePath = AbstractMission.sWorkingPath + filePath;
+
+        FileOutputStream fos = null;
+
+        try {
+            fos = new FileOutputStream(new File(filePath));
+
+            byte[] buf = new byte[1024];
+            int length = 0;
+            while ((length = stream.read(buf)) > 0) {
+                fos.write(buf, 0, length);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                fos.close();
+            } catch (IOException e) {
+            }
+
+            try {
+                stream.close();
+            } catch (IOException e) {
+            }
+        }
     }
 
     private void checkMissions() {

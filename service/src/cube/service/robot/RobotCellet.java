@@ -27,6 +27,7 @@
 package cube.service.robot;
 
 import cell.core.talk.Primitive;
+import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
@@ -164,5 +165,11 @@ public class RobotCellet extends AbstractCellet {
                 }
             });
         }
+    }
+
+    @Override
+    public void onListened(TalkContext context, PrimitiveInputStream stream) {
+        // 处理上传文件
+        this.service.processUploadFile(stream);
     }
 }

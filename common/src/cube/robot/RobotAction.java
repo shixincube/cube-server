@@ -54,7 +54,12 @@ public enum RobotAction {
     /**
      * 获取报告文件。
      */
-    GetReportFile("getReportFile")
+    GetReportFile("getReportFile"),
+
+    /**
+     * 获取所有脚本文件路径。
+     */
+    ListScriptFiles("listScriptFiles")
 
     ;
 
