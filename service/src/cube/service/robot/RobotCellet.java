@@ -140,7 +140,7 @@ public class RobotCellet extends AbstractCellet {
                 }
             });
         }
-        else if (RobotAction.GetScriptFile.name.equals(action)) {
+        else if (RobotAction.DownloadScriptFile.name.equals(action)) {
             // 来自 Client 的操作
             this.executor.execute(new Runnable() {
                 @Override
@@ -154,6 +154,19 @@ public class RobotCellet extends AbstractCellet {
                     else {
                         responder.respond(RobotStateCode.Failure.code, new JSONObject());
                     }
+                }
+            });
+        }
+        else if (RobotAction.UploadScriptFile.name.equals(action)) {
+            // 来自 Client 的操作
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    String relativePath = dialect.getParamAsString("relativePath");
+                    // 备份原文件
+                    service.backupScriptFile(relativePath);
+                    Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
+                    responder.respond(RobotStateCode.Ok.code, new JSONObject());
                 }
             });
         }

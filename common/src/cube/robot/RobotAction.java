@@ -62,9 +62,14 @@ public enum RobotAction {
     ListScriptFiles("listScriptFiles"),
 
     /**
-     * 获取脚本文件。
+     * 下载脚本文件。
      */
-    GetScriptFile("GetScriptFile")
+    DownloadScriptFile("downloadScriptFile"),
+
+    /**
+     * 上传脚本文件。
+     */
+    UploadScriptFile("uploadScriptFile")
 
     ;
 

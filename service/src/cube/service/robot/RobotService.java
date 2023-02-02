@@ -43,11 +43,14 @@ import cube.service.robot.mission.AbstractMission;
 import cube.service.robot.mission.MonitorWeiXin;
 import cube.service.robot.mission.ReportDouYinAccountData;
 import cube.util.ConfigUtils;
+import cube.util.FileUtils;
 import org.json.JSONObject;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
@@ -313,6 +316,26 @@ public class RobotService extends AbstractModule {
         return new ScriptFile(file, relativePath);
     }
 
+    public ScriptFile backupScriptFile(String relativePath) {
+        File file = new File(AbstractMission.sWorkingPath.toFile(), relativePath);
+        if (!file.exists()) {
+            return null;
+        }
+
+        Path source = Paths.get(file.getAbsolutePath());
+
+        String pathString = FileUtils.extractPath(file.getAbsolutePath());
+        Path target = Paths.get(pathString + "/" + file.getName() + ".bak");
+
+        try {
+            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new ScriptFile(file, relativePath);
+    }
+
     /**
      * 以立即执行方式执行任务。
      * 指定任务将随机选择机器人进行任务执行。
@@ -416,13 +439,12 @@ public class RobotService extends AbstractModule {
     }
 
     protected void processUploadFile(PrimitiveInputStream stream) {
-        String filePath = stream.getName();
-        filePath = AbstractMission.sWorkingPath + filePath;
+        File file = new File(AbstractMission.sWorkingPath.toFile(), stream.getName());
 
         FileOutputStream fos = null;
 
         try {
-            fos = new FileOutputStream(new File(filePath));
+            fos = new FileOutputStream(file);
 
             byte[] buf = new byte[1024];
             int length = 0;
