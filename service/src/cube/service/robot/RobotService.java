@@ -36,10 +36,7 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
-import cube.robot.Account;
-import cube.robot.RobotAction;
-import cube.robot.Schedule;
-import cube.robot.TaskNames;
+import cube.robot.*;
 import cube.service.client.ClientManager;
 import cube.service.client.ServerClient;
 import cube.service.robot.mission.AbstractMission;
@@ -52,6 +49,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -221,6 +220,48 @@ public class RobotService extends AbstractModule {
         }
 
         return null;
+    }
+
+    public List<ScriptFile> listScriptFiles() {
+        List<ScriptFile> result = new ArrayList<>();
+
+        try {
+            List<Path> files = new ArrayList<>();
+
+            Files.list(AbstractMission.sWorkingPath).forEach(path -> {
+                if (Files.isDirectory(path)) {
+                    try {
+                        Files.list(path).forEach(subPath -> {
+                            if (!Files.isDirectory(subPath)) {
+                                if (subPath.toString().toLowerCase().endsWith(".js")) {
+                                    files.add(subPath);
+                                }
+                            }
+                        });
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else {
+                    if (path.toString().toLowerCase().endsWith(".js")) {
+                        files.add(path);
+                    }
+                }
+            });
+
+            int parentStringIndex = AbstractMission.sWorkingPath.toString().length() + 1;
+
+            for (Path file : files) {
+                String pathString = file.toString();
+                pathString = pathString.substring(parentStringIndex);
+                ScriptFile scriptFile = new ScriptFile(file.toFile(), pathString);
+                result.add(scriptFile);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return result;
     }
 
     /**

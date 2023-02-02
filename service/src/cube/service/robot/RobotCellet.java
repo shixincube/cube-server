@@ -36,8 +36,11 @@ import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.robot.RobotAction;
 import cube.robot.RobotStateCode;
+import cube.robot.ScriptFile;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -114,6 +117,26 @@ public class RobotCellet extends AbstractCellet {
                 @Override
                 public void run() {
                     service.downloadReportFile(filename, talkContext);
+                }
+            });
+        }
+        else if (RobotAction.ListScriptFiles.name.equals(action)) {
+            // 来自 Client 的操作
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    List<ScriptFile> list = service.listScriptFiles();
+                    JSONObject data = new JSONObject();
+                    data.put("total", list.size());
+
+                    JSONArray array = new JSONArray();
+                    for (ScriptFile file : list) {
+                        array.put(file.toJSON());
+                    }
+                    data.put("list", array);
+
+                    Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
+                    responder.respond(RobotStateCode.Ok.code, data);
                 }
             });
         }
