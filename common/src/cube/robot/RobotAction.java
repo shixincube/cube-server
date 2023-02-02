@@ -59,7 +59,12 @@ public enum RobotAction {
     /**
      * 获取所有脚本文件路径。
      */
-    ListScriptFiles("listScriptFiles")
+    ListScriptFiles("listScriptFiles"),
+
+    /**
+     * 获取脚本文件。
+     */
+    GetScriptFile("GetScriptFile")
 
     ;
 

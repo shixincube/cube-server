@@ -140,6 +140,23 @@ public class RobotCellet extends AbstractCellet {
                 }
             });
         }
+        else if (RobotAction.GetScriptFile.name.equals(action)) {
+            // 来自 Client 的操作
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    String relativePath = dialect.getParamAsString("relativePath");
+                    ScriptFile file = service.transmitScriptFile(talkContext, relativePath);
+                    Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
+                    if (null != file) {
+                        responder.respond(RobotStateCode.Ok.code, file.toJSON());
+                    }
+                    else {
+                        responder.respond(RobotStateCode.Failure.code, new JSONObject());
+                    }
+                }
+            });
+        }
         else if (RobotAction.RegisterListener.name.equals(action)) {
             // 来自 Client 的操作
             final String name = dialect.getParamAsString("name");

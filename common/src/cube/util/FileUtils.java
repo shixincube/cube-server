@@ -155,7 +155,7 @@ public final class FileUtils {
      * @param fileCode 文件码。
      * @param contactId 所属联系人 ID 。
      * @param file 文件。
-     * @return
+     * @return 返回 FileLabel 实例。
      */
     public static FileLabel makeFileLabel(String domainName, String fileCode, Long contactId, File file) {
         // 计算文件散列码
@@ -281,10 +281,10 @@ public final class FileUtils {
     }
 
     /**
-     * 提取文件扩展名。
+     * 提取文件扩展类型。
      *
-     * @param fileName
-     * @return
+     * @param fileName 文件名。
+     * @return 返回文件类型。
      */
     public static FileType extractFileExtensionType(String fileName) {
         int index = fileName.lastIndexOf(".");
@@ -300,7 +300,7 @@ public final class FileUtils {
      * 提取文件扩展名。
      *
      * @param fileName 文件名。
-     * @return
+     * @return 返回文件名的扩展名。
      */
     public static String extractFileExtension(String fileName) {
         int index = fileName.lastIndexOf(".");
@@ -312,10 +312,10 @@ public final class FileUtils {
     }
 
     /**
-     * 提取文件名。
+     * 提取不包含扩展名的文件名。
      *
-     * @param fileName
-     * @return
+     * @param fileName 文件名。
+     * @return 返回没有文件扩展名的文件名。
      */
     public static String extractFileName(String fileName) {
         int index = fileName.lastIndexOf(".");
@@ -327,10 +327,29 @@ public final class FileUtils {
     }
 
     /**
+     * 提取路径里的完整父路径。
+     *
+     * @param path 路径。
+     * @return 返回路径的父路径。
+     */
+    public static String extractPath(String path) {
+        int index = path.lastIndexOf("/");
+        if (index < 0) {
+            index = path.lastIndexOf("\\");
+        }
+
+        if (index < 0) {
+            return "";
+        }
+
+        return path.substring(0, index);
+    }
+
+    /**
      * 校验文件类型。
      *
      * @param fileName 指定文件名。
-     * @return
+     * @return 返回文件类型。
      */
     public static FileType verifyFileType(String fileName) {
         return FileUtils.verifyFileType(fileName, null);
