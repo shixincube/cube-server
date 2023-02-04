@@ -170,11 +170,19 @@ module.exports = {
             var node = parentLayout.child(1);
             if (node.desc() == '图片') {
                 message.content = '[图片]';
+
+                if (handleFile) {
+                    var filename = this.processImage(conversationName, senderName, node);
+                    if (null != filename) {
+                        message.filename = filename;
+                    }
+                }
             }
         }
     },
 
     /**
+     * 处理文件消息里的文件。
      *
      * @param conversationName
      * @param senderName
@@ -230,7 +238,38 @@ module.exports = {
             if (null != curFilePath) {
                 // 提交文件
                 filename = report.submitFile('CubeWeiXinMonitor', conversationName, senderName, curFilePath);
+
+                // 删除文件
+                files.remove(curFilePath);
             }
+        }
+
+        // 回到消息列表界面
+        back();
+        sleep(2000);
+
+        return filename;
+    },
+
+    /**
+     * 处理图片消息里的图片。
+     *
+     * @param conversationName
+     * @param senderName
+     * @param node
+     * @returns {string} 返回上传的文件名。
+     */
+    processImage: function(conversationName, senderName, node) {
+        // 点击打开文件
+        var location = node.bounds();
+        click(location.centerX(), location.centerY());
+        sleep(500);    // 等待文件加载
+
+        var filename = null;
+
+        var btn = $.desc('下载').findOne(2000);
+        if (null != btn) {
+            
         }
 
         // 回到消息列表界面
