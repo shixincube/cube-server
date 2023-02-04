@@ -77,7 +77,7 @@ module.exports = {
             }
         }
 
-        while (swipeCount > 0) {
+        while (swipeCount >= 0 && findDateDesc) {
             for (var i = 0; i < listView.childCount(); ++i) {
                 node = listView.child(i);
                 if (node.className() == 'android.widget.RelativeLayout') {
@@ -129,13 +129,14 @@ module.exports = {
                 }
             }
 
-            swipe(cx, y1, cx, y2, 500);
-            sleep(1000);
-            --swipeCount;
-
             if (swipeCount > 0) {
+                swipe(cx, y1, cx, y2, 500);
+                sleep(1000);
+
                 listView = $.className('androidx.recyclerview.widget.RecyclerView').findOne(2000);
             }
+
+            --swipeCount;
         }
 
         return list;
