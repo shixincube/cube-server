@@ -269,7 +269,7 @@ module.exports = {
 
         var btn = $.desc('下载').findOne(2000);
         if (null != btn) {
-            
+
         }
 
         // 回到消息列表界面

@@ -414,8 +414,70 @@ public class RobotService extends AbstractModule {
         return this.roboengine.pushSchedule(schedule);
     }
 
+    /**
+     * 以立即执行方式执行任务。
+     * 指定任务将随机选择机器人进行任务执行。
+     *
+     * @param accountId
+     * @param mission
+     * @param parameter
+     * @return
+     */
     public boolean fulfill(long accountId, AbstractMission mission, JSONObject parameter) {
-        return false;
+        List<Account> accounts = this.roboengine.getOnlineAccounts();
+        if (accounts.isEmpty()) {
+            Logger.w(this.getClass(), "#fulfill - No online account");
+            return false;
+        }
+
+        Account account = null;
+        for (Account cur : accounts) {
+            if (cur.id == accountId) {
+                account = cur;
+                break;
+            }
+        }
+
+        if (null == account) {
+            Logger.w(this.getClass(), "#fulfill - Can NOT find online account : " + accountId);
+            return false;
+        }
+
+        if (account.taskRunning) {
+            Logger.w(this.getClass(), "#fulfill - Account \"" + accountId + "\" is running");
+            return false;
+        }
+
+        // 设置参数
+        mission.setParameter(parameter);
+
+        // 检查
+        mission.checkMission();
+
+        if (!mission.isTaskReady()) {
+            Logger.i(this.getClass(), "The task is NOT ready");
+            return false;
+        }
+
+        // 查询计划表
+        Schedule schedule = this.roboengine.querySchedule(account.id, mission.getTask().id);
+        if (null == schedule) {
+            schedule = this.roboengine.newSchedule(mission.getTask().id, account.id, System.currentTimeMillis());
+            if (null == schedule) {
+                Logger.w(this.getClass(), "New schedule failed - task: " + mission.getTask().id
+                        + " , account: " + account.id);
+                return false;
+            }
+        }
+
+        // 上传任务脚本文件
+        if (!mission.uploadScriptFiles()) {
+            Logger.w(this.getClass(), "Upload script file failed");
+            return false;
+        }
+
+        // 推送
+        return this.roboengine.pushSchedule(schedule);
     }
 
     /**
