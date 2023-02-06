@@ -37,19 +37,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * 报告抖音账号数据。
- * 参数：
- * word {String}
- * maxNumVideo {Integer}
+ * 微信消息列表数据。
  */
-public class ReportDouYinAccountData extends AbstractMission {
+public class WeiXinMessageList extends AbstractMission {
 
     private Roboengine roboengine;
 
-    public ReportDouYinAccountData(Roboengine roboengine) {
-        super(TaskNames.ReportDouYinAccountData,
-                "CubeReportDouYinAccountData.js",
-                "CubeReportDouYinAccountData.zip");
+    public WeiXinMessageList(Roboengine roboengine) {
+        super(TaskNames.WeiXinMessageList,
+                "CubeWeiXinMessageList.js",
+                "CubeWeiXinMessageList.zip");
         this.roboengine = roboengine;
     }
 
@@ -63,7 +60,7 @@ public class ReportDouYinAccountData extends AbstractMission {
         }
 
         if (null == task) {
-            Logger.e(ReportDouYinAccountData.class,
+            Logger.e(WeiXinMessageList.class,
                     "#checkMission - No task data in Roboengine, task name: " + getTaskName());
             return;
         }
@@ -86,7 +83,8 @@ public class ReportDouYinAccountData extends AbstractMission {
 
         this.packScriptFiles(new String[] {
                 this.mainFile,
-                "modules/DouYinVideoInfo.js",
+                "modules/WeiXinIgnoreList.js",
+                "modules/WeiXinMessageTool.js",
                 "modules/StopApp.js"
         }, outputFile);
 

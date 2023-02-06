@@ -1,6 +1,6 @@
 // 采集抖音指定账号数据
 
-const parameter = require('CubeReportDouYinAccountDataParameter');
+const parameter = require('CubeDouYinAccountDataParameter');
 const videoInfo = require('DouYinVideoInfo');
 
 const word = parameter.word;
@@ -8,7 +8,7 @@ const maxNumVideo = (undefined === parameter.maxNumVideo) ? 10 : parameter.maxNu
 
 if (undefined === word) {
     console.log('参数错误，没有设置 word 参数');
-    report.submit('CubeReportDouYinAccountData', 'Error', 'Parameter', {
+    report.submit('CubeDouYinAccountData', 'Error', 'Parameter', {
         "desc": "参数错误，没有设置 word 参数"
     });
     exit();
@@ -16,7 +16,7 @@ if (undefined === word) {
 
 if (!launchApp('抖音')) {
     console.log('没有安装抖音');
-    report.submit('CubeReportDouYinAccountData', 'Error', word, {
+    report.submit('CubeDouYinAccountData', 'Error', word, {
         "desc": "没有安装抖音"
     });
     exit();
@@ -27,7 +27,7 @@ $.descContains('拍摄').waitFor();
 
 var btn = $.desc('搜索，按钮').findOne(5000);
 if (null == btn) {
-    report.submit('CubeReportDouYinAccountData', 'Error', word, {
+    report.submit('CubeDouYinAccountData', 'Error', word, {
         "desc": "没有找到搜索按钮"
     });
     exit();
@@ -96,7 +96,7 @@ while (count > 0) {
 
 if (!resultReady) {
     console.log('没有搜索结果');
-    report.submit('CubeReportDouYinAccountData', 'Error', word, {
+    report.submit('CubeDouYinAccountData', 'Error', word, {
         "desc": "没有搜索结果或搜索超时"
     });
     exit();
@@ -202,7 +202,7 @@ if (null != el) {
                     }
 
                     var video = videoInfo.getInfo();
-                    var snapshot = report.submitScreenSnapshot('CubeReportDouYinAccountData', word);
+                    var snapshot = report.submitScreenSnapshot('CubeDouYinAccountData', word);
                     if (null != snapshot) {
                         video.snapshot = snapshot;
                     }
@@ -220,7 +220,7 @@ if (null != el) {
         }
     }
 
-    report.submit('CubeReportDouYinAccountData', 'Result', word, data);
+    report.submit('CubeDouYinAccountData', 'Result', word, data);
 }
 
 require('StopApp')('抖音');

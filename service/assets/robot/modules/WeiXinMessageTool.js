@@ -237,7 +237,7 @@ module.exports = {
 
             if (null != curFilePath) {
                 // 提交文件
-                filename = report.submitFile('CubeWeiXinMonitor', conversationName, senderName, curFilePath);
+                filename = report.submitFile('CubeWeiXinMessageList', conversationName, senderName, curFilePath);
 
                 // 删除文件
                 files.remove(curFilePath);
@@ -292,7 +292,7 @@ module.exports = {
 
                 if (null != curFilePath) {
                     // 提交文件
-                    filename = report.submitFile('CubeWeiXinMonitor', conversationName, senderName, curFilePath);
+                    filename = report.submitFile('CubeWeiXinMessageList', conversationName, senderName, curFilePath);
 
                     // 删除文件
                     files.remove(curFilePath);

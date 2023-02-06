@@ -1,5 +1,6 @@
 // 微信消息监视器
 
+const parameter = require('CubeWeiXinMessageListParameter');
 const ignoreList = require('WeiXinIgnoreList');
 const messageTool = require('WeiXinMessageTool');
 
@@ -101,7 +102,7 @@ if (null != tabChat && null != tabContacts && null != tabDiscover && null != tab
         }
     }
 
-    report.submit('CubeWeiXinMonitor', 'Result', dataReport.account.name, dataReport);
+    report.submit('CubeWeiXinMessageList', 'Result', dataReport.account.name, dataReport);
 }
 else {
     log('微信未登录');
