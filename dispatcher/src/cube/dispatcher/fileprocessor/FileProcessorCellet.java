@@ -30,7 +30,6 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
-import cell.util.CachedQueueExecutor;
 import cube.common.action.FileProcessorAction;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
@@ -41,7 +40,6 @@ import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
 
 /**
  * 文件处理模块网关的 Cellet 服务单元。
@@ -52,11 +50,6 @@ public class FileProcessorCellet extends AbstractCellet {
      * Cellet 名称。
      */
     public final static String NAME = "FileProcessor";
-
-    /**
-     * 线程池。
-     */
-    private ExecutorService executor;
 
     /**
      * 执行机。
@@ -75,7 +68,6 @@ public class FileProcessorCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(32);
         this.performer = (Performer) this.getNucleus().getParameter("performer");
 
         // 配置 HTTP/HTTPS 服务的句柄
@@ -109,7 +101,6 @@ public class FileProcessorCellet extends AbstractCellet {
 
     @Override
     public void uninstall() {
-        this.executor.shutdown();
     }
 
     @Override
@@ -120,10 +111,10 @@ public class FileProcessorCellet extends AbstractCellet {
         String action = actionDialect.getName();
 
         if (FileProcessorAction.GetMediaSource.name.equals(action)) {
-            this.executor.execute(new GetMediaSourceTask(this, talkContext, primitive, this.performer));
+            this.performer.execute(new GetMediaSourceTask(this, talkContext, primitive, this.performer));
         }
         else {
-            this.executor.execute(this.borrowTask(talkContext, primitive, true));
+            this.performer.execute(this.borrowTask(talkContext, primitive, true));
         }
     }
 

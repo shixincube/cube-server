@@ -30,13 +30,11 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
-import cell.util.CachedQueueExecutor;
 import cube.common.action.MessagingAction;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
 
 /**
  * 消息模块网关的 Cellet 服务单元。
@@ -47,11 +45,6 @@ public class MessagingCellet extends AbstractCellet {
      * Cellet 名称。
      */
     public final static String NAME = "Messaging";
-
-    /**
-     * 线程池。
-     */
-    private ExecutorService executor;
 
     /**
      * 执行机。
@@ -70,14 +63,12 @@ public class MessagingCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(64);
         this.performer = (Performer) this.getNucleus().getParameter("performer");
         return true;
     }
 
     @Override
     public void uninstall() {
-        this.executor.shutdown();
     }
 
     @Override
@@ -89,10 +80,10 @@ public class MessagingCellet extends AbstractCellet {
 
         if (MessagingAction.Pull.name.equals(action) ||
             MessagingAction.Retract.name.equals(action)) {
-            this.executor.execute(this.borrowTask(talkContext, primitive, false));
+            this.performer.execute(this.borrowTask(talkContext, primitive, false));
         }
         else {
-            this.executor.execute(this.borrowTask(talkContext, primitive, true));
+            this.performer.execute(this.borrowTask(talkContext, primitive, true));
         }
     }
 

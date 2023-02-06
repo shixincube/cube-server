@@ -31,6 +31,7 @@ import cell.core.cellet.Cellet;
 import cell.core.net.Endpoint;
 import cell.core.talk.*;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.CachedQueueExecutor;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
@@ -55,6 +56,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Performer 接入层连接器。
@@ -73,6 +75,11 @@ public class Performer implements TalkListener, Tickable {
     protected TalkService talkService;
 
     protected CelletService celletService;
+
+    /**
+     * 线程池执行器。
+     */
+    private ExecutorService executor;
 
     /**
      * 节点名称。
@@ -408,9 +415,29 @@ public class Performer implements TalkListener, Tickable {
     }
 
     /**
+     * 获取多线程执行器。
+     *
+     * @return 返回线程池实例。
+     */
+    public ExecutorService getExecutor() {
+        return this.executor;
+    }
+
+    /**
+     * 在线程池里执行任务。
+     *
+     * @param runnable 任务实例。
+     */
+    public void execute(Runnable runnable) {
+        this.executor.execute(runnable);
+    }
+
+    /**
      * 启动执行机，并对路由权重和范围进行初始化。
      */
     public void start(List<String> cellets) {
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(32);
+
         // 添加全局监听
         this.talkService.addListener(this);
 
@@ -470,6 +497,8 @@ public class Performer implements TalkListener, Tickable {
         }
 
         HttpClientFactory.getInstance().close();
+
+        this.executor.shutdown();
     }
 
     public void restart() {

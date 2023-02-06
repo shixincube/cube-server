@@ -28,12 +28,10 @@ package cube.dispatcher.ferry;
 
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
-import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
 
 /**
  * Ferry 服务接入单元。
@@ -41,11 +39,6 @@ import java.util.concurrent.ExecutorService;
 public class FerryCellet extends AbstractCellet {
 
     public final static String NAME = "Ferry";
-
-    /**
-     * 线程池执行器。
-     */
-    private ExecutorService executor = null;
 
     /**
      * 执行机。
@@ -64,21 +57,19 @@ public class FerryCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(4);
         this.performer = (Performer) this.getNucleus().getParameter("performer");
         return true;
     }
 
     @Override
     public void uninstall() {
-        this.executor.shutdown();
     }
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
 
-        this.executor.execute(this.borrowTask(talkContext, primitive));
+        this.performer.execute(this.borrowTask(talkContext, primitive));
     }
 
     protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive) {

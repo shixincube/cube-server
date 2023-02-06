@@ -27,18 +27,15 @@
 package cube.dispatcher.contact;
 
 import cell.api.Servable;
-import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
-import cell.util.CachedQueueExecutor;
 import cube.common.action.ContactAction;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
 
 /**
  * 联系人模块网关的 Cellet 服务单元。
@@ -49,11 +46,6 @@ public class ContactCellet extends AbstractCellet {
      * Cellet 名称。
      */
     public final static String NAME = "Contact";
-
-    /**
-     * 线程池执行器。
-     */
-    private ExecutorService executor;
 
     /**
      * 执行机。
@@ -96,14 +88,12 @@ public class ContactCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(64);
         this.performer = (Performer) this.getNucleus().getParameter("performer");
         return true;
     }
 
     @Override
     public void uninstall() {
-        this.executor.shutdown();
     }
 
     @Override
@@ -114,25 +104,25 @@ public class ContactCellet extends AbstractCellet {
         String action = actionDialect.getName();
 
         if (ContactAction.Comeback.name.equals(action)) {
-            this.executor.execute(this.borrowComebackTask(talkContext, primitive));
+            this.performer.execute(this.borrowComebackTask(talkContext, primitive));
         }
         else if (ContactAction.SignIn.name.equals(action)) {
-            this.executor.execute(this.borrowSignInTask(talkContext, primitive));
+            this.performer.execute(this.borrowSignInTask(talkContext, primitive));
         }
         else if (ContactAction.SignOut.name.equals(action)) {
-            this.executor.execute(this.borrowSignOutTask(talkContext, primitive));
+            this.performer.execute(this.borrowSignOutTask(talkContext, primitive));
         }
         else if (ContactAction.ListGroups.name.equals(action)) {
-            this.executor.execute(this.borrowPassTask(talkContext, primitive, false));
+            this.performer.execute(this.borrowPassTask(talkContext, primitive, false));
         }
         else {
-            this.executor.execute(this.borrowPassTask(talkContext, primitive, true));
+            this.performer.execute(this.borrowPassTask(talkContext, primitive, true));
         }
     }
 
     @Override
     public void onQuitted(TalkContext context, Servable server) {
-        this.executor.execute(this.borrowDisconnectTask(context));
+        this.performer.execute(this.borrowDisconnectTask(context));
     }
 
     protected SignInTask borrowSignInTask(TalkContext talkContext, Primitive primitive) {

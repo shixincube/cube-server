@@ -28,12 +28,10 @@ package cube.dispatcher.auth;
 
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
-import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
 
 /**
  * 授权模块网关的 Cellet 服务单元。
@@ -44,11 +42,6 @@ public class AuthCellet extends AbstractCellet {
      * Cellet 名称。
      */
     public final static String NAME = "Auth";
-
-    /**
-     * 线程池执行器。
-     */
-    private ExecutorService executor = null;
 
     /**
      * 执行机。
@@ -67,21 +60,19 @@ public class AuthCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
         this.performer = (Performer) this.getNucleus().getParameter("performer");
         return true;
     }
 
     @Override
     public void uninstall() {
-        this.executor.shutdown();
     }
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
 
-        this.executor.execute(this.borrowTask(talkContext, primitive));
+        this.performer.execute(this.borrowTask(talkContext, primitive));
     }
 
     protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive) {

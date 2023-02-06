@@ -27,7 +27,6 @@
 package cube.dispatcher.robot.handler;
 
 import cube.dispatcher.Performer;
-import cube.dispatcher.hub.Controller;
 import cube.util.CrossDomainHandler;
 
 import javax.servlet.http.HttpServletRequest;
@@ -40,16 +39,17 @@ public abstract class RobotHandler extends CrossDomainHandler {
 
     protected Performer performer;
 
-    protected Controller controller;
-
-    public RobotHandler(Performer performer, Controller controller) {
+    public RobotHandler(Performer performer) {
         super();
         this.performer = performer;
-        this.controller = controller;
     }
 
     protected String getRequestPath(HttpServletRequest request) {
         String path = request.getPathInfo();
+        if (path.length() < 2) {
+            return null;
+        }
+
         return path.substring(1).trim();
     }
 

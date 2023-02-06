@@ -28,7 +28,6 @@ package cube.dispatcher.filestorage;
 
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
-import cell.util.CachedQueueExecutor;
 import cube.common.action.FileStorageAction;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
@@ -36,7 +35,6 @@ import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
 
 /**
  * 文件存储模块的 Cellet 单元。
@@ -47,11 +45,6 @@ public class FileStorageCellet extends AbstractCellet {
      * Cellet 名称。
      */
     public final static String NAME = "FileStorage";
-
-    /**
-     * 线程池。
-     */
-    private ExecutorService executor;
 
     /**
      * 文件块存储。
@@ -76,7 +69,6 @@ public class FileStorageCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
         this.performer = (Performer) nucleus.getParameter("performer");
 
         // 打开存储管理器
@@ -102,8 +94,6 @@ public class FileStorageCellet extends AbstractCellet {
     @Override
     public void uninstall() {
         this.fileChunkStorage.close();
-
-        this.executor.shutdown();
     }
 
     @Override
@@ -120,7 +110,7 @@ public class FileStorageCellet extends AbstractCellet {
             }
         }
         else {
-            this.executor.execute(this.borrowTask(talkContext, primitive, true));
+            this.performer.execute(this.borrowTask(talkContext, primitive, true));
         }
     }
 

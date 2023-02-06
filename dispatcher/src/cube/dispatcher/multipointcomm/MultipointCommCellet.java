@@ -26,17 +26,12 @@
 
 package cube.dispatcher.multipointcomm;
 
-import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
-import cell.core.talk.dialect.ActionDialect;
-import cell.core.talk.dialect.DialectFactory;
-import cell.util.CachedQueueExecutor;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
 
 /**
  * 多方通讯的 Cellet 服务单元。
@@ -44,11 +39,6 @@ import java.util.concurrent.ExecutorService;
 public class MultipointCommCellet extends AbstractCellet {
 
     public final static String NAME = "MultipointComm";
-
-    /**
-     * 线程池。
-     */
-    private ExecutorService executor;
 
     /**
      * 执行机。
@@ -67,21 +57,19 @@ public class MultipointCommCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(64);
         this.performer = (Performer) this.getNucleus().getParameter("performer");
         return true;
     }
 
     @Override
     public void uninstall() {
-        this.executor.shutdown();
     }
 
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
 
-        this.executor.execute(this.borrowTask(talkContext, primitive, true));
+        this.performer.execute(this.borrowTask(talkContext, primitive, true));
     }
 
     protected PassThroughTask borrowTask(TalkContext talkContext, Primitive primitive, boolean sync) {

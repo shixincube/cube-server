@@ -29,6 +29,7 @@ package cube.dispatcher.robot;
 import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.robot.handler.RegisterCallback;
 import cube.dispatcher.util.Tickable;
 import cube.util.HttpServer;
 import org.eclipse.jetty.client.HttpClient;
@@ -66,6 +67,8 @@ public class RobotCellet extends AbstractCellet implements Tickable {
         this.performer = (Performer) this.getNucleus().getParameter("performer");
         this.performer.addTickable(this);
 
+        Manager.getInstance().start();
+
         setupHandler();
 
         registerCallback();
@@ -77,6 +80,8 @@ public class RobotCellet extends AbstractCellet implements Tickable {
     public void uninstall() {
         this.performer.removeTickable(this);
 
+        Manager.getInstance().stop();
+
         deregisterCallback();
     }
 
@@ -87,6 +92,8 @@ public class RobotCellet extends AbstractCellet implements Tickable {
         eventHandler.setContextPath(RoboengineEventHandler.CONTEXT_PATH);
         eventHandler.setHandler(new RoboengineEventHandler(this.performer));
         httpServer.addContextHandler(eventHandler);
+
+        httpServer.addContextHandler(new RegisterCallback(this.performer));
     }
 
     private void registerCallback() {
@@ -101,11 +108,11 @@ public class RobotCellet extends AbstractCellet implements Tickable {
             StringContentProvider provider = new StringContentProvider(data.toString());
             ContentResponse response = client.POST(Performer.ROBOT_API_URL).content(provider).send();
             if (response.getStatus() != HttpStatus.OK_200) {
-                registered = false;
+                this.registered = false;
                 Logger.w(this.getClass(), "#registerCallback - register callback URL failed: " + response.getStatus());
             }
             else {
-                registered = true;
+                this.registered = true;
                 Logger.i(this.getClass(), "#registerCallback - register callback: " + Performer.ROBOT_CALLBACK_URL);
             }
         } catch (Exception e) {
@@ -139,7 +146,7 @@ public class RobotCellet extends AbstractCellet implements Tickable {
                 Logger.i(this.getClass(), "#deregisterCallback - deregister callback: " + Performer.ROBOT_CALLBACK_URL);
             }
 
-            registered = false;
+            this.registered = false;
         } catch (Exception e) {
             Logger.e(this.getClass(), "#deregisterCallback", e);
         } finally {
