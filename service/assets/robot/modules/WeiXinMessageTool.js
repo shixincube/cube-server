@@ -269,7 +269,35 @@ module.exports = {
 
         var btn = $.desc('下载').findOne(2000);
         if (null != btn) {
+            location = btn.bounds();
+            click(location.centerX(), location.centerY());
+            // 等待保存
+            sleep(3000);
 
+            var path = files.getSdcardPath() + '/Pictures/WeiXin/';
+            if (files.exists(path)) {
+                // 找到最新的一个文件，也就是时间戳值最大的文件
+                var curFilePath = null;
+                var curLast = 0;
+                var array = files.listDir(path);
+                array.forEach(function(item) {
+                    if (files.isFile(path + item)) {
+                        var last = files.lastModified(path + item);
+                        if (last > curLast) {
+                            curLast = last;
+                            curFilePath = path + item;
+                        }
+                    }
+                });
+
+                if (null != curFilePath) {
+                    // 提交文件
+                    filename = report.submitFile('CubeWeiXinMonitor', conversationName, senderName, curFilePath);
+
+                    // 删除文件
+                    files.remove(curFilePath);
+                }
+            }
         }
 
         // 回到消息列表界面

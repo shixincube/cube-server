@@ -62,10 +62,7 @@ if (null != tabChat && null != tabContacts && null != tabDiscover && null != tab
                     var avatarNode = node.child(0);
                     if (avatarNode.childCount() != 2) {
                         // 没有提示气泡
-                        // XJW ：android.widget.RelativeLayout
-                        // XJW ：android.widget.RelativeLayout
-                        //log('XJW ：' + avatarNode.className());
-                        // continue;
+                        continue;
                     }
 
                     node = node.child(1);   // 第二列，消息列表的聊天标题列

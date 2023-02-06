@@ -72,7 +72,12 @@ public class RoboengineEventHandler extends CrossDomainHandler {
             String eventName = data.getString("name");
             JSONObject eventData = data.getJSONObject("data");
 
-
+            this.performer.execute(new Runnable() {
+                @Override
+                public void run() {
+                    Manager.getInstance().callback(eventName, eventData);
+                }
+            });
 
             ActionDialect dialect = new ActionDialect(RobotAction.Event.name);
             dialect.addParam("name", eventName);

@@ -29,6 +29,7 @@ package cube.dispatcher.robot;
 import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.robot.handler.DeregisterCallback;
 import cube.dispatcher.robot.handler.RegisterCallback;
 import cube.dispatcher.util.Tickable;
 import cube.util.HttpServer;
@@ -94,6 +95,7 @@ public class RobotCellet extends AbstractCellet implements Tickable {
         httpServer.addContextHandler(eventHandler);
 
         httpServer.addContextHandler(new RegisterCallback(this.performer));
+        httpServer.addContextHandler(new DeregisterCallback(this.performer));
     }
 
     private void registerCallback() {

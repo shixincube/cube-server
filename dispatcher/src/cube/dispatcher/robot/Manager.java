@@ -95,26 +95,27 @@ public class Manager {
     }
 
     public void callback(String name, JSONObject data) {
-        for (String url : this.callbackList) {
-            JSONObject event = new JSONObject();
-            event.put("name", name);
-            event.put("data", data);
+        synchronized (this.callbackList) {
+            for (String url : this.callbackList) {
+                JSONObject event = new JSONObject();
+                event.put("name", name);
+                event.put("data", data);
 
-            StringContentProvider provider = new StringContentProvider(event.toString());
-
-            try {
-                ContentResponse response = this.client.POST(url).content(provider).timeout(5, TimeUnit.SECONDS).send();
-                if (response.getStatus() != HttpStatus.OK_200) {
-                    if (Logger.isDebugLevel()) {
-                        Logger.d(this.getClass(), "");
+                StringContentProvider provider = new StringContentProvider(event.toString());
+                try {
+                    ContentResponse response = this.client.POST(url).content(provider).timeout(3, TimeUnit.SECONDS).send();
+                    if (response.getStatus() != HttpStatus.OK_200) {
+                        if (Logger.isDebugLevel()) {
+                            Logger.d(this.getClass(), "Callback \"" + url + "\" failed");
+                        }
                     }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (TimeoutException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (TimeoutException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
             }
         }
     }

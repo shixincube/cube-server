@@ -40,12 +40,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 /**
- * 注册回调 URL 链接。
+ * 注销回调 URL 链接。
  */
-public class RegisterCallback extends ContextHandler {
+public class DeregisterCallback extends ContextHandler {
 
-    public RegisterCallback(Performer performer) {
-        super("/robot/register/");
+    public DeregisterCallback(Performer performer) {
+        super("/robot/deregister/");
         setHandler(new Handler(performer));
     }
 
@@ -84,7 +84,7 @@ public class RegisterCallback extends ContextHandler {
             }
 
             for (String url : list) {
-                Manager.getInstance().registerCallback(url);
+                Manager.getInstance().deregisterCallback(url);
             }
 
             this.respond(response, HttpStatus.OK_200);
