@@ -52,6 +52,11 @@ public enum RobotAction {
     Fulfill("fulfill"),
 
     /**
+     * 取消任务。
+     */
+    Cancel("cancel"),
+
+    /**
      * 获取报告文件。
      */
     GetReportFile("getReportFile"),

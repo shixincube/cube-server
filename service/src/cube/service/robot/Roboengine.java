@@ -94,6 +94,14 @@ public interface Roboengine {
     boolean pushSchedule(Schedule schedule);
 
     /**
+     * 取消推送计划表，如果任务正在执行，则立即结束。
+     *
+     * @param schedule
+     * @return
+     */
+    boolean cancelSchedule(Schedule schedule);
+
+    /**
      * 获取在线账号列表。
      *
      * @return

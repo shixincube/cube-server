@@ -63,7 +63,7 @@ public class DouYinAccountData extends AbstractMission {
         }
 
         if (null == task) {
-            Logger.e(DouYinAccountData.class,
+            Logger.e(this.getClass(),
                     "#checkMission - No task data in Roboengine, task name: " + getTaskName());
             return;
         }

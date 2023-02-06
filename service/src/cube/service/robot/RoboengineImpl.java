@@ -255,6 +255,31 @@ public class RoboengineImpl implements Roboengine {
     }
 
     @Override
+    public boolean cancelSchedule(Schedule schedule) {
+        String url = "http://" + this.host + ":" + this.port + "/schedule/cancel/" + this.token;
+
+        JSONObject data = new JSONObject();
+        data.put("sn", schedule.sn);
+
+        StringContentProvider provider = new StringContentProvider(data.toString());
+
+        try {
+            ContentResponse response = this.client.POST(url).content(provider).send();
+            if (response.getStatus() != HttpStatus.OK_200) {
+                return false;
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            return false;
+        } catch (ExecutionException e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
     public List<Account> getOnlineAccounts() {
         String url = "http://" + this.host + ":" + this.port + "/account/online/" + this.token;
 

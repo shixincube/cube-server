@@ -40,6 +40,7 @@ import cube.robot.*;
 import cube.service.client.ClientManager;
 import cube.service.client.ServerClient;
 import cube.service.robot.mission.AbstractMission;
+import cube.service.robot.mission.DouYinDailyOperation;
 import cube.service.robot.mission.WeiXinMessageList;
 import cube.service.robot.mission.DouYinAccountData;
 import cube.util.ConfigUtils;
@@ -214,6 +215,9 @@ public class RobotService extends AbstractModule {
     private AbstractMission createMission(String name) {
         if (TaskNames.DouYinAccountData.equals(name)) {
             return new DouYinAccountData(this.roboengine);
+        }
+        else if (TaskNames.DouYinDailyOperation.equals(name)) {
+            return new DouYinDailyOperation(this.roboengine);
         }
         else if (TaskNames.WeiXinMessageList.equals(name)) {
             return new WeiXinMessageList(this.roboengine);
@@ -481,6 +485,37 @@ public class RobotService extends AbstractModule {
     }
 
     /**
+     * 取消任务计划表。
+     *
+     * @param accountId
+     * @param missionName
+     * @return
+     */
+    public Schedule cancel(long accountId, String missionName) {
+        AbstractMission mission = this.createMission(missionName);
+        if (null == mission) {
+            return null;
+        }
+
+        // 检查
+        mission.checkMission();
+        if (!mission.isTaskReady()) {
+            Logger.i(this.getClass(), "The task is NOT ready");
+            return null;
+        }
+
+        // 查询计划表
+        Schedule schedule = this.roboengine.querySchedule(accountId, mission.getTask().id);
+        if (null == schedule) {
+            Logger.w(this.getClass(), "Can NOT find schedule - task: " + mission.getTask().id
+                    + " , account: " + accountId);
+            return null;
+        }
+
+        return (this.roboengine.cancelSchedule(schedule) ? schedule : null);
+    }
+
+    /**
      * 下载报告文件。
      *
      * @param filename
@@ -537,6 +572,9 @@ public class RobotService extends AbstractModule {
         }
 
         AbstractMission mission = new DouYinAccountData(this.roboengine);
+        mission.checkMission();
+
+        mission = new DouYinDailyOperation(this.roboengine);
         mission.checkMission();
 
         mission = new WeiXinMessageList(this.roboengine);

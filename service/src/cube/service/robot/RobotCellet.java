@@ -36,6 +36,7 @@ import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.robot.RobotAction;
 import cube.robot.RobotStateCode;
+import cube.robot.Schedule;
 import cube.robot.ScriptFile;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -167,6 +168,21 @@ public class RobotCellet extends AbstractCellet {
                     service.backupScriptFile(relativePath);
                     Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
                     responder.respond(RobotStateCode.Ok.code, new JSONObject());
+                }
+            });
+        }
+        else if (RobotAction.Cancel.name.equals(action)) {
+            // 来自 Client 的操作
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    long accountId = dialect.getParamAsLong("accountId");
+                    String name = dialect.getParamAsString("name");
+                    // 取消任务
+                    Schedule schedule = service.cancel(accountId, name);
+                    Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
+                    responder.respond((null != schedule) ? RobotStateCode.Ok.code : RobotStateCode.Failure.code,
+                            (null != schedule) ? schedule.toJSON() : new JSONObject());
                 }
             });
         }

@@ -37,16 +37,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * 微信消息列表数据。
+ * 抖音日常操作。
+ *
+ * 参数：
+ * duration {Integer} 持续时长，单位：秒。
  */
-public class WeiXinMessageList extends AbstractMission {
+public class DouYinDailyOperation extends AbstractMission {
 
     private Roboengine roboengine;
 
-    public WeiXinMessageList(Roboengine roboengine) {
-        super(TaskNames.WeiXinMessageList,
-                "CubeWeiXinMessageList.js",
-                "CubeWeiXinMessageList.zip");
+    public DouYinDailyOperation(Roboengine roboengine) {
+        super(TaskNames.DouYinDailyOperation,
+                "CubeDouYinDailyOperation.js",
+                "CubeDouYinDailyOperation.zip");
         this.roboengine = roboengine;
     }
 
@@ -83,8 +86,6 @@ public class WeiXinMessageList extends AbstractMission {
 
         this.packScriptFiles(new String[] {
                 this.mainFile,
-                "modules/WeiXinIgnoreList.js",
-                "modules/WeiXinMessageTool.js",
                 "modules/StopApp.js"
         }, outputFile);
 
