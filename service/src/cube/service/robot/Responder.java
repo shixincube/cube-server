@@ -29,7 +29,6 @@ package cube.service.robot;
 import cell.core.cellet.Cellet;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -37,20 +36,29 @@ import org.json.JSONObject;
  */
 public class Responder {
 
-    private final static String NotifierParamName = "_notifier";
+    private final static String NotifierKey = "_notifier";
 
-    private final String performerKey = "_performer";
+    private final static String PerformerKey = "_performer";
 
     private Cellet cellet;
 
     private TalkContext talkContext;
 
+    private long performerSN;
+
     private JSONObject notifier;
+
     private String name;
 
     public Responder(ActionDialect request, Cellet cellet, TalkContext talkContext) {
-        this.notifier = request.getParamAsJson(NotifierParamName);
+        this.notifier = request.getParamAsJson(NotifierKey);
+
+        if (request.containsParam(PerformerKey)) {
+            this.performerSN = request.getParamAsJson(PerformerKey).getLong("sn");
+        }
+
         this.name = request.getName();
+
         this.cellet = cellet;
         this.talkContext = talkContext;
     }
@@ -66,28 +74,20 @@ public class Responder {
     public boolean respond(int code, JSONObject data) {
         ActionDialect actionDialect = new ActionDialect(this.name);
         if (null != this.notifier) {
-            actionDialect.addParam(NotifierParamName, this.notifier);
+            actionDialect.addParam(NotifierKey, this.notifier);
+        }
+        else {
+            actionDialect.addParam(PerformerKey, createPerformer(this.performerSN));
         }
         actionDialect.addParam("code", code);
         actionDialect.addParam("data", data);
         return this.cellet.speak(this.talkContext, actionDialect);
     }
 
-    public void respondDispatcher(long sn, int code) {
-        ActionDialect actionDialect = new ActionDialect(this.name);
-        actionDialect.addParam(this.performerKey, createPerformer(sn));
-        actionDialect.addParam("code", code);
-        this.cellet.speak(this.talkContext, actionDialect);
-    }
-
     private JSONObject createPerformer(long sn) {
         JSONObject json = new JSONObject();
-        try {
-            json.put("sn", sn);
-            json.put("ts", System.currentTimeMillis());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        json.put("sn", sn);
+        json.put("ts", System.currentTimeMillis());
         return json;
     }
 }

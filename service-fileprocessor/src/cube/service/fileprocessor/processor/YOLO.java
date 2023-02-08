@@ -24,68 +24,43 @@
  * SOFTWARE.
  */
 
-package cube.robot;
+package cube.service.fileprocessor.processor;
+
+import cube.file.YOLOResultFile;
+
+import java.io.File;
+import java.nio.file.Path;
 
 /**
- * Robot 动作。
+ * YOLO 处理器。
  */
-public enum RobotAction {
+public class YOLO extends Processor {
 
-    /**
-     * 触发事件。
-     */
-    Event("event"),
+    public final static String TASK_DETECT = "detect";
+    public final static String TASK_CLASSIFY = "classify";
+    public final static String TASK_SEGMENT = "segment";
 
-    /**
-     * 注册监听器。
-     */
-    RegisterListener("registerListener"),
+    public final static String MODE_TRAIN = "train";
+    public final static String MODE_PREDICT = "predict";
+    public final static String MODE_VAL = "val";
+    public final static String MODE_EXPORT = "export";
 
-    /**
-     * 注销监听器。
-     */
-    DeregisterListener("deregisterListener"),
+    public final static String MODEL_V8_TINY = "yolov8n.pt";
+    public final static String MODEL_V8_SMALL = "yolov8s.pt";
+    public final static String MODEL_V8_MIDDLE = "yolov8m.pt";
+    public final static String MODEL_V8_LARGE = "yolov8l.pt";
+    public final static String MODEL_V8_EXTRA_LARGE = "yolov8x.pt";
 
-    /**
-     * 获取在线设备列表。
-     */
-    GetOnlineDevices("getOnlineDevices"),
+    public YOLO(Path workPath) {
+        super(workPath);
+    }
 
-    /**
-     * 执行任务。
-     */
-    Fulfill("fulfill"),
+    public YOLOResultFile predict(File file) {
+        return null;
+    }
 
-    /**
-     * 取消任务。
-     */
-    Cancel("cancel"),
+    @Override
+    public void go(ProcessorContext context) {
 
-    /**
-     * 获取报告文件。
-     */
-    GetReportFile("getReportFile"),
-
-    /**
-     * 获取所有脚本文件路径。
-     */
-    ListScriptFiles("listScriptFiles"),
-
-    /**
-     * 下载脚本文件。
-     */
-    DownloadScriptFile("downloadScriptFile"),
-
-    /**
-     * 上传脚本文件。
-     */
-    UploadScriptFile("uploadScriptFile")
-
-    ;
-
-    public final String name;
-
-    RobotAction(String name) {
-        this.name = name;
     }
 }

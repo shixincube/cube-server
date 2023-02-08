@@ -24,68 +24,27 @@
  * SOFTWARE.
  */
 
-package cube.robot;
+package cube.file;
+
+import cube.common.JSONable;
+import org.json.JSONObject;
 
 /**
- * Robot 动作。
+ * YOLO 结果文件。
  */
-public enum RobotAction {
+public class YOLOResultFile implements JSONable {
 
-    /**
-     * 触发事件。
-     */
-    Event("event"),
+    public YOLOResultFile() {
 
-    /**
-     * 注册监听器。
-     */
-    RegisterListener("registerListener"),
+    }
 
-    /**
-     * 注销监听器。
-     */
-    DeregisterListener("deregisterListener"),
+    @Override
+    public JSONObject toJSON() {
+        return null;
+    }
 
-    /**
-     * 获取在线设备列表。
-     */
-    GetOnlineDevices("getOnlineDevices"),
-
-    /**
-     * 执行任务。
-     */
-    Fulfill("fulfill"),
-
-    /**
-     * 取消任务。
-     */
-    Cancel("cancel"),
-
-    /**
-     * 获取报告文件。
-     */
-    GetReportFile("getReportFile"),
-
-    /**
-     * 获取所有脚本文件路径。
-     */
-    ListScriptFiles("listScriptFiles"),
-
-    /**
-     * 下载脚本文件。
-     */
-    DownloadScriptFile("downloadScriptFile"),
-
-    /**
-     * 上传脚本文件。
-     */
-    UploadScriptFile("uploadScriptFile")
-
-    ;
-
-    public final String name;
-
-    RobotAction(String name) {
-        this.name = name;
+    @Override
+    public JSONObject toCompactJSON() {
+        return null;
     }
 }
