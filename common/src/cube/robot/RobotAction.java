@@ -49,7 +49,7 @@ public enum RobotAction {
     /**
      * 获取在线设备列表。
      */
-    GetOnlineDevices("getOnlineDevices"),
+    GetOnlineList("getOnlineList"),
 
     /**
      * 执行任务。

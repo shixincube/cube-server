@@ -180,6 +180,15 @@ public class RobotService extends AbstractModule {
         return true;
     }
 
+    /**
+     * 获取在线账号列表。
+     *
+     * @return
+     */
+    public List<Account> getOnlineList() {
+        return this.roboengine.getOnlineAccounts();
+    }
+
     public void transferEvent(String name, JSONObject data) {
         if (EVENT_REPORT.equals(name)) {
             try {

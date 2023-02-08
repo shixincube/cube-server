@@ -34,10 +34,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
-import cube.robot.RobotAction;
-import cube.robot.RobotStateCode;
-import cube.robot.Schedule;
-import cube.robot.ScriptFile;
+import cube.robot.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -183,6 +180,23 @@ public class RobotCellet extends AbstractCellet {
                     Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
                     responder.respond((null != schedule) ? RobotStateCode.Ok.code : RobotStateCode.Failure.code,
                             (null != schedule) ? schedule.toJSON() : new JSONObject());
+                }
+            });
+        }
+        else if (RobotAction.GetOnlineList.name.equals(action)) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    List<Account> accounts = service.getOnlineList();
+                    JSONArray array = new JSONArray();
+                    for (Account account : accounts) {
+                        array.put(account.toJSON());
+                    }
+                    JSONObject data = new JSONObject();
+                    data.put("total", accounts.size());
+                    data.put("list", array);
+                    Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
+                    responder.respond(RobotStateCode.Ok.code, data);
                 }
             });
         }
