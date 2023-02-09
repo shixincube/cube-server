@@ -54,7 +54,7 @@ public enum RobotAction {
     /**
      * 执行任务。
      */
-    Fulfill("fulfill"),
+    Perform("perform"),
 
     /**
      * 取消任务。

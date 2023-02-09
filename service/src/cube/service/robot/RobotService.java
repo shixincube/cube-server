@@ -357,13 +357,13 @@ public class RobotService extends AbstractModule {
      * @param parameter
      * @return
      */
-    public boolean fulfill(String missionName, JSONObject parameter) {
+    public boolean perform(String missionName, JSONObject parameter) {
         AbstractMission mission = this.createMission(missionName);
         if (null == mission) {
             return false;
         }
 
-        return this.fulfill(mission, parameter);
+        return this.perform(mission, parameter);
     }
 
     /**
@@ -374,7 +374,7 @@ public class RobotService extends AbstractModule {
      * @param parameter
      * @return
      */
-    public boolean fulfill(AbstractMission mission, JSONObject parameter) {
+    public boolean perform(AbstractMission mission, JSONObject parameter) {
         // 设置参数
         mission.setParameter(parameter);
 
@@ -429,17 +429,33 @@ public class RobotService extends AbstractModule {
 
     /**
      * 以立即执行方式执行任务。
-     * 指定任务将随机选择机器人进行任务执行。
+     *
+     * @param accountId
+     * @param missionName
+     * @param parameter
+     * @return
+     */
+    public boolean perform(long accountId, String missionName, JSONObject parameter) {
+        AbstractMission mission = this.createMission(missionName);
+        if (null == mission) {
+            return false;
+        }
+
+        return this.perform(accountId, mission, parameter);
+    }
+
+    /**
+     * 以立即执行方式执行任务。
      *
      * @param accountId
      * @param mission
      * @param parameter
      * @return
      */
-    public boolean fulfill(long accountId, AbstractMission mission, JSONObject parameter) {
+    public boolean perform(long accountId, AbstractMission mission, JSONObject parameter) {
         List<Account> accounts = this.roboengine.getOnlineAccounts();
         if (accounts.isEmpty()) {
-            Logger.w(this.getClass(), "#fulfill - No online account");
+            Logger.w(this.getClass(), "#perform - No online account");
             return false;
         }
 
@@ -452,12 +468,12 @@ public class RobotService extends AbstractModule {
         }
 
         if (null == account) {
-            Logger.w(this.getClass(), "#fulfill - Can NOT find online account : " + accountId);
+            Logger.w(this.getClass(), "#perform - Can NOT find online account : " + accountId);
             return false;
         }
 
         if (account.taskRunning) {
-            Logger.w(this.getClass(), "#fulfill - Account \"" + accountId + "\" is running");
+            Logger.w(this.getClass(), "#perform - Account \"" + accountId + "\" is running");
             return false;
         }
 

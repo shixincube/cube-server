@@ -91,8 +91,7 @@ public class RobotCellet extends AbstractCellet {
             JSONObject data = dialect.getParamAsJson("data");
             this.service.transferEvent(name, data);
         }
-        else if (RobotAction.Fulfill.name.equals(action)) {
-            // 来自 Client 的操作
+        else if (RobotAction.Perform.name.equals(action)) {
             final String name = dialect.getParamAsString("name");
             final JSONObject parameter = dialect.containsParam("parameter")
                     ? dialect.getParamAsJson("parameter") : new JSONObject();
@@ -100,7 +99,15 @@ public class RobotCellet extends AbstractCellet {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    boolean success = service.fulfill(name, parameter);
+                    boolean success = false;
+                    if (dialect.containsParam("accountId")) {
+                        success = service.perform(dialect.getParamAsLong("accountId"),
+                                name, parameter);
+                    }
+                    else {
+                        success = service.perform(name, parameter);
+                    }
+
                     Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
                     responder.respond(success ? RobotStateCode.Ok.code : RobotStateCode.Failure.code,
                             new JSONObject());
