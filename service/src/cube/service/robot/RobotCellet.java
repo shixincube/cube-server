@@ -176,7 +176,6 @@ public class RobotCellet extends AbstractCellet {
             });
         }
         else if (RobotAction.Cancel.name.equals(action)) {
-            // 来自 Client 的操作
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {

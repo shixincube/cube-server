@@ -29,10 +29,7 @@ package cube.dispatcher.robot;
 import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
-import cube.dispatcher.robot.handler.DeregisterCallback;
-import cube.dispatcher.robot.handler.GetOnlineList;
-import cube.dispatcher.robot.handler.Perform;
-import cube.dispatcher.robot.handler.RegisterCallback;
+import cube.dispatcher.robot.handler.*;
 import cube.dispatcher.util.Tickable;
 import cube.util.HttpServer;
 import org.eclipse.jetty.client.HttpClient;
@@ -100,6 +97,7 @@ public class RobotCellet extends AbstractCellet implements Tickable {
         httpServer.addContextHandler(new DeregisterCallback(this.performer));
         httpServer.addContextHandler(new GetOnlineList(this.performer));
         httpServer.addContextHandler(new Perform(this.performer));
+        httpServer.addContextHandler(new Cancel(this.performer));
     }
 
     private void registerCallback() {
