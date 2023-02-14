@@ -52,6 +52,11 @@ public enum RobotAction {
     GetOnlineList("getOnlineList"),
 
     /**
+     * 获取账号数据。
+     */
+    GetAccount("getAccount"),
+
+    /**
      * 执行任务。
      */
     Perform("perform"),

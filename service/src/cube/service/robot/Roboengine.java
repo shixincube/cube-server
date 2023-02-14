@@ -109,6 +109,14 @@ public interface Roboengine {
     List<Account> getOnlineAccounts();
 
     /**
+     * 获取账号数据。
+     *
+     * @param accountId 账号 ID 。
+     * @return
+     */
+    Account getAccount(long accountId);
+
+    /**
      * 上传脚本。
      *
      * @param filename 文件名。

@@ -308,6 +308,31 @@ public class RoboengineImpl implements Roboengine {
     }
 
     @Override
+    public Account getAccount(long accountId) {
+        String url = "http://" + this.host + ":" + this.port + "/account/get/" + this.token + "/?id=" + accountId;
+
+        Account account = null;
+
+        try {
+            ContentResponse response = this.client.GET(url);
+            if (response.getStatus() != HttpStatus.OK_200) {
+                return account;
+            }
+
+            JSONObject data = new JSONObject(response.getContentAsString());
+            account = new Account(data);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+
+        return account;
+    }
+
+    @Override
     public boolean uploadScript(String filename, Path file) {
         String fileName = filename;
         try {

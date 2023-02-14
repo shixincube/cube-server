@@ -189,6 +189,22 @@ public class RobotCellet extends AbstractCellet {
                 }
             });
         }
+        else if (RobotAction.GetAccount.name.equals(action)) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    long accountId = dialect.getParamAsLong("accountId");
+                    Account account = service.getAccount(accountId);
+                    Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
+                    if (null != account) {
+                        responder.respond(RobotStateCode.Ok.code, account.toJSON());
+                    }
+                    else {
+                        responder.respond(RobotStateCode.Failure.code, new JSONObject());
+                    }
+                }
+            });
+        }
         else if (RobotAction.GetOnlineList.name.equals(action)) {
             this.executor.execute(new Runnable() {
                 @Override

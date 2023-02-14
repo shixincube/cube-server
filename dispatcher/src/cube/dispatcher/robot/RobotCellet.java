@@ -96,6 +96,7 @@ public class RobotCellet extends AbstractCellet implements Tickable {
         httpServer.addContextHandler(new RegisterCallback(this.performer));
         httpServer.addContextHandler(new DeregisterCallback(this.performer));
         httpServer.addContextHandler(new GetOnlineList(this.performer));
+        httpServer.addContextHandler(new GetAccount(this.performer));
         httpServer.addContextHandler(new Perform(this.performer));
         httpServer.addContextHandler(new Cancel(this.performer));
     }

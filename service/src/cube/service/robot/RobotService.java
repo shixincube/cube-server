@@ -189,6 +189,16 @@ public class RobotService extends AbstractModule {
         return this.roboengine.getOnlineAccounts();
     }
 
+    /**
+     * 获取指定账号数据。
+     *
+     * @param accountId
+     * @return
+     */
+    public Account getAccount(long accountId) {
+        return this.roboengine.getAccount(accountId);
+    }
+
     public void transferEvent(String name, JSONObject data) {
         if (EVENT_REPORT.equals(name)) {
             try {

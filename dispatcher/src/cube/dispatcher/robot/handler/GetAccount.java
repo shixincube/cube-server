@@ -41,12 +41,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * 获取在线设备列表。
+ * 获取账号数据。
  */
-public class GetOnlineList extends ContextHandler {
+public class GetAccount extends ContextHandler {
 
-    public GetOnlineList(Performer performer) {
-        super("/robot/online/");
+    public GetAccount(Performer performer) {
+        super("/robot/account/");
         setHandler(new Handler(performer));
     }
 
@@ -66,7 +66,24 @@ public class GetOnlineList extends ContextHandler {
                 return;
             }
 
-            ActionDialect actionDialect = new ActionDialect(RobotAction.GetOnlineList.name);
+            String idString = request.getParameter("id");
+            if (null == idString) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
+            long accountId = 0;
+            try {
+                accountId = Long.parseLong(idString);
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
+            ActionDialect actionDialect = new ActionDialect(RobotAction.GetAccount.name);
+            actionDialect.addParam("accountId", accountId);
             ActionDialect responseDialect = this.performer.syncTransmit(RobotCellet.NAME, actionDialect);
             if (null == responseDialect) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
