@@ -109,6 +109,15 @@ public interface Roboengine {
     List<Account> getOnlineAccounts();
 
     /**
+     * 批量获取账号列表。
+     *
+     * @param begin
+     * @param end
+     * @return
+     */
+    List<Account> getAccountList(int begin, int end);
+
+    /**
      * 获取账号数据。
      *
      * @param accountId 账号 ID 。

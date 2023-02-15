@@ -308,6 +308,41 @@ public class RoboengineImpl implements Roboengine {
     }
 
     @Override
+    public List<Account> getAccountList(int begin, int end) {
+        List<Account> list = new ArrayList<>();
+
+        StringBuilder url = new StringBuilder("http://");
+        url.append(this.host).append(":").append(this.port);
+        url.append("/account/list/").append(this.token);
+        url.append("?");
+        url.append("begin=").append(begin);
+        url.append("&");
+        url.append("end=").append(end);
+
+        try {
+            ContentResponse response = this.client.GET(url.toString());
+            if (response.getStatus() != HttpStatus.OK_200) {
+                return list;
+            }
+
+            JSONObject data = new JSONObject(response.getContentAsString());
+            JSONArray array = data.getJSONArray("list");
+            for (int i = 0; i < array.length(); ++i) {
+                Account account = new Account(array.getJSONObject(i));
+                list.add(account);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    @Override
     public Account getAccount(long accountId) {
         String url = "http://" + this.host + ":" + this.port + "/account/get/" + this.token + "/?id=" + accountId;
 

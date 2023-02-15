@@ -107,6 +107,35 @@ public class RobotTest {
         System.out.println("******** END ********");
     }
 
+    public void testGetAccountList() {
+        String url = this.getUrl("/robot/account/list/");
+        url = url + "?begin=0&end=19";
+
+        System.out.println("GET - " + url);
+
+        try {
+            ContentResponse response = this.client.GET(url);
+            if (response.getStatus() == HttpStatus.OK_200) {
+                JSONObject data = new JSONObject(response.getContentAsString());
+                int begin = data.getInt("begin");
+                int end = data.getInt("end");
+                JSONArray list = data.getJSONArray("list");
+                System.out.println("Position : " + begin + "-" + end + ", total: " + list.length());
+            }
+            else {
+                System.out.println("Error: " + response.getStatus());
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("******** END ********");
+    }
+
     public void testGetAccount() {
         String url = this.getUrl("/robot/account/");
         url = url + "/?id=7";
@@ -140,7 +169,9 @@ public class RobotTest {
 
 //        test.testGetOnlineList();
 
-        test.testGetAccount();
+        test.testGetAccountList();
+
+//        test.testGetAccount();
 
         test.teardown();
     }

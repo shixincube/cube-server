@@ -190,6 +190,17 @@ public class RobotService extends AbstractModule {
     }
 
     /**
+     * 获取账号列表。
+     *
+     * @param begin
+     * @param end
+     * @return
+     */
+    public List<Account> getAccountList(int begin, int end) {
+        return this.roboengine.getAccountList(begin, end);
+    }
+
+    /**
      * 获取指定账号数据。
      *
      * @param accountId

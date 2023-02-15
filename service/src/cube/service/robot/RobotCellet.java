@@ -222,6 +222,26 @@ public class RobotCellet extends AbstractCellet {
                 }
             });
         }
+        else if (RobotAction.GetAccountList.name.equals(action)) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    int begin = dialect.getParamAsInt("begin");
+                    int end = dialect.getParamAsInt("end");
+                    List<Account> accounts = service.getAccountList(begin, end);
+                    JSONArray array = new JSONArray();
+                    for (Account account : accounts) {
+                        array.put(account.toJSON());
+                    }
+                    JSONObject data = new JSONObject();
+                    data.put("begin", begin);
+                    data.put("end", end);
+                    data.put("list", array);
+                    Responder responder = new Responder(dialect, RobotCellet.this, talkContext);
+                    responder.respond(RobotStateCode.Ok.code, data);
+                }
+            });
+        }
         else if (RobotAction.RegisterListener.name.equals(action)) {
             // 来自 Client 的操作
             final String name = dialect.getParamAsString("name");
