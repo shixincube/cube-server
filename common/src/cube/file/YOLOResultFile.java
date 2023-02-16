@@ -27,24 +27,46 @@
 package cube.file;
 
 import cube.common.JSONable;
+import cube.util.FileUtils;
 import org.json.JSONObject;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * YOLO 结果文件。
  */
 public class YOLOResultFile implements JSONable {
 
-    public YOLOResultFile() {
+    private File sourceFile;
+
+    private File resultDir;
+    private File resultFile;
+
+    private Map<String, List<File>> resultObjects;
+
+    public YOLOResultFile(File sourceFile, File resultDir) {
+        this.sourceFile = sourceFile;
+        this.resultDir = resultDir;
+        this.resultFile = new File(resultDir, sourceFile.getName());
+        this.resultObjects = new HashMap<>();
+    }
+
+    public void analysisResult() {
 
     }
 
     @Override
     public JSONObject toJSON() {
-        return null;
+        JSONObject json = new JSONObject();
+
+        return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return null;
+        return this.toJSON();
     }
 }

@@ -30,6 +30,8 @@ import cube.file.YOLOResultFile;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * YOLO 处理器。
@@ -56,6 +58,20 @@ public class YOLO extends Processor {
     }
 
     public YOLOResultFile predict(File file) {
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add("yolo");
+        commandLine.add(TASK_DETECT);
+        commandLine.add(MODE_PREDICT);
+        commandLine.add("model=" + MODEL_V8_SMALL);
+        commandLine.add("source=\"" + file.getAbsolutePath() + "\"");
+        commandLine.add("save=True");
+        commandLine.add("save_crop=True");
+
+        Process process = null;
+        ProcessBuilder pb = new ProcessBuilder(commandLine);
+        // 设置工作目录
+        pb.directory(getWorkPath().toFile());
+
         return null;
     }
 
