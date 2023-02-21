@@ -55,7 +55,17 @@ public class YOLOResultFile implements JSONable {
     }
 
     public void analysisResult() {
+        File cropsDir = new File(this.resultDir, "crops");
+        if (cropsDir.isDirectory()) {
+            File[] files = cropsDir.listFiles();
+            if (null == files || files.length == 0) {
+                return;
+            }
 
+            for (File dir : files) {
+
+            }
+        }
     }
 
     @Override
