@@ -62,8 +62,9 @@ public class ProcessFileTask extends ClientTask {
     @Override
     public void run() {
         String domain = actionDialect.getParamAsString("domain");
-        String fileCode = actionDialect.getParamAsString("fileCode");
         String process = actionDialect.getParamAsString("process");
+
+        String fileCode = actionDialect.getParamAsString("fileCode");
 
         JSONObject notification = new JSONObject();
         notification.put("action", process);

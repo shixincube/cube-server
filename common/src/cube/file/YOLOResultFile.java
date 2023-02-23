@@ -63,6 +63,7 @@ public class YOLOResultFile implements JSONable {
             }
 
             for (File dir : files) {
+                String name = dir.getName();
 
             }
         }

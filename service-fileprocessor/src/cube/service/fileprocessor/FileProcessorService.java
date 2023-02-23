@@ -26,6 +26,7 @@
 
 package cube.service.fileprocessor;
 
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
@@ -49,10 +50,15 @@ import cube.service.filestorage.FileStorageService;
 import cube.util.*;
 import cube.vision.Size;
 import net.coobird.thumbnailator.Thumbnails;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.json.JSONObject;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -569,6 +575,28 @@ public class FileProcessorService extends AbstractModule {
     }
 
     /**
+     * 创建视频处理器处理来自 URL 的文件。
+     *
+     * @param domainName
+     * @param fileURL
+     * @param operationJson
+     * @return
+     */
+    public VideoProcessor createVideoProcessorByURL(String domainName, String fileURL, JSONObject operationJson) {
+        String filename = Utils.randomString(8);
+        String fileCode = FileUtils.makeFileCode(fileURL, domainName, filename);
+        FileLabel fileLabel = this.downloadFileByURL(fileURL, filename, fileCode);
+        if (null == fileLabel) {
+            Logger.w(this.getClass(), "#createVideoProcessorByURL - Downloads file failed: " + fileURL);
+            return null;
+        }
+
+        VideoProcessor processor = VideoProcessorBuilder.build(this.workPath, operationJson);
+        processor.setInputFile(fileLabel.getFile(), fileLabel);
+        return processor;
+    }
+
+    /**
      * 创建视频处理器。
      *
      * @param domainName
@@ -1013,6 +1041,80 @@ public class FileProcessorService extends AbstractModule {
     }
 
     /**
+     * 下载文件。
+     *
+     * @param url
+     * @param filename
+     * @param fileCode
+     * @return
+     */
+    private FileLabel downloadFileByURL(String url, String filename, String fileCode) {
+        HttpClient client = null;
+
+        if (url.toLowerCase().startsWith("https://")) {
+            SslContextFactory sslContextFactory = new SslContextFactory.Client(true);
+            client = new HttpClient(sslContextFactory);
+        }
+        else {
+            client = new HttpClient();
+        }
+
+        Object mutex = new Object();
+
+        FileOutputStream fos = null;
+
+        try {
+            client.start();
+
+            fos = new FileOutputStream(new File(this.workPath.toFile(), filename));
+
+            client.newRequest(url)
+                    .method("GET")
+                    .onComplete(new Response.CompleteListener() {
+                        @Override
+                        public void onComplete(Result result) {
+                            synchronized (mutex) {
+                                mutex.notify();
+                            }
+                        }
+                    })
+                    .send(new Response.Listener.Adapter() {
+                        @Override
+                        public void onContent(Response serverResponse, ByteBuffer buffer) {
+                            //fos.write(buffer.array(), buffer.position());
+                            System.out.println("XJW: " + buffer.position() + "/" + buffer.limit());
+                        }
+                    });
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                client.stop();
+            } catch (Exception e) {
+                // Nothing
+            }
+
+            if (null != fos) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    // Nothing
+                }
+            }
+        }
+
+        synchronized (mutex) {
+            try {
+                mutex.wait(60000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -1061,9 +1163,17 @@ public class FileProcessorService extends AbstractModule {
             }
             else if (FileProcessorAction.Video.name.equals(action)) {
                 String domain = data.getString("domain");
-                String fileCode = data.getString("fileCode");
                 // 创建视频处理器
-                VideoProcessor processor = createVideoProcessor(domain, fileCode, data.getJSONObject("parameter"));
+                VideoProcessor processor = null;
+                if (data.has("fileCode")) {
+                    processor = createVideoProcessor(domain,
+                            data.getString("fileCode"), data.getJSONObject("parameter"));
+                }
+                else if (data.has("fileURL")) {
+                    processor = createVideoProcessorByURL(domain,
+                            data.getString("fileURL"), data.getJSONObject("parameter"));
+                }
+
                 if (null != processor) {
                     if (processor instanceof SnapshotProcessor) {
                         SnapshotContext context = new SnapshotContext();
