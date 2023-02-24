@@ -1049,6 +1049,10 @@ public class FileProcessorService extends AbstractModule {
      * @return
      */
     private FileLabel downloadFileByURL(String url, String filename, String fileCode) {
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#downloadFileByURL - URL: " + url + " - " + filename);
+        }
+
         HttpClient client = null;
 
         if (url.toLowerCase().startsWith("https://")) {

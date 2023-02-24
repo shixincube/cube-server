@@ -63,13 +63,21 @@ public class ProcessFileTask extends ClientTask {
     public void run() {
         String domain = actionDialect.getParamAsString("domain");
         String process = actionDialect.getParamAsString("process");
-
-        String fileCode = actionDialect.getParamAsString("fileCode");
+        String fileCode = null;
+        String fileURL = null;
 
         JSONObject notification = new JSONObject();
         notification.put("action", process);
         notification.put("domain", domain);
-        notification.put("fileCode", fileCode);
+
+        if (actionDialect.containsParam("fileCode")) {
+            fileCode = actionDialect.getParamAsString("fileCode");
+            notification.put("fileCode", fileCode);
+        }
+        else if (actionDialect.containsParam("fileURL")) {
+            fileURL = actionDialect.getParamAsString("fileURL");
+            notification.put("fileURL", fileURL);
+        }
 
         if (actionDialect.containsParam("parameter")) {
             notification.put("parameter", actionDialect.getParamAsJson("parameter"));
@@ -111,7 +119,7 @@ public class ProcessFileTask extends ClientTask {
         }
         else {
             if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#run - No stream : " + fileCode);
+                Logger.d(this.getClass(), "#run - No stream : " + ((null != fileCode) ? fileCode : fileURL));
             }
         }
 
