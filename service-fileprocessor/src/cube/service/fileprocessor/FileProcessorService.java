@@ -51,8 +51,10 @@ import cube.util.*;
 import cube.vision.Size;
 import net.coobird.thumbnailator.Thumbnails;
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.json.JSONObject;
 
@@ -1053,6 +1055,8 @@ public class FileProcessorService extends AbstractModule {
             Logger.d(this.getClass(), "#downloadFileByURL - URL: " + url + " - " + filename);
         }
 
+        FileType fileType = FileUtils.verifyFileType(url.substring(url.lastIndexOf("/") + 1));
+
         HttpClient client = null;
 
         if (url.toLowerCase().startsWith("https://")) {
@@ -1065,12 +1069,10 @@ public class FileProcessorService extends AbstractModule {
 
         Object mutex = new Object();
 
-        FileOutputStream fos = null;
-
         try {
             client.start();
 
-            fos = new FileOutputStream(new File(this.workPath.toFile(), filename));
+            FileOutputStream fos = new FileOutputStream(new File(this.workPath.toFile(), filename));
 
             client.newRequest(url)
                     .method("GET")
@@ -1082,20 +1084,39 @@ public class FileProcessorService extends AbstractModule {
                             }
                         }
                     })
+                    .onRequestFailure(new Request.FailureListener() {
+                        @Override
+                        public void onFailure(Request request, Throwable throwable) {
+                            Logger.w(FileProcessorService.class, "#downloadFileByURL#onRequestFailure", throwable);
+                            synchronized (mutex) {
+                                mutex.notify();
+                            }
+                        }
+                    })
+                    .onResponseBegin(new Response.BeginListener() {
+                        @Override
+                        public void onBegin(Response response) {
+                            String contentType = response.getHeaders().get(HttpHeader.CONTENT_TYPE);
+
+                        }
+                    })
                     .send(new Response.Listener.Adapter() {
                         @Override
                         public void onContent(Response serverResponse, ByteBuffer buffer) {
-                            //fos.write(buffer.array(), buffer.position());
-                            System.out.println("XJW: " + buffer.position() + "/" + buffer.limit());
+                            try {
+                                fos.write(buffer.array(), buffer.position(), buffer.limit());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
                     });
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                client.stop();
-            } catch (Exception e) {
-                // Nothing
+
+            synchronized (mutex) {
+                try {
+                    mutex.wait(120000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
 
             if (null != fos) {
@@ -1105,13 +1126,13 @@ public class FileProcessorService extends AbstractModule {
                     // Nothing
                 }
             }
-        }
-
-        synchronized (mutex) {
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#downloadFileByURL", e);
+        } finally {
             try {
-                mutex.wait(60000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                client.stop();
+            } catch (Exception e) {
+                // Nothing
             }
         }
 
