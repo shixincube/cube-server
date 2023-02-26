@@ -587,7 +587,7 @@ public class FileProcessorService extends AbstractModule {
     public VideoProcessor createVideoProcessorByURL(String domainName, String fileURL, JSONObject operationJson) {
         String filename = Utils.randomString(8);
         String fileCode = FileUtils.makeFileCode(fileURL, domainName, filename);
-        FileLabel fileLabel = this.downloadFileByURL(fileURL, filename, fileCode);
+        FileLabel fileLabel = this.downloadFileByURL(fileURL, filename, domainName, fileCode);
         if (null == fileLabel) {
             Logger.w(this.getClass(), "#createVideoProcessorByURL - Downloads file failed: " + fileURL);
             return null;
@@ -1047,10 +1047,11 @@ public class FileProcessorService extends AbstractModule {
      *
      * @param url
      * @param filename
+     * @param domainName
      * @param fileCode
      * @return
      */
-    private FileLabel downloadFileByURL(String url, String filename, String fileCode) {
+    private FileLabel downloadFileByURL(String url, String filename, String domainName, String fileCode) {
         if (Logger.isDebugLevel()) {
             Logger.d(this.getClass(), "#downloadFileByURL - URL: " + url + " - " + filename);
         }
@@ -1068,12 +1069,14 @@ public class FileProcessorService extends AbstractModule {
             client = new HttpClient();
         }
 
+        File outputFile = new File(this.workPath.toFile(), filename);
+
         Object mutex = new Object();
 
         try {
             client.start();
 
-            FileOutputStream fos = new FileOutputStream(new File(this.workPath.toFile(), filename));
+            FileOutputStream fos = new FileOutputStream(outputFile);
 
             client.newRequest(url)
                     .method("GET")
@@ -1132,8 +1135,16 @@ public class FileProcessorService extends AbstractModule {
                     // Nothing
                 }
             }
+
+            if (fileType.value != FileType.UNKNOWN) {
+                File dest = new File(this.workPath.toFile(), filename + "." + fileType.value.getPreferredExtension());
+                if (outputFile.renameTo(dest)) {
+                    outputFile = dest;
+                }
+            }
         } catch (Exception e) {
             Logger.e(this.getClass(), "#downloadFileByURL", e);
+            return null;
         } finally {
             try {
                 client.stop();
@@ -1142,7 +1153,8 @@ public class FileProcessorService extends AbstractModule {
             }
         }
 
-        return null;
+        FileLabel fileLabel = FileUtils.makeFileLabel(domainName, fileCode, 0L, outputFile);
+        return fileLabel;
     }
 
     /**
