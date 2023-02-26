@@ -1055,7 +1055,8 @@ public class FileProcessorService extends AbstractModule {
             Logger.d(this.getClass(), "#downloadFileByURL - URL: " + url + " - " + filename);
         }
 
-        FileType fileType = FileUtils.verifyFileType(url.substring(url.lastIndexOf("/") + 1));
+        FileType type = FileUtils.verifyFileType(url.substring(url.lastIndexOf("/") + 1));
+        FileTypeMutable fileType = new FileTypeMutable(type);
 
         HttpClient client = null;
 
@@ -1097,7 +1098,12 @@ public class FileProcessorService extends AbstractModule {
                         @Override
                         public void onBegin(Response response) {
                             String contentType = response.getHeaders().get(HttpHeader.CONTENT_TYPE);
-
+                            if (null != contentType) {
+                                FileType mimeType = FileType.matchMimeType(contentType);
+                                if (mimeType != FileType.UNKNOWN) {
+                                    fileType.value = mimeType;
+                                }
+                            }
                         }
                     })
                     .send(new Response.Listener.Adapter() {

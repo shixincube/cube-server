@@ -1134,8 +1134,8 @@ public enum FileType {
     /**
      * 通过后缀名匹配文件类型。
      *
-     * @param extension
-     * @return
+     * @param extension 文件扩展名。
+     * @return 返回文件类型。
      */
     public static FileType matchExtension(String extension) {
         if (null == extension) {
@@ -1162,6 +1162,22 @@ public enum FileType {
             }
         }
 
+        return UNKNOWN;
+    }
+
+    /**
+     * 通过 MIME 类型匹配文件类型。
+     * 注意，该方法并不能准确识别所有 MIME 类型，一般用于对常用的文件类型进行匹配。
+     *
+     * @param mimeType 指定 MIME 类型。
+     * @return 返回文件类型。如果没有匹配的返回 <code>UNKNOWN</code> 。
+     */
+    public static FileType matchMimeType(String mimeType) {
+        for (FileType type : FileType.values()) {
+            if (type.mimeType.equals(mimeType)) {
+                return type;
+            }
+        }
         return UNKNOWN;
     }
 
