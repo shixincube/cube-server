@@ -26,8 +26,10 @@
 
 package cube.service.fileprocessor.processor;
 
+import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -44,6 +46,17 @@ public abstract class FFmpeg extends Processor {
     public FFmpeg(Path workPath) {
         super(workPath);
         this.running = new AtomicBoolean(false);
+
+        try {
+            File config = new File("config/ffmpeg.properties");
+            if (!config.exists()) {
+
+            }
+
+            ConfigUtils.readProperties(config.getAbsolutePath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean isRunning() {

@@ -1083,6 +1083,11 @@ public class FileProcessorService extends AbstractModule {
                     .onComplete(new Response.CompleteListener() {
                         @Override
                         public void onComplete(Result result) {
+                            if (Logger.isDebugLevel()) {
+                                Logger.d(FileProcessorService.class,
+                                        "#downloadFileByURL#onComplete - " + result.getResponse().getStatus());
+                            }
+
                             synchronized (mutex) {
                                 mutex.notify();
                             }
@@ -1144,6 +1149,11 @@ public class FileProcessorService extends AbstractModule {
             }
         } catch (Exception e) {
             Logger.e(this.getClass(), "#downloadFileByURL", e);
+
+            if (outputFile.exists()) {
+                outputFile.delete();
+            }
+
             return null;
         } finally {
             try {
@@ -1154,6 +1164,8 @@ public class FileProcessorService extends AbstractModule {
         }
 
         FileLabel fileLabel = FileUtils.makeFileLabel(domainName, fileCode, 0L, outputFile);
+        // 设置关联文件
+        fileLabel.setFile(outputFile);
         return fileLabel;
     }
 

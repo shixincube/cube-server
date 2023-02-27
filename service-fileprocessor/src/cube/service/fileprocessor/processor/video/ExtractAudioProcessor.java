@@ -57,7 +57,8 @@ public class ExtractAudioProcessor extends VideoProcessor {
 
         long time = System.currentTimeMillis();
 
-        String outputName = this.getFilename() + "_" + System.currentTimeMillis() + "." + this.operation.outputType.getPreferredExtension();
+        String outputName = this.getFilename() + "_" + System.currentTimeMillis()
+                + "." + this.operation.outputType.getPreferredExtension();
         File outputFile = new File(this.getWorkPath().toFile(), outputName);
         if (outputFile.exists()) {
             outputFile.delete();
