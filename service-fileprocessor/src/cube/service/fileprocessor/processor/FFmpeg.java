@@ -26,6 +26,7 @@
 
 package cube.service.fileprocessor.processor;
 
+import cell.util.log.Logger;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -43,19 +45,26 @@ public abstract class FFmpeg extends Processor {
 
     private AtomicBoolean running;
 
+    private String ffmpegCommand;
+    private String ffprobeCommand;
+
     public FFmpeg(Path workPath) {
         super(workPath);
         this.running = new AtomicBoolean(false);
+        this.ffmpegCommand = "/usr/bin/ffmpeg";
+        this.ffprobeCommand = "/usr/bin/ffprobe";
 
         try {
             File config = new File("config/ffmpeg.properties");
             if (!config.exists()) {
-
+                config = new File("ffmpeg.properties");
             }
 
-            ConfigUtils.readProperties(config.getAbsolutePath());
+            Properties properties = ConfigUtils.readProperties(config.getAbsolutePath());
+            this.ffmpegCommand = properties.getProperty("ffmpeg", "/usr/bin/ffmpeg");
+            this.ffprobeCommand = properties.getProperty("ffprobe", "/usr/bin/ffprobe");
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.w(getClass(), "#FFmpeg", e);
         }
     }
 
@@ -71,7 +80,7 @@ public abstract class FFmpeg extends Processor {
      */
     protected JSONObject probe(String filePath) {
         List<String> commandLine = new ArrayList<>();
-        commandLine.add("ffprobe");
+        commandLine.add(this.ffprobeCommand);
         commandLine.add("-v");
         commandLine.add("quiet");
         commandLine.add("-show_format");
@@ -138,7 +147,7 @@ public abstract class FFmpeg extends Processor {
 
     protected boolean call(List<String> params, ProcessorContext context) {
         List<String> commandLine = new ArrayList<>();
-        commandLine.add("ffmpeg");
+        commandLine.add(this.ffmpegCommand);
         commandLine.addAll(params);
 
         int status = -1;
