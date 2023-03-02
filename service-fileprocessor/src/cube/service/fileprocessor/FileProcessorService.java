@@ -54,12 +54,20 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.client.util.BufferingResponseListener;
+import org.eclipse.jetty.client.util.InputStreamResponseListener;
 import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.json.JSONObject;
 
+import javax.servlet.AsyncContext;
+import javax.servlet.AsyncListener;
+import javax.servlet.ServletOutputStream;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -68,8 +76,12 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 文件处理服务。
@@ -1071,67 +1083,66 @@ public class FileProcessorService extends AbstractModule {
 
         File outputFile = new File(this.workPath.toFile(), filename);
 
-        Object mutex = new Object();
+//        final CountDownLatch latch = new CountDownLatch(1);
+//        AtomicLong totalLength = new AtomicLong(0);
+//        AtomicLong length = new AtomicLong(0);
 
         try {
+            client.setFollowRedirects(true);
             client.start();
 
             FileOutputStream fos = new FileOutputStream(outputFile);
 
+            /*
             client.newRequest(url)
-                    .method("GET")
-                    .onComplete(new Response.CompleteListener() {
-                        @Override
-                        public void onComplete(Result result) {
-                            if (Logger.isDebugLevel()) {
-                                Logger.d(FileProcessorService.class,
-                                        "#downloadFileByURL#onComplete - " + result.getResponse().getStatus());
-                            }
-
-                            synchronized (mutex) {
-                                mutex.notify();
-                            }
-                        }
-                    })
+                    .timeout(10, TimeUnit.SECONDS)
                     .onRequestFailure(new Request.FailureListener() {
                         @Override
                         public void onFailure(Request request, Throwable throwable) {
                             Logger.w(FileProcessorService.class, "#downloadFileByURL#onRequestFailure", throwable);
-                            synchronized (mutex) {
-                                mutex.notify();
-                            }
+                            latch.countDown();
                         }
                     })
-                    .onResponseBegin(new Response.BeginListener() {
-                        @Override
-                        public void onBegin(Response response) {
-                            String contentType = response.getHeaders().get(HttpHeader.CONTENT_TYPE);
-                            if (null != contentType) {
-                                FileType mimeType = FileType.matchMimeType(contentType);
-                                if (mimeType != FileType.UNKNOWN) {
-                                    fileType.value = mimeType;
-                                }
-                            }
+                    .send(result -> {
+                        if (Logger.isDebugLevel()) {
+                            Logger.d(FileProcessorService.class,
+                                    "#downloadFileByURL#onComplete - " + result.getResponse().getStatus());
                         }
-                    })
-                    .send(new Response.Listener.Adapter() {
-                        @Override
-                        public void onContent(Response serverResponse, ByteBuffer buffer) {
-                            try {
-                                fos.write(buffer.array(), buffer.position(), buffer.limit());
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    });
 
-            synchronized (mutex) {
-                try {
-                    mutex.wait(120000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                        String contentLength = result.getResponse().getHeaders().get(HttpHeader.CONTENT_LENGTH);
+                        if (null != contentLength) {
+                            totalLength.set(Long.parseLong(contentLength));
+                        }
+
+                        String contentType = result.getResponse().getHeaders().get(HttpHeader.CONTENT_TYPE);
+                        if (null != contentType) {
+                            FileType mimeType = FileType.matchMimeType(contentType);
+                            if (mimeType != FileType.UNKNOWN) {
+                                fileType.value = mimeType;
+                            }
+                        }
+
+                        latch.countDown();
+                    });*/
+
+            InputStreamResponseListener listener = new InputStreamResponseListener();
+            client.newRequest(url)
+                    .timeout(10, TimeUnit.SECONDS)
+                    .send(listener);
+
+            Response clientResponse = listener.get(5, TimeUnit.SECONDS);
+            if (clientResponse.getStatus() == HttpStatus.OK_200) {
+
+                InputStream content = listener.getInputStream();
+                byte[] buf = new byte[1024];
+                int length = 0;
+                while ((length = content.read(buf)) > 0) {
+                    fos.write(buf, 0, length);
                 }
             }
+
+//            boolean result = latch.await(2, TimeUnit.MINUTES);
+//            System.out.println("XJW end: " + result);
 
             if (null != fos) {
                 try {

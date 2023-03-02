@@ -105,8 +105,12 @@ public class ExtractAudioProcessor extends VideoProcessor {
         // 读取文件属性
         JSONObject attrJson = this.probe(file.getName());
         if (null != attrJson) {
-            MediaAttribute attribute = new MediaAttribute(attrJson);
-            result.mediaAttribute = attribute;
+            try {
+                MediaAttribute attribute = new MediaAttribute(attrJson);
+                result.mediaAttribute = attribute;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         context.addResult(result);
