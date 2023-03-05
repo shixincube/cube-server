@@ -1083,9 +1083,7 @@ public class FileProcessorService extends AbstractModule {
 
         File outputFile = new File(this.workPath.toFile(), filename);
 
-//        final CountDownLatch latch = new CountDownLatch(1);
-//        AtomicLong totalLength = new AtomicLong(0);
-//        AtomicLong length = new AtomicLong(0);
+        long totalLength = 0;
 
         try {
             client.setFollowRedirects(true);
@@ -1093,45 +1091,28 @@ public class FileProcessorService extends AbstractModule {
 
             FileOutputStream fos = new FileOutputStream(outputFile);
 
-            /*
-            client.newRequest(url)
-                    .timeout(10, TimeUnit.SECONDS)
-                    .onRequestFailure(new Request.FailureListener() {
-                        @Override
-                        public void onFailure(Request request, Throwable throwable) {
-                            Logger.w(FileProcessorService.class, "#downloadFileByURL#onRequestFailure", throwable);
-                            latch.countDown();
-                        }
-                    })
-                    .send(result -> {
-                        if (Logger.isDebugLevel()) {
-                            Logger.d(FileProcessorService.class,
-                                    "#downloadFileByURL#onComplete - " + result.getResponse().getStatus());
-                        }
-
-                        String contentLength = result.getResponse().getHeaders().get(HttpHeader.CONTENT_LENGTH);
-                        if (null != contentLength) {
-                            totalLength.set(Long.parseLong(contentLength));
-                        }
-
-                        String contentType = result.getResponse().getHeaders().get(HttpHeader.CONTENT_TYPE);
-                        if (null != contentType) {
-                            FileType mimeType = FileType.matchMimeType(contentType);
-                            if (mimeType != FileType.UNKNOWN) {
-                                fileType.value = mimeType;
-                            }
-                        }
-
-                        latch.countDown();
-                    });*/
-
             InputStreamResponseListener listener = new InputStreamResponseListener();
             client.newRequest(url)
-                    .timeout(10, TimeUnit.SECONDS)
+                    .timeout(10, TimeUnit.MINUTES)
                     .send(listener);
 
-            Response clientResponse = listener.get(5, TimeUnit.SECONDS);
+            Response clientResponse = listener.get(10, TimeUnit.MINUTES);
             if (clientResponse.getStatus() == HttpStatus.OK_200) {
+                Logger.d(this.getClass(), "#downloadFileByURL - Start download data");
+
+                // 获取类型和长度
+                String contentLength = clientResponse.getHeaders().get(HttpHeader.CONTENT_LENGTH);
+                if (null != contentLength) {
+                    totalLength = Long.parseLong(contentLength);
+                }
+
+                String contentType = clientResponse.getHeaders().get(HttpHeader.CONTENT_TYPE);
+                if (null != contentType) {
+                    FileType mimeType = FileType.matchMimeType(contentType);
+                    if (mimeType != FileType.UNKNOWN) {
+                        fileType.value = mimeType;
+                    }
+                }
 
                 InputStream content = listener.getInputStream();
                 byte[] buf = new byte[1024];
@@ -1141,15 +1122,19 @@ public class FileProcessorService extends AbstractModule {
                 }
             }
 
-//            boolean result = latch.await(2, TimeUnit.MINUTES);
-//            System.out.println("XJW end: " + result);
-
             if (null != fos) {
                 try {
                     fos.close();
                 } catch (IOException e) {
                     // Nothing
                 }
+            }
+
+            if (outputFile.length() == 0 || outputFile.length() != totalLength) {
+                Logger.e(this.getClass(), "#downloadFileByURL - Download (" + url + ") failed: "
+                        + outputFile.length() + "/" + totalLength);
+                outputFile.delete();
+                return null;
             }
 
             if (fileType.value != FileType.UNKNOWN) {
