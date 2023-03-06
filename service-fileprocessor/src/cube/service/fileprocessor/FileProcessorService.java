@@ -607,6 +607,7 @@ public class FileProcessorService extends AbstractModule {
 
         VideoProcessor processor = VideoProcessorBuilder.build(this.workPath, operationJson);
         processor.setInputFile(fileLabel.getFile(), fileLabel);
+        processor.setDeleteSourceFile(true);
         return processor;
     }
 

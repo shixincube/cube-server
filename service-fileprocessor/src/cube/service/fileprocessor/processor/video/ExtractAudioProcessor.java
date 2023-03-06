@@ -114,5 +114,9 @@ public class ExtractAudioProcessor extends VideoProcessor {
         }
 
         context.addResult(result);
+
+        if (this.deleteSourceFile) {
+            this.inputFile.delete();
+        }
     }
 }

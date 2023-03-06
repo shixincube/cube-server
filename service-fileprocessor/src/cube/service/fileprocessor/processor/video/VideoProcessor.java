@@ -43,6 +43,8 @@ public abstract class VideoProcessor extends FFmpeg {
 
     protected FileLabel inputFileLabel;
 
+    protected boolean deleteSourceFile = false;
+
     public VideoProcessor(Path workPath) {
         super(workPath);
     }
@@ -63,6 +65,10 @@ public abstract class VideoProcessor extends FFmpeg {
         else {
             return FileUtils.extractFileName(this.inputFile.getName());
         }
+    }
+
+    public void setDeleteSourceFile(boolean value) {
+        this.deleteSourceFile = value;
     }
 
     public abstract void go(ProcessorContext context);
