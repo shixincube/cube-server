@@ -66,7 +66,8 @@ public abstract class FFmpeg extends Processor {
                 this.ffprobeCommand = properties.getProperty("ffprobe", "/usr/bin/ffprobe");
             }
             else {
-                Logger.w(getClass(), "Can NOT find ffmpeg config properties file");
+                Logger.w(getClass(), "Can NOT find ffmpeg config properties file, use default config: \"" +
+                        this.ffmpegCommand + "\" and \"" + this.ffprobeCommand + "\"");
             }
         } catch (IOException e) {
             Logger.w(getClass(), "#FFmpeg", e);
