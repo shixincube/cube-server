@@ -37,6 +37,12 @@ public class ExtractAudioOperation extends VideoOperation {
 
     public final static String Operation = "ExtractAudio";
 
+    private final static String KEY_OUTPUT_TYPE = "outputType";
+
+    private final static String KEY_CHANNEL = "ac";
+
+    private final static String KEY_SAMPLING_RATE = "ar";
+
     public FileType outputType;
 
     public ExtractAudioOperation() {
@@ -46,7 +52,7 @@ public class ExtractAudioOperation extends VideoOperation {
 
     public ExtractAudioOperation(JSONObject json) {
         super();
-        this.outputType = FileType.matchExtension(json.getString("outputType"));
+        this.outputType = FileType.matchExtension(json.getString(KEY_OUTPUT_TYPE));
     }
 
     @Override
@@ -57,7 +63,7 @@ public class ExtractAudioOperation extends VideoOperation {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("outputType", this.outputType.getPreferredExtension());
+        json.put(KEY_OUTPUT_TYPE, this.outputType.getPreferredExtension());
         return json;
     }
 }
