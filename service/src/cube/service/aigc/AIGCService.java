@@ -26,11 +26,18 @@
 
 package cube.service.aigc;
 
+import cell.core.talk.TalkContext;
+import cube.common.entity.AIGCChannel;
+import cube.common.entity.AIGCUnit;
+import cube.common.entity.CapabilitySet;
 import cube.common.entity.Contact;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * AIGC 服务。
@@ -41,8 +48,11 @@ public class AIGCService extends AbstractModule {
 
     private AIGCCellet cellet;
 
+    private List<AIGCUnit> unitList;
+
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
+        this.unitList = new ArrayList<>();
     }
 
     @Override
@@ -65,9 +75,31 @@ public class AIGCService extends AbstractModule {
 
     }
 
-    public void join(Contact contact) {
+    public AIGCUnit setupUnit(Contact contact, CapabilitySet capabilitySet, TalkContext context) {
+        synchronized (this.unitList) {
+            for (AIGCUnit unit : this.unitList) {
+                if (unit.getContact().getId().equals(contact.getId())) {
+                    unit.setCapabilitySet(capabilitySet);
+                    unit.setTalkContext(context);
+                    return unit;
+                }
+            }
+
+            AIGCUnit unit = new AIGCUnit(contact, capabilitySet, context);
+            this.unitList.add(unit);
+            return unit;
+        }
+    }
+
+    public void teardownUnit(Contact contact) {
 
     }
 
+    public AIGCChannel requestChannel() {
+        return null;
+    }
 
+    public void chat() {
+
+    }
 }

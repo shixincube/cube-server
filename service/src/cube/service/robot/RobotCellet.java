@@ -51,8 +51,6 @@ public class RobotCellet extends AbstractCellet {
 
     private RobotService service;
 
-    private ExecutorService executor;
-
     public RobotCellet() {
         super(NAME);
     }
@@ -63,8 +61,6 @@ public class RobotCellet extends AbstractCellet {
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.installModule(RobotService.NAME, this.service);
 
-        this.executor = Executors.newCachedThreadPool();
-
         return true;
     }
 
@@ -74,8 +70,6 @@ public class RobotCellet extends AbstractCellet {
         kernel.uninstallModule(RobotService.NAME);
 
         this.service = null;
-
-        this.executor.shutdown();
     }
 
     @Override
@@ -96,7 +90,7 @@ public class RobotCellet extends AbstractCellet {
             final JSONObject parameter = dialect.containsParam("parameter")
                     ? dialect.getParamAsJson("parameter") : new JSONObject();
 
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     boolean success = false;
@@ -118,7 +112,7 @@ public class RobotCellet extends AbstractCellet {
             // 来自 Client 的操作
             final String filename = dialect.getParamAsString("filename");
 
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     service.downloadReportFile(filename, talkContext);
@@ -127,7 +121,7 @@ public class RobotCellet extends AbstractCellet {
         }
         else if (RobotAction.ListScriptFiles.name.equals(action)) {
             // 来自 Client 的操作
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     List<ScriptFile> list = service.listScriptFiles();
@@ -147,7 +141,7 @@ public class RobotCellet extends AbstractCellet {
         }
         else if (RobotAction.DownloadScriptFile.name.equals(action)) {
             // 来自 Client 的操作
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     String relativePath = dialect.getParamAsString("relativePath");
@@ -164,7 +158,7 @@ public class RobotCellet extends AbstractCellet {
         }
         else if (RobotAction.UploadScriptFile.name.equals(action)) {
             // 来自 Client 的操作
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     String relativePath = dialect.getParamAsString("relativePath");
@@ -176,7 +170,7 @@ public class RobotCellet extends AbstractCellet {
             });
         }
         else if (RobotAction.Cancel.name.equals(action)) {
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     long accountId = dialect.getParamAsLong("accountId");
@@ -190,7 +184,7 @@ public class RobotCellet extends AbstractCellet {
             });
         }
         else if (RobotAction.GetAccount.name.equals(action)) {
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     long accountId = dialect.getParamAsLong("accountId");
@@ -206,7 +200,7 @@ public class RobotCellet extends AbstractCellet {
             });
         }
         else if (RobotAction.GetOnlineList.name.equals(action)) {
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     List<Account> accounts = service.getOnlineList();
@@ -223,7 +217,7 @@ public class RobotCellet extends AbstractCellet {
             });
         }
         else if (RobotAction.GetAccountList.name.equals(action)) {
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     int begin = dialect.getParamAsInt("begin");
@@ -246,7 +240,7 @@ public class RobotCellet extends AbstractCellet {
             // 来自 Client 的操作
             final String name = dialect.getParamAsString("name");
 
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     int code = RobotStateCode.Unknown.code;
@@ -270,7 +264,7 @@ public class RobotCellet extends AbstractCellet {
             // 来自 Client 的操作
             final String name = dialect.getParamAsString("name");
 
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     int code = RobotStateCode.Unknown.code;

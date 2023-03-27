@@ -44,16 +44,12 @@ import java.util.concurrent.ExecutorService;
  */
 public class ContactServiceCellet extends AbstractCellet {
 
-    private ExecutorService executor = null;
-
     public ContactServiceCellet() {
         super(ContactManager.NAME);
     }
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
-
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.installModule(ContactManager.NAME, ContactManager.getInstance());
 
@@ -64,8 +60,6 @@ public class ContactServiceCellet extends AbstractCellet {
 
     @Override
     public void uninstall() {
-        this.executor.shutdown();
-
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.uninstallModule(ContactManager.NAME);
     }
@@ -78,111 +72,111 @@ public class ContactServiceCellet extends AbstractCellet {
         String action = dialect.getName();
 
         if (ContactAction.Comeback.name.equals(action)) {
-            this.executor.execute(new ComebackTask(this, talkContext, primitive,
+            this.execute(new ComebackTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.SignIn.name.equals(action)) {
-            this.executor.execute(new SignInTask(this, talkContext, primitive,
+            this.execute(new SignInTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.GetContact.name.equals(action)) {
-            this.executor.execute(new GetContactTask(this, talkContext, primitive,
+            this.execute(new GetContactTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.ModifyContact.name.equals(action)) {
-            this.executor.execute(new ModifyContactTask(this, talkContext, primitive,
+            this.execute(new ModifyContactTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.GetContactZone.name.equals(action)) {
-            this.executor.execute(new GetContactZoneTask(this, talkContext, primitive,
+            this.execute(new GetContactZoneTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.AddParticipantToZone.name.equals(action)) {
-            this.executor.execute(new AddParticipantToZoneTask(this, talkContext, primitive,
+            this.execute(new AddParticipantToZoneTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.RemoveParticipantFromZone.name.equals(action)) {
-            this.executor.execute(new RemoveParticipantFromZoneTask(this, talkContext, primitive,
+            this.execute(new RemoveParticipantFromZoneTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.ContainsParticipantInZone.name.equals(action)) {
-            this.executor.execute(new ContainsParticipantInZoneTask(this, talkContext, primitive,
+            this.execute(new ContainsParticipantInZoneTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.CreateContactZone.name.equals(action)) {
-            this.executor.execute(new CreateContactZoneTask(this, talkContext, primitive,
+            this.execute(new CreateContactZoneTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.DeleteContactZone.name.equals(action)) {
-            this.executor.execute(new DeleteContactZoneTask(this, talkContext, primitive,
+            this.execute(new DeleteContactZoneTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.ModifyZoneParticipant.name.equals(action)) {
-            this.executor.execute(new ModifyZoneParticipantTask(this, talkContext, primitive,
+            this.execute(new ModifyZoneParticipantTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.Search.name.equals(action)) {
-            this.executor.execute(new SearchTask(this, talkContext, primitive,
+            this.execute(new SearchTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.GetGroup.name.equals(action)) {
-            this.executor.execute(new GetGroupTask(this, talkContext, primitive,
+            this.execute(new GetGroupTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.ListGroups.name.equals(action)) {
-            this.executor.execute(new ListGroupsTask(this, talkContext, primitive,
+            this.execute(new ListGroupsTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.ModifyGroup.name.equals(action)) {
-            this.executor.execute(new ModifyGroupTask(this, talkContext, primitive,
+            this.execute(new ModifyGroupTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.CreateGroup.name.equals(action)) {
-            this.executor.execute(new CreateGroupTask(this, talkContext, primitive,
+            this.execute(new CreateGroupTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.DismissGroup.name.equals(action)) {
-            this.executor.execute(new DismissGroupTask(this, talkContext, primitive,
+            this.execute(new DismissGroupTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.AddGroupMember.name.equals(action)) {
-            this.executor.execute(new AddGroupMemberTask(this, talkContext, primitive,
+            this.execute(new AddGroupMemberTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.RemoveGroupMember.name.equals(action)) {
-            this.executor.execute(new RemoveGroupMemberTask(this, talkContext, primitive,
+            this.execute(new RemoveGroupMemberTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.GetAppendix.name.equals(action)) {
-            this.executor.execute(new GetAppendixTask(this, talkContext, primitive,
+            this.execute(new GetAppendixTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.UpdateAppendix.name.equals(action)) {
-            this.executor.execute(new UpdateAppendixTask(this, talkContext, primitive,
+            this.execute(new UpdateAppendixTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.ListContactZones.name.equals(action)) {
-            this.executor.execute(new ListContactZonesTask(this, talkContext, primitive,
+            this.execute(new ListContactZonesTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.TopList.name.equals(action)) {
-            this.executor.execute(new TopListTask(this, talkContext, primitive,
+            this.execute(new TopListTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.BlockList.name.equals(action)) {
-            this.executor.execute(new BlockListTask(this, talkContext, primitive,
+            this.execute(new BlockListTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.DeviceTimeout.name.equals(action)) {
-            this.executor.execute(new DeviceTimeoutTask(this, talkContext, primitive,
+            this.execute(new DeviceTimeoutTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.SignOut.name.equals(action)) {
-            this.executor.execute(new SignOutTask(this, talkContext, primitive,
+            this.execute(new SignOutTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (ContactAction.Disconnect.name.equals(action)) {
-            this.executor.execute(new DisconnectTask(this, talkContext, primitive));
+            this.execute(new DisconnectTask(this, talkContext, primitive));
         }
         else {
             Logger.w(this.getClass(), "Unsupported action: " + action);

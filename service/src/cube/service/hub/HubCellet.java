@@ -46,8 +46,6 @@ import java.util.concurrent.ExecutorService;
  */
 public class HubCellet extends AbstractCellet {
 
-    private ExecutorService executor;
-
     private HubService service;
 
     public HubCellet() {
@@ -56,9 +54,7 @@ public class HubCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
-
-        this.service = new HubService(this, this.executor);
+        this.service = new HubService(this, this.getExecutor());
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.installModule(HubService.NAME, this.service);
 
@@ -67,8 +63,6 @@ public class HubCellet extends AbstractCellet {
 
     @Override
     public void uninstall() {
-        this.executor.shutdown();
-
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.uninstallModule(HubService.NAME);
 
@@ -105,7 +99,7 @@ public class HubCellet extends AbstractCellet {
 
     @Override
     public void onListened(TalkContext talkContext, PrimitiveInputStream inputStream) {
-        this.executor.execute(new StreamProcessor(talkContext, inputStream));
+        this.execute(new StreamProcessor(talkContext, inputStream));
     }
 
     @Override

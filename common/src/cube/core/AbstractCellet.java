@@ -29,19 +29,24 @@ package cube.core;
 import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
+import cell.util.CachedQueueExecutor;
 import cube.benchmark.ResponseTime;
+import cube.common.entity.AbstractContact;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 抽象的服务 Cellet 单元。
  */
 public abstract class AbstractCellet extends Cellet {
+
+    protected static ExecutorService sExecutor;
 
     protected AtomicLong listenedCounter = new AtomicLong(0L);
 
@@ -51,6 +56,26 @@ public abstract class AbstractCellet extends Cellet {
 
     public AbstractCellet(String name) {
         super(name);
+    }
+
+    public static void initialize() {
+        if (null == AbstractCellet.sExecutor) {
+            AbstractCellet.sExecutor = CachedQueueExecutor.newCachedQueueThreadPool(32);
+        }
+    }
+
+    public static void halt() {
+        if (null != AbstractCellet.sExecutor) {
+            AbstractCellet.sExecutor.shutdown();
+        }
+    }
+
+    public ExecutorService getExecutor() {
+        return AbstractCellet.sExecutor;
+    }
+
+    protected void execute(Runnable task) {
+        AbstractCellet.sExecutor.execute(task);
     }
 
     /**

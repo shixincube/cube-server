@@ -44,8 +44,6 @@ import java.util.concurrent.Executors;
  */
 public class FerryCellet extends AbstractCellet {
 
-    private ExecutorService executor;
-
     private FerryService ferryService;
 
     public FerryCellet() {
@@ -54,8 +52,6 @@ public class FerryCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = Executors.newCachedThreadPool();
-
         this.ferryService = new FerryService(this);
 
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
@@ -68,8 +64,6 @@ public class FerryCellet extends AbstractCellet {
     public void uninstall() {
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.uninstallModule(FerryService.NAME);
-
-        this.executor.shutdown();
     }
 
     public FerryService getFerryService() {
@@ -84,11 +78,11 @@ public class FerryCellet extends AbstractCellet {
         String action = dialect.getName();
 
         if (FerryAction.Ping.name.equals(action)) {
-            this.executor.execute(new PingTask(this, talkContext, primitive,
+            this.execute(new PingTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (FerryAction.PingAck.name.equals(action)) {
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     ferryService.notifyAckBundles(dialect);
@@ -96,11 +90,11 @@ public class FerryCellet extends AbstractCellet {
             });
         }
         else if (FerryAction.Report.name.equals(action)) {
-            this.executor.execute(new ReportTask(this, talkContext, primitive,
+            this.execute(new ReportTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (FerryAction.ReportAck.name.equals(action)) {
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     ferryService.notifyAckBundles(dialect);
@@ -108,23 +102,23 @@ public class FerryCellet extends AbstractCellet {
             });
         }
         else if (FerryAction.TakeOutTenet.name.equals(action)) {
-            this.executor.execute(new TakeOutTenetTask(this, talkContext, primitive,
+            this.execute(new TakeOutTenetTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (FerryAction.QueryDomain.name.equals(action)) {
-            this.executor.execute(new QueryDomainTask(this, talkContext, primitive,
+            this.execute(new QueryDomainTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (FerryAction.JoinDomain.name.equals(action)) {
-            this.executor.execute(new JoinDomainTask(this, talkContext, primitive,
+            this.execute(new JoinDomainTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (FerryAction.QuitDomain.name.equals(action)) {
-            this.executor.execute(new QuitDomainTask(this, talkContext, primitive,
+            this.execute(new QuitDomainTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (FerryAction.CheckIn.name.equals(action)) {
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     ferryService.checkIn(dialect, talkContext);
@@ -132,7 +126,7 @@ public class FerryCellet extends AbstractCellet {
             });
         }
         else if (FerryAction.CheckOut.name.equals(action)) {
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     ferryService.checkOut(dialect, talkContext);
@@ -140,7 +134,7 @@ public class FerryCellet extends AbstractCellet {
             });
         }
         else if (FerryAction.Tenet.name.equals(action)) {
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     ferryService.triggerTenet(dialect);
@@ -148,7 +142,7 @@ public class FerryCellet extends AbstractCellet {
             });
         }
         else if (FerryAction.Synchronize.name.equals(action)) {
-            this.executor.execute(new Runnable() {
+            this.execute(new Runnable() {
                 @Override
                 public void run() {
                     ferryService.processSynchronize(dialect, talkContext);

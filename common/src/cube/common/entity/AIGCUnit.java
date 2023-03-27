@@ -24,38 +24,53 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.common.entity;
+
+import cell.core.talk.TalkContext;
+import org.json.JSONObject;
 
 /**
- * AIGC 动作。
+ * AIGC 服务单元。
  */
-public enum AIGCAction {
+public class AIGCUnit extends Entity {
 
-    /**
-     * 服务节点加入。
-     */
-    Setup("setup"),
+    private Contact contact;
 
-    /**
-     * 服务节点离开。
-     */
-    Teardown("teardown"),
+    private CapabilitySet capabilitySet;
 
-    /**
-     * 请求通道。
-     */
-    RequestChannel("requestChannel"),
+    private TalkContext context;
 
-    /**
-     * 问答互动。
-     */
-    Chat("chat")
+    public AIGCUnit(Contact contact, CapabilitySet capabilitySet, TalkContext context) {
+        super(contact.id, contact.domain.getName());
+        this.contact = contact;
+        this.capabilitySet = capabilitySet;
+        this.context = context;
+    }
 
-    ;
+    public Contact getContact() {
+        return this.contact;
+    }
 
-    public final String name;
+    public CapabilitySet getCapabilitySet() {
+        return this.capabilitySet;
+    }
 
-    AIGCAction(String name) {
-        this.name = name;
+    public TalkContext getContext() {
+        return this.context;
+    }
+
+    public void setCapabilitySet(CapabilitySet capabilitySet) {
+        this.capabilitySet = capabilitySet;
+    }
+
+    public void setTalkContext(TalkContext context) {
+        this.context = context;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("capability", this.capabilitySet.toJSON());
+        return json;
     }
 }

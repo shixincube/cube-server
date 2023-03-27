@@ -32,6 +32,7 @@ import cell.util.Utils;
 import cell.util.log.LogManager;
 import cell.util.log.Logger;
 import cube.cache.SharedMemoryCache;
+import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.plugin.PluginSystem;
 import cube.report.ReportService;
@@ -117,6 +118,8 @@ public class ServiceCarpet implements CellListener {
     }
 
     private void setupKernel() {
+        AbstractCellet.initialize();
+
         JSONObject tokenCache = new JSONObject();
         try {
             String filepath= "config/token-pool.properties";
@@ -155,6 +158,8 @@ public class ServiceCarpet implements CellListener {
         this.kernel.uninstallCache("TokenPool");
 
         this.kernel.shutdown();
+
+        AbstractCellet.halt();
     }
 
     private void initManagement(Nucleus nucleus) {

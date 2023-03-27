@@ -28,8 +28,11 @@ package cube.service.aigc;
 
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cube.common.action.AIGCAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.service.aigc.task.SetupTask;
 import cube.service.auth.AuthService;
 import cube.service.robot.RobotService;
 
@@ -60,8 +63,20 @@ public class AIGCCellet extends AbstractCellet {
         kernel.uninstallModule(AuthService.NAME);
     }
 
+    public AIGCService getService() {
+        return this.service;
+    }
+
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
+
+        ActionDialect dialect = new ActionDialect(primitive);
+        String action = dialect.getName();
+
+        if (AIGCAction.Setup.name.equals(action)) {
+            this.execute(new SetupTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
     }
 }

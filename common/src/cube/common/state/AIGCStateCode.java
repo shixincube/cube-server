@@ -24,38 +24,58 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.common.state;
 
 /**
- * AIGC 动作。
+ * AIGC 模块状态码。
  */
-public enum AIGCAction {
+public enum AIGCStateCode {
 
     /**
-     * 服务节点加入。
+     * 成功。
      */
-    Setup("setup"),
+    Ok(0),
 
     /**
-     * 服务节点离开。
+     * 无效参数。
      */
-    Teardown("teardown"),
+    InvalidParameter(5),
 
     /**
-     * 请求通道。
+     * 数据结构错误。
      */
-    RequestChannel("requestChannel"),
+    DataStructureError(8),
 
     /**
-     * 问答互动。
+     * 遇到故障。
      */
-    Chat("chat")
+    Failure(9),
+
+    /**
+     * 无效域信息。
+     */
+    InvalidDomain(11),
+
+    /**
+     * 令牌不一致。
+     */
+    InconsistentToken(21),
+
+    /**
+     * 不被接受的非法操作。
+     */
+    IllegalOperation(25),
+
+    /**
+     * 未知的状态。
+     */
+    Unknown(99)
 
     ;
 
-    public final String name;
+    public final int code;
 
-    AIGCAction(String name) {
-        this.name = name;
+    AIGCStateCode(int code) {
+        this.code = code;
     }
 }

@@ -24,38 +24,13 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.common.entity;
 
 /**
- * AIGC 动作。
+ * AIGC 分配给用户的通道。
  */
-public enum AIGCAction {
+public class AIGCChannel extends Entity {
 
-    /**
-     * 服务节点加入。
-     */
-    Setup("setup"),
-
-    /**
-     * 服务节点离开。
-     */
-    Teardown("teardown"),
-
-    /**
-     * 请求通道。
-     */
-    RequestChannel("requestChannel"),
-
-    /**
-     * 问答互动。
-     */
-    Chat("chat")
-
-    ;
-
-    public final String name;
-
-    AIGCAction(String name) {
-        this.name = name;
+    public AIGCChannel() {
     }
 }

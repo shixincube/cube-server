@@ -46,16 +46,12 @@ import java.util.concurrent.ExecutorService;
  */
 public class AuthServiceCellet extends AbstractCellet {
 
-    private ExecutorService executor;
-
     public AuthServiceCellet() {
         super(AuthService.NAME);
     }
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(4);
-
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.installModule(AuthService.NAME, new AuthService());
 
@@ -64,8 +60,6 @@ public class AuthServiceCellet extends AbstractCellet {
 
     @Override
     public void uninstall() {
-        this.executor.shutdown();
-
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.uninstallModule(AuthService.NAME);
     }
@@ -78,19 +72,19 @@ public class AuthServiceCellet extends AbstractCellet {
         String action = dialect.getName();
 
         if (AuthAction.ApplyToken.name.equals(action)) {
-            this.executor.execute(new ApplyTokenTask(this, talkContext, primitive,
+            this.execute(new ApplyTokenTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (AuthAction.GetToken.name.equals(action)) {
-            this.executor.execute(new GetTokenTask(this, talkContext, primitive,
+            this.execute(new GetTokenTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (AuthAction.GetDomain.name.equals(action)) {
-            this.executor.execute(new GetDomainTask(this, talkContext, primitive,
+            this.execute(new GetDomainTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (AuthAction.Latency.name.equals(action)) {
-            this.executor.execute(new LatencyTask(this, talkContext, primitive,
+            this.execute(new LatencyTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
     }
