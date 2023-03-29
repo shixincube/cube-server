@@ -33,7 +33,10 @@ import cell.util.log.Logger;
 import cube.common.action.AIGCAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.service.aigc.task.ChatTask;
+import cube.service.aigc.task.RequestChannelTask;
 import cube.service.aigc.task.SetupTask;
+import cube.service.aigc.task.TeardownTask;
 import cube.service.auth.AuthService;
 import cube.service.robot.RobotService;
 
@@ -69,8 +72,9 @@ public class AIGCCellet extends AbstractCellet {
         kernel.uninstallModule(AuthService.NAME);
 
         for (Responder responder : this.responderList) {
-
+            responder.finish();
         }
+        this.responderList.clear();
     }
 
     public AIGCService getService() {
@@ -114,8 +118,24 @@ public class AIGCCellet extends AbstractCellet {
                 }
             }
         }
+        else if (AIGCAction.Chat.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new ChatTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (AIGCAction.RequestChannel.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new RequestChannelTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.Setup.name.equals(action)) {
+            // 来自 Unit 的请求
             this.execute(new SetupTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (AIGCAction.Teardown.name.equals(action)) {
+            // 来自 Unit 的请求
+            this.execute(new TeardownTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
     }

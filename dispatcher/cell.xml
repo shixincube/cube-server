@@ -96,6 +96,9 @@
 		<cellet port="7000,7070,7077">
 			<class>cube.dispatcher.robot.RobotCellet</class>
 		</cellet>
+		<cellet port="7000,7070,7077">
+			<class>cube.dispatcher.aigc.AIGCCellet</class>
+		</cellet>
 	</cellets>
 
 	<!-- 适配器配置 -->

@@ -24,68 +24,39 @@
  * SOFTWARE.
  */
 
-package cube.common.state;
+package cube.dispatcher.aigc;
+
+import cube.core.AbstractCellet;
+import cube.dispatcher.Performer;
+import cube.util.HttpServer;
 
 /**
- * AIGC 模块状态码。
+ * AIGC 服务单元。
  */
-public enum AIGCStateCode {
+public class AIGCCellet extends AbstractCellet {
+
+    public final static String NAME = "AIGC";
 
     /**
-     * 成功。
+     * 执行机。
      */
-    Ok(0),
+    private Performer performer;
 
-    /**
-     * 无效参数。
-     */
-    InvalidParameter(5),
+    public AIGCCellet() {
+        super(NAME);
+    }
 
-    /**
-     * 数据结构错误。
-     */
-    DataStructureError(8),
+    @Override
+    public boolean install() {
+        this.performer = (Performer) this.getNucleus().getParameter("performer");
 
-    /**
-     * 遇到故障。
-     */
-    Failure(9),
+        Manager.getInstance().start(this.performer);
 
-    /**
-     * 无效域信息。
-     */
-    InvalidDomain(11),
+        return true;
+    }
 
-    /**
-     * 令牌不一致。
-     */
-    InconsistentToken(21),
-
-    /**
-     * 不被接受的非法操作。
-     */
-    IllegalOperation(25),
-
-    /**
-     * 单元未就绪。
-     */
-    UnitNoReady(30),
-
-    /**
-     * 单元处理错误。
-     */
-    UnitError(31),
-
-    /**
-     * 未知的状态。
-     */
-    Unknown(99)
-
-    ;
-
-    public final int code;
-
-    AIGCStateCode(int code) {
-        this.code = code;
+    @Override
+    public void uninstall() {
+        Manager.getInstance().stop();
     }
 }

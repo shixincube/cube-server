@@ -24,68 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.common.state;
+package cube.service.aigc;
+
+import cube.common.entity.AIGCChannel;
+import cube.common.entity.AIGCChatRecord;
 
 /**
- * AIGC 模块状态码。
+ * Chat 监听器。
  */
-public enum AIGCStateCode {
+public interface ChatListener {
 
-    /**
-     * 成功。
-     */
-    Ok(0),
+    void onChat(AIGCChannel channel, AIGCChatRecord record);
 
-    /**
-     * 无效参数。
-     */
-    InvalidParameter(5),
-
-    /**
-     * 数据结构错误。
-     */
-    DataStructureError(8),
-
-    /**
-     * 遇到故障。
-     */
-    Failure(9),
-
-    /**
-     * 无效域信息。
-     */
-    InvalidDomain(11),
-
-    /**
-     * 令牌不一致。
-     */
-    InconsistentToken(21),
-
-    /**
-     * 不被接受的非法操作。
-     */
-    IllegalOperation(25),
-
-    /**
-     * 单元未就绪。
-     */
-    UnitNoReady(30),
-
-    /**
-     * 单元处理错误。
-     */
-    UnitError(31),
-
-    /**
-     * 未知的状态。
-     */
-    Unknown(99)
-
-    ;
-
-    public final int code;
-
-    AIGCStateCode(int code) {
-        this.code = code;
-    }
+    void onFailed(AIGCChannel channel);
 }

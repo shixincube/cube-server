@@ -72,6 +72,12 @@ public class Responder {
         }
     }
 
+    public void finish() {
+        synchronized (this.notifier) {
+            this.notifier.notify();
+        }
+    }
+
     public boolean isResponse(ActionDialect response) {
         JSONObject notifier = response.getParamAsJson(Responder.NotifierKey);
         if (notifier.getLong("sn") == this.sn.longValue()) {

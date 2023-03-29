@@ -24,68 +24,45 @@
  * SOFTWARE.
  */
 
-package cube.common.state;
+package cube.common.entity;
+
+import cube.common.JSONable;
+import org.json.JSONObject;
 
 /**
- * AIGC 模块状态码。
+ * AIGC 互动聊天记录。
  */
-public enum AIGCStateCode {
+public class AIGCChatRecord implements JSONable {
 
-    /**
-     * 成功。
-     */
-    Ok(0),
+    public String participant;
 
-    /**
-     * 无效参数。
-     */
-    InvalidParameter(5),
+    public String content;
 
-    /**
-     * 数据结构错误。
-     */
-    DataStructureError(8),
+    public long timestamp;
 
-    /**
-     * 遇到故障。
-     */
-    Failure(9),
+    protected AIGCChatRecord(String participant, String content, long timestamp) {
+        this.participant = participant;
+        this.content = content;
+        this.timestamp = timestamp;
+    }
 
-    /**
-     * 无效域信息。
-     */
-    InvalidDomain(11),
+    public AIGCChatRecord(JSONObject json) {
+        this.participant = json.getString("participant");
+        this.content = json.getString("content");
+        this.timestamp = json.getLong("timestamp");
+    }
 
-    /**
-     * 令牌不一致。
-     */
-    InconsistentToken(21),
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("participant", this.participant);
+        json.put("content", this.content);
+        json.put("timestamp", this.timestamp);
+        return json;
+    }
 
-    /**
-     * 不被接受的非法操作。
-     */
-    IllegalOperation(25),
-
-    /**
-     * 单元未就绪。
-     */
-    UnitNoReady(30),
-
-    /**
-     * 单元处理错误。
-     */
-    UnitError(31),
-
-    /**
-     * 未知的状态。
-     */
-    Unknown(99)
-
-    ;
-
-    public final int code;
-
-    AIGCStateCode(int code) {
-        this.code = code;
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

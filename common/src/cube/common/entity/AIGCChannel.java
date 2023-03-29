@@ -27,7 +27,6 @@
 package cube.common.entity;
 
 import cell.util.Utils;
-import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -35,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * AIGC 分配给用户的通道。
@@ -47,14 +47,29 @@ public class AIGCChannel extends Entity {
 
     private String code;
 
+    private long activeTimestamp;
+
     // 倒序存储历史记录
-    private LinkedList<Record> history;
+    private LinkedList<AIGCChatRecord> history;
+
+    private AtomicBoolean processing;
 
     public AIGCChannel(String participant) {
         this.participant = participant;
         this.creationTime = System.currentTimeMillis();
         this.code = Utils.randomString(16);
         this.history = new LinkedList<>();
+        this.processing = new AtomicBoolean(false);
+        this.activeTimestamp = this.creationTime;
+    }
+
+    public AIGCChannel(JSONObject json) {
+        this.code = json.getString("code");
+        this.creationTime = json.getLong("creationTime");
+        this.participant = json.getString("participant");
+        this.history = new LinkedList<>();
+        this.processing = new AtomicBoolean(false);
+        this.activeTimestamp = this.creationTime;
     }
 
     public String getCode() {
@@ -69,14 +84,28 @@ public class AIGCChannel extends Entity {
         return this.participant;
     }
 
-    public Record appendHistory(String participant, String content) {
-        Record record = new Record(participant, content, System.currentTimeMillis());
+    public long getActiveTimestamp() {
+        return this.activeTimestamp;
+    }
+
+    public void setProcessing(boolean value) {
+        this.processing.set(value);
+    }
+
+    public boolean isProcessing() {
+        return this.processing.get();
+    }
+
+    public AIGCChatRecord appendHistory(String participant, String content) {
+        this.activeTimestamp = System.currentTimeMillis();
+
+        AIGCChatRecord record = new AIGCChatRecord(participant, content, System.currentTimeMillis());
         this.history.addFirst(record);
         return record;
     }
 
-    public List<Record> getLastHistory(int num) {
-        List<Record> result = new ArrayList<>();
+    public List<AIGCChatRecord> getLastHistory(int num) {
+        List<AIGCChatRecord> result = new ArrayList<>();
 
         for (int i = 0; i < this.history.size(); ++i) {
             result.add(this.history.get(i));
@@ -92,7 +121,7 @@ public class AIGCChannel extends Entity {
         List<String> list = new ArrayList<>();
 
         for (int i = 0; i < this.history.size(); ++i) {
-            Record record = this.history.get(i);
+            AIGCChatRecord record = this.history.get(i);
             if (record.participant.equals(this.participant)) {
                 list.add(record.content);
                 if (list.size() >= max) {
@@ -109,33 +138,17 @@ public class AIGCChannel extends Entity {
         return result;
     }
 
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("code", this.code);
+        json.put("creationTime", this.creationTime);
+        json.put("participant", this.participant);
+        return json;
+    }
 
-    public class Record implements JSONable {
-
-        public String participant;
-
-        public String content;
-
-        public long timestamp;
-
-        protected Record(String participant, String content, long timestamp) {
-            this.participant = participant;
-            this.content = content;
-            this.timestamp = timestamp;
-        }
-
-        @Override
-        public JSONObject toJSON() {
-            JSONObject json = new JSONObject();
-            json.put("participant", this.participant);
-            json.put("content", this.content);
-            json.put("timestamp", this.timestamp);
-            return json;
-        }
-
-        @Override
-        public JSONObject toCompactJSON() {
-            return this.toJSON();
-        }
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

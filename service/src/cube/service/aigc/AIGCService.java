@@ -31,19 +31,16 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
-import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCUnit;
-import cube.common.entity.CapabilitySet;
-import cube.common.entity.Contact;
+import cube.common.entity.*;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * AIGC 服务。
@@ -58,24 +55,30 @@ public class AIGCService extends AbstractModule {
 
     private List<AIGCUnit> unitList;
 
+    private Map<Long, Queue<ChatUnitMeta>> chatQueueMap;
+
+    /**
+     * 最大频道数量。
+     */
+    private int maxChannel = 50;
+
     private ConcurrentHashMap<String, AIGCChannel> channelMap;
 
-    private int maxChannel = 30;
+    private long channelTimeout = 30 * 60 * 1000;
 
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
         this.unitList = new ArrayList<>();
         this.channelMap = new ConcurrentHashMap<>();
+        this.chatQueueMap = new ConcurrentHashMap<>();
     }
 
     @Override
     public void start() {
-
     }
 
     @Override
     public void stop() {
-
     }
 
     @Override
@@ -85,7 +88,30 @@ public class AIGCService extends AbstractModule {
 
     @Override
     public void onTick(Module module, Kernel kernel) {
+        // 周期 60 秒
+//        Logger.i(AIGCService.class, "#onTick");
 
+        long now = System.currentTimeMillis();
+
+        // 删除失效的 Unit
+        synchronized (this.unitList) {
+            Iterator<AIGCUnit> iter = this.unitList.iterator();
+            while (iter.hasNext()) {
+                AIGCUnit unit = iter.next();
+                if (!unit.getContext().isValid()) {
+                    // 已失效
+                    iter.remove();
+                }
+            }
+        }
+
+        Iterator<AIGCChannel> iter = this.channelMap.values().iterator();
+        while (iter.hasNext()) {
+            AIGCChannel channel = iter.next();
+            if (now - channel.getActiveTimestamp() >= this.channelTimeout) {
+                iter.remove();
+            }
+        }
     }
 
     public AIGCUnit setupUnit(Contact contact, CapabilitySet capabilitySet, TalkContext context) {
@@ -104,10 +130,29 @@ public class AIGCService extends AbstractModule {
         }
     }
 
-    public void teardownUnit(Contact contact) {
+    public AIGCUnit teardownUnit(Contact contact) {
         synchronized (this.unitList) {
-
+            for (AIGCUnit unit : this.unitList) {
+                if (unit.getContact().getId().equals(contact.getId())) {
+                    this.unitList.remove(unit);
+                    this.chatQueueMap.remove(unit.getId());
+                    return unit;
+                }
+            }
         }
+
+        return null;
+    }
+
+    public AIGCUnit getUnit(Long id) {
+        synchronized (this.unitList) {
+            for (AIGCUnit unit : this.unitList) {
+                if (unit.getId().equals(id)) {
+                    return unit;
+                }
+            }
+        }
+        return null;
     }
 
     public AIGCChannel requestChannel(String participant) {
@@ -126,41 +171,79 @@ public class AIGCService extends AbstractModule {
         return channel;
     }
 
-    public AIGCChannel.Record chat(String code, String content) {
+    public boolean chat(String code, String content, ChatListener listener) {
         // 获取频道
         AIGCChannel channel = this.channelMap.get(code);
         if (null == channel) {
             Logger.i(AIGCService.class, "Can NOT find AIGC channel: " + code);
-            return null;
+            return false;
         }
+
+        // 如果频道正在应答上一次问题，则返回 null
+        if (channel.isProcessing()) {
+            Logger.w(AIGCService.class, "Channel is processing: " + code);
+            return false;
+        }
+
+        channel.setProcessing(true);
 
         AIGCUnit unit = null;
         synchronized (this.unitList) {
             // 获取 Unit
             if (this.unitList.isEmpty()) {
-                return null;
+                Logger.w(AIGCService.class, "No unit setup in server");
+                channel.setProcessing(false);
+                return false;
             }
             unit = this.unitList.get(0);
         }
 
-        JSONObject data = new JSONObject();
-        data.put("content", content);
-        data.put("history", channel.getLastParticipantHistory(5));
+        ChatUnitMeta meta = new ChatUnitMeta(unit, channel, content, listener);
 
-        Packet request = new Packet(AIGCAction.Chat.name, data);
-        ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect());
-        if (null == dialect) {
-            Logger.w(AIGCService.class, "Chat unit error - channel: " + code);
-            return null;
+        synchronized (this) {
+            Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getId());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.chatQueueMap.put(unit.getId(), queue);
+            }
+
+            queue.offer(meta);
         }
 
-        Packet response = new Packet(dialect);
-        JSONObject payload = Packet.extractDataPayload(response);
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
 
-        String responseText = payload.getString("response");
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    processChatQueue(meta.unit.getId());
+                }
+            });
+            thread.start();
+        }
 
-        AIGCChannel.Record result = channel.appendHistory(AI_NAME, responseText);
-        return result;
+        return true;
+    }
+
+    private void processChatQueue(Long unitId) {
+        Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unitId);
+        if (null == queue) {
+            Logger.w(AIGCService.class, "No found unit: " + unitId);
+            return;
+        }
+
+        ChatUnitMeta meta = queue.poll();
+        while (null != meta) {
+            // 执行处理
+            meta.process();
+
+            meta = queue.poll();
+        }
+
+        AIGCUnit unit = this.getUnit(unitId);
+        if (null != unit) {
+            unit.setRunning(false);
+        }
     }
 
     private boolean checkParticipantName(String name) {
@@ -171,6 +254,53 @@ public class AIGCService extends AbstractModule {
         }
         else {
             return true;
+        }
+    }
+
+
+    private class ChatUnitMeta {
+
+        protected AIGCUnit unit;
+
+        protected AIGCChannel channel;
+
+        protected String content;
+
+        protected ChatListener listener;
+
+        public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, ChatListener listener) {
+            this.unit = unit;
+            this.channel = channel;
+            this.content = content;
+            this.listener = listener;
+        }
+
+        public void process() {
+            JSONObject data = new JSONObject();
+            data.put("content", this.content);
+            data.put("history", this.channel.getLastParticipantHistory(5));
+
+            Packet request = new Packet(AIGCAction.Chat.name, data);
+            ActionDialect dialect = cellet.transmit(unit.getContext(), request.toDialect());
+            if (null == dialect) {
+                Logger.w(AIGCService.class, "Chat unit error - channel: " + this.channel.getCode());
+                channel.setProcessing(false);
+                // 回调错误
+                this.listener.onFailed(this.channel);
+                return;
+            }
+
+            Packet response = new Packet(dialect);
+            JSONObject payload = Packet.extractDataPayload(response);
+
+            String responseText = payload.getString("response");
+
+            AIGCChatRecord result = this.channel.appendHistory(AI_NAME, responseText);
+
+            // 重置状态位
+            this.channel.setProcessing(false);
+
+            this.listener.onChat(this.channel, result);
         }
     }
 }

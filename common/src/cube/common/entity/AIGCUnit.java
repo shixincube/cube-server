@@ -29,6 +29,8 @@ package cube.common.entity;
 import cell.core.talk.TalkContext;
 import org.json.JSONObject;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * AIGC 服务单元。
  */
@@ -40,11 +42,14 @@ public class AIGCUnit extends Entity {
 
     private TalkContext context;
 
+    private AtomicBoolean running;
+
     public AIGCUnit(Contact contact, CapabilitySet capabilitySet, TalkContext context) {
         super(contact.id, contact.domain.getName());
         this.contact = contact;
         this.capabilitySet = capabilitySet;
         this.context = context;
+        this.running = new AtomicBoolean(false);
     }
 
     public Contact getContact() {
@@ -65,6 +70,14 @@ public class AIGCUnit extends Entity {
 
     public void setTalkContext(TalkContext context) {
         this.context = context;
+    }
+
+    public void setRunning(boolean value) {
+        this.running.set(value);
+    }
+
+    public boolean isRunning() {
+        return this.running.get();
     }
 
     @Override
