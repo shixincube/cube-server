@@ -29,12 +29,15 @@ package cube.service.aigc;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.common.action.AIGCAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.aigc.task.SetupTask;
 import cube.service.auth.AuthService;
 import cube.service.robot.RobotService;
+
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * AIGC 服务单元。
@@ -43,8 +46,11 @@ public class AIGCCellet extends AbstractCellet {
 
     private AIGCService service;
 
+    private ConcurrentLinkedQueue<Responder> responderList;
+
     public AIGCCellet() {
         super(AIGCService.NAME);
+        this.responderList = new ConcurrentLinkedQueue<>();
     }
 
     @Override
@@ -61,10 +67,34 @@ public class AIGCCellet extends AbstractCellet {
     public void uninstall() {
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.uninstallModule(AuthService.NAME);
+
+        for (Responder responder : this.responderList) {
+
+        }
     }
 
     public AIGCService getService() {
         return this.service;
+    }
+
+    public ActionDialect transmit(TalkContext talkContext, ActionDialect dialect) {
+        Responder responder = new Responder(dialect);
+        this.responderList.add(responder);
+
+        if (!this.speak(talkContext, dialect)) {
+            Logger.w(AIGCCellet.class, "Speak session error: " + talkContext.getSessionHost());
+            this.responderList.remove(responder);
+            return null;
+        }
+
+        ActionDialect response = responder.waitingFor(2 * 60 * 1000);
+        if (null == response) {
+            Logger.w(AIGCCellet.class, "Response is null: " + talkContext.getSessionHost());
+            this.responderList.remove(responder);
+            return null;
+        }
+
+        return response;
     }
 
     @Override
@@ -74,7 +104,17 @@ public class AIGCCellet extends AbstractCellet {
         ActionDialect dialect = new ActionDialect(primitive);
         String action = dialect.getName();
 
-        if (AIGCAction.Setup.name.equals(action)) {
+        if (dialect.containsParam(Responder.NotifierKey)) {
+            // 应答阻塞访问
+            for (Responder responder : this.responderList) {
+                if (responder.isResponse(dialect)) {
+                    responder.notifyResponse(dialect);
+                    this.responderList.remove(responder);
+                    break;
+                }
+            }
+        }
+        else if (AIGCAction.Setup.name.equals(action)) {
             this.execute(new SetupTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }

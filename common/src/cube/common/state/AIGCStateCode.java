@@ -67,6 +67,11 @@ public enum AIGCStateCode {
     IllegalOperation(25),
 
     /**
+     * 单元未就绪。
+     */
+    UnitNoReady(30),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)
