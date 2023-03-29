@@ -48,18 +48,20 @@ public class Manager {
 
     private Performer performer;
 
+    private String token;
+
     public static Manager getInstance() {
         return Manager.instance;
     }
 
-    public void start(Performer performer) {
+    public void start(Performer performer, String token) {
         this.performer = performer;
+        this.token = token;
 
         this.setupHandler();
     }
 
     public void stop() {
-
     }
 
     private void setupHandler() {
@@ -67,6 +69,10 @@ public class Manager {
 
         httpServer.addContextHandler(new RequestChannel());
         httpServer.addContextHandler(new Chat());
+    }
+
+    public String getToken() {
+        return this.token;
     }
 
     public AIGCChannel requestChannel(String participant) {

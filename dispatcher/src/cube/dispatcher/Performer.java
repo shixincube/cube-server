@@ -63,11 +63,6 @@ import java.util.concurrent.ExecutorService;
  */
 public class Performer implements TalkListener, Tickable {
 
-    public static String APP_LOGIN_URL = "https://127.0.0.1:8080/index.html";
-
-    public static String ROBOT_API_URL = "http://127.0.0.1:2280/event/callback/AfKbNrmDvJQWxkMFNlYQfFHVrRZkbjNi";
-    public static String ROBOT_CALLBACK_URL = "http://127.0.0.1:7010/robot/event/kLBNGSmrTbmNlBfTYcIaKqYQiDPKoTkE";
-
     private final String performerKey = "_performer";
 
     private final String directorKey = "_director";
@@ -75,6 +70,8 @@ public class Performer implements TalkListener, Tickable {
     protected TalkService talkService;
 
     protected CelletService celletService;
+
+    private Properties properties;
 
     /**
      * 线程池执行器。
@@ -213,6 +210,24 @@ public class Performer implements TalkListener, Tickable {
         }
 
         this.httpServer.setPort(config.httpPort, config.httpsPort);
+    }
+
+    /**
+     * 设置配置属性。
+     *
+     * @param properties 指定属性。
+     */
+    public void setProperties(Properties properties) {
+        this.properties = properties;
+    }
+
+    /**
+     * 获取配置属性。
+     *
+     * @return 返回属性。
+     */
+    public Properties getProperties() {
+        return this.properties;
     }
 
     /**

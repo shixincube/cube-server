@@ -46,6 +46,8 @@ public class FileStorageCellet extends AbstractCellet {
      */
     public final static String NAME = "FileStorage";
 
+    protected static String APP_LOGIN_URL = "https://127.0.0.1:8080/index.html";
+
     /**
      * 文件块存储。
      */
@@ -70,6 +72,11 @@ public class FileStorageCellet extends AbstractCellet {
     @Override
     public boolean install() {
         this.performer = (Performer) nucleus.getParameter("performer");
+
+        // 配置 App
+        if (this.performer.getProperties().containsKey("app.login")) {
+            APP_LOGIN_URL = this.performer.getProperties().getProperty("app.login").trim();
+        }
 
         // 打开存储管理器
         this.fileChunkStorage.open(this, performer);

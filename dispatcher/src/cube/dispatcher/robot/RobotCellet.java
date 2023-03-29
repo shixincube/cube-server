@@ -49,6 +49,10 @@ public class RobotCellet extends AbstractCellet implements Tickable {
 
     public final static String NAME = "Robot";
 
+    protected static String ROBOT_API_URL = "http://127.0.0.1:2280/event/callback/AfKbNrmDvJQWxkMFNlYQfFHVrRZkbjNi";
+
+    protected static String ROBOT_CALLBACK_URL = "http://127.0.0.1:7010/robot/event/kLBNGSmrTbmNlBfTYcIaKqYQiDPKoTkE";
+
     /**
      * 执行机。
      */
@@ -66,6 +70,14 @@ public class RobotCellet extends AbstractCellet implements Tickable {
     public boolean install() {
         this.performer = (Performer) this.getNucleus().getParameter("performer");
         this.performer.addTickable(this);
+
+        // 配置
+        if (this.performer.getProperties().containsKey("robot.api")) {
+            ROBOT_API_URL = this.performer.getProperties().getProperty("robot.api").trim();
+        }
+        if (this.performer.getProperties().containsKey("robot.callback")) {
+            ROBOT_CALLBACK_URL = this.performer.getProperties().getProperty("robot.callback").trim();
+        }
 
         Manager.getInstance().start();
 
@@ -109,17 +121,17 @@ public class RobotCellet extends AbstractCellet implements Tickable {
             client.start();
 
             JSONObject data = new JSONObject();
-            data.put("url", Performer.ROBOT_CALLBACK_URL);
+            data.put("url", ROBOT_CALLBACK_URL);
 
             StringContentProvider provider = new StringContentProvider(data.toString());
-            ContentResponse response = client.POST(Performer.ROBOT_API_URL).content(provider).send();
+            ContentResponse response = client.POST(ROBOT_API_URL).content(provider).send();
             if (response.getStatus() != HttpStatus.OK_200) {
                 this.registered = false;
                 Logger.w(this.getClass(), "#registerCallback - register callback URL failed: " + response.getStatus());
             }
             else {
                 this.registered = true;
-                Logger.i(this.getClass(), "#registerCallback - register callback: " + Performer.ROBOT_CALLBACK_URL);
+                Logger.i(this.getClass(), "#registerCallback - register callback: " + ROBOT_CALLBACK_URL);
             }
         } catch (Exception e) {
             Logger.e(this.getClass(), "#registerCallback", e);
@@ -140,16 +152,16 @@ public class RobotCellet extends AbstractCellet implements Tickable {
             client.start();
 
             JSONObject data = new JSONObject();
-            data.put("url", Performer.ROBOT_CALLBACK_URL);
+            data.put("url", ROBOT_CALLBACK_URL);
             data.put("deregister", true);
 
             StringContentProvider provider = new StringContentProvider(data.toString());
-            ContentResponse response = client.POST(Performer.ROBOT_API_URL).content(provider).send();
+            ContentResponse response = client.POST(ROBOT_API_URL).content(provider).send();
             if (response.getStatus() != HttpStatus.OK_200) {
                 Logger.w(this.getClass(), "#deregisterCallback - deregister callback URL failed: " + response.getStatus());
             }
             else {
-                Logger.i(this.getClass(), "#deregisterCallback - deregister callback: " + Performer.ROBOT_CALLBACK_URL);
+                Logger.i(this.getClass(), "#deregisterCallback - deregister callback: " + ROBOT_CALLBACK_URL);
             }
 
             this.registered = false;
@@ -194,7 +206,7 @@ public class RobotCellet extends AbstractCellet implements Tickable {
             JSONObject data = new JSONObject();
 
             StringContentProvider provider = new StringContentProvider(data.toString());
-            ContentResponse response = client.POST(Performer.ROBOT_API_URL).content(provider).send();
+            ContentResponse response = client.POST(ROBOT_API_URL).content(provider).send();
             Logger.d(this.getClass(), "#checkRoboengine - " + response.getStatus());
         } catch (ExecutionException e) {
             this.registered = false;

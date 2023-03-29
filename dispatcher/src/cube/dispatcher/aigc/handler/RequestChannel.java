@@ -28,7 +28,6 @@ package cube.dispatcher.aigc.handler;
 
 import cube.common.entity.AIGCChannel;
 import cube.dispatcher.aigc.Manager;
-import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
@@ -44,7 +43,7 @@ public class RequestChannel extends ContextHandler {
         setHandler(new Handler());
     }
 
-    private class Handler extends CrossDomainHandler {
+    private class Handler extends AIGCHandler {
 
         public Handler() {
             super();
@@ -52,12 +51,21 @@ public class RequestChannel extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
+            String token = this.getRequestPath(request);
+            if (null == token || !token.equals(Manager.getInstance().getToken())) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.complete();
+                return;
+            }
+
             String participant = null;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
                 participant = json.getString("participant");
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
             }
 
             if (null == participant) {
@@ -71,7 +79,7 @@ public class RequestChannel extends ContextHandler {
             AIGCChannel channel = Manager.getInstance().requestChannel(participant);
             if (null == channel) {
                 // 不允许该参与者申请或者服务故障
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.NOT_FOUND_404);
                 this.complete();
                 return;
             }

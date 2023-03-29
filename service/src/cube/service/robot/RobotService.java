@@ -40,9 +40,9 @@ import cube.robot.*;
 import cube.service.client.ClientManager;
 import cube.service.client.ServerClient;
 import cube.service.robot.mission.AbstractMission;
+import cube.service.robot.mission.DouYinAccountData;
 import cube.service.robot.mission.DouYinDailyOperation;
 import cube.service.robot.mission.WeiXinMessageList;
-import cube.service.robot.mission.DouYinAccountData;
 import cube.util.ConfigUtils;
 import cube.util.FileUtils;
 import org.json.JSONObject;
@@ -72,9 +72,12 @@ public class RobotService extends AbstractModule {
      */
     private Map<String, List<ServerClient>> eventNameClientMap;
 
+    private volatile boolean ready;
+
     public RobotService(RobotCellet cellet) {
         this.cellet = cellet;
         this.eventNameClientMap = new HashMap<>();
+        this.ready = false;
     }
 
     @Override
@@ -92,10 +95,11 @@ public class RobotService extends AbstractModule {
                     roboengine.start(apiHost, apiPort, apiToken);
                     Logger.i(RobotService.class, "Roboengine agent started");
                     checkMissions();
+                    ready = true;
                 }
             }).start();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Logger.w(RobotService.class, "#start", e);
         }
     }
 

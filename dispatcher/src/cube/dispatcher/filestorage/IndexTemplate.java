@@ -29,7 +29,6 @@ package cube.dispatcher.filestorage;
 import cell.util.Base64;
 import cube.common.entity.FileLabel;
 import cube.common.entity.SharingTag;
-import cube.dispatcher.Performer;
 import cube.util.FileSize;
 import cube.util.FileType;
 import cube.util.FileUtils;
@@ -194,7 +193,7 @@ public class IndexTemplate {
         buf.append(this.sharingTag.toJSONForClient().toString());
         buf.append(";");
         buf.append("var appLoginURL='");
-        buf.append(Performer.APP_LOGIN_URL);
+        buf.append(FileStorageCellet.APP_LOGIN_URL);
         buf.append("';");
         return buf.toString();
     }

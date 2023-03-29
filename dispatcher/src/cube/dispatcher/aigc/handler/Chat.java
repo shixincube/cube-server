@@ -26,10 +26,8 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCChatRecord;
 import cube.dispatcher.aigc.Manager;
-import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
@@ -45,7 +43,7 @@ public class Chat extends ContextHandler {
         setHandler(new Handler());
     }
 
-    private class Handler extends CrossDomainHandler {
+    private class Handler extends AIGCHandler {
 
         public Handler() {
             super();
@@ -53,14 +51,23 @@ public class Chat extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
+            String token = this.getRequestPath(request);
+            if (null == token || !token.equals(Manager.getInstance().getToken())) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.complete();
+                return;
+            }
+
             String channelCode = null;
             String content = null;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
                 channelCode = json.getString("code");
                 content = json.getString("content");
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
             }
 
             if (null == channelCode || null == content) {
@@ -74,7 +81,7 @@ public class Chat extends ContextHandler {
             AIGCChatRecord record = Manager.getInstance().chat(channelCode, content);
             if (null == record) {
                 // 发生错误
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.NOT_FOUND_404);
                 this.complete();
                 return;
             }

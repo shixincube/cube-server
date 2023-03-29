@@ -24,43 +24,27 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.aigc;
+package cube.dispatcher.aigc.handler;
 
-import cube.core.AbstractCellet;
-import cube.dispatcher.Performer;
+import cube.util.CrossDomainHandler;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
- * AIGC 服务单元。
+ * AIGC RESTful 接口基类。
  */
-public class AIGCCellet extends AbstractCellet {
+public abstract class AIGCHandler extends CrossDomainHandler {
 
-    public final static String NAME = "AIGC";
-
-    /**
-     * 执行机。
-     */
-    private Performer performer;
-
-    public AIGCCellet() {
-        super(NAME);
+    public AIGCHandler() {
+        super();
     }
 
-    @Override
-    public boolean install() {
-        this.performer = (Performer) this.getNucleus().getParameter("performer");
-
-        String token = "cube.aigc.token";
-        if (this.performer.getProperties().containsKey("aigc.token")) {
-            token = this.performer.getProperties().getProperty("aigc.token").trim();
+    protected String getRequestPath(HttpServletRequest request) {
+        String path = request.getPathInfo();
+        if (path.length() < 2) {
+            return null;
         }
 
-        Manager.getInstance().start(this.performer, token);
-
-        return true;
-    }
-
-    @Override
-    public void uninstall() {
-        Manager.getInstance().stop();
+        return path.substring(1).trim();
     }
 }
