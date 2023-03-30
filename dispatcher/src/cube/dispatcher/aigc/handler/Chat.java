@@ -34,7 +34,6 @@ import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 public class Chat extends ContextHandler {
 
@@ -72,7 +71,7 @@ public class Chat extends ContextHandler {
 
             if (null == channelCode || null == content) {
                 // 参数错误
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.NOT_FOUND_404);
                 this.complete();
                 return;
             }
@@ -81,7 +80,7 @@ public class Chat extends ContextHandler {
             AIGCChatRecord record = Manager.getInstance().chat(channelCode, content);
             if (null == record) {
                 // 发生错误
-                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }

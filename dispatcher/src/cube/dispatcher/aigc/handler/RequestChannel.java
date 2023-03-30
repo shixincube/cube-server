@@ -70,7 +70,7 @@ public class RequestChannel extends ContextHandler {
 
             if (null == participant) {
                 // 参数错误
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.NOT_FOUND_404);
                 this.complete();
                 return;
             }
@@ -79,7 +79,7 @@ public class RequestChannel extends ContextHandler {
             AIGCChannel channel = Manager.getInstance().requestChannel(participant);
             if (null == channel) {
                 // 不允许该参与者申请或者服务故障
-                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }
