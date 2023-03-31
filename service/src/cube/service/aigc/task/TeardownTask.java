@@ -34,13 +34,15 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCUnit;
-import cube.common.entity.CapabilitySet;
 import cube.common.entity.Contact;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  * AIGC 单元拆除。
@@ -60,14 +62,20 @@ public class TeardownTask extends ServiceTask {
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
-        AIGCUnit unit = service.teardownUnit(contact);
+        List<AIGCUnit> units = service.teardownUnit(contact);
+        Logger.i(TeardownTask.class, "AIGC unit " + contact.getName() + " teardown : " + units.size());
 
-        Logger.i(TeardownTask.class, "AIGC unit " + contact.getName() + " teardown");
+        JSONArray array = new JSONArray();
+        for (AIGCUnit unit : units) {
+            array.put(unit.toJSON());
+        }
+        JSONObject responseData = new JSONObject();
+        responseData.put("units", array);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet,
-                        (null != unit) ? AIGCStateCode.Ok.code : AIGCStateCode.Failure.code,
-                        (null != unit) ? unit.toJSON() : new JSONObject()));
+                        (units.isEmpty()) ? AIGCStateCode.Failure.code : AIGCStateCode.Ok.code,
+                        responseData));
         markResponseTime();
     }
 }

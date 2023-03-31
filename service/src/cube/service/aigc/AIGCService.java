@@ -53,9 +53,15 @@ public class AIGCService extends AbstractModule {
 
     private AIGCCellet cellet;
 
-    private List<AIGCUnit> unitList;
+    /**
+     * Key 是 AIGC 的 Query Key
+     */
+    private Map<String, AIGCUnit> unitMap;
 
-    private Map<Long, Queue<ChatUnitMeta>> chatQueueMap;
+    /**
+     * Key 是 AIGC 的 Query Key
+     */
+    private Map<String, Queue<ChatUnitMeta>> chatQueueMap;
 
     /**
      * 最大频道数量。
@@ -68,7 +74,7 @@ public class AIGCService extends AbstractModule {
 
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
-        this.unitList = new ArrayList<>();
+        this.unitMap = new ConcurrentHashMap<>();
         this.channelMap = new ConcurrentHashMap<>();
         this.chatQueueMap = new ConcurrentHashMap<>();
     }
@@ -94,14 +100,12 @@ public class AIGCService extends AbstractModule {
         long now = System.currentTimeMillis();
 
         // 删除失效的 Unit
-        synchronized (this.unitList) {
-            Iterator<AIGCUnit> iter = this.unitList.iterator();
-            while (iter.hasNext()) {
-                AIGCUnit unit = iter.next();
-                if (!unit.getContext().isValid()) {
-                    // 已失效
-                    iter.remove();
-                }
+        Iterator<AIGCUnit> unitIter = this.unitMap.values().iterator();
+        while (unitIter.hasNext()) {
+            AIGCUnit unit = unitIter.next();
+            if (!unit.getContext().isValid()) {
+                // 已失效
+                unitIter.remove();
             }
         }
 
@@ -114,44 +118,50 @@ public class AIGCService extends AbstractModule {
         }
     }
 
-    public AIGCUnit setupUnit(Contact contact, CapabilitySet capabilitySet, TalkContext context) {
-        synchronized (this.unitList) {
-            for (AIGCUnit unit : this.unitList) {
-                if (unit.getContact().getId().equals(contact.getId())) {
-                    unit.setCapabilitySet(capabilitySet);
-                    unit.setTalkContext(context);
-                    return unit;
-                }
-            }
+    public List<AIGCUnit> setupUnit(Contact contact, List<AICapability> capabilities, TalkContext context) {
+        List<AIGCUnit> result = new ArrayList<>(capabilities.size());
 
-            AIGCUnit unit = new AIGCUnit(contact, capabilitySet, context);
-            this.unitList.add(unit);
-            return unit;
+        for (AICapability capability : capabilities) {
+            String key = AIGCUnit.makeQueryKey(contact, capability);
+            AIGCUnit unit = this.unitMap.get(key);
+            if (null != unit) {
+                unit.setTalkContext(context);
+            }
+            else {
+                unit = new AIGCUnit(contact, capability, context);
+                this.unitMap.put(key, unit);
+            }
+            result.add(unit);
         }
+
+        return result;
     }
 
-    public AIGCUnit teardownUnit(Contact contact) {
-        synchronized (this.unitList) {
-            for (AIGCUnit unit : this.unitList) {
-                if (unit.getContact().getId().equals(contact.getId())) {
-                    this.unitList.remove(unit);
-                    this.chatQueueMap.remove(unit.getId());
-                    return unit;
-                }
+    public List<AIGCUnit> teardownUnit(Contact contact) {
+        List<AIGCUnit> result = new ArrayList<>();
+
+        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
+        while (iter.hasNext()) {
+            AIGCUnit unit = iter.next();
+            if (unit.getContact().getId().equals(contact.getId())) {
+                result.add(unit);
+                iter.remove();
+                this.chatQueueMap.remove(unit.getQueryKey());
             }
         }
 
-        return null;
+        return result;
     }
 
-    public AIGCUnit getUnit(Long id) {
-        synchronized (this.unitList) {
-            for (AIGCUnit unit : this.unitList) {
-                if (unit.getId().equals(id)) {
-                    return unit;
-                }
+    public AIGCUnit getUnitBySubtask(String subtask) {
+        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
+        while (iter.hasNext()) {
+            AIGCUnit unit = iter.next();
+            if (unit.getCapability().getSubtask().equals(subtask)) {
+                return unit;
             }
         }
+
         return null;
     }
 
@@ -187,24 +197,20 @@ public class AIGCService extends AbstractModule {
 
         channel.setProcessing(true);
 
-        AIGCUnit unit = null;
-        synchronized (this.unitList) {
-            // 获取 Unit
-            if (this.unitList.isEmpty()) {
-                Logger.w(AIGCService.class, "No unit setup in server");
-                channel.setProcessing(false);
-                return false;
-            }
-            unit = this.unitList.get(0);
+        // 查找有该能力的单元
+        AIGCUnit unit = this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
+        if (null == unit) {
+            Logger.w(AIGCService.class, "No conversational task unit setup in server");
+            return false;
         }
 
         ChatUnitMeta meta = new ChatUnitMeta(unit, channel, content, listener);
 
         synchronized (this) {
-            Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getId());
+            Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
-                this.chatQueueMap.put(unit.getId(), queue);
+                this.chatQueueMap.put(unit.getQueryKey(), queue);
             }
 
             queue.offer(meta);
@@ -216,7 +222,7 @@ public class AIGCService extends AbstractModule {
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    processChatQueue(meta.unit.getId());
+                    processChatQueue(meta.unit.getQueryKey());
                 }
             });
             thread.start();
@@ -225,10 +231,10 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
-    private void processChatQueue(Long unitId) {
-        Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unitId);
+    private void processChatQueue(String queryKey) {
+        Queue<ChatUnitMeta> queue = this.chatQueueMap.get(queryKey);
         if (null == queue) {
-            Logger.w(AIGCService.class, "No found unit: " + unitId);
+            Logger.w(AIGCService.class, "No found unit: " + queryKey);
             return;
         }
 
@@ -240,7 +246,7 @@ public class AIGCService extends AbstractModule {
             meta = queue.poll();
         }
 
-        AIGCUnit unit = this.getUnit(unitId);
+        AIGCUnit unit = this.unitMap.get(queryKey);
         if (null != unit) {
             unit.setRunning(false);
         }

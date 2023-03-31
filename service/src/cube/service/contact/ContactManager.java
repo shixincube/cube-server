@@ -451,6 +451,11 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @return 返回签入的联系人。
      */
     public Contact signIn(String tokenCode, Device activeDevice) {
+        if (!this.started) {
+            // 未就绪
+            return null;
+        }
+
         // 获取指定令牌码对应的令牌
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken token = authService.getToken(tokenCode);

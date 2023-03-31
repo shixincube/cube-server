@@ -36,36 +36,39 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class AIGCUnit extends Entity {
 
+    private String key;
+
     private Contact contact;
 
-    private CapabilitySet capabilitySet;
+    private AICapability capability;
 
     private TalkContext context;
 
     private AtomicBoolean running;
 
-    public AIGCUnit(Contact contact, CapabilitySet capabilitySet, TalkContext context) {
+    public AIGCUnit(Contact contact, AICapability capability, TalkContext context) {
         super(contact.id, contact.domain.getName());
+        this.key = AIGCUnit.makeQueryKey(contact, capability);
         this.contact = contact;
-        this.capabilitySet = capabilitySet;
+        this.capability = capability;
         this.context = context;
         this.running = new AtomicBoolean(false);
+    }
+
+    public String getQueryKey() {
+        return this.key;
     }
 
     public Contact getContact() {
         return this.contact;
     }
 
-    public CapabilitySet getCapabilitySet() {
-        return this.capabilitySet;
+    public AICapability getCapability() {
+        return this.capability;
     }
 
     public TalkContext getContext() {
         return this.context;
-    }
-
-    public void setCapabilitySet(CapabilitySet capabilitySet) {
-        this.capabilitySet = capabilitySet;
     }
 
     public void setTalkContext(TalkContext context) {
@@ -83,7 +86,18 @@ public class AIGCUnit extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("capability", this.capabilitySet.toJSON());
+        json.put("capability", this.capability.toJSON());
         return json;
+    }
+
+    public static String makeQueryKey(Contact contact, AICapability capability) {
+        StringBuilder buf = new StringBuilder(contact.getId().toString());
+        buf.append("_");
+        buf.append(contact.domain.getName());
+        buf.append("_");
+        buf.append(capability.getName());
+        buf.append("_");
+        buf.append(capability.getSubtask());
+        return buf.toString();
     }
 }

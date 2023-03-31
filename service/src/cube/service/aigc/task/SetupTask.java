@@ -34,12 +34,17 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCUnit;
-import cube.common.entity.CapabilitySet;
+import cube.common.entity.AICapability;
 import cube.common.entity.Contact;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * AIGC 单元配置。
@@ -56,16 +61,29 @@ public class SetupTask extends ServiceTask {
         Packet packet = new Packet(dialect);
 
         Contact contact = new Contact(packet.data.getJSONObject("contact"));
-        CapabilitySet capabilitySet = new CapabilitySet(packet.data.getJSONObject("capability"));
+
+        List<AICapability> capabilities = new ArrayList<>();
+        JSONArray array = packet.data.getJSONArray("capabilities");
+        for (int i = 0; i < array.length(); ++i) {
+            JSONObject capabilityJson = array.getJSONObject(i);
+            AICapability capability = new AICapability(capabilityJson);
+            capabilities.add(capability);
+        }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
-        AIGCUnit unit = service.setupUnit(contact, capabilitySet, this.talkContext);
+        List<AIGCUnit> units = service.setupUnit(contact, capabilities, this.talkContext);
+        Logger.i(SetupTask.class, "AIGC unit " + contact.getName() + " setup : " + units.size());
 
-        Logger.i(SetupTask.class, "AIGC unit " + contact.getName() + " setup");
+        JSONArray unitArray = new JSONArray();
+        for (AIGCUnit unit : units) {
+            unitArray.put(unit.toJSON());
+        }
+        JSONObject responseData = new JSONObject();
+        responseData.put("units", unitArray);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, unit.toJSON()));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
         markResponseTime();
     }
 }
