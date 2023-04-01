@@ -33,10 +33,7 @@ import cell.util.log.Logger;
 import cube.common.action.AIGCAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
-import cube.service.aigc.task.ChatTask;
-import cube.service.aigc.task.RequestChannelTask;
-import cube.service.aigc.task.SetupTask;
-import cube.service.aigc.task.TeardownTask;
+import cube.service.aigc.task.*;
 import cube.service.auth.AuthService;
 import cube.service.robot.RobotService;
 
@@ -117,6 +114,11 @@ public class AIGCCellet extends AbstractCellet {
                     break;
                 }
             }
+        }
+        else if (AIGCAction.Sentiment.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new SentimentTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (AIGCAction.Chat.name.equals(action)) {
             // 来自 Dispatcher 的请求

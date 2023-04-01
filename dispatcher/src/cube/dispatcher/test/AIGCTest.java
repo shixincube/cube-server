@@ -143,7 +143,7 @@ public class AIGCTest {
         test.setup();
 
 //        test.testRequestChannel();
-        test.testChat();
+//        test.testChat();
 
         test.teardown();
     }

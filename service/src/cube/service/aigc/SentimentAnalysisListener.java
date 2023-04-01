@@ -24,43 +24,16 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.aigc;
+
+import cube.common.entity.SentimentResult;
 
 /**
- * AIGC 动作。
+ * 情感分析监听器。
  */
-public enum AIGCAction {
+public interface SentimentAnalysisListener {
 
-    /**
-     * 服务节点加入。
-     */
-    Setup("setup"),
+    void onCompleted(SentimentResult result);
 
-    /**
-     * 服务节点离开。
-     */
-    Teardown("teardown"),
-
-    /**
-     * 请求通道。
-     */
-    RequestChannel("requestChannel"),
-
-    /**
-     * 问答互动。
-     */
-    Chat("chat"),
-
-    /**
-     * 情感分析。
-     */
-    Sentiment("sentiment")
-
-    ;
-
-    public final String name;
-
-    AIGCAction(String name) {
-        this.name = name;
-    }
+    void onFailed();
 }

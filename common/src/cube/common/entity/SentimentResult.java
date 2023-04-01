@@ -24,43 +24,48 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.common.entity;
+
+import cube.common.JSONable;
+import org.json.JSONObject;
 
 /**
- * AIGC 动作。
+ * 情绪分析结果。
  */
-public enum AIGCAction {
+public class SentimentResult implements JSONable {
 
     /**
-     * 服务节点加入。
+     * 负面得分。
      */
-    Setup("setup"),
+    public double negative = 0;
 
     /**
-     * 服务节点离开。
+     * 正面得分。
      */
-    Teardown("teardown"),
+    public double positive = 0;
 
     /**
-     * 请求通道。
+     * 评价标签。
      */
-    RequestChannel("requestChannel"),
+    public String label;
 
-    /**
-     * 问答互动。
-     */
-    Chat("chat"),
+    public SentimentResult(JSONObject json) {
+        this.label = json.getString("label");
+        this.negative = json.getDouble("negative");
+        this.positive = json.getDouble("positive");
+    }
 
-    /**
-     * 情感分析。
-     */
-    Sentiment("sentiment")
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("label", this.label);
+        json.put("negative", this.negative);
+        json.put("positive", this.positive);
+        return json;
+    }
 
-    ;
-
-    public final String name;
-
-    AIGCAction(String name) {
-        this.name = name;
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

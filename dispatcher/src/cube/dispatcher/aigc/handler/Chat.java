@@ -27,6 +27,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cube.common.entity.AIGCChatRecord;
+import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -44,12 +45,22 @@ public class Chat extends ContextHandler {
 
     private class Handler extends AIGCHandler {
 
+        private AccessController controller;
+
         public Handler() {
             super();
+            this.controller = new AccessController();
+            this.controller.setEachIPInterval(1000);
         }
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
+            if (!this.controller.filter(request)) {
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                this.complete();
+                return;
+            }
+
             String token = this.getRequestPath(request);
             if (null == token || !token.equals(Manager.getInstance().getToken())) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);

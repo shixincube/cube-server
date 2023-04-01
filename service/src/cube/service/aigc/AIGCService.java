@@ -64,6 +64,11 @@ public class AIGCService extends AbstractModule {
     private Map<String, Queue<ChatUnitMeta>> chatQueueMap;
 
     /**
+     * Key 是 AIGC 的 Query Key
+     */
+    private Map<String, Queue<SentimentUnitMeta>> sentimentQueueMap;
+
+    /**
      * 最大频道数量。
      */
     private int maxChannel = 50;
@@ -77,6 +82,7 @@ public class AIGCService extends AbstractModule {
         this.unitMap = new ConcurrentHashMap<>();
         this.channelMap = new ConcurrentHashMap<>();
         this.chatQueueMap = new ConcurrentHashMap<>();
+        this.sentimentQueueMap = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -206,7 +212,7 @@ public class AIGCService extends AbstractModule {
 
         ChatUnitMeta meta = new ChatUnitMeta(unit, channel, content, listener);
 
-        synchronized (this) {
+        synchronized (this.chatQueueMap) {
             Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
@@ -231,6 +237,41 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
+    public boolean sentimentAnalysis(String text, SentimentAnalysisListener listener) {
+        // 查找有该能力的单元
+        AIGCUnit unit = this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.SentimentAnalysis);
+        if (null == unit) {
+            Logger.w(AIGCService.class, "No sentiment analysis task unit setup in server");
+            return false;
+        }
+
+        SentimentUnitMeta meta = new SentimentUnitMeta(unit, text, listener);
+
+        synchronized (this.sentimentQueueMap) {
+            Queue<SentimentUnitMeta> queue = this.sentimentQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.sentimentQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    processSentimentQueue(meta.unit.getQueryKey());
+                }
+            });
+            thread.start();
+        }
+
+        return true;
+    }
+
     private void processChatQueue(String queryKey) {
         Queue<ChatUnitMeta> queue = this.chatQueueMap.get(queryKey);
         if (null == queue) {
@@ -239,6 +280,27 @@ public class AIGCService extends AbstractModule {
         }
 
         ChatUnitMeta meta = queue.poll();
+        while (null != meta) {
+            // 执行处理
+            meta.process();
+
+            meta = queue.poll();
+        }
+
+        AIGCUnit unit = this.unitMap.get(queryKey);
+        if (null != unit) {
+            unit.setRunning(false);
+        }
+    }
+
+    private void processSentimentQueue(String queryKey) {
+        Queue<SentimentUnitMeta> queue = this.sentimentQueueMap.get(queryKey);
+        if (null == queue) {
+            Logger.w(AIGCService.class, "No found unit: " + queryKey);
+            return;
+        }
+
+        SentimentUnitMeta meta = queue.poll();
         while (null != meta) {
             // 执行处理
             meta.process();
@@ -287,10 +349,10 @@ public class AIGCService extends AbstractModule {
             data.put("history", this.channel.getLastParticipantHistory(5));
 
             Packet request = new Packet(AIGCAction.Chat.name, data);
-            ActionDialect dialect = cellet.transmit(unit.getContext(), request.toDialect());
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
             if (null == dialect) {
                 Logger.w(AIGCService.class, "Chat unit error - channel: " + this.channel.getCode());
-                channel.setProcessing(false);
+                this.channel.setProcessing(false);
                 // 回调错误
                 this.listener.onFailed(this.channel);
                 return;
@@ -307,6 +369,43 @@ public class AIGCService extends AbstractModule {
             this.channel.setProcessing(false);
 
             this.listener.onChat(this.channel, result);
+        }
+    }
+
+
+    private class SentimentUnitMeta {
+
+        protected AIGCUnit unit;
+
+        protected String text;
+
+        protected SentimentAnalysisListener listener;
+
+        public SentimentUnitMeta(AIGCUnit unit, String text, SentimentAnalysisListener listener) {
+            this.unit = unit;
+            this.text = text;
+            this.listener = listener;
+        }
+
+        public void process() {
+            JSONObject data = new JSONObject();
+            data.put("text", this.text);
+
+            Packet request = new Packet(AIGCAction.Sentiment.name, data);
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
+            if (null == dialect) {
+                Logger.w(AIGCService.class, "Sentiment unit error");
+                // 回调错误
+                this.listener.onFailed();
+                return;
+            }
+
+            Packet response = new Packet(dialect);
+            JSONObject payload = Packet.extractDataPayload(response);
+
+            SentimentResult result = new SentimentResult(payload);
+
+            this.listener.onCompleted(result);
         }
     }
 }
