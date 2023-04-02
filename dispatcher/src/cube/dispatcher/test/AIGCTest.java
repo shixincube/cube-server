@@ -138,12 +138,42 @@ public class AIGCTest {
         System.out.println("******** END ********");
     }
 
+    public void testSentiment() {
+        String url = this.getUrl("/aigc/nlp/sentiment/");
+
+        System.out.println("POST - " + url);
+
+        try {
+            JSONObject request = new JSONObject();
+            request.put("text", "天气不好呀");
+            StringContentProvider provider = new StringContentProvider(request.toString());
+            ContentResponse response = this.client.POST(url).content(provider).timeout(3, TimeUnit.MINUTES).send();
+            if (response.getStatus() == HttpStatus.OK_200) {
+                JSONObject data = new JSONObject(response.getContentAsString());
+                System.out.println(data.toString(4));
+            }
+            else {
+                System.out.println("Error: " + response.getStatus());
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("******** END ********");
+    }
+
     public static void main(String[] args) {
         AIGCTest test = new AIGCTest();
         test.setup();
 
 //        test.testRequestChannel();
 //        test.testChat();
+
+        test.testSentiment();
 
         test.teardown();
     }

@@ -32,10 +32,12 @@ import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCChatRecord;
+import cube.common.entity.SentimentResult;
 import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.aigc.handler.Chat;
 import cube.dispatcher.aigc.handler.RequestChannel;
+import cube.dispatcher.aigc.handler.Sentiment;
 import cube.util.HttpServer;
 import org.json.JSONObject;
 
@@ -69,6 +71,7 @@ public class Manager {
 
         httpServer.addContextHandler(new RequestChannel());
         httpServer.addContextHandler(new Chat());
+        httpServer.addContextHandler(new Sentiment());
     }
 
     public String getToken() {
@@ -119,5 +122,27 @@ public class Manager {
 
         AIGCChatRecord record = new AIGCChatRecord(Packet.extractDataPayload(responsePacket));
         return record;
+    }
+
+    public SentimentResult sentimentAnalysis(String text) {
+        JSONObject data = new JSONObject();
+        data.put("text", text);
+        Packet packet = new Packet(AIGCAction.Sentiment.name, data);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#sentimentAnalysis Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#sentimentAnalysis Response state code : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        SentimentResult result = new SentimentResult(Packet.extractDataPayload(responsePacket));
+        return result;
     }
 }
