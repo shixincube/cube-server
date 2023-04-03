@@ -361,8 +361,15 @@ public class AIGCService extends AbstractModule {
             Packet response = new Packet(dialect);
             JSONObject payload = Packet.extractDataPayload(response);
 
-            String responseText = payload.getString("response");
+            if (!payload.has("response")) {
+                Logger.w(AIGCService.class, "Chat unit respond failed - channel: " + this.channel.getCode());
+                this.channel.setProcessing(false);
+                // 回调错误
+                this.listener.onFailed(this.channel);
+                return;
+            }
 
+            String responseText = payload.getString("response");
             AIGCChatRecord result = this.channel.appendHistory(AI_NAME, responseText);
 
             // 重置状态位
