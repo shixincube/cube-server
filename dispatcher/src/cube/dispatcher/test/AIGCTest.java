@@ -109,14 +109,14 @@ public class AIGCTest {
         System.out.println("******** END ********");
     }
 
-    public void testChat() {
+    public void testChat(String code) {
         String url = this.getUrl("/aigc/chat/");
 
         System.out.println("POST - " + url);
 
         try {
             JSONObject request = new JSONObject();
-            request.put("code", "ftisfHxrdyxFIgGF");
+            request.put("code", code);
             request.put("content", "大理旅游体验好吗");
             StringContentProvider provider = new StringContentProvider(request.toString());
             ContentResponse response = this.client.POST(url).content(provider).timeout(3, TimeUnit.MINUTES).send();
@@ -171,9 +171,9 @@ public class AIGCTest {
         test.setup();
 
 //        test.testRequestChannel();
-//        test.testChat();
+        test.testChat("NldHebfkVCmljDnX");
 
-        test.testSentiment();
+//        test.testSentiment();
 
         test.teardown();
     }

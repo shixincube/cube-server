@@ -34,29 +34,29 @@ import org.json.JSONObject;
  */
 public class AIGCChatRecord implements JSONable {
 
-    public String participant;
+    public String query;
 
-    public String content;
+    public String answer;
 
     public long timestamp;
 
-    protected AIGCChatRecord(String participant, String content, long timestamp) {
-        this.participant = participant;
-        this.content = content;
+    protected AIGCChatRecord(String query, String answer, long timestamp) {
+        this.query = query;
+        this.answer = answer;
         this.timestamp = timestamp;
     }
 
     public AIGCChatRecord(JSONObject json) {
-        this.participant = json.getString("participant");
-        this.content = json.getString("content");
+        this.query = json.getString("query");
+        this.answer = json.getString("answer");
         this.timestamp = json.getLong("timestamp");
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("participant", this.participant);
-        json.put("content", this.content);
+        json.put("query", this.query);
+        json.put("answer", this.answer);
         json.put("timestamp", this.timestamp);
         return json;
     }

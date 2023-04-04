@@ -38,6 +38,8 @@ import javax.servlet.http.HttpServletResponse;
 
 public class Chat extends ContextHandler {
 
+    private final static String AI_NAME = "Cube";
+
     public Chat() {
         super("/aigc/chat/");
         setHandler(new Handler());
@@ -96,7 +98,13 @@ public class Chat extends ContextHandler {
                 return;
             }
 
-            this.respondOk(response, record.toJSON());
+            // Record 转结果
+            JSONObject responseData = new JSONObject();
+            responseData.put("participant", AI_NAME);
+            responseData.put("content", record.answer);
+            responseData.put("timestamp", record.timestamp);
+
+            this.respondOk(response, responseData);
             this.complete();
         }
     }

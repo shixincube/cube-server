@@ -36,6 +36,7 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -48,8 +49,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class AIGCService extends AbstractModule {
 
     public final static String NAME = "AIGC";
-
-    private final static String AI_NAME = "Cube";
 
     private AIGCCellet cellet;
 
@@ -160,15 +159,33 @@ public class AIGCService extends AbstractModule {
     }
 
     public AIGCUnit getUnitBySubtask(String subtask) {
+        ArrayList<AIGCUnit> candidates = new ArrayList<>();
+
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
         while (iter.hasNext()) {
             AIGCUnit unit = iter.next();
             if (unit.getCapability().getSubtask().equals(subtask)) {
-                return unit;
+                candidates.add(unit);
             }
         }
 
-        return null;
+        if (candidates.isEmpty()) {
+            return null;
+        }
+
+        AIGCUnit unit = null;
+        for (AIGCUnit u : candidates) {
+            if (!u.isRunning()) {
+                unit = u;
+                break;
+            }
+        }
+
+        if (null == unit) {
+            unit = candidates.get(0);
+        }
+
+        return unit;
     }
 
     public AIGCChannel requestChannel(String participant) {
@@ -346,7 +363,13 @@ public class AIGCService extends AbstractModule {
         public void process() {
             JSONObject data = new JSONObject();
             data.put("content", this.content);
-            data.put("history", this.channel.getLastParticipantHistory(5));
+
+            List<AIGCChatRecord> records = this.channel.getLastHistory(5);
+            JSONArray array = new JSONArray();
+            for (AIGCChatRecord record : records) {
+                array.put(record.toJSON());
+            }
+            data.put("history", array);
 
             Packet request = new Packet(AIGCAction.Chat.name, data);
             ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
@@ -370,7 +393,7 @@ public class AIGCService extends AbstractModule {
             }
 
             String responseText = payload.getString("response");
-            AIGCChatRecord result = this.channel.appendHistory(AI_NAME, responseText);
+            AIGCChatRecord result = this.channel.appendRecord(this.content, responseText);
 
             // 重置状态位
             this.channel.setProcessing(false);

@@ -27,7 +27,6 @@
 package cube.common.entity;
 
 import cell.util.Utils;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -96,46 +95,27 @@ public class AIGCChannel extends Entity {
         return this.processing.get();
     }
 
-    public AIGCChatRecord appendHistory(String participant, String content) {
+    public AIGCChatRecord appendRecord(String query, String answer) {
         this.activeTimestamp = System.currentTimeMillis();
 
-        AIGCChatRecord record = new AIGCChatRecord(participant, content, System.currentTimeMillis());
+        AIGCChatRecord record = new AIGCChatRecord(query, answer, this.activeTimestamp);
         this.history.addFirst(record);
         return record;
     }
 
     public List<AIGCChatRecord> getLastHistory(int num) {
-        List<AIGCChatRecord> result = new ArrayList<>();
+        List<AIGCChatRecord> list = new ArrayList<>(num);
 
-        for (int i = 0; i < this.history.size(); ++i) {
-            result.add(this.history.get(i));
-            if (result.size() >= num) {
+        for (AIGCChatRecord record : this.history) {
+            list.add(record);
+            if (list.size() >= num) {
                 break;
             }
         }
 
-        return result;
-    }
-
-    public JSONArray getLastParticipantHistory(int max) {
-        List<String> list = new ArrayList<>();
-
-        for (int i = 0; i < this.history.size(); ++i) {
-            AIGCChatRecord record = this.history.get(i);
-            if (record.participant.equals(this.participant)) {
-                list.add(record.content);
-                if (list.size() >= max) {
-                    break;
-                }
-            }
-        }
-
+        // 调换顺序，成为时间正序
         Collections.reverse(list);
-        JSONArray result = new JSONArray();
-        for (String content : list) {
-            result.put(content);
-        }
-        return result;
+        return list;
     }
 
     @Override
