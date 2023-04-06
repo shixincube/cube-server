@@ -103,10 +103,15 @@ public class AIGCChannel extends Entity {
         return record;
     }
 
-    public List<AIGCChatRecord> getLastHistory(int num) {
+    public List<AIGCChatRecord> getLastHistory() {
+        int num = 5;
         List<AIGCChatRecord> list = new ArrayList<>(num);
-
         for (AIGCChatRecord record : this.history) {
+            if (record.totalWords() > 120) {
+                // 过滤掉词多的问答
+                continue;
+            }
+
             list.add(record);
             if (list.size() >= num) {
                 break;

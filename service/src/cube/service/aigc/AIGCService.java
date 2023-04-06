@@ -364,7 +364,7 @@ public class AIGCService extends AbstractModule {
             JSONObject data = new JSONObject();
             data.put("content", this.content);
 
-            List<AIGCChatRecord> records = this.channel.getLastHistory(5);
+            List<AIGCChatRecord> records = this.channel.getLastHistory();
             JSONArray array = new JSONArray();
             for (AIGCChatRecord record : records) {
                 array.put(record.toJSON());
