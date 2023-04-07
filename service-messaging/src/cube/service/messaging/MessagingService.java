@@ -230,6 +230,10 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      */
     @Override
     public void stop() {
+        if (!this.started) {
+            return;
+        }
+
         this.started = false;
 
         this.messageCache.stop();

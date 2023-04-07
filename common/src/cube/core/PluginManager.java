@@ -54,6 +54,8 @@ public class PluginManager {
 
     private JSONObject config;
 
+    private volatile boolean started = false;
+
     public PluginManager(Kernel kernel) {
         this.kernel = kernel;
     }
@@ -93,10 +95,18 @@ public class PluginManager {
             }
 
             list.clear();
+
+            this.started = true;
         }
     }
 
     public void stop() {
+        if (!this.started) {
+            return;
+        }
+
+        this.started = false;
+
         for (AbstractModule module : this.kernel.getModules()) {
             PluginSystem pluginSystem = module.getPluginSystem();
             if (null == pluginSystem) {

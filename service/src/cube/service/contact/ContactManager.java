@@ -262,6 +262,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     @Override
     public void stop() {
+        if (!this.started) {
+            return;
+        }
+
         this.storage.close();
 
         this.onlineTables.clear();

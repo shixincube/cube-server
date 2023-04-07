@@ -78,7 +78,9 @@ public class FileSharingManager {
     }
 
     public void stop() {
-        this.codeDomainMap.clear();
+        if (null != this.codeDomainMap) {
+            this.codeDomainMap.clear();
+        }
     }
 
     /**

@@ -34,6 +34,8 @@ import cell.util.log.Logger;
 import cube.cache.SharedMemoryCache;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.license.LicenseConfig;
+import cube.license.LicenseTool;
 import cube.plugin.PluginSystem;
 import cube.report.ReportService;
 import cube.util.ConfigUtils;
@@ -42,6 +44,8 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.PublicKey;
 import java.util.Date;
 import java.util.Properties;
 import java.util.Timer;
@@ -56,6 +60,8 @@ public class ServiceCarpet implements CellListener {
     private Daemon daemon;
 
     private Timer timer;
+
+    private String licensePath = "license/";
 
     public ServiceCarpet() {
         Logger.i(this.getClass(), "--------------------------------");
@@ -73,7 +79,7 @@ public class ServiceCarpet implements CellListener {
         this.kernel = new Kernel(nucleus);
         nucleus.setParameter("kernel", this.kernel);
 
-        this.daemon = new Daemon(this.kernel, nucleus);
+        this.daemon = new Daemon(this.kernel, nucleus, this.licensePath);
         nucleus.setParameter("daemon", this.daemon);
 
         LogManager.getInstance().addHandle(this.daemon);
@@ -81,19 +87,28 @@ public class ServiceCarpet implements CellListener {
 
     @Override
     public void cellInitialized(Nucleus nucleus) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("Service STARTED - ");
+        buf.append(Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
+        buf.append("\n");
+
+        if (!this.verifyLicence()) {
+            // 授权无效，不进行初始化
+            buf.append("Not install certificate correctly or certificate has expired!\n");
+            buf.append("Cube service is not available!\n");
+            Logger.i(this.getClass(), buf.toString());
+            return;
+        }
+
         this.setupKernel();
 
         PluginSystem.load();
 
         this.timer = new Timer();
-        this.timer.schedule(daemon, 30L * 1000L, 10L * 1000L);
+        this.timer.schedule(this.daemon, 30 * 1000, 10 * 1000);
 
         this.initManagement(nucleus);
 
-        StringBuilder buf = new StringBuilder();
-        buf.append("Service STARTED - ");
-        buf.append(Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
-        buf.append("\n");
         buf.append("--------------------------------------------------------------------------------------\n");
         buf.append("   ______            __                  _____                         _\n");
         buf.append("  / ____/  __  __   / /_   ___          / ___/  ___    _____ _   __   (_)  _____  ___\n");
@@ -102,7 +117,6 @@ public class ServiceCarpet implements CellListener {
         buf.append("\\____/   \\__,_/  /_.___/ \\___/        /____/  \\___/ /_/     |___/  /_/   \\___/  \\___/\n");
         buf.append("--------------------------------------------------------------------------------------\n");
         Logger.i(this.getClass(), buf.toString());
-        buf = null;
     }
 
     @Override
@@ -116,6 +130,37 @@ public class ServiceCarpet implements CellListener {
 
         this.teardownKernel();
     }
+
+
+    private boolean verifyLicence() {
+        Logger.i(this.getClass(), "License path: " + (new File(this.licensePath)).getAbsolutePath());
+
+        PublicKey publicKey = LicenseTool.getPublicKeyFromCer(this.licensePath);
+        if (null == publicKey) {
+            Logger.e(this.getClass(), "Read certificate file error");
+            return false;
+        }
+
+        LicenseConfig config = LicenseTool.getLicenseConfig(new File(this.licensePath, "cube.license"));
+        if (null == config) {
+            Logger.e(this.getClass(), "Read license file error");
+            return false;
+        }
+
+        Logger.i(this.getClass(), "License expiration: " + config.expiration);
+
+        String signContent = config.extractSignContent();
+
+        byte[] data = signContent.getBytes(StandardCharsets.UTF_8);
+        try {
+            return LicenseTool.verify(data, config.signature, publicKey);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "Verify license error", e);
+        }
+
+        return false;
+    }
+
 
     private void setupKernel() {
         AbstractCellet.initialize();

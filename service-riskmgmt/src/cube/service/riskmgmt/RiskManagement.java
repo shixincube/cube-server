@@ -125,7 +125,9 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
             this.mainStorage.close();
         }
 
-        this.executor.shutdownNow();
+        if (null != this.executor) {
+            this.executor.shutdownNow();
+        }
     }
 
     @Override

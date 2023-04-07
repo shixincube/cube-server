@@ -161,10 +161,16 @@ public final class Kernel {
      * 停止内核。
      */
     public void shutdown() {
+        if (!this.started) {
+            return;
+        }
+
         this.pluginManager.stop();
 
-        this.daemon.terminate();
-        
+        if (null != this.daemon) {
+            this.daemon.terminate();
+        }
+
         Iterator<AbstractModule> miter = this.moduleMap.values().iterator();
         while (miter.hasNext()) {
             AbstractModule module = miter.next();
@@ -185,6 +191,8 @@ public final class Kernel {
 
         // 销毁进程管理器
         ProcessManager.getInstance().destroy();
+
+        this.started = false;
     }
 
     /**

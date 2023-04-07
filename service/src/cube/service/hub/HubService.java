@@ -139,7 +139,9 @@ public class HubService extends AbstractModule {
     @Override
     public void stop() {
         // 关闭信令控制器
-        this.signalController.dispose();
+        if (null != this.signalController) {
+            this.signalController.dispose();
+        }
 
         if (null != this.channelManager) {
             this.channelManager.stop();

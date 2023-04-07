@@ -86,10 +86,12 @@ public class AIGCService extends AbstractModule {
 
     @Override
     public void start() {
+        this.started = true;
     }
 
     @Override
     public void stop() {
+        this.started = false;
     }
 
     @Override
@@ -205,6 +207,10 @@ public class AIGCService extends AbstractModule {
     }
 
     public boolean chat(String code, String content, ChatListener listener) {
+        if (!this.started) {
+            return false;
+        }
+
         // 获取频道
         AIGCChannel channel = this.channelMap.get(code);
         if (null == channel) {
@@ -255,6 +261,10 @@ public class AIGCService extends AbstractModule {
     }
 
     public boolean sentimentAnalysis(String text, SentimentAnalysisListener listener) {
+        if (!this.started) {
+            return false;
+        }
+
         // 查找有该能力的单元
         AIGCUnit unit = this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.SentimentAnalysis);
         if (null == unit) {

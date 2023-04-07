@@ -106,7 +106,9 @@ public class MediaUnitLeader implements MediaUnitListener {
         this.forwardingMediaUnitList.clear();
         this.compositeMediaUnitList.clear();
 
-        this.executor.shutdown();
+        if (null != this.executor) {
+            this.executor.shutdown();
+        }
 
         if (null != this.snapshotDaemon) {
             this.snapshotDaemon.stop();

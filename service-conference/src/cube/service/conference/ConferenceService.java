@@ -88,7 +88,9 @@ public class ConferenceService extends AbstractModule {
 
     @Override
     public void stop() {
-        this.storage.close();
+        if (null != this.storage) {
+            this.storage.close();
+        }
     }
 
     /**

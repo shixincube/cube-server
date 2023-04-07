@@ -80,6 +80,8 @@ public class ManagementDaemon extends Thread {
 
     public final void terminate() {
         this.spinning = false;
-        this.executor.shutdown();
+        if (null != this.executor && !this.executor.isShutdown()) {
+            this.executor.shutdown();
+        }
     }
 }

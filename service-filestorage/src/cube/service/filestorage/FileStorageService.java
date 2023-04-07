@@ -271,6 +271,10 @@ public class FileStorageService extends AbstractModule {
 
     @Override
     public void stop() {
+        if (!this.started) {
+            return;
+        }
+
         this.started = false;
 
         // 停止分享管理器

@@ -31,12 +31,18 @@ import cell.api.Servable;
 import cell.core.cellet.Cellet;
 import cell.util.log.LogHandle;
 import cell.util.log.LogLevel;
+import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.license.LicenseConfig;
+import cube.license.LicenseTool;
 import cube.report.*;
 import cube.service.contact.ContactManager;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -53,10 +59,12 @@ public class Daemon extends TimerTask implements LogHandle {
 
     private long startTime;
 
+    private boolean stopped = false;
+
     /**
      * 日志报告间隔。
      */
-    private long logReportInterval = 10L * 1000L;
+    private long logReportInterval = 10 * 1000;
 
     /**
      * 上一次提交日志的时间戳。
@@ -66,7 +74,7 @@ public class Daemon extends TimerTask implements LogHandle {
     /**
      * 报告发送间隔。
      */
-    private long reportInterval = 60L * 1000L;
+    private long reportInterval = 60 * 1000;
 
     /**
      * 最近一次报告时间戳。
@@ -78,12 +86,29 @@ public class Daemon extends TimerTask implements LogHandle {
      */
     private List<LogLine> logRecords;
 
-    public Daemon(Kernel kernel, Nucleus nucleus) {
+    /**
+     * 验证授权间隔。
+     */
+    private long verifyLicenceInterval = 60 * 60 * 1000;
+
+    /**
+     * 最近一次验证时间。
+     */
+    private long lastVerifyLicenceTime = 0;
+
+    /**
+     * 授权文件目录。
+     */
+    private String licensePath;
+
+    public Daemon(Kernel kernel, Nucleus nucleus, String licensePath) {
         super();
         this.startTime = System.currentTimeMillis();
         this.kernel = kernel;
         this.nucleus = nucleus;
+        this.licensePath = licensePath;
         this.logRecords = new ArrayList<>();
+        this.lastVerifyLicenceTime = this.startTime;
     }
 
     public List<LogLine> getLogRecords(int limit) {
@@ -110,6 +135,11 @@ public class Daemon extends TimerTask implements LogHandle {
 
     @Override
     public void run() {
+        if (this.stopped) {
+            Logger.d(this.getClass(), "Daemon has stopped");
+            return;
+        }
+
         long now = System.currentTimeMillis();
 
         if (now - this.lastLogReport >= this.logReportInterval) {
@@ -135,6 +165,25 @@ public class Daemon extends TimerTask implements LogHandle {
             this.submitJVMReport(now);
             this.submitPerformanceReport(now);
             this.lastReportTime = now;
+        }
+
+        // 是否验证授权证书
+        if (now - this.lastVerifyLicenceTime > this.verifyLicenceInterval) {
+            this.lastVerifyLicenceTime = now;
+
+            if (!this.verifyLicence()) {
+                Logger.e(this.getClass(), "Not install certificate correctly or certificate has expired!");
+
+                // 停止运行
+                this.stopped = true;
+
+                (new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        kernel.shutdown();
+                    }
+                })).start();
+            }
         }
     }
 
@@ -166,6 +215,35 @@ public class Daemon extends TimerTask implements LogHandle {
         report.appendItem(ContactManager.NAME, contactPerf);
 
         ReportService.getInstance().submitReport(report);
+    }
+
+    private boolean verifyLicence() {
+        Logger.i(this.getClass(), "License path: " + (new File(this.licensePath)).getAbsolutePath());
+
+        PublicKey publicKey = LicenseTool.getPublicKeyFromCer(this.licensePath);
+        if (null == publicKey) {
+            Logger.e(this.getClass(), "Read certificate file error");
+            return false;
+        }
+
+        LicenseConfig config = LicenseTool.getLicenseConfig(new File(this.licensePath, "cube.license"));
+        if (null == config) {
+            Logger.e(this.getClass(), "Read license file error");
+            return false;
+        }
+
+        Logger.i(this.getClass(), "License expiration: " + config.expiration);
+
+        String signContent = config.extractSignContent();
+
+        byte[] data = signContent.getBytes(StandardCharsets.UTF_8);
+        try {
+            return LicenseTool.verify(data, config.signature, publicKey);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "Verify license error", e);
+        }
+
+        return false;
     }
 
     @Override

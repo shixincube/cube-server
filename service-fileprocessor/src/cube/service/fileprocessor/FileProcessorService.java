@@ -141,7 +141,9 @@ public class FileProcessorService extends AbstractModule {
 
     @Override
     public void stop() {
-        this.cvConnector.stop();
+        if (null != this.cvConnector) {
+            this.cvConnector.stop();
+        }
     }
 
     @Override

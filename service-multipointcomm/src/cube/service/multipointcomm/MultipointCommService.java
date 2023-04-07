@@ -147,9 +147,13 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             this.contactsAdapter.removeListener(this);
         }
 
-        this.scheduledExecutor.shutdown();
+        if (null != this.scheduledExecutor) {
+            this.scheduledExecutor.shutdown();
+        }
 
-        this.executor.shutdown();
+        if (null != this.executor) {
+            this.executor.shutdown();
+        }
 
         this.mediaUnitLeader.stop();
     }
