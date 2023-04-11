@@ -34,7 +34,9 @@ import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.Base64;
+import java.util.Date;
 
 /**
  * 许可证工具。
@@ -48,7 +50,7 @@ public class LicenseTool {
     # keystore: 指定私钥库文件的名称(生成在当前目录)
     # storepass：指定私钥库的密码(获取keystore信息所需的密码)
     # keypass：指定别名条目的密码(私钥的密码)
-    keytool -genkeypair -storetype JKS -keysize 512 -validity 3 -alias "CubeLicense" -keyalg "RSA" -keystore "CubeLicense.keystore" -storepass "cubeteam" -keypass "cube-2023" -dname "CN=Xu, OU=Yang, O=Cube, L=gz, ST=gd, C=CN"
+    keytool -genkeypair -storetype JKS -keysize 512 -validity 300 -alias "CubeLicense" -keyalg "RSA" -keystore "CubeLicense.keystore" -storepass "cubeteam" -keypass "cube-2023" -dname "CN=Xu, OU=Yang, O=Cube, L=gz, ST=gd, C=CN"
     */
 
     /* 生成证书
@@ -77,7 +79,7 @@ public class LicenseTool {
         if (!file.exists() || !file.isFile()) {
             return null;
         }
-        
+
         return new LicenseConfig(file);
     }
 
@@ -152,6 +154,38 @@ public class LicenseTool {
         }
 
         return publicKey;
+    }
+
+    /**
+     * 获取证书超期时间。
+     *
+     * @param path
+     * @return
+     */
+    public static Date getExpiration(String path) {
+        Date expiration = null;
+        FileInputStream fis = null;
+
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            fis = new FileInputStream(new File(path, CertificateInfo.CER_FILE));
+            Certificate certificate = cf.generateCertificate(fis);
+            expiration = ((X509Certificate) certificate).getNotAfter();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != fis) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    // Nothing
+                }
+            }
+        }
+
+        return expiration;
     }
 
     /**

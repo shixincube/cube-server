@@ -29,6 +29,7 @@ package cube.service;
 import cell.api.Nucleus;
 import cell.api.Servable;
 import cell.core.cellet.Cellet;
+import cell.util.Utils;
 import cell.util.log.LogHandle;
 import cell.util.log.LogLevel;
 import cell.util.log.Logger;
@@ -43,10 +44,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * 服务器的守护任务。
@@ -219,6 +217,12 @@ public class Daemon extends TimerTask implements LogHandle {
 
     private boolean verifyLicence() {
         Logger.i(this.getClass(), "License path: " + (new File(this.licensePath)).getAbsolutePath());
+
+        Date expiration = LicenseTool.getExpiration(this.licensePath);
+        if (System.currentTimeMillis() > expiration.getTime()) {
+            Logger.e(this.getClass(), "Certificate expiration: " + Utils.gsDateFormat.format(expiration));
+            return false;
+        }
 
         PublicKey publicKey = LicenseTool.getPublicKeyFromCer(this.licensePath);
         if (null == publicKey) {

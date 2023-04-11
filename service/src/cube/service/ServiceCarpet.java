@@ -135,6 +135,12 @@ public class ServiceCarpet implements CellListener {
     private boolean verifyLicence() {
         Logger.i(this.getClass(), "License path: " + (new File(this.licensePath)).getAbsolutePath());
 
+        Date expiration = LicenseTool.getExpiration(this.licensePath);
+        if (System.currentTimeMillis() > expiration.getTime()) {
+            Logger.e(this.getClass(), "Certificate expiration: " + Utils.gsDateFormat.format(expiration));
+            return false;
+        }
+
         PublicKey publicKey = LicenseTool.getPublicKeyFromCer(this.licensePath);
         if (null == publicKey) {
             Logger.e(this.getClass(), "Read certificate file error");

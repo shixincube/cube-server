@@ -79,23 +79,23 @@ public class License {
         return false;
     }
 
-    /*
+
     public static void main(String[] args) {
         License license = new License();
 
-//        if (!license.signLicense("./license/")) {
-//            System.out.println("Sign failed");
-//            return;
-//        }
-//        else {
-//            System.out.println("Sign success");
-//        }
-
-        if (license.verifyLicence("./license/")) {
-            System.out.println("Sign is correct");
+        if (!license.signLicense("./license/")) {
+            System.out.println("Sign failed");
+            return;
         }
         else {
-            System.out.println("Sign is error");
+            System.out.println("Sign success");
         }
-    }*/
+
+//        if (license.verifyLicence("./license/")) {
+//            System.out.println("Sign is correct");
+//        }
+//        else {
+//            System.out.println("Sign is error");
+//        }
+    }
 }
