@@ -38,7 +38,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.ChatListener;
+import cube.service.aigc.listener.ChatListener;
 import org.json.JSONObject;
 
 /**

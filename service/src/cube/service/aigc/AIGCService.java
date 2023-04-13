@@ -31,11 +31,14 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
+import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
+import cube.service.aigc.listener.ChatListener;
+import cube.service.aigc.listener.SentimentAnalysisListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -295,6 +298,33 @@ public class AIGCService extends AbstractModule {
             });
             thread.start();
         }
+
+        return true;
+    }
+
+
+    public boolean automaticSpeechRecognition(String domain, String fileCode) {
+        final String serviceName = "FileStorage";
+        AbstractModule fileStorage = this.getKernel().getModule(serviceName);
+        if (null == fileStorage) {
+            Logger.e(this.getClass(), "#automaticSpeechRecognition - File storage service is not ready");
+            return false;
+        }
+
+        JSONObject getFile = new JSONObject();
+        getFile.put("action", FileStorageAction.GetFile.name);
+        getFile.put("domain", domain);
+        getFile.put("fileCode", fileCode);
+        getFile.put("transmitting", false);
+
+        JSONObject fileLabelJson = fileStorage.notify(getFile);
+        if (null == fileLabelJson) {
+            Logger.e(this.getClass(), "#automaticSpeechRecognition - Get file failed: " + fileCode);
+            return false;
+        }
+
+        FileLabel fileLabel = new FileLabel(fileLabelJson);
+        System.out.println("XJW: \n" + fileLabel.toJSON().toString(4));
 
         return true;
     }

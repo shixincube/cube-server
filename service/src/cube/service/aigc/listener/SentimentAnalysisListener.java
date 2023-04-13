@@ -24,17 +24,16 @@
  * SOFTWARE.
  */
 
-package cube.service.aigc;
+package cube.service.aigc.listener;
 
-import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCChatRecord;
+import cube.common.entity.SentimentResult;
 
 /**
- * Chat 监听器。
+ * 情感分析监听器。
  */
-public interface ChatListener {
+public interface SentimentAnalysisListener {
 
-    void onChat(AIGCChannel channel, AIGCChatRecord record);
+    void onCompleted(SentimentResult result);
 
-    void onFailed(AIGCChannel channel);
+    void onFailed();
 }

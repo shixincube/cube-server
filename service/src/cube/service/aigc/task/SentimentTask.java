@@ -37,7 +37,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.SentimentAnalysisListener;
+import cube.service.aigc.listener.SentimentAnalysisListener;
 import org.json.JSONObject;
 
 /**

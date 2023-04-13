@@ -54,7 +54,12 @@ public enum AIGCAction {
     /**
      * 情感分析。
      */
-    Sentiment("sentiment")
+    Sentiment("sentiment"),
+
+    /**
+     * 自动语音识别。
+     */
+    AutomaticSpeechRecognition("automaticSpeechRecognition")
 
     ;
 
