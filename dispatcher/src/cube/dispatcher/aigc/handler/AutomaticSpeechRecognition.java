@@ -36,10 +36,10 @@ import org.json.JSONObject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class Sentiment extends ContextHandler {
+public class AutomaticSpeechRecognition extends ContextHandler {
 
-    public Sentiment() {
-        super("/aigc/nlp/sentiment");
+    public AutomaticSpeechRecognition() {
+        super("/aigc/audio/asr");
         setHandler(new Handler());
     }
 
@@ -68,25 +68,29 @@ public class Sentiment extends ContextHandler {
                 return;
             }
 
-            String text = null;
+            String domain = "shixincube.com";
+            String fileCode = null;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
-                text = json.getString("text");
+                fileCode = json.getString("fileCode");
+                if (json.has("domain")) {
+                    domain = json.getString("domain");
+                }
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
                 return;
             }
 
-            if (null == text) {
+            if (null == fileCode) {
                 // 参数错误
                 this.respond(response, HttpStatus.NOT_FOUND_404);
                 this.complete();
                 return;
             }
 
-            // 情感分析
-            SentimentResult result = Manager.getInstance().sentimentAnalysis(text);
+            // ASR
+            String result = Manager.getInstance().automaticSpeechRecognition(domain, fileCode);
             if (null == result) {
                 // 不允许该参与者申请或者服务故障
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
@@ -94,7 +98,10 @@ public class Sentiment extends ContextHandler {
                 return;
             }
 
-            this.respondOk(response, result.toJSON());
+            JSONObject resultData = new JSONObject();
+            resultData.put("result", result);
+
+            this.respondOk(response, resultData);
             this.complete();
         }
     }

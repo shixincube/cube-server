@@ -90,6 +90,11 @@ public class FileStorageCellet extends AbstractCellet {
         fileHandler.setHandler(new FileHandler(this.fileChunkStorage, this.performer));
         httpServer.addContextHandler(fileHandler);
 
+        ContextHandler operationHandler = new ContextHandler();
+        operationHandler.setContextPath(FileOperationHandler.PATH);
+        operationHandler.setHandler(new FileOperationHandler(this.performer));
+        httpServer.addContextHandler(operationHandler);
+
         ContextHandler sharingHandler = new ContextHandler();
         sharingHandler.setContextPath(FileSharingHandler.PATH);
         sharingHandler.setHandler(new FileSharingHandler(this.performer));

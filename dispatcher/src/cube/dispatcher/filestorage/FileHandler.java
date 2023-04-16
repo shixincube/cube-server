@@ -57,12 +57,11 @@ import org.json.JSONObject;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -80,6 +79,11 @@ public class FileHandler extends CrossDomainHandler {
 
     private int bufferSize = 10 * 1024 * 1024;
 
+    private File tempPath = new File("cube-fs-tmp/");
+
+    // 上传文件分块大小限制
+    private int cacheLimit = 5 * 1024 * 1024;
+
     /**
      * 构造函数。
      *
@@ -90,6 +94,9 @@ public class FileHandler extends CrossDomainHandler {
         super();
         this.fileChunkStorage = fileChunkStorage;
         this.performer = performer;
+        if (!this.tempPath.exists()) {
+            this.tempPath.mkdirs();
+        }
     }
 
     /**
@@ -106,23 +113,51 @@ public class FileHandler extends CrossDomainHandler {
         // Token Code
         String token = request.getParameter("token");
         // SN
-        Long sn = Long.parseLong(request.getParameter("sn"));
+        Long sn = (null != request.getParameter("sn")) ?
+                Long.parseLong(request.getParameter("sn")) : Utils.generateSerialNumber();
 
         // 读取流
         FlexibleByteBuffer buf = new FlexibleByteBuffer();
         byte[] bytes = new byte[4096];
         InputStream is = request.getInputStream();
 
+        ArrayList<File> tempFiles = new ArrayList<>();
+
+        long total = 0;
         int length = 0;
         while ((length = is.read(bytes)) > 0) {
             buf.put(bytes, 0, length);
+            total += length;
+
+            if (buf.position() >= this.cacheLimit) {
+                // 整理缓存
+                buf.flip();
+                File file = this.writeToTempFile(buf, token);
+                if (null == file) {
+                    for (File f : tempFiles) {
+                        f.delete();
+                    }
+                    tempFiles = null;
+                    break;
+                }
+
+                tempFiles.add(file);
+                buf = new FlexibleByteBuffer();
+            }
         }
 
-        // 整理缓存
+        if (null == tempFiles) {
+            this.respond(response, HttpStatus.FORBIDDEN_403, new JSONObject());
+            this.complete();
+            return;
+        }
+
         buf.flip();
+        File lastFile = this.writeToTempFile(buf, token);
+        tempFiles.add(lastFile);
 
         // Contact ID
-        Long contactId = null;
+        long contactId = 0;
         // 域
         String domain = null;
         // 文件大小
@@ -135,54 +170,228 @@ public class FileHandler extends CrossDomainHandler {
         int size = 0;
         // 文件名
         String fileName = null;
-        // 文件块数据
-        byte[] data = null;
 
-        try {
-            FormData formData = new FormData(buf.array(), 0, buf.limit());
+        fileName = request.getParameter("filename");
+        if (null != fileName) {
+            // 非 Form 格式
+            fileName = URLDecoder.decode(fileName, "UTF-8");
 
-            contactId = Long.parseLong(formData.getValue("cid"));
-            domain = formData.getValue("domain");
-            fileSize = Long.parseLong(formData.getValue("fileSize"));
-            lastModified = Long.parseLong(formData.getValue("lastModified"));
-            cursor = Long.parseLong(formData.getValue("cursor"));
-            size = Integer.parseInt(formData.getValue("size"));
-            fileName = formData.getFileName();
-            data = formData.getFileChunk();
-        } catch (Exception e) {
-            Logger.w(this.getClass(), "#doPost", e);
-            this.respond(response, HttpStatus.FORBIDDEN_403, new JSONObject());
-            return;
+            String sizeStr = request.getParameter("filesize");
+            if (null == sizeStr) {
+                fileSize = total;
+            }
+            else {
+                fileSize = Long.parseLong(sizeStr);
+            }
+
+            String modifiedStr = request.getParameter("modified");
+            if (null == modifiedStr) {
+                lastModified = System.currentTimeMillis();
+            }
+            else {
+                lastModified = Long.parseLong(modifiedStr);
+            }
+
+            JSONObject payload = new JSONObject();
+            payload.put("code", token);
+            Packet packet = new Packet(AuthAction.GetToken.name, payload);
+            ActionDialect dialect = this.performer.syncTransmit(AuthCellet.NAME, packet.toDialect());
+            if (null == dialect) {
+                clearTempFiles(tempFiles);
+                response.setStatus(HttpStatus.NOT_FOUND_404);
+                this.complete();
+                return;
+            }
+
+            Packet responsePacket = new Packet(dialect);
+            if (Packet.extractCode(responsePacket) != AuthStateCode.Ok.code) {
+                clearTempFiles(tempFiles);
+                response.setStatus(HttpStatus.SERVICE_UNAVAILABLE_503);
+                this.complete();
+                return;
+            }
+
+            // 存在合法令牌
+            AuthToken authToken = new AuthToken(Packet.extractDataPayload(responsePacket));
+            if (authToken.getExpiry() < System.currentTimeMillis()) {
+                // 令牌过期
+                Logger.d(this.getClass(), "Token have expired - " + authToken.getCode());
+                clearTempFiles(tempFiles);
+                response.setStatus(HttpStatus.NOT_ACCEPTABLE_406);
+                this.complete();
+                return;
+            }
+
+            contactId = authToken.getContactId();
+            domain = authToken.getDomain();
+
+            String fileCode = null;
+
+            byte[] fb = new byte[2048];
+            for (File file : tempFiles) {
+                FileInputStream fis = null;
+                FlexibleByteBuffer fbuf = new FlexibleByteBuffer();
+                try {
+                    fis = new FileInputStream(file);
+                    int len = 0;
+                    while ((len = fis.read(fb)) > 0) {
+                        fbuf.put(fb, 0, len);
+                    }
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "Read temp file failed", e);
+                } finally {
+                    if (null != fis) {
+                        try {
+                            fis.close();
+                        } catch (IOException e) {
+                            // Nothing
+                        }
+                    }
+                }
+
+                fbuf.flip();
+                byte[] data = new byte[fbuf.limit()];
+                System.arraycopy(fbuf.array(), 0, data, 0, fbuf.limit());
+                size = data.length;
+                FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, lastModified, cursor, size, data);
+                fileCode = this.fileChunkStorage.append(chunk);
+                cursor += size;
+            }
+
+            JSONObject responseData = new JSONObject();
+            try {
+                responseData.put("fileName", fileName);
+                responseData.put("fileSize", fileSize);
+                responseData.put("fileCode", fileCode);
+                responseData.put("lastModified", lastModified);
+                responseData.put("position", cursor);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            payload = new JSONObject();
+            try {
+                payload.put("data", responseData);
+                payload.put("code", FileStorageStateCode.Ok.code);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            packet = new Packet(sn, FileStorageAction.UploadFile.name, payload);
+
+            this.respondOk(response, packet.toJSON());
+        }
+        else {
+            // 文件块数据
+            byte[] data = null;
+
+            try {
+                buf = this.readFiles(tempFiles);
+                FormData formData = new FormData(buf.array(), 0, buf.limit());
+
+                contactId = Long.parseLong(formData.getValue("cid"));
+                domain = formData.getValue("domain");
+                fileSize = Long.parseLong(formData.getValue("fileSize"));
+                lastModified = Long.parseLong(formData.getValue("lastModified"));
+                cursor = Long.parseLong(formData.getValue("cursor"));
+                size = Integer.parseInt(formData.getValue("size"));
+                fileName = formData.getFileName();
+                data = formData.getFileChunk();
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "#doPost", e);
+                clearTempFiles(tempFiles);
+                this.respond(response, HttpStatus.FORBIDDEN_403, new JSONObject());
+                this.complete();
+                return;
+            }
+
+            FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, lastModified, cursor, size, data);
+            String fileCode = this.fileChunkStorage.append(chunk);
+
+            JSONObject responseData = new JSONObject();
+            try {
+                responseData.put("fileName", fileName);
+                responseData.put("fileSize", fileSize);
+                responseData.put("fileCode", fileCode);
+                responseData.put("lastModified", lastModified);
+                responseData.put("position", cursor + size);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            JSONObject payload = new JSONObject();
+            try {
+                payload.put("data", responseData);
+                payload.put("code", FileStorageStateCode.Ok.code);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            Packet packet = new Packet(sn, FileStorageAction.UploadFile.name, payload);
+
+            this.respondOk(response, packet.toJSON());
         }
 
-        buf = null;
-
-        FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, lastModified, cursor, size, data);
-        String fileCode = this.fileChunkStorage.append(chunk);
-
-        JSONObject responseData = new JSONObject();
-        try {
-            responseData.put("fileName", fileName);
-            responseData.put("fileSize", fileSize);
-            responseData.put("fileCode", fileCode);
-            responseData.put("lastModified", lastModified);
-            responseData.put("position", cursor + size);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        JSONObject payload = new JSONObject();
-        try {
-            payload.put("data", responseData);
-            payload.put("code", FileStorageStateCode.Ok.code);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        Packet packet = new Packet(sn, FileStorageAction.UploadFile.name, payload);
-
-        this.respondOk(response, packet.toJSON());
-
+        clearTempFiles(tempFiles);
         this.complete();
+    }
+
+    private File writeToTempFile(FlexibleByteBuffer buf, String token) {
+        File file = new File(this.tempPath, token + "_" + Utils.randomInt(100000, 999999) + ".tmp");
+
+        FileOutputStream fos = null;
+
+        try {
+            fos = new FileOutputStream(file);
+            fos.write(buf.array(), 0, buf.limit());
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#writeToTempFile", e);
+            return null;
+        } finally {
+            if (null != fos) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        return file;
+    }
+
+    private FlexibleByteBuffer readFiles(ArrayList<File> fileList) {
+        FlexibleByteBuffer buf = new FlexibleByteBuffer();
+
+        byte[] data = new byte[1024];
+        for (File file : fileList) {
+            FileInputStream fis = null;
+            try {
+                fis = new FileInputStream(file);
+                int len = 0;
+                while ((len = fis.read(data)) > 0) {
+                    buf.put(data, 0, len);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (null != fis) {
+                    try {
+                        fis.close();
+                    } catch (IOException e) {
+                        // Nothing
+                    }
+                }
+            }
+        }
+
+        // 整理
+        buf.flip();
+
+        return buf;
+    }
+
+    private void clearTempFiles(ArrayList<File> files) {
+        for (File file : files) {
+            file.delete();
+        }
     }
 
     /**

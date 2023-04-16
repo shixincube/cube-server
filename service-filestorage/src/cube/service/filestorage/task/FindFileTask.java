@@ -83,10 +83,17 @@ public class FindFileTask extends ServiceTask {
         long lastModified = 0;
         long fileSize = 0;
 
+        String md5Code = null;
+
         try {
-            fileName = packet.data.getString("fileName");
-            lastModified = packet.data.getLong("lastModified");
-            fileSize = packet.data.getLong("fileSize");
+            if (packet.data.has("fileName")) {
+                fileName = packet.data.getString("fileName");
+                lastModified = packet.data.getLong("lastModified");
+                fileSize = packet.data.getLong("fileSize");
+            }
+            else {
+                md5Code = packet.data.getString("md5");
+            }
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.Failure.code, packet.data));
@@ -94,9 +101,17 @@ public class FindFileTask extends ServiceTask {
             return;
         }
 
+        FileLabel fileLabel = null;
+
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-        // 精确查找文件
-        FileLabel fileLabel = service.findFile(domain, contactId, fileName, lastModified, fileSize);
+        if (null != fileName && lastModified > 0 && fileSize > 0) {
+            // 精确查找文件
+            fileLabel = service.findFile(domain, contactId, fileName, lastModified, fileSize);
+        }
+        else if (null != md5Code) {
+            // 使用 MD5 查找
+            fileLabel = service.findFileByMD5(domain, md5Code);
+        }
 
         if (null != fileLabel) {
             // 应答

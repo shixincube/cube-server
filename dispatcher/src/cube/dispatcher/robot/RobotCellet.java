@@ -58,6 +58,8 @@ public class RobotCellet extends AbstractCellet implements Tickable {
      */
     private Performer performer;
 
+    private boolean enabled = false;
+
     private boolean registered = false;
 
     private int tickCount = 0;
@@ -72,6 +74,10 @@ public class RobotCellet extends AbstractCellet implements Tickable {
         this.performer.addTickable(this);
 
         // 配置
+        if (this.performer.getProperties().containsKey("robot.enabled")) {
+            this.enabled = Boolean.parseBoolean(
+                    this.performer.getProperties().getProperty("robot.enabled", "false"));
+        }
         if (this.performer.getProperties().containsKey("robot.api")) {
             ROBOT_API_URL = this.performer.getProperties().getProperty("robot.api").trim();
         }
@@ -79,11 +85,16 @@ public class RobotCellet extends AbstractCellet implements Tickable {
             ROBOT_CALLBACK_URL = this.performer.getProperties().getProperty("robot.callback").trim();
         }
 
-        Manager.getInstance().start();
+        if (this.enabled) {
+            Manager.getInstance().start();
 
-        setupHandler();
+            setupHandler();
 
-        registerCallback();
+            registerCallback();
+        }
+        else {
+            Logger.w(this.getClass(), "Robot service is NOT enabled");
+        }
 
         return true;
     }
@@ -92,9 +103,11 @@ public class RobotCellet extends AbstractCellet implements Tickable {
     public void uninstall() {
         this.performer.removeTickable(this);
 
-        Manager.getInstance().stop();
+        if (this.enabled) {
+            Manager.getInstance().stop();
 
-        deregisterCallback();
+            deregisterCallback();
+        }
     }
 
     private void setupHandler() {
@@ -179,6 +192,10 @@ public class RobotCellet extends AbstractCellet implements Tickable {
 
     @Override
     public void onTick(long now) {
+        if (!this.enabled) {
+            return;
+        }
+
         ++this.tickCount;
         if (this.tickCount >= Integer.MAX_VALUE) {
             this.tickCount = 1;

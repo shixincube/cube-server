@@ -40,7 +40,7 @@ public class FileChunk implements Comparable<FileChunk> {
     /**
      * 文件块关联的联系人 ID 。
      */
-    protected Long contactId;
+    protected long contactId;
 
     /**
      * 文件块关联的域。
@@ -104,7 +104,7 @@ public class FileChunk implements Comparable<FileChunk> {
      * @param size
      * @param data
      */
-    public FileChunk(Long contactId, String domain, String token, String fileName,
+    public FileChunk(long contactId, String domain, String token, String fileName,
                      long fileSize, long lastModified, long cursor, int size, byte[] data) {
         this.contactId = contactId;
         this.domain = domain;

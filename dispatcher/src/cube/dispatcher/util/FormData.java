@@ -233,6 +233,10 @@ public class FormData {
         }
     }
 
+    public int numMultipart() {
+        return this.multipart.size();
+    }
+
     public String getFileName() {
         return this.fileName;
     }

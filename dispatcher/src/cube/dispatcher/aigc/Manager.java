@@ -35,6 +35,7 @@ import cube.common.entity.AIGCChatRecord;
 import cube.common.entity.SentimentResult;
 import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
+import cube.dispatcher.aigc.handler.AutomaticSpeechRecognition;
 import cube.dispatcher.aigc.handler.Chat;
 import cube.dispatcher.aigc.handler.RequestChannel;
 import cube.dispatcher.aigc.handler.Sentiment;
@@ -72,6 +73,7 @@ public class Manager {
         httpServer.addContextHandler(new RequestChannel());
         httpServer.addContextHandler(new Chat());
         httpServer.addContextHandler(new Sentiment());
+        httpServer.addContextHandler(new AutomaticSpeechRecognition());
     }
 
     public String getToken() {
@@ -144,5 +146,9 @@ public class Manager {
 
         SentimentResult result = new SentimentResult(Packet.extractDataPayload(responsePacket));
         return result;
+    }
+
+    public String automaticSpeechRecognition(String domain, String fileCode) {
+        return null;
     }
 }

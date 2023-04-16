@@ -242,13 +242,14 @@ public class FileChunkStorage {
         // 发送
         ActionDialect dialect = this.performer.syncTransmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, packet.toDialect());
         if (null == dialect) {
+            Logger.w(this.getClass(), "Put file request failed: " + fileChunkStore.tokenCode);
             return;
         }
 
         // 将数据发送给客户端
         TalkContext talkContext = this.performer.getTalkContext(fileChunkStore.tokenCode);
         if (null == talkContext) {
-            Logger.w(this.getClass(), "Can NOT find talk context: " + fileChunkStore.tokenCode);
+            Logger.d(this.getClass(), "Can NOT find talk context: " + fileChunkStore.tokenCode);
             return;
         }
 

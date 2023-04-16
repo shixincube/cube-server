@@ -648,6 +648,7 @@ public class FileStorageService extends AbstractModule {
 
     /**
      * 精确查找指定属性的文件。
+     *
      * @param domainName
      * @param fileName
      * @param lastModified
@@ -662,6 +663,23 @@ public class FileStorageService extends AbstractModule {
 
         return this.getFile(domainName, fileCode);
     }
+
+    /**
+     * 查找指定 MD5 码的文件。
+     *
+     * @param domainName
+     * @param md5Code
+     * @return
+     */
+    public FileLabel findFileByMD5(String domainName, String md5Code) {
+        String fileCode = this.serviceStorage.findFileByMD5(domainName, md5Code);
+        if (null == fileCode) {
+            return null;
+        }
+
+        return this.getFile(domainName, fileCode);
+    }
+
 
     /**
      * 读文件标签。

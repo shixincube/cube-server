@@ -119,6 +119,11 @@ public class Performer implements TalkListener, Tickable {
     private ConcurrentHashMap<String, Device> tokenDeviceMap;
 
     /**
+     * 令牌对应的 Director 。
+     */
+    private ConcurrentHashMap<String, Director> tokenDirectorMap;
+
+    /**
      * 有效的令牌。
      */
     private ConcurrentHashMap<String, AuthToken> validAuthTokenMap;
@@ -157,6 +162,7 @@ public class Performer implements TalkListener, Tickable {
         this.listenerMap = new ConcurrentHashMap<>();
         this.onlineContacts = new ConcurrentHashMap<>();
         this.tokenDeviceMap = new ConcurrentHashMap<>();
+        this.tokenDirectorMap = new ConcurrentHashMap<>();
         this.validAuthTokenMap = new ConcurrentHashMap<>();
         this.transmissionMap = new ConcurrentHashMap<>();
         this.blockMap = new ConcurrentHashMap<>();
@@ -307,14 +313,20 @@ public class Performer implements TalkListener, Tickable {
      * @return 返回被选中的导演机。
      */
     private synchronized Director selectDirector(String tokenCode, String celletName) {
-        // 获取令牌对应的设备
-        Device device = this.tokenDeviceMap.get(tokenCode);
-        if (null == device) {
-            Logger.i(this.getClass(), "#selectDirector Can NOT find device by token: " + tokenCode);
-            return null;
+        Director director = this.tokenDirectorMap.get(tokenCode);
+        if (null != director) {
+            return director;
         }
 
-        return this.selectDirector(device.getTalkContext(), celletName);
+        // 获取令牌对应的设备
+        Device device = this.tokenDeviceMap.get(tokenCode);
+        if (null != device) {
+            return this.selectDirector(device.getTalkContext(), celletName);
+        }
+
+        director = this.selectDirector();
+        this.tokenDirectorMap.put(tokenCode, director);
+        return director;
     }
 
     /**
@@ -693,19 +705,13 @@ public class Performer implements TalkListener, Tickable {
      * @param actionDialect
      */
     public void transmit(String tokenCode, String celletName, ActionDialect actionDialect) {
-        Device device = this.tokenDeviceMap.get(tokenCode);
-        if (null == device) {
-            Logger.w(this.getClass(), "#transmit : Can NOT find token device, token: " + tokenCode);
-            return;
-        }
+        Director director = this.selectDirector(tokenCode, celletName);
 
         long sn = actionDialect.containsParam("sn") ?
                 actionDialect.getParamAsLong("sn") : Utils.generateSerialNumber();
-        
+
         // 增加 P-KEY 记录
         actionDialect.addParam(this.performerKey, createPerformer(sn));
-
-        Director director = this.selectDirector(device.getTalkContext(), celletName);
 
         director.speaker.speak(celletName, actionDialect);
     }
@@ -719,13 +725,7 @@ public class Performer implements TalkListener, Tickable {
      * @param inputStream
      */
     public void transmit(String tokenCode, String celletName, String streamName, InputStream inputStream) {
-        Device device = this.tokenDeviceMap.get(tokenCode);
-        if (null == device) {
-            Logger.w(this.getClass(), "#transmit : Can NOT find token device, token: " + tokenCode);
-            return;
-        }
-
-        Director director = this.selectDirector(device.getTalkContext(), celletName);
+        Director director = this.selectDirector(tokenCode, celletName);
 
         long total = 0;
         // 发送数据
@@ -869,13 +869,8 @@ public class Performer implements TalkListener, Tickable {
      * @return
      */
     public ActionDialect syncTransmit(String tokenCode, String celletName, ActionDialect actionDialect) {
-        Device device = this.tokenDeviceMap.get(tokenCode);
-        if (null == device) {
-            Logger.i(this.getClass(), "#syncTransmit Can NOT find device by token: " + tokenCode);
-            return null;
-        }
-
-        return this.syncTransmit(device.getTalkContext(), celletName, actionDialect);
+        Director director = this.selectDirector(tokenCode, celletName);
+        return this.syncTransmit(director, celletName, actionDialect, this.blockTimeout);
     }
 
     /**

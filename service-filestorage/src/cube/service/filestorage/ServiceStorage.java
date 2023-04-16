@@ -715,6 +715,33 @@ public class ServiceStorage implements Storagable {
     }
 
     /**
+     * 按照文件的 MD5 码查找文件。
+     *
+     * @param domain
+     * @param md5
+     * @return 如果找到该文件返回文件码，否则返回 {@code null} 值。
+     */
+    public String findFileByMD5(String domain, String md5) {
+        String labelTable = this.labelTableNameMap.get(domain);
+        if (null == labelTable) {
+            return null;
+        }
+
+        String fileCode = null;
+        List<StorageField[]> result = this.storage.executeQuery(labelTable, new StorageField[] {
+                new StorageField("file_code", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo("md5", md5)
+        });
+
+        if (!result.isEmpty()) {
+            fileCode = result.get(0)[0].getString();
+        }
+
+        return fileCode;
+    }
+
+    /**
      * 读取指定文件的完成时间。
      *
      * @param domain
