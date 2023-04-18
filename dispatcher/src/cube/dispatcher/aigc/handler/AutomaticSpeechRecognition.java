@@ -26,7 +26,6 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.common.entity.SentimentResult;
 import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
@@ -99,7 +98,7 @@ public class AutomaticSpeechRecognition extends ContextHandler {
             }
 
             JSONObject resultData = new JSONObject();
-            resultData.put("result", result);
+            resultData.put("text", result);
 
             this.respondOk(response, resultData);
             this.complete();

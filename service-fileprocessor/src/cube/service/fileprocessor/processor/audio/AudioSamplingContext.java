@@ -24,21 +24,13 @@
  * SOFTWARE.
  */
 
-package cube.service.fileprocessor.processor;
-
-import java.nio.file.Path;
+package cube.service.fileprocessor.processor.audio;
 
 /**
- * ASR 处理器。
+ * 音频采样的上下文。
  */
-public class ASRProcessor extends Processor {
+public class AudioSamplingContext extends AudioProcessorContext {
 
-    public ASRProcessor(Path workPath) {
-        super(workPath);
-    }
-
-    @Override
-    public void go(ProcessorContext context) {
-
+    public AudioSamplingContext() {
     }
 }

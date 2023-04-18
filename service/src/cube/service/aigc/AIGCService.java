@@ -31,14 +31,19 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
+import cube.common.action.FileProcessorAction;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
+import cube.file.FileProcessResult;
+import cube.file.operation.AudioSamplingOperation;
 import cube.plugin.PluginSystem;
+import cube.service.aigc.listener.AutomaticSpeechRecognitionListener;
 import cube.service.aigc.listener.ChatListener;
 import cube.service.aigc.listener.SentimentAnalysisListener;
+import cube.util.FileType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -303,9 +308,8 @@ public class AIGCService extends AbstractModule {
     }
 
 
-    public boolean automaticSpeechRecognition(String domain, String fileCode) {
-        final String serviceName = "FileStorage";
-        AbstractModule fileStorage = this.getKernel().getModule(serviceName);
+    public boolean automaticSpeechRecognition(String domain, String fileCode, AutomaticSpeechRecognitionListener listener) {
+        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#automaticSpeechRecognition - File storage service is not ready");
             return false;
@@ -324,9 +328,31 @@ public class AIGCService extends AbstractModule {
         }
 
         FileLabel fileLabel = new FileLabel(fileLabelJson);
-        System.out.println("XJW: \n" + fileLabel.toJSON().toString(4));
 
-        return true;
+        AbstractModule fileProcessor = this.getKernel().getModule("FileProcessor");
+        if (null == fileProcessor) {
+            Logger.e(this.getClass(), "#automaticSpeechRecognition - File processor service is not ready");
+            return false;
+        }
+
+        // 音频重采用
+        AudioSamplingOperation samplingOperation = new AudioSamplingOperation(1, 16000, FileType.WAV);
+
+        JSONObject processor = new JSONObject();
+        processor.put("action", FileProcessorAction.Audio.name);
+        processor.put("domain", fileLabel.getDomain().getName());
+        processor.put("fileCode", fileLabel.getFileCode());
+        processor.put("parameter", samplingOperation.toJSON());
+
+        JSONObject resultJson = fileProcessor.notify(processor);
+        if (null == resultJson) {
+            Logger.e(this.getClass(), "#automaticSpeechRecognition - File processor result is NULL");
+            return false;
+        }
+
+        FileProcessResult result = new FileProcessResult(resultJson);
+
+        return false;
     }
 
     private void processChatQueue(String queryKey) {

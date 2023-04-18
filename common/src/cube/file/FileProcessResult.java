@@ -30,6 +30,7 @@ import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
 import cube.common.entity.FileResult;
 import cube.file.operation.EliminateColorOperation;
+import cube.file.operation.ExtractAudioOperation;
 import cube.file.operation.ReverseColorOperation;
 import cube.file.operation.SnapshotOperation;
 import org.json.JSONArray;
@@ -208,13 +209,30 @@ public class FileProcessResult {
             String operation = json.getJSONObject("operation").getString("operation");
             if (SnapshotOperation.Operation.equals(operation)) {
                 this.operation = new SnapshotOperation(json.getJSONObject("operation"));
-
-
+            }
+            else if (ExtractAudioOperation.Operation.equals(operation)) {
+                this.operation = new ExtractAudioOperation(json.getJSONObject("operation"));
             }
         }
 
         public VideoOperation getOperation() {
             return this.operation;
+        }
+    }
+
+    /**
+     * 音频处理结果。
+     */
+    public class AudioProcessResult {
+
+        public final boolean successful;
+
+        private AudioOperation operation;
+
+        public AudioProcessResult(JSONObject json) {
+            this.successful = json.getBoolean("success");
+
+            String operation = json.getJSONObject("operation").getString("operation");
         }
     }
 

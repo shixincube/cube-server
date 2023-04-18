@@ -43,32 +43,26 @@ import cube.file.*;
 import cube.file.operation.OCROperation;
 import cube.file.operation.OfficeConvertToOperation;
 import cube.file.operation.SnapshotOperation;
-import cube.plugin.PluginSystem;
 import cube.service.fileprocessor.processor.*;
+import cube.service.fileprocessor.processor.audio.AudioProcessor;
+import cube.service.fileprocessor.processor.audio.AudioProcessorBuilder;
+import cube.service.fileprocessor.processor.audio.AudioSamplingContext;
+import cube.service.fileprocessor.processor.audio.AudioSamplingProcessor;
 import cube.service.fileprocessor.processor.video.*;
 import cube.service.filestorage.FileStorageService;
 import cube.util.*;
 import cube.vision.Size;
 import net.coobird.thumbnailator.Thumbnails;
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
-import org.eclipse.jetty.client.api.Result;
-import org.eclipse.jetty.client.util.BufferingResponseListener;
 import org.eclipse.jetty.client.util.InputStreamResponseListener;
 import org.eclipse.jetty.http.HttpHeader;
-import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.json.JSONObject;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncListener;
-import javax.servlet.ServletOutputStream;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.net.URLConnection;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -76,12 +70,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 文件处理服务。
@@ -317,7 +308,8 @@ public class FileProcessorService extends AbstractModule {
             srcHeight = image.height;
 
             // 生成缩略图
-            Image thumbImage = ImageTools.thumbnail(input.getAbsolutePath(), new Size(srcWidth, srcHeight), outputFile, quality);
+            Image thumbImage = ImageTools.thumbnail(input.getAbsolutePath(),
+                    new Size(srcWidth, srcHeight), outputFile, quality);
 
             if (null == thumbImage) {
                 Logger.w(this.getClass(), "#makeThumbnail - Can NOT make thumbnail image : " + input.getAbsolutePath());
@@ -414,7 +406,8 @@ public class FileProcessorService extends AbstractModule {
             return null;
         }
 
-        Path imageFile = Paths.get(this.workPath.toString(), fileCode + "." + fileLabel.getFileType().getPreferredExtension());
+        Path imageFile = Paths.get(this.workPath.toString(),
+                fileCode + "." + fileLabel.getFileType().getPreferredExtension());
 
         if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
             String path = storageService.loadFileToDisk(domainName, fileCode);
@@ -490,7 +483,8 @@ public class FileProcessorService extends AbstractModule {
             return null;
         }
 
-        Path imageFile = Paths.get(this.workPath.toString(), fileCode + "." + fileLabel.getFileType().getPreferredExtension());
+        Path imageFile = Paths.get(this.workPath.toString(),
+                fileCode + "." + fileLabel.getFileType().getPreferredExtension());
 
         if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
             String path = storageService.loadFileToDisk(domainName, fileCode);
@@ -524,7 +518,8 @@ public class FileProcessorService extends AbstractModule {
             return null;
         }
 
-        Path inputFile = Paths.get(this.workPath.toString(), fileCode + "." + fileLabel.getFileType().getPreferredExtension());
+        Path inputFile = Paths.get(this.workPath.toString(),
+                fileCode + "." + fileLabel.getFileType().getPreferredExtension());
 
         if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
             // 文件在工作目录里不存在，加载到本地磁盘
@@ -567,7 +562,8 @@ public class FileProcessorService extends AbstractModule {
             return null;
         }
 
-        Path imageFile = Paths.get(this.workPath.toString(), fileCode + "." + fileLabel.getFileType().getPreferredExtension());
+        Path imageFile = Paths.get(this.workPath.toString(),
+                fileCode + "." + fileLabel.getFileType().getPreferredExtension());
 
         if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
             String path = storageService.loadFileToDisk(domainName, fileCode);
@@ -634,7 +630,8 @@ public class FileProcessorService extends AbstractModule {
             return null;
         }
 
-        Path videoFile = Paths.get(this.workPath.toString(), fileCode + "." + fileLabel.getFileType().getPreferredExtension());
+        Path videoFile = Paths.get(this.workPath.toString(),
+                fileCode + "." + fileLabel.getFileType().getPreferredExtension());
 
         if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
             String path = storageService.loadFileToDisk(domainName, fileCode);
@@ -652,6 +649,49 @@ public class FileProcessorService extends AbstractModule {
 
         VideoProcessor processor = VideoProcessorBuilder.build(this.workPath, operationJson);
         processor.setInputFile(videoFile.toFile(), fileLabel);
+        return processor;
+    }
+
+    /**
+     * 创建音频处理器。
+     *
+     * @param domainName
+     * @param fileCode
+     * @param operationJson
+     * @return
+     */
+    public AudioProcessor createAudioProcessor(String domainName, String fileCode, JSONObject operationJson) {
+        FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
+        FileLabel fileLabel = storageService.getFile(domainName, fileCode);
+        if (null == fileLabel) {
+            return null;
+        }
+
+        if (!FileUtils.isAudioType(fileLabel.getFileType())) {
+            // 指定的文件不是音频文件
+            Logger.w(this.getClass(), "File is NOT audio : " + fileLabel.getFileName());
+            return null;
+        }
+
+        Path audioFile = Paths.get(this.workPath.toString(),
+                fileCode + "." + fileLabel.getFileType().getPreferredExtension());
+
+        if (!this.existsFile(fileCode, fileLabel.getFileType().getPreferredExtension())) {
+            String path = storageService.loadFileToDisk(domainName, fileCode);
+            if (null == path) {
+                return null;
+            }
+
+            try {
+                Files.copy(Paths.get(path), audioFile);
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#createVideoProcessor", e);
+                return null;
+            }
+        }
+
+        AudioProcessor processor = AudioProcessorBuilder.build(this.workPath, operationJson);
+        processor.setInputFile(audioFile.toFile(), fileLabel);
         return processor;
     }
 
@@ -1236,6 +1276,23 @@ public class FileProcessorService extends AbstractModule {
                     }
                     else if (processor instanceof ExtractAudioProcessor) {
                         ExtractAudioContext context = new ExtractAudioContext();
+                        processor.go(context);
+                        return context.toJSON();
+                    }
+                }
+            }
+            else if (FileProcessorAction.Audio.name.equals(action)) {
+                String domain = data.getString("domain");
+                // 创建音频处理器
+                AudioProcessor processor = null;
+                if (data.has("fileCode")) {
+                    processor = createAudioProcessor(domain,
+                            data.getString("fileCode"), data.getJSONObject("parameter"));
+                }
+
+                if (null != processor) {
+                    if (processor instanceof AudioSamplingProcessor) {
+                        AudioSamplingContext context = new AudioSamplingContext();
                         processor.go(context);
                         return context.toJSON();
                     }

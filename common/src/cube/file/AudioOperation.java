@@ -24,88 +24,54 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.file;
+
+import cube.common.JSONable;
+import cube.common.action.FileProcessorAction;
+import org.json.JSONObject;
+
+import java.io.File;
 
 /**
- * 文件处理动作。
+ * 音频操作。
  */
-public enum FileProcessorAction {
+public abstract class AudioOperation implements FileOperation, JSONable {
+
+    private File inputFile;
+
+    public AudioOperation() {
+    }
 
     /**
-     * 获取媒体源地址。
+     * 获取具体的音频操作。
+     *
+     * @return
      */
-    GetMediaSource("getMediaSource"),
+    public abstract String getOperation();
 
-    /**
-     * 提交工作流。
-     */
-    SubmitWorkflow("submitWorkflow"),
+    @Override
+    public String getProcessAction() {
+        return FileProcessorAction.Audio.name;
+    }
 
-    /**
-     * 取消工作流。
-     */
-    CancelWorkflow("cancelWorkflow"),
+    public File getInputFile() {
+        return this.inputFile;
+    }
 
-    /**
-     * 工作流操作中。
-     */
-    WorkflowOperating("workflowOperating"),
+    public void setInputFile(File inputFile) {
+        this.inputFile = inputFile;
+    }
 
-    /**
-     * 图像文件操作。
-     */
-    Image("image"),
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("process", this.getProcessAction());
+        json.put("operation", this.getOperation());
+        return json;
+    }
 
-    /**
-     * 视频文件操作。
-     */
-    Video("video"),
-
-    /**
-     * 音频文件操作。
-     */
-    Audio("audio"),
-
-    /**
-     * 字符识别。
-     */
-    OCR("ocr"),
-
-    /**
-     * 生成缩略图。
-     */
-    Thumb("thumb"),
-
-    /**
-     * 办公文档转换。
-     */
-    OfficeConvertTo("officeConvertTo"),
-
-    /**
-     * 对象检测。
-     */
-    DetectObject("detectObject"),
-
-    /**
-     * 对象检测应答。
-     */
-    DetectObjectAck("detectObjectAck"),
-
-    /**
-     * 隐写。
-     */
-    Steganographic("steganographic"),
-
-    /**
-     * 未知动作。
-     */
-    Unknown("")
-
-    ;
-
-    public final String name;
-
-    FileProcessorAction(String name) {
-        this.name = name;
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

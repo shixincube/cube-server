@@ -62,7 +62,7 @@ public class FileOperationHandler extends CrossDomainHandler {
         try {
             data = this.readBodyAsJSONObject(request);
         } catch (IOException e) {
-            response.setStatus(HttpStatus.FORBIDDEN_403);
+            response.setStatus(HttpStatus.UNAUTHORIZED_401);
             this.complete();
             return;
         }
@@ -115,7 +115,8 @@ public class FileOperationHandler extends CrossDomainHandler {
             fileLabelJson.remove("directURL");
         }
 
-        this.respondOk(response, fileLabelJson);
+        responsePacket = new Packet(FileStorageAction.FindFile.name, fileLabelJson);
+        this.respondOk(response, responsePacket.toJSON());
         this.complete();
     }
 }

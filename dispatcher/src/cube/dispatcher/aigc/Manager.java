@@ -149,6 +149,25 @@ public class Manager {
     }
 
     public String automaticSpeechRecognition(String domain, String fileCode) {
-        return null;
+        JSONObject data = new JSONObject();
+        data.put("domain", domain);
+        data.put("fileCode", fileCode);
+        Packet packet = new Packet(AIGCAction.AutomaticSpeechRecognition.name, data);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#automaticSpeechRecognition Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#automaticSpeechRecognition Response state code : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        JSONObject resultJson = Packet.extractDataPayload(responsePacket);
+        return resultJson.getString("text");
     }
 }

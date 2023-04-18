@@ -269,15 +269,7 @@ public class FileHandler extends CrossDomainHandler {
                 e.printStackTrace();
             }
 
-            payload = new JSONObject();
-            try {
-                payload.put("data", responseData);
-                payload.put("code", FileStorageStateCode.Ok.code);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            packet = new Packet(sn, FileStorageAction.UploadFile.name, payload);
-
+            packet = new Packet(sn, FileStorageAction.UploadFile.name, responseData);
             this.respondOk(response, packet.toJSON());
         }
         else {
@@ -318,15 +310,7 @@ public class FileHandler extends CrossDomainHandler {
                 e.printStackTrace();
             }
 
-            JSONObject payload = new JSONObject();
-            try {
-                payload.put("data", responseData);
-                payload.put("code", FileStorageStateCode.Ok.code);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            Packet packet = new Packet(sn, FileStorageAction.UploadFile.name, payload);
-
+            Packet packet = new Packet(sn, FileStorageAction.UploadFile.name, responseData);
             this.respondOk(response, packet.toJSON());
         }
 
