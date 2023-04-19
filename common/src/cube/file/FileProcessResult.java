@@ -29,10 +29,7 @@ package cube.file;
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
 import cube.common.entity.FileResult;
-import cube.file.operation.EliminateColorOperation;
-import cube.file.operation.ExtractAudioOperation;
-import cube.file.operation.ReverseColorOperation;
-import cube.file.operation.SnapshotOperation;
+import cube.file.operation.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -55,6 +52,8 @@ public class FileProcessResult {
 
     private VideoProcessResult videoResult;
 
+    private AudioProcessResult audioResult;
+
     private OCRProcessResult ocrResult;
 
     private List<String> logs;
@@ -72,6 +71,9 @@ public class FileProcessResult {
         }
         else if (FileProcessorAction.Video.name.equals(this.process)) {
             this.videoResult = new VideoProcessResult(json);
+        }
+        else if (FileProcessorAction.Audio.name.equals(this.process)) {
+            this.audioResult = new AudioProcessResult(json);
         }
         else if (FileProcessorAction.OCR.name.equals(this.process)) {
             this.ocrResult = new OCRProcessResult(json);
@@ -121,6 +123,10 @@ public class FileProcessResult {
 
     public VideoProcessResult getVideoResult() {
         return this.videoResult;
+    }
+
+    public AudioProcessResult getAudioResult() {
+        return this.audioResult;
     }
 
     public OCRProcessResult getOCRResult() {
@@ -233,6 +239,13 @@ public class FileProcessResult {
             this.successful = json.getBoolean("success");
 
             String operation = json.getJSONObject("operation").getString("operation");
+            if (AudioSamplingOperation.Operation.equals(operation)) {
+                this.operation = new AudioSamplingOperation(json.getJSONObject("operation"));
+            }
+        }
+
+        public AudioOperation getOperation() {
+            return this.operation;
         }
     }
 
