@@ -464,14 +464,16 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken token = authService.getToken(tokenCode);
         if (null == token) {
+            Logger.w(this.getClass(), "#signIn - Can NOT find token code: " + tokenCode);
             return null;
         }
 
         String domain = token.getDomain();
         Long cid = token.getContactId();
 
-        if (cid.longValue() == 0L) {
+        if (cid.longValue() == 0) {
             // 该令牌没有绑定的联系人 ID
+            Logger.w(this.getClass(), "#signIn - Token can NOT bind content: " + tokenCode);
             return null;
         }
 
