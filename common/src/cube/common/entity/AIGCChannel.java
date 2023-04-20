@@ -40,6 +40,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class AIGCChannel extends Entity {
 
+    private int historyLengthLimit = 1024;
+
     private String participant;
 
     private long creationTime;
@@ -107,7 +109,7 @@ public class AIGCChannel extends Entity {
         int num = 5;
         List<AIGCChatRecord> list = new ArrayList<>(num);
         for (AIGCChatRecord record : this.history) {
-            if (record.totalWords() > 120) {
+            if (record.totalWords() > this.historyLengthLimit) {
                 // 过滤掉词多的问答
                 continue;
             }

@@ -44,9 +44,11 @@ import cube.service.aigc.listener.AutomaticSpeechRecognitionListener;
 import cube.service.aigc.listener.ChatListener;
 import cube.service.aigc.listener.SentimentAnalysisListener;
 import cube.util.FileType;
+import cube.util.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -351,6 +353,27 @@ public class AIGCService extends AbstractModule {
         }
 
         FileProcessResult result = new FileProcessResult(resultJson);
+        if (null == result.getAudioResult()) {
+            Logger.e(this.getClass(), "#automaticSpeechRecognition - Result error");
+            return false;
+        }
+
+        File resultFile = result.getResultList().get(0).file;
+        String localFileCode = FileUtils.makeFileCode(fileLabel.getOwnerId(), fileLabel.getDomain().getName(), resultFile.getName());
+        FileLabel localFileLabel = FileUtils.makeFileLabel(fileLabel.getDomain().getName(), localFileCode, fileLabel.getOwnerId(), resultFile);
+        // 将处理后文件存入存储器
+        JSONObject saveFile = new JSONObject();
+        saveFile.put("action", FileStorageAction.SaveFile.name);
+        saveFile.put("path", resultFile.getAbsolutePath());
+        saveFile.put("fileLabel", localFileLabel.toJSON());
+        JSONObject localFileLabelJson = fileStorage.notify(saveFile);
+        if (null == localFileLabelJson) {
+            Logger.e(this.getClass(), "#automaticSpeechRecognition - Save file to storage failed");
+            return false;
+        }
+
+        localFileLabel = new FileLabel(localFileLabelJson);
+        System.out.println("XJW:" + localFileLabel.toJSON().toString(4));
 
         return false;
     }
@@ -358,7 +381,7 @@ public class AIGCService extends AbstractModule {
     private void processChatQueue(String queryKey) {
         Queue<ChatUnitMeta> queue = this.chatQueueMap.get(queryKey);
         if (null == queue) {
-            Logger.w(AIGCService.class, "No found unit: " + queryKey);
+            Logger.w(AIGCService.class, "Not found unit: " + queryKey);
             return;
         }
 

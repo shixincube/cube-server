@@ -107,7 +107,7 @@ public class Notifier {
             FileLabel fileLabel = new FileLabel(data.getJSONObject("fileLabel"));
             FileLabel result = this.service.saveFile(fileLabel, new File(path));
             if (null != result) {
-                return result.toCompactJSON();
+                return result.toJSON();
             }
         }
         else if (FileStorageAction.ListFiles.name.equals(action)) {

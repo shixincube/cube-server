@@ -685,13 +685,14 @@ public class FileProcessorService extends AbstractModule {
             try {
                 Files.copy(Paths.get(path), audioFile);
             } catch (IOException e) {
-                Logger.e(this.getClass(), "#createVideoProcessor", e);
+                Logger.e(this.getClass(), "#createAudioProcessor", e);
                 return null;
             }
         }
 
         AudioProcessor processor = AudioProcessorBuilder.build(this.workPath, operationJson);
         processor.setInputFile(audioFile.toFile(), fileLabel);
+        processor.setDeleteSourceFile(true);
         return processor;
     }
 
