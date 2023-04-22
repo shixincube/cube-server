@@ -35,7 +35,7 @@ public final class Version {
 
     public final static int MINOR = 0;
 
-    public final static int REVISION = 8;
+    public final static int REVISION = 9;
 
     private Version() {
     }

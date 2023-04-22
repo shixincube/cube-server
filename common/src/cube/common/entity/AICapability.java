@@ -48,16 +48,20 @@ public class AICapability implements JSONable {
 
     private String subtask;
 
-    public AICapability(String name, String task, String subtask) {
+    private String description;
+
+    public AICapability(String name, String task, String subtask, String description) {
         this.name = name;
         this.task = task;
         this.subtask = subtask;
+        this.description = description;
     }
 
     public AICapability(JSONObject json) {
         this.name = json.getString("name");
         this.task = json.getString("task");
         this.subtask = json.getString("subtask");
+        this.description = json.getString("description");
     }
 
     public String getName() {
@@ -72,12 +76,17 @@ public class AICapability implements JSONable {
         return this.subtask;
     }
 
+    public String getDescription() {
+        return this.description;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
         json.put("task", this.task);
         json.put("subtask", this.subtask);
+        json.put("description", this.description);
         return json;
     }
 
@@ -123,6 +132,8 @@ public class AICapability implements JSONable {
         public final static String Summarization = "Summarization";
 
         public final static String Conversational = "Conversational";
+
+        public final static String ProfessionConversational = "ProfessionConversational";
 
         public final static String TextGeneration = "TextGeneration";
 

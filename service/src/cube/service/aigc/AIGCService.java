@@ -28,6 +28,7 @@ package cube.service.aigc;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -185,18 +186,71 @@ public class AIGCService extends AbstractModule {
             return null;
         }
 
-        AIGCUnit unit = null;
-        for (AIGCUnit u : candidates) {
-            if (!u.isRunning()) {
-                unit = u;
-                break;
+        int num = candidates.size();
+        if (num == 1) {
+            return candidates.get(0);
+        }
+
+        // 先进行一次随机选择
+        AIGCUnit unit = candidates.get(Utils.randomInt(0, num - 1));
+
+        iter = candidates.iterator();
+        while (iter.hasNext()) {
+            AIGCUnit u = iter.next();
+            if (u.isRunning()) {
+                // 把正在运行的单元从候选列表里删除
+                iter.remove();
             }
         }
 
-        if (null == unit) {
-            unit = candidates.get(0);
+        if (candidates.isEmpty()) {
+            // 所有单元都在运行，返回随机选择
+            return unit;
         }
 
+        unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
+        return unit;
+    }
+
+    public AIGCUnit getUnitBySubtask(String subtask, String description) {
+        ArrayList<AIGCUnit> candidates = new ArrayList<>();
+
+        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
+        while (iter.hasNext()) {
+            AIGCUnit unit = iter.next();
+            if (unit.getCapability().getSubtask().equals(subtask) &&
+                unit.getCapability().getDescription().equals(description)) {
+                candidates.add(unit);
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            return null;
+        }
+
+        int num = candidates.size();
+        if (num == 1) {
+            return candidates.get(0);
+        }
+
+        // 先进行一次随机选择
+        AIGCUnit unit = candidates.get(Utils.randomInt(0, num - 1));
+
+        iter = candidates.iterator();
+        while (iter.hasNext()) {
+            AIGCUnit u = iter.next();
+            if (u.isRunning()) {
+                // 把正在运行的单元从候选列表里删除
+                iter.remove();
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            // 所有单元都在运行，返回随机选择
+            return unit;
+        }
+
+        unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
         return unit;
     }
 
@@ -216,7 +270,28 @@ public class AIGCService extends AbstractModule {
         return channel;
     }
 
+    /**
+     * 执行聊天任务。
+     *
+     * @param code
+     * @param content
+     * @param listener
+     * @return
+     */
     public boolean chat(String code, String content, ChatListener listener) {
+        return this.chat(code, content, null, listener);
+    }
+
+    /**
+     * 执行聊天任务。
+     *
+     * @param code
+     * @param content
+     * @param professionDesc
+     * @param listener
+     * @return
+     */
+    public boolean chat(String code, String content, String professionDesc, ChatListener listener) {
         if (!this.started) {
             return false;
         }
@@ -237,9 +312,12 @@ public class AIGCService extends AbstractModule {
         channel.setProcessing(true);
 
         // 查找有该能力的单元
-        AIGCUnit unit = this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
+        AIGCUnit unit = (null != professionDesc) ?
+                this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.ProfessionConversational, professionDesc)
+                : this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
         if (null == unit) {
             Logger.w(AIGCService.class, "No conversational task unit setup in server");
+            channel.setProcessing(false);
             return false;
         }
 
@@ -422,7 +500,7 @@ public class AIGCService extends AbstractModule {
 
     private boolean checkParticipantName(String name) {
         if (name.equalsIgnoreCase("AIGC") || name.equalsIgnoreCase("Cube") ||
-            name.equalsIgnoreCase("Pixiu") || name.equalsIgnoreCase("貔貅") ||
+            name.equalsIgnoreCase("Baize") || name.equalsIgnoreCase("白泽") ||
             name.equalsIgnoreCase("时信魔方")) {
             return false;
         }
@@ -451,6 +529,7 @@ public class AIGCService extends AbstractModule {
 
         public void process() {
             JSONObject data = new JSONObject();
+            data.put("unit", this.unit.getCapability().getName());
             data.put("content", this.content);
 
             List<AIGCChatRecord> records = this.channel.getLastHistory();

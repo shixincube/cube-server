@@ -35,10 +35,7 @@ import cube.common.entity.AIGCChatRecord;
 import cube.common.entity.SentimentResult;
 import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
-import cube.dispatcher.aigc.handler.AutomaticSpeechRecognition;
-import cube.dispatcher.aigc.handler.Chat;
-import cube.dispatcher.aigc.handler.RequestChannel;
-import cube.dispatcher.aigc.handler.Sentiment;
+import cube.dispatcher.aigc.handler.*;
 import cube.util.HttpServer;
 import org.json.JSONObject;
 
@@ -72,6 +69,7 @@ public class Manager {
 
         httpServer.addContextHandler(new RequestChannel());
         httpServer.addContextHandler(new Chat());
+        httpServer.addContextHandler(new ProfessionChat());
         httpServer.addContextHandler(new Sentiment());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
     }
@@ -102,11 +100,18 @@ public class Manager {
         return channel;
     }
 
-
     public AIGCChatRecord chat(String channelCode, String content) {
+        return this.chat(channelCode, content, null);
+    }
+
+    public AIGCChatRecord chat(String channelCode, String content, String profession) {
         JSONObject data = new JSONObject();
         data.put("code", channelCode);
         data.put("content", content);
+        if (null != profession) {
+            data.put("profession", profession);
+        }
+
         Packet packet = new Packet(AIGCAction.Chat.name, data);
 
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
