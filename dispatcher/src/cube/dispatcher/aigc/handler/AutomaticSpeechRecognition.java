@@ -49,7 +49,7 @@ public class AutomaticSpeechRecognition extends ContextHandler {
         public Handler() {
             super();
             this.controller = new AccessController();
-            this.controller.setEachIPInterval(1000);
+            this.controller.setEachIPInterval(200);
         }
 
         @Override

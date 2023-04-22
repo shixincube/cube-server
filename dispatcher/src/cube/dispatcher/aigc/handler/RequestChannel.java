@@ -50,7 +50,7 @@ public class RequestChannel extends ContextHandler {
         public Handler() {
             super();
             this.controller = new AccessController();
-            this.controller.setEachIPInterval(1000);
+            this.controller.setEachIPInterval(100);
         }
 
         @Override
