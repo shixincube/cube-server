@@ -287,11 +287,11 @@ public class AIGCService extends AbstractModule {
      *
      * @param code
      * @param content
-     * @param professionDesc
+     * @param desc
      * @param listener
      * @return
      */
-    public boolean chat(String code, String content, String professionDesc, ChatListener listener) {
+    public boolean chat(String code, String content, String desc, ChatListener listener) {
         if (!this.started) {
             return false;
         }
@@ -312,8 +312,8 @@ public class AIGCService extends AbstractModule {
         channel.setProcessing(true);
 
         // 查找有该能力的单元
-        AIGCUnit unit = (null != professionDesc) ?
-                this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.ProfessionConversational, professionDesc)
+        AIGCUnit unit = (null != desc) ?
+                this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational, desc)
                 : this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
         if (null == unit) {
             Logger.w(AIGCService.class, "No conversational task unit setup in server");
@@ -518,12 +518,23 @@ public class AIGCService extends AbstractModule {
 
         protected String content;
 
+        protected int histories;
+
         protected ChatListener listener;
 
         public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, ChatListener listener) {
             this.unit = unit;
             this.channel = channel;
             this.content = content;
+            this.histories = 3;
+            this.listener = listener;
+        }
+
+        public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, int histories, ChatListener listener) {
+            this.unit = unit;
+            this.channel = channel;
+            this.content = content;
+            this.histories = histories;
             this.listener = listener;
         }
 
@@ -532,12 +543,22 @@ public class AIGCService extends AbstractModule {
             data.put("unit", this.unit.getCapability().getName());
             data.put("content", this.content);
 
-            List<AIGCChatRecord> records = this.channel.getLastHistory();
-            JSONArray array = new JSONArray();
-            for (AIGCChatRecord record : records) {
-                array.put(record.toJSON());
+            if (this.unit.getCapability().getSubtask().equals(AICapability.NaturalLanguageProcessing.ImprovedConversational)) {
+                data.put("history", new JSONArray());
             }
-            data.put("history", array);
+            else {
+                if (this.histories > 0) {
+                    List<AIGCChatRecord> records = this.channel.getLastHistory(this.histories);
+                    JSONArray array = new JSONArray();
+                    for (AIGCChatRecord record : records) {
+                        array.put(record.toJSON());
+                    }
+                    data.put("history", array);
+                }
+                else {
+                    data.put("history", new JSONArray());
+                }
+            }
 
             Packet request = new Packet(AIGCAction.Chat.name, data);
             ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());

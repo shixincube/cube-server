@@ -133,7 +133,7 @@ public class AICapability implements JSONable {
 
         public final static String Conversational = "Conversational";
 
-        public final static String ProfessionConversational = "ProfessionConversational";
+        public final static String ImprovedConversational = "ImprovedConversational";
 
         public final static String TextGeneration = "TextGeneration";
 

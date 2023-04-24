@@ -105,8 +105,7 @@ public class AIGCChannel extends Entity {
         return record;
     }
 
-    public List<AIGCChatRecord> getLastHistory() {
-        int num = 5;
+    public List<AIGCChatRecord> getLastHistory(int num) {
         List<AIGCChatRecord> list = new ArrayList<>(num);
         for (AIGCChatRecord record : this.history) {
             if (record.totalWords() > this.historyLengthLimit) {
