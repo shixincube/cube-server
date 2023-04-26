@@ -64,12 +64,12 @@ public class ChatTask extends ServiceTask {
 
         String code = packet.data.getString("code");
         String content = packet.data.getString("content");
-        String profession = packet.data.has("profession") ? packet.data.getString("profession") : null;
+        String desc = packet.data.has("desc") ? packet.data.getString("desc") : null;
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         // 执行 Chat
-        boolean success = service.chat(code, content, profession, new ChatListener() {
+        boolean success = service.chat(code, content, desc, new ChatListener() {
             @Override
             public void onChat(AIGCChannel channel, AIGCChatRecord record) {
                 cellet.speak(talkContext,

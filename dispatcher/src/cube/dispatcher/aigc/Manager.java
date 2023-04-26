@@ -69,7 +69,7 @@ public class Manager {
 
         httpServer.addContextHandler(new RequestChannel());
         httpServer.addContextHandler(new Chat());
-        httpServer.addContextHandler(new ProfessionChat());
+        httpServer.addContextHandler(new ImprovementChat());
         httpServer.addContextHandler(new Sentiment());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
     }
@@ -104,12 +104,12 @@ public class Manager {
         return this.chat(channelCode, content, null);
     }
 
-    public AIGCChatRecord chat(String channelCode, String content, String profession) {
+    public AIGCChatRecord chat(String channelCode, String content, String desc) {
         JSONObject data = new JSONObject();
         data.put("code", channelCode);
         data.put("content", content);
-        if (null != profession) {
-            data.put("profession", profession);
+        if (null != desc) {
+            data.put("desc", desc);
         }
 
         Packet packet = new Packet(AIGCAction.Chat.name, data);

@@ -36,12 +36,12 @@ import org.json.JSONObject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class ProfessionChat extends ContextHandler {
+public class ImprovementChat extends ContextHandler {
 
     private final static String AI_NAME = "Baize";
 
-    public ProfessionChat() {
-        super("/aigc/chat/profession");
+    public ImprovementChat() {
+        super("/aigc/chat/improvement");
         setHandler(new Handler());
     }
 
@@ -72,19 +72,19 @@ public class ProfessionChat extends ContextHandler {
 
             String channelCode = null;
             String content = null;
-            String profession = null;
+            String desc = null;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
                 channelCode = json.getString("code");
                 content = json.getString("content");
-                profession = json.getString("profession");
+                desc = json.getString("desc");
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
                 return;
             }
 
-            if (null == channelCode || null == content || null == profession) {
+            if (null == channelCode || null == content || null == desc) {
                 // 参数错误
                 this.respond(response, HttpStatus.NOT_FOUND_404);
                 this.complete();
@@ -92,7 +92,7 @@ public class ProfessionChat extends ContextHandler {
             }
 
             // Chat
-            AIGCChatRecord record = Manager.getInstance().chat(channelCode, content, profession);
+            AIGCChatRecord record = Manager.getInstance().chat(channelCode, content, desc);
             if (null == record) {
                 // 发生错误
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
