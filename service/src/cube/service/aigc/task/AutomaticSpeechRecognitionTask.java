@@ -32,6 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -68,7 +69,7 @@ public class AutomaticSpeechRecognitionTask extends ServiceTask {
         // 执行 Automatic Speech Recognition
         boolean success = service.automaticSpeechRecognition(domain, fileCode, new AutomaticSpeechRecognitionListener() {
             @Override
-            public void onCompleted(String result) {
+            public void onCompleted(FileLabel input, String result) {
                 JSONObject data = new JSONObject();
                 data.put("text", result);
                 cellet.speak(talkContext,

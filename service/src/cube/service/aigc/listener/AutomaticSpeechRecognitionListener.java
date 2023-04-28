@@ -26,12 +26,14 @@
 
 package cube.service.aigc.listener;
 
+import cube.common.entity.FileLabel;
+
 /**
  * 自动语音识别监听器。
  */
 public interface AutomaticSpeechRecognitionListener {
 
-    void onCompleted(String result);
+    void onCompleted(FileLabel input, String result);
 
     void onFailed();
 }

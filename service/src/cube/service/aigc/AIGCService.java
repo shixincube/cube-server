@@ -79,6 +79,11 @@ public class AIGCService extends AbstractModule {
     private Map<String, Queue<SentimentUnitMeta>> sentimentQueueMap;
 
     /**
+     * Key 是 AIGC 的 Query Key
+     */
+    private Map<String, Queue<ASRUnitMeta>> asrQueueMap;
+
+    /**
      * 最大频道数量。
      */
     private int maxChannel = 50;
@@ -93,6 +98,7 @@ public class AIGCService extends AbstractModule {
         this.channelMap = new ConcurrentHashMap<>();
         this.chatQueueMap = new ConcurrentHashMap<>();
         this.sentimentQueueMap = new ConcurrentHashMap<>();
+        this.asrQueueMap = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -450,10 +456,42 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
+        // 文件标签
         localFileLabel = new FileLabel(localFileLabelJson);
-        System.out.println("XJW:" + localFileLabel.toJSON().toString(4));
 
-        return false;
+        // 请求 AIGC 单元
+        // 查找有该能力的单元
+        AIGCUnit unit = this.getUnitBySubtask(AICapability.AudioProcessing.AutomaticSpeechRecognition);
+        if (null == unit) {
+            Logger.w(AIGCService.class, "No ASR task unit setup in server");
+            return false;
+        }
+
+        ASRUnitMeta meta = new ASRUnitMeta(unit, localFileLabel, listener);
+
+        synchronized (this.asrQueueMap) {
+            Queue<ASRUnitMeta> queue = this.asrQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.asrQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    processASRQueue(meta.unit.getQueryKey());
+                }
+            });
+            thread.start();
+        }
+
+        return true;
     }
 
     private void processChatQueue(String queryKey) {
@@ -466,7 +504,11 @@ public class AIGCService extends AbstractModule {
         ChatUnitMeta meta = queue.poll();
         while (null != meta) {
             // 执行处理
-            meta.process();
+            try {
+                meta.process();
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#processChatQueue - meta process", e);
+            }
 
             meta = queue.poll();
         }
@@ -487,7 +529,36 @@ public class AIGCService extends AbstractModule {
         SentimentUnitMeta meta = queue.poll();
         while (null != meta) {
             // 执行处理
-            meta.process();
+            try {
+                meta.process();
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#processSentimentQueue - meta process", e);
+            }
+
+            meta = queue.poll();
+        }
+
+        AIGCUnit unit = this.unitMap.get(queryKey);
+        if (null != unit) {
+            unit.setRunning(false);
+        }
+    }
+
+    private void processASRQueue(String queryKey) {
+        Queue<ASRUnitMeta> queue = this.asrQueueMap.get(queryKey);
+        if (null == queue) {
+            Logger.w(AIGCService.class, "No found unit: " + queryKey);
+            return;
+        }
+
+        ASRUnitMeta meta = queue.poll();
+        while (null != meta) {
+            // 执行处理
+            try {
+                meta.process();
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#processASRQueue - meta process", e);
+            }
 
             meta = queue.poll();
         }
@@ -625,6 +696,48 @@ public class AIGCService extends AbstractModule {
             SentimentResult result = new SentimentResult(payload);
 
             this.listener.onCompleted(result);
+        }
+    }
+
+
+    private class ASRUnitMeta {
+
+        protected AIGCUnit unit;
+
+        protected FileLabel input;
+
+        protected AutomaticSpeechRecognitionListener listener;
+
+        public ASRUnitMeta(AIGCUnit unit, FileLabel input, AutomaticSpeechRecognitionListener listener) {
+            this.unit = unit;
+            this.input = input;
+            this.listener = listener;
+        }
+
+        public void process() {
+            JSONObject data = new JSONObject();
+            data.put("input", this.input.toJSON());
+
+            Packet request = new Packet(AIGCAction.AutomaticSpeechRecognition.name, data);
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
+            if (null == dialect) {
+                Logger.w(AIGCService.class, "ASR unit error");
+                // 回调错误
+                this.listener.onFailed();
+                return;
+            }
+
+            Packet response = new Packet(dialect);
+            JSONObject payload = Packet.extractDataPayload(response);
+            if (!payload.has("result")) {
+                Logger.w(AIGCService.class, "ASR unit process failed");
+                // 回调错误
+                this.listener.onFailed();
+                return;
+            }
+
+            String result = payload.getString("result");
+            this.listener.onCompleted(this.input, result);
         }
     }
 }
