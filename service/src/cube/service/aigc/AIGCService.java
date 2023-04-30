@@ -39,6 +39,7 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.file.FileProcessResult;
+import cube.file.operation.AudioCropOperation;
 import cube.file.operation.AudioSamplingOperation;
 import cube.plugin.PluginSystem;
 import cube.service.aigc.listener.AutomaticSpeechRecognitionListener;
@@ -422,7 +423,7 @@ public class AIGCService extends AbstractModule {
         }
 
         // 音频重采用
-        AudioSamplingOperation samplingOperation = new AudioSamplingOperation(1, 16000, FileType.WAV);
+        /*AudioSamplingOperation samplingOperation = new AudioSamplingOperation(1, 16000, FileType.WAV);
 
         JSONObject processor = new JSONObject();
         processor.put("action", FileProcessorAction.Audio.name);
@@ -440,7 +441,16 @@ public class AIGCService extends AbstractModule {
         if (null == result.getAudioResult()) {
             Logger.e(this.getClass(), "#automaticSpeechRecognition - Result error");
             return false;
-        }
+        }*/
+
+        AudioCropOperation cropOperation = new AudioCropOperation(0, 30, FileType.WAV);
+        JSONObject processor = new JSONObject();
+        processor.put("action", FileProcessorAction.Audio.name);
+        processor.put("domain", fileLabel.getDomain().getName());
+        processor.put("fileCode", fileLabel.getFileCode());
+        processor.put("parameter", cropOperation.toJSON());
+
+        FileProcessResult result = null;
 
         File resultFile = result.getResultList().get(0).file;
         String localFileCode = FileUtils.makeFileCode(fileLabel.getOwnerId(), fileLabel.getDomain().getName(), resultFile.getName());
@@ -729,15 +739,14 @@ public class AIGCService extends AbstractModule {
 
             Packet response = new Packet(dialect);
             JSONObject payload = Packet.extractDataPayload(response);
-            if (!payload.has("result")) {
+            if (!payload.has("transcription")) {
                 Logger.w(AIGCService.class, "ASR unit process failed");
                 // 回调错误
                 this.listener.onFailed();
                 return;
             }
 
-            String result = payload.getString("result");
-            this.listener.onCompleted(this.input, result);
+            this.listener.onCompleted(this.input, new ASRResult(payload));
         }
     }
 }

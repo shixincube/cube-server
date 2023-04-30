@@ -668,16 +668,45 @@ public class FileStorageService extends AbstractModule {
      * 查找指定 MD5 码的文件。
      *
      * @param domainName
+     * @param contactId
      * @param md5Code
      * @return
      */
-    public FileLabel findFileByMD5(String domainName, String md5Code) {
-        String fileCode = this.serviceStorage.findFileByMD5(domainName, md5Code);
+    public FileLabel findFileByMD5(String domainName, long contactId, String md5Code) {
+        String fileCode = this.serviceStorage.findFileByMD5(domainName, contactId, md5Code);
         if (null == fileCode) {
             return null;
         }
 
         return this.getFile(domainName, fileCode);
+    }
+
+    /**
+     * 查找指定文件名的文件。
+     *
+     * @param domainName
+     * @param contactId
+     * @param fileName
+     * @return
+     */
+    public List<FileLabel> findFilesByFileName(String domainName, long contactId, String fileName) {
+        List<String> fileCodes = this.serviceStorage.findFilesByFileName(domainName, contactId, fileName);
+        if (fileCodes.isEmpty()) {
+            return null;
+        }
+
+        List<FileLabel> list = new ArrayList<>();
+
+        for (String fileCode : fileCodes) {
+            FileLabel fileLabel = this.getFile(domainName, fileCode);
+            if (null == fileLabel) {
+                continue;
+            }
+
+            list.add(fileLabel);
+        }
+
+        return list;
     }
 
 

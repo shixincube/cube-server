@@ -39,6 +39,11 @@ import cube.service.ServiceTask;
 import cube.service.auth.AuthService;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 查找文件任务。
@@ -88,11 +93,17 @@ public class FindFileTask extends ServiceTask {
         try {
             if (packet.data.has("fileName")) {
                 fileName = packet.data.getString("fileName");
-                lastModified = packet.data.getLong("lastModified");
-                fileSize = packet.data.getLong("fileSize");
             }
-            else {
+
+            if (packet.data.has("md5")) {
                 md5Code = packet.data.getString("md5");
+            }
+
+            if (packet.data.has("lastModified")) {
+                lastModified = packet.data.getLong("lastModified");
+            }
+            if (packet.data.has("fileSize")) {
+                fileSize = packet.data.getLong("fileSize");
             }
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
@@ -101,22 +112,44 @@ public class FindFileTask extends ServiceTask {
             return;
         }
 
-        FileLabel fileLabel = null;
+        ArrayList<FileLabel> result = new ArrayList<>();
 
         FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
         if (null != fileName && lastModified > 0 && fileSize > 0) {
             // 精确查找文件
-            fileLabel = service.findFile(domain, contactId, fileName, lastModified, fileSize);
+            FileLabel fileLabel = service.findFile(domain, contactId, fileName, lastModified, fileSize);
+            if (null != fileLabel) {
+                result.add(fileLabel);
+            }
+        }
+        else if (null != fileName) {
+            // 使用文件名查找
+            List<FileLabel> list = service.findFilesByFileName(domain, contactId, fileName);
+            if (null != list) {
+                result.addAll(list);
+            }
         }
         else if (null != md5Code) {
             // 使用 MD5 查找
-            fileLabel = service.findFileByMD5(domain, md5Code);
+            FileLabel fileLabel = service.findFileByMD5(domain, contactId, md5Code);
+            if (null != fileLabel) {
+                result.add(fileLabel);
+            }
         }
 
-        if (null != fileLabel) {
+        if (!result.isEmpty()) {
+            JSONArray array = new JSONArray();
+            for (FileLabel fileLabel : result) {
+                array.put(fileLabel.toJSON());
+            }
+            JSONObject responseData = new JSONObject();
+            responseData.put("domain", domain);
+            responseData.put("contactId", contactId);
+            responseData.put("list", array);
+
             // 应答
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.Ok.code, fileLabel.toJSON()));
+                    this.makeResponse(action, packet, FileStorageStateCode.Ok.code, responseData));
         }
         else {
             // 应答

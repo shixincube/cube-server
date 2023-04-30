@@ -26,6 +26,7 @@
 
 package cube.service.aigc.listener;
 
+import cube.common.entity.ASRResult;
 import cube.common.entity.FileLabel;
 
 /**
@@ -33,7 +34,7 @@ import cube.common.entity.FileLabel;
  */
 public interface AutomaticSpeechRecognitionListener {
 
-    void onCompleted(FileLabel input, String result);
+    void onCompleted(FileLabel input, ASRResult result);
 
     void onFailed();
 }

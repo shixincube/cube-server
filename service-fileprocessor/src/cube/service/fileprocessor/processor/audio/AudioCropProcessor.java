@@ -26,38 +26,40 @@
 
 package cube.service.fileprocessor.processor.audio;
 
-import cube.file.AudioOperation;
 import cube.file.operation.AudioCropOperation;
-import cube.file.operation.AudioSamplingOperation;
+import cube.service.fileprocessor.processor.ProcessorContext;
 import org.json.JSONObject;
 
 import java.nio.file.Path;
 
 /**
- * 音频处理器构建器。
+ * 音频文件裁剪处理器。
  */
-public final class AudioProcessorBuilder {
+public class AudioCropProcessor extends AudioProcessor {
 
-    private AudioProcessorBuilder() {
+    private AudioCropOperation operation;
+
+    public AudioCropProcessor(Path workPath, AudioCropOperation operation) {
+        super(workPath);
+        this.operation = operation;
     }
 
-    public static AudioProcessor build(Path workPath, JSONObject operationJson) {
-        AudioProcessor processor = null;
+    @Override
+    public void go(ProcessorContext context) {
+        AudioCropContext cropContext = (AudioCropContext) context;
+        cropContext.setAudioOperation(this.operation);
 
-        // 解析 Operation
-        String operation = operationJson.getString("operation");
+        long time = System.currentTimeMillis();
 
-        if (AudioCropOperation.Operation.equals(operation)) {
-            AudioCropOperation cropOperation = new AudioCropOperation(operationJson);
-            AudioCropProcessor crop = new AudioCropProcessor(workPath, cropOperation);
-            processor = crop;
+        JSONObject info = probe(cropContext.getInputFile().getAbsolutePath());
+
+        System.out.println("XJW:\n" + info.toString(4));
+
+        cropContext.setElapsedTime(System.currentTimeMillis() - time);
+
+        if (this.deleteSourceFile) {
+            // 删除输入文件
+            this.inputFile.delete();
         }
-        else if (AudioSamplingOperation.Operation.equals(operation)) {
-            AudioSamplingOperation samplingOperation = new AudioSamplingOperation(operationJson);
-            AudioSamplingProcessor sampling = new AudioSamplingProcessor(workPath, samplingOperation);
-            processor = sampling;
-        }
-
-        return processor;
     }
 }

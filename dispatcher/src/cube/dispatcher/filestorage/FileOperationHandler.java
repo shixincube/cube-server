@@ -80,14 +80,27 @@ public class FileOperationHandler extends CrossDomainHandler {
     private void findFile(JSONObject data, HttpServletRequest request, HttpServletResponse response) {
         String token = data.has("token") ? data.getString("token") : null;
         String md5 = data.has("md5") ? data.getString("md5") : null;
-        if (null == token || null == md5) {
+        String fileName = data.has("fileName") ? data.getString("fileName") : null;
+
+        if (null == token) {
+            response.setStatus(HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
+        }
+
+        if (null == md5 && null == fileName) {
             response.setStatus(HttpStatus.FORBIDDEN_403);
             this.complete();
             return;
         }
 
         JSONObject payload = new JSONObject();
-        payload.put("md5", md5.toLowerCase());
+        if (null != md5) {
+            payload.put("md5", md5.toLowerCase());
+        }
+        if (null != fileName) {
+            payload.put("fileName", fileName);
+        }
 
         Packet packet = new Packet(FileStorageAction.FindFile.name, payload);
         ActionDialect packetDialect = packet.toDialect();

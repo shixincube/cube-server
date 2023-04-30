@@ -718,10 +718,11 @@ public class ServiceStorage implements Storagable {
      * 按照文件的 MD5 码查找文件。
      *
      * @param domain
+     * @param contactId
      * @param md5
      * @return 如果找到该文件返回文件码，否则返回 {@code null} 值。
      */
-    public String findFileByMD5(String domain, String md5) {
+    public String findFileByMD5(String domain, long contactId, String md5) {
         String labelTable = this.labelTableNameMap.get(domain);
         if (null == labelTable) {
             return null;
@@ -731,6 +732,8 @@ public class ServiceStorage implements Storagable {
         List<StorageField[]> result = this.storage.executeQuery(labelTable, new StorageField[] {
                 new StorageField("file_code", LiteralBase.STRING)
         }, new Conditional[] {
+                Conditional.createEqualTo("owner_id", contactId),
+                Conditional.createAnd(),
                 Conditional.createEqualTo("md5", md5)
         });
 
@@ -739,6 +742,37 @@ public class ServiceStorage implements Storagable {
         }
 
         return fileCode;
+    }
+
+    /**
+     * 按照文件名查找文件。
+     *
+     * @param domain
+     * @param contactId
+     * @param fileName
+     * @return
+     */
+    public List<String> findFilesByFileName(String domain, long contactId, String fileName) {
+        List<String> result = new ArrayList<>();
+
+        String labelTable = this.labelTableNameMap.get(domain);
+        if (null == labelTable) {
+            return result;
+        }
+
+        List<StorageField[]> list = this.storage.executeQuery(labelTable, new StorageField[] {
+                new StorageField("file_code", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo("owner_id", contactId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("file_name", fileName)
+        });
+
+        for (StorageField[] data : list) {
+            result.add(data[0].getString());
+        }
+
+        return result;
     }
 
     /**

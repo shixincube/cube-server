@@ -26,38 +26,11 @@
 
 package cube.service.fileprocessor.processor.audio;
 
-import cube.file.AudioOperation;
-import cube.file.operation.AudioCropOperation;
-import cube.file.operation.AudioSamplingOperation;
-import org.json.JSONObject;
-
-import java.nio.file.Path;
-
 /**
- * 音频处理器构建器。
+ * 音频裁剪的上下文。
  */
-public final class AudioProcessorBuilder {
+public class AudioCropContext extends AudioProcessorContext {
 
-    private AudioProcessorBuilder() {
-    }
-
-    public static AudioProcessor build(Path workPath, JSONObject operationJson) {
-        AudioProcessor processor = null;
-
-        // 解析 Operation
-        String operation = operationJson.getString("operation");
-
-        if (AudioCropOperation.Operation.equals(operation)) {
-            AudioCropOperation cropOperation = new AudioCropOperation(operationJson);
-            AudioCropProcessor crop = new AudioCropProcessor(workPath, cropOperation);
-            processor = crop;
-        }
-        else if (AudioSamplingOperation.Operation.equals(operation)) {
-            AudioSamplingOperation samplingOperation = new AudioSamplingOperation(operationJson);
-            AudioSamplingProcessor sampling = new AudioSamplingProcessor(workPath, samplingOperation);
-            processor = sampling;
-        }
-
-        return processor;
+    public AudioCropContext() {
     }
 }

@@ -44,10 +44,7 @@ import cube.file.operation.OCROperation;
 import cube.file.operation.OfficeConvertToOperation;
 import cube.file.operation.SnapshotOperation;
 import cube.service.fileprocessor.processor.*;
-import cube.service.fileprocessor.processor.audio.AudioProcessor;
-import cube.service.fileprocessor.processor.audio.AudioProcessorBuilder;
-import cube.service.fileprocessor.processor.audio.AudioSamplingContext;
-import cube.service.fileprocessor.processor.audio.AudioSamplingProcessor;
+import cube.service.fileprocessor.processor.audio.*;
 import cube.service.fileprocessor.processor.video.*;
 import cube.service.filestorage.FileStorageService;
 import cube.util.*;
@@ -1292,7 +1289,12 @@ public class FileProcessorService extends AbstractModule {
                 }
 
                 if (null != processor) {
-                    if (processor instanceof AudioSamplingProcessor) {
+                    if (processor instanceof AudioCropProcessor) {
+                        AudioCropContext context = new AudioCropContext();
+                        processor.go(context);
+                        return context.toJSON();
+                    }
+                    else if (processor instanceof AudioSamplingProcessor) {
                         AudioSamplingContext context = new AudioSamplingContext();
                         processor.go(context);
                         return context.toJSON();

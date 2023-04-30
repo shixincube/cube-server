@@ -24,40 +24,29 @@
  * SOFTWARE.
  */
 
-package cube.service.fileprocessor.processor.audio;
+package cube.common.entity;
 
-import cube.file.AudioOperation;
-import cube.file.operation.AudioCropOperation;
-import cube.file.operation.AudioSamplingOperation;
+import cube.common.JSONable;
 import org.json.JSONObject;
 
-import java.nio.file.Path;
-
 /**
- * 音频处理器构建器。
+ * 语音识别结果。
  */
-public final class AudioProcessorBuilder {
+public class ASRResult implements JSONable {
 
-    private AudioProcessorBuilder() {
+    private JSONObject data;
+
+    public ASRResult(JSONObject json) {
+        this.data = json;
     }
 
-    public static AudioProcessor build(Path workPath, JSONObject operationJson) {
-        AudioProcessor processor = null;
+    @Override
+    public JSONObject toJSON() {
+        return this.data;
+    }
 
-        // 解析 Operation
-        String operation = operationJson.getString("operation");
-
-        if (AudioCropOperation.Operation.equals(operation)) {
-            AudioCropOperation cropOperation = new AudioCropOperation(operationJson);
-            AudioCropProcessor crop = new AudioCropProcessor(workPath, cropOperation);
-            processor = crop;
-        }
-        else if (AudioSamplingOperation.Operation.equals(operation)) {
-            AudioSamplingOperation samplingOperation = new AudioSamplingOperation(operationJson);
-            AudioSamplingProcessor sampling = new AudioSamplingProcessor(workPath, samplingOperation);
-            processor = sampling;
-        }
-
-        return processor;
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

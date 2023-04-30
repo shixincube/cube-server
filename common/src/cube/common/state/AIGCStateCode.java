@@ -77,6 +77,11 @@ public enum AIGCStateCode {
     UnitError(31),
 
     /**
+     * 文件处理错误。
+     */
+    FileError(32),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)
