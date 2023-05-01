@@ -435,14 +435,9 @@ public class AIGCService extends AbstractModule {
         if (null == resultJson) {
             Logger.e(this.getClass(), "#automaticSpeechRecognition - File processor result is NULL");
             return false;
-        }
-
-        FileProcessResult result = new FileProcessResult(resultJson);
-        if (null == result.getAudioResult()) {
-            Logger.e(this.getClass(), "#automaticSpeechRecognition - Result error");
-            return false;
         }*/
 
+        // 音频文件分割
         AudioCropOperation cropOperation = new AudioCropOperation(0, 30, FileType.WAV);
         JSONObject processor = new JSONObject();
         processor.put("action", FileProcessorAction.Audio.name);
@@ -450,7 +445,17 @@ public class AIGCService extends AbstractModule {
         processor.put("fileCode", fileLabel.getFileCode());
         processor.put("parameter", cropOperation.toJSON());
 
-        FileProcessResult result = null;
+        JSONObject resultJson = fileProcessor.notify(processor);
+        if (null == resultJson) {
+            Logger.e(this.getClass(), "#automaticSpeechRecognition - File processor result is NULL");
+            return false;
+        }
+
+        FileProcessResult result = new FileProcessResult(resultJson);
+        if (null == result.getAudioResult()) {
+            Logger.e(this.getClass(), "#automaticSpeechRecognition - Result error");
+            return false;
+        }
 
         File resultFile = result.getResultList().get(0).file;
         String localFileCode = FileUtils.makeFileCode(fileLabel.getOwnerId(), fileLabel.getDomain().getName(), resultFile.getName());
@@ -739,7 +744,7 @@ public class AIGCService extends AbstractModule {
 
             Packet response = new Packet(dialect);
             JSONObject payload = Packet.extractDataPayload(response);
-            if (!payload.has("transcription")) {
+            if (!payload.has("list")) {
                 Logger.w(AIGCService.class, "ASR unit process failed");
                 // 回调错误
                 this.listener.onFailed();

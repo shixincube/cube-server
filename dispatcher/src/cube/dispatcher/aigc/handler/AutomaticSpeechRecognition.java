@@ -26,6 +26,7 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cube.common.entity.ASRResult;
 import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
@@ -89,7 +90,7 @@ public class AutomaticSpeechRecognition extends ContextHandler {
             }
 
             // ASR
-            String result = Manager.getInstance().automaticSpeechRecognition(domain, fileCode);
+            ASRResult result = Manager.getInstance().automaticSpeechRecognition(domain, fileCode);
             if (null == result) {
                 // 不允许该参与者申请或者服务故障
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
@@ -97,10 +98,7 @@ public class AutomaticSpeechRecognition extends ContextHandler {
                 return;
             }
 
-            JSONObject resultData = new JSONObject();
-            resultData.put("text", result);
-
-            this.respondOk(response, resultData);
+            this.respondOk(response, result.toJSON());
             this.complete();
         }
     }

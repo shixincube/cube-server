@@ -26,11 +26,18 @@
 
 package cube.service.fileprocessor.processor.audio;
 
+import cube.common.entity.FileResult;
 import cube.file.operation.AudioCropOperation;
 import cube.service.fileprocessor.processor.ProcessorContext;
+import cube.util.FileUtils;
 import org.json.JSONObject;
 
+import java.io.*;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * 音频文件裁剪处理器。
@@ -49,17 +56,67 @@ public class AudioCropProcessor extends AudioProcessor {
         AudioCropContext cropContext = (AudioCropContext) context;
         cropContext.setAudioOperation(this.operation);
 
+        List<File> files = new ArrayList<>();
+
         long time = System.currentTimeMillis();
 
-        JSONObject info = probe(cropContext.getInputFile().getAbsolutePath());
+        JSONObject info = probe(this.inputFile.getName());
 
-        System.out.println("XJW:\n" + info.toString(4));
+        String durationStr = info.getJSONObject("format").getString("duration");
+        int duration = (int) Math.round(Double.parseDouble(durationStr));
+
+        if (duration > this.operation.time) {
+
+        }
+        else {
+            files.add(this.inputFile);
+        }
+
+        File outputFile = this.zipFiles(files);
 
         cropContext.setElapsedTime(System.currentTimeMillis() - time);
+        cropContext.setSuccessful(true);
+
+        FileResult fileResult = new FileResult(outputFile);
+        cropContext.addResult(fileResult);
 
         if (this.deleteSourceFile) {
             // 删除输入文件
             this.inputFile.delete();
         }
+    }
+
+    private File zipFiles(List<File> list) {
+        String name = FileUtils.extractFileName(this.inputFile.getName());
+        String outputFilename = name + ".zip";
+        File output = new File(this.getWorkPath().toFile(), outputFilename);
+
+        int len = 0;
+        byte[] buf = new byte[2048];
+        ZipOutputStream zos = null;
+        try {
+            zos = new ZipOutputStream(new FileOutputStream(output));
+            for (File file : list) {
+                FileInputStream input = new FileInputStream(file);
+                zos.putNextEntry(new ZipEntry(name + File.separator + file.getName()));
+                while ((len = input.read(buf)) > 0) {
+                    zos.write(buf, 0, len);
+                }
+                input.close();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != zos) {
+                try {
+                    zos.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        return output;
     }
 }

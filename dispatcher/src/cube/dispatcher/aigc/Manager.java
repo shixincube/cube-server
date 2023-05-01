@@ -32,6 +32,7 @@ import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCChatRecord;
+import cube.common.entity.ASRResult;
 import cube.common.entity.SentimentResult;
 import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
@@ -153,7 +154,7 @@ public class Manager {
         return result;
     }
 
-    public String automaticSpeechRecognition(String domain, String fileCode) {
+    public ASRResult automaticSpeechRecognition(String domain, String fileCode) {
         JSONObject data = new JSONObject();
         data.put("domain", domain);
         data.put("fileCode", fileCode);
@@ -173,6 +174,6 @@ public class Manager {
         }
 
         JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-        return resultJson.getString("text");
+        return new ASRResult(resultJson);
     }
 }
