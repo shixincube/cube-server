@@ -27,6 +27,7 @@
 package cube.common.entity;
 
 import cube.common.JSONable;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -38,6 +39,19 @@ public class ASRResult implements JSONable {
 
     public ASRResult(JSONObject json) {
         this.data = json;
+
+        if (this.data.has("list")) {
+            JSONArray list = this.data.getJSONArray("list");
+            for (int i = 0; i < list.length(); ++i) {
+                JSONObject item = list.getJSONObject(i);
+                if (item.has("start_timestamps")) {
+                    item.remove("start_timestamps");
+                }
+                if (item.has("end_timestamps")) {
+                    item.remove("end_timestamps");
+                }
+            }
+        }
     }
 
     @Override

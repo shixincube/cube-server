@@ -92,7 +92,7 @@ public class AutomaticSpeechRecognition extends ContextHandler {
             // ASR
             ASRResult result = Manager.getInstance().automaticSpeechRecognition(domain, fileCode);
             if (null == result) {
-                // 不允许该参与者申请或者服务故障
+                // 故障
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;

@@ -26,6 +26,7 @@
 
 package cube.service.fileprocessor.processor.audio;
 
+import cell.util.log.Logger;
 import cube.common.entity.FileResult;
 import cube.file.operation.AudioCropOperation;
 import cube.service.fileprocessor.processor.ProcessorContext;
@@ -66,7 +67,39 @@ public class AudioCropProcessor extends AudioProcessor {
         int duration = (int) Math.round(Double.parseDouble(durationStr));
 
         if (duration > this.operation.time) {
+            int num = (int) Math.floor((float) duration / (float) this.operation.time);
+            num += (duration % this.operation.time == 0) ? 0 : 1;
+            int timePos = this.operation.start;
 
+            for (int i = 0; i < num; ++i) {
+                String outputName = this.inputFile.getName() + "_" + i
+                        + "." + this.operation.outputType.getPreferredExtension();
+                File outputFile = new File(this.getWorkPath().toFile(), outputName);
+                if (outputFile.exists()) {
+                    outputFile.delete();
+                }
+
+                ArrayList<String> params = new ArrayList<>();
+                params.add("-i");
+                params.add(this.inputFile.getName());
+                params.add("-acodec");
+                params.add("copy");
+                params.add("-ss");
+                params.add(Integer.toString(timePos));
+                params.add("-t");
+                params.add(Integer.toString(this.operation.time));
+                params.add(outputName);
+
+                boolean result = this.call(params, cropContext);
+                if (!result) {
+                    Logger.w(this.getClass(), "#go - ffmpeg command failed");
+                    return;
+                }
+
+                files.add(outputFile);
+
+                timePos += this.operation.time;
+            }
         }
         else {
             files.add(this.inputFile);
@@ -82,7 +115,13 @@ public class AudioCropProcessor extends AudioProcessor {
 
         if (this.deleteSourceFile) {
             // 删除输入文件
-            this.inputFile.delete();
+            for (File file : files) {
+                file.delete();
+            }
+
+            if (this.inputFile.exists()) {
+                this.inputFile.delete();
+            }
         }
     }
 

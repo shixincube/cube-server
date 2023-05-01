@@ -160,7 +160,7 @@ public class Manager {
         data.put("fileCode", fileCode);
         Packet packet = new Packet(AIGCAction.AutomaticSpeechRecognition.name, data);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 180 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#automaticSpeechRecognition Response is null");
             return null;
