@@ -131,9 +131,9 @@ public class FindFileTask extends ServiceTask {
         }
         else if (null != md5Code) {
             // 使用 MD5 查找
-            FileLabel fileLabel = service.findFileByMD5(domain, contactId, md5Code);
-            if (null != fileLabel) {
-                result.add(fileLabel);
+            List<FileLabel> list = service.findFilesByMD5(domain, contactId, md5Code);
+            if (null != list) {
+                result.addAll(list);
             }
         }
 

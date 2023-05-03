@@ -623,11 +623,118 @@ public class ServiceStorage implements Storagable {
         }
 
         String recyclebinTable = this.recyclebinTableNameMap.get(domain);
-        this.storage.executeDelete(recyclebinTable, new Conditional[] {
+        if (null != recyclebinTable) {
+            this.storage.executeDelete(recyclebinTable, new Conditional[] {
+                    Conditional.createEqualTo("file_code", fileCode)
+            });
+        }
+
+        return result;
+    }
+
+    /**
+     * 删除文件记录。
+     *
+     * @param domain
+     * @param contactId
+     * @param fileCode
+     * @return
+     */
+    public FileLabel deleteFile(String domain, long contactId, String fileCode) {
+        String labelTable = this.labelTableNameMap.get(domain);
+        if (null == labelTable) {
+            return null;
+        }
+
+        FileLabel deleted = this.readFileLabel(domain, fileCode);
+        if (null == deleted) {
+            return null;
+        }
+
+        this.storage.executeDelete(labelTable, new Conditional[] {
+                Conditional.createEqualTo("owner_id", contactId),
+                Conditional.createAnd(),
                 Conditional.createEqualTo("file_code", fileCode)
         });
 
-        return result;
+        String descriptorTable = this.descriptorTableNameMap.get(domain);
+        if (null != descriptorTable) {
+            this.storage.executeDelete(descriptorTable, new Conditional[] {
+                    Conditional.createEqualTo("file_code", fileCode)
+            });
+        }
+
+        String recyclebinTable = this.recyclebinTableNameMap.get(domain);
+        if (null != recyclebinTable) {
+            this.storage.executeDelete(recyclebinTable, new Conditional[] {
+                    Conditional.createEqualTo("file_code", fileCode)
+            });
+        }
+
+        return deleted;
+    }
+
+    /**
+     * 通过 MD5 码删除文件。
+     *
+     * @param domain
+     * @param contactId
+     * @param md5Code
+     * @return 返回删除的文件标签列表。
+     */
+    public List<FileLabel> deleteFileByMD5(String domain, long contactId, String md5Code) {
+        String labelTable = this.labelTableNameMap.get(domain);
+        if (null == labelTable) {
+            return null;
+        }
+
+        List<StorageField[]> list = this.storage.executeQuery(labelTable, new StorageField[] {
+                new StorageField("file_code", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo("owner_id", contactId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("md5", md5Code)
+        });
+
+        if (list.isEmpty()) {
+            return null;
+        }
+
+        List<FileLabel> fileList = new ArrayList<>(list.size());
+
+        for (StorageField[] data : list) {
+            String fileCode = data[0].getString();
+            FileLabel fileLabel = this.readFileLabel(domain, fileCode);
+            if (null != fileLabel) {
+                fileList.add(fileLabel);
+            }
+        }
+
+        this.storage.executeDelete(labelTable, new Conditional[] {
+                Conditional.createEqualTo("owner_id", contactId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("md5", md5Code)
+        });
+
+        String descriptorTable = this.descriptorTableNameMap.get(domain);
+        if (null != descriptorTable) {
+            for (FileLabel file : fileList) {
+                this.storage.executeDelete(descriptorTable, new Conditional[] {
+                        Conditional.createEqualTo("file_code", file.getFileCode())
+                });
+            }
+        }
+
+        String recyclebinTable = this.recyclebinTableNameMap.get(domain);
+        if (null != recyclebinTable) {
+            for (FileLabel file : fileList) {
+                this.storage.executeDelete(recyclebinTable, new Conditional[] {
+                        Conditional.createEqualTo("file_code", file.getFileCode())
+                });
+            }
+        }
+
+        return fileList;
     }
 
     /**
@@ -722,14 +829,15 @@ public class ServiceStorage implements Storagable {
      * @param md5
      * @return 如果找到该文件返回文件码，否则返回 {@code null} 值。
      */
-    public String findFileByMD5(String domain, long contactId, String md5) {
+    public List<String> findFilesByMD5(String domain, long contactId, String md5) {
+        List<String> result = new ArrayList<>();
+
         String labelTable = this.labelTableNameMap.get(domain);
         if (null == labelTable) {
             return null;
         }
 
-        String fileCode = null;
-        List<StorageField[]> result = this.storage.executeQuery(labelTable, new StorageField[] {
+        List<StorageField[]> list = this.storage.executeQuery(labelTable, new StorageField[] {
                 new StorageField("file_code", LiteralBase.STRING)
         }, new Conditional[] {
                 Conditional.createEqualTo("owner_id", contactId),
@@ -737,11 +845,11 @@ public class ServiceStorage implements Storagable {
                 Conditional.createEqualTo("md5", md5)
         });
 
-        if (!result.isEmpty()) {
-            fileCode = result.get(0)[0].getString();
+        for (StorageField[] data : list) {
+            result.add(data[0].getString());
         }
 
-        return fileCode;
+        return result;
     }
 
     /**

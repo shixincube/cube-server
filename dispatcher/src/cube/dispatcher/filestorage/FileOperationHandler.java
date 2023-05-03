@@ -34,6 +34,7 @@ import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.ServletException;
@@ -70,6 +71,9 @@ public class FileOperationHandler extends CrossDomainHandler {
         String pathInfo = request.getPathInfo();
         if (pathInfo.startsWith("/find")) {
             this.findFile(data, request, response);
+        }
+        else if (pathInfo.startsWith("/delete")) {
+            this.deleteFile(data, request, response);
         }
         else {
             response.setStatus(HttpStatus.NOT_ACCEPTABLE_406);
@@ -117,8 +121,8 @@ public class FileOperationHandler extends CrossDomainHandler {
 
         int stateCode = Packet.extractCode(responsePacket);
         if (stateCode != FileStorageStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#doPost - Service state code : " + stateCode);
-            this.respond(response, HttpStatus.NOT_FOUND_404, new JSONObject());
+            Logger.w(this.getClass(), "#findFile - Service state code : " + stateCode);
+            this.respond(response, HttpStatus.NOT_FOUND_404, responsePacket.toJSON());
             this.complete();
             return;
         }
@@ -129,6 +133,63 @@ public class FileOperationHandler extends CrossDomainHandler {
         }
 
         responsePacket = new Packet(FileStorageAction.FindFile.name, fileLabelJson);
+        this.respondOk(response, responsePacket.toJSON());
+        this.complete();
+    }
+
+    private void deleteFile(JSONObject data, HttpServletRequest request, HttpServletResponse response) {
+        String token = data.has("token") ? data.getString("token") : null;
+        JSONArray fileCodeList = data.has("fileCodeList") ? data.getJSONArray("fileCodeList") : null;
+        JSONArray md5List = data.has("md5List") ? data.getJSONArray("md5List") : null;
+
+        if (null == token) {
+            response.setStatus(HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
+        }
+
+        JSONObject payload = new JSONObject();
+        if (null != fileCodeList) {
+            if (fileCodeList.isEmpty()) {
+                response.setStatus(HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
+            payload.put("fileCodeList", fileCodeList);
+        }
+        else if (null != md5List) {
+            if (md5List.isEmpty()) {
+                response.setStatus(HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
+            payload.put("md5List", md5List);
+        }
+
+        Packet packet = new Packet(FileStorageAction.DeleteFile.name, payload);
+        ActionDialect packetDialect = packet.toDialect();
+        packetDialect.addParam("token", token);
+
+        ActionDialect responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
+        if (null == responseDialect) {
+            this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+            this.complete();
+            return;
+        }
+
+        Packet responsePacket = new Packet(responseDialect);
+
+        int stateCode = Packet.extractCode(responsePacket);
+        if (stateCode != FileStorageStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#deleteFile - Service state code : " + stateCode);
+            this.respond(response, HttpStatus.NOT_FOUND_404, responsePacket.toJSON());
+            this.complete();
+            return;
+        }
+
+        responsePacket = new Packet(FileStorageAction.DeleteFile.name, Packet.extractDataPayload(responsePacket));
         this.respondOk(response, responsePacket.toJSON());
         this.complete();
     }

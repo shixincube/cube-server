@@ -672,13 +672,24 @@ public class FileStorageService extends AbstractModule {
      * @param md5Code
      * @return
      */
-    public FileLabel findFileByMD5(String domainName, long contactId, String md5Code) {
-        String fileCode = this.serviceStorage.findFileByMD5(domainName, contactId, md5Code);
-        if (null == fileCode) {
+    public List<FileLabel> findFilesByMD5(String domainName, long contactId, String md5Code) {
+        List<String> fileCodes = this.serviceStorage.findFilesByMD5(domainName, contactId, md5Code);
+        if (fileCodes.isEmpty()) {
             return null;
         }
 
-        return this.getFile(domainName, fileCode);
+        List<FileLabel> list = new ArrayList<>();
+
+        for (String fileCode : fileCodes) {
+            FileLabel fileLabel = this.getFile(domainName, fileCode);
+            if (null == fileLabel) {
+                continue;
+            }
+
+            list.add(fileLabel);
+        }
+
+        return list;
     }
 
     /**
@@ -753,6 +764,57 @@ public class FileStorageService extends AbstractModule {
         this.serviceStorage.deleteFile(domainName, fileLabel.getFileCode());
 
         return true;
+    }
+
+    /**
+     * 批量删除文件。
+     *
+     * @param domainName
+     * @param ownerId
+     * @param fileCodeList
+     * @return 返回已删除的文件的文件标签列表。
+     */
+    public List<FileLabel> deleteFiles(String domainName, long ownerId, List<String> fileCodeList) {
+        List<FileLabel> fileLabelList = new ArrayList<>();
+
+        for (String fileCode : fileCodeList) {
+            // 从文件系统删除
+            this.fileSystem.deleteFile(fileCode);
+
+            // 从缓存删除
+            this.fileLabelCache.remove(new CacheKey(fileCode));
+
+            // 从数据库删除
+            FileLabel fileLabel = this.serviceStorage.deleteFile(domainName, ownerId, fileCode);
+            if (null != fileLabel) {
+                fileLabelList.add(fileLabel);
+            }
+        }
+
+        return fileLabelList;
+    }
+
+    /**
+     * 批量删除指定 MD5 码的文件。
+     *
+     * @param domainName
+     * @param ownerId
+     * @param md5List
+     * @return 返回已删除的文件的文件标签列表。
+     */
+    public List<FileLabel> deleteFilesByMD5(String domainName, long ownerId, List<String> md5List) {
+        List<FileLabel> fileLabelList = new ArrayList<>();
+
+        for (String md5 : md5List) {
+            List<FileLabel> fileList = this.serviceStorage.deleteFileByMD5(domainName, ownerId, md5);
+            if (null == fileList) {
+                continue;
+            }
+
+            fileLabelList.addAll(fileList);
+        }
+
+        return fileLabelList;
     }
 
     /**
