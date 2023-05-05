@@ -26,7 +26,7 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.common.entity.AIGCChannel;
+import cube.common.entity.NLTask;
 import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
@@ -37,12 +37,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 申请对话频道。
+ * 自然语言通用任务。
  */
-public class RequestChannel extends ContextHandler {
+public class NLGeneralTask extends ContextHandler {
 
-    public RequestChannel() {
-        super("/aigc/channel/");
+    public NLGeneralTask() {
+        super("/aigc/nlp/general");
         setHandler(new Handler());
     }
 
@@ -71,33 +71,33 @@ public class RequestChannel extends ContextHandler {
                 return;
             }
 
-            String participant = null;
+            NLTask task = null;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
-                participant = json.getString("participant");
+                task = new NLTask(json);
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
                 return;
             }
 
-            if (null == participant) {
+            if (null == task) {
                 // 参数错误
                 this.respond(response, HttpStatus.NOT_FOUND_404);
                 this.complete();
                 return;
             }
 
-            // 请求频道
-            AIGCChannel channel = Manager.getInstance().requestChannel(participant);
-            if (null == channel) {
+            // 情感分析
+            NLTask result = Manager.getInstance().performNaturalLanguageTask(task);
+            if (null == result) {
                 // 不允许该参与者申请或者服务故障
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }
 
-            this.respondOk(response, channel.toJSON());
+            this.respondOk(response, result.toJSON());
             this.complete();
         }
     }

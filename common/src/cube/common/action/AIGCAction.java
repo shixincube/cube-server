@@ -57,6 +57,11 @@ public enum AIGCAction {
     Sentiment("sentiment"),
 
     /**
+     * 自然语言通用任务。
+     */
+    NaturalLanguageTask("naturalLanguageTask"),
+
+    /**
      * 自动语音识别。
      */
     AutomaticSpeechRecognition("automaticSpeechRecognition")

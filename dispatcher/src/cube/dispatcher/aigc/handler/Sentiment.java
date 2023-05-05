@@ -36,6 +36,9 @@ import org.json.JSONObject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * 情感分析。
+ */
 public class Sentiment extends ContextHandler {
 
     public Sentiment() {
@@ -62,7 +65,7 @@ public class Sentiment extends ContextHandler {
             }
 
             String token = this.getRequestPath(request);
-            if (null == token || !token.equals(Manager.getInstance().getToken())) {
+            if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
                 return;

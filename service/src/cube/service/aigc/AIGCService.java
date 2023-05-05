@@ -40,10 +40,10 @@ import cube.core.Kernel;
 import cube.core.Module;
 import cube.file.FileProcessResult;
 import cube.file.operation.AudioCropOperation;
-import cube.file.operation.AudioSamplingOperation;
 import cube.plugin.PluginSystem;
 import cube.service.aigc.listener.AutomaticSpeechRecognitionListener;
 import cube.service.aigc.listener.ChatListener;
+import cube.service.aigc.listener.NaturalLanguageTaskListener;
 import cube.service.aigc.listener.SentimentAnalysisListener;
 import cube.util.FileType;
 import cube.util.FileUtils;
@@ -54,6 +54,8 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * AIGC 服务。
@@ -77,6 +79,11 @@ public class AIGCService extends AbstractModule {
     /**
      * Key 是 AIGC 的 Query Key
      */
+    private Map<String, Queue<NaturalLanguageTaskMeta>> nlTaskQueueMap;
+
+    /**
+     * Key 是 AIGC 的 Query Key
+     */
     private Map<String, Queue<SentimentUnitMeta>> sentimentQueueMap;
 
     /**
@@ -93,22 +100,32 @@ public class AIGCService extends AbstractModule {
 
     private long channelTimeout = 30 * 60 * 1000;
 
+    private ExecutorService executor;
+
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
         this.unitMap = new ConcurrentHashMap<>();
         this.channelMap = new ConcurrentHashMap<>();
         this.chatQueueMap = new ConcurrentHashMap<>();
+        this.nlTaskQueueMap = new ConcurrentHashMap<>();
         this.sentimentQueueMap = new ConcurrentHashMap<>();
         this.asrQueueMap = new ConcurrentHashMap<>();
     }
 
     @Override
     public void start() {
+        this.executor = Executors.newCachedThreadPool();
+
         this.started = true;
     }
 
     @Override
     public void stop() {
+        if (null != this.executor) {
+            this.executor.shutdown();
+            this.executor = null;
+        }
+
         this.started = false;
     }
 
@@ -343,13 +360,63 @@ public class AIGCService extends AbstractModule {
         if (!unit.isRunning()) {
             unit.setRunning(true);
 
-            Thread thread = new Thread(new Runnable() {
+            this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
                     processChatQueue(meta.unit.getQueryKey());
                 }
             });
-            thread.start();
+        }
+
+        return true;
+    }
+
+    /**
+     * 执行自然语言任务。
+     *
+     * @param task
+     * @param listener
+     * @return
+     */
+    public boolean performNaturalLanguageTask(NLTask task, NaturalLanguageTaskListener listener) {
+        if (!this.started) {
+            return false;
+        }
+
+        // 检查任务
+        if (!task.check()) {
+            Logger.w(AIGCService.class, "Natural language task data error: " + task.type);
+            return false;
+        }
+
+        // 查找有该能力的单元
+        AIGCUnit unit = this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.MultiTask);
+        if (null == unit) {
+            Logger.w(AIGCService.class, "No natural language task unit setup in server");
+            return false;
+        }
+
+        NaturalLanguageTaskMeta meta = new NaturalLanguageTaskMeta(unit, task, listener);
+
+        synchronized (this.nlTaskQueueMap) {
+            Queue<NaturalLanguageTaskMeta> queue = this.nlTaskQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.nlTaskQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    processNaturalLanguageTaskQueue(meta.unit.getQueryKey());
+                }
+            });
         }
 
         return true;
@@ -382,13 +449,12 @@ public class AIGCService extends AbstractModule {
         if (!unit.isRunning()) {
             unit.setRunning(true);
 
-            Thread thread = new Thread(new Runnable() {
+            this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
                     processSentimentQueue(meta.unit.getQueryKey());
                 }
             });
-            thread.start();
         }
 
         return true;
@@ -497,13 +563,12 @@ public class AIGCService extends AbstractModule {
         if (!unit.isRunning()) {
             unit.setRunning(true);
 
-            Thread thread = new Thread(new Runnable() {
+            this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
                     processASRQueue(meta.unit.getQueryKey());
                 }
             });
-            thread.start();
         }
 
         return true;
@@ -523,6 +588,31 @@ public class AIGCService extends AbstractModule {
                 meta.process();
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#processChatQueue - meta process", e);
+            }
+
+            meta = queue.poll();
+        }
+
+        AIGCUnit unit = this.unitMap.get(queryKey);
+        if (null != unit) {
+            unit.setRunning(false);
+        }
+    }
+
+    private void processNaturalLanguageTaskQueue(String queryKey) {
+        Queue<NaturalLanguageTaskMeta> queue = this.nlTaskQueueMap.get(queryKey);
+        if (null == queue) {
+            Logger.w(AIGCService.class, "No found unit: " + queryKey);
+            return;
+        }
+
+        NaturalLanguageTaskMeta meta = queue.poll();
+        while (null != meta) {
+            // 执行处理
+            try {
+                meta.process();
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#processNaturalLanguageTaskQueue - meta process", e);
             }
 
             meta = queue.poll();
@@ -674,6 +764,44 @@ public class AIGCService extends AbstractModule {
             this.channel.setProcessing(false);
 
             this.listener.onChat(this.channel, result);
+        }
+    }
+
+
+    private class NaturalLanguageTaskMeta {
+
+        protected AIGCUnit unit;
+
+        protected NLTask task;
+
+        protected NaturalLanguageTaskListener listener;
+
+        public NaturalLanguageTaskMeta(AIGCUnit unit, NLTask task, NaturalLanguageTaskListener listener) {
+            this.unit = unit;
+            this.task = task;
+            this.listener = listener;
+        }
+
+        public void process() {
+            JSONObject data = new JSONObject();
+            data.put("task", this.task.toJSON());
+
+            Packet request = new Packet(AIGCAction.NaturalLanguageTask.name, data);
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
+            if (null == dialect) {
+                Logger.w(AIGCService.class, "Natural language task unit error");
+                // 回调错误
+                this.listener.onFailed();
+                return;
+            }
+
+            Packet response = new Packet(dialect);
+            JSONObject payload = Packet.extractDataPayload(response);
+
+            String type = payload.getString("task");
+            JSONArray resultList = payload.getJSONArray("result");
+
+            this.listener.onCompleted(new NLTask(type, resultList));
         }
     }
 

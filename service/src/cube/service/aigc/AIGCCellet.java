@@ -88,7 +88,7 @@ public class AIGCCellet extends AbstractCellet {
             return null;
         }
 
-        ActionDialect response = responder.waitingFor(2 * 60 * 1000);
+        ActionDialect response = responder.waitingFor(3 * 60 * 1000);
         if (null == response) {
             Logger.w(AIGCCellet.class, "Response is null: " + talkContext.getSessionHost());
             this.responderList.remove(responder);
@@ -114,6 +114,11 @@ public class AIGCCellet extends AbstractCellet {
                     break;
                 }
             }
+        }
+        else if (AIGCAction.NaturalLanguageTask.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new NLGeneralTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (AIGCAction.Sentiment.name.equals(action)) {
             // 来自 Dispatcher 的请求

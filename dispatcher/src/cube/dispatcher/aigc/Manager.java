@@ -30,10 +30,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
-import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCChatRecord;
-import cube.common.entity.ASRResult;
-import cube.common.entity.SentimentResult;
+import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.aigc.handler.*;
@@ -71,12 +68,17 @@ public class Manager {
         httpServer.addContextHandler(new RequestChannel());
         httpServer.addContextHandler(new Chat());
         httpServer.addContextHandler(new ImprovementChat());
+        httpServer.addContextHandler(new NLGeneralTask());
         httpServer.addContextHandler(new Sentiment());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
     }
 
-    public String getToken() {
-        return this.token;
+    public boolean checkToken(String token) {
+        if (null == token) {
+            return false;
+        }
+
+        return this.token.equals(token);
     }
 
     public AIGCChannel requestChannel(String participant) {
@@ -86,13 +88,13 @@ public class Manager {
 
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
         if (null == response) {
-            Logger.w(Manager.class, "#requestChannel Response is null - " + participant);
+            Logger.w(Manager.class, "#requestChannel - Response is null - " + participant);
             return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(Manager.class, "#requestChannel Response state code is NOT Ok - " + participant +
+            Logger.w(Manager.class, "#requestChannel - Response state code is NOT Ok - " + participant +
                     " - " + Packet.extractCode(responsePacket));
             return null;
         }
@@ -117,13 +119,13 @@ public class Manager {
 
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
         if (null == response) {
-            Logger.w(Manager.class, "#chat Response is null - " + channelCode);
+            Logger.w(Manager.class, "#chat - Response is null - " + channelCode);
             return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(Manager.class, "#chat Response state code is NOT Ok - " + channelCode +
+            Logger.w(Manager.class, "#chat - Response state code is NOT Ok - " + channelCode +
                     " - " + Packet.extractCode(responsePacket));
             return null;
         }
@@ -137,21 +139,46 @@ public class Manager {
         data.put("text", text);
         Packet packet = new Packet(AIGCAction.Sentiment.name, data);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 120 * 1000);
         if (null == response) {
-            Logger.w(Manager.class, "#sentimentAnalysis Response is null");
+            Logger.w(Manager.class, "#sentimentAnalysis - Response is null");
             return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(Manager.class, "#sentimentAnalysis Response state code : "
+            Logger.w(Manager.class, "#sentimentAnalysis - Response state code : "
                     + Packet.extractCode(responsePacket));
             return null;
         }
 
         SentimentResult result = new SentimentResult(Packet.extractDataPayload(responsePacket));
         return result;
+    }
+
+    public NLTask performNaturalLanguageTask(NLTask task) {
+        // 检查任务
+        if (!task.check()) {
+            // 任务参数不正确
+            Logger.w(Manager.class, "#performNaturalLanguageTask - task data error: " + task.type);
+            return null;
+        }
+
+        Packet packet = new Packet(AIGCAction.NaturalLanguageTask.name, task.toJSON());
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 120 * 100);
+        if (null == response) {
+            Logger.w(Manager.class, "#performNaturalLanguageTask - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#performNaturalLanguageTask - Response state code : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new NLTask(Packet.extractDataPayload(responsePacket));
     }
 
     public ASRResult automaticSpeechRecognition(String domain, String fileCode) {
@@ -162,13 +189,13 @@ public class Manager {
 
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 180 * 1000);
         if (null == response) {
-            Logger.w(Manager.class, "#automaticSpeechRecognition Response is null");
+            Logger.w(Manager.class, "#automaticSpeechRecognition - Response is null");
             return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(Manager.class, "#automaticSpeechRecognition Response state code : "
+            Logger.w(Manager.class, "#automaticSpeechRecognition - Response state code : "
                     + Packet.extractCode(responsePacket));
             return null;
         }

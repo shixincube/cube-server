@@ -36,6 +36,9 @@ import org.json.JSONObject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * 智能对话。
+ */
 public class Chat extends ContextHandler {
 
     private final static String AI_NAME = "Baize";
@@ -64,7 +67,7 @@ public class Chat extends ContextHandler {
             }
 
             String token = this.getRequestPath(request);
-            if (null == token || !token.equals(Manager.getInstance().getToken())) {
+            if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
                 return;
