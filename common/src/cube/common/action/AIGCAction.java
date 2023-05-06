@@ -42,6 +42,11 @@ public enum AIGCAction {
     Teardown("teardown"),
 
     /**
+     * 校验令牌。
+     */
+    CheckToken("checkToken"),
+
+    /**
      * 请求通道。
      */
     RequestChannel("requestChannel"),

@@ -28,38 +28,48 @@ package cube.dispatcher.aigc;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.aigc.handler.*;
+import cube.dispatcher.util.Tickable;
 import cube.util.HttpServer;
 import org.json.JSONObject;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 接口管理器。
  */
-public class Manager {
+public class Manager implements Tickable {
 
     private final static Manager instance = new Manager();
 
     private Performer performer;
 
-    private String token;
+    private Map<String, AuthToken> validTokenMap;
+    private long lastClearToken;
 
     public static Manager getInstance() {
         return Manager.instance;
     }
 
-    public void start(Performer performer, String token) {
+    public void start(Performer performer) {
         this.performer = performer;
-        this.token = token;
+        this.validTokenMap = new ConcurrentHashMap<>();
 
         this.setupHandler();
+
+        this.performer.addTickable(this);
+        this.lastClearToken = System.currentTimeMillis();
     }
 
     public void stop() {
+        this.performer.removeTickable(this);
     }
 
     private void setupHandler() {
@@ -78,7 +88,29 @@ public class Manager {
             return false;
         }
 
-        return this.token.equals(token);
+        if (this.validTokenMap.containsKey(token)) {
+            return true;
+        }
+
+        JSONObject data = new JSONObject();
+        data.put("token", token);
+        Packet packet = new Packet(AIGCAction.CheckToken.name, data);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+        if (null == response) {
+            Logger.w(Manager.class, "#checkToken - Response is null : " + token);
+            return false;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#checkToken - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return false;
+        }
+
+        AuthToken authToken = new AuthToken(Packet.extractDataPayload(responsePacket));
+        this.validTokenMap.put(token, authToken);
+
+        return true;
     }
 
     public AIGCChannel requestChannel(String participant) {
@@ -88,13 +120,13 @@ public class Manager {
 
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
         if (null == response) {
-            Logger.w(Manager.class, "#requestChannel - Response is null - " + participant);
+            Logger.w(Manager.class, "#requestChannel - Response is null : " + participant);
             return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(Manager.class, "#requestChannel - Response state code is NOT Ok - " + participant +
+            Logger.w(Manager.class, "#requestChannel - Response state code is NOT Ok : " + participant +
                     " - " + Packet.extractCode(responsePacket));
             return null;
         }
@@ -202,5 +234,13 @@ public class Manager {
 
         JSONObject resultJson = Packet.extractDataPayload(responsePacket);
         return new ASRResult(resultJson);
+    }
+
+    @Override
+    public void onTick(long now) {
+        if (now - this.lastClearToken > 60 * 60 * 1000) {
+            this.validTokenMap.clear();
+            this.lastClearToken = now;
+        }
     }
 }

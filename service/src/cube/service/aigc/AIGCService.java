@@ -30,6 +30,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.action.FileProcessorAction;
@@ -45,6 +46,7 @@ import cube.service.aigc.listener.AutomaticSpeechRecognitionListener;
 import cube.service.aigc.listener.ChatListener;
 import cube.service.aigc.listener.NaturalLanguageTaskListener;
 import cube.service.aigc.listener.SentimentAnalysisListener;
+import cube.service.auth.AuthService;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import org.json.JSONArray;
@@ -278,6 +280,24 @@ public class AIGCService extends AbstractModule {
         return unit;
     }
 
+    /**
+     * 校验令牌。
+     *
+     * @param tokenCode
+     * @return
+     */
+    public AuthToken checkToken(String tokenCode) {
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthToken authToken = authService.getToken(tokenCode);
+        return authToken;
+    }
+
+    /**
+     * 申请频道。
+     *
+     * @param participant
+     * @return
+     */
     public AIGCChannel requestChannel(String participant) {
         if (this.channelMap.size() >= this.maxChannel) {
             Logger.w(AIGCService.class, "Channel num overflow: " + this.maxChannel);

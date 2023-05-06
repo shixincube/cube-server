@@ -48,13 +48,7 @@ public class AIGCCellet extends AbstractCellet {
     @Override
     public boolean install() {
         this.performer = (Performer) this.getNucleus().getParameter("performer");
-
-        String token = "cube.aigc.token";
-        if (this.performer.getProperties().containsKey("aigc.token")) {
-            token = this.performer.getProperties().getProperty("aigc.token").trim();
-        }
-
-        Manager.getInstance().start(this.performer, token);
+        Manager.getInstance().start(this.performer);
 
         return true;
     }
