@@ -30,14 +30,11 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
-import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
 import cube.common.action.ContactAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.contact.task.*;
-
-import java.util.concurrent.ExecutorService;
 
 /**
  * 联系人服务 Cellet 。
@@ -67,6 +64,12 @@ public class ContactServiceCellet extends AbstractCellet {
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
+
+        if (!ContactManager.getInstance().isStarted()) {
+            // 服务未就绪
+            this.execute(new NotReadyTask(this, talkContext, primitive));
+            return;
+        }
 
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
