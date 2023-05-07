@@ -30,6 +30,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
@@ -39,7 +40,11 @@ import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.ChatListener;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 向模型请求聊天。
@@ -64,12 +69,26 @@ public class ChatTask extends ServiceTask {
 
         String code = packet.data.getString("code");
         String content = packet.data.getString("content");
+        JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
         String desc = packet.data.has("desc") ? packet.data.getString("desc") : null;
+
+        List<AIGCChatRecord> recordList = null;
+        if (null != records) {
+            recordList = new ArrayList<>();
+            try {
+                for (int i = 0; i < records.length(); ++i) {
+                    AIGCChatRecord record = new AIGCChatRecord(records.getJSONObject(i));
+                    recordList.add(record);
+                }
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "#run", e);
+            }
+        }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         // 执行 Chat
-        boolean success = service.chat(code, content, desc, new ChatListener() {
+        boolean success = service.chat(code, content, desc, recordList, new ChatListener() {
             @Override
             public void onChat(AIGCChannel channel, AIGCChatRecord record) {
                 cellet.speak(talkContext,

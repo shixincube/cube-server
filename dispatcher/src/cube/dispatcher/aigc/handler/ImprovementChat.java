@@ -31,6 +31,7 @@ import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
@@ -76,11 +77,15 @@ public class ImprovementChat extends ContextHandler {
             String channelCode = null;
             String content = null;
             String desc = null;
+            JSONArray records = null;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
                 channelCode = json.getString("code");
                 content = json.getString("content");
                 desc = json.getString("desc");
+                if (json.has("records")) {
+                    records = json.getJSONArray("records");
+                }
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
@@ -95,7 +100,7 @@ public class ImprovementChat extends ContextHandler {
             }
 
             // Chat
-            AIGCChatRecord record = Manager.getInstance().chat(channelCode, content, desc);
+            AIGCChatRecord record = Manager.getInstance().chat(channelCode, content, desc, records);
             if (null == record) {
                 // 发生错误
                 this.respond(response, HttpStatus.BAD_REQUEST_400);

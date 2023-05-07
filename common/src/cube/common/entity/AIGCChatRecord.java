@@ -49,7 +49,10 @@ public class AIGCChatRecord implements JSONable {
     public AIGCChatRecord(JSONObject json) {
         this.query = json.getString("query");
         this.answer = json.getString("answer");
-        this.timestamp = json.getLong("timestamp");
+
+        if (json.has("timestamp")) {
+            this.timestamp = json.getLong("timestamp");
+        }
     }
 
     public int totalWords() {

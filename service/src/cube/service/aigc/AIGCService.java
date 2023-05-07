@@ -323,7 +323,7 @@ public class AIGCService extends AbstractModule {
      * @return
      */
     public boolean chat(String code, String content, ChatListener listener) {
-        return this.chat(code, content, null, listener);
+        return this.chat(code, content, null, null, listener);
     }
 
     /**
@@ -332,10 +332,11 @@ public class AIGCService extends AbstractModule {
      * @param code
      * @param content
      * @param desc
+     * @param records
      * @param listener
      * @return
      */
-    public boolean chat(String code, String content, String desc, ChatListener listener) {
+    public boolean chat(String code, String content, String desc, List<AIGCChatRecord> records, ChatListener listener) {
         if (!this.started) {
             return false;
         }
@@ -365,7 +366,7 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        ChatUnitMeta meta = new ChatUnitMeta(unit, channel, content, listener);
+        ChatUnitMeta meta = new ChatUnitMeta(unit, channel, content, records, listener);
 
         synchronized (this.chatQueueMap) {
             Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getQueryKey());
@@ -714,14 +715,17 @@ public class AIGCService extends AbstractModule {
 
         protected String content;
 
+        protected List<AIGCChatRecord> records;
+
         protected int histories;
 
         protected ChatListener listener;
 
-        public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, ChatListener listener) {
+        public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, List<AIGCChatRecord> records, ChatListener listener) {
             this.unit = unit;
             this.channel = channel;
             this.content = content;
+            this.records = records;
             this.histories = 3;
             this.listener = listener;
         }
@@ -739,10 +743,7 @@ public class AIGCService extends AbstractModule {
             data.put("unit", this.unit.getCapability().getName());
             data.put("content", this.content);
 
-            if (this.unit.getCapability().getSubtask().equals(AICapability.NaturalLanguageProcessing.ImprovedConversational)) {
-                data.put("history", new JSONArray());
-            }
-            else {
+            if (null == this.records) {
                 if (this.histories > 0) {
                     List<AIGCChatRecord> records = this.channel.getLastHistory(this.histories);
                     JSONArray array = new JSONArray();
@@ -754,6 +755,13 @@ public class AIGCService extends AbstractModule {
                 else {
                     data.put("history", new JSONArray());
                 }
+            }
+            else {
+                JSONArray history = new JSONArray();
+                for (AIGCChatRecord record : this.records) {
+                    history.put(record.toJSON());
+                }
+                data.put("history", history);
             }
 
             Packet request = new Packet(AIGCAction.Chat.name, data);

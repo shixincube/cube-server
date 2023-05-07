@@ -37,6 +37,7 @@ import cube.dispatcher.Performer;
 import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.util.Tickable;
 import cube.util.HttpServer;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Map;
@@ -135,16 +136,19 @@ public class Manager implements Tickable {
         return channel;
     }
 
-    public AIGCChatRecord chat(String channelCode, String content) {
-        return this.chat(channelCode, content, null);
+    public AIGCChatRecord chat(String channelCode, String content, JSONArray records) {
+        return this.chat(channelCode, content, null, records);
     }
 
-    public AIGCChatRecord chat(String channelCode, String content, String desc) {
+    public AIGCChatRecord chat(String channelCode, String content, String desc, JSONArray records) {
         JSONObject data = new JSONObject();
         data.put("code", channelCode);
         data.put("content", content);
         if (null != desc) {
             data.put("desc", desc);
+        }
+        if (null != records) {
+            data.put("records", records);
         }
 
         Packet packet = new Packet(AIGCAction.Chat.name, data);
