@@ -230,6 +230,11 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public ASRFuture automaticSpeechRecognition(String domain, String fileCode) {
+        if (this.asrFutureMap.containsKey(fileCode)) {
+            // 正在处理
+            return this.asrFutureMap.get(fileCode);
+        }
+        
         JSONObject data = new JSONObject();
         data.put("domain", domain);
         data.put("fileCode", fileCode);

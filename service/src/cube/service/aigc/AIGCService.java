@@ -515,6 +515,7 @@ public class AIGCService extends AbstractModule {
         FileLabel sourceFile = new FileLabel(fileLabelJson);
 
         FileLabel fileLabel = new FileLabel(fileLabelJson);
+        boolean deleteFileLabel = false;
 
         AbstractModule fileProcessor = this.getKernel().getModule("FileProcessor");
         if (null == fileProcessor) {
@@ -545,7 +546,25 @@ public class AIGCService extends AbstractModule {
                 return false;
             }
 
-            // XJW TODO
+            // 音频文件
+            File audioFile = result.getResultList().get(0).file;
+            String audioFileCode = FileUtils.makeFileCode(fileLabel.getOwnerId(), fileLabel.getDomain().getName(), audioFile.getName());
+            FileLabel audioFileLabel = FileUtils.makeFileLabel(fileLabel.getDomain().getName(), audioFileCode, fileLabel.getOwnerId(), audioFile);
+            // 将处理后文件存入存储器
+            JSONObject saveFile = new JSONObject();
+            saveFile.put("action", FileStorageAction.SaveFile.name);
+            saveFile.put("path", audioFile.getAbsolutePath());
+            saveFile.put("fileLabel", audioFileLabel.toJSON());
+            JSONObject audioFileLabelJson = fileStorage.notify(saveFile);
+            if (null == audioFileLabelJson) {
+                Logger.e(this.getClass(), "#automaticSpeechRecognition - Save audio file to storage failed");
+                return false;
+            }
+
+            // 更新文件标签
+            fileLabel = new FileLabel(audioFileLabelJson);
+            // 在处理后删除该音频数据
+            deleteFileLabel = true;
         }
         else if (!FileUtils.isAudioType(fileLabel.getFileType())) {
             Logger.e(this.getClass(), "#automaticSpeechRecognition - File type is NOT audio type: "
@@ -580,6 +599,13 @@ public class AIGCService extends AbstractModule {
         if (null == resultJson) {
             Logger.e(this.getClass(), "#automaticSpeechRecognition - Audio crop result is NULL: "
                     + fileLabel.getFileCode());
+            if (deleteFileLabel) {
+                JSONObject deleteFile = new JSONObject();
+                deleteFile.put("action", FileStorageAction.DeleteFile.name);
+                deleteFile.put("domain", fileLabel.getDomain().getName());
+                deleteFile.put("fileCode", fileLabel.getFileCode());
+                fileStorage.notify(deleteFile);
+            }
             return false;
         }
 
@@ -587,6 +613,13 @@ public class AIGCService extends AbstractModule {
         if (null == result.getAudioResult()) {
             Logger.e(this.getClass(), "#automaticSpeechRecognition - Audio crop result error: "
                     + fileLabel.getFileCode());
+            if (deleteFileLabel) {
+                JSONObject deleteFile = new JSONObject();
+                deleteFile.put("action", FileStorageAction.DeleteFile.name);
+                deleteFile.put("domain", fileLabel.getDomain().getName());
+                deleteFile.put("fileCode", fileLabel.getFileCode());
+                fileStorage.notify(deleteFile);
+            }
             return false;
         }
 
@@ -601,6 +634,13 @@ public class AIGCService extends AbstractModule {
         JSONObject localFileLabelJson = fileStorage.notify(saveFile);
         if (null == localFileLabelJson) {
             Logger.e(this.getClass(), "#automaticSpeechRecognition - Save file to storage failed");
+            if (deleteFileLabel) {
+                JSONObject deleteFile = new JSONObject();
+                deleteFile.put("action", FileStorageAction.DeleteFile.name);
+                deleteFile.put("domain", fileLabel.getDomain().getName());
+                deleteFile.put("fileCode", fileLabel.getFileCode());
+                fileStorage.notify(deleteFile);
+            }
             return false;
         }
 
@@ -612,6 +652,13 @@ public class AIGCService extends AbstractModule {
         AIGCUnit unit = this.getUnitBySubtask(AICapability.AudioProcessing.AutomaticSpeechRecognition);
         if (null == unit) {
             Logger.w(AIGCService.class, "No ASR task unit setup in server");
+            if (deleteFileLabel) {
+                JSONObject deleteFile = new JSONObject();
+                deleteFile.put("action", FileStorageAction.DeleteFile.name);
+                deleteFile.put("domain", fileLabel.getDomain().getName());
+                deleteFile.put("fileCode", fileLabel.getFileCode());
+                fileStorage.notify(deleteFile);
+            }
             return false;
         }
 
@@ -636,6 +683,14 @@ public class AIGCService extends AbstractModule {
                     processASRQueue(meta.unit.getQueryKey());
                 }
             });
+        }
+
+        if (deleteFileLabel) {
+            JSONObject deleteFile = new JSONObject();
+            deleteFile.put("action", FileStorageAction.DeleteFile.name);
+            deleteFile.put("domain", fileLabel.getDomain().getName());
+            deleteFile.put("fileCode", fileLabel.getFileCode());
+            fileStorage.notify(deleteFile);
         }
 
         return true;

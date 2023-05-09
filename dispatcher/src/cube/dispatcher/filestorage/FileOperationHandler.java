@@ -107,7 +107,7 @@ public class FileOperationHandler extends CrossDomainHandler {
             payload.put("fileName", fileName);
         }
         if (null != fileCode) {
-            payload.put("fileCode", fileName);
+            payload.put("fileCode", fileCode);
         }
 
         Packet packet = new Packet(FileStorageAction.FindFile.name, payload);
