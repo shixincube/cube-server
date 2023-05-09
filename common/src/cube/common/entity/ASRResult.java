@@ -39,6 +39,13 @@ public class ASRResult implements JSONable {
 
     public ASRResult(JSONObject json) {
         this.data = json;
+    }
+
+    public ASRResult(FileLabel fileLabel, JSONObject json) {
+        this.data = json;
+
+        this.data.put("fileCode", fileLabel.getFileCode());
+        this.data.put("fileLabel", fileLabel.toCompactJSON());
 
         if (this.data.has("list")) {
             JSONArray list = this.data.getJSONArray("list");
@@ -52,6 +59,10 @@ public class ASRResult implements JSONable {
                 }
             }
         }
+    }
+
+    public String getFileCode() {
+        return this.data.getString("fileCode");
     }
 
     @Override

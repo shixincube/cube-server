@@ -50,6 +50,11 @@ public class ExtractAudioOperation extends VideoOperation {
         this.outputType = FileType.MP3;
     }
 
+    public ExtractAudioOperation(FileType outputType) {
+        super();
+        this.outputType = outputType;
+    }
+
     public ExtractAudioOperation(JSONObject json) {
         super();
         this.outputType = FileType.matchExtension(json.getString(KEY_OUTPUT_TYPE));

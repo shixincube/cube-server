@@ -85,6 +85,7 @@ public class FileOperationHandler extends CrossDomainHandler {
         String token = data.has("token") ? data.getString("token") : null;
         String md5 = data.has("md5") ? data.getString("md5") : null;
         String fileName = data.has("fileName") ? data.getString("fileName") : null;
+        String fileCode = data.has("fileCode") ? data.getString("fileCode") : null;
 
         if (null == token) {
             response.setStatus(HttpStatus.FORBIDDEN_403);
@@ -92,7 +93,7 @@ public class FileOperationHandler extends CrossDomainHandler {
             return;
         }
 
-        if (null == md5 && null == fileName) {
+        if (null == md5 && null == fileName && null == fileCode) {
             response.setStatus(HttpStatus.FORBIDDEN_403);
             this.complete();
             return;
@@ -104,6 +105,9 @@ public class FileOperationHandler extends CrossDomainHandler {
         }
         if (null != fileName) {
             payload.put("fileName", fileName);
+        }
+        if (null != fileCode) {
+            payload.put("fileCode", fileName);
         }
 
         Packet packet = new Packet(FileStorageAction.FindFile.name, payload);

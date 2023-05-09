@@ -77,16 +77,20 @@ public class AutomaticSpeechRecognitionTask extends ServiceTask {
             }
 
             @Override
-            public void onFailed() {
+            public void onFailed(FileLabel source) {
+                JSONObject data = new JSONObject();
+                data.put("fileCode", source.getFileCode());
                 cellet.speak(talkContext,
-                        makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
+                        makeResponse(dialect, packet, AIGCStateCode.UnitError.code, data));
                 markResponseTime();
             }
         });
 
         if (!success) {
+            JSONObject data = new JSONObject();
+            data.put("fileCode", fileCode);
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, data));
             markResponseTime();
         }
     }

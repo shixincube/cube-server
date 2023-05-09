@@ -41,6 +41,7 @@ import cube.core.Kernel;
 import cube.core.Module;
 import cube.file.FileProcessResult;
 import cube.file.operation.AudioCropOperation;
+import cube.file.operation.ExtractAudioOperation;
 import cube.plugin.PluginSystem;
 import cube.service.aigc.listener.AutomaticSpeechRecognitionListener;
 import cube.service.aigc.listener.ChatListener;
@@ -97,6 +98,11 @@ public class AIGCService extends AbstractModule {
      * 最大频道数量。
      */
     private int maxChannel = 50;
+
+    /**
+     * 聊天内容最大长度限制。
+     */
+    private int maxChatContent = 500;
 
     private ConcurrentHashMap<String, AIGCChannel> channelMap;
 
@@ -341,6 +347,11 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
+        if (content.length() > this.maxChatContent) {
+            Logger.i(AIGCService.class, "Content length greater than " + this.maxChatContent);
+            return false;
+        }
+
         // 获取频道
         AIGCChannel channel = this.channelMap.get(code);
         if (null == channel) {
@@ -501,11 +512,44 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
+        FileLabel sourceFile = new FileLabel(fileLabelJson);
+
         FileLabel fileLabel = new FileLabel(fileLabelJson);
 
         AbstractModule fileProcessor = this.getKernel().getModule("FileProcessor");
         if (null == fileProcessor) {
             Logger.e(this.getClass(), "#automaticSpeechRecognition - File processor service is not ready");
+            return false;
+        }
+
+        if (FileUtils.isVideoType(fileLabel.getFileType())) {
+            // 从视频文件中提取音频文件
+            ExtractAudioOperation audioOperation = new ExtractAudioOperation(FileType.WAV);
+            JSONObject processor = new JSONObject();
+            processor.put("action", FileProcessorAction.Video.name);
+            processor.put("domain", fileLabel.getDomain().getName());
+            processor.put("fileCode", fileLabel.getFileCode());
+            processor.put("parameter", audioOperation.toJSON());
+
+            JSONObject resultJson = fileProcessor.notify(processor);
+            if (null == resultJson) {
+                Logger.e(this.getClass(), "#automaticSpeechRecognition - Extract audio operation result is NULL: "
+                    + fileLabel.getFileCode());
+                return false;
+            }
+
+            FileProcessResult result = new FileProcessResult(resultJson);
+            if (!result.success) {
+                Logger.e(this.getClass(), "#automaticSpeechRecognition - Extract audio operation result error: "
+                        + fileLabel.getFileCode());
+                return false;
+            }
+
+            // XJW TODO
+        }
+        else if (!FileUtils.isAudioType(fileLabel.getFileType())) {
+            Logger.e(this.getClass(), "#automaticSpeechRecognition - File type is NOT audio type: "
+                    + fileLabel.getFileCode());
             return false;
         }
 
@@ -534,13 +578,15 @@ public class AIGCService extends AbstractModule {
 
         JSONObject resultJson = fileProcessor.notify(processor);
         if (null == resultJson) {
-            Logger.e(this.getClass(), "#automaticSpeechRecognition - File processor result is NULL");
+            Logger.e(this.getClass(), "#automaticSpeechRecognition - Audio crop result is NULL: "
+                    + fileLabel.getFileCode());
             return false;
         }
 
         FileProcessResult result = new FileProcessResult(resultJson);
         if (null == result.getAudioResult()) {
-            Logger.e(this.getClass(), "#automaticSpeechRecognition - Result error");
+            Logger.e(this.getClass(), "#automaticSpeechRecognition - Audio crop result error: "
+                    + fileLabel.getFileCode());
             return false;
         }
 
@@ -569,7 +615,7 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        ASRUnitMeta meta = new ASRUnitMeta(unit, localFileLabel, listener);
+        ASRUnitMeta meta = new ASRUnitMeta(unit, sourceFile, localFileLabel, listener);
 
         synchronized (this.asrQueueMap) {
             Queue<ASRUnitMeta> queue = this.asrQueueMap.get(unit.getQueryKey());
@@ -875,12 +921,15 @@ public class AIGCService extends AbstractModule {
 
         protected AIGCUnit unit;
 
+        protected FileLabel source;
+
         protected FileLabel input;
 
         protected AutomaticSpeechRecognitionListener listener;
 
-        public ASRUnitMeta(AIGCUnit unit, FileLabel input, AutomaticSpeechRecognitionListener listener) {
+        public ASRUnitMeta(AIGCUnit unit, FileLabel source, FileLabel input, AutomaticSpeechRecognitionListener listener) {
             this.unit = unit;
+            this.source = source;
             this.input = input;
             this.listener = listener;
         }
@@ -894,7 +943,7 @@ public class AIGCService extends AbstractModule {
             if (null == dialect) {
                 Logger.w(AIGCService.class, "ASR unit error");
                 // 回调错误
-                this.listener.onFailed();
+                this.listener.onFailed(this.source);
                 return;
             }
 
@@ -903,11 +952,23 @@ public class AIGCService extends AbstractModule {
             if (!payload.has("list")) {
                 Logger.w(AIGCService.class, "ASR unit process failed");
                 // 回调错误
-                this.listener.onFailed();
+                this.listener.onFailed(this.source);
                 return;
             }
 
-            this.listener.onCompleted(this.input, new ASRResult(payload));
+            this.listener.onCompleted(this.input, new ASRResult(source, payload));
+
+            if (!this.input.getFileCode().equals(this.source.getFileCode())) {
+                // 输入文件和源文件不一致，删除输入文件
+                AbstractModule fileStorage = getKernel().getModule("FileStorage");
+                if (null != fileStorage) {
+                    JSONObject deleteFile = new JSONObject();
+                    deleteFile.put("action", FileStorageAction.DeleteFile.name);
+                    deleteFile.put("domain", this.input.getDomain().getName());
+                    deleteFile.put("fileCode", this.input.getFileCode());
+                    fileStorage.notify(deleteFile);
+                }
+            }
         }
     }
 }

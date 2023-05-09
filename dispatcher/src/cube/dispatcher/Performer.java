@@ -641,7 +641,7 @@ public class Performer implements TalkListener, Tickable {
             return;
         }
 
-        // 添加 P-KEY 记录
+        // 添加 Performer 记录
         actionDialect.addParam(this.performerKey, createPerformer(sn));
 
         director.speaker.speak(celletName, actionDialect);
@@ -995,6 +995,12 @@ public class Performer implements TalkListener, Tickable {
                         // 向客户端发送数据
                         transmission.cellet.speak(transmission.source,
                                 this.processResponse(actionDialect));
+                    }
+                    else {
+                        PerformerListener listener = this.listenerMap.get(celletName);
+                        if (null != listener) {
+                            listener.onReceived(celletName, primitive);
+                        }
                     }
                 }
             }

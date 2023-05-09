@@ -26,27 +26,31 @@
 
 package cube.dispatcher.aigc;
 
+import cell.core.talk.Primitive;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
+import cube.common.JSONable;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
+import cube.dispatcher.PerformerListener;
 import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.util.Tickable;
 import cube.util.HttpServer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 接口管理器。
  */
-public class Manager implements Tickable {
+public class Manager implements Tickable, PerformerListener {
 
     private final static Manager instance = new Manager();
 
@@ -55,6 +59,11 @@ public class Manager implements Tickable {
     private Map<String, AuthToken> validTokenMap;
     private long lastClearToken;
 
+    /**
+     * Key：文件码
+     */
+    private Map<String, ASRFuture> asrFutureMap;
+
     public static Manager getInstance() {
         return Manager.instance;
     }
@@ -62,10 +71,13 @@ public class Manager implements Tickable {
     public void start(Performer performer) {
         this.performer = performer;
         this.validTokenMap = new ConcurrentHashMap<>();
+        this.asrFutureMap = new ConcurrentHashMap<>();
 
         this.setupHandler();
 
         this.performer.addTickable(this);
+        this.performer.setListener(AIGCCellet.NAME, this);
+
         this.lastClearToken = System.currentTimeMillis();
     }
 
@@ -217,27 +229,22 @@ public class Manager implements Tickable {
         return new NLTask(Packet.extractDataPayload(responsePacket));
     }
 
-    public ASRResult automaticSpeechRecognition(String domain, String fileCode) {
+    public ASRFuture automaticSpeechRecognition(String domain, String fileCode) {
         JSONObject data = new JSONObject();
         data.put("domain", domain);
         data.put("fileCode", fileCode);
         Packet packet = new Packet(AIGCAction.AutomaticSpeechRecognition.name, data);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 180 * 1000);
-        if (null == response) {
-            Logger.w(Manager.class, "#automaticSpeechRecognition - Response is null");
-            return null;
-        }
+        ASRFuture future = new ASRFuture(domain, fileCode);
+        this.asrFutureMap.put(fileCode, future);
 
-        Packet responsePacket = new Packet(response);
-        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(Manager.class, "#automaticSpeechRecognition - Response state code : "
-                    + Packet.extractCode(responsePacket));
-            return null;
-        }
+        this.performer.transmit(AIGCCellet.NAME, packet.toDialect());
 
-        JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-        return new ASRResult(resultJson);
+        return future;
+    }
+
+    public ASRFuture queryASRFuture(String fileCode) {
+        return this.asrFutureMap.get(fileCode);
     }
 
     @Override
@@ -245,6 +252,85 @@ public class Manager implements Tickable {
         if (now - this.lastClearToken > 60 * 60 * 1000) {
             this.validTokenMap.clear();
             this.lastClearToken = now;
+
+            Iterator<Map.Entry<String, ASRFuture>> iter = this.asrFutureMap.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry<String, ASRFuture> e = iter.next();
+                ASRFuture future = e.getValue();
+                if (now - future.timestamp > 30 * 60 * 1000) {
+                    iter.remove();
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onReceived(String cellet, Primitive primitive) {
+        ActionDialect actionDialect = new ActionDialect(primitive);
+        String action = actionDialect.getName();
+
+        if (AIGCAction.AutomaticSpeechRecognition.name.equals(action)) {
+            Packet responsePacket = new Packet(actionDialect);
+            // 状态码
+            int stateCode = Packet.extractCode(responsePacket);
+            if (stateCode == AIGCStateCode.Ok.code) {
+                // 获取结果数据
+                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
+                ASRResult result = new ASRResult(resultJson);
+                ASRFuture future = this.asrFutureMap.get(result.getFileCode());
+                if (null != future) {
+                    future.result = result;
+                    future.stateCode = stateCode;
+                }
+                else {
+                    Logger.w(this.getClass(), "#onReceived - ASR result error: " + result.getFileCode());
+                }
+            }
+            else {
+                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
+                String fileCode = resultJson.getString("fileCode");
+                ASRFuture future = this.asrFutureMap.get(fileCode);
+                if (null != future) {
+                    future.stateCode = stateCode;
+                }
+            }
+        }
+    }
+
+    public class ASRFuture implements JSONable {
+
+        protected final long timestamp;
+
+        protected String domain;
+
+        protected String fileCode;
+
+        protected ASRResult result;
+
+        protected int stateCode = -1;
+
+        protected ASRFuture(String domain, String fileCode) {
+            this.timestamp = System.currentTimeMillis();
+            this.domain = domain;
+            this.fileCode = fileCode;
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("domain", this.domain);
+            json.put("fileCode", this.fileCode);
+            json.put("timestamp", this.timestamp);
+            json.put("stateCode", this.stateCode);
+            if (null != this.result) {
+                json.put("result", this.result.toJSON());
+            }
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
         }
     }
 }

@@ -33,5 +33,5 @@ import cell.core.talk.Primitive;
  */
 public interface PerformerListener {
 
-    public void onReceived(String cellet, Primitive primitive);
+    void onReceived(String cellet, Primitive primitive);
 }

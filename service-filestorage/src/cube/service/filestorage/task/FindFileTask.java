@@ -89,6 +89,7 @@ public class FindFileTask extends ServiceTask {
         long fileSize = 0;
 
         String md5Code = null;
+        String fileCode = null;
 
         try {
             if (packet.data.has("fileName")) {
@@ -97,6 +98,10 @@ public class FindFileTask extends ServiceTask {
 
             if (packet.data.has("md5")) {
                 md5Code = packet.data.getString("md5");
+            }
+
+            if (packet.data.has("fileCode")) {
+                fileCode = packet.data.getString("fileCode");
             }
 
             if (packet.data.has("lastModified")) {
@@ -134,6 +139,13 @@ public class FindFileTask extends ServiceTask {
             List<FileLabel> list = service.findFilesByMD5(domain, contactId, md5Code);
             if (null != list) {
                 result.addAll(list);
+            }
+        }
+        else if (null != fileCode) {
+            // 通过文件码查找
+            FileLabel fileLabel = service.getFile(domain, fileCode);
+            if (null != fileLabel) {
+                result.add(fileLabel);
             }
         }
 

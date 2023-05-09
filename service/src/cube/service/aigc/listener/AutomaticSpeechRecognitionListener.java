@@ -36,5 +36,5 @@ public interface AutomaticSpeechRecognitionListener {
 
     void onCompleted(FileLabel input, ASRResult result);
 
-    void onFailed();
+    void onFailed(FileLabel source);
 }

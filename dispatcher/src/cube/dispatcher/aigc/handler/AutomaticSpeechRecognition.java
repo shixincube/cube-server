@@ -57,6 +57,43 @@ public class AutomaticSpeechRecognition extends ContextHandler {
         }
 
         @Override
+        public void doGet(HttpServletRequest request, HttpServletResponse response) {
+            if (!this.controller.filter(request)) {
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                this.complete();
+                return;
+            }
+
+            String token = this.getRequestPath(request);
+            if (!Manager.getInstance().checkToken(token)) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.complete();
+                return;
+            }
+
+            String fileCode = request.getParameter("fc");
+            if (null == fileCode) {
+                fileCode = request.getParameter("code");
+            }
+
+            if (null == fileCode) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
+            Manager.ASRFuture future = Manager.getInstance().queryASRFuture(fileCode);
+            if (null == future) {
+                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.complete();
+                return;
+            }
+
+            this.respondOk(response, future.toJSON());
+            this.complete();
+        }
+
+        @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             if (!this.controller.filter(request)) {
                 this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
@@ -93,15 +130,15 @@ public class AutomaticSpeechRecognition extends ContextHandler {
             }
 
             // ASR
-            ASRResult result = Manager.getInstance().automaticSpeechRecognition(domain, fileCode);
-            if (null == result) {
+            Manager.ASRFuture future = Manager.getInstance().automaticSpeechRecognition(domain, fileCode);
+            if (null == future) {
                 // 故障
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }
 
-            this.respondOk(response, result.toJSON());
+            this.respondOk(response, future.toJSON());
             this.complete();
         }
     }
