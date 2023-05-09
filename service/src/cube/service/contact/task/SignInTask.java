@@ -73,7 +73,12 @@ public class SignInTask extends ServiceTask {
             }
 
             // 签入联系人
-            Contact contact = ContactManager.getInstance().signIn(tokenCode, device);
+            Contact contact = null;
+            try {
+                contact = ContactManager.getInstance().signIn(tokenCode, device);
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "#run", e);
+            }
             if (null == contact) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, packet.data));

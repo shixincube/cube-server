@@ -408,6 +408,11 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @return 返回联系人实例。
      */
     public Contact signIn(final Contact contact, final AuthToken authToken, final Device activeDevice) {
+        if (!this.isStarted()) {
+            // 未就绪
+            return null;
+        }
+        
         // 判断 Domain 名称
         if (!authToken.getDomain().equals(contact.getDomain().getName())) {
             return null;
@@ -455,7 +460,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @return 返回签入的联系人。
      */
     public Contact signIn(String tokenCode, Device activeDevice) {
-        if (!this.started) {
+        if (!this.isStarted()) {
             // 未就绪
             return null;
         }
@@ -773,10 +778,26 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             return new Contact(data);
         }
 
+        Contact contact = null;
+
+        if (!this.started) {
+            int count = 0;
+            while (count < 15 && !this.started) {
+                ++count;
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
         // 缓存里没有数据，从数据库读取
-        Contact contact = this.storage.readContact(domain, id);
-        if (null != contact) {
-            return contact;
+        if (null != this.storage) {
+            contact = this.storage.readContact(domain, id);
+            if (null != contact) {
+                return contact;
+            }
         }
 
         contact = new Contact(id, domain, "Cube-" + id);
