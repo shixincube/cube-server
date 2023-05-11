@@ -24,63 +24,34 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.aigc.command;
+
+import org.json.JSONObject;
 
 /**
- * AIGC 动作。
+ * 搜索命令。
  */
-public enum AIGCAction {
+public class SearchCommand extends Command {
 
-    /**
-     * 服务节点加入。
-     */
-    Setup("setup"),
+    private String keyword;
 
-    /**
-     * 服务节点离开。
-     */
-    Teardown("teardown"),
+    public SearchCommand(String keyword) {
+        super("Search");
+        this.keyword = keyword;
+    }
 
-    /**
-     * 校验令牌。
-     */
-    CheckToken("checkToken"),
+    public String getKeyword() {
+        return this.keyword;
+    }
 
-    /**
-     * 请求通道。
-     */
-    RequestChannel("requestChannel"),
+    @Override
+    public void run() {
 
-    /**
-     * 问答互动。
-     */
-    Chat("chat"),
+    }
 
-    /**
-     * 情感分析。
-     */
-    Sentiment("sentiment"),
-
-    /**
-     * 自然语言通用任务。
-     */
-    NaturalLanguageTask("naturalLanguageTask"),
-
-    /**
-     * 自动语音识别。
-     */
-    AutomaticSpeechRecognition("automaticSpeechRecognition"),
-
-    /**
-     * 搜索命令。
-     */
-    SearchCommand("searchCommand")
-
-    ;
-
-    public final String name;
-
-    AIGCAction(String name) {
-        this.name = name;
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        return json;
     }
 }

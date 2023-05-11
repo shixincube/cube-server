@@ -24,63 +24,14 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.aigc.command;
 
 /**
- * AIGC 动作。
+ * 命令执行监听器。
  */
-public enum AIGCAction {
+public interface CommandListener {
 
-    /**
-     * 服务节点加入。
-     */
-    Setup("setup"),
+    void onCompleted(Command command);
 
-    /**
-     * 服务节点离开。
-     */
-    Teardown("teardown"),
-
-    /**
-     * 校验令牌。
-     */
-    CheckToken("checkToken"),
-
-    /**
-     * 请求通道。
-     */
-    RequestChannel("requestChannel"),
-
-    /**
-     * 问答互动。
-     */
-    Chat("chat"),
-
-    /**
-     * 情感分析。
-     */
-    Sentiment("sentiment"),
-
-    /**
-     * 自然语言通用任务。
-     */
-    NaturalLanguageTask("naturalLanguageTask"),
-
-    /**
-     * 自动语音识别。
-     */
-    AutomaticSpeechRecognition("automaticSpeechRecognition"),
-
-    /**
-     * 搜索命令。
-     */
-    SearchCommand("searchCommand")
-
-    ;
-
-    public final String name;
-
-    AIGCAction(String name) {
-        this.name = name;
-    }
+    void onFailed(int code);
 }

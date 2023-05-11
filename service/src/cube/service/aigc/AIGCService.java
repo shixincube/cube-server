@@ -43,6 +43,8 @@ import cube.file.FileProcessResult;
 import cube.file.operation.AudioCropOperation;
 import cube.file.operation.ExtractAudioOperation;
 import cube.plugin.PluginSystem;
+import cube.service.aigc.command.Command;
+import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.listener.AutomaticSpeechRecognitionListener;
 import cube.service.aigc.listener.ChatListener;
 import cube.service.aigc.listener.NaturalLanguageTaskListener;
@@ -694,6 +696,23 @@ public class AIGCService extends AbstractModule {
         }
 
         return true;
+    }
+
+    /**
+     * 执行命令。
+     *
+     * @param command
+     * @param listener
+     */
+    public void executeCommand(final Command command, final CommandListener listener) {
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                command.run();
+
+
+            }
+        });
     }
 
     private void processChatQueue(String queryKey) {

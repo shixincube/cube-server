@@ -24,63 +24,24 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.aigc.command;
+
+import cube.common.JSONable;
+import org.json.JSONObject;
 
 /**
- * AIGC 动作。
+ * 命令。
  */
-public enum AIGCAction {
-
-    /**
-     * 服务节点加入。
-     */
-    Setup("setup"),
-
-    /**
-     * 服务节点离开。
-     */
-    Teardown("teardown"),
-
-    /**
-     * 校验令牌。
-     */
-    CheckToken("checkToken"),
-
-    /**
-     * 请求通道。
-     */
-    RequestChannel("requestChannel"),
-
-    /**
-     * 问答互动。
-     */
-    Chat("chat"),
-
-    /**
-     * 情感分析。
-     */
-    Sentiment("sentiment"),
-
-    /**
-     * 自然语言通用任务。
-     */
-    NaturalLanguageTask("naturalLanguageTask"),
-
-    /**
-     * 自动语音识别。
-     */
-    AutomaticSpeechRecognition("automaticSpeechRecognition"),
-
-    /**
-     * 搜索命令。
-     */
-    SearchCommand("searchCommand")
-
-    ;
+public abstract class Command implements JSONable, Runnable {
 
     public final String name;
 
-    AIGCAction(String name) {
+    public Command(String name) {
         this.name = name;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }
