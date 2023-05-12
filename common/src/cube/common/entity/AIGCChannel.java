@@ -53,6 +53,9 @@ public class AIGCChannel extends Entity {
     // 倒序存储历史记录
     private LinkedList<AIGCChatRecord> history;
 
+    // 倒序存储应答历史
+    private LinkedList<AIGCConversationResponse> historyResponses;
+
     private AtomicBoolean processing;
 
     public AIGCChannel(String participant) {
@@ -60,6 +63,7 @@ public class AIGCChannel extends Entity {
         this.creationTime = System.currentTimeMillis();
         this.code = Utils.randomString(16);
         this.history = new LinkedList<>();
+        this.historyResponses = new LinkedList<>();
         this.processing = new AtomicBoolean(false);
         this.activeTimestamp = this.creationTime;
     }

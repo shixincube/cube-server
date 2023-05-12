@@ -38,7 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 加强型智能对话。
+ * 加强型对话。
  */
 public class ImprovementChat extends ContextHandler {
 

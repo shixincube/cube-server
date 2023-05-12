@@ -24,68 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.aigc.listener;
+
+import cube.common.entity.AIGCChannel;
+import cube.common.entity.AIGCConversationResponse;
 
 /**
- * AIGC 动作。
+ * Conversation 监听器。
  */
-public enum AIGCAction {
+public interface ConversationListener {
 
-    /**
-     * 服务节点加入。
-     */
-    Setup("setup"),
+    void onConversation(AIGCChannel channel, AIGCConversationResponse response);
 
-    /**
-     * 服务节点离开。
-     */
-    Teardown("teardown"),
-
-    /**
-     * 校验令牌。
-     */
-    CheckToken("checkToken"),
-
-    /**
-     * 请求通道。
-     */
-    RequestChannel("requestChannel"),
-
-    /**
-     * 问答互动。
-     */
-    Chat("chat"),
-
-    /**
-     * 增强型会话。
-     */
-    Conversation("conversation"),
-
-    /**
-     * 情感分析。
-     */
-    Sentiment("sentiment"),
-
-    /**
-     * 自然语言通用任务。
-     */
-    NaturalLanguageTask("naturalLanguageTask"),
-
-    /**
-     * 自动语音识别。
-     */
-    AutomaticSpeechRecognition("automaticSpeechRecognition"),
-
-    /**
-     * 搜索命令。
-     */
-    SearchCommand("searchCommand")
-
-    ;
-
-    public final String name;
-
-    AIGCAction(String name) {
-        this.name = name;
-    }
+    void onFailed(AIGCChannel channel);
 }

@@ -36,6 +36,7 @@ import cube.common.action.AIGCAction;
 import cube.common.action.FileProcessorAction;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
+import cube.common.state.AIGCStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
@@ -45,10 +46,7 @@ import cube.file.operation.ExtractAudioOperation;
 import cube.plugin.PluginSystem;
 import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
-import cube.service.aigc.listener.AutomaticSpeechRecognitionListener;
-import cube.service.aigc.listener.ChatListener;
-import cube.service.aigc.listener.NaturalLanguageTaskListener;
-import cube.service.aigc.listener.SentimentAnalysisListener;
+import cube.service.aigc.listener.*;
 import cube.service.auth.AuthService;
 import cube.util.FileType;
 import cube.util.FileUtils;
@@ -80,6 +78,11 @@ public class AIGCService extends AbstractModule {
      * Key 是 AIGC 的 Query Key
      */
     private Map<String, Queue<ChatUnitMeta>> chatQueueMap;
+
+    /**
+     * Key 是 AIGC 的 Query Key
+     */
+    private Map<String, Queue<ConversationUnitMeta>> conversationQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
@@ -117,6 +120,7 @@ public class AIGCService extends AbstractModule {
         this.unitMap = new ConcurrentHashMap<>();
         this.channelMap = new ConcurrentHashMap<>();
         this.chatQueueMap = new ConcurrentHashMap<>();
+        this.conversationQueueMap = new ConcurrentHashMap<>();
         this.nlTaskQueueMap = new ConcurrentHashMap<>();
         this.sentimentQueueMap = new ConcurrentHashMap<>();
         this.asrQueueMap = new ConcurrentHashMap<>();
@@ -398,6 +402,75 @@ public class AIGCService extends AbstractModule {
                 @Override
                 public void run() {
                     processChatQueue(meta.unit.getQueryKey());
+                }
+            });
+        }
+
+        return true;
+    }
+
+    /**
+     * 增强型互动会话。
+     *
+     * @param code
+     * @param content
+     * @param records
+     * @param listener
+     * @return
+     */
+    public boolean conversation(String code, String content, List<AIGCChatRecord> records, ConversationListener listener) {
+        if (!this.started) {
+            return false;
+        }
+
+        if (content.length() > this.maxChatContent) {
+            Logger.i(AIGCService.class, "Content length greater than " + this.maxChatContent);
+            return false;
+        }
+
+        // 获取频道
+        AIGCChannel channel = this.channelMap.get(code);
+        if (null == channel) {
+            Logger.i(AIGCService.class, "Can NOT find AIGC channel: " + code);
+            return false;
+        }
+
+        // 如果频道正在应答上一次问题，则返回 null
+        if (channel.isProcessing()) {
+            Logger.w(AIGCService.class, "Channel is processing: " + code);
+            return false;
+        }
+
+        channel.setProcessing(true);
+
+        // 查找有该能力的单元
+        AIGCUnit unit = this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational,
+                "MOSS");
+        if (null == unit) {
+            Logger.w(AIGCService.class, "No conversational task unit setup in server");
+            channel.setProcessing(false);
+            return false;
+        }
+
+        ConversationUnitMeta meta = new ConversationUnitMeta(unit, channel, content, records, listener);
+
+        synchronized (this.conversationQueueMap) {
+            Queue<ConversationUnitMeta> queue = this.conversationQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.conversationQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    processConversationQueue(meta.unit.getQueryKey());
                 }
             });
         }
@@ -740,6 +813,31 @@ public class AIGCService extends AbstractModule {
         }
     }
 
+    private void processConversationQueue(String queryKey) {
+        Queue<ConversationUnitMeta> queue = this.conversationQueueMap.get(queryKey);
+        if (null == queue) {
+            Logger.w(AIGCService.class, "Not found unit: " + queryKey);
+            return;
+        }
+
+        ConversationUnitMeta meta = queue.poll();
+        while (null != meta) {
+            // 执行处理
+            try {
+                meta.process();
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#processConversationQueue - meta process", e);
+            }
+
+            meta = queue.poll();
+        }
+
+        AIGCUnit unit = this.unitMap.get(queryKey);
+        if (null != unit) {
+            unit.setRunning(false);
+        }
+    }
+
     private void processNaturalLanguageTaskQueue(String queryKey) {
         Queue<NaturalLanguageTaskMeta> queue = this.nlTaskQueueMap.get(queryKey);
         if (null == queue) {
@@ -912,6 +1010,77 @@ public class AIGCService extends AbstractModule {
             this.channel.setProcessing(false);
 
             this.listener.onChat(this.channel, result);
+        }
+    }
+
+
+    private class ConversationUnitMeta {
+
+        protected AIGCUnit unit;
+
+        protected AIGCChannel channel;
+
+        protected String content;
+
+        protected List<AIGCChatRecord> records;
+
+        protected ConversationListener listener;
+
+        public ConversationUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
+                                    List<AIGCChatRecord> records, ConversationListener listener) {
+            this.unit = unit;
+            this.channel = channel;
+            this.content = content;
+            this.records = records;
+            this.listener = listener;
+        }
+
+        public void process() {
+            JSONObject data = new JSONObject();
+            data.put("unit", this.unit.getCapability().getName());
+            data.put("content", this.content);
+
+            if (null != this.records) {
+                JSONArray history = new JSONArray();
+                for (AIGCChatRecord record : this.records) {
+                    history.put(record.toJSON());
+                }
+                data.put("history", history);
+            }
+            else {
+                data.put("history", new JSONArray());
+            }
+
+            Packet request = new Packet(AIGCAction.Conversation.name, data);
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
+            if (null == dialect) {
+                Logger.w(AIGCService.class, "Conversation unit error - channel: " + this.channel.getCode());
+                this.channel.setProcessing(false);
+                // 回调错误
+                this.listener.onFailed(this.channel);
+                return;
+            }
+
+            Packet response = new Packet(dialect);
+            int stateCode = Packet.extractCode(response);
+            if (stateCode != AIGCStateCode.Ok.code) {
+                Logger.w(AIGCService.class, "Conversation unit respond failed - channel: " + this.channel.getCode());
+                this.channel.setProcessing(false);
+                // 回调错误
+                this.listener.onFailed(this.channel);
+                return;
+            }
+
+            JSONObject payload = Packet.extractDataPayload(response);
+            AIGCConversationResponse convResponse = new AIGCConversationResponse(payload);
+
+            // 记录
+            this.channel.appendRecord(this.content, convResponse.answer);
+
+            // 重置状态位
+            this.channel.setProcessing(false);
+
+            this.listener.onConversation(this.channel, convResponse);
         }
     }
 

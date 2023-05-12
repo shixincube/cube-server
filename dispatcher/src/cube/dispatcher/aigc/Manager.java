@@ -37,6 +37,7 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.PerformerListener;
+import cube.dispatcher.aigc.handler.Conversation;
 import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.util.Tickable;
 import cube.util.HttpServer;
@@ -94,6 +95,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new NLGeneralTask());
         httpServer.addContextHandler(new Sentiment());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
+        httpServer.addContextHandler(new Conversation());
     }
 
     public boolean checkToken(String token) {
@@ -164,7 +166,6 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         Packet packet = new Packet(AIGCAction.Chat.name, data);
-
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#chat - Response is null - " + channelCode);
@@ -180,6 +181,39 @@ public class Manager implements Tickable, PerformerListener {
 
         AIGCChatRecord record = new AIGCChatRecord(Packet.extractDataPayload(responsePacket));
         return record;
+    }
+
+    /**
+     * 增强型对话。
+     *
+     * @param channelCode
+     * @param content
+     * @param records
+     * @return
+     */
+    public AIGCConversationResponse conversation(String channelCode, String content, JSONArray records) {
+        JSONObject data = new JSONObject();
+        data.put("code", channelCode);
+        data.put("content", content);
+        if (null != records) {
+            data.put("records", records);
+        }
+
+        Packet packet = new Packet(AIGCAction.Conversation.name, data);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 120 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#conversation - Response is null - " + channelCode);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#conversation - Response state code is NOT Ok - " + channelCode +
+                    " - " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new AIGCConversationResponse(Packet.extractDataPayload(responsePacket));
     }
 
     public SentimentResult sentimentAnalysis(String text) {

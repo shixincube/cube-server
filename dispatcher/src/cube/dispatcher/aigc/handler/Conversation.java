@@ -26,7 +26,7 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.common.entity.AIGCChatRecord;
+import cube.common.entity.AIGCConversationResponse;
 import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
@@ -38,14 +38,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 对话。
+ * 智能对话。
  */
-public class Chat extends ContextHandler {
+public class Conversation extends ContextHandler {
 
     private final static String AI_NAME = "Baize";
 
-    public Chat() {
-        super("/aigc/chat/");
+    public Conversation() {
+        super("/aigc/conversation/");
         setHandler(new Handler());
     }
 
@@ -97,20 +97,20 @@ public class Chat extends ContextHandler {
                 return;
             }
 
-            // Chat
-            AIGCChatRecord record = Manager.getInstance().chat(channelCode, content, records);
-            if (null == record) {
+            // Conversation
+            AIGCConversationResponse convResponse = Manager.getInstance().conversation(channelCode, content, records);
+            if (null == convResponse) {
                 // 发生错误
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }
 
-            // Record 转结果
+            // Response
             JSONObject responseData = new JSONObject();
             responseData.put("participant", AI_NAME);
-            responseData.put("content", record.answer);
-            responseData.put("timestamp", record.timestamp);
+            responseData.put("timestamp", System.currentTimeMillis());
+            responseData.put("response", convResponse.toJSON());
 
             this.respondOk(response, responseData);
             this.complete();
