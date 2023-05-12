@@ -772,14 +772,6 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @return 返回联系人实例。
      */
     public Contact getContact(String domain, Long id) {
-        String key = UniqueKey.make(id, domain);
-        JSONObject data = this.contactCache.applyGet(key);
-        if (null != data) {
-            return new Contact(data);
-        }
-
-        Contact contact = null;
-
         if (!this.started) {
             int count = 0;
             while (count < 15 && !this.started) {
@@ -791,6 +783,14 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 }
             }
         }
+
+        String key = UniqueKey.make(id, domain);
+        JSONObject data = this.contactCache.applyGet(key);
+        if (null != data) {
+            return new Contact(data);
+        }
+
+        Contact contact = null;
 
         // 缓存里没有数据，从数据库读取
         if (null != this.storage) {

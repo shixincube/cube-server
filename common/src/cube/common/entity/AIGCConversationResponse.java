@@ -84,6 +84,11 @@ public class AIGCConversationResponse implements JSONable {
         }
     }
 
+    public AIGCChatRecord toRecord() {
+        AIGCChatRecord record = new AIGCChatRecord(this.query, this.answer, this.timestamp);
+        return record;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

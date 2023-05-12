@@ -1048,7 +1048,12 @@ public class AIGCService extends AbstractModule {
                 data.put("history", history);
             }
             else {
-                data.put("history", new JSONArray());
+                List<AIGCConversationResponse> responseList = this.channel.extractConversationResponses();
+                JSONArray history = new JSONArray();
+                for (AIGCConversationResponse response : responseList) {
+                    history.put(response.toRecord().toJSON());
+                }
+                data.put("history", history);
             }
 
             Packet request = new Packet(AIGCAction.Conversation.name, data);
@@ -1073,9 +1078,10 @@ public class AIGCService extends AbstractModule {
 
             JSONObject payload = Packet.extractDataPayload(response);
             AIGCConversationResponse convResponse = new AIGCConversationResponse(payload);
+            convResponse.query = this.content;
 
             // 记录
-            this.channel.appendRecord(this.content, convResponse.answer);
+            this.channel.appendRecord(convResponse);
 
             // 重置状态位
             this.channel.setProcessing(false);

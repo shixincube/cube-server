@@ -54,7 +54,7 @@ public class AIGCChannel extends Entity {
     private LinkedList<AIGCChatRecord> history;
 
     // 倒序存储应答历史
-    private LinkedList<AIGCConversationResponse> historyResponses;
+    private LinkedList<AIGCConversationResponse> conversationResponses;
 
     private AtomicBoolean processing;
 
@@ -63,7 +63,7 @@ public class AIGCChannel extends Entity {
         this.creationTime = System.currentTimeMillis();
         this.code = Utils.randomString(16);
         this.history = new LinkedList<>();
-        this.historyResponses = new LinkedList<>();
+        this.conversationResponses = new LinkedList<>();
         this.processing = new AtomicBoolean(false);
         this.activeTimestamp = this.creationTime;
     }
@@ -73,6 +73,7 @@ public class AIGCChannel extends Entity {
         this.creationTime = json.getLong("creationTime");
         this.participant = json.getString("participant");
         this.history = new LinkedList<>();
+        this.conversationResponses = new LinkedList<>();
         this.processing = new AtomicBoolean(false);
         this.activeTimestamp = this.creationTime;
     }
@@ -109,6 +110,17 @@ public class AIGCChannel extends Entity {
         return record;
     }
 
+    public AIGCChatRecord appendRecord(AIGCConversationResponse conversationResponse) {
+        this.activeTimestamp = System.currentTimeMillis();
+
+        AIGCChatRecord record = new AIGCChatRecord(conversationResponse.query,
+                conversationResponse.answer, this.activeTimestamp);
+        this.history.addFirst(record);
+
+        this.conversationResponses.addFirst(conversationResponse);
+        return record;
+    }
+
     public List<AIGCChatRecord> getLastHistory(int num) {
         List<AIGCChatRecord> list = new ArrayList<>(num);
         for (AIGCChatRecord record : this.history) {
@@ -119,6 +131,26 @@ public class AIGCChannel extends Entity {
 
             list.add(record);
             if (list.size() >= num) {
+                break;
+            }
+        }
+
+        // 调换顺序，成为时间正序
+        Collections.reverse(list);
+        return list;
+    }
+
+    public List<AIGCConversationResponse> extractConversationResponses() {
+        List<AIGCConversationResponse> list = new ArrayList<>();
+        if (this.conversationResponses.isEmpty()) {
+            return list;
+        }
+
+        for (AIGCConversationResponse cr : this.conversationResponses) {
+            if (cr.needHistory) {
+                list.add(cr);
+            }
+            else {
                 break;
             }
         }
