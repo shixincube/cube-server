@@ -36,5 +36,5 @@ public interface ConversationListener {
 
     void onConversation(AIGCChannel channel, AIGCConversationResponse response);
 
-    void onFailed(AIGCChannel channel);
+    void onFailed(AIGCChannel channel, int errorCode);
 }

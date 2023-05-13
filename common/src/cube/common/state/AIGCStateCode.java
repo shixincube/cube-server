@@ -82,6 +82,11 @@ public enum AIGCStateCode {
     FileError(32),
 
     /**
+     * 内容长度越界。
+     */
+    ContentLengthOverflow(41),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)

@@ -1053,10 +1053,14 @@ public class AIGCService extends AbstractModule {
             data.put("unit", this.unit.getCapability().getName());
             data.put("content", this.content);
 
+            int totalLength = this.content.length();
+
             if (null != this.records) {
                 JSONArray history = new JSONArray();
                 for (AIGCChatRecord record : this.records) {
                     history.put(record.toJSON());
+                    // 字数
+                    totalLength += record.totalWords();
                 }
                 data.put("history", history);
             }
@@ -1064,9 +1068,19 @@ public class AIGCService extends AbstractModule {
                 List<AIGCConversationResponse> responseList = this.channel.extractConversationResponses();
                 JSONArray history = new JSONArray();
                 for (AIGCConversationResponse response : responseList) {
-                    history.put(response.toRecord().toJSON());
+                    AIGCChatRecord record = response.toRecord();
+                    history.put(record.toJSON());
+                    // 字数
+                    totalLength += record.totalWords();
                 }
                 data.put("history", history);
+            }
+
+            // 判断长度
+            if (totalLength > maxChatContent + maxChatContent) {
+                // 总长度越界
+                this.listener.onFailed(this.channel, AIGCStateCode.ContentLengthOverflow.code);
+                return;
             }
 
             Packet request = new Packet(AIGCAction.Conversation.name, data);
@@ -1075,7 +1089,7 @@ public class AIGCService extends AbstractModule {
                 Logger.w(AIGCService.class, "Conversation unit error - channel: " + this.channel.getCode());
                 this.channel.setProcessing(false);
                 // 回调错误
-                this.listener.onFailed(this.channel);
+                this.listener.onFailed(this.channel, AIGCStateCode.UnitError.code);
                 return;
             }
 
@@ -1085,13 +1099,16 @@ public class AIGCService extends AbstractModule {
                 Logger.w(AIGCService.class, "Conversation unit respond failed - channel: " + this.channel.getCode());
                 this.channel.setProcessing(false);
                 // 回调错误
-                this.listener.onFailed(this.channel);
+                this.listener.onFailed(this.channel, stateCode);
                 return;
             }
 
             JSONObject payload = Packet.extractDataPayload(response);
             AIGCConversationResponse convResponse = new AIGCConversationResponse(payload);
             convResponse.query = this.content;
+
+            // 更新字数
+            this.unit.setTotalQueryWords(this.unit.getTotalQueryWords() + this.content.length());
 
             // 记录
             this.channel.appendRecord(convResponse);

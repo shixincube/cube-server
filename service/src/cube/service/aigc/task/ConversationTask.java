@@ -97,9 +97,9 @@ public class ConversationTask extends ServiceTask {
             }
 
             @Override
-            public void onFailed(AIGCChannel channel) {
+            public void onFailed(AIGCChannel channel, int errorCode) {
                 cellet.speak(talkContext,
-                        makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
+                        makeResponse(dialect, packet, errorCode, new JSONObject()));
                 markResponseTime();
             }
         });

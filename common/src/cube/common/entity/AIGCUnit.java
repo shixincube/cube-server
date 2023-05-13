@@ -46,6 +46,8 @@ public class AIGCUnit extends Entity {
 
     private AtomicBoolean running;
 
+    private int totalQueryWords = 0;
+
     public AIGCUnit(Contact contact, AICapability capability, TalkContext context) {
         super(contact.id, contact.domain.getName());
         this.key = AIGCUnit.makeQueryKey(contact, capability);
@@ -89,11 +91,20 @@ public class AIGCUnit extends Entity {
         return this.running.get();
     }
 
+    public int getTotalQueryWords() {
+        return this.totalQueryWords;
+    }
+
+    public void setTotalQueryWords(int words) {
+        this.totalQueryWords = words;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("capability", this.capability.toJSON());
         json.put("running", this.running);
+        json.put("totalQueryWords", this.totalQueryWords);
         return json;
     }
 
