@@ -29,6 +29,7 @@ package cube.service.client.task;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.core.AbstractModule;
+import cube.service.aigc.AIGCService;
 import cube.service.auth.AuthService;
 import cube.service.client.ClientCellet;
 import org.json.JSONObject;
@@ -101,5 +102,9 @@ public abstract class ClientTask implements Runnable {
 
     protected AbstractModule getRiskMgmtService() {
         return cellet.getKernel().getModule("RiskMgmt");
+    }
+
+    protected AIGCService getAIGCService() {
+        return (AIGCService) cellet.getKernel().getModule("AIGC");
     }
 }

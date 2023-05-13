@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * AIGC 分配给用户的通道。
@@ -58,6 +59,15 @@ public class AIGCChannel extends Entity {
 
     private AtomicBoolean processing;
 
+    private int totalQueryWords = 0;
+
+    private int totalAnswerWords = 0;
+
+    /**
+     * 对话轮次记录。
+     */
+    private AtomicInteger rounds;
+
     public AIGCChannel(String participant) {
         this.participant = participant;
         this.creationTime = System.currentTimeMillis();
@@ -66,6 +76,7 @@ public class AIGCChannel extends Entity {
         this.conversationResponses = new LinkedList<>();
         this.processing = new AtomicBoolean(false);
         this.activeTimestamp = this.creationTime;
+        this.rounds = new AtomicInteger(0);
     }
 
     public AIGCChannel(JSONObject json) {
@@ -74,8 +85,12 @@ public class AIGCChannel extends Entity {
         this.participant = json.getString("participant");
         this.history = new LinkedList<>();
         this.conversationResponses = new LinkedList<>();
-        this.processing = new AtomicBoolean(false);
-        this.activeTimestamp = this.creationTime;
+
+        this.processing = new AtomicBoolean(json.has("processing") && json.getBoolean("processing"));
+        this.activeTimestamp = json.has("activeTimestamp") ? json.getLong("activeTimestamp") :  this.creationTime;
+        this.rounds = new AtomicInteger(json.has("rounds") ? json.getInt("rounds") : 0);
+        this.totalQueryWords = json.has("totalQueryWords") ? json.getInt("totalQueryWords") : 0;
+        this.totalAnswerWords = json.has("totalAnswerWords") ? json.getInt("totalAnswerWords") : 0;
     }
 
     public String getCode() {
@@ -102,20 +117,38 @@ public class AIGCChannel extends Entity {
         return this.processing.get();
     }
 
+    public int getRounds() {
+        return this.rounds.get();
+    }
+
     public AIGCChatRecord appendRecord(String query, String answer) {
         this.activeTimestamp = System.currentTimeMillis();
 
+        this.totalQueryWords += query.length();
+        this.totalAnswerWords += answer.length();
+
+        this.rounds.incrementAndGet();
+
         AIGCChatRecord record = new AIGCChatRecord(query, answer, this.activeTimestamp);
-        this.history.addFirst(record);
+        synchronized (this.history) {
+            this.history.addFirst(record);
+        }
         return record;
     }
 
     public AIGCChatRecord appendRecord(AIGCConversationResponse conversationResponse) {
         this.activeTimestamp = System.currentTimeMillis();
 
+        this.totalQueryWords += conversationResponse.query.length();
+        this.totalAnswerWords += conversationResponse.answer.length();
+
+        this.rounds.incrementAndGet();
+
         AIGCChatRecord record = new AIGCChatRecord(conversationResponse.query,
                 conversationResponse.answer, this.activeTimestamp);
-        this.history.addFirst(record);
+        synchronized (this.history) {
+            this.history.addFirst(record);
+        }
 
         this.conversationResponses.addFirst(conversationResponse);
         return record;
@@ -123,15 +156,18 @@ public class AIGCChannel extends Entity {
 
     public List<AIGCChatRecord> getLastHistory(int num) {
         List<AIGCChatRecord> list = new ArrayList<>(num);
-        for (AIGCChatRecord record : this.history) {
-            if (record.totalWords() > this.historyLengthLimit) {
-                // 过滤掉词多的问答
-                continue;
-            }
 
-            list.add(record);
-            if (list.size() >= num) {
-                break;
+        synchronized (this.history) {
+            for (AIGCChatRecord record : this.history) {
+                if (record.totalWords() > this.historyLengthLimit) {
+                    // 过滤掉词多的问答
+                    continue;
+                }
+
+                list.add(record);
+                if (list.size() >= num) {
+                    break;
+                }
             }
         }
 
@@ -158,6 +194,34 @@ public class AIGCChannel extends Entity {
         // 调换顺序，成为时间正序
         Collections.reverse(list);
         return list;
+    }
+
+    /**
+     * 统计向 AI 提问的总字数。
+     *
+     * @return
+     */
+    public int totalQueryWords() {
+        return this.totalQueryWords;
+    }
+
+    /**
+     * 统计 AI 回答的总字数。
+     *
+     * @return
+     */
+    public int totalAnswerWords() {
+        return this.totalAnswerWords;
+    }
+
+    public JSONObject toInfo() {
+        JSONObject json = this.toJSON();
+        json.put("activeTimestamp", this.activeTimestamp);
+        json.put("rounds", this.rounds.get());
+        json.put("processing", this.processing.get());
+        json.put("totalQueryWords", this.totalQueryWords());
+        json.put("totalAnswerWords", this.totalAnswerWords());
+        return json;
     }
 
     @Override

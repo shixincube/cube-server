@@ -42,6 +42,11 @@ public enum AIGCAction {
     Teardown("teardown"),
 
     /**
+     * 获取 AI 单元。
+     */
+    GetUnits("getUnits"),
+
+    /**
      * 校验令牌。
      */
     CheckToken("checkToken"),

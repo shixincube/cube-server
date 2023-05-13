@@ -105,6 +105,8 @@ public enum ClientAction {
 
     ListContactBehaviors("ListContactBehaviors"),
 
+    AIGCGetServiceInfo("AIGCGetServiceInfo"),
+
     Cube("Cube");
 
     public final String name;

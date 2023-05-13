@@ -34,8 +34,6 @@ import cube.common.action.AIGCAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.aigc.task.*;
-import cube.service.auth.AuthService;
-import cube.service.robot.RobotService;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -58,7 +56,7 @@ public class AIGCCellet extends AbstractCellet {
         this.service = new AIGCService(this);
 
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
-        kernel.installModule(RobotService.NAME, this.service);
+        kernel.installModule(AIGCService.NAME, this.service);
 
         return true;
     }
@@ -66,7 +64,7 @@ public class AIGCCellet extends AbstractCellet {
     @Override
     public void uninstall() {
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
-        kernel.uninstallModule(AuthService.NAME);
+        kernel.uninstallModule(AIGCService.NAME);
 
         for (Responder responder : this.responderList) {
             responder.finish();

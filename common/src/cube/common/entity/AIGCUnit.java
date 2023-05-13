@@ -55,6 +55,12 @@ public class AIGCUnit extends Entity {
         this.running = new AtomicBoolean(false);
     }
 
+    public AIGCUnit(JSONObject json) {
+        super(json);
+        this.capability = new AICapability(json.getJSONObject("capability"));
+        this.running = new AtomicBoolean(json.getBoolean("running"));
+    }
+
     public String getQueryKey() {
         return this.key;
     }
@@ -87,7 +93,13 @@ public class AIGCUnit extends Entity {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("capability", this.capability.toJSON());
+        json.put("running", this.running);
         return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 
     public static String makeQueryKey(Contact contact, AICapability capability) {

@@ -203,10 +203,23 @@ public class AIGCService extends AbstractModule {
                 result.add(unit);
                 iter.remove();
                 this.chatQueueMap.remove(unit.getQueryKey());
+                this.conversationQueueMap.remove(unit.getQueryKey());
             }
         }
 
         return result;
+    }
+
+    public List<AIGCUnit> getAllUnits() {
+        List<AIGCUnit> list = new ArrayList<>(this.unitMap.size());
+        list.addAll(this.unitMap.values());
+        return list;
+    }
+
+    public List<AIGCChannel> getAllChannels() {
+        List<AIGCChannel> list = new ArrayList(this.channelMap.size());
+        list.addAll(this.channelMap.values());
+        return list;
     }
 
     public AIGCUnit getUnitBySubtask(String subtask) {

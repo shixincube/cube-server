@@ -108,6 +108,10 @@ public class AIGCConversationResponse implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = this.toJSON();
+        if (json.has("query")) {
+            json.remove("query");
+        }
+        return json;
     }
 }

@@ -31,15 +31,11 @@ import cell.core.talk.Primitive;
 import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.core.talk.dialect.DialectFactory;
-import cell.util.CachedQueueExecutor;
 import cube.common.action.ClientAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.Daemon;
 import cube.service.client.task.*;
-
-import java.util.concurrent.ExecutorService;
 
 /**
  * 服务器客户端的 Cellet 单元。
@@ -79,7 +75,7 @@ public class ClientCellet extends AbstractCellet {
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
 
-        ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
+        ActionDialect actionDialect = new ActionDialect(primitive);
         String action = actionDialect.getName();
 
         if (ClientAction.Login.name.equals(action)) {
@@ -193,6 +189,9 @@ public class ClientCellet extends AbstractCellet {
         }
         else if (ClientAction.CreateDomainApp.name.equals(action)) {
             this.execute(new CreateDomainAppTask(this, talkContext, actionDialect));
+        }
+        else if (ClientAction.AIGCGetServiceInfo.name.equals(action)) {
+            this.execute(new AIGCGetServiceInfoTask(this, talkContext, actionDialect));
         }
         else {
             this.execute(new UnsupportedActionTask(this, talkContext, actionDialect));
