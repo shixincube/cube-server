@@ -112,6 +112,8 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
                     loadSensitiveWordToMemory(authService.getDomainList());
 
                     initPlugin();
+
+                    started.set(true);
                 }
             });
         }
@@ -128,6 +130,8 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         if (null != this.executor) {
             this.executor.shutdownNow();
         }
+
+        this.started.set(false);
     }
 
     @Override

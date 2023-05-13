@@ -252,7 +252,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                     listener.onStarted(ContactManager.this);
                 }
 
-                started = true;
+                // 更新状态
+                started.set(true);
             }
         }).start();
     }
@@ -262,7 +263,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     @Override
     public void stop() {
-        if (!this.started) {
+        if (!this.isStarted()) {
             return;
         }
 
@@ -284,7 +285,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             listener.onStopped(this);
         }
 
-        this.started = false;
+        this.started.set(false);
     }
 
     /**
@@ -412,7 +413,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             // 未就绪
             return null;
         }
-        
+
         // 判断 Domain 名称
         if (!authToken.getDomain().equals(contact.getDomain().getName())) {
             return null;
@@ -772,9 +773,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @return 返回联系人实例。
      */
     public Contact getContact(String domain, Long id) {
-        if (!this.started) {
+        if (!this.started.get()) {
             int count = 0;
-            while (count < 15 && !this.started) {
+            while (count < 15 && !this.started.get()) {
                 ++count;
                 try {
                     Thread.sleep(100);

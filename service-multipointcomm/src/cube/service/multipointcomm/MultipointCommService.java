@@ -137,6 +137,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
                 // 读取 Media Unit 配置
                 Properties properties = loadConfig();
                 mediaUnitLeader.start(MultipointCommService.this, properties);
+
+                started.set(true);
             }
         });
     }
@@ -156,6 +158,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         }
 
         this.mediaUnitLeader.stop();
+
+        this.started.set(false);
     }
 
     @Override

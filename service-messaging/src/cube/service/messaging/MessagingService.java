@@ -222,7 +222,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
 
         this.initPlugin();
 
-        this.started = true;
+        this.started.set(true);
     }
 
     /**
@@ -230,11 +230,11 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      */
     @Override
     public void stop() {
-        if (!this.started) {
+        if (!this.started.get()) {
             return;
         }
 
-        this.started = false;
+        this.started.set(false);
 
         this.messageCache.stop();
 

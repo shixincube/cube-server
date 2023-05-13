@@ -74,7 +74,7 @@ public final class Kernel {
     /**
      * 是否已启动。
      */
-    private boolean started = false;
+    private volatile boolean started = false;
 
     /**
      * 管理守护。
@@ -148,7 +148,6 @@ public final class Kernel {
         while (miter.hasNext()) {
             AbstractModule module = miter.next();
             module.start();
-            module.started = true;
         }
 
         this.pluginManager.start();

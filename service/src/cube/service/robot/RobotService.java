@@ -96,6 +96,9 @@ public class RobotService extends AbstractModule {
                     Logger.i(RobotService.class, "Roboengine agent started");
                     checkMissions();
                     ready = true;
+
+                    // 更新状态
+                    started.set(true);
                 }
             }).start();
         } catch (Exception e) {
@@ -109,6 +112,8 @@ public class RobotService extends AbstractModule {
             this.roboengine.stop();
             this.roboengine = null;
         }
+
+        this.started.set(false);
     }
 
     @Override

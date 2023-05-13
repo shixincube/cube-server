@@ -78,10 +78,13 @@ public class SignalService extends AbstractModule implements CelletAdapterListen
     public void start() {
         this.contactsAdapter = CelletAdapterFactory.getInstance().getAdapter("Contacts");
         this.contactsAdapter.addListener(this);
+
+        this.started.set(true);
     }
 
     @Override
     public void stop() {
+        this.started.set(false);
     }
 
     @Override

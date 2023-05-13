@@ -110,6 +110,8 @@ public class AuthService extends AbstractModule {
 
         // 创建插件系统
         this.pluginSystem = new AuthServicePluginSystem();
+
+        this.started.set(true);
     }
 
     @Override
@@ -117,6 +119,8 @@ public class AuthService extends AbstractModule {
         if (null != this.authStorage) {
             this.authStorage.close();
         }
+
+        this.started.set(false);
     }
 
     @Override

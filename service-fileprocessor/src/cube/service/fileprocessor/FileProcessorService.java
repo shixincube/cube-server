@@ -125,6 +125,8 @@ public class FileProcessorService extends AbstractModule {
 
         // 加载配置
         this.loadConfig();
+
+        this.started.set(true);
     }
 
     @Override
@@ -132,6 +134,8 @@ public class FileProcessorService extends AbstractModule {
         if (null != this.cvConnector) {
             this.cvConnector.stop();
         }
+
+        this.started.set(false);
     }
 
     @Override

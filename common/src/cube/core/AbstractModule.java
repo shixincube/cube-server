@@ -26,6 +26,8 @@
 
 package cube.core;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * 模块抽象层。
  */
@@ -39,13 +41,12 @@ public abstract class AbstractModule implements Module {
     /**
      * 是否已启动。
      */
-    protected volatile boolean started;
+    protected final AtomicBoolean started = new AtomicBoolean(false);
 
     /**
      * 构造函数。
      */
     public AbstractModule() {
-        this.started = false;
     }
 
     /**
@@ -71,7 +72,7 @@ public abstract class AbstractModule implements Module {
      */
     @Override
     public boolean isStarted() {
-        return this.started;
+        return this.started.get();
     }
 
     /**

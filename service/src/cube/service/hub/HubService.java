@@ -130,6 +130,9 @@ public class HubService extends AbstractModule {
                 setupMessagingPlugin();
 
                 channelManager.start(executor);
+
+                // 更新状态
+                started.set(true);
             }
         }).start();
 
@@ -150,6 +153,8 @@ public class HubService extends AbstractModule {
         if (null != this.realTimeCache) {
             this.realTimeCache.stop();
         }
+
+        this.started.set(false);
     }
 
     @Override

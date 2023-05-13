@@ -138,6 +138,9 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
                 storage.execSelfChecking(null);
 
                 TenetManager.getInstance().start(FerryService.this, storage, contactsAdapter);
+
+                // 更新状态
+                started.set(true);
             }
         }).start();
 
@@ -197,6 +200,8 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         TenetManager.getInstance().stop();
 
         this.boxReportMap.clear();
+
+        this.started.set(false);
     }
 
     @Override

@@ -84,6 +84,8 @@ public class ConferenceService extends AbstractModule {
 
         AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
         this.storage.execSelfChecking(authService.getDomainList());
+
+        this.started.set(true);
     }
 
     @Override
@@ -91,6 +93,8 @@ public class ConferenceService extends AbstractModule {
         if (null != this.storage) {
             this.storage.close();
         }
+
+        this.started.set(false);
     }
 
     /**

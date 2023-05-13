@@ -130,7 +130,7 @@ public class AIGCService extends AbstractModule {
     public void start() {
         this.executor = Executors.newCachedThreadPool();
 
-        this.started = true;
+        this.started.set(true);
     }
 
     @Override
@@ -140,7 +140,7 @@ public class AIGCService extends AbstractModule {
             this.executor = null;
         }
 
-        this.started = false;
+        this.started.set(false);
     }
 
     @Override
@@ -362,7 +362,7 @@ public class AIGCService extends AbstractModule {
      * @return
      */
     public boolean chat(String code, String content, String desc, List<AIGCChatRecord> records, ChatListener listener) {
-        if (!this.started) {
+        if (!this.isStarted()) {
             return false;
         }
 
@@ -432,7 +432,7 @@ public class AIGCService extends AbstractModule {
      * @return
      */
     public boolean conversation(String code, String content, List<AIGCChatRecord> records, ConversationListener listener) {
-        if (!this.started) {
+        if (!this.isStarted()) {
             return false;
         }
 
@@ -499,7 +499,7 @@ public class AIGCService extends AbstractModule {
      * @return
      */
     public boolean performNaturalLanguageTask(NLTask task, NaturalLanguageTaskListener listener) {
-        if (!this.started) {
+        if (!this.isStarted()) {
             return false;
         }
 
@@ -543,7 +543,7 @@ public class AIGCService extends AbstractModule {
     }
 
     public boolean sentimentAnalysis(String text, SentimentAnalysisListener listener) {
-        if (!this.started) {
+        if (!this.isStarted()) {
             return false;
         }
 
