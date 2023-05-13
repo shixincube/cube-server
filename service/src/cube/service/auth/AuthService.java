@@ -306,6 +306,10 @@ public class AuthService extends AbstractModule {
      * @return 返回令牌码对应的令牌。
      */
     public AuthToken getToken(String code) {
+        if (!this.started.get()) {
+            return null;
+        }
+
         AuthToken token = this.authTokenMap.get(code);
         if (null != token) {
             return token;

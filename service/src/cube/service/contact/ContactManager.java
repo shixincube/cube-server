@@ -747,6 +747,22 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             return null;
         }
 
+        if (!this.started.get()) {
+            int count = 0;
+            while (count < 30 && !this.started.get()) {
+                ++count;
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (!this.started.get()) {
+                return null;
+            }
+        }
+
         TokenDevice device = this.tokenContactMap.get(tokenCode);
         if (null == device) {
             // 从授权模块查找令牌
@@ -775,13 +791,17 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     public Contact getContact(String domain, Long id) {
         if (!this.started.get()) {
             int count = 0;
-            while (count < 15 && !this.started.get()) {
+            while (count < 30 && !this.started.get()) {
                 ++count;
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+            }
+
+            if (!this.started.get()) {
+                return null;
             }
         }
 
