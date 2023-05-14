@@ -427,11 +427,11 @@ public class AIGCService extends AbstractModule {
      *
      * @param code
      * @param content
-     * @param records
+     * @param parameter
      * @param listener
      * @return
      */
-    public boolean conversation(String code, String content, List<AIGCChatRecord> records, ConversationListener listener) {
+    public boolean conversation(String code, String content, AIGCConversationParameter parameter, ConversationListener listener) {
         if (!this.isStarted()) {
             return false;
         }
@@ -465,7 +465,7 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        ConversationUnitMeta meta = new ConversationUnitMeta(unit, channel, content, records, listener);
+        ConversationUnitMeta meta = new ConversationUnitMeta(unit, channel, content, parameter, listener);
 
         synchronized (this.conversationQueueMap) {
             Queue<ConversationUnitMeta> queue = this.conversationQueueMap.get(unit.getQueryKey());
@@ -1035,16 +1035,16 @@ public class AIGCService extends AbstractModule {
 
         protected String content;
 
-        protected List<AIGCChatRecord> records;
+        protected AIGCConversationParameter parameter;
 
         protected ConversationListener listener;
 
         public ConversationUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
-                                    List<AIGCChatRecord> records, ConversationListener listener) {
+                                    AIGCConversationParameter parameter, ConversationListener listener) {
             this.unit = unit;
             this.channel = channel;
             this.content = content;
-            this.records = records;
+            this.parameter = parameter;
             this.listener = listener;
         }
 
@@ -1052,12 +1052,15 @@ public class AIGCService extends AbstractModule {
             JSONObject data = new JSONObject();
             data.put("unit", this.unit.getCapability().getName());
             data.put("content", this.content);
+            data.put("temperature", this.parameter.temperature);
+            data.put("topP", this.parameter.topP);
+            data.put("repetitionPenalty", this.parameter.repetitionPenalty);
 
             int totalLength = this.content.length();
 
-            if (null != this.records) {
+            if (null != this.parameter.records) {
                 JSONArray history = new JSONArray();
-                for (AIGCChatRecord record : this.records) {
+                for (AIGCChatRecord record : this.parameter.records) {
                     history.put(record.toJSON());
                     // 字数
                     totalLength += record.totalWords();

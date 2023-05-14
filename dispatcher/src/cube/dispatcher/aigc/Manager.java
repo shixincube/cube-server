@@ -189,14 +189,27 @@ public class Manager implements Tickable, PerformerListener {
      * @param channelCode
      * @param content
      * @param records
+     * @param temperature
+     * @param topP
+     * @param repetitionPenalty
      * @return
      */
-    public AIGCConversationResponse conversation(String channelCode, String content, JSONArray records) {
+    public AIGCConversationResponse conversation(String channelCode, String content, JSONArray records,
+                                                 float temperature, float topP, float repetitionPenalty) {
         JSONObject data = new JSONObject();
         data.put("code", channelCode);
         data.put("content", content);
         if (null != records) {
             data.put("records", records);
+        }
+        if (temperature >= 0 && temperature < 1.0) {
+            data.put("temperature", temperature);
+        }
+        if (topP >= 0 && topP < 1.0) {
+            data.put("topP", topP);
+        }
+        if (repetitionPenalty >= 0) {
+            data.put("repetitionPenalty", repetitionPenalty);
         }
 
         Packet packet = new Packet(AIGCAction.Conversation.name, data);

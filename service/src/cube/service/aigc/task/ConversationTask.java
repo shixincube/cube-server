@@ -35,6 +35,7 @@ import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCChatRecord;
+import cube.common.entity.AIGCConversationParameter;
 import cube.common.entity.AIGCConversationResponse;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
@@ -71,6 +72,10 @@ public class ConversationTask extends ServiceTask {
         String code = packet.data.getString("code");
         String content = packet.data.getString("content");
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
+        float temperature = packet.data.has("temperature") ? packet.data.getFloat("temperature") : 0.7f;
+        float topP = packet.data.has("topP") ? packet.data.getFloat("topP") : 0.8f;
+        float repetitionPenalty = packet.data.has("repetitionPenalty") ?
+                packet.data.getFloat("repetitionPenalty") : 1.02f;
 
         List<AIGCChatRecord> recordList = null;
         if (null != records) {
@@ -85,10 +90,13 @@ public class ConversationTask extends ServiceTask {
             }
         }
 
+        AIGCConversationParameter parameter = new AIGCConversationParameter(temperature,
+                topP, repetitionPenalty, recordList);
+
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         // 执行 Conversation
-        boolean success = service.conversation(code, content, recordList, new ConversationListener() {
+        boolean success = service.conversation(code, content, parameter, new ConversationListener() {
             @Override
             public void onConversation(AIGCChannel channel, AIGCConversationResponse response) {
                 cellet.speak(talkContext,

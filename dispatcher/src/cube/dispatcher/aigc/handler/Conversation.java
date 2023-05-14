@@ -77,12 +77,24 @@ public class Conversation extends ContextHandler {
             String channelCode = null;
             String content = null;
             JSONArray records = null;
+            float temperature = -1;
+            float topP = -1;
+            float repetitionPenalty = -1;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
                 channelCode = json.getString("code");
                 content = json.getString("content");
                 if (json.has("records")) {
                     records = json.getJSONArray("records");
+                }
+                if (json.has("temperature")) {
+                    temperature = json.getFloat("temperature");
+                }
+                if (json.has("topP")) {
+                    topP = json.getFloat("topP");
+                }
+                if (json.has("repetitionPenalty")) {
+                    repetitionPenalty = json.getFloat("repetitionPenalty");
                 }
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
@@ -98,7 +110,8 @@ public class Conversation extends ContextHandler {
             }
 
             // Conversation
-            AIGCConversationResponse convResponse = Manager.getInstance().conversation(channelCode, content, records);
+            AIGCConversationResponse convResponse = Manager.getInstance().conversation(channelCode, content, records,
+                    temperature, topP, repetitionPenalty);
             if (null == convResponse) {
                 // 发生错误
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
