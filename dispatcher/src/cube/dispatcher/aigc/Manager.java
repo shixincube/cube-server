@@ -96,6 +96,8 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new Sentiment());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
         httpServer.addContextHandler(new Conversation());
+
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
     }
 
     public boolean checkToken(String token) {

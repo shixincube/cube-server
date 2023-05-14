@@ -192,12 +192,18 @@ public class HttpServer {
             contexts.addHandler(handler);
         }
 
+        if (null != this.handlerList) {
+            for (Handler h : this.handlerList.getHandlers()) {
+                contexts.addHandler(h);
+            }
+        }
+
         // 设置处理句柄
         this.server.setHandler(contexts);
 
-        if (null != this.handlerList) {
-            this.server.setHandler(this.handlerList);
-        }
+//        if (null != this.handlerList) {
+//            this.server.setHandler(this.handlerList);
+//        }
 
         if (joinThread) {
             try {

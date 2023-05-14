@@ -135,11 +135,12 @@ public class CrossDomainHandler extends HttpHandler {
         }
 
         // 允许的方法
-        response.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+        response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
         // 告诉请求端，哪些自定义的头字段可以被允许添加
-        response.setHeader("Access-Control-Allow-Headers", "Content-Type,Content-Encoding,Content-Length,X-Requested-With");
+        response.setHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers,Authorization,User-Agent,Keep-Alive,Content-Type,X-Requested-With,X-CSRF-Token,AccessToken,Token,Content-Encoding,Content-Length,X-Requested-With");
         // 允许跨域请求的最长时间，指定时间内不需要发送预请求过来。
         response.setHeader("Access-Control-Max-Age", "3600");
+//        response.setHeader("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type");
     }
 
     protected boolean isHttps() {

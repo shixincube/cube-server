@@ -67,6 +67,8 @@ public abstract class HttpHandler extends AbstractHandler {
         this.target = target;
         this.baseRequest = baseRequest;
 
+        response.setHeader("Cube Server", "Cube 3.0");
+
         String method = request.getMethod().toUpperCase();
         if (method.equals("GET")) {
             doGet(request, response);
@@ -77,8 +79,6 @@ public abstract class HttpHandler extends AbstractHandler {
         else if (method.equals("OPTIONS")) {
             doOptions(request, response);
         }
-
-        response.setHeader("Cube Server", "Cube 3.0");
     }
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
