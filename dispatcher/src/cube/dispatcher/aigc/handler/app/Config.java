@@ -26,40 +26,51 @@
 
 package cube.dispatcher.aigc.handler.app;
 
+import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.aigc.handler.AIGCHandler;
+import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public final class Helper {
+public class Config extends ContextHandler {
 
-    private Helper() {
+    public Config() {
+        super("/app/config/");
+        setHandler(new Handler());
     }
 
-    public static String extractToken(HttpServletRequest request) {
-        String authorization = request.getHeader("Authorization");
-        if (null == authorization) {
-            return null;
+    private class Handler extends AIGCHandler {
+
+        public Handler() {
+            super();
         }
 
-        return authorization.replace("Baize ", "").trim();
-    }
+        @Override
+        public void doPost(HttpServletRequest request, HttpServletResponse response) {
+            String token = Helper.extractToken(request);
+            if (null == token) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
 
-    public static void respondOk(AIGCHandler handler, HttpServletResponse response, JSONObject data) {
-        JSONObject payload = new JSONObject();
-        payload.put("status", "Success");
-        payload.put("message", "");
-        payload.put("data", data);
-        handler.respondOk(response, payload);
-        handler.complete();
-    }
+            if (!Manager.getInstance().checkToken(token)) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
 
-    public static void respondFailure(AIGCHandler handler, HttpServletResponse response, int status) {
-        JSONObject payload = new JSONObject();
-        payload.put("status", "Fail");
-        payload.put("message", "");
-        handler.respond(response, status);
-        handler.complete();
+            JSONObject responseData = Manager.getInstance().getConfigData(token);
+            if (null == responseData) {
+                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.complete();
+                return;
+            }
+
+            Helper.respondOk(this, response, responseData);
+        }
     }
 }

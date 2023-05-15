@@ -24,42 +24,57 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.aigc.handler.app;
+package cube.common.entity;
 
-import cube.dispatcher.aigc.handler.AIGCHandler;
+import cube.common.JSONable;
 import org.json.JSONObject;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+/**
+ * 模型的应用配置。
+ */
+public class AIGCModelConfig implements JSONable {
 
-public final class Helper {
+    private String name;
 
-    private Helper() {
+    private String desc;
+
+    private String apiURL;
+
+    public AIGCModelConfig(String name, String desc, String apiURL) {
+        this.name = name;
+        this.desc = desc;
+        this.apiURL = apiURL;
     }
 
-    public static String extractToken(HttpServletRequest request) {
-        String authorization = request.getHeader("Authorization");
-        if (null == authorization) {
-            return null;
-        }
-
-        return authorization.replace("Baize ", "").trim();
+    public AIGCModelConfig(JSONObject json) {
+        this.name = json.getString("name");
+        this.desc = json.getString("desc");
+        this.apiURL = json.getString("apiURL");
     }
 
-    public static void respondOk(AIGCHandler handler, HttpServletResponse response, JSONObject data) {
-        JSONObject payload = new JSONObject();
-        payload.put("status", "Success");
-        payload.put("message", "");
-        payload.put("data", data);
-        handler.respondOk(response, payload);
-        handler.complete();
+    public String getName() {
+        return this.name;
     }
 
-    public static void respondFailure(AIGCHandler handler, HttpServletResponse response, int status) {
-        JSONObject payload = new JSONObject();
-        payload.put("status", "Fail");
-        payload.put("message", "");
-        handler.respond(response, status);
-        handler.complete();
+    public String getDesc() {
+        return this.desc;
+    }
+
+    public String getApiURL() {
+        return this.apiURL;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("name", this.name);
+        json.put("desc", this.desc);
+        json.put("apiURL", this.apiURL);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

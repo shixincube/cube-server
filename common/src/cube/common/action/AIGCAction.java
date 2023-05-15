@@ -47,6 +47,11 @@ public enum AIGCAction {
     GetUnits("getUnits"),
 
     /**
+     * 获取配置信息。
+     */
+    GetConfig("getConfig"),
+
+    /**
      * 校验令牌。
      */
     CheckToken("checkToken"),

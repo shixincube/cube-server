@@ -26,6 +26,15 @@
 		"password" : "CubeOpenSource"
 	},
 
+	"AIGC": {
+		"type"     : "MySQL",
+		"host"     : "192.168.11.128",
+		"port"     : 3307,
+		"schema"   : "cube",
+		"user"     : "cube_3",
+		"password" : "CubeOpenSource"
+	},
+
 	"Messaging": {
 		"type"     : "MySQL",
 		"host"     : "192.168.11.128",
@@ -54,6 +63,15 @@
 	},
 
 	"RiskMgmt": {
+		"type"     : "MySQL",
+		"host"     : "192.168.11.128",
+		"port"     : 3307,
+		"schema"   : "cube",
+		"user"     : "cube_3",
+		"password" : "CubeOpenSource"
+	},
+
+	"Hub": {
 		"type"     : "MySQL",
 		"host"     : "192.168.11.128",
 		"port"     : 3307,

@@ -48,6 +48,8 @@ import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.listener.*;
 import cube.service.auth.AuthService;
+import cube.storage.StorageType;
+import cube.util.ConfigUtils;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import org.json.JSONArray;
@@ -115,6 +117,8 @@ public class AIGCService extends AbstractModule {
 
     private ExecutorService executor;
 
+    private AIGCStorage storage;
+
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
         this.unitMap = new ConcurrentHashMap<>();
@@ -130,7 +134,29 @@ public class AIGCService extends AbstractModule {
     public void start() {
         this.executor = Executors.newCachedThreadPool();
 
-        this.started.set(true);
+        (new Thread(new Runnable() {
+            @Override
+            public void run() {
+                JSONObject config = ConfigUtils.readStorageConfig();
+                if (config.has(AIGCService.NAME)) {
+                    config = config.getJSONObject(AIGCService.NAME);
+                    if (config.getString("type").equalsIgnoreCase("SQLite")) {
+                        storage = new AIGCStorage(StorageType.SQLite, config);
+                    }
+                    else {
+                        storage = new AIGCStorage(StorageType.MySQL, config);
+                    }
+
+                    storage.open();
+                    storage.execSelfChecking(null);
+                }
+                else {
+                    Logger.e(AIGCService.class, "Can NOT find AIGC storage config");
+                }
+
+                started.set(true);
+            }
+        })).start();
     }
 
     @Override
@@ -138,6 +164,11 @@ public class AIGCService extends AbstractModule {
         if (null != this.executor) {
             this.executor.shutdown();
             this.executor = null;
+        }
+
+        if (null != this.storage) {
+            this.storage.close();
+            this.storage = null;
         }
 
         this.started.set(false);
@@ -220,6 +251,14 @@ public class AIGCService extends AbstractModule {
         List<AIGCChannel> list = new ArrayList(this.channelMap.size());
         list.addAll(this.channelMap.values());
         return list;
+    }
+
+    public List<AIGCModelConfig> getModelConfigs() {
+        if (!this.isStarted()) {
+            return null;
+        }
+
+        return this.storage.getModelConfigs();
     }
 
     public AIGCUnit getUnitBySubtask(String subtask) {
