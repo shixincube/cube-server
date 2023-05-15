@@ -57,7 +57,7 @@ public class Manager implements Tickable, PerformerListener {
 
     private Performer performer;
 
-    private Map<String, AuthToken> validTokenMap;
+    private Map<String, ContactToken> validTokenMap;
     private long lastClearToken;
 
     /**
@@ -98,6 +98,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new Conversation());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
     }
 
     public boolean checkToken(String token) {
@@ -124,10 +125,16 @@ public class Manager implements Tickable, PerformerListener {
             return false;
         }
 
-        AuthToken authToken = new AuthToken(Packet.extractDataPayload(responsePacket));
-        this.validTokenMap.put(token, authToken);
+        JSONObject payload = Packet.extractDataPayload(responsePacket);
+        AuthToken authToken = new AuthToken(payload.getJSONObject("token"));
+        Contact contact = new Contact(payload.getJSONObject("contact"));
+        this.validTokenMap.put(token, new ContactToken(authToken, contact));
 
         return true;
+    }
+
+    public ContactToken getContactToken(String token) {
+        return this.validTokenMap.get(token);
     }
 
     public AIGCChannel requestChannel(String participant) {
@@ -385,6 +392,28 @@ public class Manager implements Tickable, PerformerListener {
         @Override
         public JSONObject toCompactJSON() {
             return this.toJSON();
+        }
+    }
+
+
+    public class ContactToken {
+
+        public final AuthToken authToken;
+
+        public final Contact contact;
+
+        public final long timestamp = System.currentTimeMillis();
+
+        protected ContactToken(AuthToken authToken, Contact contact) {
+            this.authToken = authToken;
+            this.contact = contact;
+        }
+
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("token", this.authToken.toJSON());
+            json.put("contact", this.contact.toJSON());
+            return json;
         }
     }
 }

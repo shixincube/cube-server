@@ -44,4 +44,12 @@ public final class Helper {
         handler.respondOk(response, payload);
         handler.complete();
     }
+
+    public static void respondFailure(AIGCHandler handler, HttpServletResponse response, int status) {
+        JSONObject payload = new JSONObject();
+        payload.put("status", "Fail");
+        payload.put("message", "");
+        handler.respond(response, status);
+        handler.complete();
+    }
 }

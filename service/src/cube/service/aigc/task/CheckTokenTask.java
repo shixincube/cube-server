@@ -33,11 +33,12 @@ import cell.core.talk.dialect.ActionDialect;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.AIGCChannel;
+import cube.common.entity.Contact;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
+import cube.service.contact.ContactManager;
 import org.json.JSONObject;
 
 /**
@@ -72,8 +73,14 @@ public class CheckTokenTask extends ServiceTask {
             return;
         }
 
+        Contact contact = ContactManager.getInstance().getContact(token.getDomain(), token.getContactId());
+
+        JSONObject responseData = new JSONObject();
+        responseData.put("token", token.toJSON());
+        responseData.put("contact", contact.toJSON());
+
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, token.toJSON()));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
         markResponseTime();
     }
 }

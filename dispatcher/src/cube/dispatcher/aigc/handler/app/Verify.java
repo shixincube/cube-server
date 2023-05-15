@@ -31,16 +31,15 @@ import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.aigc.handler.AIGCHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class Session extends ContextHandler {
+public class Verify extends ContextHandler {
 
-    public Session() {
-        super("/app/session/");
+    public Verify() {
+        super("/app/verify/");
         setHandler(new Handler());
     }
 
@@ -52,63 +51,37 @@ public class Session extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
+            JSONObject data = null;
+            String token = null;
+
             try {
-                JSONObject data = this.readBodyAsJSONObject(request);
+                data = this.readBodyAsJSONObject(request);
                 if (null == data) {
                     this.respond(response, HttpStatus.BAD_REQUEST_400);
                     this.complete();
                     return;
                 }
 
-                if (!data.has("app")) {
+                if (!data.has("token")) {
                     this.respond(response, HttpStatus.BAD_REQUEST_400);
                     this.complete();
                     return;
                 }
 
-                if (!data.getString("app").equalsIgnoreCase("baize")) {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
-                    this.complete();
-                    return;
-                }
+                token = data.getString("token");
             } catch (Exception e) {
-                Logger.w(Session.class, "#doPost", e);
+                Logger.w(Verify.class, "#doPost", e);
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
                 return;
             }
 
-            JSONArray models = new JSONArray();
-            models.put("BaizeNLG");
-            models.put("BaizeNEXT");
-
-            JSONObject responseData = new JSONObject();
-            responseData.put("models", models);
-
-            String authorization = request.getHeader("Authorization");
-            if (null == authorization) {
-                responseData.put("auth", false);
+            if (Manager.getInstance().checkToken(token)) {
+                Helper.respondOk(this, response, data);
             }
             else {
-                String[] tmp = authorization.split(" ");
-                if (tmp.length <= 1) {
-                    responseData.put("auth", false);
-                }
-                else {
-                    String token = tmp[1].trim();
-                    if (Manager.getInstance().checkToken(token)) {
-                        responseData.put("auth", true);
-
-                        Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
-                        responseData.put("context", contactToken.toJSON());
-                    }
-                    else {
-                        responseData.put("auth", false);
-                    }
-                }
+                Helper.respondFailure(this, response, HttpStatus.NOT_FOUND_404);
             }
-
-            Helper.respondOk(this, response, responseData);
         }
     }
 }
