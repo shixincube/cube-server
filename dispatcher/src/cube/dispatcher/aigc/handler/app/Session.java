@@ -27,11 +27,11 @@
 package cube.dispatcher.aigc.handler.app;
 
 import cell.util.log.Logger;
+import cube.aigc.ModelConfig;
 import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.aigc.handler.AIGCHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
@@ -78,12 +78,7 @@ public class Session extends ContextHandler {
                 return;
             }
 
-            JSONArray models = new JSONArray();
-            models.put("BaizeNLG");
-            models.put("BaizeNEXT");
-
             JSONObject responseData = new JSONObject();
-            responseData.put("models", models);
 
             String authorization = request.getHeader("Authorization");
             if (null == authorization) {
@@ -98,6 +93,9 @@ public class Session extends ContextHandler {
                     String token = tmp[1].trim();
                     if (Manager.getInstance().checkToken(token)) {
                         responseData.put("auth", true);
+
+                        ModelConfig modelConfig = Manager.getInstance().getModelConfig(token, "BaizeNLG");
+                        responseData.put("selectedModel", modelConfig.toJSON());
 
                         Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
                         responseData.put("context", contactToken.toJSON());

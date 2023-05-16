@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.aigc;
 
 import cube.common.JSONable;
 import org.json.JSONObject;
@@ -32,7 +32,7 @@ import org.json.JSONObject;
 /**
  * 模型的应用配置。
  */
-public class AIGCModelConfig implements JSONable {
+public class ModelConfig implements JSONable {
 
     private String name;
 
@@ -40,13 +40,13 @@ public class AIGCModelConfig implements JSONable {
 
     private String apiURL;
 
-    public AIGCModelConfig(String name, String desc, String apiURL) {
+    public ModelConfig(String name, String desc, String apiURL) {
         this.name = name;
         this.desc = desc;
         this.apiURL = apiURL;
     }
 
-    public AIGCModelConfig(JSONObject json) {
+    public ModelConfig(JSONObject json) {
         this.name = json.getString("name");
         this.desc = json.getString("desc");
         this.apiURL = json.getString("apiURL");

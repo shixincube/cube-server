@@ -58,14 +58,14 @@ public class Config extends ContextHandler {
             }
 
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
                 return;
             }
 
             JSONObject responseData = Manager.getInstance().getConfigData(token);
             if (null == responseData) {
-                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }

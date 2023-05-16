@@ -30,6 +30,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.ModelConfig;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -253,7 +254,7 @@ public class AIGCService extends AbstractModule {
         return list;
     }
 
-    public List<AIGCModelConfig> getModelConfigs() {
+    public List<ModelConfig> getModelConfigs() {
         if (!this.isStarted()) {
             return null;
         }

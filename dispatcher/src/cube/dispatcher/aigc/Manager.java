@@ -29,6 +29,7 @@ package cube.dispatcher.aigc;
 import cell.core.talk.Primitive;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.aigc.ModelConfig;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.Packet;
@@ -100,6 +101,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Config());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Chat());
     }
 
     public boolean checkToken(String token) {
@@ -155,6 +157,24 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return Packet.extractDataPayload(responsePacket);
+    }
+
+    public ModelConfig getModelConfig(String token, String modelName) {
+        JSONObject data = this.getConfigData(token);
+        if (null == data) {
+            return null;
+        }
+
+        JSONArray models = data.getJSONArray("models");
+        for (int i = 0; i < models.length(); ++i) {
+            JSONObject json = models.getJSONObject(i);
+            ModelConfig config = new ModelConfig(json);
+            if (config.getName().equals(modelName)) {
+                return config;
+            }
+        }
+
+        return null;
     }
 
     public AIGCChannel requestChannel(String participant) {

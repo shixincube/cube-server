@@ -29,7 +29,7 @@ package cube.service.aigc;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
-import cube.common.entity.AIGCModelConfig;
+import cube.aigc.ModelConfig;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -97,8 +97,8 @@ public class AIGCStorage implements Storagable {
         }
     }
 
-    public List<AIGCModelConfig> getModelConfigs() {
-        List<AIGCModelConfig> list = new ArrayList<>();
+    public List<ModelConfig> getModelConfigs() {
+        List<ModelConfig> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.appConfigTable, new StorageField[] {
                 new StorageField("value", LiteralBase.STRING)
@@ -118,7 +118,7 @@ public class AIGCStorage implements Storagable {
 
             for (StorageField[] data : result) {
                 Map<String, StorageField> value = StorageFields.get(data);
-                AIGCModelConfig config = new AIGCModelConfig(value.get("item").getString(),
+                ModelConfig config = new ModelConfig(value.get("item").getString(),
                         value.get("comment").getString(), value.get("value").getString());
                 list.add(config);
             }
@@ -128,11 +128,11 @@ public class AIGCStorage implements Storagable {
     }
 
     private void resetDefaultConfig() {
-        AIGCModelConfig baizeNLG = new AIGCModelConfig("BaizeNLG",
+        ModelConfig baizeNLG = new ModelConfig("BaizeNLG",
                 "支持中英双语的对话语言模型，具有 62 亿参数。针对中文问答和对话进行了优化。经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的优化。",
                 "http://36.133.49.214:7010/aigc/chat/");
 
-        AIGCModelConfig baizeNEXT = new AIGCModelConfig("BaizeNEXT",
+        ModelConfig baizeNEXT = new ModelConfig("BaizeNEXT",
                 "支持中英双语和多种插件的开源对话语言模型。模型具有 160 亿参数。在约七千亿中英文以及代码单词上预训练得到，后续经过对话指令微调、插件增强学习和人类偏好训练具备多轮对话能力及使用多种插件的能力。",
                 "http://36.133.49.214:7010/aigc/conversation/");
 

@@ -33,7 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.AIGCModelConfig;
+import cube.aigc.ModelConfig;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -75,7 +75,7 @@ public class GetConfigTask extends ServiceTask {
             return;
         }
 
-        List<AIGCModelConfig> models = service.getModelConfigs();
+        List<ModelConfig> models = service.getModelConfigs();
         if (null == models) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
@@ -84,7 +84,7 @@ public class GetConfigTask extends ServiceTask {
         }
 
         JSONArray modelArray = new JSONArray();
-        for (AIGCModelConfig model : models) {
+        for (ModelConfig model : models) {
             modelArray.put(model.toJSON());
         }
 
