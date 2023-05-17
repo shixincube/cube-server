@@ -52,6 +52,9 @@ public class AIGCStorage implements Storagable {
     public final static String ITEM_NAME_MODELS = "models";
 
     private final StorageField[] appConfigFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
             new StorageField("item", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),

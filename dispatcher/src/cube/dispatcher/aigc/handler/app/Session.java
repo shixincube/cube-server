@@ -83,6 +83,7 @@ public class Session extends ContextHandler {
             String authorization = request.getHeader("Authorization");
             if (null == authorization) {
                 responseData.put("auth", false);
+                Logger.w(Session.class, "No authorization data");
             }
             else {
                 String[] tmp = authorization.split(" ");
@@ -92,13 +93,23 @@ public class Session extends ContextHandler {
                 else {
                     String token = tmp[1].trim();
                     if (Manager.getInstance().checkToken(token)) {
-                        responseData.put("auth", true);
-
+                        // 获取模型配置
                         ModelConfig modelConfig = Manager.getInstance().getModelConfig(token, "BaizeNLG");
                         responseData.put("selectedModel", modelConfig.toJSON());
 
-                        Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
-                        responseData.put("context", contactToken.toJSON());
+                        // 申请频道
+                        String channel = App.getInstance().openChannel(token, modelConfig);
+                        if (null != channel) {
+                            responseData.put("auth", true);
+                            responseData.put("channel", channel);
+
+                            Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
+                            responseData.put("context", contactToken.toJSON());
+                        }
+                        else {
+                            Logger.w(Session.class, "Failed to open channel for token: " + token);
+                            responseData.put("auth", false);
+                        }
                     }
                     else {
                         responseData.put("auth", false);

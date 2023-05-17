@@ -34,16 +34,16 @@ import org.json.JSONObject;
  */
 public class ModelConfig implements JSONable {
 
-    private String name;
+    private final String name;
 
-    private String desc;
+    private final String desc;
 
-    private String apiURL;
+    private final String apiURL;
 
     public ModelConfig(String name, String desc, String apiURL) {
         this.name = name;
         this.desc = desc;
-        this.apiURL = apiURL;
+        this.apiURL = apiURL + (apiURL.endsWith("/") ? "" : "/");
     }
 
     public ModelConfig(JSONObject json) {
@@ -62,6 +62,11 @@ public class ModelConfig implements JSONable {
 
     public String getApiURL() {
         return this.apiURL;
+    }
+
+    public String getChannelURL() {
+        int index = this.apiURL.indexOf("/aigc/");
+        return this.apiURL.substring(0, index) + "/aigc/channel/";
     }
 
     @Override

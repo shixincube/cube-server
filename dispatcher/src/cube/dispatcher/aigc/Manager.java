@@ -40,6 +40,7 @@ import cube.dispatcher.Performer;
 import cube.dispatcher.PerformerListener;
 import cube.dispatcher.aigc.handler.Conversation;
 import cube.dispatcher.aigc.handler.*;
+import cube.dispatcher.aigc.handler.app.App;
 import cube.dispatcher.util.Tickable;
 import cube.util.HttpServer;
 import org.json.JSONArray;
@@ -81,10 +82,19 @@ public class Manager implements Tickable, PerformerListener {
         this.performer.setListener(AIGCCellet.NAME, this);
 
         this.lastClearToken = System.currentTimeMillis();
+
+        this.performer.execute(new Runnable() {
+            @Override
+            public void run() {
+                App.getInstance().start();
+            }
+        });
     }
 
     public void stop() {
         this.performer.removeTickable(this);
+
+        App.getInstance().stop();
     }
 
     private void setupHandler() {

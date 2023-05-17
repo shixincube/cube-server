@@ -24,32 +24,42 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.aigc.handler;
+package cube.aigc;
 
-import cube.util.CrossDomainHandler;
+import cube.common.JSONable;
+import org.json.JSONObject;
 
-import javax.servlet.http.HttpServletRequest;
+public class Usage implements JSONable {
 
-/**
- * AIGC RESTful 接口基类。
- */
-public abstract class AIGCHandler extends CrossDomainHandler {
+    public final int completionTokens;
 
-    public AIGCHandler() {
-        super();
+    public final int promptTokens;
+
+    public final int totalTokens;
+
+    public Usage(int completionTokens, int promptTokens, int totalTokens) {
+        this.completionTokens = completionTokens;
+        this.promptTokens = promptTokens;
+        this.totalTokens = totalTokens;
     }
 
-    protected String getRequestPath(HttpServletRequest request) {
-        String path = request.getPathInfo();
-        if (path.length() < 2) {
-            return null;
-        }
+    public Usage(JSONObject json) {
+        this.completionTokens = json.getInt("completion_tokens");
+        this.promptTokens = json.getInt("prompt_tokens");
+        this.totalTokens = json.getInt("total_tokens");
+    }
 
-        path = path.substring(1).trim();
-        int index = path.indexOf("/");
-        if (index > 0) {
-            path = path.substring(0, index);
-        }
-        return path;
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("completion_tokens", this.completionTokens);
+        json.put("prompt_tokens", this.promptTokens);
+        json.put("total_tokens", this.totalTokens);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

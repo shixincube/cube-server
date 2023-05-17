@@ -1,14 +1,17 @@
 package cube.dispatcher.aigc.handler.app;
 
+import cube.aigc.ConversationRequest;
+import cube.aigc.ConversationResponse;
 import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.aigc.handler.AIGCHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.util.List;
 
 public class Chat extends ContextHandler {
 
@@ -41,15 +44,31 @@ public class Chat extends ContextHandler {
             JSONObject data = null;
             try {
                 data = this.readBodyAsJSONObject(request);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }
 
-            System.out.println("XJW:\n" + data.toString(4));
+            ConversationRequest convRequest = new ConversationRequest(data);
+            List<ConversationResponse> convResponseList = App.getInstance().requestConversation(token, convRequest);
+            if (null == convResponseList || convResponseList.isEmpty()) {
+                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.complete();
+                return;
+            }
 
+            JSONArray responses = new JSONArray();
+            for (ConversationResponse cr : convResponseList) {
+                responses.put(cr.toJSON());
+            }
 
+            JSONObject responseData = new JSONObject();
+            responseData.put("responses", responses);
+            responseData.put("status", "Success");
+
+            this.respondOk(response, responseData);
+            this.complete();
         }
     }
 }
