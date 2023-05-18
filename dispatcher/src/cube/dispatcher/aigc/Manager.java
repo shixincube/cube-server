@@ -29,6 +29,7 @@ package cube.dispatcher.aigc;
 import cell.core.talk.Primitive;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.aigc.ConfigInfo;
 import cube.aigc.ModelConfig;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
@@ -111,6 +112,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Config());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Change());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Chat());
     }
 
@@ -150,7 +152,7 @@ public class Manager implements Tickable, PerformerListener {
         return this.validTokenMap.get(token);
     }
 
-    public JSONObject getConfigData(String token) {
+    public ConfigInfo getConfigInfo(String token) {
         JSONObject data = new JSONObject();
         data.put("token", token);
         Packet packet = new Packet(AIGCAction.GetConfig.name, data);
@@ -166,19 +168,11 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
-        return Packet.extractDataPayload(responsePacket);
+        return new ConfigInfo(Packet.extractDataPayload(responsePacket));
     }
 
-    public ModelConfig getModelConfig(String token, String modelName) {
-        JSONObject data = this.getConfigData(token);
-        if (null == data) {
-            return null;
-        }
-
-        JSONArray models = data.getJSONArray("models");
-        for (int i = 0; i < models.length(); ++i) {
-            JSONObject json = models.getJSONObject(i);
-            ModelConfig config = new ModelConfig(json);
+    public ModelConfig getModelConfig(ConfigInfo configInfo, String modelName) {
+        for (ModelConfig config : configInfo.models) {
             if (config.getName().equals(modelName)) {
                 return config;
             }

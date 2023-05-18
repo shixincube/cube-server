@@ -26,19 +26,22 @@
 
 package cube.dispatcher.aigc.handler.app;
 
+import cell.util.log.Logger;
 import cube.aigc.ConfigInfo;
+import cube.aigc.ModelConfig;
 import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.aigc.handler.AIGCHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class Config extends ContextHandler {
+public class Change extends ContextHandler {
 
-    public Config() {
-        super("/app/config/");
+    public Change() {
+        super("/app/change/");
         setHandler(new Handler());
     }
 
@@ -63,14 +66,61 @@ public class Config extends ContextHandler {
                 return;
             }
 
+            // 当前使用的模型
+            ModelConfig modelConfig = App.getInstance().getModelConfig(token);
+            if (null == modelConfig) {
+                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.complete();
+                return;
+            }
+
+            ModelConfig newModelConfig = null;
             ConfigInfo configInfo = Manager.getInstance().getConfigInfo(token);
-            if (null == configInfo) {
+
+            try {
+                JSONObject data = this.readBodyAsJSONObject(request);
+                if (null == data) {
+                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.complete();
+                    return;
+                }
+
+                String model = data.getString("model");
+
+                if (modelConfig.getName().equals(model)) {
+                    // 模型一致，返回成功
+                    App.ChannelInfo channelInfo = App.getInstance().getChannel(token);
+                    Helper.respondOk(this, response, channelInfo.toJSON());
+                    return;
+                }
+
+                newModelConfig = Manager.getInstance().getModelConfig(configInfo, model);
+            } catch (Exception e) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }
 
-            Helper.respondOk(this, response, configInfo.toJSON());
+            if (null == newModelConfig) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
+
+            App.ChannelInfo newChannelInfo = App.getInstance().resetModel(token, newModelConfig);
+
+            JSONObject responseData = new JSONObject();
+            responseData.put("auth", true);
+            responseData.put("channel", newChannelInfo.code);
+            responseData.put("selectedModel", newModelConfig.toJSON());
+            responseData.put("models", configInfo.getModelsAsJSONArray());
+
+            Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
+            responseData.put("context", contactToken.toJSON());
+
+            Helper.respondOk(this, response, responseData);
+
+            Logger.d(Change.class, "Client reset session for changing model: " + token);
         }
     }
 }

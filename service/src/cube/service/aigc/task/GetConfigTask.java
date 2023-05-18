@@ -30,15 +30,15 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.aigc.ConfigInfo;
+import cube.aigc.ModelConfig;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.aigc.ModelConfig;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.List;
@@ -83,18 +83,10 @@ public class GetConfigTask extends ServiceTask {
             return;
         }
 
-        JSONArray modelArray = new JSONArray();
-        for (ModelConfig model : models) {
-            modelArray.put(model.toJSON());
-        }
-
-        JSONObject responseData = new JSONObject();
-        responseData.put("models", modelArray);
-        responseData.put("timeoutMs", 60 * 1000);
-        responseData.put("usage", 0);
+        ConfigInfo configInfo = new ConfigInfo(models);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, configInfo.toJSON()));
         markResponseTime();
     }
 }

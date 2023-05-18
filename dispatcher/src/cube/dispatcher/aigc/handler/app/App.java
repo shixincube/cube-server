@@ -31,6 +31,7 @@ import cell.util.log.Logger;
 import cube.aigc.ConversationRequest;
 import cube.aigc.ConversationResponse;
 import cube.aigc.ModelConfig;
+import cube.common.JSONable;
 import cube.util.HttpClientFactory;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.WWWAuthenticationProtocolHandler;
@@ -46,17 +47,19 @@ import java.util.concurrent.TimeoutException;
 
 public final class App {
 
+    public final static App instance = new App();
+
     /**
      * Key: 令牌
      */
     private Map<String, ModelConfig> modelConfigMap;
 
     /**
-     * Key: 令牌, Value: Channel Code
+     * Key: 令牌, Value: Channel
      */
-    private Map<String, String> tokenChannelMap;
+    private Map<String, ChannelInfo> tokenChannelMap;
 
-    public final static App instance = new App();
+    private final long channelTimeout = 20 * 60 * 1000;
 
     private App() {
         this.modelConfigMap = new ConcurrentHashMap<>();
@@ -73,10 +76,23 @@ public final class App {
     public void stop() {
     }
 
-    public String openChannel(String token, ModelConfig config) {
+    public ModelConfig getModelConfig(String token) {
+        return this.modelConfigMap.get(token);
+    }
+
+    public ChannelInfo getChannel(String token) {
+        return this.tokenChannelMap.get(token);
+    }
+
+    public ChannelInfo openChannel(String token, ModelConfig config) {
         this.modelConfigMap.put(token, config);
 
-        String channel = this.tokenChannelMap.get(token);
+        ChannelInfo channel = this.tokenChannelMap.get(token);
+        if (null != channel && System.currentTimeMillis() - channel.lastActivate > this.channelTimeout) {
+            // 超时
+            this.tokenChannelMap.remove(token);
+            channel = null;
+        }
 
         if (null == channel) {
             HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
@@ -93,7 +109,7 @@ public final class App {
                 ContentResponse response = client.POST(url).content(provider).send();
                 if (response.getStatus() == HttpStatus.OK_200) {
                     JSONObject responseData = new JSONObject(response.getContentAsString());
-                    channel = responseData.getString("code");
+                    channel = new ChannelInfo(responseData.getString("code"));
 
                     // 更新频道码
                     this.tokenChannelMap.put(token, channel);
@@ -117,24 +133,86 @@ public final class App {
         return channel;
     }
 
+    public ChannelInfo reopenChannel(String token, ModelConfig config) {
+        this.tokenChannelMap.remove(token);
+        return this.openChannel(token, config);
+    }
+
+    public ChannelInfo resetModel(String token, ModelConfig config) {
+        this.modelConfigMap.put(token, config);
+        return this.reopenChannel(token, config);
+    }
+
     public List<ConversationResponse> requestConversation(String token, ConversationRequest request) {
+        ChannelInfo channel = this.tokenChannelMap.get(token);
+        if (null == channel) {
+            Logger.w(this.getClass(), "#requestConversation - Not find channel for token: " + token);
+            return null;
+        }
+
         ModelConfig config = this.modelConfigMap.get(token);
         if (null == config) {
-            Logger.w(this.getClass(), "#requestModel - Not find model config for token: " + token);
+            Logger.w(this.getClass(), "#requestConversation - Not find model config for token: " + token);
             return null;
         }
 
-        String convId = this.tokenChannelMap.get(token);
-        if (null == convId) {
-            Logger.w(this.getClass(), "#requestModel - Not find channel for token: " + token);
+        long now = System.currentTimeMillis();
+        if (now - channel.lastActivate > this.channelTimeout) {
+            channel = this.reopenChannel(token, config);
+            if (null == channel) {
+                Logger.w(this.getClass(), "#requestConversation - Reopen channel failed: " + token);
+                return null;
+            }
+        }
+        else {
+            channel.lastActivate = now;
+        }
+
+        String convId = channel.code;
+
+        // 结果内容
+        String content = null;
+
+        String url = config.getApiURL() + token;
+
+        JSONObject apiData = new JSONObject();
+        apiData.put("code", convId);
+        apiData.put("content", request.prompt);
+        HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
+        try {
+            client.getProtocolHandlers().remove(WWWAuthenticationProtocolHandler.NAME);
+
+            StringContentProvider provider = new StringContentProvider(apiData.toString());
+            ContentResponse response = client.POST(url).content(provider).send();
+            if (response.getStatus() == HttpStatus.OK_200) {
+                JSONObject responseData = new JSONObject(response.getContentAsString());
+                if (responseData.has("content")) {
+                    content = responseData.getString("content");
+                }
+                else if (responseData.has("response")) {
+                    content = responseData.getJSONObject("response").getString("answer");
+                }
+            }
+            else {
+                Logger.w(this.getClass(), "#requestConversation - status code: " + response.getStatus());
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            HttpClientFactory.getInstance().returnHttpClient(client);
+        }
+
+        if (null == content) {
+            Logger.w(this.getClass(), "#requestConversation - Model unit return error: " + token);
             return null;
         }
 
-//        String url = config.getApiURL() + token + "/";
-//        HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
-//        client.POST(url);
-
-        String content = "来自 App 测试：" + request.prompt + " : " + Utils.randomString(4) + " - 这是一串字符串";
         return this.splitResponse(convId, request, content);
     }
 
@@ -161,5 +239,30 @@ public final class App {
         }
 
         return result;
+    }
+
+
+    public class ChannelInfo implements JSONable {
+
+        public final String code;
+
+        public long lastActivate;
+
+        public ChannelInfo(String code) {
+            this.code = code;
+            this.lastActivate = System.currentTimeMillis();
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("code", this.code);
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
+        }
     }
 }

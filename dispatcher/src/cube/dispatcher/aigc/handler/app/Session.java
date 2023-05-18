@@ -27,6 +27,7 @@
 package cube.dispatcher.aigc.handler.app;
 
 import cell.util.log.Logger;
+import cube.aigc.ConfigInfo;
 import cube.aigc.ModelConfig;
 import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.aigc.handler.AIGCHandler;
@@ -94,14 +95,16 @@ public class Session extends ContextHandler {
                     String token = tmp[1].trim();
                     if (Manager.getInstance().checkToken(token)) {
                         // 获取模型配置
-                        ModelConfig modelConfig = Manager.getInstance().getModelConfig(token, "BaizeNLG");
+                        ConfigInfo configInfo = Manager.getInstance().getConfigInfo(token);
+                        ModelConfig modelConfig = Manager.getInstance().getModelConfig(configInfo, "BaizeNLG");
                         responseData.put("selectedModel", modelConfig.toJSON());
 
                         // 申请频道
-                        String channel = App.getInstance().openChannel(token, modelConfig);
+                        App.ChannelInfo channel = App.getInstance().openChannel(token, modelConfig);
                         if (null != channel) {
                             responseData.put("auth", true);
-                            responseData.put("channel", channel);
+                            responseData.put("channel", channel.code);
+                            responseData.put("models", configInfo.getModelsAsJSONArray());
 
                             Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
                             responseData.put("context", contactToken.toJSON());
