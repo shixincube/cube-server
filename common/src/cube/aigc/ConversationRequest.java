@@ -26,7 +26,6 @@
 
 package cube.aigc;
 
-import com.sun.istack.internal.Nullable;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
@@ -68,10 +67,8 @@ public class ConversationRequest implements JSONable {
      */
     public class Options implements JSONable {
 
-        @Nullable
         public String conversationId;
 
-        @Nullable
         public String parentMessageId;
 
         public Options(JSONObject json) {

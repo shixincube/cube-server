@@ -51,6 +51,10 @@ public class AIGCStorage implements Storagable {
 
     public final static String ITEM_NAME_MODELS = "models";
 
+    private final String appConfigTable = "aigc_app_config";
+
+    private final String appInvitationTable = "aigc_app_invitation";
+
     private final StorageField[] appConfigFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
@@ -69,7 +73,9 @@ public class AIGCStorage implements Storagable {
             })
     };
 
-    private final String appConfigTable = "aigc_app_config";
+    private final StorageField[] appInvitationFields = new StorageField[] {
+
+    };
 
     private Storage storage;
 

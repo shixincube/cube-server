@@ -178,6 +178,8 @@ public final class App {
         JSONObject apiData = new JSONObject();
         apiData.put("code", convId);
         apiData.put("content", request.prompt);
+        apiData.put("temperature", request.temperature);
+        apiData.put("topP", request.topP);
         HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
         try {
             client.getProtocolHandlers().remove(WWWAuthenticationProtocolHandler.NAME);
