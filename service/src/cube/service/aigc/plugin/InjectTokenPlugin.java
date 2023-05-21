@@ -24,33 +24,39 @@
  * SOFTWARE.
  */
 
-package cube.service.auth;
+package cube.service.aigc.plugin;
 
-import cube.plugin.PluginSystem;
+import cube.auth.AuthToken;
+import cube.plugin.Plugin;
+import cube.plugin.PluginContext;
+import cube.service.aigc.AIGCService;
+import cube.service.auth.AuthPluginContext;
 
 /**
- * Auth 服务插件系统。
+ * 注入令牌时处理插件。
  */
-public class AuthServicePluginSystem extends PluginSystem<AuthServiceHook> {
+public class InjectTokenPlugin implements Plugin {
 
-    public AuthServicePluginSystem() {
-        super();
-        this.build();
+    private final AIGCService service;
+
+    public InjectTokenPlugin(AIGCService service) {
+        this.service = service;
     }
 
-    public AuthServiceHook getCreateDomainAppHook() {
-        return this.getHook(AuthServiceHook.CreateDomainApp);
+    @Override
+    public void setup() {
+        // Nothing
     }
 
-    public AuthServiceHook getInjectTokenHook() {
-        return this.getHook(AuthServiceHook.InjectToken);
+    @Override
+    public void teardown() {
+        // Nothing
     }
 
-    private void build() {
-        AuthServiceHook hook = new AuthServiceHook(AuthServiceHook.CreateDomainApp);
-        this.addHook(hook);
-
-        hook = new AuthServiceHook(AuthServiceHook.InjectToken);
-        this.addHook(hook);
+    @Override
+    public void onAction(PluginContext context) {
+        AuthPluginContext ctx = (AuthPluginContext) context;
+        AuthToken token = ctx.getToken();
+        this.service.newInvitationForToken(token.getCode());
     }
 }

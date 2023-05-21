@@ -84,12 +84,12 @@ public class Manager implements Tickable, PerformerListener {
 
         this.lastClearToken = System.currentTimeMillis();
 
-        this.performer.execute(new Runnable() {
+        (new Thread() {
             @Override
             public void run() {
                 App.getInstance().start();
             }
-        });
+        }).start();
     }
 
     public void stop() {
@@ -117,35 +117,48 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public boolean checkToken(String token) {
+        return (null != this.checkAndGetToken(token));
+    }
+
+    public String checkAndGetToken(String token) {
         if (null == token) {
-            return false;
+            return null;
         }
 
         if (this.validTokenMap.containsKey(token)) {
-            return true;
+            ContactToken contactToken = this.validTokenMap.get(token);
+            return contactToken.authToken.getCode();
         }
 
         JSONObject data = new JSONObject();
-        data.put("token", token);
+
+        // 如果是6位，则视为邀请码
+        if (token.length() == 6) {
+            data.put("invitation", token);
+        }
+        else {
+            data.put("token", token);
+        }
         Packet packet = new Packet(AIGCAction.CheckToken.name, data);
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
         if (null == response) {
             Logger.w(Manager.class, "#checkToken - Response is null : " + token);
-            return false;
+            return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.d(Manager.class, "#checkToken - Response state is NOT ok : " + Packet.extractCode(responsePacket));
-            return false;
+            return null;
         }
 
         JSONObject payload = Packet.extractDataPayload(responsePacket);
         AuthToken authToken = new AuthToken(payload.getJSONObject("token"));
+        token = authToken.getCode();
         Contact contact = new Contact(payload.getJSONObject("contact"));
         this.validTokenMap.put(token, new ContactToken(authToken, contact));
 
-        return true;
+        return token;
     }
 
     public ContactToken getContactToken(String token) {

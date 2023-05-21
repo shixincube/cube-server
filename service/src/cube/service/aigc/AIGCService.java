@@ -44,11 +44,15 @@ import cube.core.Module;
 import cube.file.FileProcessResult;
 import cube.file.operation.AudioCropOperation;
 import cube.file.operation.ExtractAudioOperation;
+import cube.plugin.Plugin;
+import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
 import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.listener.*;
+import cube.service.aigc.plugin.InjectTokenPlugin;
 import cube.service.auth.AuthService;
+import cube.service.auth.AuthServiceHook;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import cube.util.FileType;
@@ -154,6 +158,18 @@ public class AIGCService extends AbstractModule {
                 else {
                     Logger.e(AIGCService.class, "Can NOT find AIGC storage config");
                 }
+
+                // 监听事件
+                AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
+                while (!authService.isStarted()) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                authService.getPluginSystem().register(AuthServiceHook.InjectToken,
+                        new InjectTokenPlugin(AIGCService.this));
 
                 started.set(true);
             }
@@ -343,6 +359,28 @@ public class AIGCService extends AbstractModule {
 
         unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
         return unit;
+    }
+
+    /**
+     * 通过邀请码查询令牌。
+     *
+     * @param invitationCode
+     * @return
+     */
+    public String queryTokenByInvitation(String invitationCode) {
+        return this.storage.readTokenByInvitation(invitationCode);
+    }
+
+    /**
+     * 为令牌创建新的邀请码。
+     *
+     * @param token
+     * @return
+     */
+    public String newInvitationForToken(String token) {
+        String invitation = Utils.randomNumberString(6);
+        this.storage.writeInvitation(invitation, token);
+        return invitation;
     }
 
     /**

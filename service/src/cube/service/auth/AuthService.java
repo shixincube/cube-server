@@ -35,7 +35,6 @@ import cube.common.action.ClientAction;
 import cube.common.entity.AuthDomain;
 import cube.common.entity.IceServer;
 import cube.core.*;
-import cube.plugin.PluginSystem;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONArray;
@@ -297,6 +296,10 @@ public class AuthService extends AbstractModule {
         else {
             this.authStorage.writeToken(token);
         }
+
+        // 钩子
+        AuthServiceHook hook = this.pluginSystem.getInjectTokenHook();
+        hook.apply(new AuthPluginContext(token));
     }
 
     /**
@@ -307,6 +310,7 @@ public class AuthService extends AbstractModule {
      */
     public AuthToken getToken(String code) {
         if (!this.started.get()) {
+            Logger.w(this.getClass(), "#getToken - Service has not started");
             return null;
         }
 
@@ -330,6 +334,9 @@ public class AuthService extends AbstractModule {
 
         if (null != token) {
             this.authTokenMap.put(code, token);
+        }
+        else {
+            Logger.w(this.getClass(), "#getToken - Can NOT read token from DB: " + code);
         }
 
         return token;

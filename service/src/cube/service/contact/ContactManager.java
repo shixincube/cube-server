@@ -487,8 +487,13 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         contact.addDevice(activeDevice);
 
         // Hook sign-in
-        ContactHook hook = this.pluginSystem.getSignInHook();
-        hook.apply(new ContactPluginContext(ContactHook.SignIn, contact, activeDevice));
+        try {
+            ContactHook hook = this.pluginSystem.getSignInHook();
+            hook.apply(new ContactPluginContext(ContactHook.SignIn, contact, activeDevice));
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#signIn", e);
+            return null;
+        }
 
         this.contactCache.apply(contact.getUniqueKey(), new LockFuture() {
             @Override

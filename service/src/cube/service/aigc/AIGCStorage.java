@@ -74,7 +74,15 @@ public class AIGCStorage implements Storagable {
     };
 
     private final StorageField[] appInvitationFields = new StorageField[] {
-
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("invitation", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("token", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
     };
 
     private Storage storage;
@@ -102,6 +110,13 @@ public class AIGCStorage implements Storagable {
 
                 // 插入默认数值
                 resetDefaultConfig();
+            }
+        }
+
+        if (!this.storage.exist(this.appInvitationTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.appInvitationTable, this.appInvitationFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.appInvitationTable + "' successfully");
             }
         }
     }
@@ -134,6 +149,26 @@ public class AIGCStorage implements Storagable {
         }
 
         return list;
+    }
+
+    public String readTokenByInvitation(String invitation) {
+        List<StorageField[]> result = this.storage.executeQuery(this.appInvitationTable, new StorageField[] {
+                    new StorageField("token", LiteralBase.STRING)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("invitation", invitation)
+            });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        return result.get(0)[0].getString();
+    }
+
+    public boolean writeInvitation(String invitation, String token) {
+        return this.storage.executeInsert(this.appInvitationTable, new StorageField[] {
+                new StorageField("invitation", invitation),
+                new StorageField("token", token)
+        });
     }
 
     private void resetDefaultConfig() {

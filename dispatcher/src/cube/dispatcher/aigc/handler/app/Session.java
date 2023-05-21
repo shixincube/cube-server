@@ -37,6 +37,7 @@ import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Enumeration;
 
 public class Session extends ContextHandler {
 
@@ -53,6 +54,7 @@ public class Session extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
+            String token = null;
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
                 if (null == data) {
@@ -72,6 +74,10 @@ public class Session extends ContextHandler {
                     this.complete();
                     return;
                 }
+
+                if (data.has("token")) {
+                    token = data.getString("token");
+                }
             } catch (Exception e) {
                 Logger.w(Session.class, "#doPost", e);
                 this.respond(response, HttpStatus.FORBIDDEN_403);
@@ -81,43 +87,50 @@ public class Session extends ContextHandler {
 
             JSONObject responseData = new JSONObject();
 
-            String authorization = request.getHeader("Authorization");
-            if (null == authorization) {
-                responseData.put("auth", false);
-                Logger.w(Session.class, "No authorization data");
-            }
-            else {
-                String[] tmp = authorization.split(" ");
-                if (tmp.length <= 1) {
-                    responseData.put("auth", false);
+            if (null == token || token.length() == 0) {
+                token = null;
+                String authorization = request.getHeader("Authorization");
+                if (null == authorization) {
+                    Logger.w(Session.class, "No authorization data");
                 }
                 else {
-                    String token = tmp[1].trim();
-                    if (Manager.getInstance().checkToken(token)) {
-                        // 获取模型配置
-                        ConfigInfo configInfo = Manager.getInstance().getConfigInfo(token);
-                        ModelConfig modelConfig = Manager.getInstance().getModelConfig(configInfo, "BaizeNLG");
-                        responseData.put("selectedModel", modelConfig.toJSON());
+                    String[] tmp = authorization.split(" ");
+                    if (tmp.length > 1) {
+                        token = tmp[1].trim();
+                    }
+                }
+            }
 
-                        // 申请频道
-                        App.ChannelInfo channel = App.getInstance().openChannel(token, modelConfig);
-                        if (null != channel) {
-                            responseData.put("auth", true);
-                            responseData.put("channel", channel.code);
-                            responseData.put("models", configInfo.getModelsAsJSONArray());
+            if (null != token) {
+                if (Manager.getInstance().checkToken(token)) {
+                    // 获取模型配置
+                    ConfigInfo configInfo = Manager.getInstance().getConfigInfo(token);
+                    ModelConfig modelConfig = Manager.getInstance().getModelConfig(configInfo, "BaizeNLG");
+                    responseData.put("selectedModel", modelConfig.toJSON());
 
-                            Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
-                            responseData.put("context", contactToken.toJSON());
-                        }
-                        else {
-                            Logger.w(Session.class, "Failed to open channel for token: " + token);
-                            responseData.put("auth", false);
-                        }
+                    // 申请频道
+                    App.ChannelInfo channel = App.getInstance().openChannel(token, modelConfig);
+                    if (null != channel) {
+                        responseData.put("auth", true);
+                        responseData.put("channel", channel.code);
+                        responseData.put("models", configInfo.getModelsAsJSONArray());
+
+                        Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
+                        responseData.put("context", contactToken.toJSON());
                     }
                     else {
                         responseData.put("auth", false);
+                        Logger.w(Session.class, "Failed to open channel for token: " + token);
                     }
                 }
+                else {
+                    responseData.put("auth", false);
+                    Logger.w(Session.class, "Manager check token failed: " + token);
+                }
+            }
+            else {
+                responseData.put("auth", false);
+                Logger.w(Session.class, "Token is null");
             }
 
             Helper.respondOk(this, response, responseData);

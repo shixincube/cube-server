@@ -76,7 +76,9 @@ public class Verify extends ContextHandler {
                 return;
             }
 
-            if (Manager.getInstance().checkToken(token)) {
+            token = Manager.getInstance().checkAndGetToken(token);
+            if (null != token) {
+                data.put("token", token);
                 Helper.respondOk(this, response, data);
             }
             else {

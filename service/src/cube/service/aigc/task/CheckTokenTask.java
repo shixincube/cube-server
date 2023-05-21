@@ -55,16 +55,30 @@ public class CheckTokenTask extends ServiceTask {
         ActionDialect dialect = new ActionDialect(this.primitive);
         Packet packet = new Packet(dialect);
 
-        if (!packet.data.has("token")) {
+        if (!packet.data.has("token") && !packet.data.has("invitation")) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        String tokenCode = packet.data.getString("token");
+        String tokenCode = packet.data.has("token") ? packet.data.getString("token") : null;
+        String invitationCode = packet.data.has("invitation") ? packet.data.getString("invitation") : null;
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
+
+        if (null == tokenCode) {
+            // 用邀请码获取令牌
+            tokenCode = service.queryTokenByInvitation(invitationCode);
+            if (null == tokenCode) {
+                // 无效的邀请码
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+                markResponseTime();
+                return;
+            }
+        }
+
         AuthToken token = service.checkToken(tokenCode);
         if (null == token) {
             this.cellet.speak(this.talkContext,

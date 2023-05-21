@@ -35,6 +35,8 @@ public class AuthServiceHook extends Hook {
 
     public final static String CreateDomainApp = "CreateDomainApp";
 
+    public final static String InjectToken = "InjectToken";
+
     public AuthServiceHook(String key) {
         super(key);
     }
