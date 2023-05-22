@@ -55,6 +55,8 @@ public class AIGCStorage implements Storagable {
 
     private final String appInvitationTable = "aigc_app_invitation";
 
+    private final String queryAnswerTable = "aigc_query_answer";
+
     private final StorageField[] appConfigFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
@@ -82,6 +84,18 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("token", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] queryAnswerFields = new StorageField[]{
+            new StorageField("id", LiteralBase.LONG, new Constraint[]{
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("query_cid", LiteralBase.LONG, new Constraint[] {
+
+            }),
+            new StorageField("query_content", LiteralBase.LONG, new Constraint[] {
+
             })
     };
 
