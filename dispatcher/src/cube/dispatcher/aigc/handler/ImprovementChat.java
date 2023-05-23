@@ -77,12 +77,16 @@ public class ImprovementChat extends ContextHandler {
             String channelCode = null;
             String content = null;
             String desc = null;
+            int histories = 3;
             JSONArray records = null;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
                 channelCode = json.getString("code");
                 content = json.getString("content");
                 desc = json.getString("desc");
+                if (json.has("histories")) {
+                    histories = json.getInt("histories");
+                }
                 if (json.has("records")) {
                     records = json.getJSONArray("records");
                 }
@@ -100,7 +104,7 @@ public class ImprovementChat extends ContextHandler {
             }
 
             // Chat
-            AIGCChatRecord record = Manager.getInstance().chat(channelCode, content, desc, records);
+            AIGCChatRecord record = Manager.getInstance().chat(channelCode, content, null, desc, histories, records);
             if (null == record) {
                 // 发生错误
                 this.respond(response, HttpStatus.BAD_REQUEST_400);

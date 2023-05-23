@@ -44,8 +44,6 @@ import cube.core.Module;
 import cube.file.FileProcessResult;
 import cube.file.operation.AudioCropOperation;
 import cube.file.operation.ExtractAudioOperation;
-import cube.plugin.Plugin;
-import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
 import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
@@ -278,7 +276,48 @@ public class AIGCService extends AbstractModule {
         return this.storage.getModelConfigs();
     }
 
-    public AIGCUnit getUnitBySubtask(String subtask) {
+    public AIGCUnit selectUnitByName(String unitName) {
+        ArrayList<AIGCUnit> candidates = new ArrayList<>();
+
+        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
+        while (iter.hasNext()) {
+            AIGCUnit unit = iter.next();
+            if (unit.getCapability().getName().equals(unitName)) {
+                candidates.add(unit);
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            return null;
+        }
+
+        int num = candidates.size();
+        if (num == 1) {
+            return candidates.get(0);
+        }
+
+        // 先进行一次随机选择
+        AIGCUnit unit = candidates.get(Utils.randomInt(0, num - 1));
+
+        iter = candidates.iterator();
+        while (iter.hasNext()) {
+            AIGCUnit u = iter.next();
+            if (u.isRunning()) {
+                // 把正在运行的单元从候选列表里删除
+                iter.remove();
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            // 所有单元都在运行，返回随机选择
+            return unit;
+        }
+
+        unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
+        return unit;
+    }
+
+    public AIGCUnit selectUnitBySubtask(String subtask) {
         ArrayList<AIGCUnit> candidates = new ArrayList<>();
 
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
@@ -319,7 +358,7 @@ public class AIGCService extends AbstractModule {
         return unit;
     }
 
-    public AIGCUnit getUnitBySubtask(String subtask, String description) {
+    public AIGCUnit selectUnitBySubtask(String subtask, String description) {
         ArrayList<AIGCUnit> candidates = new ArrayList<>();
 
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
@@ -426,24 +465,15 @@ public class AIGCService extends AbstractModule {
      *
      * @param code
      * @param content
-     * @param listener
-     * @return
-     */
-    public boolean chat(String code, String content, ChatListener listener) {
-        return this.chat(code, content, null, null, listener);
-    }
-
-    /**
-     * 执行聊天任务。
-     *
-     * @param code
-     * @param content
+     * @param unitName
      * @param desc
+     * @param numHistories
      * @param records
      * @param listener
      * @return
      */
-    public boolean chat(String code, String content, String desc, List<AIGCChatRecord> records, ChatListener listener) {
+    public boolean chat(String code, String content, String unitName, String desc, int numHistories,
+                        List<AIGCChatRecord> records, ChatListener listener) {
         if (!this.isStarted()) {
             Logger.w(AIGCService.class, "#chat - Service is NOT ready");
             return false;
@@ -471,9 +501,16 @@ public class AIGCService extends AbstractModule {
         channel.setProcessing(true);
 
         // 查找有该能力的单元
-        AIGCUnit unit = (null != desc) ?
-                this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational, desc)
-                : this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
+        AIGCUnit unit = null;
+        if (null != unitName) {
+            unit = this.selectUnitByName(unitName);
+        }
+        else if (null != desc) {
+            unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational, desc);
+        }
+        else {
+            unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
+        }
         if (null == unit) {
             Logger.w(AIGCService.class, "#chat - No conversational task unit setup in server");
             channel.setProcessing(false);
@@ -481,6 +518,7 @@ public class AIGCService extends AbstractModule {
         }
 
         ChatUnitMeta meta = new ChatUnitMeta(unit, channel, content, records, listener);
+        meta.histories = numHistories;
 
         synchronized (this.chatQueueMap) {
             Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getQueryKey());
@@ -542,8 +580,7 @@ public class AIGCService extends AbstractModule {
         channel.setProcessing(true);
 
         // 查找有该能力的单元
-        AIGCUnit unit = this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational,
-                "MOSS");
+        AIGCUnit unit = this.selectUnitByName("MOSS");
         if (null == unit) {
             Logger.w(AIGCService.class, "#conversation - No conversational task unit setup in server");
             channel.setProcessing(false);
@@ -595,7 +632,7 @@ public class AIGCService extends AbstractModule {
         }
 
         // 查找有该能力的单元
-        AIGCUnit unit = this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.MultiTask);
+        AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.MultiTask);
         if (null == unit) {
             Logger.w(AIGCService.class, "No natural language task unit setup in server");
             return false;
@@ -633,7 +670,7 @@ public class AIGCService extends AbstractModule {
         }
 
         // 查找有该能力的单元
-        AIGCUnit unit = this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.SentimentAnalysis);
+        AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.SentimentAnalysis);
         if (null == unit) {
             Logger.w(AIGCService.class, "No sentiment analysis task unit setup in server");
             return false;
@@ -824,7 +861,7 @@ public class AIGCService extends AbstractModule {
 
         // 请求 AIGC 单元
         // 查找有该能力的单元
-        AIGCUnit unit = this.getUnitBySubtask(AICapability.AudioProcessing.AutomaticSpeechRecognition);
+        AIGCUnit unit = this.selectUnitBySubtask(AICapability.AudioProcessing.AutomaticSpeechRecognition);
         if (null == unit) {
             Logger.w(AIGCService.class, "No ASR task unit setup in server");
             if (deleteFileLabel) {

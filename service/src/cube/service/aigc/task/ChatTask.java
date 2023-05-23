@@ -69,8 +69,10 @@ public class ChatTask extends ServiceTask {
 
         String code = packet.data.getString("code");
         String content = packet.data.getString("content");
-        JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
+        String unit = packet.data.has("unit") ? packet.data.getString("unit") : null;
         String desc = packet.data.has("desc") ? packet.data.getString("desc") : null;
+        int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 3;
+        JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
 
         List<AIGCChatRecord> recordList = null;
         if (null != records) {
@@ -88,7 +90,7 @@ public class ChatTask extends ServiceTask {
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         // 执行 Chat
-        boolean success = service.chat(code, content, desc, recordList, new ChatListener() {
+        boolean success = service.chat(code, content, unit, desc, histories, recordList, new ChatListener() {
             @Override
             public void onChat(AIGCChannel channel, AIGCChatRecord record) {
                 cellet.speak(talkContext,

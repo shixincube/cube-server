@@ -217,14 +217,19 @@ public class Manager implements Tickable, PerformerListener {
         return channel;
     }
 
-    public AIGCChatRecord chat(String channelCode, String content, JSONArray records) {
-        return this.chat(channelCode, content, null, records);
+    public AIGCChatRecord chat(String channelCode, String content, String unit, int histories, JSONArray records) {
+        return this.chat(channelCode, content, unit, null, histories, records);
     }
 
-    public AIGCChatRecord chat(String channelCode, String content, String desc, JSONArray records) {
+    public AIGCChatRecord chat(String channelCode, String content, String unit, String desc, int histories,
+                               JSONArray records) {
         JSONObject data = new JSONObject();
         data.put("code", channelCode);
         data.put("content", content);
+        data.put("histories", histories);
+        if (null != unit) {
+            data.put("unit", unit);
+        }
         if (null != desc) {
             data.put("desc", desc);
         }
