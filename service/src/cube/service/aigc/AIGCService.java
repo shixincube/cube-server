@@ -109,12 +109,12 @@ public class AIGCService extends AbstractModule {
     /**
      * 最大频道数量。
      */
-    private int maxChannel = 50;
+    private int maxChannel = 2000;
 
     /**
      * 聊天内容最大长度限制。
      */
-    private int maxChatContent = 500;
+    private int maxChatContent = 1024;
 
     private ConcurrentHashMap<String, AIGCChannel> channelMap;
 
@@ -398,21 +398,25 @@ public class AIGCService extends AbstractModule {
     /**
      * 申请频道。
      *
+     * @param token
      * @param participant
      * @return
      */
-    public AIGCChannel requestChannel(String participant) {
+    public AIGCChannel requestChannel(String token, String participant) {
         if (this.channelMap.size() >= this.maxChannel) {
-            Logger.w(AIGCService.class, "Channel num overflow: " + this.maxChannel);
+            Logger.w(AIGCService.class, "#requestChannel - Channel num overflow: " + this.maxChannel);
             return null;
         }
 
         if (!this.checkParticipantName(participant)) {
-            Logger.w(AIGCService.class, "Participant is sensitive word: " + participant);
+            Logger.w(AIGCService.class, "#requestChannel - Participant is sensitive word: " + participant);
             return null;
         }
 
-        AIGCChannel channel = new AIGCChannel(participant);
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthToken authToken = authService.getToken(token);
+
+        AIGCChannel channel = new AIGCChannel(authToken, participant);
         this.channelMap.put(channel.getCode(), channel);
         return channel;
     }
@@ -441,27 +445,29 @@ public class AIGCService extends AbstractModule {
      */
     public boolean chat(String code, String content, String desc, List<AIGCChatRecord> records, ChatListener listener) {
         if (!this.isStarted()) {
+            Logger.w(AIGCService.class, "#chat - Service is NOT ready");
             return false;
         }
 
         if (content.length() > this.maxChatContent) {
-            Logger.i(AIGCService.class, "Content length greater than " + this.maxChatContent);
+            Logger.w(AIGCService.class, "#chat - Content length greater than " + this.maxChatContent);
             return false;
         }
 
         // 获取频道
         AIGCChannel channel = this.channelMap.get(code);
         if (null == channel) {
-            Logger.i(AIGCService.class, "Can NOT find AIGC channel: " + code);
+            Logger.w(AIGCService.class, "#chat - Can NOT find AIGC channel: " + code);
             return false;
         }
 
         // 如果频道正在应答上一次问题，则返回 null
         if (channel.isProcessing()) {
-            Logger.w(AIGCService.class, "Channel is processing: " + code);
+            Logger.w(AIGCService.class, "#chat - Channel is processing: " + code);
             return false;
         }
 
+        // 设置为正在处理
         channel.setProcessing(true);
 
         // 查找有该能力的单元
@@ -469,7 +475,7 @@ public class AIGCService extends AbstractModule {
                 this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational, desc)
                 : this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
         if (null == unit) {
-            Logger.w(AIGCService.class, "No conversational task unit setup in server");
+            Logger.w(AIGCService.class, "#chat - No conversational task unit setup in server");
             channel.setProcessing(false);
             return false;
         }
@@ -511,24 +517,25 @@ public class AIGCService extends AbstractModule {
      */
     public boolean conversation(String code, String content, AIGCConversationParameter parameter, ConversationListener listener) {
         if (!this.isStarted()) {
+            Logger.w(AIGCService.class, "#conversation - Service is NOT ready");
             return false;
         }
 
         if (content.length() > this.maxChatContent) {
-            Logger.i(AIGCService.class, "Content length greater than " + this.maxChatContent);
+            Logger.w(AIGCService.class, "#conversation - Content length greater than " + this.maxChatContent);
             return false;
         }
 
         // 获取频道
         AIGCChannel channel = this.channelMap.get(code);
         if (null == channel) {
-            Logger.i(AIGCService.class, "Can NOT find AIGC channel: " + code);
+            Logger.w(AIGCService.class, "#conversation - Can NOT find AIGC channel: " + code);
             return false;
         }
 
         // 如果频道正在应答上一次问题，则返回 null
         if (channel.isProcessing()) {
-            Logger.w(AIGCService.class, "Channel is processing: " + code);
+            Logger.w(AIGCService.class, "#conversation - Channel is processing: " + code);
             return false;
         }
 
@@ -538,7 +545,7 @@ public class AIGCService extends AbstractModule {
         AIGCUnit unit = this.getUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational,
                 "MOSS");
         if (null == unit) {
-            Logger.w(AIGCService.class, "No conversational task unit setup in server");
+            Logger.w(AIGCService.class, "#conversation - No conversational task unit setup in server");
             channel.setProcessing(false);
             return false;
         }
@@ -715,7 +722,8 @@ public class AIGCService extends AbstractModule {
             // 音频文件
             File audioFile = result.getResultList().get(0).file;
             String audioFileCode = FileUtils.makeFileCode(fileLabel.getOwnerId(), fileLabel.getDomain().getName(), audioFile.getName());
-            FileLabel audioFileLabel = FileUtils.makeFileLabel(fileLabel.getDomain().getName(), audioFileCode, fileLabel.getOwnerId(), audioFile);
+            FileLabel audioFileLabel = FileUtils.makeFileLabel(fileLabel.getDomain().getName(),
+                    audioFileCode, fileLabel.getOwnerId(), audioFile);
             // 将处理后文件存入存储器
             JSONObject saveFile = new JSONObject();
             saveFile.put("action", FileStorageAction.SaveFile.name);
@@ -791,7 +799,8 @@ public class AIGCService extends AbstractModule {
 
         File resultFile = result.getResultList().get(0).file;
         String localFileCode = FileUtils.makeFileCode(fileLabel.getOwnerId(), fileLabel.getDomain().getName(), resultFile.getName());
-        FileLabel localFileLabel = FileUtils.makeFileLabel(fileLabel.getDomain().getName(), localFileCode, fileLabel.getOwnerId(), resultFile);
+        FileLabel localFileLabel = FileUtils.makeFileLabel(fileLabel.getDomain().getName(),
+                localFileCode, fileLabel.getOwnerId(), resultFile);
         // 将处理后文件存入存储器
         JSONObject saveFile = new JSONObject();
         saveFile.put("action", FileStorageAction.SaveFile.name);
@@ -882,7 +891,7 @@ public class AIGCService extends AbstractModule {
     private void processChatQueue(String queryKey) {
         Queue<ChatUnitMeta> queue = this.chatQueueMap.get(queryKey);
         if (null == queue) {
-            Logger.w(AIGCService.class, "Not found unit: " + queryKey);
+            Logger.w(AIGCService.class, "#processChatQueue - Not found unit: " + queryKey);
             return;
         }
 
@@ -1030,13 +1039,21 @@ public class AIGCService extends AbstractModule {
 
         protected ChatListener listener;
 
-        public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, List<AIGCChatRecord> records, ChatListener listener) {
+        protected AIGCChatHistory history;
+
+        public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
+                            List<AIGCChatRecord> records, ChatListener listener) {
             this.unit = unit;
             this.channel = channel;
             this.content = content;
             this.records = records;
             this.histories = 3;
             this.listener = listener;
+
+            this.history = new AIGCChatHistory(unit.getCapability().getName());
+            this.history.queryContactId = channel.getAuthToken().getContactId();
+            this.history.queryTime = System.currentTimeMillis();
+            this.history.queryContent = content;
         }
 
         public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, int histories, ChatListener listener) {
@@ -1045,6 +1062,11 @@ public class AIGCService extends AbstractModule {
             this.content = content;
             this.histories = histories;
             this.listener = listener;
+
+            this.history = new AIGCChatHistory(unit.getCapability().getName());
+            this.history.queryContactId = channel.getAuthToken().getContactId();
+            this.history.queryTime = System.currentTimeMillis();
+            this.history.queryContent = content;
         }
 
         public void process() {
@@ -1097,10 +1119,21 @@ public class AIGCService extends AbstractModule {
             String responseText = payload.getString("response");
             AIGCChatRecord result = this.channel.appendRecord(this.content, responseText);
 
+            this.history.answerContactId = unit.getContact().getId();
+            this.history.answerTime = System.currentTimeMillis();
+            this.history.answerContent = responseText;
+
             // 重置状态位
             this.channel.setProcessing(false);
 
             this.listener.onChat(this.channel, result);
+
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    storage.writeChatHistory(history);
+                }
+            });
         }
     }
 
@@ -1117,6 +1150,8 @@ public class AIGCService extends AbstractModule {
 
         protected ConversationListener listener;
 
+        protected AIGCChatHistory history;
+
         public ConversationUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
                                     AIGCConversationParameter parameter, ConversationListener listener) {
             this.unit = unit;
@@ -1124,6 +1159,11 @@ public class AIGCService extends AbstractModule {
             this.content = content;
             this.parameter = parameter;
             this.listener = listener;
+
+            this.history = new AIGCChatHistory(unit.getCapability().getName());
+            this.history.queryContactId = channel.getAuthToken().getContactId();
+            this.history.queryTime = System.currentTimeMillis();
+            this.history.queryContent = content;
         }
 
         public void process() {
@@ -1188,6 +1228,10 @@ public class AIGCService extends AbstractModule {
             AIGCConversationResponse convResponse = new AIGCConversationResponse(payload);
             convResponse.query = this.content;
 
+            this.history.answerContactId = this.unit.getContact().getId();
+            this.history.answerTime = System.currentTimeMillis();
+            this.history.answerContent = convResponse.answer;
+
             // 更新字数
             this.unit.setTotalQueryWords(this.unit.getTotalQueryWords() + this.content.length());
 
@@ -1198,6 +1242,13 @@ public class AIGCService extends AbstractModule {
             this.channel.setProcessing(false);
 
             this.listener.onConversation(this.channel, convResponse);
+
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    storage.writeChatHistory(history);
+                }
+            });
         }
     }
 
@@ -1287,7 +1338,8 @@ public class AIGCService extends AbstractModule {
 
         protected AutomaticSpeechRecognitionListener listener;
 
-        public ASRUnitMeta(AIGCUnit unit, FileLabel source, FileLabel input, AutomaticSpeechRecognitionListener listener) {
+        public ASRUnitMeta(AIGCUnit unit, FileLabel source, FileLabel input,
+                           AutomaticSpeechRecognitionListener listener) {
             this.unit = unit;
             this.source = source;
             this.input = input;

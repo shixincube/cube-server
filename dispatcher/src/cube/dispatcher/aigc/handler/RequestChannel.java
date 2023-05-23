@@ -89,7 +89,7 @@ public class RequestChannel extends ContextHandler {
             }
 
             // 请求频道
-            AIGCChannel channel = Manager.getInstance().requestChannel(participant);
+            AIGCChannel channel = Manager.getInstance().requestChannel(token, participant);
             if (null == channel) {
                 // 不允许该参与者申请或者服务故障
                 this.respond(response, HttpStatus.BAD_REQUEST_400);

@@ -194,8 +194,9 @@ public class Manager implements Tickable, PerformerListener {
         return null;
     }
 
-    public AIGCChannel requestChannel(String participant) {
+    public AIGCChannel requestChannel(String token, String participant) {
         JSONObject data = new JSONObject();
+        data.put("token", token);
         data.put("participant", participant);
         Packet packet = new Packet(AIGCAction.RequestChannel.name, data);
 

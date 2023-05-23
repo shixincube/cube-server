@@ -27,6 +27,7 @@
 package cube.common.entity;
 
 import cell.util.Utils;
+import cube.auth.AuthToken;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -42,6 +43,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AIGCChannel extends Entity {
 
     private int historyLengthLimit = 1024;
+
+    private AuthToken authToken;
 
     private String participant;
 
@@ -68,7 +71,8 @@ public class AIGCChannel extends Entity {
      */
     private AtomicInteger rounds;
 
-    public AIGCChannel(String participant) {
+    public AIGCChannel(AuthToken authToken, String participant) {
+        this.authToken = authToken;
         this.participant = participant;
         this.creationTime = System.currentTimeMillis();
         this.code = Utils.randomString(16);
@@ -80,6 +84,7 @@ public class AIGCChannel extends Entity {
     }
 
     public AIGCChannel(JSONObject json) {
+        this.authToken = new AuthToken(json.getJSONObject("authToken"));
         this.code = json.getString("code");
         this.creationTime = json.getLong("creationTime");
         this.participant = json.getString("participant");
@@ -91,6 +96,10 @@ public class AIGCChannel extends Entity {
         this.rounds = new AtomicInteger(json.has("rounds") ? json.getInt("rounds") : 0);
         this.totalQueryWords = json.has("totalQueryWords") ? json.getInt("totalQueryWords") : 0;
         this.totalAnswerWords = json.has("totalAnswerWords") ? json.getInt("totalAnswerWords") : 0;
+    }
+
+    public AuthToken getAuthToken() {
+        return this.authToken;
     }
 
     public String getCode() {
@@ -230,6 +239,7 @@ public class AIGCChannel extends Entity {
         json.put("code", this.code);
         json.put("creationTime", this.creationTime);
         json.put("participant", this.participant);
+        json.put("authToken", this.authToken.toJSON());
         return json;
     }
 

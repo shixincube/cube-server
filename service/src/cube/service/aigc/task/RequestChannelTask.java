@@ -53,7 +53,7 @@ public class RequestChannelTask extends ServiceTask {
         ActionDialect dialect = new ActionDialect(this.primitive);
         Packet packet = new Packet(dialect);
 
-        if (!packet.data.has("participant")) {
+        if (!packet.data.has("participant") || !packet.data.has("token")) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
@@ -61,9 +61,10 @@ public class RequestChannelTask extends ServiceTask {
         }
 
         String participant = packet.data.getString("participant");
+        String token = packet.data.getString("token");
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        AIGCChannel channel = service.requestChannel(participant);
+        AIGCChannel channel = service.requestChannel(token, participant);
         if (null == channel) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

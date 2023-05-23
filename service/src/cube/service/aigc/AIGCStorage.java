@@ -30,6 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.common.Storagable;
 import cube.aigc.ModelConfig;
+import cube.common.entity.AIGCChatHistory;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -91,11 +92,29 @@ public class AIGCStorage implements Storagable {
             new StorageField("id", LiteralBase.LONG, new Constraint[]{
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
-            new StorageField("query_cid", LiteralBase.LONG, new Constraint[] {
-
+            new StorageField("unit", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
             }),
-            new StorageField("query_content", LiteralBase.LONG, new Constraint[] {
-
+            new StorageField("query_cid", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("query_time", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("query_content", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("answer_cid", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("answer_time", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("answer_content", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("context_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
             })
     };
 
@@ -131,6 +150,13 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.appInvitationTable, this.appInvitationFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.appInvitationTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.queryAnswerTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.queryAnswerTable, this.queryAnswerFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.queryAnswerTable + "' successfully");
             }
         }
     }
@@ -182,6 +208,46 @@ public class AIGCStorage implements Storagable {
         return this.storage.executeInsert(this.appInvitationTable, new StorageField[] {
                 new StorageField("invitation", invitation),
                 new StorageField("token", token)
+        });
+    }
+
+    public List<AIGCChatHistory> readChatHistoryByContactId(long contactId) {
+        List<AIGCChatHistory> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.queryAnswerTable,
+                this.queryAnswerFields, new Conditional[] {
+                        Conditional.createEqualTo("query_cid", contactId),
+                        Conditional.createOr(),
+                        Conditional.createEqualTo("answer_cid", contactId)
+                });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            AIGCChatHistory history = new AIGCChatHistory(data.get("id").getLong());
+            history.unit = data.get("unit").getString();
+            history.queryContactId = data.get("query_cid").getLong();
+            history.queryTime = data.get("query_time").getLong();
+            history.queryContent = data.get("query_content").getString();
+            history.answerContactId = data.get("answer_cid").getLong();
+            history.answerTime = data.get("answer_time").getLong();
+            history.answerContent = data.get("answer_content").getString();
+            history.contextId = data.get("context_id").getLong();
+            list.add(history);
+        }
+
+        return list;
+    }
+
+    public void writeChatHistory(AIGCChatHistory history) {
+        this.storage.executeInsert(this.queryAnswerTable, new StorageField[] {
+                new StorageField("unit", history.unit),
+                new StorageField("query_cid", history.queryContactId),
+                new StorageField("query_time", history.queryTime),
+                new StorageField("query_content", history.queryContent),
+                new StorageField("answer_cid", history.answerContactId),
+                new StorageField("answer_time", history.answerTime),
+                new StorageField("answer_content", history.answerContent),
+                new StorageField("context_id", history.contextId)
         });
     }
 
