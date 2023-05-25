@@ -32,6 +32,7 @@ import cube.aigc.ConversationResponse;
 import cube.aigc.ModelConfig;
 import cube.common.JSONable;
 import cube.util.HttpClientFactory;
+import cube.util.JSONUtils;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.WWWAuthenticationProtocolHandler;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -180,7 +181,8 @@ public final class App {
 
         String url = config.getApiURL() + token;
 
-        JSONObject apiData = new JSONObject();
+        // 处理参数，将模型配置的默认参数代入
+        JSONObject apiData = JSONUtils.clone(config.getParameter());
         apiData.put("code", convId);
         apiData.put("content", request.prompt);
         apiData.put("temperature", request.temperature);

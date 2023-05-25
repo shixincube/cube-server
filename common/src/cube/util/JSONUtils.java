@@ -113,4 +113,53 @@ public final class JSONUtils {
         }
         return json;
     }
+
+    /**
+     * 将指定的 JSON 对象的数据克隆到新 JSON 对象里。
+     *
+     * @param src 指定克隆源。
+     * @return 返回克隆的新对象。
+     */
+    public static JSONObject clone(JSONObject src) {
+        JSONObject dest = new JSONObject();
+        Iterator<String> iter = src.keys();
+        while (iter.hasNext()) {
+            String key = iter.next();
+            Object value = src.get(key);
+
+            if (value instanceof JSONObject) {
+                dest.put(key, clone((JSONObject) value));
+            }
+            else if (value instanceof JSONArray) {
+                dest.put(key, clone((JSONArray) value));
+            }
+            else {
+                dest.put(key, value);
+            }
+        }
+        return dest;
+    }
+
+    /**
+     * 将指定的 JSON 数组对象的数据克隆到新 JSON 数组对象里。
+     *
+     * @param src
+     * @return
+     */
+    public static JSONArray clone(JSONArray src) {
+        JSONArray dest = new JSONArray();
+        for (int i = 0; i < src.length(); ++i) {
+            Object value = src.get(i);
+            if (value instanceof JSONObject) {
+                dest.put(clone((JSONObject) value));
+            }
+            else if (value instanceof JSONArray) {
+                dest.put(clone((JSONArray) value));
+            }
+            else {
+                dest.put(value);
+            }
+        }
+        return dest;
+    }
 }

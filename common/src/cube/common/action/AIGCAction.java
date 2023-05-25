@@ -67,6 +67,11 @@ public enum AIGCAction {
     RequestChannel("requestChannel"),
 
     /**
+     * 保活通道。
+     */
+    KeepAliveChannel("keepAliveChannel"),
+
+    /**
      * 问答互动。
      */
     Chat("chat"),
