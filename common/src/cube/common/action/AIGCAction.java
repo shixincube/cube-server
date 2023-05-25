@@ -57,6 +57,11 @@ public enum AIGCAction {
     CheckToken("checkToken"),
 
     /**
+     * 评价回答内容的质量。
+     */
+    Evaluate("evaluate"),
+
+    /**
      * 请求通道。
      */
     RequestChannel("requestChannel"),

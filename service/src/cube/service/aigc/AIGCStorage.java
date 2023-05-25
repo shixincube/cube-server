@@ -263,6 +263,14 @@ public class AIGCStorage implements Storagable {
         });
     }
 
+    public boolean updateChatHistoryFeedback(long sn, int feedback) {
+        return this.storage.executeUpdate(this.queryAnswerTable, new StorageField[] {
+                new StorageField("feedback", feedback)
+        }, new Conditional[] {
+                Conditional.createEqualTo("sn", sn)
+        });
+    }
+
     private void resetDefaultConfig() {
         ModelConfig baizeNLG = new ModelConfig("BaizeNLG",
                 "支持中英双语的对话语言模型，具有 62 亿参数。针对中文问答和对话进行了优化。经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的优化。",

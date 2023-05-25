@@ -435,6 +435,21 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
+     * 对历史问答进行评价。
+     *
+     * @param historySN
+     * @param scores
+     */
+    public void evaluate(long historySN, int scores) {
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                storage.updateChatHistoryFeedback(historySN, scores);
+            }
+        });
+    }
+
+    /**
      * 申请频道。
      *
      * @param token
@@ -501,12 +516,16 @@ public class AIGCService extends AbstractModule {
         channel.setProcessing(true);
 
         // 查找有该能力的单元
+        // 优先按照单元名称进行检索，然后按照描述进行检索
         AIGCUnit unit = null;
         if (null != unitName) {
             unit = this.selectUnitByName(unitName);
         }
         else if (null != desc) {
-            unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational, desc);
+            unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational, desc);
+            if (null == unit) {
+                unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational, desc);
+            }
         }
         else {
             unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);

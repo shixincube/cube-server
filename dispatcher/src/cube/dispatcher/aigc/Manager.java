@@ -114,6 +114,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Config());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Change());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Chat());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Evaluate());
     }
 
     public boolean checkToken(String token) {
@@ -192,6 +193,26 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return null;
+    }
+
+    public boolean evaluate(long sn, int scores) {
+        JSONObject data = new JSONObject();
+        data.put("sn", sn);
+        data.put("scores", scores);
+        Packet packet = new Packet(AIGCAction.Evaluate.name, data);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+        if (null == response) {
+            Logger.w(Manager.class, "#evaluate - Response is null");
+            return false;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#evaluate - Response state code is NOT Ok - " + Packet.extractCode(responsePacket));
+            return false;
+        }
+
+        return true;
     }
 
     public AIGCChannel requestChannel(String token, String participant) {
