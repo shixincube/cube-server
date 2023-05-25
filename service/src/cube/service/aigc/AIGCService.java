@@ -1064,6 +1064,8 @@ public class AIGCService extends AbstractModule {
 
     private class ChatUnitMeta {
 
+        protected final long sn;
+
         protected AIGCUnit unit;
 
         protected AIGCChannel channel;
@@ -1080,6 +1082,7 @@ public class AIGCService extends AbstractModule {
 
         public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
                             List<AIGCChatRecord> records, ChatListener listener) {
+            this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
             this.content = content;
@@ -1087,20 +1090,21 @@ public class AIGCService extends AbstractModule {
             this.histories = 3;
             this.listener = listener;
 
-            this.history = new AIGCChatHistory(unit.getCapability().getName());
+            this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName());
             this.history.queryContactId = channel.getAuthToken().getContactId();
             this.history.queryTime = System.currentTimeMillis();
             this.history.queryContent = content;
         }
 
         public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, int histories, ChatListener listener) {
+            this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
             this.content = content;
             this.histories = histories;
             this.listener = listener;
 
-            this.history = new AIGCChatHistory(unit.getCapability().getName());
+            this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName());
             this.history.queryContactId = channel.getAuthToken().getContactId();
             this.history.queryTime = System.currentTimeMillis();
             this.history.queryContent = content;
@@ -1155,6 +1159,8 @@ public class AIGCService extends AbstractModule {
 
             String responseText = payload.getString("response");
             AIGCChatRecord result = this.channel.appendRecord(this.content, responseText);
+            // 设置 SN
+            result.sn = this.sn;
 
             this.history.answerContactId = unit.getContact().getId();
             this.history.answerTime = System.currentTimeMillis();
@@ -1177,6 +1183,8 @@ public class AIGCService extends AbstractModule {
 
     private class ConversationUnitMeta {
 
+        protected final long sn;
+
         protected AIGCUnit unit;
 
         protected AIGCChannel channel;
@@ -1191,13 +1199,14 @@ public class AIGCService extends AbstractModule {
 
         public ConversationUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
                                     AIGCConversationParameter parameter, ConversationListener listener) {
+            this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
             this.content = content;
             this.parameter = parameter;
             this.listener = listener;
 
-            this.history = new AIGCChatHistory(unit.getCapability().getName());
+            this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName());
             this.history.queryContactId = channel.getAuthToken().getContactId();
             this.history.queryTime = System.currentTimeMillis();
             this.history.queryContent = content;
@@ -1262,8 +1271,7 @@ public class AIGCService extends AbstractModule {
             }
 
             JSONObject payload = Packet.extractDataPayload(response);
-            AIGCConversationResponse convResponse = new AIGCConversationResponse(payload);
-            convResponse.query = this.content;
+            AIGCConversationResponse convResponse = new AIGCConversationResponse(this.sn, this.content, payload);
 
             this.history.answerContactId = this.unit.getContact().getId();
             this.history.answerTime = System.currentTimeMillis();

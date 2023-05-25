@@ -34,6 +34,8 @@ import org.json.JSONObject;
  */
 public class AIGCChatRecord implements JSONable {
 
+    public long sn;
+
     public String query;
 
     public String answer;
@@ -53,6 +55,10 @@ public class AIGCChatRecord implements JSONable {
         if (json.has("timestamp")) {
             this.timestamp = json.getLong("timestamp");
         }
+
+        if (json.has("sn")) {
+            this.sn = json.getLong("sn");
+        }
     }
 
     public int totalWords() {
@@ -62,6 +68,7 @@ public class AIGCChatRecord implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
         json.put("query", this.query);
         json.put("answer", this.answer);
         json.put("timestamp", this.timestamp);

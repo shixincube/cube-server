@@ -147,6 +147,8 @@ public class AICapability implements JSONable {
 
         public final static String MultiTask = "MultiTask";
 
+        public final static String KnowledgeComprehension = "KnowledgeComprehension";
+
         private NaturalLanguageProcessing() {
         }
     }

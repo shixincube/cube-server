@@ -35,6 +35,8 @@ import java.util.List;
 
 public class ConversationResponse implements JSONable {
 
+    private long sn;
+
     private String id = "";
 
     private String conversationId = "";
@@ -47,13 +49,15 @@ public class ConversationResponse implements JSONable {
 
     private Detail detail = new Detail();
 
-    public ConversationResponse(String id, String conversationId, String text) {
+    public ConversationResponse(long sn, String id, String conversationId, String text) {
+        this.sn = sn;
         this.id = id;
         this.conversationId = conversationId;
         this.text = text;
     }
 
-    public ConversationResponse(String id, String conversationId, String text, String parentMessageId) {
+    public ConversationResponse(long sn, String id, String conversationId, String text, String parentMessageId) {
+        this.sn = sn;
         this.id = id;
         this.conversationId = conversationId;
         this.text = text;
@@ -61,6 +65,7 @@ public class ConversationResponse implements JSONable {
     }
 
     public ConversationResponse(JSONObject json) {
+        this.sn = json.getLong("sn");
         this.id = json.getString("id");
         this.conversationId = json.getString("conversationId");
         this.parentMessageId = json.getString("parentMessageId");
@@ -72,6 +77,7 @@ public class ConversationResponse implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
         json.put("id", this.id);
         json.put("conversationId", this.conversationId);
         json.put("parentMessageId", this.parentMessageId);

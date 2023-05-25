@@ -115,6 +115,7 @@ public class ImprovementChat extends ContextHandler {
             // Record 转结果
             JSONObject responseData = new JSONObject();
             responseData.put("participant", AI_NAME);
+            responseData.put("sn", record.sn);
             responseData.put("content", record.answer);
             responseData.put("timestamp", record.timestamp);
 

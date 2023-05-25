@@ -40,16 +40,20 @@ public class ModelConfig implements JSONable {
 
     private final String apiURL;
 
-    public ModelConfig(String name, String desc, String apiURL) {
+    private final JSONObject parameter;
+
+    public ModelConfig(String name, String desc, String apiURL, JSONObject parameter) {
         this.name = name;
         this.desc = desc;
         this.apiURL = apiURL + (apiURL.endsWith("/") ? "" : "/");
+        this.parameter = parameter;
     }
 
     public ModelConfig(JSONObject json) {
         this.name = json.getString("name");
         this.desc = json.getString("desc");
         this.apiURL = json.getString("apiURL");
+        this.parameter = json.getJSONObject("parameter");
     }
 
     public String getName() {
@@ -69,12 +73,17 @@ public class ModelConfig implements JSONable {
         return this.apiURL.substring(0, index) + "/aigc/channel/";
     }
 
+    public JSONObject getParameter() {
+        return this.parameter;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
         json.put("desc", this.desc);
         json.put("apiURL", this.apiURL);
+        json.put("parameter", this.parameter);
         return json;
     }
 

@@ -274,13 +274,13 @@ public class Manager implements Tickable, PerformerListener {
         if (null != records) {
             data.put("records", records);
         }
-        if (temperature >= 0 && temperature < 1.0) {
+        if (temperature >= 0.0 && temperature <= 1.0) {
             data.put("temperature", temperature);
         }
-        if (topP >= 0 && topP < 1.0) {
+        if (topP >= 0.0 && topP <= 1.0) {
             data.put("topP", topP);
         }
-        if (repetitionPenalty >= 0) {
+        if (repetitionPenalty >= 0.0) {
             data.put("repetitionPenalty", repetitionPenalty);
         }
 

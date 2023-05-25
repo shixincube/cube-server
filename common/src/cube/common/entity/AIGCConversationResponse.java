@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
@@ -33,6 +34,8 @@ import org.json.JSONObject;
  * AIGC 互动聊天记录。
  */
 public class AIGCConversationResponse implements JSONable {
+
+    public final long sn;
 
     public String query;
 
@@ -53,6 +56,12 @@ public class AIGCConversationResponse implements JSONable {
             this.query = json.getString("query");
         }
 
+        if (json.has("sn")) {
+            this.sn = json.getLong("sn");
+        }
+        else {
+            this.sn = Utils.generateSerialNumber();
+        }
         this.answer = json.getString("answer");
         this.thought = json.getString("thought");
         this.needHistory = json.getBoolean("needHistory");
@@ -67,7 +76,8 @@ public class AIGCConversationResponse implements JSONable {
         }
     }
 
-    public AIGCConversationResponse(String query, JSONObject json) {
+    public AIGCConversationResponse(long sn, String query, JSONObject json) {
+        this.sn = sn;
         this.query = query;
 
         this.answer = json.getString("answer");
@@ -86,6 +96,7 @@ public class AIGCConversationResponse implements JSONable {
 
     public AIGCChatRecord toRecord() {
         AIGCChatRecord record = new AIGCChatRecord(this.query, this.answer, this.timestamp);
+        record.sn = this.sn;
         return record;
     }
 
@@ -96,6 +107,7 @@ public class AIGCConversationResponse implements JSONable {
             json.put("query", this.query);
         }
 
+        json.put("sn", this.sn);
         json.put("answer", this.answer);
         json.put("thought", this.thought);
         json.put("needHistory", this.needHistory);

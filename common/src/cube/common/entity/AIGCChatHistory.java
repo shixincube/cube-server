@@ -33,6 +33,8 @@ import org.json.JSONObject;
  */
 public class AIGCChatHistory extends Entity {
 
+    public final long sn;
+
     public String unit;
 
     public long queryContactId;
@@ -47,19 +49,24 @@ public class AIGCChatHistory extends Entity {
 
     public String answerContent;
 
+    public int feedback;
+
     public long contextId;
 
-    public AIGCChatHistory(String unit) {
+    public AIGCChatHistory(long sn, String unit) {
         super(0L, "shixincube.com");
+        this.sn = sn;
         this.unit = unit;
     }
 
-    public AIGCChatHistory(long id) {
+    public AIGCChatHistory(long id, long sn) {
         super(id, "shixincube.com");
+        this.sn = sn;
     }
 
     public AIGCChatHistory(JSONObject json) {
         super(json);
+        this.sn = json.getLong("sn");
         this.unit = json.getString("unit");
         this.queryContactId = json.getLong("queryContactId");
         this.queryTime = json.getLong("queryTime");
@@ -67,12 +74,14 @@ public class AIGCChatHistory extends Entity {
         this.answerContactId = json.getLong("answerContactId");
         this.answerTime = json.getLong("answerTime");
         this.answerContent = json.getString("answerContent");
+        this.feedback = json.getInt("feedback");
         this.contextId = json.getLong("contextId");
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        json.put("sn", this.sn);
         json.put("unit", this.unit);
         json.put("queryContactId", this.queryContactId);
         json.put("queryTime", this.queryTime);
@@ -80,6 +89,7 @@ public class AIGCChatHistory extends Entity {
         json.put("answerContactId", this.answerContactId);
         json.put("answerTime", this.answerTime);
         json.put("answerContent", this.answerContent);
+        json.put("feedback", this.feedback);
         json.put("contextId", this.contextId);
         return json;
     }

@@ -26,7 +26,6 @@
 
 package cube.dispatcher.aigc.handler.app;
 
-import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ConversationRequest;
 import cube.aigc.ConversationResponse;
@@ -40,7 +39,10 @@ import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -170,6 +172,9 @@ public final class App {
 
         String convId = channel.code;
 
+        // 序号
+        long sn = 0;
+
         // 结果内容
         String content = null;
 
@@ -190,9 +195,11 @@ public final class App {
                 JSONObject responseData = new JSONObject(response.getContentAsString());
                 if (responseData.has("content")) {
                     content = responseData.getString("content");
+                    sn = responseData.getLong("sn");
                 }
                 else if (responseData.has("response")) {
                     content = responseData.getJSONObject("response").getString("answer");
+                    sn = responseData.getLong("sn");
                 }
             }
             else {
@@ -215,10 +222,11 @@ public final class App {
             return null;
         }
 
-        return this.splitResponse(convId, request, content);
+        return this.splitResponse(sn, convId, request, content);
     }
 
-    private List<ConversationResponse> splitResponse(String conversationId, ConversationRequest request, String content) {
+    private List<ConversationResponse> splitResponse(long sn, String conversationId,
+                                                     ConversationRequest request, String content) {
         List<ConversationResponse> result = new ArrayList<>();
 
         // 先拆为字符数组
@@ -234,7 +242,7 @@ public final class App {
             String text = list.get(i);
 
             String id = UUID.randomUUID().toString();
-            ConversationResponse response = new ConversationResponse(id, conversationId, text, pid);
+            ConversationResponse response = new ConversationResponse(sn, id, conversationId, text, pid);
             result.add(response);
 
             pid = id;

@@ -122,6 +122,7 @@ public class Conversation extends ContextHandler {
             // Response
             JSONObject responseData = new JSONObject();
             responseData.put("participant", AI_NAME);
+            responseData.put("sn", convResponse.sn);
             responseData.put("timestamp", System.currentTimeMillis());
             responseData.put("response", convResponse.toJSON());
 

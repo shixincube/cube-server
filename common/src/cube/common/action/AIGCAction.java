@@ -89,7 +89,12 @@ public enum AIGCAction {
     /**
      * 搜索命令。
      */
-    SearchCommand("searchCommand")
+    SearchCommand("searchCommand"),
+
+    /**
+     * 文档问答。
+     */
+    DocQA("docQA")
 
     ;
 

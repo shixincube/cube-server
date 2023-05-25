@@ -28,8 +28,8 @@ package cube.service.aigc;
 
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
-import cube.common.Storagable;
 import cube.aigc.ModelConfig;
+import cube.common.Storagable;
 import cube.common.entity.AIGCChatHistory;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -92,6 +92,9 @@ public class AIGCStorage implements Storagable {
             new StorageField("id", LiteralBase.LONG, new Constraint[]{
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("unit", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -112,6 +115,10 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("answer_content", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            // 人类反馈的得分
+            new StorageField("feedback", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
             }),
             new StorageField("context_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.DEFAULT_0
@@ -180,10 +187,12 @@ public class AIGCStorage implements Storagable {
                     Conditional.createEqualTo("item", modelName)
             });
 
-            for (StorageField[] data : result) {
-                Map<String, StorageField> value = StorageFields.get(data);
-                ModelConfig config = new ModelConfig(value.get("item").getString(),
-                        value.get("comment").getString(), value.get("value").getString());
+            for (StorageField[] fields : result) {
+                Map<String, StorageField> data = StorageFields.get(fields);
+                JSONObject value = new JSONObject(data.get("value").getString());
+                ModelConfig config = new ModelConfig(data.get("item").getString(),
+                        value.getString("desc"), value.getString("api"),
+                        value.getJSONObject("param"));
                 list.add(config);
             }
         }
@@ -223,7 +232,7 @@ public class AIGCStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            AIGCChatHistory history = new AIGCChatHistory(data.get("id").getLong());
+            AIGCChatHistory history = new AIGCChatHistory(data.get("id").getLong(), data.get("sn").getLong());
             history.unit = data.get("unit").getString();
             history.queryContactId = data.get("query_cid").getLong();
             history.queryTime = data.get("query_time").getLong();
@@ -231,6 +240,7 @@ public class AIGCStorage implements Storagable {
             history.answerContactId = data.get("answer_cid").getLong();
             history.answerTime = data.get("answer_time").getLong();
             history.answerContent = data.get("answer_content").getString();
+            history.feedback = data.get("feedback").getInt();
             history.contextId = data.get("context_id").getLong();
             list.add(history);
         }
@@ -240,6 +250,7 @@ public class AIGCStorage implements Storagable {
 
     public void writeChatHistory(AIGCChatHistory history) {
         this.storage.executeInsert(this.queryAnswerTable, new StorageField[] {
+                new StorageField("sn", history.sn),
                 new StorageField("unit", history.unit),
                 new StorageField("query_cid", history.queryContactId),
                 new StorageField("query_time", history.queryTime),
@@ -247,6 +258,7 @@ public class AIGCStorage implements Storagable {
                 new StorageField("answer_cid", history.answerContactId),
                 new StorageField("answer_time", history.answerTime),
                 new StorageField("answer_content", history.answerContent),
+                new StorageField("feedback", history.feedback),
                 new StorageField("context_id", history.contextId)
         });
     }
@@ -254,11 +266,11 @@ public class AIGCStorage implements Storagable {
     private void resetDefaultConfig() {
         ModelConfig baizeNLG = new ModelConfig("BaizeNLG",
                 "支持中英双语的对话语言模型，具有 62 亿参数。针对中文问答和对话进行了优化。经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的优化。",
-                "http://36.133.49.214:7010/aigc/chat/");
+                "http://36.133.49.214:7010/aigc/chat/", new JSONObject());
 
         ModelConfig baizeNEXT = new ModelConfig("BaizeNEXT",
                 "支持中英双语和多种插件的开源对话语言模型。模型具有 160 亿参数。在约七千亿中英文以及代码单词上预训练得到，后续经过对话指令微调、插件增强学习和人类偏好训练具备多轮对话能力及使用多种插件的能力。",
-                "http://36.133.49.214:7010/aigc/conversation/");
+                "http://36.133.49.214:7010/aigc/conversation/", new JSONObject());
 
         // 重置列表
         List<StorageField[]> result = this.storage.executeQuery(this.appConfigTable, new StorageField[] {
@@ -281,6 +293,11 @@ public class AIGCStorage implements Storagable {
                 new StorageField("modified", System.currentTimeMillis())
         });
 
+        // value 为 JSON string
+        JSONObject value = new JSONObject();
+        value.put("api", baizeNLG.getApiURL());
+        value.put("desc", baizeNLG.getDesc());
+        value.put("param", baizeNLG.getParameter());
         result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
                 Conditional.createEqualTo("item", baizeNLG.getName())
         });
@@ -291,11 +308,15 @@ public class AIGCStorage implements Storagable {
         }
         this.storage.executeInsert(this.appConfigTable, new StorageField[] {
                 new StorageField("item", baizeNLG.getName()),
-                new StorageField("value", baizeNLG.getApiURL()),
-                new StorageField("comment", baizeNLG.getDesc()),
+                new StorageField("value", value.toString()),
+                new StorageField("comment", "白泽自然语言生成模型"),
                 new StorageField("modified", System.currentTimeMillis())
         });
 
+        value = new JSONObject();
+        value.put("api", baizeNEXT.getApiURL());
+        value.put("desc", baizeNEXT.getDesc());
+        value.put("param", baizeNEXT.getParameter());
         result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
                 Conditional.createEqualTo("item", baizeNEXT.getName())
         });
@@ -306,8 +327,8 @@ public class AIGCStorage implements Storagable {
         }
         this.storage.executeInsert(this.appConfigTable, new StorageField[] {
                 new StorageField("item", baizeNEXT.getName()),
-                new StorageField("value", baizeNEXT.getApiURL()),
-                new StorageField("comment", baizeNEXT.getDesc()),
+                new StorageField("value", value.toString()),
+                new StorageField("comment", "白泽大规模自然语言生成模型"),
                 new StorageField("modified", System.currentTimeMillis())
         });
     }
