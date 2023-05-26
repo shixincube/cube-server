@@ -26,6 +26,7 @@
 
 package cube.service.aigc.plugin;
 
+import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
@@ -55,8 +56,13 @@ public class InjectTokenPlugin implements Plugin {
 
     @Override
     public void onAction(PluginContext context) {
-        AuthPluginContext ctx = (AuthPluginContext) context;
-        AuthToken token = ctx.getToken();
-        this.service.newInvitationForToken(token.getCode());
+        try {
+            AuthPluginContext ctx = (AuthPluginContext) context;
+            AuthToken token = ctx.getToken();
+            this.service.newInvitationForToken(token.getCode());
+            Logger.i(this.getClass(), "Insert invitation for token \"" + token.getCode() + "\"");
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#onAction", e);
+        }
     }
 }

@@ -170,6 +170,7 @@ public class AIGCService extends AbstractModule {
                         new InjectTokenPlugin(AIGCService.this));
 
                 started.set(true);
+                Logger.i(AIGCService.class, "AIGC service is ready");
             }
         })).start();
     }
@@ -418,7 +419,9 @@ public class AIGCService extends AbstractModule {
      */
     public String newInvitationForToken(String token) {
         String invitation = Utils.randomNumberString(6);
-        this.storage.writeInvitation(invitation, token);
+        if (!this.storage.writeInvitation(invitation, token)) {
+            Logger.e(this.getClass(), "#newInvitationForToken - write invitation failed: " + token);
+        }
         return invitation;
     }
 
