@@ -190,9 +190,7 @@ public class AIGCStorage implements Storagable {
             for (StorageField[] fields : result) {
                 Map<String, StorageField> data = StorageFields.get(fields);
                 JSONObject value = new JSONObject(data.get("value").getString());
-                ModelConfig config = new ModelConfig(data.get("item").getString(),
-                        value.getString("desc"), value.getString("api"),
-                        value.getJSONObject("param"));
+                ModelConfig config = new ModelConfig(value);
                 list.add(config);
             }
         }
@@ -272,13 +270,25 @@ public class AIGCStorage implements Storagable {
     }
 
     private void resetDefaultConfig() {
+        // 支持中英双语的对话语言模型，具有 62 亿参数。针对中文问答和对话进行了优化。经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的优化。
+        JSONObject parameter = new JSONObject();
+        parameter.put("unit", "Chat");
         ModelConfig baizeNLG = new ModelConfig("BaizeNLG",
-                "支持中英双语的对话语言模型，具有 62 亿参数。针对中文问答和对话进行了优化。经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的优化。",
-                "http://36.133.49.214:7010/aigc/chat/", new JSONObject());
+                "适合大多数场景的通用模型",
+                "http://36.133.49.214:7010/aigc/chat/", parameter);
 
+        // 支持中英双语的功能型对话语言大模型。以轻量化实现高质量效果的模型。在1000亿 Token 中文语料上预训练，累计学习1.5万亿中文 Token，并且在数百种任务上进行 Prompt 任务式训练。针对理解类任务，如分类、情感分析、抽取等，可以自定义标签体系；针对多种生成任务，可以进行采样自由生成。
+        parameter = new JSONObject();
+        parameter.put("unit", "ChatT5G");
+        ModelConfig baizeX = new ModelConfig("BaizeX",
+                "适合一般场景且速度较快的通用模型",
+                "http://36.133.49.214:7010/aigc/chat/", parameter);
+
+        // 支持中英双语和多种插件的开源对话语言模型。模型具有 160 亿参数。在约七千亿中英文以及代码单词上预训练得到，后续经过对话指令微调、插件增强学习和人类偏好训练具备多轮对话能力及使用多种插件的能力。
+        parameter = new JSONObject();
         ModelConfig baizeNEXT = new ModelConfig("BaizeNEXT",
-                "支持中英双语和多种插件的开源对话语言模型。模型具有 160 亿参数。在约七千亿中英文以及代码单词上预训练得到，后续经过对话指令微调、插件增强学习和人类偏好训练具备多轮对话能力及使用多种插件的能力。",
-                "http://36.133.49.214:7010/aigc/conversation/", new JSONObject());
+                "适合谨慎问答场景的大模型（测试版）",
+                "http://36.133.49.214:7010/aigc/conversation/", parameter);
 
         // 重置列表
         List<StorageField[]> result = this.storage.executeQuery(this.appConfigTable, new StorageField[] {
@@ -293,6 +303,7 @@ public class AIGCStorage implements Storagable {
         }
         JSONArray models = new JSONArray();
         models.put(baizeNLG.getName());
+        models.put(baizeX.getName());
         models.put(baizeNEXT.getName());
         this.storage.executeInsert(this.appConfigTable, new StorageField[] {
                 new StorageField("item", ITEM_NAME_MODELS),
@@ -301,11 +312,9 @@ public class AIGCStorage implements Storagable {
                 new StorageField("modified", System.currentTimeMillis())
         });
 
-        // value 为 JSON string
-        JSONObject value = new JSONObject();
-        value.put("api", baizeNLG.getApiURL());
-        value.put("desc", baizeNLG.getDesc());
-        value.put("param", baizeNLG.getParameter());
+        // 字段 value 为模型配置的 JSON string
+
+        // BaizeNLG
         result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
                 Conditional.createEqualTo("item", baizeNLG.getName())
         });
@@ -316,15 +325,28 @@ public class AIGCStorage implements Storagable {
         }
         this.storage.executeInsert(this.appConfigTable, new StorageField[] {
                 new StorageField("item", baizeNLG.getName()),
-                new StorageField("value", value.toString()),
-                new StorageField("comment", "白泽自然语言生成模型"),
+                new StorageField("value", baizeNLG.toJSON().toString()),
+                new StorageField("comment", "自然语言生成模型"),
                 new StorageField("modified", System.currentTimeMillis())
         });
 
-        value = new JSONObject();
-        value.put("api", baizeNEXT.getApiURL());
-        value.put("desc", baizeNEXT.getDesc());
-        value.put("param", baizeNEXT.getParameter());
+        // BaizeX
+        result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
+                Conditional.createEqualTo("item", baizeX.getName())
+        });
+        if (!result.isEmpty()) {
+            this.storage.executeDelete(this.appConfigTable, new Conditional[] {
+                    Conditional.createEqualTo("item", baizeX.getName())
+            });
+        }
+        this.storage.executeInsert(this.appConfigTable, new StorageField[] {
+                new StorageField("item", baizeX.getName()),
+                new StorageField("value", baizeX.toJSON().toString()),
+                new StorageField("comment", "效能较好的自然语言生成模型"),
+                new StorageField("modified", System.currentTimeMillis())
+        });
+
+        // BaizeNEXT
         result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
                 Conditional.createEqualTo("item", baizeNEXT.getName())
         });
@@ -335,8 +357,8 @@ public class AIGCStorage implements Storagable {
         }
         this.storage.executeInsert(this.appConfigTable, new StorageField[] {
                 new StorageField("item", baizeNEXT.getName()),
-                new StorageField("value", value.toString()),
-                new StorageField("comment", "白泽大规模自然语言生成模型"),
+                new StorageField("value", baizeNEXT.toJSON().toString()),
+                new StorageField("comment", "支持下游任务的大语言生成模型"),
                 new StorageField("modified", System.currentTimeMillis())
         });
     }
