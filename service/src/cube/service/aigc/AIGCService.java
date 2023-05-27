@@ -479,6 +479,22 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
+     * 保活频道。
+     *
+     * @param token
+     * @return
+     */
+    public boolean keepAliveChannel(String token) {
+        AIGCChannel channel = this.channelMap.get(token);
+        if (null == channel) {
+            return false;
+        }
+
+        channel.setActiveTimestamp(System.currentTimeMillis());
+        return true;
+    }
+
+    /**
      * 执行聊天任务。
      *
      * @param code

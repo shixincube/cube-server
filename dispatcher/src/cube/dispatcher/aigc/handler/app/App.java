@@ -40,10 +40,7 @@ import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -62,7 +59,9 @@ public final class App {
      */
     private Map<String, ChannelInfo> tokenChannelMap;
 
-    private final long channelTimeout = 20 * 60 * 1000;
+    private final long channelTimeout = 25 * 60 * 1000;
+
+    private long lastCheckTime = 0;
 
     private App() {
         this.modelConfigMap = new ConcurrentHashMap<>();
@@ -77,6 +76,22 @@ public final class App {
     }
 
     public void stop() {
+    }
+
+    public void onTick(long now) {
+        // 删除超时的频道
+        if (now - this.lastCheckTime >= this.channelTimeout) {
+            this.lastCheckTime = now;
+
+            Iterator<Map.Entry<String, ChannelInfo>> iter = this.tokenChannelMap.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry<String, ChannelInfo> e = iter.next();
+                ChannelInfo channel = e.getValue();
+                if (now - channel.lastActivate > this.channelTimeout) {
+                    iter.remove();
+                }
+            }
+        }
     }
 
     public ModelConfig getModelConfig(String token) {

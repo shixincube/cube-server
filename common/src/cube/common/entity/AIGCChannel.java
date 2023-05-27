@@ -118,6 +118,10 @@ public class AIGCChannel extends Entity {
         return this.activeTimestamp;
     }
 
+    public void setActiveTimestamp(long time) {
+        this.activeTimestamp = time;
+    }
+
     public void setProcessing(boolean value) {
         this.processing.set(value);
     }

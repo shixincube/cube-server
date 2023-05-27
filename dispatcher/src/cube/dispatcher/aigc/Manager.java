@@ -115,6 +115,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Change());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Chat());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Evaluate());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.KeepAlive());
     }
 
     public boolean checkToken(String token) {
@@ -236,6 +237,27 @@ public class Manager implements Tickable, PerformerListener {
 
         AIGCChannel channel = new AIGCChannel(Packet.extractDataPayload(responsePacket));
         return channel;
+    }
+
+    public boolean keepAliveChannel(String channelCode) {
+        JSONObject data = new JSONObject();
+        data.put("code", channelCode);
+        Packet packet = new Packet(AIGCAction.KeepAliveChannel.name, data);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+        if (null == response) {
+            Logger.w(Manager.class, "#keepAliveChannel - Response is null, code : " + channelCode);
+            return false;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#keepAliveChannel - Response state code is NOT Ok : " + channelCode +
+                    " - " + Packet.extractCode(responsePacket));
+            return false;
+        }
+
+        return true;
     }
 
     public AIGCChatRecord chat(String channelCode, String content, String unit, int histories, JSONArray records) {
@@ -407,6 +429,9 @@ public class Manager implements Tickable, PerformerListener {
                 }
             }
         }
+
+        // 回调 App 的 onTick
+        App.getInstance().onTick(now);
     }
 
     @Override
