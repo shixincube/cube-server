@@ -29,6 +29,7 @@ package cube.service.aigc;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
+import cube.aigc.Notification;
 import cube.common.Storagable;
 import cube.common.entity.AIGCChatHistory;
 import cube.core.Conditional;
@@ -55,6 +56,8 @@ public class AIGCStorage implements Storagable {
     private final String appConfigTable = "aigc_app_config";
 
     private final String appInvitationTable = "aigc_app_invitation";
+
+    private final String appNotificationTable = "aigc_app_notification";
 
     private final String queryAnswerTable = "aigc_query_answer";
 
@@ -84,6 +87,27 @@ public class AIGCStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("token", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] appNotificationFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            new StorageField("type", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("title", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("content", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("date", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             })
     };
@@ -157,6 +181,13 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.appInvitationTable, this.appInvitationFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.appInvitationTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.appNotificationTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.appNotificationTable, this.appNotificationFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.appNotificationTable + "' successfully");
             }
         }
 
@@ -266,6 +297,39 @@ public class AIGCStorage implements Storagable {
                 new StorageField("feedback", feedback)
         }, new Conditional[] {
                 Conditional.createEqualTo("sn", sn)
+        });
+    }
+
+    public List<Notification> readEnabledNotifications() {
+        List<Notification> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.appNotificationTable, this.appNotificationFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("state", Notification.STATE_ENABLED)
+                });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            Notification notification = new Notification(data.get("id").getLong(),
+                    data.get("type").getString(),
+                    data.get("state").getInt(),
+                    data.get("title").getString(),
+                    data.get("content").getString(),
+                    data.get("date").getString());
+            list.add(notification);
+        }
+
+        return list;
+    }
+
+    public void writeNotification(Notification notification) {
+        this.storage.executeInsert(this.appNotificationTable, new StorageField[] {
+                new StorageField("id", notification.id),
+                new StorageField("type", notification.type),
+                new StorageField("state", notification.state),
+                new StorageField("title", notification.title),
+                new StorageField("content", notification.content),
+                new StorageField("date", notification.date)
         });
     }
 

@@ -31,6 +31,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
+import cube.aigc.Notification;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -275,6 +276,14 @@ public class AIGCService extends AbstractModule {
         }
 
         return this.storage.getModelConfigs();
+    }
+
+    public List<Notification> getNotifications() {
+        if (!this.isStarted()) {
+            return null;
+        }
+
+        return this.storage.readEnabledNotifications();
     }
 
     public AIGCUnit selectUnitByName(String unitName) {

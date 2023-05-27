@@ -32,6 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.ConfigInfo;
 import cube.aigc.ModelConfig;
+import cube.aigc.Notification;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -83,7 +84,15 @@ public class GetConfigTask extends ServiceTask {
             return;
         }
 
-        ConfigInfo configInfo = new ConfigInfo(models);
+        List<Notification> notifications = service.getNotifications();
+        if (null == notifications) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
+        ConfigInfo configInfo = new ConfigInfo(models, notifications);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, configInfo.toJSON()));

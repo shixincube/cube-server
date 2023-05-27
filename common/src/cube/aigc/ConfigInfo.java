@@ -40,12 +40,15 @@ public class ConfigInfo implements JSONable {
 
     public List<ModelConfig> models;
 
+    public List<Notification> notifications;
+
     public long timeoutMs;
 
     public int usage;
 
-    public ConfigInfo(List<ModelConfig> models) {
+    public ConfigInfo(List<ModelConfig> models, List<Notification> notifications) {
         this.models = models;
+        this.notifications = notifications;
         this.timeoutMs = 60 * 1000;
         this.usage = 0;
     }
@@ -57,6 +60,14 @@ public class ConfigInfo implements JSONable {
             ModelConfig mc = new ModelConfig(modelArray.getJSONObject(i));
             this.models.add(mc);
         }
+
+        this.notifications = new ArrayList<>();
+        JSONArray notificationArray = json.getJSONArray("notifications");
+        for (int i = 0; i < notificationArray.length(); ++i) {
+            Notification notification = new Notification(notificationArray.getJSONObject(i));
+            this.notifications.add(notification);
+        }
+
         this.timeoutMs = json.getLong("timeoutMs");
         this.usage = json.getInt("usage");
     }
@@ -72,13 +83,21 @@ public class ConfigInfo implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+
         JSONArray modelArray = new JSONArray();
         for (ModelConfig model : this.models) {
             modelArray.put(model.toJSON());
         }
+
+        JSONArray notificationArray = new JSONArray();
+        for (Notification notification : this.notifications) {
+            notificationArray.put(notification.toJSON());
+        }
+
         json.put("models", modelArray);
-        json.put("timeoutMs", 60 * 1000);
-        json.put("usage", 0);
+        json.put("notifications", notificationArray);
+        json.put("timeoutMs", this.timeoutMs);
+        json.put("usage", this.usage);
         return json;
     }
 
