@@ -200,6 +200,7 @@ public final class App {
         JSONObject apiData = JSONUtils.clone(config.getParameter());
         apiData.put("code", convId);
         apiData.put("content", request.prompt);
+        apiData.put("histories", request.usingContext ? 5 : 0);
         apiData.put("temperature", request.temperature);
         apiData.put("topP", request.topP);
         HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
