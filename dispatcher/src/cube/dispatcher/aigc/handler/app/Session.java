@@ -116,6 +116,9 @@ public class Session extends ContextHandler {
 
                         Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
                         responseData.put("context", contactToken.toJSON());
+
+                        // 知识库侧写
+                        responseData.put("knowledge", Manager.getInstance().getKnowledgeProfile(token).toJSON());
                     }
                     else {
                         responseData.put("auth", false);

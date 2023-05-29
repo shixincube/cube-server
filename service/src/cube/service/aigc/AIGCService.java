@@ -435,15 +435,38 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
-     * 校验令牌。
+     * 获取令牌。
      *
      * @param tokenCode
      * @return
      */
-    public AuthToken checkToken(String tokenCode) {
+    public AuthToken getToken(String tokenCode) {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(tokenCode);
         return authToken;
+    }
+
+    /**
+     * 获取知识库侧写。
+     *
+     * @param tokenCode
+     * @return
+     */
+    public KnowledgeProfile getKnowledgeProfile(String tokenCode) {
+        AuthToken authToken = this.getToken(tokenCode);
+        if (null == authToken) {
+            Logger.w(this.getClass(), "#getKnowledgeProfile - auth token is null: " + tokenCode);
+            return null;
+        }
+
+        KnowledgeProfile profile = this.storage.readKnowledgeProfile(authToken.getContactId());
+        if (null == profile) {
+            // 没有记录，返回不可用的侧写
+            profile = new KnowledgeProfile(0, authToken.getContactId(),
+                    KnowledgeProfile.STATE_FORBIDDEN, 0);
+        }
+
+        return profile;
     }
 
     /**

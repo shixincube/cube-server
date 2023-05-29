@@ -32,6 +32,7 @@ import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
 import cube.common.Storagable;
 import cube.common.entity.AIGCChatHistory;
+import cube.common.entity.KnowledgeProfile;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -60,6 +61,8 @@ public class AIGCStorage implements Storagable {
     private final String appNotificationTable = "aigc_app_notification";
 
     private final String queryAnswerTable = "aigc_query_answer";
+
+    private final String knowledgeProfileTable = "aigc_knowledge_profile";
 
     private final StorageField[] appConfigFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
@@ -112,8 +115,8 @@ public class AIGCStorage implements Storagable {
             })
     };
 
-    private final StorageField[] queryAnswerFields = new StorageField[]{
-            new StorageField("id", LiteralBase.LONG, new Constraint[]{
+    private final StorageField[] queryAnswerFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
@@ -146,6 +149,21 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("context_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.DEFAULT_0
+            })
+    };
+
+    private final StorageField[] knowledgeProfileFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            new StorageField("max_size", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
             })
     };
 
@@ -195,6 +213,13 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.queryAnswerTable, this.queryAnswerFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.queryAnswerTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.knowledgeProfileTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.knowledgeProfileTable, this.knowledgeProfileFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.knowledgeProfileTable + "' successfully");
             }
         }
     }
@@ -331,6 +356,21 @@ public class AIGCStorage implements Storagable {
                 new StorageField("content", notification.content),
                 new StorageField("date", notification.date)
         });
+    }
+
+    public KnowledgeProfile readKnowledgeProfile(long contactId) {
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeProfileTable, this.knowledgeProfileFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId)
+                });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        return new KnowledgeProfile(data.get("id").getLong(), data.get("contact_id").getLong(),
+                data.get("state").getInt(), data.get("max_size").getInt());
     }
 
     private void resetDefaultConfig() {

@@ -196,6 +196,25 @@ public class Manager implements Tickable, PerformerListener {
         return null;
     }
 
+    public KnowledgeProfile getKnowledgeProfile(String token) {
+        JSONObject data = new JSONObject();
+        data.put("token", token);
+        Packet packet = new Packet(AIGCAction.GetKnowledgeProfile.name, data);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+        if (null == response) {
+            Logger.w(Manager.class, "#getKnowledgeProfile - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#getKnowledgeProfile - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new KnowledgeProfile(Packet.extractDataPayload(responsePacket));
+    }
+
     public boolean evaluate(long sn, int scores) {
         JSONObject data = new JSONObject();
         data.put("sn", sn);

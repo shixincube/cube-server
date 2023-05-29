@@ -79,7 +79,7 @@ public class CheckTokenTask extends ServiceTask {
             }
         }
 
-        AuthToken token = service.checkToken(tokenCode);
+        AuthToken token = service.getToken(tokenCode);
         if (null == token) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

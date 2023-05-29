@@ -102,6 +102,11 @@ public enum AIGCAction {
     SearchCommand("searchCommand"),
 
     /**
+     * 获取知识库功能的概述数据。
+     */
+    GetKnowledgeProfile("getKnowledgeProfile"),
+
+    /**
      * 文档问答。
      */
     DocQA("docQA")

@@ -168,6 +168,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new GetConfigTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.GetKnowledgeProfile.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new GetKnowledgeProfileTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.Setup.name.equals(action)) {
             // 来自 Unit 的请求
             this.execute(new SetupTask(this, talkContext, primitive,

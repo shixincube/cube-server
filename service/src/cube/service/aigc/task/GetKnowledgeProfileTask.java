@@ -30,26 +30,21 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.aigc.ConfigInfo;
-import cube.aigc.ModelConfig;
-import cube.aigc.Notification;
-import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.KnowledgeProfile;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import org.json.JSONObject;
 
-import java.util.List;
-
 /**
- * 获取配置任务。
+ * 获取知识库侧写任务。
  */
-public class GetConfigTask extends ServiceTask {
+public class GetKnowledgeProfileTask extends ServiceTask {
 
-    public GetConfigTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public GetKnowledgeProfileTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -68,34 +63,16 @@ public class GetConfigTask extends ServiceTask {
         String tokenCode = packet.data.getString("token");
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        AuthToken token = service.getToken(tokenCode);
-        if (null == token) {
+        KnowledgeProfile knowledgeProfile = service.getKnowledgeProfile(tokenCode);
+        if (null == knowledgeProfile) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
             markResponseTime();
             return;
         }
-
-        List<ModelConfig> models = service.getModelConfigs();
-        if (null == models) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
-            markResponseTime();
-            return;
-        }
-
-        List<Notification> notifications = service.getNotifications();
-        if (null == notifications) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
-            markResponseTime();
-            return;
-        }
-
-        ConfigInfo configInfo = new ConfigInfo(models, notifications);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, configInfo.toJSON()));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, knowledgeProfile.toJSON()));
         markResponseTime();
     }
 }
