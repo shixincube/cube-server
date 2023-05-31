@@ -30,6 +30,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.FileStorageAction;
+import cube.common.entity.Folder;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
@@ -69,7 +70,10 @@ public class FileOperationHandler extends CrossDomainHandler {
         }
 
         String pathInfo = request.getPathInfo();
-        if (pathInfo.startsWith("/find")) {
+        if (pathInfo.startsWith("/list")) {
+            this.listFiles(data, request, response);
+        }
+        else if (pathInfo.startsWith("/find")) {
             this.findFile(data, request, response);
         }
         else if (pathInfo.startsWith("/delete")) {
@@ -79,6 +83,112 @@ public class FileOperationHandler extends CrossDomainHandler {
             response.setStatus(HttpStatus.NOT_ACCEPTABLE_406);
             this.complete();
         }
+    }
+
+    private void listFiles(JSONObject data, HttpServletRequest request, HttpServletResponse response) {
+        String token = data.has("token") ? data.getString("token") : null;
+        if (null == token) {
+            response.setStatus(HttpStatus.FORBIDDEN_403);
+            this.complete();
+            return;
+        }
+
+        boolean hierarchy = data.has("hierarchy") && data.getBoolean("hierarchy");
+
+        Packet responseData = null;
+
+        if (hierarchy) {
+            // 获取根目录信息
+            JSONObject payload = new JSONObject();
+            Packet packet = new Packet(FileStorageAction.GetRoot.name, payload);
+            ActionDialect packetDialect = packet.toDialect();
+            packetDialect.addParam("token", token);
+
+            ActionDialect responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
+            if (null == responseDialect) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+                this.complete();
+                return;
+            }
+
+            Packet responsePacket = new Packet(responseDialect);
+            int stateCode = Packet.extractCode(responsePacket);
+            if (stateCode != FileStorageStateCode.Ok.code) {
+                Logger.w(this.getClass(), "#listFiles - Service state code : " + stateCode);
+                this.respond(response, HttpStatus.NOT_FOUND_404, responsePacket.toJSON());
+                this.complete();
+                return;
+            }
+
+            // 根目录
+            Folder folder = new Folder(Packet.extractDataPayload(responsePacket));
+            if (folder.numFiles == 0) {
+                JSONObject packetPayload = new JSONObject();
+                packetPayload.put("total", folder.numFiles);
+                packetPayload.put("list", new JSONArray());
+                responseData = new Packet(FileStorageAction.ListFiles.name, packetPayload);
+            }
+            else {
+                // 获取目录里的文件列表
+                payload = new JSONObject();
+                payload.put("root", folder.ownerId);
+                payload.put("id", folder.id);
+                payload.put("begin", 0);
+                payload.put("end", folder.numFiles - 1);
+                packet = new Packet(FileStorageAction.ListFiles.name, payload);
+
+                responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
+                if (null == responseDialect) {
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+                    this.complete();
+                    return;
+                }
+
+                responsePacket = new Packet(responseDialect);
+                stateCode = Packet.extractCode(responsePacket);
+                if (stateCode != FileStorageStateCode.Ok.code) {
+                    Logger.w(this.getClass(), "#listFiles - Service state code : " + stateCode);
+                    this.respond(response, HttpStatus.NOT_FOUND_404, responsePacket.toJSON());
+                    this.complete();
+                    return;
+                }
+
+                JSONObject packetPayload = new JSONObject();
+                JSONArray list = Packet.extractDataPayload(responsePacket).getJSONArray("list");
+                packetPayload.put("total", folder.numFiles);
+                packetPayload.put("list", list);
+                responseData = new Packet(FileStorageAction.ListFiles.name, packetPayload);
+            }
+        }
+        else {
+            // 不从层级结构读取
+            JSONObject payload = new JSONObject();
+            Packet packet = new Packet(FileStorageAction.ListFileLabels.name, payload);
+            ActionDialect packetDialect = packet.toDialect();
+            packetDialect.addParam("token", token);
+
+            ActionDialect responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
+            if (null == responseDialect) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+                this.complete();
+                return;
+            }
+
+            Packet responsePacket = new Packet(responseDialect);
+            int stateCode = Packet.extractCode(responsePacket);
+            if (stateCode != FileStorageStateCode.Ok.code) {
+                Logger.w(this.getClass(), "#listFiles - Service state code : " + stateCode);
+                this.respond(response, HttpStatus.NOT_FOUND_404, responsePacket.toJSON());
+                this.complete();
+                return;
+            }
+
+            JSONObject packetPayload = Packet.extractDataPayload(responsePacket);
+            responseData = new Packet(FileStorageAction.ListFileLabels.name, packetPayload);
+        }
+
+        this.respondOk(response, responseData.toJSON());
+        this.complete();
     }
 
     private void findFile(JSONObject data, HttpServletRequest request, HttpServletResponse response) {
@@ -132,10 +242,6 @@ public class FileOperationHandler extends CrossDomainHandler {
         }
 
         JSONObject fileLabelJson = Packet.extractDataPayload(responsePacket);
-        if (fileLabelJson.has("directURL")) {
-            fileLabelJson.remove("directURL");
-        }
-
         responsePacket = new Packet(FileStorageAction.FindFile.name, fileLabelJson);
         this.respondOk(response, responsePacket.toJSON());
         this.complete();

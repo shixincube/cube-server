@@ -50,6 +50,7 @@ import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.client.util.BufferingResponseListener;
 import org.eclipse.jetty.client.util.InputStreamResponseListener;
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -172,7 +173,9 @@ public class FileHandler extends CrossDomainHandler {
         String fileName = null;
 
         fileName = request.getParameter("filename");
-        if (null != fileName) {
+
+        if (null != fileName &&
+                !request.getHeader(HttpHeader.CONTENT_TYPE.asString()).toLowerCase().contains("multipart/form-data")) {
             // 非 Form 格式
             fileName = URLDecoder.decode(fileName, "UTF-8");
 

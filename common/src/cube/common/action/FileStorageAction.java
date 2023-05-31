@@ -54,6 +54,11 @@ public enum FileStorageAction {
     GetFile("getFile"),
 
     /**
+     * 列表符合条件的文件。
+     */
+    ListFileLabels("listFileLabels"),
+
+    /**
      * 加载文件数据。
      */
     LoadFile("loadFile"),

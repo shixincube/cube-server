@@ -30,6 +30,7 @@ import cell.util.collection.FlexibleByteBuffer;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -41,7 +42,6 @@ public class FormData {
 
     private static final String sContentType = "Content-Type".toLowerCase();
     private static final String sOctetStream = "octet-stream".toLowerCase();
-//    private static final String sImage = "image".toLowerCase();
     private static final String sJson = "json".toLowerCase();
 
     private FlexibleByteBuffer buf;
@@ -247,6 +247,71 @@ public class FormData {
 
     public String getValue(String name) {
         return this.multipart.get(name);
+    }
+
+    private HashMap<String, String> analysis(byte[] content) {
+        HashMap<String, String> result = new HashMap<>();
+
+        String rawString = new String(content, StandardCharsets.UTF_8);
+        String boundary = rawString.substring(0, rawString.indexOf("\n")).trim();
+        String[] parts = rawString.split(boundary);
+
+        for (String data : parts) {
+            data = data.trim();
+            if (data.length() <= 1) {
+                continue;
+            }
+
+            String key = null;
+            String value = null;
+
+            boolean processFile = false;
+
+            String[] tmp = data.split("\n");
+            for (String line : tmp) {
+                line = line.trim();
+                if (line.length() <= 3) {
+                    continue;
+                }
+
+                if (line.indexOf("name=\"file\";") > 0) {
+                    this.fileName = line.substring(line.indexOf("filename=") + 10, line.length() - 1);
+                    processFile = true;
+                    break;
+                }
+                else if (line.indexOf("name=") > 0) {
+                    key = line.substring(line.indexOf("name=") + 6, line.length() - 1);
+                    processFile = false;
+                }
+                else {
+                    value = line;
+                }
+            }
+
+            if (processFile) {
+                if (tmp.length >= 4) {
+                    StringBuilder buf = new StringBuilder();
+                    for (int i = 3; i < tmp.length; ++i) {
+                        String text = tmp[i].trim();
+                        if (text.contains(boundary)) {
+                            break;
+                        }
+                        buf.append(text);
+                        buf.append("\n");
+                    }
+                    String fileData = buf.delete(buf.length() - 1, buf.length()).toString();
+                    this.chunk = fileData.getBytes(StandardCharsets.UTF_8);
+                }
+
+                processFile = false;
+            }
+
+            if (null != key && null != value) {
+                result.put(key, value);
+            }
+        }
+
+        return result;
     }
 
     private HashMap<String, String> parse(byte[] content) {
@@ -462,8 +527,32 @@ public class FormData {
                 "\u001A\n" +
                 "IHDR" + "���I(dt�Wk\u0000n|�������6�Z��\\�Z�A��i�c�\u001Az�;I�� ����[9�+�\u0002E��\u0012�mb\u001F�=��3�)\u0002������\u0018J���(�p_F*�NYs�\u001F\u001B\u0001����Ł\u0014�2���h��/\u0017��S�\u00001�Q���\u0000��љ��\t@33���\u0000k\u0001\u0019��3�i��0��\u0013~�ȣ(�V>c�����} \u0019\u001Cr�_�������!\u0018\u001C�ba�2�'��{�ҹ�oQ\u001F?{�v\u0019�\u0010h\u0002�\u0000p%\n" +
                 "-----------------------------131022975738869420362846154883--";
+         */
 
-        File[] files = new File[] {
+//        String data3 = "-----------------------------8008900863708314687188379310\r\n" +
+//                "Content-Disposition: form-data; name=\"cid\"\r\n" +
+//                "\r\n" +
+//                "67890001\r\n" +
+//                "-----------------------------8008900863708314687188379310\r\n" +
+//                "Content-Disposition: form-data; name=\"file\"; filename=\"TeamViewer.png\"\r\n" +
+//                "Content-Type: image/png\r\n" +
+//                "\r\n" +
+//                "TEST-PNG\r\n" +
+//                "CubeForm\r\n" +
+//                "-----------------------------8008900863708314687188379310--\r\n";
+//
+//        byte[] bytes = data3.getBytes();
+//        FormData form = new FormData(bytes, 0, bytes.length);
+//        System.out.println("filename : " + form.fileName);
+//        System.out.println("------------------------------------------------");
+//        System.out.println(new String(form.chunk, StandardCharsets.UTF_8));
+//        System.out.println("------------------------------------------------");
+//
+//        for (Map.Entry<String, String> e : form.multipart.entrySet()) {
+//            System.out.println(e.getKey() + " = " + e.getValue());
+//        }
+
+        /*File[] files = new File[] {
                 new File("dispatcher/cube-hub-files/data1.form"),
                 new File("dispatcher/cube-hub-files/data2.form")
         };
@@ -495,7 +584,7 @@ public class FormData {
         for (String data : list) {
             long t = System.currentTimeMillis();
             byte[] bytes = data.getBytes();
-            FormData form = new FormData(bytes,0, bytes.length);
+            FormData form = new FormData(bytes, 0, bytes.length);
             System.out.println("\nTime: " + (System.currentTimeMillis() - t));
             System.out.println("cursor: " + form.getValue("cursor"));
             System.out.println("size: " + form.getValue("size"));

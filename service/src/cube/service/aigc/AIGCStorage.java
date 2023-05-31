@@ -64,6 +64,8 @@ public class AIGCStorage implements Storagable {
 
     private final String knowledgeProfileTable = "aigc_knowledge_profile";
 
+    private final String knowledgeDocTable = "aigc_knowledge_doc";
+
     private final StorageField[] appConfigFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT

@@ -83,6 +83,10 @@ public class FileStorageServiceCellet extends AbstractCellet {
             this.executor.execute(new PutFileTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (FileStorageAction.ListFileLabels.name.equals(action)) {
+            this.executor.execute(new ListFileLabelsTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (FileStorageAction.GetRoot.name.equals(action)) {
             this.executor.execute(new GetRootDirectoryTask(this, talkContext, primitive,
                     this.markResponseTime(action)));

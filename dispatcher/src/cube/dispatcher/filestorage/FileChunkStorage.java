@@ -33,6 +33,7 @@ import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.FileLabel;
+import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.DispatcherTask;
 import cube.dispatcher.Performer;
 import cube.util.FileType;
@@ -75,6 +76,11 @@ public class FileChunkStorage {
     private ConcurrentHashMap<String, ChunkInputStream> passingChunkInputStreams;
 
     /**
+     * 监听器映射。
+     */
+    private ConcurrentHashMap<String, FileChunkEventListener> listenerMap;
+
+    /**
      * 线程池。
      */
     private ExecutorService executor;
@@ -102,6 +108,7 @@ public class FileChunkStorage {
         this.chunkTags = new ConcurrentSkipListSet<>();
         this.fileChunkStores = new ConcurrentHashMap<>();
         this.passingChunkInputStreams = new ConcurrentHashMap<>();
+        this.listenerMap = new ConcurrentHashMap<>();
     }
 
     public void open(FileStorageCellet cellet, Performer performer) {
@@ -112,6 +119,14 @@ public class FileChunkStorage {
 
     public void close() {
         this.executor.shutdown();
+    }
+
+    public void addListener(String fileCode, FileChunkEventListener listener) {
+        this.listenerMap.put(fileCode, listener);
+    }
+
+    public void removeListener(String fileCode) {
+        this.listenerMap.remove(fileCode);
     }
 
     /**
@@ -219,7 +234,20 @@ public class FileChunkStorage {
                 performer.transmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, fileChunkStore.fileCode, inputStream);
 
                 // 将文件流进行标记
-                markStream(fileChunkStore);
+                FileLabel fileLabel = markStream(fileChunkStore);
+                if (null == fileLabel) {
+                    Logger.w(FileChunkStore.class, "Mark stream for file label error: " + fileChunkStore.fileCode);
+                    FileChunkEventListener listener = listenerMap.remove(fileChunkStore.fileCode);
+                    if (null != listener) {
+                        listener.onFailed(fileChunkStore.fileCode);
+                    }
+                }
+                else {
+                    FileChunkEventListener listener = listenerMap.remove(fileChunkStore.fileCode);
+                    if (null != listener) {
+                        listener.onCompleted(fileLabel);
+                    }
+                }
 
                 // 清理内存
                 closeFile(fileChunkStore.fileCode);
@@ -231,8 +259,9 @@ public class FileChunkStorage {
      * 标记传送给服务单元的文件流。
      *
      * @param fileChunkStore
+     * @return
      */
-    private void markStream(final FileChunkStore fileChunkStore) {
+    private FileLabel markStream(final FileChunkStore fileChunkStore) {
         // 生成文件标签
         FileLabel fileLabel = fileChunkStore.makeFileLabel();
 
@@ -243,18 +272,24 @@ public class FileChunkStorage {
         ActionDialect dialect = this.performer.syncTransmit(fileChunkStore.tokenCode, FileStorageCellet.NAME, packet.toDialect());
         if (null == dialect) {
             Logger.w(this.getClass(), "Put file request failed: " + fileChunkStore.tokenCode);
-            return;
+            return null;
+        }
+
+        FileLabel newFileLabel = null;
+
+        Packet responsePacket = new Packet(dialect);
+        if (Packet.extractCode(responsePacket) == FileStorageStateCode.Ok.code) {
+            newFileLabel = new FileLabel(Packet.extractDataPayload(responsePacket));
         }
 
         // 将数据发送给客户端
         TalkContext talkContext = this.performer.getTalkContext(fileChunkStore.tokenCode);
-        if (null == talkContext) {
-            Logger.d(this.getClass(), "Can NOT find talk context: " + fileChunkStore.tokenCode);
-            return;
+        if (null != talkContext) {
+            // 返回给客户端，需要追加状态
+            this.cellet.speak(talkContext, DispatcherTask.appendState(dialect));
         }
 
-        // 返回给客户端，需要追加状态
-        this.cellet.speak(talkContext, DispatcherTask.appendState(dialect));
+        return newFileLabel;
     }
 
     /**

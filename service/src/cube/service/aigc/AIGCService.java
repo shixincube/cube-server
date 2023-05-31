@@ -48,6 +48,7 @@ import cube.file.operation.ExtractAudioOperation;
 import cube.plugin.PluginSystem;
 import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
+import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.*;
 import cube.service.aigc.plugin.InjectTokenPlugin;
 import cube.service.auth.AuthService;
@@ -117,6 +118,8 @@ public class AIGCService extends AbstractModule {
 
     private ConcurrentHashMap<String, AIGCChannel> channelMap;
 
+    private ConcurrentHashMap<String, KnowledgeBase> knowledgeMap;
+
     private long channelTimeout = 30 * 60 * 1000;
 
     private ExecutorService executor;
@@ -132,6 +135,7 @@ public class AIGCService extends AbstractModule {
         this.nlTaskQueueMap = new ConcurrentHashMap<>();
         this.sentimentQueueMap = new ConcurrentHashMap<>();
         this.asrQueueMap = new ConcurrentHashMap<>();
+        this.knowledgeMap = new ConcurrentHashMap<>();
     }
 
     @Override

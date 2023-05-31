@@ -509,6 +509,17 @@ public class FileStorageService extends AbstractModule {
     }
 
     /**
+     * 获取指定联系人的文件标签。
+     *
+     * @param domainName
+     * @param contactId
+     * @return
+     */
+    public List<FileLabel> getFileLabelsWithOwnerId(String domainName, long contactId) {
+        return this.serviceStorage.listFileLabelByOwnerId(domainName, contactId);
+    }
+
+    /**
      * 保存本地文件到存储系统。
      *
      * @param fileLabel

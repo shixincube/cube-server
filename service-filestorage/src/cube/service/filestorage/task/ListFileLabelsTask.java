@@ -33,21 +33,25 @@ import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.service.ServiceTask;
 import cube.service.auth.AuthService;
 import cube.service.filestorage.FileStorageService;
 import cube.service.filestorage.FileStorageServiceCellet;
-import cube.service.filestorage.hierarchy.Directory;
-import cube.service.filestorage.hierarchy.FileHierarchy;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
- * 获取指定联系人或群组的根目录。
+ * 获取文件标签任务。
  */
-public class GetRootDirectoryTask extends ServiceTask {
+public class ListFileLabelsTask extends ServiceTask {
 
-    public GetRootDirectoryTask(FileStorageServiceCellet cellet, TalkContext talkContext,
-                                Primitive primitive, ResponseTime responseTime) {
+    public ListFileLabelsTask(FileStorageServiceCellet cellet, TalkContext talkContext,
+                              Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -62,40 +66,38 @@ public class GetRootDirectoryTask extends ServiceTask {
         AuthToken authToken = authService.getToken(tokenCode);
         if (null == authToken) {
             // 发生错误
-            this.cellet.speak(this.talkContext
-                    , this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
-            markResponseTime();
-            return;
-        }
-
-        // 域
-        String domain = authToken.getDomain();
-
-        // ID
-        Long id = null;
-        if (packet.data.has("id")) {
-            id = packet.data.getLong("id");
-        }
-        else {
-            id = authToken.getContactId();
-        }
-
-        // 获取服务
-        FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-
-        // 获取指定 ID 对应的文件层级描述
-        FileHierarchy fileHierarchy = service.getFileHierarchy(domain, id);
-        if (null == fileHierarchy) {
-            // 发生错误
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.NotFound.code, packet.data));
+                    this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
             markResponseTime();
             return;
         }
 
-        Directory directory = fileHierarchy.getRoot();
+        // 最大数量
+        final int limit = 10;
+
+        FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
+        List<FileLabel> list = service.getFileLabelsWithOwnerId(authToken.getDomain(), authToken.getContactId());
+
+        // 翻转列表
+        Collections.reverse(list);
+
+        JSONArray array = new JSONArray();
+        for (FileLabel fileLabel : list) {
+            array.put(fileLabel.toCompactJSON());
+            if (array.length() >= limit) {
+                break;
+            }
+        }
+
+        JSONObject payload = new JSONObject();
+        payload.put("ownerId", authToken.getContactId());
+        payload.put("domain", authToken.getDomain());
+        payload.put("total", list.size());
+        payload.put("list", array);
+
+        // 应答
         this.cellet.speak(this.talkContext,
-                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, directory.toJSON()));
+                this.makeResponse(action, packet, FileStorageStateCode.Ok.code, payload));
         markResponseTime();
     }
 }

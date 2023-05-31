@@ -107,9 +107,24 @@ public enum AIGCAction {
     GetKnowledgeProfile("getKnowledgeProfile"),
 
     /**
-     * 文档问答。
+     * 获取已激活的知识库文档。
      */
-    DocQA("docQA")
+    GetActivatedKnowledgeDocs("getActivatedKnowledgeDocs"),
+
+    /**
+     * 激活知识库文档。
+     */
+    ActivateKnowledgeDoc("activateKnowledgeDoc"),
+
+    /**
+     * 释放知识库文档。
+     */
+    DeactivateKnowledgeDoc("deactivateKnowledgeDoc"),
+
+    /**
+     * 知识库问答。
+     */
+    KnowledgeQA("knowledgeQA")
 
     ;
 
