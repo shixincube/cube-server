@@ -32,6 +32,7 @@ import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
 import cube.common.Storagable;
 import cube.common.entity.AIGCChatHistory;
+import cube.common.entity.KnowledgeDoc;
 import cube.common.entity.KnowledgeProfile;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -169,6 +170,24 @@ public class AIGCStorage implements Storagable {
             })
     };
 
+    private final StorageField[] knowledgeDocFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("activated", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_1
+            })
+    };
+
     private Storage storage;
 
     public AIGCStorage(StorageType type, JSONObject config) {
@@ -222,6 +241,13 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.knowledgeProfileTable, this.knowledgeProfileFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.knowledgeProfileTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.knowledgeDocTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.knowledgeDocTable, this.knowledgeDocFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.knowledgeDocTable + "' successfully");
             }
         }
     }
@@ -373,6 +399,27 @@ public class AIGCStorage implements Storagable {
         Map<String, StorageField> data = StorageFields.get(result.get(0));
         return new KnowledgeProfile(data.get("id").getLong(), data.get("contact_id").getLong(),
                 data.get("state").getInt(), data.get("max_size").getInt());
+    }
+
+    public List<KnowledgeDoc> readKnowledgeDocList(String domain, long contactId) {
+        List<KnowledgeDoc> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocTable, this.knowledgeDocFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("domain", domain),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("contact_id", contactId)
+                });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
+                    data.get("contact_id").getLong(), data.get("file_code").getString(),
+                    data.get("activated").getInt() == 1);
+            list.add(doc);
+        }
+
+        return list;
     }
 
     private void resetDefaultConfig() {

@@ -26,5 +26,39 @@
 
 package cube.common.entity;
 
-public class KnowledgeDoc {
+import org.json.JSONObject;
+
+/**
+ * 知识库文档。
+ */
+public class KnowledgeDoc extends Entity {
+
+    public final long contactId;
+
+    public final String fileCode;
+
+    public final boolean activated;
+
+    public KnowledgeDoc(long id, String domain, long contactId, String fileCode, boolean activated) {
+        super(id, domain);
+        this.contactId = contactId;
+        this.fileCode = fileCode;
+        this.activated = activated;
+    }
+
+    public KnowledgeDoc(JSONObject json) {
+        super(json);
+        this.contactId = json.getLong("contactId");
+        this.fileCode = json.getString("fileCode");
+        this.activated = json.getBoolean("activated");
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("contactId", this.contactId);
+        json.put("fileCode", this.fileCode);
+        json.put("activated", this.activated);
+        return json;
+    }
 }

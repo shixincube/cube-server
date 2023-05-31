@@ -47,5 +47,4 @@ public class KnowledgeBase {
         return this.profile;
     }
 
-    
 }

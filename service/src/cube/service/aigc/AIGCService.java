@@ -468,9 +468,25 @@ public class AIGCService extends AbstractModule {
             // 没有记录，返回不可用的侧写
             profile = new KnowledgeProfile(0, authToken.getContactId(),
                     KnowledgeProfile.STATE_FORBIDDEN, 0);
+
         }
 
         return profile;
+    }
+
+    /**
+     *
+     * @param tokenCode
+     * @return
+     */
+    public List<KnowledgeDoc> getKnowledgeDocs(String tokenCode) {
+        AuthToken authToken = this.getToken(tokenCode);
+        if (null == authToken) {
+            Logger.w(this.getClass(), "#getKnowledgeDocs - auth token is null: " + tokenCode);
+            return null;
+        }
+
+        return this.storage.readKnowledgeDocList(authToken.getDomain(), authToken.getContactId());
     }
 
     /**
