@@ -109,6 +109,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
         httpServer.addContextHandler(new Conversation());
         httpServer.addContextHandler(new KnowledgeDocs());
+        httpServer.addContextHandler(new ImportKnowledgeDoc());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -233,6 +234,27 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return Packet.extractDataPayload(responsePacket);
+    }
+
+    public KnowledgeDoc importKnowledgeDoc(String token, String fileCode) {
+        JSONObject payload = new JSONObject();
+        payload.put("fileCode", fileCode);
+        Packet packet = new Packet(AIGCAction.ImportKnowledgeDoc.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#importKnowledgeDoc - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#importKnowledgeDoc - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new KnowledgeDoc(Packet.extractDataPayload(responsePacket));
     }
 
     public boolean evaluate(long sn, int scores) {

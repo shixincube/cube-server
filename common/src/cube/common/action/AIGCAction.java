@@ -117,6 +117,11 @@ public enum AIGCAction {
     ImportKnowledgeDoc("importKnowledgeDoc"),
 
     /**
+     * 移除导入的知识库文档。
+     */
+    RemoveKnowledgeDoc("removeKnowledgeDoc"),
+
+    /**
      * 激活知识库文档。
      */
     ActivateKnowledgeDoc("activateKnowledgeDoc"),
