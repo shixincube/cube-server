@@ -24,54 +24,26 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.common.notice;
 
-import org.json.JSONObject;
+import cube.common.action.FileStorageAction;
 
 /**
- * 知识库的侧写。
+ * 获取文件。
  */
-public class KnowledgeProfile extends Entity {
+public class GetFile extends NoticeData {
 
-    public final static int STATE_NORMAL = 0;
-
-    public final static int STATE_READ = 1;
-
-    public final static int STATE_FORBIDDEN = 2;
-
-    public final long contactId;
-
-    public final int state;
-
-    /**
-     * 最大可用空间。
-     */
-    public final int maxSize;
-
-    public KnowledgeProfile(long id, long contactId, int state, int maxSize) {
-        super(id);
-        this.contactId = contactId;
-        this.state = state;
-        this.maxSize = maxSize;
+    public GetFile(String domain, String fileCode) {
+        super(FileStorageAction.GetFile.name);
+        this.put(NoticeData.DOMAIN, domain);
+        this.put(NoticeData.FILE_CODE, fileCode);
+        this.put("transmitting", false);
     }
 
-    public KnowledgeProfile(JSONObject json) {
-        super(json);
-        this.contactId = json.getLong("contactId");
-        this.state = json.getInt("state");
-        this.maxSize = json.getInt("maxSize");
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = super.toJSON();
-        json.put("contactId", this.contactId);
-        json.put("state", this.state);
-        json.put("maxSize", this.maxSize);
-        return json;
-    }
-
-    public static KnowledgeProfile createDummy() {
-        return new KnowledgeProfile(0, 0, STATE_FORBIDDEN, 0);
+    public GetFile(String domain, String fileCode, boolean transmitting) {
+        super(FileStorageAction.GetFile.name);
+        this.put(NoticeData.DOMAIN, domain);
+        this.put(NoticeData.FILE_CODE, fileCode);
+        this.put("transmitting", transmitting);
     }
 }

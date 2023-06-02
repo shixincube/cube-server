@@ -39,6 +39,8 @@ public class KnowledgeDoc extends Entity {
 
     public final boolean activated;
 
+    public FileLabel fileLabel;
+
     public KnowledgeDoc(long id, String domain, long contactId, String fileCode, boolean activated) {
         super(id, domain);
         this.contactId = contactId;
@@ -51,6 +53,25 @@ public class KnowledgeDoc extends Entity {
         this.contactId = json.getLong("contactId");
         this.fileCode = json.getString("fileCode");
         this.activated = json.getBoolean("activated");
+
+        if (json.has("fileLabel")) {
+            this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
+        }
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (object instanceof KnowledgeDoc) {
+            KnowledgeDoc other = (KnowledgeDoc) object;
+            return other.fileCode.equals(this.fileCode);
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.fileCode.hashCode();
     }
 
     @Override
@@ -59,6 +80,10 @@ public class KnowledgeDoc extends Entity {
         json.put("contactId", this.contactId);
         json.put("fileCode", this.fileCode);
         json.put("activated", this.activated);
+
+        if (null != this.fileLabel) {
+            json.put("fileLabel", this.fileLabel.toCompactJSON());
+        }
         return json;
     }
 }

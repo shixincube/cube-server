@@ -47,6 +47,8 @@ public class NoticeData extends JSONObject {
 
     public final static String DATA = "data";
 
+    public final static String FILE_CODE = "fileCode";
+
     public NoticeData(String action) {
         super();
         this.put(NoticeData.ACTION, action);

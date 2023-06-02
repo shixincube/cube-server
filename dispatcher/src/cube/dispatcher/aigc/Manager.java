@@ -108,6 +108,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new Sentiment());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
         httpServer.addContextHandler(new Conversation());
+        httpServer.addContextHandler(new KnowledgeDocs());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -197,10 +198,10 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public KnowledgeProfile getKnowledgeProfile(String token) {
-        JSONObject data = new JSONObject();
-        data.put("token", token);
-        Packet packet = new Packet(AIGCAction.GetKnowledgeProfile.name, data);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+        Packet packet = new Packet(AIGCAction.GetKnowledgeProfile.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#getKnowledgeProfile - Response is null : " + token);
             return null;
@@ -213,6 +214,25 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return new KnowledgeProfile(Packet.extractDataPayload(responsePacket));
+    }
+
+    public JSONObject getKnowledgeDocs(String token) {
+        Packet packet = new Packet(AIGCAction.ListKnowledgeDocs.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#getKnowledgeDocs - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#getKnowledgeDocs - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
     }
 
     public boolean evaluate(long sn, int scores) {

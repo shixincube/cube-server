@@ -32,12 +32,16 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.KnowledgeProfile;
+import cube.common.entity.KnowledgeDoc;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.knowledge.KnowledgeBase;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  * 获取知识库文档列表任务。
@@ -53,26 +57,42 @@ public class ListKnowledgeDocsTask extends ServiceTask {
         ActionDialect dialect = new ActionDialect(this.primitive);
         Packet packet = new Packet(dialect);
 
-        if (!packet.data.has("token")) {
+        String tokenCode = this.getTokenCode(dialect);
+        if (null == tokenCode) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        String tokenCode = packet.data.getString("token");
-
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        KnowledgeProfile knowledgeProfile = service.getKnowledgeProfile(tokenCode);
-        if (null == knowledgeProfile) {
+        KnowledgeBase base = service.getKnowledgeBase(tokenCode);
+        if (null == base) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InconsistentToken.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
+        List<KnowledgeDoc> docList = base.getKnowledgeDocs();
+        if (null == docList) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
+        JSONArray array = new JSONArray();
+        for (KnowledgeDoc doc : docList) {
+            array.put(doc.toJSON());
+        }
+
+        JSONObject responsePayload = new JSONObject();
+        responsePayload.put("total", docList.size());
+        responsePayload.put("list", array);
+
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, knowledgeProfile.toJSON()));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responsePayload));
         markResponseTime();
     }
 }

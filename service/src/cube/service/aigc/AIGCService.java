@@ -38,6 +38,7 @@ import cube.common.action.AIGCAction;
 import cube.common.action.FileProcessorAction;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
+import cube.common.notice.GetFile;
 import cube.common.state.AIGCStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -224,6 +225,10 @@ public class AIGCService extends AbstractModule {
                 iter.remove();
             }
         }
+    }
+
+    public AIGCCellet getCellet() {
+        return this.cellet;
     }
 
     public List<AIGCUnit> setupUnit(Contact contact, List<AICapability> capabilities, TalkContext context) {
@@ -451,42 +456,29 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
-     * 获取知识库侧写。
+     * 获取对应的知识库实例。
      *
      * @param tokenCode
      * @return
      */
-    public KnowledgeProfile getKnowledgeProfile(String tokenCode) {
-        AuthToken authToken = this.getToken(tokenCode);
-        if (null == authToken) {
-            Logger.w(this.getClass(), "#getKnowledgeProfile - auth token is null: " + tokenCode);
-            return null;
+    public synchronized KnowledgeBase getKnowledgeBase(String tokenCode) {
+        KnowledgeBase base = this.knowledgeMap.get(tokenCode);
+        if (null == base) {
+            AuthToken authToken = this.getToken(tokenCode);
+            if (null == authToken) {
+                return null;
+            }
+
+            AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+            if (null == fileStorage) {
+                Logger.e(this.getClass(), "#getKnowledgeBase - File storage service is not ready");
+                return null;
+            }
+
+            base = new KnowledgeBase(this, this.storage, authToken, fileStorage);
+            this.knowledgeMap.put(tokenCode, base);
         }
-
-        KnowledgeProfile profile = this.storage.readKnowledgeProfile(authToken.getContactId());
-        if (null == profile) {
-            // 没有记录，返回不可用的侧写
-            profile = new KnowledgeProfile(0, authToken.getContactId(),
-                    KnowledgeProfile.STATE_FORBIDDEN, 0);
-
-        }
-
-        return profile;
-    }
-
-    /**
-     *
-     * @param tokenCode
-     * @return
-     */
-    public List<KnowledgeDoc> getKnowledgeDocs(String tokenCode) {
-        AuthToken authToken = this.getToken(tokenCode);
-        if (null == authToken) {
-            Logger.w(this.getClass(), "#getKnowledgeDocs - auth token is null: " + tokenCode);
-            return null;
-        }
-
-        return this.storage.readKnowledgeDocList(authToken.getDomain(), authToken.getContactId());
+        return base;
     }
 
     /**
@@ -800,12 +792,7 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        JSONObject getFile = new JSONObject();
-        getFile.put("action", FileStorageAction.GetFile.name);
-        getFile.put("domain", domain);
-        getFile.put("fileCode", fileCode);
-        getFile.put("transmitting", false);
-
+        GetFile getFile = new GetFile(domain, fileCode);
         JSONObject fileLabelJson = fileStorage.notify(getFile);
         if (null == fileLabelJson) {
             Logger.e(this.getClass(), "#automaticSpeechRecognition - Get file failed: " + fileCode);

@@ -29,6 +29,7 @@ package cube.dispatcher.aigc.handler.app;
 import cell.util.log.Logger;
 import cube.aigc.ConfigInfo;
 import cube.aigc.ModelConfig;
+import cube.common.entity.KnowledgeProfile;
 import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.aigc.handler.AIGCHandler;
 import org.eclipse.jetty.http.HttpStatus;
@@ -117,21 +118,24 @@ public class Session extends ContextHandler {
                         Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
                         responseData.put("context", contactToken.toJSON());
 
-                        // 知识库侧写
+                        // 知识库概述
                         responseData.put("knowledge", Manager.getInstance().getKnowledgeProfile(token).toJSON());
                     }
                     else {
                         responseData.put("auth", false);
+                        responseData.put("knowledge", KnowledgeProfile.createDummy());
                         Logger.w(Session.class, "Failed to open channel for token: " + token);
                     }
                 }
                 else {
                     responseData.put("auth", false);
+                    responseData.put("knowledge", KnowledgeProfile.createDummy());
                     Logger.w(Session.class, "Manager check token failed: " + token);
                 }
             }
             else {
                 responseData.put("auth", false);
+                responseData.put("knowledge", KnowledgeProfile.createDummy());
                 Logger.w(Session.class, "Token is null");
             }
 

@@ -112,6 +112,11 @@ public enum AIGCAction {
     ListKnowledgeDocs("listKnowledgeDocs"),
 
     /**
+     * 导入知识库文档的单元。
+     */
+    ImportKnowledgeDoc("importKnowledgeDoc"),
+
+    /**
      * 激活知识库文档。
      */
     ActivateKnowledgeDoc("activateKnowledgeDoc"),
@@ -124,7 +129,7 @@ public enum AIGCAction {
     /**
      * 知识库问答。
      */
-    KnowledgeQA("knowledgeQA")
+    KnowledgeQA("knowledgeQA"),
 
     ;
 

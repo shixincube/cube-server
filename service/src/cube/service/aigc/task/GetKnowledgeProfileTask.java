@@ -37,6 +37,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.knowledge.KnowledgeBase;
 import org.json.JSONObject;
 
 /**
@@ -53,17 +54,24 @@ public class GetKnowledgeProfileTask extends ServiceTask {
         ActionDialect dialect = new ActionDialect(this.primitive);
         Packet packet = new Packet(dialect);
 
-        if (!packet.data.has("token")) {
+        String tokenCode = this.getTokenCode(dialect);
+        if (null == tokenCode) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        String tokenCode = packet.data.getString("token");
-
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        KnowledgeProfile knowledgeProfile = service.getKnowledgeProfile(tokenCode);
+        KnowledgeBase base = service.getKnowledgeBase(tokenCode);
+        if (null == base) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InconsistentToken.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
+        KnowledgeProfile knowledgeProfile = base.getProfile();
         if (null == knowledgeProfile) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

@@ -252,6 +252,20 @@ public class AIGCStorage implements Storagable {
         }
     }
 
+    public ModelConfig getModelConfig(String modelName) {
+        List<StorageField[]> result = this.storage.executeQuery(this.appConfigTable, new StorageField[] {
+                new StorageField("value", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo("item", modelName)
+        });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        return new ModelConfig(new JSONObject(result.get(0)[0].getString()));
+    }
+
     public List<ModelConfig> getModelConfigs() {
         List<ModelConfig> list = new ArrayList<>();
 
@@ -420,6 +434,50 @@ public class AIGCStorage implements Storagable {
         }
 
         return list;
+    }
+
+    public KnowledgeDoc readKnowledgeDoc(String fileCode) {
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocTable, this.knowledgeDocFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("file_code", fileCode)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
+                data.get("contact_id").getLong(), data.get("file_code").getString(),
+                data.get("activated").getInt() == 1);
+        return doc;
+    }
+
+    public void writeKnowledgeDoc(KnowledgeDoc doc) {
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocTable, new StorageField[] {
+                new StorageField("id", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("file_code", doc.fileCode)
+        });
+
+        if (!result.isEmpty()) {
+            this.storage.executeDelete(this.knowledgeDocTable, new Conditional[] {
+                    Conditional.createEqualTo("file_code", doc.fileCode)
+            });
+        }
+
+        this.storage.executeInsert(this.knowledgeDocTable, new StorageField[] {
+                new StorageField("id", doc.getId().longValue()),
+                new StorageField("domain", doc.getDomain().getName()),
+                new StorageField("contact_id", doc.contactId),
+                new StorageField("file_code", doc.fileCode),
+                new StorageField("activated", 1)
+        });
+    }
+
+    public boolean deleteKnowledgeDoc(String fileCode) {
+        return this.storage.executeDelete(this.knowledgeDocTable, new Conditional[] {
+                Conditional.createEqualTo("file_code", fileCode)
+        });
     }
 
     private void resetDefaultConfig() {
