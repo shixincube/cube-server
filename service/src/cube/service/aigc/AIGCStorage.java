@@ -185,6 +185,9 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("activated", LiteralBase.INT, new Constraint[] {
                     Constraint.DEFAULT_1
+            }),
+            new StorageField("num_segments", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
             })
     };
 
@@ -429,7 +432,7 @@ public class AIGCStorage implements Storagable {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
                     data.get("contact_id").getLong(), data.get("file_code").getString(),
-                    data.get("activated").getInt() == 1);
+                    data.get("activated").getInt() == 1, data.get("num_segments").getInt());
             list.add(doc);
         }
 
@@ -448,7 +451,7 @@ public class AIGCStorage implements Storagable {
         Map<String, StorageField> data = StorageFields.get(result.get(0));
         KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
                 data.get("contact_id").getLong(), data.get("file_code").getString(),
-                data.get("activated").getInt() == 1);
+                data.get("activated").getInt() == 1, data.get("num_segments").getInt());
         return doc;
     }
 
@@ -470,7 +473,17 @@ public class AIGCStorage implements Storagable {
                 new StorageField("domain", doc.getDomain().getName()),
                 new StorageField("contact_id", doc.contactId),
                 new StorageField("file_code", doc.fileCode),
-                new StorageField("activated", 1)
+                new StorageField("activated", 1),
+                new StorageField("num_segments", doc.numSegments)
+        });
+    }
+
+    public boolean updateKnowledgeDoc(KnowledgeDoc doc) {
+        return this.storage.executeUpdate(this.knowledgeDocTable, new StorageField[] {
+                new StorageField("activated", doc.activated ? 1 : 0),
+                new StorageField("num_segments", doc.numSegments)
+        }, new Conditional[] {
+                Conditional.createEqualTo("file_code", doc.fileCode)
         });
     }
 

@@ -77,6 +77,10 @@ public class AIGCCellet extends AbstractCellet {
     }
 
     public ActionDialect transmit(TalkContext talkContext, ActionDialect dialect) {
+        return this.transmit(talkContext, dialect, 3 * 60 * 1000);
+    }
+
+    public ActionDialect transmit(TalkContext talkContext, ActionDialect dialect, long timeout) {
         Responder responder = new Responder(dialect);
         this.responderList.add(responder);
 
@@ -86,7 +90,7 @@ public class AIGCCellet extends AbstractCellet {
             return null;
         }
 
-        ActionDialect response = responder.waitingFor(3 * 60 * 1000);
+        ActionDialect response = responder.waitingFor(timeout);
         if (null == response) {
             Logger.w(AIGCCellet.class, "Response is null: " + talkContext.getSessionHost());
             this.responderList.remove(responder);
@@ -181,6 +185,11 @@ public class AIGCCellet extends AbstractCellet {
         else if (AIGCAction.ImportKnowledgeDoc.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new ImportKnowledgeDocTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (AIGCAction.RemoveKnowledgeDoc.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new RemoveKnowledgeDocTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (AIGCAction.Setup.name.equals(action)) {

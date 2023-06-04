@@ -342,7 +342,7 @@ public class AIGCService extends AbstractModule {
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
         while (iter.hasNext()) {
             AIGCUnit unit = iter.next();
-            if (unit.getCapability().getSubtask().equals(subtask)) {
+            if (unit.getCapability().getSubtask().equals(subtask) && unit.getContext().isValid()) {
                 candidates.add(unit);
             }
         }
@@ -497,6 +497,16 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
+     * 获取指定频道。
+     *
+     * @param channelCode
+     * @return
+     */
+    public AIGCChannel getChannel(String channelCode) {
+        return this.channelMap.get(channelCode);
+    }
+
+    /**
      * 申请频道。
      *
      * @param token
@@ -624,6 +634,31 @@ public class AIGCService extends AbstractModule {
         }
 
         return true;
+    }
+
+    public void singleChat(AIGCChannel channel, AIGCUnit unit, String query, ChatListener listener) {
+        ChatUnitMeta meta = new ChatUnitMeta(unit, channel, query, 0, listener);
+
+        synchronized (this.chatQueueMap) {
+            Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.chatQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    processChatQueue(meta.unit.getQueryKey());
+                }
+            });
+        }
     }
 
     /**

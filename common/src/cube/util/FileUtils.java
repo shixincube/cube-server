@@ -64,6 +64,9 @@ public final class FileUtils {
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
     };
 
+    private final static char HexDigits[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'a', 'b', 'c', 'd', 'e', 'f' };
+
     public final static long KB = 1024;
     public final static long MB = (long)1024 * KB;
     public final static long GB = (long)1024 * MB;
@@ -213,17 +216,52 @@ public final class FileUtils {
      * @param bytes
      * @return
      */
+//    public static String bytesToHexString(byte[] bytes) {
+//        StringBuilder buf = new StringBuilder();
+//        for (int i = 0; i < bytes.length; ++i) {
+//            byte b = bytes[i];
+//            int n = b & 0xFF;
+//            if (n < 16) {
+//                buf.append("0");
+//            }
+//            buf.append(Integer.toHexString(n));
+//        }
+//        return buf.toString();
+//    }
+
+    /**
+     * 字节数组转16进制字符串。
+     *
+     * @param bytes
+     * @return
+     */
+//    public static String bytesToHexString(byte[] bytes) {
+//        Formatter formatter = new Formatter();
+//        for (byte b : bytes) {
+//            formatter.format("%02x", b);
+//        }
+//        String result = formatter.toString();
+//        formatter.close();
+//        return result;
+//    }
+
+    /**
+     * 字节数组转16进制字符串。
+     *
+     * @param bytes
+     * @return
+     */
     public static String bytesToHexString(byte[] bytes) {
-        StringBuilder buf = new StringBuilder();
-        for (int i = 0; i < bytes.length; ++i) {
+        int len = bytes.length;
+        char[] result = new char[len * 2];
+        int k = 0;
+        for (int i = 0; i < len; ++i) {
             byte b = bytes[i];
-            int n = b & 0xFF;
-            if (n < 16) {
-                buf.append("0");
-            }
-            buf.append(Integer.toHexString(n));
+            result[k++] = HexDigits[b >>> 4 & 0xf];
+            result[k++] = HexDigits[b & 0xf];
         }
-        return buf.toString();
+
+        return new String(result);
     }
 
     private static String fastHash(List<byte[]> bytes) {

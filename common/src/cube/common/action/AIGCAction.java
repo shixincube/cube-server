@@ -132,6 +132,11 @@ public enum AIGCAction {
     DeactivateKnowledgeDoc("deactivateKnowledgeDoc"),
 
     /**
+     * 生成提示词。
+     */
+    GeneratePrompt("generatePrompt"),
+
+    /**
      * 知识库问答。
      */
     KnowledgeQA("knowledgeQA"),

@@ -1,20 +1,20 @@
 /*
  * This source file is part of Cube.
- * <p>
+ *
  * The MIT License (MIT)
- * <p>
+ *
  * Copyright (c) 2020-2023 Cube Team.
- * <p>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p>
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * <p>
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,34 +24,50 @@
  * SOFTWARE.
  */
 
-package cube.service;
+package cube.common.entity;
+
+import cube.common.JSONable;
+import org.json.JSONObject;
+
+import java.util.List;
 
 /**
- * 版本信息。
+ * 知识库问答结果。
  */
-public final class Version {
+public class KnowledgeResult implements JSONable {
 
-    public final static int MAJOR = 3;
+    public final String query;
 
-    public final static int MINOR = 0;
+    public String prompt;
 
-    public final static int REVISION = 22;
+    public String answer;
 
-    private Version() {
+    public List<Document> relatedDocs;
+
+    public KnowledgeResult(String query) {
+        this.query = query;
     }
 
-    /**
-     * 转版本串。
-     *
-     * @return
-     */
-    public static String toVersionString() {
-        StringBuilder buf = new StringBuilder();
-        buf.append(MAJOR);
-        buf.append(".");
-        buf.append(MINOR);
-        buf.append(".");
-        buf.append(REVISION);
-        return buf.toString();
+    public KnowledgeResult(JSONObject json) {
+        this.query = json.getString("query");
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("query", this.query);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
+
+    public class Document {
+
+        public String pageContent;
+
+        public float score;
     }
 }

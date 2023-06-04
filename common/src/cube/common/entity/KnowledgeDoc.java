@@ -41,11 +41,18 @@ public class KnowledgeDoc extends Entity {
 
     public FileLabel fileLabel;
 
-    public KnowledgeDoc(long id, String domain, long contactId, String fileCode, boolean activated) {
+    /**
+     * 分割的内容段落数量。
+     */
+    public int numSegments = -1;
+
+    public KnowledgeDoc(long id, String domain, long contactId, String fileCode, boolean activated,
+                        int numSegments) {
         super(id, domain);
         this.contactId = contactId;
         this.fileCode = fileCode;
         this.activated = activated;
+        this.numSegments = numSegments;
     }
 
     public KnowledgeDoc(JSONObject json) {
@@ -53,6 +60,7 @@ public class KnowledgeDoc extends Entity {
         this.contactId = json.getLong("contactId");
         this.fileCode = json.getString("fileCode");
         this.activated = json.getBoolean("activated");
+        this.numSegments = json.getInt("numSegments");
 
         if (json.has("fileLabel")) {
             this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
@@ -80,6 +88,7 @@ public class KnowledgeDoc extends Entity {
         json.put("contactId", this.contactId);
         json.put("fileCode", this.fileCode);
         json.put("activated", this.activated);
+        json.put("numSegments", this.numSegments);
 
         if (null != this.fileLabel) {
             json.put("fileLabel", this.fileLabel.toJSON());

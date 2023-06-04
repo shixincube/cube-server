@@ -39,6 +39,8 @@ import cube.common.state.AIGCStateCode;
 import cube.core.AbstractModule;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.AIGCStorage;
+import cube.service.aigc.listener.ChatListener;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Iterator;
@@ -107,36 +109,47 @@ public class KnowledgeBase {
 
         this.knowledgeRelation.docList = list;
 
+        if (null == this.knowledgeRelation.unit || !this.knowledgeRelation.unit.getContext().isValid()) {
+            this.knowledgeRelation.reselectUnit();
+        }
+
         return list;
     }
 
     public KnowledgeDoc getKnowledgeDocByFileCode(String fileCode) {
-        return this.storage.readKnowledgeDoc(fileCode);
+        KnowledgeDoc doc = this.storage.readKnowledgeDoc(fileCode);
+        if (null != doc) {
+            GetFile getFile = new GetFile(this.authToken.getDomain(), doc.fileCode);
+            JSONObject fileLabelJson = this.fileStorage.notify(getFile);
+            if (null != fileLabelJson) {
+                doc.fileLabel = new FileLabel(fileLabelJson);
+            }
+        }
+        return doc;
     }
 
     public KnowledgeDoc importKnowledgeDoc(String fileCode) {
-        Logger.d(this.getClass(), "#importKnowledgeDoc - file code: " + fileCode);
-
         KnowledgeDoc doc = this.getKnowledgeDocByFileCode(fileCode);
         if (null == doc) {
             // 创建新文档
             doc = new KnowledgeDoc(Utils.generateSerialNumber(), this.authToken.getDomain(),
-                    this.authToken.getContactId(), fileCode, true);
+                    this.authToken.getContactId(), fileCode, true, -1);
             this.storage.writeKnowledgeDoc(doc);
         }
 
-        GetFile getFile = new GetFile(this.authToken.getDomain(), fileCode);
-        JSONObject fileLabelJson = this.fileStorage.notify(getFile);
-        if (null == fileLabelJson) {
-            Logger.e(this.getClass(), "#importKnowledgeDoc - Not find file: " + fileCode);
-            return null;
+        if (null == doc.fileLabel) {
+            GetFile getFile = new GetFile(this.authToken.getDomain(), fileCode);
+            JSONObject fileLabelJson = this.fileStorage.notify(getFile);
+            if (null == fileLabelJson) {
+                Logger.e(this.getClass(), "#importKnowledgeDoc - Not find file: " + fileCode);
+                return null;
+            }
+
+            FileLabel fileLabel = new FileLabel(fileLabelJson);
+            doc.fileLabel = fileLabel;
         }
 
-        FileLabel fileLabel = new FileLabel(fileLabelJson);
-        doc.fileLabel = fileLabel;
-
-        // 追加文档
-        this.knowledgeRelation.appendDoc(doc);
+        KnowledgeDoc activatedDoc = doc;
 
         if (doc.activated) {
             if (null == this.knowledgeRelation.unit || !this.knowledgeRelation.unit.getContext().isValid()) {
@@ -145,52 +158,191 @@ public class KnowledgeBase {
 
                 if (null == this.knowledgeRelation.unit) {
                     Logger.e(this.getClass(), "#importKnowledgeDoc - Not find KnowledgeComprehension unit");
+                    this.storage.deleteKnowledgeDoc(fileCode);
                     return null;
                 }
             }
 
-            Logger.d(this.getClass(), "#importKnowledgeDoc - Unit is ready: "
-                    + this.knowledgeRelation.unit.getContact().getId());
-
-            if (!this.activateKnowledgeDoc(doc)) {
+            activatedDoc = this.activateKnowledgeDoc(doc);
+            if (null == activatedDoc) {
                 Logger.e(this.getClass(), "#importKnowledgeDoc - Unit return error");
-
                 this.storage.deleteKnowledgeDoc(fileCode);
-                this.knowledgeRelation.removeDoc(doc);
                 return null;
             }
         }
 
+        // 追加文档
+        this.knowledgeRelation.appendDoc(activatedDoc);
+
         Logger.d(this.getClass(), "#importKnowledgeDoc - file code: " + fileCode);
+        return activatedDoc;
+    }
+
+    public KnowledgeDoc removeKnowledgeDoc(String fileCode) {
+        KnowledgeDoc doc = this.getKnowledgeDocByFileCode(fileCode);
+        if (null != doc) {
+            this.storage.deleteKnowledgeDoc(fileCode);
+
+            this.knowledgeRelation.removeDoc(doc);
+
+            if (doc.activated) {
+                if (null != this.knowledgeRelation.unit &&
+                    this.knowledgeRelation.unit.getContext().isValid()) {
+
+                    KnowledgeDoc deactivatedDoc = this.deactivateKnowledgeDoc(doc);
+                    return deactivatedDoc;
+                }
+            }
+        }
+        else {
+            this.knowledgeRelation.removeDoc(fileCode);
+        }
+
         return doc;
     }
 
-    public boolean activateKnowledgeDoc(KnowledgeDoc doc) {
+    /**
+     * 激活指定知识库文档。
+     *
+     * @param doc
+     * @return 返回已激活的文档。
+     */
+    public KnowledgeDoc activateKnowledgeDoc(KnowledgeDoc doc) {
         Packet packet = new Packet(AIGCAction.ActivateKnowledgeDoc.name, doc.toJSON());
         ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
-                packet.toDialect());
+                packet.toDialect(), 3 * 60 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(),"#activateKnowledgeDoc - Request unit error: "
                     + this.knowledgeRelation.unit.getCapability().getName());
-            return false;
+            return null;
         }
 
         Packet response = new Packet(dialect);
         int state = Packet.extractCode(response);
         if (state != AIGCStateCode.Ok.code) {
             Logger.w(this.getClass(), "#activateKnowledgeDoc - Unit return error: " + state);
-            return false;
+            return null;
         }
 
-        return true;
+        // 更新文档
+        KnowledgeDoc activatedDoc = new KnowledgeDoc(Packet.extractDataPayload(response));
+        this.storage.updateKnowledgeDoc(activatedDoc);
+        return activatedDoc;
     }
 
-    public void performKnowledgeQA(KnowledgeDoc doc, String modelName) {
+    /**
+     * 解除指定的知识库文档。
+     *
+     * @param doc
+     * @return
+     */
+    public KnowledgeDoc deactivateKnowledgeDoc(KnowledgeDoc doc) {
+        Packet packet = new Packet(AIGCAction.DeactivateKnowledgeDoc.name, doc.toJSON());
+        ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
+                packet.toDialect());
+        if (null == dialect) {
+            Logger.w(this.getClass(),"#deactivateKnowledgeDoc - Request unit error: "
+                    + this.knowledgeRelation.unit.getCapability().getName());
+            return null;
+        }
+
+        Packet response = new Packet(dialect);
+        int state = Packet.extractCode(response);
+        if (state != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#deactivateKnowledgeDoc - Unit return error: " + state);
+            return null;
+        }
+
+        KnowledgeDoc deactivatedDoc = new KnowledgeDoc(Packet.extractDataPayload(response));
+        return deactivatedDoc;
+    }
+
+    public KnowledgeResult performKnowledgeQA(String channelCode, String modelName, String fileCode, String query) {
+        // 获取提示词
+        final KnowledgeResult result = this.generatePrompt(fileCode, query);
+        if (null == result) {
+            Logger.w(this.getClass(), "#performKnowledgeQA - Generate prompt failed: " + fileCode);
+            return null;
+        }
+
+        AIGCChannel channel = this.service.getChannel(channelCode);
+        if (null == channel) {
+            Logger.w(this.getClass(), "#performKnowledgeQA - Can NOT find channel: " + channelCode);
+            return null;
+        }
+
         AIGCUnit unit = this.matchUnit(modelName);
         if (null == unit) {
-            Logger.w(this.getClass(), "#importKnowledgeDoc - Select unit error: " + modelName);
-            return;
+            Logger.w(this.getClass(), "#performKnowledgeQA - Select unit error: " + modelName);
+            return null;
         }
+
+        final Object mutex = new Object();
+
+        this.service.singleChat(channel, unit, result.prompt, new ChatListener() {
+            @Override
+            public void onChat(AIGCChannel channel, AIGCChatRecord record) {
+                result.answer = record.answer;
+
+                synchronized (mutex) {
+                    mutex.notify();
+                }
+            }
+
+            @Override
+            public void onFailed(AIGCChannel channel) {
+                synchronized (mutex) {
+                    mutex.notify();
+                }
+            }
+        });
+
+        synchronized (mutex) {
+            try {
+                mutex.wait(60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return result;
+    }
+
+    private KnowledgeResult generatePrompt(String fileCode, String query) {
+        if (null == this.knowledgeRelation.docList) {
+            this.getKnowledgeDocs();
+        }
+
+        KnowledgeDoc doc = this.knowledgeRelation.getKnowledgeDoc(fileCode);
+        if (null == doc) {
+            Logger.w(this.getClass(), "#generatePrompt - Can NOT find knowledge doc: " + fileCode);
+            return null;
+        }
+
+        JSONObject payload = new JSONObject();
+        payload.put("doc", doc.toJSON());
+        payload.put("query", query);
+        Packet packet = new Packet(AIGCAction.GeneratePrompt.name, payload);
+        ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
+                packet.toDialect());
+        if (null == dialect) {
+            Logger.w(this.getClass(),"#generatePrompt - Request unit error: "
+                    + this.knowledgeRelation.unit.getCapability().getName());
+            return null;
+        }
+
+        Packet response = new Packet(dialect);
+        int state = Packet.extractCode(response);
+        if (state != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#generatePrompt - Unit return error: " + state);
+            return null;
+        }
+
+        KnowledgeResult result = new KnowledgeResult(query);
+
+        JSONObject data = Packet.extractDataPayload(response);
+        result.prompt = data.getString("prompt");
+        return result;
     }
 
     private AIGCUnit matchUnit(String modelName) {
@@ -231,9 +383,23 @@ public class KnowledgeBase {
                     AICapability.NaturalLanguageProcessing.KnowledgeComprehension);
         }
 
+        public KnowledgeDoc getKnowledgeDoc(String fileCode) {
+            if (null == this.docList) {
+                return null;
+            }
+
+            for (KnowledgeDoc doc : this.docList) {
+                if (doc.fileCode.equals(fileCode)) {
+                    return doc;
+                }
+            }
+
+            return null;
+        }
+
         public void appendDoc(KnowledgeDoc doc) {
             if (this.docList.contains(doc)) {
-                return;
+                this.docList.remove(doc);
             }
 
             this.docList.add(doc);
@@ -241,6 +407,15 @@ public class KnowledgeBase {
 
         public void removeDoc(KnowledgeDoc doc) {
             this.docList.remove(doc);
+        }
+
+        public void removeDoc(String fileCode) {
+            for (KnowledgeDoc doc : this.docList) {
+                if (doc.fileCode.equals(fileCode)) {
+                    this.docList.remove(doc);
+                    break;
+                }
+            }
         }
     }
 }
