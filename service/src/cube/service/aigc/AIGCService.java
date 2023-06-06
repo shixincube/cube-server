@@ -727,6 +727,33 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
+    public void singleConversation(AIGCChannel channel, AIGCUnit unit, String query, ConversationListener listener) {
+        AIGCConversationParameter parameter = new AIGCConversationParameter(0.7f, 0.8f, 1.02f,
+                new ArrayList<>());
+        ConversationUnitMeta meta = new ConversationUnitMeta(unit, channel, query, parameter, listener);
+
+        synchronized (this.conversationQueueMap) {
+            Queue<ConversationUnitMeta> queue = this.conversationQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.conversationQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    processConversationQueue(meta.unit.getQueryKey());
+                }
+            });
+        }
+    }
+
     /**
      * 执行自然语言任务。
      *

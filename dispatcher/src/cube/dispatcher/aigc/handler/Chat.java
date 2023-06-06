@@ -66,7 +66,7 @@ public class Chat extends ContextHandler {
             String channelCode = null;
             String pattern = "chat";
             String content = null;
-            String unit = null;
+            String unit = "Chat";
             int histories = 3;
             JSONArray records = null;
             try {

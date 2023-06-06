@@ -208,6 +208,7 @@ public final class App {
         apiData.put("temperature", request.temperature);
         apiData.put("topP", request.topP);
         apiData.put("pattern", request.options.workPattern);
+
         HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
         try {
             client.getProtocolHandlers().remove(WWWAuthenticationProtocolHandler.NAME);

@@ -42,7 +42,7 @@ public class AIGCChatRecord implements JSONable {
 
     public long timestamp;
 
-    protected AIGCChatRecord(String query, String answer, long timestamp) {
+    public AIGCChatRecord(String query, String answer, long timestamp) {
         this.query = query;
         this.answer = answer;
         this.timestamp = timestamp;

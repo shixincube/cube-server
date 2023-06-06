@@ -51,22 +51,12 @@ public class Conversation extends ContextHandler {
 
     private class Handler extends AIGCHandler {
 
-        private AccessController controller;
-
         public Handler() {
             super();
-            this.controller = new AccessController();
-            this.controller.setEachIPInterval(100);
         }
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            if (!this.controller.filter(request)) {
-                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
-                this.complete();
-                return;
-            }
-
             String token = this.getRequestPath(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
@@ -75,6 +65,7 @@ public class Conversation extends ContextHandler {
             }
 
             String channelCode = null;
+            String pattern = "chat";
             String content = null;
             JSONArray records = null;
             float temperature = -1;
@@ -96,6 +87,10 @@ public class Conversation extends ContextHandler {
                 if (json.has("repetitionPenalty")) {
                     repetitionPenalty = json.getFloat("repetitionPenalty");
                 }
+
+                if (json.has("pattern")) {
+                    pattern = json.getString("pattern");
+                }
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
@@ -110,8 +105,8 @@ public class Conversation extends ContextHandler {
             }
 
             // Conversation
-            AIGCConversationResponse convResponse = Manager.getInstance().conversation(channelCode, content, records,
-                    temperature, topP, repetitionPenalty);
+            AIGCConversationResponse convResponse = Manager.getInstance().conversation(token,
+                    channelCode, pattern, content, records, temperature, topP, repetitionPenalty);
             if (null == convResponse) {
                 // 发生错误
                 this.respond(response, HttpStatus.BAD_REQUEST_400);

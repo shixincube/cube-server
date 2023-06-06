@@ -383,7 +383,9 @@ public class Manager implements Tickable, PerformerListener {
     /**
      * 增强型对话。
      *
+     * @param token
      * @param channelCode
+     * @oaram pattern
      * @param content
      * @param records
      * @param temperature
@@ -391,14 +393,14 @@ public class Manager implements Tickable, PerformerListener {
      * @param repetitionPenalty
      * @return
      */
-    public AIGCConversationResponse conversation(String channelCode, String content, JSONArray records,
+    public AIGCConversationResponse conversation(String token, String channelCode, String pattern,
+                                                 String content, JSONArray records,
                                                  float temperature, float topP, float repetitionPenalty) {
         JSONObject data = new JSONObject();
+        data.put("token", token);
         data.put("code", channelCode);
+        data.put("pattern", pattern);
         data.put("content", content);
-        if (null != records) {
-            data.put("records", records);
-        }
         if (temperature >= 0.0 && temperature <= 1.0) {
             data.put("temperature", temperature);
         }
@@ -408,9 +410,14 @@ public class Manager implements Tickable, PerformerListener {
         if (repetitionPenalty >= 0.0) {
             data.put("repetitionPenalty", repetitionPenalty);
         }
+        if (null != records) {
+            data.put("records", records);
+        }
 
         Packet packet = new Packet(AIGCAction.Conversation.name, data);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 120 * 1000);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 120 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#conversation - Response is null - " + channelCode);
             return null;

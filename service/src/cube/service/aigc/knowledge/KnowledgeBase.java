@@ -40,6 +40,7 @@ import cube.core.AbstractModule;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.AIGCStorage;
 import cube.service.aigc.listener.ChatListener;
+import cube.service.aigc.listener.ConversationListener;
 import cube.service.aigc.listener.KnowledgeQAListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -51,6 +52,8 @@ import java.util.List;
  * 知识库操作。
  */
 public class KnowledgeBase {
+
+    public final static String EMPTY_BASE_ANSWER = "您的知识库里没有配置文档，您可以先向知识库里导入文档，再向我提问。";
 
     private AIGCService service;
 
@@ -263,10 +266,36 @@ public class KnowledgeBase {
         return deactivatedDoc;
     }
 
-    public boolean performKnowledgeQA(String channelCode, String modelName, String query,
+    public boolean performKnowledgeQA(String channelCode, String unitName, String query,
                                       KnowledgeQAListener listener) {
         Logger.d(this.getClass(), "#performKnowledgeQA - Channel: " + channelCode +
-                "/" + modelName + "/" + query);
+                "/" + unitName + "/" + query);
+
+        final AIGCChannel channel = this.service.getChannel(channelCode);
+        if (null == channel) {
+            Logger.w(this.getClass(), "#performKnowledgeQA - Can NOT find channel: " + channelCode);
+            return false;
+        }
+
+        if (null == this.knowledgeRelation.docList) {
+            this.getKnowledgeDocs();
+        }
+        // 如果没有设置知识库文档，返回提示
+        if (this.knowledgeRelation.docList.isEmpty()) {
+            Logger.d(this.getClass(), "#performKnowledgeQA - No knowledge doc in base: " + channelCode);
+            this.service.getCellet().getExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    KnowledgeQAResult result = new KnowledgeQAResult(query);
+                    result.prompt = "";
+                    AIGCChatRecord chatRecord = new AIGCChatRecord(query, EMPTY_BASE_ANSWER, System.currentTimeMillis());
+                    result.chatRecord = chatRecord;
+                    listener.onCompleted(channel, result);
+                }
+            });
+            return true;
+        }
+
         // 获取提示词
         final KnowledgeQAResult result = this.generatePrompt(query);
         if (null == result) {
@@ -274,32 +303,44 @@ public class KnowledgeBase {
             return false;
         }
 
-        AIGCChannel channel = this.service.getChannel(channelCode);
-        if (null == channel) {
-            Logger.w(this.getClass(), "#performKnowledgeQA - Can NOT find channel: " + channelCode);
-            return false;
-        }
-
-        AIGCUnit unit = this.matchUnit(modelName);
+        AIGCUnit unit = this.service.selectUnitByName(unitName);
         if (null == unit) {
-            Logger.w(this.getClass(), "#performKnowledgeQA - Select unit error: " + modelName);
+            Logger.w(this.getClass(), "#performKnowledgeQA - Select unit error: " + unitName);
             return false;
         }
 
-        this.service.singleChat(channel, unit, result.prompt, new ChatListener() {
-            @Override
-            public void onChat(AIGCChannel channel, AIGCChatRecord record) {
-                result.answer = record.answer;
-                result.chatRecord = record;
-                listener.onCompleted(channel, result);
-            }
+        if (unit.getCapability().getName().equals("MOSS")) {
+            // MOSS 单元执行 conversation
+            this.service.singleConversation(channel, unit, result.prompt, new ConversationListener() {
+                @Override
+                public void onConversation(AIGCChannel channel, AIGCConversationResponse response) {
+                    result.conversationResponse = response;
+                    listener.onCompleted(channel, result);
+                }
 
-            @Override
-            public void onFailed(AIGCChannel channel) {
-                listener.onFailed(channel);
-                Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Single chat failed: " + channelCode);
-            }
-        });
+                @Override
+                public void onFailed(AIGCChannel channel, int errorCode) {
+                    listener.onFailed(channel);
+                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Single conversation failed: " + channelCode);
+                }
+            });
+        }
+        else {
+            // 其他单元执行 chat
+            this.service.singleChat(channel, unit, result.prompt, new ChatListener() {
+                @Override
+                public void onChat(AIGCChannel channel, AIGCChatRecord record) {
+                    result.chatRecord = record;
+                    listener.onCompleted(channel, result);
+                }
+
+                @Override
+                public void onFailed(AIGCChannel channel) {
+                    listener.onFailed(channel);
+                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Single chat failed: " + channelCode);
+                }
+            });
+        }
 
         return true;
     }

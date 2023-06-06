@@ -75,10 +75,9 @@ public class ChatTask extends ServiceTask {
         String code = packet.data.getString("code");
         String content = packet.data.getString("content");
         String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : "chat";
-        String unit = packet.data.has("unit") ? packet.data.getString("unit") : null;
+        String unit = packet.data.has("unit") ? packet.data.getString("unit") : "Chat";
         int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 3;
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
-        String modelName = packet.data.has("model") ? packet.data.getString("model") : "BaizeNLG";
 
         List<AIGCChatRecord> recordList = null;
         if (null != records) {
@@ -97,7 +96,7 @@ public class ChatTask extends ServiceTask {
 
         boolean success = false;
 
-        // 根据模式配置
+        // 根据工作模式进行调用
         if (pattern.equalsIgnoreCase("chat")) {
             // 执行 Chat
             success = service.chat(code, content, unit, histories, recordList, new ChatListener() {
@@ -120,7 +119,7 @@ public class ChatTask extends ServiceTask {
             // 执行知识库问答
             KnowledgeBase knowledgeBase = service.getKnowledgeBase(token);
             if (null != knowledgeBase) {
-                success = knowledgeBase.performKnowledgeQA(code, modelName, content, new KnowledgeQAListener() {
+                success = knowledgeBase.performKnowledgeQA(code, unit, content, new KnowledgeQAListener() {
                     @Override
                     public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
                         cellet.speak(talkContext,

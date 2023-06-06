@@ -33,15 +33,14 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCChatRecord;
-import cube.common.entity.AIGCConversationParameter;
-import cube.common.entity.AIGCConversationResponse;
+import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.ConversationListener;
+import cube.service.aigc.listener.KnowledgeQAListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -62,7 +61,9 @@ public class ConversationTask extends ServiceTask {
         ActionDialect dialect = new ActionDialect(this.primitive);
         Packet packet = new Packet(dialect);
 
-        if (!packet.data.has("content") || !packet.data.has("code")) {
+        String token = getTokenCode(dialect);
+
+        if (null == token || !packet.data.has("content") || !packet.data.has("code")) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
@@ -71,6 +72,7 @@ public class ConversationTask extends ServiceTask {
 
         String code = packet.data.getString("code");
         String content = packet.data.getString("content");
+        String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : "chat";
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
         float temperature = packet.data.has("temperature") ? packet.data.getFloat("temperature") : 0.7f;
         float topP = packet.data.has("topP") ? packet.data.getFloat("topP") : 0.8f;
@@ -95,22 +97,49 @@ public class ConversationTask extends ServiceTask {
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
-        // 执行 Conversation
-        boolean success = service.conversation(code, content, parameter, new ConversationListener() {
-            @Override
-            public void onConversation(AIGCChannel channel, AIGCConversationResponse response) {
-                cellet.speak(talkContext,
-                        makeResponse(dialect, packet, AIGCStateCode.Ok.code, response.toJSON()));
-                markResponseTime();
-            }
+        boolean success = false;
 
-            @Override
-            public void onFailed(AIGCChannel channel, int errorCode) {
-                cellet.speak(talkContext,
-                        makeResponse(dialect, packet, errorCode, new JSONObject()));
-                markResponseTime();
+        // 根据工作模式进行调用
+        if (pattern.equalsIgnoreCase("chat")) {
+            // 执行 Conversation
+            success = service.conversation(code, content, parameter, new ConversationListener() {
+                @Override
+                public void onConversation(AIGCChannel channel, AIGCConversationResponse response) {
+                    cellet.speak(talkContext,
+                            makeResponse(dialect, packet, AIGCStateCode.Ok.code, response.toJSON()));
+                    markResponseTime();
+                }
+
+                @Override
+                public void onFailed(AIGCChannel channel, int errorCode) {
+                    cellet.speak(talkContext,
+                            makeResponse(dialect, packet, errorCode, new JSONObject()));
+                    markResponseTime();
+                }
+            });
+        }
+        else if (pattern.equalsIgnoreCase("knowledge")) {
+            // 执行知识库问答
+            KnowledgeBase knowledgeBase = service.getKnowledgeBase(token);
+            if (null != knowledgeBase) {
+                success = knowledgeBase.performKnowledgeQA(code, "MOSS", content, new KnowledgeQAListener() {
+                    @Override
+                    public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.Ok.code,
+                                        result.conversationResponse.toCompactJSON()));
+                        markResponseTime();
+                    }
+
+                    @Override
+                    public void onFailed(AIGCChannel channel) {
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
+                        markResponseTime();
+                    }
+                });
             }
-        });
+        }
 
         if (!success) {
             this.cellet.speak(this.talkContext,
