@@ -168,6 +168,10 @@ public final class App {
             return null;
         }
 
+        if (null == request.options.workPattern) {
+            request.options.workPattern = "chat";
+        }
+
         ModelConfig config = this.modelConfigMap.get(token);
         if (null == config) {
             Logger.w(this.getClass(), "#requestConversation - Not find model config for token: " + token);
@@ -203,6 +207,7 @@ public final class App {
         apiData.put("histories", request.usingContext ? 5 : 0);
         apiData.put("temperature", request.temperature);
         apiData.put("topP", request.topP);
+        apiData.put("pattern", request.options.workPattern);
         HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
         try {
             client.getProtocolHandlers().remove(WWWAuthenticationProtocolHandler.NAME);

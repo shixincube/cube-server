@@ -40,6 +40,7 @@ import cube.core.AbstractModule;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.AIGCStorage;
 import cube.service.aigc.listener.ChatListener;
+import cube.service.aigc.listener.KnowledgeQAListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -109,9 +110,7 @@ public class KnowledgeBase {
 
         this.knowledgeRelation.docList = list;
 
-        if (null == this.knowledgeRelation.unit || !this.knowledgeRelation.unit.getContext().isValid()) {
-            this.knowledgeRelation.reselectUnit();
-        }
+        this.knowledgeRelation.checkUnit();
 
         return list;
     }
@@ -152,15 +151,10 @@ public class KnowledgeBase {
         KnowledgeDoc activatedDoc = doc;
 
         if (doc.activated) {
-            if (null == this.knowledgeRelation.unit || !this.knowledgeRelation.unit.getContext().isValid()) {
-                // 重新选择单元
-                this.knowledgeRelation.reselectUnit();
-
-                if (null == this.knowledgeRelation.unit) {
-                    Logger.e(this.getClass(), "#importKnowledgeDoc - Not find KnowledgeComprehension unit");
-                    this.storage.deleteKnowledgeDoc(fileCode);
-                    return null;
-                }
+            if (!this.knowledgeRelation.checkUnit()) {
+                Logger.e(this.getClass(), "#importKnowledgeDoc - Not find KnowledgeComprehension unit");
+                this.storage.deleteKnowledgeDoc(fileCode);
+                return null;
             }
 
             activatedDoc = this.activateKnowledgeDoc(doc);
@@ -179,6 +173,10 @@ public class KnowledgeBase {
     }
 
     public KnowledgeDoc removeKnowledgeDoc(String fileCode) {
+        if (null == this.knowledgeRelation.docList) {
+            this.getKnowledgeDocs();
+        }
+
         KnowledgeDoc doc = this.getKnowledgeDocByFileCode(fileCode);
         if (null != doc) {
             this.storage.deleteKnowledgeDoc(fileCode);
@@ -186,10 +184,9 @@ public class KnowledgeBase {
             this.knowledgeRelation.removeDoc(doc);
 
             if (doc.activated) {
-                if (null != this.knowledgeRelation.unit &&
-                    this.knowledgeRelation.unit.getContext().isValid()) {
-
-                    KnowledgeDoc deactivatedDoc = this.deactivateKnowledgeDoc(doc);
+                if (this.knowledgeRelation.checkUnit()) {
+                    KnowledgeDoc deactivatedDoc = this.deactivateKnowledgeDoc(doc,
+                            this.knowledgeRelation.docList);
                     return deactivatedDoc;
                 }
             }
@@ -234,10 +231,19 @@ public class KnowledgeBase {
      * 解除指定的知识库文档。
      *
      * @param doc
+     * @param newList
      * @return
      */
-    public KnowledgeDoc deactivateKnowledgeDoc(KnowledgeDoc doc) {
-        Packet packet = new Packet(AIGCAction.DeactivateKnowledgeDoc.name, doc.toJSON());
+    public KnowledgeDoc deactivateKnowledgeDoc(KnowledgeDoc doc, List<KnowledgeDoc> newList) {
+        JSONArray array = new JSONArray();
+        for (KnowledgeDoc kd : newList) {
+            array.put(kd.toJSON());
+        }
+        JSONObject payload = new JSONObject();
+        payload.put("doc", doc.toJSON());
+        payload.put("newList", array);
+
+        Packet packet = new Packet(AIGCAction.DeactivateKnowledgeDoc.name, payload);
         ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
                 packet.toDialect());
         if (null == dialect) {
@@ -257,71 +263,66 @@ public class KnowledgeBase {
         return deactivatedDoc;
     }
 
-    public KnowledgeResult performKnowledgeQA(String channelCode, String modelName, String fileCode, String query) {
+    public boolean performKnowledgeQA(String channelCode, String modelName, String query,
+                                      KnowledgeQAListener listener) {
+        Logger.d(this.getClass(), "#performKnowledgeQA - Channel: " + channelCode +
+                "/" + modelName + "/" + query);
         // 获取提示词
-        final KnowledgeResult result = this.generatePrompt(fileCode, query);
+        final KnowledgeQAResult result = this.generatePrompt(query);
         if (null == result) {
-            Logger.w(this.getClass(), "#performKnowledgeQA - Generate prompt failed: " + fileCode);
-            return null;
+            Logger.w(this.getClass(), "#performKnowledgeQA - Generate prompt failed in channel: " + channelCode);
+            return false;
         }
 
         AIGCChannel channel = this.service.getChannel(channelCode);
         if (null == channel) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Can NOT find channel: " + channelCode);
-            return null;
+            return false;
         }
 
         AIGCUnit unit = this.matchUnit(modelName);
         if (null == unit) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Select unit error: " + modelName);
-            return null;
+            return false;
         }
-
-        final Object mutex = new Object();
 
         this.service.singleChat(channel, unit, result.prompt, new ChatListener() {
             @Override
             public void onChat(AIGCChannel channel, AIGCChatRecord record) {
                 result.answer = record.answer;
-
-                synchronized (mutex) {
-                    mutex.notify();
-                }
+                result.chatRecord = record;
+                listener.onCompleted(channel, result);
             }
 
             @Override
             public void onFailed(AIGCChannel channel) {
-                synchronized (mutex) {
-                    mutex.notify();
-                }
+                listener.onFailed(channel);
+                Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Single chat failed: " + channelCode);
             }
         });
 
-        synchronized (mutex) {
-            try {
-                mutex.wait(60 * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return result;
+        return true;
     }
 
-    private KnowledgeResult generatePrompt(String fileCode, String query) {
+    private KnowledgeQAResult generatePrompt(String query) {
         if (null == this.knowledgeRelation.docList) {
             this.getKnowledgeDocs();
         }
 
-        KnowledgeDoc doc = this.knowledgeRelation.getKnowledgeDoc(fileCode);
-        if (null == doc) {
-            Logger.w(this.getClass(), "#generatePrompt - Can NOT find knowledge doc: " + fileCode);
+        JSONArray docArray = new JSONArray();
+        for (KnowledgeDoc doc : this.knowledgeRelation.docList) {
+            docArray.put(doc.toJSON());
+        }
+
+        if (!this.knowledgeRelation.checkUnit()) {
+            Logger.w(this.getClass(),"#generatePrompt - No unit for knowledge base");
             return null;
         }
 
         JSONObject payload = new JSONObject();
-        payload.put("doc", doc.toJSON());
+        payload.put("contactId", this.authToken.getContactId());
         payload.put("query", query);
+        payload.put("docList", docArray);
         Packet packet = new Packet(AIGCAction.GeneratePrompt.name, payload);
         ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
                 packet.toDialect());
@@ -338,7 +339,7 @@ public class KnowledgeBase {
             return null;
         }
 
-        KnowledgeResult result = new KnowledgeResult(query);
+        KnowledgeQAResult result = new KnowledgeQAResult(query);
 
         JSONObject data = Packet.extractDataPayload(response);
         result.prompt = data.getString("prompt");
@@ -376,6 +377,17 @@ public class KnowledgeBase {
         public KnowledgeRelation() {
             this.unit = service.selectUnitBySubtask(
                     AICapability.NaturalLanguageProcessing.KnowledgeComprehension);
+        }
+
+        public boolean checkUnit() {
+            if (null == this.unit) {
+                this.reselectUnit();
+            }
+            else if (!this.unit.getContext().isValid()) {
+                this.reselectUnit();
+            }
+
+            return (null != this.unit && this.unit.getContext().isValid());
         }
 
         public void reselectUnit() {

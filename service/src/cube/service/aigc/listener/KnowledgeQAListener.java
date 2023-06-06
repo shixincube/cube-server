@@ -24,50 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.service.aigc.listener;
 
-import cube.common.JSONable;
-import org.json.JSONObject;
-
-import java.util.List;
+import cube.common.entity.AIGCChannel;
+import cube.common.entity.KnowledgeQAResult;
 
 /**
- * 知识库问答结果。
+ * 知识库文档监听器。
  */
-public class KnowledgeResult implements JSONable {
+public interface KnowledgeQAListener {
 
-    public final String query;
+    void onCompleted(AIGCChannel channel, KnowledgeQAResult result);
 
-    public String prompt;
-
-    public String answer;
-
-    public List<Document> relatedDocs;
-
-    public KnowledgeResult(String query) {
-        this.query = query;
-    }
-
-    public KnowledgeResult(JSONObject json) {
-        this.query = json.getString("query");
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("query", this.query);
-        return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
-    }
-
-    public class Document {
-
-        public String pageContent;
-
-        public float score;
-    }
+    void onFailed(AIGCChannel channel);
 }

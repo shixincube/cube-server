@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * 加强型对话。
+ * @deprecated
  */
 public class ImprovementChat extends ContextHandler {
 
@@ -75,6 +76,7 @@ public class ImprovementChat extends ContextHandler {
             }
 
             String channelCode = null;
+            String pattern = "chat";
             String content = null;
             String desc = null;
             int histories = 3;
@@ -104,7 +106,8 @@ public class ImprovementChat extends ContextHandler {
             }
 
             // Chat
-            AIGCChatRecord record = Manager.getInstance().chat(channelCode, content, null, desc, histories, records);
+            AIGCChatRecord record = Manager.getInstance().chat(token, channelCode, pattern,
+                    content, desc, histories, records);
             if (null == record) {
                 // 发生错误
                 this.respond(response, HttpStatus.BAD_REQUEST_400);

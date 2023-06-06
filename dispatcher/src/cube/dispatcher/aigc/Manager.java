@@ -103,7 +103,6 @@ public class Manager implements Tickable, PerformerListener {
 
         httpServer.addContextHandler(new RequestChannel());
         httpServer.addContextHandler(new Chat());
-        httpServer.addContextHandler(new ImprovementChat());
         httpServer.addContextHandler(new NLGeneralTask());
         httpServer.addContextHandler(new Sentiment());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
@@ -343,28 +342,25 @@ public class Manager implements Tickable, PerformerListener {
         return true;
     }
 
-    public AIGCChatRecord chat(String channelCode, String content, String unit, int histories, JSONArray records) {
-        return this.chat(channelCode, content, unit, null, histories, records);
-    }
-
-    public AIGCChatRecord chat(String channelCode, String content, String unit, String desc, int histories,
-                               JSONArray records) {
+    public AIGCChatRecord chat(String token, String channelCode, String pattern, String content, String unit,
+                               int histories, JSONArray records) {
         JSONObject data = new JSONObject();
+        data.put("token", token);
         data.put("code", channelCode);
+        data.put("pattern", pattern);
         data.put("content", content);
         data.put("histories", histories);
         if (null != unit) {
             data.put("unit", unit);
-        }
-        if (null != desc) {
-            data.put("desc", desc);
         }
         if (null != records) {
             data.put("records", records);
         }
 
         Packet packet = new Packet(AIGCAction.Chat.name, data);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 90 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#chat - Response is null - " + channelCode);
             return null;
@@ -378,6 +374,9 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         AIGCChatRecord record = new AIGCChatRecord(Packet.extractDataPayload(responsePacket));
+        if (null == record.query) {
+            record.query = content;
+        }
         return record;
     }
 

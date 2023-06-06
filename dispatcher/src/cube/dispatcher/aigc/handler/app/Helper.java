@@ -77,7 +77,7 @@ public final class Helper {
         for (int i = 0; i < buf.length; ++i) {
             String s = String.valueOf(buf[i]);
             Matcher m = sChinesePattern.matcher(s);
-            int len = Utils.randomInt(2, 5);
+            int len = Utils.randomInt(2, 20);
             if (m.matches()) {
                 // 中文字符
                 StringBuilder word = new StringBuilder(s);

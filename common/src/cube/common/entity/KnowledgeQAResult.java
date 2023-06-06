@@ -29,61 +29,47 @@ package cube.common.entity;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
+import java.util.List;
+
 /**
- * AIGC 互动聊天记录。
+ * 知识库问答结果。
  */
-public class AIGCChatRecord implements JSONable {
+public class KnowledgeQAResult implements JSONable {
 
-    public long sn;
+    public final String query;
 
-    public String query;
+    public String prompt;
 
     public String answer;
 
-    public long timestamp;
+    public AIGCChatRecord chatRecord;
 
-    protected AIGCChatRecord(String query, String answer, long timestamp) {
+    public List<Document> relatedDocs;
+
+    public KnowledgeQAResult(String query) {
         this.query = query;
-        this.answer = answer;
-        this.timestamp = timestamp;
     }
 
-    public AIGCChatRecord(JSONObject json) {
-        this.answer = json.getString("answer");
-
-        if (json.has("query")) {
-            this.query = json.getString("query");
-        }
-
-        if (json.has("timestamp")) {
-            this.timestamp = json.getLong("timestamp");
-        }
-
-        if (json.has("sn")) {
-            this.sn = json.getLong("sn");
-        }
-    }
-
-    public int totalWords() {
-        return this.query.length() + this.answer.length();
+    public KnowledgeQAResult(JSONObject json) {
+        this.query = json.getString("query");
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("sn", this.sn);
         json.put("query", this.query);
-        json.put("answer", this.answer);
-        json.put("timestamp", this.timestamp);
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = this.toJSON();
-        if (json.has("query")) {
-            json.remove("query");
-        }
-        return json;
+        return this.toJSON();
+    }
+
+    public class Document {
+
+        public String pageContent;
+
+        public float score;
     }
 }

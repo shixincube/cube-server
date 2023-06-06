@@ -301,7 +301,8 @@ public class AIGCService extends AbstractModule {
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
         while (iter.hasNext()) {
             AIGCUnit unit = iter.next();
-            if (unit.getCapability().getName().equals(unitName)) {
+            if (unit.getCapability().getName().equals(unitName) &&
+                unit.getContext().isValid()) {
                 candidates.add(unit);
             }
         }
@@ -554,13 +555,12 @@ public class AIGCService extends AbstractModule {
      * @param code
      * @param content
      * @param unitName
-     * @param desc
      * @param numHistories
      * @param records
      * @param listener
      * @return
      */
-    public boolean chat(String code, String content, String unitName, String desc, int numHistories,
+    public boolean chat(String code, String content, String unitName, int numHistories,
                         List<AIGCChatRecord> records, ChatListener listener) {
         if (!this.isStarted()) {
             Logger.w(AIGCService.class, "#chat - Service is NOT ready");
@@ -594,14 +594,11 @@ public class AIGCService extends AbstractModule {
         if (null != unitName) {
             unit = this.selectUnitByName(unitName);
         }
-        else if (null != desc) {
-            unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational, desc);
-            if (null == unit) {
-                unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational, desc);
-            }
-        }
         else {
             unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
+            if (null == unit) {
+                this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational);
+            }
         }
         if (null == unit) {
             Logger.w(AIGCService.class, "#chat - No conversational task unit setup in server");

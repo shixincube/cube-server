@@ -75,12 +75,17 @@ public class ConversationRequest implements JSONable {
 
         public String parentMessageId;
 
+        public String workPattern;
+
         public Options(JSONObject json) {
             if (json.has("conversationId")) {
                 this.conversationId = json.getString("conversationId");
             }
             if (json.has("parentMessageId")) {
                 this.parentMessageId = json.getString("parentMessageId");
+            }
+            if (json.has("workPattern")) {
+                this.workPattern = json.getString("workPattern");
             }
         }
 
@@ -92,6 +97,9 @@ public class ConversationRequest implements JSONable {
             }
             if (null != this.parentMessageId) {
                 json.put("parentMessageId", this.parentMessageId);
+            }
+            if (null != this.workPattern) {
+                json.put("workPattern", this.workPattern);
             }
             return json;
         }

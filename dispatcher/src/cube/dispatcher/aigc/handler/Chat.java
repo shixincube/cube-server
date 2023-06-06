@@ -27,7 +27,6 @@
 package cube.dispatcher.aigc.handler;
 
 import cube.common.entity.AIGCChatRecord;
-import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -51,22 +50,12 @@ public class Chat extends ContextHandler {
 
     private class Handler extends AIGCHandler {
 
-        private AccessController controller;
-
         public Handler() {
             super();
-            this.controller = new AccessController();
-            this.controller.setEachIPInterval(100);
         }
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            if (!this.controller.filter(request)) {
-                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
-                this.complete();
-                return;
-            }
-
             String token = this.getRequestPath(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
@@ -75,6 +64,7 @@ public class Chat extends ContextHandler {
             }
 
             String channelCode = null;
+            String pattern = "chat";
             String content = null;
             String unit = null;
             int histories = 3;
@@ -95,6 +85,10 @@ public class Chat extends ContextHandler {
                 if (json.has("records")) {
                     records = json.getJSONArray("records");
                 }
+
+                if (json.has("pattern")) {
+                    pattern = json.getString("pattern");
+                }
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
@@ -109,7 +103,8 @@ public class Chat extends ContextHandler {
             }
 
             // Chat
-            AIGCChatRecord record = Manager.getInstance().chat(channelCode, content, unit, histories, records);
+            AIGCChatRecord record = Manager.getInstance().chat(token, channelCode, pattern,
+                    content, unit, histories, records);
             if (null == record) {
                 // 发生错误
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
@@ -123,6 +118,7 @@ public class Chat extends ContextHandler {
             responseData.put("sn", record.sn);
             responseData.put("content", record.answer);
             responseData.put("timestamp", record.timestamp);
+            responseData.put("pattern", pattern);
 
             this.respondOk(response, responseData);
             this.complete();

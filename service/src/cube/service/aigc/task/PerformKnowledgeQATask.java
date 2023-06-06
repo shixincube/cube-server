@@ -32,7 +32,6 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.KnowledgeDoc;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -80,25 +79,10 @@ public class PerformKnowledgeQATask extends ServiceTask {
             return;
         }
 
-        KnowledgeDoc doc = null;
-        try {
-            doc = base.removeKnowledgeDoc(fileCode);
-        } catch (Exception e) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
-            markResponseTime();
-            return;
-        }
+        // TODO
 
-        if (null == doc) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
-            markResponseTime();
-            return;
-        }
-
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, doc.toJSON()));
-        markResponseTime();
+//        this.cellet.speak(this.talkContext,
+//                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, doc.toJSON()));
+//        markResponseTime();
     }
 }

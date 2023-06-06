@@ -35,11 +35,14 @@ import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCChatRecord;
+import cube.common.entity.KnowledgeQAResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.ChatListener;
+import cube.service.aigc.listener.KnowledgeQAListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -60,7 +63,9 @@ public class ChatTask extends ServiceTask {
         ActionDialect dialect = new ActionDialect(this.primitive);
         Packet packet = new Packet(dialect);
 
-        if (!packet.data.has("content") || !packet.data.has("code")) {
+        String token = getTokenCode(dialect);
+
+        if (null == token || !packet.data.has("content") || !packet.data.has("code")) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
@@ -69,10 +74,11 @@ public class ChatTask extends ServiceTask {
 
         String code = packet.data.getString("code");
         String content = packet.data.getString("content");
+        String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : "chat";
         String unit = packet.data.has("unit") ? packet.data.getString("unit") : null;
-        String desc = packet.data.has("desc") ? packet.data.getString("desc") : null;
         int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 3;
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
+        String modelName = packet.data.has("model") ? packet.data.getString("model") : "BaizeNLG";
 
         List<AIGCChatRecord> recordList = null;
         if (null != records) {
@@ -89,22 +95,48 @@ public class ChatTask extends ServiceTask {
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
-        // 执行 Chat
-        boolean success = service.chat(code, content, unit, desc, histories, recordList, new ChatListener() {
-            @Override
-            public void onChat(AIGCChannel channel, AIGCChatRecord record) {
-                cellet.speak(talkContext,
-                        makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
-                markResponseTime();
-            }
+        boolean success = false;
 
-            @Override
-            public void onFailed(AIGCChannel channel) {
-                cellet.speak(talkContext,
-                        makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
-                markResponseTime();
+        // 根据模式配置
+        if (pattern.equalsIgnoreCase("chat")) {
+            // 执行 Chat
+            success = service.chat(code, content, unit, histories, recordList, new ChatListener() {
+                @Override
+                public void onChat(AIGCChannel channel, AIGCChatRecord record) {
+                    cellet.speak(talkContext,
+                            makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
+                    markResponseTime();
+                }
+
+                @Override
+                public void onFailed(AIGCChannel channel) {
+                    cellet.speak(talkContext,
+                            makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
+                    markResponseTime();
+                }
+            });
+        }
+        else if (pattern.equalsIgnoreCase("knowledge")) {
+            // 执行知识库问答
+            KnowledgeBase knowledgeBase = service.getKnowledgeBase(token);
+            if (null != knowledgeBase) {
+                success = knowledgeBase.performKnowledgeQA(code, modelName, content, new KnowledgeQAListener() {
+                    @Override
+                    public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.chatRecord.toCompactJSON()));
+                        markResponseTime();
+                    }
+
+                    @Override
+                    public void onFailed(AIGCChannel channel) {
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
+                        markResponseTime();
+                    }
+                });
             }
-        });
+        }
 
         if (!success) {
             this.cellet.speak(this.talkContext,
