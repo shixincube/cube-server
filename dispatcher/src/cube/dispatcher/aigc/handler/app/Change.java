@@ -118,6 +118,9 @@ public class Change extends ContextHandler {
             Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
             responseData.put("context", contactToken.toJSON());
 
+            // 知识库概述
+            responseData.put("knowledge", Manager.getInstance().getKnowledgeProfile(token).toJSON());
+
             Helper.respondOk(this, response, responseData);
 
             Logger.d(Change.class, "Client reset session for changing model: " + token);
