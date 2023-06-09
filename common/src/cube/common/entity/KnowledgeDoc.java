@@ -33,6 +33,21 @@ import org.json.JSONObject;
  */
 public class KnowledgeDoc extends Entity {
 
+    /**
+     * 自动语义切割。
+     */
+    public final static String SPLITTER_AUTO = "Auto";
+
+    /**
+     * 根据标点符号切割。
+     */
+    public final static String SPLITTER_PUNCTUATION = "Punctuation";
+
+    /**
+     * 根据文本行进行切割，即一行文本切割为一段。
+     */
+    public final static String SPLITTER_LINE = "Line";
+
     public final long contactId;
 
     public final String fileCode;
@@ -40,6 +55,11 @@ public class KnowledgeDoc extends Entity {
     public final boolean activated;
 
     public FileLabel fileLabel;
+
+    /**
+     * 文本分割器。
+     */
+    public String splitter = SPLITTER_PUNCTUATION;
 
     /**
      * 分割的内容段落数量。
@@ -60,6 +80,7 @@ public class KnowledgeDoc extends Entity {
         this.contactId = json.getLong("contactId");
         this.fileCode = json.getString("fileCode");
         this.activated = json.getBoolean("activated");
+        this.splitter = json.getString("splitter");
         this.numSegments = json.getInt("numSegments");
 
         if (json.has("fileLabel")) {
@@ -88,6 +109,7 @@ public class KnowledgeDoc extends Entity {
         json.put("contactId", this.contactId);
         json.put("fileCode", this.fileCode);
         json.put("activated", this.activated);
+        json.put("splitter", this.splitter);
         json.put("numSegments", this.numSegments);
 
         if (null != this.fileLabel) {

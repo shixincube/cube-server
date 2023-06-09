@@ -27,7 +27,11 @@
 package cube.common.entity;
 
 import cube.common.JSONable;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 情绪分析结果。
@@ -49,10 +53,24 @@ public class SentimentResult implements JSONable {
      */
     public String label;
 
+    /**
+     * 段落得分。
+     */
+    public List<SentimentResult> paragraphs;
+
     public SentimentResult(JSONObject json) {
         this.label = json.getString("label");
         this.negative = json.getDouble("negative");
         this.positive = json.getDouble("positive");
+
+        if (json.has("paragraphs")) {
+            this.paragraphs = new ArrayList<>();
+            JSONArray array = json.getJSONArray("paragraphs");
+            for (int i = 0; i < array.length(); ++i) {
+                SentimentResult sr = new SentimentResult(array.getJSONObject(i));
+                this.paragraphs.add(sr);
+            }
+        }
     }
 
     @Override
@@ -61,6 +79,14 @@ public class SentimentResult implements JSONable {
         json.put("label", this.label);
         json.put("negative", this.negative);
         json.put("positive", this.positive);
+
+        if (null != this.paragraphs) {
+            JSONArray array = new JSONArray();
+            for (SentimentResult sr : this.paragraphs) {
+                array.put(sr.toJSON());
+            }
+            json.put("paragraphs", array);
+        }
         return json;
     }
 

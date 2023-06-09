@@ -754,6 +754,8 @@ public class AIGCService extends AbstractModule {
         }
     }
 
+
+
     /**
      * 执行自然语言任务。
      *
@@ -1491,7 +1493,7 @@ public class AIGCService extends AbstractModule {
             data.put("text", this.text);
 
             Packet request = new Packet(AIGCAction.Sentiment.name, data);
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 60 * 1000);
             if (null == dialect) {
                 Logger.w(AIGCService.class, "Sentiment unit error");
                 // 回调错误
