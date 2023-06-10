@@ -30,6 +30,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
 import cube.auth.AuthToken;
@@ -58,6 +59,7 @@ import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import cube.util.FileType;
 import cube.util.FileUtils;
+import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -1063,6 +1065,35 @@ public class AIGCService extends AbstractModule {
         });
     }
 
+    private ComplexConversationContent recognizeContent(AIGCUnit unit, String text) {
+        ComplexConversationContent result = null;
+
+        if (TextUtils.isURL(text.trim())) {
+            // 对 URL 进行数据读取
+            JSONObject payload = new JSONObject();
+            payload.put("url", text);
+            Packet request = new Packet(AIGCAction.ExtractContent.name, payload);
+            ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+            if (null == dialect) {
+                Logger.w(this.getClass(), "#recognizeContent - Unit is error");
+                return null;
+            }
+
+            Packet response = new Packet(dialect);
+            if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
+                result = new ComplexConversationContent(text);
+            }
+            else {
+                result = new ComplexConversationContent(Packet.extractDataPayload(response));
+            }
+        }
+        else {
+            result = new ComplexConversationContent(text);
+        }
+
+        return result;
+    }
+
     private void processChatQueue(String queryKey) {
         Queue<ChatUnitMeta> queue = this.chatQueueMap.get(queryKey);
         if (null == queue) {
@@ -1249,60 +1280,91 @@ public class AIGCService extends AbstractModule {
         }
 
         public void process() {
-            JSONObject data = new JSONObject();
-            data.put("unit", this.unit.getCapability().getName());
-            data.put("content", this.content);
+            // 识别内容
+            ComplexConversationContent complexContent = recognizeContent(this.unit, this.content);
 
-            if (null == this.records) {
-                if (this.histories > 0) {
-                    List<AIGCChatRecord> records = this.channel.getLastHistory(this.histories);
-                    JSONArray array = new JSONArray();
-                    for (AIGCChatRecord record : records) {
-                        array.put(record.toJSON());
+            AIGCChatRecord result = null;
+
+            if (ComplexConversationContent.TYPE_RAW.equals(complexContent.type)) {
+                // 原始文本
+                JSONObject data = new JSONObject();
+                data.put("unit", this.unit.getCapability().getName());
+                data.put("content", this.content);
+
+                if (null == this.records) {
+                    if (this.histories > 0) {
+                        List<AIGCChatRecord> records = this.channel.getLastHistory(this.histories);
+                        JSONArray array = new JSONArray();
+                        for (AIGCChatRecord record : records) {
+                            array.put(record.toJSON());
+                        }
+                        data.put("history", array);
                     }
-                    data.put("history", array);
+                    else {
+                        data.put("history", new JSONArray());
+                    }
                 }
                 else {
-                    data.put("history", new JSONArray());
+                    JSONArray history = new JSONArray();
+                    for (AIGCChatRecord record : this.records) {
+                        history.put(record.toJSON());
+                    }
+                    data.put("history", history);
                 }
+
+                Packet request = new Packet(AIGCAction.Chat.name, data);
+                ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
+                if (null == dialect) {
+                    Logger.w(AIGCService.class, "Chat unit error - channel: " + this.channel.getCode());
+                    this.channel.setProcessing(false);
+                    // 回调错误
+                    this.listener.onFailed(this.channel);
+                    return;
+                }
+
+                Packet response = new Packet(dialect);
+                JSONObject payload = Packet.extractDataPayload(response);
+
+                if (!payload.has("response")) {
+                    Logger.w(AIGCService.class, "Chat unit respond failed - channel: " + this.channel.getCode());
+                    this.channel.setProcessing(false);
+                    // 回调错误
+                    this.listener.onFailed(this.channel);
+                    return;
+                }
+
+                String responseText = payload.getString("response");
+                result = this.channel.appendRecord(this.content, responseText);
             }
             else {
-                JSONArray history = new JSONArray();
-                for (AIGCChatRecord record : this.records) {
-                    history.put(record.toJSON());
+                // URL 数据
+                String answer = "";
+                if (ComplexConversationContent.TYPE_PAGE.equals(complexContent.type)) {
+                    answer = Consts.formatUrlPageAnswer(TextUtils.extractDomain(complexContent.url),
+                            complexContent.title, complexContent.content.length());
                 }
-                data.put("history", history);
+                else if (ComplexConversationContent.TYPE_IMAGE.equals(complexContent.type)) {
+                    answer = Consts.formatUrlImageAnswer(TextUtils.extractDomain(complexContent.url),
+                            complexContent.format, complexContent.width, complexContent.height,
+                            complexContent.size);
+                }
+                else if (ComplexConversationContent.TYPE_PLAIN.equals(complexContent.type)) {
+                    answer = Consts.formatUrlPlainAnswer(TextUtils.extractDomain(complexContent.url),
+                            complexContent.numWords, complexContent.size);
+                }
+                else if (ComplexConversationContent.TYPE_VIDEO.equals(complexContent.type)) {
+
+                }
+
+                result = this.channel.appendRecord(this.content, answer);
             }
 
-            Packet request = new Packet(AIGCAction.Chat.name, data);
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
-            if (null == dialect) {
-                Logger.w(AIGCService.class, "Chat unit error - channel: " + this.channel.getCode());
-                this.channel.setProcessing(false);
-                // 回调错误
-                this.listener.onFailed(this.channel);
-                return;
-            }
-
-            Packet response = new Packet(dialect);
-            JSONObject payload = Packet.extractDataPayload(response);
-
-            if (!payload.has("response")) {
-                Logger.w(AIGCService.class, "Chat unit respond failed - channel: " + this.channel.getCode());
-                this.channel.setProcessing(false);
-                // 回调错误
-                this.listener.onFailed(this.channel);
-                return;
-            }
-
-            String responseText = payload.getString("response");
-            AIGCChatRecord result = this.channel.appendRecord(this.content, responseText);
             // 设置 SN
             result.sn = this.sn;
 
             this.history.answerContactId = unit.getContact().getId();
             this.history.answerTime = System.currentTimeMillis();
-            this.history.answerContent = responseText;
+            this.history.answerContent = result.answer;
 
             // 重置状态位
             this.channel.setProcessing(false);

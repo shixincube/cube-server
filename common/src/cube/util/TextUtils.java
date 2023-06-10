@@ -43,6 +43,21 @@ public final class TextUtils {
 
     private static final Pattern sBrowserNameSafari = Pattern.compile("Version\\/([\\d.]+).*Safari");
 
+    private static final Pattern sURL =
+            Pattern.compile("^((https?|ftp)://|(www|ftp)\\.)[a-z0-9-]+(\\.[a-z0-9-]+)|(:[0-9]{1,5})+([/?].*)?$");
+
+    private static final Pattern sFileURL = Pattern.compile(
+            "^((https|http|ftp|rtsp|mms)?://)"  //https、http、ftp、rtsp、mms
+            + "?(([0-9a-z_!~*'().&=+$%-]+: )?[0-9a-z_!~*'().&=+$%-]+@)?" //ftp的user@
+            + "(([0-9]{1,3}\\.){3}[0-9]{1,3}" // IP形式的URL- 例如：199.194.52.184
+            + "|" // 允许IP和DOMAIN（域名）
+            + "([0-9a-z_!~*'()-]+\\.)*" // 域名- www.
+            + "([0-9a-z][0-9a-z-]{0,61})?[0-9a-z]\\." // 二级域名
+            + "[a-z]{2,6})" // first level domain- .com or .museum
+            + "(:[0-9]{1,5})?" // 端口号最大为65535,5位数
+            + "((/?)|" // a slash isn't required if there is no file name
+            + "(/[0-9a-z_!~*'().;?:@&=+$,%#-]+)+/?)$");
+
     private TextUtils() {
     }
 
@@ -180,16 +195,66 @@ public final class TextUtils {
         return areas;
     }
 
+    /**
+     * 是否是 URL 格式。
+     *
+     * @param string
+     * @return
+     */
+    public static boolean isURL(String string) {
+        Matcher matcher = sURL.matcher(string);
+        return matcher.find();
+    }
+
+    /**
+     * 提取 URL 的域名信息。
+     *
+     * @param url
+     * @return
+     */
+    public static String extractDomain(String url) {
+        Pattern pattern = Pattern.compile("[^//]*?\\.(com|cn|net|org|biz|info|cc|tv|ai|io)");
+        Matcher matcher = pattern.matcher(url);
+        if (matcher.find()) {
+            return matcher.group();
+        }
+        else {
+            pattern = Pattern.compile("[^(http|ftp|https)://](([a-zA-Z0-9._-]+)|([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}))(([a-zA-Z]{2,6})|(:[0-9]{1,4})?)");
+            matcher = pattern.matcher(url);
+            if (matcher.find()) {
+                return matcher.group();
+            }
+        }
+
+        return null;
+    }
+
     public static void main(String[] args) {
+//        String[] data = {
+//                "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1",
+//                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Safari/605.1.15"
+//        };
+//
+//        for (String ua : data) {
+//            JSONObject result = TextUtils.parseUserAgent(ua);
+//            System.out.println("----------------------------------------");
+//            System.out.println(result.toString(4));
+//        }
+
         String[] data = {
-                "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1",
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Safari/605.1.15"
+                "http://www.news.cn/politics/leaders/2023-06/09/c_1129683180.htm",
+                "https://github.com/shixincube/cube-server",
+                "https://v26-web.douyinvod.com/4e1fc24a1b0137951fc477d4742c2603/64841a3f/video/tos/cn/tos-cn-ve-15c001-alinc2/oQTgo4C9VA8B2pnDAwg8VKrfQbQekFDB1huzQA/?a=6383&ch=5&cr=3&dr=0&lr=all&cd=0%7C0%7C0%7C3&cv=1&br=1858&bt=1858&cs=0&ds=6&ft=GN7rKGVVywIiRZm8Zmo~xj7ScoAp7cE06vrKEdFGcto0g3&mime_type=video_mp4&qs=1&rc=ODQ2OTdoOzg4ODc4NWdoZEBpM2R2dWY6ZjQ0ajMzNGkzM0AvMC4yYDQxNi4xNWMuMS80YSNyMF9ycjRfa2hgLS1kLS9zcw%3D%3D&l=20230610133343084F39F2113AF95FAE3C&btag=e00030000",
+                "http://192.168.9.173:7010/?t=9876",
+                "http://baidu/?t=9876"
         };
 
-        for (String ua : data) {
-            JSONObject result = TextUtils.parseUserAgent(ua);
-            System.out.println("----------------------------------------");
-            System.out.println(result.toString(4));
+        for (String url : data) {
+            System.out.println(TextUtils.isURL(url));
+        }
+        System.out.println("----------------------------------------");
+        for (String url : data) {
+            System.out.println(TextUtils.extractDomain(url));
         }
     }
 }

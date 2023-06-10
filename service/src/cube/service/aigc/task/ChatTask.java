@@ -73,7 +73,7 @@ public class ChatTask extends ServiceTask {
         }
 
         String code = packet.data.getString("code");
-        String content = packet.data.getString("content");
+        String content = packet.data.getString("content").trim();
         String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : "chat";
         String unit = packet.data.has("unit") ? packet.data.getString("unit") : "Chat";
         int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 3;

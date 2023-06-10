@@ -137,9 +137,9 @@ public enum AIGCAction {
     GeneratePrompt("generatePrompt"),
 
     /**
-     * 知识库问答。
+     * 提取内容。
      */
-    KnowledgeQA("knowledgeQA"),
+    ExtractContent("extractContent"),
 
     ;
 
