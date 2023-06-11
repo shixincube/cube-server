@@ -96,6 +96,14 @@ public class ChatTask extends ServiceTask {
 
         boolean success = false;
 
+        // 检查频道
+        AIGCChannel channel = service.getChannel(code);
+        if (null == channel) {
+            // 创建指定的频道
+            Logger.i(this.getClass(), "#run - Create new channel for token: " + token);
+            service.createChannel(token, "User-" + code, code);
+        }
+
         // 根据工作模式进行调用
         if (pattern.equalsIgnoreCase("chat")) {
             // 执行 Chat

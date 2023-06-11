@@ -510,6 +510,26 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
+     * 创建频道。
+     *
+     * @param token
+     * @param participant
+     * @param channelCode
+     * @return
+     */
+    public AIGCChannel createChannel(String token, String participant, String channelCode) {
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthToken authToken = authService.getToken(token);
+        if (null == authToken) {
+            return null;
+        }
+
+        AIGCChannel channel = new AIGCChannel(authToken, participant, channelCode);
+        this.channelMap.put(channel.getCode(), channel);
+        return channel;
+    }
+
+    /**
      * 申请频道。
      *
      * @param token
@@ -554,7 +574,7 @@ public class AIGCService extends AbstractModule {
     /**
      * 执行聊天任务。
      *
-     * @param code
+     * @param channelCode
      * @param content
      * @param unitName
      * @param numHistories
@@ -562,7 +582,7 @@ public class AIGCService extends AbstractModule {
      * @param listener
      * @return
      */
-    public boolean chat(String code, String content, String unitName, int numHistories,
+    public boolean chat(String channelCode, String content, String unitName, int numHistories,
                         List<AIGCChatRecord> records, ChatListener listener) {
         if (!this.isStarted()) {
             Logger.w(AIGCService.class, "#chat - Service is NOT ready");
@@ -575,15 +595,15 @@ public class AIGCService extends AbstractModule {
         }
 
         // 获取频道
-        AIGCChannel channel = this.channelMap.get(code);
+        AIGCChannel channel = this.channelMap.get(channelCode);
         if (null == channel) {
-            Logger.w(AIGCService.class, "#chat - Can NOT find AIGC channel: " + code);
+            Logger.w(AIGCService.class, "#chat - Can NOT find AIGC channel: " + channelCode);
             return false;
         }
 
         // 如果频道正在应答上一次问题，则返回 null
         if (channel.isProcessing()) {
-            Logger.w(AIGCService.class, "#chat - Channel is processing: " + code);
+            Logger.w(AIGCService.class, "#chat - Channel is processing: " + channelCode);
             return false;
         }
 
@@ -1065,8 +1085,8 @@ public class AIGCService extends AbstractModule {
         });
     }
 
-    private ComplexConversationContent recognizeContent(AIGCUnit unit, String text) {
-        ComplexConversationContent result = null;
+    private ComplexContext recognizeContent(AIGCUnit unit, String text) {
+        ComplexContext result = null;
 
         if (TextUtils.isURL(text.trim())) {
             // 对 URL 进行数据读取
@@ -1076,19 +1096,19 @@ public class AIGCService extends AbstractModule {
             ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(), 60 * 1000);
             if (null == dialect) {
                 Logger.w(this.getClass(), "#recognizeContent - Unit is error");
-                return new ComplexConversationContent(text);
+                return new ComplexContext(text);
             }
 
             Packet response = new Packet(dialect);
             if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
-                result = new ComplexConversationContent(text, ComplexConversationContent.TYPE_OTHER, true);
+                result = new ComplexContext(text, ComplexContext.TYPE_OTHER, true);
             }
             else {
-                result = new ComplexConversationContent(Packet.extractDataPayload(response));
+                result = new ComplexContext(Packet.extractDataPayload(response));
             }
         }
         else {
-            result = new ComplexConversationContent(text);
+            result = new ComplexContext(text);
         }
 
         return result;
@@ -1281,11 +1301,11 @@ public class AIGCService extends AbstractModule {
 
         public void process() {
             // 识别内容
-            ComplexConversationContent complexContent = recognizeContent(this.unit, this.content);
+            ComplexContext complexContext = recognizeContent(this.unit, this.content);
 
             AIGCChatRecord result = null;
 
-            if (ComplexConversationContent.TYPE_RAW.equals(complexContent.type)) {
+            if (ComplexContext.TYPE_RAW.equals(complexContext.type)) {
                 // 原始文本
                 JSONObject data = new JSONObject();
                 data.put("unit", this.unit.getCapability().getName());
@@ -1334,44 +1354,44 @@ public class AIGCService extends AbstractModule {
                 }
 
                 String responseText = payload.getString("response");
-                result = this.channel.appendRecord(this.content, responseText);
+                result = this.channel.appendRecord(this.content, responseText, complexContext);
             }
             else {
                 // URL 数据
                 String answer = "";
-                if (complexContent.failure) {
-                    answer = Consts.formatUrlFailureAnswer(TextUtils.extractDomain(complexContent.url),
-                            complexContent.content);
+                if (complexContext.failure) {
+                    answer = Consts.formatUrlFailureAnswer(TextUtils.extractDomain(complexContext.url),
+                            complexContext.content);
                 }
                 else {
-                    if (ComplexConversationContent.TYPE_PAGE.equals(complexContent.type)) {
-                        answer = Consts.formatUrlPageAnswer(TextUtils.extractDomain(complexContent.url),
-                                complexContent.title, complexContent.content.length());
+                    if (ComplexContext.TYPE_PAGE.equals(complexContext.type)) {
+                        answer = Consts.formatUrlPageAnswer(TextUtils.extractDomain(complexContext.url),
+                                complexContext.title, complexContext.content.length());
                     }
-                    else if (ComplexConversationContent.TYPE_IMAGE.equals(complexContent.type)) {
-                        answer = Consts.formatUrlImageAnswer(TextUtils.extractDomain(complexContent.url),
-                                complexContent.format, complexContent.width, complexContent.height,
-                                complexContent.size);
+                    else if (ComplexContext.TYPE_IMAGE.equals(complexContext.type)) {
+                        answer = Consts.formatUrlImageAnswer(TextUtils.extractDomain(complexContext.url),
+                                complexContext.format, complexContext.width, complexContext.height,
+                                complexContext.size);
                     }
-                    else if (ComplexConversationContent.TYPE_PLAIN.equals(complexContent.type)) {
-                        answer = Consts.formatUrlPlainAnswer(TextUtils.extractDomain(complexContent.url),
-                                complexContent.numWords, complexContent.size);
+                    else if (ComplexContext.TYPE_PLAIN.equals(complexContext.type)) {
+                        answer = Consts.formatUrlPlainAnswer(TextUtils.extractDomain(complexContext.url),
+                                complexContext.numWords, complexContext.size);
                     }
-                    else if (ComplexConversationContent.TYPE_VIDEO.equals(complexContent.type)) {
-                        answer = Consts.formatUrlVideoAnswer(TextUtils.extractDomain(complexContent.url),
-                                complexContent.size);
+                    else if (ComplexContext.TYPE_VIDEO.equals(complexContext.type)) {
+                        answer = Consts.formatUrlVideoAnswer(TextUtils.extractDomain(complexContext.url),
+                                complexContext.size);
                     }
-                    else if (ComplexConversationContent.TYPE_AUDIO.equals(complexContent.type)) {
-                        answer = Consts.formatUrlAudioAnswer(TextUtils.extractDomain(complexContent.url),
-                                complexContent.size);
+                    else if (ComplexContext.TYPE_AUDIO.equals(complexContext.type)) {
+                        answer = Consts.formatUrlAudioAnswer(TextUtils.extractDomain(complexContext.url),
+                                complexContext.size);
                     }
                     else {
-                        answer = Consts.formatUrlOtherAnswer(TextUtils.extractDomain(complexContent.url),
-                                complexContent.size);
+                        answer = Consts.formatUrlOtherAnswer(TextUtils.extractDomain(complexContext.url),
+                                complexContext.size);
                     }
                 }
 
-                result = this.channel.appendRecord(this.content, answer);
+                result = this.channel.appendRecord(this.content, answer, complexContext);
             }
 
             // 设置 SN
@@ -1428,6 +1448,8 @@ public class AIGCService extends AbstractModule {
         }
 
         public void process() {
+            ComplexContext complexContext = recognizeContent(this.unit, this.content);
+
             JSONObject data = new JSONObject();
             data.put("unit", this.unit.getCapability().getName());
             data.put("content", this.content);
@@ -1486,7 +1508,8 @@ public class AIGCService extends AbstractModule {
             }
 
             JSONObject payload = Packet.extractDataPayload(response);
-            AIGCConversationResponse convResponse = new AIGCConversationResponse(this.sn, this.content, payload);
+            AIGCConversationResponse convResponse = new AIGCConversationResponse(this.sn, this.content,
+                    complexContext, payload);
 
             this.history.answerContactId = this.unit.getContact().getId();
             this.history.answerTime = System.currentTimeMillis();

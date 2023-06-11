@@ -72,10 +72,14 @@ public class AIGCChannel extends Entity {
     private AtomicInteger rounds;
 
     public AIGCChannel(AuthToken authToken, String participant) {
+        this(authToken, participant, Utils.randomString(16));
+    }
+
+    public AIGCChannel(AuthToken authToken, String participant, String channelCode) {
         this.authToken = authToken;
         this.participant = participant;
         this.creationTime = System.currentTimeMillis();
-        this.code = Utils.randomString(16);
+        this.code = channelCode;
         this.history = new LinkedList<>();
         this.conversationResponses = new LinkedList<>();
         this.processing = new AtomicBoolean(false);
@@ -134,7 +138,7 @@ public class AIGCChannel extends Entity {
         return this.rounds.get();
     }
 
-    public AIGCChatRecord appendRecord(String query, String answer) {
+    public AIGCChatRecord appendRecord(String query, String answer, ComplexContext context) {
         this.activeTimestamp = System.currentTimeMillis();
 
         this.totalQueryWords += query.length();
@@ -142,7 +146,7 @@ public class AIGCChannel extends Entity {
 
         this.rounds.incrementAndGet();
 
-        AIGCChatRecord record = new AIGCChatRecord(query, answer, this.activeTimestamp);
+        AIGCChatRecord record = new AIGCChatRecord(query, answer, this.activeTimestamp, context);
         synchronized (this.history) {
             this.history.addFirst(record);
         }
@@ -158,7 +162,7 @@ public class AIGCChannel extends Entity {
         this.rounds.incrementAndGet();
 
         AIGCChatRecord record = new AIGCChatRecord(conversationResponse.query,
-                conversationResponse.answer, this.activeTimestamp);
+                conversationResponse.answer, this.activeTimestamp, conversationResponse.context);
         synchronized (this.history) {
             this.history.addFirst(record);
         }

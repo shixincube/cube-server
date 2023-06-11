@@ -32,7 +32,7 @@ import org.json.JSONObject;
 /**
  * 复合会话内容。
  */
-public class ComplexConversationContent extends Entity {
+public class ComplexContext extends Entity {
 
     public final static String TYPE_RAW = "raw";
 
@@ -72,7 +72,7 @@ public class ComplexConversationContent extends Entity {
     public int height;
     public String format;
 
-    public ComplexConversationContent(String text) {
+    public ComplexContext(String text) {
         this.url = "";
         this.failure = false;
         this.mimeType = "text/plain";
@@ -80,7 +80,7 @@ public class ComplexConversationContent extends Entity {
         this.content = text;
     }
 
-    public ComplexConversationContent(String url, String type, boolean failure) {
+    public ComplexContext(String url, String type, boolean failure) {
         this.url = url;
         this.type = type;
         this.failure = failure;
@@ -88,7 +88,7 @@ public class ComplexConversationContent extends Entity {
         this.content = "[" + TextUtils.extractDomain(url) + "](" + url + ")";
     }
 
-    public ComplexConversationContent(JSONObject json) {
+    public ComplexContext(JSONObject json) {
         super();
         this.failure = false;
         this.url = json.getString("url");

@@ -51,6 +51,8 @@ public class AIGCConversationResponse implements JSONable {
 
     public long timestamp;
 
+    public ComplexContext context;
+
     public AIGCConversationResponse(JSONObject json) {
         if (json.has("query")) {
             this.query = json.getString("query");
@@ -74,20 +76,25 @@ public class AIGCConversationResponse implements JSONable {
         else {
             this.timestamp = System.currentTimeMillis();
         }
+
+        if (json.has("context")) {
+            this.context = new ComplexContext(json.getJSONObject("context"));
+        }
     }
 
-    public AIGCConversationResponse(long sn, String query, JSONObject json) {
+    public AIGCConversationResponse(long sn, String query, ComplexContext context, JSONObject payload) {
         this.sn = sn;
         this.query = query;
+        this.context = context;
 
-        this.answer = json.getString("answer");
-        this.thought = json.getString("thought");
-        this.needHistory = json.getBoolean("needHistory");
-        this.candidateQuery = json.getString("candidateQuery");
-        this.candidateAnswer = json.getString("candidateAnswer");
+        this.answer = payload.getString("answer");
+        this.thought = payload.getString("thought");
+        this.needHistory = payload.getBoolean("needHistory");
+        this.candidateQuery = payload.getString("candidateQuery");
+        this.candidateAnswer = payload.getString("candidateAnswer");
 
-        if (json.has("timestamp")) {
-            this.timestamp = json.getLong("timestamp");
+        if (payload.has("timestamp")) {
+            this.timestamp = payload.getLong("timestamp");
         }
         else {
             this.timestamp = System.currentTimeMillis();
@@ -95,7 +102,7 @@ public class AIGCConversationResponse implements JSONable {
     }
 
     public AIGCChatRecord toRecord() {
-        AIGCChatRecord record = new AIGCChatRecord(this.query, this.answer, this.timestamp);
+        AIGCChatRecord record = new AIGCChatRecord(this.query, this.answer, this.timestamp, this.context);
         record.sn = this.sn;
         return record;
     }
@@ -115,6 +122,8 @@ public class AIGCConversationResponse implements JSONable {
         json.put("candidateAnswer", this.candidateAnswer);
 
         json.put("timestamp", this.timestamp);
+
+        json.put("context", this.context.toJSON());
         return json;
     }
 

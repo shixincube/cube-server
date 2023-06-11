@@ -42,10 +42,13 @@ public class AIGCChatRecord implements JSONable {
 
     public long timestamp;
 
-    public AIGCChatRecord(String query, String answer, long timestamp) {
+    public ComplexContext context;
+
+    public AIGCChatRecord(String query, String answer, long timestamp, ComplexContext context) {
         this.query = query;
         this.answer = answer;
         this.timestamp = timestamp;
+        this.context = context;
     }
 
     public AIGCChatRecord(JSONObject json) {
@@ -62,6 +65,10 @@ public class AIGCChatRecord implements JSONable {
         if (json.has("sn")) {
             this.sn = json.getLong("sn");
         }
+
+        if (json.has("context")) {
+            this.context = new ComplexContext(json.getJSONObject("context"));
+        }
     }
 
     public int totalWords() {
@@ -75,6 +82,9 @@ public class AIGCChatRecord implements JSONable {
         json.put("query", this.query);
         json.put("answer", this.answer);
         json.put("timestamp", this.timestamp);
+        if (null != this.context) {
+            json.put("context", this.context.toJSON());
+        }
         return json;
     }
 

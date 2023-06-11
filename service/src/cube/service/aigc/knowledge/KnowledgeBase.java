@@ -288,7 +288,8 @@ public class KnowledgeBase {
                 public void run() {
                     KnowledgeQAResult result = new KnowledgeQAResult(query);
                     result.prompt = "";
-                    AIGCChatRecord chatRecord = new AIGCChatRecord(query, EMPTY_BASE_ANSWER, System.currentTimeMillis());
+                    AIGCChatRecord chatRecord = new AIGCChatRecord(query, EMPTY_BASE_ANSWER, System.currentTimeMillis(),
+                            new ComplexContext(query));
                     result.chatRecord = chatRecord;
                     listener.onCompleted(channel, result);
                 }
