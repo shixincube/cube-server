@@ -1076,12 +1076,12 @@ public class AIGCService extends AbstractModule {
             ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(), 60 * 1000);
             if (null == dialect) {
                 Logger.w(this.getClass(), "#recognizeContent - Unit is error");
-                return null;
+                return new ComplexConversationContent(text);
             }
 
             Packet response = new Packet(dialect);
             if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
-                result = new ComplexConversationContent(text);
+                result = new ComplexConversationContent(text, ComplexConversationContent.TYPE_OTHER, true);
             }
             else {
                 result = new ComplexConversationContent(Packet.extractDataPayload(response));
@@ -1339,21 +1339,36 @@ public class AIGCService extends AbstractModule {
             else {
                 // URL 数据
                 String answer = "";
-                if (ComplexConversationContent.TYPE_PAGE.equals(complexContent.type)) {
-                    answer = Consts.formatUrlPageAnswer(TextUtils.extractDomain(complexContent.url),
-                            complexContent.title, complexContent.content.length());
+                if (complexContent.failure) {
+                    answer = Consts.formatUrlFailureAnswer(TextUtils.extractDomain(complexContent.url),
+                            complexContent.content);
                 }
-                else if (ComplexConversationContent.TYPE_IMAGE.equals(complexContent.type)) {
-                    answer = Consts.formatUrlImageAnswer(TextUtils.extractDomain(complexContent.url),
-                            complexContent.format, complexContent.width, complexContent.height,
-                            complexContent.size);
-                }
-                else if (ComplexConversationContent.TYPE_PLAIN.equals(complexContent.type)) {
-                    answer = Consts.formatUrlPlainAnswer(TextUtils.extractDomain(complexContent.url),
-                            complexContent.numWords, complexContent.size);
-                }
-                else if (ComplexConversationContent.TYPE_VIDEO.equals(complexContent.type)) {
-
+                else {
+                    if (ComplexConversationContent.TYPE_PAGE.equals(complexContent.type)) {
+                        answer = Consts.formatUrlPageAnswer(TextUtils.extractDomain(complexContent.url),
+                                complexContent.title, complexContent.content.length());
+                    }
+                    else if (ComplexConversationContent.TYPE_IMAGE.equals(complexContent.type)) {
+                        answer = Consts.formatUrlImageAnswer(TextUtils.extractDomain(complexContent.url),
+                                complexContent.format, complexContent.width, complexContent.height,
+                                complexContent.size);
+                    }
+                    else if (ComplexConversationContent.TYPE_PLAIN.equals(complexContent.type)) {
+                        answer = Consts.formatUrlPlainAnswer(TextUtils.extractDomain(complexContent.url),
+                                complexContent.numWords, complexContent.size);
+                    }
+                    else if (ComplexConversationContent.TYPE_VIDEO.equals(complexContent.type)) {
+                        answer = Consts.formatUrlVideoAnswer(TextUtils.extractDomain(complexContent.url),
+                                complexContent.size);
+                    }
+                    else if (ComplexConversationContent.TYPE_AUDIO.equals(complexContent.type)) {
+                        answer = Consts.formatUrlAudioAnswer(TextUtils.extractDomain(complexContent.url),
+                                complexContent.size);
+                    }
+                    else {
+                        answer = Consts.formatUrlOtherAnswer(TextUtils.extractDomain(complexContent.url),
+                                complexContent.size);
+                    }
                 }
 
                 result = this.channel.appendRecord(this.content, answer);

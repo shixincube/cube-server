@@ -33,6 +33,8 @@ import cube.util.FileUtils;
  */
 public final class Consts {
 
+    private final static String ANSWER_URL_FAILURE_FORMAT = "这是站点 %s 的访问链接：%s\n我没有访问到该链接数据，此链接可能已经失效了。";
+
     private final static String ANSWER_URL_PAGE_FORMAT = "这是来自站点 %s 的页面链接。\n页面标题是：《%s》。\n页面正文约 %d 个字符。";
 
     private final static String ANSWER_URL_IMAGE_FORMAT = "这是张来自 %s 的 %s 图片。\n图片宽 %d 像素，高 %d 像素，文件大小是 %s 。";
@@ -44,6 +46,10 @@ public final class Consts {
     private final static String ANSWER_URL_AUDIO_FORMAT = "这是来自 %s 的音频文件。\n文件大小是 %s 。";
 
     private final static String ANSWER_URL_OTHER_FORMAT = "这是来自 %s 的文件。\n文件大小是 %s 。";
+
+    public static String formatUrlFailureAnswer(String domain, String url) {
+        return String.format(ANSWER_URL_FAILURE_FORMAT, domain, url);
+    }
 
     public static String formatUrlPageAnswer(String domain, String title, int numWords) {
         return String.format(ANSWER_URL_PAGE_FORMAT, domain, title, numWords);

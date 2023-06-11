@@ -226,7 +226,7 @@ public final class TextUtils {
             }
         }
 
-        return null;
+        return url;
     }
 
     public static void main(String[] args) {

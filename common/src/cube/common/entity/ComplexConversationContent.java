@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cube.util.TextUtils;
 import org.json.JSONObject;
 
 /**
@@ -49,6 +50,8 @@ public class ComplexConversationContent extends Entity {
 
     public final String url;
 
+    public final boolean failure;
+
     public String mimeType;
 
     public String type;
@@ -71,13 +74,23 @@ public class ComplexConversationContent extends Entity {
 
     public ComplexConversationContent(String text) {
         this.url = "";
+        this.failure = false;
         this.mimeType = "text/plain";
         this.type = TYPE_RAW;
         this.content = text;
     }
 
+    public ComplexConversationContent(String url, String type, boolean failure) {
+        this.url = url;
+        this.type = type;
+        this.failure = failure;
+        this.mimeType = "text/plain";
+        this.content = "[" + TextUtils.extractDomain(url) + "](" + url + ")";
+    }
+
     public ComplexConversationContent(JSONObject json) {
         super();
+        this.failure = false;
         this.url = json.getString("url");
         this.type = json.getString("metaType");
         this.mimeType = json.getString("mimeType");
