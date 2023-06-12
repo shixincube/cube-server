@@ -26,7 +26,6 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.common.entity.SentimentResult;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -36,33 +35,23 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 情感分析。
+ * 生成文本摘要。
  */
-public class Sentiment extends ContextHandler {
+public class Summarization extends ContextHandler {
 
-    public Sentiment() {
-        super("/aigc/nlp/sentiment");
+    public Summarization() {
+        super("/aigc/nlp/summarization");
         setHandler(new Handler());
     }
 
     private class Handler extends AIGCHandler {
 
-//        private AccessController controller;
-
         public Handler() {
             super();
-//            this.controller = new AccessController();
-//            this.controller.setEachIPInterval(100);
         }
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-//            if (!this.controller.filter(request)) {
-//                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
-//                this.complete();
-//                return;
-//            }
-
             String token = this.getRequestPath(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
@@ -87,8 +76,8 @@ public class Sentiment extends ContextHandler {
                 return;
             }
 
-            // 情感分析
-            SentimentResult result = Manager.getInstance().sentimentAnalysis(text);
+            // 文本摘要
+            String result = Manager.getInstance().generateSummarization(text);
             if (null == result) {
                 // 不允许该参与者申请或者服务故障
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
@@ -96,7 +85,9 @@ public class Sentiment extends ContextHandler {
                 return;
             }
 
-            this.respondOk(response, result.toJSON());
+            JSONObject responseData = new JSONObject();
+            responseData.put("summarization", result);
+            this.respondOk(response, responseData);
             this.complete();
         }
     }

@@ -107,6 +107,11 @@ public class AIGCService extends AbstractModule {
     /**
      * Key 是 AIGC 的 Query Key
      */
+    private Map<String, Queue<SummarizationUnitMeta>> summarizationQueueMap;
+
+    /**
+     * Key 是 AIGC 的 Query Key
+     */
     private Map<String, Queue<ASRUnitMeta>> asrQueueMap;
 
     /**
@@ -137,6 +142,7 @@ public class AIGCService extends AbstractModule {
         this.conversationQueueMap = new ConcurrentHashMap<>();
         this.nlTaskQueueMap = new ConcurrentHashMap<>();
         this.sentimentQueueMap = new ConcurrentHashMap<>();
+        this.summarizationQueueMap = new ConcurrentHashMap<>();
         this.asrQueueMap = new ConcurrentHashMap<>();
         this.knowledgeMap = new ConcurrentHashMap<>();
     }
@@ -837,7 +843,7 @@ public class AIGCService extends AbstractModule {
         // 查找有该能力的单元
         AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.SentimentAnalysis);
         if (null == unit) {
-            Logger.w(AIGCService.class, "No sentiment analysis task unit setup in server");
+            Logger.w(AIGCService.class, "No sentiment analysis unit setup in server");
             return false;
         }
 
@@ -860,6 +866,51 @@ public class AIGCService extends AbstractModule {
                 @Override
                 public void run() {
                     processSentimentQueue(meta.unit.getQueryKey());
+                }
+            });
+        }
+
+        return true;
+    }
+
+    /**
+     * 生成文本摘要。
+     *
+     * @param text
+     * @param listener
+     * @return
+     */
+    public boolean generateSummarization(String text, SummarizationListener listener) {
+        if (!this.isStarted()) {
+            return false;
+        }
+
+        // 查找有该能力的单元
+        AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Summarization);
+        if (null == unit) {
+            Logger.w(AIGCService.class, "No summarization unit setup in server");
+            return false;
+        }
+
+        SummarizationUnitMeta meta = new SummarizationUnitMeta(unit, text, listener);
+
+        synchronized (this.summarizationQueueMap) {
+            Queue<SummarizationUnitMeta> queue = this.summarizationQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.summarizationQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    processSummarizationQueue(meta.unit.getQueryKey());
                 }
             });
         }
@@ -1079,8 +1130,6 @@ public class AIGCService extends AbstractModule {
             @Override
             public void run() {
                 command.run();
-
-
             }
         });
     }
@@ -1192,7 +1241,7 @@ public class AIGCService extends AbstractModule {
     private void processSentimentQueue(String queryKey) {
         Queue<SentimentUnitMeta> queue = this.sentimentQueueMap.get(queryKey);
         if (null == queue) {
-            Logger.w(AIGCService.class, "No found unit: " + queryKey);
+            Logger.w(AIGCService.class, "#processSentimentQueue - No found unit: " + queryKey);
             return;
         }
 
@@ -1203,6 +1252,31 @@ public class AIGCService extends AbstractModule {
                 meta.process();
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#processSentimentQueue - meta process", e);
+            }
+
+            meta = queue.poll();
+        }
+
+        AIGCUnit unit = this.unitMap.get(queryKey);
+        if (null != unit) {
+            unit.setRunning(false);
+        }
+    }
+
+    private void processSummarizationQueue(String queryKey) {
+        Queue<SummarizationUnitMeta> queue = this.summarizationQueueMap.get(queryKey);
+        if (null == queue) {
+            Logger.w(AIGCService.class, "#processSummarizationQueue - No found unit: " + queryKey);
+            return;
+        }
+
+        SummarizationUnitMeta meta = queue.poll();
+        while (null != meta) {
+            // 执行处理
+            try {
+                meta.process();
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#processSummarizationQueue - meta process", e);
             }
 
             meta = queue.poll();
@@ -1607,6 +1681,45 @@ public class AIGCService extends AbstractModule {
             SentimentResult result = new SentimentResult(payload);
 
             this.listener.onCompleted(result);
+        }
+    }
+
+
+    private class SummarizationUnitMeta {
+
+        protected AIGCUnit unit;
+
+        protected String text;
+
+        protected SummarizationListener listener;
+
+        public SummarizationUnitMeta(AIGCUnit unit, String text, SummarizationListener listener) {
+            this.unit = unit;
+            this.text = text;
+            this.listener = listener;
+        }
+
+        public void process() {
+            JSONObject data = new JSONObject();
+            data.put("text", this.text);
+
+            Packet request = new Packet(AIGCAction.Summarization.name, data);
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 60 * 1000);
+            if (null == dialect) {
+                Logger.w(AIGCService.class, "Summarization unit error");
+                // 回调错误
+                this.listener.onFailed();
+                return;
+            }
+
+            Packet response = new Packet(dialect);
+            JSONObject payload = Packet.extractDataPayload(response);
+            if (payload.has("summarization")) {
+                this.listener.onCompleted(payload.getString("summarization"));
+            }
+            else {
+                this.listener.onFailed();
+            }
         }
     }
 

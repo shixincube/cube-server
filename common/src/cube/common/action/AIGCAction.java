@@ -87,6 +87,11 @@ public enum AIGCAction {
     Sentiment("sentiment"),
 
     /**
+     * 生成摘要。
+     */
+    Summarization("summarization"),
+
+    /**
      * 自然语言通用任务。
      */
     NaturalLanguageTask("naturalLanguageTask"),

@@ -105,6 +105,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new Chat());
         httpServer.addContextHandler(new NLGeneralTask());
         httpServer.addContextHandler(new Sentiment());
+        httpServer.addContextHandler(new Summarization());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
         httpServer.addContextHandler(new Conversation());
         httpServer.addContextHandler(new KnowledgeDocs());
@@ -438,7 +439,7 @@ public class Manager implements Tickable, PerformerListener {
         data.put("text", text);
         Packet packet = new Packet(AIGCAction.Sentiment.name, data);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 120 * 1000);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#sentimentAnalysis - Response is null");
             return null;
@@ -453,6 +454,27 @@ public class Manager implements Tickable, PerformerListener {
 
         SentimentResult result = new SentimentResult(Packet.extractDataPayload(responsePacket));
         return result;
+    }
+
+    public String generateSummarization(String text) {
+        JSONObject data = new JSONObject();
+        data.put("text", text);
+        Packet packet = new Packet(AIGCAction.Summarization.name, data);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#generateSummarization - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#generateSummarization - Response state code : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket).getString("summarization");
     }
 
     public NLTask performNaturalLanguageTask(NLTask task) {
