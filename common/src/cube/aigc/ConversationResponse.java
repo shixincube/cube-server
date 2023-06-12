@@ -27,6 +27,7 @@
 package cube.aigc;
 
 import cube.common.JSONable;
+import cube.common.entity.ComplexContext;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -48,6 +49,8 @@ public class ConversationResponse implements JSONable {
     private String text = "";
 
     private Detail detail = new Detail();
+
+    public ComplexContext context;
 
     public ConversationResponse(long sn, String id, String conversationId, String text) {
         this.sn = sn;
@@ -72,6 +75,9 @@ public class ConversationResponse implements JSONable {
         this.role = json.getString("role");
         this.text = json.getString("text");
         this.detail = new Detail(json.getJSONObject("detail"));
+        if (json.has("context")) {
+            this.context = new ComplexContext(json.getJSONObject("context"));
+        }
     }
 
     @Override
@@ -84,6 +90,9 @@ public class ConversationResponse implements JSONable {
         json.put("role", this.role);
         json.put("text", this.text);
         json.put("detail", this.detail.toJSON());
+        if (null != this.context) {
+            json.put("context", this.context.toJSON());
+        }
         return json;
     }
 

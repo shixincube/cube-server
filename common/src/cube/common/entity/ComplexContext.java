@@ -91,7 +91,7 @@ public class ComplexContext extends Entity {
     public ComplexContext(JSONObject json) {
         super();
         this.failure = false;
-        this.url = json.getString("url");
+        this.url = json.has("url") ? json.getString("url") : "";
         this.type = json.getString("metaType");
         this.mimeType = json.getString("mimeType");
 
@@ -131,7 +131,7 @@ public class ComplexContext extends Entity {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("url", this.url);
-        json.put("type", this.type);
+        json.put("metaType", this.type);
         json.put("mimeType", this.mimeType);
         if (null != this.title) {
             json.put("title", this.title);

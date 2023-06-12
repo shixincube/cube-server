@@ -31,6 +31,7 @@ import cube.aigc.ConversationRequest;
 import cube.aigc.ConversationResponse;
 import cube.aigc.ModelConfig;
 import cube.common.JSONable;
+import cube.common.entity.ComplexContext;
 import cube.util.HttpClientFactory;
 import cube.util.JSONUtils;
 import org.eclipse.jetty.client.HttpClient;
@@ -197,6 +198,8 @@ public final class App {
 
         // 结果内容
         String content = null;
+        // 内容的复合数据上下文
+        ComplexContext context = null;
 
         String url = config.getApiURL() + token;
 
@@ -204,7 +207,7 @@ public final class App {
         JSONObject apiData = JSONUtils.clone(config.getParameter());
         apiData.put("code", convId);
         apiData.put("content", request.prompt);
-        apiData.put("histories", request.usingContext ? 5 : 0);
+        apiData.put("histories", request.usingContext ? 3 : 0);
         apiData.put("temperature", request.temperature);
         apiData.put("topP", request.topP);
         apiData.put("pattern", request.options.workPattern);
@@ -224,6 +227,10 @@ public final class App {
                 else if (responseData.has("response")) {
                     content = responseData.getJSONObject("response").getString("answer");
                     sn = responseData.getLong("sn");
+                }
+
+                if (responseData.has("context")) {
+                    context = new ComplexContext(responseData.getJSONObject("context"));
                 }
             }
             else {
@@ -246,11 +253,12 @@ public final class App {
             return null;
         }
 
-        return this.splitResponse(sn, convId, request, content);
+        return this.splitResponse(sn, convId, request, content, context);
     }
 
     private List<ConversationResponse> splitResponse(long sn, String conversationId,
-                                                     ConversationRequest request, String content) {
+                                                     ConversationRequest request, String content,
+                                                     ComplexContext context) {
         List<ConversationResponse> result = new ArrayList<>();
 
         // 先拆为字符数组
@@ -271,6 +279,9 @@ public final class App {
 
             pid = id;
         }
+
+        // 仅在第一个元素携带上下文
+        result.get(0).context = context;
 
         return result;
     }

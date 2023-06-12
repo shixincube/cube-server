@@ -26,6 +26,7 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cell.util.log.Logger;
 import cube.common.entity.AIGCChatRecord;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
@@ -67,7 +68,7 @@ public class Chat extends ContextHandler {
             String pattern = "chat";
             String content = null;
             String unit = "Chat";
-            int histories = 3;
+            int histories = 0;
             JSONArray records = null;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
@@ -90,6 +91,7 @@ public class Chat extends ContextHandler {
                     pattern = json.getString("pattern");
                 }
             } catch (Exception e) {
+                Logger.e(Chat.class, "#doPost - Read body failed", e);
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
                 return;
@@ -119,6 +121,9 @@ public class Chat extends ContextHandler {
             responseData.put("content", record.answer);
             responseData.put("timestamp", record.timestamp);
             responseData.put("pattern", pattern);
+            if (null != record.context) {
+                responseData.put("context", record.context.toJSON());
+            }
 
             this.respondOk(response, responseData);
             this.complete();
