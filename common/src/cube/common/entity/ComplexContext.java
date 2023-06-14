@@ -26,146 +26,72 @@
 
 package cube.common.entity;
 
-import cube.util.TextUtils;
+import cell.util.Utils;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 复合会话内容。
  */
 public class ComplexContext extends Entity {
 
-    public final static String TYPE_RAW = "raw";
+    public final static String Simplex = "simplex";
 
-    public final static String TYPE_PLAIN = "plain";
+    public final static String Complex = "complex";
 
-    public final static String TYPE_PAGE = "page";
+    public final String raw;
 
-    public final static String TYPE_IMAGE = "image";
+    private List<ComplexResource> resources;
 
-    public final static String TYPE_VIDEO = "video";
-
-    public final static String TYPE_AUDIO = "audio";
-
-    public final static String TYPE_OTHER = "other";
-
-    public final String url;
-
-    public final boolean failure;
-
-    public String mimeType;
-
-    public String type;
-
-    public String content;
-
-    public String title;
-
-    public String illustration;
-
-    public String path;
-
-    public long size;
-
-    public int numWords;
-
-    public int width;
-    public int height;
-    public String format;
-
-    public ComplexContext(String text) {
-        this.url = "";
-        this.failure = false;
-        this.mimeType = "text/plain";
-        this.type = TYPE_RAW;
-        this.content = text;
-    }
-
-    public ComplexContext(String url, String type, boolean failure) {
-        this.url = url;
-        this.type = type;
-        this.failure = failure;
-        this.mimeType = "text/plain";
-        this.content = "[" + TextUtils.extractDomain(url) + "](" + url + ")";
+    public ComplexContext(String raw) {
+        super(Utils.generateSerialNumber());
+        this.raw = raw;
+        this.resources = new ArrayList<>();
     }
 
     public ComplexContext(JSONObject json) {
-        super();
-        this.failure = false;
-        this.url = json.has("url") ? json.getString("url") : "";
-        this.type = json.getString("metaType");
-        this.mimeType = json.getString("mimeType");
+        super(json);
+        this.raw = json.getString("raw");
+        this.resources = new ArrayList<>();
 
-        if (json.has("title")) {
-            this.title = json.getString("title");
+        JSONArray array = json.getJSONArray("resources");
+        for (int i = 0; i < array.length(); ++i) {
+            this.resources.add(new ComplexResource(array.getJSONObject(i)));
         }
-        if (json.has("content")) {
-            this.content = json.getString("content");
-        }
-        if (json.has("illustration")) {
-            this.illustration = json.getString("illustration");
-        }
+    }
 
-        if (json.has("path")) {
-            this.path = json.getString("path");
-        }
-        if (json.has("size")) {
-            this.size = json.getLong("size");
-        }
+    public int numResources() {
+        return this.resources.size();
+    }
 
-        if (json.has("numWords")) {
-            this.numWords = json.getInt("numWords");
-        }
+    public ComplexResource getResource() {
+        return this.resources.get(0);
+    }
 
-        if (json.has("width")) {
-            this.width = json.getInt("width");
-        }
-        if (json.has("height")) {
-            this.height = json.getInt("height");
-        }
-        if (json.has("format")) {
-            this.format = json.getString("format");
-        }
+    public void addResource(ComplexResource resource) {
+        this.resources.add(resource);
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("url", this.url);
-        json.put("metaType", this.type);
-        json.put("mimeType", this.mimeType);
-        if (null != this.title) {
-            json.put("title", this.title);
-        }
-        if (null != this.content) {
-            json.put("content", this.content);
-        }
-        if (null != this.illustration) {
-            json.put("illustration", this.illustration);
-        }
+        json.put("raw", this.raw);
 
-        if (this.numWords > 0) {
-            json.put("numWords", this.numWords);
+        JSONArray array = new JSONArray();
+        for (ComplexResource resource : this.resources) {
+            array.put(resource.toCompactJSON());
         }
+        json.put("resources", array);
 
-        if (null != this.path) {
-            json.put("path", this.path);
-            json.put("size", this.size);
-        }
-
-        if (null != this.format) {
-            json.put("width", this.width);
-            json.put("height", this.height);
-            json.put("format", this.format);
-        }
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = this.toJSON();
-        if (json.has("path")) {
-            json.remove("path");
-        }
         return json;
     }
 }

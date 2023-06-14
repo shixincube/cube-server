@@ -142,9 +142,9 @@ public enum AIGCAction {
     GeneratePrompt("generatePrompt"),
 
     /**
-     * 提取内容。
+     * 提取 URL 内容。
      */
-    ExtractContent("extractContent"),
+    ExtractURLContent("extractURLContent"),
 
     ;
 

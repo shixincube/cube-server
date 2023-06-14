@@ -30,6 +30,8 @@ import cube.common.entity.TextConstraint;
 import cube.vision.Size;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,8 +45,11 @@ public final class TextUtils {
 
     private static final Pattern sBrowserNameSafari = Pattern.compile("Version\\/([\\d.]+).*Safari");
 
-    private static final Pattern sURL =
+    private static final Pattern sWholeURL =
             Pattern.compile("^((https?|ftp)://|(www|ftp)\\.)[a-z0-9-]+(\\.[a-z0-9-]+)|(:[0-9]{1,5})+([/?].*)?$");
+
+    private static final Pattern sURL =
+            Pattern.compile("(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]");
 
     private static final Pattern sFileURL = Pattern.compile(
             "^((https|http|ftp|rtsp|mms)?://)"  //https、http、ftp、rtsp、mms
@@ -57,6 +62,11 @@ public final class TextUtils {
             + "(:[0-9]{1,5})?" // 端口号最大为65535,5位数
             + "((/?)|" // a slash isn't required if there is no file name
             + "(/[0-9a-z_!~*'().;?:@&=+$,%#-]+)+/?)$");
+
+    private static final Pattern sIPv4 = Pattern.compile("^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
+            + "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
+            + "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
+            + "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
 
     private TextUtils() {
     }
@@ -202,7 +212,18 @@ public final class TextUtils {
      * @return
      */
     public static boolean isURL(String string) {
-        Matcher matcher = sURL.matcher(string);
+        Matcher matcher = sWholeURL.matcher(string);
+        return matcher.find();
+    }
+
+    /**
+     * 是否是 IPv4 格式。
+     *
+     * @param string
+     * @return
+     */
+    public static boolean isIPv4(String string) {
+        Matcher matcher = sIPv4.matcher(string);
         return matcher.find();
     }
 
@@ -213,7 +234,7 @@ public final class TextUtils {
      * @return
      */
     public static String extractDomain(String url) {
-        Pattern pattern = Pattern.compile("[^//]*?\\.(com|cn|net|org|biz|info|cc|tv|ai|io)");
+        Pattern pattern = Pattern.compile("[^//]*?\\.(com|cn|net|org|biz|info|cc|tv|ai|io|tw|hk|mo|edu|gov|int|mil|pro|name|museum|coop|aero)");
         Matcher matcher = pattern.matcher(url);
         if (matcher.find()) {
             return matcher.group();
@@ -227,6 +248,24 @@ public final class TextUtils {
         }
 
         return url;
+    }
+
+    /**
+     * 提取文本里的所有 URL 链接。
+     *
+     * @param text
+     * @return
+     */
+    public synchronized static List<String> extractAllURLs(String text) {
+        List<String> list = new ArrayList<>();
+        Matcher matcher = sURL.matcher(text);
+        while (matcher.find()) {
+            String url = matcher.group();
+            if (isURL(url)) {
+                list.add(url);
+            }
+        }
+        return list;
     }
 
     public static void main(String[] args) {
@@ -245,16 +284,34 @@ public final class TextUtils {
                 "http://www.news.cn/politics/leaders/2023-06/09/c_1129683180.htm",
                 "https://github.com/shixincube/cube-server",
                 "https://v26-web.douyinvod.com/4e1fc24a1b0137951fc477d4742c2603/64841a3f/video/tos/cn/tos-cn-ve-15c001-alinc2/oQTgo4C9VA8B2pnDAwg8VKrfQbQekFDB1huzQA/?a=6383&ch=5&cr=3&dr=0&lr=all&cd=0%7C0%7C0%7C3&cv=1&br=1858&bt=1858&cs=0&ds=6&ft=GN7rKGVVywIiRZm8Zmo~xj7ScoAp7cE06vrKEdFGcto0g3&mime_type=video_mp4&qs=1&rc=ODQ2OTdoOzg4ODc4NWdoZEBpM2R2dWY6ZjQ0ajMzNGkzM0AvMC4yYDQxNi4xNWMuMS80YSNyMF9ycjRfa2hgLS1kLS9zcw%3D%3D&l=20230610133343084F39F2113AF95FAE3C&btag=e00030000",
-                "http://192.168.9.173:7010/?t=9876",
+                "http://192.168.9.173/?t=9876",
                 "http://baidu/?t=9876"
         };
-
         for (String url : data) {
-            System.out.println(TextUtils.isURL(url));
+            System.out.println("URL: " + TextUtils.isURL(url));
         }
         System.out.println("----------------------------------------");
         for (String url : data) {
-            System.out.println(TextUtils.extractDomain(url));
+            String domain = TextUtils.extractDomain(url);
+            System.out.println(domain + " - IP: " + TextUtils.isIPv4(domain));
         }
+
+//        List<String> simData = new ArrayList<>();
+//        for (String url : data) {
+//            StringBuilder buf = new StringBuilder("这个链接是什么内容");
+//            buf.append(Utils.randomString(Utils.randomInt(3, 10)));
+//            buf.append(url);
+//            buf.append("\n疑似链接：");
+//            buf.append(url);
+//            simData.add(buf.toString());
+//        }
+//
+//        for (String text : simData) {
+//            System.out.println("----------------------------------------");
+//            List<String> result = TextUtils.extractAllURLs(text);
+//            for (String url : result) {
+//                System.out.println(url);
+//            }
+//        }
     }
 }

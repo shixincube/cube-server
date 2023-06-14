@@ -42,6 +42,8 @@ public class AICapability implements JSONable {
 
     public final static String AudioProcessingTask = "AudioProcessing";
 
+    public final static String DataProcessingTask = "DataProcessing";
+
     private String name;
 
     private String task;
@@ -190,6 +192,15 @@ public class AICapability implements JSONable {
         public final static String VoiceActivityDetection = "VoiceActivityDetection";
 
         private AudioProcessing() {
+        }
+    }
+
+
+    public class DataProcessing {
+
+        public final static String ExtractURLContent = "ExtractURLContent";
+
+        private DataProcessing() {
         }
     }
 }

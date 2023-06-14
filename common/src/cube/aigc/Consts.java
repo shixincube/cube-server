@@ -75,4 +75,6 @@ public final class Consts {
     public static String formatUrlOtherAnswer(String domain, long size) {
         return String.format(ANSWER_URL_OTHER_FORMAT, domain, FileUtils.scaleFileSize(size).toString());
     }
+
+
 }

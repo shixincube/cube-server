@@ -53,6 +53,7 @@ import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.*;
 import cube.service.aigc.plugin.InjectTokenPlugin;
+import cube.service.aigc.resource.ResourceAnswer;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
 import cube.storage.StorageType;
@@ -1134,30 +1135,38 @@ public class AIGCService extends AbstractModule {
         });
     }
 
-    private ComplexContext recognizeContent(AIGCUnit unit, String text) {
-        ComplexContext result = null;
+    private ComplexContext recognizeContent(String text) {
+        String content = text.trim();
+        ComplexContext result = new ComplexContext(ComplexContext.Simplex);
 
-        if (TextUtils.isURL(text.trim())) {
+        if (TextUtils.isURL(content)) {
+            AIGCUnit unit = this.selectUnitBySubtask(AICapability.DataProcessing.ExtractURLContent);
+            if (null == unit) {
+                Logger.w(this.getClass(), "#recognizeContent - Can NOT find extract URL content unit");
+                return result;
+            }
+
             // 对 URL 进行数据读取
             JSONObject payload = new JSONObject();
-            payload.put("url", text);
-            Packet request = new Packet(AIGCAction.ExtractContent.name, payload);
+            payload.put("url", content);
+            Packet request = new Packet(AIGCAction.ExtractURLContent.name, payload);
             ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(), 60 * 1000);
             if (null == dialect) {
                 Logger.w(this.getClass(), "#recognizeContent - Unit is error");
-                return new ComplexContext(text);
+                return result;
             }
 
             Packet response = new Packet(dialect);
             if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
-                result = new ComplexContext(text, ComplexContext.TYPE_OTHER, true);
+                ComplexResource resource = new ComplexResource(content, ComplexResource.TYPE_OTHER, true);
+                result = new ComplexContext(ComplexContext.Complex);
+                result.addResource(resource);
             }
             else {
-                result = new ComplexContext(Packet.extractDataPayload(response));
+                ComplexResource resource = new ComplexResource(Packet.extractDataPayload(response));
+                result = new ComplexContext(ComplexContext.Complex);
+                result.addResource(resource);
             }
-        }
-        else {
-            result = new ComplexContext(text);
         }
 
         return result;
@@ -1375,11 +1384,11 @@ public class AIGCService extends AbstractModule {
 
         public void process() {
             // 识别内容
-            ComplexContext complexContext = recognizeContent(this.unit, this.content);
+            ComplexContext complexContext = recognizeContent(this.content);
 
             AIGCChatRecord result = null;
 
-            if (ComplexContext.TYPE_RAW.equals(complexContext.type)) {
+            if (ComplexContext.Simplex.equals(complexContext.raw)) {
                 // 原始文本
                 JSONObject data = new JSONObject();
                 data.put("unit", this.unit.getCapability().getName());
@@ -1432,39 +1441,8 @@ public class AIGCService extends AbstractModule {
             }
             else {
                 // URL 数据
-                String answer = "";
-                if (complexContext.failure) {
-                    answer = Consts.formatUrlFailureAnswer(TextUtils.extractDomain(complexContext.url),
-                            complexContext.content);
-                }
-                else {
-                    if (ComplexContext.TYPE_PAGE.equals(complexContext.type)) {
-                        answer = Consts.formatUrlPageAnswer(TextUtils.extractDomain(complexContext.url),
-                                complexContext.title, complexContext.content.length());
-                    }
-                    else if (ComplexContext.TYPE_IMAGE.equals(complexContext.type)) {
-                        answer = Consts.formatUrlImageAnswer(TextUtils.extractDomain(complexContext.url),
-                                complexContext.format, complexContext.width, complexContext.height,
-                                complexContext.size);
-                    }
-                    else if (ComplexContext.TYPE_PLAIN.equals(complexContext.type)) {
-                        answer = Consts.formatUrlPlainAnswer(TextUtils.extractDomain(complexContext.url),
-                                complexContext.numWords, complexContext.size);
-                    }
-                    else if (ComplexContext.TYPE_VIDEO.equals(complexContext.type)) {
-                        answer = Consts.formatUrlVideoAnswer(TextUtils.extractDomain(complexContext.url),
-                                complexContext.size);
-                    }
-                    else if (ComplexContext.TYPE_AUDIO.equals(complexContext.type)) {
-                        answer = Consts.formatUrlAudioAnswer(TextUtils.extractDomain(complexContext.url),
-                                complexContext.size);
-                    }
-                    else {
-                        answer = Consts.formatUrlOtherAnswer(TextUtils.extractDomain(complexContext.url),
-                                complexContext.size);
-                    }
-                }
-
+                ResourceAnswer resourceAnswer = new ResourceAnswer(complexContext);
+                String answer = resourceAnswer.answer();
                 result = this.channel.appendRecord(this.content, answer, complexContext);
             }
 
@@ -1522,7 +1500,7 @@ public class AIGCService extends AbstractModule {
         }
 
         public void process() {
-            ComplexContext complexContext = recognizeContent(this.unit, this.content);
+            ComplexContext complexContext = recognizeContent(this.content);
 
             JSONObject data = new JSONObject();
             data.put("unit", this.unit.getCapability().getName());
