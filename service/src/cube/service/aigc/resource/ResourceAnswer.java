@@ -47,36 +47,34 @@ public class ResourceAnswer {
 
         if (this.complexContext.numResources() == 1) {
             ComplexResource resource = this.complexContext.getResource();
-            if (resource.failure) {
-                result = Consts.formatUrlFailureAnswer(TextUtils.extractDomain(resource.url),
-                        resource.content);
+            if (ComplexResource.TYPE_PAGE.equals(resource.metaType)) {
+                result = Consts.formatUrlPageAnswer(TextUtils.extractDomain(resource.url),
+                        resource.title, resource.content.length());
+            }
+            else if (ComplexResource.TYPE_IMAGE.equals(resource.metaType)) {
+                result = Consts.formatUrlImageAnswer(TextUtils.extractDomain(resource.url),
+                        resource.format, resource.width, resource.height,
+                        resource.size);
+            }
+            else if (ComplexResource.TYPE_PLAIN.equals(resource.metaType)) {
+                result = Consts.formatUrlPlainAnswer(TextUtils.extractDomain(resource.url),
+                        resource.numWords, resource.size);
+            }
+            else if (ComplexResource.TYPE_VIDEO.equals(resource.metaType)) {
+                result = Consts.formatUrlVideoAnswer(TextUtils.extractDomain(resource.url),
+                        resource.size);
+            }
+            else if (ComplexResource.TYPE_AUDIO.equals(resource.metaType)) {
+                result = Consts.formatUrlAudioAnswer(TextUtils.extractDomain(resource.url),
+                        resource.size);
+            }
+            else if (ComplexResource.TYPE_OTHER.equals(resource.metaType)) {
+                result = Consts.formatUrlOtherAnswer(TextUtils.extractDomain(resource.url),
+                        resource.size);
             }
             else {
-                if (ComplexResource.TYPE_PAGE.equals(resource.metaType)) {
-                    result = Consts.formatUrlPageAnswer(TextUtils.extractDomain(resource.url),
-                            resource.title, resource.content.length());
-                }
-                else if (ComplexResource.TYPE_IMAGE.equals(resource.metaType)) {
-                    result = Consts.formatUrlImageAnswer(TextUtils.extractDomain(resource.url),
-                            resource.format, resource.width, resource.height,
-                            resource.size);
-                }
-                else if (ComplexResource.TYPE_PLAIN.equals(resource.metaType)) {
-                    result = Consts.formatUrlPlainAnswer(TextUtils.extractDomain(resource.url),
-                            resource.numWords, resource.size);
-                }
-                else if (ComplexResource.TYPE_VIDEO.equals(resource.metaType)) {
-                    result = Consts.formatUrlVideoAnswer(TextUtils.extractDomain(resource.url),
-                            resource.size);
-                }
-                else if (ComplexResource.TYPE_AUDIO.equals(resource.metaType)) {
-                    result = Consts.formatUrlAudioAnswer(TextUtils.extractDomain(resource.url),
-                            resource.size);
-                }
-                else {
-                    result = Consts.formatUrlOtherAnswer(TextUtils.extractDomain(resource.url),
-                            resource.size);
-                }
+                result = Consts.formatUrlFailureAnswer(TextUtils.extractDomain(resource.url),
+                        resource.content);
             }
         }
         else {
