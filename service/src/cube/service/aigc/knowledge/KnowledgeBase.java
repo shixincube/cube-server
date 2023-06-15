@@ -289,7 +289,7 @@ public class KnowledgeBase {
                     KnowledgeQAResult result = new KnowledgeQAResult(query);
                     result.prompt = "";
                     AIGCChatRecord chatRecord = new AIGCChatRecord(query, EMPTY_BASE_ANSWER, System.currentTimeMillis(),
-                            new ComplexContext(query));
+                            new ComplexContext(ComplexContext.RawType.Simplex));
                     result.chatRecord = chatRecord;
                     listener.onCompleted(channel, result);
                 }

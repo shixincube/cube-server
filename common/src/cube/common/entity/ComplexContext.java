@@ -38,29 +38,51 @@ import java.util.List;
  */
 public class ComplexContext extends Entity {
 
-    public final static String Simplex = "simplex";
+    public enum RawType {
 
-    public final static String Complex = "complex";
+        Simplex("simplex"),
 
-    public final String raw;
+        Complex("complex");
+
+        public final String value;
+
+        RawType(String value) {
+            this.value = value;
+        }
+
+        public static RawType parse(String value) {
+            if (value.equalsIgnoreCase(Simplex.value)) {
+                return Simplex;
+            }
+            else {
+                return Complex;
+            }
+        }
+    }
+
+    public final RawType rawType;
 
     private List<ComplexResource> resources;
 
-    public ComplexContext(String raw) {
+    public ComplexContext(RawType rawType) {
         super(Utils.generateSerialNumber());
-        this.raw = raw;
+        this.rawType = rawType;
         this.resources = new ArrayList<>();
     }
 
     public ComplexContext(JSONObject json) {
         super(json);
-        this.raw = json.getString("raw");
+        this.rawType = RawType.parse(json.getString("raw"));
         this.resources = new ArrayList<>();
 
         JSONArray array = json.getJSONArray("resources");
         for (int i = 0; i < array.length(); ++i) {
             this.resources.add(new ComplexResource(array.getJSONObject(i)));
         }
+    }
+
+    public boolean isSimplex() {
+        return this.rawType == RawType.Simplex;
     }
 
     public int numResources() {
@@ -78,7 +100,7 @@ public class ComplexContext extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("raw", this.raw);
+        json.put("raw", this.rawType.value);
 
         JSONArray array = new JSONArray();
         for (ComplexResource resource : this.resources) {

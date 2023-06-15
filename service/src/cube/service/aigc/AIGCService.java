@@ -1136,8 +1136,8 @@ public class AIGCService extends AbstractModule {
     }
 
     private ComplexContext recognizeContent(String text) {
-        String content = text.trim();
-        ComplexContext result = new ComplexContext(ComplexContext.Simplex);
+        final String content = text.trim();
+        ComplexContext result = new ComplexContext(ComplexContext.RawType.Simplex);
 
         if (TextUtils.isURL(content)) {
             AIGCUnit unit = this.selectUnitBySubtask(AICapability.DataProcessing.ExtractURLContent);
@@ -1159,13 +1159,20 @@ public class AIGCService extends AbstractModule {
             Packet response = new Packet(dialect);
             if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
                 ComplexResource resource = new ComplexResource(content, ComplexResource.TYPE_OTHER, true);
-                result = new ComplexContext(ComplexContext.Complex);
+                result = new ComplexContext(ComplexContext.RawType.Complex);
                 result.addResource(resource);
             }
             else {
                 ComplexResource resource = new ComplexResource(Packet.extractDataPayload(response));
-                result = new ComplexContext(ComplexContext.Complex);
+                result = new ComplexContext(ComplexContext.RawType.Complex);
                 result.addResource(resource);
+            }
+        }
+        else {
+            List<String> urlList = TextUtils.extractAllURLs(content);
+            if (!urlList.isEmpty()) {
+                // 内容包含 URL 链接
+                
             }
         }
 
@@ -1388,8 +1395,8 @@ public class AIGCService extends AbstractModule {
 
             AIGCChatRecord result = null;
 
-            if (ComplexContext.Simplex.equals(complexContext.raw)) {
-                // 原始文本
+            if (complexContext.isSimplex()) {
+                // 一般文本
                 JSONObject data = new JSONObject();
                 data.put("unit", this.unit.getCapability().getName());
                 data.put("content", this.content);
