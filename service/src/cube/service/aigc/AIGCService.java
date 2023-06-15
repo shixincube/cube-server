@@ -1158,21 +1158,68 @@ public class AIGCService extends AbstractModule {
 
             Packet response = new Packet(dialect);
             if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
-                ComplexResource resource = new ComplexResource(content, ComplexResource.TYPE_OTHER, true);
+                ComplexResource resource = new ComplexResource(content, ComplexResource.TYPE_FAILURE);
                 result = new ComplexContext(ComplexContext.RawType.Complex);
                 result.addResource(resource);
             }
             else {
-                ComplexResource resource = new ComplexResource(Packet.extractDataPayload(response));
-                result = new ComplexContext(ComplexContext.RawType.Complex);
-                result.addResource(resource);
+                JSONObject data = Packet.extractDataPayload(response);
+                JSONArray list = data.getJSONArray("list");
+                if (list.isEmpty()) {
+                    // 列表没有数据，获取 URL 失败
+                    result = new ComplexContext(ComplexContext.RawType.Complex);
+                    ComplexResource resource = new ComplexResource(content, ComplexResource.TYPE_FAILURE);
+                    result.addResource(resource);
+                }
+                else {
+                    result = new ComplexContext(ComplexContext.RawType.Complex);
+                    ComplexResource resource = new ComplexResource(list.getJSONObject(0));
+                    result.addResource(resource);
+                }
             }
         }
         else {
             List<String> urlList = TextUtils.extractAllURLs(content);
             if (!urlList.isEmpty()) {
                 // 内容包含 URL 链接
-                
+                AIGCUnit unit = this.selectUnitBySubtask(AICapability.DataProcessing.ExtractURLContent);
+                if (null == unit) {
+                    Logger.w(this.getClass(), "#recognizeContent - Can NOT find extract URL content unit");
+                    return result;
+                }
+
+                // 对 URL 进行数据读取
+                JSONArray urlArray = new JSONArray();
+                for (String url : urlList) {
+                    urlArray.put(url);
+                }
+                JSONObject payload = new JSONObject();
+                payload.put("urls", urlArray);
+                Packet request = new Packet(AIGCAction.ExtractURLContent.name, payload);
+                ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+                if (null == dialect) {
+                    Logger.w(this.getClass(), "#recognizeContent - Unit is error");
+                    return result;
+                }
+
+                Packet response = new Packet(dialect);
+                if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
+                    Logger.d(this.getClass(), "#recognizeContent - Process url list failed");
+                    result = new ComplexContext(ComplexContext.RawType.Complex);
+                    for (String url : urlList) {
+                        ComplexResource resource = new ComplexResource(url, ComplexResource.TYPE_FAILURE);
+                        result.addResource(resource);
+                    }
+                }
+                else {
+                    JSONObject data = Packet.extractDataPayload(response);
+                    JSONArray list = data.getJSONArray("list");
+                    result = new ComplexContext(ComplexContext.RawType.Complex);
+                    for (int i = 0; i < list.length(); ++i) {
+                        ComplexResource resource = new ComplexResource(list.getJSONObject(i));
+                        result.addResource(resource);
+                    }
+                }
             }
         }
 

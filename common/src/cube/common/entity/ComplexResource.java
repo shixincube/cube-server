@@ -48,11 +48,11 @@ public class ComplexResource implements JSONable {
 
     public final static String TYPE_OTHER = "other";
 
+    public final static String TYPE_FAILURE = "failure";
+
     public final long sn;
 
     public final String url;
-
-    public final boolean failure;
 
     public String mimeType;
 
@@ -76,11 +76,10 @@ public class ComplexResource implements JSONable {
     public int height;
     public String format;
 
-    public ComplexResource(String url, String metaType, boolean failure) {
+    public ComplexResource(String url, String metaType) {
         this.sn = Utils.generateSerialNumber();
         this.url = url;
         this.metaType = metaType;
-        this.failure = failure;
         this.mimeType = "text/plain";
         this.site = TextUtils.extractDomain(url);
         this.content = "[" + this.site + "](" + url + ")";
@@ -88,7 +87,6 @@ public class ComplexResource implements JSONable {
 
     public ComplexResource(JSONObject json) {
         this.sn = json.has("sn") ? json.getLong("sn") : Utils.generateSerialNumber();
-        this.failure = false;
         this.url = json.has("url") ? json.getString("url") : "";
         this.metaType = json.getString("metaType");
         this.mimeType = json.getString("mimeType");
@@ -149,7 +147,6 @@ public class ComplexResource implements JSONable {
         json.put("site", this.site);
         json.put("metaType", this.metaType);
         json.put("mimeType", this.mimeType);
-        json.put("failure", this.failure);
 
         if (null != this.title) {
             json.put("title", this.title);
