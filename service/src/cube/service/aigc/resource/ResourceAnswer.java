@@ -74,11 +74,50 @@ public class ResourceAnswer {
             }
             else {
                 result = Consts.formatUrlFailureAnswer(TextUtils.extractDomain(resource.url),
-                        resource.content);
+                        resource.url);
             }
         }
         else {
-            result = "TODO";
+            StringBuilder buf = new StringBuilder(Consts.formatUrlSomeAnswer(this.complexContext.numResources()));
+            buf.append("\n");
+            for (ComplexResource resource : this.complexContext.getResources()) {
+                if (ComplexResource.TYPE_PAGE.equals(resource.metaType)) {
+                    buf.append("* ");
+                    buf.append(Consts.formatUrlSomePageAnswer(resource.url));
+                    buf.append("\n");
+                }
+                else if (ComplexResource.TYPE_IMAGE.equals(resource.metaType)) {
+                    buf.append("* ");
+                    buf.append(Consts.formatUrlSomeImageAnswer(resource.url));
+                    buf.append("\n");
+                }
+                else if (ComplexResource.TYPE_PLAIN.equals(resource.metaType)) {
+                    buf.append("* ");
+                    buf.append(Consts.formatUrlSomePlainAnswer(resource.url));
+                    buf.append("\n");
+                }
+                else if (ComplexResource.TYPE_VIDEO.equals(resource.metaType)) {
+                    buf.append("* ");
+                    buf.append(Consts.formatUrlSomeVideoAnswer(resource.url));
+                    buf.append("\n");
+                }
+                else if (ComplexResource.TYPE_AUDIO.equals(resource.metaType)) {
+                    buf.append("* ");
+                    buf.append(Consts.formatUrlSomeAudioAnswer(resource.url));
+                    buf.append("\n");
+                }
+                else if (ComplexResource.TYPE_OTHER.equals(resource.metaType)) {
+                    buf.append("* ");
+                    buf.append(Consts.formatUrlSomeOtherAnswer(resource.url, resource.mimeType));
+                    buf.append("\n");
+                }
+                else {
+                    buf.append("* ");
+                    buf.append(Consts.formatUrlSomeFailureAnswer(resource.url));
+                    buf.append("\n");
+                }
+            }
+            result = buf.toString();
         }
 
         return result;

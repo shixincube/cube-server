@@ -120,7 +120,7 @@ public class AIGCUnit extends Entity {
         buf.append("_");
         buf.append(capability.getName());
         buf.append("_");
-        buf.append(capability.getSubtask());
+        buf.append(capability.getPrimarySubtask());
         buf.append("_");
         buf.append(capability.getDescription());
         return buf.toString();

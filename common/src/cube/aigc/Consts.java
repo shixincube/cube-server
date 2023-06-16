@@ -27,6 +27,7 @@
 package cube.aigc;
 
 import cube.util.FileUtils;
+import cube.util.TextUtils;
 
 /**
  * 常量数据。
@@ -35,7 +36,7 @@ public final class Consts {
 
     private final static String ANSWER_URL_FAILURE_FORMAT = "这是站点 %s 的访问链接：%s\n我没有访问到该链接数据，此链接可能已经失效了。";
 
-    private final static String ANSWER_URL_PAGE_FORMAT = "这是来自站点 %s 的页面链接。\n页面标题是：《%s》。\n页面正文约 %d 个字符。";
+    private final static String ANSWER_URL_PAGE_FORMAT = "这是来自站点 %s 的页面链接。\n页面标题是：《 **%s** 》。\n页面正文约 %d 个字符。";
 
     private final static String ANSWER_URL_IMAGE_FORMAT = "这是张来自 %s 的 %s 图片。\n图片宽 %d 像素，高 %d 像素，文件大小是 %s 。";
 
@@ -46,6 +47,16 @@ public final class Consts {
     private final static String ANSWER_URL_AUDIO_FORMAT = "这是来自 %s 的音频文件。\n文件大小是 %s 。";
 
     private final static String ANSWER_URL_OTHER_FORMAT = "这是来自 %s 的文件。\n文件大小是 %s 。";
+
+    private final static String ANSWER_URL_SOME_FORMAT = "这是 **%d** 个超链接的访问地址，我帮您进行了整理：";
+
+    private final static String ANSWER_URL_SOME_PAGE_FORMAT = "[%s](%s) 是**页面链接** 。";
+    private final static String ANSWER_URL_SOME_IMAGE_FORMAT = "[%s](%s) 是**图片链接** 。";
+    private final static String ANSWER_URL_SOME_PLAIN_FORMAT = "[%s](%s) 是**文本格式数据链接** 。";
+    private final static String ANSWER_URL_SOME_VIDEO_FORMAT = "[%s](%s) 是**视频数据链接** 。";
+    private final static String ANSWER_URL_SOME_AUDIO_FORMAT = "[%s](%s) 是**音频数据链接** 。";
+    private final static String ANSWER_URL_SOME_OTHER_FORMAT = "[%s](%s) 链接的数据格式是 %s 。";
+    private final static String ANSWER_URL_SOME_FAILURE_FORMAT = "链接 [%s](%s) 无法访问。";
 
     public static String formatUrlFailureAnswer(String domain, String url) {
         return String.format(ANSWER_URL_FAILURE_FORMAT, domain, url);
@@ -76,5 +87,35 @@ public final class Consts {
         return String.format(ANSWER_URL_OTHER_FORMAT, domain, FileUtils.scaleFileSize(size).toString());
     }
 
+    public static String formatUrlSomeAnswer(int numURLs) {
+        return String.format(ANSWER_URL_SOME_FORMAT, numURLs);
+    }
 
+    public static String formatUrlSomePageAnswer(String url) {
+        return String.format(ANSWER_URL_SOME_PAGE_FORMAT, TextUtils.ellipsisURL(url, 32), url);
+    }
+
+    public static String formatUrlSomeImageAnswer(String url) {
+        return String.format(ANSWER_URL_SOME_IMAGE_FORMAT, TextUtils.ellipsisURL(url, 32), url);
+    }
+
+    public static String formatUrlSomePlainAnswer(String url) {
+        return String.format(ANSWER_URL_SOME_PLAIN_FORMAT, TextUtils.ellipsisURL(url, 32), url);
+    }
+
+    public static String formatUrlSomeVideoAnswer(String url) {
+        return String.format(ANSWER_URL_SOME_VIDEO_FORMAT, TextUtils.ellipsisURL(url, 32), url);
+    }
+
+    public static String formatUrlSomeAudioAnswer(String url) {
+        return String.format(ANSWER_URL_SOME_AUDIO_FORMAT, TextUtils.ellipsisURL(url, 32), url);
+    }
+
+    public static String formatUrlSomeOtherAnswer(String url, String format) {
+        return String.format(ANSWER_URL_SOME_OTHER_FORMAT, TextUtils.ellipsisURL(url, 32), url, format);
+    }
+
+    public static String formatUrlSomeFailureAnswer(String url) {
+        return String.format(ANSWER_URL_SOME_FAILURE_FORMAT, TextUtils.ellipsisURL(url, 32), url);
+    }
 }

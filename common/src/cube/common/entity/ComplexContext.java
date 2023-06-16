@@ -93,6 +93,10 @@ public class ComplexContext extends Entity {
         return this.resources.get(0);
     }
 
+    public List<ComplexResource> getResources() {
+        return this.resources;
+    }
+
     public void addResource(ComplexResource resource) {
         this.resources.add(resource);
     }

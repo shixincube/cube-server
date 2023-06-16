@@ -352,49 +352,7 @@ public class AIGCService extends AbstractModule {
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
         while (iter.hasNext()) {
             AIGCUnit unit = iter.next();
-            if (unit.getCapability().getSubtask().equals(subtask) && unit.getContext().isValid()) {
-                candidates.add(unit);
-            }
-        }
-
-        if (candidates.isEmpty()) {
-            return null;
-        }
-
-        int num = candidates.size();
-        if (num == 1) {
-            return candidates.get(0);
-        }
-
-        // 先进行一次随机选择
-        AIGCUnit unit = candidates.get(Utils.randomInt(0, num - 1));
-
-        iter = candidates.iterator();
-        while (iter.hasNext()) {
-            AIGCUnit u = iter.next();
-            if (u.isRunning()) {
-                // 把正在运行的单元从候选列表里删除
-                iter.remove();
-            }
-        }
-
-        if (candidates.isEmpty()) {
-            // 所有单元都在运行，返回随机选择
-            return unit;
-        }
-
-        unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
-        return unit;
-    }
-
-    public AIGCUnit selectUnitBySubtask(String subtask, String description) {
-        ArrayList<AIGCUnit> candidates = new ArrayList<>();
-
-        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
-        while (iter.hasNext()) {
-            AIGCUnit unit = iter.next();
-            if (unit.getCapability().getSubtask().equals(subtask) &&
-                unit.getCapability().getDescription().equals(description)) {
+            if (unit.getCapability().containsSubtask(subtask) && unit.getContext().isValid()) {
                 candidates.add(unit);
             }
         }
@@ -1139,7 +1097,49 @@ public class AIGCService extends AbstractModule {
         final String content = text.trim();
         ComplexContext result = new ComplexContext(ComplexContext.RawType.Simplex);
 
-        if (TextUtils.isURL(content)) {
+        List<String> urlList = TextUtils.extractAllURLs(content);
+        if (!urlList.isEmpty()) {
+            // 内容包含 URL 链接
+            AIGCUnit unit = this.selectUnitBySubtask(AICapability.DataProcessing.ExtractURLContent);
+            if (null == unit) {
+                Logger.w(this.getClass(), "#recognizeContent - Can NOT find extract URL content unit");
+                return result;
+            }
+
+            // 对 URL 进行数据读取
+            JSONArray urlArray = new JSONArray();
+            for (String url : urlList) {
+                urlArray.put(url);
+            }
+            JSONObject payload = new JSONObject();
+            payload.put("urls", urlArray);
+            Packet request = new Packet(AIGCAction.ExtractURLContent.name, payload);
+            ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+            if (null == dialect) {
+                Logger.w(this.getClass(), "#recognizeContent - Unit is error");
+                return result;
+            }
+
+            Packet response = new Packet(dialect);
+            if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
+                Logger.d(this.getClass(), "#recognizeContent - Process url list failed");
+                result = new ComplexContext(ComplexContext.RawType.Complex);
+                for (String url : urlList) {
+                    ComplexResource resource = new ComplexResource(url, ComplexResource.TYPE_FAILURE);
+                    result.addResource(resource);
+                }
+            }
+            else {
+                JSONObject data = Packet.extractDataPayload(response);
+                JSONArray list = data.getJSONArray("list");
+                result = new ComplexContext(ComplexContext.RawType.Complex);
+                for (int i = 0; i < list.length(); ++i) {
+                    ComplexResource resource = new ComplexResource(list.getJSONObject(i));
+                    result.addResource(resource);
+                }
+            }
+        }
+        else if (TextUtils.isURL(content)) {
             AIGCUnit unit = this.selectUnitBySubtask(AICapability.DataProcessing.ExtractURLContent);
             if (null == unit) {
                 Logger.w(this.getClass(), "#recognizeContent - Can NOT find extract URL content unit");
@@ -1175,50 +1175,6 @@ public class AIGCService extends AbstractModule {
                     result = new ComplexContext(ComplexContext.RawType.Complex);
                     ComplexResource resource = new ComplexResource(list.getJSONObject(0));
                     result.addResource(resource);
-                }
-            }
-        }
-        else {
-            List<String> urlList = TextUtils.extractAllURLs(content);
-            if (!urlList.isEmpty()) {
-                // 内容包含 URL 链接
-                AIGCUnit unit = this.selectUnitBySubtask(AICapability.DataProcessing.ExtractURLContent);
-                if (null == unit) {
-                    Logger.w(this.getClass(), "#recognizeContent - Can NOT find extract URL content unit");
-                    return result;
-                }
-
-                // 对 URL 进行数据读取
-                JSONArray urlArray = new JSONArray();
-                for (String url : urlList) {
-                    urlArray.put(url);
-                }
-                JSONObject payload = new JSONObject();
-                payload.put("urls", urlArray);
-                Packet request = new Packet(AIGCAction.ExtractURLContent.name, payload);
-                ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(), 60 * 1000);
-                if (null == dialect) {
-                    Logger.w(this.getClass(), "#recognizeContent - Unit is error");
-                    return result;
-                }
-
-                Packet response = new Packet(dialect);
-                if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
-                    Logger.d(this.getClass(), "#recognizeContent - Process url list failed");
-                    result = new ComplexContext(ComplexContext.RawType.Complex);
-                    for (String url : urlList) {
-                        ComplexResource resource = new ComplexResource(url, ComplexResource.TYPE_FAILURE);
-                        result.addResource(resource);
-                    }
-                }
-                else {
-                    JSONObject data = Packet.extractDataPayload(response);
-                    JSONArray list = data.getJSONArray("list");
-                    result = new ComplexContext(ComplexContext.RawType.Complex);
-                    for (int i = 0; i < list.length(); ++i) {
-                        ComplexResource resource = new ComplexResource(list.getJSONObject(i));
-                        result.addResource(resource);
-                    }
                 }
             }
         }
@@ -1659,7 +1615,6 @@ public class AIGCService extends AbstractModule {
         public void process() {
             JSONObject data = new JSONObject();
             data.put("task", this.task.toJSON());
-
             Packet request = new Packet(AIGCAction.NaturalLanguageTask.name, data);
             ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
             if (null == dialect) {

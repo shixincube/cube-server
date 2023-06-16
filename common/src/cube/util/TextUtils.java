@@ -268,6 +268,38 @@ public final class TextUtils {
         return list;
     }
 
+    /**
+     * 文本省略。
+     *
+     * @param text
+     * @param limit
+     * @return
+     */
+    public static String ellipsis(String text, int limit) {
+        if (text.length() > limit) {
+            return text.substring(0, limit - 1) + "...";
+        }
+        else {
+            return text;
+        }
+    }
+
+    public static String ellipsisURL(String url, int limit) {
+        String result = url.toLowerCase();
+        if (result.startsWith("https")) {
+            result = result.substring(8);
+        }
+        else {
+            result = result.substring(7);
+        }
+
+        if (result.length() > limit) {
+            result = result.substring(0, limit - 6) + "..." + result.substring(result.length() - 6);
+        }
+
+        return result;
+    }
+
     public static void main(String[] args) {
 //        String[] data = {
 //                "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1",
@@ -287,14 +319,17 @@ public final class TextUtils {
                 "http://192.168.9.173/?t=9876",
                 "http://baidu/?t=9876"
         };
+//        for (String url : data) {
+//            System.out.println("URL: " + TextUtils.isURL(url));
+//        }
         for (String url : data) {
-            System.out.println("URL: " + TextUtils.isURL(url));
+            System.out.println("URL: " + TextUtils.ellipsisURL(url, 24));
         }
-        System.out.println("----------------------------------------");
-        for (String url : data) {
-            String domain = TextUtils.extractDomain(url);
-            System.out.println(domain + " - IP: " + TextUtils.isIPv4(domain));
-        }
+//        System.out.println("----------------------------------------");
+//        for (String url : data) {
+//            String domain = TextUtils.extractDomain(url);
+//            System.out.println(domain + " - IP: " + TextUtils.isIPv4(domain));
+//        }
 
 //        List<String> simData = new ArrayList<>();
 //        for (String url : data) {

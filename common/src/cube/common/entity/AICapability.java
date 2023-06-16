@@ -27,7 +27,11 @@
 package cube.common.entity;
 
 import cube.common.JSONable;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * AI 能力集。
@@ -48,21 +52,32 @@ public class AICapability implements JSONable {
 
     private String task;
 
-    private String subtask;
+    private List<String> subtasks;
 
     private String description;
 
-    public AICapability(String name, String task, String subtask, String description) {
+    public AICapability(String name, String task, List<String> subtasks, String description) {
         this.name = name;
         this.task = task;
-        this.subtask = subtask;
+        this.subtasks = subtasks;
         this.description = description;
     }
 
     public AICapability(JSONObject json) {
         this.name = json.getString("name");
         this.task = json.getString("task");
-        this.subtask = json.getString("subtask");
+
+        this.subtasks = new ArrayList<>();
+        if (json.has("subtask")) {
+            this.subtasks.add(json.getString("subtask"));
+        }
+        else if (json.has("subtasks")) {
+            JSONArray array = json.getJSONArray("subtasks");
+            for (int i = 0; i < array.length(); ++i) {
+                this.subtasks.add(array.getString(i));
+            }
+        }
+
         this.description = json.getString("description");
     }
 
@@ -74,8 +89,12 @@ public class AICapability implements JSONable {
         return this.task;
     }
 
-    public String getSubtask() {
-        return this.subtask;
+    public String getPrimarySubtask() {
+        return this.subtasks.get(0);
+    }
+
+    public boolean containsSubtask(String subtask) {
+        return this.subtasks.contains(subtask);
     }
 
     public String getDescription() {
@@ -87,7 +106,18 @@ public class AICapability implements JSONable {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
         json.put("task", this.task);
-        json.put("subtask", this.subtask);
+
+        if (this.subtasks.size() == 1) {
+            json.put("subtask", this.subtasks.get(0));
+        }
+        else {
+            JSONArray array = new JSONArray();
+            for (String subtask : this.subtasks) {
+                array.put(subtask);
+            }
+            json.put("subtasks", array);
+        }
+
         json.put("description", this.description);
         return json;
     }
@@ -146,6 +176,8 @@ public class AICapability implements JSONable {
         public final static String SentenceSimilarity = "SentenceSimilarity";
 
         public final static String SentimentAnalysis = "SentimentAnalysis";
+
+        public final static String ExtractKeywords = "ExtractKeywords";
 
         public final static String MultiTask = "MultiTask";
 
