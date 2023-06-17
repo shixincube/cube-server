@@ -28,6 +28,7 @@ package cube.service.filestorage.system;
 
 import cell.core.net.Endpoint;
 import cell.util.log.Logger;
+import cube.service.filestorage.FileStorageService;
 import cube.storage.StorageType;
 import cube.util.CrossDomainHandler;
 import cube.util.HttpServer;
@@ -69,6 +70,8 @@ public class DiskSystem implements FileSystem {
     private Endpoint masterEndpoint;
 
     private DiskCluster diskCluster;
+
+    private ReceiveFileHandler receiveFileHandler;
 
     public DiskSystem(String managingPath, String host, int port) {
         this(managingPath, host, port, null, 0);
@@ -118,6 +121,9 @@ public class DiskSystem implements FileSystem {
 
         this.httpServer.addContextHandler(new TransferHandler());
 
+        this.receiveFileHandler = new ReceiveFileHandler();
+        this.httpServer.addContextHandler(this.receiveFileHandler);
+
         this.httpServer.start(this.endpoint.getPort());
     }
 
@@ -129,6 +135,10 @@ public class DiskSystem implements FileSystem {
             this.diskCluster.close();
             this.diskCluster = null;
         }
+    }
+
+    public void activateExtendedHandlers(FileStorageService service) {
+        this.receiveFileHandler.activate(service);
     }
 
     /**
@@ -239,7 +249,7 @@ public class DiskSystem implements FileSystem {
             try {
                 fos = new FileOutputStream(target.toFile());
 
-                byte[] buf = new byte[64 * 1024];
+                byte[] buf = new byte[10240];
                 int length = 0;
                 while ((length = inputStream.read(buf)) > 0) {
                     fos.write(buf, 0, length);

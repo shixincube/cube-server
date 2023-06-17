@@ -469,11 +469,11 @@ public class FileHandler extends CrossDomainHandler {
         else {
             // Token Code
             String token = request.getParameter("token");
-            // Domain
-            String domain = request.getParameter("domain");
             // File Code
             String fileCode = request.getParameter("fc");
-            // Device
+            // Domain, optional
+            String domain = request.getParameter("domain");
+            // Device, optional
             String device = request.getParameter("device");
 
             if (null == token && null == domain) {
@@ -520,6 +520,7 @@ public class FileHandler extends CrossDomainHandler {
             ActionDialect responseDialect = null;
 
             if (null != token) {
+                token = token.trim();
                 packetDialect.addParam("token", token);
 
                 if (this.performer.existsTokenCode(token)) {
@@ -558,6 +559,11 @@ public class FileHandler extends CrossDomainHandler {
             JSONObject fileLabelJson = Packet.extractDataPayload(responsePacket);
             // 文件标签
             fileLabel = new FileLabel(fileLabelJson);
+        }
+
+        // 识别文件类型
+        if (type == FileType.UNKNOWN) {
+            type = FileType.matchExtension(fileLabel.getFileExtension());
         }
 
         if (fileLabel.getFileSize() > (long) this.bufferSize) {

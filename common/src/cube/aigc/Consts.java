@@ -48,7 +48,7 @@ public final class Consts {
 
     private final static String ANSWER_URL_OTHER_FORMAT = "这是来自 %s 的文件。\n文件大小是 %s 。";
 
-    private final static String ANSWER_URL_SOME_FORMAT = "这是 **%d** 个超链接的访问地址，我帮您进行了整理：";
+    private final static String ANSWER_URL_SOME_FORMAT = "这是 **%d** 个链接地址，我帮您进行了整理：";
 
     private final static String ANSWER_URL_SOME_PAGE_FORMAT = "[%s](%s) 是**页面链接** 。";
     private final static String ANSWER_URL_SOME_IMAGE_FORMAT = "[%s](%s) 是**图片链接** 。";
@@ -57,6 +57,8 @@ public final class Consts {
     private final static String ANSWER_URL_SOME_AUDIO_FORMAT = "[%s](%s) 是**音频数据链接** 。";
     private final static String ANSWER_URL_SOME_OTHER_FORMAT = "[%s](%s) 链接的数据格式是 %s 。";
     private final static String ANSWER_URL_SOME_FAILURE_FORMAT = "链接 [%s](%s) 无法访问。";
+
+    private final static int URL_ELLIPSIS_LIMIT = 48;
 
     public static String formatUrlFailureAnswer(String domain, String url) {
         return String.format(ANSWER_URL_FAILURE_FORMAT, domain, url);
@@ -92,30 +94,30 @@ public final class Consts {
     }
 
     public static String formatUrlSomePageAnswer(String url) {
-        return String.format(ANSWER_URL_SOME_PAGE_FORMAT, TextUtils.ellipsisURL(url, 32), url);
+        return String.format(ANSWER_URL_SOME_PAGE_FORMAT, TextUtils.ellipsisURL(url, URL_ELLIPSIS_LIMIT), url);
     }
 
     public static String formatUrlSomeImageAnswer(String url) {
-        return String.format(ANSWER_URL_SOME_IMAGE_FORMAT, TextUtils.ellipsisURL(url, 32), url);
+        return String.format(ANSWER_URL_SOME_IMAGE_FORMAT, TextUtils.ellipsisURL(url, URL_ELLIPSIS_LIMIT), url);
     }
 
     public static String formatUrlSomePlainAnswer(String url) {
-        return String.format(ANSWER_URL_SOME_PLAIN_FORMAT, TextUtils.ellipsisURL(url, 32), url);
+        return String.format(ANSWER_URL_SOME_PLAIN_FORMAT, TextUtils.ellipsisURL(url, URL_ELLIPSIS_LIMIT), url);
     }
 
     public static String formatUrlSomeVideoAnswer(String url) {
-        return String.format(ANSWER_URL_SOME_VIDEO_FORMAT, TextUtils.ellipsisURL(url, 32), url);
+        return String.format(ANSWER_URL_SOME_VIDEO_FORMAT, TextUtils.ellipsisURL(url, URL_ELLIPSIS_LIMIT), url);
     }
 
     public static String formatUrlSomeAudioAnswer(String url) {
-        return String.format(ANSWER_URL_SOME_AUDIO_FORMAT, TextUtils.ellipsisURL(url, 32), url);
+        return String.format(ANSWER_URL_SOME_AUDIO_FORMAT, TextUtils.ellipsisURL(url, URL_ELLIPSIS_LIMIT), url);
     }
 
     public static String formatUrlSomeOtherAnswer(String url, String format) {
-        return String.format(ANSWER_URL_SOME_OTHER_FORMAT, TextUtils.ellipsisURL(url, 32), url, format);
+        return String.format(ANSWER_URL_SOME_OTHER_FORMAT, TextUtils.ellipsisURL(url, URL_ELLIPSIS_LIMIT), url, format);
     }
 
     public static String formatUrlSomeFailureAnswer(String url) {
-        return String.format(ANSWER_URL_SOME_FAILURE_FORMAT, TextUtils.ellipsisURL(url, 32), url);
+        return String.format(ANSWER_URL_SOME_FAILURE_FORMAT, TextUtils.ellipsisURL(url, URL_ELLIPSIS_LIMIT), url);
     }
 }

@@ -33,6 +33,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -100,12 +101,19 @@ public final class FileUtils {
      * @return 返回文件码。
      */
     public static String makeFileCode(Long contactId, String domain, String fileName) {
+        // FIXME 2023年6月17日 修改文件码生成规则。
+        // 原规则里加入了时间戳，这样相同文件会生成不同的文件码。
+        // 修正新规则：不加入时间戳作为原始串进行散列。
         StringBuilder buf = new StringBuilder(contactId.toString());
-        buf.append(domain).append(fileName).append(System.currentTimeMillis());
+        buf.append(domain).append(fileName);
+        // 删除时间戳 .append(System.currentTimeMillis());
 
         // 补空位
         if (buf.length() < 64) {
             buf.append("_").append(contactId.toString());
+        }
+        if (buf.length() < 64) {
+            buf.append("_").append(fileName);
         }
         if (buf.length() < 64) {
             buf.append("_").append(domain);
@@ -114,7 +122,7 @@ public final class FileUtils {
         String keyStr = buf.toString();
 
         // 将 Key 串切割
-        List<byte[]> list = FileUtils.slice(keyStr.getBytes(Charset.forName("UTF-8")), 64);
+        List<byte[]> list = FileUtils.slice(keyStr.getBytes(StandardCharsets.UTF_8), 64);
 
         // Hash
         String code = FileUtils.fastHash(list);
@@ -130,12 +138,18 @@ public final class FileUtils {
      * @return 返回文件码。
      */
     public static String makeFileCode(String identification, String domain, String fileName) {
+        // FIXME 2023年6月17日 修改文件码生成规则。
+        // 原规则里加入了时间戳，这样相同文件会生成不同的文件码。
+        // 修正新规则：不加入时间戳作为原始串进行散列。
         StringBuilder buf = new StringBuilder(identification);
-        buf.append(domain).append(fileName).append(System.currentTimeMillis());
+        buf.append(domain).append(fileName);
 
         // 补空位
         if (buf.length() < 64) {
             buf.append("_").append(identification);
+        }
+        if (buf.length() < 64) {
+            buf.append("_").append(fileName);
         }
         if (buf.length() < 64) {
             buf.append("_").append(domain);
@@ -144,7 +158,7 @@ public final class FileUtils {
         String keyStr = buf.toString();
 
         // 将 Key 串切割
-        List<byte[]> list = FileUtils.slice(keyStr.getBytes(Charset.forName("UTF-8")), 64);
+        List<byte[]> list = FileUtils.slice(keyStr.getBytes(StandardCharsets.UTF_8), 64);
 
         // Hash
         String code = FileUtils.fastHash(list);

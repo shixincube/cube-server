@@ -399,7 +399,7 @@ public class FileStorageService extends AbstractModule {
      * @param fileCode
      * @param inputStream
      */
-    public void writeFile(String fileCode, InputStream inputStream) {
+    public File writeFile(String fileCode, InputStream inputStream) {
         // 删除旧文件
         this.fileSystem.deleteFile(fileCode);
 
@@ -408,7 +408,10 @@ public class FileStorageService extends AbstractModule {
         if (null != descriptor) {
             // 缓存文件标识
             this.fileDescriptors.put(fileCode, descriptor);
+            return new File(descriptor.attr("path"));
         }
+
+        return null;
     }
 
     /**
@@ -1028,9 +1031,11 @@ public class FileStorageService extends AbstractModule {
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
                 serviceStorage.execSelfChecking(authService.getDomainList());
 
-                // 激活磁盘集群
                 if (fileSystem instanceof DiskSystem) {
+                    // 激活磁盘集群
                     ((DiskSystem) fileSystem).activateCluster(serviceStorage.getType(), serviceStorage.getConfig());
+                    // 激活扩展功能句柄
+                    ((DiskSystem) fileSystem).activateExtendedHandlers(FileStorageService.this);
                 }
             }
         }).start();

@@ -76,6 +76,8 @@ public class ComplexResource implements JSONable {
     public int height;
     public String format;
 
+    public String thumbnail;
+
     public ComplexResource(String url, String metaType) {
         this.sn = Utils.generateSerialNumber();
         this.url = url;
@@ -128,6 +130,10 @@ public class ComplexResource implements JSONable {
         if (json.has("format")) {
             this.format = json.getString("format");
         }
+
+        if (json.has("thumbnail")) {
+            this.thumbnail = json.getString("thumbnail");
+        }
     }
 
     public int getNumWords() {
@@ -174,6 +180,10 @@ public class ComplexResource implements JSONable {
             json.put("width", this.width);
             json.put("height", this.height);
             json.put("format", this.format);
+        }
+
+        if (null != this.thumbnail) {
+            json.put("thumbnail", this.thumbnail);
         }
         return json;
     }
