@@ -30,7 +30,6 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
 import cube.auth.AuthToken;
@@ -54,6 +53,7 @@ import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.*;
 import cube.service.aigc.plugin.InjectTokenPlugin;
 import cube.service.aigc.resource.ResourceAnswer;
+import cube.service.aigc.resource.ResourceCenter;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
 import cube.storage.StorageType;
@@ -113,6 +113,11 @@ public class AIGCService extends AbstractModule {
     /**
      * Key 是 AIGC 的 Query Key
      */
+    private Map<String, Queue<ExtractKeywordsUnitMeta>> extractKeywordsQueueMap;
+
+    /**
+     * Key 是 AIGC 的 Query Key
+     */
     private Map<String, Queue<ASRUnitMeta>> asrQueueMap;
 
     /**
@@ -144,6 +149,7 @@ public class AIGCService extends AbstractModule {
         this.nlTaskQueueMap = new ConcurrentHashMap<>();
         this.sentimentQueueMap = new ConcurrentHashMap<>();
         this.summarizationQueueMap = new ConcurrentHashMap<>();
+        this.extractKeywordsQueueMap = new ConcurrentHashMap<>();
         this.asrQueueMap = new ConcurrentHashMap<>();
         this.knowledgeMap = new ConcurrentHashMap<>();
     }
@@ -183,6 +189,9 @@ public class AIGCService extends AbstractModule {
                 }
                 authService.getPluginSystem().register(AuthServiceHook.InjectToken,
                         new InjectTokenPlugin(AIGCService.this));
+
+                // 资源管理器
+                ResourceCenter.getInstance().setService(AIGCService.this);
 
                 started.set(true);
                 Logger.i(AIGCService.class, "AIGC service is ready");
@@ -877,6 +886,51 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
+    /**
+     * 提取关键词。
+     *
+     * @param text
+     * @param listener
+     * @return
+     */
+    public boolean extractKeywords(String text, ExtractKeywordsListener listener) {
+        if (!this.isStarted()) {
+            return false;
+        }
+
+        // 查找有该能力的单元
+        AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.ExtractKeywords);
+        if (null == unit) {
+            Logger.w(AIGCService.class, "No extract keywords unit setup in server");
+            return false;
+        }
+
+        ExtractKeywordsUnitMeta meta = new ExtractKeywordsUnitMeta(unit, text, listener);
+
+        synchronized (this.extractKeywordsQueueMap) {
+            Queue<ExtractKeywordsUnitMeta> queue = this.extractKeywordsQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.extractKeywordsQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    processExtractKeywordsQueue(meta.unit.getQueryKey());
+                }
+            });
+        }
+
+        return true;
+    }
+
 
     public boolean automaticSpeechRecognition(String domain, String fileCode, AutomaticSpeechRecognitionListener listener) {
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
@@ -1307,6 +1361,31 @@ public class AIGCService extends AbstractModule {
         }
     }
 
+    private void processExtractKeywordsQueue(String queryKey) {
+        Queue<ExtractKeywordsUnitMeta> queue = this.extractKeywordsQueueMap.get(queryKey);
+        if (null == queue) {
+            Logger.w(AIGCService.class, "#processExtractKeywordsQueue - No found unit: " + queryKey);
+            return;
+        }
+
+        ExtractKeywordsUnitMeta meta = queue.poll();
+        while (null != meta) {
+            // 执行处理
+            try {
+                meta.process();
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#processExtractKeywordsQueue - meta process", e);
+            }
+
+            meta = queue.poll();
+        }
+
+        AIGCUnit unit = this.unitMap.get(queryKey);
+        if (null != unit) {
+            unit.setRunning(false);
+        }
+    }
+
     private void processASRQueue(String queryKey) {
         Queue<ASRUnitMeta> queue = this.asrQueueMap.get(queryKey);
         if (null == queue) {
@@ -1454,6 +1533,9 @@ public class AIGCService extends AbstractModule {
                 ResourceAnswer resourceAnswer = new ResourceAnswer(complexContext);
                 String answer = resourceAnswer.answer();
                 result = this.channel.appendRecord(this.content, answer, complexContext);
+
+                // 缓存上下文
+                ResourceCenter.getInstance().cacheComplexContext(complexContext);
             }
 
             // 设置 SN
@@ -1472,6 +1554,9 @@ public class AIGCService extends AbstractModule {
                 @Override
                 public void run() {
                     storage.writeChatHistory(history);
+
+                    // 进行资源搜索
+                    ResourceCenter.getInstance().search(content, history.answerContent, complexContext);
                 }
             });
         }
@@ -1703,6 +1788,50 @@ public class AIGCService extends AbstractModule {
             JSONObject payload = Packet.extractDataPayload(response);
             if (payload.has("summarization")) {
                 this.listener.onCompleted(payload.getString("summarization"));
+            }
+            else {
+                this.listener.onFailed();
+            }
+        }
+    }
+
+
+    private class ExtractKeywordsUnitMeta {
+
+        protected AIGCUnit unit;
+
+        protected String text;
+
+        protected ExtractKeywordsListener listener;
+
+        public ExtractKeywordsUnitMeta(AIGCUnit unit, String text, ExtractKeywordsListener listener) {
+            this.unit = unit;
+            this.text = text;
+            this.listener = listener;
+        }
+
+        public void process() {
+            JSONObject data = new JSONObject();
+            data.put("text", this.text);
+
+            Packet request = new Packet(AIGCAction.ExtractKeywords.name, data);
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 60 * 1000);
+            if (null == dialect) {
+                Logger.w(AIGCService.class, "Extract keywords unit error");
+                // 回调错误
+                this.listener.onFailed();
+                return;
+            }
+
+            Packet response = new Packet(dialect);
+            JSONObject payload = Packet.extractDataPayload(response);
+            if (payload.has("words")) {
+                JSONArray array = payload.getJSONArray("words");
+                List<String> words = new ArrayList<>(array.length());
+                for (int i = 0; i < array.length(); ++i) {
+                    words.add(array.getString(i));
+                }
+                this.listener.onCompleted(this.text, words);
             }
             else {
                 this.listener.onFailed();

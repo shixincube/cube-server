@@ -92,6 +92,11 @@ public enum AIGCAction {
     Summarization("summarization"),
 
     /**
+     * 提取关键词。
+     */
+    ExtractKeywords("extractKeywords"),
+
+    /**
      * 自然语言通用任务。
      */
     NaturalLanguageTask("naturalLanguageTask"),
