@@ -26,12 +26,90 @@
 
 package cube.service.aigc.resource;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 搜索结果。
+ */
 public class SearchResult {
+
+    public String engine;
+
+    public long created;
 
     public List<String> keywords;
 
+    public List<OrganicResult> organicResults;
+
     public SearchResult() {
+        this.engine = "unknown";
+        this.created = System.currentTimeMillis();
+    }
+
+    public void addOrganicResult(int position, String title, String link, String snippet) {
+        if (null == this.organicResults) {
+            this.organicResults = new ArrayList<>();
+        }
+
+        OrganicResult result = new OrganicResult(position, title, link, snippet);
+        this.organicResults.add(result);
+    }
+
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        if (null != this.keywords) {
+            JSONArray array = new JSONArray();
+            for (String word : this.keywords) {
+                array.put(word);
+            }
+            json.put("keywords", array);
+        }
+
+        if (null != this.organicResults) {
+            JSONArray array = new JSONArray();
+            for (OrganicResult orgRes : this.organicResults) {
+                array.put(orgRes.toJSON());
+            }
+            json.put("organicResults", array);
+        }
+        return json;
+    }
+
+    public class OrganicResult {
+
+        public int position;
+
+        public String title;
+
+        public String link;
+
+        public String snippet;
+
+        public OrganicResult(int position, String title, String link, String snippet) {
+            this.position = position;
+            this.title = title;
+            this.link = link;
+            this.snippet = snippet;
+        }
+
+        public OrganicResult(JSONObject json) {
+            this.position = json.getInt("position");
+            this.title = json.getString("title");
+            this.link = json.getString("link");
+            this.snippet = json.getString("snippet");
+        }
+
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("position", this.position);
+            json.put("title", this.title);
+            json.put("link", this.link);
+            json.put("snippet", this.snippet);
+            return json;
+        }
     }
 }

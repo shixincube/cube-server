@@ -78,6 +78,8 @@ public class ComplexResource implements JSONable {
 
     public String thumbnail;
 
+    public String rawText;
+
     public ComplexResource(String url, String metaType) {
         this.sn = Utils.generateSerialNumber();
         this.url = url;
@@ -133,6 +135,10 @@ public class ComplexResource implements JSONable {
 
         if (json.has("thumbnail")) {
             this.thumbnail = json.getString("thumbnail");
+        }
+
+        if (json.has("rawText")) {
+            this.rawText = json.getString("rawText");
         }
     }
 

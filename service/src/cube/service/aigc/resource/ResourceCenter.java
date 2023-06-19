@@ -26,6 +26,7 @@
 
 package cube.service.aigc.resource;
 
+import cell.util.log.Logger;
 import cube.common.entity.ComplexContext;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.ExtractKeywordsListener;
@@ -59,9 +60,10 @@ public class ResourceCenter {
     public SearchResult search(String query, String answer, ComplexContext context) {
         final SearchResult result = new SearchResult();
         // 提取问句的关键词
-        this.service.extractKeywords(query, new ExtractKeywordsListener() {
+        boolean success = this.service.extractKeywords(query, new ExtractKeywordsListener() {
             @Override
             public void onCompleted(String text, List<String> words) {
+                result.keywords = words;
 
                 synchronized (result) {
                     result.notify();
@@ -76,14 +78,33 @@ public class ResourceCenter {
             }
         });
 
-        synchronized (result) {
-            try {
-                result.wait(60 * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        if (success && null == result.keywords) {
+            synchronized (result) {
+                try {
+                    result.wait(60 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
+        if (null == result.keywords) {
+            Logger.i(this.getClass(), "#search - Keywords is empty");
+            return result;
+        }
+
+        BaiduSearcher searcher = new BaiduSearcher(this.service);
+        if (searcher.search(result.keywords)) {
+            // 搜索关键词
+            searcher.fillSearchResult(result);
+        }
+
+
+
         return result;
+    }
+
+    public void pushSearchResult(SearchResult result) {
+
     }
 }

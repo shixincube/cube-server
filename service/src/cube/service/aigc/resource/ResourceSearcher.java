@@ -28,18 +28,23 @@ package cube.service.aigc.resource;
 
 import cube.service.aigc.AIGCService;
 
+import java.util.List;
+
 /**
  * 资源搜索器。
  */
-public class ResourceSearcher {
+public abstract class ResourceSearcher {
 
-    private AIGCService service;
+    protected AIGCService service;
 
     public ResourceSearcher(AIGCService service) {
         this.service = service;
     }
 
-    public void search(String words) {
-
-    }
+    /**
+     *
+     * @param words
+     * @return 返回是否执行成功。
+     */
+    public abstract boolean search(List<String> words);
 }

@@ -26,15 +26,130 @@
 
 package cube.service.aigc.resource;
 
+import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
+import cube.common.Packet;
+import cube.common.action.AIGCAction;
+import cube.common.entity.AICapability;
+import cube.common.entity.AIGCUnit;
+import cube.common.state.AIGCStateCode;
+import cube.service.aigc.AIGCService;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  *
  */
-public class BaiduSearcher {
+public class BaiduSearcher extends ResourceSearcher {
 
-    public BaiduSearcher() {
+    private final String urlFormat = "https://www.baidu.com/s?wd=%s&oq=%s&f=8&tn=baidu&ie=UTF-8";
+
+    private BaiduSearchResult baiduResult;
+
+    private long startTime;
+
+    public BaiduSearcher(AIGCService service) {
+        super(service);
     }
 
-    public void search(String words) {
+    @Override
+    public boolean search(List<String> words) {
+        this.startTime = System.currentTimeMillis();
 
+        AIGCUnit unit = this.service.selectUnitBySubtask(AICapability.DataProcessing.ExtractURLContent);
+        if (null == unit) {
+            Logger.w(this.getClass(), "#search - No unit: " + AICapability.DataProcessing.ExtractURLContent);
+            return false;
+        }
+
+        String url = this.makeURL(words);
+        JSONObject payload = new JSONObject();
+        payload.put("url", url);
+        payload.put("parser", "baidu");
+        Packet request = new Packet(AIGCAction.ExtractURLContent.name, payload);
+        ActionDialect dialect = this.service.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+        if (null == dialect) {
+            Logger.w(this.getClass(), "#search - Unit is error");
+            return false;
+        }
+
+        Packet response = new Packet(dialect);
+        if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#search - Unit return state: " + Packet.extractCode(response));
+            return false;
+        }
+
+        JSONArray list = Packet.extractDataPayload(response).getJSONArray("list");
+        JSONObject data = list.getJSONObject(0);
+        if (!data.has("organic_results")) {
+            Logger.w(this.getClass(), "#search - Baidu search result format error: " + url);
+            return false;
+        }
+
+        this.baiduResult = new BaiduSearchResult(data);
+        return true;
+    }
+
+    public void fillSearchResult(SearchResult searchResult) {
+        searchResult.engine = "baidu";
+        searchResult.created = this.startTime;
+
+        if (null != this.baiduResult) {
+            for (OrganicResult orgRes : this.baiduResult.organicResults) {
+                searchResult.addOrganicResult(orgRes.position,
+                        orgRes.title, orgRes.link, orgRes.snippet);
+            }
+        }
+    }
+
+    private String makeURL(List<String> words) {
+        StringBuilder buf = new StringBuilder();
+        for (String word : words) {
+            buf.append(word);
+            buf.append(" ");
+        }
+        buf.deleteCharAt(buf.length() - 1);
+        return String.format(this.urlFormat, buf.toString(), words.get(0));
+    }
+
+    private class BaiduSearchResult {
+
+        public String url;
+
+        public List<OrganicResult> organicResults;
+
+        public BaiduSearchResult(JSONObject json) {
+            this.url = json.getString("url");
+            this.organicResults = new ArrayList<>();
+
+            if (json.has("organic_results")) {
+                JSONArray organicResultArray = json.getJSONArray("organic_results");
+                for (int i = 0; i < organicResultArray.length(); ++i) {
+                    OrganicResult or = new OrganicResult(organicResultArray.getJSONObject(i));
+                    this.organicResults.add(or);
+                }
+            }
+        }
+    }
+
+    private class OrganicResult {
+
+        public int position;
+
+        public String title;
+
+        public String link;
+
+        public String snippet;
+
+        public OrganicResult(JSONObject json) {
+            this.position = json.getInt("position");
+            this.title = json.getString("title");
+            this.link = json.getString("link");
+            this.snippet = json.getString("snippet");
+        }
     }
 }

@@ -1813,7 +1813,6 @@ public class AIGCService extends AbstractModule {
         public void process() {
             JSONObject data = new JSONObject();
             data.put("text", this.text);
-
             Packet request = new Packet(AIGCAction.ExtractKeywords.name, data);
             ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 60 * 1000);
             if (null == dialect) {
@@ -1829,7 +1828,7 @@ public class AIGCService extends AbstractModule {
                 JSONArray array = payload.getJSONArray("words");
                 List<String> words = new ArrayList<>(array.length());
                 for (int i = 0; i < array.length(); ++i) {
-                    words.add(array.getString(i));
+                    words.add(array.getString(i).replaceAll("\n", ""));
                 }
                 this.listener.onCompleted(this.text, words);
             }
