@@ -147,6 +147,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new ConversationTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.GetSearchResults.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new GetSearchResultsTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.SearchCommand.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new SearchCommandTask(this, talkContext, primitive,

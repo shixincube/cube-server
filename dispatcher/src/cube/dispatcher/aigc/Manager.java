@@ -111,6 +111,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new KnowledgeDocs());
         httpServer.addContextHandler(new ImportKnowledgeDoc());
         httpServer.addContextHandler(new RemoveKnowledgeDoc());
+        httpServer.addContextHandler(new SearchResults());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -432,6 +433,27 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return new AIGCConversationResponse(Packet.extractDataPayload(responsePacket));
+    }
+
+    public JSONObject querySearchResults(String token) {
+        Packet packet = new Packet(AIGCAction.GetSearchResults.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#querySearchResults - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#querySearchResults - Response state code is NOT Ok - "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
     }
 
     public SentimentResult sentimentAnalysis(String text) {

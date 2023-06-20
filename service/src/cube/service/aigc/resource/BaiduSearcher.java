@@ -32,6 +32,7 @@ import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.AICapability;
 import cube.common.entity.AIGCUnit;
+import cube.common.entity.SearchResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import org.json.JSONArray;

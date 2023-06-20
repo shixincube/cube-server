@@ -151,6 +151,11 @@ public enum AIGCAction {
      */
     ExtractURLContent("extractURLContent"),
 
+    /**
+     * 获取搜索结果。
+     */
+    GetSearchResults("getSearchResults"),
+
     ;
 
     public final String name;

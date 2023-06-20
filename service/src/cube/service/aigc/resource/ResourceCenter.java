@@ -27,26 +27,46 @@
 package cube.service.aigc.resource;
 
 import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.common.entity.ComplexContext;
+import cube.common.entity.SearchResult;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.ExtractKeywordsListener;
 
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 资源中心。
  */
 public class ResourceCenter {
 
+    private final static ResourceCenter instance = new ResourceCenter();
+
     private AIGCService service;
 
-    private final static ResourceCenter instance = new ResourceCenter();
+    private Map<Long, ComplexContext> complexContextMap;
+
+    /**
+     * Key：Contact ID
+     */
+    private Map<Long, LinkedList<SearchResult>> contactSearchResults;
+
+    /**
+     * 缓存的超时时间。
+     */
+    private long cacheTimeout = 24 * 60 * 60 * 1000;
 
     public final static ResourceCenter getInstance() {
         return ResourceCenter.instance;
     }
 
     private ResourceCenter() {
+        this.complexContextMap = new ConcurrentHashMap<>();
+        this.contactSearchResults = new ConcurrentHashMap<>();
     }
 
     public void setService(AIGCService service) {
@@ -54,7 +74,7 @@ public class ResourceCenter {
     }
 
     public void cacheComplexContext(ComplexContext context) {
-
+        this.complexContextMap.put(context.getId(), context);
     }
 
     public SearchResult search(String query, String answer, ComplexContext context) {
@@ -99,12 +119,39 @@ public class ResourceCenter {
             searcher.fillSearchResult(result);
         }
 
-
-
         return result;
     }
 
-    public void pushSearchResult(SearchResult result) {
+    public void cacheSearchResult(AuthToken authToken, SearchResult result) {
+        result.authToken = authToken;
+        synchronized (this.contactSearchResults) {
+            LinkedList<SearchResult> list = this.contactSearchResults.computeIfAbsent(authToken.getContactId(), k -> new LinkedList<>());
+            list.addFirst(result);
+        }
+    }
 
+    public List<SearchResult> querySearchResults(AuthToken token) {
+        LinkedList<SearchResult> result = new LinkedList<>();
+        LinkedList<SearchResult> list = this.contactSearchResults.get(token.getContactId());
+        if (null != list) {
+            for (SearchResult sr : list) {
+                if (!sr.popup) {
+                    sr.popup = true;
+                    result.add(sr);
+                }
+            }
+        }
+        return result;
+    }
+
+    public void onTick(long now) {
+        this.complexContextMap.entrySet().removeIf(e -> now - e.getValue().getTimestamp() > this.cacheTimeout);
+
+        Iterator<Map.Entry<Long, LinkedList<SearchResult>>> iter = this.contactSearchResults.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<Long, LinkedList<SearchResult>> e = iter.next();
+            LinkedList<SearchResult> list = e.getValue();
+            list.removeIf(v -> now - v.created > this.cacheTimeout);
+        }
     }
 }

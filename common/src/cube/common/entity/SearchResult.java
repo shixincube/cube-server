@@ -24,8 +24,11 @@
  * SOFTWARE.
  */
 
-package cube.service.aigc.resource;
+package cube.common.entity;
 
+import cell.util.Utils;
+import cube.auth.AuthToken;
+import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -35,7 +38,9 @@ import java.util.List;
 /**
  * 搜索结果。
  */
-public class SearchResult {
+public class SearchResult implements JSONable {
+
+    public long sn;
 
     public String engine;
 
@@ -45,9 +50,21 @@ public class SearchResult {
 
     public List<OrganicResult> organicResults;
 
+    public AuthToken authToken;
+
+    /**
+     * 是否已被客户端拉取数据。
+     */
+    public boolean popup = false;
+
     public SearchResult() {
+        this.sn = Utils.generateSerialNumber();
         this.engine = "unknown";
         this.created = System.currentTimeMillis();
+    }
+
+    public boolean hasResult() {
+        return (null != this.organicResults);
     }
 
     public void addOrganicResult(int position, String title, String link, String snippet) {
@@ -59,8 +76,14 @@ public class SearchResult {
         this.organicResults.add(result);
     }
 
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+
+        json.put("sn", this.sn);
+        json.put("engine", this.engine);
+        json.put("created", this.created);
+
         if (null != this.keywords) {
             JSONArray array = new JSONArray();
             for (String word : this.keywords) {
@@ -77,6 +100,11 @@ public class SearchResult {
             json.put("organicResults", array);
         }
         return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 
     public class OrganicResult {
