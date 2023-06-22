@@ -32,6 +32,7 @@ import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
 import cube.common.Storagable;
 import cube.common.entity.AIGCChatHistory;
+import cube.common.entity.ChartReaction;
 import cube.common.entity.KnowledgeDoc;
 import cube.common.entity.KnowledgeProfile;
 import cube.core.Conditional;
@@ -66,6 +67,10 @@ public class AIGCStorage implements Storagable {
     private final String knowledgeProfileTable = "aigc_knowledge_profile";
 
     private final String knowledgeDocTable = "aigc_knowledge_doc";
+
+    private final String chartReactionTable = "aigc_chart_reaction";
+
+    private final String chartSeriesTable = "aigc_chart_series";
 
     private final StorageField[] appConfigFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
@@ -191,6 +196,58 @@ public class AIGCStorage implements Storagable {
             })
     };
 
+    /**
+     * 图表的感应词表。
+     * 一个感应词可以对应多个数据序列。
+     */
+    private final StorageField[] chartReactionFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("primary", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("secondary", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("tertiary", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("quaternary", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("series_name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+    };
+
+    private final StorageField[] chartSeriesFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("type", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("x_axis", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("option", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+    };
+
     private Storage storage;
 
     public AIGCStorage(StorageType type, JSONObject config) {
@@ -251,6 +308,20 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.knowledgeDocTable, this.knowledgeDocFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.knowledgeDocTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.chartReactionTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.chartReactionTable, this.chartReactionFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.chartReactionTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.chartSeriesTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.chartSeriesTable, this.chartSeriesFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.chartSeriesTable + "' successfully");
             }
         }
     }
@@ -490,6 +561,32 @@ public class AIGCStorage implements Storagable {
     public boolean deleteKnowledgeDoc(String fileCode) {
         return this.storage.executeDelete(this.knowledgeDocTable, new Conditional[] {
                 Conditional.createEqualTo("file_code", fileCode)
+        });
+    }
+
+    public String readLastChartReaction(String primary) {
+        List<StorageField[]> result = this.storage.executeQuery(this.chartReactionTable,
+                this.chartReactionFields, new Conditional[] {
+                        Conditional.createEqualTo("primary", primary),
+                        Conditional.createOrderBy("timestamp", true),
+                        Conditional.createLimit(1)
+        });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        return data.get("series_name").getString();
+    }
+
+    public boolean insertChartReaction(ChartReaction chartReaction) {
+        return this.storage.executeInsert(this.chartReactionTable, new StorageField[] {
+                new StorageField("primary", chartReaction.primary),
+                new StorageField("secondary", chartReaction.secondary),
+                new StorageField("tertiary", chartReaction.tertiary),
+                new StorageField("quaternary", chartReaction.quaternary),
+                new StorageField("series_name", chartReaction.seriesName),
+                new StorageField("timestamp", chartReaction.timestamp)
         });
     }
 

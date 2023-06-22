@@ -56,6 +56,8 @@ import cube.service.aigc.resource.ResourceAnswer;
 import cube.service.aigc.resource.ResourceCenter;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
+import cube.service.tokenizer.SegToken;
+import cube.service.tokenizer.Tokenizer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import cube.util.FileType;
@@ -140,6 +142,8 @@ public class AIGCService extends AbstractModule {
 
     private AIGCStorage storage;
 
+    private Tokenizer tokenizer;
+
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
         this.unitMap = new ConcurrentHashMap<>();
@@ -152,6 +156,7 @@ public class AIGCService extends AbstractModule {
         this.extractKeywordsQueueMap = new ConcurrentHashMap<>();
         this.asrQueueMap = new ConcurrentHashMap<>();
         this.knowledgeMap = new ConcurrentHashMap<>();
+        this.tokenizer = new Tokenizer();
     }
 
     @Override
@@ -1149,6 +1154,12 @@ public class AIGCService extends AbstractModule {
         });
     }
 
+    /**
+     * 对聊天内容进行分类识别。
+     *
+     * @param text
+     * @return
+     */
     private ComplexContext recognizeContent(String text) {
         final String content = text.trim();
         ComplexContext result = new ComplexContext(ComplexContext.RawType.Simplex);
@@ -1233,6 +1244,11 @@ public class AIGCService extends AbstractModule {
                     result.addResource(resource);
                 }
             }
+        }
+        else {
+            // 分词
+            List<SegToken> tokens = this.tokenizer.process(content, Tokenizer.SegMode.INDEX);
+
         }
 
         return result;
