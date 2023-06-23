@@ -156,6 +156,11 @@ public enum AIGCAction {
      */
     GetSearchResults("getSearchResults"),
 
+    /**
+     * 操作图表数据。
+     */
+    ChartData("chartData"),
+
     ;
 
     public final String name;

@@ -29,7 +29,11 @@ package cube.common.entity;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
+import java.util.List;
+
 public class ChartReaction implements JSONable {
+
+    public long sn;
 
     public final String primary;
 
@@ -43,15 +47,60 @@ public class ChartReaction implements JSONable {
 
     public final long timestamp;
 
-    public ChartReaction(String primary, String seriesName) {
+    public ChartReaction(String primary, String seriesName, long timestamp) {
+        this.sn = 0;
         this.primary = primary;
         this.seriesName = seriesName;
-        this.timestamp = System.currentTimeMillis();
+        this.timestamp = timestamp;
+    }
+
+    public ChartReaction(JSONObject json) {
+        this.sn = json.has("sn") ? json.getLong("sn") : 0;
+        this.primary = json.getString("primary");
+        this.seriesName = json.getString("seriesName");
+        if (json.has("timestamp")) {
+            this.timestamp = json.getLong("timestamp");
+        }
+        else {
+            this.timestamp = System.currentTimeMillis();
+        }
+    }
+
+    public int matchWordNum(List<String> words) {
+        int num = 0;
+        for (String word : words) {
+            if (null != this.secondary && this.secondary.contains(word)) {
+                ++num;
+            }
+            else if (null != this.tertiary && this.tertiary.contains(word)) {
+                ++num;
+            }
+            else if (null != this.quaternary && this.quaternary.contains(word)) {
+                ++num;
+            }
+        }
+        return num;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ChartReaction) {
+            ChartReaction other = (ChartReaction) obj;
+            return other.sn == this.sn || (other.primary.equals(this.primary) && other.timestamp == this.timestamp);
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return (int)(this.sn + this.primary.hashCode() * 7 + this.timestamp);
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
         json.put("primary", this.primary);
         if (null != this.secondary) {
             json.put("secondary", this.secondary);

@@ -256,6 +256,10 @@ public class AIGCService extends AbstractModule {
         return this.cellet;
     }
 
+    public AIGCStorage getStorage() {
+        return this.storage;
+    }
+
     public List<AIGCUnit> setupUnit(Contact contact, List<AICapability> capabilities, TalkContext context) {
         List<AIGCUnit> result = new ArrayList<>(capabilities.size());
 

@@ -30,13 +30,16 @@ import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChartSeries implements JSONable {
 
     public String name;
 
-    public String timestamp;
+    public String desc;
+
+    public long timestamp;
 
     public String type;
 
@@ -46,8 +49,35 @@ public class ChartSeries implements JSONable {
 
     public JSONObject option;
 
-    public ChartSeries() {
+    public ChartSeries(String name, String desc, long timestamp, String type) {
+        this.name = name;
+        this.desc = desc;
+        this.timestamp = timestamp;
+        this.type = type;
+        this.xAxis = new ArrayList<>();
+        this.data = new ArrayList<>();
+    }
 
+    public ChartSeries(JSONObject json) {
+        this.name = json.getString("name");
+        this.desc = json.getString("desc");
+        this.timestamp = json.has("timestamp") ? json.getLong("timestamp") : System.currentTimeMillis();
+        this.type = json.getString("type");
+
+        this.xAxis = new ArrayList<>();
+        this.data = new ArrayList<>();
+
+        this.setXAxis(json.getJSONArray("xAxis"));
+        this.setData(json.getJSONArray("data"));
+        if (json.has("option")) {
+            this.option = json.getJSONObject("option");
+        }
+    }
+
+    public void setXAxis(JSONArray array) {
+        for (int i = 0; i < array.length(); ++i) {
+            this.xAxis.add(array.getString(i));
+        }
     }
 
     public JSONArray getXAxis() {
@@ -58,6 +88,12 @@ public class ChartSeries implements JSONable {
             }
         }
         return result;
+    }
+
+    public void setData(JSONArray array) {
+        for (int i = 0; i < array.length(); ++i) {
+            this.data.add(array.getInt(i));
+        }
     }
 
     public JSONArray getData() {
@@ -74,7 +110,14 @@ public class ChartSeries implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
+        json.put("desc", this.desc);
         json.put("timestamp", this.timestamp);
+        json.put("type", this.type);
+        json.put("xAxis", this.getXAxis());
+        json.put("data", this.getData());
+        if (null != this.option) {
+            json.put("option", this.option);
+        }
         return json;
     }
 

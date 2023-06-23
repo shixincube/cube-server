@@ -28,15 +28,14 @@ package cube.service.aigc.resource;
 
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
+import cube.common.entity.ChartReaction;
+import cube.common.entity.ChartSeries;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.SearchResult;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.ExtractKeywordsListener;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -59,6 +58,11 @@ public class ResourceCenter {
      * 缓存的超时时间。
      */
     private long cacheTimeout = 24 * 60 * 60 * 1000;
+
+    private final String[] chartKeywords = new String[] {
+            "图表", "统计图", "曲线图", "线图", "柱图", "柱状图", "柱形图",
+            "饼图", "饼状图", "饼形图", "圆瓣图", "环形图"
+    };
 
     public final static ResourceCenter getInstance() {
         return ResourceCenter.instance;
@@ -144,7 +148,69 @@ public class ResourceCenter {
         return result;
     }
 
+    public ChartSeries matchChartSeries(List<String> words) {
+        boolean hit = false;
+        for (String word : words) {
+            for (String chartName : this.chartKeywords) {
+                if (word.equals(chartName)) {
+                    hit = true;
+                    break;
+                }
+            }
+            if (hit) {
+                break;
+            }
+        }
 
+        if (!hit) {
+            // 没有命中关键词
+            return null;
+        }
+
+        // 词必须和 Chart Reaction 的 primary 匹配，然后匹配余下词
+        List<ChartReaction> reactions = new ArrayList<>();
+        for (String word : words) {
+            List<ChartReaction> list = this.service.getStorage().readChartReactions(word,
+                    null, null, null);
+            for (ChartReaction cr : list) {
+                if (!reactions.contains(cr)) {
+                    reactions.add(cr);
+                }
+            }
+        }
+
+        // primary 没有匹配的就不再匹配
+        if (reactions.isEmpty()) {
+            return null;
+        }
+
+        List<ChartReactionWrap> wrapList = new ArrayList<>();
+        ChartReactionWrap mostMatching = null;
+        for (ChartReaction cr : reactions) {
+            // 当前的 Reaction 匹配的关键字数量
+            int num = cr.matchWordNum(words);
+            ChartReactionWrap wrap = new ChartReactionWrap(cr, num);
+
+            if (null == mostMatching) {
+                mostMatching = wrap;
+            }
+            else {
+                if (wrap.matchingNum > mostMatching.matchingNum) {
+                    mostMatching = wrap;
+                }
+            }
+
+            wrapList.add(wrap);
+        }
+
+        // 如果匹配关键词数量少于2，则不匹配
+        if (mostMatching.matchingNum < 2) {
+            return null;
+        }
+
+        ChartSeries chartSeries = this.service.getStorage().readLastChartSeries(mostMatching.reaction.seriesName);
+        return chartSeries;
+    }
 
     public void onTick(long now) {
         this.complexContextMap.entrySet().removeIf(e -> now - e.getValue().getTimestamp() > this.cacheTimeout);
@@ -154,6 +220,18 @@ public class ResourceCenter {
             Map.Entry<Long, LinkedList<SearchResult>> e = iter.next();
             LinkedList<SearchResult> list = e.getValue();
             list.removeIf(v -> now - v.created > this.cacheTimeout);
+        }
+    }
+
+    private class ChartReactionWrap {
+
+        protected ChartReaction reaction;
+
+        protected int matchingNum;
+
+        protected ChartReactionWrap(ChartReaction reaction, int matchingNum) {
+            this.reaction = reaction;
+            this.matchingNum = matchingNum;
         }
     }
 }

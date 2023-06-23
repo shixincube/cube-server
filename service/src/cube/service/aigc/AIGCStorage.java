@@ -31,10 +31,7 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
 import cube.common.Storagable;
-import cube.common.entity.AIGCChatHistory;
-import cube.common.entity.ChartReaction;
-import cube.common.entity.KnowledgeDoc;
-import cube.common.entity.KnowledgeProfile;
+import cube.common.entity.*;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -229,6 +226,9 @@ public class AIGCStorage implements Storagable {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
             new StorageField("name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("desc", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
@@ -564,7 +564,61 @@ public class AIGCStorage implements Storagable {
         });
     }
 
-    public String readLastChartReaction(String primary) {
+    public List<ChartReaction> readChartReactions(String primary, String secondary, String tertiary, String quaternary) {
+        List<ChartReaction> list = new ArrayList<>();
+
+        if (null == primary && null == secondary && null == tertiary && null == quaternary) {
+            return list;
+        }
+
+        List<Conditional> conditionals = new ArrayList<>();
+        if (null != primary) {
+            conditionals.add(Conditional.createAnd());
+            conditionals.add(Conditional.createEqualTo("primary", primary));
+        }
+        if (null != secondary) {
+            conditionals.add(Conditional.createAnd());
+            conditionals.add(Conditional.createEqualTo("secondary", secondary));
+        }
+        if (null != tertiary) {
+            conditionals.add(Conditional.createAnd());
+            conditionals.add(Conditional.createEqualTo("tertiary", tertiary));
+        }
+        if (null != quaternary) {
+            conditionals.add(Conditional.createAnd());
+            conditionals.add(Conditional.createEqualTo("quaternary", quaternary));
+        }
+        // 时间倒序
+        conditionals.add(Conditional.createOrderBy("timestamp", true));
+        conditionals.remove(0);
+
+        List<StorageField[]> result = this.storage.executeQuery(this.chartReactionTable, this.chartReactionFields,
+                conditionals.toArray(new Conditional[0]));
+        if (result.isEmpty()) {
+            return list;
+        }
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            ChartReaction chartReaction = new ChartReaction(data.get("primary").getString(),
+                    data.get("series_name").getString(), data.get("timestamp").getLong());
+            chartReaction.sn = data.get("sn").getLong();
+            if (!data.get("secondary").isNullValue()) {
+                chartReaction.secondary = data.get("secondary").getString();
+            }
+            if (!data.get("tertiary").isNullValue()) {
+                chartReaction.tertiary = data.get("tertiary").getString();
+            }
+            if (!data.get("quaternary").isNullValue()) {
+                chartReaction.quaternary = data.get("quaternary").getString();
+            }
+            list.add(chartReaction);
+        }
+
+        return list;
+    }
+
+    public ChartReaction readLastChartReaction(String primary) {
         List<StorageField[]> result = this.storage.executeQuery(this.chartReactionTable,
                 this.chartReactionFields, new Conditional[] {
                         Conditional.createEqualTo("primary", primary),
@@ -576,10 +630,42 @@ public class AIGCStorage implements Storagable {
         }
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
-        return data.get("series_name").getString();
+        ChartReaction chartReaction = new ChartReaction(data.get("primary").getString(),
+                data.get("series_name").getString(), data.get("timestamp").getLong());
+        chartReaction.sn = data.get("sn").getLong();
+        if (!data.get("secondary").isNullValue()) {
+            chartReaction.secondary = data.get("secondary").getString();
+        }
+        if (!data.get("tertiary").isNullValue()) {
+            chartReaction.tertiary = data.get("tertiary").getString();
+        }
+        if (!data.get("quaternary").isNullValue()) {
+            chartReaction.quaternary = data.get("quaternary").getString();
+        }
+        return chartReaction;
     }
 
-    public boolean insertChartReaction(ChartReaction chartReaction) {
+    public boolean insertChartReaction(ChartReaction chartReaction, boolean overwrite) {
+        if (overwrite) {
+            List<Conditional> conditionals = new ArrayList<>();
+            conditionals.add(Conditional.createEqualTo("primary", chartReaction.primary));
+            if (null != chartReaction.secondary) {
+                conditionals.add(Conditional.createAnd());
+                conditionals.add(Conditional.createEqualTo("secondary", chartReaction.secondary));
+            }
+            if (null != chartReaction.tertiary) {
+                conditionals.add(Conditional.createAnd());
+                conditionals.add(Conditional.createEqualTo("tertiary", chartReaction.tertiary));
+            }
+            if (null != chartReaction.quaternary) {
+                conditionals.add(Conditional.createAnd());
+                conditionals.add(Conditional.createEqualTo("quaternary", chartReaction.quaternary));
+            }
+
+            // 删除符合条件的旧数据
+            this.storage.executeDelete(this.chartReactionTable, conditionals.toArray(new Conditional[0]));
+        }
+
         return this.storage.executeInsert(this.chartReactionTable, new StorageField[] {
                 new StorageField("primary", chartReaction.primary),
                 new StorageField("secondary", chartReaction.secondary),
@@ -587,6 +673,60 @@ public class AIGCStorage implements Storagable {
                 new StorageField("quaternary", chartReaction.quaternary),
                 new StorageField("series_name", chartReaction.seriesName),
                 new StorageField("timestamp", chartReaction.timestamp)
+        });
+    }
+
+    public boolean deleteChartReaction(String primary) {
+        return this.storage.executeDelete(this.chartReactionTable, new Conditional[] {
+                Conditional.createEqualTo("primary", primary)
+        });
+    }
+
+    public ChartSeries readLastChartSeries(String seriesName) {
+        List<StorageField[]> result = this.storage.executeQuery(this.chartSeriesTable,
+                this.chartSeriesFields, new Conditional[] {
+                        Conditional.createEqualTo("name", seriesName),
+                        Conditional.createOrderBy("timestamp", true),
+                        Conditional.createLimit(1)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        ChartSeries chartSeries = new ChartSeries(data.get("name").getString(),
+                data.get("desc").getString(), data.get("timestamp").getLong(), data.get("type").getString());
+        chartSeries.setXAxis(new JSONArray(data.get("x_axis").getString()));
+        chartSeries.setData(new JSONArray(data.get("data").getString()));
+        if (!data.get("option").isNullValue()) {
+            chartSeries.option = new JSONObject(data.get("option").getString());
+        }
+        return chartSeries;
+    }
+
+    public boolean insertChartSeries(ChartSeries series, boolean overwrite) {
+        if (overwrite) {
+            this.storage.executeDelete(this.chartSeriesTable, new Conditional[] {
+                    Conditional.createEqualTo("name", series.name),
+                    Conditional.createOr(),
+                    Conditional.createEqualTo("timestamp", series.timestamp)
+            });
+        }
+
+        return this.storage.executeInsert(this.chartSeriesTable, new StorageField[] {
+                new StorageField("name", series.name),
+                new StorageField("desc", series.desc),
+                new StorageField("timestamp", series.timestamp),
+                new StorageField("type", series.type),
+                new StorageField("x_axis", series.getXAxis().toString()),
+                new StorageField("data", series.getData().toString()),
+                new StorageField("option", (null != series.option) ? series.option.toString() : null),
+        });
+    }
+
+    public boolean deleteChartSeries(String seriesName) {
+        return this.storage.executeDelete(this.chartSeriesTable, new Conditional[] {
+                Conditional.createEqualTo("name", seriesName)
         });
     }
 

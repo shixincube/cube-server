@@ -112,6 +112,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new ImportKnowledgeDoc());
         httpServer.addContextHandler(new RemoveKnowledgeDoc());
         httpServer.addContextHandler(new SearchResults());
+        httpServer.addContextHandler(new ChartData());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -545,6 +546,20 @@ public class Manager implements Tickable, PerformerListener {
 
     public ASRFuture queryASRFuture(String fileCode) {
         return this.asrFutureMap.get(fileCode);
+    }
+
+    public boolean handleChartData(String token, JSONObject data) {
+        Packet packet = new Packet(AIGCAction.ChartData.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            return false;
+        }
+
+        Packet responsePacket = new Packet(response);
+        return (Packet.extractCode(responsePacket) == AIGCStateCode.Ok.code);
     }
 
     @Override
