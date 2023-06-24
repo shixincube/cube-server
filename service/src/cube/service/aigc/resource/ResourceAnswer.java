@@ -27,8 +27,10 @@
 package cube.service.aigc.resource;
 
 import cube.aigc.Consts;
+import cube.common.entity.ChartResource;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.ComplexResource;
+import cube.common.entity.HyperlinkResource;
 import cube.util.TextUtils;
 
 /**
@@ -46,77 +48,99 @@ public class ResourceAnswer {
         String result = "";
 
         if (this.complexContext.numResources() == 1) {
-            ComplexResource resource = this.complexContext.getResource();
-            if (ComplexResource.TYPE_PAGE.equals(resource.metaType)) {
-                result = Consts.formatUrlPageAnswer(TextUtils.extractDomain(resource.url),
-                        resource.title, resource.content.length());
+            ComplexResource res = this.complexContext.getResource();
+            if (res instanceof HyperlinkResource) {
+                HyperlinkResource resource = (HyperlinkResource) res;
+                if (HyperlinkResource.TYPE_PAGE.equals(resource.metaType)) {
+                    result = Consts.formatUrlPageAnswer(TextUtils.extractDomain(resource.url),
+                            resource.title, resource.content.length());
+                }
+                else if (HyperlinkResource.TYPE_IMAGE.equals(resource.metaType)) {
+                    result = Consts.formatUrlImageAnswer(TextUtils.extractDomain(resource.url),
+                            resource.format, resource.width, resource.height,
+                            resource.size);
+                }
+                else if (HyperlinkResource.TYPE_PLAIN.equals(resource.metaType)) {
+                    result = Consts.formatUrlPlainAnswer(TextUtils.extractDomain(resource.url),
+                            resource.numWords, resource.size);
+                }
+                else if (HyperlinkResource.TYPE_VIDEO.equals(resource.metaType)) {
+                    result = Consts.formatUrlVideoAnswer(TextUtils.extractDomain(resource.url),
+                            resource.size);
+                }
+                else if (HyperlinkResource.TYPE_AUDIO.equals(resource.metaType)) {
+                    result = Consts.formatUrlAudioAnswer(TextUtils.extractDomain(resource.url),
+                            resource.size);
+                }
+                else if (HyperlinkResource.TYPE_OTHER.equals(resource.metaType)) {
+                    result = Consts.formatUrlOtherAnswer(TextUtils.extractDomain(resource.url),
+                            resource.size);
+                }
+                else {
+                    result = Consts.formatUrlFailureAnswer(TextUtils.extractDomain(resource.url),
+                            resource.url);
+                }
             }
-            else if (ComplexResource.TYPE_IMAGE.equals(resource.metaType)) {
-                result = Consts.formatUrlImageAnswer(TextUtils.extractDomain(resource.url),
-                        resource.format, resource.width, resource.height,
-                        resource.size);
-            }
-            else if (ComplexResource.TYPE_PLAIN.equals(resource.metaType)) {
-                result = Consts.formatUrlPlainAnswer(TextUtils.extractDomain(resource.url),
-                        resource.numWords, resource.size);
-            }
-            else if (ComplexResource.TYPE_VIDEO.equals(resource.metaType)) {
-                result = Consts.formatUrlVideoAnswer(TextUtils.extractDomain(resource.url),
-                        resource.size);
-            }
-            else if (ComplexResource.TYPE_AUDIO.equals(resource.metaType)) {
-                result = Consts.formatUrlAudioAnswer(TextUtils.extractDomain(resource.url),
-                        resource.size);
-            }
-            else if (ComplexResource.TYPE_OTHER.equals(resource.metaType)) {
-                result = Consts.formatUrlOtherAnswer(TextUtils.extractDomain(resource.url),
-                        resource.size);
+            else if (res instanceof ChartResource) {
+                ChartResource resource = (ChartResource) res;
+                result = Consts.formatChartAnswer(resource.title);
             }
             else {
-                result = Consts.formatUrlFailureAnswer(TextUtils.extractDomain(resource.url),
-                        resource.url);
+                result = Consts.ANSWER_NO_CONTENT;
             }
         }
         else {
-            StringBuilder buf = new StringBuilder(Consts.formatUrlSomeAnswer(this.complexContext.numResources()));
-            buf.append("\n");
-            for (ComplexResource resource : this.complexContext.getResources()) {
-                if (ComplexResource.TYPE_PAGE.equals(resource.metaType)) {
-                    buf.append("* ");
-                    buf.append(Consts.formatUrlSomePageAnswer(resource.url));
-                    buf.append("\n");
-                }
-                else if (ComplexResource.TYPE_IMAGE.equals(resource.metaType)) {
-                    buf.append("* ");
-                    buf.append(Consts.formatUrlSomeImageAnswer(resource.url));
-                    buf.append("\n");
-                }
-                else if (ComplexResource.TYPE_PLAIN.equals(resource.metaType)) {
-                    buf.append("* ");
-                    buf.append(Consts.formatUrlSomePlainAnswer(resource.url));
-                    buf.append("\n");
-                }
-                else if (ComplexResource.TYPE_VIDEO.equals(resource.metaType)) {
-                    buf.append("* ");
-                    buf.append(Consts.formatUrlSomeVideoAnswer(resource.url));
-                    buf.append("\n");
-                }
-                else if (ComplexResource.TYPE_AUDIO.equals(resource.metaType)) {
-                    buf.append("* ");
-                    buf.append(Consts.formatUrlSomeAudioAnswer(resource.url));
-                    buf.append("\n");
-                }
-                else if (ComplexResource.TYPE_OTHER.equals(resource.metaType)) {
-                    buf.append("* ");
-                    buf.append(Consts.formatUrlSomeOtherAnswer(resource.url, resource.mimeType));
-                    buf.append("\n");
-                }
-                else {
-                    buf.append("* ");
-                    buf.append(Consts.formatUrlSomeFailureAnswer(resource.url));
-                    buf.append("\n");
+            StringBuilder buf = new StringBuilder();
+
+            if (this.complexContext.getResources().get(0) instanceof HyperlinkResource) {
+                buf.append(Consts.formatUrlSomeAnswer(this.complexContext.numResources()));
+                buf.append("\n");
+                for (ComplexResource res : this.complexContext.getResources()) {
+                    HyperlinkResource resource = (HyperlinkResource) res;
+                    if (HyperlinkResource.TYPE_PAGE.equals(resource.metaType)) {
+                        buf.append("* ");
+                        buf.append(Consts.formatUrlSomePageAnswer(resource.url));
+                        buf.append("\n");
+                    }
+                    else if (HyperlinkResource.TYPE_IMAGE.equals(resource.metaType)) {
+                        buf.append("* ");
+                        buf.append(Consts.formatUrlSomeImageAnswer(resource.url));
+                        buf.append("\n");
+                    }
+                    else if (HyperlinkResource.TYPE_PLAIN.equals(resource.metaType)) {
+                        buf.append("* ");
+                        buf.append(Consts.formatUrlSomePlainAnswer(resource.url));
+                        buf.append("\n");
+                    }
+                    else if (HyperlinkResource.TYPE_VIDEO.equals(resource.metaType)) {
+                        buf.append("* ");
+                        buf.append(Consts.formatUrlSomeVideoAnswer(resource.url));
+                        buf.append("\n");
+                    }
+                    else if (HyperlinkResource.TYPE_AUDIO.equals(resource.metaType)) {
+                        buf.append("* ");
+                        buf.append(Consts.formatUrlSomeAudioAnswer(resource.url));
+                        buf.append("\n");
+                    }
+                    else if (HyperlinkResource.TYPE_OTHER.equals(resource.metaType)) {
+                        buf.append("* ");
+                        buf.append(Consts.formatUrlSomeOtherAnswer(resource.url, resource.mimeType));
+                        buf.append("\n");
+                    }
+                    else {
+                        buf.append("* ");
+                        buf.append(Consts.formatUrlSomeFailureAnswer(resource.url));
+                        buf.append("\n");
+                    }
                 }
             }
+            else if (this.complexContext.getResources().get(0) instanceof ChartResource) {
+
+            }
+            else {
+                buf.append(Consts.ANSWER_NO_CONTENT);
+            }
+
             result = buf.toString();
         }
 

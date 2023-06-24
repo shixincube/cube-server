@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class ComplexContext extends Entity {
 
-    public enum RawType {
+    public enum Type {
 
         Simplex("simplex"),
 
@@ -46,11 +46,11 @@ public class ComplexContext extends Entity {
 
         public final String value;
 
-        RawType(String value) {
+        Type(String value) {
             this.value = value;
         }
 
-        public static RawType parse(String value) {
+        public static Type parse(String value) {
             if (value.equalsIgnoreCase(Simplex.value)) {
                 return Simplex;
             }
@@ -60,29 +60,36 @@ public class ComplexContext extends Entity {
         }
     }
 
-    public final RawType rawType;
+    public final Type type;
 
     private List<ComplexResource> resources;
 
-    public ComplexContext(RawType rawType) {
+    public ComplexContext(Type type) {
         super(Utils.generateSerialNumber());
-        this.rawType = rawType;
+        this.type = type;
         this.resources = new ArrayList<>();
     }
 
     public ComplexContext(JSONObject json) {
         super(json);
-        this.rawType = RawType.parse(json.getString("raw"));
+        this.type = Type.parse(json.getString("type"));
         this.resources = new ArrayList<>();
 
         JSONArray array = json.getJSONArray("resources");
         for (int i = 0; i < array.length(); ++i) {
-            this.resources.add(new ComplexResource(array.getJSONObject(i)));
+            JSONObject data = array.getJSONObject(i);
+            String subject = data.getString("subject");
+            if (subject.equals(ComplexResource.Subject.Hyperlink.name())) {
+                this.resources.add(new HyperlinkResource(data));
+            }
+            else if (subject.equals(ComplexResource.Subject.Chart.name())) {
+                this.resources.add(new ChartResource(data));
+            }
         }
     }
 
     public boolean isSimplex() {
-        return this.rawType == RawType.Simplex;
+        return this.type == Type.Simplex;
     }
 
     public int numResources() {
@@ -104,7 +111,7 @@ public class ComplexContext extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("raw", this.rawType.value);
+        json.put("type", this.type.value);
 
         JSONArray array = new JSONArray();
         for (ComplexResource resource : this.resources) {

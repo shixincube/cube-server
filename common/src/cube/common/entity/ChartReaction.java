@@ -27,6 +27,7 @@
 package cube.common.entity;
 
 import cube.common.JSONable;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public class ChartReaction implements JSONable {
 
     public long sn;
 
-    public final String primary;
+    public final String[] primary;
 
     public String secondary = null;
 
@@ -47,7 +48,7 @@ public class ChartReaction implements JSONable {
 
     public final long timestamp;
 
-    public ChartReaction(String primary, String seriesName, long timestamp) {
+    public ChartReaction(String[] primary, String seriesName, long timestamp) {
         this.sn = 0;
         this.primary = primary;
         this.seriesName = seriesName;
@@ -56,7 +57,13 @@ public class ChartReaction implements JSONable {
 
     public ChartReaction(JSONObject json) {
         this.sn = json.has("sn") ? json.getLong("sn") : 0;
-        this.primary = json.getString("primary");
+
+        JSONArray array = json.getJSONArray("primary");
+        this.primary = new String[array.length()];
+        for (int i = 0; i < array.length(); ++i) {
+            this.primary[i] = array.getString(i);
+        }
+
         this.seriesName = json.getString("seriesName");
         if (json.has("timestamp")) {
             this.timestamp = json.getLong("timestamp");
@@ -64,6 +71,16 @@ public class ChartReaction implements JSONable {
         else {
             this.timestamp = System.currentTimeMillis();
         }
+    }
+
+    public String serializePrimary() {
+        StringBuilder buf = new StringBuilder();
+        for (String word : this.primary) {
+            buf.append(word);
+            buf.append(",");
+        }
+        buf.deleteCharAt(buf.length() - 1);
+        return buf.toString();
     }
 
     public int matchWordNum(List<String> words) {
@@ -86,7 +103,7 @@ public class ChartReaction implements JSONable {
     public boolean equals(Object obj) {
         if (obj instanceof ChartReaction) {
             ChartReaction other = (ChartReaction) obj;
-            return other.sn == this.sn || (other.primary.equals(this.primary) && other.timestamp == this.timestamp);
+            return other.sn == this.sn && other.timestamp == this.timestamp;
         }
 
         return false;
@@ -94,14 +111,20 @@ public class ChartReaction implements JSONable {
 
     @Override
     public int hashCode() {
-        return (int)(this.sn + this.primary.hashCode() * 7 + this.timestamp);
+        return (int)(this.sn + this.primary[0].hashCode() * 7 + this.timestamp);
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
-        json.put("primary", this.primary);
+
+        JSONArray array = new JSONArray();
+        for (String word : this.primary) {
+            array.put(word);
+        }
+        json.put("primary", array);
+
         if (null != this.secondary) {
             json.put("secondary", this.secondary);
         }

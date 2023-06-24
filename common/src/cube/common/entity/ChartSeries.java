@@ -123,6 +123,8 @@ public class ChartSeries implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = this.toJSON();
+        json.remove("name");
+        return json;
     }
 }

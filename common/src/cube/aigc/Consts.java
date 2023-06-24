@@ -34,6 +34,8 @@ import cube.util.TextUtils;
  */
 public final class Consts {
 
+    public final static String ANSWER_NO_CONTENT = "很抱歉，我目前没有符合该描述的信息提供给您。";
+
     private final static String ANSWER_URL_FAILURE_FORMAT = "这是站点 %s 的访问链接：%s\n我没有访问到该链接数据，此链接可能已经失效了。";
 
     private final static String ANSWER_URL_PAGE_FORMAT = "这是来自站点 %s 的页面链接。\n页面标题是：《 **%s** 》。\n页面正文约 %d 个字符。";
@@ -58,7 +60,12 @@ public final class Consts {
     private final static String ANSWER_URL_SOME_OTHER_FORMAT = "[%s](%s) 链接的数据格式是 %s 。";
     private final static String ANSWER_URL_SOME_FAILURE_FORMAT = "链接 [%s](%s) 无法访问。";
 
-    private final static int URL_ELLIPSIS_LIMIT = 48;
+    private final static String ANSWER_CHART_FORMAT = "这是**%s**的图表。";
+
+    private final static String ANSWER_CHART_SOME_FORMAT = "为您准备了 **%d** 张图表。";
+    private final static String ANSWER_CHART_SOME_ONE_FORMAT = "**%s** 图表。";
+
+    private final static int URL_ELLIPSIS_LIMIT = 56;
 
     public static String formatUrlFailureAnswer(String domain, String url) {
         return String.format(ANSWER_URL_FAILURE_FORMAT, domain, url);
@@ -119,5 +126,17 @@ public final class Consts {
 
     public static String formatUrlSomeFailureAnswer(String url) {
         return String.format(ANSWER_URL_SOME_FAILURE_FORMAT, TextUtils.ellipsisURL(url, URL_ELLIPSIS_LIMIT), url);
+    }
+
+    public static String formatChartAnswer(String desc) {
+        return String.format(ANSWER_CHART_FORMAT, desc);
+    }
+
+    public static String formatChartSomeAnswer(int num) {
+        return String.format(ANSWER_CHART_SOME_FORMAT, num);
+    }
+
+    public static String formatChartSomeOneAnswer(String desc) {
+        return String.format(ANSWER_CHART_SOME_ONE_FORMAT, desc);
     }
 }

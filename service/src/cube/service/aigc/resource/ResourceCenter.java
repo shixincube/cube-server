@@ -60,7 +60,7 @@ public class ResourceCenter {
     private long cacheTimeout = 24 * 60 * 60 * 1000;
 
     private final String[] chartKeywords = new String[] {
-            "图表", "统计图", "曲线图", "线图", "柱图", "柱状图", "柱形图",
+            "图表", "统计图", "曲线图", "线图", "折线图", "柱图", "柱状图", "柱形图",
             "饼图", "饼状图", "饼形图", "圆瓣图", "环形图"
     };
 
@@ -164,6 +164,9 @@ public class ResourceCenter {
 
         if (!hit) {
             // 没有命中关键词
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#matchChartSeries - No key words hit：" + words.toString());
+            }
             return null;
         }
 
@@ -211,6 +214,8 @@ public class ResourceCenter {
         ChartSeries chartSeries = this.service.getStorage().readLastChartSeries(mostMatching.reaction.seriesName);
         return chartSeries;
     }
+
+
 
     public void onTick(long now) {
         this.complexContextMap.entrySet().removeIf(e -> now - e.getValue().getTimestamp() > this.cacheTimeout);

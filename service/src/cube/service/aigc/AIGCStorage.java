@@ -574,7 +574,7 @@ public class AIGCStorage implements Storagable {
         List<Conditional> conditionals = new ArrayList<>();
         if (null != primary) {
             conditionals.add(Conditional.createAnd());
-            conditionals.add(Conditional.createEqualTo("primary", primary));
+            conditionals.add(Conditional.createLike("primary", primary));
         }
         if (null != secondary) {
             conditionals.add(Conditional.createAnd());
@@ -600,7 +600,7 @@ public class AIGCStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            ChartReaction chartReaction = new ChartReaction(data.get("primary").getString(),
+            ChartReaction chartReaction = new ChartReaction(data.get("primary").getString().split(","),
                     data.get("series_name").getString(), data.get("timestamp").getLong());
             chartReaction.sn = data.get("sn").getLong();
             if (!data.get("secondary").isNullValue()) {
@@ -621,7 +621,7 @@ public class AIGCStorage implements Storagable {
     public ChartReaction readLastChartReaction(String primary) {
         List<StorageField[]> result = this.storage.executeQuery(this.chartReactionTable,
                 this.chartReactionFields, new Conditional[] {
-                        Conditional.createEqualTo("primary", primary),
+                        Conditional.createLike("primary", primary),
                         Conditional.createOrderBy("timestamp", true),
                         Conditional.createLimit(1)
         });
@@ -630,7 +630,7 @@ public class AIGCStorage implements Storagable {
         }
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
-        ChartReaction chartReaction = new ChartReaction(data.get("primary").getString(),
+        ChartReaction chartReaction = new ChartReaction(data.get("primary").getString().split(","),
                 data.get("series_name").getString(), data.get("timestamp").getLong());
         chartReaction.sn = data.get("sn").getLong();
         if (!data.get("secondary").isNullValue()) {
@@ -648,7 +648,7 @@ public class AIGCStorage implements Storagable {
     public boolean insertChartReaction(ChartReaction chartReaction, boolean overwrite) {
         if (overwrite) {
             List<Conditional> conditionals = new ArrayList<>();
-            conditionals.add(Conditional.createEqualTo("primary", chartReaction.primary));
+            conditionals.add(Conditional.createEqualTo("primary", chartReaction.serializePrimary()));
             if (null != chartReaction.secondary) {
                 conditionals.add(Conditional.createAnd());
                 conditionals.add(Conditional.createEqualTo("secondary", chartReaction.secondary));
@@ -667,7 +667,7 @@ public class AIGCStorage implements Storagable {
         }
 
         return this.storage.executeInsert(this.chartReactionTable, new StorageField[] {
-                new StorageField("primary", chartReaction.primary),
+                new StorageField("primary", chartReaction.serializePrimary()),
                 new StorageField("secondary", chartReaction.secondary),
                 new StorageField("tertiary", chartReaction.tertiary),
                 new StorageField("quaternary", chartReaction.quaternary),

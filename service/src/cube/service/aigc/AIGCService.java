@@ -1166,7 +1166,7 @@ public class AIGCService extends AbstractModule {
      */
     private ComplexContext recognizeContent(String text) {
         final String content = text.trim();
-        ComplexContext result = new ComplexContext(ComplexContext.RawType.Simplex);
+        ComplexContext result = new ComplexContext(ComplexContext.Type.Simplex);
 
         List<String> urlList = TextUtils.extractAllURLs(content);
         if (!urlList.isEmpty()) {
@@ -1194,18 +1194,20 @@ public class AIGCService extends AbstractModule {
             Packet response = new Packet(dialect);
             if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
                 Logger.d(this.getClass(), "#recognizeContent - Process url list failed");
-                result = new ComplexContext(ComplexContext.RawType.Complex);
+                result = new ComplexContext(ComplexContext.Type.Complex);
                 for (String url : urlList) {
-                    ComplexResource resource = new ComplexResource(url, ComplexResource.TYPE_FAILURE);
+                    HyperlinkResource resource = new HyperlinkResource(url, HyperlinkResource.TYPE_FAILURE);
                     result.addResource(resource);
                 }
             }
             else {
                 JSONObject data = Packet.extractDataPayload(response);
                 JSONArray list = data.getJSONArray("list");
-                result = new ComplexContext(ComplexContext.RawType.Complex);
+                result = new ComplexContext(ComplexContext.Type.Complex);
                 for (int i = 0; i < list.length(); ++i) {
-                    ComplexResource resource = new ComplexResource(list.getJSONObject(i));
+                    JSONObject resPayload = new JSONObject();
+                    resPayload.put("payload", list.getJSONObject(i));
+                    HyperlinkResource resource = new HyperlinkResource(resPayload);
                     result.addResource(resource);
                 }
             }
@@ -1229,8 +1231,8 @@ public class AIGCService extends AbstractModule {
 
             Packet response = new Packet(dialect);
             if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
-                ComplexResource resource = new ComplexResource(content, ComplexResource.TYPE_FAILURE);
-                result = new ComplexContext(ComplexContext.RawType.Complex);
+                HyperlinkResource resource = new HyperlinkResource(content, HyperlinkResource.TYPE_FAILURE);
+                result = new ComplexContext(ComplexContext.Type.Complex);
                 result.addResource(resource);
             }
             else {
@@ -1238,13 +1240,15 @@ public class AIGCService extends AbstractModule {
                 JSONArray list = data.getJSONArray("list");
                 if (list.isEmpty()) {
                     // 列表没有数据，获取 URL 失败
-                    result = new ComplexContext(ComplexContext.RawType.Complex);
-                    ComplexResource resource = new ComplexResource(content, ComplexResource.TYPE_FAILURE);
+                    result = new ComplexContext(ComplexContext.Type.Complex);
+                    HyperlinkResource resource = new HyperlinkResource(content, HyperlinkResource.TYPE_FAILURE);
                     result.addResource(resource);
                 }
                 else {
-                    result = new ComplexContext(ComplexContext.RawType.Complex);
-                    ComplexResource resource = new ComplexResource(list.getJSONObject(0));
+                    result = new ComplexContext(ComplexContext.Type.Complex);
+                    JSONObject resPayload = new JSONObject();
+                    resPayload.put("payload", list.getJSONObject(0));
+                    HyperlinkResource resource = new HyperlinkResource(resPayload);
                     result.addResource(resource);
                 }
             }
@@ -1252,7 +1256,18 @@ public class AIGCService extends AbstractModule {
         else {
             // 分词
             List<SegToken> tokens = this.tokenizer.process(content, Tokenizer.SegMode.INDEX);
-
+            List<String> words = new ArrayList<>();
+            for (SegToken token : tokens) {
+                words.add(token.word);
+            }
+            ChartSeries chartSeries = ResourceCenter.getInstance().matchChartSeries(words);
+            if (null != chartSeries) {
+                // 创建资源
+                ChartResource resource = new ChartResource(chartSeries.desc, chartSeries);
+                // 命中图表序列
+                result = new ComplexContext(ComplexContext.Type.Complex);
+                result.addResource(resource);
+            }
         }
 
         return result;
@@ -1551,7 +1566,7 @@ public class AIGCService extends AbstractModule {
                 result = this.channel.appendRecord(this.content, responseText, complexContext);
             }
             else {
-                // URL 数据
+                // 复合型数据
                 ResourceAnswer resourceAnswer = new ResourceAnswer(complexContext);
                 String answer = resourceAnswer.answer();
                 result = this.channel.appendRecord(this.content, answer, complexContext);
