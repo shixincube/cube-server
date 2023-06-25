@@ -96,6 +96,16 @@ public class ComplexContext extends Entity {
         return this.resources.size();
     }
 
+    public boolean hasResource(ComplexResource.Subject subject) {
+        for (ComplexResource res : this.resources) {
+            if (res.subject == subject) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public ComplexResource getResource() {
         return this.resources.get(0);
     }

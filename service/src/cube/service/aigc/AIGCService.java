@@ -1593,13 +1593,15 @@ public class AIGCService extends AbstractModule {
                     // 保存历史记录
                     storage.writeChatHistory(history);
 
-                    // 进行资源搜索
-                    SearchResult searchResult = ResourceCenter.getInstance().search(content,
-                            history.answerContent, complexContext);
-                    if (searchResult.hasResult()) {
-                        // 缓存结果，以便客户端读取数据
-                        ResourceCenter.getInstance().cacheSearchResult(channel.getAuthToken(),
-                                searchResult);
+                    if (complexContext.isSimplex()) {
+                        // 进行资源搜索
+                        SearchResult searchResult = ResourceCenter.getInstance().search(content,
+                                history.answerContent, complexContext);
+                        if (searchResult.hasResult()) {
+                            // 缓存结果，以便客户端读取数据
+                            ResourceCenter.getInstance().cacheSearchResult(channel.getAuthToken(),
+                                    searchResult);
+                        }
                     }
                 }
             });

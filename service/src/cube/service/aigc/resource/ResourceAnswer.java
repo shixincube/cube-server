@@ -135,7 +135,14 @@ public class ResourceAnswer {
                 }
             }
             else if (this.complexContext.getResources().get(0) instanceof ChartResource) {
-
+                buf.append(Consts.formatChartSomeAnswer(this.complexContext.numResources()));
+                buf.append("\n");
+                for (ComplexResource res : this.complexContext.getResources()) {
+                    ChartResource resource = (ChartResource) res;
+                    buf.append("* ");
+                    buf.append(Consts.formatChartSomeOneAnswer(resource.chartSeries.desc));
+                    buf.append("\n");
+                }
             }
             else {
                 buf.append(Consts.ANSWER_NO_CONTENT);

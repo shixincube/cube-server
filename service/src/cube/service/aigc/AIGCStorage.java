@@ -69,6 +69,8 @@ public class AIGCStorage implements Storagable {
 
     private final String chartSeriesTable = "aigc_chart_series";
 
+    private final String chartAtomTable = "aigc_chart_atom";
+
     private final StorageField[] appConfigFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
@@ -248,6 +250,57 @@ public class AIGCStorage implements Storagable {
             }),
     };
 
+    private final StorageField[] chartAtomFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("label_1", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("label_2", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("label_3", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("label_4", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("label_5", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("label_6", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("label_7", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("label_8", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("date_1", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("date_2", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("date_3", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("date_4", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("date_5", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("value_1", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("value_2", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+    };
+
     private Storage storage;
 
     public AIGCStorage(StorageType type, JSONObject config) {
@@ -322,6 +375,13 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.chartSeriesTable, this.chartSeriesFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.chartSeriesTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.chartAtomTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.chartAtomTable, this.chartAtomFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.chartAtomTable + "' successfully");
             }
         }
     }
@@ -729,6 +789,8 @@ public class AIGCStorage implements Storagable {
                 Conditional.createEqualTo("name", seriesName)
         });
     }
+
+
 
     private void resetDefaultConfig() {
         // 支持中英双语的对话语言模型，具有 62 亿参数。针对中文问答和对话进行了优化。经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的优化。

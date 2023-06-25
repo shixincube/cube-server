@@ -24,30 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.service.test;
+package cube.aigc.atom;
 
-import cube.service.tokenizer.SegToken;
-import cube.service.tokenizer.Tokenizer;
-
-import java.util.List;
-
-public class TestTokenizer {
-
-    public static void main(String[] args) {
-        Tokenizer tokenizer = new Tokenizer();
-
-        String[] sentences = new String[] {
-                "北京最近一周的天气气温图表",
-                "这是一个伸手不见五指的黑夜。我叫孙悟空，我爱北京，我爱Python和C++。",
-                "我不喜欢日本和服。",
-                "雷猴回归人间。",
-                "工信处女干事每月经过下属科室都要亲口交代24口交换机等技术性器件的安装工作",
-                "结果婚的和尚未结过婚的"
-        };
-
-        for (String sentence : sentences) {
-            List<SegToken> result = tokenizer.process(sentence, Tokenizer.SegMode.INDEX);
-            System.out.println(result.toString());
-        }
-    }
+public class Molecule {
 }

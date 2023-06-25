@@ -24,30 +24,54 @@
  * SOFTWARE.
  */
 
-package cube.service.test;
+package cube.aigc.atom;
 
-import cube.service.tokenizer.SegToken;
-import cube.service.tokenizer.Tokenizer;
+import cube.common.JSONable;
+import org.json.JSONObject;
 
-import java.util.List;
+public class Atom implements JSONable {
 
-public class TestTokenizer {
+    public String label1;
 
-    public static void main(String[] args) {
-        Tokenizer tokenizer = new Tokenizer();
+    public String label2;
 
-        String[] sentences = new String[] {
-                "北京最近一周的天气气温图表",
-                "这是一个伸手不见五指的黑夜。我叫孙悟空，我爱北京，我爱Python和C++。",
-                "我不喜欢日本和服。",
-                "雷猴回归人间。",
-                "工信处女干事每月经过下属科室都要亲口交代24口交换机等技术性器件的安装工作",
-                "结果婚的和尚未结过婚的"
-        };
+    public String label3;
 
-        for (String sentence : sentences) {
-            List<SegToken> result = tokenizer.process(sentence, Tokenizer.SegMode.INDEX);
-            System.out.println(result.toString());
-        }
+    public String label4;
+
+    public String label5;
+
+    public String label6;
+
+    public String label7;
+
+    public String label8;
+
+    public String date1;
+
+    public String date2;
+
+    public String date3;
+
+    public String date4;
+
+    public String date5;
+
+    public int value1;
+
+    public int value2;
+
+    public Atom() {
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

@@ -62,7 +62,7 @@ public final class Consts {
 
     private final static String ANSWER_CHART_FORMAT = "这是**%s**的图表。";
 
-    private final static String ANSWER_CHART_SOME_FORMAT = "为您准备了 **%d** 张图表。";
+    private final static String ANSWER_CHART_SOME_FORMAT = "目前可以为您提供 **%d** 张图表。";
     private final static String ANSWER_CHART_SOME_ONE_FORMAT = "**%s** 图表。";
 
     private final static int URL_ELLIPSIS_LIMIT = 56;
