@@ -38,6 +38,7 @@ public class TestTokenizer {
 
         String[] sentences = new String[] {
                 "北京最近一周的天气气温图表",
+                "北京2023年6月的天气气温图表",
                 "这是一个伸手不见五指的黑夜。我叫孙悟空，我爱北京，我爱Python和C++。",
                 "我不喜欢日本和服。",
                 "雷猴回归人间。",

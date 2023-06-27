@@ -2,7 +2,9 @@ package cube.service.tokenizer;
 
 import cube.service.tokenizer.viterbi.FinalSeg;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +22,10 @@ public class Tokenizer {
     }
 
     public Tokenizer() {
+        Path path = Paths.get("./assets/tokenizer/");
+        if (Files.exists(path) && Files.isDirectory(path)) {
+            initUserDict(path);
+        }
     }
 
     /**
@@ -93,7 +99,13 @@ public class Tokenizer {
         return route;
     }
 
-
+    /**
+     * 标准分词。
+     *
+     * @param paragraph
+     * @param mode
+     * @return
+     */
     public synchronized List<SegToken> process(String paragraph, SegMode mode) {
         List<SegToken> tokens = new ArrayList<SegToken>();
         StringBuilder sb = new StringBuilder();
@@ -175,10 +187,13 @@ public class Tokenizer {
     }
 
 
-    /*
+    /**
+     * 整句分句。
      *
+     * @param sentence
+     * @return
      */
-    public List<String> sentenceProcess(String sentence) {
+    public synchronized List<String> sentenceProcess(String sentence) {
         List<String> tokens = new ArrayList<String>();
         int N = sentence.length();
         Map<Integer, List<Integer>> dag = createDAG(sentence);

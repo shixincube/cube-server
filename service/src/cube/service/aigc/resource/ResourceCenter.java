@@ -27,6 +27,7 @@
 package cube.service.aigc.resource;
 
 import cell.util.log.Logger;
+import cube.aigc.atom.Molecule;
 import cube.auth.AuthToken;
 import cube.common.entity.ChartReaction;
 import cube.common.entity.ChartSeries;
@@ -165,9 +166,21 @@ public class ResourceCenter {
         if (!hit) {
             // 没有命中关键词
             if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#matchChartSeries - No key words hit：" + words.toString());
+                Logger.d(this.getClass(), "#matchChartSeries - No key words hit：" + words.get(0));
             }
             return null;
+        }
+
+        // 先尝试从 Atom 库里提取数据
+        AtomCollider atomCollider = new AtomCollider(this.service.getStorage());
+        ChartSeries chartSeries = atomCollider.collapse(words);
+        if (null != chartSeries) {
+            return chartSeries;
+        }
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#matchChartSeries - Can NOT find data series in atom system: "
+                    + words.get(0));
         }
 
         // 词必须和 Chart Reaction 的 primary 匹配，然后匹配余下词
@@ -211,7 +224,7 @@ public class ResourceCenter {
             return null;
         }
 
-        ChartSeries chartSeries = this.service.getStorage().readLastChartSeries(mostMatching.reaction.seriesName);
+        chartSeries = this.service.getStorage().readLastChartSeries(mostMatching.reaction.seriesName);
         return chartSeries;
     }
 

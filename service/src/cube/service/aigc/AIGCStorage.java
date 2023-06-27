@@ -30,6 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
+import cube.aigc.atom.Atom;
 import cube.common.Storagable;
 import cube.common.entity.*;
 import cube.core.Conditional;
@@ -43,6 +44,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -236,10 +238,10 @@ public class AIGCStorage implements Storagable {
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("type", LiteralBase.STRING, new Constraint[] {
+            new StorageField("x_axis", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("x_axis", LiteralBase.STRING, new Constraint[] {
+            new StorageField("type", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("data", LiteralBase.STRING, new Constraint[] {
@@ -254,44 +256,17 @@ public class AIGCStorage implements Storagable {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
-            new StorageField("label_1", LiteralBase.STRING, new Constraint[] {
+            new StorageField("label", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("label_2", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
-            }),
-            new StorageField("label_3", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
-            }),
-            new StorageField("label_4", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
-            }),
-            new StorageField("label_5", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
-            }),
-            new StorageField("label_6", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
-            }),
-            new StorageField("label_7", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
-            }),
-            new StorageField("label_8", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
-            }),
-            new StorageField("date_1", LiteralBase.STRING, new Constraint[] {
+            new StorageField("year", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("date_2", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
+            new StorageField("month", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
             }),
-            new StorageField("date_3", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
-            }),
-            new StorageField("date_4", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
-            }),
-            new StorageField("date_5", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
+            new StorageField("date", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
             }),
             new StorageField("value_1", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
@@ -755,9 +730,9 @@ public class AIGCStorage implements Storagable {
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
         ChartSeries chartSeries = new ChartSeries(data.get("name").getString(),
-                data.get("desc").getString(), data.get("timestamp").getLong(), data.get("type").getString());
+                data.get("desc").getString(), data.get("timestamp").getLong());
         chartSeries.setXAxis(new JSONArray(data.get("x_axis").getString()));
-        chartSeries.setData(new JSONArray(data.get("data").getString()));
+        chartSeries.setData(data.get("type").getString(), new JSONArray(data.get("data").getString()));
         if (!data.get("option").isNullValue()) {
             chartSeries.option = new JSONObject(data.get("option").getString());
         }
@@ -777,9 +752,9 @@ public class AIGCStorage implements Storagable {
                 new StorageField("name", series.name),
                 new StorageField("desc", series.desc),
                 new StorageField("timestamp", series.timestamp),
-                new StorageField("type", series.type),
                 new StorageField("x_axis", series.getXAxis().toString()),
-                new StorageField("data", series.getData().toString()),
+                new StorageField("type", series.getSeries().type),
+                new StorageField("data", series.getSeries().getData().toString()),
                 new StorageField("option", (null != series.option) ? series.option.toString() : null),
         });
     }
@@ -790,7 +765,53 @@ public class AIGCStorage implements Storagable {
         });
     }
 
+    public List<Atom> fullMatching(List<String> labels, String year, String month, String date) {
+        List<Atom> atoms = new ArrayList<>();
 
+        LinkedList<Conditional> conditionals = new LinkedList<>();
+        for (int i = 0; i < 8 && i < labels.size(); ++i) {
+            String label = labels.get(i);
+            conditionals.add(Conditional.createOr());
+            conditionals.add(Conditional.createLike("label", label));
+        }
+        conditionals.remove(0);
+
+        LinkedList<Conditional> timeConditionals = new LinkedList<>();
+        if (null != year) {
+            timeConditionals.add(Conditional.createAnd());
+            timeConditionals.add(Conditional.createLike("year", year));
+        }
+        if (null != month) {
+            timeConditionals.add(Conditional.createAnd());
+            timeConditionals.add(Conditional.createLike("month", month));
+        }
+        if (null != date) {
+            timeConditionals.add(Conditional.createAnd());
+            timeConditionals.add(Conditional.createLike("date", date));
+        }
+        if (!timeConditionals.isEmpty()) {
+            timeConditionals.remove(0);
+            conditionals.add(Conditional.createAnd());
+            conditionals.add(Conditional.createBracket(timeConditionals.toArray(new Conditional[0])));
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(this.chartAtomTable, this.chartAtomFields,
+                conditionals.toArray(new Conditional[0]));
+        if (result.isEmpty()) {
+            return atoms;
+        }
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            Atom atom = new Atom(data.get("sn").getLong(), data.get("label").getString(),
+                    data.get("year").getString(), data.get("month").getString(), data.get("date").getString(),
+                    data.get("value_1").getInt(),
+                    data.get("value_2").isNullValue() ? 0 : data.get("value_2").getInt());
+            atoms.add(atom);
+        }
+
+        return atoms;
+    }
 
     private void resetDefaultConfig() {
         // 支持中英双语的对话语言模型，具有 62 亿参数。针对中文问答和对话进行了优化。经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的优化。

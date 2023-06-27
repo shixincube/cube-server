@@ -1264,7 +1264,6 @@ public class AIGCService extends AbstractModule {
             if (null != chartSeries) {
                 // 创建资源
                 ChartResource resource = new ChartResource(chartSeries.desc, chartSeries);
-                // 命中图表序列
                 result = new ComplexContext(ComplexContext.Type.Complex);
                 result.addResource(resource);
             }

@@ -37,29 +37,28 @@ public class WordDictionary {
         return singleton;
     }
 
-
     /**
-     * for ES to initialize the user dictionary.
+     * Initialize the user dictionary.
      *
-     * @param configFile
+     * @param userPath
      */
-    public void init(Path configFile) {
-        String abspath = configFile.toAbsolutePath().toString();
-        Log.debug("initialize user dictionary:" + abspath);
+    public void init(Path userPath) {
+        String absPath = userPath.toAbsolutePath().toString();
+        Log.debug("initialize user dictionary:" + absPath);
         synchronized (WordDictionary.class) {
-            if (loadedPath.contains(abspath))
+            if (loadedPath.contains(absPath))
                 return;
 
             DirectoryStream<Path> stream;
             try {
-                stream = Files.newDirectoryStream(configFile, String.format(Locale.getDefault(), "*%s", USER_DICT_SUFFIX));
+                stream = Files.newDirectoryStream(userPath, String.format(Locale.getDefault(), "*%s", USER_DICT_SUFFIX));
                 for (Path path : stream) {
                     Log.error(String.format(Locale.getDefault(), "loading dict %s", path.toString()));
                     singleton.loadUserDict(path);
                 }
-                loadedPath.add(abspath);
+                loadedPath.add(absPath);
             } catch (IOException e) {
-                Log.error(String.format(Locale.getDefault(), "%s: load user dict failure!", configFile.toString()));
+                Log.error(String.format(Locale.getDefault(), "%s: load user dict failure!", userPath.toString()));
             }
         }
     }

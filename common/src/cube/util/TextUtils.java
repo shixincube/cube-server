@@ -43,6 +43,8 @@ public final class TextUtils {
     // Pattern.compile("^-?[0-9]+");
     private static final Pattern sPatternNumeric = Pattern.compile("^-?\\d+(\\.\\d+)?$");
 
+    private static final Pattern sDate = Pattern.compile("^\\d+年|月|日|号$");
+
     private static final Pattern sBrowserNameSafari = Pattern.compile("Version\\/([\\d.]+).*Safari");
 
     private static final Pattern sWholeURL =
@@ -300,6 +302,41 @@ public final class TextUtils {
         return result;
     }
 
+    /**
+     * 判断短字符串是否是日期信息字符串。
+     *
+     * @param value
+     * @return
+     */
+    public static boolean isDateString(String value) {
+        Matcher matcher = sDate.matcher(value);
+        boolean result = matcher.find();
+        if (result) {
+            return true;
+        }
+
+        String v2 = TextUtils.convChineseToArabicNumerals(value);
+        matcher = sDate.matcher(v2);
+        return matcher.find();
+    }
+
+    public static String convChineseToArabicNumerals(String value) {
+        String result = value.replaceAll("一", "1")
+                .replaceAll("二", "2")
+                .replaceAll("三", "3")
+                .replaceAll("四", "4")
+                .replaceAll("五", "5")
+                .replaceAll("六", "6")
+                .replaceAll("七", "7")
+                .replaceAll("八", "8")
+                .replaceAll("九", "9")
+                .replaceAll("零", "0")
+                .replaceAll("十", "10")
+                .replaceAll("十一", "11")
+                .replaceAll("十二", "12");
+        return result;
+    }
+
     public static void main(String[] args) {
 //        String[] data = {
 //                "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1",
@@ -312,19 +349,19 @@ public final class TextUtils {
 //            System.out.println(result.toString(4));
 //        }
 
-        String[] data = {
-                "http://www.news.cn/politics/leaders/2023-06/09/c_1129683180.htm",
-                "https://github.com/shixincube/cube-server",
-                "https://v26-web.douyinvod.com/4e1fc24a1b0137951fc477d4742c2603/64841a3f/video/tos/cn/tos-cn-ve-15c001-alinc2/oQTgo4C9VA8B2pnDAwg8VKrfQbQekFDB1huzQA/?a=6383&ch=5&cr=3&dr=0&lr=all&cd=0%7C0%7C0%7C3&cv=1&br=1858&bt=1858&cs=0&ds=6&ft=GN7rKGVVywIiRZm8Zmo~xj7ScoAp7cE06vrKEdFGcto0g3&mime_type=video_mp4&qs=1&rc=ODQ2OTdoOzg4ODc4NWdoZEBpM2R2dWY6ZjQ0ajMzNGkzM0AvMC4yYDQxNi4xNWMuMS80YSNyMF9ycjRfa2hgLS1kLS9zcw%3D%3D&l=20230610133343084F39F2113AF95FAE3C&btag=e00030000",
-                "http://192.168.9.173/?t=9876",
-                "http://baidu/?t=9876"
-        };
+//        String[] data = {
+//                "http://www.news.cn/politics/leaders/2023-06/09/c_1129683180.htm",
+//                "https://github.com/shixincube/cube-server",
+//                "https://v26-web.douyinvod.com/4e1fc24a1b0137951fc477d4742c2603/64841a3f/video/tos/cn/tos-cn-ve-15c001-alinc2/oQTgo4C9VA8B2pnDAwg8VKrfQbQekFDB1huzQA/?a=6383&ch=5&cr=3&dr=0&lr=all&cd=0%7C0%7C0%7C3&cv=1&br=1858&bt=1858&cs=0&ds=6&ft=GN7rKGVVywIiRZm8Zmo~xj7ScoAp7cE06vrKEdFGcto0g3&mime_type=video_mp4&qs=1&rc=ODQ2OTdoOzg4ODc4NWdoZEBpM2R2dWY6ZjQ0ajMzNGkzM0AvMC4yYDQxNi4xNWMuMS80YSNyMF9ycjRfa2hgLS1kLS9zcw%3D%3D&l=20230610133343084F39F2113AF95FAE3C&btag=e00030000",
+//                "http://192.168.9.173/?t=9876",
+//                "http://baidu/?t=9876"
+//        };
 //        for (String url : data) {
 //            System.out.println("URL: " + TextUtils.isURL(url));
 //        }
-        for (String url : data) {
-            System.out.println("URL: " + TextUtils.ellipsisURL(url, 24));
-        }
+//        for (String url : data) {
+//            System.out.println("URL: " + TextUtils.ellipsisURL(url, 24));
+//        }
 //        System.out.println("----------------------------------------");
 //        for (String url : data) {
 //            String domain = TextUtils.extractDomain(url);
@@ -348,5 +385,20 @@ public final class TextUtils {
 //                System.out.println(url);
 //            }
 //        }
+
+
+        String[] dateValue = new String[] {
+                "2023年",
+                "6月",
+                "25日",
+                "30号",
+                "8月份",
+                "九月",
+                "2023初",
+                "年份2023",
+        };
+        for (String value : dateValue) {
+            System.out.println(value + " : " + TextUtils.isDateString(value));
+        }
     }
 }

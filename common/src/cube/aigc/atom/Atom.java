@@ -29,39 +29,106 @@ package cube.aigc.atom;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
+import java.util.List;
+
 public class Atom implements JSONable {
 
-    public String label1;
+    public final long sn;
 
-    public String label2;
+    public String label;
 
-    public String label3;
-
-    public String label4;
-
-    public String label5;
-
-    public String label6;
-
-    public String label7;
-
-    public String label8;
-
-    public String date1;
-
-    public String date2;
-
-    public String date3;
-
-    public String date4;
-
-    public String date5;
+    public String year;
+    public String month;
+    public String date;
 
     public int value1;
-
     public int value2;
 
-    public Atom() {
+    public int currentLabelMatchingNum;
+
+    public Atom(long sn, String label, String year, String month, String date, int value1, int value2) {
+        this.sn = sn;
+        this.label = label;
+        this.year = year;
+        this.month = month;
+        this.date = date;
+        this.value1 = value1;
+        this.value2 = value2;
+    }
+
+    public String serializeDate() {
+        StringBuilder buf = new StringBuilder();
+        if (null != this.year) {
+            buf.append(this.year);
+        }
+        if (null != this.month) {
+            buf.append(this.month);
+        }
+        if (null != this.date) {
+            buf.append(this.date);
+        }
+        return buf.toString();
+    }
+
+    public String formatDate() {
+        StringBuilder buf = new StringBuilder();
+        if (null != this.year) {
+            buf.append(this.year);
+            if (!this.year.endsWith("年")) {
+                buf.append("年");
+            }
+        }
+        if (null != this.month) {
+            buf.append(this.month);
+            if (!this.month.endsWith("月")) {
+                buf.append("月");
+            }
+        }
+        if (null != this.date) {
+            buf.append(this.date);
+            if (!this.date.endsWith("日")) {
+                buf.append("日");
+            }
+        }
+        return buf.toString();
+    }
+
+    public String formatSimpleDate() {
+        StringBuilder buf = new StringBuilder();
+        if (null != this.year) {
+            buf.append(this.year.replace("年", ""));
+        }
+        if (null != this.month) {
+            buf.append("-");
+            buf.append(this.month.replace("月", ""));
+        }
+        if (null != this.date) {
+            buf.append("-");
+            buf.append(this.date.replace("日", ""));
+        }
+        return buf.toString();
+    }
+
+    /**
+     * 计算有多少个输入词与标签匹配。
+     *
+     * @param words
+     * @return
+     */
+    public int numMatchingLabels(List<String> words) {
+        int num = 0;
+        String[] labels = this.label.split(",");
+
+        for (String label : labels) {
+            for (String word : words) {
+                if (word.equals(label.trim())) {
+                    ++num;
+                }
+            }
+        }
+
+        this.currentLabelMatchingNum = num;
+        return num;
     }
 
     @Override
