@@ -58,6 +58,8 @@ import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
 import cube.service.tokenizer.SegToken;
 import cube.service.tokenizer.Tokenizer;
+import cube.service.tokenizer.keyword.Keyword;
+import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import cube.util.FileType;
@@ -1262,9 +1264,19 @@ public class AIGCService extends AbstractModule {
             }
             ChartSeries chartSeries = ResourceCenter.getInstance().matchChartSeries(words);
             if (null != chartSeries) {
+                // 判断上下文是否需要进行推算
+                boolean inference = false;
+                TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+                List<Keyword> keywordList = analyzer.analyze(content, 3);
+                if (!ResourceCenter.getInstance().hitChartsKeywords(keywordList.get(0).getName())
+                    && !ResourceCenter.getInstance().hitChartsKeywords(keywordList.get(1).getName())) {
+                    // 前2个关键词都没有图表相关词，进行推理
+                    inference = true;
+                }
+
                 // 创建资源
                 ChartResource resource = new ChartResource(chartSeries.desc, chartSeries);
-                result = new ComplexContext(ComplexContext.Type.Complex);
+                result = new ComplexContext(ComplexContext.Type.Complex, inference);
                 result.addResource(resource);
             }
         }
@@ -1513,11 +1525,21 @@ public class AIGCService extends AbstractModule {
 
             AIGCChatRecord result = null;
 
-            if (complexContext.isSimplex()) {
+            if (complexContext.isSimplex() || complexContext.isInference()) {
                 // 一般文本
                 JSONObject data = new JSONObject();
                 data.put("unit", this.unit.getCapability().getName());
-                data.put("content", this.content);
+
+                if (complexContext.isInference()) {
+                    this.records = null;
+                    this.histories = 0;
+                    ResourceAnswer answer = new ResourceAnswer(complexContext);
+                    String question = answer.ask(this.content);
+                    data.put("content", question);
+                }
+                else {
+                    data.put("content", this.content);
+                }
 
                 if (null == this.records) {
                     if (this.histories > 0) {

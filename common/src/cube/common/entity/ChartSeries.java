@@ -43,6 +43,8 @@ public class ChartSeries implements JSONable {
 
     public List<String> xAxis;
 
+    public List<String> xAxisDesc;
+
     public List<Series> seriesList;
 
     public JSONObject option;
@@ -52,6 +54,7 @@ public class ChartSeries implements JSONable {
         this.desc = desc;
         this.timestamp = timestamp;
         this.xAxis = new ArrayList<>();
+        this.xAxisDesc = new ArrayList<>();
         this.seriesList = new ArrayList<>();
     }
 
@@ -60,6 +63,7 @@ public class ChartSeries implements JSONable {
         this.desc = json.getString("desc");
         this.timestamp = json.has("timestamp") ? json.getLong("timestamp") : System.currentTimeMillis();
         this.xAxis = new ArrayList<>();
+        this.xAxisDesc = new ArrayList<>();
         this.seriesList = new ArrayList<>();
 
         this.setXAxis(json.getJSONArray("xAxis"));
@@ -95,6 +99,10 @@ public class ChartSeries implements JSONable {
             }
         }
         return result;
+    }
+
+    public void setXAxisDesc(List<String> descList) {
+        this.xAxisDesc.addAll(descList);
     }
 
     public void setData(String type, JSONArray data) {

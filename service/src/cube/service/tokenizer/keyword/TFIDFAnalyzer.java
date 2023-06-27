@@ -6,18 +6,23 @@ import java.io.*;
 import java.util.*;
 
 /**
- * @author Tom Qian
- * @email tomqianmaple@outlook.com
- * @github https://github.com/bluemapleman
- * @date Oct 20, 2018
  * tfidf算法原理参考：http://www.cnblogs.com/ywl925/p/3275878.html
- * 部分实现思路参考jieba分词：https://github.com/fxsjy/jieba
  */
 public class TFIDFAnalyzer {
 
-    static HashMap<String, Double> idfMap;
-    static HashSet<String> stopWordsSet;
-    static double idfMedian;
+    private static HashMap<String, Double> idfMap;
+    private static HashSet<String> stopWordsSet;
+    private static double idfMedian;
+
+    private Tokenizer tokenizer;
+
+    public TFIDFAnalyzer() {
+        this.tokenizer = new Tokenizer();
+    }
+
+    public TFIDFAnalyzer(Tokenizer tokenizer) {
+        this.tokenizer = tokenizer;
+    }
 
     /**
      * tfidf分析方法
@@ -51,8 +56,9 @@ public class TFIDFAnalyzer {
             // 若该词不在idf文档中，则使用平均的idf值(可能定期需要对新出现的网络词语进行纳入)
             if (idfMap.containsKey(word)) {
                 keywordList.add(new Keyword(word, idfMap.get(word) * tfMap.get(word)));
-            } else
+            } else {
                 keywordList.add(new Keyword(word, idfMedian * tfMap.get(word)));
+            }
         }
 
         Collections.sort(keywordList);
@@ -79,8 +85,7 @@ public class TFIDFAnalyzer {
         if (content == null || content.equals(""))
             return tfMap;
 
-        Tokenizer segmenter = new Tokenizer();
-        List<String> segments = segmenter.sentenceProcess(content);
+        List<String> segments = this.tokenizer.sentenceProcess(content);
         Map<String, Integer> freqMap = new HashMap<>();
 
         int wordSum = 0;
@@ -158,15 +163,6 @@ public class TFIDFAnalyzer {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public static void main(String[] args) {
-        String content = "孩子上了幼儿园 安全防拐教育要做好";
-        int topN = 5;
-        TFIDFAnalyzer tfidfAnalyzer = new TFIDFAnalyzer();
-        List<Keyword> list = tfidfAnalyzer.analyze(content, topN);
-        for (Keyword word : list)
-            System.out.print(word.getName() + ":" + word.getTfidfvalue() + ",");
     }
 }
 

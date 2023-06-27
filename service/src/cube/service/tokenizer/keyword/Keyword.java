@@ -1,12 +1,9 @@
 package cube.service.tokenizer.keyword;
 
-/**
- * @author Tom Qian
- * @email tomqianmaple@outlook.com
- * @github https://github.com/bluemapleman
- * @date Oct 20, 2018
- */
+import java.math.BigDecimal;
+
 public class Keyword implements Comparable<Keyword> {
+
     private double tfidfvalue;
     private String name;
 
@@ -24,7 +21,6 @@ public class Keyword implements Comparable<Keyword> {
         this.tfidfvalue = tfidfvalue;
     }
 
-
     /**
      * @return the name
      */
@@ -32,14 +28,12 @@ public class Keyword implements Comparable<Keyword> {
         return name;
     }
 
-
     /**
      * @param name the name to set
      */
     public void setName(String name) {
         this.name = name;
     }
-
 
     public Keyword(String name, double tfidfvalue) {
         this.name = name;
@@ -51,14 +45,10 @@ public class Keyword implements Comparable<Keyword> {
      * 为了在返回tdidf分析结果时，可以按照值的从大到小顺序返回，故实现Comparable接口
      */
     @Override
-    public int compareTo(Keyword o) {
-        if (this.tfidfvalue > o.tfidfvalue) {
-            return -1;
-        } else if (this.tfidfvalue == o.tfidfvalue) {
-            return 0;
-        } else {
-            return -1;
-        }
+    public int compareTo(Keyword other) {
+        BigDecimal selfDec = new BigDecimal(Double.toString(this.tfidfvalue));
+        BigDecimal otherDec = new BigDecimal(Double.toString(other.tfidfvalue));
+        return  otherDec.compareTo(selfDec);
     }
 
     /**
@@ -83,17 +73,16 @@ public class Keyword implements Comparable<Keyword> {
             return false;
         if (getClass() != obj.getClass())
             return false;
+
         Keyword other = (Keyword) obj;
         if (name == null) {
             if (other.name != null)
                 return false;
-        } else if (!name.equals(other.name))
+        } else if (!name.equals(other.name)) {
             return false;
+        }
 //		if (Double.doubleToLongBits(tfidfvalue) != Double.doubleToLongBits(other.tfidfvalue))
 //			return false;
         return true;
     }
-
-
 }
-

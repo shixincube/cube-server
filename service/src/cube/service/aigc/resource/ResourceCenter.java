@@ -27,7 +27,6 @@
 package cube.service.aigc.resource;
 
 import cell.util.log.Logger;
-import cube.aigc.atom.Molecule;
 import cube.auth.AuthToken;
 import cube.common.entity.ChartReaction;
 import cube.common.entity.ChartSeries;
@@ -61,6 +60,7 @@ public class ResourceCenter {
     private long cacheTimeout = 24 * 60 * 60 * 1000;
 
     private final String[] chartKeywords = new String[] {
+            "数据", "报告",
             "图表", "统计图", "曲线图", "线图", "折线图", "柱图", "柱状图", "柱形图",
             "饼图", "饼状图", "饼形图", "圆瓣图", "环形图"
     };
@@ -149,11 +149,20 @@ public class ResourceCenter {
         return result;
     }
 
+    public boolean hitChartsKeywords(String word) {
+        for (String chartName : this.chartKeywords) {
+            if (chartName.equals(word)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public ChartSeries matchChartSeries(List<String> words) {
         boolean hit = false;
         for (String word : words) {
             for (String chartName : this.chartKeywords) {
-                if (word.equals(chartName)) {
+                if (chartName.equals(word)) {
                     hit = true;
                     break;
                 }
@@ -227,8 +236,6 @@ public class ResourceCenter {
         chartSeries = this.service.getStorage().readLastChartSeries(mostMatching.reaction.seriesName);
         return chartSeries;
     }
-
-
 
     public void onTick(long now) {
         this.complexContextMap.entrySet().removeIf(e -> now - e.getValue().getTimestamp() > this.cacheTimeout);

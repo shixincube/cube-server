@@ -67,6 +67,9 @@ public final class Consts {
 
     private final static int URL_ELLIPSIS_LIMIT = 56;
 
+    private final static String ASK_FORMAT = "已知信息：%s\n\n" +
+            "根据上述已知信息，简洁和专业的来回答用户的问题。如果无法从中得到答案，请说 “根据已知信息无法回答该问题” 或 “没有提供足够的相关信息”，不允许在答案中添加编造成分，答案请使用中文。 问题是：%s";
+
     public static String formatUrlFailureAnswer(String domain, String url) {
         return String.format(ANSWER_URL_FAILURE_FORMAT, domain, url);
     }
@@ -138,5 +141,9 @@ public final class Consts {
 
     public static String formatChartSomeOneAnswer(String desc) {
         return String.format(ANSWER_CHART_SOME_ONE_FORMAT, desc);
+    }
+
+    public static String formatQuestion(String data, String query) {
+        return String.format(ASK_FORMAT, data, query);
     }
 }

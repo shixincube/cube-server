@@ -153,4 +153,19 @@ public class ResourceAnswer {
 
         return result;
     }
+
+    public String ask(String query) {
+        String result = query;
+
+        StringBuilder data = new StringBuilder();
+
+        for (ComplexResource res : this.complexContext.getResources()) {
+            if (res instanceof ChartResource) {
+                ChartResource chart = (ChartResource) res;
+
+            }
+        }
+
+        return result;
+    }
 }

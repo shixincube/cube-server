@@ -65,6 +65,17 @@ public class ChartResource extends ComplexResource {
         }
     }
 
+    public String makeDataPlainString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append(this.title).append("。\n");
+        for (ChartSeries.Series series : this.chartSeries.seriesList) {
+            for (int i = 0; i < this.chartSeries.xAxis.size(); ++i) {
+
+            }
+        }
+        return buf.toString();
+    }
+
     private void parseLegend() {
         if (this.chartSeries.seriesList.size() <= 1) {
             return;

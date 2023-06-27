@@ -122,16 +122,19 @@ public class Molecule {
             // 图例名
             String legend = words[words.length - 1] + words[0];
 
+            ArrayList<String> xAxisDesc = new ArrayList<>();
             JSONArray xAxis = new JSONArray();
             JSONArray data = new JSONArray();
             for (Atom atom : atoms) {
                 xAxis.put(atom.formatSimpleDate());
+                xAxisDesc.add(atom.formatDate());
                 data.put(atom.value1);
             }
 
             ChartSeries chartSeries = new ChartSeries(name, desc, System.currentTimeMillis());
             chartSeries.setXAxis(xAxis);
             chartSeries.setData("line", data, legend);
+            chartSeries.setXAxisDesc(xAxisDesc);
             seriesList.add(chartSeries);
         }
 
