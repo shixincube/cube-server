@@ -77,7 +77,7 @@ public final class Helper {
         for (int i = 0; i < buf.length; ++i) {
             String s = String.valueOf(buf[i]);
             Matcher m = sChinesePattern.matcher(s);
-            int len = Utils.randomInt(2, 20);
+            int len = Utils.randomInt(5, 30);
             if (m.matches()) {
                 // 中文字符
                 StringBuilder word = new StringBuilder(s);
@@ -112,7 +112,9 @@ public final class Helper {
                         if (s.equals(" ") || s.equals(",") || s.equals(".") || s.equals(":") || s.equals("!") || s.equals("?")) {
                             // 符号，结束
                             word.append(s);
-                            break;
+                            if (word.length() > len) {
+                                break;
+                            }
                         }
                         else {
                             word.append(s);
@@ -128,7 +130,7 @@ public final class Helper {
 
 
     public static void main(String[] args) {
-        String content = "来自 App 测试：三国志刘备传 : AMny - 这是一串字符串";
+        String content = "来自 App 测试：三国志刘备传 : AMny - 这是一串字符串，The sun is setting and the heartbroken are in the sky";
 //        String content = "来自人工智能的测试：三国志刘备传 : AMny - 这是一串字符串";
 
         List<String> list = Helper.splitContent(content);

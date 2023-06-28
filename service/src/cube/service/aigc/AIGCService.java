@@ -1591,7 +1591,9 @@ public class AIGCService extends AbstractModule {
                 ResourceAnswer resourceAnswer = new ResourceAnswer(complexContext);
                 String answer = resourceAnswer.answer();
                 result = this.channel.appendRecord(this.content, answer, complexContext);
+            }
 
+            if (!complexContext.isSimplex()) {
                 // 缓存上下文
                 ResourceCenter.getInstance().cacheComplexContext(complexContext);
             }

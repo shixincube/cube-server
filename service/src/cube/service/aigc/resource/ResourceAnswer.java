@@ -155,17 +155,16 @@ public class ResourceAnswer {
     }
 
     public String ask(String query) {
-        String result = query;
-
         StringBuilder data = new StringBuilder();
 
         for (ComplexResource res : this.complexContext.getResources()) {
             if (res instanceof ChartResource) {
                 ChartResource chart = (ChartResource) res;
-
+                String plainText = chart.makeDataPlainString();
+                data.append(plainText);
             }
         }
 
-        return result;
+        return Consts.formatQuestion(data.toString(), query);
     }
 }

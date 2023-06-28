@@ -68,10 +68,19 @@ public class ChartResource extends ComplexResource {
     public String makeDataPlainString() {
         StringBuilder buf = new StringBuilder();
         buf.append(this.title).append("。\n");
-        for (ChartSeries.Series series : this.chartSeries.seriesList) {
-            for (int i = 0; i < this.chartSeries.xAxis.size(); ++i) {
+        buf.append(this.chartSeries.name).append("：\n");
 
+        for (ChartSeries.Series series : this.chartSeries.seriesList) {
+            String legend = series.name;
+
+            for (int i = 0; i < this.chartSeries.xAxis.size(); ++i) {
+                String desc = this.chartSeries.xAxisDesc.get(i);
+                int value = series.data.get(i);
+                buf.append(desc).append(legend).append("：").append(value)
+                    .append("。\n");
             }
+
+            buf.append("\n");
         }
         return buf.toString();
     }
