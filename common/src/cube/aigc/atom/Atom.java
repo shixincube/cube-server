@@ -56,6 +56,16 @@ public class Atom implements JSONable {
         this.value2 = value2;
     }
 
+    public Atom(JSONObject json) {
+        this.sn = 0;
+        this.label = json.getString("label");
+        this.year = json.getString("year");
+        this.month = json.getString("month");
+        this.date = json.getString("date");
+        this.value1 = json.has("value") ? json.getInt("value") : json.getInt("value1");
+        this.value2 = json.has("value2") ? json.getInt("value2") : 0;
+    }
+
     public String serializeDate() {
         StringBuilder buf = new StringBuilder();
         if (null != this.year) {
@@ -134,11 +144,25 @@ public class Atom implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("label", this.label);
+        json.put("year", this.year);
+        json.put("month", this.month);
+        json.put("date", this.date);
+        json.put("value", this.value1);
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         return this.toJSON();
+    }
+
+    public static boolean checkLabel(Atom atom) {
+        String[] array = atom.label.split(",");
+        if (array.length < 3) {
+            return false;
+        }
+
+        return true;
     }
 }

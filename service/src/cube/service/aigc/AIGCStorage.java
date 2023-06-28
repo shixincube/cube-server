@@ -765,6 +765,24 @@ public class AIGCStorage implements Storagable {
         });
     }
 
+    public boolean insertAtoms(List<Atom> atomList) {
+        if (atomList.isEmpty()) {
+            return false;
+        }
+
+        for (Atom atom : atomList) {
+            this.storage.executeInsert(this.chartAtomTable, new StorageField[] {
+                    new StorageField("label", atom.label),
+                    new StorageField("year", atom.year),
+                    new StorageField("month", atom.month),
+                    new StorageField("date", atom.date),
+                    new StorageField("value_1", atom.value1),
+            });
+        }
+
+        return true;
+    }
+
     public List<Atom> fullMatching(List<String> labels, String year, String month, String date) {
         List<Atom> atoms = new ArrayList<>();
 

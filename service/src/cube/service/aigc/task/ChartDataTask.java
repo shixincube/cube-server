@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.aigc.atom.Atom;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -45,6 +46,7 @@ import cube.service.aigc.resource.ResourceCenter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -72,8 +74,6 @@ public class ChartDataTask extends ServiceTask {
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         JSONObject requestData = packet.data;
         String action = requestData.getString("action");
-
-        System.out.println("XJW:\n" + requestData.toString(4));
 
         try {
             if (action.equalsIgnoreCase("insertReaction")) {
@@ -115,6 +115,37 @@ public class ChartDataTask extends ServiceTask {
                     markResponseTime();
                     return;
                 }
+            }
+            else if (action.equalsIgnoreCase("insertAtom")) {
+                List<Atom> list = new ArrayList<>();
+                if (requestData.has("atomList")) {
+                    JSONArray array = requestData.getJSONArray("atomList");
+                    for (int i = 0; i < array.length(); ++i) {
+                        Atom atom = new Atom(array.getJSONObject(i));
+                        if (!Atom.checkLabel(atom)) {
+                            continue;
+                        }
+
+                        list.add(atom);
+                    }
+                }
+                else {
+                    JSONObject json = requestData.getJSONObject("atom");
+                    Atom atom = new Atom(json);
+                    if (Atom.checkLabel(atom)) {
+                        list.add(atom);
+                    }
+                }
+
+                if (service.getStorage().insertAtoms(list)) {
+                    this.cellet.speak(this.talkContext,
+                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, new JSONObject()));
+                    markResponseTime();
+                    return;
+                }
+            }
+            else if (action.equalsIgnoreCase("deleteAtom")) {
+
             }
         } catch (Exception e) {
             Logger.e(this.getClass(), "#run", e);
