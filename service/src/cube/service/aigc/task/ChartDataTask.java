@@ -116,6 +116,25 @@ public class ChartDataTask extends ServiceTask {
                     return;
                 }
             }
+            else if (action.equalsIgnoreCase("getAtoms")) {
+                String label = requestData.getString("label");
+                String year = requestData.has("year") ? requestData.getString("year") : null;
+                String month = requestData.has("month") ? requestData.getString("month") : null;
+                String date = requestData.has("date") ? requestData.getString("date") : null;
+                List<Atom> list = service.getStorage().readAtoms(label, year, month, date);
+
+                JSONArray array = new JSONArray();
+                for (Atom atom : list) {
+                    array.put(atom.toJSON());
+                }
+                JSONObject payload = new JSONObject();
+                payload.put("list", array);
+                payload.put("total", list.size());
+
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, payload));
+                markResponseTime();
+            }
             else if (action.equalsIgnoreCase("insertAtom")) {
                 List<Atom> list = new ArrayList<>();
                 if (requestData.has("atomList")) {
@@ -145,6 +164,8 @@ public class ChartDataTask extends ServiceTask {
                 }
             }
             else if (action.equalsIgnoreCase("deleteAtom")) {
+                List<Atom> list = new ArrayList<>();
+                JSONArray array = requestData.getJSONArray("snList");
 
             }
         } catch (Exception e) {

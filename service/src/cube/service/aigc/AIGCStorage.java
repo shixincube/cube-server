@@ -783,6 +783,53 @@ public class AIGCStorage implements Storagable {
         return true;
     }
 
+    public boolean deleteAtoms(List<Long> atomSnList) {
+        if (atomSnList.isEmpty()) {
+            return false;
+        }
+
+        for (long sn : atomSnList) {
+            this.storage.executeDelete(this.chartAtomTable, new Conditional[] {
+                    Conditional.createEqualTo("sn", sn)
+            });
+        }
+
+        return true;
+    }
+
+    public List<Atom> readAtoms(String label, String year, String month, String date) {
+        List<Atom> list = new ArrayList<>();
+
+        ArrayList<Conditional> conditionals = new ArrayList<>();
+        conditionals.add(Conditional.createLike("label", label));
+        if (null != year) {
+            conditionals.add(Conditional.createAnd());
+            conditionals.add(Conditional.createEqualTo("year", year));
+        }
+        if (null != month) {
+            conditionals.add(Conditional.createAnd());
+            conditionals.add(Conditional.createEqualTo("month", month));
+        }
+        if (null != date) {
+            conditionals.add(Conditional.createAnd());
+            conditionals.add(Conditional.createEqualTo("date", date));
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(this.chartAtomTable, this.chartAtomFields,
+                conditionals.toArray(new Conditional[0]));
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            Atom atom = new Atom(data.get("sn").getLong(), data.get("label").getString(),
+                    data.get("year").getString(), data.get("month").getString(), data.get("date").getString(),
+                    data.get("value_1").getInt(),
+                    data.get("value_2").isNullValue() ? 0 : data.get("value_2").getInt());
+            list.add(atom);
+        }
+
+        return list;
+    }
+
     public List<Atom> fullMatching(List<String> labels, String year, String month, String date) {
         List<Atom> atoms = new ArrayList<>();
 
