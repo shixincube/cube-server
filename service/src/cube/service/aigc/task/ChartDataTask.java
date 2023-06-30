@@ -37,12 +37,10 @@ import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.ChartReaction;
 import cube.common.entity.ChartSeries;
-import cube.common.entity.SearchResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.resource.ResourceCenter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -134,11 +132,12 @@ public class ChartDataTask extends ServiceTask {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, payload));
                 markResponseTime();
+                return;
             }
-            else if (action.equalsIgnoreCase("insertAtom")) {
+            else if (action.equalsIgnoreCase("insertAtoms")) {
                 List<Atom> list = new ArrayList<>();
-                if (requestData.has("atomList")) {
-                    JSONArray array = requestData.getJSONArray("atomList");
+                if (requestData.has("list")) {
+                    JSONArray array = requestData.getJSONArray("list");
                     for (int i = 0; i < array.length(); ++i) {
                         Atom atom = new Atom(array.getJSONObject(i));
                         if (!Atom.checkLabel(atom)) {
@@ -156,17 +155,32 @@ public class ChartDataTask extends ServiceTask {
                     }
                 }
 
-                if (service.getStorage().insertAtoms(list)) {
+                int num = service.getStorage().insertAtoms(list);
+                if (num >= 0) {
+                    JSONObject responseData = new JSONObject();
+                    responseData.put("total", num);
                     this.cellet.speak(this.talkContext,
-                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, new JSONObject()));
+                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
                     markResponseTime();
                     return;
                 }
             }
-            else if (action.equalsIgnoreCase("deleteAtom")) {
-                List<Atom> list = new ArrayList<>();
+            else if (action.equalsIgnoreCase("deleteAtoms")) {
+                List<Long> list = new ArrayList<>();
                 JSONArray array = requestData.getJSONArray("snList");
+                for (int i = 0; i < array.length(); ++i) {
+                    list.add(array.getLong(i));
+                }
 
+                int num = service.getStorage().deleteAtoms(list);
+                if (num >= 0) {
+                    JSONObject responseData = new JSONObject();
+                    responseData.put("total", num);
+                    this.cellet.speak(this.talkContext,
+                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
+                    markResponseTime();
+                    return;
+                }
             }
         } catch (Exception e) {
             Logger.e(this.getClass(), "#run", e);

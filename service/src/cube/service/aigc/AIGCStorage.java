@@ -765,36 +765,44 @@ public class AIGCStorage implements Storagable {
         });
     }
 
-    public boolean insertAtoms(List<Atom> atomList) {
+    public int insertAtoms(List<Atom> atomList) {
         if (atomList.isEmpty()) {
-            return false;
+            return -1;
         }
 
+        int num = 0;
         for (Atom atom : atomList) {
-            this.storage.executeInsert(this.chartAtomTable, new StorageField[] {
+            boolean success = this.storage.executeInsert(this.chartAtomTable, new StorageField[] {
                     new StorageField("label", atom.label),
                     new StorageField("year", atom.year),
                     new StorageField("month", atom.month),
                     new StorageField("date", atom.date),
                     new StorageField("value_1", atom.value1),
             });
-        }
 
-        return true;
+            if (success) {
+                ++num;
+            }
+        }
+        return num;
     }
 
-    public boolean deleteAtoms(List<Long> atomSnList) {
+    public int deleteAtoms(List<Long> atomSnList) {
         if (atomSnList.isEmpty()) {
-            return false;
+            return -1;
         }
 
+        int num = 0;
         for (long sn : atomSnList) {
-            this.storage.executeDelete(this.chartAtomTable, new Conditional[] {
+            boolean success = this.storage.executeDelete(this.chartAtomTable, new Conditional[] {
                     Conditional.createEqualTo("sn", sn)
             });
-        }
 
-        return true;
+            if (success) {
+                ++num;
+            }
+        }
+        return num;
     }
 
     public List<Atom> readAtoms(String label, String year, String month, String date) {

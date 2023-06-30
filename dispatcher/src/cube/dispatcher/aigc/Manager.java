@@ -548,18 +548,24 @@ public class Manager implements Tickable, PerformerListener {
         return this.asrFutureMap.get(fileCode);
     }
 
-    public boolean handleChartData(String token, JSONObject data) {
+    public JSONObject handleChartData(String token, JSONObject data) {
         Packet packet = new Packet(AIGCAction.ChartData.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
-            return false;
+            Logger.w(this.getClass(), "#handleChartData - No response");
+            return null;
         }
 
         Packet responsePacket = new Packet(response);
-        return (Packet.extractCode(responsePacket) == AIGCStateCode.Ok.code);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#handleChartData - No response");
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
     }
 
     @Override

@@ -61,8 +61,9 @@ public class ChartData extends ContextHandler {
 
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
-                if (Manager.getInstance().handleChartData(token, data)) {
-                    this.respondOk(response, new JSONObject());
+                JSONObject responseData = Manager.getInstance().handleChartData(token, data);
+                if (null != responseData) {
+                    this.respondOk(response, responseData);
                     this.complete();
                 }
                 else {
