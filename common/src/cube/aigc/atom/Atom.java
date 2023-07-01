@@ -142,6 +142,60 @@ public class Atom implements JSONable {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Atom) {
+            Atom other = (Atom) obj;
+            if (other.label.equals(this.label)) {
+                boolean year = false;
+                if (null != other.year && null != this.year
+                    && other.year.equals(this.year)) {
+                    year = true;
+                }
+                else if (null == other.year && null == this.year) {
+                    year = true;
+                }
+
+                boolean month = false;
+                if (null != other.month && null != this.month
+                    && other.month.equals(this.month)) {
+                    month = true;
+                }
+                else if (null == other.month && null == this.month) {
+                    month = true;
+                }
+
+                boolean date = false;
+                if (null != other.date && null != this.date
+                    && other.date.equals(this.date)) {
+                    date = true;
+                }
+                else if (null == other.date && null == this.date) {
+                    date = true;
+                }
+
+                return year && month && date;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int code = this.label.hashCode();
+        if (null != this.year) {
+            code += this.year.hashCode() * 7;
+        }
+        if (null != this.month) {
+            code += this.month.hashCode() * 7;
+        }
+        if (null != this.date) {
+            code += this.date.hashCode() * 7;
+        }
+        return code;
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("label", this.label);

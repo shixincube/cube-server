@@ -883,7 +883,16 @@ public class AIGCStorage implements Storagable {
             atoms.add(atom);
         }
 
-        return atoms;
+        // 排除重复数据
+        ArrayList<Atom> atomList = new ArrayList<>();
+        for (Atom atom : atoms) {
+            if (atomList.contains(atom)) {
+                continue;
+            }
+            atomList.add(atom);
+        }
+
+        return atomList;
     }
 
     private void resetDefaultConfig() {
