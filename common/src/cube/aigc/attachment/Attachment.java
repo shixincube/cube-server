@@ -24,74 +24,31 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.aigc.attachment;
 
-import cell.util.Utils;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
 /**
- * 复合资源基类。
+ * 内容附件。
  */
-public abstract class ComplexResource implements JSONable {
+public abstract class Attachment implements JSONable {
 
-    public enum Subject {
+    protected String type;
 
-        Hyperlink,
-
-        Chart,
-
-        ;
-
-        public static Subject parse(String name) {
-            if (name.equals(Subject.Hyperlink.name())) {
-                return Hyperlink;
-            }
-            else if (name.equals(Subject.Chart.name())) {
-                return Chart;
-            }
-            else {
-                return null;
-            }
-        }
-    }
-
-    protected final Subject subject;
-
-    public final long sn;
-
-    protected ComplexResource(Subject subject) {
-        this.subject = subject;
-        this.sn = Utils.generateSerialNumber();
-    }
-
-    protected ComplexResource(Subject subject, long sn) {
-        this.subject = subject;
-        this.sn = sn;
-    }
-
-    protected ComplexResource(Subject subject, JSONObject json) {
-        this.subject = subject;
-        this.sn = json.has("sn") ? json.getLong("sn") : Utils.generateSerialNumber();
-    }
-
-    public Subject getSubject() {
-        return this.subject;
+    public Attachment(String type) {
+        this.type = type;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("subject", this.subject.name());
-        json.put("sn", this.sn);
+        json.put("type", this.type);
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        json.put("subject", this.subject.name());
-        json.put("sn", this.sn);
-        return json;
+        return this.toJSON();
     }
 }
