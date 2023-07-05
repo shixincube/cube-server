@@ -161,6 +161,16 @@ public enum AIGCAction {
      */
     ChartData("chartData"),
 
+    /**
+     * 获取提示词。
+     */
+    GetPrompts("getPrompts"),
+
+    /**
+     * 设置提示词。
+     */
+    SetPrompts("setPrompts")
+
     ;
 
     public final String name;

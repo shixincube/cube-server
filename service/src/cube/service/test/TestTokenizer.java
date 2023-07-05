@@ -47,7 +47,10 @@ public class TestTokenizer {
                 "工信处女干事每月经过下属科室都要亲口交代24口交换机等技术性器件的安装工作",
                 "结果婚的和尚未结过婚的",
                 "北京6月份的气温图表。针对6月份的气温数据，给一些防止中暑的办法",
-                "根据北京6月份的天气数据，给我一些防暑方法"
+                "根据北京6月份的天气数据，给我一些防暑方法",
+                "请作为心理学专家完成后续问答",
+                "汤臣倍健昨天的负面舆情数据",
+                "很抱歉，作为一个人工智能助手，我没有实时获取汤臣倍健昨天的负面舆情数据的能力。同时，作为一个中立的信息来源，我也无法对任何特定的舆情数据进行评估或证实。舆情数据的真实性和准确性可能会受到多种因素的影响，包括数据采集的及时性、样本的选择、数据来源的可靠性等等。如果对汤臣倍健昨天的舆情数据有任何疑问或关注，建议关注相关的新闻报道、社交媒体评论等公开信息渠道，以了解实际情况。"
         };
 
 //        for (String sentence : sentences) {
@@ -57,7 +60,7 @@ public class TestTokenizer {
 
         System.out.println("----------------------------------------");
 
-        TFIDFAnalyzer analyzer = new TFIDFAnalyzer();
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
         for (String sentence : sentences) {
             List<Keyword> keywordList = analyzer.analyze(sentence, 5);
             for (Keyword keyword : keywordList) {

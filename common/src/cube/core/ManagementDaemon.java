@@ -26,6 +26,9 @@
 
 package cube.core;
 
+import cell.api.Servable;
+import cell.core.talk.BaseServer;
+import cell.core.talk.TalkContext;
 import cell.util.CachedQueueExecutor;
 
 import java.util.List;
@@ -42,6 +45,8 @@ public class ManagementDaemon extends Thread {
     private boolean spinning = true;
 
     private final long spinningSleep = 60 * 1000;
+
+    private long lastCheckTime = System.currentTimeMillis();
 
     private ExecutorService executor;
 
@@ -74,6 +79,25 @@ public class ManagementDaemon extends Thread {
                         module.onTick(module, kernel);
                     }
                 });
+            }
+
+            if (System.currentTimeMillis() - this.lastCheckTime > 10 * 60 * 1000) {
+                this.lastCheckTime = System.currentTimeMillis();
+
+                try {
+                    for (Servable server : this.kernel.getNucleus().getTalkService().getServers()) {
+                        List<TalkContext> contextList = server.getAllContext();
+                        for (TalkContext context : contextList) {
+                            if (!server.isActive(context)) {
+                                // 非活跃
+                                BaseServer baseServer = (BaseServer) server;
+                                baseServer.hangup(context.getSession(), true);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

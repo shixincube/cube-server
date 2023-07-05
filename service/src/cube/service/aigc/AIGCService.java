@@ -146,6 +146,8 @@ public class AIGCService extends AbstractModule {
 
     private Tokenizer tokenizer;
 
+    private StageDirector stageDirector;
+
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
         this.unitMap = new ConcurrentHashMap<>();
@@ -159,6 +161,7 @@ public class AIGCService extends AbstractModule {
         this.asrQueueMap = new ConcurrentHashMap<>();
         this.knowledgeMap = new ConcurrentHashMap<>();
         this.tokenizer = new Tokenizer();
+        this.stageDirector = new StageDirector(this.tokenizer);
     }
 
     @Override
@@ -762,8 +765,6 @@ public class AIGCService extends AbstractModule {
             });
         }
     }
-
-
 
     /**
      * 执行自然语言任务。
@@ -1597,6 +1598,10 @@ public class AIGCService extends AbstractModule {
                 // 缓存上下文
                 ResourceCenter.getInstance().cacheComplexContext(complexContext);
             }
+            else {
+                // 使用 Stage 进行内容计算
+                stageDirector.settingUp(this.content, result.answer);
+            }
 
             // 设置 SN
             result.sn = this.sn;
@@ -1897,7 +1902,11 @@ public class AIGCService extends AbstractModule {
                 JSONArray array = payload.getJSONArray("words");
                 List<String> words = new ArrayList<>(array.length());
                 for (int i = 0; i < array.length(); ++i) {
-                    words.add(array.getString(i).replaceAll("\n", ""));
+                    String word = array.getString(i).replaceAll("\n", "");
+                    if (word.length() == 0) {
+                        continue;
+                    }
+                    words.add(word);
                 }
                 this.listener.onCompleted(this.text, words);
             }

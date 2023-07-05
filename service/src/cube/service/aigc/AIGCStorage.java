@@ -30,6 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
+import cube.aigc.Prompt;
 import cube.aigc.atom.Atom;
 import cube.common.Storagable;
 import cube.common.entity.*;
@@ -72,6 +73,10 @@ public class AIGCStorage implements Storagable {
     private final String chartSeriesTable = "aigc_chart_series";
 
     private final String chartAtomTable = "aigc_chart_atom";
+
+    private final String promptWordTable = "aigc_prompt_word";
+
+    private final String promptWordScopeTable = "aigc_prompt_word_scope";
 
     private final StorageField[] appConfigFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
@@ -276,6 +281,30 @@ public class AIGCStorage implements Storagable {
             }),
     };
 
+    private final StorageField[] promptWordFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("act", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("prompt", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+    };
+
+    private final StorageField[] promptWordScopeFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("prompt_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+    };
+
     private Storage storage;
 
     public AIGCStorage(StorageType type, JSONObject config) {
@@ -357,6 +386,20 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.chartAtomTable, this.chartAtomFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.chartAtomTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.promptWordTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.promptWordTable, this.promptWordFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.promptWordTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.promptWordScopeTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.promptWordScopeTable, this.promptWordScopeFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.promptWordScopeTable + "' successfully");
             }
         }
     }
@@ -893,6 +936,57 @@ public class AIGCStorage implements Storagable {
         }
 
         return atomList;
+    }
+
+    public List<Prompt> readPrompts(long contactId) {
+        List<Prompt> prompts = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(new String[] {
+            this.promptWordTable, this.promptWordScopeTable
+        }, new StorageField[] {
+                new StorageField(this.promptWordTable, "id", LiteralBase.LONG),
+                new StorageField(this.promptWordTable, "act", LiteralBase.STRING),
+                new StorageField(this.promptWordTable, "prompt", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo(new StorageField(this.promptWordTable, "id", LiteralBase.LONG),
+                        new StorageField(this.promptWordScopeTable, "prompt_id", LiteralBase.LONG)),
+                Conditional.createAnd(),
+                Conditional.createBracket(new Conditional[] {
+                        Conditional.createEqualTo(new StorageField(this.promptWordScopeTable,
+                                "contact_id", LiteralBase.LONG, contactId)),
+                        Conditional.createOr(),
+                        Conditional.createEqualTo(new StorageField(this.promptWordScopeTable,
+                                "contact_id", LiteralBase.LONG, 0))
+                })
+        });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            Prompt prompt = new Prompt(data.get("id").getLong(), data.get("act").getString(),
+                    data.get("prompt").getString());
+            prompts.add(prompt);
+        }
+
+        return prompts;
+    }
+
+    public void writePrompts(List<Prompt> prompts) {
+        this.writePrompts(prompts, 0);
+    }
+
+    public void writePrompts(List<Prompt> prompts, long contactId) {
+        for (Prompt prompt : prompts) {
+            this.storage.executeInsert(this.promptWordTable, new StorageField[] {
+                    new StorageField("id", prompt.id),
+                    new StorageField("act", prompt.act),
+                    new StorageField("prompt", prompt.prompt)
+            });
+
+            this.storage.executeInsert(this.promptWordScopeTable, new StorageField[] {
+                    new StorageField("prompt_id", prompt.id),
+                    new StorageField("contact_id", contactId)
+            });
+        }
     }
 
     private void resetDefaultConfig() {
