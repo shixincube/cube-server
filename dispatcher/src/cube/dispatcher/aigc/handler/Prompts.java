@@ -26,23 +26,22 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.common.entity.KnowledgeDoc;
+import cube.aigc.Prompt;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * 导入知识库文档。
- */
-public class ImportKnowledgeDoc extends ContextHandler {
+public class Prompts extends ContextHandler {
 
-    public ImportKnowledgeDoc() {
-        super("/aigc/knowledge/import/");
+    public Prompts() {
+        super("/aigc/prompt/");
         setHandler(new Handler());
     }
 
@@ -50,6 +49,26 @@ public class ImportKnowledgeDoc extends ContextHandler {
 
         public Handler() {
             super();
+        }
+
+        @Override
+        public void doGet(HttpServletRequest request, HttpServletResponse response) {
+            String token = this.getRequestPath(request);
+            if (!Manager.getInstance().checkToken(token)) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.complete();
+                return;
+            }
+
+            JSONObject result = Manager.getInstance().getPrompts(token);
+            if (null == result) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
+
+            this.respondOk(response, result);
+            this.complete();
         }
 
         @Override
@@ -61,35 +80,27 @@ public class ImportKnowledgeDoc extends ContextHandler {
                 return;
             }
 
-            String fileCode = null;
             try {
                 JSONObject data = readBodyAsJSONObject(request);
-                if (null == data) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
-                    this.complete();
-                    return;
+                JSONArray array = data.getJSONArray("list");
+                List<Prompt> promptList = new ArrayList<>();
+                for (int i = 0; i < array.length(); ++i) {
+                    Prompt prompt = new Prompt(array.getJSONObject(i));
+                    promptList.add(prompt);
                 }
 
-                if (!data.has("fileCode")) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                if (Manager.getInstance().setPrompts(token, promptList)) {
+                    this.respondOk(response, new JSONObject());
                     this.complete();
-                    return;
                 }
-
-                fileCode = data.getString("fileCode");
+                else {
+                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.complete();
+                }
             } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            KnowledgeDoc doc = Manager.getInstance().importKnowledgeDoc(token, fileCode);
-            if (null == doc) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
-                return;
             }
-
-            this.respondOk(response, doc.toJSON());
-            this.complete();
         }
     }
 }

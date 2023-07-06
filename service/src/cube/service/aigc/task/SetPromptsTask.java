@@ -30,12 +30,19 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.aigc.Prompt;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
+import cube.service.aigc.AIGCCellet;
+import cube.service.aigc.AIGCService;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 设置提示词。
@@ -59,6 +66,29 @@ public class SetPromptsTask extends ServiceTask {
             return;
         }
 
+        JSONArray array = null;
+        if (packet.data.has("list")) {
+            array = packet.data.getJSONArray("list");
+        }
+        else if (packet.data.has("prompts")) {
+            array = packet.data.getJSONArray("prompts");
+        }
+        else {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
+        AIGCService service = ((AIGCCellet) this.cellet).getService();
+
+        List<Prompt> list = new ArrayList<>();
+        for (int i = 0; i < array.length(); ++i) {
+            Prompt prompt = new Prompt(array.getJSONObject(i));
+            list.add(prompt);
+        }
+
+        service.getStorage().writePrompts(list, authToken.getContactId());
 
         JSONObject responsePayload = new JSONObject();
 

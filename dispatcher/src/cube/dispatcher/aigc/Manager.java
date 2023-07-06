@@ -31,6 +31,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.ConfigInfo;
 import cube.aigc.ModelConfig;
+import cube.aigc.Prompt;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.Packet;
@@ -48,6 +49,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -113,6 +115,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new RemoveKnowledgeDoc());
         httpServer.addContextHandler(new SearchResults());
         httpServer.addContextHandler(new ChartData());
+        httpServer.addContextHandler(new Prompts());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -561,11 +564,58 @@ public class Manager implements Tickable, PerformerListener {
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#handleChartData - No response");
+            Logger.w(this.getClass(), "#handleChartData - Response state is " + Packet.extractCode(responsePacket));
             return null;
         }
 
         return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject getPrompts(String token) {
+        Packet packet = new Packet(AIGCAction.GetPrompts.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(this.getClass(), "#getPrompts - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getPrompts - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public boolean setPrompts(String token, List<Prompt> list) {
+        JSONObject data = new JSONObject();
+        JSONArray array = new JSONArray();
+        for (Prompt prompt : list) {
+            array.put(prompt.toJSON());
+        }
+        data.put("list", array);
+
+        Packet packet = new Packet(AIGCAction.SetPrompts.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(this.getClass(), "#setPrompts - No response");
+            return false;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#setPrompts - Response state is " + Packet.extractCode(responsePacket));
+            return false;
+        }
+
+        return true;
     }
 
     @Override

@@ -207,6 +207,16 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new ChartDataTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.GetPrompts.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new GetPromptsTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (AIGCAction.SetPrompts.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new SetPromptsTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.Setup.name.equals(action)) {
             // 来自 Unit 的请求
             this.execute(new SetupTask(this, talkContext, primitive,

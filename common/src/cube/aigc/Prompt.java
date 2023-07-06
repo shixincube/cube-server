@@ -26,6 +26,7 @@
 
 package cube.aigc;
 
+import cell.util.Utils;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
@@ -41,6 +42,12 @@ public class Prompt implements JSONable {
         this.id = id;
         this.act = act;
         this.prompt = prompt;
+    }
+
+    public Prompt(JSONObject json) {
+        this.id = json.has("id") ? json.getLong("id") : Utils.generateSerialNumber();
+        this.act = json.getString("act");
+        this.prompt = json.getString("prompt");
     }
 
     @Override
