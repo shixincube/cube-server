@@ -52,4 +52,16 @@ public abstract class AIGCHandler extends CrossDomainHandler {
         }
         return path;
     }
+
+    protected String getLastRequestPath(HttpServletRequest request) {
+        String path = request.getPathInfo();
+        if (path.length() < 2) {
+            return null;
+        }
+
+        path = path.substring(1).trim();
+        String[] paths = path.split("/");
+        path = paths[paths.length - 1];
+        return path;
+    }
 }

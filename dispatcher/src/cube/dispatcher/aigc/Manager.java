@@ -591,13 +591,23 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public boolean setPrompts(String token, List<Prompt> list) {
+    public boolean addPrompts(String token, List<Prompt> promptList, List<Long> contactIdList) {
         JSONObject data = new JSONObject();
-        JSONArray array = new JSONArray();
-        for (Prompt prompt : list) {
-            array.put(prompt.toJSON());
+        data.put("action", "add");
+
+        JSONArray promptArray = new JSONArray();
+        for (Prompt prompt : promptList) {
+            promptArray.put(prompt.toJSON());
         }
-        data.put("list", array);
+        data.put("prompts", promptArray);
+
+        if (null != contactIdList) {
+            JSONArray contactIdArray = new JSONArray();
+            for (long contactId : contactIdList) {
+                contactIdArray.put(contactId);
+            }
+            data.put("contactIds", contactIdArray);
+        }
 
         Packet packet = new Packet(AIGCAction.SetPrompts.name, data);
         ActionDialect request = packet.toDialect();
@@ -605,13 +615,42 @@ public class Manager implements Tickable, PerformerListener {
 
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
-            Logger.w(this.getClass(), "#setPrompts - No response");
+            Logger.w(this.getClass(), "#addPrompts - No response");
             return false;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#setPrompts - Response state is " + Packet.extractCode(responsePacket));
+            Logger.w(this.getClass(), "#addPrompts - Response state is " + Packet.extractCode(responsePacket));
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean removePrompts(String token, List<Long> promptIdList) {
+        JSONObject data = new JSONObject();
+        data.put("action", "remove");
+
+        JSONArray idArray = new JSONArray();
+        for (long id : promptIdList) {
+            idArray.put(id);
+        }
+        data.put("idList", idArray);
+
+        Packet packet = new Packet(AIGCAction.SetPrompts.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(this.getClass(), "#removePrompts - No response");
+            return false;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#removePrompts - Response state is " + Packet.extractCode(responsePacket));
             return false;
         }
 

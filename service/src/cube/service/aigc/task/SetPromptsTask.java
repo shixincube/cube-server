@@ -66,31 +66,70 @@ public class SetPromptsTask extends ServiceTask {
             return;
         }
 
-        JSONArray array = null;
-        if (packet.data.has("list")) {
-            array = packet.data.getJSONArray("list");
-        }
-        else if (packet.data.has("prompts")) {
-            array = packet.data.getJSONArray("prompts");
-        }
-        else {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
-            markResponseTime();
-            return;
-        }
+        String action = packet.data.getString("action");
+        JSONObject responsePayload = new JSONObject();
+        responsePayload.put("action", action);
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
-        List<Prompt> list = new ArrayList<>();
-        for (int i = 0; i < array.length(); ++i) {
-            Prompt prompt = new Prompt(array.getJSONObject(i));
-            list.add(prompt);
+        if (action.equalsIgnoreCase("add")) {
+            JSONArray promptArray = null;
+            if (packet.data.has("prompts")) {
+                promptArray = packet.data.getJSONArray("prompts");
+            }
+            else {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                markResponseTime();
+                return;
+            }
+
+            JSONArray contactIdArray = packet.data.has("contactIds") ?
+                    packet.data.getJSONArray("contactIds") : null;
+            if (null == contactIdArray) {
+                contactIdArray = new JSONArray();
+                contactIdArray.put(0);
+            }
+
+            List<Prompt> promptList = new ArrayList<>();
+            for (int i = 0; i < promptArray.length(); ++i) {
+                Prompt prompt = new Prompt(promptArray.getJSONObject(i));
+                promptList.add(prompt);
+            }
+
+            List<Long> contactIdList = new ArrayList<>();
+            for (int i = 0; i < contactIdArray.length(); ++i) {
+                contactIdList.add(contactIdArray.getLong(i));
+            }
+
+            service.getStorage().writePrompts(promptList, contactIdList);
+            responsePayload.put("total", promptList.size() * contactIdList.size());
         }
+        else if (action.equalsIgnoreCase("remove")) {
+            if (packet.data.has("contactId") && packet.data.has("act")) {
+                long contactId = packet.data.getLong("contactId");
+                String act = packet.data.getString("act");
 
-        service.getStorage().writePrompts(list, authToken.getContactId());
+                int total = service.getStorage().deletePrompt(contactId, act);
+                responsePayload.put("total", total);
+            }
+            else if (packet.data.has("idList")) {
+                JSONArray idArray = packet.data.getJSONArray("idList");
+                List<Long> idList = new ArrayList<>();
+                for (int i = 0; i < idArray.length(); ++i) {
+                    idList.add(idArray.getLong(i));
+                }
 
-        JSONObject responsePayload = new JSONObject();
+                service.getStorage().deletePrompts(idList);
+                responsePayload.put("total", idList.size());
+            }
+            else {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                markResponseTime();
+                return;
+            }
+        }
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responsePayload));

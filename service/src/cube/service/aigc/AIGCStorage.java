@@ -27,6 +27,7 @@
 package cube.service.aigc;
 
 import cell.core.talk.LiteralBase;
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
@@ -970,23 +971,103 @@ public class AIGCStorage implements Storagable {
         return prompts;
     }
 
-    public void writePrompts(List<Prompt> prompts) {
-        this.writePrompts(prompts, 0);
+    public Prompt readPrompt(String act, long contactId) {
+        List<StorageField[]> result = this.storage.executeQuery(new String[] {
+                this.promptWordTable, this.promptWordScopeTable
+        }, new StorageField[] {
+                new StorageField(this.promptWordTable, "id", LiteralBase.LONG),
+                new StorageField(this.promptWordTable, "act", LiteralBase.STRING),
+                new StorageField(this.promptWordTable, "prompt", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo(new StorageField(this.promptWordTable, "id", LiteralBase.LONG),
+                        new StorageField(this.promptWordScopeTable, "prompt_id", LiteralBase.LONG)),
+                Conditional.createAnd(),
+                Conditional.createEqualTo(new StorageField(this.promptWordTable,
+                        "act", LiteralBase.STRING, act)),
+                Conditional.createAnd(),
+                Conditional.createEqualTo(new StorageField(this.promptWordScopeTable,
+                        "contact_id", LiteralBase.LONG, contactId))
+        });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+
+        return null;
     }
 
-    public void writePrompts(List<Prompt> prompts, long contactId) {
+    public void writePrompts(List<Prompt> prompts, List<Long> contactIds) {
         for (Prompt prompt : prompts) {
-            this.storage.executeInsert(this.promptWordTable, new StorageField[] {
-                    new StorageField("id", prompt.id),
-                    new StorageField("act", prompt.act),
-                    new StorageField("prompt", prompt.prompt)
+            for (long contactId : contactIds) {
+                long id = Utils.generateSerialNumber();
+
+                this.storage.executeInsert(this.promptWordTable, new StorageField[] {
+                        new StorageField("id", id),
+                        new StorageField("act", prompt.act),
+                        new StorageField("prompt", prompt.prompt)
+                });
+
+                this.storage.executeInsert(this.promptWordScopeTable, new StorageField[] {
+                        new StorageField("prompt_id", id),
+                        new StorageField("contact_id", contactId)
+                });
+            }
+        }
+    }
+
+    public void deletePrompts(List<Long> promptIdList) {
+        for (long id : promptIdList) {
+            this.storage.executeDelete(this.promptWordTable, new Conditional[] {
+                    Conditional.createEqualTo("id", id)
             });
 
-            this.storage.executeInsert(this.promptWordScopeTable, new StorageField[] {
-                    new StorageField("prompt_id", prompt.id),
-                    new StorageField("contact_id", contactId)
+            this.storage.executeDelete(this.promptWordScopeTable, new Conditional[] {
+                    Conditional.createEqualTo("prompt_id", id)
             });
         }
+    }
+
+    public int deletePrompt(long contactId, String act) {
+        int count = 0;
+
+        List<StorageField[]> result = this.storage.executeQuery(new String[] {
+                this.promptWordTable, this.promptWordScopeTable
+        }, new StorageField[] {
+                new StorageField(this.promptWordTable, "id", LiteralBase.LONG),
+                new StorageField(this.promptWordScopeTable, "sn", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo(new StorageField(this.promptWordTable, "id", LiteralBase.LONG),
+                        new StorageField(this.promptWordScopeTable, "prompt_id", LiteralBase.LONG)),
+                Conditional.createAnd(),
+                Conditional.createBracket(new Conditional[] {
+                        Conditional.createEqualTo(new StorageField(this.promptWordScopeTable,
+                                "contact_id", LiteralBase.LONG, contactId)),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo(new StorageField(this.promptWordTable,
+                                "act", LiteralBase.STRING, act))
+                })
+        });
+
+        if (result.isEmpty()) {
+            return count;
+        }
+
+        for (StorageField[] fields : result) {
+            long promptId = fields[0].getLong();
+            long sn = fields[1].getLong();
+            this.storage.executeDelete(this.promptWordTable, new Conditional[] {
+                    Conditional.createEqualTo("id", promptId)
+            });
+            this.storage.executeDelete(this.promptWordScopeTable, new Conditional[] {
+                    Conditional.createEqualTo("sn", sn)
+            });
+
+            ++count;
+        }
+
+        return count;
     }
 
     private void resetDefaultConfig() {
