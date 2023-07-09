@@ -994,25 +994,37 @@ public class AIGCStorage implements Storagable {
         }
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
-
-        return null;
+        return new Prompt(data.get("id").getLong(), data.get("act").getString(), data.get("prompt").getString());
     }
 
     public void writePrompts(List<Prompt> prompts, List<Long> contactIds) {
         for (Prompt prompt : prompts) {
             for (long contactId : contactIds) {
-                long id = Utils.generateSerialNumber();
+                // 判断是否有重复的 act
+                Prompt cur = this.readPrompt(prompt.act, contactId);
+                if (null == cur) {
+                    // 新的 act
+                    long id = Utils.generateSerialNumber();
 
-                this.storage.executeInsert(this.promptWordTable, new StorageField[] {
-                        new StorageField("id", id),
-                        new StorageField("act", prompt.act),
-                        new StorageField("prompt", prompt.prompt)
-                });
+                    this.storage.executeInsert(this.promptWordTable, new StorageField[] {
+                            new StorageField("id", id),
+                            new StorageField("act", prompt.act),
+                            new StorageField("prompt", prompt.prompt)
+                    });
 
-                this.storage.executeInsert(this.promptWordScopeTable, new StorageField[] {
-                        new StorageField("prompt_id", id),
-                        new StorageField("contact_id", contactId)
-                });
+                    this.storage.executeInsert(this.promptWordScopeTable, new StorageField[] {
+                            new StorageField("prompt_id", id),
+                            new StorageField("contact_id", contactId)
+                    });
+                }
+                else {
+                    // 更新 prompt
+                    this.storage.executeUpdate(this.promptWordTable, new StorageField[] {
+                            new StorageField("prompt", prompt.prompt)
+                    }, new Conditional[] {
+                            Conditional.createEqualTo("id", cur.id)
+                    });
+                }
             }
         }
     }
