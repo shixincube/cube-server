@@ -657,6 +657,32 @@ public class Manager implements Tickable, PerformerListener {
         return true;
     }
 
+    public boolean updatePrompt(String token, Prompt prompt) {
+        JSONObject data = new JSONObject();
+        data.put("action", "update");
+        data.put("id", prompt.id);
+        data.put("act", prompt.act);
+        data.put("prompt", prompt.prompt);
+
+        Packet packet = new Packet(AIGCAction.SetPrompts.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(this.getClass(), "#updatePrompt - No response");
+            return false;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#updatePrompt - Response state is " + Packet.extractCode(responsePacket));
+            return false;
+        }
+
+        return true;
+    }
+
     @Override
     public void onTick(long now) {
         if (now - this.lastClearToken > 60 * 60 * 1000) {

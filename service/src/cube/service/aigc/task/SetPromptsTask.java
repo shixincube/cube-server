@@ -130,6 +130,24 @@ public class SetPromptsTask extends ServiceTask {
                 return;
             }
         }
+        else if (action.equalsIgnoreCase("update")) {
+            long contactId = packet.data.has("contactId") ?
+                    packet.data.getLong("contactId") : authToken.getContactId();
+
+            if (packet.data.has("id") && packet.data.has("act") && packet.data.has("prompt")) {
+                Prompt prompt = new Prompt(packet.data.getLong("id"),
+                        packet.data.getString("act"), packet.data.getString("prompt"));
+
+                service.getStorage().writePrompt(prompt, contactId);
+                responsePayload.put("total", 1);
+            }
+            else {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                markResponseTime();
+                return;
+            }
+        }
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responsePayload));

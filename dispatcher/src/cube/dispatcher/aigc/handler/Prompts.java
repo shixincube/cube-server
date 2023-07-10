@@ -157,6 +157,25 @@ public class Prompts extends ContextHandler {
                     this.complete();
                 }
             }
+            else if (action.equalsIgnoreCase("update")) {
+                try {
+                    JSONObject data = readBodyAsJSONObject(request);
+                    Prompt prompt = new Prompt(data);
+                    if (Manager.getInstance().updatePrompt(token, prompt)) {
+                        JSONObject responseData = new JSONObject();
+                        responseData.put("total", 1);
+                        this.respondOk(response, responseData);
+                        this.complete();
+                    }
+                    else {
+                        this.respond(response, HttpStatus.BAD_REQUEST_400);
+                        this.complete();
+                    }
+                } catch (Exception e) {
+                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.complete();
+                }
+            }
             else {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();

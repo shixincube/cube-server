@@ -997,6 +997,42 @@ public class AIGCStorage implements Storagable {
         return new Prompt(data.get("id").getLong(), data.get("act").getString(), data.get("prompt").getString());
     }
 
+    public boolean writePrompt(Prompt prompt, long contactId) {
+        List<StorageField[]> result = this.storage.executeQuery(this.promptWordTable,
+                this.promptWordFields, new Conditional[] {
+                        Conditional.createEqualTo("id", prompt.id)
+                });
+
+        if (result.isEmpty()) {
+            // 插入
+            this.storage.executeInsert(this.promptWordTable, new StorageField[] {
+                    new StorageField("id", prompt.id),
+                    new StorageField("act", prompt.act),
+                    new StorageField("prompt", prompt.prompt)
+            });
+
+            return this.storage.executeInsert(this.promptWordScopeTable, new StorageField[] {
+                    new StorageField("prompt_id", prompt.id),
+                    new StorageField("contact_id", contactId)
+            });
+        }
+        else {
+            // 更新
+            this.storage.executeUpdate(this.promptWordTable, new StorageField[] {
+                    new StorageField("act", prompt.act),
+                    new StorageField("prompt", prompt.prompt)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("id", prompt.id)
+            });
+
+            return this.storage.executeUpdate(this.promptWordScopeTable, new StorageField[] {
+                    new StorageField("contact_id", contactId)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("prompt_id", prompt.id)
+            });
+        }
+    }
+
     public void writePrompts(List<Prompt> prompts, List<Long> contactIds) {
         for (Prompt prompt : prompts) {
             for (long contactId : contactIds) {
