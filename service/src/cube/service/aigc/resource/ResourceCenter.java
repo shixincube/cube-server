@@ -27,11 +27,10 @@
 package cube.service.aigc.resource;
 
 import cell.util.log.Logger;
+import cube.aigc.attachment.Attachment;
+import cube.aigc.attachment.Component;
 import cube.auth.AuthToken;
-import cube.common.entity.ChartReaction;
-import cube.common.entity.ChartSeries;
-import cube.common.entity.ComplexContext;
-import cube.common.entity.SearchResult;
+import cube.common.entity.*;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.ExtractKeywordsListener;
 
@@ -235,6 +234,10 @@ public class ResourceCenter {
 
         chartSeries = this.service.getStorage().readLastChartSeries(mostMatching.reaction.seriesName);
         return chartSeries;
+    }
+
+    public AttachmentResource packAttachmentResource(Component component) {
+        return null;
     }
 
     public void onTick(long now) {

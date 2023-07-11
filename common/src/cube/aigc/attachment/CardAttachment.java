@@ -26,5 +26,9 @@
 
 package cube.aigc.attachment;
 
-public class CardAttachment {
+public class CardAttachment extends Attachment {
+
+    public CardAttachment(String type) {
+        super("Card");
+    }
 }

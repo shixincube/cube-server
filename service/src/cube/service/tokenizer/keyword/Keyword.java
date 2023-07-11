@@ -4,50 +4,51 @@ import java.math.BigDecimal;
 
 public class Keyword implements Comparable<Keyword> {
 
-    private double tfidfvalue;
-    private String name;
+    private double tfidfValue;
+
+    private String word;
 
     /**
-     * @return the tfidfvalue
+     * @return the TF-IDF Value
      */
-    public double getTfidfvalue() {
-        return tfidfvalue;
+    public double getTfidfValue() {
+        return tfidfValue;
     }
 
     /**
-     * @param tfidfvalue the tfidfvalue to set
+     * @param tfidfValue the TF-IDF Value to set
      */
-    public void setTfidfvalue(double tfidfvalue) {
-        this.tfidfvalue = tfidfvalue;
+    public void setTfidfValue(double tfidfValue) {
+        this.tfidfValue = tfidfValue;
     }
 
     /**
-     * @return the name
+     * @return the word
      */
-    public String getName() {
-        return name;
+    public String getWord() {
+        return word;
     }
 
     /**
-     * @param name the name to set
+     * @param word the word to set
      */
-    public void setName(String name) {
-        this.name = name;
+    public void setWord(String word) {
+        this.word = word;
     }
 
-    public Keyword(String name, double tfidfvalue) {
-        this.name = name;
-        // tfidf值只保留3位小数
-        this.tfidfvalue = (double) Math.round(tfidfvalue * 10000) / 10000;
+    public Keyword(String word, double tfidfValue) {
+        this.word = word;
+        // TF-IDF 值只保留3位小数
+        this.tfidfValue = (double) Math.round(tfidfValue * 10000) / 10000;
     }
 
     /**
-     * 为了在返回tdidf分析结果时，可以按照值的从大到小顺序返回，故实现Comparable接口
+     * 为了在返回 TD-IDF 分析结果时，可以按照值的从大到小顺序返回，故实现Comparable接口
      */
     @Override
     public int compareTo(Keyword other) {
-        BigDecimal selfDec = new BigDecimal(Double.toString(this.tfidfvalue));
-        BigDecimal otherDec = new BigDecimal(Double.toString(other.tfidfvalue));
+        BigDecimal selfDec = new BigDecimal(Double.toString(this.tfidfValue));
+        BigDecimal otherDec = new BigDecimal(Double.toString(other.tfidfValue));
         return  otherDec.compareTo(selfDec);
     }
 
@@ -58,9 +59,9 @@ public class Keyword implements Comparable<Keyword> {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((word == null) ? 0 : word.hashCode());
         long temp;
-        temp = Double.doubleToLongBits(tfidfvalue);
+        temp = Double.doubleToLongBits(tfidfValue);
         result = prime * result + (int) (temp ^ (temp >>> 32));
         return result;
     }
@@ -75,10 +76,10 @@ public class Keyword implements Comparable<Keyword> {
             return false;
 
         Keyword other = (Keyword) obj;
-        if (name == null) {
-            if (other.name != null)
+        if (word == null) {
+            if (other.word != null)
                 return false;
-        } else if (!name.equals(other.name)) {
+        } else if (!word.equals(other.word)) {
             return false;
         }
 //		if (Double.doubleToLongBits(tfidfvalue) != Double.doubleToLongBits(other.tfidfvalue))

@@ -1257,20 +1257,23 @@ public class AIGCService extends AbstractModule {
             }
         }
         else {
+            this.stageDirector.inferDatePicker(content);
+
             // 分词
             List<SegToken> tokens = this.tokenizer.process(content, Tokenizer.SegMode.INDEX);
             List<String> words = new ArrayList<>();
             for (SegToken token : tokens) {
                 words.add(token.word);
             }
+
             ChartSeries chartSeries = ResourceCenter.getInstance().matchChartSeries(words);
             if (null != chartSeries) {
                 // 判断上下文是否需要进行推算
                 boolean inference = false;
                 TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
                 List<Keyword> keywordList = analyzer.analyze(content, 3);
-                if (!ResourceCenter.getInstance().hitChartsKeywords(keywordList.get(0).getName())
-                    && !ResourceCenter.getInstance().hitChartsKeywords(keywordList.get(1).getName())) {
+                if (!ResourceCenter.getInstance().hitChartsKeywords(keywordList.get(0).getWord())
+                    && !ResourceCenter.getInstance().hitChartsKeywords(keywordList.get(1).getWord())) {
                     // 前2个关键词都没有图表相关词，进行推理
                     inference = true;
                 }

@@ -1124,20 +1124,20 @@ public class AIGCStorage implements Storagable {
         parameter.put("unit", "Chat");
         ModelConfig baizeNLG = new ModelConfig("BaizeNLG",
                 "适合大多数场景的通用模型",
-                "http://36.133.49.214:7010/aigc/chat/", parameter);
+                "http://211.157.179.34:7010/aigc/chat/", parameter);
 
         // 支持中英双语的功能型对话语言大模型。以轻量化实现高质量效果的模型。在1000亿 Token 中文语料上预训练，累计学习1.5万亿中文 Token，并且在数百种任务上进行 Prompt 任务式训练。针对理解类任务，如分类、情感分析、抽取等，可以自定义标签体系；针对多种生成任务，可以进行采样自由生成。
         parameter = new JSONObject();
         parameter.put("unit", "ChatT5G");
         ModelConfig baizeX = new ModelConfig("BaizeX",
                 "适合一般场景且速度较快的通用模型",
-                "http://36.133.49.214:7010/aigc/chat/", parameter);
+                "http://211.157.179.34:7010/aigc/chat/", parameter);
 
         // 支持中英双语和多种插件的开源对话语言模型。模型具有 160 亿参数。在约七千亿中英文以及代码单词上预训练得到，后续经过对话指令微调、插件增强学习和人类偏好训练具备多轮对话能力及使用多种插件的能力。
         parameter = new JSONObject();
         ModelConfig baizeNEXT = new ModelConfig("BaizeNEXT",
                 "适合谨慎问答场景的大模型（测试版）",
-                "http://36.133.49.214:7010/aigc/conversation/", parameter);
+                "http://211.157.179.34:7010/aigc/conversation/", parameter);
 
         // 重置列表
         List<StorageField[]> result = this.storage.executeQuery(this.appConfigTable, new StorageField[] {

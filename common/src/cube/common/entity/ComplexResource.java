@@ -41,6 +41,8 @@ public abstract class ComplexResource implements JSONable {
 
         Chart,
 
+        Attachment,
+
         ;
 
         public static Subject parse(String name) {
@@ -49,6 +51,9 @@ public abstract class ComplexResource implements JSONable {
             }
             else if (name.equals(Subject.Chart.name())) {
                 return Chart;
+            }
+            else if (name.equals(Subject.Attachment.name())) {
+                return Attachment;
             }
             else {
                 return null;

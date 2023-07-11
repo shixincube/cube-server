@@ -26,7 +26,6 @@
 
 package cube.service.test;
 
-import cube.service.tokenizer.SegToken;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -39,18 +38,20 @@ public class TestTokenizer {
         Tokenizer tokenizer = new Tokenizer();
 
         String[] sentences = new String[] {
-                "北京最近一周的天气气温图表",
-                "北京2023年6月的天气气温图表",
-                "这是一个伸手不见五指的黑夜。我叫孙悟空，我爱北京，我爱Python和C++。",
-                "我不喜欢日本和服。",
-                "雷猴回归人间。",
-                "工信处女干事每月经过下属科室都要亲口交代24口交换机等技术性器件的安装工作",
-                "结果婚的和尚未结过婚的",
-                "北京6月份的气温图表。针对6月份的气温数据，给一些防止中暑的办法",
-                "根据北京6月份的天气数据，给我一些防暑方法",
-                "请作为心理学专家完成后续问答",
-                "汤臣倍健昨天的负面舆情数据",
-                "很抱歉，作为一个人工智能助手，我没有实时获取汤臣倍健昨天的负面舆情数据的能力。同时，作为一个中立的信息来源，我也无法对任何特定的舆情数据进行评估或证实。舆情数据的真实性和准确性可能会受到多种因素的影响，包括数据采集的及时性、样本的选择、数据来源的可靠性等等。如果对汤臣倍健昨天的舆情数据有任何疑问或关注，建议关注相关的新闻报道、社交媒体评论等公开信息渠道，以了解实际情况。"
+//                "北京最近一周的天气气温图表",
+//                "北京2023年6月的天气气温图表",
+//                "这是一个伸手不见五指的黑夜。我叫孙悟空，我爱北京，我爱Python和C++。",
+//                "我不喜欢日本和服。",
+//                "雷猴回归人间。",
+//                "工信处女干事每月经过下属科室都要亲口交代24口交换机等技术性器件的安装工作",
+//                "结果婚的和尚未结过婚的",
+//                "北京6月份的气温图表。针对6月份的气温数据，给一些防止中暑的办法",
+//                "根据北京6月份的天气数据，给我一些防暑方法",
+//                "请作为心理学专家完成后续问答",
+//                "很抱歉，作为一个人工智能助手，我没有实时获取汤臣倍健昨天的负面舆情数据的能力。同时，作为一个中立的信息来源，我也无法对任何特定的舆情数据进行评估或证实。舆情数据的真实性和准确性可能会受到多种因素的影响，包括数据采集的及时性、样本的选择、数据来源的可靠性等等。如果对汤臣倍健昨天的舆情数据有任何疑问或关注，建议关注相关的新闻报道、社交媒体评论等公开信息渠道，以了解实际情况。",
+                "把业务三部2022年1月到12月的差旅费用按照月为单位统计成图表进行展示。",
+                "把业务三部2022年全年的差旅费用按照月为单位统计成图表进行展示。",
+                "展示汤臣倍健2022年的舆情数据图表",
         };
 
 //        for (String sentence : sentences) {
@@ -62,9 +63,9 @@ public class TestTokenizer {
 
         TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
         for (String sentence : sentences) {
-            List<Keyword> keywordList = analyzer.analyze(sentence, 5);
+            List<Keyword> keywordList = analyzer.analyze(sentence, 10);
             for (Keyword keyword : keywordList) {
-                System.out.print(keyword.getName() + ":" + keyword.getTfidfvalue() + ", ");
+                System.out.print(keyword.getWord() + ":" + keyword.getTfidfValue() + ", ");
             }
             System.out.println("");
         }

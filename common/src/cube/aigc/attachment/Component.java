@@ -24,40 +24,12 @@
  * SOFTWARE.
  */
 
-package cube.service.aigc;
+package cube.aigc.attachment;
 
-import cube.aigc.attachment.DatePicker;
-import cube.service.tokenizer.Tokenizer;
-import cube.service.tokenizer.keyword.Keyword;
-import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+/**
+ * 互动组件。
+ */
+public abstract class Component {
 
-import java.util.List;
 
-public class StageDirector {
-
-    private final Tokenizer tokenizer;
-
-    public StageDirector(Tokenizer tokenizer) {
-        this.tokenizer = tokenizer;
-    }
-
-    public String settingUp(String query, String answer) {
-        return answer;
-    }
-
-    public DatePicker inferDatePicker(String content) {
-        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
-        List<Keyword> keywordList = analyzer.analyze(content, 10);
-
-        boolean hitDate = false;
-        // 前3个关键词是否命中日期
-        for (int i = 0; i < 3 && i < keywordList.size(); ++i) {
-            String word = keywordList.get(i).getWord();
-            if (word.contains("年")) {
-
-            }
-        }
-
-        return null;
-    }
 }
