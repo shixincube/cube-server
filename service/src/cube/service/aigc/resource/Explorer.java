@@ -27,12 +27,13 @@
 package cube.service.aigc.resource;
 
 import cell.util.log.Logger;
-import cube.aigc.attachment.Attachment;
-import cube.aigc.attachment.Component;
 import cube.auth.AuthToken;
 import cube.common.entity.*;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.ExtractKeywordsListener;
+import cube.service.tokenizer.Tokenizer;
+import cube.service.tokenizer.keyword.Keyword;
+import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,11 +41,13 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 资源中心。
  */
-public class ResourceCenter {
+public class Explorer {
 
-    private final static ResourceCenter instance = new ResourceCenter();
+    private final static Explorer instance = new Explorer();
 
     private AIGCService service;
+
+    private Tokenizer tokenizer;
 
     private Map<Long, ComplexContext> complexContextMap;
 
@@ -64,17 +67,18 @@ public class ResourceCenter {
             "饼图", "饼状图", "饼形图", "圆瓣图", "环形图"
     };
 
-    public final static ResourceCenter getInstance() {
-        return ResourceCenter.instance;
+    public final static Explorer getInstance() {
+        return Explorer.instance;
     }
 
-    private ResourceCenter() {
+    private Explorer() {
         this.complexContextMap = new ConcurrentHashMap<>();
         this.contactSearchResults = new ConcurrentHashMap<>();
     }
 
-    public void setService(AIGCService service) {
+    public void setup(AIGCService service, Tokenizer tokenizer) {
         this.service = service;
+        this.tokenizer = tokenizer;
     }
 
     public void cacheComplexContext(ComplexContext context) {
@@ -148,7 +152,79 @@ public class ResourceCenter {
         return result;
     }
 
-    public boolean hitChartsKeywords(String word) {
+    public Stage infer(String content) {
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+        List<Keyword> keywordList = analyzer.analyze(content, 10);
+        List<String> words = new ArrayList<>();
+        for (Keyword keyword : keywordList) {
+            words.add(keyword.getWord());
+        }
+
+        Stage stage = new Stage();
+
+        ChartInference chartInference = this.inferChart(words);
+        if (null != chartInference) {
+            stage.chartResources.addAll(chartInference.chartResources);
+        }
+
+        return stage;
+    }
+
+    private ChartInference inferChart(List<String> words) {
+        boolean hit = false;
+        for (String word : words) {
+            for (String chartName : this.chartKeywords) {
+                if (chartName.equals(word)) {
+                    hit = true;
+                    break;
+                }
+            }
+            if (hit) {
+                break;
+            }
+        }
+
+        if (!hit) {
+            // 没有命中关键词
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#inferDataChart - No key words hit：" + words.get(0));
+            }
+            return null;
+        }
+
+        // 先尝试从 Atom 库里提取数据
+        AtomCollider atomCollider = new AtomCollider(this.service.getStorage());
+        atomCollider.collapse(words);
+
+        ChartInference chartInference = new ChartInference();
+
+        if (!atomCollider.chartSeriesList.isEmpty()) {
+            // 判断上下文是否需要进行推算
+            boolean inference = false;
+            if (!this.hitChartsKeywords(words.get(0))
+                    && !this.hitChartsKeywords(words.get(1))) {
+                // 前2个关键词都没有图表相关词，进行推理
+                inference = true;
+            }
+
+            chartInference.inference = inference;
+
+            for (ChartSeries chartSeries : atomCollider.chartSeriesList) {
+                // 创建资源
+                ChartResource resource = new ChartResource(chartSeries.desc, chartSeries);
+                chartInference.chartResources.add(resource);
+            }
+        }
+        else {
+            if (null != atomCollider.explanation) {
+
+            }
+        }
+
+        return chartInference;
+    }
+
+    private boolean hitChartsKeywords(String word) {
         for (String chartName : this.chartKeywords) {
             if (chartName.equals(word)) {
                 return true;
@@ -157,7 +233,8 @@ public class ResourceCenter {
         return false;
     }
 
-    public ChartSeries matchChartSeries(List<String> words) {
+    /*
+    private ChartSeries matchChartSeries(List<String> words) {
         boolean hit = false;
         for (String word : words) {
             for (String chartName : this.chartKeywords) {
@@ -234,11 +311,7 @@ public class ResourceCenter {
 
         chartSeries = this.service.getStorage().readLastChartSeries(mostMatching.reaction.seriesName);
         return chartSeries;
-    }
-
-    public AttachmentResource packAttachmentResource(Component component) {
-        return null;
-    }
+    }*/
 
     public void onTick(long now) {
         this.complexContextMap.entrySet().removeIf(e -> now - e.getValue().getTimestamp() > this.cacheTimeout);
@@ -248,6 +321,21 @@ public class ResourceCenter {
             Map.Entry<Long, LinkedList<SearchResult>> e = iter.next();
             LinkedList<SearchResult> list = e.getValue();
             list.removeIf(v -> now - v.created > this.cacheTimeout);
+        }
+    }
+
+
+    private class ChartInference {
+
+        protected List<ChartResource> chartResources = new ArrayList<>();
+
+        protected boolean inference = false;
+
+        protected String explanation = null;
+
+        protected int recommendYear = 0;
+
+        protected ChartInference() {
         }
     }
 

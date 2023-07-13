@@ -26,6 +26,7 @@
 
 package cube.service.aigc.resource;
 
+import cube.aigc.Consts;
 import cube.aigc.atom.Atom;
 import cube.aigc.atom.Molecule;
 import cube.common.entity.ChartSeries;
@@ -43,11 +44,18 @@ public class AtomCollider {
 
     private final AIGCStorage storage;
 
+    public List<ChartSeries> chartSeriesList;
+
+    public String explanation = null;
+
+    public int recommendYear = 0;
+
     public AtomCollider(AIGCStorage storage) {
         this.storage = storage;
+        this.chartSeriesList = new ArrayList<>();
     }
 
-    public ChartSeries collapse(List<String> words) {
+    public void collapse(List<String> words) {
         Molecule molecule = new Molecule();
 
         // 将词分为标签和日期，进行快速标记
@@ -74,20 +82,53 @@ public class AtomCollider {
             }
         }
         if (!hitYear) {
-            // 没有年，补齐
+            // 没有年，补齐年
             Calendar calendar = Calendar.getInstance();
             dates.add(calendar.get(Calendar.YEAR) + "年");
         }
-        if (!hitMonth) {
-            // 没有月，用当月补齐
+        if (!hitYear && !hitMonth) {
+            // 没有年，没有月，补齐月
             Calendar calendar = Calendar.getInstance();
             dates.add((calendar.get(Calendar.MONTH) + 1) + "月");
         }
 
+        String yearDesc = guessYear(dates);
+        String monthDesc = guessMonth(dates);
+        String dateDesc = guessDate(dates);
+
         // 全匹配，把所有符合标签的 Atom 都匹配出来
-        List<Atom> atomList = this.storage.fullMatching(labels, guessYear(dates), guessMonth(dates), guessDate(dates));
-        // 计算
-        return molecule.build(atomList, labels);
+        List<Atom> atomList = this.storage.fullMatching(labels, yearDesc, monthDesc, dateDesc);
+        // 将 Atom 列表生成位图表序列
+        ChartSeries result = molecule.build(atomList, labels);
+        if (null != result) {
+            this.chartSeriesList.add(result);
+            return;
+        }
+
+        // 未找到数据，进行日期猜测
+        try {
+            Calendar calendar = Calendar.getInstance();
+            int thisYear = calendar.get(Calendar.YEAR);
+            int year = this.extractYear(yearDesc);
+            if (year == thisYear) {
+                // 前推一年
+                year = year - 1;
+            }
+            else {
+                // 设定为今年
+                year = thisYear;
+            }
+
+            boolean exists = this.storage.existsAtoms(labels, year + "年", monthDesc);
+            if (exists) {
+                // 推测的年份存在数据
+                this.recommendYear = year;
+                this.explanation = String.format(Consts.ANSWER_FIND_SOME_YEAR_DATA,
+                        yearDesc, year + "年");
+            }
+        } catch (Exception e) {
+            // Nothing
+        }
     }
 
     private String guessYear(List<String> dates) {
@@ -115,5 +156,9 @@ public class AtomCollider {
             }
         }
         return null;
+    }
+
+    private int extractYear(String desc) {
+        return Integer.parseInt(desc.replace("年", ""));
     }
 }

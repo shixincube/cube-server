@@ -1,20 +1,20 @@
 /*
  * This source file is part of Cube.
- * <p>
+ *
  * The MIT License (MIT)
- * <p>
+ *
  * Copyright (c) 2020-2023 Cube Team.
- * <p>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p>
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * <p>
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,34 +24,54 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher;
+package cube.common.entity;
+
+import cell.util.Utils;
+import cube.aigc.attachment.Component;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * 版本信息。
+ * 互动舞台。
  */
-public final class Version {
+public class Stage extends Entity {
 
-    public final static int MAJOR = 3;
+    public boolean inference = false;
 
-    public final static int MINOR = 0;
+    public List<ChartResource> chartResources;
 
-    public final static int REVISION = 22;
+    public List<Component> components;
 
-    private Version() {
+    public Stage() {
+        super(Utils.generateSerialNumber());
+        this.chartResources = new ArrayList<>();
+        this.components = new ArrayList<>();
     }
 
-    /**
-     * 转版本串。
-     *
-     * @return
-     */
-    public static String toVersionString() {
-        StringBuilder buf = new StringBuilder();
-        buf.append(MAJOR);
-        buf.append(".");
-        buf.append(MINOR);
-        buf.append(".");
-        buf.append(REVISION);
-        return buf.toString();
+    public void addComponent(Component component) {
+        this.components.add(component);
+    }
+
+    public Component getComponent(long id) {
+        for (Component component : this.components) {
+            if (component.getId() == id) {
+                return component;
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

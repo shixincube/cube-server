@@ -274,7 +274,7 @@ public class AIGCStorage implements Storagable {
             new StorageField("date", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("value_1", LiteralBase.INT, new Constraint[] {
+            new StorageField("value", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("value_2", LiteralBase.INT, new Constraint[] {
@@ -821,7 +821,7 @@ public class AIGCStorage implements Storagable {
                     new StorageField("year", atom.year),
                     new StorageField("month", atom.month),
                     new StorageField("date", atom.date),
-                    new StorageField("value_1", atom.value1),
+                    new StorageField("value", atom.value),
             });
 
             if (success) {
@@ -874,8 +874,7 @@ public class AIGCStorage implements Storagable {
             Map<String, StorageField> data = StorageFields.get(fields);
             Atom atom = new Atom(data.get("sn").getLong(), data.get("label").getString(),
                     data.get("year").getString(), data.get("month").getString(), data.get("date").getString(),
-                    data.get("value_1").getInt(),
-                    data.get("value_2").isNullValue() ? 0 : data.get("value_2").getInt());
+                    data.get("value").getInt());
             list.add(atom);
         }
 
@@ -886,12 +885,15 @@ public class AIGCStorage implements Storagable {
         List<Atom> atoms = new ArrayList<>();
 
         LinkedList<Conditional> conditionals = new LinkedList<>();
+
+        LinkedList<Conditional> labelConditionals = new LinkedList<>();
         for (int i = 0; i < 8 && i < labels.size(); ++i) {
             String label = labels.get(i);
-            conditionals.add(Conditional.createOr());
-            conditionals.add(Conditional.createLike("label", label));
+            labelConditionals.add(Conditional.createOr());
+            labelConditionals.add(Conditional.createLike("label", label));
         }
-        conditionals.remove(0);
+        labelConditionals.remove(0);
+        conditionals.add(Conditional.createBracket(labelConditionals.toArray(new Conditional[0])));
 
         LinkedList<Conditional> timeConditionals = new LinkedList<>();
         if (null != year) {
@@ -922,8 +924,7 @@ public class AIGCStorage implements Storagable {
             Map<String, StorageField> data = StorageFields.get(fields);
             Atom atom = new Atom(data.get("sn").getLong(), data.get("label").getString(),
                     data.get("year").getString(), data.get("month").getString(), data.get("date").getString(),
-                    data.get("value_1").getInt(),
-                    data.get("value_2").isNullValue() ? 0 : data.get("value_2").getInt());
+                    data.get("value").getInt());
             atoms.add(atom);
         }
 
@@ -937,6 +938,35 @@ public class AIGCStorage implements Storagable {
         }
 
         return atomList;
+    }
+
+    public boolean existsAtoms(List<String> labels, String year, String month) {
+        LinkedList<Conditional> conditionals = new LinkedList<>();
+
+        LinkedList<Conditional> labelConditionals = new LinkedList<>();
+        for (int i = 0; i < 8 && i < labels.size(); ++i) {
+            String label = labels.get(i);
+            labelConditionals.add(Conditional.createOr());
+            labelConditionals.add(Conditional.createLike("label", label));
+        }
+        labelConditionals.remove(0);
+        conditionals.add(Conditional.createBracket(labelConditionals.toArray(new Conditional[0])));
+
+        conditionals.add(Conditional.createAnd());
+
+        LinkedList<Conditional> timeConditionals = new LinkedList<>();
+        timeConditionals.add(Conditional.createLike("year", year));
+        if (null != month) {
+            timeConditionals.add(Conditional.createAnd());
+            timeConditionals.add(Conditional.createLike("month", month));
+        }
+        conditionals.add(Conditional.createBracket(timeConditionals.toArray(new Conditional[0])));
+
+        conditionals.add(Conditional.createLimit(2));
+
+        List<StorageField[]> result = this.storage.executeQuery(this.chartAtomTable, this.chartAtomFields,
+                conditionals.toArray(new Conditional[0]));
+        return !result.isEmpty();
     }
 
     public List<Prompt> readPrompts(long contactId) {
@@ -1124,20 +1154,20 @@ public class AIGCStorage implements Storagable {
         parameter.put("unit", "Chat");
         ModelConfig baizeNLG = new ModelConfig("BaizeNLG",
                 "适合大多数场景的通用模型",
-                "http://211.157.179.34:7010/aigc/chat/", parameter);
+                "http://127.0.0.1:7010/aigc/chat/", parameter);
 
         // 支持中英双语的功能型对话语言大模型。以轻量化实现高质量效果的模型。在1000亿 Token 中文语料上预训练，累计学习1.5万亿中文 Token，并且在数百种任务上进行 Prompt 任务式训练。针对理解类任务，如分类、情感分析、抽取等，可以自定义标签体系；针对多种生成任务，可以进行采样自由生成。
         parameter = new JSONObject();
         parameter.put("unit", "ChatT5G");
         ModelConfig baizeX = new ModelConfig("BaizeX",
                 "适合一般场景且速度较快的通用模型",
-                "http://211.157.179.34:7010/aigc/chat/", parameter);
+                "http://127.0.0.1:7010/aigc/chat/", parameter);
 
         // 支持中英双语和多种插件的开源对话语言模型。模型具有 160 亿参数。在约七千亿中英文以及代码单词上预训练得到，后续经过对话指令微调、插件增强学习和人类偏好训练具备多轮对话能力及使用多种插件的能力。
         parameter = new JSONObject();
         ModelConfig baizeNEXT = new ModelConfig("BaizeNEXT",
                 "适合谨慎问答场景的大模型（测试版）",
-                "http://211.157.179.34:7010/aigc/conversation/", parameter);
+                "http://127.0.0.1:7010/aigc/conversation/", parameter);
 
         // 重置列表
         List<StorageField[]> result = this.storage.executeQuery(this.appConfigTable, new StorageField[] {

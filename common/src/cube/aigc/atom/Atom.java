@@ -41,19 +41,18 @@ public class Atom implements JSONable {
     public String month;
     public String date;
 
-    public int value1;
-    public int value2;
+    public int value;
+//    public int value2;
 
     public int currentLabelMatchingNum;
 
-    public Atom(long sn, String label, String year, String month, String date, int value1, int value2) {
+    public Atom(long sn, String label, String year, String month, String date, int value) {
         this.sn = sn;
         this.label = label;
         this.year = year;
         this.month = month;
         this.date = date;
-        this.value1 = value1;
-        this.value2 = value2;
+        this.value = value;
     }
 
     public Atom(JSONObject json) {
@@ -62,8 +61,7 @@ public class Atom implements JSONable {
         this.year = json.getString("year");
         this.month = json.getString("month");
         this.date = json.getString("date");
-        this.value1 = json.has("value") ? json.getInt("value") : json.getInt("value1");
-        this.value2 = json.has("value2") ? json.getInt("value2") : 0;
+        this.value = json.has("value") ? json.getInt("value") : 0;
     }
 
     public String serializeDate() {
@@ -202,7 +200,7 @@ public class Atom implements JSONable {
         json.put("year", this.year);
         json.put("month", this.month);
         json.put("date", this.date);
-        json.put("value", this.value1);
+        json.put("value", this.value);
         return json;
     }
 

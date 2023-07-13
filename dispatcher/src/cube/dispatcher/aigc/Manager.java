@@ -116,6 +116,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new SearchResults());
         httpServer.addContextHandler(new ChartData());
         httpServer.addContextHandler(new Prompts());
+        httpServer.addContextHandler(new PreInfer());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -681,6 +682,29 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return true;
+    }
+
+    public JSONObject preInfer(String token, String content) {
+        JSONObject data = new JSONObject();
+        data.put("content", content);
+
+        Packet packet = new Packet(AIGCAction.PreInfer.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(this.getClass(), "#preInfer - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#preInfer - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
     }
 
     @Override

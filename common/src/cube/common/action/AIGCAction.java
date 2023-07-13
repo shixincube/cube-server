@@ -169,7 +169,12 @@ public enum AIGCAction {
     /**
      * 设置提示词。
      */
-    SetPrompts("setPrompts")
+    SetPrompts("setPrompts"),
+
+    /**
+     * 预推理。
+     */
+    PreInfer("preInfer"),
 
     ;
 

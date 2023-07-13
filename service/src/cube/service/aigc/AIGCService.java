@@ -52,14 +52,11 @@ import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.*;
 import cube.service.aigc.plugin.InjectTokenPlugin;
+import cube.service.aigc.resource.Explorer;
 import cube.service.aigc.resource.ResourceAnswer;
-import cube.service.aigc.resource.ResourceCenter;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
-import cube.service.tokenizer.SegToken;
 import cube.service.tokenizer.Tokenizer;
-import cube.service.tokenizer.keyword.Keyword;
-import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import cube.util.FileType;
@@ -146,8 +143,6 @@ public class AIGCService extends AbstractModule {
 
     private Tokenizer tokenizer;
 
-    private StageDirector stageDirector;
-
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
         this.unitMap = new ConcurrentHashMap<>();
@@ -161,7 +156,6 @@ public class AIGCService extends AbstractModule {
         this.asrQueueMap = new ConcurrentHashMap<>();
         this.knowledgeMap = new ConcurrentHashMap<>();
         this.tokenizer = new Tokenizer();
-        this.stageDirector = new StageDirector(this.tokenizer);
     }
 
     @Override
@@ -201,7 +195,7 @@ public class AIGCService extends AbstractModule {
                         new InjectTokenPlugin(AIGCService.this));
 
                 // 资源管理器
-                ResourceCenter.getInstance().setService(AIGCService.this);
+                Explorer.getInstance().setup(AIGCService.this, tokenizer);
 
                 started.set(true);
                 Logger.i(AIGCService.class, "AIGC service is ready");
@@ -254,7 +248,7 @@ public class AIGCService extends AbstractModule {
             }
         }
 
-        ResourceCenter.getInstance().onTick(now);
+        Explorer.getInstance().onTick(now);
     }
 
     public AIGCCellet getCellet() {
@@ -559,6 +553,16 @@ public class AIGCService extends AbstractModule {
 
         channel.setActiveTimestamp(System.currentTimeMillis());
         return true;
+    }
+
+    /**
+     * 预推理，以复合上下文形式进行描述。
+     *
+     * @param content
+     * @return
+     */
+    public ComplexContext preInfer(String content) {
+        return this.recognizeContext(content);
     }
 
     /**
@@ -1167,7 +1171,7 @@ public class AIGCService extends AbstractModule {
      * @param text
      * @return
      */
-    private ComplexContext recognizeContent(String text) {
+    private ComplexContext recognizeContext(String text) {
         final String content = text.trim();
         ComplexContext result = new ComplexContext(ComplexContext.Type.Simplex);
 
@@ -1257,23 +1261,28 @@ public class AIGCService extends AbstractModule {
             }
         }
         else {
-            this.stageDirector.inferDatePicker(content);
+            Stage stage = Explorer.getInstance().infer(content);
 
-            // 分词
-            List<SegToken> tokens = this.tokenizer.process(content, Tokenizer.SegMode.INDEX);
-            List<String> words = new ArrayList<>();
-            for (SegToken token : tokens) {
-                words.add(token.word);
+            if (!stage.chartResources.isEmpty()) {
+                result = new ComplexContext(ComplexContext.Type.Complex, stage.inference);
+                for (ChartResource chartResource : stage.chartResources) {
+                    result.addResource(chartResource);
+                }
             }
 
-            ChartSeries chartSeries = ResourceCenter.getInstance().matchChartSeries(words);
+            /*TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+            List<Keyword> keywordList = analyzer.analyze(content, 10);
+            List<String> words = new ArrayList<>();
+            for (Keyword keyword : keywordList) {
+                words.add(keyword.getWord());
+            }
+
+            ChartSeries chartSeries = Explorer.getInstance().matchChartSeries(words);
             if (null != chartSeries) {
                 // 判断上下文是否需要进行推算
                 boolean inference = false;
-                TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
-                List<Keyword> keywordList = analyzer.analyze(content, 3);
-                if (!ResourceCenter.getInstance().hitChartsKeywords(keywordList.get(0).getWord())
-                    && !ResourceCenter.getInstance().hitChartsKeywords(keywordList.get(1).getWord())) {
+                if (!Explorer.getInstance().hitChartsKeywords(words.get(0))
+                        && !Explorer.getInstance().hitChartsKeywords(words.get(1))) {
                     // 前2个关键词都没有图表相关词，进行推理
                     inference = true;
                 }
@@ -1282,7 +1291,7 @@ public class AIGCService extends AbstractModule {
                 ChartResource resource = new ChartResource(chartSeries.desc, chartSeries);
                 result = new ComplexContext(ComplexContext.Type.Complex, inference);
                 result.addResource(resource);
-            }
+            }*/
         }
 
         return result;
@@ -1525,7 +1534,7 @@ public class AIGCService extends AbstractModule {
 
         public void process() {
             // 识别内容
-            ComplexContext complexContext = recognizeContent(this.content);
+            ComplexContext complexContext = recognizeContext(this.content);
 
             AIGCChatRecord result = null;
 
@@ -1599,11 +1608,7 @@ public class AIGCService extends AbstractModule {
 
             if (!complexContext.isSimplex()) {
                 // 缓存上下文
-                ResourceCenter.getInstance().cacheComplexContext(complexContext);
-            }
-            else {
-                // 使用 Stage 进行内容计算
-                stageDirector.settingUp(this.content, result.answer);
+                Explorer.getInstance().cacheComplexContext(complexContext);
             }
 
             // 设置 SN
@@ -1626,11 +1631,11 @@ public class AIGCService extends AbstractModule {
 
                     if (complexContext.isSimplex()) {
                         // 进行资源搜索
-                        SearchResult searchResult = ResourceCenter.getInstance().search(content,
+                        SearchResult searchResult = Explorer.getInstance().search(content,
                                 history.answerContent, complexContext);
                         if (searchResult.hasResult()) {
                             // 缓存结果，以便客户端读取数据
-                            ResourceCenter.getInstance().cacheSearchResult(channel.getAuthToken(),
+                            Explorer.getInstance().cacheSearchResult(channel.getAuthToken(),
                                     searchResult);
                         }
                     }
@@ -1672,7 +1677,7 @@ public class AIGCService extends AbstractModule {
         }
 
         public void process() {
-            ComplexContext complexContext = recognizeContent(this.content);
+            ComplexContext complexContext = recognizeContext(this.content);
 
             JSONObject data = new JSONObject();
             data.put("unit", this.unit.getCapability().getName());

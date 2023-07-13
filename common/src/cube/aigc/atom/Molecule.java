@@ -120,7 +120,7 @@ public class Molecule {
             String desc = name + " - " + first.formatDate() + "至" + last.formatDate();
 
             // 图例名
-            String legend = words[words.length - 1] + words[0];
+            String legend = words[words.length - 1];
 
             ArrayList<String> xAxisDesc = new ArrayList<>();
             JSONArray xAxis = new JSONArray();
@@ -128,7 +128,7 @@ public class Molecule {
             for (Atom atom : atoms) {
                 xAxis.put(atom.formatSimpleDate());
                 xAxisDesc.add(atom.formatDate());
-                data.put(atom.value1);
+                data.put(atom.value);
             }
 
             ChartSeries chartSeries = new ChartSeries(name, desc, System.currentTimeMillis());

@@ -26,10 +26,52 @@
 
 package cube.aigc.attachment;
 
+import cell.util.Utils;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * 互动组件。
  */
 public abstract class Component {
 
+    protected final long id;
 
+    protected final String name;
+
+    protected Map<String, String> attributes;
+
+    public Component(String name) {
+        this.id = Utils.generateSerialNumber();
+        this.name = name;
+        this.attributes = new HashMap<>();
+    }
+
+    public long getId() {
+        return this.id;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void addAttribute(String key, String value) {
+        this.attributes.put(key, value);
+    }
+
+    public String removeAttribute(String key) {
+        return this.attributes.remove(key);
+    }
+
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("id", this.id);
+        json.put("name", this.name);
+        for (Map.Entry<String, String> e : this.attributes.entrySet()) {
+            json.put(e.getKey(), e.getValue());
+        }
+        return json;
+    }
 }
