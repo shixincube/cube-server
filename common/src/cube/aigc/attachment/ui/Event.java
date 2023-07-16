@@ -24,14 +24,51 @@
  * SOFTWARE.
  */
 
-package cube.service.aigc.resource;
+package cube.aigc.attachment.ui;
+
+import cube.common.JSONable;
+import org.json.JSONObject;
 
 /**
- * 组件构建器。
+ * 事件描述。
  */
-public class ComponentBuilder {
+public class Event implements JSONable {
 
-    public ComponentBuilder() {
+    public long resourceSn;
 
+    public long attachmentId;
+
+    public long componentId;
+
+    public String name;
+
+    public JSONObject parameter;
+
+    public Component target;
+
+    public Event() {
+    }
+
+    public Event(JSONObject json) {
+        this.resourceSn = json.getLong("resourceSn");
+
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("resourceSn", this.resourceSn);
+        json.put("attachmentId", this.attachmentId);
+        json.put("componentId", this.componentId);
+        json.put("name", this.name);
+        if (null != this.parameter) {
+            json.put("parameter", this.parameter);
+        }
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

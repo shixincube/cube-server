@@ -26,7 +26,13 @@
 
 package cube.aigc.attachment;
 
+import cube.aigc.attachment.ui.Button;
+import cube.aigc.attachment.ui.Component;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Thing 类型附件。
@@ -45,17 +51,34 @@ public class ThingAttachment extends Attachment {
 
     public String footer;
 
-    public String action;
+    public List<Component> actions;
 
     public ThingAttachment(String content) {
         super("Thing");
         this.content = content;
     }
 
+    public void addActionButton(Button button) {
+        if (null == this.actions) {
+            this.actions = new ArrayList<>();
+        }
+
+        this.actions.add(button);
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("content", this.content);
+
+        if (null != this.actions) {
+            JSONArray actionArray = new JSONArray();
+            for (Component component : this.actions) {
+                actionArray.put(component.toJSON());
+            }
+            json.put("actions", actionArray);
+        }
+
         return json;
     }
 }

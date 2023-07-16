@@ -24,43 +24,66 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.aigc.attachment.ui;
 
 import cell.util.Utils;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * 互动舞台。
+ * 互动组件。
  */
-public class Stage extends Entity {
+public abstract class Component {
 
-    public boolean inference = false;
+    protected final long id;
 
-    public List<ChartResource> chartResources;
+    protected final String name;
 
-    public List<AttachmentResource> attachmentResources;
+    protected boolean disposable;
 
-    public Stage() {
-        super(Utils.generateSerialNumber());
-        this.chartResources = new ArrayList<>();
-        this.attachmentResources = new ArrayList<>();
+    protected Map<String, String> attributes;
+
+    public Component(String name) {
+        this.id = Utils.generateSerialNumber();
+        this.name = name;
+        this.disposable = false;
+        this.attributes = new HashMap<>();
     }
 
-    public boolean isComplex() {
-        return !this.chartResources.isEmpty() || !this.attachmentResources.isEmpty();
+    public long getId() {
+        return this.id;
     }
 
-    @Override
+    public String getName() {
+        return this.name;
+    }
+
+    public boolean isDisposable() {
+        return this.disposable;
+    }
+
+    public void setDisposable(boolean value) {
+        this.disposable = value;
+    }
+
+    public void addAttribute(String key, String value) {
+        this.attributes.put(key, value);
+    }
+
+    public String removeAttribute(String key) {
+        return this.attributes.remove(key);
+    }
+
     public JSONObject toJSON() {
-        JSONObject json = super.toJSON();
+        JSONObject json = new JSONObject();
+        json.put("id", this.id);
+        json.put("name", this.name);
+        json.put("disposable", this.disposable);
+        for (Map.Entry<String, String> e : this.attributes.entrySet()) {
+            json.put(e.getKey(), e.getValue());
+        }
         return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
     }
 }

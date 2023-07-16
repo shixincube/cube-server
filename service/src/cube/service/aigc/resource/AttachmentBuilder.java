@@ -24,50 +24,27 @@
  * SOFTWARE.
  */
 
-package cube.aigc.attachment;
+package cube.service.aigc.resource;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import cube.aigc.attachment.CardAttachment;
+import cube.aigc.attachment.ThingAttachment;
+import cube.aigc.attachment.ui.Button;
 
 /**
- * 日期选择器组件。
+ * 附件构建器。
  */
-public class DatePicker extends Component {
+public class AttachmentBuilder {
 
-    public final static String TYPE_DATE = "date";
-
-    public final static String TYPE_DATE_TIME = "datetime";
-
-    public final static String TYPE_DATE_RANGE = "daterange";
-
-    private String type;
-
-    private boolean clearable;
-
-    private JSONArray range;
-
-    public DatePicker(String type) {
-        super("DatePicker");
-        this.type = type;
-        this.clearable = false;
+    public AttachmentBuilder() {
     }
 
-    public void setRange(long start, long end) {
-        this.range = new JSONArray();
-        this.range.put(start);
-        this.range.put(end);
+    public CardAttachment buildCard(String content, Button okButton) {
+        return null;
     }
 
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = super.toJSON();
-        json.put("type", this.type);
-        json.put("clearable", this.clearable);
-
-        if (null != this.range) {
-            json.put("range", this.range);
-        }
-
-        return json;
+    public ThingAttachment buildThing(String content, Button viewButton) {
+        ThingAttachment attachment = new ThingAttachment(content);
+        attachment.addActionButton(viewButton);
+        return attachment;
     }
 }

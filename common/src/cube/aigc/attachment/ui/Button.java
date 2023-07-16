@@ -24,43 +24,29 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.aigc.attachment.ui;
 
-import cell.util.Utils;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * 互动舞台。
+ * 按钮组件。
  */
-public class Stage extends Entity {
+public class Button extends Component {
 
-    public boolean inference = false;
+    private String text;
 
-    public List<ChartResource> chartResources;
+    private ButtonListener listener;
 
-    public List<AttachmentResource> attachmentResources;
-
-    public Stage() {
-        super(Utils.generateSerialNumber());
-        this.chartResources = new ArrayList<>();
-        this.attachmentResources = new ArrayList<>();
-    }
-
-    public boolean isComplex() {
-        return !this.chartResources.isEmpty() || !this.attachmentResources.isEmpty();
+    public Button(String text, ButtonListener listener) {
+        super("Button");
+        this.text = text;
+        this.listener = listener;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        json.put("text", this.text);
         return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
     }
 }

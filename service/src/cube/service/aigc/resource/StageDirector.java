@@ -26,7 +26,7 @@
 
 package cube.service.aigc.resource;
 
-import cube.aigc.attachment.DatePicker;
+import cube.aigc.attachment.ui.DatePicker;
 import cube.common.entity.Stage;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
@@ -61,17 +61,6 @@ public class StageDirector {
 
     public Stage infer(String content) {
         Stage stage = null;
-
-        DatePicker datePicker = this.inferDatePicker(content);
-        if (null != datePicker) {
-            stage = new Stage();
-            stage.addComponent(datePicker);
-        }
-
-        if (null != stage) {
-            this.stageMap.put(stage.getId(), stage);
-        }
-
         return stage;
     }
 

@@ -172,6 +172,11 @@ public enum AIGCAction {
     SetPrompts("setPrompts"),
 
     /**
+     * 提交附件事件。
+     */
+    SubmitEvent("submitEvent"),
+
+    /**
      * 预推理。
      */
     PreInfer("preInfer"),

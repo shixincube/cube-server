@@ -44,14 +44,19 @@ public class AtomCollider {
 
     private final AIGCStorage storage;
 
+    public List<String> labelList;
+
+    public int year = 0;
+
     public List<ChartSeries> chartSeriesList;
 
-    public String explanation = null;
+    public String recommendWord = null;
 
     public int recommendYear = 0;
 
     public AtomCollider(AIGCStorage storage) {
         this.storage = storage;
+        this.labelList = new ArrayList<>();
         this.chartSeriesList = new ArrayList<>();
     }
 
@@ -59,14 +64,13 @@ public class AtomCollider {
         Molecule molecule = new Molecule();
 
         // 将词分为标签和日期，进行快速标记
-        List<String> labels = new ArrayList<>();
         List<String> dates = new ArrayList<>();
         for (String word : words) {
             if (TextUtils.isDateString(word)) {
                 dates.add(TextUtils.convChineseToArabicNumerals(word));
             }
             else {
-                labels.add(word);
+                this.labelList.add(word);
             }
         }
 
@@ -96,10 +100,12 @@ public class AtomCollider {
         String monthDesc = guessMonth(dates);
         String dateDesc = guessDate(dates);
 
+        this.year = this.extractYear(yearDesc);
+
         // 全匹配，把所有符合标签的 Atom 都匹配出来
-        List<Atom> atomList = this.storage.fullMatching(labels, yearDesc, monthDesc, dateDesc);
+        List<Atom> atomList = this.storage.fullMatching(this.labelList, yearDesc, monthDesc, dateDesc);
         // 将 Atom 列表生成位图表序列
-        ChartSeries result = molecule.build(atomList, labels);
+        ChartSeries result = molecule.build(atomList, this.labelList);
         if (null != result) {
             this.chartSeriesList.add(result);
             return;
@@ -109,7 +115,7 @@ public class AtomCollider {
         try {
             Calendar calendar = Calendar.getInstance();
             int thisYear = calendar.get(Calendar.YEAR);
-            int year = this.extractYear(yearDesc);
+            int year = this.year;
             if (year == thisYear) {
                 // 前推一年
                 year = year - 1;
@@ -119,11 +125,11 @@ public class AtomCollider {
                 year = thisYear;
             }
 
-            boolean exists = this.storage.existsAtoms(labels, year + "年", monthDesc);
+            boolean exists = this.storage.existsAtoms(this.labelList, year + "年", monthDesc);
             if (exists) {
                 // 推测的年份存在数据
                 this.recommendYear = year;
-                this.explanation = String.format(Consts.ANSWER_FIND_SOME_YEAR_DATA,
+                this.recommendWord = String.format(Consts.ANSWER_FIND_SOME_YEAR_DATA,
                         yearDesc, year + "年");
             }
         } catch (Exception e) {

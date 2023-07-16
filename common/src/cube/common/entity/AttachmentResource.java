@@ -26,8 +26,11 @@
 
 package cube.common.entity;
 
-import cube.aigc.attachment.Component;
+import cube.aigc.attachment.Attachment;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,9 +38,31 @@ import java.util.List;
  */
 public class AttachmentResource extends ComplexResource {
 
-    private List<Component> components;
+    private List<Attachment> attachments;
 
-    protected AttachmentResource() {
+    public AttachmentResource(Attachment attachment) {
         super(Subject.Attachment);
+        this.attachments = new ArrayList<>();
+        this.attachments.add(attachment);
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+
+        JSONObject payload = new JSONObject();
+        JSONArray attachmentArray = new JSONArray();
+        for (Attachment attachment : this.attachments) {
+            attachmentArray.put(attachment.toJSON());
+        }
+        payload.put("attachments", attachmentArray);
+
+        json.put("payload", payload);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

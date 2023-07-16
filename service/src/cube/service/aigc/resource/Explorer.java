@@ -27,6 +27,10 @@
 package cube.service.aigc.resource;
 
 import cell.util.log.Logger;
+import cube.aigc.attachment.ThingAttachment;
+import cube.aigc.attachment.ui.Button;
+import cube.aigc.attachment.ui.ButtonListener;
+import cube.aigc.attachment.ui.Event;
 import cube.auth.AuthToken;
 import cube.common.entity.*;
 import cube.service.aigc.AIGCService;
@@ -45,6 +49,12 @@ public class Explorer {
 
     private final static Explorer instance = new Explorer();
 
+    private final String[] chartKeywords = new String[] {
+            "数据", "报告",
+            "图表", "统计图", "曲线图", "线图", "折线图", "柱图", "柱状图", "柱形图",
+            "饼图", "饼状图", "饼形图", "圆瓣图", "环形图"
+    };
+
     private AIGCService service;
 
     private Tokenizer tokenizer;
@@ -61,11 +71,10 @@ public class Explorer {
      */
     private long cacheTimeout = 24 * 60 * 60 * 1000;
 
-    private final String[] chartKeywords = new String[] {
-            "数据", "报告",
-            "图表", "统计图", "曲线图", "线图", "折线图", "柱图", "柱状图", "柱形图",
-            "饼图", "饼状图", "饼形图", "圆瓣图", "环形图"
-    };
+    /**
+     * Key：Resource SN
+     */
+    private Map<Long, AttachmentResource> attachmentResourceMap;
 
     public final static Explorer getInstance() {
         return Explorer.instance;
@@ -74,6 +83,7 @@ public class Explorer {
     private Explorer() {
         this.complexContextMap = new ConcurrentHashMap<>();
         this.contactSearchResults = new ConcurrentHashMap<>();
+        this.attachmentResourceMap = new ConcurrentHashMap<>();
     }
 
     public void setup(AIGCService service, Tokenizer tokenizer) {
@@ -165,6 +175,7 @@ public class Explorer {
         ChartInference chartInference = this.inferChart(words);
         if (null != chartInference) {
             stage.chartResources.addAll(chartInference.chartResources);
+            stage.attachmentResources.addAll(chartInference.attachmentResources);
         }
 
         return stage;
@@ -193,12 +204,12 @@ public class Explorer {
         }
 
         // 先尝试从 Atom 库里提取数据
-        AtomCollider atomCollider = new AtomCollider(this.service.getStorage());
-        atomCollider.collapse(words);
+        AtomCollider collider = new AtomCollider(this.service.getStorage());
+        collider.collapse(words);
 
         ChartInference chartInference = new ChartInference();
 
-        if (!atomCollider.chartSeriesList.isEmpty()) {
+        if (!collider.chartSeriesList.isEmpty()) {
             // 判断上下文是否需要进行推算
             boolean inference = false;
             if (!this.hitChartsKeywords(words.get(0))
@@ -209,15 +220,28 @@ public class Explorer {
 
             chartInference.inference = inference;
 
-            for (ChartSeries chartSeries : atomCollider.chartSeriesList) {
+            for (ChartSeries chartSeries : collider.chartSeriesList) {
                 // 创建资源
                 ChartResource resource = new ChartResource(chartSeries.desc, chartSeries);
                 chartInference.chartResources.add(resource);
             }
         }
         else {
-            if (null != atomCollider.explanation) {
+            if (null != collider.recommendWord) {
+                // 有推荐数据
+                AttachmentBuilder builder = new AttachmentBuilder();
+                ThingAttachment attachment = builder.buildThing(collider.recommendWord,
+                        new Button("查看" + collider.recommendYear + "年数据", new ButtonListener() {
+                    @Override
+                    public void onClick(Event event) {
 
+                    }
+                }));
+                AttachmentResource resource = new AttachmentResource(attachment);
+                chartInference.attachmentResources.add(resource);
+
+                // 缓存附件资源
+                this.attachmentResourceMap.put(resource.sn, resource);
             }
         }
 
@@ -232,6 +256,13 @@ public class Explorer {
         }
         return false;
     }
+
+    private ChartSeries matchChartSeries(List<String> labels) {
+
+        return null;
+    }
+
+
 
     /*
     private ChartSeries matchChartSeries(List<String> words) {
@@ -329,11 +360,9 @@ public class Explorer {
 
         protected List<ChartResource> chartResources = new ArrayList<>();
 
+        protected List<AttachmentResource> attachmentResources = new ArrayList<>();
+
         protected boolean inference = false;
-
-        protected String explanation = null;
-
-        protected int recommendYear = 0;
 
         protected ChartInference() {
         }

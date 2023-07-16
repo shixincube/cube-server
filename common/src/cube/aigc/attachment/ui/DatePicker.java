@@ -24,43 +24,50 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.aigc.attachment.ui;
 
-import cell.util.Utils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * 互动舞台。
+ * 日期选择器组件。
  */
-public class Stage extends Entity {
+public class DatePicker extends Component {
 
-    public boolean inference = false;
+    public final static String TYPE_DATE = "date";
 
-    public List<ChartResource> chartResources;
+    public final static String TYPE_DATE_TIME = "datetime";
 
-    public List<AttachmentResource> attachmentResources;
+    public final static String TYPE_DATE_RANGE = "daterange";
 
-    public Stage() {
-        super(Utils.generateSerialNumber());
-        this.chartResources = new ArrayList<>();
-        this.attachmentResources = new ArrayList<>();
+    private String type;
+
+    private boolean clearable;
+
+    private JSONArray range;
+
+    public DatePicker(String type) {
+        super("DatePicker");
+        this.type = type;
+        this.clearable = false;
     }
 
-    public boolean isComplex() {
-        return !this.chartResources.isEmpty() || !this.attachmentResources.isEmpty();
+    public void setRange(long start, long end) {
+        this.range = new JSONArray();
+        this.range.put(start);
+        this.range.put(end);
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        return json;
-    }
+        json.put("type", this.type);
+        json.put("clearable", this.clearable);
 
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
+        if (null != this.range) {
+            json.put("range", this.range);
+        }
+
+        return json;
     }
 }

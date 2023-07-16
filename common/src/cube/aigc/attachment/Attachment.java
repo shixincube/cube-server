@@ -26,6 +26,7 @@
 
 package cube.aigc.attachment;
 
+import cell.util.Utils;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
@@ -34,15 +35,19 @@ import org.json.JSONObject;
  */
 public abstract class Attachment implements JSONable {
 
+    protected long id;
+
     protected String type;
 
     public Attachment(String type) {
+        this.id = Utils.generateSerialNumber();
         this.type = type;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("id", this.id);
         json.put("type", this.type);
         return json;
     }

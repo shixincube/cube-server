@@ -32,6 +32,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
+import cube.aigc.attachment.ui.Event;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -553,6 +554,10 @@ public class AIGCService extends AbstractModule {
 
         channel.setActiveTimestamp(System.currentTimeMillis());
         return true;
+    }
+
+    public void submitEvent(Event event) {
+
     }
 
     /**
@@ -1263,10 +1268,19 @@ public class AIGCService extends AbstractModule {
         else {
             Stage stage = Explorer.getInstance().infer(content);
 
-            if (!stage.chartResources.isEmpty()) {
+            if (stage.isComplex()) {
                 result = new ComplexContext(ComplexContext.Type.Complex, stage.inference);
+            }
+
+            if (!stage.chartResources.isEmpty()) {
                 for (ChartResource chartResource : stage.chartResources) {
                     result.addResource(chartResource);
+                }
+            }
+
+            if (!stage.attachmentResources.isEmpty()) {
+                for (AttachmentResource attachmentResource : stage.attachmentResources) {
+                    result.addResource(attachmentResource);
                 }
             }
 
