@@ -39,22 +39,40 @@ import java.util.List;
  */
 public class ThingAttachment extends Attachment {
 
+    public final static String TYPE = "Thing";
+
     public String content;
 
-    public String avatar;
+//    public String avatar;
 
-    public String header;
+//    public String header;
 
-    public String headerExtra;
+//    public String headerExtra;
 
-    public String description;
+//    public String description;
 
-    public String footer;
+//    public String footer;
 
-    public List<Component> actions;
+    public List<Button> actions;
+
+    public ThingAttachment(JSONObject json) {
+        super(json);
+        this.content = json.getString("content");
+
+        if (json.has("actions")) {
+            this.actions = new ArrayList<>();
+            JSONArray actionArray = json.getJSONArray("actions");
+            for (int i = 0; i < actionArray.length(); ++i) {
+                JSONObject data = actionArray.getJSONObject(i);
+                if (Button.isButton(data)) {
+                    this.actions.add(new Button(data));
+                }
+            }
+        }
+    }
 
     public ThingAttachment(String content) {
-        super("Thing");
+        super(TYPE);
         this.content = content;
     }
 
@@ -64,6 +82,20 @@ public class ThingAttachment extends Attachment {
         }
 
         this.actions.add(button);
+    }
+
+    public Button getActionButton(long id) {
+        if (null == this.actions) {
+            return null;
+        }
+
+        for (Button btn : this.actions) {
+            if (btn.getId() == id) {
+                return btn;
+            }
+        }
+
+        return null;
     }
 
     @Override

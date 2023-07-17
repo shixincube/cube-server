@@ -33,6 +33,7 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
 import cube.aigc.attachment.ui.Event;
+import cube.aigc.attachment.ui.EventResult;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -556,8 +557,9 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
-    public void submitEvent(Event event) {
-
+    public EventResult submitEvent(Event event) {
+        Explorer
+        return null;
     }
 
     /**
@@ -1270,42 +1272,19 @@ public class AIGCService extends AbstractModule {
 
             if (stage.isComplex()) {
                 result = new ComplexContext(ComplexContext.Type.Complex, stage.inference);
-            }
 
-            if (!stage.chartResources.isEmpty()) {
-                for (ChartResource chartResource : stage.chartResources) {
-                    result.addResource(chartResource);
-                }
-            }
-
-            if (!stage.attachmentResources.isEmpty()) {
-                for (AttachmentResource attachmentResource : stage.attachmentResources) {
-                    result.addResource(attachmentResource);
-                }
-            }
-
-            /*TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
-            List<Keyword> keywordList = analyzer.analyze(content, 10);
-            List<String> words = new ArrayList<>();
-            for (Keyword keyword : keywordList) {
-                words.add(keyword.getWord());
-            }
-
-            ChartSeries chartSeries = Explorer.getInstance().matchChartSeries(words);
-            if (null != chartSeries) {
-                // 判断上下文是否需要进行推算
-                boolean inference = false;
-                if (!Explorer.getInstance().hitChartsKeywords(words.get(0))
-                        && !Explorer.getInstance().hitChartsKeywords(words.get(1))) {
-                    // 前2个关键词都没有图表相关词，进行推理
-                    inference = true;
+                if (!stage.chartResources.isEmpty()) {
+                    for (ChartResource chartResource : stage.chartResources) {
+                        result.addResource(chartResource);
+                    }
                 }
 
-                // 创建资源
-                ChartResource resource = new ChartResource(chartSeries.desc, chartSeries);
-                result = new ComplexContext(ComplexContext.Type.Complex, inference);
-                result.addResource(resource);
-            }*/
+                if (!stage.attachmentResources.isEmpty()) {
+                    for (AttachmentResource attachmentResource : stage.attachmentResources) {
+                        result.addResource(attachmentResource);
+                    }
+                }
+            }
         }
 
         return result;

@@ -27,6 +27,7 @@
 package cube.common.entity;
 
 import cell.util.Utils;
+import cell.util.log.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -91,6 +92,12 @@ public class ComplexContext extends Entity {
             }
             else if (subject.equals(ComplexResource.Subject.Chart.name())) {
                 this.resources.add(new ChartResource(data));
+            }
+            else if (subject.equals(ComplexResource.Subject.Attachment.name())) {
+                this.resources.add(new AttachmentResource(data));
+            }
+            else {
+                Logger.e(this.getClass(), "Unknown complex context resource subject: " + subject);
             }
         }
     }

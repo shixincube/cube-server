@@ -33,14 +33,29 @@ import org.json.JSONObject;
  */
 public class Button extends Component {
 
+    public final static String NAME = "Button";
+
     private String text;
 
     private ButtonListener listener;
 
+    public Button(JSONObject json) {
+        super(json);
+        this.text = json.getString("text");
+    }
+
     public Button(String text, ButtonListener listener) {
-        super("Button");
+        super(NAME);
         this.text = text;
         this.listener = listener;
+    }
+
+    public static boolean isButton(JSONObject json) {
+        return json.has("name") && json.getString("name").equals(NAME);
+    }
+
+    public ButtonListener getListener() {
+        return this.listener;
     }
 
     @Override

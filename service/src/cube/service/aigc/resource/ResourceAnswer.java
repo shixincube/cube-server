@@ -27,10 +27,7 @@
 package cube.service.aigc.resource;
 
 import cube.aigc.Consts;
-import cube.common.entity.ChartResource;
-import cube.common.entity.ComplexContext;
-import cube.common.entity.ComplexResource;
-import cube.common.entity.HyperlinkResource;
+import cube.common.entity.*;
 import cube.util.TextUtils;
 
 /**
@@ -84,6 +81,9 @@ public class ResourceAnswer {
             else if (res instanceof ChartResource) {
                 ChartResource resource = (ChartResource) res;
                 result = Consts.formatChartAnswer(resource.title);
+            }
+            else if (res instanceof AttachmentResource) {
+                result = Consts.ANSWER_SILENT;
             }
             else {
                 result = Consts.ANSWER_NO_CONTENT;
@@ -143,6 +143,9 @@ public class ResourceAnswer {
                     buf.append(Consts.formatChartSomeOneAnswer(resource.chartSeries.desc));
                     buf.append("\n");
                 }
+            }
+            else if (this.complexContext.getResources().get(0) instanceof AttachmentResource) {
+                buf.append(Consts.ANSWER_SILENT);
             }
             else {
                 buf.append(Consts.ANSWER_NO_CONTENT);

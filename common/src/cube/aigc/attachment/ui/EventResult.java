@@ -26,15 +26,27 @@
 
 package cube.aigc.attachment.ui;
 
+import cube.common.JSONable;
+import org.json.JSONObject;
+
 /**
  * 事件结果。
  */
-public class EventResult {
+public class EventResult implements JSONable {
 
     public Component target;
 
-
-
     public EventResult() {
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

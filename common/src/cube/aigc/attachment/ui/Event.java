@@ -51,7 +51,8 @@ public class Event implements JSONable {
 
     public Event(JSONObject json) {
         this.resourceSn = json.getLong("resourceSn");
-
+        this.attachmentId = json.getLong("attachmentId");
+        this.componentId = json.getLong("componentId");
     }
 
     @Override

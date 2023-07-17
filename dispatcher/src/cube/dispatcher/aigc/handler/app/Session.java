@@ -123,7 +123,7 @@ public class Session extends ContextHandler {
                     }
                     else {
                         responseData.put("auth", false);
-                        responseData.put("knowledge", KnowledgeProfile.createDummy());
+                        responseData.put("knowledge", KnowledgeProfile.createDummy().toJSON());
                         Logger.w(Session.class, "Failed to open channel for token: " + token);
                     }
                 }

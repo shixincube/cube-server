@@ -29,9 +29,6 @@ package cube.aigc.attachment.ui;
 import cell.util.Utils;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * 互动组件。
  */
@@ -43,13 +40,19 @@ public abstract class Component {
 
     protected boolean disposable;
 
-    protected Map<String, String> attributes;
+//    protected Map<String, String> attributes;
 
     public Component(String name) {
         this.id = Utils.generateSerialNumber();
         this.name = name;
         this.disposable = false;
-        this.attributes = new HashMap<>();
+//        this.attributes = new HashMap<>();
+    }
+
+    public Component(JSONObject json) {
+        this.id = json.getLong("id");
+        this.name = json.getString("name");
+        this.disposable = json.getBoolean("disposable");
     }
 
     public long getId() {
@@ -68,22 +71,23 @@ public abstract class Component {
         this.disposable = value;
     }
 
-    public void addAttribute(String key, String value) {
-        this.attributes.put(key, value);
-    }
+//    public void addAttribute(String key, String value) {
+//        this.attributes.put(key, value);
+//    }
 
-    public String removeAttribute(String key) {
-        return this.attributes.remove(key);
-    }
+//    public String removeAttribute(String key) {
+//        return this.attributes.remove(key);
+//    }
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("id", this.id);
         json.put("name", this.name);
         json.put("disposable", this.disposable);
-        for (Map.Entry<String, String> e : this.attributes.entrySet()) {
-            json.put(e.getKey(), e.getValue());
-        }
+
+//        for (Map.Entry<String, String> e : this.attributes.entrySet()) {
+//            json.put(e.getKey(), e.getValue());
+//        }
         return json;
     }
 }

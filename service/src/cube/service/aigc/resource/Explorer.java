@@ -27,6 +27,7 @@
 package cube.service.aigc.resource;
 
 import cell.util.log.Logger;
+import cube.aigc.attachment.Attachment;
 import cube.aigc.attachment.ThingAttachment;
 import cube.aigc.attachment.ui.Button;
 import cube.aigc.attachment.ui.ButtonListener;
@@ -262,7 +263,29 @@ public class Explorer {
         return null;
     }
 
+    public boolean fireEvent(Event event) {
+        AttachmentResource resource = this.attachmentResourceMap.get(event.resourceSn);
+        if (null == resource) {
+            return false;
+        }
 
+        Attachment attachment = resource.getAttachment(event.attachmentId);
+        if (null == attachment) {
+            return false;
+        }
+
+        if (attachment instanceof ThingAttachment) {
+            ThingAttachment thing = (ThingAttachment) attachment;
+            Button button = thing.getActionButton(event.componentId);
+            if (null == button) {
+                return false;
+            }
+
+            button.getListener();
+        }
+
+        return true;
+    }
 
     /*
     private ChartSeries matchChartSeries(List<String> words) {
