@@ -32,6 +32,7 @@ import cube.aigc.attachment.ThingAttachment;
 import cube.aigc.attachment.ui.Button;
 import cube.aigc.attachment.ui.ButtonListener;
 import cube.aigc.attachment.ui.Event;
+import cube.aigc.attachment.ui.EventResult;
 import cube.auth.AuthToken;
 import cube.common.entity.*;
 import cube.service.aigc.AIGCService;
@@ -235,9 +236,15 @@ public class Explorer {
                         new Button("查看" + collider.recommendYear + "年数据", new ButtonListener() {
                     @Override
                     public void onClick(Event event) {
-
+                        AtomCollider collider = (AtomCollider) event.target.getContext();
+                        ChartSeries chartSeries = matchChartSeries(collider.labelList,
+                                collider.recommendYear, collider.month, collider.date);
+                        if (null != chartSeries) {
+                            ChartResource resource = new ChartResource(chartSeries.desc, chartSeries);
+                            event.finish(resource);
+                        }
                     }
-                }));
+                }, collider));
                 AttachmentResource resource = new AttachmentResource(attachment);
                 chartInference.attachmentResources.add(resource);
 
@@ -258,33 +265,59 @@ public class Explorer {
         return false;
     }
 
-    private ChartSeries matchChartSeries(List<String> labels) {
+    private ChartSeries matchChartSeries(List<String> labels, int year, int month, int date) {
+        AtomCollider collider = new AtomCollider(this.service.getStorage());
+        collider.collapse(labels, year, month, date);
+        if (collider.chartSeriesList.isEmpty()) {
+            return null;
+        }
 
-        return null;
+        return collider.chartSeriesList.get(0);
     }
 
-    public boolean fireEvent(Event event) {
+    public EventResult fireEvent(Event event) {
         AttachmentResource resource = this.attachmentResourceMap.get(event.resourceSn);
         if (null == resource) {
-            return false;
+            return null;
         }
+
+        // 绑定资源
+        event.resource = resource;
 
         Attachment attachment = resource.getAttachment(event.attachmentId);
         if (null == attachment) {
-            return false;
+            return null;
         }
 
         if (attachment instanceof ThingAttachment) {
             ThingAttachment thing = (ThingAttachment) attachment;
+
+            // 绑定附件
+            event.attachment = thing;
+
             Button button = thing.getActionButton(event.componentId);
             if (null == button) {
-                return false;
+                return null;
             }
 
-            button.getListener();
+            // 绑定目标
+            event.target = button;
+
+            ButtonListener listener = button.getListener();
+            if (null == listener) {
+                return null;
+            }
+
+            if (event.name.equals("click")) {
+                // 触发事件
+                listener.onClick(event);
+
+                EventResult result = new EventResult(event);
+                return result;
+            }
         }
 
-        return true;
+        return null;
     }
 
     /*

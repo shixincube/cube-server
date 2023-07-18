@@ -40,6 +40,8 @@ public abstract class Component {
 
     protected boolean disposable;
 
+    protected Object context;
+
 //    protected Map<String, String> attributes;
 
     public Component(String name) {
@@ -69,6 +71,10 @@ public abstract class Component {
 
     public void setDisposable(boolean value) {
         this.disposable = value;
+    }
+
+    public Object getContext() {
+        return this.context;
     }
 
 //    public void addAttribute(String key, String value) {

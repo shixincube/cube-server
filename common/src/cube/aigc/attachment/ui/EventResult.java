@@ -34,14 +34,18 @@ import org.json.JSONObject;
  */
 public class EventResult implements JSONable {
 
-    public Component target;
+    private Event event;
 
-    public EventResult() {
+    public EventResult(Event event) {
+        this.event = event;
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
+        JSONObject json = this.event.toCompactJSON();
+        if (null != this.event.resultResource) {
+            json.put("result", this.event.resultResource.toJSON());
+        }
         return json;
     }
 

@@ -44,10 +44,11 @@ public class Button extends Component {
         this.text = json.getString("text");
     }
 
-    public Button(String text, ButtonListener listener) {
+    public Button(String text, ButtonListener listener, Object context) {
         super(NAME);
         this.text = text;
         this.listener = listener;
+        this.context = context;
     }
 
     public static boolean isButton(JSONObject json) {
@@ -62,6 +63,7 @@ public class Button extends Component {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("text", this.text);
+        json.put("loading", false);
         return json;
     }
 }

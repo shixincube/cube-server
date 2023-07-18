@@ -26,7 +26,10 @@
 
 package cube.aigc.attachment.ui;
 
+import cube.aigc.attachment.Attachment;
 import cube.common.JSONable;
+import cube.common.entity.AttachmentResource;
+import cube.common.entity.ComplexResource;
 import org.json.JSONObject;
 
 /**
@@ -44,7 +47,13 @@ public class Event implements JSONable {
 
     public JSONObject parameter;
 
+    public AttachmentResource resource;
+
+    public Attachment attachment;
+
     public Component target;
+
+    public ComplexResource resultResource;
 
     public Event() {
     }
@@ -53,6 +62,14 @@ public class Event implements JSONable {
         this.resourceSn = json.getLong("resourceSn");
         this.attachmentId = json.getLong("attachmentId");
         this.componentId = json.getLong("componentId");
+        this.name = json.getString("name");
+        if (json.has("parameter")) {
+            this.parameter = json.getJSONObject("parameter");
+        }
+    }
+
+    public void finish(ComplexResource resource) {
+        this.resultResource = resource;
     }
 
     @Override
@@ -70,6 +87,10 @@ public class Event implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = this.toJSON();
+        if (json.has("parameter")) {
+            json.remove("parameter");
+        }
+        return json;
     }
 }

@@ -47,6 +47,8 @@ public class AtomCollider {
     public List<String> labelList;
 
     public int year = 0;
+    public int month = 0;
+    public int date = 0;
 
     public List<ChartSeries> chartSeriesList;
 
@@ -60,9 +62,27 @@ public class AtomCollider {
         this.chartSeriesList = new ArrayList<>();
     }
 
-    public void collapse(List<String> words) {
-        Molecule molecule = new Molecule();
+    public void collapse(List<String> labels, int year, int month, int date) {
+        this.labelList.addAll(labels);
+        this.year = year;
+        this.month = month;
+        this.date = date;
 
+        String yearDesc = year + "年";
+        String monthDesc = this.month > 0 ? this.month + "月" : null;
+        String dateDesc = this.date > 0 ? this.date + "日" : null;
+
+        // 全匹配，把所有符合标签的 Atom 都匹配出来
+        List<Atom> atomList = this.storage.fullMatching(this.labelList, yearDesc, monthDesc, dateDesc);
+        // 将 Atom 列表生成位图表序列
+        Molecule molecule = new Molecule();
+        ChartSeries result = molecule.build(atomList, this.labelList);
+        if (null != result) {
+            this.chartSeriesList.add(result);
+        }
+    }
+
+    public void collapse(List<String> words) {
         // 将词分为标签和日期，进行快速标记
         List<String> dates = new ArrayList<>();
         for (String word : words) {
@@ -101,10 +121,13 @@ public class AtomCollider {
         String dateDesc = guessDate(dates);
 
         this.year = this.extractYear(yearDesc);
+        this.month = this.extractMonth(monthDesc);
+        this.date = this.extractDate(dateDesc);
 
         // 全匹配，把所有符合标签的 Atom 都匹配出来
         List<Atom> atomList = this.storage.fullMatching(this.labelList, yearDesc, monthDesc, dateDesc);
         // 将 Atom 列表生成位图表序列
+        Molecule molecule = new Molecule();
         ChartSeries result = molecule.build(atomList, this.labelList);
         if (null != result) {
             this.chartSeriesList.add(result);
@@ -166,5 +189,19 @@ public class AtomCollider {
 
     private int extractYear(String desc) {
         return Integer.parseInt(desc.replace("年", ""));
+    }
+
+    private int extractMonth(String desc) {
+        if (null == desc) {
+            return 0;
+        }
+        return Integer.parseInt(desc.replace("月", ""));
+    }
+
+    private int extractDate(String desc) {
+        if (null == desc) {
+            return 0;
+        }
+        return Integer.parseInt(desc.replace("日", "").replace("号", ""));
     }
 }

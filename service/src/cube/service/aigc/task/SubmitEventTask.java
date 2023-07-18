@@ -61,10 +61,18 @@ public class SubmitEventTask extends ServiceTask {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
+            return;
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         EventResult result = service.submitEvent(event);
+        if (null == result) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.toJSON()));
         markResponseTime();

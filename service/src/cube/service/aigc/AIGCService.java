@@ -557,9 +557,14 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
+    /**
+     * 提交事件。
+     *
+     * @param event
+     * @return
+     */
     public EventResult submitEvent(Event event) {
-        Explorer
-        return null;
+        return Explorer.getInstance().fireEvent(event);
     }
 
     /**
