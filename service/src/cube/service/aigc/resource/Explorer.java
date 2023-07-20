@@ -278,6 +278,7 @@ public class Explorer {
     public EventResult fireEvent(Event event) {
         AttachmentResource resource = this.attachmentResourceMap.get(event.resourceSn);
         if (null == resource) {
+            Logger.w(this.getClass(), "#fireEvent - Can NOT find attachment resource: " + event.resourceSn);
             return null;
         }
 
@@ -286,6 +287,7 @@ public class Explorer {
 
         Attachment attachment = resource.getAttachment(event.attachmentId);
         if (null == attachment) {
+            Logger.w(this.getClass(), "#fireEvent - Can NOT find attachment: " + event.attachmentId);
             return null;
         }
 
@@ -297,6 +299,7 @@ public class Explorer {
 
             Button button = thing.getActionButton(event.componentId);
             if (null == button) {
+                Logger.w(this.getClass(), "#fireEvent - Can NOT find button in attachment: " + event.componentId);
                 return null;
             }
 
@@ -305,6 +308,7 @@ public class Explorer {
 
             ButtonListener listener = button.getListener();
             if (null == listener) {
+                Logger.w(this.getClass(), "#fireEvent - The button has not event listener: " + event.componentId);
                 return null;
             }
 
@@ -315,6 +319,12 @@ public class Explorer {
                 EventResult result = new EventResult(event);
                 return result;
             }
+            else {
+                Logger.w(this.getClass(), "#fireEvent - Unknown event: " + event.name);
+            }
+        }
+        else {
+            Logger.w(this.getClass(), "#fireEvent - Attachment instance type error");
         }
 
         return null;

@@ -73,6 +73,11 @@ public final class Helper {
     public static List<String> splitContent(String content) {
         // 先拆为字符数组
         List<String> list = new LinkedList<>();
+        if (content.length() <= 5) {
+            list.add(content);
+            return list;
+        }
+
         char[] buf = content.toCharArray();
         for (int i = 0; i < buf.length; ++i) {
             String s = String.valueOf(buf[i]);

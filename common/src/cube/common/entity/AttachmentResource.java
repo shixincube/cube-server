@@ -48,7 +48,7 @@ public class AttachmentResource extends ComplexResource {
     }
 
     public AttachmentResource(JSONObject json) {
-        super(Subject.Attachment);
+        super(Subject.Attachment, json);
         this.attachments = new ArrayList<>();
 
         JSONObject payload = json.getJSONObject("payload");
