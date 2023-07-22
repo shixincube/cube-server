@@ -798,7 +798,7 @@ public class AIGCStorage implements Storagable {
                 new StorageField("timestamp", series.timestamp),
                 new StorageField("x_axis", series.getXAxis().toString()),
                 new StorageField("type", series.getSeries().type),
-                new StorageField("data", series.getSeries().getData().toString()),
+                new StorageField("data", series.getSeries().toArray().toString()),
                 new StorageField("option", (null != series.option) ? series.option.toString() : null),
         });
     }

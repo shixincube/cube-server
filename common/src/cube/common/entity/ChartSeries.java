@@ -85,6 +85,10 @@ public class ChartSeries implements JSONable {
         }
     }
 
+    public void setXAxis(List<String> axis) {
+        this.xAxis.addAll(axis);
+    }
+
     public void setXAxis(JSONArray array) {
         for (int i = 0; i < array.length(); ++i) {
             this.xAxis.add(array.getString(i));
@@ -116,6 +120,10 @@ public class ChartSeries implements JSONable {
         this.seriesList.add(series);
     }
 
+    public void setData(String type, JSONArray names, JSONArray values) {
+
+    }
+
     public Series getSeries() {
         return this.seriesList.get(0);
     }
@@ -145,7 +153,7 @@ public class ChartSeries implements JSONable {
 
         if (this.seriesList.size() == 1) {
             json.put("type", this.seriesList.get(0).type);
-            json.put("data", this.seriesList.get(0).getData());
+            json.put("data", this.seriesList.get(0).toArray());
         }
         else {
             JSONArray array = new JSONArray();
@@ -169,6 +177,9 @@ public class ChartSeries implements JSONable {
     }
 
 
+    /**
+     * 数据序列描述。
+     */
     public class Series {
 
         // 图例名称
@@ -176,47 +187,111 @@ public class ChartSeries implements JSONable {
 
         public String type;
 
-        public List<Integer> data;
+        public List<Integer> values;
 
-        public Series(String type, JSONArray dataArray) {
+        public List<String> names;
+
+        public Series(String type, JSONArray data) {
             this.type = type;
-            this.data = new ArrayList<>();
-            this.setData(dataArray);
+            this.values = new ArrayList<>();
+            this.parseDataArray(data);
         }
 
         public Series(JSONObject json) {
             this.type = json.getString("type");
-            this.data = new ArrayList<>();
-            this.setData(json.getJSONArray("data"));
+            this.values = new ArrayList<>();
+
+            JSONArray dataArray = json.getJSONArray("data");
+            this.parseDataArray(dataArray);
 
             if (json.has("name")) {
                 this.name = json.getString("name");
             }
         }
 
-        public void setData(JSONArray array) {
-            for (int i = 0; i < array.length(); ++i) {
-                this.data.add(array.getInt(i));
+        private void parseDataArray(JSONArray dataArray) {
+            if (dataArray.get(0) instanceof JSONObject) {
+                // Data pair
+                for (int i = 0; i < dataArray.length(); ++i) {
+                    JSONObject pair = dataArray.getJSONObject(i);
+                    String name = pair.getString("name");
+                    int value = pair.getInt("value");
+
+                    this.putData(name, value);
+                }
+            }
+            else {
+                for (int i = 0; i < dataArray.length(); ++i) {
+                    this.values.add(dataArray.getInt(i));
+                }
             }
         }
 
-        public JSONArray getData() {
-            JSONArray result = new JSONArray();
-            if (null != this.data) {
-                for (Integer value : this.data) {
-                    result.put(value.intValue());
-                }
+        public void putData(String name, int value) {
+            if (null == this.names) {
+                this.names = new ArrayList<>();
             }
-            return result;
+
+            this.names.add(name);
+            this.values.add(value);
+        }
+
+        public int getValue(int index) {
+            return this.values.get(index);
+        }
+
+        public JSONArray toArray() {
+            if (null != this.names && this.names.size() == this.values.size()) {
+                return this.toNameValuePairArray();
+            }
+            else {
+                return this.toValueArray();
+            }
+        }
+
+        private JSONArray toValueArray() {
+            JSONArray array = new JSONArray();
+            for (Integer value : this.values) {
+                array.put(value.intValue());
+            }
+            return array;
+        }
+
+        private JSONArray toNameValuePairArray() {
+            if (null == this.names) {
+                return null;
+            }
+
+            JSONArray array = new JSONArray();
+            for (int i = 0; i < this.names.size(); ++i) {
+                String name = this.names.get(i);
+                int value = this.values.get(i);
+
+                JSONObject data = new JSONObject();
+                data.put("name", name);
+                data.put("value", value);
+
+                array.put(data);
+            }
+            return array;
         }
 
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
             json.put("type", this.type);
-            json.put("data", this.getData());
+
+            // 如果 names 和 data 长度相同，则将数据形式设置为 name/value 形式
+            if (null != this.names && this.names.size() == this.values.size()) {
+                json.put("data", this.toNameValuePairArray());
+            }
+            else {
+                json.put("data", this.toValueArray());
+            }
+
             if (null != this.name) {
                 json.put("name", this.name);
             }
+
             return json;
         }
     }

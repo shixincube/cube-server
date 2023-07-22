@@ -55,6 +55,8 @@ public class AtomCollider {
     public String recommendWord = null;
 
     public int recommendYear = 0;
+    public int recommendMonth = 0;
+    public int recommendDate = 0;
 
     public AtomCollider(AIGCStorage storage) {
         this.storage = storage;
@@ -116,6 +118,8 @@ public class AtomCollider {
             dates.add((calendar.get(Calendar.MONTH) + 1) + "月");
         }
 
+        List<String> months = guessMonths(dates);
+
         String yearDesc = guessYear(dates);
         String monthDesc = guessMonth(dates);
         String dateDesc = guessDate(dates);
@@ -138,25 +142,48 @@ public class AtomCollider {
         try {
             Calendar calendar = Calendar.getInstance();
             int thisYear = calendar.get(Calendar.YEAR);
-            int year = this.year;
-            if (year == thisYear) {
+            int candidate = this.year;
+            if (candidate == thisYear) {
                 // 前推一年
-                year = year - 1;
+                candidate = candidate - 1;
             }
             else {
                 // 设定为今年
-                year = thisYear;
+                candidate = thisYear;
             }
 
-            boolean exists = this.storage.existsAtoms(this.labelList, year + "年", monthDesc);
+            boolean exists = this.storage.existsAtoms(this.labelList, candidate + "年", monthDesc);
             if (exists) {
                 // 推测的年份存在数据
-                this.recommendYear = year;
+                this.recommendYear = candidate;
                 this.recommendWord = String.format(Consts.ANSWER_FIND_SOME_YEAR_DATA,
-                        yearDesc, year + "年");
+                        yearDesc, candidate + "年");
             }
         } catch (Exception e) {
             // Nothing
+        }
+
+        if (null == this.recommendWord && this.month > 0) {
+            // 尝试推荐月
+            try {
+                int candidate = this.month > 1 ? this.month - 1 : this.month + 1;
+                boolean exists = this.storage.existsAtoms(this.labelList, this.year + "年",
+                        candidate + "月");
+                if (!exists) {
+                    candidate = this.month + 1;
+                    exists = this.storage.existsAtoms(this.labelList, this.year + "年",
+                            candidate + "月");
+                }
+
+                if (exists) {
+                    this.recommendYear = this.year;
+                    this.recommendMonth = candidate;
+                    this.recommendWord = String.format(Consts.ANSWER_FIND_SOME_YEAR_DATA,
+                            yearDesc + monthDesc, this.recommendYear + "年" + this.recommendMonth + "月");
+                }
+            } catch (Exception e) {
+                // Nothing
+            }
         }
     }
 
@@ -176,6 +203,16 @@ public class AtomCollider {
             }
         }
         return null;
+    }
+
+    private List<String> guessMonths(List<String> dates) {
+        List<String> list = new ArrayList();
+        for (String value : dates) {
+            if (value.contains("月")) {
+                list.add(value);
+            }
+        }
+        return list;
     }
 
     private String guessDate(List<String> dates) {

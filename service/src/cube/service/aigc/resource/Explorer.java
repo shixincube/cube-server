@@ -183,6 +183,8 @@ public class Explorer {
         return stage;
     }
 
+    
+
     private ChartInference inferChart(List<String> words) {
         boolean hit = false;
         for (String word : words) {
@@ -232,13 +234,24 @@ public class Explorer {
             if (null != collider.recommendWord) {
                 // 有推荐数据
                 AttachmentBuilder builder = new AttachmentBuilder();
+
+                String label = "";
+                if (collider.recommendMonth > 0) {
+                    label = "查看" + collider.recommendYear + "年" + collider.recommendMonth + "月数据";
+                }
+                else {
+                    label = "查看" + collider.recommendYear + "年数据";
+                }
+
                 ThingAttachment attachment = builder.buildThing(collider.recommendWord,
-                        new Button("查看" + collider.recommendYear + "年数据", new ButtonListener() {
+                        new Button(label, new ButtonListener() {
                     @Override
                     public void onClick(Event event) {
                         AtomCollider collider = (AtomCollider) event.target.getContext();
                         ChartSeries chartSeries = matchChartSeries(collider.labelList,
-                                collider.recommendYear, collider.month, collider.date);
+                                collider.recommendYear,
+                                collider.recommendMonth > 0 ? collider.recommendMonth : collider.month,
+                                collider.date);
                         if (null != chartSeries) {
                             ChartResource resource = new ChartResource(chartSeries.desc, chartSeries);
                             event.finish(resource);

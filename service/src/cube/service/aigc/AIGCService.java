@@ -54,6 +54,7 @@ import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.*;
 import cube.service.aigc.plugin.InjectTokenPlugin;
+import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.Explorer;
 import cube.service.aigc.resource.ResourceAnswer;
 import cube.service.auth.AuthService;
@@ -144,6 +145,11 @@ public class AIGCService extends AbstractModule {
     private AIGCStorage storage;
 
     private Tokenizer tokenizer;
+
+    /**
+     * 是否访问，仅用于本地测试
+     */
+    private boolean useAgent = true;
 
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
@@ -619,15 +625,21 @@ public class AIGCService extends AbstractModule {
         // 查找有该能力的单元
         // 优先按照单元名称进行检索，然后按照描述进行检索
         AIGCUnit unit = null;
-        if (null != unitName) {
-            unit = this.selectUnitByName(unitName);
+        if (this.useAgent) {
+            unit = Agent.getInstance().getUnit();
         }
         else {
-            unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
-            if (null == unit) {
-                this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational);
+            if (null != unitName) {
+                unit = this.selectUnitByName(unitName);
+            }
+            else {
+                unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
+                if (null == unit) {
+                    this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational);
+                }
             }
         }
+
         if (null == unit) {
             Logger.w(AIGCService.class, "#chat - No conversational task unit setup in server");
             channel.setProcessing(false);
@@ -1573,29 +1585,43 @@ public class AIGCService extends AbstractModule {
                     data.put("history", history);
                 }
 
-                Packet request = new Packet(AIGCAction.Chat.name, data);
-                ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
-                if (null == dialect) {
-                    Logger.w(AIGCService.class, "Chat unit error - channel: " + this.channel.getCode());
-                    this.channel.setProcessing(false);
-                    // 回调错误
-                    this.listener.onFailed(this.channel);
-                    return;
+                if (useAgent) {
+                    String responseText = Agent.getInstance().chat(channel.getAuthToken().getCode(),
+                            channel.getCode(), this.content);
+                    if (null != responseText) {
+                        result = this.channel.appendRecord(this.content, responseText, complexContext);
+                    }
+                    else {
+                        // 回调失败
+                        this.listener.onFailed(this.channel);
+                        return;
+                    }
                 }
+                else {
+                    Packet request = new Packet(AIGCAction.Chat.name, data);
+                    ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
+                    if (null == dialect) {
+                        Logger.w(AIGCService.class, "Chat unit error - channel: " + this.channel.getCode());
+                        this.channel.setProcessing(false);
+                        // 回调错误
+                        this.listener.onFailed(this.channel);
+                        return;
+                    }
 
-                Packet response = new Packet(dialect);
-                JSONObject payload = Packet.extractDataPayload(response);
+                    Packet response = new Packet(dialect);
+                    JSONObject payload = Packet.extractDataPayload(response);
 
-                if (!payload.has("response")) {
-                    Logger.w(AIGCService.class, "Chat unit respond failed - channel: " + this.channel.getCode());
-                    this.channel.setProcessing(false);
-                    // 回调错误
-                    this.listener.onFailed(this.channel);
-                    return;
+                    if (!payload.has("response")) {
+                        Logger.w(AIGCService.class, "Chat unit respond failed - channel: " + this.channel.getCode());
+                        this.channel.setProcessing(false);
+                        // 回调错误
+                        this.listener.onFailed(this.channel);
+                        return;
+                    }
+
+                    String responseText = payload.getString("response");
+                    result = this.channel.appendRecord(this.content, responseText, complexContext);
                 }
-
-                String responseText = payload.getString("response");
-                result = this.channel.appendRecord(this.content, responseText, complexContext);
             }
             else {
                 // 复合型数据

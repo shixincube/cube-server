@@ -122,11 +122,11 @@ public class Molecule {
             // 图例名
             String legend = words[words.length - 1];
 
+            ArrayList<String> xAxis = new ArrayList();
             ArrayList<String> xAxisDesc = new ArrayList<>();
-            JSONArray xAxis = new JSONArray();
             JSONArray data = new JSONArray();
             for (Atom atom : atoms) {
-                xAxis.put(atom.formatSimpleDate());
+                xAxis.add(atom.formatSimpleDate());
                 xAxisDesc.add(atom.formatDate());
                 data.put(atom.value);
             }
