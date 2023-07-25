@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cube.aigc.atom.Atom;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -33,6 +34,9 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Chart 序列封装。
+ */
 public class ChartSeries implements JSONable {
 
     public String name;
@@ -46,6 +50,10 @@ public class ChartSeries implements JSONable {
     public List<String> xAxisDesc;
 
     public List<Series> seriesList;
+
+    public Timeline timeline;
+
+    public String label;
 
     public JSONObject option;
 
@@ -120,10 +128,6 @@ public class ChartSeries implements JSONable {
         this.seriesList.add(series);
     }
 
-    public void setData(String type, JSONArray names, JSONArray values) {
-
-    }
-
     public Series getSeries() {
         return this.seriesList.get(0);
     }
@@ -141,6 +145,10 @@ public class ChartSeries implements JSONable {
 
         this.seriesList.addAll(chartSeries.seriesList);
         return true;
+    }
+
+    public void setTimeline(List<Atom> atoms) {
+        this.timeline = new Timeline(atoms);
     }
 
     @Override
@@ -293,6 +301,43 @@ public class ChartSeries implements JSONable {
             }
 
             return json;
+        }
+    }
+
+    /**
+     * 序列时间线描述。
+     */
+    public class Timeline {
+
+        public List<TimePoint> points;
+
+        public Timeline(List<Atom> atoms) {
+            this.points = new ArrayList<>(atoms.size());
+            for (Atom atom : atoms) {
+                TimePoint point = new TimePoint(atom.getYear(), atom.getMonth(), atom.getDate());
+                this.points.add(point);
+            }
+        }
+
+        public TimePoint first() {
+            return this.points.get(0);
+        }
+
+        public TimePoint last() {
+            return this.points.get(this.points.size() - 1);
+        }
+    }
+
+
+    public class TimePoint {
+        public final int year;
+        public final int month;
+        public final int date;
+
+        public TimePoint(int year, int month, int date) {
+            this.year = year;
+            this.month = month;
+            this.date = date;
         }
     }
 }

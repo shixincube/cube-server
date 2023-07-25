@@ -65,17 +65,10 @@ public class ComplexContext extends Entity {
 
     private List<ComplexResource> resources;
 
-    private boolean inference = false;
-
     public ComplexContext(Type type) {
         super(Utils.generateSerialNumber());
         this.type = type;
         this.resources = new ArrayList<>();
-    }
-
-    public ComplexContext(Type type, boolean inference) {
-        this(type);
-        this.inference = inference;
     }
 
     public ComplexContext(JSONObject json) {
@@ -104,10 +97,6 @@ public class ComplexContext extends Entity {
 
     public boolean isSimplex() {
         return this.type == Type.Simplex;
-    }
-
-    public boolean isInference() {
-        return this.inference;
     }
 
     public int numResources() {

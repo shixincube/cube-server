@@ -160,13 +160,15 @@ public class ResourceAnswer {
     public String ask(String query) {
         StringBuilder data = new StringBuilder();
 
-        for (ComplexResource res : this.complexContext.getResources()) {
-            if (res instanceof ChartResource) {
-                ChartResource chart = (ChartResource) res;
-                String plainText = chart.makeDataPlainString();
-                data.append(plainText);
-            }
-        }
+        // TODO XJW 从模组里读取相关数据和问答
+
+//        for (ComplexResource res : this.complexContext.getResources()) {
+//            if (res instanceof ChartResource) {
+//                ChartResource chart = (ChartResource) res;
+//                String plainText = chart.makeDataPlainString();
+//                data.append(plainText);
+//            }
+//        }
 
         return Consts.formatQuestion(data.toString(), query);
     }

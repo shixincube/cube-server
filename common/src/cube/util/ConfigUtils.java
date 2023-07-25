@@ -37,6 +37,7 @@ import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -199,9 +200,31 @@ public final class ConfigUtils {
             }
 
             byte[] data = Files.readAllBytes(file);
-            json = new JSONObject(new String(data, Charset.forName("UTF-8")));
+            json = new JSONObject(new String(data, StandardCharsets.UTF_8));
         } catch (IOException e) {
             Logger.d(ConfigUtils.class, "#readStorageConfig - " + e.getMessage());
+        }
+        return json;
+    }
+
+    /**
+     * 读取指定的存储文件。
+     *
+     * @param fullPath
+     * @return
+     */
+    public static JSONObject readStorageFile(String fullPath) {
+        JSONObject json = new JSONObject();
+        try {
+            Path file = Paths.get(fullPath);
+            if (!Files.exists(file)) {
+                file = Paths.get("config/" + fullPath);
+            }
+
+            byte[] data = Files.readAllBytes(file);
+            json = new JSONObject(new String(data, StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            Logger.d(ConfigUtils.class, "#readStorageFile - " + e.getMessage());
         }
         return json;
     }

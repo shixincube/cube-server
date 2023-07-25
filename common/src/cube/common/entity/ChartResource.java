@@ -76,7 +76,7 @@ public class ChartResource extends ComplexResource {
             for (int i = 0; i < this.chartSeries.xAxis.size(); ++i) {
                 String desc = this.chartSeries.xAxisDesc.get(i);
                 int value = series.getValue(i);
-                buf.append(desc).append(legend).append("是").append(value)
+                buf.append(desc).append(legend).append("：").append(value)
                     .append("。\n");
             }
 

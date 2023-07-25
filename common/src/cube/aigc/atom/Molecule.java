@@ -135,6 +135,8 @@ public class Molecule {
             chartSeries.setXAxis(xAxis);
             chartSeries.setData("line", data, legend);
             chartSeries.setXAxisDesc(xAxisDesc);
+            chartSeries.setTimeline(atoms);
+            chartSeries.label = words[0];
             seriesList.add(chartSeries);
         }
 

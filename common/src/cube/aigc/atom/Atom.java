@@ -42,7 +42,6 @@ public class Atom implements JSONable {
     public String date;
 
     public int value;
-//    public int value2;
 
     public int currentLabelMatchingNum;
 
@@ -62,6 +61,30 @@ public class Atom implements JSONable {
         this.month = json.getString("month");
         this.date = json.getString("date");
         this.value = json.has("value") ? json.getInt("value") : 0;
+    }
+
+    public int getYear() {
+        try {
+            return Integer.parseInt(this.year.replace("年", ""));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    public int getMonth() {
+        try {
+            return Integer.parseInt(this.month.replace("月", ""));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    public int getDate() {
+        try {
+            return Integer.parseInt(this.date.replace("日", "").replace("号", ""));
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public String serializeDate() {

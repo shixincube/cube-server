@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.service.aigc.resource;
+package cube.service.aigc;
 
 import cell.util.log.Logger;
 import cube.aigc.attachment.Attachment;
@@ -35,8 +35,13 @@ import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
 import cube.auth.AuthToken;
 import cube.common.entity.*;
-import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.ExtractKeywordsListener;
+import cube.service.aigc.module.ModuleManager;
+import cube.service.aigc.module.PublicOpinion;
+import cube.service.aigc.module.Stage;
+import cube.service.aigc.resource.AtomCollider;
+import cube.service.aigc.resource.AttachmentBuilder;
+import cube.service.aigc.resource.BaiduSearcher;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -91,6 +96,13 @@ public class Explorer {
     public void setup(AIGCService service, Tokenizer tokenizer) {
         this.service = service;
         this.tokenizer = tokenizer;
+
+        ModuleManager.getInstance().addModule(new PublicOpinion());
+        ModuleManager.getInstance().start();
+    }
+
+    public void teardown() {
+        ModuleManager.getInstance().stop();
     }
 
     public void cacheComplexContext(ComplexContext context) {
@@ -172,7 +184,7 @@ public class Explorer {
             words.add(keyword.getWord());
         }
 
-        Stage stage = new Stage();
+        Stage stage = new Stage(words);
 
         ChartInference chartInference = this.inferChart(words);
         if (null != chartInference) {
@@ -180,10 +192,18 @@ public class Explorer {
             stage.attachmentResources.addAll(chartInference.attachmentResources);
         }
 
+        // 判断上下文是否需要进行推算
+        boolean inference = false;
+        if (!this.hitChartsKeywords(words.get(0))
+                && !this.hitChartsKeywords(words.get(1))) {
+            // 前2个关键词都没有图表相关词，进行推理
+            inference = true;
+        }
+
+        stage.inference = inference;
+
         return stage;
     }
-
-    
 
     private ChartInference inferChart(List<String> words) {
         boolean hit = false;
@@ -202,7 +222,7 @@ public class Explorer {
         if (!hit) {
             // 没有命中关键词
             if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#inferDataChart - No key words hit：" + words.get(0));
+                Logger.d(this.getClass(), "#inferChart - No key words hit：" + words.get(0));
             }
             return null;
         }
@@ -214,15 +234,22 @@ public class Explorer {
         ChartInference chartInference = new ChartInference();
 
         if (!collider.chartSeriesList.isEmpty()) {
+            /*
             // 判断上下文是否需要进行推算
             boolean inference = false;
             if (!this.hitChartsKeywords(words.get(0))
                     && !this.hitChartsKeywords(words.get(1))) {
-                // 前2个关键词都没有图表相关词，进行推理
+                 前2个关键词都没有图表相关词，进行推理
                 inference = true;
             }
-
-            chartInference.inference = inference;
+            if (inference) {
+                this.records = null;
+                this.histories = 0;
+                ResourceAnswer answer = new ResourceAnswer(complexContext);
+                String question = answer.ask(this.content);
+                data.put("content", question);
+            }
+            */
 
             for (ChartSeries chartSeries : collider.chartSeriesList) {
                 // 创建资源
@@ -440,8 +467,6 @@ public class Explorer {
         protected List<ChartResource> chartResources = new ArrayList<>();
 
         protected List<AttachmentResource> attachmentResources = new ArrayList<>();
-
-        protected boolean inference = false;
 
         protected ChartInference() {
         }

@@ -24,43 +24,22 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.service.aigc.module;
 
-import cell.util.Utils;
-import org.json.JSONObject;
+public class Article {
 
-import java.util.ArrayList;
-import java.util.List;
+    public String title;
 
-/**
- * 互动舞台。
- */
-public class Stage extends Entity {
+    public String content;
 
-    public boolean inference = false;
+    public String author;
 
-    public List<ChartResource> chartResources;
+    public int year;
 
-    public List<AttachmentResource> attachmentResources;
+    public int month;
 
-    public Stage() {
-        super(Utils.generateSerialNumber());
-        this.chartResources = new ArrayList<>();
-        this.attachmentResources = new ArrayList<>();
-    }
+    public int date;
 
-    public boolean isComplex() {
-        return !this.chartResources.isEmpty() || !this.attachmentResources.isEmpty();
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = super.toJSON();
-        return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
+    public Article() {
     }
 }

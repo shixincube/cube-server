@@ -79,6 +79,9 @@ public class AIGCStorage implements Storagable {
 
     private final String promptWordScopeTable = "aigc_prompt_word_scope";
 
+    // 联系人偏好，用于标记联系偏好的内置知识库。
+    private final String contactPreferenceTable = "aigc_contact_preference";
+
     private final StorageField[] appConfigFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT

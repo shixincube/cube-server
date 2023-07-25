@@ -53,6 +53,14 @@ public class PreInferTask extends ServiceTask {
         ActionDialect dialect = new ActionDialect(this.primitive);
         Packet packet = new Packet(dialect);
 
+        String token = getTokenCode(dialect);
+        if (null == token) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
         if (!packet.data.has("content")) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -63,7 +71,7 @@ public class PreInferTask extends ServiceTask {
         String content = packet.data.getString("content");
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        ComplexContext context = service.preInfer(content);
+        ComplexContext context = service.preInfer(content, token);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, context.toJSON()));

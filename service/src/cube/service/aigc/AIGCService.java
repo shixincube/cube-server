@@ -53,9 +53,9 @@ import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.*;
+import cube.service.aigc.module.Stage;
 import cube.service.aigc.plugin.InjectTokenPlugin;
 import cube.service.aigc.resource.Agent;
-import cube.service.aigc.resource.Explorer;
 import cube.service.aigc.resource.ResourceAnswer;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
@@ -149,7 +149,7 @@ public class AIGCService extends AbstractModule {
     /**
      * 是否访问，仅用于本地测试
      */
-    private boolean useAgent = true;
+    private boolean useAgent = false;
 
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
@@ -224,6 +224,8 @@ public class AIGCService extends AbstractModule {
         }
 
         this.started.set(false);
+
+        Explorer.getInstance().teardown();
     }
 
     @Override
@@ -577,10 +579,13 @@ public class AIGCService extends AbstractModule {
      * 预推理，以复合上下文形式进行描述。
      *
      * @param content
+     * @param token
      * @return
      */
-    public ComplexContext preInfer(String content) {
-        return this.recognizeContext(content);
+    public ComplexContext preInfer(String content, String token) {
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthToken authToken = authService.getToken(token);
+        return this.recognizeContext(content, authToken);
     }
 
     /**
@@ -1193,9 +1198,10 @@ public class AIGCService extends AbstractModule {
      * 对聊天内容进行分类识别。
      *
      * @param text
+     * @param authToken
      * @return
      */
-    private ComplexContext recognizeContext(String text) {
+    private ComplexContext recognizeContext(String text, AuthToken authToken) {
         final String content = text.trim();
         ComplexContext result = new ComplexContext(ComplexContext.Type.Simplex);
 
@@ -1288,7 +1294,7 @@ public class AIGCService extends AbstractModule {
             Stage stage = Explorer.getInstance().infer(content);
 
             if (stage.isComplex()) {
-                result = new ComplexContext(ComplexContext.Type.Complex, stage.inference);
+                result = new ComplexContext(ComplexContext.Type.Complex);
 
                 if (!stage.chartResources.isEmpty()) {
                     for (ChartResource chartResource : stage.chartResources) {
@@ -1301,10 +1307,25 @@ public class AIGCService extends AbstractModule {
                         result.addResource(attachmentResource);
                     }
                 }
+
+                if (stage.inference) {
+                    stage.matching(this, getChannel(authToken), authToken);
+                }
             }
         }
 
         return result;
+    }
+
+    private AIGCChannel getChannel(AuthToken authToken) {
+        Iterator<AIGCChannel> iter = this.channelMap.values().iterator();
+        while (iter.hasNext()) {
+            AIGCChannel channel = iter.next();
+            if (channel.getAuthToken().getCode().equals(authToken.getCode())) {
+                return channel;
+            }
+        }
+        return null;
     }
 
     private void processChatQueue(String queryKey) {
@@ -1544,25 +1565,15 @@ public class AIGCService extends AbstractModule {
 
         public void process() {
             // 识别内容
-            ComplexContext complexContext = recognizeContext(this.content);
+            ComplexContext complexContext = recognizeContext(this.content, this.channel.getAuthToken());
 
             AIGCChatRecord result = null;
 
-            if (complexContext.isSimplex() || complexContext.isInference()) {
+            if (complexContext.isSimplex()) {
                 // 一般文本
                 JSONObject data = new JSONObject();
                 data.put("unit", this.unit.getCapability().getName());
-
-                if (complexContext.isInference()) {
-                    this.records = null;
-                    this.histories = 0;
-                    ResourceAnswer answer = new ResourceAnswer(complexContext);
-                    String question = answer.ask(this.content);
-                    data.put("content", question);
-                }
-                else {
-                    data.put("content", this.content);
-                }
+                data.put("content", this.content);
 
                 if (null == this.records) {
                     if (this.histories > 0) {
@@ -1701,7 +1712,7 @@ public class AIGCService extends AbstractModule {
         }
 
         public void process() {
-            ComplexContext complexContext = recognizeContext(this.content);
+            ComplexContext complexContext = recognizeContext(this.content, this.channel.getAuthToken());
 
             JSONObject data = new JSONObject();
             data.put("unit", this.unit.getCapability().getName());

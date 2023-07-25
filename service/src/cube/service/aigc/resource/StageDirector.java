@@ -27,7 +27,7 @@
 package cube.service.aigc.resource;
 
 import cube.aigc.attachment.ui.DatePicker;
-import cube.common.entity.Stage;
+import cube.service.aigc.module.Stage;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -57,11 +57,6 @@ public class StageDirector {
 
     public String settingUp(String query, String answer) {
         return answer;
-    }
-
-    public Stage infer(String content) {
-        Stage stage = null;
-        return stage;
     }
 
     private DatePicker inferDatePicker(String content) {

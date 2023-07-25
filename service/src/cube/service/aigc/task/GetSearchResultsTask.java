@@ -36,7 +36,7 @@ import cube.common.Packet;
 import cube.common.entity.SearchResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
-import cube.service.aigc.resource.Explorer;
+import cube.service.aigc.Explorer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
