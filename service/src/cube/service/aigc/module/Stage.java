@@ -31,10 +31,12 @@ import cube.aigc.Sentiment;
 import cube.auth.AuthToken;
 import cube.common.entity.*;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.listener.ChatListener;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 互动舞台。
@@ -60,7 +62,7 @@ public class Stage extends Entity {
         return !this.chartResources.isEmpty() || !this.attachmentResources.isEmpty();
     }
 
-    public void matching(AIGCService service, AIGCChannel channel, AuthToken authToken) {
+    public void perform(AIGCService service, AIGCChannel channel, StageListener listener) {
         Module mod = ModuleManager.getInstance().matchModule(this.words);
         if (null == mod) {
             return;
@@ -76,11 +78,58 @@ public class Stage extends Entity {
                 ChartSeries.TimePoint starting = timeline.first();
                 ChartSeries.TimePoint ending = timeline.last();
 
-                List<String> queries = publicOpinion.makeEvaluatingArticleQueries(chartResource.chartSeries.label,
-                        Sentiment.Negative, starting.year, starting.month, starting.date, ending.date);
+                List<String> result = new ArrayList<>();
+                AtomicInteger total = new AtomicInteger(0);
 
+                List<String> negativeQueries = publicOpinion.makeEvaluatingArticleQueries(chartResource.chartSeries.label,
+                        Sentiment.Negative, starting.year, starting.month, starting.date, ending.date);
+                if (!negativeQueries.isEmpty()) {
+                    total.addAndGet(negativeQueries.size());
+
+                    for (String query : negativeQueries) {
+                        service.singleChat(channel,
+                                service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational),
+                                query, new ChatListener() {
+                                    @Override
+                                    public void onChat(AIGCChannel channel, AIGCChatRecord record) {
+                                        callback(total.get(), result, listener);
+                                    }
+
+                                    @Override
+                                    public void onFailed(AIGCChannel channel) {
+
+                                    }
+                                });
+                    }
+                }
+
+                List<String> positiveQueries = publicOpinion.makeEvaluatingArticleQueries(chartResource.chartSeries.label,
+                        Sentiment.Positive, starting.year, starting.month, starting.date, ending.date);
+                if (!positiveQueries.isEmpty()) {
+                    total.addAndGet(positiveQueries.size());
+
+                    for (String query : positiveQueries) {
+                        service.singleChat(channel,
+                                service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational),
+                                query, new ChatListener() {
+                                    @Override
+                                    public void onChat(AIGCChannel channel, AIGCChatRecord record) {
+                                        callback(total.get(), result, listener);
+                                    }
+
+                                    @Override
+                                    public void onFailed(AIGCChannel channel) {
+
+                                    }
+                                });
+                    }
+                }
             }
         }
+    }
+
+    private void callback(int targetTotal, List<String> result, StageListener listener) {
+
     }
 
     @Override

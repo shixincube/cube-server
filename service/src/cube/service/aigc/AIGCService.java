@@ -54,6 +54,7 @@ import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.*;
 import cube.service.aigc.module.Stage;
+import cube.service.aigc.module.StageListener;
 import cube.service.aigc.plugin.InjectTokenPlugin;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.ResourceAnswer;
@@ -1309,7 +1310,12 @@ public class AIGCService extends AbstractModule {
                 }
 
                 if (stage.inference) {
-                    stage.matching(this, getChannel(authToken), authToken);
+                    stage.perform(this, getChannel(authToken), new StageListener() {
+                        @Override
+                        public void onPerform(Stage stage, cube.service.aigc.module.Module module) {
+
+                        }
+                    });
                 }
             }
         }

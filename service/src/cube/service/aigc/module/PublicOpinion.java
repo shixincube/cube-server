@@ -30,20 +30,19 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.Sentiment;
 import cube.common.Storagable;
-import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCUnit;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
-import cube.service.aigc.listener.ChatListener;
 import cube.storage.StorageFactory;
+import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 舆情模组。
@@ -51,6 +50,12 @@ import java.util.List;
 public class PublicOpinion implements Module {
 
     private final String name = "PublicOpinion";
+
+    private final static String PositiveQueryFormat = "已知信息：%s\n\n" +
+            "根据上述已知信息，请回答：关于%s的正面描述内容有哪些？";
+
+    private final static String NegativeQueryFormat = "已知信息：%s\n\n" +
+            "根据上述已知信息，请回答：关于%s的负面描述内容有哪些？";
 
     private List<String> matchingWords;
 
@@ -91,8 +96,20 @@ public class PublicOpinion implements Module {
 
     public List<String> makeEvaluatingArticleQueries(String category, String sentiment, int year, int month,
                                                    int startDate, int endDate) {
+        List<String> result = new ArrayList<>();
         List<Article> articleList = this.storage.readArticles(category, sentiment, year, month, startDate, endDate);
-        return null;
+        for (Article article : articleList) {
+            if (article.content.length() > 800) {
+                Logger.w(this.getClass(), "#makeEvaluatingArticleQueries - Article content length overflow: " + article.title);
+                continue;
+            }
+
+            String query = sentiment.equals(Sentiment.Positive) ?
+                    String.format(PositiveQueryFormat, article.content, category) :
+                    String.format(NegativeQueryFormat, article.content, category);
+            result.add(query);
+        }
+        return result;
     }
 
 
@@ -119,7 +136,7 @@ public class PublicOpinion implements Module {
                         Constraint.NOT_NULL
                 }),
                 new StorageField("author", LiteralBase.STRING, new Constraint[] {
-                        Constraint.DEFAULT_NULL
+                        Constraint.NOT_NULL
                 }),
                 new StorageField("year", LiteralBase.INT, new Constraint[] {
                         Constraint.NOT_NULL
@@ -180,7 +197,13 @@ public class PublicOpinion implements Module {
             });
 
             for (StorageField[] fields : result) {
-
+                Map<String, StorageField> data = StorageFields.get(fields);
+                Article article = new Article(data.get("title").getString(), data.get("content").getString(),
+                        data.get("author").getString(),
+                        data.get("year").getInt(),
+                        data.get("month").getInt(),
+                        data.get("date").getInt());
+                list.add(article);
             }
 
             return list;

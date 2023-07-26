@@ -26,26 +26,7 @@
 
 package cube.service.aigc.module;
 
-public class Article {
+public interface StageListener {
 
-    public String title;
-
-    public String content;
-
-    public String author;
-
-    public int year;
-
-    public int month;
-
-    public int date;
-
-    public Article(String title, String content, String author, int year, int month, int date) {
-        this.title = title;
-        this.content = content;
-        this.author = author;
-        this.year = year;
-        this.month = month;
-        this.date = date;
-    }
+    void onPerform(Stage stage, Module module);
 }
