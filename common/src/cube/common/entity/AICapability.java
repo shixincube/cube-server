@@ -149,6 +149,8 @@ public class AICapability implements JSONable {
 
     public class NaturalLanguageProcessing {
 
+        public final static String Segmentation = "Segmentation";
+
         public final static String TextClassification = "TextClassification";
 
         public final static String TokenClassification = "TokenClassification";

@@ -107,6 +107,11 @@ public enum AIGCAction {
     AutomaticSpeechRecognition("automaticSpeechRecognition"),
 
     /**
+     * 分词。
+     */
+    Segmentation("segmentation"),
+
+    /**
      * 搜索命令。
      */
     SearchCommand("searchCommand"),

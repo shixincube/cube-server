@@ -1181,6 +1181,16 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
+     * 文本分词。
+     *
+     * @param text
+     * @return
+     */
+    public List<String> segmentation(String text) {
+        return this.tokenizer.sentenceProcess(text);
+    }
+
+    /**
      * 执行命令。
      *
      * @param command
@@ -1310,9 +1320,11 @@ public class AIGCService extends AbstractModule {
                 }
 
                 if (stage.inference) {
+                    Logger.d(this.getClass(), "#recognizeContext - perform stage");
+
                     stage.perform(this, getChannel(authToken), new StageListener() {
                         @Override
-                        public void onPerform(Stage stage, cube.service.aigc.module.Module module) {
+                        public void onPerform(Stage stage, cube.service.aigc.module.Module module, String answer) {
 
                         }
                     });

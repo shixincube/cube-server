@@ -206,8 +206,9 @@ public class Tokenizer {
         while (x < N) {
             y = route.get(x).key + 1;
             String lWord = sentence.substring(x, y);
-            if (y - x == 1)
+            if (y - x == 1) {
                 sb.append(lWord);
+            }
             else {
                 if (sb.length() > 0) {
                     buf = sb.toString();

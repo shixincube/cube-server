@@ -38,6 +38,7 @@ import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
+import cube.util.TextUtils;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -56,6 +57,8 @@ public class PublicOpinion implements Module {
 
     private final static String NegativeQueryFormat = "已知信息：%s\n\n" +
             "根据上述已知信息，请回答：关于%s的负面描述内容有哪些？";
+
+    private int maxArticleLength = 800;
 
     private List<String> matchingWords;
 
@@ -92,6 +95,7 @@ public class PublicOpinion implements Module {
     }
 
     public void addArticle(String category, String sentiment, Article article) {
+        // TODO
     }
 
     public List<String> makeEvaluatingArticleQueries(String category, String sentiment, int year, int month,
@@ -99,16 +103,35 @@ public class PublicOpinion implements Module {
         List<String> result = new ArrayList<>();
         List<Article> articleList = this.storage.readArticles(category, sentiment, year, month, startDate, endDate);
         for (Article article : articleList) {
-            if (article.content.length() > 800) {
-                Logger.w(this.getClass(), "#makeEvaluatingArticleQueries - Article content length overflow: " + article.title);
-                continue;
+            // 控制内容长度，防止溢出
+            List<String> contentList = this.composeArticleContent(article);
+            for (String content : contentList) {
+                String query = sentiment.equals(Sentiment.Positive) ?
+                        String.format(PositiveQueryFormat, article.content, category) :
+                        String.format(NegativeQueryFormat, article.content, category);
+                result.add(query);
             }
-
-            String query = sentiment.equals(Sentiment.Positive) ?
-                    String.format(PositiveQueryFormat, article.content, category) :
-                    String.format(NegativeQueryFormat, article.content, category);
-            result.add(query);
         }
+        return result;
+    }
+
+    private List<String> composeArticleContent(Article article) {
+        List<String> result = new ArrayList<>();
+
+        StringBuilder content = new StringBuilder();
+        List<String> sentences = TextUtils.splitSentence(article.content);
+        for (String sentence : sentences) {
+            content.append(sentence);
+            if (content.length() >= this.maxArticleLength) {
+                result.add(content.toString());
+                content.delete(0, content.length());
+            }
+        }
+
+        if (content.length() > 0) {
+            result.add(content.toString());
+        }
+
         return result;
     }
 
@@ -152,23 +175,31 @@ public class PublicOpinion implements Module {
         private Storage storage;
 
         public PublicOpinionStorage() {
-            JSONObject config = ConfigUtils.readStorageFile("config/storage_public_opinion.json");
-            this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL,
-                    "PublicOpinionStorage", config);
         }
 
         @Override
         public void open() {
-            this.storage.open();
+            JSONObject config = ConfigUtils.readStorageFile("config/storage_public_opinion.json");
+            if (null != config) {
+                this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL,
+                        "PublicOpinionStorage", config);
+                this.storage.open();
+            }
         }
 
         @Override
         public void close() {
-            this.storage.close();
+            if (null != this.storage) {
+                this.storage.close();
+            }
         }
 
         @Override
         public void execSelfChecking(List<String> domainNameList) {
+            if (null == this.storage) {
+                return;
+            }
+
             if (!this.storage.exist(this.articleTable)) {
                 // 不存在，建新表
                 if (this.storage.executeCreate(this.articleTable, this.articleFields)) {

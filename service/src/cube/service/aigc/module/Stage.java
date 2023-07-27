@@ -28,7 +28,6 @@ package cube.service.aigc.module;
 
 import cell.util.Utils;
 import cube.aigc.Sentiment;
-import cube.auth.AuthToken;
 import cube.common.entity.*;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.ChatListener;
@@ -78,8 +77,9 @@ public class Stage extends Entity {
                 ChartSeries.TimePoint starting = timeline.first();
                 ChartSeries.TimePoint ending = timeline.last();
 
-                List<String> result = new ArrayList<>();
+                List<AIGCChatRecord> result = new ArrayList<>();
                 AtomicInteger total = new AtomicInteger(0);
+                AtomicInteger callCount = new AtomicInteger(0);
 
                 List<String> negativeQueries = publicOpinion.makeEvaluatingArticleQueries(chartResource.chartSeries.label,
                         Sentiment.Negative, starting.year, starting.month, starting.date, ending.date);
@@ -92,12 +92,13 @@ public class Stage extends Entity {
                                 query, new ChatListener() {
                                     @Override
                                     public void onChat(AIGCChannel channel, AIGCChatRecord record) {
-                                        callback(total.get(), result, listener);
+                                        result.add(record);
+                                        callback(total.get(), callCount, result, listener);
                                     }
 
                                     @Override
                                     public void onFailed(AIGCChannel channel) {
-
+                                        callback(total.get(), callCount, result, listener);
                                     }
                                 });
                     }
@@ -114,12 +115,13 @@ public class Stage extends Entity {
                                 query, new ChatListener() {
                                     @Override
                                     public void onChat(AIGCChannel channel, AIGCChatRecord record) {
-                                        callback(total.get(), result, listener);
+                                        result.add(record);
+                                        callback(total.get(), callCount, result, listener);
                                     }
 
                                     @Override
                                     public void onFailed(AIGCChannel channel) {
-
+                                        callback(total.get(), callCount, result, listener);
                                     }
                                 });
                     }
@@ -128,8 +130,17 @@ public class Stage extends Entity {
         }
     }
 
-    private void callback(int targetTotal, List<String> result, StageListener listener) {
+    private void callback(int targetTotal, AtomicInteger callCount,
+                          List<AIGCChatRecord> result, StageListener listener) {
+        // 更新计数
+        int count = callCount.incrementAndGet();
+        if (targetTotal == count) {
+            // 结束
+            StringBuilder buf = new StringBuilder();
+            for (AIGCChatRecord record : result) {
 
+            }
+        }
     }
 
     @Override

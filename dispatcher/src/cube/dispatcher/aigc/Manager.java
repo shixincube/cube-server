@@ -104,6 +104,7 @@ public class Manager implements Tickable, PerformerListener {
     private void setupHandler() {
         HttpServer httpServer = this.performer.getHttpServer();
 
+        httpServer.addContextHandler(new Segmentation());
         httpServer.addContextHandler(new RequestChannel());
         httpServer.addContextHandler(new Chat());
         httpServer.addContextHandler(new NLGeneralTask());
@@ -552,6 +553,28 @@ public class Manager implements Tickable, PerformerListener {
 
     public ASRFuture queryASRFuture(String fileCode) {
         return this.asrFutureMap.get(fileCode);
+    }
+
+    public JSONObject segmentation(String token, String text) {
+        JSONObject data = new JSONObject();
+        data.put("text", text);
+        Packet packet = new Packet(AIGCAction.Segmentation.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(this.getClass(), "#segmentation - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#segmentation - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
     }
 
     public JSONObject handleChartData(String token, JSONObject data) {
