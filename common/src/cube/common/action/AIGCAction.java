@@ -162,6 +162,11 @@ public enum AIGCAction {
     GetSearchResults("getSearchResults"),
 
     /**
+     * 获取上下文的推理内容。
+     */
+    GetContextInference("getContextInference"),
+
+    /**
      * 操作图表数据。
      */
     ChartData("chartData"),

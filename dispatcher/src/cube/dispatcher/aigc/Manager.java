@@ -116,6 +116,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new ImportKnowledgeDoc());
         httpServer.addContextHandler(new RemoveKnowledgeDoc());
         httpServer.addContextHandler(new SearchResults());
+        httpServer.addContextHandler(new ContextInference());
         httpServer.addContextHandler(new ChartData());
         httpServer.addContextHandler(new Prompts());
         httpServer.addContextHandler(new SubmitEvent());
@@ -457,6 +458,29 @@ public class Manager implements Tickable, PerformerListener {
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.w(Manager.class, "#querySearchResults - Response state code is NOT Ok - "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject getContextInference(String token, long contextId) {
+        JSONObject data = new JSONObject();
+        data.put("id", contextId);
+        Packet packet = new Packet(AIGCAction.GetContextInference.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#getContextInference - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#getContextInference - Response state code is NOT Ok - "
                     + Packet.extractCode(responsePacket));
             return null;
         }

@@ -26,14 +26,21 @@
 
 package cube.aigc;
 
-public final class Sentiment {
+/**
+ * 情感分类。
+ */
+public enum Sentiment {
 
-    public final static String Positive = "positive";
+    Positive("positive"),
 
-    public final static String Negative = "negative";
+    Negative("negative"),
 
-    public final static String Neutral = "neutral";
+    Neutral("neutral")
+    ;
 
-    private Sentiment() {
+    public final String code;
+
+    Sentiment(String code) {
+        this.code = code;
     }
 }

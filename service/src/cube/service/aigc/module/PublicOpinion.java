@@ -58,7 +58,9 @@ public class PublicOpinion implements Module {
     private final static String NegativeQueryFormat = "已知信息：%s\n\n" +
             "根据上述已知信息，请回答：关于%s的负面描述内容有哪些？";
 
-    private int maxArticleLength = 800;
+    private final static String ArticleQueryOutputFormat = "在《%s》这篇文章里，%s";
+
+    private int maxArticleLength = 900;
 
     private List<String> matchingWords;
 
@@ -98,20 +100,23 @@ public class PublicOpinion implements Module {
         // TODO
     }
 
-    public List<String> makeEvaluatingArticleQueries(String category, String sentiment, int year, int month,
-                                                   int startDate, int endDate) {
-        List<String> result = new ArrayList<>();
-        List<Article> articleList = this.storage.readArticles(category, sentiment, year, month, startDate, endDate);
+    public List<ArticleQuery> makeEvaluatingArticleQueries(String category, Sentiment sentiment,
+                                                           int year, int month, int startDate, int endDate) {
+        List<ArticleQuery> result = new ArrayList<>();
+        List<Article> articleList = this.storage.readArticles(category, sentiment.code, year, month, startDate, endDate);
         for (Article article : articleList) {
             // 控制内容长度，防止溢出
             List<String> contentList = this.composeArticleContent(article);
-            for (String content : contentList) {
-                String query = sentiment.equals(Sentiment.Positive) ?
-                        String.format(PositiveQueryFormat, article.content, category) :
-                        String.format(NegativeQueryFormat, article.content, category);
-                result.add(query);
-            }
+            // 目前只处理第一部分内容
+            String content = contentList.get(0);
+            String query = (sentiment == Sentiment.Positive) ?
+                    String.format(PositiveQueryFormat, content, category) :
+                    String.format(NegativeQueryFormat, content, category);
+
+            ArticleQuery articleQuery = new ArticleQuery(article, sentiment, query);
+            result.add(articleQuery);
         }
+
         return result;
     }
 
@@ -133,6 +138,27 @@ public class PublicOpinion implements Module {
         }
 
         return result;
+    }
+
+    public class ArticleQuery {
+
+        public Article article;
+
+        public Sentiment sentiment;
+
+        public String query;
+
+        public String answer;
+
+        protected ArticleQuery(Article article, Sentiment sentiment, String query) {
+            this.article = article;
+            this.sentiment = sentiment;
+            this.query = query;
+        }
+
+        public String output() {
+            return String.format(ArticleQueryOutputFormat, this.article.title, this.answer);
+        }
     }
 
 

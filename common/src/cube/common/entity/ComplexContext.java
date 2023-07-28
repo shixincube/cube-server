@@ -65,6 +65,10 @@ public class ComplexContext extends Entity {
 
     private List<ComplexResource> resources;
 
+    private boolean inferable = false;
+
+    private String inferenceResult;
+
     public ComplexContext(Type type) {
         super(Utils.generateSerialNumber());
         this.type = type;
@@ -92,6 +96,14 @@ public class ComplexContext extends Entity {
             else {
                 Logger.e(this.getClass(), "Unknown complex context resource subject: " + subject);
             }
+        }
+
+        if (json.has("inferable")) {
+            this.inferable = json.getBoolean("inferable");
+        }
+
+        if (json.has("inferenceResult")) {
+            this.inferenceResult = json.getString("inferenceResult");
         }
     }
 
@@ -125,6 +137,22 @@ public class ComplexContext extends Entity {
         this.resources.add(resource);
     }
 
+    public void setInferable(boolean value) {
+        this.inferable = value;
+    }
+
+    public boolean isInferable() {
+        return this.inferable;
+    }
+
+    public void setInferenceResult(String result) {
+        this.inferenceResult = result;
+    }
+
+    public String getInferenceResult() {
+        return this.inferenceResult;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
@@ -136,12 +164,21 @@ public class ComplexContext extends Entity {
         }
         json.put("resources", array);
 
+        json.put("inferable", this.inferable);
+
+        if (null != this.inferenceResult) {
+            json.put("inferenceResult", this.inferenceResult);
+        }
+
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = this.toJSON();
+        if (json.has("inferable")) {
+            json.remove("inferable");
+        }
         return json;
     }
 }

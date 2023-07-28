@@ -150,7 +150,7 @@ public class AIGCService extends AbstractModule {
     /**
      * 是否访问，仅用于本地测试
      */
-    private boolean useAgent = false;
+    private boolean useAgent = true;
 
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
@@ -680,6 +680,16 @@ public class AIGCService extends AbstractModule {
     }
 
     public void singleChat(AIGCChannel channel, AIGCUnit unit, String query, ChatListener listener) {
+        if (this.useAgent) {
+            unit = Agent.getInstance().getUnit();
+        }
+
+        if (null == unit) {
+            // 没有单元数据
+            listener.onFailed(channel);
+            return;
+        }
+
         ChatUnitMeta meta = new ChatUnitMeta(unit, channel, query, 0, listener);
 
         synchronized (this.chatQueueMap) {
@@ -1322,10 +1332,18 @@ public class AIGCService extends AbstractModule {
                 if (stage.inference) {
                     Logger.d(this.getClass(), "#recognizeContext - perform stage");
 
+                    result.setInferable(true);
+
+                    // 上下文 ID
+                    final long ctxId = result.getId();
+
                     stage.perform(this, getChannel(authToken), new StageListener() {
                         @Override
                         public void onPerform(Stage stage, cube.service.aigc.module.Module module, String answer) {
-
+                            ComplexContext ctx = Explorer.getInstance().getComplexContext(ctxId);
+                            if (null != ctx) {
+                                ctx.setInferenceResult(answer);
+                            }
                         }
                     });
                 }
@@ -1343,6 +1361,14 @@ public class AIGCService extends AbstractModule {
                 return channel;
             }
         }
+
+        // 没有频道，如果使用代理则新建频道
+        if (this.useAgent) {
+            AIGCChannel channel = new AIGCChannel(authToken, "User-" + authToken.getContactId());
+            this.channelMap.put(channel.getCode(), channel);
+            return channel;
+        }
+
         return null;
     }
 

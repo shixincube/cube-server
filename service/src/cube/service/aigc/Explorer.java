@@ -109,6 +109,10 @@ public class Explorer {
         this.complexContextMap.put(context.getId(), context);
     }
 
+    public ComplexContext getComplexContext(long id) {
+        return this.complexContextMap.get(id);
+    }
+
     public SearchResult search(String query, String answer, ComplexContext context) {
         final SearchResult result = new SearchResult();
         // 提取问句的关键词

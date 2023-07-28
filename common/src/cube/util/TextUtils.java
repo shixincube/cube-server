@@ -354,8 +354,15 @@ public final class TextUtils {
         String[] array = sentence.split("\n");
         for (String text : array) {
             String content = text.replaceAll("\n", "").trim();
+            if (content.length() == 0) {
+                continue;
+            }
+
             String[] contentArray = content.split("。");
             for (String str : contentArray) {
+                if (str.length() == 0) {
+                    continue;
+                }
                 result.add(str.trim() + "。");
             }
         }

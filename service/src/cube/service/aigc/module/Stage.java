@@ -77,69 +77,98 @@ public class Stage extends Entity {
                 ChartSeries.TimePoint starting = timeline.first();
                 ChartSeries.TimePoint ending = timeline.last();
 
-                List<AIGCChatRecord> result = new ArrayList<>();
                 AtomicInteger total = new AtomicInteger(0);
                 AtomicInteger callCount = new AtomicInteger(0);
+                // 结果数组
+                List<PublicOpinion.ArticleQuery> result = new ArrayList<>();
 
-                List<String> negativeQueries = publicOpinion.makeEvaluatingArticleQueries(chartResource.chartSeries.label,
-                        Sentiment.Negative, starting.year, starting.month, starting.date, ending.date);
+                List<PublicOpinion.ArticleQuery> negativeQueries = publicOpinion.makeEvaluatingArticleQueries(
+                        chartResource.chartSeries.label, Sentiment.Negative,
+                        starting.year, starting.month, starting.date, ending.date);
                 if (!negativeQueries.isEmpty()) {
                     total.addAndGet(negativeQueries.size());
 
-                    for (String query : negativeQueries) {
+                    for (PublicOpinion.ArticleQuery articleQuery : negativeQueries) {
                         service.singleChat(channel,
                                 service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational),
-                                query, new ChatListener() {
+                                articleQuery.query, new ChatListener() {
                                     @Override
                                     public void onChat(AIGCChannel channel, AIGCChatRecord record) {
-                                        result.add(record);
-                                        callback(total.get(), callCount, result, listener);
+                                        PublicOpinion.ArticleQuery current = findArticleQuery(negativeQueries,
+                                                record.query);
+                                        if (null != current) {
+                                            current.answer = record.answer.replaceAll(",", "，");
+                                            result.add(current);
+                                        }
+                                        callback(total.get(), callCount, publicOpinion, result, listener);
                                     }
 
                                     @Override
                                     public void onFailed(AIGCChannel channel) {
-                                        callback(total.get(), callCount, result, listener);
+                                        callback(total.get(), callCount, publicOpinion, result, listener);
                                     }
                                 });
                     }
                 }
 
-                List<String> positiveQueries = publicOpinion.makeEvaluatingArticleQueries(chartResource.chartSeries.label,
-                        Sentiment.Positive, starting.year, starting.month, starting.date, ending.date);
+                List<PublicOpinion.ArticleQuery> positiveQueries = publicOpinion.makeEvaluatingArticleQueries(
+                        chartResource.chartSeries.label, Sentiment.Positive,
+                        starting.year, starting.month, starting.date, ending.date);
                 if (!positiveQueries.isEmpty()) {
                     total.addAndGet(positiveQueries.size());
 
-                    for (String query : positiveQueries) {
+                    for (PublicOpinion.ArticleQuery articleQuery : positiveQueries) {
                         service.singleChat(channel,
                                 service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational),
-                                query, new ChatListener() {
+                                articleQuery.query, new ChatListener() {
                                     @Override
                                     public void onChat(AIGCChannel channel, AIGCChatRecord record) {
-                                        result.add(record);
-                                        callback(total.get(), callCount, result, listener);
+                                        PublicOpinion.ArticleQuery current = findArticleQuery(positiveQueries,
+                                                record.query);
+                                        if (null != current) {
+                                            current.answer = record.answer.replaceAll(",", "，");
+                                            result.add(current);
+                                        }
+                                        callback(total.get(), callCount, publicOpinion, result, listener);
                                     }
 
                                     @Override
                                     public void onFailed(AIGCChannel channel) {
-                                        callback(total.get(), callCount, result, listener);
+                                        callback(total.get(), callCount, publicOpinion, result, listener);
                                     }
                                 });
                     }
+                }
+
+                if (total.get() == 0) {
+                    callback(0, callCount, publicOpinion, result, listener);
                 }
             }
         }
     }
 
-    private void callback(int targetTotal, AtomicInteger callCount,
-                          List<AIGCChatRecord> result, StageListener listener) {
+    private PublicOpinion.ArticleQuery findArticleQuery(List<PublicOpinion.ArticleQuery> queryList, String query) {
+        for (PublicOpinion.ArticleQuery articleQuery : queryList) {
+            if (articleQuery.query.equals(query)) {
+                return articleQuery;
+            }
+        }
+        return null;
+    }
+
+    private void callback(int targetTotal, AtomicInteger callCount, Module module,
+                          List<PublicOpinion.ArticleQuery> articleQueryList, StageListener listener) {
         // 更新计数
         int count = callCount.incrementAndGet();
-        if (targetTotal == count) {
+        if (targetTotal <= count) {
             // 结束
             StringBuilder buf = new StringBuilder();
-            for (AIGCChatRecord record : result) {
-
+            for (PublicOpinion.ArticleQuery articleQuery : articleQueryList) {
+                buf.append(articleQuery.output());
+                buf.append("\n");
             }
+
+            listener.onPerform(this, module, buf.toString());
         }
     }
 
