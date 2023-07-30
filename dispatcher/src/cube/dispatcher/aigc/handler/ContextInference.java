@@ -66,7 +66,14 @@ public class ContextInference extends ContextHandler {
                 return;
             }
 
-            JSONObject data = Manager.getInstance().getContextInference(token, Long.parseLong(idStr));
+            JSONObject data = null;
+            try {
+                data = Manager.getInstance().getContextInference(token, Long.parseLong(idStr));
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
             if (null == data) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();

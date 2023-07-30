@@ -78,6 +78,24 @@ public class GetContextInferenceTask extends ServiceTask {
             return;
         }
 
+        if (!context.isInferable()) {
+            JSONObject responsePayload = new JSONObject();
+            responsePayload.put("inferable", context.isInferable());
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responsePayload));
+            markResponseTime();
+            return;
+        }
+
+        if (null == context.getInferenceResult()) {
+            JSONObject responsePayload = new JSONObject();
+            responsePayload.put("inferable", context.isInferable());
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, responsePayload));
+            markResponseTime();
+            return;
+        }
+
         JSONObject responsePayload = new JSONObject();
         responsePayload.put("inferable", context.isInferable());
         responsePayload.put("inferenceResult", context.getInferenceResult());
