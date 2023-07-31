@@ -33,6 +33,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 复合会话内容。
@@ -67,7 +68,9 @@ public class ComplexContext extends Entity {
 
     private boolean inferable = false;
 
-    private String inferenceResult;
+    private final AtomicBoolean inferring = new AtomicBoolean(false);
+
+    private List<String> inferenceResult;
 
     public ComplexContext(Type type) {
         super(Utils.generateSerialNumber());
@@ -101,9 +104,16 @@ public class ComplexContext extends Entity {
         if (json.has("inferable")) {
             this.inferable = json.getBoolean("inferable");
         }
+        if (json.has("inferring")) {
+            this.inferring.set(json.getBoolean("inferring"));
+        }
 
         if (json.has("inferenceResult")) {
-            this.inferenceResult = json.getString("inferenceResult");
+            this.inferenceResult = new ArrayList<>();
+            JSONArray list = json.getJSONArray("inferenceResult");
+            for (int i = 0; i < list.length(); ++i) {
+                this.inferenceResult.add(list.getString(i));
+            }
         }
     }
 
@@ -145,11 +155,23 @@ public class ComplexContext extends Entity {
         return this.inferable;
     }
 
-    public void setInferenceResult(String result) {
-        this.inferenceResult = result;
+    public void setInferring(boolean value) {
+        this.inferring.set(value);
     }
 
-    public String getInferenceResult() {
+    public boolean isInferring(){
+        return this.inferring.get();
+    }
+
+    public synchronized void addInferenceResult(String result) {
+        if (null == this.inferenceResult) {
+            this.inferenceResult = new ArrayList<>();
+        }
+
+        this.inferenceResult.add(result);
+    }
+
+    public List<String> getInferenceResult() {
         return this.inferenceResult;
     }
 
@@ -165,9 +187,14 @@ public class ComplexContext extends Entity {
         json.put("resources", array);
 
         json.put("inferable", this.inferable);
+        json.put("inferring", this.inferring.get());
 
         if (null != this.inferenceResult) {
-            json.put("inferenceResult", this.inferenceResult);
+            JSONArray list = new JSONArray();
+            for (String result : this.inferenceResult) {
+                list.put(result);
+            }
+            json.put("inferenceResult", list);
         }
 
         return json;
@@ -178,6 +205,10 @@ public class ComplexContext extends Entity {
         JSONObject json = this.toJSON();
         if (json.has("inferable")) {
             json.remove("inferable");
+            json.remove("inferring");
+        }
+        if (json.has("inferenceResult")) {
+            json.remove("inferenceResult");
         }
         return json;
     }

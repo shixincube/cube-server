@@ -26,7 +26,9 @@
 
 package cube.service.aigc.module;
 
+import java.util.List;
+
 public interface StageListener {
 
-    void onPerform(Stage stage, Module module, String answer);
+    void onPerform(Stage stage, Module module, List<String> answerList);
 }

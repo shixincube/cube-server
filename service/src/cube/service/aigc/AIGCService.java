@@ -1333,16 +1333,21 @@ public class AIGCService extends AbstractModule {
                     Logger.d(this.getClass(), "#recognizeContext - perform stage");
 
                     result.setInferable(true);
+                    result.setInferring(true);
 
                     // 上下文 ID
                     final long ctxId = result.getId();
 
                     stage.perform(this, getChannel(authToken), new StageListener() {
                         @Override
-                        public void onPerform(Stage stage, cube.service.aigc.module.Module module, String answer) {
+                        public void onPerform(Stage stage, cube.service.aigc.module.Module module,
+                                              List<String> answerList) {
                             ComplexContext ctx = Explorer.getInstance().getComplexContext(ctxId);
                             if (null != ctx) {
-                                ctx.setInferenceResult(answer);
+                                for (String answer : answerList) {
+                                    ctx.addInferenceResult(answer);
+                                }
+                                ctx.setInferring(false);
                             }
                         }
                     });

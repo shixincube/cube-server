@@ -162,13 +162,12 @@ public class Stage extends Entity {
         int count = callCount.incrementAndGet();
         if (targetTotal <= count) {
             // 结束
-            StringBuilder buf = new StringBuilder();
+            ArrayList<String> list = new ArrayList<>();
             for (PublicOpinion.ArticleQuery articleQuery : articleQueryList) {
-                buf.append(articleQuery.output());
-                buf.append("\n");
+                list.add(articleQuery.output());
             }
 
-            listener.onPerform(this, module, buf.toString());
+            listener.onPerform(this, module, list);
         }
     }
 
