@@ -52,6 +52,12 @@ import java.util.List;
  */
 public class ChartDataTask extends ServiceTask {
 
+    public final static String ACTION_GET_ATOMS = "getAtoms";
+
+    public final static String ACTION_INSERT_ATOMS = "insertAtoms";
+
+    public final static String ACTION_DELETE_ATOMS = "deleteAtoms";
+
     public ChartDataTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
@@ -114,7 +120,7 @@ public class ChartDataTask extends ServiceTask {
                     return;
                 }
             }
-            else if (action.equalsIgnoreCase("getAtoms")) {
+            else if (ACTION_GET_ATOMS.equalsIgnoreCase(action)) {
                 String label = requestData.getString("label");
                 String year = requestData.has("year") ? requestData.getString("year") : null;
                 String month = requestData.has("month") ? requestData.getString("month") : null;
@@ -134,7 +140,7 @@ public class ChartDataTask extends ServiceTask {
                 markResponseTime();
                 return;
             }
-            else if (action.equalsIgnoreCase("insertAtoms")) {
+            else if (ACTION_INSERT_ATOMS.equalsIgnoreCase(action)) {
                 List<Atom> list = new ArrayList<>();
                 if (requestData.has("list")) {
                     JSONArray array = requestData.getJSONArray("list");
@@ -165,7 +171,7 @@ public class ChartDataTask extends ServiceTask {
                     return;
                 }
             }
-            else if (action.equalsIgnoreCase("deleteAtoms")) {
+            else if (ACTION_DELETE_ATOMS.equalsIgnoreCase(action)) {
                 List<Long> list = new ArrayList<>();
                 JSONArray array = requestData.getJSONArray("snList");
                 for (int i = 0; i < array.length(); ++i) {

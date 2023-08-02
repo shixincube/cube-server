@@ -227,6 +227,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new SetPromptsTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.PublicOpinionData.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new PublicOpinionDataTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.SubmitEvent.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new SubmitEventTask(this, talkContext, primitive,

@@ -120,6 +120,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new ChartData());
         httpServer.addContextHandler(new Prompts());
         httpServer.addContextHandler(new SubmitEvent());
+        httpServer.addContextHandler(new PublicOpinionData());
         httpServer.addContextHandler(new PreInfer());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
@@ -747,6 +748,27 @@ public class Manager implements Tickable, PerformerListener {
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.w(this.getClass(), "#submitEvent - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject handlePublicOpinionData(String token, JSONObject data) {
+        Packet packet = new Packet(AIGCAction.PublicOpinionData.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(this.getClass(), "#handlePublicOpinionData - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#handlePublicOpinionData - Response state is "
+                    + Packet.extractCode(responsePacket));
             return null;
         }
 

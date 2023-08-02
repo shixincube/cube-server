@@ -97,12 +97,28 @@ public class PublicOpinion implements Module {
     }
 
     public void addArticle(String category, String sentiment, Article article) {
-        // TODO
+        if (null == this.storage) {
+            return;
+        }
+
+        this.storage.writeArticle(category, sentiment, article);
+    }
+
+    public void removeArticle(String category, String title) {
+        if (null == this.storage) {
+            return;
+        }
+
+        this.storage.deleteArticle(category, title);
     }
 
     public List<ArticleQuery> makeEvaluatingArticleQueries(String category, Sentiment sentiment,
                                                            int year, int month, int startDate, int endDate) {
         List<ArticleQuery> result = new ArrayList<>();
+        if (null == this.storage) {
+            return result;
+        }
+
         List<Article> articleList = this.storage.readArticles(category, sentiment.code, year, month, startDate, endDate);
         for (Article article : articleList) {
             // 控制内容长度，防止溢出
@@ -264,6 +280,27 @@ public class PublicOpinion implements Module {
             }
 
             return list;
+        }
+
+        public boolean writeArticle(String category, String sentiment, Article article) {
+            return this.storage.executeInsert(this.articleTable, new StorageField[] {
+                    new StorageField("category", category),
+                    new StorageField("sentiment", sentiment),
+                    new StorageField("title", article.title),
+                    new StorageField("content", article.content),
+                    new StorageField("author", article.author),
+                    new StorageField("year", article.year),
+                    new StorageField("month", article.month),
+                    new StorageField("date", article.date),
+            });
+        }
+
+        public boolean deleteArticle(String category, String title) {
+            return this.storage.executeDelete(this.articleTable, new Conditional[] {
+                    Conditional.createEqualTo("category", category),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("title", title)
+            });
         }
     }
 }

@@ -150,7 +150,7 @@ public class AIGCService extends AbstractModule {
     /**
      * 是否访问，仅用于本地测试
      */
-    private boolean useAgent = true;
+    private boolean useAgent = false;
 
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;

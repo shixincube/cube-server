@@ -42,6 +42,11 @@ public enum AIGCStateCode {
     InvalidParameter(5),
 
     /**
+     * 未找到指定数据。
+     */
+    NotFound(6),
+
+    /**
      * 数据结构错误。
      */
     DataStructureError(8),

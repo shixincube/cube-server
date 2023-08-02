@@ -280,7 +280,7 @@ public class AIGCStorage implements Storagable {
             new StorageField("value", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("value_2", LiteralBase.INT, new Constraint[] {
+            new StorageField("value_string", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
     };

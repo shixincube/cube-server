@@ -66,6 +66,15 @@ public class ModuleManager {
         this.moduleList.remove(module);
     }
 
+    public Module getModule(String moduleName) {
+        for (Module module : this.moduleList) {
+            if (module.getName().equals(moduleName)) {
+                return module;
+            }
+        }
+        return null;
+    }
+
     public Module matchModule(List<String> words) {
         Module module = null;
         for (Module mod : this.moduleList) {

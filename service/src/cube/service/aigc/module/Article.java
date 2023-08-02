@@ -26,6 +26,8 @@
 
 package cube.service.aigc.module;
 
+import org.json.JSONObject;
+
 public class Article {
 
     public String title;
@@ -47,5 +49,14 @@ public class Article {
         this.year = year;
         this.month = month;
         this.date = date;
+    }
+
+    public Article(JSONObject json) {
+        this.title = json.getString("title");
+        this.content = json.getString("content");
+        this.author = json.has("author") ? json.getString("author") : "Anonymity";
+        this.year = json.getInt("year");
+        this.month = json.getInt("month");
+        this.date = json.getInt("date");
     }
 }
