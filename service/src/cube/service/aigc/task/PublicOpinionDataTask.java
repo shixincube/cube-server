@@ -100,16 +100,20 @@ public class PublicOpinionDataTask extends ServiceTask {
             return;
         }
 
+        JSONObject responseData = new JSONObject();
+
         PublicOpinion publicOpinion = (PublicOpinion) module;
         if (ACTION_ADD_ARTICLE.equalsIgnoreCase(action)) {
-            publicOpinion.addArticle(category, sentiment, article);
+            long id = publicOpinion.addArticle(category, sentiment, article);
+            responseData.put("id", id);
         }
         else if (ACTION_REMOVE_ARTICLE.equalsIgnoreCase(action)) {
-            publicOpinion.removeArticle(category, title);
+            int total = publicOpinion.removeArticle(category, title);
+            responseData.put("total", total);
         }
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, new JSONObject()));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
         markResponseTime();
     }
 }

@@ -96,20 +96,33 @@ public class PublicOpinion implements Module {
         return this.matchingWords;
     }
 
-    public void addArticle(String category, String sentiment, Article article) {
+    /**
+     *
+     * @param category
+     * @param sentiment
+     * @param article
+     * @return 返回文章的 ID 。
+     */
+    public long addArticle(String category, String sentiment, Article article) {
         if (null == this.storage) {
-            return;
+            return 0;
         }
 
-        this.storage.writeArticle(category, sentiment, article);
+        return this.storage.writeArticle(category, sentiment, article);
     }
 
-    public void removeArticle(String category, String title) {
+    /**
+     *
+     * @param category
+     * @param title
+     * @return 返回删除的记录数量。
+     */
+    public int removeArticle(String category, String title) {
         if (null == this.storage) {
-            return;
+            return 0;
         }
 
-        this.storage.deleteArticle(category, title);
+        return this.storage.deleteArticle(category, title);
     }
 
     public List<ArticleQuery> makeEvaluatingArticleQueries(String category, Sentiment sentiment,
@@ -282,8 +295,8 @@ public class PublicOpinion implements Module {
             return list;
         }
 
-        public boolean writeArticle(String category, String sentiment, Article article) {
-            return this.storage.executeInsert(this.articleTable, new StorageField[] {
+        public synchronized long writeArticle(String category, String sentiment, Article article) {
+            if (this.storage.executeInsert(this.articleTable, new StorageField[] {
                     new StorageField("category", category),
                     new StorageField("sentiment", sentiment),
                     new StorageField("title", article.title),
@@ -292,15 +305,37 @@ public class PublicOpinion implements Module {
                     new StorageField("year", article.year),
                     new StorageField("month", article.month),
                     new StorageField("date", article.date),
-            });
+            })) {
+                List<StorageField[]> result = this.storage.executeQuery(
+                        String.format("SELECT MAX(id) FROM `%s`", this.articleTable));
+                if (result.isEmpty()) {
+                    return -1;
+                }
+
+                return result.get(0)[0].getLong();
+            }
+            else {
+                return -1;
+            }
         }
 
-        public boolean deleteArticle(String category, String title) {
-            return this.storage.executeDelete(this.articleTable, new Conditional[] {
+        public synchronized int deleteArticle(String category, String title) {
+            List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(id) FROM `"
+                    + this.articleTable + "` WHERE `category`='" + category + "' AND `title`="
+                    + "'" + title + "'");
+            if (result.isEmpty()) {
+                return 0;
+            }
+
+            int num = result.get(0)[0].getInt();
+
+            this.storage.executeDelete(this.articleTable, new Conditional[] {
                     Conditional.createEqualTo("category", category),
                     Conditional.createAnd(),
                     Conditional.createEqualTo("title", title)
             });
+
+            return num;
         }
     }
 }
