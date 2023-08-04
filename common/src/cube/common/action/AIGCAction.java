@@ -192,6 +192,11 @@ public enum AIGCAction {
     PublicOpinionData("publicOpinionData"),
 
     /**
+     * 通过功能模块进行推理。
+     */
+    InferByModule("inferByModule"),
+
+    /**
      * 预推理。
      */
     PreInfer("preInfer"),

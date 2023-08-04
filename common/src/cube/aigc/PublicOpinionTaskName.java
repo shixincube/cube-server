@@ -24,42 +24,27 @@
  * SOFTWARE.
  */
 
-package cube.service.aigc.module;
+package cube.aigc;
 
-import cube.aigc.Sentiment;
-import org.json.JSONObject;
+public enum PublicOpinionTaskName {
 
-public class Article {
+    ArticleSentimentSummary("ArticleSentimentSummary")
 
-    public String title;
+    ;
 
-    public String content;
+    public final String name;
 
-    public String author;
-
-    public int year;
-
-    public int month;
-
-    public int date;
-
-    public Sentiment sentiment;
-
-    public Article(String title, String content, String author, int year, int month, int date) {
-        this.title = title;
-        this.content = content;
-        this.author = author;
-        this.year = year;
-        this.month = month;
-        this.date = date;
+    PublicOpinionTaskName(String name) {
+        this.name = name;
     }
 
-    public Article(JSONObject json) {
-        this.title = json.getString("title");
-        this.content = json.getString("content");
-        this.author = json.has("author") ? json.getString("author") : "Anonymity";
-        this.year = json.getInt("year");
-        this.month = json.getInt("month");
-        this.date = json.getInt("date");
+    public static PublicOpinionTaskName parse(String name) {
+        for (PublicOpinionTaskName potn : PublicOpinionTaskName.values()) {
+            if (potn.name.equals(name)) {
+                return potn;
+            }
+        }
+
+        return null;
     }
 }

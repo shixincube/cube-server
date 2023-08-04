@@ -125,6 +125,46 @@ public class PublicOpinion implements Module {
         return this.storage.deleteArticle(category, title);
     }
 
+    /**
+     * 生成评估文章的 Query 。
+     *
+     * @param category
+     * @param title
+     * @return
+     */
+    public ArticleQuery makeEvaluatingArticleQueries(String category, String title) {
+        if (null == this.storage) {
+            return null;
+        }
+
+        Article article = this.storage.readArticle(category, title);
+        if (null == article.sentiment) {
+            Logger.w(this.getClass(),
+                    "#makeEvaluatingArticleQueries - Article do not have sentiment value : " + title);
+            return null;
+        }
+
+        List<String> contentList = this.composeArticleContent(article);
+        String content = contentList.get(0);
+        String query = (article.sentiment == Sentiment.Positive) ?
+                String.format(PositiveQueryFormat, content, category) :
+                String.format(NegativeQueryFormat, content, category);
+
+        ArticleQuery articleQuery = new ArticleQuery(article, article.sentiment, query);
+        return articleQuery;
+    }
+
+    /**
+     * 生成评估文章的 Query 列表。
+     *
+     * @param category
+     * @param sentiment
+     * @param year
+     * @param month
+     * @param startDate
+     * @param endDate
+     * @return
+     */
     public List<ArticleQuery> makeEvaluatingArticleQueries(String category, Sentiment sentiment,
                                                            int year, int month, int startDate, int endDate) {
         List<ArticleQuery> result = new ArrayList<>();
@@ -186,6 +226,10 @@ public class PublicOpinion implements Module {
         }
 
         public String output() {
+            if (null == this.answer) {
+                return null;
+            }
+
             return String.format(ArticleQueryOutputFormat, this.article.title, this.answer);
         }
     }
@@ -263,6 +307,29 @@ public class PublicOpinion implements Module {
             }
         }
 
+        public Article readArticle(String category, String title) {
+            List<StorageField[]> result = this.storage.executeQuery(this.articleTable, this.articleFields,
+                    new Conditional[] {
+                            Conditional.createEqualTo("category", category),
+                            Conditional.createAnd(),
+                            Conditional.createEqualTo("title", title),
+                    });
+
+            if (result.isEmpty()) {
+                return null;
+            }
+
+            StorageField[] fields = result.get(result.size() - 1);
+            Map<String, StorageField> data = StorageFields.get(fields);
+            Article article = new Article(data.get("title").getString(), data.get("content").getString(),
+                    data.get("author").getString(),
+                    data.get("year").getInt(),
+                    data.get("month").getInt(),
+                    data.get("date").getInt());
+            article.sentiment = Sentiment.parse(data.get("sentiment").getString());
+            return article;
+        }
+
         public List<Article> readArticles(String category, String sentiment, int year, int month,
                                           int startDate, int endDate) {
             List<Article> list = new ArrayList<>();
@@ -289,6 +356,7 @@ public class PublicOpinion implements Module {
                         data.get("year").getInt(),
                         data.get("month").getInt(),
                         data.get("date").getInt());
+                article.sentiment = Sentiment.parse(data.get("sentiment").getString());
                 list.add(article);
             }
 

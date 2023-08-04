@@ -24,42 +24,25 @@
  * SOFTWARE.
  */
 
-package cube.service.aigc.module;
+package cube.service.aigc.task;
 
-import cube.aigc.Sentiment;
-import org.json.JSONObject;
+import cell.core.cellet.Cellet;
+import cell.core.talk.Primitive;
+import cell.core.talk.TalkContext;
+import cube.benchmark.ResponseTime;
+import cube.service.ServiceTask;
 
-public class Article {
+/**
+ * 通过功能模组进行推理。
+ */
+public class InferByModuleTask extends ServiceTask {
 
-    public String title;
-
-    public String content;
-
-    public String author;
-
-    public int year;
-
-    public int month;
-
-    public int date;
-
-    public Sentiment sentiment;
-
-    public Article(String title, String content, String author, int year, int month, int date) {
-        this.title = title;
-        this.content = content;
-        this.author = author;
-        this.year = year;
-        this.month = month;
-        this.date = date;
+    public InferByModuleTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
     }
 
-    public Article(JSONObject json) {
-        this.title = json.getString("title");
-        this.content = json.getString("content");
-        this.author = json.has("author") ? json.getString("author") : "Anonymity";
-        this.year = json.getInt("year");
-        this.month = json.getInt("month");
-        this.date = json.getInt("date");
+    @Override
+    public void run() {
+
     }
 }

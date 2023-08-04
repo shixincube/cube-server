@@ -32,6 +32,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
+import cube.aigc.PublicOpinionTaskName;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
 import cube.auth.AuthToken;
@@ -53,6 +54,8 @@ import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.*;
+import cube.service.aigc.module.ModuleManager;
+import cube.service.aigc.module.PublicOpinion;
 import cube.service.aigc.module.Stage;
 import cube.service.aigc.module.StageListener;
 import cube.service.aigc.plugin.InjectTokenPlugin;
@@ -579,14 +582,112 @@ public class AIGCService extends AbstractModule {
     /**
      * 预推理，以复合上下文形式进行描述。
      *
-     * @param content
      * @param token
+     * @param content
      * @return
      */
-    public ComplexContext preInfer(String content, String token) {
+    public ComplexContext preInfer(String token, String content) {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(token);
         return this.recognizeContext(content, authToken);
+    }
+
+    /**
+     * 使用模块进行推理。
+     *
+     * @param token
+     * @param moduleName
+     * @param params
+     * @return
+     */
+    public String inferByModule(String token, String moduleName, JSONObject params) {
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthToken authToken = authService.getToken(token);
+        if (null == authToken) {
+            Logger.w(this.getClass(), "#inferByModule - Auth token error: " + token);
+            return null;
+        }
+
+        cube.service.aigc.module.Module module = ModuleManager.getInstance().getModule(moduleName);
+        if (null == module) {
+            Logger.w(this.getClass(), "#inferByModule - Module is not find: " + moduleName);
+            return null;
+        }
+
+        if (module instanceof PublicOpinion) {
+            if (!params.has("task")) {
+                Logger.d(this.getClass(), "#inferByModule - PublicOpinion module param error");
+                return null;
+            }
+
+            String taskName = params.getString("task");
+            PublicOpinionTaskName task = PublicOpinionTaskName.parse(taskName);
+            if (null == task) {
+                Logger.d(this.getClass(), "#inferByModule - PublicOpinion task is unknown: " + taskName);
+                return null;
+            }
+
+            if (task == PublicOpinionTaskName.ArticleSentimentSummary) {
+                if (!params.has("category") || !params.has("title")) {
+                    Logger.d(this.getClass(), "#inferByModule - PublicOpinion module param error");
+                    return null;
+                }
+
+                String category = params.getString("category");
+                String title = params.getString("title");
+
+                PublicOpinion po = (PublicOpinion) module;
+                PublicOpinion.ArticleQuery articleQuery = po.makeEvaluatingArticleQueries(category, title);
+                if (null == articleQuery) {
+                    Logger.w(this.getClass(), "#inferByModule - Make article query failed: " + category);
+                    return null;
+                }
+
+                AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
+                if (null == unit) {
+                    Logger.w(this.getClass(), "#inferByModule - Unit error");
+                    return null;
+                }
+
+                AIGCChannel channel = this.getChannel(authToken);
+                if (null == channel) {
+                    channel = this.createChannel(token, "User-" + authToken.getContactId(),
+                            Utils.randomString(16));
+                }
+
+                StringBuilder result = new StringBuilder();
+
+                this.singleChat(channel, unit, articleQuery.query, new ChatListener() {
+                    @Override
+                    public void onChat(AIGCChannel channel, AIGCChatRecord record) {
+                        articleQuery.answer = record.answer.replaceAll(",", "，");
+                        synchronized (result) {
+                            result.append(articleQuery.output());
+                            result.notify();
+                        }
+                    }
+
+                    @Override
+                    public void onFailed(AIGCChannel channel) {
+                        synchronized (result) {
+                            result.notify();
+                        }
+                    }
+                });
+
+                synchronized (result) {
+                    try {
+                        result.wait(2 * 60 * 1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                return result.toString();
+            }
+        }
+
+        return null;
     }
 
     /**

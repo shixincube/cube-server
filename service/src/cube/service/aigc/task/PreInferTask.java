@@ -71,7 +71,7 @@ public class PreInferTask extends ServiceTask {
         String content = packet.data.getString("content");
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        ComplexContext context = service.preInfer(content, token);
+        ComplexContext context = service.preInfer(token, content);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, context.toJSON()));

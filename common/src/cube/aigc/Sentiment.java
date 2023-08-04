@@ -43,4 +43,14 @@ public enum Sentiment {
     Sentiment(String code) {
         this.code = code;
     }
+
+    public static Sentiment parse(String code) {
+        for (Sentiment sentiment : Sentiment.values()) {
+            if (sentiment.code.equals(code)) {
+                return sentiment;
+            }
+        }
+
+        return null;
+    }
 }
