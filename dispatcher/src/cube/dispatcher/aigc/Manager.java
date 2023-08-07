@@ -121,6 +121,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new Prompts());
         httpServer.addContextHandler(new SubmitEvent());
         httpServer.addContextHandler(new PublicOpinionData());
+        httpServer.addContextHandler(new InferByModule());
         httpServer.addContextHandler(new PreInfer());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
@@ -768,6 +769,30 @@ public class Manager implements Tickable, PerformerListener {
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.w(this.getClass(), "#handlePublicOpinionData - Response state is "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject inferByModule(String token, String moduleName, JSONObject param) {
+        JSONObject data = new JSONObject();
+        data.put("module", moduleName);
+        data.put("param", param);
+        Packet packet = new Packet(AIGCAction.InferByModule.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(this.getClass(), "#inferByModule - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#inferByModule - Response state is "
                     + Packet.extractCode(responsePacket));
             return null;
         }

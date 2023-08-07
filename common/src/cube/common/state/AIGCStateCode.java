@@ -67,6 +67,11 @@ public enum AIGCStateCode {
     InconsistentToken(21),
 
     /**
+     * 没有令牌。
+     */
+    NoToken(22),
+
+    /**
      * 不被接受的非法操作。
      */
     IllegalOperation(25),

@@ -26,9 +26,22 @@
 
 package cube.aigc;
 
+/**
+ * 舆情任务名称。
+ */
 public enum PublicOpinionTaskName {
 
-    ArticleSentimentSummary("ArticleSentimentSummary")
+    /**
+     * 文章情感概述。
+     */
+    ArticleSentimentSummary("ArticleSentimentSummary"),
+
+    /**
+     * 文章情感分类。
+     */
+    ArticleSentimentClassification("ArticleSentimentClassification"),
+
+    Unknown("Unknown")
 
     ;
 

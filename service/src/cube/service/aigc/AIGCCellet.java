@@ -237,6 +237,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new SubmitEventTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.InferByModule.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new InferByModuleTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.PreInfer.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new PreInferTask(this, talkContext, primitive,

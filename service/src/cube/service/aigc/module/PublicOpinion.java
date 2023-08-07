@@ -58,6 +58,9 @@ public class PublicOpinion implements Module {
     private final static String NegativeQueryFormat = "已知信息：%s\n\n" +
             "根据上述已知信息，请回答：关于%s的负面描述内容有哪些？";
 
+    private final static String ArticleSentimentClassificationFormat = "已知内容：%s\n\n" +
+            "根据上述已知内容，请分别说明关于%s的正面描述内容和%s的负面描述内容，如果没有正面或者负面描述则回答无相关描述。";
+
     private final static String ArticleQueryOutputFormat = "在《%s》这篇文章里，%s";
 
     private int maxArticleLength = 900;
@@ -132,7 +135,7 @@ public class PublicOpinion implements Module {
      * @param title
      * @return
      */
-    public ArticleQuery makeEvaluatingArticleQueries(String category, String title) {
+    public ArticleQuery makeEvaluatingArticleQuery(String category, String title) {
         if (null == this.storage) {
             return null;
         }
@@ -187,6 +190,24 @@ public class PublicOpinion implements Module {
         }
 
         return result;
+    }
+
+    public ArticleQuery makeArticleClassificationQuery(String category, String title) {
+        if (null == this.storage) {
+            return null;
+        }
+
+        Article article = this.storage.readArticle(category, title);
+        if (null == article.sentiment) {
+            Logger.w(this.getClass(),
+                    "#makeArticleClassificationQuery - Article do not have sentiment value : " + title);
+            return null;
+        }
+
+        List<String> contentList = this.composeArticleContent(article);
+        String content = contentList.get(0);
+        String query = String.format(ArticleSentimentClassificationFormat, content, category, category);
+        return new ArticleQuery(article, article.sentiment, query);
     }
 
     private List<String> composeArticleContent(Article article) {

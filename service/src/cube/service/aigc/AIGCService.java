@@ -153,7 +153,7 @@ public class AIGCService extends AbstractModule {
     /**
      * 是否访问，仅用于本地测试
      */
-    private boolean useAgent = false;
+    private boolean useAgent = true;
 
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
@@ -627,7 +627,8 @@ public class AIGCService extends AbstractModule {
                 return null;
             }
 
-            if (task == PublicOpinionTaskName.ArticleSentimentSummary) {
+            if (task == PublicOpinionTaskName.ArticleSentimentSummary ||
+                task == PublicOpinionTaskName.ArticleSentimentClassification) {
                 if (!params.has("category") || !params.has("title")) {
                     Logger.d(this.getClass(), "#inferByModule - PublicOpinion module param error");
                     return null;
@@ -637,13 +638,21 @@ public class AIGCService extends AbstractModule {
                 String title = params.getString("title");
 
                 PublicOpinion po = (PublicOpinion) module;
-                PublicOpinion.ArticleQuery articleQuery = po.makeEvaluatingArticleQueries(category, title);
-                if (null == articleQuery) {
+
+                MutableArticleQuery maq = new MutableArticleQuery();
+                if (PublicOpinionTaskName.ArticleSentimentSummary == task) {
+                    maq.articleQuery = po.makeEvaluatingArticleQuery(category, title);
+                }
+                else if (PublicOpinionTaskName.ArticleSentimentClassification == task) {
+                    maq.articleQuery = po.makeArticleClassificationQuery(category, title);
+                }
+                if (null == maq.articleQuery) {
                     Logger.w(this.getClass(), "#inferByModule - Make article query failed: " + category);
                     return null;
                 }
 
-                AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
+                AIGCUnit unit = (this.useAgent) ? Agent.getInstance().getUnit()
+                        :  this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
                 if (null == unit) {
                     Logger.w(this.getClass(), "#inferByModule - Unit error");
                     return null;
@@ -657,12 +666,12 @@ public class AIGCService extends AbstractModule {
 
                 StringBuilder result = new StringBuilder();
 
-                this.singleChat(channel, unit, articleQuery.query, new ChatListener() {
+                this.singleChat(channel, unit, maq.articleQuery.query, new ChatListener() {
                     @Override
                     public void onChat(AIGCChannel channel, AIGCChatRecord record) {
-                        articleQuery.answer = record.answer.replaceAll(",", "，");
+                        maq.articleQuery.answer = record.answer.replaceAll(",", "，");
                         synchronized (result) {
-                            result.append(articleQuery.output());
+                            result.append(maq.articleQuery.output());
                             result.notify();
                         }
                     }
@@ -2163,6 +2172,15 @@ public class AIGCService extends AbstractModule {
                     fileStorage.notify(deleteFile);
                 }
             }
+        }
+    }
+
+
+    protected class MutableArticleQuery {
+
+        public PublicOpinion.ArticleQuery articleQuery;
+
+        public MutableArticleQuery() {
         }
     }
 }
