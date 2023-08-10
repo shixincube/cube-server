@@ -29,6 +29,7 @@ package cube.service.aigc.module;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.Sentiment;
+import cube.aigc.po.Article;
 import cube.common.Storagable;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -53,17 +54,20 @@ public class PublicOpinion implements Module {
     private final String name = "PublicOpinion";
 
     private final static String PositiveQueryFormat = "已知信息：%s\n\n" +
-            "根据上述已知信息，请回答：关于%s的正面描述内容有哪些？";
+            "根据上述已知信息，请回答：关于%s的正面描述内容有哪些？如果没有正面描述则回答没有正面描述。";
 
     private final static String NegativeQueryFormat = "已知信息：%s\n\n" +
-            "根据上述已知信息，请回答：关于%s的负面描述内容有哪些？";
+            "根据上述已知信息，请回答：关于%s的负面描述内容有哪些？如果没有负面描述则回答没有负面描述。";
+
+    private final static String OtherQueryFormat = "已知信息：%s\n\n" +
+            "根据上述已知信息，请回答：关于%s的描述内容有哪些？";
 
     private final static String ArticleSentimentClassificationFormat = "已知内容：%s\n\n" +
-            "根据上述已知内容，请分别说明关于%s的正面描述内容和%s的负面描述内容，如果没有正面或者负面描述则回答无相关描述。";
+            "根据上述已知内容，请分别说明关于%s的正面描述内容和%s的负面描述内容，如果没有正面描述或者负面描述则回答无相关描述。";
 
     private final static String ArticleQueryOutputFormat = "在《%s》这篇文章里，%s";
 
-    private int maxArticleLength = 900;
+    private int maxArticleLength = 1000;
 
     private List<String> matchingWords;
 
@@ -128,32 +132,49 @@ public class PublicOpinion implements Module {
         return this.storage.deleteArticle(category, title);
     }
 
+    public List<Article> getArticleList(String category) {
+        if (null == this.storage) {
+            return null;
+        }
+
+        return this.storage.readArticles(category);
+    }
+
     /**
      * 生成评估文章的 Query 。
      *
      * @param category
      * @param title
+     * @param sentiment
      * @return
      */
-    public ArticleQuery makeEvaluatingArticleQuery(String category, String title) {
+    public ArticleQuery makeEvaluatingArticleQuery(String category, String title, Sentiment sentiment) {
         if (null == this.storage) {
             return null;
         }
 
+        Sentiment articleSentiment = sentiment;
+
         Article article = this.storage.readArticle(category, title);
-        if (null == article.sentiment) {
-            Logger.w(this.getClass(),
-                    "#makeEvaluatingArticleQueries - Article do not have sentiment value : " + title);
-            return null;
+
+        if (null == articleSentiment) {
+            articleSentiment = article.sentiment;
         }
 
         List<String> contentList = this.composeArticleContent(article);
         String content = contentList.get(0);
-        String query = (article.sentiment == Sentiment.Positive) ?
-                String.format(PositiveQueryFormat, content, category) :
-                String.format(NegativeQueryFormat, content, category);
+        String query = null;
+        if (articleSentiment == Sentiment.Positive) {
+            query = String.format(PositiveQueryFormat, content, category);
+        }
+        else if (articleSentiment == Sentiment.Negative) {
+            query = String.format(NegativeQueryFormat, content, category);
+        }
+        else {
+            query = String.format(OtherQueryFormat, content, category);
+        }
 
-        ArticleQuery articleQuery = new ArticleQuery(article, article.sentiment, query);
+        ArticleQuery articleQuery = new ArticleQuery(article, articleSentiment, query);
         return articleQuery;
     }
 
@@ -347,8 +368,30 @@ public class PublicOpinion implements Module {
                     data.get("year").getInt(),
                     data.get("month").getInt(),
                     data.get("date").getInt());
+            article.id = data.get("id").getLong();
             article.sentiment = Sentiment.parse(data.get("sentiment").getString());
             return article;
+        }
+
+        public List<Article> readArticles(String category) {
+            List<Article> list = new ArrayList<>();
+            List<StorageField[]> result = this.storage.executeQuery(this.articleTable, this.articleFields, new Conditional[]{
+                    Conditional.createEqualTo("category", category)
+            });
+
+            for (StorageField[] fields : result) {
+                Map<String, StorageField> data = StorageFields.get(fields);
+                Article article = new Article(data.get("title").getString(), data.get("content").getString(),
+                        data.get("author").getString(),
+                        data.get("year").getInt(),
+                        data.get("month").getInt(),
+                        data.get("date").getInt());
+                article.id = data.get("id").getLong();
+                article.sentiment = Sentiment.parse(data.get("sentiment").getString());
+                list.add(article);
+            }
+
+            return list;
         }
 
         public List<Article> readArticles(String category, String sentiment, int year, int month,

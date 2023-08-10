@@ -31,11 +31,31 @@ package cube.aigc;
  */
 public enum Sentiment {
 
+    /**
+     * 正面的。
+     */
     Positive("positive"),
 
+    /**
+     * 负面的。
+     */
     Negative("negative"),
 
-    Neutral("neutral")
+    /**
+     * 中立的。
+     */
+    Neutral("neutral"),
+
+    /**
+     * 正负面均含。
+     */
+    Both("both"),
+
+    /**
+     * 未定义的。
+     */
+    Undefined("undefined")
+
     ;
 
     public final String code;
@@ -51,6 +71,6 @@ public enum Sentiment {
             }
         }
 
-        return null;
+        return Sentiment.Undefined;
     }
 }

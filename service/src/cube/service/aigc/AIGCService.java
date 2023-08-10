@@ -33,6 +33,7 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
 import cube.aigc.PublicOpinionTaskName;
+import cube.aigc.Sentiment;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
 import cube.auth.AuthToken;
@@ -153,7 +154,7 @@ public class AIGCService extends AbstractModule {
     /**
      * 是否访问，仅用于本地测试
      */
-    private boolean useAgent = true;
+    private boolean useAgent = false;
 
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
@@ -636,12 +637,15 @@ public class AIGCService extends AbstractModule {
 
                 String category = params.getString("category");
                 String title = params.getString("title");
+                String sentiment = params.has("sentiment") ?
+                        params.getString("sentiment") : null;
 
                 PublicOpinion po = (PublicOpinion) module;
 
                 MutableArticleQuery maq = new MutableArticleQuery();
                 if (PublicOpinionTaskName.ArticleSentimentSummary == task) {
-                    maq.articleQuery = po.makeEvaluatingArticleQuery(category, title);
+                    maq.articleQuery = po.makeEvaluatingArticleQuery(category, title,
+                            (null != sentiment) ? Sentiment.parse(sentiment) : null);
                 }
                 else if (PublicOpinionTaskName.ArticleSentimentClassification == task) {
                     maq.articleQuery = po.makeArticleClassificationQuery(category, title);

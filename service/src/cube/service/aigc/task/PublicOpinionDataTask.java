@@ -30,16 +30,20 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.aigc.Sentiment;
+import cube.aigc.po.Article;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
-import cube.service.aigc.module.Article;
 import cube.service.aigc.module.Module;
 import cube.service.aigc.module.ModuleManager;
 import cube.service.aigc.module.PublicOpinion;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  * 舆情模块数据任务。
@@ -49,6 +53,8 @@ public class PublicOpinionDataTask extends ServiceTask {
     public final static String ACTION_ADD_ARTICLE = "addArticle";
 
     public final static String ACTION_REMOVE_ARTICLE = "removeArticle";
+
+    public final static String ACTION_GET_ARTICLES = "getArticles";
 
     public PublicOpinionDataTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
@@ -77,13 +83,17 @@ public class PublicOpinionDataTask extends ServiceTask {
 
             if (ACTION_ADD_ARTICLE.equalsIgnoreCase(action)) {
                 category = packet.data.getString("category");
-                sentiment = packet.data.getString("sentiment");
+                sentiment = packet.data.has("sentiment") ?
+                        packet.data.getString("sentiment") : Sentiment.Undefined.code;
                 JSONObject articleJson = packet.data.getJSONObject("article");
                 article = new Article(articleJson);
             }
             else if (ACTION_REMOVE_ARTICLE.equalsIgnoreCase(action)) {
                 category = packet.data.getString("category");
                 title = packet.data.getString("title");
+            }
+            else if (ACTION_GET_ARTICLES.equalsIgnoreCase(action)) {
+                category = packet.data.getString("category");
             }
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
@@ -110,6 +120,16 @@ public class PublicOpinionDataTask extends ServiceTask {
         else if (ACTION_REMOVE_ARTICLE.equalsIgnoreCase(action)) {
             int total = publicOpinion.removeArticle(category, title);
             responseData.put("total", total);
+        }
+        else if (ACTION_GET_ARTICLES.equalsIgnoreCase(action)) {
+            List<Article> list = publicOpinion.getArticleList(category);
+            JSONArray array = new JSONArray();
+            for (Article art : list) {
+                array.put(art.toCompactJSON());
+            }
+
+            responseData.put("total", array.length());
+            responseData.put("list", array);
         }
 
         this.cellet.speak(this.talkContext,
