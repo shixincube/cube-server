@@ -266,6 +266,26 @@ public class KnowledgeBase {
         return deactivatedDoc;
     }
 
+    public void appendKnowledgeArticle(KnowledgeArticle article) {
+
+    }
+
+    public void removeKnowledgeArticle(long id) {
+
+    }
+
+    /**
+     * 为指定的联系人激活知识库文章。
+     *
+     * @param contactId
+     * @param articleIdList
+     * @return
+     */
+    public KnowledgeArticle activateKnowledgeArticle(long contactId, List<Long> articleIdList) {
+
+        return null;
+    }
+
     public boolean performKnowledgeQA(String channelCode, String unitName, String query,
                                       KnowledgeQAListener listener) {
         Logger.d(this.getClass(), "#performKnowledgeQA - Channel: " + channelCode +

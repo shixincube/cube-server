@@ -146,6 +146,9 @@ public enum AIGCAction {
      */
     DeactivateKnowledgeDoc("deactivateKnowledgeDoc"),
 
+    ListKnowledgeArticles(""),
+    
+
     /**
      * 生成提示词。
      */

@@ -45,10 +45,7 @@ import cube.storage.StorageType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * AIGC 存储器。
@@ -68,6 +65,8 @@ public class AIGCStorage implements Storagable {
     private final String knowledgeProfileTable = "aigc_knowledge_profile";
 
     private final String knowledgeDocTable = "aigc_knowledge_doc";
+
+    private final String knowledgeArticleTable = "aigc_knowledge_article";
 
     private final String chartReactionTable = "aigc_chart_reaction";
 
@@ -202,6 +201,36 @@ public class AIGCStorage implements Storagable {
                     Constraint.DEFAULT_1
             }),
             new StorageField("num_segments", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] knowledgeArticleFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("category", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("title", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("content", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("author", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("year", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("month", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("date", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             })
     };
@@ -369,6 +398,13 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.knowledgeDocTable, this.knowledgeDocFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.knowledgeDocTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.knowledgeArticleTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.knowledgeArticleTable, this.knowledgeArticleFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.knowledgeArticleTable + "' successfully");
             }
         }
 
@@ -644,6 +680,79 @@ public class AIGCStorage implements Storagable {
         return this.storage.executeDelete(this.knowledgeDocTable, new Conditional[] {
                 Conditional.createEqualTo("file_code", fileCode)
         });
+    }
+
+    public void writeKnowledgeArticle(KnowledgeArticle article) {
+        this.storage.executeInsert(this.knowledgeArticleTable, new StorageField[] {
+                new StorageField("id", article.getId().longValue()),
+                new StorageField("category", article.category),
+                new StorageField("title", article.title),
+                new StorageField("content", article.content),
+                new StorageField("author", article.author),
+                new StorageField("year", article.year),
+                new StorageField("month", article.month),
+                new StorageField("date", article.date),
+                new StorageField("timestamp", article.getTimestamp())
+        });
+    }
+
+    public List<KnowledgeArticle> readKnowledgeArticles(String category) {
+        List<KnowledgeArticle> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("category", category)
+        });
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(),
+                    data.get("category").getString(), data.get("title").getString(),
+                    data.get("content").getString(), data.get("author").getString(),
+                    data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
+                    data.get("timestamp").getLong());
+            list.add(article);
+        }
+
+        return list;
+    }
+
+    public List<KnowledgeArticle> readKnowledgeArticles(String category, int startYear, int startMonth, int startDate) {
+        List<KnowledgeArticle> list = new ArrayList<>();
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(startYear, startMonth - 1, startDate);
+        long timestamp = calendar.getTimeInMillis();
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("category", category),
+                        Conditional.createAnd(),
+                        Conditional.createGreaterThanEqual(new StorageField("timestamp", timestamp))
+                });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(),
+                    data.get("category").getString(), data.get("title").getString(),
+                    data.get("content").getString(), data.get("author").getString(),
+                    data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
+                    data.get("timestamp").getLong());
+            list.add(article);
+        }
+
+        return list;
+    }
+
+    public void deleteKnowledgeArticles(List<Long> idList) {
+        List<Conditional> conditionals = new ArrayList<>();
+        for (Long id : idList) {
+            Conditional conditional = Conditional.createEqualTo("id", (long) id.longValue());
+            conditionals.add(conditional);
+            conditionals.add(Conditional.createOr());
+        }
+        conditionals.remove(conditionals.size() - 1);
+
+        this.storage.executeDelete(this.knowledgeArticleTable,
+                conditionals.toArray(new Conditional[0]));
     }
 
     public List<ChartReaction> readChartReactions(String primary, String secondary, String tertiary, String quaternary) {
@@ -1152,21 +1261,25 @@ public class AIGCStorage implements Storagable {
     }
 
     private void resetDefaultConfig() {
-        // 支持中英双语的对话语言模型，具有 62 亿参数。针对中文问答和对话进行了优化。经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的优化。
+        // 支持中英双语的对话语言模型，具有 62 亿参数。针对中文问答和对话进行了优化。
+        // 经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的优化。
         JSONObject parameter = new JSONObject();
         parameter.put("unit", "Chat");
         ModelConfig baizeNLG = new ModelConfig("BaizeNLG",
                 "适合大多数场景的通用模型",
                 "http://127.0.0.1:7010/aigc/chat/", parameter);
 
-        // 支持中英双语的功能型对话语言大模型。以轻量化实现高质量效果的模型。在1000亿 Token 中文语料上预训练，累计学习1.5万亿中文 Token，并且在数百种任务上进行 Prompt 任务式训练。针对理解类任务，如分类、情感分析、抽取等，可以自定义标签体系；针对多种生成任务，可以进行采样自由生成。
+        // 支持中英双语的功能型对话语言大模型。以轻量化实现高质量效果的模型。在1000亿 Token 中文语料上预训练，累计学习1.5万亿中文 Token，
+        // 并且在数百种任务上进行 Prompt 任务式训练。针对理解类任务，如分类、情感分析、抽取等，可以自定义标签体系；针对多种生成任务，
+        // 可以进行采样自由生成。
         parameter = new JSONObject();
         parameter.put("unit", "ChatT5G");
         ModelConfig baizeX = new ModelConfig("BaizeX",
                 "适合一般场景且速度较快的通用模型",
                 "http://127.0.0.1:7010/aigc/chat/", parameter);
 
-        // 支持中英双语和多种插件的开源对话语言模型。模型具有 160 亿参数。在约七千亿中英文以及代码单词上预训练得到，后续经过对话指令微调、插件增强学习和人类偏好训练具备多轮对话能力及使用多种插件的能力。
+        // 支持中英双语和多种插件的开源对话语言模型。模型具有 160 亿参数。在约七千亿中英文以及代码单词上预训练得到，后续经过对话指令微调、
+        // 插件增强学习和人类偏好训练具备多轮对话能力及使用多种插件的能力。
         parameter = new JSONObject();
         ModelConfig baizeNEXT = new ModelConfig("BaizeNEXT",
                 "适合谨慎问答场景的大模型（测试版）",
