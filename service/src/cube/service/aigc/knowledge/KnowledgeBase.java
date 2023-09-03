@@ -45,6 +45,7 @@ import cube.service.aigc.listener.KnowledgeQAListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -266,24 +267,88 @@ public class KnowledgeBase {
         return deactivatedDoc;
     }
 
-    public void appendKnowledgeArticle(KnowledgeArticle article) {
-
+    public List<KnowledgeArticle> getKnowledgeArticle(String category, int startYear, int startMonth, int startDate) {
+        List<KnowledgeArticle> list = this.storage.readKnowledgeArticles(category,
+                startYear, startMonth, startDate);
+        return list;
     }
 
-    public void removeKnowledgeArticle(long id) {
+    public KnowledgeArticle appendKnowledgeArticle(KnowledgeArticle article) {
+        if (this.storage.writeKnowledgeArticle(article)) {
+            return article;
+        }
 
+        return null;
+    }
+
+    public void removeKnowledgeArticles(List<Long> idList) {
+        this.storage.deleteKnowledgeArticles(idList);
     }
 
     /**
      * 为指定的联系人激活知识库文章。
      *
-     * @param contactId
      * @param articleIdList
      * @return
      */
-    public KnowledgeArticle activateKnowledgeArticle(long contactId, List<Long> articleIdList) {
+    public List<KnowledgeArticle> activateKnowledgeArticles(List<Long> articleIdList) {
+        List<KnowledgeArticle> articleList = this.storage.readKnowledgeArticles(articleIdList);
 
-        return null;
+        for (KnowledgeArticle article : articleList) {
+            JSONObject payload = new JSONObject();
+            payload.put("article", article.toJSON());
+            payload.put("contactId", this.authToken.getContactId());
+            Packet packet = new Packet(AIGCAction.ActivateKnowledgeArticle.name, payload);
+            ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
+                    packet.toDialect(), 3 * 60 * 1000);
+            if (null == dialect) {
+                Logger.w(this.getClass(),"#activateKnowledgeArticles - Request unit error: "
+                        + this.knowledgeRelation.unit.getCapability().getName());
+                continue;
+            }
+
+            Packet response = new Packet(dialect);
+            int state = Packet.extractCode(response);
+            if (state != AIGCStateCode.Ok.code) {
+                Logger.w(this.getClass(), "#activateKnowledgeArticles - Unit return error: " + state);
+                continue;
+            }
+
+            KnowledgeArticle activated = new KnowledgeArticle(Packet.extractDataPayload(response));
+            activated.content = article.content;
+            this.knowledgeRelation.appendArticle(activated);
+        }
+
+        return this.knowledgeRelation.articleList;
+    }
+
+    public List<KnowledgeArticle> deactivateKnowledgeArticles() {
+        List<KnowledgeArticle> result = new ArrayList<>();
+
+        JSONObject payload = new JSONObject();
+        payload.put("contactId", this.authToken.getContactId());
+        Packet packet = new Packet(AIGCAction.DeactivateKnowledgeArticle.name, payload);
+        ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
+                packet.toDialect(), 3 * 60 * 1000);
+        if (null == dialect) {
+            Logger.w(this.getClass(),"#deactivateKnowledgeArticles - Request unit error: "
+                    + this.knowledgeRelation.unit.getCapability().getName());
+            return result;
+        }
+
+        Packet response = new Packet(dialect);
+        int state = Packet.extractCode(response);
+        if (state != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#deactivateKnowledgeArticles - Unit return error: " + state);
+            return result;
+        }
+
+        if (null != this.knowledgeRelation.articleList) {
+            result.addAll(this.knowledgeRelation.articleList);
+        }
+
+        this.knowledgeRelation.clearArticles();
+        return result;
     }
 
     public boolean performKnowledgeQA(String channelCode, String unitName, String query,
@@ -434,6 +499,8 @@ public class KnowledgeBase {
 
         protected List<KnowledgeDoc> docList;
 
+        protected List<KnowledgeArticle> articleList;
+
         protected AIGCUnit unit;
 
         public KnowledgeRelation() {
@@ -490,6 +557,38 @@ public class KnowledgeBase {
                     break;
                 }
             }
+        }
+
+        public void appendArticle(KnowledgeArticle article) {
+            if (null == this.articleList) {
+                this.articleList = new ArrayList<>();
+            }
+
+            if (!this.articleList.contains(article)) {
+                this.articleList.add(article);
+            }
+        }
+
+        public void removeArticle(long articleId) {
+            if (null == this.articleList) {
+                return;
+            }
+
+            for (int i = 0; i < this.articleList.size(); ++i) {
+                KnowledgeArticle article = this.articleList.get(i);
+                if (article.getId().longValue() == articleId) {
+                    this.articleList.remove(i);
+                    break;
+                }
+            }
+        }
+
+        public void clearArticles() {
+            if (null == this.articleList) {
+                return;
+            }
+
+            this.articleList.clear();
         }
     }
 }

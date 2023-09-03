@@ -48,7 +48,7 @@ public class KnowledgeArticle extends Entity {
     public int date;
 
     public KnowledgeArticle(String category, String title, String content, String author,
-                            int year, int month, int date) {
+                            int year, int month, int date, long timestamp) {
         super();
         this.category = category;
         this.title = title;
@@ -57,6 +57,7 @@ public class KnowledgeArticle extends Entity {
         this.year = year;
         this.month = month;
         this.date = date;
+        this.timestamp = timestamp;
     }
 
     public KnowledgeArticle(long id, String category, String title, String content, String author,
@@ -75,11 +76,28 @@ public class KnowledgeArticle extends Entity {
         super(json);
         this.category = json.getString("category");
         this.title = json.getString("title");
-        this.content = json.getString("content");
+        if (json.has("content")) {
+            this.content = json.getString("content");
+        }
         this.author = json.has("author") ? json.getString("author") : "Anonymity";
         this.year = json.getInt("year");
         this.month = json.getInt("month");
         this.date = json.getInt("date");
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (null != obj && obj instanceof KnowledgeArticle) {
+            KnowledgeArticle other = (KnowledgeArticle) obj;
+            return other.id.longValue() == this.id.longValue();
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.id.hashCode();
     }
 
     @Override

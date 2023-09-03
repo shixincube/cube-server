@@ -682,8 +682,8 @@ public class AIGCStorage implements Storagable {
         });
     }
 
-    public void writeKnowledgeArticle(KnowledgeArticle article) {
-        this.storage.executeInsert(this.knowledgeArticleTable, new StorageField[] {
+    public boolean writeKnowledgeArticle(KnowledgeArticle article) {
+        return this.storage.executeInsert(this.knowledgeArticleTable, new StorageField[] {
                 new StorageField("id", article.getId().longValue()),
                 new StorageField("category", article.category),
                 new StorageField("title", article.title),
@@ -703,6 +703,31 @@ public class AIGCStorage implements Storagable {
                 new Conditional[] {
                         Conditional.createEqualTo("category", category)
         });
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(),
+                    data.get("category").getString(), data.get("title").getString(),
+                    data.get("content").getString(), data.get("author").getString(),
+                    data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
+                    data.get("timestamp").getLong());
+            list.add(article);
+        }
+
+        return list;
+    }
+
+    public List<KnowledgeArticle> readKnowledgeArticles(List<Long> idList) {
+        List<Conditional> conditionals = new ArrayList<>();
+        for (Long id : idList) {
+            conditionals.add(Conditional.createEqualTo("id", (long) id.longValue()));
+            conditionals.add(Conditional.createOr());
+        }
+        conditionals.remove(conditionals.size() - 1);
+
+        List<KnowledgeArticle> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
+                conditionals.toArray(new Conditional[0]));
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(),
@@ -742,7 +767,7 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public void deleteKnowledgeArticles(List<Long> idList) {
+    public boolean deleteKnowledgeArticles(List<Long> idList) {
         List<Conditional> conditionals = new ArrayList<>();
         for (Long id : idList) {
             Conditional conditional = Conditional.createEqualTo("id", (long) id.longValue());
@@ -751,7 +776,7 @@ public class AIGCStorage implements Storagable {
         }
         conditionals.remove(conditionals.size() - 1);
 
-        this.storage.executeDelete(this.knowledgeArticleTable,
+        return this.storage.executeDelete(this.knowledgeArticleTable,
                 conditionals.toArray(new Conditional[0]));
     }
 

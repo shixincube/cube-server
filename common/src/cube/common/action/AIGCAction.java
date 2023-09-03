@@ -146,8 +146,30 @@ public enum AIGCAction {
      */
     DeactivateKnowledgeDoc("deactivateKnowledgeDoc"),
 
-    ListKnowledgeArticles(""),
-    
+    /**
+     * 获取知识库文章清单。
+     */
+    ListKnowledgeArticles("listKnowledgeArticles"),
+
+    /**
+     * 新增知识库文章。
+     */
+    AppendKnowledgeArticle("appendKnowledgeArticle"),
+
+    /**
+     * 删除知识库文章。
+     */
+    RemoveKnowledgeArticle("removeKnowledgeArticle"),
+
+    /**
+     * 对指定联系人激活知识库文章。
+     */
+    ActivateKnowledgeArticle("activateKnowledgeArticle"),
+
+    /**
+     * 对指定联系人释放知识库文章。
+     */
+    DeactivateKnowledgeArticle("deactivateKnowledgeArticle"),
 
     /**
      * 生成提示词。
