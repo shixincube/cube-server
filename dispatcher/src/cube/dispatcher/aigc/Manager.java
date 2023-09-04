@@ -115,6 +115,8 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new KnowledgeDocs());
         httpServer.addContextHandler(new ImportKnowledgeDoc());
         httpServer.addContextHandler(new RemoveKnowledgeDoc());
+        httpServer.addContextHandler(new AppendKnowledgeArticle());
+        httpServer.addContextHandler(new RemoveKnowledgeArticle());
         httpServer.addContextHandler(new SearchResults());
         httpServer.addContextHandler(new ContextInference());
         httpServer.addContextHandler(new ChartData());
@@ -289,6 +291,46 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return new KnowledgeDoc(Packet.extractDataPayload(responsePacket));
+    }
+
+    public KnowledgeArticle appendKnowledgeArticle(String token, KnowledgeArticle article) {
+        Packet packet = new Packet(AIGCAction.AppendKnowledgeArticle.name, article.toJSON());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#appendKnowledgeArticle - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#appendKnowledgeArticle - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new KnowledgeArticle(Packet.extractDataPayload(responsePacket));
+    }
+
+    public boolean removeKnowledgeArticle(String token, JSONArray idList) {
+        JSONObject payload = new JSONObject();
+        payload.put("ids", idList);
+        Packet packet = new Packet(AIGCAction.RemoveKnowledgeArticle.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#removeKnowledgeArticle - Response is null : " + token);
+            return false;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#removeKnowledgeArticle - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return false;
+        }
+
+        return true;
     }
 
     public boolean evaluate(long sn, int scores) {

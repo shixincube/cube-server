@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
 import cube.common.Domain;
 import cube.common.JSONable;
 import cube.common.UniqueKey;
@@ -74,9 +75,17 @@ public abstract class Entity implements JSONable {
         if (json.has("id")) {
             this.id = json.getLong("id");
         }
+        else {
+            this.id = Utils.generateSerialNumber();
+        }
+
         if (json.has("domain")) {
             this.domain = new Domain(json.getString("domain"));
         }
+        else {
+            this.domain = new Domain("");
+        }
+
         if (json.has("timestamp")) {
             this.timestamp = json.getLong("timestamp");
         }
@@ -148,6 +157,14 @@ public abstract class Entity implements JSONable {
      */
     public Long getId() {
         return this.id;
+    }
+
+    /**
+     * 重置 ID 。
+     */
+    public void resetId() {
+        this.id = Utils.generateSerialNumber();
+        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
     }
 
     /**

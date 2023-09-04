@@ -274,6 +274,9 @@ public class KnowledgeBase {
     }
 
     public KnowledgeArticle appendKnowledgeArticle(KnowledgeArticle article) {
+        // 重置 ID，由服务器生成
+        article.resetId();
+
         if (this.storage.writeKnowledgeArticle(article)) {
             return article;
         }

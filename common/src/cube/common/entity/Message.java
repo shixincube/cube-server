@@ -348,14 +348,6 @@ public class Message extends Entity implements Comparable<Message> {
     }
 
     /**
-     * 重置 ID 。
-     */
-    public void resetId() {
-        this.id = Utils.generateSerialNumber();
-        this.uniqueKey = UniqueKey.make(this.id, this.domain.getName());
-    }
-
-    /**
      * 获取消息发送人。
      *
      * @return
