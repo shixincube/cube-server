@@ -49,6 +49,7 @@ import cube.util.HttpServer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -117,6 +118,8 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new RemoveKnowledgeDoc());
         httpServer.addContextHandler(new AppendKnowledgeArticle());
         httpServer.addContextHandler(new RemoveKnowledgeArticle());
+        httpServer.addContextHandler(new ActivateKnowledgeArticle());
+        httpServer.addContextHandler(new DeactivateKnowledgeArticle());
         httpServer.addContextHandler(new SearchResults());
         httpServer.addContextHandler(new ContextInference());
         httpServer.addContextHandler(new ChartData());
@@ -331,6 +334,63 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return true;
+    }
+
+    public List<KnowledgeArticle> activateKnowledgeArticle(String token, JSONArray idList) {
+        List<KnowledgeArticle> result = new ArrayList<>();
+
+        JSONObject payload = new JSONObject();
+        payload.put("ids", idList);
+        Packet packet = new Packet(AIGCAction.ActivateKnowledgeArticle.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#activateKnowledgeArticle - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#activateKnowledgeArticle - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        JSONArray responseList = Packet.extractDataPayload(responsePacket).getJSONArray("articles");
+        for (int i = 0; i < responseList.length(); ++i) {
+            KnowledgeArticle article = new KnowledgeArticle(responseList.getJSONObject(i));
+            result.add(article);
+        }
+
+        return result;
+    }
+
+    public List<KnowledgeArticle> deactivateKnowledgeArticle(String token) {
+        List<KnowledgeArticle> result = new ArrayList<>();
+
+        JSONObject payload = new JSONObject();
+        Packet packet = new Packet(AIGCAction.ActivateKnowledgeArticle.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#deactivateKnowledgeArticle - Response is null : " + token);
+            return result;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#deactivateKnowledgeArticle - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return result;
+        }
+
+        JSONArray responseList = Packet.extractDataPayload(responsePacket).getJSONArray("articles");
+        for (int i = 0; i < responseList.length(); ++i) {
+            KnowledgeArticle article = new KnowledgeArticle(responseList.getJSONObject(i));
+            result.add(article);
+        }
+
+        return result;
     }
 
     public boolean evaluate(long sn, int scores) {

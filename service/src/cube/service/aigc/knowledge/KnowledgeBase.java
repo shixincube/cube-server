@@ -297,13 +297,15 @@ public class KnowledgeBase {
     public List<KnowledgeArticle> activateKnowledgeArticles(List<Long> articleIdList) {
         List<KnowledgeArticle> articleList = this.storage.readKnowledgeArticles(articleIdList);
 
+        this.knowledgeRelation.checkUnit();
+
         for (KnowledgeArticle article : articleList) {
             JSONObject payload = new JSONObject();
             payload.put("article", article.toJSON());
             payload.put("contactId", this.authToken.getContactId());
             Packet packet = new Packet(AIGCAction.ActivateKnowledgeArticle.name, payload);
             ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
-                    packet.toDialect(), 3 * 60 * 1000);
+                    packet.toDialect(), 60 * 1000);
             if (null == dialect) {
                 Logger.w(this.getClass(),"#activateKnowledgeArticles - Request unit error: "
                         + this.knowledgeRelation.unit.getCapability().getName());
@@ -326,6 +328,8 @@ public class KnowledgeBase {
     }
 
     public List<KnowledgeArticle> deactivateKnowledgeArticles() {
+        this.knowledgeRelation.checkUnit();
+
         List<KnowledgeArticle> result = new ArrayList<>();
 
         JSONObject payload = new JSONObject();

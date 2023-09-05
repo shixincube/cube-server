@@ -92,6 +92,7 @@ public class ActivateKnowledgeArticleTask extends ServiceTask {
             }
             articles = base.activateKnowledgeArticles(idList);
         } catch (Exception e) {
+            e.printStackTrace();
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
             markResponseTime();

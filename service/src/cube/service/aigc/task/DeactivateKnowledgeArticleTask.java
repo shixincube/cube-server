@@ -81,8 +81,8 @@ public class DeactivateKnowledgeArticleTask extends ServiceTask {
         }
 
         JSONObject result = new JSONObject();
-        result.put("total", list.size());
-        result.put("list", array);
+        result.put("total", array.length());
+        result.put("articles", array);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, result));

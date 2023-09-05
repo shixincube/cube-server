@@ -105,7 +105,9 @@ public class KnowledgeArticle extends Entity {
         JSONObject json = super.toJSON();
         json.put("category", this.category);
         json.put("title", this.title);
-        json.put("content", this.content);
+        if (null != this.content) {
+            json.put("content", this.content);
+        }
         json.put("author", this.author);
         json.put("year", this.year);
         json.put("month", this.month);
