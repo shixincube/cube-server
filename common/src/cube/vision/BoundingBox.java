@@ -71,6 +71,15 @@ public class BoundingBox implements JSONable {
         return (x > this.x && y > this.y && x < this.x + this.width && y < this.y + this.height);
     }
 
+    /**
+     * 计算面积。
+     *
+     * @return
+     */
+    public int calculateArea() {
+        return this.width * this.height;
+    }
+
     @Override
     public JSONObject toJSON() {
         return this.toCompactJSON();

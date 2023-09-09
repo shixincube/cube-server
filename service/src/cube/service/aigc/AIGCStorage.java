@@ -717,14 +717,17 @@ public class AIGCStorage implements Storagable {
     }
 
     public List<KnowledgeArticle> readKnowledgeArticles(List<Long> idList) {
+        List<KnowledgeArticle> list = new ArrayList<>();
+        if (idList.isEmpty()) {
+            return list;
+        }
+
         List<Conditional> conditionals = new ArrayList<>();
         for (Long id : idList) {
             conditionals.add(Conditional.createEqualTo("id", (long) id.longValue()));
             conditionals.add(Conditional.createOr());
         }
         conditionals.remove(conditionals.size() - 1);
-
-        List<KnowledgeArticle> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
                 conditionals.toArray(new Conditional[0]));

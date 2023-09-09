@@ -289,6 +289,46 @@ public class KnowledgeBase {
     }
 
     /**
+     * 获取已激活的文章。
+     *
+     * @return
+     */
+    public List<KnowledgeArticle> listKnowledgeArticles() {
+        if (this.knowledgeRelation.checkUnit()) {
+            return new ArrayList<>();
+        }
+
+        JSONObject payload = new JSONObject();
+        payload.put("contactId", this.authToken.getContactId());
+        Packet packet = new Packet(AIGCAction.ListKnowledgeArticles.name, payload);
+        ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
+                packet.toDialect(), 60 * 1000);
+        if (null == dialect) {
+            Logger.w(this.getClass(),"#listKnowledgeArticles - Request unit error: "
+                    + this.knowledgeRelation.unit.getCapability().getName());
+            return null;
+        }
+
+        Packet response = new Packet(dialect);
+        int state = Packet.extractCode(response);
+        if (state != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#listKnowledgeArticles - Unit return error: " + state);
+            return null;
+        }
+
+        List<Long> idList = new ArrayList<>();
+        JSONArray ids = Packet.extractDataPayload(response).getJSONArray("ids");
+        for (int i = 0; i < ids.length(); ++i) {
+            idList.add(ids.getLong(i));
+        }
+
+        List<KnowledgeArticle> result = this.storage.readKnowledgeArticles(idList);
+        this.knowledgeRelation.articleList = result;
+
+        return result;
+    }
+
+    /**
      * 为指定的联系人激活知识库文章。
      *
      * @param articleIdList
@@ -372,9 +412,14 @@ public class KnowledgeBase {
         if (null == this.knowledgeRelation.docList) {
             this.getKnowledgeDocs();
         }
+
+        if (null == this.knowledgeRelation.articleList) {
+            this.listKnowledgeArticles();
+        }
+
         // 如果没有设置知识库文档，返回提示
-        if (this.knowledgeRelation.docList.isEmpty()) {
-            Logger.d(this.getClass(), "#performKnowledgeQA - No knowledge doc in base: " + channelCode);
+        if (this.knowledgeRelation.docList.isEmpty() && this.knowledgeRelation.articleList.isEmpty()) {
+            Logger.d(this.getClass(), "#performKnowledgeQA - No knowledge doc or article in base: " + channelCode);
             this.service.getCellet().getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
@@ -456,7 +501,9 @@ public class KnowledgeBase {
         JSONObject payload = new JSONObject();
         payload.put("contactId", this.authToken.getContactId());
         payload.put("query", query);
-        payload.put("docList", docArray);
+        if (!docArray.isEmpty()) {
+            payload.put("docList", docArray);
+        }
         Packet packet = new Packet(AIGCAction.GeneratePrompt.name, payload);
         ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
                 packet.toDialect());
