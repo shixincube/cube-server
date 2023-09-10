@@ -26,23 +26,13 @@
 
 package cube.aigc.psychology;
 
-public class House extends Thing {
+public class Window extends Thing {
 
-    private boolean hasDoor;
+    private boolean isOpen;
 
-    private boolean hasWindow;
 
-    private boolean hasChimney;
 
-    private boolean hasWall;
-
-    private boolean doorOpen;
-
-    public House() {
-        super("house");
-    }
-
-    public void addWindow() {
-
+    public Window() {
+        super("window");
     }
 }

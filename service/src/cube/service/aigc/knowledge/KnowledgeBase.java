@@ -376,7 +376,7 @@ public class KnowledgeBase {
         payload.put("contactId", this.authToken.getContactId());
         Packet packet = new Packet(AIGCAction.DeactivateKnowledgeArticle.name, payload);
         ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
-                packet.toDialect(), 3 * 60 * 1000);
+                packet.toDialect(), 60 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(),"#deactivateKnowledgeArticles - Request unit error: "
                     + this.knowledgeRelation.unit.getCapability().getName());
@@ -390,9 +390,12 @@ public class KnowledgeBase {
             return result;
         }
 
-        if (null != this.knowledgeRelation.articleList) {
-            result.addAll(this.knowledgeRelation.articleList);
+        JSONArray idsArray = Packet.extractDataPayload(response).getJSONArray("ids");
+        List<Long> idsList = new ArrayList<>();
+        for (int i = 0; i < idsArray.length(); ++i) {
+            idsList.add(idsArray.getLong(i));
         }
+        result = this.storage.readKnowledgeArticles(idsList);
 
         this.knowledgeRelation.clearArticles();
         return result;

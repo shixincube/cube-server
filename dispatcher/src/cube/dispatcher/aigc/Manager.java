@@ -369,19 +369,19 @@ public class Manager implements Tickable, PerformerListener {
         List<KnowledgeArticle> result = new ArrayList<>();
 
         JSONObject payload = new JSONObject();
-        Packet packet = new Packet(AIGCAction.ActivateKnowledgeArticle.name, payload);
+        Packet packet = new Packet(AIGCAction.DeactivateKnowledgeArticle.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#deactivateKnowledgeArticle - Response is null : " + token);
-            return result;
+            return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.d(Manager.class, "#deactivateKnowledgeArticle - Response state is NOT ok : " + Packet.extractCode(responsePacket));
-            return result;
+            return null;
         }
 
         JSONArray responseList = Packet.extractDataPayload(responsePacket).getJSONArray("articles");
