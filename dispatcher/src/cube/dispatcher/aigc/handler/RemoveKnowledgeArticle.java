@@ -76,14 +76,14 @@ public class RemoveKnowledgeArticle extends ContextHandler {
                 return;
             }
 
-            boolean result = Manager.getInstance().removeKnowledgeArticle(token, idList);
-            if (!result) {
+            JSONObject result = Manager.getInstance().removeKnowledgeArticle(token, idList);
+            if (null == result) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }
 
-            this.respondOk(response, new JSONObject());
+            this.respondOk(response, result);
             this.complete();
         }
     }

@@ -24,30 +24,58 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
+package cube.aigc.psychology.composition;
 
-public class Window extends Thing {
-
-    private boolean isOpen;
-
-    /**
-     * 是否有窗帘。
-     */
-    private boolean hasCurtain;
-
-    private boolean curtainOpened;
+/**
+ * 框架结构。
+ */
+public enum FrameStructure {
 
     /**
-     * 是否有窗格。
+     * 整体上方空间。
      */
-    private boolean hasPane;
+    WholeTopSpace("WholeTopSpace"),
 
     /**
-     * 是否有栏栅。
+     * 整体下方空间。
      */
-    private boolean hasBars;
+    WholeBottomSpace("WholeBottomSpace"),
 
-    public Window() {
-        super("window");
+    /**
+     * 整体左边空间。
+     */
+    WholeLeftSpace("WholeLeftSpace"),
+
+    /**
+     * 整体右边空间。
+     */
+    WholeRightSpace("WholeRightSpace"),
+
+    /**
+     * 中间左上部空间。
+     */
+    CenterTopLeftSpace("CenterTopLeftSpace"),
+
+    /**
+     * 中间右上部空间。
+     */
+    CenterTopRightSpace("CenterTopRightSpace"),
+
+    /**
+     * 中间左下部空间。
+     */
+    CenterBottomLeftSpace("CenterBottomLeftSpace"),
+
+    /**
+     * 中间右下部空间。
+     */
+    CenterBottomRightSpace("CenterBottomRightSpace"),
+
+    Normal("Normal");
+
+    public final String name;
+
+    FrameStructure(String name) {
+        this.name = name;
     }
 }

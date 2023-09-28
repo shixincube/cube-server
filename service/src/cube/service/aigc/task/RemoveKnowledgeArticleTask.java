@@ -88,7 +88,7 @@ public class RemoveKnowledgeArticleTask extends ServiceTask {
                 ids.add(array.getLong(i));
             }
             // 批量删除
-            base.removeKnowledgeArticles(ids);
+            ids = base.removeKnowledgeArticles(ids);
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
@@ -96,8 +96,24 @@ public class RemoveKnowledgeArticleTask extends ServiceTask {
             return;
         }
 
+        if (null == ids) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
+        JSONArray idArray = new JSONArray();
+        for (Long id : ids) {
+            idArray.put(id.longValue());
+        }
+
+        JSONObject payload = new JSONObject();
+        payload.put("ids", idArray);
+        payload.put("total", ids.size());
+
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, new JSONObject()));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, payload));
         markResponseTime();
     }
 }

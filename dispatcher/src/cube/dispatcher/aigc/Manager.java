@@ -315,7 +315,7 @@ public class Manager implements Tickable, PerformerListener {
         return new KnowledgeArticle(Packet.extractDataPayload(responsePacket));
     }
 
-    public boolean removeKnowledgeArticle(String token, JSONArray idList) {
+    public JSONObject removeKnowledgeArticle(String token, JSONArray idList) {
         JSONObject payload = new JSONObject();
         payload.put("ids", idList);
         Packet packet = new Packet(AIGCAction.RemoveKnowledgeArticle.name, payload);
@@ -324,16 +324,16 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#removeKnowledgeArticle - Response is null : " + token);
-            return false;
+            return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.d(Manager.class, "#removeKnowledgeArticle - Response state is NOT ok : " + Packet.extractCode(responsePacket));
-            return false;
+            return null;
         }
 
-        return true;
+        return Packet.extractDataPayload(responsePacket);
     }
 
     public List<KnowledgeArticle> activateKnowledgeArticle(String token, JSONArray idList) {

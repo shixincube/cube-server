@@ -770,17 +770,38 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public boolean deleteKnowledgeArticles(List<Long> idList) {
+    /**
+     * 删除知识库文章。
+     *
+     * @param idList
+     * @return 返回已删除的文章 ID 列表。
+     */
+    public List<Long> deleteKnowledgeArticles(List<Long> idList) {
+        if (idList.isEmpty()) {
+            return null;
+        }
+
         List<Conditional> conditionals = new ArrayList<>();
         for (Long id : idList) {
-            Conditional conditional = Conditional.createEqualTo("id", (long) id.longValue());
-            conditionals.add(conditional);
+            conditionals.add(Conditional.createEqualTo("id", (long) id.longValue()));
             conditionals.add(Conditional.createOr());
         }
         conditionals.remove(conditionals.size() - 1);
 
-        return this.storage.executeDelete(this.knowledgeArticleTable,
+        List<Long> result = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder("SELECT `id` FROM " + this.knowledgeArticleTable + " WHERE");
+        for (Conditional conditional : conditionals) {
+            sql.append(" ").append(conditional.toString());
+        }
+        List<StorageField[]> ids = this.storage.executeQuery(sql.toString());
+        for (StorageField[] data : ids) {
+            result.add(data[0].getLong());
+        }
+
+        this.storage.executeDelete(this.knowledgeArticleTable,
                 conditionals.toArray(new Conditional[0]));
+        return result;
     }
 
     public List<ChartReaction> readChartReactions(String primary, String secondary, String tertiary, String quaternary) {

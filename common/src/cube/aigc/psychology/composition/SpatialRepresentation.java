@@ -24,30 +24,70 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
+package cube.aigc.psychology.composition;
 
-public class Window extends Thing {
-
-    private boolean isOpen;
-
-    /**
-     * 是否有窗帘。
-     */
-    private boolean hasCurtain;
-
-    private boolean curtainOpened;
+/**
+ * 空间示意。
+ */
+public enum SpatialRepresentation {
 
     /**
-     * 是否有窗格。
+     * 精神。
      */
-    private boolean hasPane;
+    Spirit("Spirit"),
 
     /**
-     * 是否有栏栅。
+     * 物质。
      */
-    private boolean hasBars;
+    Matter("Matter"),
 
-    public Window() {
-        super("window");
+    /**
+     * 过去。
+     */
+    Past("Past"),
+
+    /**
+     * 未来。
+     */
+    Future("Future"),
+
+    /**
+     * 内向者。
+     */
+    Introvert("Introvert"),
+
+    /**
+     * 外向者。
+     */
+    Extravert("Extravert"),
+
+    /**
+     * 被动性。
+     */
+    Passivity("Passivity"),
+
+    /**
+     * 主动性。
+     */
+    Proactivity("Proactivity"),
+
+    /**
+     * 退行。
+     */
+    Regression("Regression"),
+
+    /**
+     * 冲动。
+     */
+    Impulse("Impulse"),
+
+
+    Unknown("Unknown")
+    ;
+
+    public final String name;
+
+    SpatialRepresentation(String name) {
+        this.name = name;
     }
 }

@@ -34,54 +34,77 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class WholeDescription {
+public class PictureDescription {
 
     private Size canvasSize;
 
-    private House house;
+    private List<House> houseList;
 
-    private BoundingBox houseBox;
+    private List<Tree> treeList;
 
-    private Tree tree;
+    private List<Person> personList;
 
-    private BoundingBox treeBox;
-
-    private Person person;
-
-    private BoundingBox personBox;
-
-    public WholeDescription() {
+    public PictureDescription(Size canvasSize) {
+        this.canvasSize = canvasSize;
+        this.houseList = new ArrayList<>();
+        this.treeList = new ArrayList<>();
+        this.personList = new ArrayList<>();
     }
 
-    public void setHouse(House house, BoundingBox box) {
-        this.house = house;
-        this.houseBox = box;
+    public void addHouse(House house) {
+        this.houseList.add(house);
     }
 
-    public void setTree(Tree tree, BoundingBox box) {
-        this.tree = tree;
-        this.treeBox = box;
+    public House getHouse() {
+        return this.houseList.isEmpty() ? null : this.houseList.get(0);
     }
 
-    public void setPerson(Person person, BoundingBox box) {
-        this.person = person;
-        this.personBox = box;
+    public List<House> getHouses() {
+        return this.houseList;
+    }
+
+    public void addTree(Tree tree) {
+        this.treeList.add(tree);
+    }
+
+    public Tree getTree() {
+        return this.treeList.isEmpty() ? null : this.treeList.get(0);
+    }
+
+    public List<Tree> getTrees() {
+        return this.treeList;
+    }
+
+    public void addPerson(Person person) {
+        this.personList.add(person);
+    }
+
+    public Person getPerson() {
+        return this.personList.isEmpty() ? null : this.personList.get(0);
+    }
+
+    public List<Person> getPersons() {
+        return this.personList;
     }
 
     public List<BoundingBoxDescription> sortBySize() {
         List<BoundingBoxDescription> bbdList = new ArrayList<>();
-        if (null != this.house) {
-            bbdList.add(new BoundingBoxDescription(this.house, this.houseBox));
+        if (!this.houseList.isEmpty()) {
+            bbdList.add(new BoundingBoxDescription(this.houseList.get(0)));
         }
-        if (null != this.tree) {
-            bbdList.add(new BoundingBoxDescription(this.tree, this.treeBox));
+        if (!this.treeList.isEmpty()) {
+            bbdList.add(new BoundingBoxDescription(this.treeList.get(0)));
         }
-        if (null != this.person) {
-            bbdList.add(new BoundingBoxDescription(this.person, this.personBox));
+        if (!this.personList.isEmpty()) {
+            bbdList.add(new BoundingBoxDescription(this.personList.get(0)));
         }
 
         Collections.sort(bbdList, new BoundingBoxComparator());
         return bbdList;
+    }
+
+    public void calcFrameStructure() {
+
     }
 
     public class BoundingBoxDescription {
@@ -89,9 +112,9 @@ public class WholeDescription {
         public Thing thing;
         public BoundingBox bbox;
 
-        public BoundingBoxDescription(Thing thing, BoundingBox bbox) {
+        public BoundingBoxDescription(Thing thing) {
             this.thing = thing;
-            this.bbox = bbox;
+            this.bbox = thing.boundingBox;
         }
     }
 

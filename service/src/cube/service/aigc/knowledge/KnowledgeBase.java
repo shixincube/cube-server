@@ -284,8 +284,8 @@ public class KnowledgeBase {
         return null;
     }
 
-    public void removeKnowledgeArticles(List<Long> idList) {
-        this.storage.deleteKnowledgeArticles(idList);
+    public List<Long> removeKnowledgeArticles(List<Long> idList) {
+        return this.storage.deleteKnowledgeArticles(idList);
     }
 
     /**

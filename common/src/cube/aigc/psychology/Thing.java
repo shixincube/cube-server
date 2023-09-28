@@ -27,6 +27,7 @@
 package cube.aigc.psychology;
 
 import cube.common.JSONable;
+import cube.vision.BoundingBox;
 import org.json.JSONObject;
 
 /**
@@ -36,12 +37,22 @@ public abstract class Thing implements JSONable {
 
     protected final String name;
 
+    protected BoundingBox boundingBox;
+
     public Thing(String name) {
         this.name = name;
     }
 
     public String getName() {
         return this.name;
+    }
+
+    public BoundingBox getBoundingBox() {
+        return this.boundingBox;
+    }
+
+    public void setBoundingBox(BoundingBox bbox) {
+        this.boundingBox = bbox;
     }
 
     @Override
