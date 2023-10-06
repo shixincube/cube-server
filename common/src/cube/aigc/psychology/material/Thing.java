@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
+package cube.aigc.psychology.material;
 
 import cube.common.JSONable;
 import cube.vision.BoundingBox;
@@ -35,12 +35,20 @@ import org.json.JSONObject;
  */
 public abstract class Thing implements JSONable {
 
-    protected final String name;
+    protected String name;
 
     protected BoundingBox boundingBox;
 
     public Thing(String name) {
         this.name = name;
+    }
+
+    public Thing(JSONObject json) {
+        this.name = json.getString("name");
+        if (this.name.startsWith("p_")) {
+            this.name = this.name.replace("p_", "");
+        }
+        this.boundingBox = new BoundingBox(json.getJSONObject("bbox"));
     }
 
     public String getName() {
@@ -59,6 +67,7 @@ public abstract class Thing implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
+        json.put("bbox", this.boundingBox.toJSON());
         return json;
     }
 
@@ -66,6 +75,7 @@ public abstract class Thing implements JSONable {
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
+        json.put("bbox", this.boundingBox.toJSON());
         return json;
     }
 }

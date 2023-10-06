@@ -24,11 +24,30 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
+package cube.aigc.psychology.material;
 
-public class Tree extends Thing {
+public class Window extends Thing {
 
-    public Tree() {
-        super("tree");
+    private boolean isOpen;
+
+    /**
+     * 是否有窗帘。
+     */
+    private boolean hasCurtain;
+
+    private boolean curtainOpened;
+
+    /**
+     * 是否有窗格。
+     */
+    private boolean hasPane;
+
+    /**
+     * 是否有栏栅。
+     */
+    private boolean hasBars;
+
+    public Window() {
+        super("window");
     }
 }

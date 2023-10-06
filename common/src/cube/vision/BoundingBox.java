@@ -60,6 +60,14 @@ public class BoundingBox implements JSONable {
         this.height = json.getInt("height");
     }
 
+    public int getX2() {
+        return this.x + this.width;
+    }
+
+    public int getY2() {
+        return this.y + this.height;
+    }
+
     /**
      * 对点进行碰撞检测。
      *
@@ -78,6 +86,42 @@ public class BoundingBox implements JSONable {
      */
     public int calculateArea() {
         return this.width * this.height;
+    }
+
+    /**
+     * 将指定的边界盒与当前边界盒进行空间合并。
+     *
+     * @param bbox
+     * @return
+     */
+    public BoundingBox merge(BoundingBox bbox) {
+        int x = Math.min(bbox.x, this.x);
+        int y = Math.min(bbox.y, this.y);
+        int x2 = Math.max(bbox.x + bbox.width, this.x + this.width);
+        int y2 = Math.max(bbox.y + bbox.height, this.y + this.height);
+        int width = x2 - x;
+        int height = y2 - y;
+
+        return new BoundingBox(x, y, width, height);
+    }
+
+    /**
+     * 计算与指定边界盒的碰撞面积。
+     *
+     * @param box
+     * @return
+     */
+    public int calculateCollisionArea(BoundingBox box) {
+        int mX = Math.max(this.x, box.x);
+        int mY = Math.max(this.y, box.y);
+        int mX2 = Math.min(this.getX2(), box.getX2());
+        int mY2 = Math.min(this.getY2(), box.getY2());
+        int w = mX2 - mX;
+        int h = mY2 - mY;
+        if (w <= 0 || h <= 0) {
+            return 0;
+        }
+        return w * h;
     }
 
     @Override

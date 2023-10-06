@@ -24,11 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
+package cube.aigc.psychology.material;
+
+import org.json.JSONObject;
 
 public class Person extends Thing {
 
     public Person() {
         super("person");
+    }
+
+    public Person(JSONObject json) {
+        super(json);
     }
 }

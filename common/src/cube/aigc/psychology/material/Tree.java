@@ -24,25 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
+package cube.aigc.psychology.material;
 
-public class House extends Thing {
+import org.json.JSONObject;
 
-    private boolean hasDoor;
+public class Tree extends Thing {
 
-    private boolean hasWindow;
-
-    private boolean hasChimney;
-
-    private boolean hasWall;
-
-    private boolean doorOpen;
-
-    public House() {
-        super("house");
+    public Tree() {
+        super("tree");
     }
 
-    public void addWindow() {
-
+    public Tree(JSONObject json) {
+        super(json);
     }
 }
