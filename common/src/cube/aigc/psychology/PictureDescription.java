@@ -36,7 +36,6 @@ import cube.vision.BoundingBox;
 import cube.vision.Size;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import sun.tools.jconsole.AboutDialog;
 
 import java.util.ArrayList;
 import java.util.Collections;

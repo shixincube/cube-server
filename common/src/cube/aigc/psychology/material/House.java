@@ -26,31 +26,42 @@
 
 package cube.aigc.psychology.material;
 
+import cube.aigc.psychology.material.house.Door;
+import cube.aigc.psychology.material.house.Roof;
+import cube.aigc.psychology.material.house.Window;
 import org.json.JSONObject;
 
+import java.util.List;
+
+/**
+ * 房。
+ */
 public class House extends Thing {
 
-    private boolean hasDoor;
+    private Roof roof;
 
-    private boolean hasWindow;
+    private List<Window> windowList;
 
-    private boolean hasChimney;
-
-    private boolean hasWall;
-
-    private boolean doorOpen;
+    private List<Door> doorList;
 
     public House() {
-        super("house");
+        super(Label.House);
     }
 
     public House(JSONObject json) {
         super(json);
+
+        if (json.has("roof")) {
+            this.roof = new Roof(json.getJSONObject("roof"));
+        }
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        if (null != this.roof) {
+            json.put("roof", this.roof.toJSON());
+        }
         return json;
     }
 }

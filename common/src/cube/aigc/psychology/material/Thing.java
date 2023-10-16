@@ -35,24 +35,21 @@ import org.json.JSONObject;
  */
 public abstract class Thing implements JSONable {
 
-    protected String name;
+    protected Label label;
 
     protected BoundingBox boundingBox;
 
-    public Thing(String name) {
-        this.name = name;
+    public Thing(Label label) {
+        this.label = label;
     }
 
     public Thing(JSONObject json) {
-        this.name = json.getString("name");
-        if (this.name.startsWith("p_")) {
-            this.name = this.name.replace("p_", "");
-        }
+        this.label = Label.parse(json.getString("label"));
         this.boundingBox = new BoundingBox(json.getJSONObject("bbox"));
     }
 
-    public String getName() {
-        return this.name;
+    public Label getLabel() {
+        return this.label;
     }
 
     public BoundingBox getBoundingBox() {
@@ -66,7 +63,7 @@ public abstract class Thing implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("name", this.name);
+        json.put("label", this.label.name);
         json.put("bbox", this.boundingBox.toJSON());
         return json;
     }
@@ -74,7 +71,7 @@ public abstract class Thing implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
-        json.put("name", this.name);
+        json.put("label", this.label.name);
         json.put("bbox", this.boundingBox.toJSON());
         return json;
     }

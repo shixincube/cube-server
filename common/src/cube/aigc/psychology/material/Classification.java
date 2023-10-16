@@ -29,11 +29,31 @@ package cube.aigc.psychology.material;
 import org.json.JSONObject;
 
 /**
- * 树。
+ * 分类器。
  */
-public class Tree extends Thing {
+public class Classification {
 
-    public Tree(JSONObject json) {
-        super(json);
+    public Classification() {
+    }
+
+    public Thing recognize(JSONObject json) {
+        if (!json.has("label")) {
+            return null;
+        }
+
+        Label label = Label.parse(json.getString("label"));
+
+        switch (label) {
+            case House:
+                return new House(json);
+            case Tree:
+                return new Tree(json);
+            case Person:
+                return new Person(json);
+            default:
+                break;
+        }
+
+        return null;
     }
 }

@@ -24,30 +24,41 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.material;
+package cube.aigc.psychology.material.house;
 
-public class Window extends Thing {
+import cube.aigc.psychology.material.Label;
+import cube.aigc.psychology.material.Thing;
+import org.json.JSONObject;
 
-    private boolean isOpen;
+/**
+ * 房门。
+ */
+public class Door extends Thing {
 
-    /**
-     * 是否有窗帘。
-     */
-    private boolean hasCurtain;
+    private boolean open = false;
 
-    private boolean curtainOpened;
+    private boolean lock = false;
 
-    /**
-     * 是否有窗格。
-     */
-    private boolean hasPane;
+    public Door(JSONObject json) {
+        super(json);
 
-    /**
-     * 是否有栏栅。
-     */
-    private boolean hasBars;
+        if (Label.HouseDoorOpened == this.label) {
+            this.open = true;
+        }
+        else if (Label.HouseDoorLocked == this.label) {
+            this.lock = true;
+        }
+    }
 
-    public Window() {
-        super("window");
+    public boolean isOpen() {
+        return this.open;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("open", this.open);
+        json.put("lock", this.lock);
+        return json;
     }
 }

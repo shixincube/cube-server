@@ -24,16 +24,34 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.material;
+package cube.aigc.psychology.material.house;
 
+import cube.aigc.psychology.material.Label;
+import cube.aigc.psychology.material.Thing;
 import org.json.JSONObject;
 
 /**
- * 树。
+ * 窗户。
  */
-public class Tree extends Thing {
+public class Window extends Thing {
 
-    public Tree(JSONObject json) {
+    private boolean open = false;
+
+    public Window(JSONObject json) {
         super(json);
+        if (Label.HouseWindowOpened == this.label) {
+            this.open = true;
+        }
+    }
+
+    public boolean isOpen() {
+        return this.open;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        json.put("open", this.open);
+        return json;
     }
 }

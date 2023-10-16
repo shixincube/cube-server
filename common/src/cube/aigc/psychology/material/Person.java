@@ -28,11 +28,10 @@ package cube.aigc.psychology.material;
 
 import org.json.JSONObject;
 
+/**
+ * 人。
+ */
 public class Person extends Thing {
-
-    public Person() {
-        super("person");
-    }
 
     public Person(JSONObject json) {
         super(json);

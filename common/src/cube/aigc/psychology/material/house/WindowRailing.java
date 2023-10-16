@@ -24,16 +24,23 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.material;
+package cube.aigc.psychology.material.house;
 
+import cube.aigc.psychology.material.Thing;
 import org.json.JSONObject;
 
 /**
- * 树。
+ * 窗户栏栅。
  */
-public class Tree extends Thing {
+public class WindowRailing extends Thing {
 
-    public Tree(JSONObject json) {
+    public WindowRailing(JSONObject json) {
         super(json);
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+        return json;
     }
 }
