@@ -31,7 +31,7 @@ import cube.vision.BoundingBox;
 import org.json.JSONObject;
 
 /**
- *
+ * 素材。
  */
 public abstract class Thing implements JSONable {
 

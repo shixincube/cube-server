@@ -24,48 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.material;
+package cube.aigc.psychology.material.tree;
 
-import cube.aigc.psychology.material.house.Door;
-import cube.aigc.psychology.material.house.Roof;
-import cube.aigc.psychology.material.house.Window;
+import cube.aigc.psychology.material.Thing;
 import org.json.JSONObject;
 
-import java.util.List;
-
 /**
- * 房。
+ * 树根。
  */
-public class House extends Thing {
+public class Root extends Thing {
 
-    private Roof roof;
-
-    private List<Window> windowList;
-
-    private List<Door> doorList;
-
-    public House() {
-        super(Label.House);
-    }
-
-    public House(JSONObject json) {
+    public Root(JSONObject json) {
         super(json);
-
-        if (json.has("roof")) {
-            this.roof = new Roof(json.getJSONObject("roof"));
-        }
-    }
-
-    public void setRoof(Roof roof) {
-        this.roof = roof;
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = super.toJSON();
-        if (null != this.roof) {
-            json.put("roof", this.roof.toJSON());
-        }
-        return json;
     }
 }

@@ -26,6 +26,8 @@
 
 package cube.aigc.psychology.material;
 
+import cube.aigc.psychology.material.house.*;
+import cube.aigc.psychology.material.tree.*;
 import org.json.JSONObject;
 
 /**
@@ -50,6 +52,44 @@ public class Classification {
                 return new Tree(json);
             case Person:
                 return new Person(json);
+
+            case HouseRoof:
+                return new Roof(json);
+            case HouseWindow:
+            case HouseWindowOpened:
+                return new Window(json);
+            case HouseDoor:
+            case HouseDoorOpened:
+            case HouseDoorLocked:
+                return new Door(json);
+            case HouseCurtain:
+            case HouseCurtainOpened:
+                return new Curtain(json);
+            case HouseWindowRailing:
+                return new WindowRailing(json);
+            case HouseSmoke:
+                return new Smoke(json);
+            case HouseFence:
+                return new Fence(json);
+            case HousePath:
+                return new Path(json);
+
+            case TreeTrunk:
+                return new Trunk(json);
+            case TreeBranch:
+                return new Branch(json);
+            case TreeCanopy:
+                return new Canopy(json);
+            case TreeRoot:
+                return new Root(json);
+            case TreeFruit:
+                return new Fruit(json);
+            case TreeHole:
+                return new Hole(json);
+            case TreeDrooping:
+                return new DroopingLeaves(json);
+
+
             default:
                 break;
         }

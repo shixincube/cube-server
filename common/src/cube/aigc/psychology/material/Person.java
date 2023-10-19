@@ -33,6 +33,8 @@ import org.json.JSONObject;
  */
 public class Person extends Thing {
 
+    private boolean sideFace;
+
     public Person(JSONObject json) {
         super(json);
     }
