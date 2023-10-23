@@ -37,6 +37,8 @@ public enum Label {
 
     Person("p_person"),
 
+    Table("p_table"),
+
     Sun("p_sun"),
 
     Moon("p_moon"),

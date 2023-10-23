@@ -26,21 +26,19 @@
 
 package cube.aigc.psychology;
 
+import cell.util.log.Logger;
 import cube.aigc.psychology.composition.FrameStructure;
-import cube.aigc.psychology.material.House;
-import cube.aigc.psychology.material.Person;
-import cube.aigc.psychology.material.Thing;
-import cube.aigc.psychology.material.Tree;
+import cube.aigc.psychology.material.*;
+import cube.aigc.psychology.material.house.*;
+import cube.aigc.psychology.material.tree.Branch;
+import cube.aigc.psychology.material.tree.Trunk;
 import cube.common.JSONable;
 import cube.vision.BoundingBox;
 import cube.vision.Size;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * 画面空间元素描述。
@@ -55,41 +53,274 @@ public class PictureDescription implements JSONable {
 
     private List<Person> personList;
 
+    private List<Table> tableList;
+
+    private List<Sun> sunList;
+
+    private List<Moon> moonList;
+
+    private List<Star> starList;
+
+    private List<Mountain> mountainList;
+
+    private List<Flower> flowerList;
+
+    private List<Grass> grassList;
+
+    private List<Cloud> cloudList;
+
+    private List<Bird> birdList;
+
+    private List<Animal> animalList;
+
     public PictureDescription(Size canvasSize) {
         this.canvasSize = canvasSize;
-        this.houseList = new ArrayList<>();
-        this.treeList = new ArrayList<>();
-        this.personList = new ArrayList<>();
     }
 
     public PictureDescription(JSONObject json) {
         this.canvasSize = new Size(json.getJSONObject("size"));
-        this.houseList = new ArrayList<>();
-        this.treeList = new ArrayList<>();
-        this.personList = new ArrayList<>();
 
-        JSONArray array = json.getJSONArray("houses");
+        if (json.has("materials")) {
+            this.parseMaterial(json.getJSONArray("materials"));
+        }
+    }
+
+    private void parseMaterial(JSONArray array) {
+        Classification classification = new Classification();
+
+        List<Thing> thingList = new ArrayList<>();
         for (int i = 0; i < array.length(); ++i) {
-            this.houseList.add(new House(array.getJSONObject(i)));
+            Thing thing = classification.recognize(array.getJSONObject(i));
+            if (null == thing) {
+                continue;
+            }
+
+            thingList.add(thing);
         }
 
-        array = json.getJSONArray("trees");
-        for (int i = 0; i < array.length(); ++i) {
-            this.treeList.add(new Tree(array.getJSONObject(i)));
+        // 解析一级素材
+        for (Thing thing : thingList) {
+            Label label = thing.getLabel();
+            switch (label) {
+                case House:
+                    addHouse((House) thing);
+                    break;
+                case Tree:
+                    addTree((Tree) thing);
+                    break;
+                case Person:
+                    addPerson((Person) thing);
+                    break;
+                case Table:
+                    addTable((Table) thing);
+                    break;
+                case Sun:
+                    addSun((Sun) thing);
+                    break;
+                case Moon:
+                    addMoon((Moon) thing);
+                    break;
+                case Star:
+                    addStar((Star) thing);
+                    break;
+                case Mountain:
+                    addMountain((Mountain) thing);
+                    break;
+                case Flower:
+                    addFlower((Flower) thing);
+                    break;
+                case Grass:
+                    addGrass((Grass) thing);
+                    break;
+                case Cloud:
+                    addCloud((Cloud) thing);
+                    break;
+                case Bird:
+                    addBird((Bird) thing);
+                    break;
+                case Cat:
+                case Dog:
+                    addAnimal((Animal) thing);
+                    break;
+                default:
+                    break;
+            }
         }
 
-        array = json.getJSONArray("persons");
-        for (int i = 0; i < array.length(); ++i) {
-            this.personList.add(new Person(array.getJSONObject(i)));
+        // 解析 HTP 内容
+        for (Thing thing : thingList) {
+            Label label = thing.getLabel();
+            switch (label) {
+                case HouseRoof:
+                case HouseRoofTextured:
+                case HouseDoor:
+                case HouseDoorOpened:
+                case HouseDoorLocked:
+                case HouseWindow:
+                case HouseWindowOpened:
+                case HouseCurtain:
+                case HouseCurtainOpened:
+                case HouseWindowRailing:
+                case HouseSmoke:
+                case HouseFence:
+                case HousePath:
+                    buildHouse(thing);
+                    break;
+                case TreeTrunk:
+                case TreeBranch:
+                case TreeCanopy:
+                case TreeRoot:
+                case TreeFruit:
+                case TreeHole:
+                case TreeDrooping:
+                    buildTree(thing);
+                    break;
+                case PersonHead:
+                case PersonHair:
+                case PersonEye:
+                case PersonEyebrow:
+                case PersonNose:
+                case PersonEar:
+                case PersonMouth:
+                case PersonBody:
+                case PersonArm:
+                case PersonPalm:
+                case PersonLeg:
+                case PersonFoot:
+                case PersonMask:
+                case PersonHairAccessories:
+                case PersonItem:
+                case PersonGlasses:
+                    buildPerson(thing);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void buildHouse(Thing thing) {
+        if (null == this.houseList) {
+            Logger.i(this.getClass(), "#buildHouse - No house material");
+            return;
+        }
+
+        for (House house : this.houseList) {
+            switch (thing.getLabel()) {
+                case HouseRoof:
+                case HouseRoofTextured:
+                    if (house.getBoundingBox().detectCollision(thing.getBoundingBox())) {
+                        house.setRoof((Roof) thing);
+                    }
+                    break;
+                case HouseDoor:
+                case HouseDoorOpened:
+                case HouseDoorLocked:
+                    if (house.getBoundingBox().detectCollision(thing.getBoundingBox())) {
+                        house.addDoor((Door) thing);
+                    }
+                    break;
+                case HouseWindow:
+                case HouseWindowOpened:
+                    if (house.getBoundingBox().detectCollision(thing.getBoundingBox())) {
+                        house.addWindow((Window) thing);
+                    }
+                    break;
+                case HouseCurtain:
+                case HouseCurtainOpened:
+                    if (house.getBoundingBox().detectCollision(thing.getBoundingBox())) {
+                        house.addCurtain((Curtain) thing);
+                    }
+                    break;
+                case HouseWindowRailing:
+                    if (house.getBoundingBox().detectCollision(thing.getBoundingBox())) {
+                        house.addWindowRailing((WindowRailing) thing);
+                    }
+                    break;
+                case HouseSmoke:
+                    house.addSmoke((Smoke) thing);
+                    break;
+                case HouseFence:
+                    house.addFence((Fence) thing);
+                    break;
+                case HousePath:
+                    house.addPath((Path) thing);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void buildTree(Thing thing) {
+        if (null == this.treeList) {
+            Logger.i(this.getClass(), "#buildTree - No tree material");
+            return;
+        }
+
+        LinkedList<Thing> list = null;
+
+        switch (thing.getLabel()) {
+            case TreeTrunk:
+                list = this.sortByCollisionArea(this.treeList, thing.getBoundingBox());
+                ((Tree) list.getLast()).addTrunk((Trunk) thing);
+                break;
+            case TreeBranch:
+                list = this.sortByCollisionArea(this.treeList, thing.getBoundingBox());
+                ((Tree) list.getLast()).addBranch((Branch) thing);
+                break;
+            case TreeCanopy:
+                
+                break;
+            case TreeRoot:
+                break;
+            case TreeFruit:
+                break;
+            case TreeHole:
+                break;
+            case TreeDrooping:
+                break;
+            default:
+                break;
+        }
+    }
+
+    private LinkedList<Thing> sortByCollisionArea(List<? extends Thing> list, BoundingBox box) {
+        LinkedList<Thing> result = new LinkedList<>(list);
+        Collections.sort(result, new Comparator<Thing>() {
+            @Override
+            public int compare(Thing t1, Thing t2) {
+                int area1 = t1.getBoundingBox().calculateCollisionArea(box);
+                int area2 = t2.getBoundingBox().calculateCollisionArea(box);
+                return area1 - area2;
+            }
+        });
+        return result;
+    }
+
+    private void buildPerson(Thing thing) {
+        if (null == this.personList) {
+            Logger.i(this.getClass(), "#buildPerson - No person material");
+            return;
+        }
+
+        for (Person person : this.personList) {
+            switch (thing.getLabel()) {
+                default:
+                    break;
+            }
         }
     }
 
     public void addHouse(House house) {
+        if (null == this.houseList) {
+            this.houseList = new ArrayList<>();
+        }
         this.houseList.add(house);
     }
 
     public House getHouse() {
-        if (this.houseList.isEmpty()) {
+        if (null == this.houseList || this.houseList.isEmpty()) {
             return null;
         }
 
@@ -103,11 +334,14 @@ public class PictureDescription implements JSONable {
     }
 
     public void addTree(Tree tree) {
+        if (null == this.treeList) {
+            this.treeList = new ArrayList<>();
+        }
         this.treeList.add(tree);
     }
 
     public Tree getTree() {
-        if (this.treeList.isEmpty()) {
+        if (null == this.treeList || this.treeList.isEmpty()) {
             return null;
         }
 
@@ -121,11 +355,14 @@ public class PictureDescription implements JSONable {
     }
 
     public void addPerson(Person person) {
+        if (null == this.personList) {
+            this.personList = new ArrayList<>();
+        }
         this.personList.add(person);
     }
 
     public Person getPerson() {
-        if (this.personList.isEmpty()) {
+        if (null == this.personList || this.personList.isEmpty()) {
             return null;
         }
 
@@ -136,6 +373,76 @@ public class PictureDescription implements JSONable {
 
     public List<Person> getPersons() {
         return this.personList;
+    }
+
+    public void addTable(Table table) {
+        if (null == this.tableList) {
+            this.tableList = new ArrayList<>();
+        }
+        this.tableList.add(table);
+    }
+
+    public void addSun(Sun sun) {
+        if (null == this.sunList) {
+            this.sunList = new ArrayList<>();
+        }
+        this.sunList.add(sun);
+    }
+
+    public void addMoon(Moon moon) {
+        if (null == this.moonList) {
+            this.moonList = new ArrayList<>();
+        }
+        this.moonList.add(moon);
+    }
+
+    public void addStar(Star star) {
+        if (null == this.starList) {
+            this.starList = new ArrayList<>();
+        }
+        this.starList.add(star);
+    }
+
+    public void addMountain(Mountain mountain) {
+        if (null == this.mountainList) {
+            this.mountainList = new ArrayList<>();
+        }
+        this.mountainList.add(mountain);
+    }
+
+    public void addFlower(Flower flower) {
+        if (null == this.flowerList) {
+            this.flowerList = new ArrayList<>();
+        }
+        this.flowerList.add(flower);
+    }
+
+    public void addGrass(Grass grass) {
+        if (null == this.grassList) {
+            this.grassList = new ArrayList<>();
+        }
+        this.grassList.add(grass);
+    }
+
+    public void addCloud(Cloud cloud) {
+        if (null == this.cloudList) {
+            this.cloudList = new ArrayList<>();
+        }
+        this.cloudList.add(cloud);
+    }
+
+    public void addBird(Bird bird) {
+        if (null == this.birdList) {
+            this.birdList = new ArrayList<>();
+        }
+        this.birdList.add(bird);
+    }
+
+    public void addAnimal(Animal animal) {
+        if (null == this.animalList) {
+            this.animalList = new ArrayList<>();
+        }
+        this.animalList.add(animal);
     }
 
     public List<Thing> sortBySize() {

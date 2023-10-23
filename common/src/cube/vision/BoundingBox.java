@@ -80,6 +80,27 @@ public class BoundingBox implements JSONable {
     }
 
     /**
+     * 边界盒碰撞检测。
+     *
+     * @param box
+     * @return
+     */
+    public boolean detectCollision(BoundingBox box) {
+        int mX = Math.max(this.x, box.x);
+        int mY = Math.max(this.y, box.y);
+        int mX2 = Math.min(this.getX2(), box.getX2());
+        int mY2 = Math.min(this.getY2(), box.getY2());
+        int w = mX2 - mX;
+        int h = mY2 - mY;
+        if (w > 0 && h > 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
      * 计算面积。
      *
      * @return

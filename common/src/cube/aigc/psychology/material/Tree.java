@@ -26,14 +26,109 @@
 
 package cube.aigc.psychology.material;
 
+import cube.aigc.psychology.material.tree.*;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 树。
  */
 public class Tree extends Thing {
 
+    private List<Trunk> trunkList;
+
+    private List<Branch> branchList;
+
+    private List<Canopy> canopyList;
+
+    private List<Root> rootList;
+
+    private List<Fruit> fruitList;
+
+    private List<Hole> holeList;
+
+    private List<DroopingLeaves> droopingLeavesList;
+
     public Tree(JSONObject json) {
         super(json);
+    }
+
+    public void addTrunk(Trunk trunk) {
+        if (null == this.trunkList) {
+            this.trunkList = new ArrayList<>();
+        }
+        this.trunkList.add(trunk);
+    }
+
+    public List<Trunk> getTrunks() {
+        return this.trunkList;
+    }
+
+    public void addBranch(Branch branch) {
+        if (null == this.branchList) {
+            this.branchList = new ArrayList<>();
+        }
+        this.branchList.add(branch);
+    }
+
+    public List<Branch> getBranches() {
+        return this.branchList;
+    }
+
+    public void addCanopy(Canopy canopy) {
+        if (null == this.canopyList) {
+            this.canopyList = new ArrayList<>();
+        }
+        this.canopyList.add(canopy);
+    }
+
+    public List<Canopy> getCanopies() {
+        return this.canopyList;
+    }
+
+    public void addRoot(Root root) {
+        if (null == this.rootList) {
+            this.rootList = new ArrayList<>();
+        }
+        this.rootList.add(root);
+    }
+
+    public List<Root> getRoots() {
+        return this.rootList;
+    }
+
+    public void addFruit(Fruit fruit) {
+        if (null == this.fruitList) {
+            this.fruitList = new ArrayList<>();
+        }
+        this.fruitList.add(fruit);
+    }
+
+    public List<Fruit> getFruits() {
+        return this.fruitList;
+    }
+
+    public void addHole(Hole hole) {
+        if (null == this.holeList) {
+            this.holeList = new ArrayList<>();
+        }
+        this.holeList.add(hole);
+    }
+
+    public List<Hole> getHoles() {
+        return this.holeList;
+    }
+
+    public void addDrooping(DroopingLeaves droopingLeaves) {
+        if (null == this.droopingLeavesList) {
+            this.droopingLeavesList = new ArrayList<>();
+        }
+        this.droopingLeavesList.add(droopingLeaves);
+    }
+
+    public List<DroopingLeaves> getDroopingLeaves() {
+        return this.droopingLeavesList;
     }
 }

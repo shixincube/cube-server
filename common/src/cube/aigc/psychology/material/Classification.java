@@ -27,6 +27,7 @@
 package cube.aigc.psychology.material;
 
 import cube.aigc.psychology.material.house.*;
+import cube.aigc.psychology.material.person.*;
 import cube.aigc.psychology.material.tree.*;
 import org.json.JSONObject;
 
@@ -52,6 +53,29 @@ public class Classification {
                 return new Tree(json);
             case Person:
                 return new Person(json);
+
+            case Table:
+                return new Table(json);
+
+            case Sun:
+                return new Sun(json);
+            case Moon:
+                return new Moon(json);
+            case Star:
+                return new Star(json);
+            case Mountain:
+                return new Mountain(json);
+            case Flower:
+                return new Flower(json);
+            case Grass:
+                return new Grass(json);
+            case Cloud:
+                return new Cloud(json);
+            case Bird:
+                return new Bird(json);
+            case Cat:
+            case Dog:
+                return new Animal(json);
 
             case HouseRoof:
                 return new Roof(json);
@@ -89,6 +113,38 @@ public class Classification {
             case TreeDrooping:
                 return new DroopingLeaves(json);
 
+            case PersonHead:
+                return new Head(json);
+            case PersonHair:
+                return new Hair(json);
+            case PersonEye:
+                return new Eye(json);
+            case PersonEyebrow:
+                return new Eyebrow(json);
+            case PersonNose:
+                return new Nose(json);
+            case PersonEar:
+                return new Ear(json);
+            case PersonMouth:
+                return new Mouth(json);
+            case PersonBody:
+                return new Body(json);
+            case PersonArm:
+                return new Arm(json);
+            case PersonPalm:
+                return new Palm(json);
+            case PersonLeg:
+                return new Leg(json);
+            case PersonFoot:
+                return new Foot(json);
+            case PersonMask:
+                return new Mask(json);
+            case PersonHairAccessories:
+                return new HairAccessory(json);
+            case PersonItem:
+                return new Item(json);
+            case PersonGlasses:
+                return new Glasses(json);
 
             default:
                 break;
