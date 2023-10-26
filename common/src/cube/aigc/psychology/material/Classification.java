@@ -54,8 +54,21 @@ public class Classification {
             case Person:
                 return new Person(json);
 
+            case Man:
+                return new Man(json);
+            case Woman:
+                return new Woman(json);
+            case Boy:
+                return new Boy(json);
+            case Girl:
+                return new Girl(json);
+
             case Table:
                 return new Table(json);
+            case Temple:
+                return new Temple(json);
+            case Grave:
+                return new Grave(json);
 
             case Sun:
                 return new Sun(json);
@@ -137,6 +150,8 @@ public class Classification {
                 return new Leg(json);
             case PersonFoot:
                 return new Foot(json);
+            case PersonSkirt:
+                return new Skirt(json);
             case PersonMask:
                 return new Mask(json);
             case PersonHairAccessories:

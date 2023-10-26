@@ -37,6 +37,14 @@ public enum Label {
 
     Person("p_person"),
 
+    Man("p_man"),
+
+    Woman("p_woman"),
+
+    Boy("p_boy"),
+
+    Girl("p_girl"),
+
     Table("p_table"),
 
     Sun("p_sun"),
@@ -58,6 +66,10 @@ public enum Label {
     Cat("p_cat"),
 
     Dog("p_dog"),
+
+    Temple("p_temple"),
+
+    Grave("p_grave"),
 
     HouseRoof("p_house_roof"),
 
@@ -112,6 +124,8 @@ public enum Label {
     PersonNose("p_person_nose"),
 
     PersonEar("p_person_ear"),
+
+    PersonSkirt("p_person_skirt"),
 
     PersonMouth("p_person_mouth"),
 

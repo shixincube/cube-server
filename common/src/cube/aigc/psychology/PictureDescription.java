@@ -73,6 +73,10 @@ public class PictureDescription implements JSONable {
 
     private List<Animal> animalList;
 
+    private List<Temple> templeList;
+
+    private List<Grave> graveList;
+
     public PictureDescription(Size canvasSize) {
         this.canvasSize = canvasSize;
     }
@@ -109,6 +113,10 @@ public class PictureDescription implements JSONable {
                     addTree((Tree) thing);
                     break;
                 case Person:
+                case Man:
+                case Woman:
+                case Boy:
+                case Girl:
                     addPerson((Person) thing);
                     break;
                 case Table:
@@ -141,6 +149,12 @@ public class PictureDescription implements JSONable {
                 case Cat:
                 case Dog:
                     addAnimal((Animal) thing);
+                    break;
+                case Temple:
+                    addTemple((Temple) thing);
+                    break;
+                case Grave:
+                    addGrave((Grave) thing);
                     break;
                 default:
                     break;
@@ -187,6 +201,7 @@ public class PictureDescription implements JSONable {
                 case PersonPalm:
                 case PersonLeg:
                 case PersonFoot:
+                case PersonSkirt:
                 case PersonMask:
                 case PersonHairAccessories:
                 case PersonItem:
@@ -350,6 +365,10 @@ public class PictureDescription implements JSONable {
             case PersonFoot:
                 list = this.sortByCollisionArea(this.personList, thing.getBoundingBox());
                 ((Person) list.getLast()).addFoot((Foot) thing);
+                break;
+            case PersonSkirt:
+                list = this.sortByCollisionArea(this.personList, thing.getBoundingBox());
+                ((Person) list.getLast()).setSkirt((Skirt) thing);
                 break;
             case PersonMask:
                 list = this.sortByCollisionArea(this.personList, thing.getBoundingBox());
@@ -516,6 +535,20 @@ public class PictureDescription implements JSONable {
             this.animalList = new ArrayList<>();
         }
         this.animalList.add(animal);
+    }
+
+    public void addTemple(Temple temple) {
+        if (null == this.templeList) {
+            this.templeList = new ArrayList<>();
+        }
+        this.templeList.add(temple);
+    }
+
+    public void addGrave(Grave grave) {
+        if (null == this.graveList) {
+            this.graveList = new ArrayList<>();
+        }
+        this.graveList.add(grave);
     }
 
     public List<Thing> sortBySize() {

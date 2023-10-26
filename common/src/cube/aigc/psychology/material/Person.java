@@ -37,7 +37,20 @@ import java.util.List;
  */
 public class Person extends Thing {
 
+    /**
+     * 性别。
+     */
+    public enum Gender {
+        Male,
+
+        Female,
+
+        Unknown
+    }
+
     private boolean sideFace = false;
+
+    protected Gender gender = Gender.Unknown;
 
     private Head head;
 
@@ -63,6 +76,8 @@ public class Person extends Thing {
 
     private List<Foot> footList;
 
+    private Skirt skirt;
+
     private Mask mask;
 
     private List<HairAccessory> hairAccessoryList;
@@ -73,6 +88,10 @@ public class Person extends Thing {
 
     public Person(JSONObject json) {
         super(json);
+    }
+
+    public Gender getGender() {
+        return this.gender;
     }
 
     public void setHead(Head head) {
@@ -193,6 +212,14 @@ public class Person extends Thing {
 
     public List<Foot> getFoot() {
         return this.footList;
+    }
+
+    public void setSkirt(Skirt skirt) {
+        this.skirt = skirt;
+    }
+
+    public Skirt getSkirt() {
+        return this.skirt;
     }
 
     public void setMask(Mask mask) {
