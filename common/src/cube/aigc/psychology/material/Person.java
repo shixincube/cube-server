@@ -54,6 +54,8 @@ public class Person extends Thing {
 
     private Head head;
 
+    private List<Braid> braidList;
+
     private List<Hair> hairList;
 
     private List<Eye> eyeList;
@@ -100,6 +102,19 @@ public class Person extends Thing {
 
     public Head getHead() {
         return this.head;
+    }
+
+    public void addBraid(Braid braid) {
+        if (null == this.braidList) {
+            this.braidList = new ArrayList<>();
+        }
+        this.braidList.add(braid);
+
+        this.gender = Gender.Female;
+    }
+
+    public List<Braid> getBraids() {
+        return this.braidList;
     }
 
     public void addHair(Hair hair) {
@@ -216,6 +231,9 @@ public class Person extends Thing {
 
     public void setSkirt(Skirt skirt) {
         this.skirt = skirt;
+        if (null != this.skirt) {
+            this.gender = Gender.Female;
+        }
     }
 
     public Skirt getSkirt() {

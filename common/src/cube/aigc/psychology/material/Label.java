@@ -113,6 +113,8 @@ public enum Label {
 
     PersonSideFace("p_person_side_face"),
 
+    PersonBraid("p_person_braid"),
+
     PersonHead("p_person_head"),
 
     PersonHair("p_person_hair"),

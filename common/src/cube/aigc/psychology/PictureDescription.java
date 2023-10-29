@@ -322,6 +322,10 @@ public class PictureDescription implements JSONable {
                 list = this.sortByCollisionArea(this.personList, thing.getBoundingBox());
                 ((Person) list.getLast()).setHead((Head) thing);
                 break;
+            case PersonBraid:
+                list = this.sortByCollisionArea(this.personList, thing.getBoundingBox());
+                ((Person) list.getLast()).addBraid((Braid) thing);
+                break;
             case PersonHair:
                 list = this.sortByCollisionArea(this.personList, thing.getBoundingBox());
                 ((Person) list.getLast()).addHair((Hair) thing);

@@ -126,6 +126,8 @@ public class Classification {
             case TreeDrooping:
                 return new DroopingLeaves(json);
 
+            case PersonBraid:
+                return new Braid(json);
             case PersonHead:
                 return new Head(json);
             case PersonHair:
