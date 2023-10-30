@@ -37,6 +37,18 @@ public enum Label {
 
     Person("p_person"),
 
+    Bungalow("p_bungalow"),
+
+    Villa("p_villa"),
+
+    Building("p_building"),
+
+    Fairyland("p_fairyland"),
+
+    Temple("p_temple"),
+
+    Grave("p_grave"),
+
     Man("p_man"),
 
     Woman("p_woman"),
@@ -67,13 +79,15 @@ public enum Label {
 
     Dog("p_dog"),
 
-    Temple("p_temple"),
-
-    Grave("p_grave"),
+    HouseSidewall("p_house_sidewall"),
 
     HouseRoof("p_house_roof"),
 
     HouseRoofTextured("p_house_roof_textured"),
+
+    HouseRoofSkylight("p_house_roof_skylight"),
+
+    HouseChimney("p_house_chimney"),
 
     HouseDoor("p_house_door"),
 
@@ -96,6 +110,10 @@ public enum Label {
     HouseFence("p_house_fence"),
 
     HousePath("p_house_path"),
+
+    HouseCurvePath("p_house_curve_path"),
+
+    HouseCobbledPath("p_house_cobbled_path"),
 
     TreeTrunk("p_tree_trunk"),
 

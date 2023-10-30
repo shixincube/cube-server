@@ -69,13 +69,7 @@ public class PictureDescription implements JSONable {
 
     private List<Cloud> cloudList;
 
-    private List<Bird> birdList;
-
     private List<Animal> animalList;
-
-    private List<Temple> templeList;
-
-    private List<Grave> graveList;
 
     public PictureDescription(Size canvasSize) {
         this.canvasSize = canvasSize;
@@ -107,6 +101,12 @@ public class PictureDescription implements JSONable {
             Label label = thing.getLabel();
             switch (label) {
                 case House:
+                case Bungalow:
+                case Villa:
+                case Building:
+                case Fairyland:
+                case Temple:
+                case Grave:
                     addHouse((House) thing);
                     break;
                 case Tree:
@@ -144,19 +144,12 @@ public class PictureDescription implements JSONable {
                     addCloud((Cloud) thing);
                     break;
                 case Bird:
-                    addBird((Bird) thing);
-                    break;
                 case Cat:
                 case Dog:
                     addAnimal((Animal) thing);
                     break;
-                case Temple:
-                    addTemple((Temple) thing);
-                    break;
-                case Grave:
-                    addGrave((Grave) thing);
-                    break;
                 default:
+                    Logger.w(this.getClass(), "Unknown label: " + label.name);
                     break;
             }
         }
@@ -165,8 +158,11 @@ public class PictureDescription implements JSONable {
         for (Thing thing : thingList) {
             Label label = thing.getLabel();
             switch (label) {
+                case HouseSidewall:
                 case HouseRoof:
                 case HouseRoofTextured:
+                case HouseRoofSkylight:
+                case HouseChimney:
                 case HouseDoor:
                 case HouseDoorOpened:
                 case HouseDoorLocked:
@@ -178,6 +174,7 @@ public class PictureDescription implements JSONable {
                 case HouseSmoke:
                 case HouseFence:
                 case HousePath:
+                case HouseCurvePath:
                     buildHouse(thing);
                     break;
                 case TreeTrunk:
@@ -209,6 +206,7 @@ public class PictureDescription implements JSONable {
                     buildPerson(thing);
                     break;
                 default:
+                    Logger.w(this.getClass(), "Unknown label: " + label.name + " for building HTP");
                     break;
             }
         }
@@ -222,10 +220,25 @@ public class PictureDescription implements JSONable {
 
         for (House house : this.houseList) {
             switch (thing.getLabel()) {
+                case HouseSidewall:
+                    if (house.getBoundingBox().detectCollision(thing.getBoundingBox())) {
+                        house.addSidewall((Sidewall) thing);
+                    }
+                    break;
                 case HouseRoof:
                 case HouseRoofTextured:
                     if (house.getBoundingBox().detectCollision(thing.getBoundingBox())) {
                         house.setRoof((Roof) thing);
+                    }
+                    break;
+                case HouseRoofSkylight:
+                    if (house.getBoundingBox().detectCollision(thing.getBoundingBox())) {
+                        house.addRoofSkylight((RoofSkylight) thing);
+                    }
+                    break;
+                case HouseChimney:
+                    if (house.getBoundingBox().detectCollision(thing.getBoundingBox())) {
+                        house.addChimney((Chimney) thing);
                     }
                     break;
                 case HouseDoor:
@@ -259,6 +272,7 @@ public class PictureDescription implements JSONable {
                     house.addFence((Fence) thing);
                     break;
                 case HousePath:
+                case HouseCurvePath:
                     house.addPath((Path) thing);
                     break;
                 default:
@@ -527,32 +541,11 @@ public class PictureDescription implements JSONable {
         this.cloudList.add(cloud);
     }
 
-    public void addBird(Bird bird) {
-        if (null == this.birdList) {
-            this.birdList = new ArrayList<>();
-        }
-        this.birdList.add(bird);
-    }
-
     public void addAnimal(Animal animal) {
         if (null == this.animalList) {
             this.animalList = new ArrayList<>();
         }
         this.animalList.add(animal);
-    }
-
-    public void addTemple(Temple temple) {
-        if (null == this.templeList) {
-            this.templeList = new ArrayList<>();
-        }
-        this.templeList.add(temple);
-    }
-
-    public void addGrave(Grave grave) {
-        if (null == this.graveList) {
-            this.graveList = new ArrayList<>();
-        }
-        this.graveList.add(grave);
     }
 
     public List<Thing> sortBySize() {

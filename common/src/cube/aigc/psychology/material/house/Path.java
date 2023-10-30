@@ -26,6 +26,7 @@
 
 package cube.aigc.psychology.material.house;
 
+import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Thing;
 import org.json.JSONObject;
 
@@ -34,7 +35,17 @@ import org.json.JSONObject;
  */
 public class Path extends Thing {
 
+    private boolean curve = false;
+
     public Path(JSONObject json) {
         super(json);
+
+        if (Label.HouseCurvePath == this.label) {
+            this.curve = true;
+        }
+    }
+
+    public boolean isCurve() {
+        return this.curve;
     }
 }

@@ -24,16 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.material;
+package cube.aigc.psychology.material.house;
 
+import cube.aigc.psychology.material.Thing;
 import org.json.JSONObject;
 
 /**
- * 坟墓。
+ * 烟囱。
  */
-public class Grave extends House {
+public class Chimney extends Thing {
 
-    public Grave(JSONObject json) {
+    public Chimney(JSONObject json) {
         super(json);
     }
 }

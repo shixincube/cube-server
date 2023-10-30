@@ -29,11 +29,11 @@ package cube.aigc.psychology.material;
 import org.json.JSONObject;
 
 /**
- * 坟墓。
+ * 平房。
  */
-public class Grave extends House {
+public class Bungalow extends House {
 
-    public Grave(JSONObject json) {
+    public Bungalow(JSONObject json) {
         super(json);
     }
 }

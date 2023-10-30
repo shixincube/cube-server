@@ -33,26 +33,40 @@ import org.json.JSONObject;
  */
 public class Animal extends Thing {
 
-    private boolean cat = false;
+    public enum Classes {
+        /**
+         * 鸟
+         */
+        Bird,
 
-    private boolean dog = false;
+        /**
+         * 猫。
+         */
+        Cat,
+
+        /**
+         * 狗。
+         */
+        Dog
+    }
+
+    private Classes classes;
 
     public Animal(JSONObject json) {
         super(json);
 
-        if (Label.Cat == this.label) {
-            this.cat = true;
+        if (Label.Bird == this.label) {
+            this.classes = Classes.Bird;
+        }
+        else if (Label.Cat == this.label) {
+            this.classes = Classes.Cat;
         }
         else if (Label.Dog == this.label) {
-            this.dog = true;
+            this.classes = Classes.Dog;
         }
     }
 
-    public boolean isCat() {
-        return this.cat;
-    }
-
-    public boolean isDog() {
-        return this.dog;
+    public Classes getClasses() {
+        return this.classes;
     }
 }

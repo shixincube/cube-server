@@ -37,7 +37,13 @@ import java.util.List;
  */
 public class House extends Thing {
 
+    private List<Sidewall> sidewallList;
+
     private Roof roof;
+
+    private List<RoofSkylight> roofSkylightList;
+
+    private List<Chimney> chimneyList;
 
     private List<Window> windowList;
 
@@ -61,12 +67,45 @@ public class House extends Thing {
         }
     }
 
+    public void addSidewall(Sidewall sidewall) {
+        if (null == this.sidewallList) {
+            this.sidewallList = new ArrayList<>();
+        }
+        this.sidewallList.add(sidewall);
+    }
+
+    public List<Sidewall> getSidewalls() {
+        return this.sidewallList;
+    }
+
     public void setRoof(Roof roof) {
         this.roof = roof;
     }
 
     public Roof getRoof() {
         return this.roof;
+    }
+
+    public void addRoofSkylight(RoofSkylight roofSkylight) {
+        if (null == this.roofSkylightList) {
+            this.roofSkylightList = new ArrayList<>();
+        }
+        this.roofSkylightList.add(roofSkylight);
+    }
+
+    public List<RoofSkylight> getRoofSkylights() {
+        return this.roofSkylightList;
+    }
+
+    public void addChimney(Chimney chimney) {
+        if (null == this.chimneyList) {
+            this.chimneyList = new ArrayList<>();
+        }
+        this.chimneyList.add(chimney);
+    }
+
+    public List<Chimney> getChimneys() {
+        return this.chimneyList;
     }
 
     public void addWindow(Window window) {

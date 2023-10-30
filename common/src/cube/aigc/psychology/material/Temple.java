@@ -31,7 +31,7 @@ import org.json.JSONObject;
 /**
  * 庙宇。
  */
-public class Temple extends Thing {
+public class Temple extends House {
 
     public Temple(JSONObject json) {
         super(json);

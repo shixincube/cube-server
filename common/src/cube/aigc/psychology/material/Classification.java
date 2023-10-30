@@ -54,6 +54,19 @@ public class Classification {
             case Person:
                 return new Person(json);
 
+            case Bungalow:
+                return new Bungalow(json);
+            case Villa:
+                return new Villa(json);
+            case Building:
+                return new Building(json);
+            case Fairyland:
+                return new Fairyland(json);
+            case Temple:
+                return new Temple(json);
+            case Grave:
+                return new Grave(json);
+
             case Man:
                 return new Man(json);
             case Woman:
@@ -65,10 +78,6 @@ public class Classification {
 
             case Table:
                 return new Table(json);
-            case Temple:
-                return new Temple(json);
-            case Grave:
-                return new Grave(json);
 
             case Sun:
                 return new Sun(json);
@@ -85,13 +94,18 @@ public class Classification {
             case Cloud:
                 return new Cloud(json);
             case Bird:
-                return new Bird(json);
             case Cat:
             case Dog:
                 return new Animal(json);
 
+            case HouseSidewall:
+                return new Sidewall(json);
             case HouseRoof:
                 return new Roof(json);
+            case HouseRoofSkylight:
+                return new RoofSkylight(json);
+            case HouseChimney:
+                return new Chimney(json);
             case HouseWindow:
             case HouseWindowOpened:
                 return new Window(json);
@@ -109,6 +123,7 @@ public class Classification {
             case HouseFence:
                 return new Fence(json);
             case HousePath:
+            case HouseCurvePath:
                 return new Path(json);
 
             case TreeTrunk:
