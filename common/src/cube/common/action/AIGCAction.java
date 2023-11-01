@@ -226,6 +226,11 @@ public enum AIGCAction {
      */
     PreInfer("preInfer"),
 
+    /**
+     * 预测心理学图画。
+     */
+    PredictPsychology("predictPsychology"),
+
     ;
 
     public final String name;

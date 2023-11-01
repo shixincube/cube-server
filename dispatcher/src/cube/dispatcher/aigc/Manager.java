@@ -925,6 +925,13 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
+    public JSONObject predictPsychology(String token, String fileCode) {
+        JSONObject data = new JSONObject();
+
+
+        return null;
+    }
+
     @Override
     public void onTick(long now) {
         if (now - this.lastClearToken > 60 * 60 * 1000) {

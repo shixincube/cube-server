@@ -67,6 +67,19 @@ public class Classification {
             case Grave:
                 return new Grave(json);
 
+            case DeciduousTree:
+                return new DeciduousTree(json);
+            case DeadTree:
+                return new DeadTree(json);
+            case PineTree:
+                return new PineTree(json);
+            case WillowTree:
+                return new WillowTree(json);
+            case CoconutTree:
+                return new CoconutTree(json);
+            case Bamboo:
+                return new Bamboo(json);
+
             case Man:
                 return new Man(json);
             case Woman:
@@ -124,6 +137,7 @@ public class Classification {
                 return new Fence(json);
             case HousePath:
             case HouseCurvePath:
+            case HouseCobbledPath:
                 return new Path(json);
 
             case TreeTrunk:
@@ -147,6 +161,16 @@ public class Classification {
                 return new Head(json);
             case PersonHair:
                 return new Hair(json);
+            case PersonStraightHair:
+                return new StraightHair(json);
+            case PersonShortHair:
+                return new ShortHair(json);
+            case PersonCurlyHair:
+                return new CurlyHair(json);
+            case PersonStandingHair:
+                return new StandingHair(json);
+            case PersonCap:
+                return new Cap(json);
             case PersonEye:
                 return new Eye(json);
             case PersonEyebrow:

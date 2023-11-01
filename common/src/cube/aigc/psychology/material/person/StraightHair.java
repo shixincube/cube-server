@@ -24,37 +24,16 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.material.house;
+package cube.aigc.psychology.material.person;
 
-import cube.aigc.psychology.material.Label;
-import cube.aigc.psychology.material.Thing;
 import org.json.JSONObject;
 
 /**
- * 房前小路。
+ * 直发。
  */
-public class Path extends Thing {
+public class StraightHair extends Hair {
 
-    private boolean curve = false;
-
-    private boolean cobbled = false;
-
-    public Path(JSONObject json) {
+    public StraightHair(JSONObject json) {
         super(json);
-
-        if (Label.HouseCurvePath == this.label) {
-            this.curve = true;
-        }
-        else if (Label.HouseCobbledPath == this.label) {
-            this.cobbled = true;
-        }
-    }
-
-    public boolean isCurve() {
-        return this.curve;
-    }
-
-    public boolean isCobbled() {
-        return this.cobbled;
     }
 }

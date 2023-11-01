@@ -36,6 +36,7 @@ import cube.aigc.PublicOpinionTaskName;
 import cube.aigc.Sentiment;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
+import cube.aigc.psychology.PictureDescription;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -1103,6 +1104,56 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
+    /**
+     * 心理学绘画预测。
+     *
+     * @param domain
+     * @param fileCode
+     * @return
+     */
+    public PictureDescription predictPsychology(String domain, String fileCode) {
+        if (!this.isStarted()) {
+            return null;
+        }
+
+        AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
+        if (null == unit) {
+            Logger.w(this.getClass(), "#predictPsychology - Can NOT find unit in server");
+            return null;
+        }
+
+        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        if (null == fileStorage) {
+            Logger.e(this.getClass(), "#predictPsychology - File storage service is not ready");
+            return null;
+        }
+
+        GetFile getFile = new GetFile(domain, fileCode);
+        JSONObject fileLabelJson = fileStorage.notify(getFile);
+        if (null == fileLabelJson) {
+            Logger.e(this.getClass(), "#predictPsychology - Get file failed: " + fileCode);
+            return null;
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            JSONObject data = new JSONObject();
+            data.put("fileLabel", fileLabelJson);
+            Packet request = new Packet(AIGCAction.PredictPsychology.name, data);
+            ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+            if (null == dialect) {
+                Logger.w(this.getClass(), "#predictPsychology - Unit error");
+                return null;
+            }
+
+            Packet response = new Packet(dialect);
+            JSONObject payload = Packet.extractDataPayload(response);
+            PictureDescription pictureDescription = new PictureDescription(payload);
+        }
+
+        return null;
+    }
 
     public boolean automaticSpeechRecognition(String domain, String fileCode, AutomaticSpeechRecognitionListener listener) {
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");

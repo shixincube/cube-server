@@ -110,6 +110,12 @@ public class PictureDescription implements JSONable {
                     addHouse((House) thing);
                     break;
                 case Tree:
+                case DeciduousTree:
+                case DeadTree:
+                case PineTree:
+                case WillowTree:
+                case CoconutTree:
+                case Bamboo:
                     addTree((Tree) thing);
                     break;
                 case Person:
@@ -188,6 +194,11 @@ public class PictureDescription implements JSONable {
                     break;
                 case PersonHead:
                 case PersonHair:
+                case PersonStraightHair:
+                case PersonShortHair:
+                case PersonCurlyHair:
+                case PersonStandingHair:
+                case PersonCap:
                 case PersonEye:
                 case PersonEyebrow:
                 case PersonNose:
@@ -273,9 +284,11 @@ public class PictureDescription implements JSONable {
                     break;
                 case HousePath:
                 case HouseCurvePath:
+                case HouseCobbledPath:
                     house.addPath((Path) thing);
                     break;
                 default:
+                    Logger.w(this.getClass(), "Unknown label: " + thing.getLabel().name + " for building house");
                     break;
             }
         }
@@ -319,6 +332,7 @@ public class PictureDescription implements JSONable {
                 ((Tree) list.getLast()).addDrooping((DroopingLeaves) thing);
                 break;
             default:
+                Logger.w(this.getClass(), "Unknown label: " + thing.getLabel().name + " for building tree");
                 break;
         }
     }
@@ -341,8 +355,16 @@ public class PictureDescription implements JSONable {
                 ((Person) list.getLast()).addBraid((Braid) thing);
                 break;
             case PersonHair:
+            case PersonStraightHair:
+            case PersonShortHair:
+            case PersonCurlyHair:
+            case PersonStandingHair:
                 list = this.sortByCollisionArea(this.personList, thing.getBoundingBox());
                 ((Person) list.getLast()).addHair((Hair) thing);
+                break;
+            case PersonCap:
+                list = this.sortByCollisionArea(this.personList, thing.getBoundingBox());
+                ((Person) list.getLast()).setCap((Cap) thing);
                 break;
             case PersonEye:
                 list = this.sortByCollisionArea(this.personList, thing.getBoundingBox());
@@ -405,6 +427,7 @@ public class PictureDescription implements JSONable {
                 ((Person) list.getLast()).setGlasses((Glasses) thing);
                 break;
             default:
+                Logger.w(this.getClass(), "Unknown label: " + thing.getLabel().name + " for building person");
                 break;
         }
     }

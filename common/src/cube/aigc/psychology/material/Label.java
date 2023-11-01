@@ -49,6 +49,18 @@ public enum Label {
 
     Grave("p_grave"),
 
+    DeciduousTree("p_deciduous_tree"),
+
+    DeadTree("p_dead_tree"),
+
+    PineTree("p_pine_tree"),
+
+    WillowTree("p_willow_tree"),
+
+    CoconutTree("p_coconut_tree"),
+
+    Bamboo("p_bamboo"),
+
     Man("p_man"),
 
     Woman("p_woman"),
@@ -136,6 +148,16 @@ public enum Label {
     PersonHead("p_person_head"),
 
     PersonHair("p_person_hair"),
+
+    PersonStraightHair("p_person_straight_hair"),
+
+    PersonShortHair("p_person_short_hair"),
+
+    PersonCurlyHair("p_person_curly_hair"),
+
+    PersonStandingHair("p_person_standing_hair"),
+
+    PersonCap("p_person_cap"),
 
     PersonEye("p_person_eye"),
 

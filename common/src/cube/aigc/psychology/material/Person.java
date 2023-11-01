@@ -58,6 +58,8 @@ public class Person extends Thing {
 
     private List<Hair> hairList;
 
+    private Cap cap;
+
     private List<Eye> eyeList;
 
     private List<Eyebrow> eyebrowList;
@@ -126,6 +128,14 @@ public class Person extends Thing {
 
     public List<Hair> getHairs() {
         return this.hairList;
+    }
+
+    public void setCap(Cap cap) {
+        this.cap = cap;
+    }
+
+    public Cap getCap() {
+        return this.cap;
     }
 
     public void addEye(Eye eye) {
