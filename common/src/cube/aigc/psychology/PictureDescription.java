@@ -81,6 +81,64 @@ public class PictureDescription implements JSONable {
         if (json.has("materials")) {
             this.parseMaterials(json.getJSONArray("materials"));
         }
+
+        if (json.has("houses")) {
+            this.houseList = new ArrayList<>();
+            this.parseList(json.getJSONArray("houses"), this.houseList);
+        }
+        if (json.has("trees")) {
+            this.treeList = new ArrayList<>();
+            this.parseList(json.getJSONArray("trees"), this.treeList);
+        }
+        if (json.has("persons")) {
+            this.personList = new ArrayList<>();
+            this.parseList(json.getJSONArray("persons"), this.personList);
+        }
+        if (json.has("suns")) {
+            this.sunList = new ArrayList<>();
+            this.parseList(json.getJSONArray("suns"), this.sunList);
+        }
+        if (json.has("moons")) {
+            this.moonList = new ArrayList<>();
+            this.parseList(json.getJSONArray("moons"), this.moonList);
+        }
+        if (json.has("stars")) {
+            this.starList = new ArrayList<>();
+            this.parseList(json.getJSONArray("stars"), this.starList);
+        }
+        if (json.has("mountains")) {
+            this.mountainList = new ArrayList<>();
+            this.parseList(json.getJSONArray("mountains"), this.mountainList);
+        }
+        if (json.has("flowers")) {
+            this.flowerList = new ArrayList<>();
+            this.parseList(json.getJSONArray("flowers"), this.flowerList);
+        }
+        if (json.has("grasses")) {
+            this.grassList = new ArrayList<>();
+            this.parseList(json.getJSONArray("grasses"), this.grassList);
+        }
+        if (json.has("clouds")) {
+            this.cloudList = new ArrayList<>();
+            this.parseList(json.getJSONArray("clouds"), this.cloudList);
+        }
+        if (json.has("animals")) {
+            this.animalList = new ArrayList<>();
+            this.parseList(json.getJSONArray("animals"), this.animalList);
+        }
+    }
+
+    private void parseList(JSONArray array, List targetList) {
+        Classification classification = new Classification();
+
+        for (int i = 0; i < array.length(); ++i) {
+            Thing thing = classification.recognize(array.getJSONObject(i));
+            if (null == thing) {
+                continue;
+            }
+
+            targetList.add(thing);
+        }
     }
 
     private void parseMaterials(JSONArray array) {
@@ -702,23 +760,93 @@ public class PictureDescription implements JSONable {
         JSONObject json = new JSONObject();
         json.put("size", this.canvasSize.toJSON());
 
-        JSONArray houseArray = new JSONArray();
-        for (House house : this.houseList) {
-            houseArray.put(house.toJSON());
+        if (null != this.houseList) {
+            JSONArray houseArray = new JSONArray();
+            for (House house : this.houseList) {
+                houseArray.put(house.toJSON());
+            }
+            json.put("houses", houseArray);
         }
-        json.put("houses", houseArray);
 
-        JSONArray treeArray = new JSONArray();
-        for (Tree tree : this.treeList) {
-            treeArray.put(tree.toJSON());
+        if (null != this.treeList) {
+            JSONArray treeArray = new JSONArray();
+            for (Tree tree : this.treeList) {
+                treeArray.put(tree.toJSON());
+            }
+            json.put("trees", treeArray);
         }
-        json.put("trees", treeArray);
 
-        JSONArray personArray = new JSONArray();
-        for (Person person : this.personList) {
-            personArray.put(person.toJSON());
+        if (null != this.personList) {
+            JSONArray personArray = new JSONArray();
+            for (Person person : this.personList) {
+                personArray.put(person.toJSON());
+            }
+            json.put("persons", personArray);
         }
-        json.put("persons", personArray);
+
+        if (null != this.sunList) {
+            JSONArray sunArray = new JSONArray();
+            for (Sun sun : this.sunList) {
+                sunArray.put(sun.toJSON());
+            }
+            json.put("suns", sunArray);
+        }
+
+        if (null != this.moonList) {
+            JSONArray moonArray = new JSONArray();
+            for (Moon moon : this.moonList) {
+                moonArray.put(moon.toJSON());
+            }
+            json.put("moons", moonArray);
+        }
+
+        if (null != this.starList) {
+            JSONArray starArray = new JSONArray();
+            for (Star star : this.starList) {
+                starArray.put(star.toJSON());
+            }
+            json.put("stars", starArray);
+        }
+
+        if (null != this.mountainList) {
+            JSONArray mountainArray = new JSONArray();
+            for (Mountain mountain : this.mountainList) {
+                mountainArray.put(mountain.toJSON());
+            }
+            json.put("mountains", mountainArray);
+        }
+
+        if (null != this.flowerList) {
+            JSONArray flowerArray = new JSONArray();
+            for (Flower flower : this.flowerList) {
+                flowerArray.put(flower.toJSON());
+            }
+            json.put("flowers", flowerArray);
+        }
+
+        if (null != this.grassList) {
+            JSONArray grassArray = new JSONArray();
+            for (Grass grass : this.grassList) {
+                grassArray.put(grass.toJSON());
+            }
+            json.put("grasses", grassArray);
+        }
+
+        if (null != this.cloudList) {
+            JSONArray cloudArray = new JSONArray();
+            for (Cloud cloud : this.cloudList) {
+                cloudArray.put(cloud.toJSON());
+            }
+            json.put("clouds", cloudArray);
+        }
+
+        if (null != this.animalList) {
+            JSONArray animalArray = new JSONArray();
+            for (Animal animal : this.animalList) {
+                animalArray.put(animal.toJSON());
+            }
+            json.put("animals", animalArray);
+        }
 
         return json;
     }

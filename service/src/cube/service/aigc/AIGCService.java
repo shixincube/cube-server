@@ -1107,12 +1107,19 @@ public class AIGCService extends AbstractModule {
     /**
      * 心理学绘画预测。
      *
-     * @param domain
+     * @param token
      * @param fileCode
      * @return
      */
-    public PictureDescription predictPsychology(String domain, String fileCode) {
+    public PictureDescription predictPsychology(String token, String fileCode) {
         if (!this.isStarted()) {
+            return null;
+        }
+
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthToken authToken = authService.getToken(token);
+        if (null == authToken) {
+            Logger.w(this.getClass(), "#predictPsychology - Token error: " + token);
             return null;
         }
 
@@ -1128,31 +1135,26 @@ public class AIGCService extends AbstractModule {
             return null;
         }
 
-        GetFile getFile = new GetFile(domain, fileCode);
+        GetFile getFile = new GetFile(authToken.getDomain(), fileCode);
         JSONObject fileLabelJson = fileStorage.notify(getFile);
         if (null == fileLabelJson) {
             Logger.e(this.getClass(), "#predictPsychology - Get file failed: " + fileCode);
             return null;
         }
 
-        if (!unit.isRunning()) {
-            unit.setRunning(true);
-
-            JSONObject data = new JSONObject();
-            data.put("fileLabel", fileLabelJson);
-            Packet request = new Packet(AIGCAction.PredictPsychology.name, data);
-            ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(), 60 * 1000);
-            if (null == dialect) {
-                Logger.w(this.getClass(), "#predictPsychology - Unit error");
-                return null;
-            }
-
-            Packet response = new Packet(dialect);
-            JSONObject payload = Packet.extractDataPayload(response);
-            PictureDescription pictureDescription = new PictureDescription(payload);
+        JSONObject data = new JSONObject();
+        data.put("fileLabel", fileLabelJson);
+        Packet request = new Packet(AIGCAction.PredictPsychology.name, data);
+        ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+        if (null == dialect) {
+            Logger.w(this.getClass(), "#predictPsychology - Unit error");
+            return null;
         }
 
-        return null;
+        Packet response = new Packet(dialect);
+        JSONObject payload = Packet.extractDataPayload(response);
+        PictureDescription pictureDescription = new PictureDescription(payload);
+        return pictureDescription;
     }
 
     public boolean automaticSpeechRecognition(String domain, String fileCode, AutomaticSpeechRecognitionListener listener) {
