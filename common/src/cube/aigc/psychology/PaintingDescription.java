@@ -43,7 +43,7 @@ import java.util.*;
 /**
  * 画面空间元素描述。
  */
-public class PictureDescription implements JSONable {
+public class PaintingDescription implements JSONable {
 
     private Size canvasSize;
 
@@ -71,11 +71,11 @@ public class PictureDescription implements JSONable {
 
     private List<Animal> animalList;
 
-    public PictureDescription(Size canvasSize) {
+    public PaintingDescription(Size canvasSize) {
         this.canvasSize = canvasSize;
     }
 
-    public PictureDescription(JSONObject json) {
+    public PaintingDescription(JSONObject json) {
         this.canvasSize = new Size(json.getJSONObject("size"));
 
         if (json.has("materials")) {

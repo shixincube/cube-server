@@ -30,7 +30,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.aigc.psychology.PictureDescription;
+import cube.aigc.psychology.PaintingDescription;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
@@ -71,10 +71,16 @@ public class PredictPsychologyTask extends ServiceTask {
         String fileCode = packet.data.getString("fileCode");
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        PictureDescription description = service.predictPsychology(token, fileCode);
+        PaintingDescription description = service.predictPsychology(token, fileCode);
 
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, description.toJSON()));
+        if (null != description) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, description.toJSON()));
+        }
+        else {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+        }
         markResponseTime();
     }
 }

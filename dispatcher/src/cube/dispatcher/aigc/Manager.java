@@ -28,11 +28,13 @@ package cube.dispatcher.aigc;
 
 import cell.core.talk.Primitive;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ConfigInfo;
 import cube.aigc.ModelConfig;
 import cube.aigc.Prompt;
 import cube.aigc.attachment.ui.Event;
+import cube.aigc.psychology.PaintingDescription;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.Packet;
@@ -72,6 +74,11 @@ public class Manager implements Tickable, PerformerListener {
      */
     private Map<String, ASRFuture> asrFutureMap;
 
+    /**
+     * Key：文件码
+     */
+    private Map<String, PaintingFuture> paintingFutureMap;
+
     public static Manager getInstance() {
         return Manager.instance;
     }
@@ -80,6 +87,7 @@ public class Manager implements Tickable, PerformerListener {
         this.performer = performer;
         this.validTokenMap = new ConcurrentHashMap<>();
         this.asrFutureMap = new ConcurrentHashMap<>();
+        this.paintingFutureMap = new ConcurrentHashMap<>();
 
         this.setupHandler();
 
@@ -128,6 +136,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new PublicOpinionData());
         httpServer.addContextHandler(new InferByModule());
         httpServer.addContextHandler(new PreInfer());
+        httpServer.addContextHandler(new PredictPsychology());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -925,9 +934,53 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public JSONObject predictPsychology(String token, String fileCode) {
-        JSONObject data = new JSONObject();
+    public PaintingFuture predictPsychology(String token, String fileCode) {
+        if (this.paintingFutureMap.containsKey(fileCode)) {
+            return this.paintingFutureMap.get(fileCode);
+        }
 
+        final PaintingFuture paintingFuture = new PaintingFuture(token, fileCode);
+        this.paintingFutureMap.put(fileCode, paintingFuture);
+
+        this.performer.execute(new Runnable() {
+            @Override
+            public void run() {
+                paintingFuture.start = System.currentTimeMillis();
+
+                JSONObject data = new JSONObject();
+                data.put("fileCode", fileCode);
+
+                Packet packet = new Packet(AIGCAction.PredictPsychology.name, data);
+                ActionDialect request = packet.toDialect();
+                request.addParam("token", token);
+
+                ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request);
+                if (null == response) {
+                    Logger.w(this.getClass(), "#predictPsychology - No response");
+                    paintingFuture.stateCode = AIGCStateCode.UnitError.code;
+                    paintingFuture.end = System.currentTimeMillis();
+                    return;
+                }
+
+                Packet responsePacket = new Packet(response);
+                if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+                    Logger.w(this.getClass(), "#predictPsychology - Response state is " + Packet.extractCode(responsePacket));
+                    paintingFuture.stateCode = Packet.extractCode(responsePacket);
+                    paintingFuture.end = System.currentTimeMillis();
+                    return;
+                }
+
+                PaintingDescription description = new PaintingDescription(Packet.extractDataPayload(responsePacket));
+                paintingFuture.paintingDescription = description;
+                paintingFuture.stateCode = AIGCStateCode.Ok.code;
+                paintingFuture.end = System.currentTimeMillis();
+            }
+        });
+
+        return paintingFuture;
+    }
+
+    public JSONObject queryPredictPsychology(String token, String fileCode) {
 
         return null;
     }
@@ -1012,6 +1065,45 @@ public class Manager implements Tickable, PerformerListener {
             json.put("stateCode", this.stateCode);
             if (null != this.result) {
                 json.put("result", this.result.toJSON());
+            }
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
+        }
+    }
+
+
+    public class PaintingFuture implements JSONable {
+
+        protected String token;
+
+        protected String fileCode;
+
+        protected PaintingDescription paintingDescription;
+
+        protected long start;
+
+        protected long end;
+
+        protected int stateCode = -1;
+
+        public PaintingFuture(String token, String fileCode) {
+            this.token = token;
+            this.fileCode = fileCode;
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("fileCode", fileCode);
+            json.put("stateCode", this.stateCode);
+            json.put("start", this.start);
+            json.put("end", this.end);
+            if (null != this.paintingDescription) {
+                json.put("painting", this.paintingDescription.toJSON());
             }
             return json;
         }
