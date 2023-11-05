@@ -137,6 +137,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new InferByModule());
         httpServer.addContextHandler(new PreInfer());
         httpServer.addContextHandler(new PredictPsychology());
+        httpServer.addContextHandler(new QueryPredictPsychology());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -934,6 +935,13 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
+    /**
+     * 执行心理学绘图预测。
+     *
+     * @param token
+     * @param fileCode
+     * @return
+     */
     public PaintingFuture predictPsychology(String token, String fileCode) {
         if (this.paintingFutureMap.containsKey(fileCode)) {
             return this.paintingFutureMap.get(fileCode);
@@ -980,9 +988,14 @@ public class Manager implements Tickable, PerformerListener {
         return paintingFuture;
     }
 
-    public JSONObject queryPredictPsychology(String token, String fileCode) {
-
-        return null;
+    /**
+     * 查询心理学绘图预测任务。
+     *
+     * @param fileCode
+     * @return
+     */
+    public PaintingFuture queryPredictPsychology(String fileCode) {
+        return this.paintingFutureMap.get(fileCode);
     }
 
     @Override
@@ -997,6 +1010,15 @@ public class Manager implements Tickable, PerformerListener {
                 ASRFuture future = e.getValue();
                 if (now - future.timestamp > 30 * 60 * 1000) {
                     iter.remove();
+                }
+            }
+
+            Iterator<Map.Entry<String, PaintingFuture>> pfiter = this.paintingFutureMap.entrySet().iterator();
+            while (pfiter.hasNext()) {
+                Map.Entry<String, PaintingFuture> e = pfiter.next();
+                PaintingFuture future = e.getValue();
+                if (now - future.start > 30 * 60 * 1000) {
+                    pfiter.remove();
                 }
             }
         }
