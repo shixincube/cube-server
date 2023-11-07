@@ -26,7 +26,7 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.aigc.Prompt;
+import cube.aigc.PromptRecord;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -103,10 +103,10 @@ public class Prompts extends ContextHandler {
                         contactIdArray.put(data.getLong("contactId"));
                     }
 
-                    List<Prompt> promptList = new ArrayList<>();
+                    List<PromptRecord> promptRecordList = new ArrayList<>();
                     for (int i = 0; i < promptArray.length(); ++i) {
-                        Prompt prompt = new Prompt(promptArray.getJSONObject(i));
-                        promptList.add(prompt);
+                        PromptRecord promptRecord = new PromptRecord(promptArray.getJSONObject(i));
+                        promptRecordList.add(promptRecord);
                     }
 
                     List<Long> contactIdList = null;
@@ -117,9 +117,9 @@ public class Prompts extends ContextHandler {
                         }
                     }
 
-                    if (Manager.getInstance().addPrompts(token, promptList, contactIdList)) {
+                    if (Manager.getInstance().addPrompts(token, promptRecordList, contactIdList)) {
                         JSONObject responseData = new JSONObject();
-                        responseData.put("total", promptList.size() * (null != contactIdList ? contactIdList.size() : 1));
+                        responseData.put("total", promptRecordList.size() * (null != contactIdList ? contactIdList.size() : 1));
                         this.respondOk(response, responseData);
                         this.complete();
                     }
@@ -160,8 +160,8 @@ public class Prompts extends ContextHandler {
             else if (action.equalsIgnoreCase("update")) {
                 try {
                     JSONObject data = readBodyAsJSONObject(request);
-                    Prompt prompt = new Prompt(data);
-                    if (Manager.getInstance().updatePrompt(token, prompt)) {
+                    PromptRecord promptRecord = new PromptRecord(data);
+                    if (Manager.getInstance().updatePrompt(token, promptRecord)) {
                         JSONObject responseData = new JSONObject();
                         responseData.put("total", 1);
                         this.respondOk(response, responseData);

@@ -30,7 +30,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.aigc.Prompt;
+import cube.aigc.PromptRecord;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -67,10 +67,10 @@ public class GetPromptsTask extends ServiceTask {
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
-        List<Prompt> list = service.getStorage().readPrompts(authToken.getContactId());
+        List<PromptRecord> list = service.getStorage().readPrompts(authToken.getContactId());
         JSONArray promptArray = new JSONArray();
-        for (Prompt prompt : list) {
-            promptArray.put(prompt.toJSON());
+        for (PromptRecord promptRecord : list) {
+            promptArray.put(promptRecord.toJSON());
         }
 
         JSONObject responsePayload = new JSONObject();

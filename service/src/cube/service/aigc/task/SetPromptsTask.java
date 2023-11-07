@@ -30,7 +30,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.aigc.Prompt;
+import cube.aigc.PromptRecord;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -91,10 +91,10 @@ public class SetPromptsTask extends ServiceTask {
                 contactIdArray.put(0);
             }
 
-            List<Prompt> promptList = new ArrayList<>();
+            List<PromptRecord> promptRecordList = new ArrayList<>();
             for (int i = 0; i < promptArray.length(); ++i) {
-                Prompt prompt = new Prompt(promptArray.getJSONObject(i));
-                promptList.add(prompt);
+                PromptRecord promptRecord = new PromptRecord(promptArray.getJSONObject(i));
+                promptRecordList.add(promptRecord);
             }
 
             List<Long> contactIdList = new ArrayList<>();
@@ -102,8 +102,8 @@ public class SetPromptsTask extends ServiceTask {
                 contactIdList.add(contactIdArray.getLong(i));
             }
 
-            service.getStorage().writePrompts(promptList, contactIdList);
-            responsePayload.put("total", promptList.size() * contactIdList.size());
+            service.getStorage().writePrompts(promptRecordList, contactIdList);
+            responsePayload.put("total", promptRecordList.size() * contactIdList.size());
         }
         else if (action.equalsIgnoreCase("remove")) {
             if (packet.data.has("contactId") && packet.data.has("act")) {
@@ -135,10 +135,10 @@ public class SetPromptsTask extends ServiceTask {
                     packet.data.getLong("contactId") : authToken.getContactId();
 
             if (packet.data.has("id") && packet.data.has("act") && packet.data.has("prompt")) {
-                Prompt prompt = new Prompt(packet.data.getLong("id"),
+                PromptRecord promptRecord = new PromptRecord(packet.data.getLong("id"),
                         packet.data.getString("act"), packet.data.getString("prompt"));
 
-                service.getStorage().writePrompt(prompt, contactId);
+                service.getStorage().writePrompt(promptRecord, contactId);
                 responsePayload.put("total", 1);
             }
             else {

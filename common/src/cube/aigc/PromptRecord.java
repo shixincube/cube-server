@@ -26,8 +26,44 @@
 
 package cube.aigc;
 
+import cell.util.Utils;
+import cube.common.JSONable;
+import org.json.JSONObject;
+
 /**
- * 提示词。
+ * 提示词记录。
  */
-public class Prompt {
+public class PromptRecord implements JSONable {
+
+    public final long id;
+
+    public final String act;
+
+    public final String prompt;
+
+    public PromptRecord(long id, String act, String prompt) {
+        this.id = id;
+        this.act = act;
+        this.prompt = prompt;
+    }
+
+    public PromptRecord(JSONObject json) {
+        this.id = json.has("id") ? json.getLong("id") : Utils.generateSerialNumber();
+        this.act = json.getString("act");
+        this.prompt = json.getString("prompt");
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("id", this.id);
+        json.put("act", this.act);
+        json.put("prompt", this.prompt);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
 }

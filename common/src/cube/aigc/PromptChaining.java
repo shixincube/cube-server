@@ -27,7 +27,10 @@
 package cube.aigc;
 
 /**
- * 提示词。
+ * 提示词链。
  */
-public class Prompt {
+public class PromptChaining {
+
+    public PromptChaining() {
+    }
 }

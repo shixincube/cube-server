@@ -28,11 +28,10 @@ package cube.dispatcher.aigc;
 
 import cell.core.talk.Primitive;
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ConfigInfo;
 import cube.aigc.ModelConfig;
-import cube.aigc.Prompt;
+import cube.aigc.PromptRecord;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.psychology.PaintingDescription;
 import cube.auth.AuthToken;
@@ -755,13 +754,13 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public boolean addPrompts(String token, List<Prompt> promptList, List<Long> contactIdList) {
+    public boolean addPrompts(String token, List<PromptRecord> promptRecordList, List<Long> contactIdList) {
         JSONObject data = new JSONObject();
         data.put("action", "add");
 
         JSONArray promptArray = new JSONArray();
-        for (Prompt prompt : promptList) {
-            promptArray.put(prompt.toJSON());
+        for (PromptRecord promptRecord : promptRecordList) {
+            promptArray.put(promptRecord.toJSON());
         }
         data.put("prompts", promptArray);
 
@@ -821,12 +820,12 @@ public class Manager implements Tickable, PerformerListener {
         return true;
     }
 
-    public boolean updatePrompt(String token, Prompt prompt) {
+    public boolean updatePrompt(String token, PromptRecord promptRecord) {
         JSONObject data = new JSONObject();
         data.put("action", "update");
-        data.put("id", prompt.id);
-        data.put("act", prompt.act);
-        data.put("prompt", prompt.prompt);
+        data.put("id", promptRecord.id);
+        data.put("act", promptRecord.act);
+        data.put("prompt", promptRecord.prompt);
 
         Packet packet = new Packet(AIGCAction.SetPrompts.name, data);
         ActionDialect request = packet.toDialect();
