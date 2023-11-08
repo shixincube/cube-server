@@ -26,11 +26,37 @@
 
 package cube.aigc;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 提示词链。
  */
 public class PromptChaining {
 
+    private List<Prompt> promptList;
+
     public PromptChaining() {
+        this.promptList = new ArrayList<>();
+    }
+
+    public List<Prompt> getPrompts() {
+        return this.promptList;
+    }
+
+    public String getSystemMetadata() {
+        return this.promptList.get(0).system;
+    }
+
+    public boolean addPrompt(Prompt prompt) {
+        if (null == prompt.query || null == prompt.answer) {
+            return false;
+        }
+
+        return this.promptList.add(prompt);
+    }
+
+    public boolean removePrompt(Prompt prompt) {
+        return this.promptList.remove(prompt);
     }
 }

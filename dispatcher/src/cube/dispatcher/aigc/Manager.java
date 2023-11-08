@@ -33,7 +33,7 @@ import cube.aigc.ConfigInfo;
 import cube.aigc.ModelConfig;
 import cube.aigc.PromptRecord;
 import cube.aigc.attachment.ui.Event;
-import cube.aigc.psychology.PaintingDescription;
+import cube.aigc.psychology.Painting;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.Packet;
@@ -977,8 +977,8 @@ public class Manager implements Tickable, PerformerListener {
                     return;
                 }
 
-                PaintingDescription description = new PaintingDescription(Packet.extractDataPayload(responsePacket));
-                paintingFuture.paintingDescription = description;
+                Painting description = new Painting(Packet.extractDataPayload(responsePacket));
+                paintingFuture.painting = description;
                 paintingFuture.stateCode = AIGCStateCode.Ok.code;
                 paintingFuture.end = System.currentTimeMillis();
             }
@@ -1103,7 +1103,7 @@ public class Manager implements Tickable, PerformerListener {
 
         protected String fileCode;
 
-        protected PaintingDescription paintingDescription;
+        protected Painting painting;
 
         protected long start;
 
@@ -1123,8 +1123,8 @@ public class Manager implements Tickable, PerformerListener {
             json.put("stateCode", this.stateCode);
             json.put("start", this.start);
             json.put("end", this.end);
-            if (null != this.paintingDescription) {
-                json.put("painting", this.paintingDescription.toJSON());
+            if (null != this.painting) {
+                json.put("painting", this.painting.toJSON());
             }
             return json;
         }

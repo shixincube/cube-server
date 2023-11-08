@@ -36,7 +36,7 @@ import cube.aigc.PublicOpinionTaskName;
 import cube.aigc.Sentiment;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
-import cube.aigc.psychology.PaintingDescription;
+import cube.aigc.psychology.Painting;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -1111,7 +1111,7 @@ public class AIGCService extends AbstractModule {
      * @param fileCode
      * @return
      */
-    public PaintingDescription predictPsychology(String token, String fileCode) {
+    public Painting predictPsychology(String token, String fileCode) {
         if (!this.isStarted()) {
             return null;
         }
@@ -1153,8 +1153,8 @@ public class AIGCService extends AbstractModule {
 
         Packet response = new Packet(dialect);
         JSONObject payload = Packet.extractDataPayload(response);
-        PaintingDescription paintingDescription = new PaintingDescription(payload);
-        return paintingDescription;
+        Painting painting = new Painting(payload);
+        return painting;
     }
 
     public boolean automaticSpeechRecognition(String domain, String fileCode, AutomaticSpeechRecognitionListener listener) {

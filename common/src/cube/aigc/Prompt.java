@@ -26,8 +26,45 @@
 
 package cube.aigc;
 
+import cube.common.JSONable;
+import org.json.JSONObject;
+
 /**
  * 提示词。
  */
-public class Prompt {
+public class Prompt implements JSONable {
+
+    public String role;
+
+    public String system;
+
+    public String query;
+
+    public String answer;
+
+    public Prompt(String query) {
+        this.query= query;
+    }
+
+    public Prompt(String query, String answer) {
+        this.query = query;
+        this.answer = answer;
+    }
+
+    public Prompt(String system, String query, String answer) {
+        this.system = system;
+        this.query = query;
+        this.answer = answer;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
 }

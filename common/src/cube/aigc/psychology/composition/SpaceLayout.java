@@ -26,6 +26,10 @@
 
 package cube.aigc.psychology.composition;
 
+import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.material.Thing;
+import cube.vision.BoundingBox;
+
 /**
  * 空间布局。
  */
@@ -33,7 +37,32 @@ public class SpaceLayout {
 
     private float areaRatio;
 
-    public SpaceLayout() {
+    public SpaceLayout(Painting painting) {
+        this.parse(painting);
+    }
+
+    private void parse(Painting painting) {
+        // 计算所有元素的边界盒
+        int x = painting.getCanvasSize().width;
+        int y = painting.getCanvasSize().height;
+        int x2 = 0;
+        int y2 = 0;
+
+        for (Thing thing : painting.getAllThings()) {
+            BoundingBox box = thing.getBoundingBox();
+            if (box.x < x) {
+                x = box.x;
+            }
+            if (box.y < y) {
+                y = box.y;
+            }
+            if (box.getX2() > x2) {
+                x2 = box.getX2();
+            }
+            if (box.getY2() > y2) {
+                y2 = box.getY2();
+            }
+        }
     }
 
     public float getAreaRatio() {

@@ -45,15 +45,15 @@ import java.util.List;
  */
 public class Evaluation {
 
-    private PaintingDescription paintingDescription;
+    private Painting painting;
 
     private Size canvasSize;
 
     private SpaceLayout spaceLayout;
 
-    public Evaluation(PaintingDescription paintingDescription) {
-        this.paintingDescription = paintingDescription;
-        this.canvasSize = paintingDescription.getCanvasSize();
+    public Evaluation(Painting painting) {
+        this.painting = painting;
+        this.canvasSize = painting.getCanvasSize();
     }
 
     public FrameStructureDescription calcHouseFrameStructure() {

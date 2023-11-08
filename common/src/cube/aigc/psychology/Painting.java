@@ -42,7 +42,7 @@ import java.util.*;
 /**
  * 画面空间元素描述。
  */
-public class PaintingDescription implements JSONable {
+public class Painting implements JSONable {
 
     private Size canvasSize;
 
@@ -70,11 +70,11 @@ public class PaintingDescription implements JSONable {
 
     private List<Animal> animalList;
 
-    public PaintingDescription(Size canvasSize) {
+    public Painting(Size canvasSize) {
         this.canvasSize = canvasSize;
     }
 
-    public PaintingDescription(JSONObject json) {
+    public Painting(JSONObject json) {
         this.canvasSize = new Size(json.getJSONObject("size"));
 
         if (json.has("materials")) {
@@ -504,6 +504,49 @@ public class PaintingDescription implements JSONable {
 
     public Size getCanvasSize() {
         return this.canvasSize;
+    }
+
+    /**
+     * 获取所有画面元素。
+     *
+     * @return
+     */
+    public List<Thing> getAllThings() {
+        List<Thing> list = new ArrayList<>();
+        if (null != this.houseList) {
+            list.addAll(this.houseList);
+        }
+        if (null != this.treeList) {
+            list.addAll(this.treeList);
+        }
+        if (null != this.personList) {
+            list.addAll(this.personList);
+        }
+        if (null != this.sunList) {
+            list.addAll(this.sunList);
+        }
+        if (null != this.moonList) {
+            list.addAll(this.moonList);
+        }
+        if (null != this.starList) {
+            list.addAll(this.starList);
+        }
+        if (null != this.mountainList) {
+            list.addAll(this.mountainList);
+        }
+        if (null != this.flowerList) {
+            list.addAll(this.flowerList);
+        }
+        if (null != this.grassList) {
+            list.addAll(this.grassList);
+        }
+        if (null != this.cloudList) {
+            list.addAll(this.cloudList);
+        }
+        if (null != this.animalList) {
+            list.addAll(this.animalList);
+        }
+        return list;
     }
 
     public void addHouse(House house) {

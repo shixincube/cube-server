@@ -29,5 +29,26 @@ package cube.aigc.psychology.composition;
 /**
  * 得分。
  */
-public class Score {
+public enum Score {
+
+    High(1.0),
+
+    Medium(0),
+
+    Low(-1.0),
+
+
+    Level_1(1.0),
+
+    Level_2(2.0),
+
+    Level_3(3.0),
+
+    Default(0);
+
+    public final double value;
+
+    Score(double value) {
+        this.value = value;
+    }
 }

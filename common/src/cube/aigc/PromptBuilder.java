@@ -39,6 +39,8 @@ public class PromptBuilder {
 
     private final static String TOKEN_ASSISTANT = "<|assistant|>";
 
+    private final static String TOKEN_OBSERVATION = "<|observation|>";
+
     private String hallucinationInhibitor = "。如果无法提供准确答案，就回答不知道。";
 
     public PromptBuilder() {
@@ -55,6 +57,11 @@ public class PromptBuilder {
 
     public String serializePromptChaining(PromptChaining chaining) {
         StringBuilder buf = new StringBuilder();
+        buf.append(TOKEN_SYSTEM).append(chaining.getSystemMetadata()).append("\n");
+        for (Prompt prompt : chaining.getPrompts()) {
+            buf.append(TOKEN_USER).append(prompt.query).append("\n");
+            buf.append(TOKEN_ASSISTANT).append(prompt.answer).append("\n");
+        }
         return buf.toString();
     }
 
@@ -68,6 +75,7 @@ public class PromptBuilder {
         result = result.replaceAll(TOKEN_SYSTEM, "");
         result = result.replaceAll(TOKEN_USER, "");
         result = result.replaceAll(TOKEN_ASSISTANT, "");
+        result = result.replaceAll(TOKEN_OBSERVATION, "");
         return result;
     }
 }
