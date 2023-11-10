@@ -29,7 +29,7 @@ package cube.aigc.psychology;
 /**
  * 专业描述词。
  */
-public enum Words {
+public enum Word {
 
     /**
      * 自我存在。
@@ -47,13 +47,33 @@ public enum Words {
     SelfConfidence("自信心"),
 
     /**
+     * 适应能力。
+     */
+    Adaptability("适应能力"),
+
+    /**
+     * 对环境疏离感。
+     */
+    EnvironmentalAlienation("环境疏离感"),
+
+    /**
+     * 对环境依赖。
+     */
+    EnvironmentalDependence("环境依赖"),
+
+    /**
+     * 对环境亲切感。
+     */
+    EnvironmentalFriendliness("环境亲切感"),
+
+    /**
      * 未知。
      */
     Unknown("未知");
 
     public final String word;
 
-    Words(String word) {
+    Word(String word) {
         this.word = word;
     }
 }

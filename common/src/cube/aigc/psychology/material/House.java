@@ -78,6 +78,10 @@ public class House extends Thing {
         return this.sidewallList;
     }
 
+    public boolean hasSidewall() {
+        return (null != this.sidewallList);
+    }
+
     public void setRoof(Roof roof) {
         this.roof = roof;
     }

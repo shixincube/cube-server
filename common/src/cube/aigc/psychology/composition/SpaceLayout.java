@@ -35,7 +35,16 @@ import cube.vision.BoundingBox;
  */
 public class SpaceLayout {
 
-    private float areaRatio;
+    private double correctedValue = 0.95f;
+
+    private double topMargin = 0f;
+    private double rightMargin = 0f;
+    private double bottomMargin = 0f;
+    private double leftMargin = 0f;
+
+    private BoundingBox paintingBox;
+
+    private double areaRatio = 0f;
 
     public SpaceLayout(Painting painting) {
         this.parse(painting);
@@ -63,9 +72,58 @@ public class SpaceLayout {
                 y2 = box.getY2();
             }
         }
+
+        this.paintingBox = new BoundingBox(x, y, (x2 - x), (y2 - y));
+
+        double pW = x2 - x;
+        double pH = y2 - y;
+        double canvasW = painting.getCanvasSize().width * this.correctedValue;
+        double canvasH = painting.getCanvasSize().height * this.correctedValue;
+
+        if (pW > 0 && pH > 0) {
+            double area = canvasW * canvasH;
+            this.areaRatio = (pW * pH) / area;
+        }
+
+        // 计算画面边距
+        double paddingW = (painting.getCanvasSize().width - canvasW) * 0.5f;
+        double paddingH = (painting.getCanvasSize().height - canvasH) * 0.5f;
+        this.topMargin = y - paddingH;
+        this.rightMargin = painting.getCanvasSize().width - x2 - paddingW;
+        this.bottomMargin = painting.getCanvasSize().height - y2 - paddingH;
+        this.leftMargin = x - paddingW;
     }
 
-    public float getAreaRatio() {
+    public BoundingBox getPaintingBox() {
+        return this.paintingBox;
+    }
+
+    public double getAreaRatio() {
         return this.areaRatio;
+    }
+
+    public double[] getMargin() {
+        return new double[] {
+                this.topMargin,
+                this.rightMargin,
+                this.bottomMargin,
+                this.leftMargin
+        };
+    }
+
+    public double getTopMargin() {
+        return this.topMargin;
+    }
+
+    public double getRightMargin() {
+        return this.rightMargin;
+    }
+
+    public double getBottomMargin() {
+        return this.bottomMargin;
+    }
+
+    public double getLeftMargin() {
+        return this.leftMargin;
     }
 }

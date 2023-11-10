@@ -44,6 +44,10 @@ public enum Score {
 
     Level_3(3.0),
 
+    Level_4(4.0),
+
+    Level_5(5.0),
+
     Default(0);
 
     public final double value;

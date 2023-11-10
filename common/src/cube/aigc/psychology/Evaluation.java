@@ -27,6 +27,7 @@
 package cube.aigc.psychology;
 
 import cube.aigc.psychology.composition.FrameStructure;
+import cube.aigc.psychology.composition.Score;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.material.House;
 import cube.aigc.psychology.material.Person;
@@ -54,33 +55,72 @@ public class Evaluation {
     public Evaluation(Painting painting) {
         this.painting = painting;
         this.canvasSize = painting.getCanvasSize();
+        this.spaceLayout = new SpaceLayout(painting);
     }
 
-    public FrameStructureDescription calcHouseFrameStructure() {
-        House house = null;//this.getHouse();
-        if (null == house) {
-            return null;
+    public List<Result> evalSpaceStructure() {
+        List<Result> list = new ArrayList<>();
+
+        // 画面大小比例
+        double areaRatio = this.spaceLayout.getAreaRatio();
+        if (areaRatio > 0) {
+            if (areaRatio >= (2.0f / 3.0f)) {
+                list.add(new Result(Word.SelfExistence, Score.High));
+            }
+            else if (areaRatio < (1.0f / 6.0f)) {
+                list.add(new Result(Word.SelfEsteem, Score.Low));
+                list.add(new Result(Word.SelfConfidence, Score.Low));
+                list.add(new Result(Word.Adaptability, Score.Low));
+            }
+            else {
+                list.add(new Result(Word.SelfEsteem, Score.Medium));
+                list.add(new Result(Word.SelfConfidence, Score.High));
+            }
         }
-        return this.calcFrameStructure(house);
-    }
 
-    public FrameStructureDescription calcTreeFrameStructure() {
-        Tree tree = null;//this.getTree();
-        if (null == tree) {
-            return null;
+        // 空间构图
+        double minThreshold = this.canvasSize.width * 0.025f;
+        double maxThreshold = this.canvasSize.width * 0.15f;
+        if (this.spaceLayout.getTopMargin() < minThreshold
+                || this.spaceLayout.getRightMargin() < minThreshold
+                || this.spaceLayout.getBottomMargin() < minThreshold
+                || this.spaceLayout.getLeftMargin() < minThreshold) {
+            list.add(new Result(Word.EnvironmentalDependence, Score.High));
         }
-        return this.calcFrameStructure(tree);
-    }
-
-    public FrameStructureDescription calcPersonFrameStructure() {
-        Person person = null;//this.getPerson();
-        if (null == person) {
-            return null;
+        else if (this.spaceLayout.getTopMargin() > maxThreshold
+                || this.spaceLayout.getRightMargin() > maxThreshold
+                || this.spaceLayout.getBottomMargin() > maxThreshold
+                || this.spaceLayout.getLeftMargin() > maxThreshold) {
+            list.add(new Result(Word.EnvironmentalAlienation, Score.High));
         }
-        return this.calcFrameStructure(person);
+
+        return list;
     }
 
-    private FrameStructureDescription calcFrameStructure(Thing thing) {
+    public List<Result> evalFrameStructure() {
+        List<Result> list = new ArrayList<>();
+
+        FrameStructureDescription description = this.calcFrameStructure(this.spaceLayout.getPaintingBox());
+
+        // TODO XJW
+
+        return list;
+    }
+
+    public List<Result> evalHouse() {
+        List<Result> list = new ArrayList<>();
+
+        List<House> houseList = this.painting.getHouses();
+        for (House house : houseList) {
+            if (house.hasSidewall()) {
+                list.add(new Result(Word.SelfConfidence, Score.High));
+            }
+        }
+
+        return list;
+    }
+
+    private FrameStructureDescription calcFrameStructure(BoundingBox bbox) {
         int halfHeight = (int) (this.canvasSize.height * 0.5);
         int halfWidth = (int) (this.canvasSize.width * 0.5);
 
@@ -96,8 +136,8 @@ public class Evaluation {
         FrameStructureDescription fsd = new FrameStructureDescription();
 
         // 判读上下空间
-        int topArea = topSpaceBox.calculateCollisionArea(thing.getBoundingBox());
-        int bottomArea = bottomSpaceBox.calculateCollisionArea(thing.getBoundingBox());
+        int topArea = topSpaceBox.calculateCollisionArea(bbox);
+        int bottomArea = bottomSpaceBox.calculateCollisionArea(bbox);
         if (topArea > bottomArea) {
             fsd.addFrameStructure(FrameStructure.WholeTopSpace);
         }
@@ -106,8 +146,8 @@ public class Evaluation {
         }
 
         // 判断左右空间
-        int leftArea = leftSpaceBox.calculateCollisionArea(thing.getBoundingBox());
-        int rightArea = rightSpaceBox.calculateCollisionArea(thing.getBoundingBox());
+        int leftArea = leftSpaceBox.calculateCollisionArea(bbox);
+        int rightArea = rightSpaceBox.calculateCollisionArea(bbox);
         if (leftArea > rightArea) {
             fsd.addFrameStructure(FrameStructure.WholeLeftSpace);
         }
@@ -130,10 +170,10 @@ public class Evaluation {
                 halfWidth, halfHeight);
         BoundingBox bottomRightBox = new BoundingBox(centerBox.x + halfWidth, centerBox.y + halfHeight,
                 halfWidth, halfHeight);
-        int topLeftArea = topLeftBox.calculateCollisionArea(thing.getBoundingBox());
-        int topRightArea = topRightBox.calculateCollisionArea(thing.getBoundingBox());
-        int bottomLeftArea = bottomLeftBox.calculateCollisionArea(thing.getBoundingBox());
-        int bottomRightArea = bottomRightBox.calculateCollisionArea(thing.getBoundingBox());
+        int topLeftArea = topLeftBox.calculateCollisionArea(bbox);
+        int topRightArea = topRightBox.calculateCollisionArea(bbox);
+        int bottomLeftArea = bottomLeftBox.calculateCollisionArea(bbox);
+        int bottomRightArea = bottomRightBox.calculateCollisionArea(bbox);
 
         List<AreaDesc> list = new ArrayList<>(4);
         list.add(new AreaDesc(topLeftArea, FrameStructure.CenterTopLeftSpace));
@@ -151,6 +191,18 @@ public class Evaluation {
 
         fsd.addFrameStructure(list.get(list.size() - 1).structure);
         return fsd;
+    }
+
+    public class Result {
+
+        public Word word;
+
+        public Score score;
+
+        public Result(Word word, Score score) {
+            this.word = word;
+            this.score = score;
+        }
     }
 
     public class FrameStructureDescription {
@@ -174,6 +226,30 @@ public class Evaluation {
 
         public boolean isWholeBottom() {
             return this.frameStructures.contains(FrameStructure.WholeBottomSpace);
+        }
+
+        public boolean isWholeLeft() {
+            return this.frameStructures.contains(FrameStructure.WholeLeftSpace);
+        }
+
+        public boolean isWholeRight() {
+            return this.frameStructures.contains(FrameStructure.WholeRightSpace);
+        }
+
+        public boolean isCenterTopLeft() {
+            return this.frameStructures.contains(FrameStructure.CenterTopLeftSpace);
+        }
+
+        public boolean isCenterTopRight() {
+            return this.frameStructures.contains(FrameStructure.CenterTopRightSpace);
+        }
+
+        public boolean isCenterBottomLeft() {
+            return this.frameStructures.contains(FrameStructure.CenterBottomLeftSpace);
+        }
+
+        public boolean isCenterBottomRight() {
+            return this.frameStructures.contains(FrameStructure.CenterBottomRightSpace);
         }
     }
 
