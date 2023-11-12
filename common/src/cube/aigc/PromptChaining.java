@@ -45,7 +45,16 @@ public class PromptChaining {
     }
 
     public String getSystemMetadata() {
-        return this.promptList.get(0).system;
+        if (null == this.promptList.get(0).system) {
+            return "你是智能AI助手。";
+        }
+
+        if (this.promptList.get(0).system.endsWith("。")) {
+            return this.promptList.get(0).system;
+        }
+        else {
+            return this.promptList.get(0).system + "。";
+        }
     }
 
     public boolean addPrompt(Prompt prompt) {
@@ -58,5 +67,22 @@ public class PromptChaining {
 
     public boolean removePrompt(Prompt prompt) {
         return this.promptList.remove(prompt);
+    }
+
+    public boolean addPrompts(List<Prompt> prompts) {
+        return this.promptList.addAll(prompts);
+    }
+
+    public int getWordNum() {
+        int num = 0;
+        for (Prompt prompt : this.promptList) {
+            if (null != prompt.query) {
+                num += prompt.query.length();
+            }
+            if (null != prompt.answer) {
+                num += prompt.answer.length();
+            }
+        }
+        return num;
     }
 }

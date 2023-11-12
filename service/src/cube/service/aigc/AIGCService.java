@@ -80,6 +80,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 
 /**
  * AIGC 服务。
@@ -87,6 +88,9 @@ import java.util.concurrent.Executors;
 public class AIGCService extends AbstractModule {
 
     public final static String NAME = "AIGC";
+
+    private final static Pattern sChinesePattern =
+            Pattern.compile("[\\u4E00-\\u9FA5|\\\\！|\\\\，|\\\\。|\\\\（|\\\\）|\\\\《|\\\\》|\\\\“|\\\\”|\\\\？|\\\\：|\\\\；|\\\\【|\\\\】]");
 
     private AIGCCellet cellet;
 
@@ -1847,6 +1851,9 @@ public class AIGCService extends AbstractModule {
                     }
 
                     String responseText = payload.getString("response");
+
+                    // 过滤中文字符
+
                     result = this.channel.appendRecord(this.content, responseText, complexContext);
                 }
             }

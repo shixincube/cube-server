@@ -30,9 +30,6 @@ import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.Score;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.material.House;
-import cube.aigc.psychology.material.Person;
-import cube.aigc.psychology.material.Thing;
-import cube.aigc.psychology.material.Tree;
 import cube.vision.BoundingBox;
 import cube.vision.Size;
 

@@ -57,9 +57,36 @@ public class Prompt implements JSONable {
         this.answer = answer;
     }
 
+    public Prompt(JSONObject json) {
+        if (json.has("role")) {
+            this.role = json.getString("role");
+        }
+        if (json.has("system")) {
+            this.system = json.getString("system");
+        }
+        if (json.has("query")) {
+            this.query = json.getString("query");
+        }
+        if (json.has("answer")) {
+            this.answer = json.getString("answer");
+        }
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        if (null != this.role) {
+            json.put("role", this.role);
+        }
+        if (null != this.system) {
+            json.put("system", this.system);
+        }
+        if (null != this.query) {
+            json.put("query", this.query);
+        }
+        if (null != this.answer) {
+            json.put("answer", this.answer);
+        }
         return json;
     }
 

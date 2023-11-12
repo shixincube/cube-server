@@ -39,6 +39,9 @@ import java.util.regex.Pattern;
 
 public final class Helper {
 
+    /**
+     * 中文字符和中文符号。
+     */
     private final static Pattern sChinesePattern = Pattern.compile("[\\u4E00-\\u9FA5|\\\\！|\\\\，|\\\\。|\\\\（|\\\\）|\\\\《|\\\\》|\\\\“|\\\\”|\\\\？|\\\\：|\\\\；|\\\\【|\\\\】]");
 
     private Helper() {
