@@ -24,12 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
+package cube.service.test;
 
-/**
- * 词描述。
- */
-public class WordDescription {
-
-
+public class TestEvaluation {
 }

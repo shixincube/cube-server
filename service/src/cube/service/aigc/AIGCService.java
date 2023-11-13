@@ -89,9 +89,6 @@ public class AIGCService extends AbstractModule {
 
     public final static String NAME = "AIGC";
 
-    private final static Pattern sChinesePattern =
-            Pattern.compile("[\\u4E00-\\u9FA5|\\\\！|\\\\，|\\\\。|\\\\（|\\\\）|\\\\《|\\\\》|\\\\“|\\\\”|\\\\？|\\\\：|\\\\；|\\\\【|\\\\】]");
-
     private AIGCCellet cellet;
 
     /**
@@ -1820,6 +1817,8 @@ public class AIGCService extends AbstractModule {
                     String responseText = Agent.getInstance().chat(channel.getAuthToken().getCode(),
                             channel.getCode(), this.content);
                     if (null != responseText) {
+                        // 过滤中文字符
+                        responseText = this.filterChinese(responseText);
                         result = this.channel.appendRecord(this.content, responseText, complexContext);
                     }
                     else {
@@ -1853,7 +1852,7 @@ public class AIGCService extends AbstractModule {
                     String responseText = payload.getString("response");
 
                     // 过滤中文字符
-
+                    responseText = this.filterChinese(responseText);
                     result = this.channel.appendRecord(this.content, responseText, complexContext);
                 }
             }
@@ -1899,6 +1898,15 @@ public class AIGCService extends AbstractModule {
                     }
                 }
             });
+        }
+
+        private String filterChinese(String text) {
+            if (!TextUtils.containsChinese(text)) {
+                return text;
+            }
+
+            return text.replaceAll(",", "，")
+                    .replaceAll(":", "：");
         }
     }
 
@@ -1998,6 +2006,9 @@ public class AIGCService extends AbstractModule {
             AIGCConversationResponse convResponse = new AIGCConversationResponse(this.sn, this.content,
                     complexContext, payload);
 
+            // 过滤中文字符
+            convResponse.answer = this.filterChinese(convResponse.answer);
+
             this.history.answerContactId = this.unit.getContact().getId();
             this.history.answerTime = System.currentTimeMillis();
             this.history.answerContent = convResponse.answer;
@@ -2019,6 +2030,15 @@ public class AIGCService extends AbstractModule {
                     storage.writeChatHistory(history);
                 }
             });
+        }
+
+        private String filterChinese(String text) {
+            if (!TextUtils.containsChinese(text)) {
+                return text;
+            }
+
+            return text.replaceAll(",", "，")
+                    .replaceAll(":", "：");
         }
     }
 

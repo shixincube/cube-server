@@ -34,22 +34,22 @@ public enum SpatialRepresentation {
     /**
      * 精神。
      */
-    Spirit("Spirit"),
+    Spirit("精神领域"),
 
     /**
      * 物质。
      */
-    Matter("Matter"),
+    Matter("物质领域"),
 
     /**
      * 过去。
      */
-    Past("Past"),
+    Past("过去"),
 
     /**
      * 未来。
      */
-    Future("Future"),
+    Future("未来"),
 
     /**
      * 内向者。

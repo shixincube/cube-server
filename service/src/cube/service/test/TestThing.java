@@ -4,6 +4,7 @@ import cube.aigc.Prompt;
 import cube.aigc.PromptBuilder;
 import cube.aigc.PromptChaining;
 import cube.aigc.psychology.composition.PsychologicalHealth;
+import cube.util.TextUtils;
 
 import java.io.File;
 import java.util.List;
@@ -36,6 +37,7 @@ public class TestThing {
 
     public static void main(String[] args) {
 //        testPromptBuilder();
+
         testPsychologicalHealth();
     }
 }

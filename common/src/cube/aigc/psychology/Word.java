@@ -47,6 +47,11 @@ public enum Word {
     SelfConfidence("自信心"),
 
     /**
+     * 自制力。
+     */
+    SelfControl("自制力"),
+
+    /**
      * 适应能力。
      */
     Adaptability("适应能力"),
@@ -67,6 +72,11 @@ public enum Word {
     EnvironmentalFriendliness("环境亲切感"),
 
     /**
+     * 防御性。
+     */
+    Defensiveness("防御性"),
+
+    /**
      * 内向。
      */
     Introversion("内向"),
@@ -76,7 +86,140 @@ public enum Word {
      */
     Simple("朴素"),
 
-    
+    /**
+     * 想法简单。
+     */
+    SimpleIdea("想法简单"),
+
+    /**
+     * 理想化。
+     */
+    Idealization("理想化"),
+
+    /**
+     * 现实化。
+     */
+    Actualization("现实化"),
+
+    /**
+     * 怀旧。
+     */
+    Nostalgia("怀旧"),
+
+    /**
+     * 憧憬未来。
+     */
+    Future("憧憬未来"),
+
+    /**
+     * 追求奢华。
+     */
+    Luxurious("追求奢华"),
+
+    /**
+     * 幻想型。
+     */
+    Fantasy("幻想型"),
+
+    /**
+     * 幼稚。
+     */
+    Childish("幼稚"),
+
+    /**
+     * 极端化。
+     */
+    Extreme("极端化"),
+
+    /**
+     * 厌世。
+     */
+    WorldWeariness("厌世"),
+
+    /**
+     * 完美主义。
+     */
+    Perfectionism("完美主义"),
+
+    /**
+     * 心理压力。
+     */
+    HighPressure("心理压力"),
+
+    /**
+     * 外部压力。
+     */
+    ExternalPressure("外部压力"),
+
+    /**
+     * 逃避现实。
+     */
+    Escapism("逃避现实"),
+
+    /**
+     * 特立独行。
+     */
+    Maverick("特立独行"),
+
+    /**
+     * 追求人际关系。
+     */
+    PursueInterpersonalRelationships("追求人际关系"),
+
+    /**
+     * 情感淡漠。
+     */
+    EmotionalIndifference("情感淡漠"),
+
+    /**
+     * 依赖性。
+     */
+    Dependence("依赖性"),
+
+    /**
+     * 社交无力感。
+     */
+    SocialPowerlessness("社交无力感"),
+
+    /**
+     * 敏感。
+     */
+    Sensitiveness("敏感"),
+
+    /**
+     * 感性。
+     */
+    Emotionality("感性"),
+
+    /**
+     * 多疑。
+     */
+    Suspiciousness("多疑"),
+
+    /**
+     * 直率。
+     */
+    Straightforwardness("直率"),
+
+    /**
+     * 警惕。
+     */
+    Vigilance("警惕"),
+
+    /**
+     * 抑郁。
+     */
+    Depression("抑郁"),
+
+    /**
+     * 创造力。
+     */
+    Creativity("创造力"),
+
+    /**
+     * 独立。
+     */
+    Independent("独立"),
 
     /**
      * 未知。

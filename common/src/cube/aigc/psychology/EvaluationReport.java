@@ -26,10 +26,5 @@
 
 package cube.aigc.psychology;
 
-/**
- * 词描述。
- */
-public class WordDescription {
-
-
+public class EvaluationReport {
 }

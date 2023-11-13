@@ -90,6 +90,40 @@ public class House extends Thing {
         return this.roof;
     }
 
+    public boolean hasRoof() {
+        return (null != this.roof);
+    }
+
+    /**
+     * 获取房顶相对整个房子的面积比例。
+     * 例如：房顶面积30，房整体面积100，则比例为0.3
+     *
+     * @return
+     */
+    public double getRoofAreaRatio() {
+        if (null == this.roof) {
+            return 0;
+        }
+
+        return ((double) this.roof.getBoundingBox().calculateArea())
+                / ((double) this.getBoundingBox().calculateArea());
+    }
+
+    /**
+     * 获取房顶相对整个房子的高度比例。
+     * 例如：房顶高20，房子高100，则比例为0.2
+     *
+     * @return
+     */
+    public double getRoofHeightRatio() {
+        if (null == this.roof) {
+            return 0;
+        }
+
+        return ((double) this.roof.getBoundingBox().height)
+                / ((double) this.getBoundingBox().height);
+    }
+
     public void addRoofSkylight(RoofSkylight roofSkylight) {
         if (null == this.roofSkylightList) {
             this.roofSkylightList = new ArrayList<>();
@@ -99,6 +133,10 @@ public class House extends Thing {
 
     public List<RoofSkylight> getRoofSkylights() {
         return this.roofSkylightList;
+    }
+
+    public boolean hasRoofSkylight() {
+        return (null != this.roofSkylightList);
     }
 
     public void addChimney(Chimney chimney) {
@@ -112,6 +150,10 @@ public class House extends Thing {
         return this.chimneyList;
     }
 
+    public boolean hasChimney() {
+        return (null != this.chimneyList);
+    }
+
     public void addWindow(Window window) {
         if (null == this.windowList) {
             this.windowList = new ArrayList<>();
@@ -121,6 +163,22 @@ public class House extends Thing {
 
     public List<Window> getWindows() {
         return this.windowList;
+    }
+
+    public boolean hasWindow() {
+        return (null != this.windowList);
+    }
+
+    public double getMaxWindowAreaRatio() {
+        double maxRatio = 0;
+        for (Window window : this.windowList) {
+            double ratio = ((double) window.getBoundingBox().calculateArea())
+                    / ((double) this.getBoundingBox().calculateArea());
+            if (ratio > maxRatio) {
+                maxRatio = ratio;
+            }
+        }
+        return maxRatio;
     }
 
     public void addDoor(Door door) {
@@ -134,6 +192,35 @@ public class House extends Thing {
         return this.doorList;
     }
 
+    public boolean hasDoor() {
+        return (null != this.doorList);
+    }
+
+    public boolean hasOpenDoor() {
+        if (null == this.doorList) {
+            return false;
+        }
+
+        for (Door door : this.doorList) {
+            if (door.isOpen()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public double getMaxDoorAreaRatio() {
+        double maxRatio = 0;
+        for (Door door : this.doorList) {
+            double ratio = ((double) door.getBoundingBox().calculateArea())
+                    / ((double) this.getBoundingBox().calculateArea());
+            if (ratio > maxRatio) {
+                maxRatio = ratio;
+            }
+        }
+        return maxRatio;
+    }
+
     public void addCurtain(Curtain curtain) {
         if (null == this.curtainList) {
             this.curtainList = new ArrayList<>();
@@ -143,6 +230,24 @@ public class House extends Thing {
 
     public List<Curtain> getCurtains() {
         return this.curtainList;
+    }
+
+    public boolean hasCurtain() {
+        return (null != this.curtainList);
+    }
+
+    public boolean hasOpenCurtain() {
+        if (null == this.curtainList) {
+            return false;
+        }
+
+        for (Curtain curtain : this.curtainList) {
+            if (curtain.isOpen()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void addWindowRailing(WindowRailing windowRailing) {
@@ -178,6 +283,10 @@ public class House extends Thing {
         return this.fenceList;
     }
 
+    public boolean hasFence() {
+        return (null != this.fenceList);
+    }
+
     public void addPath(Path path) {
         if (null == this.pathList) {
             this.pathList = new ArrayList<>();
@@ -187,6 +296,38 @@ public class House extends Thing {
 
     public List<Path> getPaths() {
         return this.pathList;
+    }
+
+    public boolean hasPath() {
+        return (null != this.pathList);
+    }
+
+    public boolean hasCurvePath() {
+        if (null == this.pathList) {
+            return false;
+        }
+
+        for (Path path : this.pathList) {
+            if (path.isCurve()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean hasCobbledPath() {
+        if (null == this.pathList) {
+            return false;
+        }
+
+        for (Path path : this.pathList) {
+            if (path.isCobbled()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override

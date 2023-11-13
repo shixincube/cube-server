@@ -70,6 +70,9 @@ public final class TextUtils {
             + "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
             + "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
 
+    private final static Pattern sChinese =
+            Pattern.compile("[\\u4E00-\\u9FA5|\\\\！|\\\\，|\\\\。|\\\\（|\\\\）|\\\\《|\\\\》|\\\\“|\\\\”|\\\\？|\\\\：|\\\\；|\\\\【|\\\\】]");
+
     private TextUtils() {
     }
 
@@ -327,7 +330,9 @@ public final class TextUtils {
      * @return
      */
     public static String convChineseToArabicNumerals(String value) {
-        String result = value.replaceAll("一", "1")
+        String result = value.replaceAll("十一", "11")
+                .replaceAll("十二", "12")
+                .replaceAll("一", "1")
                 .replaceAll("二", "2")
                 .replaceAll("三", "3")
                 .replaceAll("四", "4")
@@ -337,10 +342,29 @@ public final class TextUtils {
                 .replaceAll("八", "8")
                 .replaceAll("九", "9")
                 .replaceAll("零", "0")
-                .replaceAll("十", "10")
-                .replaceAll("十一", "11")
-                .replaceAll("十二", "12");
+                .replaceAll("十", "10");
         return result;
+    }
+
+    /**
+     * 指定字符串是否是中文内容。
+     *
+     * @param value
+     * @return
+     */
+    public static boolean containsChinese(String value) {
+        boolean chinese = false;
+
+        for (int i = 0; i < value.length(); ++i) {
+            String s = value.substring(i, i + 1);
+            Matcher m = sChinese.matcher(s);
+            if (m.matches()) {
+                chinese = true;
+                break;
+            }
+        }
+
+        return chinese;
     }
 
     /**

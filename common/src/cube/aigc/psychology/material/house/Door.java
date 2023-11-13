@@ -54,6 +54,10 @@ public class Door extends Thing {
         return this.open;
     }
 
+    public boolean isLock() {
+        return this.lock;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
