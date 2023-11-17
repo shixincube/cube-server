@@ -27,6 +27,7 @@
 package cube.aigc.psychology.material;
 
 import cube.aigc.psychology.material.person.*;
+import cube.vision.Point;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -106,6 +107,18 @@ public class Person extends Thing {
         return this.head;
     }
 
+    public boolean hasHead() {
+        return (null != this.head);
+    }
+
+    public double getHeadHeightRatio() {
+        if (null == this.head) {
+            return 0;
+        }
+
+        return this.head.getHeight() / this.getHeight();
+    }
+
     public void addBraid(Braid braid) {
         if (null == this.braidList) {
             this.braidList = new ArrayList<>();
@@ -130,12 +143,76 @@ public class Person extends Thing {
         return this.hairList;
     }
 
+    public boolean hasHair() {
+        return (null != this.hairList);
+    }
+
+    public boolean hasStraightHair() {
+        if (null == this.hairList) {
+            return false;
+        }
+
+        for (Hair hair : this.hairList) {
+            if (hair instanceof StraightHair) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean hasShortHair() {
+        if (null == this.hairList) {
+            return false;
+        }
+
+        for (Hair hair : this.hairList) {
+            if (hair instanceof ShortHair) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean hasCurlyHair() {
+        if (null == this.hairList) {
+            return false;
+        }
+
+        for (Hair hair : this.hairList) {
+            if (hair instanceof CurlyHair) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean hasStandingHair() {
+        if (null == this.hairList) {
+            return false;
+        }
+
+        for (Hair hair : this.hairList) {
+            if (hair instanceof StandingHair) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void setCap(Cap cap) {
         this.cap = cap;
     }
 
     public Cap getCap() {
         return this.cap;
+    }
+
+    public boolean hasCap() {
+        return (null != this.cap);
     }
 
     public void addEye(Eye eye) {
@@ -149,6 +226,34 @@ public class Person extends Thing {
         return this.eyeList;
     }
 
+    public boolean hasEye() {
+        return (null != this.eyeList);
+    }
+
+    public boolean hasOpenEye() {
+        if (null == this.eyeList) {
+            return false;
+        }
+
+        for (Eye eye : this.eyeList) {
+            if (eye.isOpen()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public double getMaxEyeAreaRatio() {
+        if (null == this.eyeList || null == this.head) {
+            return 0;
+        }
+
+        Eye eye = this.getMaxAreaThing(this.eyeList);
+        return ((double) eye.getBoundingBox().calculateArea())
+                / ((double) this.head.getBoundingBox().calculateArea());
+    }
+
     public void addEyebrow(Eyebrow eyebrow) {
         if (null == this.eyebrowList) {
             this.eyebrowList = new ArrayList<>();
@@ -160,12 +265,20 @@ public class Person extends Thing {
         return this.eyebrowList;
     }
 
+    public boolean hasEyebrow() {
+        return (null != this.eyebrowList);
+    }
+
     public void setNose(Nose nose) {
         this.nose = nose;
     }
 
     public Nose getNose() {
         return this.nose;
+    }
+
+    public boolean hasNose() {
+        return (null != this.nose);
     }
 
     public void addEar(Ear ear) {
@@ -179,6 +292,10 @@ public class Person extends Thing {
         return this.earList;
     }
 
+    public boolean hasEar() {
+        return (null != this.earList);
+    }
+
     public void setMouth(Mouth mouth) {
         this.mouth = mouth;
     }
@@ -187,12 +304,20 @@ public class Person extends Thing {
         return this.mouth;
     }
 
+    public boolean hasMouth() {
+        return (null != this.mouth);
+    }
+
     public void setBody(Body body) {
         this.body = body;
     }
 
     public Body getBody() {
         return this.body;
+    }
+
+    public boolean hasBody() {
+        return (null != this.body);
     }
 
     public void addArm(Arm arm) {
@@ -204,6 +329,20 @@ public class Person extends Thing {
 
     public List<Arm> getArms() {
         return this.armList;
+    }
+
+    public boolean hasTwoArms() {
+        return (null != this.armList && this.armList.size() >= 2);
+    }
+
+    public double calcArmsDistance() {
+        if (!this.hasTwoArms()) {
+            return 0;
+        }
+
+        Point c1 = this.armList.get(0).getBoundingBox().getCenterPoint();
+        Point c2 = this.armList.get(1).getBoundingBox().getCenterPoint();
+        return Math.abs(c1.x - c2.x);
     }
 
     public void addPalm(Palm palm) {
@@ -226,6 +365,36 @@ public class Person extends Thing {
 
     public List<Leg> getLegs() {
         return this.legList;
+    }
+
+    public boolean hasTwoLegs() {
+        return (null != this.legList && this.legList.size() >= 2);
+    }
+
+    public double calcLegsDistance() {
+        if (!this.hasTwoLegs()) {
+            return 0;
+        }
+
+        Point c1 = this.legList.get(0).getBoundingBox().getCenterPoint();
+        Point c2 = this.legList.get(1).getBoundingBox().getCenterPoint();
+        return Math.abs(c1.x - c2.x);
+    }
+
+    public Leg getThinnestLeg() {
+        if (null == this.legList) {
+            return null;
+        }
+
+        Leg leg = null;
+        int w = Integer.MAX_VALUE;
+        for (Leg cur : this.legList) {
+            if ((int) cur.getWidth() < w) {
+                w = (int) cur.getWidth();
+                leg = cur;
+            }
+        }
+        return leg;
     }
 
     public void addFoot(Foot foot) {
@@ -267,6 +436,10 @@ public class Person extends Thing {
 
     public List<HairAccessory> getHairAccessories() {
         return this.hairAccessoryList;
+    }
+
+    public boolean hasHairAccessory() {
+        return (null != this.hairAccessoryList);
     }
 
     public void addItem(Item item) {

@@ -30,6 +30,8 @@ import cube.common.JSONable;
 import cube.vision.BoundingBox;
 import org.json.JSONObject;
 
+import java.util.List;
+
 /**
  * 素材。
  */
@@ -58,6 +60,30 @@ public abstract class Thing implements JSONable {
 
     public void setBoundingBox(BoundingBox bbox) {
         this.boundingBox = bbox;
+    }
+
+    public double getWidth() {
+        return this.boundingBox.width;
+    }
+
+    public double getHeight() {
+        return this.boundingBox.height;
+    }
+
+    protected <T> T getMaxAreaThing(List<T> list) {
+        int max = 0;
+        T result = null;
+        for (T t : list) {
+            if (t instanceof Thing) {
+                Thing thing = (Thing) t;
+                int area = thing.getBoundingBox().calculateArea();
+                if (area > max) {
+                    max = area;
+                    result = t;
+                }
+            }
+        }
+        return result;
     }
 
     @Override

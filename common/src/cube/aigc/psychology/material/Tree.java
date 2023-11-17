@@ -66,6 +66,25 @@ public class Tree extends Thing {
         return this.trunkList;
     }
 
+    public boolean hasTrunk() {
+        return (null != this.trunkList);
+    }
+
+    /**
+     * 获取树干相较于树的宽度比例。
+     * 例如：树干宽30，树整体宽度100，则返回0.3
+     *
+     * @return
+     */
+    public double getTrunkWidthRatio() {
+        if (null == this.trunkList) {
+            return 0;
+        }
+
+        return ((double) this.trunkList.get(0).getBoundingBox().width * 0.7f)
+                / ((double) this.getBoundingBox().width);
+    }
+
     public void addBranch(Branch branch) {
         if (null == this.branchList) {
             this.branchList = new ArrayList<>();
@@ -88,6 +107,49 @@ public class Tree extends Thing {
         return this.canopyList;
     }
 
+    public boolean hasCanopy() {
+        return (null != this.canopyList);
+    }
+
+    /**
+     * 计算树冠面积比例。
+     *
+     * @return
+     */
+    public double getCanopyAreaRatio() {
+        if (null == this.canopyList) {
+            return 0;
+        }
+
+        Canopy canopy = this.getMaxAreaThing(this.canopyList);
+        if (null == canopy) {
+            return 0;
+        }
+
+        return ((double) canopy.getBoundingBox().calculateArea())
+                / ((double) this.getBoundingBox().calculateArea());
+    }
+
+    /**
+     * 计算树冠高度比例。
+     *
+     * @return
+     */
+    public double getCanopyHeightRatio() {
+        if (null == this.canopyList) {
+            return 0;
+        }
+
+        double height = 0;
+        for (Canopy canopy : this.canopyList) {
+            if (canopy.getHeight() > height) {
+                height = canopy.getHeight();
+            }
+        }
+
+        return height / this.getHeight();
+    }
+
     public void addRoot(Root root) {
         if (null == this.rootList) {
             this.rootList = new ArrayList<>();
@@ -97,6 +159,10 @@ public class Tree extends Thing {
 
     public List<Root> getRoots() {
         return this.rootList;
+    }
+
+    public boolean hasRoot() {
+        return (null != this.rootList);
     }
 
     public void addFruit(Fruit fruit) {
@@ -110,6 +176,29 @@ public class Tree extends Thing {
         return this.fruitList;
     }
 
+    public boolean hasFruit() {
+        return (null != this.fruitList);
+    }
+
+    public double[] getFruitAreaRatios() {
+        if (null == this.fruitList || null == this.canopyList) {
+            return null;
+        }
+
+        Canopy canopy = this.getMaxAreaThing(this.canopyList);
+        double totalArea = canopy.getBoundingBox().calculateArea();
+
+        double[] result = new double[this.fruitList.size()];
+        int index = 0;
+        for (Fruit fruit : this.fruitList) {
+            double area = fruit.getBoundingBox().calculateArea();
+            double ratio = area / totalArea;
+            result[index] = ratio;
+            ++index;
+        }
+        return result;
+    }
+
     public void addHole(Hole hole) {
         if (null == this.holeList) {
             this.holeList = new ArrayList<>();
@@ -119,6 +208,10 @@ public class Tree extends Thing {
 
     public List<Hole> getHoles() {
         return this.holeList;
+    }
+
+    public boolean hasHole() {
+        return (null != this.holeList);
     }
 
     public void addDrooping(DroopingLeaves droopingLeaves) {

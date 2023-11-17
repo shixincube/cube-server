@@ -37,4 +37,21 @@ public class Mouth extends Thing {
     public Mouth(JSONObject json) {
         super(json);
     }
+
+    public boolean isOpen() {
+        // 判断纵横比
+        double ar = this.getBoundingBox().getAspectRatio();
+        return ar <= 1.13;
+    }
+
+    /**
+     * 一字型。
+     *
+     * @return
+     */
+    public boolean isStraight() {
+        // 判断纵横比
+        double ar = this.getBoundingBox().getAspectRatio();
+        return ar > 3.33;
+    }
 }

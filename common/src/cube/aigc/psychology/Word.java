@@ -52,9 +52,29 @@ public enum Word {
     SelfControl("自制力"),
 
     /**
+     * 自我无力感。
+     */
+    SelfPowerlessness("自我无力感"),
+
+    /**
+     * 自我感觉。
+     */
+    SelfFeeling("自我感觉"),
+
+    /**
+     * 自恋。
+     */
+    Narcissism("自恋"),
+
+    /**
      * 适应能力。
      */
     Adaptability("适应能力"),
+
+    /**
+     * 社会适应性。
+     */
+    SocialAdaptability("社会适应性"),
 
     /**
      * 对环境疏离感。
@@ -80,6 +100,11 @@ public enum Word {
      * 内向。
      */
     Introversion("内向"),
+
+    /**
+     * 外向。
+     */
+    Extroversion("外向"),
 
     /**
      * 朴素。
@@ -172,6 +197,16 @@ public enum Word {
     EmotionalIndifference("情感淡漠"),
 
     /**
+     * 情感稳定。
+     */
+    EmotionalStability("情感稳定"),
+
+    /**
+     * 情绪不安。
+     */
+    EmotionalDisturbance("情绪不安"),
+
+    /**
      * 依赖性。
      */
     Dependence("依赖性"),
@@ -180,6 +215,11 @@ public enum Word {
      * 社交无力感。
      */
     SocialPowerlessness("社交无力感"),
+
+    /**
+     * 社交需求。
+     */
+    SocialDemand("社交需求"),
 
     /**
      * 敏感。
@@ -202,7 +242,7 @@ public enum Word {
     Straightforwardness("直率"),
 
     /**
-     * 警惕。
+     * 警惕/警戒心。
      */
     Vigilance("警惕"),
 
@@ -220,6 +260,96 @@ public enum Word {
      * 独立。
      */
     Independent("独立"),
+
+    /**
+     * 本能。
+     */
+    Instinct("本能"),
+
+    /**
+     * 创伤。
+     */
+    Trauma("创伤"),
+
+    /**
+     * 精力旺盛。
+     */
+    HighEnergy("精力旺盛"),
+
+    /**
+     * 安全感。
+     */
+    SenseOfSecurity("安全感"),
+
+    /**
+     * 追求成就。
+     */
+    PursuitOfAchievement("追求成就"),
+
+    /**
+     * 多目标。
+     */
+    ManyGoals("多目标"),
+
+    /**
+     * 多欲望。
+     */
+    ManyDesires("多欲望"),
+
+    /**
+     * 内心冲突。
+     */
+    IntrapsychicConflict("内心冲突"),
+
+    /**
+     * 敌意。
+     */
+    Hostility("敌意"),
+
+    /**
+     * 注意细节。
+     */
+    AttentionToDetail("注意细节"),
+
+    /**
+     * 渴望母爱。
+     */
+    LongingForMaternalLove("渴望母爱"),
+
+    /**
+     * 坚强。
+     */
+    Strong("坚强"),
+
+    /**
+     * 固执。
+     */
+    Stubborn("固执"),
+
+    /**
+     * 控制欲。
+     */
+    DesireForControl("控制欲"),
+
+    /**
+     * 多愁善感。
+     */
+    Sentimentality("多愁善感"),
+
+    /**
+     * 攻击性。
+     */
+    Aggression("攻击性"),
+
+    /**
+     * 拘谨。
+     */
+    Cautious("拘谨"),
+
+    /**
+     * 积极期待。
+     */
+    PositiveExpectation("积极期待"),
 
     /**
      * 未知。

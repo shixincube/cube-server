@@ -44,6 +44,8 @@ import java.util.*;
  */
 public class Painting implements JSONable {
 
+    private Author author;
+
     private Size canvasSize;
 
     private List<House> houseList;
@@ -69,10 +71,6 @@ public class Painting implements JSONable {
     private List<Cloud> cloudList;
 
     private List<Animal> animalList;
-
-    public Painting(Size canvasSize) {
-        this.canvasSize = canvasSize;
-    }
 
     public Painting(JSONObject json) {
         this.canvasSize = new Size(json.getJSONObject("size"));
@@ -124,6 +122,10 @@ public class Painting implements JSONable {
         if (json.has("animals")) {
             this.animalList = new ArrayList<>();
             this.parseList(json.getJSONArray("animals"), this.animalList);
+        }
+
+        if (json.has("author")) {
+            this.author = new Author(json.getJSONObject("author"));
         }
     }
 
@@ -502,6 +504,14 @@ public class Painting implements JSONable {
         return result;
     }
 
+    public void setAuthor(Author author) {
+        this.author = author;
+    }
+
+    public Author getAuthor() {
+        return this.author;
+    }
+
     public Size getCanvasSize() {
         return this.canvasSize;
     }
@@ -626,11 +636,19 @@ public class Painting implements JSONable {
         this.sunList.add(sun);
     }
 
+    public boolean hasSun() {
+        return (null != this.sunList);
+    }
+
     public void addMoon(Moon moon) {
         if (null == this.moonList) {
             this.moonList = new ArrayList<>();
         }
         this.moonList.add(moon);
+    }
+
+    public boolean hasMoon() {
+        return (null != this.moonList);
     }
 
     public void addStar(Star star) {
@@ -640,11 +658,19 @@ public class Painting implements JSONable {
         this.starList.add(star);
     }
 
+    public boolean hasStar() {
+        return (null != this.starList);
+    }
+
     public void addMountain(Mountain mountain) {
         if (null == this.mountainList) {
             this.mountainList = new ArrayList<>();
         }
         this.mountainList.add(mountain);
+    }
+
+    public boolean hasMountain() {
+        return (null != this.mountainList);
     }
 
     public void addFlower(Flower flower) {
@@ -654,11 +680,19 @@ public class Painting implements JSONable {
         this.flowerList.add(flower);
     }
 
+    public boolean hasFlower() {
+        return (null != this.flowerList);
+    }
+
     public void addGrass(Grass grass) {
         if (null == this.grassList) {
             this.grassList = new ArrayList<>();
         }
         this.grassList.add(grass);
+    }
+
+    public boolean hasGrass() {
+        return (null != this.grassList);
     }
 
     public void addCloud(Cloud cloud) {
@@ -668,11 +702,19 @@ public class Painting implements JSONable {
         this.cloudList.add(cloud);
     }
 
+    public boolean hasCloud() {
+        return (null != this.cloudList);
+    }
+
     public void addAnimal(Animal animal) {
         if (null == this.animalList) {
             this.animalList = new ArrayList<>();
         }
         this.animalList.add(animal);
+    }
+
+    public boolean hasAnimal() {
+        return (null != this.animalList);
     }
 
     public List<Thing> sortBySize() {
@@ -803,6 +845,49 @@ public class Painting implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         return this.toJSON();
+    }
+
+    /**
+     * 作画作者。
+     */
+    public class Author implements JSONable {
+
+        public final String gender;
+
+        public final int age;
+
+        public Author(String gender, int age) {
+            this.gender = gender;
+            this.age = age;
+        }
+
+        public Author(JSONObject json) {
+            this.gender = json.getString("gender");
+            this.age = json.getInt("age");
+        }
+
+        public boolean isMale() {
+            return this.gender.equalsIgnoreCase("male")
+                    || this.gender.equals("男");
+        }
+
+        public boolean isFemale() {
+            return this.gender.equalsIgnoreCase("female")
+                    || this.gender.equals("女");
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("gender", this.gender);
+            json.put("age", this.age);
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
+        }
     }
 
     private class BoundingBoxComparator implements Comparator<Thing> {

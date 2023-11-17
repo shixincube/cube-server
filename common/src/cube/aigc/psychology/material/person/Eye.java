@@ -37,4 +37,10 @@ public class Eye extends Thing {
     public Eye(JSONObject json) {
         super(json);
     }
+
+    public boolean isOpen() {
+        // 判断纵横比
+        double ar = this.getBoundingBox().getAspectRatio();
+        return ar <= 1.25;
+    }
 }

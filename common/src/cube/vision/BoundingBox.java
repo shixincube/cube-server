@@ -68,6 +68,15 @@ public class BoundingBox implements JSONable {
         return this.y + this.height;
     }
 
+    public double getAspectRatio() {
+        return ((double) this.width) / ((double) this.height);
+    }
+
+    public Point getCenterPoint() {
+        return new Point((int)(this.x + ((double)this.width * 0.5)),
+                (int)(this.y + ((double)this.height * 0.5)));
+    }
+
     /**
      * 对点进行碰撞检测。
      *

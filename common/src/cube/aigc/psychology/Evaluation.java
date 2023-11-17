@@ -31,7 +31,9 @@ import cube.aigc.psychology.composition.Score;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.material.House;
 import cube.aigc.psychology.material.Label;
+import cube.aigc.psychology.material.Person;
 import cube.aigc.psychology.material.Tree;
+import cube.aigc.psychology.material.person.Leg;
 import cube.vision.BoundingBox;
 import cube.vision.Size;
 
@@ -285,7 +287,223 @@ public class Evaluation {
                 // 常青树
                 list.add(new Result(Word.SelfConfidence, Score.High));
             }
+
+            // 树干
+            if (tree.hasTrunk()) {
+                double ratio = tree.getTrunkWidthRatio();
+                if (ratio < 0.2f) {
+                    // 细
+                    list.add(new Result(Word.SelfPowerlessness, Score.High));
+                }
+                else if (ratio >= 0.2f && ratio < 0.7f) {
+                    // 粗
+                    list.add(new Result(Word.EmotionalStability, Score.High));
+                }
+            }
+            else {
+                list.add(new Result(Word.Introversion, Score.High));
+            }
+
+            // 树根
+            if (tree.hasRoot()) {
+                list.add(new Result(Word.Instinct, Score.High));
+            }
+
+            // 树洞
+            if (tree.hasHole()) {
+                list.add(new Result(Word.Trauma, Score.High));
+                list.add(new Result(Word.EmotionalDisturbance, Score.High));
+            }
+
+            // 树冠大小
+            if (tree.hasCanopy()) {
+                list.add(new Result(Word.HighEnergy, Score.High));
+                // 通过评估面积和高度确定树冠大小
+                if (tree.getCanopyAreaRatio() >= 0.45) {
+                    list.add(new Result(Word.SocialDemand, Score.High));
+                }
+                else if (tree.getCanopyAreaRatio() < 0.2) {
+                    list.add(new Result(Word.SelfConfidence, Score.Low));
+                }
+
+                if (tree.getCanopyHeightRatio() >= 0.33) {
+                    list.add(new Result(Word.SelfFeeling, Score.High));
+                }
+                else if (tree.getCanopyHeightRatio() < 0.2) {
+                    list.add(new Result(Word.SelfFeeling, Score.Low));
+                }
+
+                if (tree.getCanopyAreaRatio() < 0.2 && tree.getCanopyHeightRatio() < 0.3) {
+                    list.add(new Result(Word.Childish, Score.High));
+                }
+            }
+            else {
+                // 安全感缺失
+                list.add(new Result(Word.SenseOfSecurity, Score.Low));
+            }
+
+            // 果实
+            if (tree.hasFruit()) {
+                list.add(new Result(Word.PursuitOfAchievement, Score.High));
+
+                double[] areaRatios = tree.getFruitAreaRatios();
+                if (null != areaRatios) {
+                    boolean many = areaRatios.length >= 3;
+                    boolean big = false;
+                    // 判断大小
+                    for (double ratio : areaRatios) {
+                        if (ratio >= 0.02) {
+                            big = true;
+                        }
+                    }
+
+                    if (big && many) {
+                        // 大而多
+                        list.add(new Result(Word.ManyGoals, Score.High));
+                        list.add(new Result(Word.ManyDesires, Score.High));
+                        list.add(new Result(Word.SelfConfidence, Score.High));
+                    }
+                    else if (big) {
+                        list.add(new Result(Word.ManyGoals, Score.High));
+                    }
+                    else if (many) {
+                        list.add(new Result(Word.ManyGoals, Score.High));
+                        list.add(new Result(Word.SelfConfidence, Score.Low));
+                    }
+                    else {
+                        list.add(new Result(Word.SelfConfidence, Score.Low));
+                    }
+                }
+            }
         }
+
+        return list;
+    }
+
+    public List<Result> evalPerson() {
+        List<Result> list = new ArrayList<>();
+
+        for (Person person : this.painting.getPersons()) {
+            // 头
+            if (person.hasHead()) {
+                // 头身比例
+                if (person.getHeadHeightRatio() > 0.25) {
+                    list.add(new Result(Word.SocialAdaptability, Score.Low));
+                }
+            }
+
+            // 人物动态、静态判断方式：比较手臂和腿的边界盒形状，边界盒形状越相似则越接近静态，反之为动态。
+            // TODO XJW
+
+            // 五官是否完整
+            if (!(person.hasEye() && person.hasNose() && person.hasMouth())) {
+                list.add(new Result(Word.SelfConfidence, Score.Low));
+            }
+
+            // 眼
+            if (person.hasEye()) {
+                // 是否睁开眼
+                if (!person.hasOpenEye()) {
+                    list.add(new Result(Word.Hostility, Score.High));
+                }
+
+                double ratio = person.getMaxEyeAreaRatio();
+                if (ratio > 0.018) {
+                    // 眼睛大
+                    list.add(new Result(Word.Sensitiveness, Score.High));
+                    list.add(new Result(Word.Vigilance, Score.High));
+                }
+            }
+            else {
+                list.add(new Result(Word.IntrapsychicConflict, Score.High));
+            }
+
+            // 眉毛
+            if (person.hasEyebrow()) {
+                list.add(new Result(Word.AttentionToDetail, Score.High));
+            }
+
+            // 嘴
+            if (person.hasMouth()) {
+                if (person.getMouth().isOpen()) {
+                    list.add(new Result(Word.LongingForMaternalLove, Score.High));
+                }
+                else if (person.getMouth().isStraight()) {
+                    list.add(new Result(Word.Strong, Score.High));
+                }
+            }
+
+            // 耳朵
+            if (!person.hasEar()) {
+                // 没有耳朵
+                list.add(new Result(Word.Stubborn, Score.High));
+            }
+
+            // 头发
+            if (person.hasHair()) {
+                if (person.hasStraightHair()) {
+                    // 直发
+                    list.add(new Result(Word.Simple, Score.High));
+                }
+                else if (person.hasShortHair()) {
+                    // 短发
+                    list.add(new Result(Word.DesireForControl, Score.High));
+                }
+                else if (person.hasCurlyHair()) {
+                    // 卷发
+                    list.add(new Result(Word.Sentimentality, Score.High));
+                }
+                else if (person.hasStandingHair()) {
+                    // 竖直头发
+                    list.add(new Result(Word.Aggression, Score.High));
+                }
+            }
+
+            // 发饰
+            if (person.hasHairAccessory()) {
+                list.add(new Result(Word.Narcissism, Score.High));
+            }
+
+            // 帽子
+            if (person.hasCap()) {
+                list.add(new Result(Word.SelfPowerlessness, Score.High));
+            }
+
+            // 手臂
+            if (person.hasTwoArms() && person.hasBody()) {
+                // 计算手臂间距离相对于身体的宽度
+                double d = person.calcArmsDistance();
+                if (d > person.getBody().getWidth() * 0.5) {
+                    // 手臂分开
+                    list.add(new Result(Word.Extroversion, Score.High));
+                }
+            }
+
+            // 腿
+            if (person.hasTwoLegs()) {
+                double d = person.calcLegsDistance();
+                Leg thinLeg = person.getThinnestLeg();
+                if (null != thinLeg) {
+                    if (d < thinLeg.getWidth() * 0.5) {
+                        // 腿的距离较近
+                        list.add(new Result(Word.Cautious, Score.High));
+                        list.add(new Result(Word.Introversion, Score.High));
+                    }
+                }
+            }
+        }
+
+        return list;
+    }
+
+    public List<Result> evalOthers() {
+        List<Result> list = new ArrayList<>();
+
+        if (this.painting.hasSun()) {
+            list.add(new Result(Word.PositiveExpectation, Score.High));
+        }
+
+
 
         return list;
     }
