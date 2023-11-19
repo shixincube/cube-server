@@ -44,6 +44,9 @@ public class Stage extends Entity {
 
     private List<String> words;
 
+    /**
+     * 是否需要进行模块推理。
+     */
     public boolean inference = false;
 
     public List<ChartResource> chartResources;

@@ -22,7 +22,7 @@ public class Tokenizer {
     }
 
     public Tokenizer() {
-        Path path = Paths.get("./assets/tokenizer/");
+        Path path = Paths.get("assets/tokenizer/");
         if (Files.exists(path) && Files.isDirectory(path)) {
             initUserDict(path);
         }

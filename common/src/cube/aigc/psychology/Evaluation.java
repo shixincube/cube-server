@@ -69,7 +69,7 @@ public class Evaluation {
             else if (areaRatio < (1.0f / 6.0f)) {
                 list.add(new Result(Word.SelfEsteem, Score.Low));
                 list.add(new Result(Word.SelfConfidence, Score.Low));
-                list.add(new Result(Word.Adaptability, Score.Low));
+                list.add(new Result(Word.SocialAdaptability, Score.Low));
             }
             else {
                 list.add(new Result(Word.SelfEsteem, Score.Medium));
@@ -423,10 +423,10 @@ public class Evaluation {
                 }
 
                 if (tree.getCanopyHeightRatio() >= 0.33) {
-                    list.add(new Result(Word.SelfFeeling, Score.High));
+                    list.add(new Result(Word.SelfEsteem, Score.High));
                 }
                 else if (tree.getCanopyHeightRatio() < 0.2) {
-                    list.add(new Result(Word.SelfFeeling, Score.Low));
+                    list.add(new Result(Word.SelfEsteem, Score.Low));
                 }
 
                 if (tree.getCanopyAreaRatio() < 0.2 && tree.getCanopyHeightRatio() < 0.3) {

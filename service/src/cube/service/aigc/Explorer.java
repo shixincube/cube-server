@@ -188,23 +188,35 @@ public class Explorer {
             words.add(keyword.getWord());
         }
 
+        if (words.isEmpty()) {
+            // 没有词
+            words.add(content);
+            Stage stage = new Stage(words);
+            stage.inference = false;
+            return stage;
+        }
+
         Stage stage = new Stage(words);
 
-        ChartInference chartInference = this.inferChart(words);
-        if (null != chartInference) {
-            stage.chartResources.addAll(chartInference.chartResources);
-            stage.attachmentResources.addAll(chartInference.attachmentResources);
-        }
+        try {
+            ChartInference chartInference = this.inferChart(words);
+            if (null != chartInference) {
+                stage.chartResources.addAll(chartInference.chartResources);
+                stage.attachmentResources.addAll(chartInference.attachmentResources);
+            }
 
-        // 判断上下文是否需要进行推算
-        boolean inference = false;
-        if (!this.hitChartsKeywords(words.get(0))
-                && !this.hitChartsKeywords(words.get(1))) {
-            // 前2个关键词都没有图表相关词，进行推理
-            inference = true;
-        }
+            // 判断上下文是否需要进行推算
+            boolean inference = false;
+            if (words.size() >= 2 && !this.hitChartsKeywords(words.get(0))
+                    && !this.hitChartsKeywords(words.get(1))) {
+                // 前2个关键词都没有图表相关词，进行推理
+                inference = true;
+            }
 
-        stage.inference = inference;
+            stage.inference = inference;
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#infer", e);
+        }
 
         return stage;
     }

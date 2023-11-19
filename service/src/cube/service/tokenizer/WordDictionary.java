@@ -53,7 +53,12 @@ public class WordDictionary {
             try {
                 stream = Files.newDirectoryStream(userPath, String.format(Locale.getDefault(), "*%s", USER_DICT_SUFFIX));
                 for (Path path : stream) {
-                    Log.error(String.format(Locale.getDefault(), "loading dict %s", path.toString()));
+                    if (path.getFileName().startsWith(".")) {
+                        // 跳过 "." 开头的文件
+                        continue;
+                    }
+
+                    Log.debug(String.format(Locale.getDefault(), "loading dict %s", path.toString()));
                     singleton.loadUserDict(path);
                 }
                 loadedPath.add(absPath);

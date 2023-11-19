@@ -57,19 +57,9 @@ public enum Word {
     SelfPowerlessness("自我无力感"),
 
     /**
-     * 自我感觉。
-     */
-    SelfFeeling("自我感觉"),
-
-    /**
      * 自恋。
      */
     Narcissism("自恋"),
-
-    /**
-     * 适应能力。
-     */
-    Adaptability("适应能力"),
 
     /**
      * 社会适应性。
@@ -84,7 +74,7 @@ public enum Word {
     /**
      * 对环境依赖。
      */
-    EnvironmentalDependence("环境依赖"),
+    EnvironmentalDependence("环境依赖感"),
 
     /**
      * 对环境亲切感。
