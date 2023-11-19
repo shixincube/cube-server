@@ -662,6 +662,10 @@ public class Painting implements JSONable {
         return (null != this.starList);
     }
 
+    public int numStars() {
+        return (null != this.starList) ? this.starList.size() : 0;
+    }
+
     public void addMountain(Mountain mountain) {
         if (null == this.mountainList) {
             this.mountainList = new ArrayList<>();
@@ -671,6 +675,10 @@ public class Painting implements JSONable {
 
     public boolean hasMountain() {
         return (null != this.mountainList);
+    }
+
+    public int numMountains() {
+        return (null != this.mountainList) ? this.mountainList.size() : 0;
     }
 
     public void addFlower(Flower flower) {
@@ -684,6 +692,10 @@ public class Painting implements JSONable {
         return (null != this.flowerList);
     }
 
+    public int numFlowers() {
+        return (null != this.flowerList) ? this.flowerList.size() : 0;
+    }
+
     public void addGrass(Grass grass) {
         if (null == this.grassList) {
             this.grassList = new ArrayList<>();
@@ -693,6 +705,10 @@ public class Painting implements JSONable {
 
     public boolean hasGrass() {
         return (null != this.grassList);
+    }
+
+    public int numGrasses() {
+        return (null != this.grassList) ? this.grassList.size() : 0;
     }
 
     public void addCloud(Cloud cloud) {
@@ -713,8 +729,54 @@ public class Painting implements JSONable {
         this.animalList.add(animal);
     }
 
+    public int numAnimals() {
+        return (null != this.animalList) ? this.animalList.size() : 0;
+    }
+
     public boolean hasAnimal() {
         return (null != this.animalList);
+    }
+
+    public boolean hasBird() {
+        if (null == this.animalList) {
+            return false;
+        }
+
+        for (Animal animal : this.animalList) {
+            if (animal.getClasses() == Animal.Classes.Bird) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean hasDog() {
+        if (null == this.animalList) {
+            return false;
+        }
+
+        for (Animal animal : this.animalList) {
+            if (animal.getClasses() == Animal.Classes.Dog) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean hasCat() {
+        if (null == this.animalList) {
+            return false;
+        }
+
+        for (Animal animal : this.animalList) {
+            if (animal.getClasses() == Animal.Classes.Cat) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public List<Thing> sortBySize() {

@@ -29,12 +29,10 @@ package cube.aigc.psychology;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.Score;
 import cube.aigc.psychology.composition.SpaceLayout;
-import cube.aigc.psychology.material.House;
-import cube.aigc.psychology.material.Label;
-import cube.aigc.psychology.material.Person;
-import cube.aigc.psychology.material.Tree;
+import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.person.Leg;
 import cube.vision.BoundingBox;
+import cube.vision.Point;
 import cube.vision.Size;
 
 import java.util.ArrayList;
@@ -93,6 +91,104 @@ public class Evaluation {
                 || this.spaceLayout.getBottomMargin() > maxThreshold
                 || this.spaceLayout.getLeftMargin() > maxThreshold) {
             list.add(new Result(Word.EnvironmentalAlienation, Score.High));
+        }
+
+        // 房、树、人之间的空间关系
+        // 中线
+        double banding = ((double) this.painting.getCanvasSize().height) * 0.167;
+        double bl = (this.painting.getCanvasSize().height - (int) banding) * 0.5;
+        int evalRange = (int) Math.round(banding * 0.5);
+
+        House house = this.painting.getHouse();
+        Tree tree = this.painting.getTree();
+        Person person = this.painting.getPerson();
+        if (null != house && null != tree && null != person) {
+            // 位置关系
+            Point hc = house.getBoundingBox().getCenterPoint();
+            Point tc = tree.getBoundingBox().getCenterPoint();
+            Point pc = person.getBoundingBox().getCenterPoint();
+            if (Math.abs(hc.y - tc.y) < evalRange && Math.abs(hc.y - pc.y) < evalRange) {
+                // 基本在一个水平线上
+                list.add(new Result(Word.Stereotype, Score.High));
+            }
+            else {
+                // 位置分散
+                list.add(new Result(Word.EmotionalStability, Score.Low));
+            }
+
+            // 大小关系
+            int ha = house.getBoundingBox().calculateArea();
+            int ta = tree.getBoundingBox().calculateArea();
+            int pa = person.getBoundingBox().calculateArea();
+            if (ha >= ta && ha >= pa) {
+                // 房大
+                list.add(new Result(Word.PayAttentionToFamily, Score.High));
+            }
+            else if (ta >= ha && ta >= pa) {
+                // 树大
+                list.add(new Result(Word.SocialDemand, Score.High));
+            }
+            else if (pa >= ha && pa >= ta) {
+                // 人大
+                list.add(new Result(Word.IndividualDemand, Score.High));
+            }
+        }
+        else if (null != house && null != tree) {
+            Point hc = house.getBoundingBox().getCenterPoint();
+            Point tc = tree.getBoundingBox().getCenterPoint();
+            if (Math.abs(hc.y - tc.y) < evalRange) {
+                // 基本在一个水平线上
+                list.add(new Result(Word.Stereotype, Score.High));
+            }
+
+            int ha = house.getBoundingBox().calculateArea();
+            int ta = tree.getBoundingBox().calculateArea();
+            if (ha > ta) {
+                // 房大
+                list.add(new Result(Word.PayAttentionToFamily, Score.High));
+            }
+            else {
+                // 树大
+                list.add(new Result(Word.SocialDemand, Score.High));
+            }
+        }
+        else if (null != house && null != person) {
+            Point hc = house.getBoundingBox().getCenterPoint();
+            Point pc = person.getBoundingBox().getCenterPoint();
+            if (Math.abs(hc.y - pc.y) < evalRange) {
+                // 基本在一个水平线上
+                list.add(new Result(Word.Stereotype, Score.High));
+            }
+
+            int ha = house.getBoundingBox().calculateArea();
+            int pa = person.getBoundingBox().calculateArea();
+            if (ha > pa) {
+                // 房大
+                list.add(new Result(Word.PayAttentionToFamily, Score.High));
+            }
+            else {
+                // 人大
+                list.add(new Result(Word.IndividualDemand, Score.High));
+            }
+        }
+        else if (null != tree && null != person) {
+            Point tc = tree.getBoundingBox().getCenterPoint();
+            Point pc = person.getBoundingBox().getCenterPoint();
+            if (Math.abs(tc.y - pc.y) < evalRange) {
+                // 基本在一个水平线上
+                list.add(new Result(Word.Stereotype, Score.High));
+            }
+
+            int ta = tree.getBoundingBox().calculateArea();
+            int pa = person.getBoundingBox().calculateArea();
+            if (ta > pa) {
+                // 树大
+                list.add(new Result(Word.SocialDemand, Score.High));
+            }
+            else {
+                // 人大
+                list.add(new Result(Word.IndividualDemand, Score.High));
+            }
         }
 
         return list;
@@ -500,10 +596,59 @@ public class Evaluation {
         List<Result> list = new ArrayList<>();
 
         if (this.painting.hasSun()) {
+            // 太阳
             list.add(new Result(Word.PositiveExpectation, Score.High));
         }
 
+        if (this.painting.hasMoon()) {
+            // 月亮
+            list.add(new Result(Word.Sentimentality, Score.High));
+        }
 
+        if (this.painting.hasCloud()) {
+            // 云
+            list.add(new Result(Word.Imagination, Score.High));
+        }
+
+        if (this.painting.hasAnimal()) {
+            // 动物
+            list.add(new Result(Word.DelicateEmotions, Score.High));
+            if (this.painting.hasBird()) {
+                // 鸟
+                list.add(new Result(Word.DesireForFreedom, Score.High));
+            }
+            else if (this.painting.hasDog()) {
+                // 狗
+                list.add(new Result(Word.Spirituality, Score.High));
+            }
+            else if (this.painting.hasCat()) {
+                // 猫
+                list.add(new Result(Word.SocialDemand, Score.High));
+            }
+        }
+
+        if (this.painting.hasGrass()) {
+            // 草
+            list.add(new Result(Word.Stubborn, Score.High));
+        }
+
+        if (this.painting.hasFlower()) {
+            // 花
+            list.add(new Result(Word.Vanity, Score.High));
+        }
+
+        if (this.painting.hasMountain()) {
+            // 山
+            list.add(new Result(Word.NeedProtection, Score.High));
+        }
+
+        int numMaterials = this.painting.numStars()
+                + this.painting.numFlowers() + this.painting.numGrasses()
+                + this.painting.numMountains() + this.painting.numAnimals();
+        if (numMaterials >= 5) {
+            // 绘制的元素多
+            list.add(new Result(Word.Creativity, Score.High));
+        }
 
         return list;
     }

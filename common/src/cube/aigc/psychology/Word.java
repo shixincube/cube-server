@@ -222,6 +222,11 @@ public enum Word {
     SocialDemand("社交需求"),
 
     /**
+     * 个人需求。
+     */
+    IndividualDemand("个人需求"),
+
+    /**
      * 敏感。
      */
     Sensitiveness("敏感"),
@@ -350,6 +355,46 @@ public enum Word {
      * 积极期待。
      */
     PositiveExpectation("积极期待"),
+
+    /**
+     * 想象力。
+     */
+    Imagination("想象力"),
+
+    /**
+     * 情感细腻。
+     */
+    DelicateEmotions("情感细腻"),
+
+    /**
+     * 渴望自由。
+     */
+    DesireForFreedom("渴望自由"),
+
+    /**
+     * 灵性。
+     */
+    Spirituality("灵性"),
+
+    /**
+     * 虚荣。
+     */
+    Vanity("虚荣"),
+
+    /**
+     * 需要保护。
+     */
+    NeedProtection("需要保护"),
+
+    /**
+     * 刻板。
+     */
+    Stereotype("刻板"),
+
+    /**
+     * 重视家庭。
+     */
+    PayAttentionToFamily("重视家庭"),
 
     /**
      * 未知。

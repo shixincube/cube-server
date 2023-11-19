@@ -27,4 +27,8 @@
 package cube.service.test;
 
 public class TestEvaluation {
+
+    public static void main(String[] args) {
+
+    }
 }
