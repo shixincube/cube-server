@@ -112,11 +112,6 @@ public enum Word {
     Idealization("理想化"),
 
     /**
-     * 现实化。
-     */
-    Actualization("现实化"),
-
-    /**
      * 怀旧。
      */
     Nostalgia("怀旧"),
@@ -212,9 +207,9 @@ public enum Word {
     SocialDemand("社交需求"),
 
     /**
-     * 个人需求。
+     * 自我需求。
      */
-    IndividualDemand("个人需求"),
+    SelfDemand("自我需求"),
 
     /**
      * 敏感。
@@ -254,7 +249,7 @@ public enum Word {
     /**
      * 独立。
      */
-    Independent("独立"),
+    Independence("独立"),
 
     /**
      * 本能。
@@ -372,9 +367,9 @@ public enum Word {
     Vanity("虚荣"),
 
     /**
-     * 需要保护。
+     * 渴望保护。
      */
-    NeedProtection("需要保护"),
+    NeedProtection("渴望保护"),
 
     /**
      * 刻板。

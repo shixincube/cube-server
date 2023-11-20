@@ -130,7 +130,7 @@ public class Evaluation {
             }
             else if (pa >= ha && pa >= ta) {
                 // 人大
-                list.add(new Result(Word.IndividualDemand, Score.High));
+                list.add(new Result(Word.SelfDemand, Score.High));
             }
         }
         else if (null != house && null != tree) {
@@ -168,7 +168,7 @@ public class Evaluation {
             }
             else {
                 // 人大
-                list.add(new Result(Word.IndividualDemand, Score.High));
+                list.add(new Result(Word.SelfDemand, Score.High));
             }
         }
         else if (null != tree && null != person) {
@@ -187,7 +187,7 @@ public class Evaluation {
             }
             else {
                 // 人大
-                list.add(new Result(Word.IndividualDemand, Score.High));
+                list.add(new Result(Word.SelfDemand, Score.High));
             }
         }
 
@@ -204,7 +204,7 @@ public class Evaluation {
         }
         else if (description.isWholeBottom()) {
             // 整体底部
-            list.add(new Result(Word.Actualization, Score.High));
+            list.add(new Result(Word.Instinct, Score.High));
         }
         else if (description.isWholeLeft()) {
             // 整体左边
@@ -377,7 +377,7 @@ public class Evaluation {
             }
             else if (Label.Bamboo == tree.getLabel()) {
                 // 竹子
-                list.add(new Result(Word.Independent, Score.High));
+                list.add(new Result(Word.Independence, Score.High));
             }
             else {
                 // 常青树
