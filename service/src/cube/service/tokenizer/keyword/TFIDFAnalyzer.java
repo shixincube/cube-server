@@ -6,7 +6,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * tfidf算法原理参考：http://www.cnblogs.com/ywl925/p/3275878.html
+ * TFIDF 算法原理参考：http://www.cnblogs.com/ywl925/p/3275878.html
  */
 public class TFIDFAnalyzer {
 
@@ -25,10 +25,10 @@ public class TFIDFAnalyzer {
     }
 
     /**
-     * tfidf分析方法
+     * TFIDF 分析方法
      *
      * @param content 需要分析的文本/文档内容
-     * @param topN    需要返回的tfidf值最高的N个关键词，若超过content本身含有的词语上限数目，则默认返回全部
+     * @param topN    需要返回的 TFIDF 值最高的N个关键词，若超过content本身含有的词语上限数目，则默认返回全部
      * @return
      */
     public List<Keyword> analyze(String content, int topN) {
@@ -110,7 +110,7 @@ public class TFIDFAnalyzer {
     }
 
     /**
-     * 默认jieba分词的停词表
+     * 默认停词表
      * url:https://github.com/yanyiwu/nodejieba/blob/master/dict/stop_words.utf8
      *
      * @param set
@@ -142,18 +142,13 @@ public class TFIDFAnalyzer {
      * @param in
      */
     private void loadIDFMap(Map<String, Double> map, InputStream in) {
-        BufferedReader bufr;
+        BufferedReader buf = null;
         try {
-            bufr = new BufferedReader(new InputStreamReader(in));
+            buf = new BufferedReader(new InputStreamReader(in));
             String line = null;
-            while ((line = bufr.readLine()) != null) {
+            while ((line = buf.readLine()) != null) {
                 String[] kv = line.trim().split(" ");
                 map.put(kv[0], Double.parseDouble(kv[1]));
-            }
-            try {
-                bufr.close();
-            } catch (IOException e) {
-                e.printStackTrace();
             }
 
             // 计算idf值的中位数
@@ -162,7 +157,14 @@ public class TFIDFAnalyzer {
             idfMedian = idfList.get(idfList.size() / 2);
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            if (null != buf) {
+                try {
+                    buf.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }
-

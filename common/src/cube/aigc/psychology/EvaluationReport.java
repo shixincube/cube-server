@@ -26,5 +26,14 @@
 
 package cube.aigc.psychology;
 
+import java.util.List;
+
+/**
+ * 评估报告。
+ */
 public class EvaluationReport {
+
+    public EvaluationReport(List<Evaluation.Result> resultList) {
+
+    }
 }

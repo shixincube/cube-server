@@ -29,7 +29,7 @@ package cube.aigc.psychology;
 /**
  * 专业描述词。
  */
-public enum Word {
+public enum Comment {
 
     /**
      * 自我存在。
@@ -388,7 +388,7 @@ public enum Word {
 
     public final String word;
 
-    Word(String word) {
+    Comment(String word) {
         this.word = word;
     }
 }
