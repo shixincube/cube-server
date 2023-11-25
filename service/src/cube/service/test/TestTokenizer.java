@@ -26,6 +26,7 @@
 
 package cube.service.test;
 
+import cube.service.tokenizer.SegToken;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -49,14 +50,17 @@ public class TestTokenizer {
 //                "根据北京6月份的天气数据，给我一些防暑方法",
 //                "请作为心理学专家完成后续问答",
 
-                "把业务三部2022年1月到12月的差旅费用按照月为单位统计成图表进行展示。",
-                "把业务三部2022年全年的差旅费用按照月为单位统计成图表进行展示。",
-                "展示汤臣倍健2022年的舆情数据图表",
-                "根据汤臣倍健2023年6月的舆情图表数据，撰写汤臣倍健6月份的舆情报告。",
+//                "把业务三部2022年1月到12月的差旅费用按照月为单位统计成图表进行展示。",
+//                "把业务三部2022年全年的差旅费用按照月为单位统计成图表进行展示。",
+//                "展示汤臣倍健2022年的舆情数据图表",
+//                "根据汤臣倍健2023年6月的舆情图表数据，撰写汤臣倍健6月份的舆情报告。",
+
+                "自我存在是个体体验到自身是能思想、能感知、有情感、能行动的统一体，是扮演各种“角色”之总和，从中能看到并意识到自己的这些不同方面。",
         };
 
+        // 分词
 //        for (String sentence : sentences) {
-//            List<SegToken> result = tokenizer.process(sentence, Tokenizer.SegMode.INDEX);
+//            List<SegToken> result = tokenizer.process(sentence, Tokenizer.SegMode.SEARCH);
 //            System.out.println(result.toString());
 //        }
 

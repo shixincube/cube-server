@@ -26,9 +26,15 @@
 
 package cube.service.test;
 
+import cube.aigc.psychology.CommentInterpretation;
+import cube.aigc.psychology.Resource;
+
+import java.util.List;
+
 public class TestEvaluation {
 
     public static void main(String[] args) {
-
+        List<CommentInterpretation> list = Resource.getInstance().getCommentDescriptions();
+        System.out.println("Size: " + list.size());
     }
 }

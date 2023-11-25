@@ -232,9 +232,14 @@ public enum Comment {
     Straightforwardness("直率"),
 
     /**
-     * 警惕/警戒心。
+     * 警惕。
      */
     Vigilance("警惕"),
+
+    /**
+     * 警戒心。
+     */
+    Alertness("警戒心"),
 
     /**
      * 抑郁。
@@ -390,5 +395,14 @@ public enum Comment {
 
     Comment(String word) {
         this.word = word;
+    }
+
+    public static Comment parse(String word) {
+        for (Comment comment : Comment.values()) {
+            if (comment.word.equals(word)) {
+                return comment;
+            }
+        }
+        return Unknown;
     }
 }

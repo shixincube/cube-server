@@ -145,6 +145,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Chat());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Evaluate());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.KeepAlive());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Inject());
     }
 
     public boolean checkToken(String token) {
@@ -194,6 +195,33 @@ public class Manager implements Tickable, PerformerListener {
 
     public ContactToken getContactToken(String token) {
         return this.validTokenMap.get(token);
+    }
+
+    public ContactToken checkOrInjectContactToken(String phoneNumber, String userName) {
+        JSONObject data = new JSONObject();
+        data.put("phone", phoneNumber);
+        if (null != userName) {
+            data.put("name", userName);
+        }
+
+        Packet packet = new Packet(AIGCAction.InjectOrGetToken.name, data);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+        if (null == response) {
+            Logger.w(Manager.class, "#checkOrInjectContactToken - Response is null : " + phoneNumber);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#checkOrInjectContactToken - Response state is NOT ok : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        JSONObject responseJson = Packet.extractDataPayload(responsePacket);
+        AuthToken authToken = new AuthToken(responseJson.getJSONObject("token"));
+        Contact contact = new Contact(responseJson.getJSONObject("contact"));
+        return new ContactToken(authToken, contact);
     }
 
     public ConfigInfo getConfigInfo(String token) {

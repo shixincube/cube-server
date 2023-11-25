@@ -26,59 +26,47 @@
 
 package cube.aigc.psychology;
 
-import cube.aigc.PromptChaining;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.json.JSONObject;
 
 /**
- * 评估报告。
+ * 词描述。
  */
-public class EvaluationReport {
+public class CommentInterpretation {
 
-    private List<CommentInterpretation> interpretationList;
+    private Comment comment;
 
-    public EvaluationReport(List<Evaluation.Result> resultList) {
-        this.interpretationList = new ArrayList<>();
-        this.build(resultList);
-    }
+    private String interpretation;
 
-    private void build(List<Evaluation.Result> resultList) {
-        for (Evaluation.Result r : resultList) {
+    private String advise;
 
+    private String remark;
+
+    public CommentInterpretation(JSONObject json) {
+        this.comment = Comment.parse(json.getString("comment"));
+        if (json.has("interpretation")) {
+            this.interpretation = json.getString("interpretation");
+        }
+        if (json.has("advise")) {
+            this.advise = json.getString("advise");
+        }
+        if (json.has("remark")) {
+            this.remark = json.getString("remark");
         }
     }
 
-    public PromptChaining outputFamilyRelationships() {
-        return null;
+    public Comment getComment() {
+        return this.comment;
     }
 
-    public class ReportScore {
+    public String getInterpretation() {
+        return this.interpretation;
+    }
 
-        public CommentInterpretation comment;
+    public String getAdvise() {
+        return this.advise;
+    }
 
-        public int positive = 0;
-
-        public int negative = 0;
-
-        public ReportScore(CommentInterpretation comment) {
-            this.comment = comment;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj instanceof ReportScore) {
-                ReportScore score = (ReportScore) obj;
-                if (score.comment.getComment() == this.comment.getComment()) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            return this.comment.getComment().hashCode();
-        }
+    public String getRemark() {
+        return this.remark;
     }
 }

@@ -57,6 +57,11 @@ public enum AIGCAction {
     CheckToken("checkToken"),
 
     /**
+     * 注入或者获取令牌。
+     */
+    InjectOrGetToken("injectOrGetToken"),
+
+    /**
      * 评价回答内容的质量。
      */
     Evaluate("evaluate"),

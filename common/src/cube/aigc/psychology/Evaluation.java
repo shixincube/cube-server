@@ -507,7 +507,7 @@ public class Evaluation {
                 if (ratio > 0.018) {
                     // 眼睛大
                     list.add(new Result(Comment.Sensitiveness, Score.High));
-                    list.add(new Result(Comment.Vigilance, Score.High));
+                    list.add(new Result(Comment.Alertness, Score.High));
                 }
             }
             else {

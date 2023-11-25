@@ -24,12 +24,24 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
+package cube.aigc.psychology.composition;
 
 /**
- * 词描述。
+ * 测试主题。
  */
-public class WordDescription {
+public enum Theme {
 
+    FamilyRelationships("家庭关系"),
 
+    Stress("压力评估"),
+
+    Intimacy("亲密关系测试"),
+
+    Cognition("认知测试");
+
+    public final String name;
+
+    Theme(String name) {
+        this.name = name;
+    }
 }

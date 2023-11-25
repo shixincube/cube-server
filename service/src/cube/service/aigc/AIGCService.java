@@ -65,6 +65,7 @@ import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.ResourceAnswer;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
+import cube.service.contact.ContactManager;
 import cube.service.tokenizer.Tokenizer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
@@ -445,6 +446,46 @@ public class AIGCService extends AbstractModule {
             Logger.e(this.getClass(), "#newInvitationForToken - write invitation failed: " + token);
         }
         return invitation;
+    }
+
+    /**
+     * 检测或注入验证码。
+     *
+     * @param phoneNumber
+     * @param userName 用户名，可以为 {@code null} 值。
+     * @return
+     */
+    public AuthToken getOrInjectAuthToken(String phoneNumber, String userName) {
+        long phone = 0;
+        try {
+            phone = Long.parseLong(phoneNumber);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "");
+            return null;
+        }
+
+        final String domain = "shixincube.com";
+        final String appKey = "shixin-cubeteam-opensource-appkey";
+
+        AuthToken authToken = null;
+
+        ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactId(domain, Long.toString(phone));
+        if (searchResult.getContactList().isEmpty()) {
+            // 没有该联系人
+            Contact contact = ContactManager.getInstance().createContact(phone,
+                    domain, (null != userName) ? userName : phoneNumber, null);
+            // 创建令牌
+            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+            // 5年有效时长
+            authToken = authService.applyToken(domain, appKey, contact.getId(), 5L * 365 * 24 * 60 * 60 * 1000);
+        }
+        else {
+            // 有该联系人
+            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+            authToken = authService.queryAuthTokenByContactId(phone);
+        }
+
+        return authToken;
     }
 
     /**
