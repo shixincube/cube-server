@@ -140,7 +140,7 @@ public class AIGCService extends AbstractModule {
     /**
      * 聊天内容最大长度限制。
      */
-    private int maxChatContent = 1024;
+    private int maxChatContent = 4 * 1024;
 
     private ConcurrentHashMap<String, AIGCChannel> channelMap;
 
@@ -1425,6 +1425,18 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
+     * 计算文本的 Token 列表。
+     *
+     * @param text
+     * @return
+     */
+    public List<String> calcTokens(String text) {
+        List<String> tokens = this.tokenizer.sentenceProcess(text);
+        tokens.removeIf(s -> !TextUtils.isChineseWord(s) && !TextUtils.isWord(s));
+        return tokens;
+    }
+
+    /**
      * 对聊天内容进行分类识别。
      *
      * @param text
@@ -1924,6 +1936,13 @@ public class AIGCService extends AbstractModule {
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
+                    // 更新用量
+                    List<String> tokens = calcTokens(history.queryContent);
+                    long promptTokens = tokens.size();
+                    tokens = calcTokens(history.answerContent);
+                    long completionTokens = tokens.size();
+                    storage.updateUsage(history.queryContactId, completionTokens, promptTokens);
+
                     // 保存历史记录
                     storage.writeChatHistory(history);
 

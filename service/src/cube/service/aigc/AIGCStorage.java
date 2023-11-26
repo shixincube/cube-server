@@ -32,6 +32,7 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
 import cube.aigc.PromptRecord;
+import cube.aigc.Usage;
 import cube.aigc.atom.Atom;
 import cube.common.Storagable;
 import cube.common.entity.*;
@@ -77,6 +78,11 @@ public class AIGCStorage implements Storagable {
     private final String promptWordTable = "aigc_prompt_word";
 
     private final String promptWordScopeTable = "aigc_prompt_word_scope";
+
+    /**
+     * 用量表。
+     */
+    private final String usageTable = "aigc_usage";
 
     // 联系人偏好，用于标记联系偏好的内置知识库。
     private final String contactPreferenceTable = "aigc_contact_preference";
@@ -338,6 +344,24 @@ public class AIGCStorage implements Storagable {
             }),
     };
 
+    private final StorageField[] usageFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.UNIQUE
+            }),
+            new StorageField("completion_tokens", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
+            }),
+            new StorageField("prompt_tokens", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
+            })
+    };
+
     private Storage storage;
 
     public AIGCStorage(StorageType type, JSONObject config) {
@@ -440,6 +464,13 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.promptWordScopeTable, this.promptWordScopeFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.promptWordScopeTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.usageTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.usageTable, this.usageFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.usageTable + "' successfully");
             }
         }
     }
@@ -1307,6 +1338,47 @@ public class AIGCStorage implements Storagable {
         }
 
         return count;
+    }
+
+    public synchronized Usage updateUsage(long contactId, long incrementalCompletion, long incrementalPrompt) {
+        Usage usage = this.readUsage(contactId);
+        if (null == usage) {
+            this.storage.executeInsert(this.usageTable, new StorageField[] {
+                    new StorageField("contact_id", contactId),
+                    new StorageField("completion_tokens", incrementalCompletion),
+                    new StorageField("prompt_tokens", incrementalPrompt),
+                    new StorageField("timestamp", System.currentTimeMillis())
+            });
+            usage = new Usage(incrementalCompletion, incrementalPrompt,
+                    incrementalCompletion + incrementalPrompt);
+        }
+        else {
+            this.storage.executeUpdate(this.usageTable, new StorageField[] {
+                    new StorageField("completion_tokens", incrementalCompletion + usage.completionTokens),
+                    new StorageField("prompt_tokens", incrementalPrompt + usage.promptTokens),
+                    new StorageField("timestamp", System.currentTimeMillis())
+            }, new Conditional[] {
+                    Conditional.createEqualTo("contact_id", contactId)
+            });
+            usage = new Usage(incrementalCompletion + usage.completionTokens,
+                    incrementalPrompt + usage.promptTokens,
+                    incrementalCompletion + incrementalPrompt + usage.totalTokens);
+        }
+        return usage;
+    }
+
+    public Usage readUsage(long contactId) {
+        List<StorageField[]> result = this.storage.executeQuery(this.usageTable, this.usageFields, new Conditional[] {
+                Conditional.createEqualTo("contact_id", contactId)
+        });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        long completionTokens = data.get("completion_tokens").getLong();
+        long promptTokens = data.get("prompt_tokens").getLong();
+        return new Usage(completionTokens, promptTokens, completionTokens + promptTokens);
     }
 
     private void resetDefaultConfig() {

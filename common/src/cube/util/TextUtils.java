@@ -72,6 +72,8 @@ public final class TextUtils {
 
     private final static Pattern sChinese =
             Pattern.compile("[\\u4E00-\\u9FA5|\\\\！|\\\\，|\\\\。|\\\\（|\\\\）|\\\\《|\\\\》|\\\\“|\\\\”|\\\\？|\\\\：|\\\\；|\\\\【|\\\\】]");
+    private final static Pattern sChineseWord =
+            Pattern.compile("[\\u4E00-\\u9FA5]");
 
     private TextUtils() {
     }
@@ -365,6 +367,44 @@ public final class TextUtils {
         }
 
         return chinese;
+    }
+
+    /**
+     * 是否是中文文字。
+     *
+     * @param word
+     * @return
+     */
+    public static boolean isChineseWord(String word) {
+        boolean result = false;
+        for (int i = 0; i < word.length(); ++i) {
+            String w = word.substring(i, i + 1);
+            Matcher m = sChineseWord.matcher(w);
+            if (m.matches()) {
+                result = true;
+                break;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 是否是词。
+     *
+     * @param word
+     * @return
+     */
+    public static boolean isWord(String word) {
+        boolean result = false;
+        for (int i = 0; i < word.length(); ++i) {
+            char c = word.charAt(0);
+            if ((c >= 48 && c <= 57) || (c >= 65 && c <= 90)
+                || (c >= 97 && c <= 122)) {
+                result = true;
+                break;
+            }
+        }
+        return result;
     }
 
     /**

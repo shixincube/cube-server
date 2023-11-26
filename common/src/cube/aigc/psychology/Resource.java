@@ -55,7 +55,7 @@ public class Resource {
         return Resource.instance;
     }
 
-    public List<CommentInterpretation> getCommentDescriptions() {
+    public List<CommentInterpretation> getCommentInterpretations() {
         if (this.commentDescriptionFile.exists()) {
             if (this.commentDescriptionFile.lastModified() != this.commentDescriptionLastModified) {
                 this.commentDescriptionLastModified = this.commentDescriptionFile.lastModified();
@@ -75,5 +75,19 @@ public class Resource {
         }
 
         return this.commentInterpretations;
+    }
+
+    public CommentInterpretation getCommentInterpretation(Comment comment) {
+        if (this.commentInterpretations.isEmpty()) {
+            this.getCommentInterpretations();
+        }
+
+        for (CommentInterpretation interpretation : this.commentInterpretations) {
+            if (interpretation.getComment() == comment) {
+                return interpretation;
+            }
+        }
+
+        return null;
     }
 }

@@ -5,16 +5,15 @@ import cube.service.tokenizer.viterbi.FinalSeg;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Tokenizer {
 
     private final static WordDictionary wordDict = WordDictionary.getInstance();
 
     private final static FinalSeg finalSeg = FinalSeg.getInstance();
+
+    private final static String blank = " ";
 
     public enum SegMode {
         INDEX,
@@ -238,8 +237,10 @@ public class Tokenizer {
                     finalSeg.cut(buf, tokens);
                 }
             }
-
         }
+
+        tokens.removeIf(s -> s.equalsIgnoreCase(blank));
+
         return tokens;
     }
 }

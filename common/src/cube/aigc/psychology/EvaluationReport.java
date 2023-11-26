@@ -36,22 +36,33 @@ import java.util.List;
  */
 public class EvaluationReport {
 
-    private List<CommentInterpretation> interpretationList;
+    private List<ReportScore> reportScoreList;
 
     public EvaluationReport(List<Evaluation.Result> resultList) {
-        this.interpretationList = new ArrayList<>();
+        this.reportScoreList = new ArrayList<>();
         this.build(resultList);
     }
 
     private void build(List<Evaluation.Result> resultList) {
-        for (Evaluation.Result r : resultList) {
+        for (Evaluation.Result result : resultList) {
+            CommentInterpretation interpretation = Resource.getInstance().getCommentInterpretation(result.comment);
 
         }
+    }
+
+    public ReportScore getReportScore(Comment comment) {
+        for (ReportScore score : this.reportScoreList) {
+
+        }
+
+        return null;
     }
 
     public PromptChaining outputFamilyRelationships() {
         return null;
     }
+
+
 
     public class ReportScore {
 

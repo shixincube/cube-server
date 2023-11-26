@@ -69,4 +69,21 @@ public class CommentInterpretation {
     public String getRemark() {
         return this.remark;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof CommentInterpretation) {
+            CommentInterpretation other = (CommentInterpretation) obj;
+            if (other.comment == this.comment) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.comment.hashCode();
+    }
 }

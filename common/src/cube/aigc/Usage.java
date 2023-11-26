@@ -29,31 +29,40 @@ package cube.aigc;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
+/**
+ * 用量。
+ */
 public class Usage implements JSONable {
 
-    public final int completionTokens;
+    public final long completionTokens;
 
-    public final int promptTokens;
+    public final long promptTokens;
 
-    public final int totalTokens;
+    public final long totalTokens;
 
-    public Usage(int completionTokens, int promptTokens, int totalTokens) {
+    public Usage(long completionTokens, long promptTokens, long totalTokens) {
         this.completionTokens = completionTokens;
         this.promptTokens = promptTokens;
         this.totalTokens = totalTokens;
     }
 
     public Usage(JSONObject json) {
-        this.completionTokens = json.getInt("completion_tokens");
-        this.promptTokens = json.getInt("prompt_tokens");
-        this.totalTokens = json.getInt("total_tokens");
+        this.completionTokens = json.has("completionTokens") ?
+                json.getLong("completionTokens") : json.getLong("completion_tokens");
+        this.promptTokens = json.has("promptTokens") ?
+                json.getLong("promptTokens") : json.getLong("prompt_tokens");
+        this.totalTokens = json.has("totalTokens") ?
+                json.getLong("totalTokens") : json.getLong("total_tokens");
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("completionTokens", this.completionTokens);
         json.put("completion_tokens", this.completionTokens);
+        json.put("promptTokens", this.promptTokens);
         json.put("prompt_tokens", this.promptTokens);
+        json.put("totalTokens", this.totalTokens);
         json.put("total_tokens", this.totalTokens);
         return json;
     }

@@ -30,6 +30,7 @@ import cube.service.tokenizer.SegToken;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+import cube.util.TextUtils;
 
 import java.util.List;
 
@@ -59,10 +60,11 @@ public class TestTokenizer {
         };
 
         // 分词
-//        for (String sentence : sentences) {
+        for (String sentence : sentences) {
 //            List<SegToken> result = tokenizer.process(sentence, Tokenizer.SegMode.SEARCH);
-//            System.out.println(result.toString());
-//        }
+            List<String> result = tokenizer.sentenceProcess(sentence);
+            System.out.println(result.toString());
+        }
 
         System.out.println("----------------------------------------");
 

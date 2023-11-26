@@ -34,7 +34,7 @@ import java.util.List;
 public class TestEvaluation {
 
     public static void main(String[] args) {
-        List<CommentInterpretation> list = Resource.getInstance().getCommentDescriptions();
+        List<CommentInterpretation> list = Resource.getInstance().getCommentInterpretations();
         System.out.println("Size: " + list.size());
     }
 }
