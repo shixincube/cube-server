@@ -125,6 +125,11 @@ public class AIGCService extends AbstractModule {
     /**
      * Key 是 AIGC 的 Query Key
      */
+    private Map<String, Queue<TextToImageUnitMeta>> textToImageQueueMap;
+
+    /**
+     * Key 是 AIGC 的 Query Key
+     */
     private Map<String, Queue<ExtractKeywordsUnitMeta>> extractKeywordsQueueMap;
 
     /**
@@ -168,6 +173,7 @@ public class AIGCService extends AbstractModule {
         this.nlTaskQueueMap = new ConcurrentHashMap<>();
         this.sentimentQueueMap = new ConcurrentHashMap<>();
         this.summarizationQueueMap = new ConcurrentHashMap<>();
+        this.textToImageQueueMap = new ConcurrentHashMap<>();
         this.extractKeywordsQueueMap = new ConcurrentHashMap<>();
         this.asrQueueMap = new ConcurrentHashMap<>();
         this.knowledgeMap = new ConcurrentHashMap<>();
@@ -1102,6 +1108,50 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
+     * 文本生成图片。
+     *
+     * @param text
+     * @return
+     */
+    public boolean generateImage(String text, TextToImageListener listener) {
+        if (!this.isStarted()) {
+            return false;
+        }
+
+        // 查找有该能力的单元
+        AIGCUnit unit = this.selectUnitBySubtask(AICapability.Multimodal.TextToImage);
+        if (null == unit) {
+            Logger.w(AIGCService.class, "No text to image unit setup in server");
+            return false;
+        }
+
+        TextToImageUnitMeta meta = new TextToImageUnitMeta(unit, text, listener);
+
+        synchronized (this.textToImageQueueMap) {
+            Queue<TextToImageUnitMeta> queue = this.textToImageQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.textToImageQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    processTextToImageQueue(meta.unit.getQueryKey());
+                }
+            });
+        }
+
+        return true;
+    }
+
+    /**
      * 提取关键词。
      *
      * @param text
@@ -1723,6 +1773,31 @@ public class AIGCService extends AbstractModule {
         }
     }
 
+    private void processTextToImageQueue(String queryKey) {
+        Queue<TextToImageUnitMeta> queue = this.textToImageQueueMap.get(queryKey);
+        if (null == queue) {
+            Logger.w(AIGCService.class, "#processTextToImageQueue - No found unit: " + queryKey);
+            return;
+        }
+
+        TextToImageUnitMeta meta = queue.poll();
+        while (null != meta) {
+            // 执行处理
+            try {
+                meta.process();
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#processTextToImageQueue - meta process", e);
+            }
+
+            meta = queue.poll();
+        }
+
+        AIGCUnit unit = this.unitMap.get(queryKey);
+        if (null != unit) {
+            unit.setRunning(false);
+        }
+    }
+
     private void processExtractKeywordsQueue(String queryKey) {
         Queue<ExtractKeywordsUnitMeta> queue = this.extractKeywordsQueueMap.get(queryKey);
         if (null == queue) {
@@ -2208,6 +2283,47 @@ public class AIGCService extends AbstractModule {
             JSONObject payload = Packet.extractDataPayload(response);
             if (payload.has("summarization")) {
                 this.listener.onCompleted(payload.getString("summarization"));
+            }
+            else {
+                this.listener.onFailed();
+            }
+        }
+    }
+
+    private class TextToImageUnitMeta {
+
+        protected AIGCUnit unit;
+
+        protected String text;
+
+        protected FileLabel fileLabel;
+
+        protected TextToImageListener listener;
+
+        public TextToImageUnitMeta(AIGCUnit unit, String text, TextToImageListener listener) {
+            this.unit = unit;
+            this.text = text;
+            this.listener = listener;
+        }
+
+        public void process() {
+            JSONObject data = new JSONObject();
+            data.put("text", this.text);
+
+            Packet request = new Packet(AIGCAction.TextToImage.name, data);
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 60 * 1000);
+            if (null == dialect) {
+                Logger.w(AIGCService.class, "TextToImage unit error");
+                // 回调错误
+                this.listener.onFailed();
+                return;
+            }
+
+            Packet response = new Packet(dialect);
+            JSONObject payload = Packet.extractDataPayload(response);
+            if (payload.has("fileLabel")) {
+                this.fileLabel = new FileLabel(payload.getJSONObject("fileLabel"));
+                this.listener.onCompleted(this.text, this.fileLabel);
             }
             else {
                 this.listener.onFailed();

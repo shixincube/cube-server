@@ -112,6 +112,11 @@ public enum Comment {
     Idealization("理想化"),
 
     /**
+     * 本能。
+     */
+    Instinct("本能"),
+
+    /**
      * 怀旧。
      */
     Nostalgia("怀旧"),
@@ -255,11 +260,6 @@ public enum Comment {
      * 独立。
      */
     Independence("独立"),
-
-    /**
-     * 本能。
-     */
-    Instinct("本能"),
 
     /**
      * 创伤。

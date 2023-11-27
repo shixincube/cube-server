@@ -26,7 +26,9 @@
 
 package cube.aigc.psychology;
 
+import cell.util.log.Logger;
 import cube.aigc.PromptChaining;
+import cube.aigc.psychology.composition.Score;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,42 +47,72 @@ public class EvaluationReport {
 
     private void build(List<Evaluation.Result> resultList) {
         for (Evaluation.Result result : resultList) {
-            CommentInterpretation interpretation = Resource.getInstance().getCommentInterpretation(result.comment);
+            ReportScore score = this.getReportScore(result.comment);
+            if (null == score) {
+                CommentInterpretation interpretation = Resource.getInstance().getCommentInterpretation(result.comment);
+                if (null == interpretation) {
+                    // 没有对应的释义
+                    Logger.e(this.getClass(), "#build - Can NOT find comment interpretation: " + result.comment.word);
+                    continue;
+                }
 
+                score = new ReportScore(interpretation);
+                this.reportScoreList.add(score);
+            }
+
+            if (result.score == Score.High) {
+                score.positive += 1;
+            }
+            else {
+                score.negative += 1;
+            }
         }
     }
 
     public ReportScore getReportScore(Comment comment) {
         for (ReportScore score : this.reportScoreList) {
-
+            if (score.interpretation.getComment() == comment) {
+                return score;
+            }
         }
-
         return null;
     }
 
-    public PromptChaining outputFamilyRelationships() {
+    public PromptChaining makeStress() {
+        // 1、相关释义
+        // 2、提问
         return null;
     }
 
+    public PromptChaining makeFamilyRelationships() {
+        return null;
+    }
 
+    public PromptChaining makeIntimacy() {
+        return null;
+    }
+
+    public PromptChaining makeCognition() {
+        return null;
+    }
 
     public class ReportScore {
 
-        public CommentInterpretation comment;
+        public CommentInterpretation interpretation;
 
         public int positive = 0;
 
         public int negative = 0;
 
-        public ReportScore(CommentInterpretation comment) {
-            this.comment = comment;
+        public ReportScore(CommentInterpretation interpretation) {
+            this.interpretation = interpretation;
         }
 
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof ReportScore) {
                 ReportScore score = (ReportScore) obj;
-                if (score.comment.getComment() == this.comment.getComment()) {
+                if (score.interpretation.getComment() == this.interpretation.getComment()) {
                     return true;
                 }
             }
@@ -89,7 +121,7 @@ public class EvaluationReport {
 
         @Override
         public int hashCode() {
-            return this.comment.getComment().hashCode();
+            return this.interpretation.getComment().hashCode();
         }
     }
 }

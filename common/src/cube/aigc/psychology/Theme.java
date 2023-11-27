@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.composition;
+package cube.aigc.psychology;
 
 /**
  * 测试主题。

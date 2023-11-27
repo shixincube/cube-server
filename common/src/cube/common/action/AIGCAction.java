@@ -117,6 +117,11 @@ public enum AIGCAction {
     Segmentation("segmentation"),
 
     /**
+     * 文本生成图片。
+     */
+    TextToImage("textToImage"),
+
+    /**
      * 搜索命令。
      */
     SearchCommand("searchCommand"),
