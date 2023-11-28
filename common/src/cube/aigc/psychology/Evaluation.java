@@ -26,10 +26,14 @@
 
 package cube.aigc.psychology;
 
+import cell.util.Utils;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.Score;
 import cube.aigc.psychology.composition.SpaceLayout;
-import cube.aigc.psychology.material.*;
+import cube.aigc.psychology.material.House;
+import cube.aigc.psychology.material.Label;
+import cube.aigc.psychology.material.Person;
+import cube.aigc.psychology.material.Tree;
 import cube.aigc.psychology.material.person.Leg;
 import cube.vision.BoundingBox;
 import cube.vision.Point;
@@ -50,6 +54,9 @@ public class Evaluation {
     private Size canvasSize;
 
     private SpaceLayout spaceLayout;
+
+    public Evaluation() {
+    }
 
     public Evaluation(Painting painting) {
         this.painting = painting;
@@ -653,8 +660,37 @@ public class Evaluation {
         return list;
     }
 
-    public EvaluationReport makeReport(List<Result> resultList) {
-        return null;
+    /**
+     * 生成评估报告。
+     *
+     * @return
+     */
+    public EvaluationReport makeEvaluationReport() {
+        EvaluationReport report = null;
+
+        if (null != this.painting) {
+            List<Result> results = new ArrayList<>();
+            results.addAll(this.evalSpaceStructure());
+            results.addAll(this.evalFrameStructure());
+            results.addAll(this.evalHouse());
+            results.addAll(this.evalTree());
+            results.addAll(this.evalPerson());
+            results.addAll(this.evalOthers());
+            report = new EvaluationReport(results);
+        }
+        else {
+            // 仅用于测试
+            List<Result> results = new ArrayList<>();
+            int num = Utils.randomInt(3, 10);
+            for (int i = 0; i < num; ++i) {
+                int index = Utils.randomInt(0, Comment.values().length - 1);
+                Result result = new Result(Comment.values()[index], Score.High);
+                results.add(result);
+            }
+            report = new EvaluationReport(results);
+        }
+
+        return report;
     }
 
     private FrameStructureDescription calcFrameStructure(BoundingBox bbox) {

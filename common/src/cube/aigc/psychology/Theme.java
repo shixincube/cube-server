@@ -31,9 +31,9 @@ package cube.aigc.psychology;
  */
 public enum Theme {
 
-    FamilyRelationships("家庭关系"),
-
     Stress("压力评估"),
+
+    FamilyRelationships("家庭关系"),
 
     Intimacy("亲密关系测试"),
 

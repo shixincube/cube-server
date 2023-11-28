@@ -36,8 +36,6 @@ public class Prompt implements JSONable {
 
     public String role;
 
-    public String system;
-
     public String query;
 
     public String answer;
@@ -51,18 +49,9 @@ public class Prompt implements JSONable {
         this.answer = answer;
     }
 
-    public Prompt(String system, String query, String answer) {
-        this.system = system;
-        this.query = query;
-        this.answer = answer;
-    }
-
     public Prompt(JSONObject json) {
         if (json.has("role")) {
             this.role = json.getString("role");
-        }
-        if (json.has("system")) {
-            this.system = json.getString("system");
         }
         if (json.has("query")) {
             this.query = json.getString("query");
@@ -77,9 +66,6 @@ public class Prompt implements JSONable {
         JSONObject json = new JSONObject();
         if (null != this.role) {
             json.put("role", this.role);
-        }
-        if (null != this.system) {
-            json.put("system", this.system);
         }
         if (null != this.query) {
             json.put("query", this.query);

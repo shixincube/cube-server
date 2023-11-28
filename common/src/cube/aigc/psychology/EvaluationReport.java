@@ -27,6 +27,8 @@
 package cube.aigc.psychology;
 
 import cell.util.log.Logger;
+import cube.aigc.Consts;
+import cube.aigc.Prompt;
 import cube.aigc.PromptChaining;
 import cube.aigc.psychology.composition.Score;
 
@@ -78,9 +80,33 @@ public class EvaluationReport {
         return null;
     }
 
-    public PromptChaining makeStress() {
-        // 1、相关释义
-        // 2、提问
+    public List<ReportScore> getReportScoreList() {
+        return this.reportScoreList;
+    }
+
+    public ThemeTemplate makeStress() {
+        // 1、正负向分类
+        List<ReportScore> positiveScoreList = new ArrayList<>();
+        List<ReportScore> negativeScoreList = new ArrayList<>();
+        for (ReportScore score : this.reportScoreList) {
+            if (score.positive > 0) {
+                positiveScoreList.add(score);
+            }
+            else {
+                negativeScoreList.add(score);
+            }
+        }
+
+        ThemeTemplate template = ThemeTemplate.makeStressThemeTemplate();
+
+        // 2、构建提示链
+        List<PromptChaining> chainings = new ArrayList<>();
+
+        PromptChaining chaining = new PromptChaining(Consts.PROMPT_SYSTEM_PSYCHOLOGY);
+        for (ReportScore score : positiveScoreList) {
+            
+        }
+
         return null;
     }
 

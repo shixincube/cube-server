@@ -24,22 +24,44 @@
  * SOFTWARE.
  */
 
-package cube.service.test;
+package cube.aigc.psychology;
 
-import cube.aigc.psychology.Evaluation;
-import cube.aigc.psychology.EvaluationReport;
+import java.util.ArrayList;
+import java.util.List;
 
-public class TestEvaluation {
+/**
+ * 主题模板。
+ */
+public class ThemeTemplate {
 
-    public static void testEvaluationReport() {
-        Evaluation evaluation = new Evaluation();
-        EvaluationReport report = evaluation.makeEvaluationReport();
-        System.out.println("Num: " + report.getReportScoreList().size());
+    public final Theme theme;
 
+    public final List<String> paragraphList = new ArrayList<>();
 
+    private ThemeTemplate(Theme theme) {
+        this.theme = theme;
     }
 
-    public static void main(String[] args) {
-        testEvaluationReport();
+    public static ThemeTemplate makeStressThemeTemplate() {
+        ThemeTemplate template = new ThemeTemplate(Theme.Stress);
+        template.paragraphList.add("压力的主要表现");
+        template.paragraphList.add("压力的调整");
+        template.paragraphList.add("一些建议");
+        return template;
+    }
+
+    public static ThemeTemplate makeFamilyRelationshipsThemeTemplate() {
+        ThemeTemplate template = new ThemeTemplate(Theme.FamilyRelationships);
+        return template;
+    }
+
+    public static ThemeTemplate makeIntimacyThemeTemplate() {
+        ThemeTemplate template = new ThemeTemplate(Theme.Intimacy);
+        return template;
+    }
+
+    public static ThemeTemplate makeCognitionThemeTemplate() {
+        ThemeTemplate template = new ThemeTemplate(Theme.Cognition);
+        return template;
     }
 }

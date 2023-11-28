@@ -34,27 +34,33 @@ import java.util.List;
  */
 public class PromptChaining {
 
+    private String system;
+
     private List<Prompt> promptList;
 
     public PromptChaining() {
         this.promptList = new ArrayList<>();
     }
 
-    public List<Prompt> getPrompts() {
-        return this.promptList;
+    public PromptChaining(String system) {
+        this.system = system;
+        this.promptList = new ArrayList<>();
+    }
+
+    public void setSystemMetadata(String system) {
+        this.system = system;
     }
 
     public String getSystemMetadata() {
-        if (null == this.promptList.get(0).system) {
+        if (null == this.system) {
             return "你是智能AI助手。";
         }
 
-        if (this.promptList.get(0).system.endsWith("。")) {
-            return this.promptList.get(0).system;
-        }
-        else {
-            return this.promptList.get(0).system + "。";
-        }
+        return this.system;
+    }
+
+    public List<Prompt> getPrompts() {
+        return this.promptList;
     }
 
     public boolean addPrompt(Prompt prompt) {
