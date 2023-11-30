@@ -40,7 +40,7 @@ public class KnowledgeQAResult implements JSONable {
 
     public String prompt;
 
-    public AIGCChatRecord chatRecord;
+    public AIGCGenerationRecord chatRecord;
 
     public AIGCConversationResponse conversationResponse;
 

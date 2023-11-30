@@ -494,8 +494,8 @@ public class Manager implements Tickable, PerformerListener {
         return true;
     }
 
-    public AIGCChatRecord chat(String token, String channelCode, String pattern, String content, String unit,
-                               int histories, JSONArray records) {
+    public AIGCGenerationRecord chat(String token, String channelCode, String pattern, String content, String unit,
+                                     int histories, JSONArray records) {
         JSONObject data = new JSONObject();
         data.put("token", token);
         data.put("code", channelCode);
@@ -525,7 +525,7 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
-        AIGCChatRecord record = new AIGCChatRecord(Packet.extractDataPayload(responsePacket));
+        AIGCGenerationRecord record = new AIGCGenerationRecord(Packet.extractDataPayload(responsePacket));
         if (null == record.query) {
             record.query = content;
         }

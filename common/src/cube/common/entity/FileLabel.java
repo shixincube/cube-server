@@ -425,6 +425,35 @@ public class FileLabel extends Entity {
     }
 
     /**
+     * 重置 URL 的令牌参数。
+     *
+     * @param token 新的令牌串。
+     */
+    public void resetURLsToken(String token) {
+        if (null != this.fileURL) {
+            int index = this.fileURL.indexOf("token=");
+            if (index > 0) {
+                String prefix = this.fileURL.substring(0, index);
+                this.fileURL = prefix + "token=" + token;
+            }
+            else {
+                this.fileURL = this.fileURL + "&token=" + token;
+            }
+        }
+
+        if (null != this.fileSecureURL) {
+            int index = this.fileSecureURL.indexOf("token=");
+            if (index > 0) {
+                String prefix = this.fileSecureURL.substring(0, index);
+                this.fileSecureURL = prefix + "token=" + token;
+            }
+            else {
+                this.fileSecureURL = this.fileSecureURL + "&token=" + token;
+            }
+        }
+    }
+
+    /**
      * 获取文件的安全 URL 访问地址。
      *
      * @return 返回文件的安全 URL 访问地址。

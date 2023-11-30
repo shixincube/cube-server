@@ -27,12 +27,16 @@
 package cube.common.entity;
 
 import cube.common.JSONable;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * AIGC 互动聊天记录。
+ * AIGC 内容生成记录。
  */
-public class AIGCChatRecord implements JSONable {
+public class AIGCGenerationRecord implements JSONable {
 
     public long sn;
 
@@ -40,22 +44,42 @@ public class AIGCChatRecord implements JSONable {
 
     public String answer;
 
+    public List<FileLabel> fileLabels;
+
     public long timestamp;
 
     public ComplexContext context;
 
-    public AIGCChatRecord(String query, String answer, long timestamp, ComplexContext context) {
+    public AIGCGenerationRecord(String query, String answer, long timestamp, ComplexContext context) {
         this.query = query;
         this.answer = answer;
         this.timestamp = timestamp;
         this.context = context;
     }
 
-    public AIGCChatRecord(JSONObject json) {
-        this.answer = json.getString("answer");
+    public AIGCGenerationRecord(String query, FileLabel fileLabel) {
+        this.query = query;
+        this.fileLabels = new ArrayList<>();
+        this.fileLabels.add(fileLabel);
+        this.timestamp = System.currentTimeMillis();
+    }
+
+    public AIGCGenerationRecord(JSONObject json) {
+        if (json.has("answer")) {
+            this.answer = json.getString("answer");
+        }
 
         if (json.has("query")) {
             this.query = json.getString("query");
+        }
+
+        if (json.has("fileLabels")) {
+            this.fileLabels = new ArrayList<>();
+            JSONArray array = json.getJSONArray("fileLabels");
+            for (int i = 0; i < array.length(); ++i) {
+                FileLabel fileLabel = new FileLabel(array.getJSONObject(i));
+                this.fileLabels.add(fileLabel);
+            }
         }
 
         if (json.has("timestamp")) {
@@ -72,7 +96,19 @@ public class AIGCChatRecord implements JSONable {
     }
 
     public int totalWords() {
-        return this.query.length() + this.answer.length();
+        return this.query.length() + ((null != this.answer) ? this.answer.length() : 0);
+    }
+
+    public JSONArray outputFileLabelArray() {
+        if (null == this.fileLabels) {
+            return null;
+        }
+
+        JSONArray array = new JSONArray();
+        for (FileLabel fileLabel : this.fileLabels) {
+            array.put(fileLabel.toJSON());
+        }
+        return array;
     }
 
     @Override
@@ -80,8 +116,21 @@ public class AIGCChatRecord implements JSONable {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
         json.put("query", this.query);
-        json.put("answer", this.answer);
+
+        if (null != this.answer) {
+            json.put("answer", this.answer);
+        }
+
+        if (null != this.fileLabels) {
+            JSONArray array = new JSONArray();
+            for (FileLabel fileLabel : this.fileLabels) {
+                array.put(fileLabel.toJSON());
+            }
+            json.put("fileLabels", array);
+        }
+
         json.put("timestamp", this.timestamp);
+
         if (null != this.context) {
             json.put("context", this.context.toJSON());
         }

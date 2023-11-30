@@ -79,12 +79,12 @@ public class ConversationTask extends ServiceTask {
         float repetitionPenalty = packet.data.has("repetitionPenalty") ?
                 packet.data.getFloat("repetitionPenalty") : 1.02f;
 
-        List<AIGCChatRecord> recordList = null;
+        List<AIGCGenerationRecord> recordList = null;
         if (null != records) {
             recordList = new ArrayList<>();
             try {
                 for (int i = 0; i < records.length(); ++i) {
-                    AIGCChatRecord record = new AIGCChatRecord(records.getJSONObject(i));
+                    AIGCGenerationRecord record = new AIGCGenerationRecord(records.getJSONObject(i));
                     recordList.add(record);
                 }
             } catch (Exception e) {

@@ -27,14 +27,14 @@
 package cube.service.aigc.listener;
 
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCChatRecord;
+import cube.common.entity.AIGCGenerationRecord;
 
 /**
  * Chat 监听器。
  */
 public interface ChatListener {
 
-    void onChat(AIGCChannel channel, AIGCChatRecord record);
+    void onChat(AIGCChannel channel, AIGCGenerationRecord record);
 
     void onFailed(AIGCChannel channel);
 }

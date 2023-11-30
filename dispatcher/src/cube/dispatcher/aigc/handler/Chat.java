@@ -27,7 +27,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cell.util.log.Logger;
-import cube.common.entity.AIGCChatRecord;
+import cube.common.entity.AIGCGenerationRecord;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -105,7 +105,7 @@ public class Chat extends ContextHandler {
             }
 
             // Chat
-            AIGCChatRecord record = Manager.getInstance().chat(token, channelCode, pattern,
+            AIGCGenerationRecord record = Manager.getInstance().chat(token, channelCode, pattern,
                     content, unit, histories, records);
             if (null == record) {
                 // 发生错误
@@ -118,11 +118,14 @@ public class Chat extends ContextHandler {
             JSONObject responseData = new JSONObject();
             responseData.put("sn", record.sn);
             responseData.put("participant", AI_NAME);
-            responseData.put("content", record.answer);
             responseData.put("timestamp", record.timestamp);
             responseData.put("pattern", pattern);
+            responseData.put("content", null != record.answer ? record.answer : "");
             if (null != record.context) {
                 responseData.put("context", record.context.toJSON());
+            }
+            if (null != record.fileLabels) {
+                responseData.put("fileLabels", record.outputFileLabelArray());
             }
 
             this.respondOk(response, responseData);

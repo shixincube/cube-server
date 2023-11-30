@@ -32,6 +32,7 @@ import cube.aigc.ConversationResponse;
 import cube.aigc.ModelConfig;
 import cube.common.JSONable;
 import cube.common.entity.ComplexContext;
+import cube.common.entity.FileLabel;
 import cube.util.HttpClientFactory;
 import cube.util.JSONUtils;
 import org.eclipse.jetty.client.HttpClient;
@@ -39,11 +40,13 @@ import org.eclipse.jetty.client.WWWAuthenticationProtocolHandler;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpStatus;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public final class App {
@@ -200,6 +203,8 @@ public final class App {
         String content = null;
         // 内容的复合数据上下文
         ComplexContext context = null;
+        // 结果文件
+        List<FileLabel> fileLabels = null;
 
         String url = config.getApiURL() + token;
 
@@ -217,16 +222,22 @@ public final class App {
             client.getProtocolHandlers().remove(WWWAuthenticationProtocolHandler.NAME);
 
             StringContentProvider provider = new StringContentProvider(apiData.toString());
-            ContentResponse response = client.POST(url).content(provider).send();
+            ContentResponse response = client.POST(url).timeout(2, TimeUnit.MINUTES).content(provider).send();
             if (response.getStatus() == HttpStatus.OK_200) {
                 JSONObject responseData = new JSONObject(response.getContentAsString());
                 if (responseData.has("content")) {
-                    content = responseData.getString("content");
                     sn = responseData.getLong("sn");
+                    content = responseData.getString("content");
+                    if (responseData.has("fileLabels")) {
+                        fileLabels = parseFileLabels(responseData.getJSONArray("fileLabels"));
+                    }
                 }
                 else if (responseData.has("response")) {
-                    content = responseData.getJSONObject("response").getString("answer");
                     sn = responseData.getLong("sn");
+                    content = responseData.getJSONObject("response").getString("answer");
+                    if (responseData.getJSONObject("response").has("fileLabels")) {
+                        fileLabels = parseFileLabels(responseData.getJSONObject("response").getJSONArray("fileLabels"));
+                    }
                 }
 
                 if (responseData.has("context")) {
@@ -253,7 +264,37 @@ public final class App {
             return null;
         }
 
-        return this.splitResponse(sn, convId, request, content, context);
+        if (null != fileLabels) {
+            return this.makeResponse(sn, convId, request, fileLabels);
+        }
+        else {
+            return this.splitResponse(sn, convId, request, content, context);
+        }
+    }
+
+    private List<FileLabel> parseFileLabels(JSONArray array) {
+        List<FileLabel> list = new ArrayList<>();
+        for (int i = 0; i < array.length(); ++i) {
+            list.add(new FileLabel(array.getJSONObject(i)));
+        }
+        return list;
+    }
+
+    private List<ConversationResponse> makeResponse(long sn, String conversationId,
+                                                    ConversationRequest request, List<FileLabel> fileLabels) {
+        List<ConversationResponse> result = new ArrayList<>();
+
+        // 父 ID
+        String pid = request.options.parentMessageId;
+        if (null == pid) {
+            pid = "";
+        }
+
+        String id = UUID.randomUUID().toString();
+        ConversationResponse response = new ConversationResponse(sn, id, conversationId, pid, fileLabels);
+        result.add(response);
+
+        return result;
     }
 
     private List<ConversationResponse> splitResponse(long sn, String conversationId,

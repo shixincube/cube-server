@@ -31,10 +31,11 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.aigc.ModelConfig;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCChatRecord;
+import cube.common.entity.AIGCGenerationRecord;
 import cube.common.entity.KnowledgeQAResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
@@ -43,6 +44,7 @@ import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.ChatListener;
 import cube.service.aigc.listener.KnowledgeQAListener;
+import cube.service.aigc.listener.TextToImageListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -79,12 +81,12 @@ public class ChatTask extends ServiceTask {
         int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 3;
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
 
-        List<AIGCChatRecord> recordList = null;
+        List<AIGCGenerationRecord> recordList = null;
         if (null != records) {
             recordList = new ArrayList<>();
             try {
                 for (int i = 0; i < records.length(); ++i) {
-                    AIGCChatRecord record = new AIGCChatRecord(records.getJSONObject(i));
+                    AIGCGenerationRecord record = new AIGCGenerationRecord(records.getJSONObject(i));
                     recordList.add(record);
                 }
             } catch (Exception e) {
@@ -106,22 +108,43 @@ public class ChatTask extends ServiceTask {
 
         // 根据工作模式进行调用
         if (pattern.equalsIgnoreCase("chat")) {
-            // 执行 Chat
-            success = service.chat(code, content, unit, histories, recordList, new ChatListener() {
-                @Override
-                public void onChat(AIGCChannel channel, AIGCChatRecord record) {
-                    cellet.speak(talkContext,
-                            makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
-                    markResponseTime();
-                }
+            // 判断单元任务类型
+            if (ModelConfig.isTextToImageUnit(unit)) {
+                // 执行 Text to Image
+                success = service.generateImage(channel, content, unit, new TextToImageListener() {
+                    @Override
+                    public void onCompleted(AIGCGenerationRecord record) {
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
+                        markResponseTime();
+                    }
 
-                @Override
-                public void onFailed(AIGCChannel channel) {
-                    cellet.speak(talkContext,
-                            makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
-                    markResponseTime();
-                }
-            });
+                    @Override
+                    public void onFailed(AIGCChannel channel) {
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
+                        markResponseTime();
+                    }
+                });
+            }
+            else {
+                // 执行 Chat
+                success = service.chat(code, content, unit, histories, recordList, new ChatListener() {
+                    @Override
+                    public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
+                        markResponseTime();
+                    }
+
+                    @Override
+                    public void onFailed(AIGCChannel channel) {
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
+                        markResponseTime();
+                    }
+                });
+            }
         }
         else if (pattern.equalsIgnoreCase("knowledge")) {
             // 执行知识库问答

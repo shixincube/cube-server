@@ -39,10 +39,10 @@ public class AIGCConversationParameter {
 
     public final float repetitionPenalty;
 
-    public final List<AIGCChatRecord> records;
+    public final List<AIGCGenerationRecord> records;
 
     public AIGCConversationParameter(float temperature, float topP, float repetitionPenalty,
-                                     List<AIGCChatRecord> records) {
+                                     List<AIGCGenerationRecord> records) {
         this.temperature = temperature;
         this.topP = topP;
         this.repetitionPenalty = repetitionPenalty;

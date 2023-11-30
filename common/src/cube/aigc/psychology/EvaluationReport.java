@@ -100,25 +100,25 @@ public class EvaluationReport {
         ThemeTemplate template = ThemeTemplate.makeStressThemeTemplate();
 
         // 2、构建提示链
-        List<PromptChaining> chainings = new ArrayList<>();
+        List<PromptChaining> chainingList = new ArrayList<>();
 
         PromptChaining chaining = new PromptChaining(Consts.PROMPT_SYSTEM_PSYCHOLOGY);
         for (ReportScore score : positiveScoreList) {
-            
+
         }
 
+        return template;
+    }
+
+    public ThemeTemplate makeFamilyRelationships() {
         return null;
     }
 
-    public PromptChaining makeFamilyRelationships() {
+    public ThemeTemplate makeIntimacy() {
         return null;
     }
 
-    public PromptChaining makeIntimacy() {
-        return null;
-    }
-
-    public PromptChaining makeCognition() {
+    public ThemeTemplate makeCognition() {
         return null;
     }
 

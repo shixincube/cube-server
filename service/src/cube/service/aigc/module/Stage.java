@@ -96,7 +96,7 @@ public class Stage extends Entity {
                                 service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational),
                                 articleQuery.query, new ChatListener() {
                                     @Override
-                                    public void onChat(AIGCChannel channel, AIGCChatRecord record) {
+                                    public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
                                         PublicOpinion.ArticleQuery current = findArticleQuery(negativeQueries,
                                                 record.query);
                                         if (null != current) {
@@ -125,7 +125,7 @@ public class Stage extends Entity {
                                 service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational),
                                 articleQuery.query, new ChatListener() {
                                     @Override
-                                    public void onChat(AIGCChannel channel, AIGCChatRecord record) {
+                                    public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
                                         PublicOpinion.ArticleQuery current = findArticleQuery(positiveQueries,
                                                 record.query);
                                         if (null != current) {

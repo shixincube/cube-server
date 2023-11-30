@@ -428,7 +428,7 @@ public class KnowledgeBase {
                 public void run() {
                     KnowledgeQAResult result = new KnowledgeQAResult(query);
                     result.prompt = "";
-                    AIGCChatRecord chatRecord = new AIGCChatRecord(query, EMPTY_BASE_ANSWER, System.currentTimeMillis(),
+                    AIGCGenerationRecord chatRecord = new AIGCGenerationRecord(query, EMPTY_BASE_ANSWER, System.currentTimeMillis(),
                             new ComplexContext(ComplexContext.Type.Simplex));
                     result.chatRecord = chatRecord;
                     listener.onCompleted(channel, result);
@@ -470,7 +470,7 @@ public class KnowledgeBase {
             // 其他单元执行 chat
             this.service.singleChat(channel, unit, result.prompt, new ChatListener() {
                 @Override
-                public void onChat(AIGCChannel channel, AIGCChatRecord record) {
+                public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
                     result.chatRecord = record;
                     listener.onCompleted(channel, result);
                 }

@@ -55,7 +55,7 @@ public class AIGCChannel extends Entity {
     private long activeTimestamp;
 
     // 倒序存储历史记录
-    private LinkedList<AIGCChatRecord> history;
+    private LinkedList<AIGCGenerationRecord> history;
 
     // 倒序存储应答历史
     private LinkedList<AIGCConversationResponse> conversationResponses;
@@ -138,7 +138,7 @@ public class AIGCChannel extends Entity {
         return this.rounds.get();
     }
 
-    public AIGCChatRecord appendRecord(String query, String answer, ComplexContext context) {
+    public AIGCGenerationRecord appendRecord(String query, String answer, ComplexContext context) {
         this.activeTimestamp = System.currentTimeMillis();
 
         this.totalQueryWords += query.length();
@@ -146,14 +146,14 @@ public class AIGCChannel extends Entity {
 
         this.rounds.incrementAndGet();
 
-        AIGCChatRecord record = new AIGCChatRecord(query, answer, this.activeTimestamp, context);
+        AIGCGenerationRecord record = new AIGCGenerationRecord(query, answer, this.activeTimestamp, context);
         synchronized (this.history) {
             this.history.addFirst(record);
         }
         return record;
     }
 
-    public AIGCChatRecord appendRecord(AIGCConversationResponse conversationResponse) {
+    public AIGCGenerationRecord appendRecord(AIGCConversationResponse conversationResponse) {
         this.activeTimestamp = System.currentTimeMillis();
 
         this.totalQueryWords += conversationResponse.query.length();
@@ -161,7 +161,7 @@ public class AIGCChannel extends Entity {
 
         this.rounds.incrementAndGet();
 
-        AIGCChatRecord record = new AIGCChatRecord(conversationResponse.query,
+        AIGCGenerationRecord record = new AIGCGenerationRecord(conversationResponse.query,
                 conversationResponse.answer, this.activeTimestamp, conversationResponse.context);
         synchronized (this.history) {
             this.history.addFirst(record);
@@ -171,11 +171,11 @@ public class AIGCChannel extends Entity {
         return record;
     }
 
-    public List<AIGCChatRecord> getLastHistory(int num) {
-        List<AIGCChatRecord> list = new ArrayList<>(num);
+    public List<AIGCGenerationRecord> getLastHistory(int num) {
+        List<AIGCGenerationRecord> list = new ArrayList<>(num);
 
         synchronized (this.history) {
-            for (AIGCChatRecord record : this.history) {
+            for (AIGCGenerationRecord record : this.history) {
                 if (record.totalWords() > this.historyLengthLimit) {
                     // 过滤掉词多的问答
                     continue;

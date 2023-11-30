@@ -28,6 +28,7 @@ package cube.aigc;
 
 import cube.common.JSONable;
 import cube.common.entity.ComplexContext;
+import cube.common.entity.FileLabel;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -48,6 +49,9 @@ public class ConversationResponse implements JSONable {
 
     private String text = "";
 
+    private List<FileLabel> fileLabels;
+
+    // 无用的属性，仅用于兼容旧版本
     private Detail detail = new Detail();
 
     public ComplexContext context;
@@ -67,6 +71,15 @@ public class ConversationResponse implements JSONable {
         this.parentMessageId = parentMessageId;
     }
 
+    public ConversationResponse(long sn, String id, String conversationId, String parentMessageId,
+                                List<FileLabel> fileLabels) {
+        this.sn = sn;
+        this.id = id;
+        this.conversationId = conversationId;
+        this.parentMessageId = parentMessageId;
+        this.fileLabels = fileLabels;
+    }
+
     public ConversationResponse(JSONObject json) {
         this.sn = json.getLong("sn");
         this.id = json.getString("id");
@@ -77,6 +90,14 @@ public class ConversationResponse implements JSONable {
         this.detail = new Detail(json.getJSONObject("detail"));
         if (json.has("context")) {
             this.context = new ComplexContext(json.getJSONObject("context"));
+        }
+        if (json.has("fileLabels")) {
+            this.fileLabels = new ArrayList<>();
+            JSONArray array = json.getJSONArray("fileLabels");
+            for (int i = 0; i < array.length(); ++i) {
+                FileLabel fileLabel = new FileLabel(array.getJSONObject(i));
+                this.fileLabels.add(fileLabel);
+            }
         }
     }
 
@@ -92,6 +113,13 @@ public class ConversationResponse implements JSONable {
         json.put("detail", this.detail.toJSON());
         if (null != this.context) {
             json.put("context", this.context.toJSON());
+        }
+        if (null != this.fileLabels) {
+            JSONArray array = new JSONArray();
+            for (FileLabel fileLabel : this.fileLabels) {
+                array.put(fileLabel.toCompactJSON());
+            }
+            json.put("fileLabels", array);
         }
         return json;
     }

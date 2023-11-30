@@ -34,6 +34,8 @@ import org.json.JSONObject;
  */
 public class ModelConfig implements JSONable {
 
+    public final static String TEXT_TO_IMAGE_UNIT_NAMES[] = new String[] { "DallE" };
+
     private final String name;
 
     private final String desc;
@@ -90,5 +92,20 @@ public class ModelConfig implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         return this.toJSON();
+    }
+
+    /**
+     * 判断指定的单元名单元是否是 TextToImage 单元。
+     *
+     * @param unitName
+     * @return
+     */
+    public static boolean isTextToImageUnit(String unitName) {
+        for (String name : TEXT_TO_IMAGE_UNIT_NAMES) {
+            if (name.equalsIgnoreCase(unitName)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

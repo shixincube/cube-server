@@ -26,14 +26,15 @@
 
 package cube.service.aigc.listener;
 
-import cube.common.entity.FileLabel;
+import cube.common.entity.AIGCChannel;
+import cube.common.entity.AIGCGenerationRecord;
 
 /**
  * 文本生成图像监听器。
  */
 public interface TextToImageListener {
 
-    void onCompleted(String text, FileLabel fileLabel);
+    void onCompleted(AIGCGenerationRecord record);
 
-    void onFailed();
+    void onFailed(AIGCChannel channel);
 }

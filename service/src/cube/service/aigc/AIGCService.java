@@ -81,7 +81,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.Pattern;
 
 /**
  * AIGC 服务。
@@ -721,7 +720,7 @@ public class AIGCService extends AbstractModule {
 
                 this.singleChat(channel, unit, maq.articleQuery.query, new ChatListener() {
                     @Override
-                    public void onChat(AIGCChannel channel, AIGCChatRecord record) {
+                    public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
                         maq.articleQuery.answer = record.answer.replaceAll(",", "，");
                         synchronized (result) {
                             result.append(maq.articleQuery.output());
@@ -764,7 +763,7 @@ public class AIGCService extends AbstractModule {
      * @return
      */
     public boolean chat(String channelCode, String content, String unitName, int numHistories,
-                        List<AIGCChatRecord> records, ChatListener listener) {
+                        List<AIGCGenerationRecord> records, ChatListener listener) {
         if (!this.isStarted()) {
             Logger.w(AIGCService.class, "#chat - Service is NOT ready");
             return false;
@@ -1107,25 +1106,55 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
+    public boolean generateImage(String channelCode, String text, String unitName, TextToImageListener listener) {
+        if (!this.isStarted()) {
+            return false;
+        }
+
+        // 获取频道
+        AIGCChannel channel = this.channelMap.get(channelCode);
+        if (null == channel) {
+            Logger.w(AIGCService.class, "#generateImage - Can NOT find AIGC channel: " + channelCode);
+            return false;
+        }
+
+        return this.generateImage(channel, text, unitName, listener);
+    }
+
     /**
      * 文本生成图片。
      *
      * @param text
      * @return
      */
-    public boolean generateImage(String text, TextToImageListener listener) {
+    public boolean generateImage(AIGCChannel channel, String text, String unitName, TextToImageListener listener) {
         if (!this.isStarted()) {
             return false;
         }
 
+        // 如果频道正在应答上一次问题，则返回 null
+        if (channel.isProcessing()) {
+            Logger.w(AIGCService.class, "#generateImage - Channel is processing: " + channel.getCode());
+            return false;
+        }
+
+        // 设置为正在处理
+        channel.setProcessing(true);
+
         // 查找有该能力的单元
-        AIGCUnit unit = this.selectUnitBySubtask(AICapability.Multimodal.TextToImage);
+        AIGCUnit unit = this.selectUnitByName(unitName);
+        if (null == unit || !ModelConfig.isTextToImageUnit(unitName)) {
+            Logger.w(AIGCService.class, "No text to image unit: " + unitName);
+            return false;
+        }
+
+        unit = this.selectUnitBySubtask(AICapability.Multimodal.TextToImage);
         if (null == unit) {
             Logger.w(AIGCService.class, "No text to image unit setup in server");
             return false;
         }
 
-        TextToImageUnitMeta meta = new TextToImageUnitMeta(unit, text, listener);
+        TextToImageUnitMeta meta = new TextToImageUnitMeta(unit, channel, text, listener);
 
         synchronized (this.textToImageQueueMap) {
             Queue<TextToImageUnitMeta> queue = this.textToImageQueueMap.get(unit.getQueryKey());
@@ -1870,7 +1899,7 @@ public class AIGCService extends AbstractModule {
 
         protected String content;
 
-        protected List<AIGCChatRecord> records;
+        protected List<AIGCGenerationRecord> records;
 
         protected int histories;
 
@@ -1879,7 +1908,7 @@ public class AIGCService extends AbstractModule {
         protected AIGCChatHistory history;
 
         public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
-                            List<AIGCChatRecord> records, ChatListener listener) {
+                            List<AIGCGenerationRecord> records, ChatListener listener) {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
@@ -1912,7 +1941,7 @@ public class AIGCService extends AbstractModule {
             // 识别内容
             ComplexContext complexContext = recognizeContext(this.content, this.channel.getAuthToken());
 
-            AIGCChatRecord result = null;
+            AIGCGenerationRecord result = null;
 
             if (complexContext.isSimplex()) {
                 // 一般文本
@@ -1922,9 +1951,9 @@ public class AIGCService extends AbstractModule {
 
                 if (null == this.records) {
                     if (this.histories > 0) {
-                        List<AIGCChatRecord> records = this.channel.getLastHistory(this.histories);
+                        List<AIGCGenerationRecord> records = this.channel.getLastHistory(this.histories);
                         JSONArray array = new JSONArray();
-                        for (AIGCChatRecord record : records) {
+                        for (AIGCGenerationRecord record : records) {
                             array.put(record.toJSON());
                         }
                         data.put("history", array);
@@ -1935,7 +1964,7 @@ public class AIGCService extends AbstractModule {
                 }
                 else {
                     JSONArray history = new JSONArray();
-                    for (AIGCChatRecord record : this.records) {
+                    for (AIGCGenerationRecord record : this.records) {
                         history.put(record.toJSON());
                     }
                     data.put("history", history);
@@ -2045,7 +2074,6 @@ public class AIGCService extends AbstractModule {
         }
     }
 
-
     private class ConversationUnitMeta {
 
         protected final long sn;
@@ -2091,7 +2119,7 @@ public class AIGCService extends AbstractModule {
 
             if (null != this.parameter.records) {
                 JSONArray history = new JSONArray();
-                for (AIGCChatRecord record : this.parameter.records) {
+                for (AIGCGenerationRecord record : this.parameter.records) {
                     history.put(record.toJSON());
                     // 字数
                     totalLength += record.totalWords();
@@ -2102,7 +2130,7 @@ public class AIGCService extends AbstractModule {
                 List<AIGCConversationResponse> responseList = this.channel.extractConversationResponses();
                 JSONArray history = new JSONArray();
                 for (AIGCConversationResponse response : responseList) {
-                    AIGCChatRecord record = response.toRecord();
+                    AIGCGenerationRecord record = response.toRecord();
                     history.put(record.toJSON());
                     // 字数
                     totalLength += record.totalWords();
@@ -2177,7 +2205,6 @@ public class AIGCService extends AbstractModule {
         }
     }
 
-
     private class NaturalLanguageTaskMeta {
 
         protected AIGCUnit unit;
@@ -2214,7 +2241,6 @@ public class AIGCService extends AbstractModule {
         }
     }
 
-
     private class SentimentUnitMeta {
 
         protected AIGCUnit unit;
@@ -2250,7 +2276,6 @@ public class AIGCService extends AbstractModule {
             this.listener.onCompleted(result);
         }
     }
-
 
     private class SummarizationUnitMeta {
 
@@ -2294,14 +2319,17 @@ public class AIGCService extends AbstractModule {
 
         protected AIGCUnit unit;
 
+        protected AIGCChannel channel;
+
         protected String text;
 
         protected FileLabel fileLabel;
 
         protected TextToImageListener listener;
 
-        public TextToImageUnitMeta(AIGCUnit unit, String text, TextToImageListener listener) {
+        public TextToImageUnitMeta(AIGCUnit unit, AIGCChannel channel, String text, TextToImageListener listener) {
             this.unit = unit;
+            this.channel = channel;
             this.text = text;
             this.listener = listener;
         }
@@ -2315,7 +2343,7 @@ public class AIGCService extends AbstractModule {
             if (null == dialect) {
                 Logger.w(AIGCService.class, "TextToImage unit error");
                 // 回调错误
-                this.listener.onFailed();
+                this.listener.onFailed(this.channel);
                 return;
             }
 
@@ -2323,11 +2351,28 @@ public class AIGCService extends AbstractModule {
             JSONObject payload = Packet.extractDataPayload(response);
             if (payload.has("fileLabel")) {
                 this.fileLabel = new FileLabel(payload.getJSONObject("fileLabel"));
-                this.listener.onCompleted(this.text, this.fileLabel);
+                this.fileLabel.resetURLsToken(this.channel.getAuthToken().getCode());
+
+                AIGCGenerationRecord record = new AIGCGenerationRecord(this.text, this.fileLabel);
+                this.listener.onCompleted(record);
+
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        long contactId = channel.getAuthToken().getContactId();
+                        List<String> tokens = calcTokens(text);
+                        long promptTokens = tokens.size();
+                        long completionTokens = (long) Math.floor(fileLabel.getFileSize() / 10240.0);
+                        storage.updateUsage(contactId, completionTokens, promptTokens);
+                    }
+                });
             }
             else {
-                this.listener.onFailed();
+                this.listener.onFailed(this.channel);
             }
+
+            // 重置状态
+            this.channel.setProcessing(false);
         }
     }
 
