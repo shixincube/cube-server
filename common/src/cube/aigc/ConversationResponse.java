@@ -51,6 +51,8 @@ public class ConversationResponse implements JSONable {
 
     private List<FileLabel> fileLabels;
 
+    private boolean end = true;
+
     // 无用的属性，仅用于兼容旧版本
     private Detail detail = new Detail();
 
@@ -71,6 +73,12 @@ public class ConversationResponse implements JSONable {
         this.parentMessageId = parentMessageId;
     }
 
+    public ConversationResponse(long sn, String id, String conversationId, String text,
+                                String parentMessageId, boolean end) {
+        this(sn, id, conversationId, text, parentMessageId);
+        this.end = end;
+    }
+
     public ConversationResponse(long sn, String id, String conversationId, String parentMessageId,
                                 List<FileLabel> fileLabels) {
         this.sn = sn;
@@ -85,6 +93,7 @@ public class ConversationResponse implements JSONable {
         this.id = json.getString("id");
         this.conversationId = json.getString("conversationId");
         this.parentMessageId = json.getString("parentMessageId");
+        this.end = json.getBoolean("end");
         this.role = json.getString("role");
         this.text = json.getString("text");
         this.detail = new Detail(json.getJSONObject("detail"));
@@ -108,6 +117,7 @@ public class ConversationResponse implements JSONable {
         json.put("id", this.id);
         json.put("conversationId", this.conversationId);
         json.put("parentMessageId", this.parentMessageId);
+        json.put("end", this.end);
         json.put("role", this.role);
         json.put("text", this.text);
         json.put("detail", this.detail.toJSON());

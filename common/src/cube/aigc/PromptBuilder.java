@@ -55,21 +55,23 @@ public class PromptBuilder {
     public PromptBuilder() {
     }
 
-    public String serializePrompt(String system, String query) {
-        StringBuilder buf = new StringBuilder();
-        buf.append(TOKEN_ROLE).append(getDefaultRole()).append("\n");
-        buf.append(TOKEN_SYSTEM).append(this.filter(system)).append(this.hallucinationInhibitor).append("\n");
-        buf.append(TOKEN_USER).append(this.filter(query)).append("\n");
-        buf.append(TOKEN_ASSISTANT);
-        return buf.toString();
-    }
+//    public String serializePrompt(String system, String query) {
+//        StringBuilder buf = new StringBuilder();
+//        buf.append(TOKEN_ROLE).append(getDefaultRole()).append("\n");
+//        buf.append(TOKEN_SYSTEM).append(this.filter(system)).append(this.hallucinationInhibitor).append("\n");
+//        buf.append(TOKEN_USER).append(this.filter(query)).append("\n");
+//        buf.append(TOKEN_ASSISTANT);
+//        return buf.toString();
+//    }
 
     public String serializePromptChaining(PromptChaining chaining) {
         StringBuilder buf = new StringBuilder();
-        buf.append(TOKEN_SYSTEM).append(chaining.getSystemMetadata()).append(this.hallucinationInhibitor).append("\n");
+        buf.append(TOKEN_ROLE).append(chaining.getRoleMetadata()).append("\n");
         for (Prompt prompt : chaining.getPrompts()) {
             buf.append(TOKEN_USER).append(prompt.query).append("\n");
-            buf.append(TOKEN_ASSISTANT).append(prompt.answer).append("\n");
+            if (null != prompt.answer) {
+                buf.append(TOKEN_ASSISTANT).append(prompt.answer).append("\n");
+            }
         }
         return buf.toString();
     }

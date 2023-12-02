@@ -203,6 +203,8 @@ public final class App {
         String content = null;
         // 内容的复合数据上下文
         ComplexContext context = null;
+        // 是否结束
+        boolean end = false;
         // 结果文件
         List<FileLabel> fileLabels = null;
 
@@ -226,6 +228,7 @@ public final class App {
             if (response.getStatus() == HttpStatus.OK_200) {
                 JSONObject responseData = new JSONObject(response.getContentAsString());
                 if (responseData.has("content")) {
+                    end = true;
                     sn = responseData.getLong("sn");
                     content = responseData.getString("content");
                     if (responseData.has("fileLabels")) {
@@ -233,11 +236,18 @@ public final class App {
                     }
                 }
                 else if (responseData.has("response")) {
+                    end = true;
                     sn = responseData.getLong("sn");
                     content = responseData.getJSONObject("response").getString("answer");
                     if (responseData.getJSONObject("response").has("fileLabels")) {
                         fileLabels = parseFileLabels(responseData.getJSONObject("response").getJSONArray("fileLabels"));
                     }
+                }
+                else if (responseData.has("lastMetaSn")) {
+                    end = false;
+                    // 返回正在处理状态，例如 Text to Image，此时返回 AIGCChannel info 格式
+                    sn = responseData.getLong("lastMetaSn");
+                    content = responseData.getString("message");
                 }
 
                 if (responseData.has("context")) {
@@ -264,11 +274,16 @@ public final class App {
             return null;
         }
 
-        if (null != fileLabels) {
-            return this.makeResponse(sn, convId, request, fileLabels);
+        if (end) {
+            if (null != fileLabels) {
+                return this.makeResponse(sn, convId, request, fileLabels);
+            }
+            else {
+                return this.splitResponse(sn, convId, request, content, context);
+            }
         }
         else {
-            return this.splitResponse(sn, convId, request, content, context);
+            return this.makeResponse(sn, convId, request, content, end);
         }
     }
 
@@ -292,6 +307,23 @@ public final class App {
 
         String id = UUID.randomUUID().toString();
         ConversationResponse response = new ConversationResponse(sn, id, conversationId, pid, fileLabels);
+        result.add(response);
+
+        return result;
+    }
+
+    private List<ConversationResponse> makeResponse(long sn, String conversationId,
+                                                    ConversationRequest request, String content, boolean end) {
+        List<ConversationResponse> result = new ArrayList<>();
+
+        // 父 ID
+        String pid = request.options.parentMessageId;
+        if (null == pid) {
+            pid = "";
+        }
+
+        String id = UUID.randomUUID().toString();
+        ConversationResponse response = new ConversationResponse(sn, id, conversationId, content, pid, end);
         result.add(response);
 
         return result;

@@ -47,6 +47,11 @@ public enum AIGCStateCode {
     NotFound(6),
 
     /**
+     * 正在处理数据。
+     */
+    Processing(7),
+
+    /**
      * 数据结构错误。
      */
     DataStructureError(8),

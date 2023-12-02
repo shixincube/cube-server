@@ -72,6 +72,11 @@ public enum AIGCAction {
     RequestChannel("requestChannel"),
 
     /**
+     * 获取通道工作信息。
+     */
+    GetChannelInfo("getChannelInfo"),
+
+    /**
      * 保活通道。
      */
     KeepAliveChannel("keepAliveChannel"),

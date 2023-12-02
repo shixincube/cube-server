@@ -113,6 +113,13 @@ public class ChatTask extends ServiceTask {
                 // 执行 Text to Image
                 success = service.generateImage(channel, content, unit, new TextToImageListener() {
                     @Override
+                    public void onProcessing(AIGCChannel channel) {
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.Processing.code, channel.toInfo()));
+                        markResponseTime();
+                    }
+
+                    @Override
                     public void onCompleted(AIGCGenerationRecord record) {
                         cellet.speak(talkContext,
                                 makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));

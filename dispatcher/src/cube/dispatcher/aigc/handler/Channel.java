@@ -37,11 +37,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 申请对话频道。
+ * 对话频道操作。
  */
-public class RequestChannel extends ContextHandler {
+public class Channel extends ContextHandler {
 
-    public RequestChannel() {
+    public Channel() {
         super("/aigc/channel/");
         setHandler(new Handler());
     }
@@ -64,7 +64,7 @@ public class RequestChannel extends ContextHandler {
                 return;
             }
 
-            String token = this.getRequestPath(request);
+            String token = this.getLastRequestPath(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
@@ -98,6 +98,33 @@ public class RequestChannel extends ContextHandler {
             }
 
             this.respondOk(response, channel.toJSON());
+            this.complete();
+        }
+
+        @Override
+        public void doGet(HttpServletRequest request, HttpServletResponse response) {
+            String token = this.getLastRequestPath(request);
+            if (!Manager.getInstance().checkToken(token)) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.complete();
+                return;
+            }
+
+            String channelCode = request.getParameter("cc");
+            if (null == channelCode) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
+
+            JSONObject data = Manager.getInstance().getChannel(token, channelCode);
+            if (null == data) {
+                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.complete();
+                return;
+            }
+
+            this.respondOk(response, data);
             this.complete();
         }
     }

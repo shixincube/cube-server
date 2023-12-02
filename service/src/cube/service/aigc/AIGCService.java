@@ -594,6 +594,19 @@ public class AIGCService extends AbstractModule {
             return null;
         }
 
+        Iterator<Map.Entry<String, AIGCChannel>> iter = this.channelMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, AIGCChannel> e = iter.next();
+            AIGCChannel channel = e.getValue();
+            if (channel.getAuthToken().getCode().equals(token)) {
+                // 当前频道是否还在工作状态
+                if (channel.isProcessing()) {
+                    Logger.w(AIGCService.class, "#requestChannel - Channel is processing: " + channel.getCode());
+                    return null;
+                }
+            }
+        }
+
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(token);
 
@@ -1106,6 +1119,15 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
+    /**
+     * 文本生成图片。
+     *
+     * @param channelCode
+     * @param text
+     * @param unitName
+     * @param listener
+     * @return
+     */
     public boolean generateImage(String channelCode, String text, String unitName, TextToImageListener listener) {
         if (!this.isStarted()) {
             return false;
@@ -1124,7 +1146,10 @@ public class AIGCService extends AbstractModule {
     /**
      * 文本生成图片。
      *
+     * @param channel
      * @param text
+     * @param unitName
+     * @param listener
      * @return
      */
     public boolean generateImage(AIGCChannel channel, String text, String unitName, TextToImageListener listener) {
@@ -1145,12 +1170,14 @@ public class AIGCService extends AbstractModule {
         AIGCUnit unit = this.selectUnitByName(unitName);
         if (null == unit || !ModelConfig.isTextToImageUnit(unitName)) {
             Logger.w(AIGCService.class, "No text to image unit: " + unitName);
+            channel.setProcessing(false);
             return false;
         }
 
         unit = this.selectUnitBySubtask(AICapability.Multimodal.TextToImage);
         if (null == unit) {
             Logger.w(AIGCService.class, "No text to image unit setup in server");
+            channel.setProcessing(false);
             return false;
         }
 
@@ -1975,10 +2002,11 @@ public class AIGCService extends AbstractModule {
                             channel.getCode(), this.content);
                     if (null != responseText) {
                         // 过滤中文字符
-                        responseText = this.filterChinese(responseText);
+                        responseText = this.filterChinese(this.unit, responseText);
                         result = this.channel.appendRecord(this.content, responseText, complexContext);
                     }
                     else {
+                        this.channel.setProcessing(false);
                         // 回调失败
                         this.listener.onFailed(this.channel);
                         return;
@@ -2009,7 +2037,7 @@ public class AIGCService extends AbstractModule {
                     String responseText = payload.getString("response");
 
                     // 过滤中文字符
-                    responseText = this.filterChinese(responseText);
+                    responseText = this.filterChinese(this.unit, responseText);
                     result = this.channel.appendRecord(this.content, responseText, complexContext);
                 }
             }
@@ -2064,13 +2092,18 @@ public class AIGCService extends AbstractModule {
             });
         }
 
-        private String filterChinese(String text) {
-            if (!TextUtils.containsChinese(text)) {
+        private String filterChinese(AIGCUnit unit, String text) {
+            if (unit.getCapability().getName().equalsIgnoreCase("Chat")) {
+                if (!TextUtils.containsChinese(text)) {
+                    return text;
+                }
+
+                return text.replaceAll(",", "，")
+                        .replaceAll(":", "：");
+            }
+            else {
                 return text;
             }
-
-            return text.replaceAll(",", "，")
-                    .replaceAll(":", "：");
         }
     }
 
@@ -2141,6 +2174,7 @@ public class AIGCService extends AbstractModule {
             // 判断长度
             if (totalLength > maxChatContent + maxChatContent) {
                 // 总长度越界
+                this.channel.setProcessing(false);
                 this.listener.onFailed(this.channel, AIGCStateCode.ContentLengthOverflow.code);
                 return;
             }
@@ -2317,6 +2351,8 @@ public class AIGCService extends AbstractModule {
 
     private class TextToImageUnitMeta {
 
+        protected long sn;
+
         protected AIGCUnit unit;
 
         protected AIGCChannel channel;
@@ -2328,6 +2364,7 @@ public class AIGCService extends AbstractModule {
         protected TextToImageListener listener;
 
         public TextToImageUnitMeta(AIGCUnit unit, AIGCChannel channel, String text, TextToImageListener listener) {
+            this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
             this.text = text;
@@ -2335,13 +2372,24 @@ public class AIGCService extends AbstractModule {
         }
 
         public void process() {
+            this.channel.setLastUnitMetaSn(this.sn);
+
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onProcessing(channel);
+                }
+            });
+
             JSONObject data = new JSONObject();
             data.put("text", this.text);
 
             Packet request = new Packet(AIGCAction.TextToImage.name, data);
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 60 * 1000);
+            // 使用较长的超时时间，以便等待上传数据
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 180 * 1000);
             if (null == dialect) {
                 Logger.w(AIGCService.class, "TextToImage unit error");
+                this.channel.setProcessing(false);
                 // 回调错误
                 this.listener.onFailed(this.channel);
                 return;
@@ -2353,7 +2401,9 @@ public class AIGCService extends AbstractModule {
                 this.fileLabel = new FileLabel(payload.getJSONObject("fileLabel"));
                 this.fileLabel.resetURLsToken(this.channel.getAuthToken().getCode());
 
-                AIGCGenerationRecord record = new AIGCGenerationRecord(this.text, this.fileLabel);
+                // 记录
+                AIGCGenerationRecord record = this.channel.appendRecord(this.text, this.fileLabel);
+                record.sn = this.sn;
                 this.listener.onCompleted(record);
 
                 executor.execute(new Runnable() {

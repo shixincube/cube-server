@@ -27,6 +27,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cell.util.log.Logger;
+import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCGenerationRecord;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
@@ -36,6 +37,7 @@ import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.UUID;
 
 /**
  * 对话。
@@ -105,31 +107,53 @@ public class Chat extends ContextHandler {
             }
 
             // Chat
-            AIGCGenerationRecord record = Manager.getInstance().chat(token, channelCode, pattern,
+            Manager.ChatFuture future = Manager.getInstance().chat(token, channelCode, pattern,
                     content, unit, histories, records);
-            if (null == record) {
-                // 发生错误
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+            if (future.end) {
+                // 已结束
+                AIGCGenerationRecord record = future.record;
+                if (null == record) {
+                    // 发生错误
+                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.complete();
+                    return;
+                }
+
+                // Record 转结果
+                JSONObject responseData = new JSONObject();
+                responseData.put("sn", record.sn);
+                responseData.put("participant", AI_NAME);
+                responseData.put("timestamp", record.timestamp);
+                responseData.put("pattern", pattern);
+                responseData.put("content", null != record.answer ? record.answer : "");
+                if (null != record.context) {
+                    responseData.put("context", record.context.toJSON());
+                }
+                if (null != record.fileLabels) {
+                    responseData.put("fileLabels", record.outputFileLabelArray());
+                }
+
+                this.respondOk(response, responseData);
                 this.complete();
-                return;
             }
+            else {
+                // 正在处理
+                AIGCChannel channel = future.channel;
 
-            // Record 转结果
-            JSONObject responseData = new JSONObject();
-            responseData.put("sn", record.sn);
-            responseData.put("participant", AI_NAME);
-            responseData.put("timestamp", record.timestamp);
-            responseData.put("pattern", pattern);
-            responseData.put("content", null != record.answer ? record.answer : "");
-            if (null != record.context) {
-                responseData.put("context", record.context.toJSON());
-            }
-            if (null != record.fileLabels) {
-                responseData.put("fileLabels", record.outputFileLabelArray());
-            }
+                // Channel 转结果
+                JSONObject responseData = channel.toInfo();
+                if (responseData.has("authToken")) {
+                    responseData.remove("authToken");
+                }
+                if (responseData.has("lastRecord")) {
+                    responseData.remove("lastRecord");
+                }
 
-            this.respondOk(response, responseData);
-            this.complete();
+                responseData.put("message", "正在思考中……");
+
+                this.respondOk(response, responseData);
+                this.complete();
+            }
         }
     }
 }

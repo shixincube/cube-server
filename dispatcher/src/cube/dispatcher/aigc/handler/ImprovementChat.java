@@ -107,7 +107,7 @@ public class ImprovementChat extends ContextHandler {
 
             // Chat
             AIGCGenerationRecord record = Manager.getInstance().chat(token, channelCode, pattern,
-                    content, desc, histories, records);
+                    content, desc, histories, records).record;
             if (null == record) {
                 // 发生错误
                 this.respond(response, HttpStatus.BAD_REQUEST_400);

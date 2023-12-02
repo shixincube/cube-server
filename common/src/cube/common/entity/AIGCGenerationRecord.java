@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -38,7 +39,7 @@ import java.util.List;
  */
 public class AIGCGenerationRecord implements JSONable {
 
-    public long sn;
+    public long sn = Utils.generateSerialNumber();
 
     public String query;
 
@@ -57,11 +58,11 @@ public class AIGCGenerationRecord implements JSONable {
         this.context = context;
     }
 
-    public AIGCGenerationRecord(String query, FileLabel fileLabel) {
+    public AIGCGenerationRecord(String query, FileLabel fileLabel, long timestamp) {
         this.query = query;
         this.fileLabels = new ArrayList<>();
         this.fileLabels.add(fileLabel);
-        this.timestamp = System.currentTimeMillis();
+        this.timestamp = timestamp;
     }
 
     public AIGCGenerationRecord(JSONObject json) {

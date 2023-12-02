@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class AIGCChannel extends Entity {
 
-    private int historyLengthLimit = 1024;
+    private int historyLengthLimit = 4 * 1024;
 
     private AuthToken authToken;
 
@@ -70,6 +70,11 @@ public class AIGCChannel extends Entity {
      * 对话轮次记录。
      */
     private AtomicInteger rounds;
+
+    /**
+     * 最近一次任务的 SN 。
+     */
+    private long lastUnitMetaSn;
 
     public AIGCChannel(AuthToken authToken, String participant) {
         this(authToken, participant, Utils.randomString(16));
@@ -100,6 +105,13 @@ public class AIGCChannel extends Entity {
         this.rounds = new AtomicInteger(json.has("rounds") ? json.getInt("rounds") : 0);
         this.totalQueryWords = json.has("totalQueryWords") ? json.getInt("totalQueryWords") : 0;
         this.totalAnswerWords = json.has("totalAnswerWords") ? json.getInt("totalAnswerWords") : 0;
+
+        this.lastUnitMetaSn = json.has("lastMetaSn") ? json.getLong("lastMetaSn") : 0;
+
+        if (json.has("lastRecord")) {
+            AIGCGenerationRecord record = new AIGCGenerationRecord(json.getJSONObject("lastRecord"));
+            this.history.addFirst(record);
+        }
     }
 
     public AuthToken getAuthToken() {
@@ -138,6 +150,20 @@ public class AIGCChannel extends Entity {
         return this.rounds.get();
     }
 
+    public void setLastUnitMetaSn(long sn) {
+        this.lastUnitMetaSn = sn;
+    }
+
+    public AIGCGenerationRecord getLastRecord() {
+        synchronized (this.history) {
+            if (this.history.isEmpty()) {
+                return null;
+            }
+
+            return this.history.getFirst();
+        }
+    }
+
     public AIGCGenerationRecord appendRecord(String query, String answer, ComplexContext context) {
         this.activeTimestamp = System.currentTimeMillis();
 
@@ -147,6 +173,21 @@ public class AIGCChannel extends Entity {
         this.rounds.incrementAndGet();
 
         AIGCGenerationRecord record = new AIGCGenerationRecord(query, answer, this.activeTimestamp, context);
+        synchronized (this.history) {
+            this.history.addFirst(record);
+        }
+        return record;
+    }
+
+    public AIGCGenerationRecord appendRecord(String query, FileLabel fileLabel) {
+        this.activeTimestamp = System.currentTimeMillis();
+
+        this.totalQueryWords += query.length();
+        this.totalAnswerWords += fileLabel.getFileCode().length();
+
+        this.rounds.incrementAndGet();
+
+        AIGCGenerationRecord record = new AIGCGenerationRecord(query, fileLabel, this.activeTimestamp);
         synchronized (this.history) {
             this.history.addFirst(record);
         }
@@ -238,6 +279,12 @@ public class AIGCChannel extends Entity {
         json.put("processing", this.processing.get());
         json.put("totalQueryWords", this.totalQueryWords());
         json.put("totalAnswerWords", this.totalAnswerWords());
+        json.put("lastMetaSn", this.lastUnitMetaSn);
+
+        AIGCGenerationRecord record = this.getLastRecord();
+        if (null != record) {
+            json.put("lastRecord", record.toCompactJSON());
+        }
         return json;
     }
 

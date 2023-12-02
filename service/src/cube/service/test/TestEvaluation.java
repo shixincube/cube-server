@@ -28,6 +28,7 @@ package cube.service.test;
 
 import cube.aigc.psychology.Evaluation;
 import cube.aigc.psychology.EvaluationReport;
+import cube.aigc.psychology.ThemeTemplate;
 
 public class TestEvaluation {
 
@@ -36,7 +37,7 @@ public class TestEvaluation {
         EvaluationReport report = evaluation.makeEvaluationReport();
         System.out.println("Num: " + report.getReportScoreList().size());
 
-
+        ThemeTemplate template = report.makeStress();
     }
 
     public static void main(String[] args) {

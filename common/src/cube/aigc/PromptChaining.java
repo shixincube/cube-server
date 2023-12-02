@@ -34,7 +34,7 @@ import java.util.List;
  */
 public class PromptChaining {
 
-    private String system;
+    private String role;
 
     private List<Prompt> promptList;
 
@@ -42,21 +42,21 @@ public class PromptChaining {
         this.promptList = new ArrayList<>();
     }
 
-    public PromptChaining(String system) {
-        this.system = system;
+    public PromptChaining(String role) {
+        this.role = role;
         this.promptList = new ArrayList<>();
     }
 
-    public void setSystemMetadata(String system) {
-        this.system = system;
+    public void setRoleMetadata(String system) {
+        this.role = role;
     }
 
-    public String getSystemMetadata() {
-        if (null == this.system) {
+    public String getRoleMetadata() {
+        if (null == this.role) {
             return "你是智能AI助手。";
         }
 
-        return this.system;
+        return this.role;
     }
 
     public List<Prompt> getPrompts() {
@@ -64,10 +64,9 @@ public class PromptChaining {
     }
 
     public boolean addPrompt(Prompt prompt) {
-        if (null == prompt.query || null == prompt.answer) {
+        if (null == prompt.query && null == prompt.answer) {
             return false;
         }
-
         return this.promptList.add(prompt);
     }
 
@@ -90,5 +89,11 @@ public class PromptChaining {
             }
         }
         return num;
+    }
+
+    public PromptChaining copy() {
+        PromptChaining copy = new PromptChaining(this.role);
+        copy.promptList.addAll(this.promptList);
+        return copy;
     }
 }

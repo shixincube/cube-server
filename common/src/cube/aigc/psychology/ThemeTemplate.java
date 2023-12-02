@@ -26,6 +26,8 @@
 
 package cube.aigc.psychology;
 
+import cube.aigc.PromptChaining;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +38,16 @@ public class ThemeTemplate {
 
     public final Theme theme;
 
+    public final String featurePromptFormat = "将%s这种特点结合心理学的压力特征，描述一下%s是如何影响压力的。";
+
     public final List<String> paragraphList = new ArrayList<>();
+
+    public final List<String> paragraphPromptFormatList = new ArrayList<>();
+
+    /**
+     * 每个段落对应的提示词链。
+     */
+    public final List<PromptChaining> paragraphChainingList = new ArrayList<>();
 
     private ThemeTemplate(Theme theme) {
         this.theme = theme;
@@ -46,7 +57,12 @@ public class ThemeTemplate {
         ThemeTemplate template = new ThemeTemplate(Theme.Stress);
         template.paragraphList.add("压力的主要表现");
         template.paragraphList.add("压力的调整");
-        template.paragraphList.add("一些建议");
+        template.paragraphList.add("总结");
+
+        template.paragraphPromptFormatList.add("已知这些关键词描述工作、生活压力：%s。作为心理学咨询专家，通过对这些词的描述，结合心理学压力特点给出对压力的表现描述。");
+        template.paragraphPromptFormatList.add("最近我的压力主要表现为：%s。这些压力表现应该如何调整，给我一些建议。");
+        template.paragraphPromptFormatList.add("基于最近我的压力表现：%s，综合性地给我总结一些结论，能让我知道后续我应该怎么解决这些压力。");
+
         return template;
     }
 

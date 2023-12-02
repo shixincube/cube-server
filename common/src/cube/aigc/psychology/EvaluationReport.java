@@ -29,6 +29,7 @@ package cube.aigc.psychology;
 import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.Prompt;
+import cube.aigc.PromptBuilder;
 import cube.aigc.PromptChaining;
 import cube.aigc.psychology.composition.Score;
 
@@ -39,6 +40,9 @@ import java.util.List;
  * 评估报告。
  */
 public class EvaluationReport {
+
+    public final static String HighTrick = "明显";
+    public final static String LowTrick = "不足";
 
     private List<ReportScore> reportScoreList;
 
@@ -102,10 +106,49 @@ public class EvaluationReport {
         // 2、构建提示链
         List<PromptChaining> chainingList = new ArrayList<>();
 
-        PromptChaining chaining = new PromptChaining(Consts.PROMPT_SYSTEM_PSYCHOLOGY);
-        for (ReportScore score : positiveScoreList) {
+        // Comment 话术
+        StringBuilder buf = new StringBuilder();
 
+        // 基础链
+        PromptChaining baseChaining = new PromptChaining(Consts.PROMPT_SYSTEM_PSYCHOLOGY);
+        for (ReportScore score : positiveScoreList) {
+            Prompt prompt = new Prompt(score.interpretation.getComment().word,
+                    score.interpretation.getInterpretation());
+            baseChaining.addPrompt(prompt);
+
+            if (score.positive > 1) {
+                // 高分
+                buf.append(score.interpretation.getComment().word);
+                buf.append(HighTrick);
+                buf.append("，");
+            }
+            else {
+                // 一般
+                buf.append(score.interpretation.getComment().word);
+                buf.append("，");
+            }
         }
+        for (ReportScore score : negativeScoreList) {
+            Prompt prompt = new Prompt(score.interpretation.getComment().word,
+                    score.interpretation.getInterpretation());
+            baseChaining.addPrompt(prompt);
+
+            buf.append(score.interpretation.getComment().word);
+            buf.append(LowTrick);
+            buf.append("，");
+        }
+
+        // 完整的状态词
+        String wholeWord = buf.delete(buf.length() - 1, buf.length()).toString();
+
+        // 表现
+        PromptChaining copy = baseChaining.copy();
+        String promptFormat = template.paragraphPromptFormatList.get(0);
+        String query = String.format(promptFormat, wholeWord);
+        copy.addPrompt(new Prompt(query));
+
+        PromptBuilder builder = new PromptBuilder();
+        System.out.println(builder.serializePromptChaining(copy));
 
         return template;
     }

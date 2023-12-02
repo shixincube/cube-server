@@ -34,6 +34,8 @@ import cube.common.entity.AIGCGenerationRecord;
  */
 public interface TextToImageListener {
 
+    void onProcessing(AIGCChannel channel);
+
     void onCompleted(AIGCGenerationRecord record);
 
     void onFailed(AIGCChannel channel);

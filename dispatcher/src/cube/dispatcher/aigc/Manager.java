@@ -113,7 +113,7 @@ public class Manager implements Tickable, PerformerListener {
         HttpServer httpServer = this.performer.getHttpServer();
 
         httpServer.addContextHandler(new Segmentation());
-        httpServer.addContextHandler(new RequestChannel());
+        httpServer.addContextHandler(new Channel());
         httpServer.addContextHandler(new Chat());
         httpServer.addContextHandler(new NLGeneralTask());
         httpServer.addContextHandler(new Sentiment());
@@ -473,6 +473,29 @@ public class Manager implements Tickable, PerformerListener {
         return channel;
     }
 
+    public JSONObject getChannel(String token, String channelCode) {
+        JSONObject data = new JSONObject();
+        data.put("code", channelCode);
+
+        Packet packet = new Packet(AIGCAction.GetChannelInfo.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#getChannel - Response is null : " + channelCode);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#getChannel - Response state code is NOT Ok: " + channelCode +
+                    " - " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
     public boolean keepAliveChannel(String channelCode) {
         JSONObject data = new JSONObject();
         data.put("code", channelCode);
@@ -494,8 +517,8 @@ public class Manager implements Tickable, PerformerListener {
         return true;
     }
 
-    public AIGCGenerationRecord chat(String token, String channelCode, String pattern, String content, String unit,
-                                     int histories, JSONArray records) {
+    public ChatFuture chat(String token, String channelCode, String pattern, String content, String unit,
+                           int histories, JSONArray records) {
         JSONObject data = new JSONObject();
         data.put("token", token);
         data.put("code", channelCode);
@@ -519,17 +542,27 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         Packet responsePacket = new Packet(response);
-        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+
+        if (Packet.extractCode(responsePacket) == AIGCStateCode.Processing.code) {
+            AIGCChannel channel = new AIGCChannel(Packet.extractDataPayload(responsePacket));
+            ChatFuture future = new ChatFuture(channel);
+            future.end = false;
+            return future;
+        }
+        else if (Packet.extractCode(responsePacket) == AIGCStateCode.Ok.code) {
+            AIGCGenerationRecord record = new AIGCGenerationRecord(Packet.extractDataPayload(responsePacket));
+            if (null == record.query) {
+                record.query = content;
+            }
+            ChatFuture future = new ChatFuture(record);
+            future.end = true;
+            return future;
+        }
+        else {
             Logger.w(Manager.class, "#chat - Response state code is NOT Ok - " + channelCode +
                     " - " + Packet.extractCode(responsePacket));
             return null;
         }
-
-        AIGCGenerationRecord record = new AIGCGenerationRecord(Packet.extractDataPayload(responsePacket));
-        if (null == record.query) {
-            record.query = content;
-        }
-        return record;
     }
 
     /**
@@ -1084,6 +1117,34 @@ public class Manager implements Tickable, PerformerListener {
                     future.stateCode = stateCode;
                 }
             }
+        }
+    }
+
+    public class ChatFuture implements JSONable {
+
+        public boolean end = true;
+
+        public AIGCChannel channel;
+
+        public AIGCGenerationRecord record;
+
+        protected ChatFuture(AIGCChannel channel) {
+            this.channel = channel;
+        }
+
+        protected ChatFuture(AIGCGenerationRecord record) {
+            this.record = record;
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
         }
     }
 
