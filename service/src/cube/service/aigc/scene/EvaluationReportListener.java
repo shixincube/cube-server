@@ -24,14 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.service.test;
+package cube.service.aigc.scene;
 
-public class TestEvaluation {
-
-    public static void testEvaluationReport() {
-    }
-
-    public static void main(String[] args) {
-        testEvaluationReport();
-    }
+public interface EvaluationReportListener {
 }

@@ -24,14 +24,20 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
+package cube.service.aigc.scene;
 
 import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.Prompt;
 import cube.aigc.PromptBuilder;
 import cube.aigc.PromptChaining;
+import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.Score;
+import cube.common.entity.AIGCChannel;
+import cube.common.entity.AIGCGenerationRecord;
+import cube.common.entity.AIGCUnit;
+import cube.service.aigc.AIGCService;
+import cube.service.aigc.listener.ChatListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,8 +94,8 @@ public class EvaluationReport {
         return this.reportScoreList;
     }
 
-    public ThemeTemplate makeStress() {
-        // 1、正负向分类
+    public ThemeTemplate makeStress(AIGCChannel channel, AIGCService aigcService) {
+        // 正负向分类
         List<ReportScore> positiveScoreList = new ArrayList<>();
         List<ReportScore> negativeScoreList = new ArrayList<>();
         for (ReportScore score : this.reportScoreList) {
@@ -101,54 +107,57 @@ public class EvaluationReport {
             }
         }
 
+        // 创建模板
         ThemeTemplate template = ThemeTemplate.makeStressThemeTemplate();
 
-        // 2、构建提示链
-        List<PromptChaining> chainingList = new ArrayList<>();
+        // 构建提示语
+        Workflow workflow = new Workflow();
 
-        // Comment 话术
-        StringBuilder buf = new StringBuilder();
-
-        // 基础链
-        PromptChaining baseChaining = new PromptChaining(Consts.PROMPT_SYSTEM_PSYCHOLOGY);
+        // Phase 1
         for (ReportScore score : positiveScoreList) {
-            Prompt prompt = new Prompt(score.interpretation.getComment().word,
-                    score.interpretation.getInterpretation());
-            baseChaining.addPrompt(prompt);
+            String word = score.interpretation.getComment().word;
 
-            if (score.positive > 1) {
-                // 高分
-                buf.append(score.interpretation.getComment().word);
-                buf.append(HighTrick);
-                buf.append("，");
-            }
-            else {
-                // 一般
-                buf.append(score.interpretation.getComment().word);
-                buf.append("，");
-            }
+            AIGCGenerationRecord record = new AIGCGenerationRecord(word, score.interpretation.getInterpretation());
+
+            String prompt = template.formatFeaturePrompt(score.positive > 1 ? word + HighTrick : word);
+            PromptChaining chaining = new PromptChaining(Consts.PROMPT_ROLE_PSYCHOLOGY);
+            chaining.addPrompt(new Prompt(prompt));
+
+            workflow.addPhase1(record, chaining);
         }
         for (ReportScore score : negativeScoreList) {
-            Prompt prompt = new Prompt(score.interpretation.getComment().word,
-                    score.interpretation.getInterpretation());
-            baseChaining.addPrompt(prompt);
+            String word = score.interpretation.getComment().word;
+            AIGCGenerationRecord record = new AIGCGenerationRecord(word, score.interpretation.getInterpretation());
 
-            buf.append(score.interpretation.getComment().word);
-            buf.append(LowTrick);
-            buf.append("，");
+            String prompt = template.formatFeaturePrompt(word + LowTrick);
+            PromptChaining chaining = new PromptChaining(Consts.PROMPT_ROLE_PSYCHOLOGY);
+            chaining.addPrompt(new Prompt(prompt));
+
+            workflow.addPhase1(record, chaining);
         }
 
-        // 完整的状态词
-        String wholeWord = buf.delete(buf.length() - 1, buf.length()).toString();
+        PromptBuilder promptBuilder = new PromptBuilder();
 
-        // 表现
-        PromptChaining copy = baseChaining.copy();
-        String promptFormat = template.paragraphPromptFormatList.get(0);
-        String query = String.format(promptFormat, wholeWord);
-        copy.addPrompt(new Prompt(query));
+        // 调用 AGI 生成结果
+        AIGCUnit unit = aigcService.selectUnitByName("Chat");
+        for (Workflow.PromptGroup group : workflow.getPhase1Groups()) {
+            List<AIGCGenerationRecord> records = new ArrayList<>();
+            records.add(group.record);
+            aigcService.singleChat(channel, unit,
+                    promptBuilder.serializePromptChaining(group.chaining), records,
+                    new ChatListener() {
+                        @Override
+                        public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
+                        }
 
-        PromptBuilder builder = new PromptBuilder();
-        System.out.println(builder.serializePromptChaining(copy));
+                        @Override
+                        public void onFailed(AIGCChannel channel) {
+                        }
+                    });
+        }
+
+
+        // Phase 2
 
         return template;
     }

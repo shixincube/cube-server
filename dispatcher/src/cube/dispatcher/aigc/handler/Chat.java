@@ -149,7 +149,7 @@ public class Chat extends ContextHandler {
                     responseData.remove("lastRecord");
                 }
 
-                responseData.put("message", "正在思考中……");
+                responseData.put("message", "正在思考中，由于数据文件较大请稍作等待……");
 
                 this.respondOk(response, responseData);
                 this.complete();

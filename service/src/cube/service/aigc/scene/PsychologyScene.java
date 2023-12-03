@@ -24,14 +24,42 @@
  * SOFTWARE.
  */
 
-package cube.service.test;
+package cube.service.aigc.scene;
 
-public class TestEvaluation {
+import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.ThemeTemplate;
+import cube.common.entity.AIGCChannel;
+import cube.common.entity.FileLabel;
+import cube.service.aigc.AIGCService;
+import cube.service.cv.CVService;
 
-    public static void testEvaluationReport() {
+/**
+ * 心理学场景。
+ */
+public class PsychologyScene {
+
+    private CVService cvService;
+
+    private AIGCService aigcService;
+
+    public PsychologyScene(CVService cvService, AIGCService aigcService) {
     }
 
-    public static void main(String[] args) {
-        testEvaluationReport();
+    public void generateEvaluationReport(AIGCChannel channel, FileLabel fileLabel, SceneListener listener) {
+        Painting painting = this.processPainting(fileLabel, listener);
+
+        this.processReport(channel, painting, listener);
+    }
+
+    private Painting processPainting(FileLabel fileLabel, SceneListener listener) {
+        return null;
+    }
+
+    private void processReport(AIGCChannel channel, Painting painting, SceneListener listener) {
+        Evaluation evaluation = (null == painting) ? new Evaluation() : new Evaluation(painting);
+
+        EvaluationReport report = evaluation.makeEvaluationReport();
+
+        ThemeTemplate template = report.makeStress(channel, this.aigcService);
     }
 }

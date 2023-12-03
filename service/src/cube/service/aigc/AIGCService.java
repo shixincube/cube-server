@@ -731,7 +731,7 @@ public class AIGCService extends AbstractModule {
 
                 StringBuilder result = new StringBuilder();
 
-                this.singleChat(channel, unit, maq.articleQuery.query, new ChatListener() {
+                this.singleChat(channel, unit, maq.articleQuery.query, null, new ChatListener() {
                     @Override
                     public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
                         maq.articleQuery.answer = record.answer.replaceAll(",", "，");
@@ -828,7 +828,7 @@ public class AIGCService extends AbstractModule {
         }
 
         ChatUnitMeta meta = new ChatUnitMeta(unit, channel, content, records, listener);
-        meta.histories = numHistories;
+        meta.numHistories = numHistories;
 
         synchronized (this.chatQueueMap) {
             Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getQueryKey());
@@ -854,7 +854,8 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
-    public void singleChat(AIGCChannel channel, AIGCUnit unit, String query, ChatListener listener) {
+    public void singleChat(AIGCChannel channel, AIGCUnit unit, String query, List<AIGCGenerationRecord> records,
+                           ChatListener listener) {
         if (this.useAgent) {
             unit = Agent.getInstance().getUnit();
         }
@@ -865,7 +866,7 @@ public class AIGCService extends AbstractModule {
             return;
         }
 
-        ChatUnitMeta meta = new ChatUnitMeta(unit, channel, query, 0, listener);
+        ChatUnitMeta meta = new ChatUnitMeta(unit, channel, query, records, listener);
 
         synchronized (this.chatQueueMap) {
             Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getQueryKey());
@@ -1928,7 +1929,7 @@ public class AIGCService extends AbstractModule {
 
         protected List<AIGCGenerationRecord> records;
 
-        protected int histories;
+        protected int numHistories;
 
         protected ChatListener listener;
 
@@ -1941,7 +1942,7 @@ public class AIGCService extends AbstractModule {
             this.channel = channel;
             this.content = content;
             this.records = records;
-            this.histories = 3;
+            this.numHistories = (null != records) ? records.size() : 0;
             this.listener = listener;
 
             this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName());
@@ -1950,12 +1951,12 @@ public class AIGCService extends AbstractModule {
             this.history.queryContent = content;
         }
 
-        public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, int histories, ChatListener listener) {
+        public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, int numHistories, ChatListener listener) {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
             this.content = content;
-            this.histories = histories;
+            this.numHistories = numHistories;
             this.listener = listener;
 
             this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName());
@@ -1972,16 +1973,25 @@ public class AIGCService extends AbstractModule {
 
             if (complexContext.isSimplex()) {
                 // 一般文本
+
+                int maxHistories = 10;
+                if (this.unit.getCapability().getName().equalsIgnoreCase("Chat")) {
+                    maxHistories = 5;
+                }
+
                 JSONObject data = new JSONObject();
                 data.put("unit", this.unit.getCapability().getName());
                 data.put("content", this.content);
 
                 if (null == this.records) {
-                    if (this.histories > 0) {
-                        List<AIGCGenerationRecord> records = this.channel.getLastHistory(this.histories);
+                    if (this.numHistories > 0) {
+                        List<AIGCGenerationRecord> records = this.channel.getLastHistory(this.numHistories);
                         JSONArray array = new JSONArray();
                         for (AIGCGenerationRecord record : records) {
                             array.put(record.toJSON());
+                            if (array.length() >= maxHistories) {
+                                break;
+                            }
                         }
                         data.put("history", array);
                     }
@@ -1993,6 +2003,9 @@ public class AIGCService extends AbstractModule {
                     JSONArray history = new JSONArray();
                     for (AIGCGenerationRecord record : this.records) {
                         history.put(record.toJSON());
+                        if (history.length() >= maxHistories) {
+                            break;
+                        }
                     }
                     data.put("history", history);
                 }
@@ -2094,12 +2107,13 @@ public class AIGCService extends AbstractModule {
 
         private String filterChinese(AIGCUnit unit, String text) {
             if (unit.getCapability().getName().equalsIgnoreCase("Chat")) {
-                if (!TextUtils.containsChinese(text)) {
+                if (TextUtils.containsChinese(text)) {
+                    return text.replaceAll(",", "，")
+                            .replaceAll(":", "：");
+                }
+                else {
                     return text;
                 }
-
-                return text.replaceAll(",", "，")
-                        .replaceAll(":", "：");
             }
             else {
                 return text;

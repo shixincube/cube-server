@@ -24,9 +24,11 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
+package cube.service.aigc.scene;
 
 import cell.util.Utils;
+import cube.aigc.psychology.Comment;
+import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.Score;
 import cube.aigc.psychology.composition.SpaceLayout;
@@ -681,7 +683,7 @@ public class Evaluation {
         else {
             // 仅用于测试
             List<Result> results = new ArrayList<>();
-            int num = Utils.randomInt(3, 10);
+            int num = Utils.randomInt(3, 5);
             for (int i = 0; i < num; ++i) {
                 int index = Utils.randomInt(0, Comment.values().length - 1);
                 Result result = new Result(Comment.values()[index], Score.High);

@@ -26,10 +26,12 @@
 
 package cube.service.cv;
 
+import cube.common.entity.FileLabel;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
+import org.json.JSONObject;
 
 /**
  * 计算机视觉功能服务模块。
@@ -61,5 +63,9 @@ public class CVService extends AbstractModule {
 
     }
 
+    public JSONObject predict(FileLabel fileLabel) {
+        String modelFile = "painting.pt";
 
+        return null;
+    }
 }

@@ -24,14 +24,23 @@
  * SOFTWARE.
  */
 
-package cube.service.test;
+package cube.service.aigc.scene;
 
-public class TestEvaluation {
+import cube.aigc.psychology.Painting;
+import cube.common.entity.FileLabel;
 
-    public static void testEvaluationReport() {
-    }
+/**
+ *
+ */
+public interface SceneListener {
 
-    public static void main(String[] args) {
-        testEvaluationReport();
-    }
+    void onStart(FileLabel fileLabel);
+
+    void onPaintingPredict(FileLabel fileLabel, Painting painting);
+
+    void onPaintingPredictFailed(FileLabel fileLabel);
+
+    void onPaintingEvaluate(Evaluation evaluation);
+
+    void onReportEvaluate(EvaluationReport report);
 }

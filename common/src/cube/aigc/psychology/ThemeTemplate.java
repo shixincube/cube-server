@@ -38,8 +38,6 @@ public class ThemeTemplate {
 
     public final Theme theme;
 
-    public final String featurePromptFormat = "将%s这种特点结合心理学的压力特征，描述一下%s是如何影响压力的。";
-
     public final List<String> paragraphList = new ArrayList<>();
 
     public final List<String> paragraphPromptFormatList = new ArrayList<>();
@@ -49,35 +47,47 @@ public class ThemeTemplate {
      */
     public final List<PromptChaining> paragraphChainingList = new ArrayList<>();
 
-    private ThemeTemplate(Theme theme) {
+    private String featurePromptFormat;
+
+    private ThemeTemplate(Theme theme, String featurePromptFormat) {
         this.theme = theme;
+        this.featurePromptFormat = featurePromptFormat;
+    }
+
+    public String formatFeaturePrompt(String word) {
+        return String.format(this.featurePromptFormat, word, word);
     }
 
     public static ThemeTemplate makeStressThemeTemplate() {
-        ThemeTemplate template = new ThemeTemplate(Theme.Stress);
+        ThemeTemplate template = new ThemeTemplate(Theme.Stress,
+                "将%s这种特点结合心理学的压力特征，描述一下%s是如何影响压力的。");
+
         template.paragraphList.add("压力的主要表现");
         template.paragraphList.add("压力的调整");
         template.paragraphList.add("总结");
 
-        template.paragraphPromptFormatList.add("已知这些关键词描述工作、生活压力：%s。作为心理学咨询专家，通过对这些词的描述，结合心理学压力特点给出对压力的表现描述。");
-        template.paragraphPromptFormatList.add("最近我的压力主要表现为：%s。这些压力表现应该如何调整，给我一些建议。");
+        template.paragraphPromptFormatList.add("已知信息：%s。作为心理学咨询专家，结合心理学里心理压力特点给出对压力的表现描述。");
+        template.paragraphPromptFormatList.add("已知信息：%s。这些压力表现应该如何调整，给我一些建议。");
         template.paragraphPromptFormatList.add("基于最近我的压力表现：%s，综合性地给我总结一些结论，能让我知道后续我应该怎么解决这些压力。");
 
         return template;
     }
 
     public static ThemeTemplate makeFamilyRelationshipsThemeTemplate() {
-        ThemeTemplate template = new ThemeTemplate(Theme.FamilyRelationships);
+        ThemeTemplate template = new ThemeTemplate(Theme.FamilyRelationships,
+                "将%s这种特点结合心理学里的家庭关系特征，描述一下%s是如何影响家庭关系的。");
         return template;
     }
 
     public static ThemeTemplate makeIntimacyThemeTemplate() {
-        ThemeTemplate template = new ThemeTemplate(Theme.Intimacy);
+        ThemeTemplate template = new ThemeTemplate(Theme.Intimacy,
+                "将%s这种特点结合心理学的亲密关系特征，描述一下%s是如何影响亲密关系的。");
         return template;
     }
 
     public static ThemeTemplate makeCognitionThemeTemplate() {
-        ThemeTemplate template = new ThemeTemplate(Theme.Cognition);
+        ThemeTemplate template = new ThemeTemplate(Theme.Cognition,
+                "将%s这种特点结合心理学的认知特征，描述一下%s是如何影响人的认知的。");
         return template;
     }
 }

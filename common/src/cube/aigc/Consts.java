@@ -75,7 +75,7 @@ public final class Consts {
 
     public final static String ANSWER_FIND_SOME_YEAR_DATA = "没有找到%s的数据，但是找到了%s的数据。";
 
-    public final static String PROMPT_SYSTEM_PSYCHOLOGY = "你是专业的心理咨询专家。";
+    public final static String PROMPT_ROLE_PSYCHOLOGY = "专业的心理咨询专家。";
 
     public static String formatUrlFailureAnswer(String domain, String url) {
         return String.format(ANSWER_URL_FAILURE_FORMAT, domain, url);

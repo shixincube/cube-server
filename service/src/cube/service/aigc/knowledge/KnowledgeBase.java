@@ -468,7 +468,7 @@ public class KnowledgeBase {
         }
         else {
             // 其他单元执行 chat
-            this.service.singleChat(channel, unit, result.prompt, new ChatListener() {
+            this.service.singleChat(channel, unit, result.prompt, null, new ChatListener() {
                 @Override
                 public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
                     result.chatRecord = record;

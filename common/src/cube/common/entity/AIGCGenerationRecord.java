@@ -51,6 +51,12 @@ public class AIGCGenerationRecord implements JSONable {
 
     public ComplexContext context;
 
+    public AIGCGenerationRecord(String query, String answer) {
+        this.query = query;
+        this.answer = answer;
+        this.timestamp = System.currentTimeMillis();
+    }
+
     public AIGCGenerationRecord(String query, String answer, long timestamp, ComplexContext context) {
         this.query = query;
         this.answer = answer;

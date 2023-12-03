@@ -66,11 +66,11 @@ public class PromptBuilder {
 
     public String serializePromptChaining(PromptChaining chaining) {
         StringBuilder buf = new StringBuilder();
-        buf.append(TOKEN_ROLE).append(chaining.getRoleMetadata()).append("\n");
+        buf.append(TOKEN_SYSTEM).append(chaining.getSystemMetadata()).append('\n');
         for (Prompt prompt : chaining.getPrompts()) {
-            buf.append(TOKEN_USER).append(prompt.query).append("\n");
+            buf.append(TOKEN_USER).append(prompt.query).append('\n');
             if (null != prompt.answer) {
-                buf.append(TOKEN_ASSISTANT).append(prompt.answer).append("\n");
+                buf.append(TOKEN_ASSISTANT).append(prompt.answer).append('\n');
             }
         }
         return buf.toString();
