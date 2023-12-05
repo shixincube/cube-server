@@ -37,10 +37,10 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * 心理学绘画预测。
  */
-public class PredictPsychology extends ContextHandler {
+public class GeneratePsychologyReport extends ContextHandler {
 
-    public PredictPsychology() {
-        super("/aigc/psychology/predict");
+    public GeneratePsychologyReport() {
+        super("/aigc/psychology/report");
         setHandler(new Handler());
     }
 
@@ -62,9 +62,9 @@ public class PredictPsychology extends ContextHandler {
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
                 String fileCode = data.getString("fileCode");
-                Manager.PaintingFuture paintingFuture = Manager.getInstance().predictPsychology(token, fileCode);
-                if (null != paintingFuture) {
-                    this.respondOk(response, paintingFuture.toJSON());
+                Manager.PsychologyReportFuture reportFuture = Manager.getInstance().generatePsychologyReport(token, fileCode);
+                if (null != reportFuture) {
+                    this.respondOk(response, reportFuture.toJSON());
                     this.complete();
                 }
                 else {

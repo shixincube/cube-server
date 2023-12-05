@@ -33,7 +33,7 @@ import cube.aigc.ConfigInfo;
 import cube.aigc.ModelConfig;
 import cube.aigc.PromptRecord;
 import cube.aigc.attachment.ui.Event;
-import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.PsychologyReport;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.Packet;
@@ -76,7 +76,7 @@ public class Manager implements Tickable, PerformerListener {
     /**
      * Key：文件码
      */
-    private Map<String, PaintingFuture> paintingFutureMap;
+    private Map<String, PsychologyReportFuture> psychologyReportFutureMap;
 
     public static Manager getInstance() {
         return Manager.instance;
@@ -86,7 +86,7 @@ public class Manager implements Tickable, PerformerListener {
         this.performer = performer;
         this.validTokenMap = new ConcurrentHashMap<>();
         this.asrFutureMap = new ConcurrentHashMap<>();
-        this.paintingFutureMap = new ConcurrentHashMap<>();
+        this.psychologyReportFutureMap = new ConcurrentHashMap<>();
 
         this.setupHandler();
 
@@ -135,8 +135,8 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new PublicOpinionData());
         httpServer.addContextHandler(new InferByModule());
         httpServer.addContextHandler(new PreInfer());
-        httpServer.addContextHandler(new PredictPsychology());
-        httpServer.addContextHandler(new QueryPredictPsychology());
+        httpServer.addContextHandler(new GeneratePsychologyReport());
+        httpServer.addContextHandler(new QueryPsychologyReport());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -1002,50 +1002,51 @@ public class Manager implements Tickable, PerformerListener {
      * @param fileCode
      * @return
      */
-    public PaintingFuture predictPsychology(String token, String fileCode) {
-        if (this.paintingFutureMap.containsKey(fileCode)) {
-            return this.paintingFutureMap.get(fileCode);
+    public PsychologyReportFuture generatePsychologyReport(String token, String fileCode) {
+        if (this.psychologyReportFutureMap.containsKey(fileCode)) {
+            return this.psychologyReportFutureMap.get(fileCode);
         }
 
-        final PaintingFuture paintingFuture = new PaintingFuture(token, fileCode);
-        this.paintingFutureMap.put(fileCode, paintingFuture);
+        final PsychologyReportFuture reportFuture = new PsychologyReportFuture(token, fileCode);
+        this.psychologyReportFutureMap.put(fileCode, reportFuture);
 
         this.performer.execute(new Runnable() {
             @Override
             public void run() {
-                paintingFuture.start = System.currentTimeMillis();
+                reportFuture.start = System.currentTimeMillis();
 
                 JSONObject data = new JSONObject();
                 data.put("fileCode", fileCode);
 
-                Packet packet = new Packet(AIGCAction.PredictPsychology.name, data);
+                Packet packet = new Packet(AIGCAction.GeneratePsychologyReport.name, data);
                 ActionDialect request = packet.toDialect();
                 request.addParam("token", token);
 
-                ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request);
+                // 使用超长超时
+                ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 5 * 60 * 1000);
                 if (null == response) {
-                    Logger.w(this.getClass(), "#predictPsychology - No response");
-                    paintingFuture.stateCode = AIGCStateCode.UnitError.code;
-                    paintingFuture.end = System.currentTimeMillis();
+                    Logger.w(this.getClass(), "#generatePsychologyReport - No response");
+                    reportFuture.stateCode = AIGCStateCode.UnitError.code;
+                    reportFuture.end = System.currentTimeMillis();
                     return;
                 }
 
                 Packet responsePacket = new Packet(response);
                 if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-                    Logger.w(this.getClass(), "#predictPsychology - Response state is " + Packet.extractCode(responsePacket));
-                    paintingFuture.stateCode = Packet.extractCode(responsePacket);
-                    paintingFuture.end = System.currentTimeMillis();
+                    Logger.w(this.getClass(), "#generatePsychologyReport - Response state is " + Packet.extractCode(responsePacket));
+                    reportFuture.stateCode = Packet.extractCode(responsePacket);
+                    reportFuture.end = System.currentTimeMillis();
                     return;
                 }
 
-                Painting description = new Painting(Packet.extractDataPayload(responsePacket));
-                paintingFuture.painting = description;
-                paintingFuture.stateCode = AIGCStateCode.Ok.code;
-                paintingFuture.end = System.currentTimeMillis();
+                PsychologyReport report = new PsychologyReport(Packet.extractDataPayload(responsePacket));
+                reportFuture.psychologyReport = report;
+                reportFuture.stateCode = AIGCStateCode.Ok.code;
+                reportFuture.end = System.currentTimeMillis();
             }
         });
 
-        return paintingFuture;
+        return reportFuture;
     }
 
     /**
@@ -1054,8 +1055,8 @@ public class Manager implements Tickable, PerformerListener {
      * @param fileCode
      * @return
      */
-    public PaintingFuture queryPredictPsychology(String fileCode) {
-        return this.paintingFutureMap.get(fileCode);
+    public PsychologyReportFuture queryPsychologyReport(String fileCode) {
+        return this.psychologyReportFutureMap.get(fileCode);
     }
 
     @Override
@@ -1073,12 +1074,12 @@ public class Manager implements Tickable, PerformerListener {
                 }
             }
 
-            Iterator<Map.Entry<String, PaintingFuture>> pfiter = this.paintingFutureMap.entrySet().iterator();
-            while (pfiter.hasNext()) {
-                Map.Entry<String, PaintingFuture> e = pfiter.next();
-                PaintingFuture future = e.getValue();
+            Iterator<Map.Entry<String, PsychologyReportFuture>> prfiter = this.psychologyReportFutureMap.entrySet().iterator();
+            while (prfiter.hasNext()) {
+                Map.Entry<String, PsychologyReportFuture> e = prfiter.next();
+                PsychologyReportFuture future = e.getValue();
                 if (now - future.start > 30 * 60 * 1000) {
-                    pfiter.remove();
+                    prfiter.remove();
                 }
             }
         }
@@ -1186,13 +1187,13 @@ public class Manager implements Tickable, PerformerListener {
     }
 
 
-    public class PaintingFuture implements JSONable {
+    public class PsychologyReportFuture implements JSONable {
 
         protected String token;
 
         protected String fileCode;
 
-        protected Painting painting;
+        protected PsychologyReport psychologyReport;
 
         protected long start;
 
@@ -1200,7 +1201,7 @@ public class Manager implements Tickable, PerformerListener {
 
         protected int stateCode = -1;
 
-        public PaintingFuture(String token, String fileCode) {
+        public PsychologyReportFuture(String token, String fileCode) {
             this.token = token;
             this.fileCode = fileCode;
         }
@@ -1212,8 +1213,8 @@ public class Manager implements Tickable, PerformerListener {
             json.put("stateCode", this.stateCode);
             json.put("start", this.start);
             json.put("end", this.end);
-            if (null != this.painting) {
-                json.put("painting", this.painting.toJSON());
+            if (null != this.psychologyReport) {
+                json.put("psychologyReport", this.psychologyReport.toJSON());
             }
             return json;
         }

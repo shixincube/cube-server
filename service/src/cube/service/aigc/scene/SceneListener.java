@@ -27,20 +27,19 @@
 package cube.service.aigc.scene;
 
 import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.PsychologyReport;
 import cube.common.entity.FileLabel;
 
 /**
- *
+ * 场景事件监听器。
  */
 public interface SceneListener {
 
-    void onStart(FileLabel fileLabel);
+    void onPaintingPredictCompleted(PsychologyReport report, Painting painting);
 
-    void onPaintingPredict(FileLabel fileLabel, Painting painting);
+    void onPaintingPredictFailed(PsychologyReport report);
 
-    void onPaintingPredictFailed(FileLabel fileLabel);
+    void onReportEvaluated(PsychologyReport report);
 
-    void onPaintingEvaluate(Evaluation evaluation);
-
-    void onReportEvaluate(EvaluationReport report);
+    void onReportEvaluateFailed(PsychologyReport report);
 }

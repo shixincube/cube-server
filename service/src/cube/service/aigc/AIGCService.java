@@ -37,6 +37,7 @@ import cube.aigc.Sentiment;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
 import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.PsychologyReport;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -63,6 +64,10 @@ import cube.service.aigc.module.StageListener;
 import cube.service.aigc.plugin.InjectTokenPlugin;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.ResourceAnswer;
+import cube.service.aigc.scene.Evaluation;
+import cube.service.aigc.scene.EvaluationReport;
+import cube.service.aigc.scene.PsychologyScene;
+import cube.service.aigc.scene.SceneListener;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactManager;
@@ -182,6 +187,7 @@ public class AIGCService extends AbstractModule {
     @Override
     public void start() {
         this.executor = Executors.newCachedThreadPool();
+        PsychologyScene.getInstance().setAigcService(this);
 
         (new Thread(new Runnable() {
             @Override
@@ -554,6 +560,22 @@ public class AIGCService extends AbstractModule {
      */
     public AIGCChannel getChannel(String channelCode) {
         return this.channelMap.get(channelCode);
+    }
+
+    /**
+     * 通过访问令牌获取对应的频道。
+     *
+     * @param tokenCode
+     * @return
+     */
+    public AIGCChannel getChannelByToken(String tokenCode) {
+        for (Map.Entry<String, AIGCChannel> e : this.channelMap.entrySet()) {
+            AIGCChannel channel = e.getValue();
+            if (channel.getAuthToken().getCode().equals(tokenCode)) {
+                return channel;
+            }
+        }
+        return null;
     }
 
     /**
@@ -1260,7 +1282,7 @@ public class AIGCService extends AbstractModule {
      * @param fileCode
      * @return
      */
-    public Painting predictPsychology(String token, String fileCode) {
+    public PsychologyReport generatePsychologyReport(String token, String fileCode) {
         if (!this.isStarted()) {
             return null;
         }
@@ -1268,42 +1290,48 @@ public class AIGCService extends AbstractModule {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(token);
         if (null == authToken) {
-            Logger.w(this.getClass(), "#predictPsychology - Token error: " + token);
-            return null;
-        }
-
-        AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
-        if (null == unit) {
-            Logger.w(this.getClass(), "#predictPsychology - Can NOT find unit in server");
+            Logger.w(this.getClass(), "#generatePsychologyReport - Token error: " + token);
             return null;
         }
 
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
         if (null == fileStorage) {
-            Logger.e(this.getClass(), "#predictPsychology - File storage service is not ready");
+            Logger.e(this.getClass(), "#generatePsychologyReport - File storage service is not ready");
             return null;
         }
 
         GetFile getFile = new GetFile(authToken.getDomain(), fileCode);
         JSONObject fileLabelJson = fileStorage.notify(getFile);
         if (null == fileLabelJson) {
-            Logger.e(this.getClass(), "#predictPsychology - Get file failed: " + fileCode);
+            Logger.e(this.getClass(), "#generatePsychologyReport - Get file failed: " + fileCode);
             return null;
         }
 
-        JSONObject data = new JSONObject();
-        data.put("fileLabel", fileLabelJson);
-        Packet request = new Packet(AIGCAction.PredictPsychology.name, data);
-        ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(), 60 * 1000);
-        if (null == dialect) {
-            Logger.w(this.getClass(), "#predictPsychology - Unit error");
-            return null;
-        }
+        FileLabel fileLabel = new FileLabel(fileLabelJson);
 
-        Packet response = new Packet(dialect);
-        JSONObject payload = Packet.extractDataPayload(response);
-        Painting painting = new Painting(payload);
-        return painting;
+        PsychologyReport report = PsychologyScene.getInstance().generateEvaluationReport(
+                this.getChannelByToken(token), fileLabel, new SceneListener() {
+            @Override
+            public void onPaintingPredictCompleted(PsychologyReport report, Painting painting) {
+
+            }
+
+            @Override
+            public void onPaintingPredictFailed(PsychologyReport report) {
+
+            }
+
+            @Override
+            public void onReportEvaluated(PsychologyReport report) {
+
+            }
+
+            @Override
+            public void onReportEvaluateFailed(PsychologyReport report) {
+
+            }
+        });
+        return report;
     }
 
     public boolean automaticSpeechRecognition(String domain, String fileCode, AutomaticSpeechRecognitionListener listener) {

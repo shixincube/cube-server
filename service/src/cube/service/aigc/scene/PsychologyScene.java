@@ -26,40 +26,141 @@
 
 package cube.service.aigc.scene;
 
+import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
+import cube.aigc.ModelConfig;
 import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.PsychologyReport;
 import cube.aigc.psychology.ThemeTemplate;
+import cube.aigc.psychology.Workflow;
+import cube.common.Packet;
+import cube.common.action.AIGCAction;
 import cube.common.entity.AIGCChannel;
+import cube.common.entity.AIGCUnit;
 import cube.common.entity.FileLabel;
+import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.service.cv.CVService;
+import org.json.JSONObject;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 心理学场景。
  */
 public class PsychologyScene {
 
-    private CVService cvService;
+    private final static PsychologyScene instance = new PsychologyScene();
 
     private AIGCService aigcService;
 
-    public PsychologyScene(CVService cvService, AIGCService aigcService) {
+    /**
+     * Key：访问码。
+     */
+    private Map<String, List<PsychologyReport>> psychologyReportMap;
+
+    private PsychologyScene() {
+        this.psychologyReportMap = new ConcurrentHashMap<>();
     }
 
-    public void generateEvaluationReport(AIGCChannel channel, FileLabel fileLabel, SceneListener listener) {
-        Painting painting = this.processPainting(fileLabel, listener);
-
-        this.processReport(channel, painting, listener);
+    public static PsychologyScene getInstance() {
+        return PsychologyScene.instance;
     }
 
-    private Painting processPainting(FileLabel fileLabel, SceneListener listener) {
-        return null;
+    public void setAigcService(AIGCService aigcService) {
+        this.aigcService = aigcService;
     }
 
-    private void processReport(AIGCChannel channel, Painting painting, SceneListener listener) {
+    public PsychologyReport generateEvaluationReport(AIGCChannel channel, FileLabel fileLabel, SceneListener listener) {
+        // 判断频道是否繁忙
+        if (null == channel || channel.isProcessing()) {
+            Logger.w(this.getClass(), "#generateEvaluationReport - Channel error");
+            return null;
+        }
+
+        // 设置为正在操作
+        channel.setProcessing(true);
+
+        PsychologyReport report = new PsychologyReport(fileLabel);
+
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // 处理绘图预测
+                Painting painting = processPainting(fileLabel);
+                if (null == painting) {
+                    // 预测绘图失败
+                    report.resetPhase(PsychologyReport.PHASE_PREDICT_FAILED);
+                    channel.setProcessing(false);
+                    listener.onPaintingPredictFailed(report);
+                    return;
+                }
+
+                // 绘图预测完成
+                listener.onPaintingPredictCompleted(report, painting);
+                report.resetPhase(PsychologyReport.PHASE_INFER);
+
+                // 根据图像推理报告
+                Workflow workflow = processReport(channel, painting);
+                if (null == workflow) {
+                    // 推理生成报告失败
+                    report.resetPhase(PsychologyReport.PHASE_INFER_FAILED);
+                    channel.setProcessing(false);
+                    listener.onReportEvaluateFailed(report);
+                    return;
+                }
+
+                report.setWorkflow(workflow);
+                report.resetPhase(PsychologyReport.PHASE_FINISH);
+                channel.setProcessing(false);
+                listener.onReportEvaluated(report);
+
+                // 记录
+                List<PsychologyReport> list = psychologyReportMap.get(channel.getCode());
+            }
+        });
+        thread.start();
+
+        return report;
+    }
+
+    private Painting processPainting(FileLabel fileLabel) {
+        AIGCUnit unit = this.aigcService.selectUnitByName(ModelConfig.PREFERENCE_UNIT_FOR_CV);
+        if (null == unit) {
+            Logger.w(this.getClass(), "#processPainting - Can NOT find CV unit in server");
+            return null;
+        }
+
+        JSONObject data = new JSONObject();
+        data.put("fileLabel", fileLabel.toJSON());
+        Packet request = new Packet(AIGCAction.PredictImage.name, data);
+        ActionDialect dialect = this.aigcService.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+        if (null == dialect) {
+            Logger.w(this.getClass(), "#processPainting - Predict image unit error");
+            return null;
+        }
+
+        Packet response = new Packet(dialect);
+        if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#processPainting - Predict image response state: " +
+                    Packet.extractCode(response));
+            return null;
+        }
+
+        JSONObject payload = Packet.extractDataPayload(response);
+        // 绘画识别结果
+        Painting painting = new Painting(payload);
+        return painting;
+    }
+
+    private Workflow processReport(AIGCChannel channel, Painting painting) {
         Evaluation evaluation = (null == painting) ? new Evaluation() : new Evaluation(painting);
 
         EvaluationReport report = evaluation.makeEvaluationReport();
 
         ThemeTemplate template = report.makeStress(channel, this.aigcService);
+
+        return null;
     }
 }

@@ -242,9 +242,14 @@ public enum AIGCAction {
     PreInfer("preInfer"),
 
     /**
-     * 预测心理学图画。
+     * 预测图片元素。
      */
-    PredictPsychology("predictPsychology"),
+    PredictImage("predictImage"),
+
+    /**
+     * 生成心理学报告。
+     */
+    GeneratePsychologyReport("generatePsychologyReport"),
 
     ;
 
