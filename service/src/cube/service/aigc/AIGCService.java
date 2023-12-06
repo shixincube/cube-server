@@ -38,6 +38,7 @@ import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.Theme;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -1280,9 +1281,10 @@ public class AIGCService extends AbstractModule {
      *
      * @param token
      * @param fileCode
+     * @param theme
      * @return
      */
-    public PsychologyReport generatePsychologyReport(String token, String fileCode) {
+    public PsychologyReport generatePsychologyReport(String token, String fileCode, Theme theme) {
         if (!this.isStarted()) {
             return null;
         }
@@ -1310,7 +1312,7 @@ public class AIGCService extends AbstractModule {
         FileLabel fileLabel = new FileLabel(fileLabelJson);
 
         PsychologyReport report = PsychologyScene.getInstance().generateEvaluationReport(
-                this.getChannelByToken(token), fileLabel, new SceneListener() {
+                this.getChannelByToken(token), fileLabel, theme, new SceneListener() {
             @Override
             public void onPaintingPredictCompleted(PsychologyReport report, Painting painting) {
 

@@ -44,4 +44,27 @@ public enum Theme {
     Theme(String name) {
         this.name = name;
     }
+
+    public static Theme parse(String name) {
+        for (Theme th : Theme.values()) {
+            if (th.name.equals(name)) {
+                return th;
+            }
+        }
+
+        if (name.equalsIgnoreCase("Stress")) {
+            return Stress;
+        }
+        else if (name.equalsIgnoreCase("FamilyRelationships")) {
+            return FamilyRelationships;
+        }
+        else if (name.equalsIgnoreCase("Intimacy")) {
+            return Intimacy;
+        }
+        else if (name.equalsIgnoreCase("Cognition")) {
+            return Cognition;
+        }
+
+        return null;
+    }
 }

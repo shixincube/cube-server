@@ -1000,9 +1000,10 @@ public class Manager implements Tickable, PerformerListener {
      *
      * @param token
      * @param fileCode
+     * @param theme
      * @return
      */
-    public PsychologyReportFuture generatePsychologyReport(String token, String fileCode) {
+    public PsychologyReportFuture generatePsychologyReport(String token, String fileCode, String theme) {
         if (this.psychologyReportFutureMap.containsKey(fileCode)) {
             return this.psychologyReportFutureMap.get(fileCode);
         }
@@ -1017,13 +1018,14 @@ public class Manager implements Tickable, PerformerListener {
 
                 JSONObject data = new JSONObject();
                 data.put("fileCode", fileCode);
+                data.put("theme", theme);
 
                 Packet packet = new Packet(AIGCAction.GeneratePsychologyReport.name, data);
                 ActionDialect request = packet.toDialect();
                 request.addParam("token", token);
 
-                // 使用超长超时
-                ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 5 * 60 * 1000);
+                // 不需要超长的超时时间
+                ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
                 if (null == response) {
                     Logger.w(this.getClass(), "#generatePsychologyReport - No response");
                     reportFuture.stateCode = AIGCStateCode.UnitError.code;

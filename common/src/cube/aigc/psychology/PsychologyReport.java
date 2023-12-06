@@ -27,6 +27,7 @@
 package cube.aigc.psychology;
 
 import cube.common.JSONable;
+import cube.common.entity.AIGCChannel;
 import cube.common.entity.FileLabel;
 import org.json.JSONObject;
 
@@ -50,15 +51,25 @@ public class PsychologyReport implements JSONable {
 
     private FileLabel fileLabel;
 
+    private Theme theme;
+
+    private AIGCChannel channel;
+
     private Workflow workflow;
 
-    public PsychologyReport(FileLabel fileLabel) {
+    public PsychologyReport(FileLabel fileLabel, Theme theme, AIGCChannel channel) {
         this.phase = PHASE_PREDICT;
         this.fileLabel = fileLabel;
+        this.theme = theme;
+        this.channel = channel;
     }
 
     public PsychologyReport(JSONObject json) {
         this.phase = json.getString("phase");
+    }
+
+    public FileLabel getFileLabel() {
+        return this.fileLabel;
     }
 
     public void resetPhase(String phase) {
@@ -79,6 +90,8 @@ public class PsychologyReport implements JSONable {
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
         json.put("phase", this.phase);
+        json.put("fileLabel", this.fileLabel.toCompactJSON());
+        json.put("theme", this.theme.name);
         return json;
     }
 }

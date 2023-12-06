@@ -94,7 +94,7 @@ public class EvaluationReport {
         return this.reportScoreList;
     }
 
-    public ThemeTemplate makeStress(AIGCChannel channel, AIGCService aigcService) {
+    public Workflow makeStress(AIGCChannel channel, AIGCService aigcService) {
         // 正负向分类
         List<ReportScore> positiveScoreList = new ArrayList<>();
         List<ReportScore> negativeScoreList = new ArrayList<>();
@@ -138,7 +138,7 @@ public class EvaluationReport {
 
         PromptBuilder promptBuilder = new PromptBuilder();
 
-        // 调用 AGI 生成结果
+        // 调用 LLM 生成结果
         AIGCUnit unit = aigcService.selectUnitByName("Chat");
         for (Workflow.PromptGroup group : workflow.getPhase1Groups()) {
             List<AIGCGenerationRecord> records = new ArrayList<>();
@@ -159,7 +159,7 @@ public class EvaluationReport {
 
         // Phase 2
 
-        return template;
+        return workflow;
     }
 
     public ThemeTemplate makeFamilyRelationships() {

@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.Theme;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
@@ -56,12 +57,12 @@ public class GeneratePsychologyReportTask extends ServiceTask {
         String token = getTokenCode(dialect);
         if (null == token) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.NoToken.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        if (!packet.data.has("fileCode")) {
+        if (!packet.data.has("fileCode") || !packet.data.has("theme")) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
@@ -69,9 +70,18 @@ public class GeneratePsychologyReportTask extends ServiceTask {
         }
 
         String fileCode = packet.data.getString("fileCode");
+        String themeName = packet.data.getString("theme");
+
+        Theme theme = Theme.parse(themeName);
+        if (null == theme) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        PsychologyReport psychologyReport = service.generatePsychologyReport(token, fileCode);
+        PsychologyReport psychologyReport = service.generatePsychologyReport(token, fileCode, theme);
 
         if (null != psychologyReport) {
             this.cellet.speak(this.talkContext,

@@ -29,10 +29,7 @@ package cube.service.aigc.scene;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.Painting;
-import cube.aigc.psychology.PsychologyReport;
-import cube.aigc.psychology.ThemeTemplate;
-import cube.aigc.psychology.Workflow;
+import cube.aigc.psychology.*;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.AIGCChannel;
@@ -42,6 +39,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,7 +54,7 @@ public class PsychologyScene {
     private AIGCService aigcService;
 
     /**
-     * Key：访问码。
+     * Key：令牌码。
      */
     private Map<String, List<PsychologyReport>> psychologyReportMap;
 
@@ -72,7 +70,21 @@ public class PsychologyScene {
         this.aigcService = aigcService;
     }
 
-    public PsychologyReport generateEvaluationReport(AIGCChannel channel, FileLabel fileLabel, SceneListener listener) {
+    public PsychologyReport getPsychologyReport(String token, String fileCode) {
+        List<PsychologyReport> list = this.psychologyReportMap.get(token);
+        if (null == list) {
+            return null;
+        }
+        for (PsychologyReport report : list) {
+            if (report.getFileLabel().getFileCode().equals(fileCode)) {
+                return report;
+            }
+        }
+        return null;
+    }
+
+    public PsychologyReport generateEvaluationReport(AIGCChannel channel, FileLabel fileLabel,
+                                                     Theme theme, SceneListener listener) {
         // 判断频道是否繁忙
         if (null == channel || channel.isProcessing()) {
             Logger.w(this.getClass(), "#generateEvaluationReport - Channel error");
@@ -82,7 +94,7 @@ public class PsychologyScene {
         // 设置为正在操作
         channel.setProcessing(true);
 
-        PsychologyReport report = new PsychologyReport(fileLabel);
+        PsychologyReport report = new PsychologyReport(fileLabel, theme, channel);
 
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -102,7 +114,7 @@ public class PsychologyScene {
                 report.resetPhase(PsychologyReport.PHASE_INFER);
 
                 // 根据图像推理报告
-                Workflow workflow = processReport(channel, painting);
+                Workflow workflow = processReport(channel, painting, theme);
                 if (null == workflow) {
                     // 推理生成报告失败
                     report.resetPhase(PsychologyReport.PHASE_INFER_FAILED);
@@ -117,7 +129,12 @@ public class PsychologyScene {
                 listener.onReportEvaluated(report);
 
                 // 记录
-                List<PsychologyReport> list = psychologyReportMap.get(channel.getCode());
+                List<PsychologyReport> list = psychologyReportMap.get(channel.getAuthToken().getCode());
+                if (null == list) {
+                    list = new ArrayList<>();
+                    psychologyReportMap.put(channel.getAuthToken().getCode(), list);
+                }
+                list.add(report);
             }
         });
         thread.start();
@@ -154,13 +171,29 @@ public class PsychologyScene {
         return painting;
     }
 
-    private Workflow processReport(AIGCChannel channel, Painting painting) {
+    private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme) {
+        Workflow workflow = null;
+
         Evaluation evaluation = (null == painting) ? new Evaluation() : new Evaluation(painting);
 
         EvaluationReport report = evaluation.makeEvaluationReport();
 
-        ThemeTemplate template = report.makeStress(channel, this.aigcService);
+        switch (theme) {
+            case Stress:
+                workflow = report.makeStress(channel, this.aigcService);
+                break;
+            case FamilyRelationships:
+                break;
+            case Intimacy:
+                break;
+            case Cognition:
+                break;
+            default:
+                break;
+        }
 
-        return null;
+
+
+        return workflow;
     }
 }

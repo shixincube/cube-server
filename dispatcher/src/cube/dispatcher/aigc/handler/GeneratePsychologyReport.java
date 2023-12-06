@@ -62,7 +62,9 @@ public class GeneratePsychologyReport extends ContextHandler {
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
                 String fileCode = data.getString("fileCode");
-                Manager.PsychologyReportFuture reportFuture = Manager.getInstance().generatePsychologyReport(token, fileCode);
+                String theme = data.getString("theme");
+                Manager.PsychologyReportFuture reportFuture =
+                        Manager.getInstance().generatePsychologyReport(token, fileCode, theme);
                 if (null != reportFuture) {
                     this.respondOk(response, reportFuture.toJSON());
                     this.complete();
