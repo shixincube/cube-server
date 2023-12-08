@@ -36,6 +36,7 @@ import cube.aigc.psychology.composition.Score;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCGenerationRecord;
 import cube.common.entity.AIGCUnit;
+import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.ChatListener;
 
@@ -151,7 +152,7 @@ public class EvaluationReport {
                         }
 
                         @Override
-                        public void onFailed(AIGCChannel channel) {
+                        public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                         }
                     });
         }

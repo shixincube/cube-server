@@ -639,6 +639,47 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
+     * 停止频道正在进行的操作。
+     *
+     * @param channelCode 指定频道码。
+     * @return
+     */
+    public AIGCChannel stopProcessing(String channelCode) {
+        AIGCChannel channel = this.getChannel(channelCode);
+        if (null == channel) {
+            return null;
+        }
+
+        if (channel.isProcessing()) {
+            boolean hit = false;
+
+            // 进入队列，但是没有被执行线程处理
+            for (Queue<ChatUnitMeta> queue : this.chatQueueMap.values()) {
+                Iterator<ChatUnitMeta> iter = queue.iterator();
+                while (iter.hasNext()) {
+                    ChatUnitMeta meta = iter.next();
+                    if (meta.channel.getCode().equals(channelCode)) {
+                        iter.remove();
+                        channel.setProcessing(false);
+                        hit = true;
+                        break;
+                    }
+                }
+                if (hit) {
+                    break;
+                }
+            }
+
+            if (!hit) {
+                // 已经执行
+                this.cellet.interrupt(channel.getLastUnitMetaSn());
+            }
+        }
+
+        return channel;
+    }
+
+    /**
      * 保活频道。
      *
      * @param token
@@ -765,7 +806,7 @@ public class AIGCService extends AbstractModule {
                     }
 
                     @Override
-                    public void onFailed(AIGCChannel channel) {
+                    public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                         synchronized (result) {
                             result.notify();
                         }
@@ -885,7 +926,7 @@ public class AIGCService extends AbstractModule {
 
         if (null == unit) {
             // 没有单元数据
-            listener.onFailed(channel);
+            listener.onFailed(channel, AIGCStateCode.NotFound);
             return;
         }
 
@@ -1739,6 +1780,10 @@ public class AIGCService extends AbstractModule {
         Queue<ChatUnitMeta> queue = this.chatQueueMap.get(queryKey);
         if (null == queue) {
             Logger.w(AIGCService.class, "#processChatQueue - Not found unit: " + queryKey);
+            AIGCUnit unit = this.unitMap.get(queryKey);
+            if (null != unit) {
+                unit.setRunning(false);
+            }
             return;
         }
 
@@ -1996,6 +2041,8 @@ public class AIGCService extends AbstractModule {
         }
 
         public void process() {
+            this.channel.setLastUnitMetaSn(this.sn);
+
             // 识别内容
             ComplexContext complexContext = recognizeContext(this.content, this.channel.getAuthToken());
 
@@ -2051,18 +2098,28 @@ public class AIGCService extends AbstractModule {
                     else {
                         this.channel.setProcessing(false);
                         // 回调失败
-                        this.listener.onFailed(this.channel);
+                        this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
                         return;
                     }
                 }
                 else {
                     Packet request = new Packet(AIGCAction.Chat.name, data);
-                    ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
+                    ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(),
+                            3 * 60 * 1000, this.sn);
                     if (null == dialect) {
                         Logger.w(AIGCService.class, "Chat unit error - channel: " + this.channel.getCode());
                         this.channel.setProcessing(false);
                         // 回调错误
-                        this.listener.onFailed(this.channel);
+                        this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
+                        return;
+                    }
+
+                    // 是否被中断
+                    if (cellet.isInterruption(dialect)) {
+                        Logger.d(AIGCService.class, "Channel interrupted: " + this.channel.getCode());
+                        this.channel.setProcessing(false);
+                        // 回调错误
+                        this.listener.onFailed(this.channel, AIGCStateCode.Interrupted);
                         return;
                     }
 
@@ -2073,7 +2130,7 @@ public class AIGCService extends AbstractModule {
                         Logger.w(AIGCService.class, "Chat unit respond failed - channel: " + this.channel.getCode());
                         this.channel.setProcessing(false);
                         // 回调错误
-                        this.listener.onFailed(this.channel);
+                        this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
                         return;
                     }
 
@@ -2430,9 +2487,19 @@ public class AIGCService extends AbstractModule {
 
             Packet request = new Packet(AIGCAction.TextToImage.name, data);
             // 使用较长的超时时间，以便等待上传数据
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 180 * 1000);
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(),
+                    180 * 1000, this.sn);
             if (null == dialect) {
                 Logger.w(AIGCService.class, "TextToImage unit error");
+                this.channel.setProcessing(false);
+                // 回调错误
+                this.listener.onFailed(this.channel);
+                return;
+            }
+
+            // 是否被中断
+            if (cellet.isInterruption(dialect)) {
+                Logger.d(AIGCService.class, "Channel interrupted: " + this.channel.getCode());
                 this.channel.setProcessing(false);
                 // 回调错误
                 this.listener.onFailed(this.channel);

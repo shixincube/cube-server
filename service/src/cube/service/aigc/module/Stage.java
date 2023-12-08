@@ -29,6 +29,7 @@ package cube.service.aigc.module;
 import cell.util.Utils;
 import cube.aigc.Sentiment;
 import cube.common.entity.*;
+import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.ChatListener;
 import org.json.JSONObject;
@@ -107,7 +108,7 @@ public class Stage extends Entity {
                                     }
 
                                     @Override
-                                    public void onFailed(AIGCChannel channel) {
+                                    public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                                         callback(total.get(), callCount, publicOpinion, result, listener);
                                     }
                                 });
@@ -136,7 +137,7 @@ public class Stage extends Entity {
                                     }
 
                                     @Override
-                                    public void onFailed(AIGCChannel channel) {
+                                    public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                                         callback(total.get(), callCount, publicOpinion, result, listener);
                                     }
                                 });

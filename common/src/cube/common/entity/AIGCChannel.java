@@ -154,6 +154,10 @@ public class AIGCChannel extends Entity {
         this.lastUnitMetaSn = sn;
     }
 
+    public long getLastUnitMetaSn() {
+        return this.lastUnitMetaSn;
+    }
+
     public AIGCGenerationRecord getLastRecord() {
         synchronized (this.history) {
             if (this.history.isEmpty()) {

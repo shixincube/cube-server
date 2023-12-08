@@ -29,6 +29,7 @@ package cube.service.aigc;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.action.AIGCAction;
 import cube.core.AbstractCellet;
@@ -81,7 +82,11 @@ public class AIGCCellet extends AbstractCellet {
     }
 
     public ActionDialect transmit(TalkContext talkContext, ActionDialect dialect, long timeout) {
-        Responder responder = new Responder(dialect);
+        return this.transmit(talkContext, dialect, timeout, Utils.generateSerialNumber());
+    }
+
+    public ActionDialect transmit(TalkContext talkContext, ActionDialect dialect, long timeout, long sn) {
+        Responder responder = new Responder(sn, dialect);
         this.responderList.add(responder);
 
         if (!this.speak(talkContext, dialect)) {
@@ -98,6 +103,28 @@ public class AIGCCellet extends AbstractCellet {
         }
 
         return response;
+    }
+
+    public void interrupt(long sn) {
+        Responder responder = null;
+        for (Responder r : this.responderList) {
+            if (r.getSN() == sn) {
+                responder = r;
+                break;
+            }
+        }
+
+        if (null == responder) {
+            return;
+        }
+
+        Logger.d(AIGCCellet.class, "Response (" + sn + ") interrupt");
+        this.responderList.remove(responder);
+        responder.notifyResponse(new ActionDialect("interrupt"));
+    }
+
+    public boolean isInterruption(ActionDialect actionDialect) {
+        return actionDialect.getName().equalsIgnoreCase("interrupt");
     }
 
     @Override

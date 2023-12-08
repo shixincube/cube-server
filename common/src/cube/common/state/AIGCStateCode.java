@@ -67,6 +67,11 @@ public enum AIGCStateCode {
     InvalidDomain(11),
 
     /**
+     * 被中断的操作。
+     */
+    Interrupted(12),
+
+    /**
      * 令牌不一致。
      */
     InconsistentToken(21),

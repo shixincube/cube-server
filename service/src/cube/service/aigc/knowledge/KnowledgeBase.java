@@ -476,7 +476,7 @@ public class KnowledgeBase {
                 }
 
                 @Override
-                public void onFailed(AIGCChannel channel) {
+                public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                     listener.onFailed(channel);
                     Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Single chat failed: " + channelCode);
                 }

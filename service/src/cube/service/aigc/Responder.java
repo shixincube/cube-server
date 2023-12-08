@@ -26,10 +26,7 @@
 
 package cube.service.aigc;
 
-import cell.core.cellet.Cellet;
-import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.Utils;
 import org.json.JSONObject;
 
 /**
@@ -39,16 +36,20 @@ public class Responder {
 
     public final static String NotifierKey = "_notifier";
 
-    private Long sn;
+    private long sn;
 
     private JSONObject notifier;
 
     private ActionDialect response;
 
-    public Responder(ActionDialect actionDialect) {
-        this.sn = Utils.generateSerialNumber();
+    public Responder(long sn, ActionDialect actionDialect) {
+        this.sn = sn;
         this.notifier = createNotifier();
         actionDialect.addParam(Responder.NotifierKey, this.notifier);
+    }
+
+    public long getSN() {
+        return this.sn;
     }
 
     public ActionDialect waitingFor(long timeout) {
@@ -80,7 +81,7 @@ public class Responder {
 
     public boolean isResponse(ActionDialect response) {
         JSONObject notifier = response.getParamAsJson(Responder.NotifierKey);
-        if (notifier.getLong("sn") == this.sn.longValue()) {
+        if (notifier.getLong("sn") == this.sn) {
             return true;
         }
 
@@ -89,7 +90,7 @@ public class Responder {
 
     private JSONObject createNotifier() {
         JSONObject json = new JSONObject();
-        json.put("sn", this.sn.longValue());
+        json.put("sn", this.sn);
         json.put("ts", System.currentTimeMillis());
         return json;
     }

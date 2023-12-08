@@ -36,6 +36,8 @@ public final class Consts {
 
     public final static String ANSWER_NO_CONTENT = "很抱歉，我目前没有符合该描述的信息提供给您。";
 
+    public final static String ANSWER_INTERRUPTED = "我已停止了响应。";
+
     public final static String ANSWER_SILENT = "";
 
     private final static String ANSWER_URL_FAILURE_FORMAT = "这是站点 %s 的访问链接：%s\n我没有访问到该链接数据，此链接可能已经失效了。";
