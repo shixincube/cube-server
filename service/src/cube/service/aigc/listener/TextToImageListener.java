@@ -28,6 +28,7 @@ package cube.service.aigc.listener;
 
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCGenerationRecord;
+import cube.common.state.AIGCStateCode;
 
 /**
  * 文本生成图像监听器。
@@ -38,5 +39,5 @@ public interface TextToImageListener {
 
     void onCompleted(AIGCGenerationRecord record);
 
-    void onFailed(AIGCChannel channel);
+    void onFailed(AIGCChannel channel, AIGCStateCode stateCode);
 }

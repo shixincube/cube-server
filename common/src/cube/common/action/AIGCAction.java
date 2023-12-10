@@ -72,6 +72,11 @@ public enum AIGCAction {
     RequestChannel("requestChannel"),
 
     /**
+     * 停止通道响应。
+     */
+    StopChannel("stopChannel"),
+
+    /**
      * 获取通道工作信息。
      */
     GetChannelInfo("getChannelInfo"),

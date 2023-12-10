@@ -128,10 +128,19 @@ public class ChatTask extends ServiceTask {
                     }
 
                     @Override
-                    public void onFailed(AIGCChannel channel) {
-                        cellet.speak(talkContext,
-                                makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
-                        markResponseTime();
+                    public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
+                        if (stateCode == AIGCStateCode.Interrupted) {
+                            // 被中断
+                            AIGCGenerationRecord record = new AIGCGenerationRecord(content, Consts.ANSWER_INTERRUPTED);
+                            cellet.speak(talkContext,
+                                    makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
+                            markResponseTime();
+                        }
+                        else {
+                            cellet.speak(talkContext,
+                                    makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
+                            markResponseTime();
+                        }
                     }
                 });
             }

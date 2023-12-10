@@ -2493,7 +2493,7 @@ public class AIGCService extends AbstractModule {
                 Logger.w(AIGCService.class, "TextToImage unit error");
                 this.channel.setProcessing(false);
                 // 回调错误
-                this.listener.onFailed(this.channel);
+                this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
                 return;
             }
 
@@ -2502,7 +2502,7 @@ public class AIGCService extends AbstractModule {
                 Logger.d(AIGCService.class, "Channel interrupted: " + this.channel.getCode());
                 this.channel.setProcessing(false);
                 // 回调错误
-                this.listener.onFailed(this.channel);
+                this.listener.onFailed(this.channel, AIGCStateCode.Interrupted);
                 return;
             }
 
@@ -2529,7 +2529,7 @@ public class AIGCService extends AbstractModule {
                 });
             }
             else {
-                this.listener.onFailed(this.channel);
+                this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
             }
 
             // 重置状态

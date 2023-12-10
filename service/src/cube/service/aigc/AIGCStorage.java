@@ -69,6 +69,8 @@ public class AIGCStorage implements Storagable {
 
     private final String knowledgeArticleTable = "aigc_knowledge_article";
 
+    private final String knowledgeParaphraseTable = "aigc_knowledge_paraphrase";
+
     private final String chartReactionTable = "aigc_chart_reaction";
 
     private final String chartSeriesTable = "aigc_chart_series";
@@ -237,6 +239,24 @@ public class AIGCStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] knowledgeParaphraseFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("parent_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            new StorageField("category", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("word", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("paraphrase", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             })
     };
@@ -429,6 +449,13 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.knowledgeArticleTable, this.knowledgeArticleFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.knowledgeArticleTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.knowledgeParaphraseTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.knowledgeParaphraseTable, this.knowledgeParaphraseFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.knowledgeParaphraseTable + "' successfully");
             }
         }
 
@@ -834,6 +861,43 @@ public class AIGCStorage implements Storagable {
                 conditionals.toArray(new Conditional[0]));
         return result;
     }
+
+    public List<KnowledgeParaphrase> readKnowledgeParaphrases(String category) {
+        List<KnowledgeParaphrase> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeParaphraseTable,
+                this.knowledgeParaphraseFields, new Conditional[] {
+                Conditional.createLike("category", category)
+        });
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            KnowledgeParaphrase paraphrase = new KnowledgeParaphrase(data.get("id").getLong(),
+                    data.get("parent_id").getLong(), data.get("category").getString(),
+                    data.get("word").getString(), data.get("paraphrase").getString());
+            list.add(paraphrase);
+        }
+
+        return list;
+    }
+
+    public boolean writeKnowledgeParaphrases(List<KnowledgeParaphrase> list) {
+        for (KnowledgeParaphrase paraphrase : list) {
+            boolean result = this.storage.executeInsert(this.knowledgeParaphraseTable, new StorageField[] {
+                    new StorageField("id", paraphrase.getId().longValue()),
+                    new StorageField("parent_id", paraphrase.getParentId()),
+                    new StorageField("category", paraphrase.getCategory()),
+                    new StorageField("word", paraphrase.getWord()),
+                    new StorageField("paraphrase", paraphrase.getParaphrase())
+            });
+            if (!result) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    
 
     public List<ChartReaction> readChartReactions(String primary, String secondary, String tertiary, String quaternary) {
         List<ChartReaction> list = new ArrayList<>();

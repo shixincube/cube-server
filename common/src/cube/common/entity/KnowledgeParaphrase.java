@@ -42,8 +42,9 @@ public class KnowledgeParaphrase extends Entity {
 
     private String paraphrase;
 
-    public KnowledgeParaphrase(String category, String word, String paraphrase) {
-        super(Utils.generateSerialNumber());
+    public KnowledgeParaphrase(long id, long parentId, String category, String word, String paraphrase) {
+        super(id);
+        this.parentId = parentId;
         this.category = category;
         this.word = word;
         this.paraphrase = paraphrase;
@@ -51,9 +52,14 @@ public class KnowledgeParaphrase extends Entity {
 
     public KnowledgeParaphrase(JSONObject json) {
         super(json);
+        this.parentId = json.getLong("parentId");
         this.category = json.getString("category");
         this.word = json.getString("word");
         this.paraphrase = json.getString("paraphrase");
+    }
+
+    public long getParentId() {
+        return this.parentId;
     }
 
     public String getCategory() {
@@ -71,6 +77,7 @@ public class KnowledgeParaphrase extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        json.put("parentId", this.parentId);
         json.put("category", this.category);
         json.put("word", this.word);
         json.put("paraphrase", this.paraphrase);

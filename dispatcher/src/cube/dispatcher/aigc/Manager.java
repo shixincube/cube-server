@@ -114,6 +114,7 @@ public class Manager implements Tickable, PerformerListener {
 
         httpServer.addContextHandler(new Segmentation());
         httpServer.addContextHandler(new Channel());
+        httpServer.addContextHandler(new StopProcessing());
         httpServer.addContextHandler(new Chat());
         httpServer.addContextHandler(new NLGeneralTask());
         httpServer.addContextHandler(new Sentiment());
@@ -471,6 +472,29 @@ public class Manager implements Tickable, PerformerListener {
 
         AIGCChannel channel = new AIGCChannel(Packet.extractDataPayload(responsePacket));
         return channel;
+    }
+
+    public AIGCChannel stopProcessing(String token, String channelCode) {
+        JSONObject data = new JSONObject();
+        data.put("code", channelCode);
+
+        Packet packet = new Packet(AIGCAction.StopChannel.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#stopProcessing - Response is null : " + channelCode);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#stopProcessing - Response state code is NOT Ok: " + channelCode +
+                    " - " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new AIGCChannel(Packet.extractDataPayload(responsePacket));
     }
 
     public JSONObject getChannel(String token, String channelCode) {
