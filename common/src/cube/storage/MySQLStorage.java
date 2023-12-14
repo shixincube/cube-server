@@ -510,6 +510,8 @@ public class MySQLStorage extends AbstractStorage {
                 }
             }
 
+            this.count.incrementAndGet();
+
             Connection conn = this.connections.poll();
             if (null != conn) {
                 try {
@@ -542,10 +544,13 @@ public class MySQLStorage extends AbstractStorage {
             }
 
             if (null == conn) {
+                this.count.decrementAndGet();
+                synchronized (this) {
+                    this.notify();
+                }
                 return null;
             }
 
-            this.count.incrementAndGet();
             return conn;
         }
 
@@ -562,13 +567,11 @@ public class MySQLStorage extends AbstractStorage {
                 Logger.e(this.getClass(), "#returnConn", e);
             }
 
-            if (this.count.get() >= this.maxConn) {
-                synchronized (this) {
-                    this.notifyAll();
-                }
-            }
-
             this.count.decrementAndGet();
+
+            synchronized (this) {
+                this.notify();
+            }
         }
 
         protected void close() {

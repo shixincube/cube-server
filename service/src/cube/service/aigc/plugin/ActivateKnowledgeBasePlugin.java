@@ -24,54 +24,50 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.service.aigc.plugin;
 
-import org.json.JSONObject;
+import cell.util.log.Logger;
+import cube.common.entity.Contact;
+import cube.common.entity.KnowledgeProfile;
+import cube.plugin.Plugin;
+import cube.plugin.PluginContext;
+import cube.service.aigc.AIGCService;
+import cube.service.contact.ContactPluginContext;
 
 /**
- * 知识库的侧写。
+ * 当创建新联系人时激活知识库。
  */
-public class KnowledgeProfile extends Entity {
+public class ActivateKnowledgeBasePlugin implements Plugin {
 
-    public final static int STATE_NORMAL = 0;
+    private final AIGCService service;
 
-    public final static int STATE_READ = 1;
-
-    public final static int STATE_FORBIDDEN = 2;
-
-    public final long contactId;
-
-    public final int state;
-
-    /**
-     * 最大可用空间。
-     */
-    public final long maxSize;
-
-    public KnowledgeProfile(long id, long contactId, int state, long maxSize) {
-        super(id);
-        this.contactId = contactId;
-        this.state = state;
-        this.maxSize = maxSize;
-    }
-
-    public KnowledgeProfile(JSONObject json) {
-        super(json);
-        this.contactId = json.getLong("contactId");
-        this.state = json.getInt("state");
-        this.maxSize = json.getLong("maxSize");
+    public ActivateKnowledgeBasePlugin(AIGCService service) {
+        this.service = service;
     }
 
     @Override
-    public JSONObject toJSON() {
-        JSONObject json = super.toJSON();
-        json.put("contactId", this.contactId);
-        json.put("state", this.state);
-        json.put("maxSize", this.maxSize);
-        return json;
+    public void setup() {
+        // Nothing
     }
 
-    public static KnowledgeProfile createDummy() {
-        return new KnowledgeProfile(0, 0, STATE_FORBIDDEN, 0);
+    @Override
+    public void teardown() {
+        // Nothing
+    }
+
+    @Override
+    public void onAction(PluginContext context) {
+        try {
+            ContactPluginContext ctx = (ContactPluginContext) context;
+            Contact contact = ctx.getContact();
+
+            Logger.i(ActivateKnowledgeBasePlugin.class, "Activate knowledge base: " + contact.getId());
+
+            // 更新
+            this.service.getStorage().updateKnowledgeProfile(contact.getId(),
+                    KnowledgeProfile.STATE_NORMAL, 549755813888L);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#onAction", e);
+        }
     }
 }

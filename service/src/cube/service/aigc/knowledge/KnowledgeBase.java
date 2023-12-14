@@ -48,6 +48,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 知识库操作。
@@ -403,6 +405,21 @@ public class KnowledgeBase {
 
     public boolean performKnowledgeQA(String channelCode, String unitName, String query,
                                       KnowledgeQAListener listener) {
+        return this.performKnowledgeQA(channelCode, unitName, query, null, listener);
+    }
+
+    /**
+     * 执行知识库 QA
+     *
+     * @param channelCode
+     * @param unitName
+     * @param query
+     * @param knowledgeCategory
+     * @param listener
+     * @return
+     */
+    public boolean performKnowledgeQA(String channelCode, String unitName, String query,
+                                      String knowledgeCategory, KnowledgeQAListener listener) {
         Logger.d(this.getClass(), "#performKnowledgeQA - Channel: " + channelCode +
                 "/" + unitName + "/" + query);
 
@@ -558,6 +575,8 @@ public class KnowledgeBase {
 
         protected List<KnowledgeArticle> articleList;
 
+        protected Map<String, List<KnowledgeParaphrase>> paraphraseMap;
+
         protected AIGCUnit unit;
 
         public KnowledgeRelation() {
@@ -646,6 +665,22 @@ public class KnowledgeBase {
             }
 
             this.articleList.clear();
+        }
+
+        public List<KnowledgeParaphrase> getKnowledgeParaphrases(String category) {
+            if (null == this.paraphraseMap) {
+                this.paraphraseMap = new ConcurrentHashMap<>();
+            }
+
+            return this.paraphraseMap.get(category);
+        }
+
+        public void addKnowledgeParaphrases(String category, List<KnowledgeParaphrase> list) {
+            if (null == this.paraphraseMap) {
+                this.paraphraseMap = new ConcurrentHashMap<>();
+            }
+
+            this.paraphraseMap.put(category, list);
         }
     }
 }

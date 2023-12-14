@@ -26,7 +26,6 @@
 
 package cube.common.entity;
 
-import cell.util.Utils;
 import org.json.JSONObject;
 
 /**

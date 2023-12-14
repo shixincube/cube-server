@@ -62,6 +62,7 @@ import cube.service.aigc.module.ModuleManager;
 import cube.service.aigc.module.PublicOpinion;
 import cube.service.aigc.module.Stage;
 import cube.service.aigc.module.StageListener;
+import cube.service.aigc.plugin.ActivateKnowledgeBasePlugin;
 import cube.service.aigc.plugin.InjectTokenPlugin;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.ResourceAnswer;
@@ -71,6 +72,7 @@ import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.SceneListener;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
+import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.tokenizer.Tokenizer;
 import cube.storage.StorageType;
@@ -154,7 +156,10 @@ public class AIGCService extends AbstractModule {
 
     private ConcurrentHashMap<String, AIGCChannel> channelMap;
 
-    private ConcurrentHashMap<String, KnowledgeBase> knowledgeMap;
+    /**
+     * Key: 联系人 ID 。
+     */
+    private ConcurrentHashMap<Long, KnowledgeBase> knowledgeMap;
 
     private long channelTimeout = 30 * 60 * 1000;
 
@@ -221,6 +226,16 @@ public class AIGCService extends AbstractModule {
                 }
                 authService.getPluginSystem().register(AuthServiceHook.InjectToken,
                         new InjectTokenPlugin(AIGCService.this));
+
+                while (!ContactManager.getInstance().isStarted()) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                ContactManager.getInstance().getPluginSystem().register(ContactHook.NewContact,
+                        new ActivateKnowledgeBasePlugin(AIGCService.this));
 
                 // 资源管理器
                 Explorer.getInstance().setup(AIGCService.this, tokenizer);
@@ -519,21 +534,34 @@ public class AIGCService extends AbstractModule {
      * @return
      */
     public synchronized KnowledgeBase getKnowledgeBase(String tokenCode) {
-        KnowledgeBase base = this.knowledgeMap.get(tokenCode);
-        if (null == base) {
-            AuthToken authToken = this.getToken(tokenCode);
-            if (null == authToken) {
-                return null;
-            }
+        AuthToken authToken = this.getToken(tokenCode);
+        if (null == authToken) {
+            return null;
+        }
 
+        return this.getKnowledgeBase(authToken.getContactId());
+    }
+
+    /**
+     * 获取对应的知识库实例。
+     *
+     * @param contactId
+     * @return
+     */
+    public synchronized KnowledgeBase getKnowledgeBase(Long contactId) {
+        KnowledgeBase base = this.knowledgeMap.get(contactId);
+        if (null == base) {
             AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
             if (null == fileStorage) {
                 Logger.e(this.getClass(), "#getKnowledgeBase - File storage service is not ready");
                 return null;
             }
 
+            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+            AuthToken authToken = authService.queryAuthTokenByContactId(contactId);
+
             base = new KnowledgeBase(this, this.storage, authToken, fileStorage);
-            this.knowledgeMap.put(tokenCode, base);
+            this.knowledgeMap.put(contactId, base);
         }
         return base;
     }

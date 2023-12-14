@@ -662,7 +662,30 @@ public class AIGCStorage implements Storagable {
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
         return new KnowledgeProfile(data.get("id").getLong(), data.get("contact_id").getLong(),
-                data.get("state").getInt(), data.get("max_size").getInt());
+                data.get("state").getInt(), data.get("max_size").getLong());
+    }
+
+    public void updateKnowledgeProfile(long contactId, int state, long maxSize) {
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeProfileTable, this.knowledgeProfileFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId)
+                });
+
+        if (result.isEmpty()) {
+            this.storage.executeInsert(this.knowledgeProfileTable, new StorageField[] {
+                    new StorageField("contact_id", contactId),
+                    new StorageField("state", state),
+                    new StorageField("max_size", maxSize)
+            });
+            return;
+        }
+
+        this.storage.executeUpdate(this.knowledgeProfileTable, new StorageField[] {
+                new StorageField("state", state),
+                new StorageField("max_size", maxSize)
+        }, new Conditional[] {
+                Conditional.createEqualTo("contact_id", contactId)
+        });
     }
 
     public List<KnowledgeDoc> readKnowledgeDocList(String domain, long contactId) {
@@ -897,7 +920,33 @@ public class AIGCStorage implements Storagable {
         return true;
     }
 
-    
+    public List<Long> deleteKnowledgeParaphrases(List<Long> idList) {
+        if (idList.isEmpty()) {
+            return null;
+        }
+
+        List<Conditional> conditionals = new ArrayList<>();
+        for (Long id : idList) {
+            conditionals.add(Conditional.createEqualTo("id", (long) id.longValue()));
+            conditionals.add(Conditional.createOr());
+        }
+        conditionals.remove(conditionals.size() - 1);
+
+        List<Long> result = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder("SELECT `id` FROM " + this.knowledgeParaphraseTable + " WHERE");
+        for (Conditional conditional : conditionals) {
+            sql.append(" ").append(conditional.toString());
+        }
+        List<StorageField[]> ids = this.storage.executeQuery(sql.toString());
+        for (StorageField[] data : ids) {
+            result.add(data[0].getLong());
+        }
+
+        this.storage.executeDelete(this.knowledgeParaphraseTable,
+                conditionals.toArray(new Conditional[0]));
+        return result;
+    }
 
     public List<ChartReaction> readChartReactions(String primary, String secondary, String tertiary, String quaternary) {
         List<ChartReaction> list = new ArrayList<>();

@@ -59,6 +59,7 @@ import cube.service.contact.plugin.CreateDomainAppPlugin;
 import cube.service.contact.plugin.FilterContactNamePlugin;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
+import cube.util.DummyDevice;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -397,6 +398,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         // 更新存储
         this.storage.writeContact(contact, device);
 
+        ContactHook hook = this.pluginSystem.getNewContact();
+        hook.apply(new ContactPluginContext(ContactHook.NewContact, contact, null));
+
         return contact;
     }
 
@@ -659,6 +663,9 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         String key = UniqueKey.make(contact.getId(), contact.getDomain().getName());
         this.contactCache.applyPut(key, contact.toJSON());
+
+        ContactHook hook = this.pluginSystem.getNewContact();
+        hook.apply(new ContactPluginContext(ContactHook.NewContact, contact, null));
 
         return contact;
     }

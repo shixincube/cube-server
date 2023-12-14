@@ -41,6 +41,8 @@ public class ContactHook extends Hook {
 
     public final static String Comeback = "Comeback";
 
+    public final static String NewContact = "NewContact";
+
     public final static String ModifyContactName = "ModifyContactName";
 
     public final static String ModifyContactContext = "ModifyContactContext";
