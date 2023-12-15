@@ -32,23 +32,21 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.KnowledgeDoc;
+import cube.common.entity.KnowledgeProfile;
+import cube.common.entity.KnowledgeScope;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.List;
-
 /**
- * 获取知识库文档列表任务。
+ * 更新知识库侧写任务。
  */
-public class ListKnowledgeDocsTask extends ServiceTask {
+public class UpdateKnowledgeProfileTask extends ServiceTask {
 
-    public ListKnowledgeDocsTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public UpdateKnowledgeProfileTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -58,7 +56,7 @@ public class ListKnowledgeDocsTask extends ServiceTask {
         Packet packet = new Packet(dialect);
 
         String tokenCode = this.getTokenCode(dialect);
-        if (null == tokenCode) {
+        if (null == tokenCode || !packet.data.has("contactId")) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
@@ -66,7 +64,7 @@ public class ListKnowledgeDocsTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        KnowledgeBase base = service.getKnowledgeBase(tokenCode);
+        KnowledgeBase base = service.getKnowledgeBase(packet.data.getLong("contactId"));
         if (null == base) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InconsistentToken.code, new JSONObject()));
@@ -74,25 +72,22 @@ public class ListKnowledgeDocsTask extends ServiceTask {
             return;
         }
 
-        List<KnowledgeDoc> docList = base.listKnowledgeDocs();
-        if (null == docList) {
+        KnowledgeProfile profile = base.getProfile();
+        if (null == profile) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        JSONArray array = new JSONArray();
-        for (KnowledgeDoc doc : docList) {
-            array.put(doc.toJSON());
-        }
-
-        JSONObject responsePayload = new JSONObject();
-        responsePayload.put("total", docList.size());
-        responsePayload.put("list", array);
+        int state = packet.data.has("state") ? packet.data.getInt("state") : profile.state;
+        long maxSize = packet.data.has("maxSize") ? packet.data.getLong("maxSize") : profile.maxSize;
+        KnowledgeScope scope = packet.data.has("scope") ?
+                KnowledgeScope.parse(packet.data.getString("scope")) : profile.scope;
+        profile = base.updateProfile(state, maxSize, scope);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responsePayload));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, profile.toJSON()));
         markResponseTime();
     }
 }

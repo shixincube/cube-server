@@ -66,18 +66,24 @@ public class KnowledgeBase {
 
     private AbstractModule fileStorage;
 
-    private KnowledgeRelation knowledgeRelation;
+    private KnowledgeScope scope;
 
-    public KnowledgeBase(AIGCService service, AIGCStorage storage, AuthToken authToken, AbstractModule fileStorage) {
+    private KnowledgeResource resource;
+
+    public KnowledgeBase(AIGCService service, AIGCStorage storage, AuthToken authToken, AbstractModule fileStorage,
+                         KnowledgeScope scope) {
         this.service = service;
         this.storage = storage;
         this.authToken = authToken;
         this.fileStorage = fileStorage;
-        this.knowledgeRelation = new KnowledgeRelation();
+        this.scope = scope;
+        this.resource = new KnowledgeResource();
+        this.listKnowledgeDocs();
+        this.listKnowledgeArticles();
     }
 
     /**
-     * 获取知识库概况。
+     * 获取知识库侧写。
      *
      * @return
      */
@@ -85,10 +91,23 @@ public class KnowledgeBase {
         KnowledgeProfile profile = this.storage.readKnowledgeProfile(this.authToken.getContactId());
         if (null == profile) {
             // 没有记录，返回不可用的侧写
-            profile = new KnowledgeProfile(0, this.authToken.getContactId(),
-                    KnowledgeProfile.STATE_FORBIDDEN, 0);
+            profile = new KnowledgeProfile(0, this.authToken.getContactId(), this.authToken.getDomain(),
+                    KnowledgeProfile.STATE_FORBIDDEN, 0, KnowledgeScope.Private);
         }
         return profile;
+    }
+
+    /**
+     * 更新知识库侧写。
+     *
+     * @param state
+     * @param maxSize
+     * @param scope
+     * @return
+     */
+    public KnowledgeProfile updateProfile(int state, long maxSize, KnowledgeScope scope) {
+        return this.storage.updateKnowledgeProfile(this.authToken.getContactId(), state,
+                maxSize, scope);
     }
 
     /**
@@ -96,8 +115,10 @@ public class KnowledgeBase {
      *
      * @return
      */
-    public List<KnowledgeDoc> getKnowledgeDocs() {
-        List<KnowledgeDoc> list = this.storage.readKnowledgeDocList(this.authToken.getDomain(), this.authToken.getContactId());
+    public List<KnowledgeDoc> listKnowledgeDocs() {
+        List<KnowledgeDoc> list = (KnowledgeScope.Private == this.scope) ?
+                this.storage.readKnowledgeDocList(this.authToken.getDomain(), this.authToken.getContactId())
+                : this.storage.readKnowledgeDocList(this.authToken.getDomain());
 
         Iterator<KnowledgeDoc> iter = list.iterator();
         while (iter.hasNext()) {
@@ -114,9 +135,7 @@ public class KnowledgeBase {
             doc.fileLabel = new FileLabel(fileLabelJson);
         }
 
-        this.knowledgeRelation.docList = list;
-
-        this.knowledgeRelation.checkUnit();
+        this.resource.docList = list;
 
         return list;
     }
@@ -138,7 +157,7 @@ public class KnowledgeBase {
         if (null == doc) {
             // 创建新文档
             doc = new KnowledgeDoc(Utils.generateSerialNumber(), this.authToken.getDomain(),
-                    this.authToken.getContactId(), fileCode, true, -1);
+                    this.authToken.getContactId(), fileCode, true, -1, this.scope);
             this.storage.writeKnowledgeDoc(doc);
         }
 
@@ -157,7 +176,7 @@ public class KnowledgeBase {
         KnowledgeDoc activatedDoc = doc;
 
         if (doc.activated) {
-            if (!this.knowledgeRelation.checkUnit()) {
+            if (!this.resource.checkUnit()) {
                 Logger.e(this.getClass(), "#importKnowledgeDoc - Not find KnowledgeComprehension unit");
                 this.storage.deleteKnowledgeDoc(fileCode);
                 return null;
@@ -172,33 +191,34 @@ public class KnowledgeBase {
         }
 
         // 追加文档
-        this.knowledgeRelation.appendDoc(activatedDoc);
+        this.resource.appendDoc(activatedDoc);
 
         Logger.d(this.getClass(), "#importKnowledgeDoc - file code: " + fileCode);
         return activatedDoc;
     }
 
     public KnowledgeDoc removeKnowledgeDoc(String fileCode) {
-        if (null == this.knowledgeRelation.docList) {
-            this.getKnowledgeDocs();
+        if (!this.resource.checkUnit()) {
+            Logger.e(this.getClass(), "#removeKnowledgeDoc - No unit: " + fileCode);
+            return null;
         }
 
         KnowledgeDoc doc = this.getKnowledgeDocByFileCode(fileCode);
         if (null != doc) {
             this.storage.deleteKnowledgeDoc(fileCode);
 
-            this.knowledgeRelation.removeDoc(doc);
+            this.resource.removeDoc(doc);
 
             if (doc.activated) {
-                if (this.knowledgeRelation.checkUnit()) {
+                if (this.resource.checkUnit()) {
                     KnowledgeDoc deactivatedDoc = this.deactivateKnowledgeDoc(doc,
-                            this.knowledgeRelation.docList);
+                            this.resource.docList);
                     return deactivatedDoc;
                 }
             }
         }
         else {
-            this.knowledgeRelation.removeDoc(fileCode);
+            this.resource.removeDoc(fileCode);
         }
 
         return doc;
@@ -212,11 +232,11 @@ public class KnowledgeBase {
      */
     public KnowledgeDoc activateKnowledgeDoc(KnowledgeDoc doc) {
         Packet packet = new Packet(AIGCAction.ActivateKnowledgeDoc.name, doc.toJSON());
-        ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
+        ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect(), 3 * 60 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(),"#activateKnowledgeDoc - Request unit error: "
-                    + this.knowledgeRelation.unit.getCapability().getName());
+                    + this.resource.unit.getCapability().getName());
             return null;
         }
 
@@ -250,11 +270,11 @@ public class KnowledgeBase {
         payload.put("newList", array);
 
         Packet packet = new Packet(AIGCAction.DeactivateKnowledgeDoc.name, payload);
-        ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
+        ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect());
         if (null == dialect) {
             Logger.w(this.getClass(),"#deactivateKnowledgeDoc - Request unit error: "
-                    + this.knowledgeRelation.unit.getCapability().getName());
+                    + this.resource.unit.getCapability().getName());
             return null;
         }
 
@@ -296,18 +316,18 @@ public class KnowledgeBase {
      * @return
      */
     public List<KnowledgeArticle> listKnowledgeArticles() {
-        if (this.knowledgeRelation.checkUnit()) {
+        if (!this.resource.checkUnit()) {
             return new ArrayList<>();
         }
 
         JSONObject payload = new JSONObject();
         payload.put("contactId", this.authToken.getContactId());
         Packet packet = new Packet(AIGCAction.ListKnowledgeArticles.name, payload);
-        ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
+        ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect(), 60 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(),"#listKnowledgeArticles - Request unit error: "
-                    + this.knowledgeRelation.unit.getCapability().getName());
+                    + this.resource.unit.getCapability().getName());
             return null;
         }
 
@@ -325,7 +345,7 @@ public class KnowledgeBase {
         }
 
         List<KnowledgeArticle> result = this.storage.readKnowledgeArticles(idList);
-        this.knowledgeRelation.articleList = result;
+        this.resource.articleList = result;
 
         return result;
     }
@@ -339,18 +359,18 @@ public class KnowledgeBase {
     public List<KnowledgeArticle> activateKnowledgeArticles(List<Long> articleIdList) {
         List<KnowledgeArticle> articleList = this.storage.readKnowledgeArticles(articleIdList);
 
-        this.knowledgeRelation.checkUnit();
+        this.resource.checkUnit();
 
         for (KnowledgeArticle article : articleList) {
             JSONObject payload = new JSONObject();
             payload.put("article", article.toJSON());
             payload.put("contactId", this.authToken.getContactId());
             Packet packet = new Packet(AIGCAction.ActivateKnowledgeArticle.name, payload);
-            ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
+            ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                     packet.toDialect(), 60 * 1000);
             if (null == dialect) {
                 Logger.w(this.getClass(),"#activateKnowledgeArticles - Request unit error: "
-                        + this.knowledgeRelation.unit.getCapability().getName());
+                        + this.resource.unit.getCapability().getName());
                 continue;
             }
 
@@ -363,25 +383,25 @@ public class KnowledgeBase {
 
             KnowledgeArticle activated = new KnowledgeArticle(Packet.extractDataPayload(response));
             activated.content = article.content;
-            this.knowledgeRelation.appendArticle(activated);
+            this.resource.appendArticle(activated);
         }
 
-        return this.knowledgeRelation.articleList;
+        return this.resource.articleList;
     }
 
     public List<KnowledgeArticle> deactivateKnowledgeArticles() {
-        this.knowledgeRelation.checkUnit();
+        this.resource.checkUnit();
 
         List<KnowledgeArticle> result = new ArrayList<>();
 
         JSONObject payload = new JSONObject();
         payload.put("contactId", this.authToken.getContactId());
         Packet packet = new Packet(AIGCAction.DeactivateKnowledgeArticle.name, payload);
-        ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
+        ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect(), 60 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(),"#deactivateKnowledgeArticles - Request unit error: "
-                    + this.knowledgeRelation.unit.getCapability().getName());
+                    + this.resource.unit.getCapability().getName());
             return result;
         }
 
@@ -399,10 +419,19 @@ public class KnowledgeBase {
         }
         result = this.storage.readKnowledgeArticles(idsList);
 
-        this.knowledgeRelation.clearArticles();
+        this.resource.clearArticles();
         return result;
     }
 
+    /**
+     * 执行知识库 QA
+     *
+     * @param channelCode
+     * @param unitName
+     * @param query
+     * @param listener
+     * @return
+     */
     public boolean performKnowledgeQA(String channelCode, String unitName, String query,
                                       KnowledgeQAListener listener) {
         return this.performKnowledgeQA(channelCode, unitName, query, null, listener);
@@ -429,16 +458,8 @@ public class KnowledgeBase {
             return false;
         }
 
-        if (null == this.knowledgeRelation.docList) {
-            this.getKnowledgeDocs();
-        }
-
-        if (null == this.knowledgeRelation.articleList) {
-            this.listKnowledgeArticles();
-        }
-
         // 如果没有设置知识库文档，返回提示
-        if (this.knowledgeRelation.docList.isEmpty() && this.knowledgeRelation.articleList.isEmpty()) {
+        if (this.resource.docList.isEmpty() && this.resource.articleList.isEmpty()) {
             Logger.d(this.getClass(), "#performKnowledgeQA - No knowledge doc or article in base: " + channelCode);
             this.service.getCellet().getExecutor().execute(new Runnable() {
                 @Override
@@ -504,16 +525,14 @@ public class KnowledgeBase {
     }
 
     private KnowledgeQAResult generatePrompt(String query) {
-        if (null == this.knowledgeRelation.docList) {
-            this.getKnowledgeDocs();
-        }
+        this.resource.checkUnit();
 
         JSONArray docArray = new JSONArray();
-        for (KnowledgeDoc doc : this.knowledgeRelation.docList) {
+        for (KnowledgeDoc doc : this.resource.docList) {
             docArray.put(doc.toJSON());
         }
 
-        if (!this.knowledgeRelation.checkUnit()) {
+        if (!this.resource.checkUnit()) {
             Logger.w(this.getClass(),"#generatePrompt - No unit for knowledge base");
             return null;
         }
@@ -525,11 +544,11 @@ public class KnowledgeBase {
             payload.put("docList", docArray);
         }
         Packet packet = new Packet(AIGCAction.GeneratePrompt.name, payload);
-        ActionDialect dialect = this.service.getCellet().transmit(this.knowledgeRelation.unit.getContext(),
+        ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect());
         if (null == dialect) {
             Logger.w(this.getClass(),"#generatePrompt - Request unit error: "
-                    + this.knowledgeRelation.unit.getCapability().getName());
+                    + this.resource.unit.getCapability().getName());
             return null;
         }
 
@@ -569,7 +588,7 @@ public class KnowledgeBase {
         return unit;
     }
 
-    public class KnowledgeRelation {
+    public class KnowledgeResource {
 
         protected List<KnowledgeDoc> docList;
 
@@ -579,7 +598,7 @@ public class KnowledgeBase {
 
         protected AIGCUnit unit;
 
-        public KnowledgeRelation() {
+        public KnowledgeResource() {
             this.unit = service.selectUnitBySubtask(
                     AICapability.NaturalLanguageProcessing.KnowledgeComprehension);
         }

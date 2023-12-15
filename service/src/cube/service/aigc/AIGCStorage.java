@@ -184,10 +184,16 @@ public class AIGCStorage implements Storagable {
             new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("state", LiteralBase.INT, new Constraint[] {
                     Constraint.DEFAULT_0
             }),
             new StorageField("max_size", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("scope", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             })
     };
@@ -209,6 +215,9 @@ public class AIGCStorage implements Storagable {
                     Constraint.DEFAULT_1
             }),
             new StorageField("num_segments", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("scope", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             })
     };
@@ -662,10 +671,11 @@ public class AIGCStorage implements Storagable {
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
         return new KnowledgeProfile(data.get("id").getLong(), data.get("contact_id").getLong(),
-                data.get("state").getInt(), data.get("max_size").getLong());
+                data.get("domain").getString(), data.get("state").getInt(), data.get("max_size").getLong(),
+                KnowledgeScope.parse(data.get("scope").getString()));
     }
 
-    public void updateKnowledgeProfile(long contactId, int state, long maxSize) {
+    public KnowledgeProfile updateKnowledgeProfile(long contactId, int state, long maxSize, KnowledgeScope scope) {
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeProfileTable, this.knowledgeProfileFields,
                 new Conditional[] {
                         Conditional.createEqualTo("contact_id", contactId)
@@ -675,17 +685,45 @@ public class AIGCStorage implements Storagable {
             this.storage.executeInsert(this.knowledgeProfileTable, new StorageField[] {
                     new StorageField("contact_id", contactId),
                     new StorageField("state", state),
-                    new StorageField("max_size", maxSize)
+                    new StorageField("max_size", maxSize),
+                    new StorageField("scope", scope.name)
             });
-            return;
+            return this.readKnowledgeProfile(contactId);
         }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        long id = data.get("id").getLong();
+        String domain = data.get("domain").getString();
 
         this.storage.executeUpdate(this.knowledgeProfileTable, new StorageField[] {
                 new StorageField("state", state),
-                new StorageField("max_size", maxSize)
+                new StorageField("max_size", maxSize),
+                new StorageField("scope", scope.name)
         }, new Conditional[] {
                 Conditional.createEqualTo("contact_id", contactId)
         });
+
+        return new KnowledgeProfile(id, contactId, domain, state, maxSize, scope);
+    }
+
+    public List<KnowledgeDoc> readKnowledgeDocList(String domain) {
+        List<KnowledgeDoc> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocTable, this.knowledgeDocFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("domain", domain)
+                });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
+                    data.get("contact_id").getLong(), data.get("file_code").getString(),
+                    data.get("activated").getInt() == 1, data.get("num_segments").getInt(),
+                    KnowledgeScope.parse(data.get("scope").getString()));
+            list.add(doc);
+        }
+
+        return list;
     }
 
     public List<KnowledgeDoc> readKnowledgeDocList(String domain, long contactId) {
@@ -702,7 +740,8 @@ public class AIGCStorage implements Storagable {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
                     data.get("contact_id").getLong(), data.get("file_code").getString(),
-                    data.get("activated").getInt() == 1, data.get("num_segments").getInt());
+                    data.get("activated").getInt() == 1, data.get("num_segments").getInt(),
+                    KnowledgeScope.parse(data.get("scope").getString()));
             list.add(doc);
         }
 
@@ -721,7 +760,8 @@ public class AIGCStorage implements Storagable {
         Map<String, StorageField> data = StorageFields.get(result.get(0));
         KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
                 data.get("contact_id").getLong(), data.get("file_code").getString(),
-                data.get("activated").getInt() == 1, data.get("num_segments").getInt());
+                data.get("activated").getInt() == 1, data.get("num_segments").getInt(),
+                KnowledgeScope.parse(data.get("scope").getString()));
         return doc;
     }
 

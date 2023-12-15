@@ -24,40 +24,42 @@
  * SOFTWARE.
  */
 
-package cube.aigc;
+package cube.common.entity;
 
 /**
- * 舆情任务名称。
+ * 知识库文档范围。
  */
-public enum PublicOpinionTaskName {
+public enum KnowledgeScope {
 
     /**
-     * 文章情感概述。
+     * 全局。
      */
-    ArticleSentimentSummary("ArticleSentimentSummary"),
+    Global("global"),
 
     /**
-     * 文章情感分类。
+     * 公共。
      */
-    ArticleSentimentClassification("ArticleSentimentClassification"),
+    Public("public"),
 
-    Unknown("Unknown")
+    /**
+     * 私有。
+     */
+    Private("private")
 
     ;
 
     public final String name;
 
-    PublicOpinionTaskName(String name) {
+    KnowledgeScope(String name) {
         this.name = name;
     }
 
-    public static PublicOpinionTaskName parse(String name) {
-        for (PublicOpinionTaskName potn : PublicOpinionTaskName.values()) {
-            if (potn.name.equals(name)) {
-                return potn;
+    public static KnowledgeScope parse(String name) {
+        for (KnowledgeScope scope : KnowledgeScope.values()) {
+            if (scope.name.equalsIgnoreCase(name)) {
+                return scope;
             }
         }
-
-        return null;
+        return KnowledgeScope.Private;
     }
 }

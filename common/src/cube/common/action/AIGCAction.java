@@ -142,6 +142,11 @@ public enum AIGCAction {
     GetKnowledgeProfile("getKnowledgeProfile"),
 
     /**
+     *
+     */
+    UpdateKnowledgeProfile("updateKnowledgeProfile"),
+
+    /**
      * 获取知识库文档清单。
      */
     ListKnowledgeDocs("listKnowledgeDocs"),

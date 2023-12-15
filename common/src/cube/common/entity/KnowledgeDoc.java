@@ -66,13 +66,19 @@ public class KnowledgeDoc extends Entity {
      */
     public int numSegments = -1;
 
+    /**
+     * 作用范围。
+     */
+    public KnowledgeScope scope = KnowledgeScope.Private;
+
     public KnowledgeDoc(long id, String domain, long contactId, String fileCode, boolean activated,
-                        int numSegments) {
+                        int numSegments, KnowledgeScope scope) {
         super(id, domain);
         this.contactId = contactId;
         this.fileCode = fileCode;
         this.activated = activated;
         this.numSegments = numSegments;
+        this.scope = scope;
     }
 
     public KnowledgeDoc(JSONObject json) {
@@ -82,6 +88,7 @@ public class KnowledgeDoc extends Entity {
         this.activated = json.getBoolean("activated");
         this.splitter = json.getString("splitter");
         this.numSegments = json.getInt("numSegments");
+        this.scope = KnowledgeScope.parse(json.getString("scope"));
 
         if (json.has("fileLabel")) {
             this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
@@ -111,6 +118,7 @@ public class KnowledgeDoc extends Entity {
         json.put("activated", this.activated);
         json.put("splitter", this.splitter);
         json.put("numSegments", this.numSegments);
+        json.put("scope", this.scope.name);
 
         if (null != this.fileLabel) {
             json.put("fileLabel", this.fileLabel.toJSON());

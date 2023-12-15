@@ -176,7 +176,8 @@ public class ChatTask extends ServiceTask {
             // 执行知识库问答
             KnowledgeBase knowledgeBase = service.getKnowledgeBase(token);
             if (null != knowledgeBase) {
-                success = knowledgeBase.performKnowledgeQA(code, unit, content, new KnowledgeQAListener() {
+                success = knowledgeBase.performKnowledgeQA(code, unit, content,
+                        new KnowledgeQAListener() {
                     @Override
                     public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
                         cellet.speak(talkContext,

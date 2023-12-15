@@ -26,7 +26,7 @@
 
 package cube.dispatcher.test;
 
-import cube.aigc.po.Article;
+import cube.aigc.publicopinion.Article;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.WWWAuthenticationProtocolHandler;
 import org.eclipse.jetty.client.api.ContentResponse;

@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.aigc.po;
+package cube.aigc.publicopinion;
 
 import cube.aigc.Sentiment;
 import cube.common.JSONable;

@@ -239,6 +239,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new GetKnowledgeProfileTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.UpdateKnowledgeProfile.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new UpdateKnowledgeProfileTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.ListKnowledgeDocs.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new ListKnowledgeDocsTask(this, talkContext, primitive,

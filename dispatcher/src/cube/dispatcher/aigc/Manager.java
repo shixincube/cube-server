@@ -39,6 +39,7 @@ import cube.common.JSONable;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
+import cube.common.entity.KnowledgeProfile;
 import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.PerformerListener;
@@ -121,6 +122,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new Summarization());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
         httpServer.addContextHandler(new Conversation());
+        httpServer.addContextHandler(new KnowledgeProfiles());
         httpServer.addContextHandler(new KnowledgeDocs());
         httpServer.addContextHandler(new ImportKnowledgeDoc());
         httpServer.addContextHandler(new RemoveKnowledgeDoc());
@@ -267,6 +269,38 @@ public class Manager implements Tickable, PerformerListener {
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.d(Manager.class, "#getKnowledgeProfile - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new KnowledgeProfile(Packet.extractDataPayload(responsePacket));
+    }
+
+    public KnowledgeProfile updateKnowledgeProfile(String token, long contactId,
+                                                   int state, long maxSize, KnowledgeScope scope) {
+        JSONObject data = new JSONObject();
+        data.put("contactId", contactId);
+        if (-1 != state) {
+            data.put("state", state);
+        }
+        if (-1 != maxSize) {
+            data.put("maxSize", maxSize);
+        }
+        if (null != scope) {
+            data.put("scope", scope.name);
+        }
+
+        Packet packet = new Packet(AIGCAction.UpdateKnowledgeProfile.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#updateKnowledgeProfile - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#updateKnowledgeProfile - Response state is NOT ok : " + Packet.extractCode(responsePacket));
             return null;
         }
 

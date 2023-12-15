@@ -32,7 +32,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
-import cube.aigc.PublicOpinionTaskName;
+import cube.aigc.publicopinion.PublicOpinionTaskName;
 import cube.aigc.Sentiment;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
@@ -66,8 +66,6 @@ import cube.service.aigc.plugin.ActivateKnowledgeBasePlugin;
 import cube.service.aigc.plugin.InjectTokenPlugin;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.ResourceAnswer;
-import cube.service.aigc.scene.Evaluation;
-import cube.service.aigc.scene.EvaluationReport;
 import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.SceneListener;
 import cube.service.auth.AuthService;
@@ -560,7 +558,7 @@ public class AIGCService extends AbstractModule {
             AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
             AuthToken authToken = authService.queryAuthTokenByContactId(contactId);
 
-            base = new KnowledgeBase(this, this.storage, authToken, fileStorage);
+            base = new KnowledgeBase(this, this.storage, authToken, fileStorage, KnowledgeScope.Public);
             this.knowledgeMap.put(contactId, base);
         }
         return base;
