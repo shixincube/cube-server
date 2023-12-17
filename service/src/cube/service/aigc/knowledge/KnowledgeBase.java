@@ -66,18 +66,17 @@ public class KnowledgeBase {
 
     private AbstractModule fileStorage;
 
-    private KnowledgeScope scope;
-
     private KnowledgeResource resource;
 
-    public KnowledgeBase(AIGCService service, AIGCStorage storage, AuthToken authToken, AbstractModule fileStorage,
-                         KnowledgeScope scope) {
+    private KnowledgeScope scope;
+
+    public KnowledgeBase(AIGCService service, AIGCStorage storage, AuthToken authToken, AbstractModule fileStorage) {
         this.service = service;
         this.storage = storage;
         this.authToken = authToken;
         this.fileStorage = fileStorage;
-        this.scope = scope;
         this.resource = new KnowledgeResource();
+        this.scope = getProfile().scope;
         this.listKnowledgeDocs();
         this.listKnowledgeArticles();
     }
@@ -106,8 +105,12 @@ public class KnowledgeBase {
      * @return
      */
     public KnowledgeProfile updateProfile(int state, long maxSize, KnowledgeScope scope) {
-        return this.storage.updateKnowledgeProfile(this.authToken.getContactId(), state,
+        KnowledgeProfile profile = this.storage.updateKnowledgeProfile(this.authToken.getContactId(), state,
                 maxSize, scope);
+        this.scope = profile.scope;
+        this.listKnowledgeDocs();
+        this.listKnowledgeArticles();
+        return profile;
     }
 
     /**

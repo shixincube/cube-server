@@ -41,6 +41,10 @@ import javax.servlet.http.HttpServletResponse;
 
 public class Session extends ContextHandler {
 
+    public final static String[] MODEL_NAMES = new String[]{
+            "Wenxin", "GPT", "Gemini", "DallE", "Baize"
+    };
+
     public Session() {
         super("/app/session/");
         setHandler(new Handler());
@@ -105,7 +109,13 @@ public class Session extends ContextHandler {
                 if (Manager.getInstance().checkToken(token)) {
                     // 获取模型配置
                     ConfigInfo configInfo = Manager.getInstance().getConfigInfo(token);
-                    ModelConfig modelConfig = Manager.getInstance().getModelConfig(configInfo, "BaizeNLG");
+                    ModelConfig modelConfig = null;
+                    for (String modelName : MODEL_NAMES) {
+                        modelConfig = Manager.getInstance().getModelConfig(configInfo, modelName);
+                        if (null != modelConfig) {
+                            break;
+                        }
+                    }
                     responseData.put("selectedModel", modelConfig.toJSON());
 
                     // 申请频道

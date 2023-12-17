@@ -214,7 +214,7 @@ public final class App {
         JSONObject apiData = JSONUtils.clone(config.getParameter());
         apiData.put("code", convId);
         apiData.put("content", request.prompt);
-        apiData.put("histories", request.usingContext ? 3 : 0);
+        apiData.put("histories", request.usingContext ? 100 : 0);
         apiData.put("temperature", request.temperature);
         apiData.put("topP", request.topP);
         apiData.put("pattern", request.options.workPattern);

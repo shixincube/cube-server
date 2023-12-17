@@ -1314,6 +1314,13 @@ public class AIGCStorage implements Storagable {
         return !result.isEmpty();
     }
 
+    /**
+     * 读取联系人的提示词。
+     * 同时读取 contact_id 为 0 的公共提示词。
+     *
+     * @param contactId
+     * @return
+     */
     public List<PromptRecord> readPrompts(long contactId) {
         List<PromptRecord> promptRecords = new ArrayList<>();
 
@@ -1346,23 +1353,11 @@ public class AIGCStorage implements Storagable {
         return promptRecords;
     }
 
-    public PromptRecord readPrompt(String act, long contactId) {
-        List<StorageField[]> result = this.storage.executeQuery(new String[] {
-                this.promptWordTable, this.promptWordScopeTable
-        }, new StorageField[] {
-                new StorageField(this.promptWordTable, "id", LiteralBase.LONG),
-                new StorageField(this.promptWordTable, "act", LiteralBase.STRING),
-                new StorageField(this.promptWordTable, "prompt", LiteralBase.STRING)
-        }, new Conditional[] {
-                Conditional.createEqualTo(new StorageField(this.promptWordTable, "id", LiteralBase.LONG),
-                        new StorageField(this.promptWordScopeTable, "prompt_id", LiteralBase.LONG)),
-                Conditional.createAnd(),
-                Conditional.createEqualTo(new StorageField(this.promptWordTable,
-                        "act", LiteralBase.STRING, act)),
-                Conditional.createAnd(),
-                Conditional.createEqualTo(new StorageField(this.promptWordScopeTable,
-                        "contact_id", LiteralBase.LONG, contactId))
-        });
+    public PromptRecord readPrompt(String act) {
+        List<StorageField[]> result = this.storage.executeQuery(this.promptWordTable, this.promptWordFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("act", act)
+                });
 
         if (result.isEmpty()) {
             return null;
@@ -1377,18 +1372,12 @@ public class AIGCStorage implements Storagable {
                 this.promptWordFields, new Conditional[] {
                         Conditional.createEqualTo("id", promptRecord.id)
                 });
-
         if (result.isEmpty()) {
             // 插入
             this.storage.executeInsert(this.promptWordTable, new StorageField[] {
                     new StorageField("id", promptRecord.id),
                     new StorageField("act", promptRecord.act),
                     new StorageField("prompt", promptRecord.prompt)
-            });
-
-            return this.storage.executeInsert(this.promptWordScopeTable, new StorageField[] {
-                    new StorageField("prompt_id", promptRecord.id),
-                    new StorageField("contact_id", contactId)
             });
         }
         else {
@@ -1399,41 +1388,65 @@ public class AIGCStorage implements Storagable {
             }, new Conditional[] {
                     Conditional.createEqualTo("id", promptRecord.id)
             });
+        }
 
-            return this.storage.executeUpdate(this.promptWordScopeTable, new StorageField[] {
+        result = this.storage.executeQuery(this.promptWordScopeTable, this.promptWordScopeFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("prompt_id", promptRecord.id),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("contact_id", contactId)
+                });
+        if (result.isEmpty()) {
+            return this.storage.executeInsert(this.promptWordScopeTable, new StorageField[] {
+                    new StorageField("prompt_id", promptRecord.id),
                     new StorageField("contact_id", contactId)
-            }, new Conditional[] {
-                    Conditional.createEqualTo("prompt_id", promptRecord.id)
             });
+        }
+        else {
+            return true;
         }
     }
 
     public void writePrompts(List<PromptRecord> promptRecords, List<Long> contactIds) {
+        List<Long> idList = new ArrayList<>();
         for (PromptRecord promptRecord : promptRecords) {
-            for (long contactId : contactIds) {
-                // 判断是否有重复的 act
-                PromptRecord cur = this.readPrompt(promptRecord.act, contactId);
-                if (null == cur) {
-                    // 新的 act
-                    long id = Utils.generateSerialNumber();
+            PromptRecord record = this.readPrompt(promptRecord.act);
+            if (null == record) {
+                // 插入
+                long id = Utils.generateSerialNumber();
+                this.storage.executeInsert(this.promptWordTable, new StorageField[]{
+                        new StorageField("id", id),
+                        new StorageField("act", promptRecord.act),
+                        new StorageField("prompt", promptRecord.prompt)
+                });
+                idList.add(id);
+            }
+            else {
+                // 更新
+                this.storage.executeUpdate(this.promptWordTable, new StorageField[] {
+                        new StorageField("prompt", promptRecord.prompt)
+                }, new Conditional[] {
+                            Conditional.createEqualTo("id", record.id)
+                });
+                idList.add(record.id);
+            }
+        }
 
-                    this.storage.executeInsert(this.promptWordTable, new StorageField[] {
-                            new StorageField("id", id),
-                            new StorageField("act", promptRecord.act),
-                            new StorageField("prompt", promptRecord.prompt)
-                    });
+        for (long contactId : contactIds) {
+            for (long id : idList) {
+                List<StorageField[]> result = this.storage.executeQuery(this.promptWordScopeTable,
+                        this.promptWordScopeFields,
+                        new Conditional[] {
+                                Conditional.createEqualTo("prompt_id", id),
+                                Conditional.createAnd(),
+                                Conditional.createEqualTo("contact_id", contactId)
+                        });
 
+                if (result.isEmpty()) {
+                    // 插入新数据
                     this.storage.executeInsert(this.promptWordScopeTable, new StorageField[] {
                             new StorageField("prompt_id", id),
                             new StorageField("contact_id", contactId)
-                    });
-                }
-                else {
-                    // 更新 prompt
-                    this.storage.executeUpdate(this.promptWordTable, new StorageField[] {
-                            new StorageField("prompt", promptRecord.prompt)
-                    }, new Conditional[] {
-                            Conditional.createEqualTo("id", cur.id)
                     });
                 }
             }
@@ -1539,7 +1552,7 @@ public class AIGCStorage implements Storagable {
         // 经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的优化。
         JSONObject parameter = new JSONObject();
         parameter.put("unit", "Chat");
-        ModelConfig baizeNLG = new ModelConfig("BaizeNLG",
+        ModelConfig baizeNLG = new ModelConfig("Baize",
                 "适合大多数场景的通用模型",
                 "http://127.0.0.1:7010/aigc/chat/", parameter);
 
@@ -1583,7 +1596,7 @@ public class AIGCStorage implements Storagable {
 
         // 字段 value 为模型配置的 JSON string
 
-        // BaizeNLG
+        // Baize
         result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
                 Conditional.createEqualTo("item", baizeNLG.getName())
         });

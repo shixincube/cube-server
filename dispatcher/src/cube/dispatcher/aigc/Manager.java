@@ -248,7 +248,7 @@ public class Manager implements Tickable, PerformerListener {
 
     public ModelConfig getModelConfig(ConfigInfo configInfo, String modelName) {
         for (ModelConfig config : configInfo.models) {
-            if (config.getName().equals(modelName)) {
+            if (config.getName().equalsIgnoreCase(modelName)) {
                 return config;
             }
         }

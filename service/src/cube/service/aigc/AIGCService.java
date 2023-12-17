@@ -558,7 +558,7 @@ public class AIGCService extends AbstractModule {
             AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
             AuthToken authToken = authService.queryAuthTokenByContactId(contactId);
 
-            base = new KnowledgeBase(this, this.storage, authToken, fileStorage, KnowledgeScope.Public);
+            base = new KnowledgeBase(this, this.storage, authToken, fileStorage);
             this.knowledgeMap.put(contactId, base);
         }
         return base;
@@ -2077,9 +2077,9 @@ public class AIGCService extends AbstractModule {
             if (complexContext.isSimplex()) {
                 // 一般文本
 
-                int maxHistories = 10;
+                int maxHistories = 100;
                 if (this.unit.getCapability().getName().equalsIgnoreCase("Chat")) {
-                    maxHistories = 5;
+                    maxHistories = 10;
                 }
 
                 JSONObject data = new JSONObject();
@@ -2087,14 +2087,12 @@ public class AIGCService extends AbstractModule {
                 data.put("content", this.content);
 
                 if (null == this.records) {
-                    if (this.numHistories > 0) {
-                        List<AIGCGenerationRecord> records = this.channel.getLastHistory(this.numHistories);
+                    int validNumHistories = Math.min(this.numHistories, maxHistories);
+                    if (validNumHistories > 0) {
+                        List<AIGCGenerationRecord> records = this.channel.getLastHistory(validNumHistories);
                         JSONArray array = new JSONArray();
                         for (AIGCGenerationRecord record : records) {
                             array.put(record.toJSON());
-                            if (array.length() >= maxHistories) {
-                                break;
-                            }
                         }
                         data.put("history", array);
                     }
@@ -2104,11 +2102,19 @@ public class AIGCService extends AbstractModule {
                 }
                 else {
                     JSONArray history = new JSONArray();
-                    for (AIGCGenerationRecord record : this.records) {
-                        history.put(record.toJSON());
-                        if (history.length() >= maxHistories) {
+                    // 从后往前插入
+                    ArrayList<AIGCGenerationRecord> recordList = new ArrayList<>();
+                    for (int i = this.records.size() - 1; i >= 0; --i) {
+                        recordList.add(this.records.get(i));
+                        if (recordList.size() >= maxHistories) {
                             break;
                         }
+                    }
+                    // 翻转顺序
+                    Collections.reverse(recordList);
+                    // 写入数组
+                    for (AIGCGenerationRecord record : recordList) {
+                        history.put(record.toJSON());
                     }
                     data.put("history", history);
                 }
