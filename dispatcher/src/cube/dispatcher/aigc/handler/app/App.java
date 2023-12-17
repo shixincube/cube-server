@@ -27,6 +27,7 @@
 package cube.dispatcher.aigc.handler.app;
 
 import cell.util.log.Logger;
+import cube.aigc.Consts;
 import cube.aigc.ConversationRequest;
 import cube.aigc.ConversationResponse;
 import cube.aigc.ModelConfig;
@@ -173,7 +174,7 @@ public final class App {
         }
 
         if (null == request.options.workPattern) {
-            request.options.workPattern = "chat";
+            request.options.workPattern = Consts.PATTERN_CHAT;
         }
 
         ModelConfig config = this.modelConfigMap.get(token);

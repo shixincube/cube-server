@@ -34,6 +34,10 @@ import cube.util.TextUtils;
  */
 public final class Consts {
 
+    public final static String PATTERN_CHAT = "chat";
+
+    public final static String PATTERN_KNOWLEDGE = "knowledge";
+
     public final static String ANSWER_NO_CONTENT = "很抱歉，我目前没有符合该描述的信息提供给您。";
 
     public final static String ANSWER_INTERRUPTED = "我已停止了响应。";

@@ -118,4 +118,13 @@ public enum AIGCStateCode {
     AIGCStateCode(int code) {
         this.code = code;
     }
+
+    public static AIGCStateCode parse(int code) {
+        for (AIGCStateCode sc : AIGCStateCode.values()) {
+            if (sc.code == code) {
+                return sc;
+            }
+        }
+        return Unknown;
+    }
 }

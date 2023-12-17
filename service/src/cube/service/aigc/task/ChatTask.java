@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.aigc.AppEvent;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.benchmark.ResponseTime;
@@ -77,7 +78,7 @@ public class ChatTask extends ServiceTask {
 
         String code = packet.data.getString("code");
         String content = packet.data.getString("content").trim();
-        String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : "chat";
+        String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : Consts.PATTERN_CHAT;
         String unit = packet.data.has("unit") ? packet.data.getString("unit") : "Chat";
         int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 100;
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
@@ -108,7 +109,7 @@ public class ChatTask extends ServiceTask {
         }
 
         // 根据工作模式进行调用
-        if (pattern.equalsIgnoreCase("chat")) {
+        if (pattern.equalsIgnoreCase(Consts.PATTERN_CHAT)) {
             // 判断单元任务类型
             if (ModelConfig.isTextToImageUnit(unit)) {
                 // 执行 Text to Image
@@ -152,6 +153,14 @@ public class ChatTask extends ServiceTask {
                         cellet.speak(talkContext,
                                 makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
                         markResponseTime();
+
+                        // 写入事件
+                        AppEvent appEvent = new AppEvent(AppEvent.Chat, System.currentTimeMillis(),
+                                channel.getAuthToken().getContactId(),
+                                AppEvent.createChatSuccessfulData(record));
+                        if (!service.getStorage().writeAppEvent(appEvent)) {
+                            Logger.w(ChatTask.class, "Write app event failed - cid: " + channel.getAuthToken().getContactId());
+                        }
                     }
 
                     @Override
@@ -168,11 +177,20 @@ public class ChatTask extends ServiceTask {
                                     makeResponse(dialect, packet, stateCode.code, new JSONObject()));
                             markResponseTime();
                         }
+
+                        // 写入事件
+                        AppEvent appEvent = new AppEvent(AppEvent.Chat, System.currentTimeMillis(),
+                                channel.getAuthToken().getContactId(),
+                                AppEvent.createChatFailedData(channel.getLastUnitMetaSn(), stateCode,
+                                        content, unit));
+                        if (!service.getStorage().writeAppEvent(appEvent)) {
+                            Logger.w(ChatTask.class, "Write app event failed - cid: " + channel.getAuthToken().getContactId());
+                        }
                     }
                 });
             }
         }
-        else if (pattern.equalsIgnoreCase("knowledge")) {
+        else if (pattern.equalsIgnoreCase(Consts.PATTERN_KNOWLEDGE)) {
             // 执行知识库问答
             KnowledgeBase knowledgeBase = service.getKnowledgeBase(token);
             if (null != knowledgeBase) {
@@ -181,14 +199,16 @@ public class ChatTask extends ServiceTask {
                     @Override
                     public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
                         cellet.speak(talkContext,
-                                makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.chatRecord.toCompactJSON()));
+                                makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.record.toCompactJSON()));
                         markResponseTime();
+
+
                     }
 
                     @Override
-                    public void onFailed(AIGCChannel channel) {
+                    public void onFailed(AIGCChannel channel, AIGCStateCode errorCode) {
                         cellet.speak(talkContext,
-                                makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
+                                makeResponse(dialect, packet, errorCode.code, new JSONObject()));
                         markResponseTime();
                     }
                 });

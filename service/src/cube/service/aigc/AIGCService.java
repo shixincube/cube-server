@@ -30,6 +30,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.AppEvent;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
 import cube.aigc.publicopinion.PublicOpinionTaskName;
@@ -2125,7 +2126,7 @@ public class AIGCService extends AbstractModule {
                     if (null != responseText) {
                         // 过滤中文字符
                         responseText = this.filterChinese(this.unit, responseText);
-                        result = this.channel.appendRecord(this.content, responseText, complexContext);
+                        result = this.channel.appendRecord(this.sn, this.content, responseText, complexContext);
                     }
                     else {
                         this.channel.setProcessing(false);
@@ -2170,23 +2171,20 @@ public class AIGCService extends AbstractModule {
 
                     // 过滤中文字符
                     responseText = this.filterChinese(this.unit, responseText);
-                    result = this.channel.appendRecord(this.content, responseText, complexContext);
+                    result = this.channel.appendRecord(this.sn, this.content, responseText, complexContext);
                 }
             }
             else {
                 // 复合型数据
                 ResourceAnswer resourceAnswer = new ResourceAnswer(complexContext);
                 String answer = resourceAnswer.answer();
-                result = this.channel.appendRecord(this.content, answer, complexContext);
+                result = this.channel.appendRecord(this.sn, this.content, answer, complexContext);
             }
 
             if (!complexContext.isSimplex()) {
                 // 缓存上下文
                 Explorer.getInstance().cacheComplexContext(complexContext);
             }
-
-            // 设置 SN
-            result.sn = this.sn;
 
             this.history.answerContactId = unit.getContact().getId();
             this.history.answerTime = System.currentTimeMillis();
@@ -2308,7 +2306,7 @@ public class AIGCService extends AbstractModule {
             if (totalLength > maxChatContent + maxChatContent) {
                 // 总长度越界
                 this.channel.setProcessing(false);
-                this.listener.onFailed(this.channel, AIGCStateCode.ContentLengthOverflow.code);
+                this.listener.onFailed(this.channel, AIGCStateCode.ContentLengthOverflow);
                 return;
             }
 
@@ -2318,7 +2316,7 @@ public class AIGCService extends AbstractModule {
                 Logger.w(AIGCService.class, "Conversation unit error - channel: " + this.channel.getCode());
                 this.channel.setProcessing(false);
                 // 回调错误
-                this.listener.onFailed(this.channel, AIGCStateCode.UnitError.code);
+                this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
                 return;
             }
 
@@ -2328,7 +2326,7 @@ public class AIGCService extends AbstractModule {
                 Logger.w(AIGCService.class, "Conversation unit respond failed - channel: " + this.channel.getCode());
                 this.channel.setProcessing(false);
                 // 回调错误
-                this.listener.onFailed(this.channel, stateCode);
+                this.listener.onFailed(this.channel, AIGCStateCode.parse(stateCode));
                 return;
             }
 
@@ -2347,7 +2345,7 @@ public class AIGCService extends AbstractModule {
             this.unit.setTotalQueryWords(this.unit.getTotalQueryWords() + this.content.length());
 
             // 记录
-            this.channel.appendRecord(convResponse);
+            this.channel.appendRecord(this.sn, convResponse);
 
             // 重置状态位
             this.channel.setProcessing(false);
@@ -2552,8 +2550,7 @@ public class AIGCService extends AbstractModule {
                 this.fileLabel.resetURLsToken(this.channel.getAuthToken().getCode());
 
                 // 记录
-                AIGCGenerationRecord record = this.channel.appendRecord(this.text, this.fileLabel);
-                record.sn = this.sn;
+                AIGCGenerationRecord record = this.channel.appendRecord(this.sn, this.text, this.fileLabel);
                 this.listener.onCompleted(record);
 
                 // 填写历史

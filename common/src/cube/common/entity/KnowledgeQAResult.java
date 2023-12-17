@@ -40,11 +40,9 @@ public class KnowledgeQAResult implements JSONable {
 
     public String prompt;
 
-    public AIGCGenerationRecord chatRecord;
+    public AIGCGenerationRecord record;
 
     public AIGCConversationResponse conversationResponse;
-
-    public List<Document> relatedDocs;
 
     public KnowledgeQAResult(String query) {
         this.query = query;
@@ -64,12 +62,5 @@ public class KnowledgeQAResult implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         return this.toJSON();
-    }
-
-    public class Document {
-
-        public String pageContent;
-
-        public float score;
     }
 }

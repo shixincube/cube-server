@@ -467,11 +467,13 @@ public class KnowledgeBase {
             this.service.getCellet().getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
+                    long sn = Utils.generateSerialNumber();
+
                     KnowledgeQAResult result = new KnowledgeQAResult(query);
                     result.prompt = "";
-                    AIGCGenerationRecord chatRecord = new AIGCGenerationRecord(query, EMPTY_BASE_ANSWER, System.currentTimeMillis(),
-                            new ComplexContext(ComplexContext.Type.Simplex));
-                    result.chatRecord = chatRecord;
+                    AIGCGenerationRecord record = new AIGCGenerationRecord(sn, query, EMPTY_BASE_ANSWER,
+                            System.currentTimeMillis(), new ComplexContext(ComplexContext.Type.Simplex));
+                    result.record = record;
                     listener.onCompleted(channel, result);
                 }
             });
@@ -501,9 +503,9 @@ public class KnowledgeBase {
                 }
 
                 @Override
-                public void onFailed(AIGCChannel channel, int errorCode) {
-                    listener.onFailed(channel);
-                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Single conversation failed: " + channelCode);
+                public void onFailed(AIGCChannel channel, AIGCStateCode errorCode) {
+                    listener.onFailed(channel, errorCode);
+                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Single conversation failed: " + errorCode.code);
                 }
             });
         }
@@ -512,14 +514,14 @@ public class KnowledgeBase {
             this.service.singleChat(channel, unit, result.prompt, null, new ChatListener() {
                 @Override
                 public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
-                    result.chatRecord = record;
+                    result.record = record;
                     listener.onCompleted(channel, result);
                 }
 
                 @Override
                 public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
-                    listener.onFailed(channel);
-                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Single chat failed: " + channelCode);
+                    listener.onFailed(channel, stateCode);
+                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Single chat failed: " + stateCode.code);
                 }
             });
         }

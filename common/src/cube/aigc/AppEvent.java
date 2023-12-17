@@ -28,7 +28,9 @@ package cube.aigc;
 
 import cell.util.Utils;
 import cube.common.JSONable;
-import cube.common.entity.Contact;
+import cube.common.entity.AIGCGenerationRecord;
+import cube.common.entity.KnowledgeQAResult;
+import cube.common.state.AIGCStateCode;
 import org.json.JSONObject;
 
 import java.util.Date;
@@ -48,6 +50,11 @@ public class AppEvent implements JSONable {
      */
     public final static String Chat = "chat";
 
+    /**
+     * 知识库问答。
+     */
+    public final static String Knowledge = "knowledge";
+
     public final String name;
 
     public final long timestamp;
@@ -62,6 +69,14 @@ public class AppEvent implements JSONable {
         this.name = name;
         this.timestamp = timestamp;
         this.time = Utils.gsDateFormat.format(new Date(this.timestamp));
+        this.data = data;
+    }
+
+    public AppEvent(String name, long timestamp, long contactId, JSONObject data) {
+        this.name = name;
+        this.timestamp = timestamp;
+        this.time = Utils.gsDateFormat.format(new Date(this.timestamp));
+        this.contactId = contactId;
         this.data = data;
     }
 
@@ -102,5 +117,29 @@ public class AppEvent implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         return this.toJSON();
+    }
+
+
+    public static JSONObject createChatSuccessfulData(AIGCGenerationRecord record) {
+        JSONObject json = record.toJSON();
+        json.put("code", AIGCStateCode.Ok.code);
+        return json;
+    }
+
+    public static JSONObject createChatFailedData(long sn, AIGCStateCode stateCode,
+                                                  String query, String unit) {
+        JSONObject json = new JSONObject();
+        json.put("sn", sn);
+        json.put("code", stateCode.code);
+        json.put("query", query);
+        if (null != unit) {
+            json.put("unit", unit);
+        }
+        return json;
+    }
+
+    public static JSONObject createKnowledgeSuccessfulData(KnowledgeQAResult result) {
+        JSONObject json = null;
+        return json;
     }
 }

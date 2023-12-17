@@ -39,7 +39,7 @@ import java.util.List;
  */
 public class AIGCGenerationRecord implements JSONable {
 
-    public long sn = Utils.generateSerialNumber();
+    public final long sn;
 
     public String query;
 
@@ -52,19 +52,22 @@ public class AIGCGenerationRecord implements JSONable {
     public ComplexContext context;
 
     public AIGCGenerationRecord(String query, String answer) {
+        this.sn = Utils.generateSerialNumber();
         this.query = query;
         this.answer = answer;
         this.timestamp = System.currentTimeMillis();
     }
 
-    public AIGCGenerationRecord(String query, String answer, long timestamp, ComplexContext context) {
+    public AIGCGenerationRecord(long sn, String query, String answer, long timestamp, ComplexContext context) {
+        this.sn = sn;
         this.query = query;
         this.answer = answer;
         this.timestamp = timestamp;
         this.context = context;
     }
 
-    public AIGCGenerationRecord(String query, FileLabel fileLabel, long timestamp) {
+    public AIGCGenerationRecord(long sn, String query, FileLabel fileLabel, long timestamp) {
+        this.sn = sn;
         this.query = query;
         this.fileLabels = new ArrayList<>();
         this.fileLabels.add(fileLabel);
@@ -72,6 +75,13 @@ public class AIGCGenerationRecord implements JSONable {
     }
 
     public AIGCGenerationRecord(JSONObject json) {
+        if (json.has("sn")) {
+            this.sn = json.getLong("sn");
+        }
+        else {
+            this.sn = Utils.generateSerialNumber();
+        }
+
         if (json.has("answer")) {
             this.answer = json.getString("answer");
         }
@@ -91,10 +101,6 @@ public class AIGCGenerationRecord implements JSONable {
 
         if (json.has("timestamp")) {
             this.timestamp = json.getLong("timestamp");
-        }
-
-        if (json.has("sn")) {
-            this.sn = json.getLong("sn");
         }
 
         if (json.has("context")) {
