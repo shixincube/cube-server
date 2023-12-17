@@ -27,6 +27,7 @@
 package cube.dispatcher.aigc.handler.app;
 
 import cell.util.log.Logger;
+import cube.aigc.AppEvent;
 import cube.aigc.ConfigInfo;
 import cube.aigc.ModelConfig;
 import cube.common.entity.KnowledgeProfile;
@@ -59,6 +60,7 @@ public class Session extends ContextHandler {
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             String token = null;
+            String ip = null;
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
                 if (null == data) {
@@ -81,6 +83,10 @@ public class Session extends ContextHandler {
 
                 if (data.has("token")) {
                     token = data.getString("token");
+                }
+
+                if (data.has("ip")) {
+                    ip = data.getString("ip");
                 }
             } catch (Exception e) {
                 Logger.w(Session.class, "#doPost", e);
@@ -107,6 +113,12 @@ public class Session extends ContextHandler {
 
             if (null != token) {
                 if (Manager.getInstance().checkToken(token)) {
+                    JSONObject eventData = new JSONObject();
+                    eventData.put("token", token);
+                    if (null != ip) {
+                        eventData.put("ip", ip);
+                    }
+
                     // 获取模型配置
                     ConfigInfo configInfo = Manager.getInstance().getConfigInfo(token);
                     ModelConfig modelConfig = null;
@@ -130,11 +142,21 @@ public class Session extends ContextHandler {
 
                         // 知识库概述
                         responseData.put("knowledge", Manager.getInstance().getKnowledgeProfile(token).toJSON());
+
+                        eventData.put("auth", true);
                     }
                     else {
                         responseData.put("auth", false);
                         responseData.put("knowledge", KnowledgeProfile.createDummy().toJSON());
                         Logger.w(Session.class, "Failed to open channel for token: " + token);
+
+                        eventData.put("auth", false);
+                    }
+
+                    // 记录事件
+                    AppEvent appEvent = new AppEvent(AppEvent.Session, System.currentTimeMillis(), eventData);
+                    if (!Manager.getInstance().writeAppEvent(token, appEvent)) {
+                        Logger.w(Session.class, "Write app event failed: " + token);
                     }
                 }
                 else {

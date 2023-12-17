@@ -49,9 +49,9 @@ public class AIGCChatHistory extends Entity {
 
     public String answerContent;
 
-    public int feedback;
+    public int feedback = 0;
 
-    public long contextId;
+    public long contextId = 0;
 
     public AIGCChatHistory(long sn, String unit) {
         super(0L, "shixincube.com");

@@ -29,6 +29,7 @@ package cube.dispatcher.aigc;
 import cell.core.talk.Primitive;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.aigc.AppEvent;
 import cube.aigc.ConfigInfo;
 import cube.aigc.ModelConfig;
 import cube.aigc.PromptRecord;
@@ -483,6 +484,20 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return true;
+    }
+
+    public boolean writeAppEvent(String token, AppEvent appEvent) {
+        Packet packet = new Packet(AIGCAction.WriteAppEvent.name, appEvent.toJSON());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#writeAppEvent - Response is null");
+            return false;
+        }
+
+        Packet responsePacket = new Packet(response);
+        return Packet.extractCode(responsePacket) == AIGCStateCode.Ok.code;
     }
 
     public AIGCChannel requestChannel(String token, String participant) {

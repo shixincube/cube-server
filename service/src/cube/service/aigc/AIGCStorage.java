@@ -29,10 +29,7 @@ package cube.service.aigc;
 import cell.core.talk.LiteralBase;
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.aigc.ModelConfig;
-import cube.aigc.Notification;
-import cube.aigc.PromptRecord;
-import cube.aigc.Usage;
+import cube.aigc.*;
 import cube.aigc.atom.Atom;
 import cube.common.Storagable;
 import cube.common.entity.*;
@@ -60,6 +57,8 @@ public class AIGCStorage implements Storagable {
     private final String appInvitationTable = "aigc_app_invitation";
 
     private final String appNotificationTable = "aigc_app_notification";
+
+    private final String appEventTable = "aigc_app_event";
 
     private final String queryAnswerTable = "aigc_query_answer";
 
@@ -137,6 +136,27 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("date", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] appEventFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("event", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("time", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 
@@ -433,6 +453,13 @@ public class AIGCStorage implements Storagable {
             }
         }
 
+        if (!this.storage.exist(this.appEventTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.appEventTable, this.appEventFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.appEventTable + "' successfully");
+            }
+        }
+
         if (!this.storage.exist(this.queryAnswerTable)) {
             // 不存在，建新表
             if (this.storage.executeCreate(this.queryAnswerTable, this.queryAnswerFields)) {
@@ -572,6 +599,30 @@ public class AIGCStorage implements Storagable {
         return this.storage.executeInsert(this.appInvitationTable, new StorageField[] {
                 new StorageField("invitation", invitation),
                 new StorageField("token", token)
+        });
+    }
+
+    public List<AppEvent> readAppEvents(long contactId, String eventName) {
+        List<AppEvent> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.appEventTable, this.appEventFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("event", eventName)
+                });
+
+
+        return list;
+    }
+
+    public boolean writeAppEvent(AppEvent appEvent) {
+        return this.storage.executeInsert(this.appEventTable, new StorageField[] {
+                new StorageField("event", appEvent.name),
+                new StorageField("time", appEvent.time),
+                new StorageField("timestamp", appEvent.timestamp),
+                new StorageField("contact_id", appEvent.contactId),
+                new StorageField("data", appEvent.getSafeData().toString())
         });
     }
 

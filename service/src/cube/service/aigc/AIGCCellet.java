@@ -224,6 +224,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new EvaluateTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.WriteAppEvent.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new WriteAppEventTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.AutomaticSpeechRecognition.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new AutomaticSpeechRecognitionTask(this, talkContext, primitive,

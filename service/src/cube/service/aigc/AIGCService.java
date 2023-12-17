@@ -2496,12 +2496,19 @@ public class AIGCService extends AbstractModule {
 
         protected TextToImageListener listener;
 
+        protected AIGCChatHistory history;
+
         public TextToImageUnitMeta(AIGCUnit unit, AIGCChannel channel, String text, TextToImageListener listener) {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
             this.text = text;
             this.listener = listener;
+
+            this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName());
+            this.history.queryContactId = channel.getAuthToken().getContactId();
+            this.history.queryTime = System.currentTimeMillis();
+            this.history.queryContent = text;
         }
 
         public void process() {
@@ -2549,14 +2556,23 @@ public class AIGCService extends AbstractModule {
                 record.sn = this.sn;
                 this.listener.onCompleted(record);
 
+                // 填写历史
+                this.history.answerContactId = this.unit.getContact().getId();
+                this.history.answerTime = System.currentTimeMillis();
+                this.history.answerContent = this.fileLabel.toCompactJSON().toString();
+
                 executor.execute(new Runnable() {
                     @Override
                     public void run() {
+                        // 计算用量
                         long contactId = channel.getAuthToken().getContactId();
                         List<String> tokens = calcTokens(text);
                         long promptTokens = tokens.size();
                         long completionTokens = (long) Math.floor(fileLabel.getFileSize() / 10240.0);
                         storage.updateUsage(contactId, completionTokens, promptTokens);
+
+                        // 保存历史记录
+                        storage.writeChatHistory(history);
                     }
                 });
             }
