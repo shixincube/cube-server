@@ -159,7 +159,8 @@ public class ChatTask extends ServiceTask {
                                 channel.getAuthToken().getContactId(),
                                 AppEvent.createChatSuccessfulData(record));
                         if (!service.getStorage().writeAppEvent(appEvent)) {
-                            Logger.w(ChatTask.class, "Write app event failed - cid: " + channel.getAuthToken().getContactId());
+                            Logger.w(ChatTask.class, "Writes app event failed (chat) - cid: " +
+                                    channel.getAuthToken().getContactId());
                         }
                     }
 
@@ -184,7 +185,8 @@ public class ChatTask extends ServiceTask {
                                 AppEvent.createChatFailedData(channel.getLastUnitMetaSn(), stateCode,
                                         content, unit));
                         if (!service.getStorage().writeAppEvent(appEvent)) {
-                            Logger.w(ChatTask.class, "Write app event failed - cid: " + channel.getAuthToken().getContactId());
+                            Logger.w(ChatTask.class, "Writes app event failed (chat) - cid: " +
+                                    channel.getAuthToken().getContactId());
                         }
                     }
                 });
@@ -202,7 +204,14 @@ public class ChatTask extends ServiceTask {
                                 makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.record.toCompactJSON()));
                         markResponseTime();
 
-
+                        // 写入事件
+                        AppEvent appEvent = new AppEvent(AppEvent.Knowledge, System.currentTimeMillis(),
+                                channel.getAuthToken().getContactId(),
+                                AppEvent.createKnowledgeSuccessfulData(result));
+                        if (!service.getStorage().writeAppEvent(appEvent)) {
+                            Logger.w(ChatTask.class, "Writes app event failed (knowledge) - cid: " +
+                                    channel.getAuthToken().getContactId());
+                        }
                     }
 
                     @Override
@@ -210,6 +219,16 @@ public class ChatTask extends ServiceTask {
                         cellet.speak(talkContext,
                                 makeResponse(dialect, packet, errorCode.code, new JSONObject()));
                         markResponseTime();
+
+                        // 写入事件
+                        AppEvent appEvent = new AppEvent(AppEvent.Knowledge, System.currentTimeMillis(),
+                                channel.getAuthToken().getContactId(),
+                                AppEvent.createKnowledgeFailedData(channel.getLastUnitMetaSn(), errorCode,
+                                        content));
+                        if (!service.getStorage().writeAppEvent(appEvent)) {
+                            Logger.w(ChatTask.class, "Writes app event failed (knowledge) - cid: " +
+                                    channel.getAuthToken().getContactId());
+                        }
                     }
                 });
             }

@@ -155,7 +155,7 @@ public class Session extends ContextHandler {
 
                     // 记录事件
                     AppEvent appEvent = new AppEvent(AppEvent.Session, System.currentTimeMillis(), eventData);
-                    if (!Manager.getInstance().writeAppEvent(token, appEvent)) {
+                    if (!Manager.getInstance().addAppEvent(token, appEvent)) {
                         Logger.w(Session.class, "Write app event failed: " + token);
                     }
                 }

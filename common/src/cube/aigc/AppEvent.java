@@ -55,7 +55,7 @@ public class AppEvent implements JSONable {
      */
     public final static String Knowledge = "knowledge";
 
-    public final String name;
+    public final String event;
 
     public final long timestamp;
 
@@ -65,23 +65,23 @@ public class AppEvent implements JSONable {
 
     public JSONObject data;
 
-    public AppEvent(String name, long timestamp, JSONObject data) {
-        this.name = name;
+    public AppEvent(String event, long timestamp, JSONObject data) {
+        this.event = event;
         this.timestamp = timestamp;
         this.time = Utils.gsDateFormat.format(new Date(this.timestamp));
         this.data = data;
     }
 
-    public AppEvent(String name, long timestamp, long contactId, JSONObject data) {
-        this.name = name;
+    public AppEvent(String event, long timestamp, long contactId, JSONObject data) {
+        this.event = event;
         this.timestamp = timestamp;
         this.time = Utils.gsDateFormat.format(new Date(this.timestamp));
         this.contactId = contactId;
         this.data = data;
     }
 
-    public AppEvent(String name, long timestamp, String time, long contactId, JSONObject data) {
-        this.name = name;
+    public AppEvent(String event, long timestamp, String time, long contactId, JSONObject data) {
+        this.event = event;
         this.timestamp = timestamp;
         this.time = time;
         this.contactId = contactId;
@@ -89,7 +89,7 @@ public class AppEvent implements JSONable {
     }
 
     public AppEvent(JSONObject json) {
-        this.name = json.getString("name");
+        this.event = json.getString("event");
         this.timestamp = json.getLong("timestamp");
         this.time = json.has("time") ? json.getString("time") :
                 Utils.gsDateFormat.format(new Date(this.timestamp));
@@ -104,7 +104,7 @@ public class AppEvent implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("name", this.name);
+        json.put("event", this.event);
         json.put("timestamp", this.timestamp);
         json.put("time", this.time);
         json.put("contactId", this.contactId);
@@ -139,7 +139,18 @@ public class AppEvent implements JSONable {
     }
 
     public static JSONObject createKnowledgeSuccessfulData(KnowledgeQAResult result) {
-        JSONObject json = null;
+        JSONObject json = result.toCompactJSON();
+        json.put("sn", result.record.sn);
+        json.put("code", AIGCStateCode.Ok.code);
+        return json;
+    }
+
+    public static JSONObject createKnowledgeFailedData(long sn, AIGCStateCode stateCode,
+                                                       String query) {
+        JSONObject json = new JSONObject();
+        json.put("sn", sn);
+        json.put("code", stateCode.code);
+        json.put("query", query);
         return json;
     }
 }

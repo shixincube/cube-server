@@ -87,14 +87,14 @@ public enum AIGCAction {
     KeepAliveChannel("keepAliveChannel"),
 
     /**
-     * 写入应用事件。
+     * 添加应用事件。
      */
-    WriteAppEvent("writeAppEvent"),
+    AddAppEvent("addAppEvent"),
 
     /**
-     * 读取应用事件。
+     * 查询应用事件。
      */
-    ReadAppEvent("readAppEvent"),
+    QueryAppEvent("queryAppEvent"),
 
     /**
      * 问答互动。

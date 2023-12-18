@@ -50,17 +50,38 @@ public class KnowledgeQAResult implements JSONable {
 
     public KnowledgeQAResult(JSONObject json) {
         this.query = json.getString("query");
+        if (json.has("prompt")) {
+            this.prompt = json.getString("prompt");
+        }
+        if (json.has("record")) {
+            this.record = new AIGCGenerationRecord(json.getJSONObject("record"));
+        }
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("query", this.query);
+        if (null != this.prompt) {
+            json.put("prompt", this.prompt);
+        }
+        if (null != this.record) {
+            json.put("record", this.record.toJSON());
+        }
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = this.toJSON();
+        if (json.has("prompt")) {
+            json.remove("prompt");
+        }
+        if (json.has("record")) {
+            // 将 record 里的 query 修改为原 query
+            JSONObject recordJson = json.getJSONObject("record");
+            recordJson.put("query", this.query);
+        }
+        return json;
     }
 }

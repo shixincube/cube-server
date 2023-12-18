@@ -468,6 +468,7 @@ public class KnowledgeBase {
                 @Override
                 public void run() {
                     long sn = Utils.generateSerialNumber();
+                    channel.setLastUnitMetaSn(sn);
 
                     KnowledgeQAResult result = new KnowledgeQAResult(query);
                     result.prompt = "";

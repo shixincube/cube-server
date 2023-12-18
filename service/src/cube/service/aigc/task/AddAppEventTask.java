@@ -41,11 +41,11 @@ import cube.service.aigc.AIGCService;
 import org.json.JSONObject;
 
 /**
- * 写入应用事件任务。
+ * 添加应用事件任务。
  */
-public class WriteAppEventTask extends ServiceTask {
+public class AddAppEventTask extends ServiceTask {
 
-    public WriteAppEventTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public AddAppEventTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
