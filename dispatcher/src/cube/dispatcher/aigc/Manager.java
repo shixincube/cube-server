@@ -500,9 +500,16 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractCode(responsePacket) == AIGCStateCode.Ok.code;
     }
 
-    public List<AppEvent> queryAppEvents(String token, long contactId, String event, long start, long end,
-                                         int page) {
+    public JSONObject queryAppEvents(String token, long contactId, String event, long start, long end,
+                                     int pageIndex, int pageSize) {
         JSONObject requestData = new JSONObject();
+        requestData.put("contactId", contactId);
+        requestData.put("event", event);
+        requestData.put("start", start);
+        requestData.put("end", end);
+        requestData.put("page", pageIndex);
+        requestData.put("num", pageSize);
+
         Packet packet = new Packet(AIGCAction.QueryAppEvent.name, requestData);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
@@ -512,9 +519,14 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#queryAppEvents - Response state code is NOT Ok - "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
 
-        List<AppEvent> list = new ArrayList<>();
-        return list;
+        return Packet.extractDataPayload(responsePacket);
     }
 
     public AIGCChannel requestChannel(String token, String participant) {
