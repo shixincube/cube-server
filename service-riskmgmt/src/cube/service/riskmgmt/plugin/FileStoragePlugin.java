@@ -1,9 +1,9 @@
 package cube.service.riskmgmt.plugin;
 
 import cube.common.entity.ContactBehavior;
+import cube.file.hook.FileStorageHook;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
-import cube.service.filestorage.FileStorageHook;
 import cube.service.filestorage.FileStoragePluginContext;
 import cube.service.riskmgmt.RiskManagement;
 import org.json.JSONObject;

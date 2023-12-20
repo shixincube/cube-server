@@ -26,6 +26,7 @@
 
 package cube.service.filestorage;
 
+import cube.file.hook.FileStorageHook;
 import cube.plugin.PluginSystem;
 
 /**
@@ -40,6 +41,10 @@ public class FileStoragePluginSystem extends PluginSystem<FileStorageHook> {
 
     public FileStorageHook getSaveFileHook() {
         return this.getHook(FileStorageHook.SaveFile);
+    }
+
+    public FileStorageHook getDestroyFileHook() {
+        return this.getHook(FileStorageHook.DestroyFile);
     }
 
     public FileStorageHook getNewFileHook() {
@@ -62,6 +67,9 @@ public class FileStoragePluginSystem extends PluginSystem<FileStorageHook> {
 
     private void build() {
         FileStorageHook hook = new FileStorageHook(FileStorageHook.SaveFile);
+        this.addHook(hook);
+
+        hook = new FileStorageHook(FileStorageHook.DestroyFile);
         this.addHook(hook);
 
         hook = new FileStorageHook(FileStorageHook.NewFile);

@@ -30,7 +30,6 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.aigc.AppEvent;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
 import cube.aigc.publicopinion.PublicOpinionTaskName;
@@ -52,6 +51,7 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.file.FileProcessResult;
+import cube.file.hook.FileStorageHook;
 import cube.file.operation.AudioCropOperation;
 import cube.file.operation.ExtractAudioOperation;
 import cube.plugin.PluginSystem;
@@ -64,7 +64,9 @@ import cube.service.aigc.module.PublicOpinion;
 import cube.service.aigc.module.Stage;
 import cube.service.aigc.module.StageListener;
 import cube.service.aigc.plugin.ActivateKnowledgeBasePlugin;
+import cube.service.aigc.plugin.DeleteFilePlugin;
 import cube.service.aigc.plugin.InjectTokenPlugin;
+import cube.service.aigc.plugin.NewFilePlugin;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.ResourceAnswer;
 import cube.service.aigc.scene.PsychologyScene;
@@ -169,6 +171,11 @@ public class AIGCService extends AbstractModule {
     private Tokenizer tokenizer;
 
     /**
+     * 是否对 Prompt 进行上下文识别。
+     */
+    private boolean useRecognizeContext = false;
+
+    /**
      * 是否访问，仅用于本地测试
      */
     private boolean useAgent = false;
@@ -214,7 +221,7 @@ public class AIGCService extends AbstractModule {
                     Logger.e(AIGCService.class, "Can NOT find AIGC storage config");
                 }
 
-                // 监听事件
+                // 监听授权服务事件
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
                 while (!authService.isStarted()) {
                     try {
@@ -226,6 +233,7 @@ public class AIGCService extends AbstractModule {
                 authService.getPluginSystem().register(AuthServiceHook.InjectToken,
                         new InjectTokenPlugin(AIGCService.this));
 
+                // 监听联系人服务事件
                 while (!ContactManager.getInstance().isStarted()) {
                     try {
                         Thread.sleep(100);
@@ -235,6 +243,25 @@ public class AIGCService extends AbstractModule {
                 }
                 ContactManager.getInstance().getPluginSystem().register(ContactHook.NewContact,
                         new ActivateKnowledgeBasePlugin(AIGCService.this));
+
+                // 监听文件服务事件
+                AbstractModule fileStorage = getKernel().getModule("FileStorage");
+                if (null != fileStorage) {
+                    while (!fileStorage.isStarted()) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    fileStorage.getPluginSystem().register(FileStorageHook.NewFile,
+                            new NewFilePlugin(AIGCService.this));
+                    fileStorage.getPluginSystem().register(FileStorageHook.DeleteFile,
+                            new DeleteFilePlugin(AIGCService.this));
+                }
+                else {
+                    Logger.e(AIGCService.class, "#start - Can NOT find \"FileStorage\" module!");
+                }
 
                 // 资源管理器
                 Explorer.getInstance().setup(AIGCService.this, tokenizer);
@@ -2027,6 +2054,8 @@ public class AIGCService extends AbstractModule {
 
         protected AIGCChannel channel;
 
+        protected Contact participant;
+
         protected String content;
 
         protected List<AIGCGenerationRecord> records;
@@ -2042,6 +2071,8 @@ public class AIGCService extends AbstractModule {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
+            this.participant = ContactManager.getInstance().getContact(channel.getAuthToken().getDomain(),
+                    channel.getAuthToken().getContactId());
             this.content = content;
             this.records = records;
             this.numHistories = (null != records) ? records.size() : 0;
@@ -2057,6 +2088,8 @@ public class AIGCService extends AbstractModule {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
+            this.participant = ContactManager.getInstance().getContact(channel.getAuthToken().getDomain(),
+                    channel.getAuthToken().getContactId());
             this.content = content;
             this.numHistories = numHistories;
             this.listener = listener;
@@ -2071,7 +2104,9 @@ public class AIGCService extends AbstractModule {
             this.channel.setLastUnitMetaSn(this.sn);
 
             // 识别内容
-            ComplexContext complexContext = recognizeContext(this.content, this.channel.getAuthToken());
+            ComplexContext complexContext = useRecognizeContext ?
+                    recognizeContext(this.content, this.channel.getAuthToken()) :
+                    new ComplexContext(ComplexContext.Type.Simplex);;
 
             AIGCGenerationRecord result = null;
 
@@ -2086,6 +2121,7 @@ public class AIGCService extends AbstractModule {
                 JSONObject data = new JSONObject();
                 data.put("unit", this.unit.getCapability().getName());
                 data.put("content", this.content);
+                data.put("participant", this.participant.toCompactJSON());
 
                 if (null == this.records) {
                     int validNumHistories = Math.min(this.numHistories, maxHistories);
@@ -2208,7 +2244,7 @@ public class AIGCService extends AbstractModule {
                     // 保存历史记录
                     storage.writeChatHistory(history);
 
-                    if (complexContext.isSimplex()) {
+                    if (complexContext.isSimplex() && useRecognizeContext) {
                         // 进行资源搜索
                         SearchResult searchResult = Explorer.getInstance().search(content,
                                 history.answerContent, complexContext);

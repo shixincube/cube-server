@@ -136,6 +136,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new ChartData());
         httpServer.addContextHandler(new Prompts());
         httpServer.addContextHandler(new SubmitEvent());
+        httpServer.addContextHandler(new QueryAppEvents());
         httpServer.addContextHandler(new PublicOpinionData());
         httpServer.addContextHandler(new InferByModule());
         httpServer.addContextHandler(new PreInfer());
@@ -508,7 +509,7 @@ public class Manager implements Tickable, PerformerListener {
         requestData.put("start", start);
         requestData.put("end", end);
         requestData.put("page", pageIndex);
-        requestData.put("num", pageSize);
+        requestData.put("size", pageSize);
 
         Packet packet = new Packet(AIGCAction.QueryAppEvent.name, requestData);
         ActionDialect request = packet.toDialect();

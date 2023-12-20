@@ -35,6 +35,7 @@ import cube.common.notice.OfficeConvertTo;
 import cube.common.notice.ProcessImage;
 import cube.core.AbstractModule;
 import cube.file.FileProcessResult;
+import cube.file.hook.FileStorageHook;
 import cube.file.operation.OfficeConvertToOperation;
 import cube.file.operation.WatermarkOperation;
 import cube.service.auth.AuthService;

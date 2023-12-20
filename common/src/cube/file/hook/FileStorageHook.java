@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.service.filestorage;
+package cube.file.hook;
 
 import cube.plugin.Hook;
 
@@ -33,10 +33,24 @@ import cube.plugin.Hook;
  */
 public class FileStorageHook extends Hook {
 
+    /**
+     * 文件保存到系统。
+     */
     public final static String SaveFile = "SaveFile";
 
+    /**
+     * 从系统里销毁文件。
+     */
+    public final static String DestroyFile = "DestroyFile";
+
+    /**
+     * 目录插入新文件。
+     */
     public final static String NewFile = "NewFile";
 
+    /**
+     * 删除目录里文件。
+     */
     public final static String DeleteFile = "DeleteFile";
 
     public final static String DownloadFile = "DownloadFile";

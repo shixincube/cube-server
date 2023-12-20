@@ -37,6 +37,8 @@ public class FileStoragePluginContext extends PluginContext {
 
     public final static String FILE_LABEL = "fileLabel";
 
+    public final static String CONTACT = "contact";
+
     public final static String DIRECTORY = "directory";
 
     public final static String SHARING_TAG = "sharingTag";
@@ -109,6 +111,9 @@ public class FileStoragePluginContext extends PluginContext {
         if (FILE_LABEL.equals(name)) {
             return this.fileLabel;
         }
+        else if (CONTACT.equals(name)) {
+            return this.contact;
+        }
         else if (DIRECTORY.equals(name)) {
             return this.directory;
         }
@@ -126,6 +131,9 @@ public class FileStoragePluginContext extends PluginContext {
     public void set(String name, Object value) {
         if (FILE_LABEL.equals(name) && value instanceof FileLabel) {
             this.fileLabel = (FileLabel) value;
+        }
+        else if (CONTACT.equals(name) && value instanceof Contact) {
+            this.contact = (Contact) value;
         }
         else if (DIRECTORY.equals(name) && value instanceof Directory) {
             this.directory = (Directory) value;

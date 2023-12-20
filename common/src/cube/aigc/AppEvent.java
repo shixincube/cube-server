@@ -51,9 +51,19 @@ public class AppEvent implements JSONable {
     public final static String Chat = "chat";
 
     /**
-     * 知识库问答。
+     * 知识库问答事件。
      */
     public final static String Knowledge = "knowledge";
+
+    /**
+     * 提交了新文件事件。
+     */
+    public final static String NewFile = "newFile";
+
+    /**
+     * 删除已提交文件事件。
+     */
+    public final static String DeleteFile = "deleteFile";
 
     public final String event;
 

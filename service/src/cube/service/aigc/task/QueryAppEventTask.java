@@ -78,8 +78,8 @@ public class QueryAppEventTask extends ServiceTask {
         String event = null;
         long start = 0;
         long end = 0;
-        int num = 10;
         int page = 0;
+        int size = 10;
 
         try {
             contactId = packet.data.getLong("contactId");
@@ -91,11 +91,11 @@ public class QueryAppEventTask extends ServiceTask {
             else {
                 end = System.currentTimeMillis();
             }
-            if (packet.data.has("num")) {
-                num = packet.data.getInt("num");
-            }
             if (packet.data.has("page")) {
                 page = packet.data.getInt("page");
+            }
+            if (packet.data.has("size")) {
+                size = packet.data.getInt("size");
             }
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
@@ -106,7 +106,7 @@ public class QueryAppEventTask extends ServiceTask {
 
         JSONArray array = new JSONArray();
         List<AppEvent> list = service.getStorage().readAppEvents(contactId, event, start, end);
-        for (int i = num * page; i < num * page + num && i < list.size(); ++i) {
+        for (int i = size * page; i < size * page + size && i < list.size(); ++i) {
             array.put(list.get(i).toJSON());
         }
 
@@ -115,8 +115,8 @@ public class QueryAppEventTask extends ServiceTask {
         data.put("event", event);
         data.put("start", start);
         data.put("end", end);
-        data.put("num", num);
-        data.put("page", page);
+        data.put("pageIndex", page);
+        data.put("pageSize", size);
         data.put("total", list.size());
         data.put("list", array);
 

@@ -37,6 +37,7 @@ import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
 import cube.common.state.FileStorageStateCode;
 import cube.core.*;
+import cube.file.hook.FileStorageHook;
 import cube.plugin.PluginSystem;
 import cube.service.Director;
 import cube.service.auth.AuthService;
@@ -777,6 +778,15 @@ public class FileStorageService extends AbstractModule {
         // 从数据库里删除
         this.serviceStorage.deleteFile(domainName, fileLabel.getFileCode());
 
+        // 触发 Hook
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                FileStorageHook hook = pluginSystem.getDestroyFileHook();
+                hook.apply(new FileStoragePluginContext(fileLabel));
+            }
+        });
+
         return true;
     }
 
@@ -804,6 +814,17 @@ public class FileStorageService extends AbstractModule {
                 fileLabelList.add(fileLabel);
             }
         }
+
+        // 触发 Hook
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                FileStorageHook hook = pluginSystem.getDestroyFileHook();
+                for (FileLabel fileLabel : fileLabelList) {
+                    hook.apply(new FileStoragePluginContext(fileLabel));
+                }
+            }
+        });
 
         return fileLabelList;
     }
