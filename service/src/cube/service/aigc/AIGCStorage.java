@@ -849,7 +849,8 @@ public class AIGCStorage implements Storagable {
                 new StorageField("contact_id", doc.contactId),
                 new StorageField("file_code", doc.fileCode),
                 new StorageField("activated", 1),
-                new StorageField("num_segments", doc.numSegments)
+                new StorageField("num_segments", doc.numSegments),
+                new StorageField("scope", doc.scope.name)
         });
     }
 

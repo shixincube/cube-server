@@ -45,29 +45,34 @@ public class AIGCGenerationRecord implements JSONable {
 
     public String answer;
 
+    public String unit;
+
     public List<FileLabel> fileLabels;
 
     public long timestamp;
 
     public ComplexContext context;
 
-    public AIGCGenerationRecord(String query, String answer) {
+    public AIGCGenerationRecord(String unit, String query, String answer) {
         this.sn = Utils.generateSerialNumber();
+        this.unit = unit;
         this.query = query;
         this.answer = answer;
         this.timestamp = System.currentTimeMillis();
     }
 
-    public AIGCGenerationRecord(long sn, String query, String answer, long timestamp, ComplexContext context) {
+    public AIGCGenerationRecord(long sn, String unit, String query, String answer, long timestamp, ComplexContext context) {
         this.sn = sn;
+        this.unit = unit;
         this.query = query;
         this.answer = answer;
         this.timestamp = timestamp;
         this.context = context;
     }
 
-    public AIGCGenerationRecord(long sn, String query, FileLabel fileLabel, long timestamp) {
+    public AIGCGenerationRecord(long sn, String unit, String query, FileLabel fileLabel, long timestamp) {
         this.sn = sn;
+        this.unit = unit;
         this.query = query;
         this.fileLabels = new ArrayList<>();
         this.fileLabels.add(fileLabel);
@@ -80,6 +85,10 @@ public class AIGCGenerationRecord implements JSONable {
         }
         else {
             this.sn = Utils.generateSerialNumber();
+        }
+
+        if (json.has("unit")) {
+            this.unit = json.getString("unit");
         }
 
         if (json.has("answer")) {
@@ -128,6 +137,11 @@ public class AIGCGenerationRecord implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
+
+        if (null != this.unit) {
+            json.put("unit", this.unit);
+        }
+
         json.put("query", this.query);
 
         if (null != this.answer) {

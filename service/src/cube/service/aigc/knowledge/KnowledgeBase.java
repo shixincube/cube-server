@@ -77,6 +77,10 @@ public class KnowledgeBase {
         this.fileStorage = fileStorage;
         this.resource = new KnowledgeResource();
         this.scope = getProfile().scope;
+
+    }
+
+    public void init() {
         this.listKnowledgeDocs();
         this.listKnowledgeArticles();
     }
@@ -472,7 +476,7 @@ public class KnowledgeBase {
 
                     KnowledgeQAResult result = new KnowledgeQAResult(query);
                     result.prompt = "";
-                    AIGCGenerationRecord record = new AIGCGenerationRecord(sn, query, EMPTY_BASE_ANSWER,
+                    AIGCGenerationRecord record = new AIGCGenerationRecord(sn, unitName, query, EMPTY_BASE_ANSWER,
                             System.currentTimeMillis(), new ComplexContext(ComplexContext.Type.Simplex));
                     result.record = record;
                     listener.onCompleted(channel, result);

@@ -43,27 +43,27 @@ public class AppEvent implements JSONable {
     /**
      * 会话激活事件。
      */
-    public final static String Session = "session";
+    public final static String Session = "Session";
 
     /**
      * 对话事件。
      */
-    public final static String Chat = "chat";
+    public final static String Chat = "Chat";
 
     /**
      * 知识库问答事件。
      */
-    public final static String Knowledge = "knowledge";
+    public final static String Knowledge = "Knowledge";
 
     /**
      * 提交了新文件事件。
      */
-    public final static String NewFile = "newFile";
+    public final static String NewFile = "NewFile";
 
     /**
      * 删除已提交文件事件。
      */
-    public final static String DeleteFile = "deleteFile";
+    public final static String DeleteFile = "DeleteFile";
 
     public final String event;
 

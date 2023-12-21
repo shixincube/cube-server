@@ -254,7 +254,7 @@ public class AIGCService extends AbstractModule {
                             e.printStackTrace();
                         }
                     }
-                    fileStorage.getPluginSystem().register(FileStorageHook.NewFile,
+                    fileStorage.getPluginSystem().register(FileStorageHook.SaveFile,
                             new NewFilePlugin(AIGCService.this));
                     fileStorage.getPluginSystem().register(FileStorageHook.DeleteFile,
                             new DeleteFilePlugin(AIGCService.this));
@@ -587,6 +587,13 @@ public class AIGCService extends AbstractModule {
             AuthToken authToken = authService.queryAuthTokenByContactId(contactId);
 
             base = new KnowledgeBase(this, this.storage, authToken, fileStorage);
+            final KnowledgeBase knowledgeBase = base;
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    knowledgeBase.init();
+                }
+            });
             this.knowledgeMap.put(contactId, base);
         }
         return base;
@@ -2162,7 +2169,8 @@ public class AIGCService extends AbstractModule {
                     if (null != responseText) {
                         // 过滤中文字符
                         responseText = this.filterChinese(this.unit, responseText);
-                        result = this.channel.appendRecord(this.sn, this.content, responseText, complexContext);
+                        result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
+                                this.content, responseText, complexContext);
                     }
                     else {
                         this.channel.setProcessing(false);
@@ -2207,14 +2215,16 @@ public class AIGCService extends AbstractModule {
 
                     // 过滤中文字符
                     responseText = this.filterChinese(this.unit, responseText);
-                    result = this.channel.appendRecord(this.sn, this.content, responseText, complexContext);
+                    result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
+                            this.content, responseText, complexContext);
                 }
             }
             else {
                 // 复合型数据
                 ResourceAnswer resourceAnswer = new ResourceAnswer(complexContext);
                 String answer = resourceAnswer.answer();
-                result = this.channel.appendRecord(this.sn, this.content, answer, complexContext);
+                result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
+                        this.content, answer, complexContext);
             }
 
             if (!complexContext.isSimplex()) {
@@ -2367,8 +2377,8 @@ public class AIGCService extends AbstractModule {
             }
 
             JSONObject payload = Packet.extractDataPayload(response);
-            AIGCConversationResponse convResponse = new AIGCConversationResponse(this.sn, this.content,
-                    complexContext, payload);
+            AIGCConversationResponse convResponse = new AIGCConversationResponse(this.sn,
+                    this.unit.getCapability().getName(), this.content, complexContext, payload);
 
             // 过滤中文字符
             convResponse.answer = this.filterChinese(convResponse.answer);
@@ -2586,7 +2596,8 @@ public class AIGCService extends AbstractModule {
                 this.fileLabel.resetURLsToken(this.channel.getAuthToken().getCode());
 
                 // 记录
-                AIGCGenerationRecord record = this.channel.appendRecord(this.sn, this.text, this.fileLabel);
+                AIGCGenerationRecord record = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
+                        this.text, this.fileLabel);
                 this.listener.onCompleted(record);
 
                 // 填写历史

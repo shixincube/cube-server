@@ -51,6 +51,8 @@ public class EvaluationReport {
     public final static String HighTrick = "明显";
     public final static String LowTrick = "不足";
 
+    public final static String UNIT = "Chat";
+
     private List<ReportScore> reportScoreList;
 
     public EvaluationReport(List<Evaluation.Result> resultList) {
@@ -118,7 +120,7 @@ public class EvaluationReport {
         for (ReportScore score : positiveScoreList) {
             String word = score.interpretation.getComment().word;
 
-            AIGCGenerationRecord record = new AIGCGenerationRecord(word, score.interpretation.getInterpretation());
+            AIGCGenerationRecord record = new AIGCGenerationRecord(UNIT, word, score.interpretation.getInterpretation());
 
             String prompt = template.formatFeaturePrompt(score.positive > 1 ? word + HighTrick : word);
             PromptChaining chaining = new PromptChaining(Consts.PROMPT_ROLE_PSYCHOLOGY);
@@ -128,7 +130,7 @@ public class EvaluationReport {
         }
         for (ReportScore score : negativeScoreList) {
             String word = score.interpretation.getComment().word;
-            AIGCGenerationRecord record = new AIGCGenerationRecord(word, score.interpretation.getInterpretation());
+            AIGCGenerationRecord record = new AIGCGenerationRecord(UNIT, word, score.interpretation.getInterpretation());
 
             String prompt = template.formatFeaturePrompt(word + LowTrick);
             PromptChaining chaining = new PromptChaining(Consts.PROMPT_ROLE_PSYCHOLOGY);

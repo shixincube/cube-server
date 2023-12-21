@@ -37,6 +37,8 @@ public class AIGCConversationResponse implements JSONable {
 
     public final long sn;
 
+    public final String unit;
+
     public String query;
 
     public String answer;
@@ -54,16 +56,24 @@ public class AIGCConversationResponse implements JSONable {
     public ComplexContext context;
 
     public AIGCConversationResponse(JSONObject json) {
-        if (json.has("query")) {
-            this.query = json.getString("query");
-        }
-
         if (json.has("sn")) {
             this.sn = json.getLong("sn");
         }
         else {
             this.sn = Utils.generateSerialNumber();
         }
+
+        if (json.has("unit")) {
+            this.unit = json.getString("unit");
+        }
+        else {
+            this.unit = "";
+        }
+
+        if (json.has("query")) {
+            this.query = json.getString("query");
+        }
+
         this.answer = json.getString("answer");
         this.thought = json.getString("thought");
         this.needHistory = json.getBoolean("needHistory");
@@ -82,8 +92,9 @@ public class AIGCConversationResponse implements JSONable {
         }
     }
 
-    public AIGCConversationResponse(long sn, String query, ComplexContext context, JSONObject payload) {
+    public AIGCConversationResponse(long sn, String unit, String query, ComplexContext context, JSONObject payload) {
         this.sn = sn;
+        this.unit = unit;
         this.query = query;
         this.context = context;
 
@@ -103,7 +114,7 @@ public class AIGCConversationResponse implements JSONable {
 
     public AIGCGenerationRecord toRecord() {
         AIGCGenerationRecord record = new AIGCGenerationRecord(this.sn,
-                this.query, this.answer, this.timestamp, this.context);
+                this.unit, this.query, this.answer, this.timestamp, this.context);
         return record;
     }
 
@@ -115,6 +126,7 @@ public class AIGCConversationResponse implements JSONable {
         }
 
         json.put("sn", this.sn);
+        json.put("unit", this.unit);
         json.put("answer", this.answer);
         json.put("thought", this.thought);
         json.put("needHistory", this.needHistory);

@@ -262,7 +262,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.GetKnowledgeProfile.name, new JSONObject());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#getKnowledgeProfile - Response is null : " + token);
             return null;

@@ -168,7 +168,7 @@ public class AIGCChannel extends Entity {
         }
     }
 
-    public AIGCGenerationRecord appendRecord(long sn, String query, String answer, ComplexContext context) {
+    public AIGCGenerationRecord appendRecord(long sn, String unit, String query, String answer, ComplexContext context) {
         this.activeTimestamp = System.currentTimeMillis();
 
         this.totalQueryWords += query.length();
@@ -176,14 +176,14 @@ public class AIGCChannel extends Entity {
 
         this.rounds.incrementAndGet();
 
-        AIGCGenerationRecord record = new AIGCGenerationRecord(sn, query, answer, this.activeTimestamp, context);
+        AIGCGenerationRecord record = new AIGCGenerationRecord(sn, unit, query, answer, this.activeTimestamp, context);
         synchronized (this.history) {
             this.history.addFirst(record);
         }
         return record;
     }
 
-    public AIGCGenerationRecord appendRecord(long sn, String query, FileLabel fileLabel) {
+    public AIGCGenerationRecord appendRecord(long sn, String unit, String query, FileLabel fileLabel) {
         this.activeTimestamp = System.currentTimeMillis();
 
         this.totalQueryWords += query.length();
@@ -191,7 +191,7 @@ public class AIGCChannel extends Entity {
 
         this.rounds.incrementAndGet();
 
-        AIGCGenerationRecord record = new AIGCGenerationRecord(sn, query, fileLabel, this.activeTimestamp);
+        AIGCGenerationRecord record = new AIGCGenerationRecord(sn, unit, query, fileLabel, this.activeTimestamp);
         synchronized (this.history) {
             this.history.addFirst(record);
         }
@@ -206,8 +206,9 @@ public class AIGCChannel extends Entity {
 
         this.rounds.incrementAndGet();
 
-        AIGCGenerationRecord record = new AIGCGenerationRecord(sn, conversationResponse.query,
-                conversationResponse.answer, this.activeTimestamp, conversationResponse.context);
+        AIGCGenerationRecord record = new AIGCGenerationRecord(sn, conversationResponse.unit,
+                conversationResponse.query, conversationResponse.answer, this.activeTimestamp,
+                conversationResponse.context);
         synchronized (this.history) {
             this.history.addFirst(record);
         }
