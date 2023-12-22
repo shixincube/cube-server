@@ -278,12 +278,21 @@ public class Contact extends AbstractContact {
     }
 
     /**
+     * 获取当前联系人第一个设备。
+     *
+     * @return
+     */
+    public Device getDevice() {
+        return (this.deviceList.isEmpty()) ? new Device("Dummy", "Cube") : this.deviceList.get(0);
+    }
+
+    /**
      * 获取设备列表。
      *
      * @return 返回设备列表。
      */
     public List<Device> getDeviceList() {
-        return new ArrayList<Device>(this.deviceList);
+        return new ArrayList<>(this.deviceList);
     }
 
     /**

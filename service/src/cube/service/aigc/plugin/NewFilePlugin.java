@@ -28,6 +28,7 @@ package cube.service.aigc.plugin;
 
 import cell.util.log.Logger;
 import cube.aigc.AppEvent;
+import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
@@ -58,9 +59,10 @@ public class NewFilePlugin implements Plugin {
     public void onAction(PluginContext context) {
         try {
             FileLabel fileLabel = (FileLabel) context.get("fileLabel");
+            Contact contact = (Contact) context.get("contact");
 
             AppEvent appEvent = new AppEvent(AppEvent.NewFile, System.currentTimeMillis(),
-                    fileLabel.getOwnerId(), fileLabel.toCompactJSON());
+                    contact.getId(), fileLabel.toCompactJSON());
             this.service.getStorage().writeAppEvent(appEvent);
         } catch (Exception e) {
             Logger.w(this.getClass(), "#onAction", e);

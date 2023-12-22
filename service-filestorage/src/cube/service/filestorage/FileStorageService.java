@@ -500,12 +500,14 @@ public class FileStorageService extends AbstractModule {
         // 写入集群缓存
         this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
 
+        // 触发 Hook
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                // 触发 Hook
+                Contact contact = ContactManager.getInstance().getContact(fileLabel.getDomain().getName(),
+                        fileLabel.getOwnerId());
                 FileStorageHook hook = pluginSystem.getSaveFileHook();
-                hook.apply(new FileStoragePluginContext(fileLabel));
+                hook.apply(new FileStoragePluginContext(fileLabel, contact, contact.getDevice()));
             }
         });
 
@@ -564,8 +566,10 @@ public class FileStorageService extends AbstractModule {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
+                Contact contact = ContactManager.getInstance().getContact(fileLabel.getDomain().getName(),
+                        fileLabel.getOwnerId());
                 FileStorageHook hook = pluginSystem.getSaveFileHook();
-                hook.apply(new FileStoragePluginContext(fileLabel));
+                hook.apply(new FileStoragePluginContext(fileLabel, contact, contact.getDevice()));
             }
         });
 
@@ -776,14 +780,20 @@ public class FileStorageService extends AbstractModule {
         this.fileLabelCache.remove(new CacheKey(fileLabel.getFileCode()));
 
         // 从数据库里删除
-        this.serviceStorage.deleteFile(domainName, fileLabel.getFileCode());
+        FileLabel deleted = this.serviceStorage.deleteFile(domainName, fileLabel.getFileCode());
+        if (null == deleted) {
+            Logger.w(this.getClass(), "#deleteFile - No file in DB : " + fileLabel.getFileCode());
+            return false;
+        }
 
         // 触发 Hook
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
+                Contact contact = ContactManager.getInstance().getContact(domainName,
+                        fileLabel.getOwnerId());
                 FileStorageHook hook = pluginSystem.getDestroyFileHook();
-                hook.apply(new FileStoragePluginContext(fileLabel));
+                hook.apply(new FileStoragePluginContext(fileLabel, contact, contact.getDevice()));
             }
         });
 
@@ -794,11 +804,11 @@ public class FileStorageService extends AbstractModule {
      * 批量删除文件。
      *
      * @param domainName
-     * @param ownerId
+     * @param operatorId
      * @param fileCodeList
      * @return 返回已删除的文件的文件标签列表。
      */
-    public List<FileLabel> deleteFiles(String domainName, long ownerId, List<String> fileCodeList) {
+    public List<FileLabel> deleteFiles(String domainName, long operatorId, List<String> fileCodeList) {
         List<FileLabel> fileLabelList = new ArrayList<>();
 
         for (String fileCode : fileCodeList) {
@@ -809,7 +819,7 @@ public class FileStorageService extends AbstractModule {
             this.fileLabelCache.remove(new CacheKey(fileCode));
 
             // 从数据库删除
-            FileLabel fileLabel = this.serviceStorage.deleteFile(domainName, ownerId, fileCode);
+            FileLabel fileLabel = this.serviceStorage.deleteFile(domainName, fileCode);
             if (null != fileLabel) {
                 fileLabelList.add(fileLabel);
             }
@@ -819,9 +829,11 @@ public class FileStorageService extends AbstractModule {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
+                Contact contact = ContactManager.getInstance().getContact(domainName,
+                        operatorId);
                 FileStorageHook hook = pluginSystem.getDestroyFileHook();
                 for (FileLabel fileLabel : fileLabelList) {
-                    hook.apply(new FileStoragePluginContext(fileLabel));
+                    hook.apply(new FileStoragePluginContext(fileLabel, contact, contact.getDevice()));
                 }
             }
         });
@@ -833,21 +845,34 @@ public class FileStorageService extends AbstractModule {
      * 批量删除指定 MD5 码的文件。
      *
      * @param domainName
-     * @param ownerId
+     * @param operatorId
      * @param md5List
      * @return 返回已删除的文件的文件标签列表。
      */
-    public List<FileLabel> deleteFilesByMD5(String domainName, long ownerId, List<String> md5List) {
+    public List<FileLabel> deleteFilesByMD5(String domainName, long operatorId, List<String> md5List) {
         List<FileLabel> fileLabelList = new ArrayList<>();
 
         for (String md5 : md5List) {
-            List<FileLabel> fileList = this.serviceStorage.deleteFileByMD5(domainName, ownerId, md5);
+            List<FileLabel> fileList = this.serviceStorage.deleteFileByMD5(domainName, operatorId, md5);
             if (null == fileList) {
                 continue;
             }
 
             fileLabelList.addAll(fileList);
         }
+
+        // 触发 Hook
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                Contact contact = ContactManager.getInstance().getContact(domainName,
+                        operatorId);
+                FileStorageHook hook = pluginSystem.getDestroyFileHook();
+                for (FileLabel fileLabel : fileLabelList) {
+                    hook.apply(new FileStoragePluginContext(fileLabel, contact, contact.getDevice()));
+                }
+            }
+        });
 
         return fileLabelList;
     }

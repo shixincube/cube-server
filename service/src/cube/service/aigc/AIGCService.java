@@ -256,7 +256,7 @@ public class AIGCService extends AbstractModule {
                     }
                     fileStorage.getPluginSystem().register(FileStorageHook.SaveFile,
                             new NewFilePlugin(AIGCService.this));
-                    fileStorage.getPluginSystem().register(FileStorageHook.DeleteFile,
+                    fileStorage.getPluginSystem().register(FileStorageHook.DestroyFile,
                             new DeleteFilePlugin(AIGCService.this));
                 }
                 else {

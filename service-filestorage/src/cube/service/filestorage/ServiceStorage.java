@@ -605,13 +605,18 @@ public class ServiceStorage implements Storagable {
      * @param fileCode
      * @return
      */
-    public boolean deleteFile(String domain, String fileCode) {
+    public FileLabel deleteFile(String domain, String fileCode) {
         String labelTable = this.labelTableNameMap.get(domain);
         if (null == labelTable) {
-            return false;
+            return null;
         }
 
-        boolean result = this.storage.executeDelete(labelTable, new Conditional[] {
+        FileLabel deleted = this.readFileLabel(domain, fileCode);
+        if (null == deleted) {
+            return null;
+        }
+
+        this.storage.executeDelete(labelTable, new Conditional[] {
                 Conditional.createEqualTo("file_code", fileCode)
         });
 
@@ -629,7 +634,7 @@ public class ServiceStorage implements Storagable {
             });
         }
 
-        return result;
+        return deleted;
     }
 
     /**
