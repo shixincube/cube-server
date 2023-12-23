@@ -400,6 +400,9 @@ public class AIGCStorage implements Storagable {
             new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL, Constraint.UNIQUE
             }),
+            new StorageField("model", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("completion_tokens", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL, Constraint.DEFAULT_0
             }),
@@ -566,9 +569,9 @@ public class AIGCStorage implements Storagable {
 
         JSONArray models = new JSONArray(result.get(0)[0].getString());
         for (int i = 0; i < models.length(); ++i) {
-            String modelName = models.getString(i);
+            String unitName = models.getString(i);
             result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
-                    Conditional.createEqualTo("item", modelName)
+                    Conditional.createEqualTo("item", unitName)
             });
 
             for (StorageField[] fields : result) {
@@ -1572,16 +1575,18 @@ public class AIGCStorage implements Storagable {
         return count;
     }
 
-    public synchronized Usage updateUsage(long contactId, long incrementalCompletion, long incrementalPrompt) {
-        Usage usage = this.readUsage(contactId);
+    public synchronized Usage updateUsage(long contactId, String model,
+                                          long incrementalCompletion, long incrementalPrompt) {
+        Usage usage = this.readUsage(contactId, model);
         if (null == usage) {
             this.storage.executeInsert(this.usageTable, new StorageField[] {
                     new StorageField("contact_id", contactId),
+                    new StorageField("model", model),
                     new StorageField("completion_tokens", incrementalCompletion),
                     new StorageField("prompt_tokens", incrementalPrompt),
                     new StorageField("timestamp", System.currentTimeMillis())
             });
-            usage = new Usage(incrementalCompletion, incrementalPrompt,
+            usage = new Usage(model, incrementalCompletion, incrementalPrompt,
                     incrementalCompletion + incrementalPrompt);
         }
         else {
@@ -1590,18 +1595,22 @@ public class AIGCStorage implements Storagable {
                     new StorageField("prompt_tokens", incrementalPrompt + usage.promptTokens),
                     new StorageField("timestamp", System.currentTimeMillis())
             }, new Conditional[] {
-                    Conditional.createEqualTo("contact_id", contactId)
+                    Conditional.createEqualTo("contact_id", contactId),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("model", model)
             });
-            usage = new Usage(incrementalCompletion + usage.completionTokens,
+            usage = new Usage(model, incrementalCompletion + usage.completionTokens,
                     incrementalPrompt + usage.promptTokens,
                     incrementalCompletion + incrementalPrompt + usage.totalTokens);
         }
         return usage;
     }
 
-    public Usage readUsage(long contactId) {
+    public Usage readUsage(long contactId, String model) {
         List<StorageField[]> result = this.storage.executeQuery(this.usageTable, this.usageFields, new Conditional[] {
-                Conditional.createEqualTo("contact_id", contactId)
+                Conditional.createEqualTo("contact_id", contactId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("model", model)
         });
         if (result.isEmpty()) {
             return null;
@@ -1610,7 +1619,7 @@ public class AIGCStorage implements Storagable {
         Map<String, StorageField> data = StorageFields.get(result.get(0));
         long completionTokens = data.get("completion_tokens").getLong();
         long promptTokens = data.get("prompt_tokens").getLong();
-        return new Usage(completionTokens, promptTokens, completionTokens + promptTokens);
+        return new Usage(model, completionTokens, promptTokens, completionTokens + promptTokens);
     }
 
     private void resetDefaultConfig() {
@@ -1618,7 +1627,7 @@ public class AIGCStorage implements Storagable {
         // 经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的优化。
         JSONObject parameter = new JSONObject();
         parameter.put("unit", "Chat");
-        ModelConfig baizeNLG = new ModelConfig("Baize",
+        ModelConfig baizeNLG = new ModelConfig("Baize", "Baize",
                 "适合大多数场景的通用模型",
                 "http://127.0.0.1:7010/aigc/chat/", parameter);
 
@@ -1627,14 +1636,14 @@ public class AIGCStorage implements Storagable {
         // 可以进行采样自由生成。
         parameter = new JSONObject();
         parameter.put("unit", "ChatT5G");
-        ModelConfig baizeX = new ModelConfig("BaizeX",
+        ModelConfig baizeX = new ModelConfig("BaizeX", "BaizeX",
                 "适合一般场景且速度较快的通用模型",
                 "http://127.0.0.1:7010/aigc/chat/", parameter);
 
         // 支持中英双语和多种插件的开源对话语言模型。模型具有 160 亿参数。在约七千亿中英文以及代码单词上预训练得到，后续经过对话指令微调、
         // 插件增强学习和人类偏好训练具备多轮对话能力及使用多种插件的能力。
         parameter = new JSONObject();
-        ModelConfig baizeNEXT = new ModelConfig("BaizeNEXT",
+        ModelConfig baizeNEXT = new ModelConfig("BaizeNEXT", "BaizeNEXT",
                 "适合谨慎问答场景的大模型（测试版）",
                 "http://127.0.0.1:7010/aigc/conversation/", parameter);
 

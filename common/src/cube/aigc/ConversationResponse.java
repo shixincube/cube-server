@@ -158,7 +158,7 @@ public class ConversationResponse implements JSONable {
             this.created = 0;
             this.model = "";
             this.object = "";
-            this.usage = new Usage(0, 0, 0);
+            this.usage = new Usage("Baize", 0, 0, 0);
             this.choices = new ArrayList<>();
             this.choices.add(new Choice());
         }

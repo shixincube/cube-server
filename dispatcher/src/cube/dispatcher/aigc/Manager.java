@@ -137,6 +137,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new Prompts());
         httpServer.addContextHandler(new SubmitEvent());
         httpServer.addContextHandler(new QueryAppEvents());
+        httpServer.addContextHandler(new QueryUsages());
         httpServer.addContextHandler(new PublicOpinionData());
         httpServer.addContextHandler(new InferByModule());
         httpServer.addContextHandler(new PreInfer());
@@ -514,7 +515,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.QueryAppEvent.name, requestData);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#queryAppEvents - Response is null");
             return null;
@@ -523,6 +524,29 @@ public class Manager implements Tickable, PerformerListener {
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.w(Manager.class, "#queryAppEvents - Response state code is NOT Ok - "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject queryUsages(String token, long contactId) {
+        JSONObject requestData = new JSONObject();
+        requestData.put("contactId", contactId);
+
+        Packet packet = new Packet(AIGCAction.QueryUsages.name, requestData);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#queryUsages - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#queryUsages - Response state code is NOT Ok - "
                     + Packet.extractCode(responsePacket));
             return null;
         }
@@ -621,7 +645,7 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public ChatFuture chat(String token, String channelCode, String pattern, String content, String unit,
-                           int histories, JSONArray records) {
+                           int histories, JSONArray records, int searchTopK, int searchFetchK) {
         JSONObject data = new JSONObject();
         data.put("token", token);
         data.put("code", channelCode);
@@ -634,6 +658,8 @@ public class Manager implements Tickable, PerformerListener {
         if (null != records) {
             data.put("records", records);
         }
+        data.put("searchTopK", searchTopK);
+        data.put("searchFetchK", searchFetchK);
 
         Packet packet = new Packet(AIGCAction.Chat.name, data);
         ActionDialect request = packet.toDialect();

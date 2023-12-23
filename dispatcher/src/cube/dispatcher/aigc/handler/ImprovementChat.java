@@ -26,6 +26,7 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cube.aigc.Consts;
 import cube.common.entity.AIGCGenerationRecord;
 import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
@@ -76,7 +77,7 @@ public class ImprovementChat extends ContextHandler {
             }
 
             String channelCode = null;
-            String pattern = "chat";
+            String pattern = Consts.PATTERN_CHAT;
             String content = null;
             String desc = null;
             int histories = 3;
@@ -107,7 +108,7 @@ public class ImprovementChat extends ContextHandler {
 
             // Chat
             AIGCGenerationRecord record = Manager.getInstance().chat(token, channelCode, pattern,
-                    content, desc, histories, records).record;
+                    content, desc, histories, records, 10, 50).record;
             if (null == record) {
                 // 发生错误
                 this.respond(response, HttpStatus.BAD_REQUEST_400);

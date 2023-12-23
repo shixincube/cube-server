@@ -38,6 +38,8 @@ public class ModelConfig implements JSONable {
 
     public final static String PREFERENCE_UNIT_FOR_CV = "Chat";
 
+    private final String unitName;
+
     private final String name;
 
     private final String desc;
@@ -46,7 +48,8 @@ public class ModelConfig implements JSONable {
 
     private final JSONObject parameter;
 
-    public ModelConfig(String name, String desc, String apiURL, JSONObject parameter) {
+    public ModelConfig(String unitName, String name, String desc, String apiURL, JSONObject parameter) {
+        this.unitName = unitName;
         this.name = name;
         this.desc = desc;
         this.apiURL = apiURL + (apiURL.endsWith("/") ? "" : "/");
@@ -54,10 +57,16 @@ public class ModelConfig implements JSONable {
     }
 
     public ModelConfig(JSONObject json) {
+        this.unitName = json.has("unitName") ? json.getString("unitName") :
+                json.getJSONObject("parameter").getString("unit");
         this.name = json.getString("name");
         this.desc = json.getString("desc");
         this.apiURL = json.getString("apiURL");
         this.parameter = json.getJSONObject("parameter");
+    }
+
+    public String getUnitName() {
+        return this.unitName;
     }
 
     public String getName() {
@@ -84,6 +93,7 @@ public class ModelConfig implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("unitName", this.unitName);
         json.put("name", this.name);
         json.put("desc", this.desc);
         json.put("apiURL", this.apiURL);

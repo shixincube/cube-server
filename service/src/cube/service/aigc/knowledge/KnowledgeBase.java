@@ -436,12 +436,16 @@ public class KnowledgeBase {
      * @param channelCode
      * @param unitName
      * @param query
+     * @param searchTopK
+     * @param searchFetchK
      * @param listener
      * @return
      */
     public boolean performKnowledgeQA(String channelCode, String unitName, String query,
+                                      int searchTopK, int searchFetchK,
                                       KnowledgeQAListener listener) {
-        return this.performKnowledgeQA(channelCode, unitName, query, null, listener);
+        return this.performKnowledgeQA(channelCode, unitName, query,
+                searchTopK, searchFetchK, null, listener);
     }
 
     /**
@@ -450,11 +454,14 @@ public class KnowledgeBase {
      * @param channelCode
      * @param unitName
      * @param query
+     * @param searchTopK
+     * @param searchFetchK
      * @param knowledgeCategory
      * @param listener
      * @return
      */
     public boolean performKnowledgeQA(String channelCode, String unitName, String query,
+                                      int searchTopK, int searchFetchK,
                                       String knowledgeCategory, KnowledgeQAListener listener) {
         Logger.d(this.getClass(), "#performKnowledgeQA - Channel: " + channelCode +
                 "/" + unitName + "/" + query);
@@ -486,7 +493,7 @@ public class KnowledgeBase {
         }
 
         // 获取提示词
-        final KnowledgeQAResult result = this.generatePrompt(query);
+        final KnowledgeQAResult result = this.generatePrompt(query, searchTopK, searchFetchK);
         if (null == result) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Generate prompt failed in channel: " + channelCode);
             return false;
@@ -534,7 +541,7 @@ public class KnowledgeBase {
         return true;
     }
 
-    private KnowledgeQAResult generatePrompt(String query) {
+    private KnowledgeQAResult generatePrompt(String query, int topK, int fetchK) {
         this.resource.checkUnit();
 
         JSONArray docArray = new JSONArray();
@@ -548,11 +555,16 @@ public class KnowledgeBase {
         }
 
         JSONObject payload = new JSONObject();
+        // 检索路径
+        payload.put("pathKey", (KnowledgeScope.Private == this.scope) ?
+                Long.toString(this.authToken.getContactId()) : this.authToken.getDomain());
         payload.put("contactId", this.authToken.getContactId());
         payload.put("query", query);
         if (!docArray.isEmpty()) {
             payload.put("docList", docArray);
         }
+        payload.put("topK", topK);
+        payload.put("fetchK", fetchK);
         Packet packet = new Packet(AIGCAction.GeneratePrompt.name, payload);
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect());

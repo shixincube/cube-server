@@ -59,7 +59,7 @@ public class KnowledgeDoc extends Entity {
     /**
      * 文本分割器。
      */
-    public String splitter = SPLITTER_PUNCTUATION;
+    public String splitter = SPLITTER_AUTO;
 
     /**
      * 分割的内容段落数量。

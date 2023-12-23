@@ -120,9 +120,14 @@ public class ConversationTask extends ServiceTask {
         }
         else if (pattern.equalsIgnoreCase("knowledge")) {
             // 执行知识库问答
+            int searchTopK = packet.data.has("searchTopK")
+                    ? packet.data.getInt("searchTopK") : 10;
+            int searchFetchK = packet.data.has("searchFetchK")
+                    ? packet.data.getInt("searchFetchK") : 50;
+
             KnowledgeBase knowledgeBase = service.getKnowledgeBase(token);
             if (null != knowledgeBase) {
-                success = knowledgeBase.performKnowledgeQA(code, "MOSS", content,
+                success = knowledgeBase.performKnowledgeQA(code, "MOSS", content, searchTopK, searchFetchK,
                         new KnowledgeQAListener() {
                     @Override
                     public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {

@@ -216,9 +216,11 @@ public final class App {
         apiData.put("code", convId);
         apiData.put("content", request.prompt);
         apiData.put("histories", request.usingContext ? 100 : 0);
+        apiData.put("pattern", request.options.workPattern);
         apiData.put("temperature", request.temperature);
         apiData.put("topP", request.topP);
-        apiData.put("pattern", request.options.workPattern);
+        apiData.put("searchTopK", request.searchTopK);
+        apiData.put("searchFetchK", request.searchFetchK);
 
         HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
         try {

@@ -27,6 +27,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cell.util.log.Logger;
+import cube.aigc.Consts;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCGenerationRecord;
 import cube.dispatcher.aigc.Manager;
@@ -37,7 +38,6 @@ import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.UUID;
 
 /**
  * 对话。
@@ -67,11 +67,13 @@ public class Chat extends ContextHandler {
             }
 
             String channelCode = null;
-            String pattern = "chat";
+            String pattern = Consts.PATTERN_CHAT;
             String content = null;
             String unit = "Chat";
             int histories = 0;
             JSONArray records = null;
+            int searchTopK = 10;
+            int searchFetchK = 50;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
                 channelCode = json.getString("code");
@@ -92,6 +94,14 @@ public class Chat extends ContextHandler {
                 if (json.has("pattern")) {
                     pattern = json.getString("pattern");
                 }
+
+                if (json.has("searchTopK")) {
+                    searchTopK = json.getInt("searchTopK");
+                }
+
+                if (json.has("searchFetchK")) {
+                    searchFetchK = json.getInt("searchFetchK");
+                }
             } catch (Exception e) {
                 Logger.e(Chat.class, "#doPost - Read body failed", e);
                 this.respond(response, HttpStatus.FORBIDDEN_403);
@@ -108,7 +118,7 @@ public class Chat extends ContextHandler {
 
             // Chat
             Manager.ChatFuture future = Manager.getInstance().chat(token, channelCode, pattern,
-                    content, unit, histories, records);
+                    content, unit, histories, records, searchTopK, searchFetchK);
             if (future.end) {
                 // 已结束
                 AIGCGenerationRecord record = future.record;

@@ -97,6 +97,11 @@ public enum AIGCAction {
     QueryAppEvent("queryAppEvent"),
 
     /**
+     * 查询用量。
+     */
+    QueryUsages("queryUsages"),
+
+    /**
      * 问答互动。
      */
     Chat("chat"),

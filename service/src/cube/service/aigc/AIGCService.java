@@ -32,6 +32,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
+import cube.aigc.Usage;
 import cube.aigc.publicopinion.PublicOpinionTaskName;
 import cube.aigc.Sentiment;
 import cube.aigc.attachment.ui.Event;
@@ -1379,6 +1380,33 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
+     * 查询联系人的用量数据。
+     *
+     * @param contactId
+     * @return
+     */
+    public List<Usage> queryContactUsages(long contactId) {
+        if (!this.isStarted()) {
+            return null;
+        }
+
+        List<Usage> result = new ArrayList<>();
+
+        List<ModelConfig> models = this.getModelConfigs();
+        for (ModelConfig modelConfig : models) {
+            Usage usage = this.storage.readUsage(contactId, modelConfig.getUnitName());
+            if (null == usage) {
+                // 跳过没有记录的模型
+                continue;
+            }
+
+            result.add(usage);
+        }
+
+        return result;
+    }
+
+    /**
      * 心理学绘画预测。
      *
      * @param token
@@ -2249,7 +2277,7 @@ public class AIGCService extends AbstractModule {
                     long promptTokens = tokens.size();
                     tokens = calcTokens(history.answerContent);
                     long completionTokens = tokens.size();
-                    storage.updateUsage(history.queryContactId, completionTokens, promptTokens);
+                    storage.updateUsage(history.queryContactId, history.unit, completionTokens, promptTokens);
 
                     // 保存历史记录
                     storage.writeChatHistory(history);
@@ -2613,7 +2641,7 @@ public class AIGCService extends AbstractModule {
                         List<String> tokens = calcTokens(text);
                         long promptTokens = tokens.size();
                         long completionTokens = (long) Math.floor(fileLabel.getFileSize() / 10240.0);
-                        storage.updateUsage(contactId, completionTokens, promptTokens);
+                        storage.updateUsage(contactId, history.unit, completionTokens, promptTokens);
 
                         // 保存历史记录
                         storage.writeChatHistory(history);
