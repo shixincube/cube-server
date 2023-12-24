@@ -94,6 +94,45 @@ public class ContactRiskHandler extends RiskManagementHandler {
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
+        String token = this.getLastRequestPath(request);
 
+        long contactId = 0;
+        int mask = 0;
+
+        try {
+            JSONObject data = this.readBodyAsJSONObject(request);
+            contactId = data.getLong("contactId");
+            mask = data.getInt("mask");
+        } catch (Exception e) {
+            this.respond(response, HttpStatus.FORBIDDEN_403, new JSONObject());
+            this.complete();
+            return;
+        }
+
+        JSONObject payload = new JSONObject();
+        payload.put("contactId", contactId);
+        payload.put("mask", mask);
+        Packet packet = new Packet(RiskManagementAction.ModifyContactRisk.name, payload);
+        ActionDialect packetDialect = packet.toDialect();
+        packetDialect.addParam("token", token);
+
+        ActionDialect responseDialect = this.performer.syncTransmit(RiskManagementCellet.NAME, packetDialect);
+        if (null == responseDialect) {
+            this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+            this.complete();
+            return;
+        }
+
+        Packet responsePacket = new Packet(responseDialect);
+        int stateCode = Packet.extractCode(responsePacket);
+        if (stateCode != FileStorageStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#doPost - Service state code : " + stateCode);
+            this.respond(response, HttpStatus.NOT_FOUND_404, responsePacket.toJSON());
+            this.complete();
+            return;
+        }
+
+        this.respondOk(response, Packet.extractDataPayload(responsePacket));
+        this.complete();
     }
 }
