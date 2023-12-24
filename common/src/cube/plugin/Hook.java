@@ -64,9 +64,9 @@ public class Hook {
      *
      * @param context
      */
-    public void apply(PluginContext context) {
+    public HookResult apply(PluginContext context) {
         context.setKey(this.key);
 
-        this.system.apply(this.key, context);
+        return this.system.apply(this.key, context);
     }
 }

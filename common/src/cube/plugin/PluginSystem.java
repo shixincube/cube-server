@@ -192,15 +192,21 @@ public class PluginSystem<T extends Hook> {
         }
     }
 
-    protected void apply(String key, PluginContext context) {
+    protected HookResult apply(String key, PluginContext context) {
+        HookResult result = new HookResult();
+
         List<Plugin> list = this.plugins.get(key);
         if (null == list) {
-            return;
+            return result;
         }
 
         for (Plugin plugin : list) {
-            plugin.onAction(context);
+            HookResult hr = plugin.launch(context);
+            if (null != hr) {
+                result.add(hr);
+            }
         }
+        return result;
     }
 
     public List<Plugin> getPlugins() {

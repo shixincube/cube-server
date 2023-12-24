@@ -1,3 +1,29 @@
+/*
+ * This source file is part of Cube.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2020-2023 Cube Team.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package cube.common.entity;
 
 import cell.util.Utils;
@@ -11,27 +37,27 @@ public class ContactBehavior extends Entity {
     /**
      * 联系人签入系统。
      */
-    public final static String BEHAVIOR_SIGNIN = "SignIn";
+    public final static String SIGN_IN = "SignIn";
 
     /**
      * 联系人签出系统。
      */
-    public final static String BEHAVIOR_SIGNOUT = "SignOut";
+    public final static String SIGN_OUT = "SignOut";
 
     /**
      * 云存储里创建新文件。
      */
-    public final static String BEHAVIOR_NEW_FILE = "NewFile";
+    public final static String NEW_FILE = "NewFile";
 
     /**
      * 云存储里删除文件。
      */
-    public final static String BEHAVIOR_DELETE_FILE = "DeleteFile";
+    public final static String DELETE_FILE = "DeleteFile";
 
     /**
      * 联系人从服务器下载文件。
      */
-    public final static String BEHAVIOR_DOWNLOAD_FILE = "DownloadFile";
+    public final static String DOWNLOAD_FILE = "DownloadFile";
 
     private Contact contact;
 

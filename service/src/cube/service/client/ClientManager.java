@@ -39,6 +39,7 @@ import cube.core.Kernel;
 import cube.file.OperationWork;
 import cube.file.OperationWorkflow;
 import cube.file.event.FileWorkflowEvent;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
@@ -208,8 +209,9 @@ public final class ClientManager {
     private void setupContactPlugin(PluginSystem pluginSystem) {
         pluginSystem.register(ContactHook.SignIn, new Plugin() {
             @Override
-            public void onAction(PluginContext context) {
+            public HookResult launch(PluginContext context) {
                 onSignIn(context);
+                return null;
             }
 
             @Override
@@ -223,8 +225,9 @@ public final class ClientManager {
         });
         pluginSystem.register(ContactHook.SignOut, new Plugin() {
             @Override
-            public void onAction(PluginContext context) {
+            public HookResult launch(PluginContext context) {
                 onSignOut(context);
+                return null;
             }
 
             @Override
@@ -238,8 +241,9 @@ public final class ClientManager {
         });
         pluginSystem.register(ContactHook.DeviceTimeout, new Plugin() {
             @Override
-            public void onAction(PluginContext context) {
+            public HookResult launch(PluginContext context) {
                 onDeviceTimeout(context);
+                return null;
             }
 
             @Override
@@ -265,8 +269,9 @@ public final class ClientManager {
             }
 
             @Override
-            public void onAction(PluginContext context) {
+            public HookResult launch(PluginContext context) {
                 onMessagingPush(context);
+                return null;
             }
         });
     }
@@ -280,8 +285,9 @@ public final class ClientManager {
             public void teardown() {}
 
             @Override
-            public void onAction(PluginContext context) {
+            public HookResult launch(PluginContext context) {
                 onFileProcessor("WorkflowStarted", context);
+                return null;
             }
         });
 
@@ -293,8 +299,9 @@ public final class ClientManager {
             public void teardown() {}
 
             @Override
-            public void onAction(PluginContext context) {
+            public HookResult launch(PluginContext context) {
                 onFileProcessor("WorkflowStopped", context);
+                return null;
             }
         });
 
@@ -306,8 +313,9 @@ public final class ClientManager {
             public void teardown() {}
 
             @Override
-            public void onAction(PluginContext context) {
+            public HookResult launch(PluginContext context) {
                 onFileProcessor("WorkBegun", context);
+                return null;
             }
         });
 
@@ -319,8 +327,9 @@ public final class ClientManager {
             public void teardown() {}
 
             @Override
-            public void onAction(PluginContext context) {
+            public HookResult launch(PluginContext context) {
                 onFileProcessor("WorkEnded", context);
+                return null;
             }
         });
     }

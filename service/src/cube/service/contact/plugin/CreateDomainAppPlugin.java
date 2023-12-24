@@ -27,6 +27,7 @@
 package cube.service.contact.plugin;
 
 import cube.common.entity.AuthDomain;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.auth.AuthPluginContext;
@@ -49,7 +50,7 @@ public class CreateDomainAppPlugin implements Plugin {
     }
 
     @Override
-    public void onAction(PluginContext context) {
+    public HookResult launch(PluginContext context) {
         if (context instanceof AuthPluginContext) {
             AuthPluginContext apc = (AuthPluginContext) context;
             AuthDomain authDomain = apc.getDomain();
@@ -57,5 +58,7 @@ public class CreateDomainAppPlugin implements Plugin {
                 ContactManager.getInstance().refreshAuthDomain(authDomain);
             }
         }
+
+        return null;
     }
 }

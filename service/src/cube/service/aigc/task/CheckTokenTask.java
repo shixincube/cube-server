@@ -34,6 +34,7 @@ import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -79,18 +80,25 @@ public class CheckTokenTask extends ServiceTask {
             }
         }
 
-        AuthToken token = service.getToken(tokenCode);
-        if (null == token) {
+        // 使用令牌码登录
+        Contact contact = ContactManager.getInstance().signIn(tokenCode, Device.createDevice());
+        if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        Contact contact = ContactManager.getInstance().getContact(token.getDomain(), token.getContactId());
+        AuthToken authToken = service.getToken(tokenCode);
+        if (null == authToken) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InconsistentToken.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
 
         JSONObject responseData = new JSONObject();
-        responseData.put("token", token.toJSON());
+        responseData.put("token", authToken.toJSON());
         responseData.put("contact", contact.toJSON());
 
         this.cellet.speak(this.talkContext,

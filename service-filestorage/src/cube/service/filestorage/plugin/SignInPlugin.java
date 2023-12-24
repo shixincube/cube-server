@@ -26,6 +26,7 @@
 
 package cube.service.filestorage.plugin;
 
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.contact.ContactPluginContext;
@@ -53,10 +54,11 @@ public class SignInPlugin implements Plugin {
     }
 
     @Override
-    public void onAction(PluginContext context) {
+    public HookResult launch(PluginContext context) {
         if (context instanceof ContactPluginContext) {
             ContactPluginContext ctx = (ContactPluginContext) context;
             this.service.getDaemonTask().addManagedContact(ctx.getContact(), ctx.getDevice());
         }
+        return null;
     }
 }

@@ -33,6 +33,11 @@ import cube.plugin.Hook;
  */
 public class ContactHook extends Hook {
 
+    /**
+     * 验证联系人身份。
+     */
+    public final static String VerifyIdentity = "VerifyIdentity";
+
     public final static String SignIn = "SignIn";
 
     public final static String SignOut = "SignOut";

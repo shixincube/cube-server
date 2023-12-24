@@ -27,6 +27,7 @@
 package cube.service.riskmgmt.plugin;
 
 import cube.common.entity.AuthDomain;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.auth.AuthPluginContext;
@@ -52,7 +53,7 @@ public class CreateDomainAppPlugin implements Plugin {
     }
 
     @Override
-    public void onAction(PluginContext context) {
+    public HookResult launch(PluginContext context) {
         if (context instanceof AuthPluginContext) {
             AuthPluginContext authPluginContext = (AuthPluginContext) context;
             AuthDomain authDomain = authPluginContext.getDomain();
@@ -60,5 +61,7 @@ public class CreateDomainAppPlugin implements Plugin {
                 this.service.refreshDomain(authDomain);
             }
         }
+
+        return null;
     }
 }

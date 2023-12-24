@@ -33,6 +33,7 @@ import cube.core.AbstractModule;
 import cube.ferry.FerryAction;
 import cube.ferry.FerryPacket;
 import cube.ferry.FerryPort;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.ferry.FerryService;
@@ -62,14 +63,14 @@ public class SaveFilePlugin implements Plugin {
     }
 
     @Override
-    public void onAction(PluginContext context) {
+    public HookResult launch(PluginContext context) {
         FileLabel fileLabel = (FileLabel) context.get("fileLabel");
         if (null != fileLabel) {
             if (!this.service.isOnlineDomain(fileLabel.getDomain().getName())) {
                 if (Logger.isDebugLevel()) {
                     Logger.d(this.getClass(), "Domain is offline: " + fileLabel.getDomain().getName());
                 }
-                return;
+                return null;
             }
 
             ActionDialect actionDialect = new ActionDialect(FerryAction.Ferry.name);
@@ -81,6 +82,8 @@ public class SaveFilePlugin implements Plugin {
             // 传输文件流
             this.transmitFileStream(fileLabel);
         }
+
+        return null;
     }
 
     private void transmitFileStream(FileLabel fileLabel) {

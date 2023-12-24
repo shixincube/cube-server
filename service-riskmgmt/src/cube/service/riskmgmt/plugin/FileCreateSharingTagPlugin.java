@@ -27,6 +27,7 @@
 package cube.service.riskmgmt.plugin;
 
 import cube.common.entity.SharingTag;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.filestorage.FileStoragePluginContext;
@@ -52,9 +53,11 @@ public class FileCreateSharingTagPlugin implements Plugin {
     }
 
     @Override
-    public void onAction(PluginContext context) {
+    public HookResult launch(PluginContext context) {
         FileStoragePluginContext ctx = (FileStoragePluginContext) context;
         SharingTag sharingTag = ctx.getSharingTag();
         this.service.addFileChainNode(sharingTag);
+
+        return null;
     }
 }

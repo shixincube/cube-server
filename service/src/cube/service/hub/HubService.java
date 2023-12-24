@@ -42,6 +42,7 @@ import cube.hub.data.ChannelCode;
 import cube.hub.data.DataHelper;
 import cube.hub.event.*;
 import cube.hub.signal.*;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
@@ -506,8 +507,9 @@ public class HubService extends AbstractModule {
             }
 
             @Override
-            public void onAction(PluginContext context) {
+            public HookResult launch(PluginContext context) {
                 onMessagingPush(context);
+                return null;
             }
         });
     }

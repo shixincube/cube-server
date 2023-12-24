@@ -24,51 +24,66 @@
  * SOFTWARE.
  */
 
-package cube.service.aigc.plugin;
+package cube.plugin;
 
-import cell.util.log.Logger;
-import cube.aigc.AppEvent;
-import cube.common.entity.Contact;
-import cube.common.entity.FileLabel;
-import cube.plugin.HookResult;
-import cube.plugin.Plugin;
-import cube.plugin.PluginContext;
-import cube.service.aigc.AIGCService;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * 保存文件。
+ * Hook 处理结果。
  */
-public class NewFilePlugin implements Plugin {
+public class HookResult {
 
-    private final AIGCService service;
+    private List<HookResult> results;
 
-    public NewFilePlugin(AIGCService service) {
-        this.service = service;
+    private Map<String, Object> data;
+
+    public HookResult() {
+        this.results = new ArrayList<>();
     }
 
-    @Override
-    public void setup() {
-        // Nothing
+    public void add(HookResult result) {
+        this.results.add(result);
     }
 
-    @Override
-    public void teardown() {
-        // Nothing
+    public void put(String key, Object value) {
+        if (null == this.data) {
+            this.data = new HashMap<>();
+        }
+        this.data.put(key, value);
     }
 
-    @Override
-    public HookResult launch(PluginContext context) {
-        try {
-            FileLabel fileLabel = (FileLabel) context.get("fileLabel");
-            Contact contact = (Contact) context.get("contact");
+    public Object get(String key) {
+        if (null != this.data) {
+            Object value = this.data.get(key);
+            if (null != value) {
+                return value;
+            }
+        }
 
-            AppEvent appEvent = new AppEvent(AppEvent.NewFile, System.currentTimeMillis(),
-                    contact.getId(), fileLabel.toCompactJSON());
-            this.service.getStorage().writeAppEvent(appEvent);
-        } catch (Exception e) {
-            Logger.w(this.getClass(), "#launch", e);
+        for (HookResult hr : this.results) {
+            Object value = hr.get(key);
+            if (null != value) {
+                return value;
+            }
         }
 
         return null;
+    }
+
+    public boolean getBoolean(String key) {
+        Object value = this.get(key);
+        if (null == value) {
+            return false;
+        }
+
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        else {
+            return false;
+        }
     }
 }

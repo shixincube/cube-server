@@ -30,6 +30,7 @@ import cell.util.log.Logger;
 import cube.common.entity.Contact;
 import cube.common.entity.KnowledgeProfile;
 import cube.common.entity.KnowledgeScope;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.aigc.AIGCService;
@@ -57,7 +58,7 @@ public class ActivateKnowledgeBasePlugin implements Plugin {
     }
 
     @Override
-    public void onAction(PluginContext context) {
+    public HookResult launch(PluginContext context) {
         try {
             ContactPluginContext ctx = (ContactPluginContext) context;
             Contact contact = ctx.getContact();
@@ -68,7 +69,9 @@ public class ActivateKnowledgeBasePlugin implements Plugin {
             this.service.getStorage().updateKnowledgeProfile(contact.getId(),
                     KnowledgeProfile.STATE_NORMAL, 549755813888L, KnowledgeScope.Private);
         } catch (Exception e) {
-            Logger.e(this.getClass(), "#onAction", e);
+            Logger.e(this.getClass(), "#launch", e);
         }
+
+        return null;
     }
 }

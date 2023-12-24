@@ -31,6 +31,7 @@ import cube.common.entity.Message;
 import cube.ferry.FerryAction;
 import cube.ferry.FerryPacket;
 import cube.ferry.FerryPort;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.ferry.FerryService;
@@ -55,7 +56,7 @@ public class UpdateMessagePlugin implements Plugin {
     }
 
     @Override
-    public void onAction(PluginContext context) {
+    public HookResult launch(PluginContext context) {
         Message message = (Message) context.get("message");
 
         ActionDialect actionDialect = new ActionDialect(FerryAction.Ferry.name);
@@ -63,5 +64,7 @@ public class UpdateMessagePlugin implements Plugin {
         actionDialect.addParam("message", message.toCompactJSON());
 
         this.service.pushToBoat(message.getDomain().getName(), new FerryPacket(actionDialect));
+
+        return null;
     }
 }

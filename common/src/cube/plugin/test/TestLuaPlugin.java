@@ -26,8 +26,8 @@
 
 package cube.plugin.test;
 
+import cube.plugin.HookResult;
 import cube.plugin.LuaPlugin;
-import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
 
@@ -50,7 +50,7 @@ public class TestLuaPlugin {
 
             System.out.println("----------------------------------------");
 
-            plugin.onAction(context);
+            plugin.launch(context);
 
             try {
                 Thread.sleep(1000L);
@@ -94,7 +94,7 @@ public class TestLuaPlugin {
         }
 
         @Override
-        public void onAction(PluginContext context) {
+        public HookResult launch(PluginContext context) {
             try {
                 this.call(context);
             } catch (FileNotFoundException e) {
@@ -102,6 +102,7 @@ public class TestLuaPlugin {
             }
 
             System.out.println("Data: " + ((SimpleContext)context).text);
+            return null;
         }
     }
 

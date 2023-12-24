@@ -28,6 +28,7 @@ package cube.service.riskmgmt.plugin;
 
 import cube.common.entity.Message;
 import cube.common.state.MessagingStateCode;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.messaging.MessagingPluginContext;
@@ -54,7 +55,7 @@ public class MessagingPrePushPlugin implements Plugin {
     }
 
     @Override
-    public void onAction(PluginContext context) {
+    public HookResult launch(PluginContext context) {
         MessagingPluginContext ctx = (MessagingPluginContext) context;
         Message message = ctx.getMessage();
         if (null != message) {
@@ -70,5 +71,6 @@ public class MessagingPrePushPlugin implements Plugin {
                 }
             }
         }
+        return null;
     }
 }

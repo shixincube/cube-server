@@ -30,6 +30,7 @@ import cell.util.log.Logger;
 import cube.aigc.AppEvent;
 import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.aigc.AIGCService;
@@ -56,7 +57,7 @@ public class DeleteFilePlugin implements Plugin {
     }
 
     @Override
-    public void onAction(PluginContext context) {
+    public HookResult launch(PluginContext context) {
         try {
             FileLabel fileLabel = (FileLabel) context.get("fileLabel");
             Contact contact = (Contact) context.get("contact");
@@ -65,7 +66,9 @@ public class DeleteFilePlugin implements Plugin {
                     contact.getId(), fileLabel.toCompactJSON());
             this.service.getStorage().writeAppEvent(appEvent);
         } catch (Exception e) {
-            Logger.w(this.getClass(), "#onAction", e);
+            Logger.w(this.getClass(), "#launch", e);
         }
+
+        return null;
     }
 }

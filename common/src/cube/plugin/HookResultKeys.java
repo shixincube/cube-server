@@ -24,51 +24,15 @@
  * SOFTWARE.
  */
 
-package cube.service.aigc.plugin;
-
-import cell.util.log.Logger;
-import cube.aigc.AppEvent;
-import cube.common.entity.Contact;
-import cube.common.entity.FileLabel;
-import cube.plugin.HookResult;
-import cube.plugin.Plugin;
-import cube.plugin.PluginContext;
-import cube.service.aigc.AIGCService;
+package cube.plugin;
 
 /**
- * 保存文件。
+ * Hook 处理数据键。
  */
-public class NewFilePlugin implements Plugin {
+public class HookResultKeys {
 
-    private final AIGCService service;
+    public final static String NOT_ALLOWED = "NotAllowed";
 
-    public NewFilePlugin(AIGCService service) {
-        this.service = service;
-    }
-
-    @Override
-    public void setup() {
-        // Nothing
-    }
-
-    @Override
-    public void teardown() {
-        // Nothing
-    }
-
-    @Override
-    public HookResult launch(PluginContext context) {
-        try {
-            FileLabel fileLabel = (FileLabel) context.get("fileLabel");
-            Contact contact = (Contact) context.get("contact");
-
-            AppEvent appEvent = new AppEvent(AppEvent.NewFile, System.currentTimeMillis(),
-                    contact.getId(), fileLabel.toCompactJSON());
-            this.service.getStorage().writeAppEvent(appEvent);
-        } catch (Exception e) {
-            Logger.w(this.getClass(), "#launch", e);
-        }
-
-        return null;
+    private HookResultKeys() {
     }
 }

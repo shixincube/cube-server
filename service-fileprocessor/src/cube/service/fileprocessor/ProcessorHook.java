@@ -37,6 +37,7 @@ import cube.common.entity.FileLabel;
 import cube.common.state.FileProcessorStateCode;
 import cube.file.OperationWorkflow;
 import cube.plugin.Hook;
+import cube.plugin.HookResult;
 import cube.plugin.PluginContext;
 import cube.service.Director;
 import cube.service.contact.ContactManager;
@@ -80,8 +81,8 @@ public class ProcessorHook extends Hook {
     }
 
     @Override
-    public void apply(PluginContext context) {
-        super.apply(context);
+    public HookResult apply(PluginContext context) {
+        HookResult result = super.apply(context);
 
         WorkflowPluginContext ctx = (WorkflowPluginContext) context;
 
@@ -89,13 +90,13 @@ public class ProcessorHook extends Hook {
         Long contactId = workflow.getContactId();
         if (null == contactId || workflow.getClientId() > 0) {
             // 没有指定联系人
-            return;
+            return result;
         }
 
         Contact contact = ContactManager.getInstance().getOnlineContact(workflow.getDomain(), workflow.getContactId());
         if (null == contact) {
             // 没有找到对应的联系人
-            return;
+            return result;
         }
 
         if (ProcessorHook.WorkflowStopped.equals(this.getKey())) {
@@ -128,5 +129,7 @@ public class ProcessorHook extends Hook {
                     contactId.longValue(), contact.getDomain().getName());
             this.cellet.speak(talkContext, dialect);
         }
+
+        return result;
     }
 }

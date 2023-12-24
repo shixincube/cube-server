@@ -60,12 +60,12 @@ public abstract class LuaPlugin implements Plugin {
         this.prepare();
 
         // 查找参数
-        this.luaState.getField(LuaState.LUA_GLOBALSINDEX, "onAction");
+        this.luaState.getField(LuaState.LUA_GLOBALSINDEX, "launch");
 
         // 参数压栈
         this.luaState.pushJavaObject(context);
 
-        // 调用 onAction
+        // 调用 launch
         this.luaState.call(1, 0);
     }
 

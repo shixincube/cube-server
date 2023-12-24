@@ -26,6 +26,7 @@
 
 package cube.service.contact;
 
+import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
@@ -44,6 +45,8 @@ public class ContactPluginContext extends PluginContext implements JSONable {
 
     private Device device;
 
+    private AuthToken authToken;
+
     private String newName;
 
     private JSONObject newContext;
@@ -61,6 +64,14 @@ public class ContactPluginContext extends PluginContext implements JSONable {
         this.device = device;
     }
 
+    public ContactPluginContext(String hookName, AuthToken authToken, Contact contact, Device device) {
+        super();
+        this.hookName = hookName;
+        this.authToken = authToken;
+        this.contact = contact;
+        this.device = device;
+    }
+
     public String getHookName() {
         return this.hookName;
     }
@@ -71,6 +82,10 @@ public class ContactPluginContext extends PluginContext implements JSONable {
 
     public Device getDevice() {
         return this.device;
+    }
+
+    public AuthToken getAuthToken() {
+        return this.authToken;
     }
 
     public void setNewName(String newName) {
@@ -91,16 +106,19 @@ public class ContactPluginContext extends PluginContext implements JSONable {
 
     @Override
     public Object get(String name) {
-        if (name.equals("contact")) {
+        if (name.equalsIgnoreCase("contact")) {
             return this.contact;
         }
-        else if (name.equals("device")) {
+        else if (name.equalsIgnoreCase("authToken")) {
+            return this.authToken;
+        }
+        else if (name.equalsIgnoreCase("device")) {
             return this.device;
         }
-        else if (name.equals("newName")) {
+        else if (name.equalsIgnoreCase("newName")) {
             return this.newName;
         }
-        else if (name.equals("newContext")) {
+        else if (name.equalsIgnoreCase("newContext")) {
             return this.newContext;
         }
         else {
@@ -110,10 +128,10 @@ public class ContactPluginContext extends PluginContext implements JSONable {
 
     @Override
     public void set(String name, Object value) {
-        if (name.equals("newName")) {
+        if (name.equalsIgnoreCase("newName")) {
             this.newName = (null != value && value instanceof String) ? (String) value : null;
         }
-        else if (name.equals("newContext")) {
+        else if (name.equalsIgnoreCase("newContext")) {
             this.newContext = (null != value && value instanceof JSONObject) ? (JSONObject) value : null;
         }
     }

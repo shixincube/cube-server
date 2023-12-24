@@ -27,6 +27,7 @@
 package cube.service.riskmgmt.plugin;
 
 import cube.common.entity.ContactBehavior;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.contact.ContactHook;
@@ -53,34 +54,36 @@ public class ContactPlugin implements Plugin {
     }
 
     @Override
-    public void onAction(PluginContext context) {
+    public HookResult launch(PluginContext context) {
         if (context instanceof ContactPluginContext) {
             ContactPluginContext ctx = (ContactPluginContext) context;
             String hook = ctx.getHookName();
             if (ContactHook.SignIn.equals(hook)) {
-                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.BEHAVIOR_SIGNIN);
+                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.SIGN_IN);
                 behavior.setDevice(ctx.getDevice());
                 // 添加记录
                 this.service.recordContactBehavior(behavior);
             }
             else if (ContactHook.DeviceTimeout.equals(hook)) {
-                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.BEHAVIOR_SIGNOUT);
+                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.SIGN_OUT);
                 behavior.setDevice(ctx.getDevice());
                 // 添加记录
                 this.service.recordContactBehavior(behavior);
             }
             else if (ContactHook.Comeback.equals(hook)) {
-                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.BEHAVIOR_SIGNIN);
+                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.SIGN_IN);
                 behavior.setDevice(ctx.getDevice());
                 // 添加记录
                 this.service.recordContactBehavior(behavior);
             }
             else if (ContactHook.SignOut.equals(hook)) {
-                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.BEHAVIOR_SIGNOUT);
+                ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.SIGN_OUT);
                 behavior.setDevice(ctx.getDevice());
                 // 添加记录
                 this.service.recordContactBehavior(behavior);
             }
         }
+
+        return null;
     }
 }

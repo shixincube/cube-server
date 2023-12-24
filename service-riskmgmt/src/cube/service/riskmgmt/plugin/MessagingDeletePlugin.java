@@ -29,6 +29,7 @@ package cube.service.riskmgmt.plugin;
 import cube.common.entity.TraceEvent;
 import cube.common.entity.FileAttachment;
 import cube.common.entity.Message;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.messaging.MessagingPluginContext;
@@ -54,7 +55,7 @@ public class MessagingDeletePlugin implements Plugin {
     }
 
     @Override
-    public void onAction(PluginContext context) {
+    public HookResult launch(PluginContext context) {
         MessagingPluginContext ctx = (MessagingPluginContext) context;
         Message message = ctx.getMessage();
         if (null != message) {
@@ -64,5 +65,7 @@ public class MessagingDeletePlugin implements Plugin {
                 this.riskManagement.addFileChainNode(TraceEvent.Delete, message, ctx.getDevice());
             }
         }
+
+        return null;
     }
 }

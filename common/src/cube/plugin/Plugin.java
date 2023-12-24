@@ -46,6 +46,6 @@ public interface Plugin {
      *
      * @param context
      */
-    void onAction(PluginContext context);
+    HookResult launch(PluginContext context);
 
 }

@@ -36,6 +36,7 @@ import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.plugin.PluginSystem;
@@ -473,7 +474,7 @@ public final class StatisticsSystem {
         }
 
         @Override
-        public void onAction(PluginContext context) {
+        public HookResult launch(PluginContext context) {
             final ContactPluginContext ctx = (ContactPluginContext) context;
 
             final Contact contact = ctx.getContact();
@@ -493,6 +494,8 @@ public final class StatisticsSystem {
                     });
                 }
             });
+
+            return null;
         }
     }
 
@@ -510,7 +513,7 @@ public final class StatisticsSystem {
         }
 
         @Override
-        public void onAction(PluginContext context) {
+        public HookResult launch(PluginContext context) {
             final ContactPluginContext ctx = (ContactPluginContext) context;
 
             final Contact contact = ctx.getContact();
@@ -530,6 +533,8 @@ public final class StatisticsSystem {
                     });
                 }
             });
+
+            return null;
         }
     }
 
@@ -547,7 +552,7 @@ public final class StatisticsSystem {
         }
 
         @Override
-        public void onAction(PluginContext context) {
+        public HookResult launch(PluginContext context) {
             final ContactPluginContext ctx = (ContactPluginContext) context;
 
             final Contact contact = ctx.getContact();
@@ -567,6 +572,8 @@ public final class StatisticsSystem {
                     });
                 }
             });
+
+            return null;
         }
     }
 
@@ -584,7 +591,7 @@ public final class StatisticsSystem {
         }
 
         @Override
-        public void onAction(PluginContext context) {
+        public HookResult launch(PluginContext context) {
             final ContactPluginContext ctx = (ContactPluginContext) context;
 
             final Contact contact = ctx.getContact();
@@ -604,6 +611,8 @@ public final class StatisticsSystem {
                     });
                 }
             });
+
+            return null;
         }
     }
 }

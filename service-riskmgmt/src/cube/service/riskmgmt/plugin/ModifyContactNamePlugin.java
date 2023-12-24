@@ -27,6 +27,7 @@
 package cube.service.riskmgmt.plugin;
 
 import cube.common.entity.Contact;
+import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.contact.ContactPluginContext;
@@ -54,11 +55,11 @@ public class ModifyContactNamePlugin implements Plugin {
     }
 
     @Override
-    public void onAction(PluginContext context) {
+    public HookResult launch(PluginContext context) {
         ContactPluginContext contactContext = (ContactPluginContext) context;
         String newName = contactContext.getNewName();
         if (null == newName) {
-            return;
+            return null;
         }
 
         Contact contact = contactContext.getContact();
@@ -66,5 +67,7 @@ public class ModifyContactNamePlugin implements Plugin {
             // 包含敏感词，不允许修改
             contactContext.setNewName(null);
         }
+
+        return null;
     }
 }

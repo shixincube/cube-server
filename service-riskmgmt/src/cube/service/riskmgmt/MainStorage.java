@@ -53,13 +53,30 @@ import java.util.concurrent.ExecutorService;
  */
 public class MainStorage implements Storagable {
 
-    private final String contactBehaviorPrefix = "contact_behavior_";
+    private final String contactRiskTablePrefix = "contact_risk_";
+
+    private final String contactBehaviorTablePrefix = "contact_behavior_";
 
     private final String sensitiveWordTablePrefix = "risk_sensitive_word_";
 
     private final String transChainTrackTablePrefix = "trans_chain_track_";
 
     private final String transChainNodeTablePrefix = "trans_chain_node_";
+
+    private final StorageField[] contactRiskFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("risk_mask", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
+            }),
+            new StorageField("time", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
 
     private final StorageField[] contactBehaviorFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
@@ -149,6 +166,7 @@ public class MainStorage implements Storagable {
 
     private Storage storage;
 
+    private Map<String, String> contactRiskTableNameMap;
     private Map<String, String> contactBehaviorTableNameMap;
     private Map<String, String> sensitiveWordTableNameMap;
     private Map<String, String> transChainTrackTableNameMap;
@@ -157,6 +175,7 @@ public class MainStorage implements Storagable {
     public MainStorage(ExecutorService executor, StorageType type, JSONObject config) {
         this.executor = executor;
         this.storage = StorageFactory.getInstance().createStorage(type, "RickMgmtMainStorage", config);
+        this.contactRiskTableNameMap = new HashMap<>();
         this.contactBehaviorTableNameMap = new HashMap<>();
         this.sensitiveWordTableNameMap = new HashMap<>();
         this.transChainTrackTableNameMap = new HashMap<>();
@@ -176,11 +195,25 @@ public class MainStorage implements Storagable {
     @Override
     public void execSelfChecking(List<String> domainNameList) {
         for (String domain : domainNameList) {
+            this.checkContactRiskTable(domain);
             this.checkContactBehaviorTable(domain);
             this.checkSensitiveWordTable(domain);
             this.checkChainTrackTable(domain);
             this.checkChainNodeTable(domain);
         }
+    }
+
+    public int readContactRiskMask(String domain, long contactId) {
+        final String table = this.contactRiskTableNameMap.get(domain);
+        List<StorageField[]> result = this.storage.executeQuery(table, this.contactRiskFields, new Conditional[] {
+                Conditional.createEqualTo("contact_id", contactId)
+        });
+        if (result.isEmpty()) {
+            return 0;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        return data.get("risk_mask").getInt();
     }
 
     public void writeContactBehavior(ContactBehavior contactBehavior) {
@@ -325,8 +358,22 @@ public class MainStorage implements Storagable {
         }
     }
 
+    private void checkContactRiskTable(String domain) {
+        String table = this.contactRiskTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.contactRiskTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.contactRiskFields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
     private void checkContactBehaviorTable(String domain) {
-        String table = this.contactBehaviorPrefix + domain;
+        String table = this.contactBehaviorTablePrefix + domain;
 
         table = SQLUtils.correctTableName(table);
         this.contactBehaviorTableNameMap.put(domain, table);

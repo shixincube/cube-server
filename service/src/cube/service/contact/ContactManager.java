@@ -50,7 +50,8 @@ import cube.common.entity.*;
 import cube.common.state.ContactStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
-import cube.plugin.PluginSystem;
+import cube.plugin.HookResult;
+import cube.plugin.HookResultKeys;
 import cube.service.Director;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
@@ -59,7 +60,6 @@ import cube.service.contact.plugin.CreateDomainAppPlugin;
 import cube.service.contact.plugin.FilterContactNamePlugin;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
-import cube.util.DummyDevice;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -423,12 +423,21 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             return null;
         }
 
+        // Hook verify identity
+        ContactHook hook = this.pluginSystem.getVerifyIdentity();
+        HookResult hookResult = hook.apply(new ContactPluginContext(ContactHook.VerifyIdentity,
+                authToken, contact, activeDevice));
+        if (hookResult.getBoolean(HookResultKeys.NOT_ALLOWED)) {
+            Logger.i(this.getClass(), "#signIn - Sign-in not allowed: " + contact.getId());
+            return null;
+        }
+
         Logger.d(this.getClass(), "SignIn contact: " + contact.getId() + " (" + activeDevice.getName() + ") - " +
                 authToken.getCode());
 
         // Hook sign-in
-        ContactHook hook = this.pluginSystem.getSignInHook();
-        hook.apply(new ContactPluginContext(ContactHook.SignIn, contact, activeDevice));
+        hook = this.pluginSystem.getSignInHook();
+        hook.apply(new ContactPluginContext(ContactHook.SignIn, authToken, contact, activeDevice));
 
         this.contactCache.apply(contact.getUniqueKey(), new LockFuture() {
             @Override
@@ -472,14 +481,14 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         // 获取指定令牌码对应的令牌
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
-        AuthToken token = authService.getToken(tokenCode);
-        if (null == token) {
+        AuthToken authToken = authService.getToken(tokenCode);
+        if (null == authToken) {
             Logger.w(this.getClass(), "#signIn - Can NOT find token code: " + tokenCode);
             return null;
         }
 
-        String domain = token.getDomain();
-        Long cid = token.getContactId();
+        String domain = authToken.getDomain();
+        Long cid = authToken.getContactId();
 
         if (cid.longValue() == 0) {
             // 该令牌没有绑定的联系人 ID
@@ -490,10 +499,19 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         Contact contact = this.getContact(domain, cid);
         contact.addDevice(activeDevice);
 
-        // Hook sign-in
         try {
-            ContactHook hook = this.pluginSystem.getSignInHook();
-            hook.apply(new ContactPluginContext(ContactHook.SignIn, contact, activeDevice));
+            // Hook verify identity
+            ContactHook hook = this.pluginSystem.getVerifyIdentity();
+            HookResult hookResult = hook.apply(new ContactPluginContext(ContactHook.VerifyIdentity,
+                    authToken, contact, activeDevice));
+            if (hookResult.getBoolean(HookResultKeys.NOT_ALLOWED)) {
+                Logger.i(this.getClass(), "#signIn - Sign-in not allowed: " + contact.getId());
+                return null;
+            }
+
+            // Hook sign-in
+            hook = this.pluginSystem.getSignInHook();
+            hook.apply(new ContactPluginContext(ContactHook.SignIn, authToken, contact, activeDevice));
         } catch (Exception e) {
             Logger.e(this.getClass(), "#signIn", e);
             return null;
@@ -522,7 +540,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         this.storage.writeContact(contact, activeDevice);
 
         // 关注该用户数据
-        this.follow(contact, token, activeDevice);
+        this.follow(contact, authToken, activeDevice);
 
         return contact;
     }
