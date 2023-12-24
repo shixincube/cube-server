@@ -27,7 +27,9 @@
 package cube.service.riskmgmt.plugin;
 
 import cube.common.entity.ContactBehavior;
+import cube.common.entity.ContactRisk;
 import cube.plugin.HookResult;
+import cube.plugin.HookResultKeys;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.contact.ContactHook;
@@ -58,7 +60,16 @@ public class ContactPlugin implements Plugin {
         if (context instanceof ContactPluginContext) {
             ContactPluginContext ctx = (ContactPluginContext) context;
             String hook = ctx.getHookName();
-            if (ContactHook.SignIn.equals(hook)) {
+            if (ContactHook.VerifyIdentity.equals(hook)) {
+                int mask = this.service.getContactRiskMask(ctx.getContact().getDomain().getName(), ctx.getContact().getId());
+                if (ContactRisk.hasForbiddenSignIn(mask)) {
+                    // 联系人被禁止签入
+                    HookResult result = new HookResult();
+                    result.set(HookResultKeys.NOT_ALLOWED, true);
+                    return result;
+                }
+            }
+            else if (ContactHook.SignIn.equals(hook)) {
                 ContactBehavior behavior = new ContactBehavior(ctx.getContact(), ContactBehavior.SIGN_IN);
                 behavior.setDevice(ctx.getDevice());
                 // 添加记录

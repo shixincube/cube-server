@@ -79,10 +79,10 @@ public class FileStorageCellet extends AbstractCellet {
         }
 
         // 打开存储管理器
-        this.fileChunkStorage.open(this, performer);
+        this.fileChunkStorage.open(this, this.performer);
 
         // 配置 HTTP/HTTPS 服务的句柄
-        HttpServer httpServer = performer.getHttpServer();
+        HttpServer httpServer = this.performer.getHttpServer();
 
         // 添加句柄
         ContextHandler fileHandler = new ContextHandler();

@@ -162,6 +162,29 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
     }
 
     /**
+     * 获取联系人的风险掩码。
+     *
+     * @param domain
+     * @param contactId
+     * @return
+     */
+    public int getContactRiskMask(String domain, long contactId) {
+        return this.mainStorage.readContactRiskMask(domain, contactId);
+    }
+
+    /**
+     * 修改联系人风险控制掩码。
+     *
+     * @param domain
+     * @param contactId
+     * @param mask
+     * @return
+     */
+    public boolean modifyContactRiskMask(String domain, long contactId, int mask) {
+        return this.mainStorage.writeContactRiskMask(domain, contactId, mask);
+    }
+
+    /**
      * 记录联系人行为。
      *
      * @param behavior
@@ -322,6 +345,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         }
         ContactPluginSystem contactPluginSystem = ContactManager.getInstance().getPluginSystem();
         ContactPlugin contactPlugin = new ContactPlugin(this);
+        contactPluginSystem.register(ContactHook.VerifyIdentity, contactPlugin);
         contactPluginSystem.register(ContactHook.SignIn, contactPlugin);
         contactPluginSystem.register(ContactHook.SignOut, contactPlugin);
         contactPluginSystem.register(ContactHook.Comeback, contactPlugin);

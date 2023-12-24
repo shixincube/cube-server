@@ -85,6 +85,9 @@
 			<class>cube.dispatcher.conference.ConferenceCellet</class>
 		</cellet>
 		<cellet port="7000,7070,7077">
+			<class>cube.dispatcher.riskmgmt.RiskManagementCellet</class>
+		</cellet>
+		<cellet port="7000,7070,7077">
 			<class>cube.dispatcher.ferry.FerryCellet</class>
 		</cellet>
 		<cellet port="7000,7070,7077">

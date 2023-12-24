@@ -216,6 +216,30 @@ public class MainStorage implements Storagable {
         return data.get("risk_mask").getInt();
     }
 
+    public boolean writeContactRiskMask(String domain, long contactId, int mask) {
+        final String table = this.contactRiskTableNameMap.get(domain);
+        List<StorageField[]> result = this.storage.executeQuery(table, this.contactRiskFields, new Conditional[] {
+                Conditional.createEqualTo("contact_id", contactId)
+        });
+        if (result.isEmpty()) {
+            // 插入
+            return this.storage.executeInsert(table, new StorageField[] {
+                    new StorageField("contact_id", contactId),
+                    new StorageField("risk_mask", mask),
+                    new StorageField("time", System.currentTimeMillis())
+            });
+        }
+        else {
+            // 更新
+            return this.storage.executeUpdate(table, new StorageField[] {
+                    new StorageField("risk_mask", mask),
+                    new StorageField("time", System.currentTimeMillis())
+            }, new Conditional[] {
+                    Conditional.createEqualTo("contact_id", contactId)
+            });
+        }
+    }
+
     public void writeContactBehavior(ContactBehavior contactBehavior) {
         final String table = this.contactBehaviorTableNameMap.get(contactBehavior.getDomain().getName());
         this.executor.execute(new Runnable() {

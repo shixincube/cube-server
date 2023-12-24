@@ -48,7 +48,7 @@ public class HookResult {
         this.results.add(result);
     }
 
-    public void put(String key, Object value) {
+    public void set(String key, Object value) {
         if (null == this.data) {
             this.data = new HashMap<>();
         }

@@ -24,33 +24,45 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.dispatcher.riskmgmt;
+
+import cube.core.AbstractCellet;
+import cube.dispatcher.Performer;
+import cube.util.HttpServer;
+import org.eclipse.jetty.server.handler.ContextHandler;
 
 /**
- * 风控模块动作。
+ * 风险管理单元。
  */
-public enum RiskManagementAction {
+public class RiskManagementCellet extends AbstractCellet {
+
+    public final static String NAME = "RiskMgmt";
 
     /**
-     * 获取联系人行为列表。
+     * 执行机。
      */
-    ListContactBehaviors("listContactBehaviors"),
+    private Performer performer;
 
-    /**
-     * 获取联系人风险掩码。
-     */
-    GetContactRisk("getContactRisk"),
+    public RiskManagementCellet() {
+        super(NAME);
+    }
 
-    /**
-     * 修改联系人风险掩码。
-     */
-    ModifyContactRisk("modifyContactRisk"),
+    @Override
+    public boolean install() {
+        this.performer = (Performer) nucleus.getParameter("performer");
 
-    ;
+        // 配置 HTTP/HTTPS 服务的句柄
+        HttpServer httpServer = this.performer.getHttpServer();
 
-    public final String name;
+        ContextHandler contactRiskHandler = new ContextHandler();
+        contactRiskHandler.setContextPath(ContactRiskHandler.PATH);
+        contactRiskHandler.setHandler(new ContactRiskHandler(this.performer));
+        httpServer.addContextHandler(contactRiskHandler);
 
-    RiskManagementAction(String name) {
-        this.name = name;
+        return true;
+    }
+
+    @Override
+    public void uninstall() {
     }
 }

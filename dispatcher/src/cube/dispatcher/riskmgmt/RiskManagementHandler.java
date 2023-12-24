@@ -24,33 +24,44 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.dispatcher.riskmgmt;
+
+import cube.util.CrossDomainHandler;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
- * 风控模块动作。
+ * RESTful 接口基类。
  */
-public enum RiskManagementAction {
+public abstract class RiskManagementHandler extends CrossDomainHandler {
 
-    /**
-     * 获取联系人行为列表。
-     */
-    ListContactBehaviors("listContactBehaviors"),
+    public RiskManagementHandler() {
+        super();
+    }
 
-    /**
-     * 获取联系人风险掩码。
-     */
-    GetContactRisk("getContactRisk"),
+    protected String getRequestPath(HttpServletRequest request) {
+        String path = request.getPathInfo();
+        if (path.length() < 2) {
+            return null;
+        }
 
-    /**
-     * 修改联系人风险掩码。
-     */
-    ModifyContactRisk("modifyContactRisk"),
+        path = path.substring(1).trim();
+        int index = path.indexOf("/");
+        if (index > 0) {
+            path = path.substring(0, index);
+        }
+        return path;
+    }
 
-    ;
+    protected String getLastRequestPath(HttpServletRequest request) {
+        String path = request.getPathInfo();
+        if (path.length() < 2) {
+            return null;
+        }
 
-    public final String name;
-
-    RiskManagementAction(String name) {
-        this.name = name;
+        path = path.substring(1).trim();
+        String[] paths = path.split("/");
+        path = paths[paths.length - 1];
+        return path;
     }
 }
