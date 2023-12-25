@@ -30,6 +30,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.RiskManagementAction;
+import cube.common.entity.ContactRisk;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import org.eclipse.jetty.http.HttpStatus;
@@ -87,7 +88,12 @@ public class ContactRiskHandler extends RiskManagementHandler {
             return;
         }
 
-        this.respondOk(response, Packet.extractDataPayload(responsePacket));
+        int mask = Packet.extractDataPayload(responsePacket).getInt("mask");
+        JSONObject responseData = ContactRisk.toJSON(mask);
+        responseData.put("mask", mask);
+        responseData.put("contactId", contactId);
+
+        this.respondOk(response, responseData);
         this.complete();
     }
 
@@ -97,12 +103,21 @@ public class ContactRiskHandler extends RiskManagementHandler {
         String token = this.getLastRequestPath(request);
 
         long contactId = 0;
+        int originalMask = 0;
         int mask = 0;
 
         try {
             JSONObject data = this.readBodyAsJSONObject(request);
             contactId = data.getLong("contactId");
-            mask = data.getInt("mask");
+            originalMask = data.getInt("originalMask");
+
+            if (data.has("mask")) {
+                // 如果设置了 mask 则直接操作 mask
+                mask = data.getInt("mask");
+            }
+            else {
+                mask = ContactRisk.toMask(originalMask, data);
+            }
         } catch (Exception e) {
             this.respond(response, HttpStatus.FORBIDDEN_403, new JSONObject());
             this.complete();
@@ -132,7 +147,12 @@ public class ContactRiskHandler extends RiskManagementHandler {
             return;
         }
 
-        this.respondOk(response, Packet.extractDataPayload(responsePacket));
+        mask = Packet.extractDataPayload(responsePacket).getInt("mask");
+        JSONObject responseData = ContactRisk.toJSON(mask);
+        responseData.put("mask", mask);
+        responseData.put("contactId", contactId);
+
+        this.respondOk(response, responseData);
         this.complete();
     }
 }

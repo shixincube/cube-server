@@ -322,16 +322,14 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
     private void initPlugin() {
         // 授权服务
         AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
-        AuthServicePluginSystem authPluginSystem = authService.getPluginSystem();
-        while (null == authPluginSystem) {
+        while (!authService.isStarted()) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            authPluginSystem = authService.getPluginSystem();
         }
+        AuthServicePluginSystem authPluginSystem = authService.getPluginSystem();
         authPluginSystem.register(AuthServiceHook.CreateDomainApp,
                 new CreateDomainAppPlugin(this));
 

@@ -66,7 +66,7 @@ public class ActivateKnowledgeBasePlugin implements Plugin {
             Logger.i(ActivateKnowledgeBasePlugin.class, "Activate knowledge base: " + contact.getId());
 
             // 更新
-            this.service.getStorage().updateKnowledgeProfile(contact.getId(),
+            this.service.getStorage().updateKnowledgeProfile(contact.getId(), "shixincube.com",
                     KnowledgeProfile.STATE_NORMAL, 549755813888L, KnowledgeScope.Private);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#launch", e);

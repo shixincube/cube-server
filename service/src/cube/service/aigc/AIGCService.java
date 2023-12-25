@@ -586,6 +586,10 @@ public class AIGCService extends AbstractModule {
 
             AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
             AuthToken authToken = authService.queryAuthTokenByContactId(contactId);
+            if (null == authToken) {
+                Logger.e(this.getClass(), "#getKnowledgeBase - Can NOT find auth token: " + contactId);
+                return null;
+            }
 
             base = new KnowledgeBase(this, this.storage, authToken, fileStorage);
             final KnowledgeBase knowledgeBase = base;

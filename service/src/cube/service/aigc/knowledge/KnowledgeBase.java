@@ -77,7 +77,6 @@ public class KnowledgeBase {
         this.fileStorage = fileStorage;
         this.resource = new KnowledgeResource();
         this.scope = getProfile().scope;
-
     }
 
     public void init() {
@@ -109,8 +108,8 @@ public class KnowledgeBase {
      * @return
      */
     public KnowledgeProfile updateProfile(int state, long maxSize, KnowledgeScope scope) {
-        KnowledgeProfile profile = this.storage.updateKnowledgeProfile(this.authToken.getContactId(), state,
-                maxSize, scope);
+        KnowledgeProfile profile = this.storage.updateKnowledgeProfile(this.authToken.getContactId(),
+                this.authToken.getDomain(), state, maxSize, scope);
         this.scope = profile.scope;
         this.listKnowledgeDocs();
         this.listKnowledgeArticles();

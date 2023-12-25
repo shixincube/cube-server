@@ -71,8 +71,9 @@ public class DaemonTask implements Runnable {
         this.service.getExecutor().execute(new Runnable() {
             @Override
             public void run() {
-                service.notifyPerformance(managedContact.contact, managedContact.device, size);
-                managedContact.notified = true;
+                if (service.notifyPerformance(managedContact.contact, managedContact.device, size)) {
+                    managedContact.notified = true;
+                }
             }
         });
 
@@ -140,7 +141,10 @@ public class DaemonTask implements Runnable {
             for (ManagedContact mc : this.managedContacts) {
                 if (!mc.notified) {
                     mc.notified = true;
-                    this.service.notifyPerformance(mc.contact, mc.device, mc.spaceSize);
+                    boolean result = this.service.notifyPerformance(mc.contact, mc.device, mc.spaceSize);
+                    if (!result) {
+                        mc.notified = false;
+                    }
                 }
             }
         }

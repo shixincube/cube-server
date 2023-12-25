@@ -344,7 +344,11 @@ public class FileStorageService extends AbstractModule {
         return this.executor;
     }
 
-    protected void notifyPerformance(Contact contact, Device device, long fileSpaceSize) {
+    protected boolean notifyPerformance(Contact contact, Device device, long fileSpaceSize) {
+        if (null == device.getTalkContext()) {
+            return false;
+        }
+
         FileStoragePerformance performance = this.serviceStorage.readPerformance(contact.getDomain().getName(),
                 contact.getId());
         if (null == performance) {
@@ -364,7 +368,7 @@ public class FileStorageService extends AbstractModule {
         Packet packet = new Packet(FileStorageAction.Performance.name, payload);
         ActionDialect dialect = Director.attachDirector(packet.toDialect(),
                 contact.getId(), contact.getDomain().getName());
-        this.cellet.speak(device.getTalkContext(), dialect);
+        return this.cellet.speak(device.getTalkContext(), dialect);
     }
 
     protected FileStoragePerformance getPerformance(Contact contact) {

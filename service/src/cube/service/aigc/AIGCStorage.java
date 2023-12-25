@@ -743,7 +743,8 @@ public class AIGCStorage implements Storagable {
                 KnowledgeScope.parse(data.get("scope").getString()));
     }
 
-    public KnowledgeProfile updateKnowledgeProfile(long contactId, int state, long maxSize, KnowledgeScope scope) {
+    public KnowledgeProfile updateKnowledgeProfile(long contactId, String domain, int state, long maxSize,
+                                                   KnowledgeScope scope) {
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeProfileTable, this.knowledgeProfileFields,
                 new Conditional[] {
                         Conditional.createEqualTo("contact_id", contactId)
@@ -752,6 +753,7 @@ public class AIGCStorage implements Storagable {
         if (result.isEmpty()) {
             this.storage.executeInsert(this.knowledgeProfileTable, new StorageField[] {
                     new StorageField("contact_id", contactId),
+                    new StorageField("domain", domain),
                     new StorageField("state", state),
                     new StorageField("max_size", maxSize),
                     new StorageField("scope", scope.name)
@@ -761,7 +763,6 @@ public class AIGCStorage implements Storagable {
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
         long id = data.get("id").getLong();
-        String domain = data.get("domain").getString();
 
         this.storage.executeUpdate(this.knowledgeProfileTable, new StorageField[] {
                 new StorageField("state", state),

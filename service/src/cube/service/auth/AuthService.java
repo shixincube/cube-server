@@ -260,7 +260,10 @@ public class AuthService extends AbstractModule {
                     this.tokenCache.put(new CacheKey(code), new CacheValue(token.toJSON()));
 
                     // 更新存储
-                    this.authStorage.writeToken(token);
+                    if (!this.authStorage.writeToken(token)) {
+                        // 写入失败，返回 null
+                        return null;
+                    }
                 }
             }
         }
