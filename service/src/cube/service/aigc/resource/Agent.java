@@ -44,7 +44,7 @@ import java.util.List;
 /**
  * 代理访问。
  */
-public class Agent {
+public final class Agent {
 
     private final static Agent instance = new Agent();
 

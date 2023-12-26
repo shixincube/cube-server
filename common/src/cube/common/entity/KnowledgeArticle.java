@@ -47,6 +47,8 @@ public class KnowledgeArticle extends Entity {
 
     public int date;
 
+    public KnowledgeScope scope = KnowledgeScope.Private;
+
     public KnowledgeArticle(String category, String title, String content, String author,
                             int year, int month, int date, long timestamp) {
         super();
@@ -83,11 +85,13 @@ public class KnowledgeArticle extends Entity {
         this.year = json.getInt("year");
         this.month = json.getInt("month");
         this.date = json.getInt("date");
+        this.scope = json.has("scope") ? KnowledgeScope.parse(json.getString("scope")) :
+                KnowledgeScope.Private;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (null != obj && obj instanceof KnowledgeArticle) {
+        if (obj instanceof KnowledgeArticle) {
             KnowledgeArticle other = (KnowledgeArticle) obj;
             return other.id.longValue() == this.id.longValue();
         }
@@ -112,6 +116,7 @@ public class KnowledgeArticle extends Entity {
         json.put("year", this.year);
         json.put("month", this.month);
         json.put("date", this.date);
+        json.put("scope", this.scope.name);
         return json;
     }
 
@@ -124,6 +129,7 @@ public class KnowledgeArticle extends Entity {
         json.put("year", this.year);
         json.put("month", this.month);
         json.put("date", this.date);
+        json.put("scope", this.scope.name);
         return json;
     }
 }

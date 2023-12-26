@@ -838,9 +838,10 @@ public class AIGCService extends AbstractModule {
                     maq.articleQuery = po.makeEvaluatingArticleQuery(category, title,
                             (null != sentiment) ? Sentiment.parse(sentiment) : null);
                 }
-                else if (PublicOpinionTaskName.ArticleSentimentClassification == task) {
+                else {
                     maq.articleQuery = po.makeArticleClassificationQuery(category, title);
                 }
+                
                 if (null == maq.articleQuery) {
                     Logger.w(this.getClass(), "#inferByModule - Make article query failed: " + category);
                     return null;
@@ -861,7 +862,7 @@ public class AIGCService extends AbstractModule {
 
                 StringBuilder result = new StringBuilder();
 
-                this.singleChat(channel, unit, maq.articleQuery.query, null, new ChatListener() {
+                this.singleChat(channel, unit, maq.articleQuery.query, maq.articleQuery.query, null, new ChatListener() {
                     @Override
                     public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
                         maq.articleQuery.answer = record.answer.replaceAll(",", "，");
@@ -984,8 +985,8 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
-    public void singleChat(AIGCChannel channel, AIGCUnit unit, String query, List<AIGCGenerationRecord> records,
-                           ChatListener listener) {
+    public void singleChat(AIGCChannel channel, AIGCUnit unit, String query, String prompt,
+                           List<AIGCGenerationRecord> records, ChatListener listener) {
         if (this.useAgent) {
             unit = Agent.getInstance().getUnit();
         }
@@ -996,7 +997,8 @@ public class AIGCService extends AbstractModule {
             return;
         }
 
-        ChatUnitMeta meta = new ChatUnitMeta(unit, channel, query, records, listener);
+        ChatUnitMeta meta = new ChatUnitMeta(unit, channel, prompt, records, listener);
+        meta.setOriginalQuery(query);
 
         synchronized (this.chatQueueMap) {
             Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getQueryKey());
@@ -2097,6 +2099,8 @@ public class AIGCService extends AbstractModule {
 
         protected String content;
 
+        protected String originalQuery;
+
         protected List<AIGCGenerationRecord> records;
 
         protected int numHistories;
@@ -2137,6 +2141,15 @@ public class AIGCService extends AbstractModule {
             this.history.queryContactId = channel.getAuthToken().getContactId();
             this.history.queryTime = System.currentTimeMillis();
             this.history.queryContent = content;
+        }
+
+        public void setOriginalQuery(String originalQuery) {
+            if (null == originalQuery) {
+                return;
+            }
+
+            this.originalQuery = originalQuery;
+            this.history.queryContent = originalQuery;
         }
 
         public void process() {
@@ -2216,7 +2229,7 @@ public class AIGCService extends AbstractModule {
                     ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(),
                             3 * 60 * 1000, this.sn);
                     if (null == dialect) {
-                        Logger.w(AIGCService.class, "Chat unit error - channel: " + this.channel.getCode());
+                        Logger.w(AIGCService.class, "Unit error - channel: " + this.channel.getCode());
                         this.channel.setProcessing(false);
                         // 回调错误
                         this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
@@ -2236,7 +2249,7 @@ public class AIGCService extends AbstractModule {
                     JSONObject payload = Packet.extractDataPayload(response);
 
                     if (!payload.has("response")) {
-                        Logger.w(AIGCService.class, "Chat unit respond failed - channel: " + this.channel.getCode());
+                        Logger.w(AIGCService.class, "Unit respond failed - channel: " + this.channel.getCode());
                         this.channel.setProcessing(false);
                         // 回调错误
                         this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
@@ -2248,7 +2261,8 @@ public class AIGCService extends AbstractModule {
                     // 过滤中文字符
                     responseText = this.filterChinese(this.unit, responseText);
                     result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
-                            this.content, responseText, complexContext);
+                            (null != this.originalQuery) ? this.originalQuery : this.content,
+                            responseText, complexContext);
                 }
             }
             else {
@@ -2256,7 +2270,7 @@ public class AIGCService extends AbstractModule {
                 ResourceAnswer resourceAnswer = new ResourceAnswer(complexContext);
                 String answer = resourceAnswer.answer();
                 result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
-                        this.content, answer, complexContext);
+                        (null != this.originalQuery) ? this.originalQuery : this.content, answer, complexContext);
             }
 
             if (!complexContext.isSimplex()) {
@@ -2277,7 +2291,7 @@ public class AIGCService extends AbstractModule {
                 @Override
                 public void run() {
                     // 更新用量
-                    List<String> tokens = calcTokens(history.queryContent);
+                    List<String> tokens = calcTokens(content);
                     long promptTokens = tokens.size();
                     tokens = calcTokens(history.answerContent);
                     long completionTokens = tokens.size();
@@ -2288,7 +2302,8 @@ public class AIGCService extends AbstractModule {
 
                     if (complexContext.isSimplex() && useRecognizeContext) {
                         // 进行资源搜索
-                        SearchResult searchResult = Explorer.getInstance().search(content,
+                        SearchResult searchResult = Explorer.getInstance().search(
+                                (null != originalQuery) ? originalQuery : content,
                                 history.answerContent, complexContext);
                         if (searchResult.hasResult()) {
                             // 缓存结果，以便客户端读取数据

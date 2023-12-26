@@ -643,14 +643,46 @@ public class AIGCStorage implements Storagable {
         });
     }
 
-    public List<AIGCChatHistory> readChatHistoryByContactId(long contactId) {
+    public List<AIGCChatHistory> readChatHistoryByContactId(long contactId, long startTime, long endTime) {
         List<AIGCChatHistory> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.queryAnswerTable,
                 this.queryAnswerFields, new Conditional[] {
                         Conditional.createEqualTo("query_cid", contactId),
-                        Conditional.createOr(),
-                        Conditional.createEqualTo("answer_cid", contactId)
+                        Conditional.createAnd(),
+                        Conditional.createGreaterThanEqual(new StorageField("query_time", startTime)),
+                        Conditional.createAnd(),
+                        Conditional.createLessThanEqual(new StorageField("query_time", endTime))
+                });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            AIGCChatHistory history = new AIGCChatHistory(data.get("id").getLong(), data.get("sn").getLong());
+            history.unit = data.get("unit").getString();
+            history.queryContactId = data.get("query_cid").getLong();
+            history.queryTime = data.get("query_time").getLong();
+            history.queryContent = data.get("query_content").getString();
+            history.answerContactId = data.get("answer_cid").getLong();
+            history.answerTime = data.get("answer_time").getLong();
+            history.answerContent = data.get("answer_content").getString();
+            history.feedback = data.get("feedback").getInt();
+            history.contextId = data.get("context_id").getLong();
+            list.add(history);
+        }
+
+        return list;
+    }
+
+    public List<AIGCChatHistory> readChatHistoryByFeedback(int feedback, long startTime, long endTime) {
+        List<AIGCChatHistory> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.queryAnswerTable,
+                this.queryAnswerFields, new Conditional[] {
+                        Conditional.createEqualTo("feedback", feedback),
+                        Conditional.createAnd(),
+                        Conditional.createGreaterThanEqual(new StorageField("query_time", startTime)),
+                        Conditional.createAnd(),
+                        Conditional.createLessThanEqual(new StorageField("query_time", endTime))
                 });
 
         for (StorageField[] fields : result) {
@@ -935,17 +967,16 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public List<KnowledgeArticle> readKnowledgeArticles(String category, int startYear, int startMonth, int startDate) {
+    public List<KnowledgeArticle> readKnowledgeArticles(String category, long startTime, long endTime) {
         List<KnowledgeArticle> list = new ArrayList<>();
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(startYear, startMonth - 1, startDate);
-        long timestamp = calendar.getTimeInMillis();
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
                 new Conditional[] {
                         Conditional.createEqualTo("category", category),
                         Conditional.createAnd(),
-                        Conditional.createGreaterThanEqual(new StorageField("timestamp", timestamp))
+                        Conditional.createGreaterThanEqual(new StorageField("timestamp", startTime)),
+                        Conditional.createAnd(),
+                        Conditional.createLessThanEqual(new StorageField("timestamp", endTime))
                 });
 
         for (StorageField[] fields : result) {

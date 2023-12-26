@@ -147,6 +147,7 @@ public class EvaluationReport {
             List<AIGCGenerationRecord> records = new ArrayList<>();
             records.add(group.record);
             aigcService.singleChat(channel, unit,
+                    promptBuilder.serializePromptChaining(group.chaining),
                     promptBuilder.serializePromptChaining(group.chaining), records,
                     new ChatListener() {
                         @Override

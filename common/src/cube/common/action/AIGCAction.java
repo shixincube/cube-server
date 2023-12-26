@@ -102,6 +102,11 @@ public enum AIGCAction {
     QueryUsages("queryUsages"),
 
     /**
+     * 查询互动问答历史。
+     */
+    QueryChatHistory("queryChatHistory"),
+
+    /**
      * 问答互动。
      */
     Chat("chat"),

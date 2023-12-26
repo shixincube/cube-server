@@ -295,9 +295,8 @@ public class KnowledgeBase {
         return deactivatedDoc;
     }
 
-    public List<KnowledgeArticle> getKnowledgeArticle(String category, int startYear, int startMonth, int startDate) {
-        List<KnowledgeArticle> list = this.storage.readKnowledgeArticles(category,
-                startYear, startMonth, startDate);
+    public List<KnowledgeArticle> getKnowledgeArticles(String category, long startTime, long endTime) {
+        List<KnowledgeArticle> list = this.storage.readKnowledgeArticles(category, startTime, endTime);
         return list;
     }
 
@@ -522,7 +521,7 @@ public class KnowledgeBase {
         }
         else {
             // 其他单元执行 chat
-            this.service.singleChat(channel, unit, result.prompt, null, new ChatListener() {
+            this.service.singleChat(channel, unit, query, result.prompt, null, new ChatListener() {
                 @Override
                 public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
                     result.record = record;
@@ -536,6 +535,46 @@ public class KnowledgeBase {
                 }
             });
         }
+
+        return true;
+    }
+
+    /**
+     * 使用全量数据进行问答。
+     *
+     * @param channelCode
+     * @param unitName
+     * @param pipelineQuery
+     * @param comprehensiveQuery
+     * @param category
+     * @param maxArticles
+     * @param maxParaphrases
+     * @param listener
+     * @return
+     */
+    public boolean performKnowledgeQA(String channelCode, String unitName,
+                                      String pipelineQuery, String comprehensiveQuery,
+                                      String category, int maxArticles, int maxParaphrases,
+                                      KnowledgeQAListener listener) {
+        Logger.d(this.getClass(), "#performKnowledgeQA [category] - Channel: " + channelCode +
+                "/" + unitName + "/" + comprehensiveQuery + "/" + category);
+
+        final AIGCChannel channel = this.service.getChannel(channelCode);
+        if (null == channel) {
+            Logger.w(this.getClass(), "#performKnowledgeQA - Can NOT find channel: " + channelCode);
+            return false;
+        }
+
+        AIGCUnit unit = this.service.selectUnitByName(unitName);
+        if (null == unit) {
+            Logger.w(this.getClass(), "#performKnowledgeQA - Select unit error: " + unitName);
+            return false;
+        }
+
+//        Consts.formatQuestion();
+
+        List<KnowledgeArticle> articles = this.storage.readKnowledgeArticles(category);
+
 
         return true;
     }

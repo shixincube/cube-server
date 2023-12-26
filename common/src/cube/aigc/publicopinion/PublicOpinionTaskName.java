@@ -41,6 +41,9 @@ public enum PublicOpinionTaskName {
      */
     ArticleSentimentClassification("ArticleSentimentClassification"),
 
+    /**
+     * 未知。
+     */
     Unknown("Unknown")
 
     ;

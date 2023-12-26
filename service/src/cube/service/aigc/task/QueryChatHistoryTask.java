@@ -30,25 +30,25 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.KnowledgeArticle;
+import cube.common.entity.AIGCChatHistory;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.knowledge.KnowledgeBase;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.List;
 
 /**
- * 获取知识库文档列表任务。
+ * 查询 Chat 历史数据任务。
  */
-public class ListKnowledgeArticlesTask extends ServiceTask {
+public class QueryChatHistoryTask extends ServiceTask {
 
-    public ListKnowledgeArticlesTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public QueryChatHistoryTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -60,33 +60,40 @@ public class ListKnowledgeArticlesTask extends ServiceTask {
         String tokenCode = this.getTokenCode(dialect);
         if (null == tokenCode) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.NoToken.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        KnowledgeBase base = service.getKnowledgeBase(tokenCode);
-        if (null == base) {
+        AuthToken token = service.getToken(tokenCode);
+        if (null == token) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InconsistentToken.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        String category = null;
-        int startYear = 0;
-        int startMonth = 0;
-        int startDate = 0;
-        boolean containsContent = false;
+        long contactId = 0;
+        int feedback = -1;
+        long start = 0;
+        long end = 0;
 
         try {
-            category = packet.data.getString("category");
-            startYear = packet.data.getInt("startYear");
-            startMonth = packet.data.getInt("startMonth");
-            startDate = packet.data.getInt("startDate");
-            if (packet.data.has("content")) {
-                containsContent = packet.data.getBoolean("content");
+            if (packet.data.has("contactId")) {
+                contactId = packet.data.getLong("contactId");
+            }
+            if (packet.data.has("feedback")) {
+                feedback = packet.data.getInt("feedback");
+            }
+
+            start = packet.data.getLong("start");
+
+            if (packet.data.has("end")) {
+                end = packet.data.getLong("end");
+            }
+            else {
+                end = System.currentTimeMillis();
             }
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
@@ -95,8 +102,16 @@ public class ListKnowledgeArticlesTask extends ServiceTask {
             return;
         }
 
-        List<KnowledgeArticle> articleList = null;//base.getKnowledgeArticle(category, startYear, startMonth, startDate);
-        if (null == articleList) {
+        List<AIGCChatHistory> historyList = null;
+
+        if (contactId != 0) {
+            historyList = service.getStorage().readChatHistoryByContactId(contactId, start, end);
+        }
+        else if (feedback != -1) {
+            historyList = service.getStorage().readChatHistoryByFeedback(feedback, start, end);
+        }
+
+        if (null == historyList) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
             markResponseTime();
@@ -104,16 +119,18 @@ public class ListKnowledgeArticlesTask extends ServiceTask {
         }
 
         JSONArray array = new JSONArray();
-        for (KnowledgeArticle article : articleList) {
-            array.put(containsContent ? article.toJSON() : article.toCompactJSON());
+        for (AIGCChatHistory history : historyList) {
+            array.put(history.toJSON());
         }
 
-        JSONObject responsePayload = new JSONObject();
-        responsePayload.put("total", articleList.size());
-        responsePayload.put("list", array);
+        JSONObject data = new JSONObject();
+        data.put("start", start);
+        data.put("end", end);
+        data.put("total", historyList.size());
+        data.put("histories", array);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responsePayload));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, data));
         markResponseTime();
     }
 }

@@ -95,7 +95,7 @@ public class Stage extends Entity {
                     for (PublicOpinion.ArticleQuery articleQuery : negativeQueries) {
                         service.singleChat(channel,
                                 service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational),
-                                articleQuery.query, null, new ChatListener() {
+                                articleQuery.query, articleQuery.query, null, new ChatListener() {
                                     @Override
                                     public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
                                         PublicOpinion.ArticleQuery current = findArticleQuery(negativeQueries,
@@ -124,7 +124,7 @@ public class Stage extends Entity {
                     for (PublicOpinion.ArticleQuery articleQuery : positiveQueries) {
                         service.singleChat(channel,
                                 service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational),
-                                articleQuery.query, null, new ChatListener() {
+                                articleQuery.query, articleQuery.query, null, new ChatListener() {
                                     @Override
                                     public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
                                         PublicOpinion.ArticleQuery current = findArticleQuery(positiveQueries,

@@ -138,6 +138,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new SubmitEvent());
         httpServer.addContextHandler(new QueryAppEvents());
         httpServer.addContextHandler(new QueryUsages());
+        httpServer.addContextHandler(new QueryChatHistory());
         httpServer.addContextHandler(new PublicOpinionData());
         httpServer.addContextHandler(new InferByModule());
         httpServer.addContextHandler(new PreInfer());
@@ -547,6 +548,32 @@ public class Manager implements Tickable, PerformerListener {
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.w(Manager.class, "#queryUsages - Response state code is NOT Ok - "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject queryChatHistory(String token, long contactId, int feedback, long start, long end) {
+        JSONObject requestData = new JSONObject();
+        requestData.put("contactId", contactId);
+        requestData.put("feedback", feedback);
+        requestData.put("start", start);
+        requestData.put("end", end);
+
+        Packet packet = new Packet(AIGCAction.QueryChatHistory.name, requestData);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#queryChatHistory - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#queryChatHistory - Response state code is NOT Ok - "
                     + Packet.extractCode(responsePacket));
             return null;
         }
