@@ -86,6 +86,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -174,7 +175,12 @@ public class AIGCService extends AbstractModule {
     /**
      * 是否对 Prompt 进行上下文识别。
      */
-    private boolean useRecognizeContext = false;
+    private boolean enabledRecognizeContext = false;
+
+    /**
+     * 是否启用搜索关键词。
+     */
+    private boolean enabledSearch = false;
 
     /**
      * 是否访问，仅用于本地测试
@@ -200,7 +206,25 @@ public class AIGCService extends AbstractModule {
     @Override
     public void start() {
         this.executor = Executors.newCachedThreadPool();
+
         PsychologyScene.getInstance().setAigcService(this);
+
+        try {
+            File file = new File("config/aigc.properties");
+            if (!file.exists()) {
+                file = new File("aigc.properties");
+            }
+            Properties properties = ConfigUtils.readProperties(file.getAbsolutePath());
+            this.enabledRecognizeContext = Boolean.parseBoolean(
+                    properties.getProperty("enabled.recognize_context", "false"));
+            this.enabledSearch = Boolean.parseBoolean(
+                    properties.getProperty("enabled.search", "false"));
+        } catch (IOException e) {
+            Logger.e(this.getClass(), "#start - Load config properties error", e);
+        }
+
+        Logger.i(this.getClass(), "AI Service - Recognize Context Enabled: " + this.enabledRecognizeContext);
+        Logger.i(this.getClass(), "AI Service - Search Enabled: " + this.enabledSearch);
 
         (new Thread(new Runnable() {
             @Override
@@ -2167,7 +2191,7 @@ public class AIGCService extends AbstractModule {
             this.channel.setLastUnitMetaSn(this.sn);
 
             // 识别内容
-            ComplexContext complexContext = useRecognizeContext ?
+            ComplexContext complexContext = enabledRecognizeContext ?
                     recognizeContext(this.content, this.channel.getAuthToken()) :
                     new ComplexContext(ComplexContext.Type.Simplex);;
 
@@ -2314,7 +2338,7 @@ public class AIGCService extends AbstractModule {
                         storage.writeChatHistory(history);
                     }
 
-                    if (complexContext.isSimplex() && useRecognizeContext) {
+                    if (complexContext.isSimplex() && enabledSearch) {
                         // 进行资源搜索
                         SearchResult searchResult = Explorer.getInstance().search(
                                 (null != originalQuery) ? originalQuery : content,
