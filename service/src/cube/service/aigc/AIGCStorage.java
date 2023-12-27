@@ -398,7 +398,7 @@ public class AIGCStorage implements Storagable {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
             new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
-                    Constraint.NOT_NULL, Constraint.UNIQUE
+                    Constraint.NOT_NULL,
             }),
             new StorageField("model", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL

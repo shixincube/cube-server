@@ -119,7 +119,12 @@ public class Chat extends ContextHandler {
             // Chat
             Manager.ChatFuture future = Manager.getInstance().chat(token, channelCode, pattern,
                     content, unit, histories, records, searchTopK, searchFetchK);
-            if (future.end) {
+            if (null == future) {
+                // 发生错误
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                this.complete();
+            }
+            else if (future.end) {
                 // 已结束
                 AIGCGenerationRecord record = future.record;
                 if (null == record) {

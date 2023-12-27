@@ -62,6 +62,8 @@ public class AIGCChannel extends Entity {
 
     private AtomicBoolean processing;
 
+    private long processingTimestamp;
+
     private int totalQueryWords = 0;
 
     private int totalAnswerWords = 0;
@@ -139,11 +141,16 @@ public class AIGCChannel extends Entity {
     }
 
     public void setProcessing(boolean value) {
+        this.processingTimestamp = System.currentTimeMillis();
         this.processing.set(value);
     }
 
     public boolean isProcessing() {
         return this.processing.get();
+    }
+
+    public long getProcessingTimestamp() {
+        return this.processingTimestamp;
     }
 
     public int getRounds() {

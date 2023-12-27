@@ -315,6 +315,11 @@ public class AIGCService extends AbstractModule {
         Iterator<AIGCChannel> iter = this.channelMap.values().iterator();
         while (iter.hasNext()) {
             AIGCChannel channel = iter.next();
+            if (now - channel.getProcessingTimestamp() >= 3 * 60 * 1000) {
+                // 重置状态
+                channel.setProcessing(false);
+            }
+
             if (now - channel.getActiveTimestamp() >= this.channelTimeout) {
                 iter.remove();
             }
@@ -2109,6 +2114,8 @@ public class AIGCService extends AbstractModule {
 
         protected AIGCChatHistory history;
 
+        protected boolean needRecordHistory = true;
+
         public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
                             List<AIGCGenerationRecord> records, ChatListener listener) {
             this.sn = Utils.generateSerialNumber();
@@ -2141,6 +2148,10 @@ public class AIGCService extends AbstractModule {
             this.history.queryContactId = channel.getAuthToken().getContactId();
             this.history.queryTime = System.currentTimeMillis();
             this.history.queryContent = content;
+        }
+
+        public void setNeedRecordHistory(boolean needRecordHistory) {
+            this.needRecordHistory = needRecordHistory;
         }
 
         public void setOriginalQuery(String originalQuery) {
@@ -2248,15 +2259,16 @@ public class AIGCService extends AbstractModule {
                     Packet response = new Packet(dialect);
                     JSONObject payload = Packet.extractDataPayload(response);
 
-                    if (!payload.has("response")) {
+                    String responseText = "";
+                    try {
+                        responseText = payload.getString("response");
+                    } catch (Exception e) {
                         Logger.w(AIGCService.class, "Unit respond failed - channel: " + this.channel.getCode());
                         this.channel.setProcessing(false);
                         // 回调错误
                         this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
                         return;
                     }
-
-                    String responseText = payload.getString("response");
 
                     // 过滤中文字符
                     responseText = this.filterChinese(this.unit, responseText);
@@ -2298,7 +2310,9 @@ public class AIGCService extends AbstractModule {
                     storage.updateUsage(history.queryContactId, history.unit, completionTokens, promptTokens);
 
                     // 保存历史记录
-                    storage.writeChatHistory(history);
+                    if (needRecordHistory) {
+                        storage.writeChatHistory(history);
+                    }
 
                     if (complexContext.isSimplex() && useRecognizeContext) {
                         // 进行资源搜索
