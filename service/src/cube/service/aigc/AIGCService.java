@@ -608,13 +608,13 @@ public class AIGCService extends AbstractModule {
      * 对历史问答进行评价。
      *
      * @param historySN
-     * @param scores
+     * @param feedback
      */
-    public void evaluate(long historySN, int scores) {
+    public void evaluate(long historySN, int feedback) {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                storage.updateChatHistoryFeedback(historySN, scores);
+                storage.updateChatHistoryFeedback(historySN, feedback);
             }
         });
     }

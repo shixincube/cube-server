@@ -35,16 +35,21 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 查询 Chat 历史。
+ * 操作 Chat 历史数据。
  */
-public class QueryChatHistory extends ContextHandler {
+public class ChatHistory extends ContextHandler {
 
-    public QueryChatHistory() {
+    public ChatHistory() {
         super("/aigc/history/");
         setHandler(new Handler());
     }
 
     private class Handler extends AIGCHandler {
+
+        public Handler() {
+            super();
+        }
+
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
             String token = this.getLastRequestPath(request);
@@ -89,6 +94,41 @@ public class QueryChatHistory extends ContextHandler {
 
             this.respondOk(response, responseData);
             this.complete();
+        }
+
+        @Override
+        public void doPost(HttpServletRequest request, HttpServletResponse response) {
+            String token = this.getLastRequestPath(request);
+            if (!Manager.getInstance().checkToken(token)) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.complete();
+                return;
+            }
+
+            long sn = 0;
+            int feedback = -1;
+
+            try {
+                JSONObject data = this.readBodyAsJSONObject(request);
+                sn = data.getLong("sn");
+                feedback = data.getInt("feedback");
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
+            if (Manager.getInstance().evaluate(sn, feedback)) {
+                JSONObject data = new JSONObject();
+                data.put("sn", sn);
+                data.put("feedback", feedback);
+                this.respondOk(response, data);
+                this.complete();
+            }
+            else {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+            }
         }
     }
 }

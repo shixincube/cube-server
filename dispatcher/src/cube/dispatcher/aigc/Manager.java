@@ -138,7 +138,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new SubmitEvent());
         httpServer.addContextHandler(new QueryAppEvents());
         httpServer.addContextHandler(new QueryUsages());
-        httpServer.addContextHandler(new QueryChatHistory());
+        httpServer.addContextHandler(new ChatHistory());
         httpServer.addContextHandler(new PublicOpinionData());
         httpServer.addContextHandler(new InferByModule());
         httpServer.addContextHandler(new PreInfer());
@@ -469,10 +469,14 @@ public class Manager implements Tickable, PerformerListener {
         return result;
     }
 
-    public boolean evaluate(long sn, int scores) {
+    public boolean evaluate(long sn, int feedback) {
+        if (feedback < 0) {
+            return false;
+        }
+
         JSONObject data = new JSONObject();
         data.put("sn", sn);
-        data.put("scores", scores);
+        data.put("feedback", feedback);
         Packet packet = new Packet(AIGCAction.Evaluate.name, data);
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
         if (null == response) {
