@@ -50,7 +50,7 @@ public class KnowledgeArticle extends Entity {
     public KnowledgeScope scope = KnowledgeScope.Private;
 
     public KnowledgeArticle(String category, String title, String content, String author,
-                            int year, int month, int date, long timestamp) {
+                            int year, int month, int date, long timestamp, KnowledgeScope scope) {
         super();
         this.category = category;
         this.title = title;
@@ -60,10 +60,11 @@ public class KnowledgeArticle extends Entity {
         this.month = month;
         this.date = date;
         this.timestamp = timestamp;
+        this.scope = scope;
     }
 
     public KnowledgeArticle(long id, String category, String title, String content, String author,
-                            int year, int month, int date, long timestamp) {
+                            int year, int month, int date, long timestamp, KnowledgeScope scope) {
         super(id, "", timestamp);
         this.category = category;
         this.title = title;
@@ -72,6 +73,7 @@ public class KnowledgeArticle extends Entity {
         this.year = year;
         this.month = month;
         this.date = date;
+        this.scope = scope;
     }
 
     public KnowledgeArticle(JSONObject json) {

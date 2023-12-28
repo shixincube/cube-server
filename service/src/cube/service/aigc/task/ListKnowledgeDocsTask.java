@@ -82,14 +82,32 @@ public class ListKnowledgeDocsTask extends ServiceTask {
             return;
         }
 
-        JSONArray array = new JSONArray();
-        for (KnowledgeDoc doc : docList) {
-            array.put(doc.toJSON());
-        }
-
         JSONObject responsePayload = new JSONObject();
-        responsePayload.put("total", docList.size());
-        responsePayload.put("list", array);
+
+        int size = 10;
+        if (docList.size() > size) {
+            int page = packet.data.has("page") ? packet.data.getInt("page") : 0;
+            JSONArray array = new JSONArray();
+            for (int i = page * size; i < docList.size(); ++i) {
+                array.put(docList.get(i).toJSON());
+                if (array.length() >= size) {
+                    break;
+                }
+            }
+
+            responsePayload.put("page", page);
+            responsePayload.put("total", docList.size());
+            responsePayload.put("list", array);
+        }
+        else {
+            JSONArray array = new JSONArray();
+            for (KnowledgeDoc doc : docList) {
+                array.put(doc.toJSON());
+            }
+
+            responsePayload.put("total", docList.size());
+            responsePayload.put("list", array);
+        }
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responsePayload));

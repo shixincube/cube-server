@@ -81,7 +81,10 @@ public class KnowledgeBase {
 
     public void init() {
         this.listKnowledgeDocs();
-        this.listKnowledgeArticles();
+
+        if (KnowledgeScope.Private == this.scope) {
+            this.listKnowledgeArticles();
+        }
     }
 
     /**
@@ -112,7 +115,9 @@ public class KnowledgeBase {
                 this.authToken.getDomain(), state, maxSize, scope);
         this.scope = profile.scope;
         this.listKnowledgeDocs();
-        this.listKnowledgeArticles();
+        if (KnowledgeScope.Private == this.scope && null == this.resource.articleList) {
+            this.listKnowledgeArticles();
+        }
         return profile;
     }
 
@@ -122,28 +127,36 @@ public class KnowledgeBase {
      * @return
      */
     public List<KnowledgeDoc> listKnowledgeDocs() {
-        List<KnowledgeDoc> list = (KnowledgeScope.Private == this.scope) ?
-                this.storage.readKnowledgeDocList(this.authToken.getDomain(), this.authToken.getContactId())
-                : this.storage.readKnowledgeDocList(this.authToken.getDomain());
-
-        Iterator<KnowledgeDoc> iter = list.iterator();
-        while (iter.hasNext()) {
-            KnowledgeDoc doc = iter.next();
-            GetFile getFile = new GetFile(this.authToken.getDomain(), doc.fileCode);
-            JSONObject fileLabelJson = this.fileStorage.notify(getFile);
-            if (null == fileLabelJson) {
-                // 文件已被删除
-                iter.remove();
-                this.storage.deleteKnowledgeDoc(doc.fileCode);
-                continue;
+        synchronized (this) {
+            if (null != this.resource.docList && System.currentTimeMillis() - this.resource.listDocTime < 30 * 1000) {
+                Logger.d(this.getClass(), "#listKnowledgeDocs - Read from memory");
+                return this.resource.docList;
             }
 
-            doc.fileLabel = new FileLabel(fileLabelJson);
+            List<KnowledgeDoc> list = (KnowledgeScope.Private == this.scope) ?
+                    this.storage.readKnowledgeDocList(this.authToken.getDomain(), this.authToken.getContactId())
+                    : this.storage.readKnowledgeDocList(this.authToken.getDomain());
+
+            Iterator<KnowledgeDoc> iter = list.iterator();
+            while (iter.hasNext()) {
+                KnowledgeDoc doc = iter.next();
+                GetFile getFile = new GetFile(this.authToken.getDomain(), doc.fileCode);
+                JSONObject fileLabelJson = this.fileStorage.notify(getFile);
+                if (null == fileLabelJson) {
+                    // 文件已被删除
+                    iter.remove();
+                    this.storage.deleteKnowledgeDoc(doc.fileCode);
+                    continue;
+                }
+
+                doc.fileLabel = new FileLabel(fileLabelJson);
+            }
+
+            this.resource.docList = list;
+            this.resource.listDocTime = System.currentTimeMillis();
+
+            return list;
         }
-
-        this.resource.docList = list;
-
-        return list;
     }
 
     public KnowledgeDoc getKnowledgeDocByFileCode(String fileCode) {
@@ -255,6 +268,11 @@ public class KnowledgeBase {
 
         // 更新文档
         KnowledgeDoc activatedDoc = new KnowledgeDoc(Packet.extractDataPayload(response));
+        if (activatedDoc.numSegments <= 0) {
+            Logger.w(this.getClass(), "#activateKnowledgeDoc - Num of segments error: " + activatedDoc.numSegments);
+            return null;
+        }
+
         this.storage.updateKnowledgeDoc(activatedDoc);
         return activatedDoc;
     }
@@ -320,7 +338,7 @@ public class KnowledgeBase {
      *
      * @return
      */
-    public List<KnowledgeArticle> listKnowledgeArticles() {
+    private List<KnowledgeArticle> listKnowledgeArticles() {
         if (!this.resource.checkUnit()) {
             return new ArrayList<>();
         }
@@ -333,14 +351,14 @@ public class KnowledgeBase {
         if (null == dialect) {
             Logger.w(this.getClass(),"#listKnowledgeArticles - Request unit error: "
                     + this.resource.unit.getCapability().getName());
-            return null;
+            return new ArrayList<>();
         }
 
         Packet response = new Packet(dialect);
         int state = Packet.extractCode(response);
         if (state != AIGCStateCode.Ok.code) {
             Logger.w(this.getClass(), "#listKnowledgeArticles - Unit return error: " + state);
-            return null;
+            return new ArrayList<>();
         }
 
         List<Long> idList = new ArrayList<>();
@@ -491,7 +509,8 @@ public class KnowledgeBase {
         }
 
         // 获取提示词
-        final KnowledgeQAResult result = this.generatePrompt(query, searchTopK, searchFetchK);
+        boolean brisk = !unitName.equalsIgnoreCase(ModelConfig.NO_BRISK_UNIT);
+        final KnowledgeQAResult result = this.generatePrompt(query, searchTopK, searchFetchK, brisk);
         if (null == result) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Generate prompt failed in channel: " + channelCode);
             return false;
@@ -520,6 +539,7 @@ public class KnowledgeBase {
             });
         }
         else {
+
             // 其他单元执行 chat
             this.service.singleChat(channel, unit, query, result.prompt, null, new ChatListener() {
                 @Override
@@ -579,7 +599,11 @@ public class KnowledgeBase {
         return true;
     }
 
-    private KnowledgeQAResult generatePrompt(String query, int topK, int fetchK) {
+    private KnowledgeArticle searchArticles(String s) {
+        return null;
+    }
+
+    private KnowledgeQAResult generatePrompt(String query, int topK, int fetchK, boolean brisk) {
         this.resource.checkUnit();
 
         JSONArray docArray = new JSONArray();
@@ -603,6 +627,7 @@ public class KnowledgeBase {
         }
         payload.put("topK", topK);
         payload.put("fetchK", fetchK);
+        payload.put("brisk", brisk);
         Packet packet = new Packet(AIGCAction.GeneratePrompt.name, payload);
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect());
@@ -651,6 +676,8 @@ public class KnowledgeBase {
     public class KnowledgeResource {
 
         protected List<KnowledgeDoc> docList;
+
+        protected long listDocTime;
 
         protected List<KnowledgeArticle> articleList;
 

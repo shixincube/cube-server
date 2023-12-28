@@ -67,6 +67,11 @@ public class BaiduSearcher extends ResourceSearcher {
         }
 
         String url = this.makeURL(words);
+        if (null == url) {
+            Logger.w(this.getClass(), "#search - No words");
+            return false;
+        }
+
         JSONObject payload = new JSONObject();
         payload.put("url", url);
         payload.put("parser", "baidu");
@@ -107,6 +112,10 @@ public class BaiduSearcher extends ResourceSearcher {
     }
 
     private String makeURL(List<String> words) {
+        if (words.isEmpty()) {
+            return null;
+        }
+
         StringBuilder buf = new StringBuilder();
         for (String word : words) {
             buf.append(word);

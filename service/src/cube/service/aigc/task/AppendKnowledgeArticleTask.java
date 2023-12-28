@@ -33,6 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.KnowledgeArticle;
+import cube.common.entity.KnowledgeScope;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -84,10 +85,12 @@ public class AppendKnowledgeArticleTask extends ServiceTask {
                 calendar.set(year, month - 1, date);
                 timestamp = calendar.getTimeInMillis();
             }
+            KnowledgeScope scope = packet.data.has("scope") ?
+                    KnowledgeScope.parse(packet.data.getString("scope")) : KnowledgeScope.Private;
 
             KnowledgeArticle input = new KnowledgeArticle(packet.data.getString("category"),
                     packet.data.getString("title"), packet.data.getString("content"),
-                    packet.data.getString("author"), year, month, date, timestamp);
+                    packet.data.getString("author"), year, month, date, timestamp, scope);
             // 新增知识库文章
             article = base.appendKnowledgeArticle(input);
         } catch (Exception e) {

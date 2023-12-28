@@ -269,6 +269,9 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("scope", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
             })
     };
 
@@ -915,7 +918,8 @@ public class AIGCStorage implements Storagable {
                 new StorageField("year", article.year),
                 new StorageField("month", article.month),
                 new StorageField("date", article.date),
-                new StorageField("timestamp", article.getTimestamp())
+                new StorageField("timestamp", article.getTimestamp()),
+                new StorageField("scope", article.scope.name)
         });
     }
 
@@ -932,7 +936,7 @@ public class AIGCStorage implements Storagable {
                     data.get("category").getString(), data.get("title").getString(),
                     data.get("content").getString(), data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
-                    data.get("timestamp").getLong());
+                    data.get("timestamp").getLong(), KnowledgeScope.parse(data.get("scope").getString()));
             list.add(article);
         }
 
@@ -960,7 +964,7 @@ public class AIGCStorage implements Storagable {
                     data.get("category").getString(), data.get("title").getString(),
                     data.get("content").getString(), data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
-                    data.get("timestamp").getLong());
+                    data.get("timestamp").getLong(), KnowledgeScope.parse(data.get("scope").getString()));
             list.add(article);
         }
 
@@ -985,7 +989,7 @@ public class AIGCStorage implements Storagable {
                     data.get("category").getString(), data.get("title").getString(),
                     data.get("content").getString(), data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
-                    data.get("timestamp").getLong());
+                    data.get("timestamp").getLong(), KnowledgeScope.parse(data.get("scope").getString()));
             list.add(article);
         }
 

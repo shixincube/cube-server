@@ -315,7 +315,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.ListKnowledgeDocs.name, new JSONObject());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#getKnowledgeDocs - Response is null : " + token);
             return null;
@@ -327,7 +327,53 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
-        return Packet.extractDataPayload(responsePacket);
+        try {
+            JSONObject data = Packet.extractDataPayload(responsePacket);
+            if (data.has("page")) {
+                // 有分页
+                int total = data.getInt("total");
+                JSONArray list = data.getJSONArray("list");
+                int page = data.getInt("page");
+                while (list.length() < total) {
+                    page += 1;
+
+                    JSONObject packetPayload = new JSONObject();
+                    packetPayload.put("page", page);
+                    packet = new Packet(AIGCAction.ListKnowledgeDocs.name, packetPayload);
+                    request = packet.toDialect();
+                    request.addParam("token", token);
+                    response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+                    if (null == response) {
+                        Logger.w(Manager.class, "#getKnowledgeDocs - Response is null : " + token);
+                        return null;
+                    }
+
+                    responsePacket = new Packet(response);
+                    if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+                        Logger.d(Manager.class, "#getKnowledgeDocs - Response state is NOT ok : "
+                                + Packet.extractCode(responsePacket));
+                        return null;
+                    }
+
+                    JSONObject nextData = Packet.extractDataPayload(responsePacket);
+                    JSONArray nextList = nextData.getJSONArray("list");
+                    for (int i = 0; i < nextList.length(); ++i) {
+                        list.put(nextList.getJSONObject(i));
+                    }
+                }
+
+                JSONObject result = new JSONObject();
+                result.put("total", total);
+                result.put("list", list);
+                return result;
+            }
+            else {
+                return data;
+            }
+        } catch (Exception e) {
+            Logger.e(Manager.class, "#getKnowledgeDocs - Error", e);
+            return null;
+        }
     }
 
     public KnowledgeDoc importKnowledgeDoc(String token, String fileCode) {

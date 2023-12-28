@@ -34,9 +34,13 @@ import org.json.JSONObject;
  */
 public class ModelConfig implements JSONable {
 
-    public final static String TEXT_TO_IMAGE_UNIT_NAMES[] = new String[] { "DallE" };
+    public final static String[] TEXT_TO_IMAGE_UNIT_NAMES = new String[] { "DallE" };
+
+    public final static String[] LARGE_PROMPT_UNIT = new String[]{ "GPT", "Gemini", "Wenxin" };
 
     public final static String PREFERENCE_UNIT_FOR_CV = "Chat";
+
+    public final static String NO_BRISK_UNIT = "Chat";
 
     private final String unitName;
 
