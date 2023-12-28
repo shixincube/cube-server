@@ -26,6 +26,8 @@
 
 package cube.service.aigc.listener;
 
+import cube.common.state.AIGCStateCode;
+
 import java.util.List;
 
 /**
@@ -35,5 +37,5 @@ public interface ExtractKeywordsListener {
 
     void onCompleted(String text, List<String> words);
 
-    void onFailed();
+    void onFailed(String text, AIGCStateCode stateCode);
 }

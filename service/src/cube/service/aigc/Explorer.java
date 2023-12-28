@@ -35,6 +35,7 @@ import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
 import cube.auth.AuthToken;
 import cube.common.entity.*;
+import cube.common.state.AIGCStateCode;
 import cube.service.aigc.listener.ExtractKeywordsListener;
 import cube.service.aigc.module.ModuleManager;
 import cube.service.aigc.module.PublicOpinion;
@@ -127,7 +128,7 @@ public class Explorer {
             }
 
             @Override
-            public void onFailed() {
+            public void onFailed(String text, AIGCStateCode stateCode) {
                 synchronized (result) {
                     result.notify();
                 }

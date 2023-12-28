@@ -230,8 +230,7 @@ public class KnowledgeBase {
 
             if (doc.activated) {
                 if (this.resource.checkUnit()) {
-                    KnowledgeDoc deactivatedDoc = this.deactivateKnowledgeDoc(doc,
-                            this.resource.docList);
+                    KnowledgeDoc deactivatedDoc = this.deactivateKnowledgeDoc(doc);
                     return deactivatedDoc;
                 }
             }
@@ -281,17 +280,11 @@ public class KnowledgeBase {
      * 解除指定的知识库文档。
      *
      * @param doc
-     * @param newList
      * @return
      */
-    public KnowledgeDoc deactivateKnowledgeDoc(KnowledgeDoc doc, List<KnowledgeDoc> newList) {
-        JSONArray array = new JSONArray();
-        for (KnowledgeDoc kd : newList) {
-            array.put(kd.toJSON());
-        }
+    public KnowledgeDoc deactivateKnowledgeDoc(KnowledgeDoc doc) {
         JSONObject payload = new JSONObject();
         payload.put("doc", doc.toJSON());
-        payload.put("newList", array);
 
         Packet packet = new Packet(AIGCAction.DeactivateKnowledgeDoc.name, payload);
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
@@ -604,13 +597,6 @@ public class KnowledgeBase {
     }
 
     private KnowledgeQAResult generatePrompt(String query, int topK, int fetchK, boolean brisk) {
-        this.resource.checkUnit();
-
-        JSONArray docArray = new JSONArray();
-        for (KnowledgeDoc doc : this.resource.docList) {
-            docArray.put(doc.toJSON());
-        }
-
         if (!this.resource.checkUnit()) {
             Logger.w(this.getClass(),"#generatePrompt - No unit for knowledge base");
             return null;
@@ -622,9 +608,6 @@ public class KnowledgeBase {
                 Long.toString(this.authToken.getContactId()) : this.authToken.getDomain());
         payload.put("contactId", this.authToken.getContactId());
         payload.put("query", query);
-        if (!docArray.isEmpty()) {
-            payload.put("docList", docArray);
-        }
         payload.put("topK", topK);
         payload.put("fetchK", fetchK);
         payload.put("brisk", brisk);

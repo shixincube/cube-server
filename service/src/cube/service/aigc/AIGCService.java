@@ -2737,7 +2737,7 @@ public class AIGCService extends AbstractModule {
             if (null == dialect) {
                 Logger.w(AIGCService.class, "Extract keywords unit error");
                 // 回调错误
-                this.listener.onFailed();
+                this.listener.onFailed(this.text, AIGCStateCode.UnitError);
                 return;
             }
 
@@ -2753,10 +2753,16 @@ public class AIGCService extends AbstractModule {
                     }
                     words.add(word);
                 }
-                this.listener.onCompleted(this.text, words);
+
+                if (words.isEmpty()) {
+                    this.listener.onFailed(this.text, AIGCStateCode.NoData);
+                }
+                else {
+                    this.listener.onCompleted(this.text, words);
+                }
             }
             else {
-                this.listener.onFailed();
+                this.listener.onFailed(this.text, AIGCStateCode.DataStructureError);
             }
         }
     }
