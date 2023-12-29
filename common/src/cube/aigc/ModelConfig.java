@@ -34,13 +34,13 @@ import org.json.JSONObject;
  */
 public class ModelConfig implements JSONable {
 
-    public final static String[] TEXT_TO_IMAGE_UNIT_NAMES = new String[] { "DallE" };
+    public final static String[] TEXT_TO_IMAGE_UNIT = new String[] { "DallE" };
 
-    public final static String[] LARGE_PROMPT_UNIT = new String[]{ "GPT", "Gemini", "Wenxin" };
+    public final static String[] EXTRA_LONG_PROMPT_UNIT = new String[]{ "GPT", "Gemini", "Wenxin" };
 
     public final static String PREFERENCE_UNIT_FOR_CV = "Chat";
 
-    public final static String NO_BRISK_UNIT = "Chat";
+    public final static String BAIZE_UNIT = "Chat";
 
     private final String unitName;
 
@@ -111,13 +111,28 @@ public class ModelConfig implements JSONable {
     }
 
     /**
-     * 判断指定的单元名单元是否是 TextToImage 单元。
+     * 判断指定的单元是否是 TextToImage 单元。
      *
      * @param unitName
      * @return
      */
     public static boolean isTextToImageUnit(String unitName) {
-        for (String name : TEXT_TO_IMAGE_UNIT_NAMES) {
+        for (String name : TEXT_TO_IMAGE_UNIT) {
+            if (name.equalsIgnoreCase(unitName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 判断指定的单元是否是支持超长提示词的单元。
+     *
+     * @param unitName
+     * @return
+     */
+    public static boolean isExtraLongPromptUnit(String unitName) {
+        for (String name : EXTRA_LONG_PROMPT_UNIT) {
             if (name.equalsIgnoreCase(unitName)) {
                 return true;
             }

@@ -891,7 +891,8 @@ public class AIGCService extends AbstractModule {
 
                 StringBuilder result = new StringBuilder();
 
-                this.singleChat(channel, unit, maq.articleQuery.query, maq.articleQuery.query, null, new ChatListener() {
+                this.singleChat(channel, unit, maq.articleQuery.query, maq.articleQuery.query,
+                        null, false, new ChatListener() {
                     @Override
                     public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
                         maq.articleQuery.answer = record.answer.replaceAll(",", "，");
@@ -1015,7 +1016,7 @@ public class AIGCService extends AbstractModule {
     }
 
     public void singleChat(AIGCChannel channel, AIGCUnit unit, String query, String prompt,
-                           List<AIGCGenerationRecord> records, ChatListener listener) {
+                           List<AIGCGenerationRecord> records, boolean recordable, ChatListener listener) {
         if (this.useAgent) {
             unit = Agent.getInstance().getUnit();
         }
@@ -1028,6 +1029,7 @@ public class AIGCService extends AbstractModule {
 
         ChatUnitMeta meta = new ChatUnitMeta(unit, channel, prompt, records, listener);
         meta.setOriginalQuery(query);
+        meta.setNeedRecordHistory(recordable);
 
         synchronized (this.chatQueueMap) {
             Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getQueryKey());
@@ -2200,9 +2202,9 @@ public class AIGCService extends AbstractModule {
             if (complexContext.isSimplex()) {
                 // 一般文本
 
-                int maxHistories = 100;
-                if (this.unit.getCapability().getName().equalsIgnoreCase("Chat")) {
-                    maxHistories = 10;
+                int maxHistories = 10;
+                if (ModelConfig.isExtraLongPromptUnit(this.unit.getCapability().getName())) {
+                    maxHistories = 50;
                 }
 
                 JSONObject data = new JSONObject();
@@ -2354,7 +2356,7 @@ public class AIGCService extends AbstractModule {
         }
 
         private String filterChinese(AIGCUnit unit, String text) {
-            if (unit.getCapability().getName().equalsIgnoreCase("Chat")) {
+            if (unit.getCapability().getName().equalsIgnoreCase(ModelConfig.BAIZE_UNIT)) {
                 if (TextUtils.containsChinese(text)) {
                     return text.replaceAll(",", "，")
                             .replaceAll(":", "：");

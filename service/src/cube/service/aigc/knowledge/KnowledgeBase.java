@@ -502,7 +502,7 @@ public class KnowledgeBase {
         }
 
         // 获取提示词
-        boolean brisk = !unitName.equalsIgnoreCase(ModelConfig.NO_BRISK_UNIT);
+        boolean brisk = !unitName.equalsIgnoreCase(ModelConfig.BAIZE_UNIT);
         final KnowledgeQAResult result = this.generatePrompt(query, searchTopK, searchFetchK, brisk);
         if (null == result) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Generate prompt failed in channel: " + channelCode);
@@ -527,14 +527,15 @@ public class KnowledgeBase {
                 @Override
                 public void onFailed(AIGCChannel channel, AIGCStateCode errorCode) {
                     listener.onFailed(channel, errorCode);
-                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Single conversation failed: " + errorCode.code);
+                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Single conversation failed: "
+                            + errorCode.code);
                 }
             });
         }
         else {
-
             // 其他单元执行 chat
-            this.service.singleChat(channel, unit, query, result.prompt, null, new ChatListener() {
+            this.service.singleChat(channel, unit, query, result.prompt, null, true,
+                    new ChatListener() {
                 @Override
                 public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
                     result.record = record;

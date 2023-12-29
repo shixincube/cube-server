@@ -27,10 +27,7 @@
 package cube.service.aigc.scene;
 
 import cell.util.log.Logger;
-import cube.aigc.Consts;
-import cube.aigc.Prompt;
-import cube.aigc.PromptBuilder;
-import cube.aigc.PromptChaining;
+import cube.aigc.*;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.Score;
 import cube.common.entity.AIGCChannel;
@@ -142,13 +139,13 @@ public class EvaluationReport {
         PromptBuilder promptBuilder = new PromptBuilder();
 
         // 调用 LLM 生成结果
-        AIGCUnit unit = aigcService.selectUnitByName("Chat");
+        AIGCUnit unit = aigcService.selectUnitByName(ModelConfig.BAIZE_UNIT);
         for (Workflow.PromptGroup group : workflow.getPhase1Groups()) {
             List<AIGCGenerationRecord> records = new ArrayList<>();
             records.add(group.record);
             aigcService.singleChat(channel, unit,
                     promptBuilder.serializePromptChaining(group.chaining),
-                    promptBuilder.serializePromptChaining(group.chaining), records,
+                    promptBuilder.serializePromptChaining(group.chaining), records, false,
                     new ChatListener() {
                         @Override
                         public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
