@@ -246,6 +246,9 @@ public class AIGCStorage implements Storagable {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("category", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -254,6 +257,9 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("content", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("summarization", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             }),
             new StorageField("author", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
@@ -911,15 +917,25 @@ public class AIGCStorage implements Storagable {
     public boolean writeKnowledgeArticle(KnowledgeArticle article) {
         return this.storage.executeInsert(this.knowledgeArticleTable, new StorageField[] {
                 new StorageField("id", article.getId().longValue()),
+                new StorageField("domain", article.getDomain().getName()),
                 new StorageField("category", article.category),
                 new StorageField("title", article.title),
                 new StorageField("content", article.content),
+                new StorageField("summarization", article.summarization),
                 new StorageField("author", article.author),
                 new StorageField("year", article.year),
                 new StorageField("month", article.month),
                 new StorageField("date", article.date),
                 new StorageField("timestamp", article.getTimestamp()),
                 new StorageField("scope", article.scope.name)
+        });
+    }
+
+    public boolean updateKnowledgeArticleSummarization(long articleId, String summarization) {
+        return this.storage.executeUpdate(this.knowledgeArticleTable, new StorageField[] {
+                new StorageField("summarization", summarization)
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", articleId)
         });
     }
 
@@ -932,11 +948,13 @@ public class AIGCStorage implements Storagable {
         });
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(),
-                    data.get("category").getString(), data.get("title").getString(),
-                    data.get("content").getString(), data.get("author").getString(),
+            KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(), data.get("domain").getString(),
+                    data.get("category").getString(), data.get("title").getString(), data.get("content").getString(),
+                    data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
+                    data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
-                    data.get("timestamp").getLong(), KnowledgeScope.parse(data.get("scope").getString()));
+                    data.get("timestamp").getLong(),
+                    KnowledgeScope.parse(data.get("scope").getString()));
             list.add(article);
         }
 
@@ -960,11 +978,13 @@ public class AIGCStorage implements Storagable {
                 conditionals.toArray(new Conditional[0]));
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(),
-                    data.get("category").getString(), data.get("title").getString(),
-                    data.get("content").getString(), data.get("author").getString(),
+            KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(), data.get("domain").getString(),
+                    data.get("category").getString(), data.get("title").getString(), data.get("content").getString(),
+                    data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
+                    data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
-                    data.get("timestamp").getLong(), KnowledgeScope.parse(data.get("scope").getString()));
+                    data.get("timestamp").getLong(),
+                    KnowledgeScope.parse(data.get("scope").getString()));
             list.add(article);
         }
 
@@ -985,11 +1005,44 @@ public class AIGCStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(),
-                    data.get("category").getString(), data.get("title").getString(),
-                    data.get("content").getString(), data.get("author").getString(),
+            KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(), data.get("domain").getString(),
+                    data.get("category").getString(), data.get("title").getString(), data.get("content").getString(),
+                    data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
+                    data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
-                    data.get("timestamp").getLong(), KnowledgeScope.parse(data.get("scope").getString()));
+                    data.get("timestamp").getLong(),
+                    KnowledgeScope.parse(data.get("scope").getString()));
+            list.add(article);
+        }
+
+        return list;
+    }
+
+    /**
+     * 使用关键字匹配文章标题和摘要。
+     *
+     * @param keyword
+     * @return
+     */
+    public List<KnowledgeArticle> matchKnowledgeArticles(String keyword) {
+        List<KnowledgeArticle> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
+                new Conditional[] {
+                        Conditional.createLike("title", keyword),
+                        Conditional.createOr(),
+                        Conditional.createLike("summarization", keyword),
+                });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(), data.get("domain").getString(),
+                    data.get("category").getString(), data.get("title").getString(), data.get("content").getString(),
+                    data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
+                    data.get("author").getString(),
+                    data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
+                    data.get("timestamp").getLong(),
+                    KnowledgeScope.parse(data.get("scope").getString()));
             list.add(article);
         }
 

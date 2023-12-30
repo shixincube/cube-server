@@ -42,6 +42,9 @@ import cube.service.aigc.AIGCStorage;
 import cube.service.aigc.listener.ChatListener;
 import cube.service.aigc.listener.ConversationListener;
 import cube.service.aigc.listener.KnowledgeQAListener;
+import cube.service.aigc.listener.SummarizationListener;
+import cube.service.tokenizer.keyword.Keyword;
+import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -85,6 +88,10 @@ public class KnowledgeBase {
         if (KnowledgeScope.Private == this.scope) {
             this.listKnowledgeArticles();
         }
+    }
+
+    public AuthToken getAuthToken() {
+        return this.authToken;
     }
 
     /**
@@ -316,6 +323,23 @@ public class KnowledgeBase {
         article.resetId();
 
         if (this.storage.writeKnowledgeArticle(article)) {
+            if (null == article.summarization) {
+                // 为文章生成摘要
+                this.service.generateSummarization(article.content, new SummarizationListener() {
+                    @Override
+                    public void onCompleted(String text, String summarization) {
+                        article.summarization = summarization;
+                        storage.updateKnowledgeArticleSummarization(article.getId(), summarization);
+                    }
+
+                    @Override
+                    public void onFailed(String text, AIGCStateCode stateCode) {
+                        Logger.w(KnowledgeBase.class, "#appendKnowledgeArticle - Generate summarization failed - id: "
+                                + article.getId() + " - code: " + stateCode.code);
+                    }
+                });
+            }
+
             return article;
         }
 
@@ -482,16 +506,17 @@ public class KnowledgeBase {
         }
 
         // 如果没有设置知识库文档，返回提示
-        if (this.resource.docList.isEmpty() && this.resource.articleList.isEmpty()) {
-            Logger.d(this.getClass(), "#performKnowledgeQA - No knowledge doc or article in base: " + channelCode);
+        boolean noDocument = null == this.resource.docList || this.resource.docList.isEmpty();
+        boolean noArticle = null == this.resource.articleList || this.resource.articleList.isEmpty();
+        if (noDocument && noArticle) {
+            Logger.d(this.getClass(), "#performKnowledgeQA - No knowledge document or article in base: " + channelCode);
             this.service.getCellet().getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
                     long sn = Utils.generateSerialNumber();
                     channel.setLastUnitMetaSn(sn);
 
-                    KnowledgeQAResult result = new KnowledgeQAResult(query);
-                    result.prompt = "";
+                    KnowledgeQAResult result = new KnowledgeQAResult(query, "");
                     AIGCGenerationRecord record = new AIGCGenerationRecord(sn, unitName, query, EMPTY_BASE_ANSWER,
                             System.currentTimeMillis(), new ComplexContext(ComplexContext.Type.Simplex));
                     result.record = record;
@@ -503,8 +528,8 @@ public class KnowledgeBase {
 
         // 获取提示词
         boolean brisk = !unitName.equalsIgnoreCase(ModelConfig.BAIZE_UNIT);
-        final KnowledgeQAResult result = this.generatePrompt(query, searchTopK, searchFetchK, brisk);
-        if (null == result) {
+        String prompt = this.generatePrompt(query, searchTopK, searchFetchK, brisk);
+        if (null == prompt) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Generate prompt failed in channel: " + channelCode);
             return false;
         }
@@ -515,9 +540,13 @@ public class KnowledgeBase {
             return false;
         }
 
+        prompt = this.optimizePrompt(prompt, query);
+
+        final KnowledgeQAResult result = new KnowledgeQAResult(query, prompt);
+
         if (unit.getCapability().getName().equals("MOSS")) {
             // MOSS 单元执行 conversation
-            this.service.singleConversation(channel, unit, result.prompt, new ConversationListener() {
+            this.service.singleConversation(channel, unit, prompt, new ConversationListener() {
                 @Override
                 public void onConversation(AIGCChannel channel, AIGCConversationResponse response) {
                     result.conversationResponse = response;
@@ -534,7 +563,7 @@ public class KnowledgeBase {
         }
         else {
             // 其他单元执行 chat
-            this.service.singleChat(channel, unit, query, result.prompt, null, true,
+            this.service.singleChat(channel, unit, query, prompt, null, true,
                     new ChatListener() {
                 @Override
                 public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
@@ -551,6 +580,43 @@ public class KnowledgeBase {
         }
 
         return true;
+    }
+
+    private String optimizePrompt(String prompt, String query) {
+        String[] lines = prompt.split("\n");
+        List<String> lineList = new ArrayList<>();
+        for (String line : lines) {
+            if (lineList.contains(line)) {
+                // 删除重复
+                continue;
+            }
+            lineList.add(line);
+        }
+
+        // 从数据库里匹配文章
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
+        List<Keyword> keywords = analyzer.analyze(query, 3);
+        if (!keywords.isEmpty()) {
+            // 尝试获取文章
+            List<KnowledgeArticle> articleList = new ArrayList<>();
+            for (Keyword keyword : keywords) {
+                List<KnowledgeArticle> articles = this.storage.matchKnowledgeArticles(keyword.getWord());
+                articleList.addAll(articles);
+            }
+
+            if (!articleList.isEmpty()) {
+                for (KnowledgeArticle article : articleList) {
+
+                }
+            }
+        }
+
+        StringBuilder buf = new StringBuilder();
+        for (String line : lineList) {
+            buf.append(line).append("\n");
+        }
+        buf.delete(buf.length() - 1, buf.length());
+        return buf.toString();
     }
 
     /**
@@ -593,11 +659,7 @@ public class KnowledgeBase {
         return true;
     }
 
-    private KnowledgeArticle searchArticles(String s) {
-        return null;
-    }
-
-    private KnowledgeQAResult generatePrompt(String query, int topK, int fetchK, boolean brisk) {
+    private String generatePrompt(String query, int topK, int fetchK, boolean brisk) {
         if (!this.resource.checkUnit()) {
             Logger.w(this.getClass(),"#generatePrompt - No unit for knowledge base");
             return null;
@@ -628,11 +690,8 @@ public class KnowledgeBase {
             return null;
         }
 
-        KnowledgeQAResult result = new KnowledgeQAResult(query);
-
         JSONObject data = Packet.extractDataPayload(response);
-        result.prompt = data.getString("prompt");
-        return result;
+        return data.getString("prompt");
     }
 
     private AIGCUnit matchUnit(String modelName) {

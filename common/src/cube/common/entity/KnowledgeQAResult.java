@@ -29,8 +29,6 @@ package cube.common.entity;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
-import java.util.List;
-
 /**
  * 知识库问答结果。
  */
@@ -44,8 +42,9 @@ public class KnowledgeQAResult implements JSONable {
 
     public AIGCConversationResponse conversationResponse;
 
-    public KnowledgeQAResult(String query) {
+    public KnowledgeQAResult(String query, String prompt) {
         this.query = query;
+        this.prompt = prompt;
     }
 
     public KnowledgeQAResult(JSONObject json) {

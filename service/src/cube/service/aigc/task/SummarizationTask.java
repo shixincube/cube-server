@@ -67,7 +67,7 @@ public class SummarizationTask extends ServiceTask {
         // 执行 Summarization
         boolean success = service.generateSummarization(text, new SummarizationListener() {
             @Override
-            public void onCompleted(String summarization) {
+            public void onCompleted(String text, String summarization) {
                 JSONObject data = new JSONObject();
                 data.put("summarization", summarization);
                 cellet.speak(talkContext,
@@ -76,7 +76,7 @@ public class SummarizationTask extends ServiceTask {
             }
 
             @Override
-            public void onFailed() {
+            public void onFailed(String text, AIGCStateCode stateCode) {
                 cellet.speak(talkContext,
                         makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
                 markResponseTime();

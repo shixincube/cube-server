@@ -26,12 +26,14 @@
 
 package cube.service.aigc.listener;
 
+import cube.common.state.AIGCStateCode;
+
 /**
  * 生成摘要监听器。
  */
 public interface SummarizationListener {
 
-    void onCompleted(String summarization);
+    void onCompleted(String text, String summarization);
 
-    void onFailed();
+    void onFailed(String text, AIGCStateCode stateCode);
 }

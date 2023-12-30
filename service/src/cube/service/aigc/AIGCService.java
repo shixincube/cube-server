@@ -360,6 +360,10 @@ public class AIGCService extends AbstractModule {
         return this.storage;
     }
 
+    public Tokenizer getTokenizer() {
+        return this.tokenizer;
+    }
+
     public List<AIGCUnit> setupUnit(Contact contact, List<AICapability> capabilities, TalkContext context) {
         List<AIGCUnit> result = new ArrayList<>(capabilities.size());
 
@@ -2598,17 +2602,18 @@ public class AIGCService extends AbstractModule {
             if (null == dialect) {
                 Logger.w(AIGCService.class, "Summarization unit error");
                 // 回调错误
-                this.listener.onFailed();
+                this.listener.onFailed(this.text, AIGCStateCode.UnitError);
                 return;
             }
 
             Packet response = new Packet(dialect);
             JSONObject payload = Packet.extractDataPayload(response);
             if (payload.has("summarization")) {
-                this.listener.onCompleted(payload.getString("summarization"));
+                this.listener.onCompleted(this.text, payload.getString("summarization"));
             }
             else {
-                this.listener.onFailed();
+                Logger.w(AIGCService.class, "Summarization unit return error");
+                this.listener.onFailed(this.text, AIGCStateCode.NoData);
             }
         }
     }

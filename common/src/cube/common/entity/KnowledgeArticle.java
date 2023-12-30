@@ -39,6 +39,8 @@ public class KnowledgeArticle extends Entity {
 
     public String content;
 
+    public String summarization;
+
     public String author;
 
     public int year;
@@ -49,9 +51,9 @@ public class KnowledgeArticle extends Entity {
 
     public KnowledgeScope scope = KnowledgeScope.Private;
 
-    public KnowledgeArticle(String category, String title, String content, String author,
+    public KnowledgeArticle(String domain, String category, String title, String content, String author,
                             int year, int month, int date, long timestamp, KnowledgeScope scope) {
-        super();
+        super(0L, domain, timestamp);
         this.category = category;
         this.title = title;
         this.content = content;
@@ -59,16 +61,16 @@ public class KnowledgeArticle extends Entity {
         this.year = year;
         this.month = month;
         this.date = date;
-        this.timestamp = timestamp;
         this.scope = scope;
     }
 
-    public KnowledgeArticle(long id, String category, String title, String content, String author,
-                            int year, int month, int date, long timestamp, KnowledgeScope scope) {
-        super(id, "", timestamp);
+    public KnowledgeArticle(long id, String domain, String category, String title, String content, String summarization,
+                            String author, int year, int month, int date, long timestamp, KnowledgeScope scope) {
+        super(id, domain, timestamp);
         this.category = category;
         this.title = title;
         this.content = content;
+        this.summarization = summarization;
         this.author = author;
         this.year = year;
         this.month = month;
@@ -82,6 +84,9 @@ public class KnowledgeArticle extends Entity {
         this.title = json.getString("title");
         if (json.has("content")) {
             this.content = json.getString("content");
+        }
+        if (json.has("summarization")) {
+            this.summarization = json.getString("summarization");
         }
         this.author = json.has("author") ? json.getString("author") : "Anonymity";
         this.year = json.getInt("year");
@@ -113,6 +118,9 @@ public class KnowledgeArticle extends Entity {
         json.put("title", this.title);
         if (null != this.content) {
             json.put("content", this.content);
+        }
+        if (null != this.summarization) {
+            json.put("summarization", this.summarization);
         }
         json.put("author", this.author);
         json.put("year", this.year);

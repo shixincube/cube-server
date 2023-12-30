@@ -38,6 +38,8 @@ import cube.service.aigc.AIGCService;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -122,7 +124,20 @@ public class BaiduSearcher extends ResourceSearcher {
             buf.append(" ");
         }
         buf.deleteCharAt(buf.length() - 1);
-        return String.format(this.urlFormat, buf.toString(), words.get(0));
+
+        String word = buf.toString();
+        String oqWord = words.get(0);
+        try {
+            word = URLEncoder.encode(word, "UTF-8");
+            word = word.replaceAll("\\+", "%20");
+
+            oqWord = URLEncoder.encode(oqWord, "UTF-8");
+            oqWord = oqWord.replaceAll("\\+", "%20");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        return String.format(this.urlFormat, word, oqWord);
     }
 
     private class BaiduSearchResult {
