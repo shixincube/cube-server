@@ -88,7 +88,7 @@ public class AppendKnowledgeArticleTask extends ServiceTask {
             KnowledgeScope scope = packet.data.has("scope") ?
                     KnowledgeScope.parse(packet.data.getString("scope")) : KnowledgeScope.Private;
 
-            KnowledgeArticle input = new KnowledgeArticle(base.getAuthToken().getDomain(),
+            KnowledgeArticle input = new KnowledgeArticle(base.getAuthToken().getDomain(), base.getAuthToken().getContactId(),
                     packet.data.getString("category"), packet.data.getString("title"),
                     packet.data.getString("content"), packet.data.getString("author"),
                     year, month, date, timestamp, scope);

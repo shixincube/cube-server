@@ -33,6 +33,8 @@ import org.json.JSONObject;
  */
 public class KnowledgeArticle extends Entity {
 
+    public long contactId;
+
     public String category;
 
     public String title;
@@ -51,9 +53,12 @@ public class KnowledgeArticle extends Entity {
 
     public KnowledgeScope scope = KnowledgeScope.Private;
 
-    public KnowledgeArticle(String domain, String category, String title, String content, String author,
+    public int numKeywords;
+
+    public KnowledgeArticle(String domain, long contactId, String category, String title, String content, String author,
                             int year, int month, int date, long timestamp, KnowledgeScope scope) {
         super(0L, domain, timestamp);
+        this.contactId = contactId;
         this.category = category;
         this.title = title;
         this.content = content;
@@ -64,9 +69,10 @@ public class KnowledgeArticle extends Entity {
         this.scope = scope;
     }
 
-    public KnowledgeArticle(long id, String domain, String category, String title, String content, String summarization,
+    public KnowledgeArticle(long id, String domain, long contactId, String category, String title, String content, String summarization,
                             String author, int year, int month, int date, long timestamp, KnowledgeScope scope) {
         super(id, domain, timestamp);
+        this.contactId = contactId;
         this.category = category;
         this.title = title;
         this.content = content;
@@ -80,6 +86,7 @@ public class KnowledgeArticle extends Entity {
 
     public KnowledgeArticle(JSONObject json) {
         super(json);
+        this.contactId = json.getLong("contactId");
         this.category = json.getString("category");
         this.title = json.getString("title");
         if (json.has("content")) {
@@ -114,6 +121,7 @@ public class KnowledgeArticle extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        json.put("contactId", this.contactId);
         json.put("category", this.category);
         json.put("title", this.title);
         if (null != this.content) {
@@ -133,6 +141,7 @@ public class KnowledgeArticle extends Entity {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = super.toCompactJSON();
+        json.put("contactId", this.contactId);
         json.put("category", this.category);
         json.put("title", this.title);
         json.put("author", this.author);

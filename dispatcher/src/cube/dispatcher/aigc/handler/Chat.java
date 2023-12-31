@@ -72,7 +72,7 @@ public class Chat extends ContextHandler {
             String unit = "Chat";
             int histories = 0;
             JSONArray records = null;
-            int searchTopK = 10;
+            int searchTopK = 5;
             int searchFetchK = 50;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
