@@ -157,14 +157,19 @@ public enum AIGCAction {
     SearchCommand("searchCommand"),
 
     /**
-     * 获取知识库功能的概述数据。
+     * 获取知识库功能的配置数据。
      */
     GetKnowledgeProfile("getKnowledgeProfile"),
 
     /**
-     *
+     * 更新知识库功能的配置数据。
      */
     UpdateKnowledgeProfile("updateKnowledgeProfile"),
+
+    /**
+     * 删除知识库数据仓库。
+     */
+    DeleteKnowledgeStore("deleteKnowledgeStore"),
 
     /**
      * 获取知识库文档清单。
@@ -190,6 +195,16 @@ public enum AIGCAction {
      * 释放知识库文档。
      */
     DeactivateKnowledgeDoc("deactivateKnowledgeDoc"),
+
+    /**
+     * 批量激活知识库文档。
+     */
+    BatchActivateKnowledgeDocs("batchActivateKnowledgeDocs"),
+
+    /**
+     * 重置知识库数据。
+     */
+    ResetKnowledgeStore("resetKnowledgeStore"),
 
     /**
      * 获取知识库文章清单。

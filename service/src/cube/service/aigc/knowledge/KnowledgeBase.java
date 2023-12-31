@@ -39,10 +39,7 @@ import cube.common.state.AIGCStateCode;
 import cube.core.AbstractModule;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.AIGCStorage;
-import cube.service.aigc.listener.ChatListener;
-import cube.service.aigc.listener.ConversationListener;
-import cube.service.aigc.listener.KnowledgeQAListener;
-import cube.service.aigc.listener.SummarizationListener;
+import cube.service.aigc.listener.*;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import org.json.JSONArray;
@@ -50,6 +47,7 @@ import org.json.JSONObject;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 知识库操作。
@@ -70,6 +68,10 @@ public class KnowledgeBase {
 
     private KnowledgeScope scope;
 
+    private AtomicBoolean lock;
+
+    private ResetProgress resetProgress;
+
     public KnowledgeBase(AIGCService service, AIGCStorage storage, AuthToken authToken, AbstractModule fileStorage) {
         this.service = service;
         this.storage = storage;
@@ -77,6 +79,7 @@ public class KnowledgeBase {
         this.fileStorage = fileStorage;
         this.resource = new KnowledgeResource();
         this.scope = getProfile().scope;
+        this.lock = new AtomicBoolean();
     }
 
     public void init() {
@@ -304,6 +307,155 @@ public class KnowledgeBase {
         KnowledgeDoc deactivatedDoc = new KnowledgeDoc(Packet.extractDataPayload(response));
         this.storage.updateKnowledgeDoc(deactivatedDoc);
         return deactivatedDoc;
+    }
+
+    /**
+     * 返回重置进度。
+     *
+     * @return
+     */
+    public ResetProgress getResetProgress() {
+        return this.resetProgress;
+    }
+
+    /**
+     * 重置知识仓库。
+     */
+    public synchronized boolean resetKnowledgeStore(ResetKnowledgeStoreListener listener) {
+        if (this.lock.get()) {
+            return false;
+        }
+
+        this.resetProgress = new ResetProgress();
+        this.lock.set(true);
+
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // 删除文件
+                JSONObject payload = new JSONObject();
+                if (KnowledgeScope.Private == scope) {
+                    payload.put("contactId", authToken.getContactId());
+                }
+                else {
+                    payload.put("domain", authToken.getDomain());
+                }
+                Packet packet = new Packet(AIGCAction.DeleteKnowledgeStore.name, payload);
+                ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
+                        packet.toDialect());
+                if (null == dialect) {
+                    Logger.w(this.getClass(),"#resetKnowledgeStore - Request unit error: "
+                            + resource.unit.getCapability().getName());
+                    // 回调
+                    listener.onStoreDeleteFailed(AIGCStateCode.UnitError);
+                    // 解锁
+                    lock.set(false);
+                    return;
+                }
+
+                Packet response = new Packet(dialect);
+                int state = Packet.extractCode(response);
+                if (state != AIGCStateCode.Ok.code) {
+                    Logger.w(this.getClass(), "#resetKnowledgeStore - Unit return error: " + state);
+                    // 回调
+                    listener.onStoreDeleteFailed(AIGCStateCode.parse(state));
+                    // 解锁
+                    lock.set(false);
+                    return;
+                }
+
+                // 回调
+                listener.onStoreDeleted(authToken.getContactId(), getAuthToken().getDomain(), scope);
+
+                List<KnowledgeDoc> list = listKnowledgeDocs();
+                if (list.isEmpty()) {
+                    // 回调
+                    listener.onCompleted(list, list);
+                    // 解锁
+                    lock.set(false);
+                    return;
+                }
+
+                // 将文档设置为未激活
+                for (KnowledgeDoc doc : list) {
+                    doc.activated = false;
+                    doc.numSegments = 0;
+                    storage.updateKnowledgeDoc(doc);
+                }
+
+                // 分批
+                int batchSize = 10;
+                List<List<KnowledgeDoc>> batchList = new ArrayList<>();
+                int index = 0;
+                while (index < list.size()) {
+                    List<KnowledgeDoc> docList = new ArrayList<>();
+                    while (docList.size() < batchSize) {
+                        KnowledgeDoc doc = list.get(index);
+                        docList.add(doc);
+                        ++index;
+                        if (index >= list.size()) {
+                            break;
+                        }
+                    }
+                    batchList.add(docList);
+                }
+
+                List<KnowledgeDoc> completionList = new ArrayList<>();
+
+                for (List<KnowledgeDoc> batch : batchList) {
+                    // 按照批次发送给单元
+                    JSONArray array = new JSONArray();
+                    for (KnowledgeDoc doc : batch) {
+                        array.put(doc.toJSON());
+                    }
+                    payload = new JSONObject();
+                    payload.put("list", array);
+                    packet = new Packet(AIGCAction.BatchActivateKnowledgeDocs.name, payload);
+                    dialect = service.getCellet().transmit(resource.unit.getContext(),
+                            packet.toDialect(), 3 * 60 * 1000);
+                    if (null == dialect) {
+                        Logger.w(this.getClass(),"#resetKnowledgeStore - Request unit error: "
+                                + resource.unit.getCapability().getName());
+                        // 回调
+                        listener.onKnowledgeDocActivateFailed(list, batch, AIGCStateCode.UnitError);
+                        // 解锁
+                        lock.set(false);
+                        return;
+                    }
+
+                    response = new Packet(dialect);
+                    state = Packet.extractCode(response);
+                    if (state != AIGCStateCode.Ok.code) {
+                        Logger.w(this.getClass(), "#resetKnowledgeStore - Unit return error: " + state);
+                        // 回调
+                        listener.onKnowledgeDocActivateFailed(list, batch, AIGCStateCode.parse(state));
+                        // 解锁
+                        lock.set(false);
+                        return;
+                    }
+
+                    JSONArray resultArray = Packet.extractDataPayload(response).getJSONArray("list");
+                    List<KnowledgeDoc> resultList = new ArrayList<>();
+                    for (int i = 0; i < resultArray.length(); ++i) {
+                        KnowledgeDoc doc = new KnowledgeDoc(resultArray.getJSONObject(i));
+                        resultList.add(doc);
+                        storage.updateKnowledgeDoc(doc);
+                    }
+
+                    // 回调
+                    listener.onKnowledgeDocActivated(list, resultList);
+                    completionList.addAll(resultList);
+                }
+
+                // 回调
+                listener.onCompleted(list, completionList);
+                // 解锁
+                lock.set(false);
+            }
+        });
+        thread.start();
+
+        return true;
     }
 
     public List<KnowledgeArticle> getKnowledgeArticles(String category, long startTime, long endTime) {

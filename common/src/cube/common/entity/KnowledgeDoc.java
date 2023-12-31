@@ -52,7 +52,7 @@ public class KnowledgeDoc extends Entity {
 
     public final String fileCode;
 
-    public final boolean activated;
+    public boolean activated;
 
     public FileLabel fileLabel;
 
