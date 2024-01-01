@@ -127,6 +127,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new KnowledgeDocs());
         httpServer.addContextHandler(new ImportKnowledgeDoc());
         httpServer.addContextHandler(new RemoveKnowledgeDoc());
+        httpServer.addContextHandler(new ResetKnowledgeStore());
         httpServer.addContextHandler(new AppendKnowledgeArticle());
         httpServer.addContextHandler(new RemoveKnowledgeArticle());
         httpServer.addContextHandler(new ActivateKnowledgeArticle());
@@ -411,11 +412,54 @@ public class Manager implements Tickable, PerformerListener {
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.d(Manager.class, "#removeKnowledgeDoc - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            Logger.d(Manager.class, "#removeKnowledgeDoc - Response state is NOT ok : "
+                    + Packet.extractCode(responsePacket));
             return null;
         }
 
         return new KnowledgeDoc(Packet.extractDataPayload(responsePacket));
+    }
+
+    public ResetKnowledgeProgress getResetKnowledgeProgress(String token, long sn) {
+        JSONObject payload = new JSONObject();
+        payload.put("sn", sn);
+        Packet packet = new Packet(AIGCAction.GetResetKnowledgeProgress.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#getResetKnowledgeProgress - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#getResetKnowledgeProgress - Response state is NOT ok : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new ResetKnowledgeProgress(Packet.extractDataPayload(responsePacket));
+    }
+
+    public ResetKnowledgeProgress resetKnowledgeStore(String token) {
+        Packet packet = new Packet(AIGCAction.ResetKnowledgeStore.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#resetKnowledgeStore - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#resetKnowledgeStore - Response state is NOT ok : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new ResetKnowledgeProgress(Packet.extractDataPayload(responsePacket));
     }
 
     public KnowledgeArticle appendKnowledgeArticle(String token, KnowledgeArticle article) {

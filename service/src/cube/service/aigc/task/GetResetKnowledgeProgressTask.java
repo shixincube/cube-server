@@ -30,28 +30,22 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.KnowledgeDoc;
-import cube.common.entity.KnowledgeScope;
 import cube.common.entity.ResetKnowledgeProgress;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
-import cube.service.aigc.listener.ResetKnowledgeStoreListener;
 import org.json.JSONObject;
 
-import java.util.List;
-
 /**
- * 重置知识库任务。
+ * 查询重置知识库进度任务。
  */
-public class ResetKnowledgeStoreTask extends ServiceTask {
+public class GetResetKnowledgeProgressTask extends ServiceTask {
 
-    public ResetKnowledgeStoreTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public GetResetKnowledgeProgressTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -68,6 +62,13 @@ public class ResetKnowledgeStoreTask extends ServiceTask {
             return;
         }
 
+        if (!packet.data.has("sn")) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         KnowledgeBase base = service.getKnowledgeBase(tokenCode);
         if (null == base) {
@@ -77,49 +78,19 @@ public class ResetKnowledgeStoreTask extends ServiceTask {
             return;
         }
 
-        // 是否备份
-        boolean backup = packet.data.has("backup") && packet.data.getBoolean("backup");
+        long sn = packet.data.getLong("sn");
 
-        ResetKnowledgeProgress progress = base.resetKnowledgeStore(backup, new ResetKnowledgeStoreListener() {
-            @Override
-            public void onStoreDeleted(long contactId, String domain, KnowledgeScope scope) {
-                Logger.d(ResetKnowledgeStoreTask.class, "#onStoreDeleted : " + base.getAuthToken().getContactId());
-            }
-
-            @Override
-            public void onStoreDeleteFailed(AIGCStateCode stateCode) {
-                Logger.d(ResetKnowledgeStoreTask.class, "#onStoreDeleteFailed : "
-                        + base.getAuthToken().getContactId() + " - code: " + stateCode);
-            }
-
-            @Override
-            public void onKnowledgeDocActivated(List<KnowledgeDoc> originList, List<KnowledgeDoc> activatedList) {
-                Logger.d(ResetKnowledgeStoreTask.class, "#onKnowledgeDocActivated : " + base.getAuthToken().getContactId());
-            }
-
-            @Override
-            public void onKnowledgeDocActivateFailed(List<KnowledgeDoc> originList, List<KnowledgeDoc> docList,
-                                                     AIGCStateCode stateCode) {
-                Logger.d(ResetKnowledgeStoreTask.class, "#onKnowledgeDocActivateFailed : "
-                        + base.getAuthToken().getContactId() + " - code: " + stateCode);
-            }
-
-            @Override
-            public void onCompleted(List<KnowledgeDoc> originList, List<KnowledgeDoc> completionList) {
-                Logger.d(ResetKnowledgeStoreTask.class, "#onCompleted : " + base.getAuthToken().getContactId()
-                    + " - completion/origin: " + completionList.size() + "/" + originList.size());
-            }
-        });
-
-        if (null == progress) {
+        ResetKnowledgeProgress progress = base.getResetProgress();
+        if (null == progress || progress.getSN() != sn) {
+            // SN 不一致
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
             markResponseTime();
+            return;
         }
-        else {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, progress.toJSON()));
-            markResponseTime();
-        }
+
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, progress.toJSON()));
+        markResponseTime();
     }
 }

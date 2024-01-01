@@ -70,7 +70,7 @@ public class KnowledgeBase {
 
     private AtomicBoolean lock;
 
-    private ResetProgress resetProgress;
+    private ResetKnowledgeProgress resetProgress;
 
     public KnowledgeBase(AIGCService service, AIGCStorage storage, AuthToken authToken, AbstractModule fileStorage) {
         this.service = service;
@@ -79,7 +79,7 @@ public class KnowledgeBase {
         this.fileStorage = fileStorage;
         this.resource = new KnowledgeResource();
         this.scope = getProfile().scope;
-        this.lock = new AtomicBoolean();
+        this.lock = new AtomicBoolean(false);
     }
 
     public void init() {
@@ -174,6 +174,12 @@ public class KnowledgeBase {
     }
 
     public KnowledgeDoc importKnowledgeDoc(String fileCode) {
+        if (this.lock.get()) {
+            Logger.w(this.getClass(), "#importKnowledgeDoc - Store locked: " + fileCode);
+            return null;
+        }
+        this.lock.set(true);
+
         KnowledgeDoc doc = this.getKnowledgeDocByFileCode(fileCode);
         if (null == doc) {
             // 创建新文档
@@ -188,6 +194,7 @@ public class KnowledgeBase {
             if (null == fileLabelJson) {
                 this.storage.deleteKnowledgeDoc(fileCode);
                 Logger.e(this.getClass(), "#importKnowledgeDoc - Not find file: " + fileCode);
+                this.lock.set(false);
                 return null;
             }
 
@@ -200,6 +207,7 @@ public class KnowledgeBase {
         if (!doc.activated) {
             if (!this.resource.checkUnit()) {
                 Logger.e(this.getClass(), "#importKnowledgeDoc - Not find Knowledge unit");
+                this.lock.set(false);
                 return null;
             }
 
@@ -207,6 +215,7 @@ public class KnowledgeBase {
             if (null == activatedDoc) {
                 Logger.e(this.getClass(), "#importKnowledgeDoc - Unit return error");
                 this.storage.deleteKnowledgeDoc(fileCode);
+                this.lock.set(false);
                 return null;
             }
         }
@@ -215,12 +224,20 @@ public class KnowledgeBase {
         this.resource.appendDoc(activatedDoc);
 
         Logger.d(this.getClass(), "#importKnowledgeDoc - file code: " + fileCode);
+        this.lock.set(false);
         return activatedDoc;
     }
 
     public KnowledgeDoc removeKnowledgeDoc(String fileCode) {
+        if (this.lock.get()) {
+            Logger.w(this.getClass(), "#removeKnowledgeDoc - Store locked: " + fileCode);
+            return null;
+        }
+        this.lock.set(true);
+
         if (!this.resource.checkUnit()) {
             Logger.e(this.getClass(), "#removeKnowledgeDoc - No unit: " + fileCode);
+            this.lock.set(false);
             return null;
         }
 
@@ -233,7 +250,7 @@ public class KnowledgeBase {
             if (doc.activated) {
                 if (this.resource.checkUnit()) {
                     KnowledgeDoc deactivatedDoc = this.deactivateKnowledgeDoc(doc);
-                    return deactivatedDoc;
+                    doc = deactivatedDoc;
                 }
             }
         }
@@ -241,6 +258,7 @@ public class KnowledgeBase {
             this.resource.removeDoc(fileCode);
         }
 
+        this.lock.set(false);
         return doc;
     }
 
@@ -314,25 +332,41 @@ public class KnowledgeBase {
      *
      * @return
      */
-    public ResetProgress getResetProgress() {
+    public ResetKnowledgeProgress getResetProgress() {
         return this.resetProgress;
     }
 
     /**
      * 重置知识仓库。
+     *
+     * @param backup
+     * @param listener
+     * @return
      */
-    public synchronized boolean resetKnowledgeStore(ResetKnowledgeStoreListener listener) {
+    public synchronized ResetKnowledgeProgress resetKnowledgeStore(boolean backup,
+                                                                   ResetKnowledgeStoreListener listener) {
         if (this.lock.get()) {
-            return false;
+            Logger.w(this.getClass(), "#resetKnowledgeStore - Store locked: " + this.authToken.getContactId());
+            return null;
         }
 
-        this.resetProgress = new ResetProgress();
         this.lock.set(true);
+        this.resetProgress = new ResetKnowledgeProgress();
 
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                // 删除文件
+                if (!resource.checkUnit()) {
+                    // 单元错误
+                    resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
+                    resetProgress.setStateCode(AIGCStateCode.UnitNoReady.code);
+                    return;
+                }
+
+                // 更新进度
+                resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_DELETE_STORE);
+
+                // 删除库
                 JSONObject payload = new JSONObject();
                 if (KnowledgeScope.Private == scope) {
                     payload.put("contactId", authToken.getContactId());
@@ -342,7 +376,7 @@ public class KnowledgeBase {
                 }
                 Packet packet = new Packet(AIGCAction.DeleteKnowledgeStore.name, payload);
                 ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
-                        packet.toDialect());
+                        packet.toDialect(), 60 * 1000);
                 if (null == dialect) {
                     Logger.w(this.getClass(),"#resetKnowledgeStore - Request unit error: "
                             + resource.unit.getCapability().getName());
@@ -350,6 +384,9 @@ public class KnowledgeBase {
                     listener.onStoreDeleteFailed(AIGCStateCode.UnitError);
                     // 解锁
                     lock.set(false);
+                    // 更新进度
+                    resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
+                    resetProgress.setStateCode(AIGCStateCode.UnitError.code);
                     return;
                 }
 
@@ -361,11 +398,17 @@ public class KnowledgeBase {
                     listener.onStoreDeleteFailed(AIGCStateCode.parse(state));
                     // 解锁
                     lock.set(false);
+                    // 更新进度
+                    resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
+                    resetProgress.setStateCode(AIGCStateCode.Failure.code);
                     return;
                 }
 
                 // 回调
                 listener.onStoreDeleted(authToken.getContactId(), getAuthToken().getDomain(), scope);
+
+                // 更新进度
+                resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_ACTIVATE_DOC);
 
                 List<KnowledgeDoc> list = listKnowledgeDocs();
                 if (list.isEmpty()) {
@@ -373,8 +416,17 @@ public class KnowledgeBase {
                     listener.onCompleted(list, list);
                     // 解锁
                     lock.set(false);
+                    // 更新进度
+                    resetProgress.setTotalDocs(list.size());
+                    resetProgress.setProcessedDocs(list.size());
+                    resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
+                    resetProgress.setStateCode(AIGCStateCode.Ok.code);
                     return;
                 }
+
+                // 更新进度
+                resetProgress.setTotalDocs(list.size());
+                resetProgress.setProcessedDocs(0);
 
                 // 将文档设置为未激活
                 for (KnowledgeDoc doc : list) {
@@ -403,6 +455,9 @@ public class KnowledgeBase {
                 List<KnowledgeDoc> completionList = new ArrayList<>();
 
                 for (List<KnowledgeDoc> batch : batchList) {
+                    // 更新进度
+                    resetProgress.setActivatingDoc(batch.get(0));
+
                     // 按照批次发送给单元
                     JSONArray array = new JSONArray();
                     for (KnowledgeDoc doc : batch) {
@@ -420,6 +475,9 @@ public class KnowledgeBase {
                         listener.onKnowledgeDocActivateFailed(list, batch, AIGCStateCode.UnitError);
                         // 解锁
                         lock.set(false);
+                        // 更新进度
+                        resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
+                        resetProgress.setStateCode(AIGCStateCode.UnitError.code);
                         return;
                     }
 
@@ -431,8 +489,14 @@ public class KnowledgeBase {
                         listener.onKnowledgeDocActivateFailed(list, batch, AIGCStateCode.parse(state));
                         // 解锁
                         lock.set(false);
+                        // 更新进度
+                        resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
+                        resetProgress.setStateCode(AIGCStateCode.Failure.code);
                         return;
                     }
+
+                    // 更新进度
+                    resetProgress.setActivatingDoc(batch.get(batch.size() - 1));
 
                     JSONArray resultArray = Packet.extractDataPayload(response).getJSONArray("list");
                     List<KnowledgeDoc> resultList = new ArrayList<>();
@@ -445,17 +509,24 @@ public class KnowledgeBase {
                     // 回调
                     listener.onKnowledgeDocActivated(list, resultList);
                     completionList.addAll(resultList);
+
+                    // 更新进度
+                    resetProgress.setProcessedDocs(resetProgress.getProcessedDocs() + resultList.size());
                 }
 
                 // 回调
                 listener.onCompleted(list, completionList);
                 // 解锁
                 lock.set(false);
+                // 更新进度
+                resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
+                resetProgress.setStateCode(AIGCStateCode.Ok.code);
+                resetProgress.setActivatingDoc(null);
             }
         });
         thread.start();
 
-        return true;
+        return this.resetProgress;
     }
 
     public List<KnowledgeArticle> getKnowledgeArticles(String category, long startTime, long endTime) {
