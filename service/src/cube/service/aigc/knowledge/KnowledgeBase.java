@@ -56,6 +56,10 @@ public class KnowledgeBase {
 
     public final static String EMPTY_BASE_ANSWER = "您的知识库里没有配置文档，您可以先向知识库里导入文档，再向我提问。";
 
+    private String name;
+
+    private String description;
+
     private AIGCService service;
 
     private AIGCStorage storage;
@@ -72,7 +76,10 @@ public class KnowledgeBase {
 
     private ResetKnowledgeProgress resetProgress;
 
-    public KnowledgeBase(AIGCService service, AIGCStorage storage, AuthToken authToken, AbstractModule fileStorage) {
+    public KnowledgeBase(String name, String description, AIGCService service, AIGCStorage storage,
+                         AuthToken authToken, AbstractModule fileStorage) {
+        this.name = name;
+        this.description = description;
         this.service = service;
         this.storage = storage;
         this.authToken = authToken;
@@ -85,6 +92,14 @@ public class KnowledgeBase {
     public void init() {
         this.listKnowledgeDocs();
         this.listKnowledgeArticles();
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public String getDescription() {
+        return this.description;
     }
 
     public AuthToken getAuthToken() {

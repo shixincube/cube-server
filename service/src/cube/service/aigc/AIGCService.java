@@ -59,6 +59,7 @@ import cube.plugin.PluginSystem;
 import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.knowledge.KnowledgeBase;
+import cube.service.aigc.knowledge.KnowledgeFrame;
 import cube.service.aigc.listener.*;
 import cube.service.aigc.module.ModuleManager;
 import cube.service.aigc.module.PublicOpinion;
@@ -160,9 +161,9 @@ public class AIGCService extends AbstractModule {
     private ConcurrentHashMap<String, AIGCChannel> channelMap;
 
     /**
-     * Key: 联系人 ID 。
+     * 知识库架构。
      */
-    private ConcurrentHashMap<Long, KnowledgeBase> knowledgeMap;
+    private KnowledgeFrame knowledgeFrame;
 
     private long channelTimeout = 30 * 60 * 1000;
 
@@ -199,7 +200,7 @@ public class AIGCService extends AbstractModule {
         this.textToImageQueueMap = new ConcurrentHashMap<>();
         this.extractKeywordsQueueMap = new ConcurrentHashMap<>();
         this.asrQueueMap = new ConcurrentHashMap<>();
-        this.knowledgeMap = new ConcurrentHashMap<>();
+        this.knowledgeFrame = new KnowledgeFrame();
         this.tokenizer = new Tokenizer();
     }
 
@@ -609,7 +610,7 @@ public class AIGCService extends AbstractModule {
      * @return
      */
     public synchronized KnowledgeBase getKnowledgeBase(Long contactId) {
-        KnowledgeBase base = this.knowledgeMap.get(contactId);
+        KnowledgeBase base = this.knowledgeFrame.getKnowledgeBase(contactId);
         if (null == base) {
             AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
             if (null == fileStorage) {
@@ -624,7 +625,8 @@ public class AIGCService extends AbstractModule {
                 return null;
             }
 
-            base = new KnowledgeBase(this, this.storage, authToken, fileStorage);
+            base = new KnowledgeBase(KnowledgeFrame.DefaultName, KnowledgeFrame.DefaultDescription,
+                    this, this.storage, authToken, fileStorage);
             final KnowledgeBase knowledgeBase = base;
             this.executor.execute(new Runnable() {
                 @Override
@@ -632,7 +634,7 @@ public class AIGCService extends AbstractModule {
                     knowledgeBase.init();
                 }
             });
-            this.knowledgeMap.put(contactId, base);
+            this.knowledgeFrame.putKnowledgeBase(knowledgeBase);
         }
         return base;
     }
