@@ -27,8 +27,9 @@
 package cube.service.aigc.listener;
 
 import cube.common.entity.KnowledgeDoc;
-import cube.common.entity.KnowledgeScope;
+import cube.common.entity.ResetKnowledgeProgress;
 import cube.common.state.AIGCStateCode;
+import cube.service.aigc.knowledge.KnowledgeBase;
 
 import java.util.List;
 
@@ -37,13 +38,9 @@ import java.util.List;
  */
 public interface ResetKnowledgeStoreListener {
 
-    void onStoreDeleted(long contactId, String domain, KnowledgeScope scope);
+    void onProgress(KnowledgeBase knowledgeBase, ResetKnowledgeProgress progress);
 
-    void onStoreDeleteFailed(AIGCStateCode stateCode);
+    void onFailed(KnowledgeBase knowledgeBase, ResetKnowledgeProgress progress, AIGCStateCode stateCode);
 
-    void onKnowledgeDocActivated(List<KnowledgeDoc> originList, List<KnowledgeDoc> activatedList);
-
-    void onKnowledgeDocActivateFailed(List<KnowledgeDoc> originList, List<KnowledgeDoc> docList, AIGCStateCode stateCode);
-
-    void onCompleted(List<KnowledgeDoc> originList, List<KnowledgeDoc> completionList);
+    void onCompleted(KnowledgeBase knowledgeBase, List<KnowledgeDoc> originList, List<KnowledgeDoc> completionList);
 }

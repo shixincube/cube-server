@@ -442,8 +442,10 @@ public class Manager implements Tickable, PerformerListener {
         return new ResetKnowledgeProgress(Packet.extractDataPayload(responsePacket));
     }
 
-    public ResetKnowledgeProgress resetKnowledgeStore(String token) {
-        Packet packet = new Packet(AIGCAction.ResetKnowledgeStore.name, new JSONObject());
+    public ResetKnowledgeProgress resetKnowledgeStore(String token, boolean backup) {
+        JSONObject payload = new JSONObject();
+        payload.put("backup", backup);
+        Packet packet = new Packet(AIGCAction.ResetKnowledgeStore.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);

@@ -30,6 +30,7 @@ import cube.common.entity.ResetKnowledgeProgress;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -59,8 +60,18 @@ public class ResetKnowledgeStore extends ContextHandler {
                 return;
             }
 
+            boolean backup = true;
+            try {
+                JSONObject data = this.readBodyAsJSONObject(request);
+                if (data.has("backup")) {
+                    backup = data.getBoolean("backup");
+                }
+            } catch (Exception e) {
+                // Nothing
+            }
+
             // 重置
-            ResetKnowledgeProgress progress = Manager.getInstance().resetKnowledgeStore(token);
+            ResetKnowledgeProgress progress = Manager.getInstance().resetKnowledgeStore(token, backup);
             if (null == progress) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();

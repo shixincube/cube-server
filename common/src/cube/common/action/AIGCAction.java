@@ -207,6 +207,11 @@ public enum AIGCAction {
     ResetKnowledgeStore("resetKnowledgeStore"),
 
     /**
+     * 备份知识库数据。
+     */
+    BackupKnowledgeStore("backupKnowledgeStore"),
+
+    /**
      * 获取重置知识库进度。
      */
     GetResetKnowledgeProgress("getResetKnowledgeProgress"),

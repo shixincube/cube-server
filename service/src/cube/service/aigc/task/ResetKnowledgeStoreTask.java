@@ -34,7 +34,6 @@ import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.KnowledgeDoc;
-import cube.common.entity.KnowledgeScope;
 import cube.common.entity.ResetKnowledgeProgress;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
@@ -82,32 +81,20 @@ public class ResetKnowledgeStoreTask extends ServiceTask {
 
         ResetKnowledgeProgress progress = base.resetKnowledgeStore(backup, new ResetKnowledgeStoreListener() {
             @Override
-            public void onStoreDeleted(long contactId, String domain, KnowledgeScope scope) {
-                Logger.d(ResetKnowledgeStoreTask.class, "#onStoreDeleted : " + base.getAuthToken().getContactId());
+            public void onProgress(KnowledgeBase knowledgeBase, ResetKnowledgeProgress progress) {
+                Logger.d(ResetKnowledgeStoreTask.class, "#onProgress - " + knowledgeBase.getAuthToken().getContactId() +
+                        " - " + progress.getProgress());
             }
 
             @Override
-            public void onStoreDeleteFailed(AIGCStateCode stateCode) {
-                Logger.d(ResetKnowledgeStoreTask.class, "#onStoreDeleteFailed : "
-                        + base.getAuthToken().getContactId() + " - code: " + stateCode);
+            public void onFailed(KnowledgeBase knowledgeBase, ResetKnowledgeProgress progress, AIGCStateCode stateCode) {
+                Logger.d(ResetKnowledgeStoreTask.class, "#onFailed - " + knowledgeBase.getAuthToken().getContactId() +
+                        " - " + progress.getProgress() + " - code:" + stateCode.code);
             }
 
             @Override
-            public void onKnowledgeDocActivated(List<KnowledgeDoc> originList, List<KnowledgeDoc> activatedList) {
-                Logger.d(ResetKnowledgeStoreTask.class, "#onKnowledgeDocActivated : " + base.getAuthToken().getContactId());
-            }
-
-            @Override
-            public void onKnowledgeDocActivateFailed(List<KnowledgeDoc> originList, List<KnowledgeDoc> docList,
-                                                     AIGCStateCode stateCode) {
-                Logger.d(ResetKnowledgeStoreTask.class, "#onKnowledgeDocActivateFailed : "
-                        + base.getAuthToken().getContactId() + " - code: " + stateCode);
-            }
-
-            @Override
-            public void onCompleted(List<KnowledgeDoc> originList, List<KnowledgeDoc> completionList) {
-                Logger.d(ResetKnowledgeStoreTask.class, "#onCompleted : " + base.getAuthToken().getContactId()
-                    + " - completion/origin: " + completionList.size() + "/" + originList.size());
+            public void onCompleted(KnowledgeBase knowledgeBase, List<KnowledgeDoc> originList, List<KnowledgeDoc> completionList) {
+                Logger.d(ResetKnowledgeStoreTask.class, "#onCompleted - " + knowledgeBase.getAuthToken().getContactId());
             }
         });
 

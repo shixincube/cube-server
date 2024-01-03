@@ -37,6 +37,8 @@ public class ResetKnowledgeProgress implements JSONable {
 
     public final static String PROGRESS_START = "Start";
 
+    public final static String PROGRESS_BACKUP_STORE = "BackupStore";
+
     public final static String PROGRESS_DELETE_STORE = "DeleteStore";
 
     public final static String PROGRESS_ACTIVATE_DOC = "ActivateDoc";
@@ -89,6 +91,10 @@ public class ResetKnowledgeProgress implements JSONable {
         if (PROGRESS_END.equalsIgnoreCase(value)) {
             this.endTime = System.currentTimeMillis();
         }
+    }
+
+    public String getProgress() {
+        return this.progress;
     }
 
     public void setTotalDocs(int value) {
