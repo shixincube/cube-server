@@ -27,8 +27,10 @@
 package cube.common.entity;
 
 import cell.core.talk.TalkContext;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -46,7 +48,7 @@ public class AIGCUnit extends Entity {
 
     private AtomicBoolean running;
 
-    private int totalQueryWords = 0;
+    private ConcurrentLinkedQueue<Failure> failures;
 
     public AIGCUnit(Contact contact, AICapability capability, TalkContext context) {
         super(contact.id, contact.domain.getName());
@@ -55,12 +57,21 @@ public class AIGCUnit extends Entity {
         this.capability = capability;
         this.context = context;
         this.running = new AtomicBoolean(false);
+        this.failures = new ConcurrentLinkedQueue<>();
     }
 
     public AIGCUnit(JSONObject json) {
         super(json);
         this.capability = new AICapability(json.getJSONObject("capability"));
         this.running = new AtomicBoolean(json.getBoolean("running"));
+        this.failures = new ConcurrentLinkedQueue<>();
+        if (json.has("failures")) {
+            JSONArray array = json.getJSONArray("failures");
+            for (int i = 0; i < array.length(); ++i) {
+                Failure failure = new Failure(array.getJSONObject(i));
+                this.failures.add(failure);
+            }
+        }
     }
 
     public String getQueryKey() {
@@ -91,12 +102,8 @@ public class AIGCUnit extends Entity {
         return this.running.get();
     }
 
-    public int getTotalQueryWords() {
-        return this.totalQueryWords;
-    }
-
-    public void setTotalQueryWords(int words) {
-        this.totalQueryWords = words;
+    public void markFailure(int code, long timestamp, long contactId) {
+        this.failures.add(new Failure(code, timestamp, contactId));
     }
 
     @Override
@@ -104,7 +111,13 @@ public class AIGCUnit extends Entity {
         JSONObject json = super.toJSON();
         json.put("capability", this.capability.toJSON());
         json.put("running", this.running);
-        json.put("totalQueryWords", this.totalQueryWords);
+
+        JSONArray array = new JSONArray();
+        for (Failure failure : this.failures) {
+            array.put(failure.toJSON());
+        }
+        json.put("failures", array);
+
         return json;
     }
 
@@ -124,5 +137,34 @@ public class AIGCUnit extends Entity {
         buf.append("_");
         buf.append(capability.getDescription());
         return buf.toString();
+    }
+
+    public class Failure {
+
+        public final int code;
+
+        public final long timestamp;
+
+        public long contactId;
+
+        public Failure(int code, long timestamp, long contactId) {
+            this.code = code;
+            this.timestamp = timestamp;
+            this.contactId = contactId;
+        }
+
+        public Failure(JSONObject json) {
+            this.code = json.getInt("code");
+            this.timestamp = json.getLong("timestamp");
+            this.contactId = json.getLong("contactId");
+        }
+
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("code", this.code);
+            json.put("timestamp", this.timestamp);
+            json.put("contactId", this.contactId);
+            return json;
+        }
     }
 }

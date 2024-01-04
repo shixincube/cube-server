@@ -125,4 +125,9 @@ public class KnowledgeDoc extends Entity {
         }
         return json;
     }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
 }

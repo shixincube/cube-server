@@ -65,10 +65,7 @@ import cube.service.aigc.module.ModuleManager;
 import cube.service.aigc.module.PublicOpinion;
 import cube.service.aigc.module.Stage;
 import cube.service.aigc.module.StageListener;
-import cube.service.aigc.plugin.ActivateKnowledgeBasePlugin;
-import cube.service.aigc.plugin.DeleteFilePlugin;
-import cube.service.aigc.plugin.InjectTokenPlugin;
-import cube.service.aigc.plugin.NewFilePlugin;
+import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.ResourceAnswer;
 import cube.service.aigc.scene.PsychologyScene;
@@ -173,6 +170,8 @@ public class AIGCService extends AbstractModule {
 
     private Tokenizer tokenizer;
 
+    private AIGCPluginSystem pluginSystem;
+
     /**
      * 是否对 Prompt 进行上下文识别。
      */
@@ -207,6 +206,8 @@ public class AIGCService extends AbstractModule {
     @Override
     public void start() {
         this.executor = Executors.newCachedThreadPool();
+
+        this.pluginSystem = new AIGCPluginSystem();
 
         PsychologyScene.getInstance().setAigcService(this);
 
@@ -246,6 +247,11 @@ public class AIGCService extends AbstractModule {
                 else {
                     Logger.e(AIGCService.class, "Can NOT find AIGC storage config");
                 }
+
+                // 知识库事件
+                KnowledgeBaseEventPlugin plugin = new KnowledgeBaseEventPlugin(AIGCService.this);
+                pluginSystem.register(AIGCHook.ImportKnowledgeDoc, plugin);
+                pluginSystem.register(AIGCHook.RemoveKnowledgeDoc, plugin);
 
                 // 监听授权服务事件
                 AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
@@ -316,8 +322,8 @@ public class AIGCService extends AbstractModule {
     }
 
     @Override
-    public <T extends PluginSystem> T getPluginSystem() {
-        return null;
+    public AIGCPluginSystem getPluginSystem() {
+        return this.pluginSystem;
     }
 
     @Override
@@ -2273,6 +2279,10 @@ public class AIGCService extends AbstractModule {
                             3 * 60 * 1000, this.sn);
                     if (null == dialect) {
                         Logger.w(AIGCService.class, "Unit error - channel: " + this.channel.getCode());
+                        // 记录故障
+                        this.unit.markFailure(AIGCStateCode.UnitError.code, System.currentTimeMillis(),
+                                channel.getAuthToken().getContactId());
+                        // 频道状态
                         this.channel.setProcessing(false);
                         // 回调错误
                         this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
@@ -2296,9 +2306,13 @@ public class AIGCService extends AbstractModule {
                         responseText = payload.getString("response");
                     } catch (Exception e) {
                         Logger.w(AIGCService.class, "Unit respond failed - channel: " + this.channel.getCode());
+                        // 记录故障
+                        this.unit.markFailure(AIGCStateCode.Failure.code, System.currentTimeMillis(),
+                                channel.getAuthToken().getContactId());
+                        // 频道状态
                         this.channel.setProcessing(false);
                         // 回调错误
-                        this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
+                        this.listener.onFailed(this.channel, AIGCStateCode.Failure);
                         return;
                     }
 
@@ -2479,9 +2493,6 @@ public class AIGCService extends AbstractModule {
             this.history.answerContactId = this.unit.getContact().getId();
             this.history.answerTime = System.currentTimeMillis();
             this.history.answerContent = convResponse.answer;
-
-            // 更新字数
-            this.unit.setTotalQueryWords(this.unit.getTotalQueryWords() + this.content.length());
 
             // 记录
             this.channel.appendRecord(this.sn, convResponse);

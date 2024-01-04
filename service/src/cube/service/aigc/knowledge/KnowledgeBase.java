@@ -37,6 +37,8 @@ import cube.common.entity.*;
 import cube.common.notice.GetFile;
 import cube.common.state.AIGCStateCode;
 import cube.core.AbstractModule;
+import cube.service.aigc.AIGCHook;
+import cube.service.aigc.AIGCPluginContext;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.AIGCStorage;
 import cube.service.aigc.listener.*;
@@ -238,6 +240,10 @@ public class KnowledgeBase {
         // 追加文档
         this.resource.appendDoc(activatedDoc);
 
+        // Hook
+        AIGCHook hook = this.service.getPluginSystem().getImportKnowledgeDocHook();
+        hook.apply(new AIGCPluginContext(this, activatedDoc));
+
         Logger.d(this.getClass(), "#importKnowledgeDoc - file code: " + fileCode);
         this.lock.set(false);
         return activatedDoc;
@@ -270,7 +276,13 @@ public class KnowledgeBase {
             }
         }
         else {
-            this.resource.removeDoc(fileCode);
+            doc = this.resource.removeDoc(fileCode);
+        }
+
+        if (null != doc) {
+            // Hook
+            AIGCHook hook = this.service.getPluginSystem().getRemoveKnowledgeDoc();
+            hook.apply(new AIGCPluginContext(this, doc));
         }
 
         this.lock.set(false);
@@ -1130,13 +1142,14 @@ public class KnowledgeBase {
             this.docList.remove(doc);
         }
 
-        public void removeDoc(String fileCode) {
+        public KnowledgeDoc removeDoc(String fileCode) {
             for (KnowledgeDoc doc : this.docList) {
                 if (doc.fileCode.equals(fileCode)) {
                     this.docList.remove(doc);
-                    break;
+                    return doc;
                 }
             }
+            return null;
         }
 
         public void appendArticle(KnowledgeArticle article) {
