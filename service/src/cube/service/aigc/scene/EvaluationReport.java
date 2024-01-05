@@ -35,7 +35,7 @@ import cube.common.entity.AIGCGenerationRecord;
 import cube.common.entity.AIGCUnit;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.ChatListener;
+import cube.service.aigc.listener.GenerateTextListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,12 +143,12 @@ public class EvaluationReport {
         for (Workflow.PromptGroup group : workflow.getPhase1Groups()) {
             List<AIGCGenerationRecord> records = new ArrayList<>();
             records.add(group.record);
-            aigcService.singleChat(channel, unit,
+            aigcService.generateText(channel, unit,
                     promptBuilder.serializePromptChaining(group.chaining),
                     promptBuilder.serializePromptChaining(group.chaining), records, false,
-                    new ChatListener() {
+                    new GenerateTextListener() {
                         @Override
-                        public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
+                        public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                         }
 
                         @Override

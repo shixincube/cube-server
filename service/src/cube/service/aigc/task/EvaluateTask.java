@@ -52,6 +52,14 @@ public class EvaluateTask extends ServiceTask {
         ActionDialect dialect = new ActionDialect(this.primitive);
         Packet packet = new Packet(dialect);
 
+        String token = this.getTokenCode(dialect);
+        if (null == token) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
         if (!packet.data.has("sn") || !packet.data.has("feedback")) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -63,7 +71,7 @@ public class EvaluateTask extends ServiceTask {
         int feedback = packet.data.getInt("feedback");
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        service.evaluate(sn, feedback);
+        service.evaluate(token, sn, feedback);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, packet.data));

@@ -91,7 +91,7 @@ public class Evaluate extends ContextHandler {
                 return;
             }
 
-            if (Manager.getInstance().evaluate(sn, scores)) {
+            if (Manager.getInstance().evaluate(token, sn, scores)) {
                 Helper.respondOk(this, response, data);
             }
             else {

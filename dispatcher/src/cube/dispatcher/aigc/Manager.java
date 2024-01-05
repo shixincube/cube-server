@@ -561,7 +561,7 @@ public class Manager implements Tickable, PerformerListener {
         return result;
     }
 
-    public boolean evaluate(long sn, int feedback) {
+    public boolean evaluate(String token, long sn, int feedback) {
         if (feedback < 0) {
             return false;
         }
@@ -570,7 +570,9 @@ public class Manager implements Tickable, PerformerListener {
         data.put("sn", sn);
         data.put("feedback", feedback);
         Packet packet = new Packet(AIGCAction.Evaluate.name, data);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#evaluate - Response is null");
             return false;

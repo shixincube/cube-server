@@ -24,18 +24,50 @@
  * SOFTWARE.
  */
 
-package cube.service.aigc.listener;
+package cube.common.entity;
 
-import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCGenerationRecord;
-import cube.common.state.AIGCStateCode;
+import cube.common.JSONable;
+import org.json.JSONObject;
 
 /**
- * Chat 监听器。
+ * 知识文档进度。
  */
-public interface ChatListener {
+public class KnowledgeQAProgress implements JSONable {
 
-    void onChat(AIGCChannel channel, AIGCGenerationRecord record);
+    private AIGCChannel channel;
 
-    void onFailed(AIGCChannel channel, AIGCStateCode stateCode);
+    private String unitName;
+
+    private String query;
+
+    private String prompt;
+
+    private int progress;
+
+    private int totalProgress;
+
+    public KnowledgeQAProgress(AIGCChannel channel, String unitName) {
+        this.channel = channel;
+        this.unitName = unitName;
+    }
+
+    public void defineTotalProgress(int value) {
+        this.totalProgress = value;
+    }
+
+    public int updateProgress(int value) {
+        this.progress += value;
+        return (int) Math.floor(((float) this.progress / (float) this.totalProgress) * 100.0);
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
 }

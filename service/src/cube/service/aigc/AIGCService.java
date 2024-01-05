@@ -55,7 +55,6 @@ import cube.file.FileProcessResult;
 import cube.file.hook.FileStorageHook;
 import cube.file.operation.AudioCropOperation;
 import cube.file.operation.ExtractAudioOperation;
-import cube.plugin.PluginSystem;
 import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.knowledge.KnowledgeBase;
@@ -648,10 +647,16 @@ public class AIGCService extends AbstractModule {
     /**
      * 对历史问答进行评价。
      *
+     * @param token
      * @param historySN
      * @param feedback
      */
-    public void evaluate(long historySN, int feedback) {
+    public void evaluate(String token, long historySN, int feedback) {
+        AIGCChannel channel = this.getChannelByToken(token);
+        if (null != channel) {
+            channel.feedbackRecord(historySN, feedback);
+        }
+
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -903,10 +908,10 @@ public class AIGCService extends AbstractModule {
 
                 StringBuilder result = new StringBuilder();
 
-                this.singleChat(channel, unit, maq.articleQuery.query, maq.articleQuery.query,
-                        null, false, new ChatListener() {
+                this.generateText(channel, unit, maq.articleQuery.query, maq.articleQuery.query,
+                        null, false, new GenerateTextListener() {
                     @Override
-                    public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
+                    public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                         maq.articleQuery.answer = record.answer.replaceAll(",", "，");
                         synchronized (result) {
                             result.append(maq.articleQuery.output());
@@ -945,11 +950,12 @@ public class AIGCService extends AbstractModule {
      * @param unitName
      * @param numHistories
      * @param records
+     * @param recordable
      * @param listener
      * @return
      */
     public boolean chat(String channelCode, String content, String unitName, int numHistories,
-                        List<AIGCGenerationRecord> records, ChatListener listener) {
+                        List<AIGCGenerationRecord> records, boolean recordable, GenerateTextListener listener) {
         if (!this.isStarted()) {
             Logger.w(AIGCService.class, "#chat - Service is NOT ready");
             return false;
@@ -1002,6 +1008,7 @@ public class AIGCService extends AbstractModule {
 
         ChatUnitMeta meta = new ChatUnitMeta(unit, channel, content, records, listener);
         meta.numHistories = numHistories;
+        meta.needRecordHistory = recordable;
 
         synchronized (this.chatQueueMap) {
             Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getQueryKey());
@@ -1027,8 +1034,8 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
-    public void singleChat(AIGCChannel channel, AIGCUnit unit, String query, String prompt,
-                           List<AIGCGenerationRecord> records, boolean recordable, ChatListener listener) {
+    public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt,
+                             List<AIGCGenerationRecord> records, boolean recordable, GenerateTextListener listener) {
         if (this.useAgent) {
             unit = Agent.getInstance().getUnit();
         }
@@ -2148,14 +2155,14 @@ public class AIGCService extends AbstractModule {
 
         protected int numHistories;
 
-        protected ChatListener listener;
+        protected GenerateTextListener listener;
 
         protected AIGCChatHistory history;
 
         protected boolean needRecordHistory = true;
 
         public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
-                            List<AIGCGenerationRecord> records, ChatListener listener) {
+                            List<AIGCGenerationRecord> records, GenerateTextListener listener) {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
@@ -2172,7 +2179,7 @@ public class AIGCService extends AbstractModule {
             this.history.queryContent = content;
         }
 
-        public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, int numHistories, ChatListener listener) {
+        public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, int numHistories, GenerateTextListener listener) {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
@@ -2343,7 +2350,7 @@ public class AIGCService extends AbstractModule {
             // 重置状态位
             this.channel.setProcessing(false);
 
-            this.listener.onChat(this.channel, result);
+            this.listener.onGenerated(this.channel, result);
 
             executor.execute(new Runnable() {
                 @Override

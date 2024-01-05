@@ -31,7 +31,7 @@ import cube.aigc.Sentiment;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.ChatListener;
+import cube.service.aigc.listener.GenerateTextListener;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -93,12 +93,12 @@ public class Stage extends Entity {
                     total.addAndGet(negativeQueries.size());
 
                     for (PublicOpinion.ArticleQuery articleQuery : negativeQueries) {
-                        service.singleChat(channel,
+                        service.generateText(channel,
                                 service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational),
                                 articleQuery.query, articleQuery.query, null, false,
-                                new ChatListener() {
+                                new GenerateTextListener() {
                                     @Override
-                                    public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
+                                    public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                                         PublicOpinion.ArticleQuery current = findArticleQuery(negativeQueries,
                                                 record.query);
                                         if (null != current) {
@@ -123,12 +123,12 @@ public class Stage extends Entity {
                     total.addAndGet(positiveQueries.size());
 
                     for (PublicOpinion.ArticleQuery articleQuery : positiveQueries) {
-                        service.singleChat(channel,
+                        service.generateText(channel,
                                 service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational),
                                 articleQuery.query, articleQuery.query, null, false,
-                                new ChatListener() {
+                                new GenerateTextListener() {
                                     @Override
-                                    public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
+                                    public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                                         PublicOpinion.ArticleQuery current = findArticleQuery(positiveQueries,
                                                 record.query);
                                         if (null != current) {

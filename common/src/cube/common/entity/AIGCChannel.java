@@ -234,6 +234,12 @@ public class AIGCChannel extends Entity {
                     continue;
                 }
 
+                // 过滤低分项
+                if (record.feedback == 1) {
+                    // 跳过差评
+                    continue;
+                }
+
                 list.add(record);
                 if (list.size() >= num) {
                     break;
@@ -244,6 +250,17 @@ public class AIGCChannel extends Entity {
         // 调换顺序，成为时间正序
         Collections.reverse(list);
         return list;
+    }
+
+    public void feedbackRecord(long sn, int feedback) {
+        synchronized (this.history) {
+            for (AIGCGenerationRecord record : this.history) {
+                if (record.sn == sn) {
+                    record.feedback = feedback;
+                    break;
+                }
+            }
+        }
     }
 
     public List<AIGCConversationResponse> extractConversationResponses() {

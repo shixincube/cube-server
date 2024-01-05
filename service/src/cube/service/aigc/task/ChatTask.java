@@ -44,7 +44,7 @@ import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
-import cube.service.aigc.listener.ChatListener;
+import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.listener.KnowledgeQAListener;
 import cube.service.aigc.listener.TextToImageListener;
 import org.json.JSONArray;
@@ -82,6 +82,7 @@ public class ChatTask extends ServiceTask {
         String unit = packet.data.has("unit") ? packet.data.getString("unit") : "Chat";
         int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 100;
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
+        boolean recordable = packet.data.has("recordable") && packet.data.getBoolean("recordable");
 
         List<AIGCGenerationRecord> recordList = null;
         if (null != records) {
@@ -148,9 +149,9 @@ public class ChatTask extends ServiceTask {
             }
             else {
                 // 执行 Chat
-                success = service.chat(code, content, unit, histories, recordList, new ChatListener() {
+                success = service.chat(code, content, unit, histories, recordList, recordable, new GenerateTextListener() {
                     @Override
-                    public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
+                    public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                         cellet.speak(talkContext,
                                 makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
                         markResponseTime();

@@ -118,7 +118,7 @@ public class ChatHistory extends ContextHandler {
                 return;
             }
 
-            if (Manager.getInstance().evaluate(sn, feedback)) {
+            if (Manager.getInstance().evaluate(token, sn, feedback)) {
                 JSONObject data = new JSONObject();
                 data.put("sn", sn);
                 data.put("feedback", feedback);

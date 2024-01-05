@@ -53,6 +53,8 @@ public class AIGCGenerationRecord implements JSONable {
 
     public ComplexContext context;
 
+    public int feedback = 0;
+
     public AIGCGenerationRecord(String unit, String query, String answer) {
         this.sn = Utils.generateSerialNumber();
         this.unit = unit;
