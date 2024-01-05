@@ -27,6 +27,8 @@
 package cube.service.aigc.resource;
 
 import cell.util.log.Logger;
+import cube.aigc.Consts;
+import cube.aigc.ModelConfig;
 import cube.common.entity.AICapability;
 import cube.common.entity.AIGCUnit;
 import cube.common.entity.Contact;
@@ -67,7 +69,7 @@ public final class Agent {
 
         List<String> subtasks = new ArrayList<>();
         subtasks.add(AICapability.NaturalLanguageProcessing.Conversational);
-        AICapability capability = new AICapability("Chat",
+        AICapability capability = new AICapability(ModelConfig.BAIZE_UNIT,
                 AICapability.NaturalLanguageProcessingTask, subtasks, "");
 
         this.unit = new AIGCUnit(contact, capability, null);
@@ -86,9 +88,10 @@ public final class Agent {
             JSONObject data = new JSONObject();
             data.put("code", channelCode);
             data.put("content", content);
-            data.put("unit", "Chat");
+            data.put("unit", this.unit.getCapability().getName());
             data.put("histories", 0);
-            data.put("pattern", "chat");
+            data.put("pattern", Consts.PATTERN_CHAT);
+            data.put("recordable", false);
 
             client.getProtocolHandlers().remove(WWWAuthenticationProtocolHandler.NAME);
 

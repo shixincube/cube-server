@@ -61,13 +61,13 @@ public class KnowledgeBaseEventPlugin implements Plugin {
         try {
             AIGCPluginContext ctx = (AIGCPluginContext) context;
 
-            if (AIGCHook.ImportKnowledgeDoc.equals(context.getKey())) {
+            if (AIGCHook.ImportKnowledgeDoc.equals(ctx.getKey())) {
                 AppEvent appEvent = new AppEvent(AppEvent.ImportKnowledgeDoc, System.currentTimeMillis(),
                         ctx.getKnowledgeBase().getAuthToken().getContactId(),
                         ctx.getKnowledgeDoc().toJSON());
                 this.service.getStorage().writeAppEvent(appEvent);
             }
-            else if (AIGCHook.RemoveKnowledgeDoc.equals(context.getKey())) {
+            else if (AIGCHook.RemoveKnowledgeDoc.equals(ctx.getKey())) {
                 AppEvent appEvent = new AppEvent(AppEvent.RemoveKnowledgeDoc, System.currentTimeMillis(),
                         ctx.getKnowledgeBase().getAuthToken().getContactId(),
                         ctx.getKnowledgeDoc().toJSON());

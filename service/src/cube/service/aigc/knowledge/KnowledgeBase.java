@@ -29,6 +29,7 @@ package cube.service.aigc.knowledge;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.auth.AuthToken;
 import cube.common.Packet;
@@ -58,6 +59,10 @@ public class KnowledgeBase {
 
     public final static String EMPTY_BASE_ANSWER = "您的知识库里没有配置文档，您可以先向知识库里导入文档，再向我提问。";
 
+    public final static int DEFAULT_TOP_K = 10;
+
+    public final static int DEFAULT_FETCH_K = 30;
+
     private String name;
 
     private String description;
@@ -77,6 +82,8 @@ public class KnowledgeBase {
     private AtomicBoolean lock;
 
     private ResetKnowledgeProgress resetProgress;
+
+    private KnowledgeQAResult activateKnowledgeQAResult;
 
     public KnowledgeBase(String name, String description, AIGCService service, AIGCStorage storage,
                          AuthToken authToken, AbstractModule fileStorage) {
@@ -1001,8 +1008,8 @@ public class KnowledgeBase {
                                       String pipelineQuery, String comprehensiveQuery,
                                       String category, int maxArticles, int maxParaphrases,
                                       KnowledgeQAListener listener) {
-        Logger.d(this.getClass(), "#performKnowledgeQA [category] - Channel: " + channelCode +
-                "/" + unitName + "/" + comprehensiveQuery + "/" + category);
+        Logger.d(this.getClass(), "#performKnowledgeQA [pipeline/category] - " + channelCode +
+                "/" + unitName + "/" + pipelineQuery + "/" + comprehensiveQuery + "/" + category);
 
         final AIGCChannel channel = this.service.getChannel(channelCode);
         if (null == channel) {
@@ -1016,10 +1023,33 @@ public class KnowledgeBase {
             return false;
         }
 
-//        Consts.formatQuestion();
+        if (maxArticles <= 0) {
+            maxArticles = 5;
+        }
+        if (maxParaphrases <= 0) {
+            maxParaphrases = 5;
+        }
 
-        List<KnowledgeArticle> articles = this.storage.readKnowledgeArticles(category);
+        List<KnowledgeArticle> articles = this.storage.matchKnowledgeArticles(this.authToken.getDomain(),
+                this.authToken.getContactId(), category);
+        // 倒序
+        Collections.reverse(articles);
+        for (int i = 0; i < articles.size() && i < maxArticles; ++i) {
+            KnowledgeArticle article = articles.get(i);
+            String prompt = Consts.formatQuestion(article.content, pipelineQuery);
+            this.service.singleChat(channel, this.service.selectUnitByName(unitName), pipelineQuery,
+                    prompt, null, false, new ChatListener() {
+                        @Override
+                        public void onChat(AIGCChannel channel, AIGCGenerationRecord record) {
 
+                        }
+
+                        @Override
+                        public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
+
+                        }
+                    });
+        }
 
         return true;
     }

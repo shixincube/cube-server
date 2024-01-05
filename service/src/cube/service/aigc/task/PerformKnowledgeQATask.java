@@ -30,13 +30,17 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.aigc.ModelConfig;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.AIGCChannel;
+import cube.common.entity.KnowledgeQAResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
+import cube.service.aigc.listener.KnowledgeQAListener;
 import org.json.JSONObject;
 
 /**
@@ -61,28 +65,72 @@ public class PerformKnowledgeQATask extends ServiceTask {
             return;
         }
 
-        if (!packet.data.has("fileCode")) {
+        String unitName = null;
+        String pipelineQuery = null;    // 必填参数
+        String comprehensiveQuery = null;   // 必填参数
+        String category = null;     // 必填参数
+        int maxArticles = 0;
+        int maxParaphrases = 0;
+
+        try {
+            unitName = packet.data.has("unit") ? packet.data.getString("unit") : ModelConfig.BAIZE_UNIT;
+            pipelineQuery = packet.data.getString("pipeline");
+            comprehensiveQuery = packet.data.getString("comprehensive");
+            category = packet.data.getString("category");
+            maxArticles = packet.data.has("maxArticles") ? packet.data.getInt("maxArticles") : 0;
+            maxParaphrases = packet.data.has("maxParaphrases") ? packet.data.getInt("maxParaphrases") : 0;
+        } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        String fileCode = packet.data.getString("fileCode");
-
         AIGCService service = ((AIGCCellet) this.cellet).getService();
+
+        AIGCChannel channel = service.getChannelByToken(tokenCode);
+        if (null == channel) {
+            channel = service.requestChannel(tokenCode, "Unknown");
+            if (null == channel) {
+                // 申请频道失败
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.InconsistentToken.code, new JSONObject()));
+                markResponseTime();
+                return;
+            }
+        }
+
         KnowledgeBase base = service.getKnowledgeBase(tokenCode);
         if (null == base) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.InconsistentToken.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        // TODO
+        // 执行知识库问答
+        boolean success = base.performKnowledgeQA(channel.getCode(), unitName, pipelineQuery, comprehensiveQuery,
+                category, maxArticles, maxParaphrases, new KnowledgeQAListener() {
+                    @Override
+                    public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
+                        // Nothing
+                    }
 
-//        this.cellet.speak(this.talkContext,
-//                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, doc.toJSON()));
-//        markResponseTime();
+                    @Override
+                    public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
+                        // Nothing
+                    }
+                });
+
+        if (success) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, packet.data));
+            markResponseTime();
+        }
+        else {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+            markResponseTime();
+        }
     }
 }

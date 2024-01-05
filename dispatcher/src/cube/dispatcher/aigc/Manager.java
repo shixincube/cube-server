@@ -767,8 +767,23 @@ public class Manager implements Tickable, PerformerListener {
         return true;
     }
 
+    /**
+     * 互动对话。
+     *
+     * @param token
+     * @param channelCode
+     * @param pattern
+     * @param content
+     * @param unit
+     * @param histories
+     * @param records
+     * @param recordable
+     * @param searchTopK
+     * @param searchFetchK
+     * @return
+     */
     public ChatFuture chat(String token, String channelCode, String pattern, String content, String unit,
-                           int histories, JSONArray records, int searchTopK, int searchFetchK) {
+                           int histories, JSONArray records, boolean recordable, int searchTopK, int searchFetchK) {
         JSONObject data = new JSONObject();
         data.put("token", token);
         data.put("code", channelCode);
@@ -781,6 +796,7 @@ public class Manager implements Tickable, PerformerListener {
         if (null != records) {
             data.put("records", records);
         }
+        data.put("recordable", recordable);
         data.put("searchTopK", searchTopK);
         data.put("searchFetchK", searchFetchK);
 
@@ -822,7 +838,7 @@ public class Manager implements Tickable, PerformerListener {
      *
      * @param token
      * @param channelCode
-     * @oaram pattern
+     * @param pattern
      * @param content
      * @param records
      * @param temperature

@@ -72,6 +72,7 @@ public class Chat extends ContextHandler {
             String unit = "Chat";
             int histories = 0;
             JSONArray records = null;
+            boolean recordable = true;
             int searchTopK = 5;
             int searchFetchK = 50;
             try {
@@ -89,6 +90,10 @@ public class Chat extends ContextHandler {
 
                 if (json.has("records")) {
                     records = json.getJSONArray("records");
+                }
+
+                if (json.has("recordable")) {
+                    recordable = json.getBoolean("recordable");
                 }
 
                 if (json.has("pattern")) {
@@ -118,7 +123,7 @@ public class Chat extends ContextHandler {
 
             // Chat
             Manager.ChatFuture future = Manager.getInstance().chat(token, channelCode, pattern,
-                    content, unit, histories, records, searchTopK, searchFetchK);
+                    content, unit, histories, records, recordable, searchTopK, searchFetchK);
             if (null == future) {
                 // 发生错误
                 this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);

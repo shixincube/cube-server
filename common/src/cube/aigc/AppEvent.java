@@ -66,12 +66,12 @@ public class AppEvent implements JSONable {
     public final static String DeleteFile = "DeleteFile";
 
     /**
-     * 导入知识库文档。
+     * 导入知识库文档事件。
      */
     public final static String ImportKnowledgeDoc = "ImportKnowledgeDoc";
 
     /**
-     * 移除知识库文档。
+     * 移除知识库文档事件。
      */
     public final static String RemoveKnowledgeDoc = "RemoveKnowledgeDoc";
 
