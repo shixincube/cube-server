@@ -28,6 +28,7 @@ package cube.dispatcher.aigc.handler;
 
 import cell.util.log.Logger;
 import cube.aigc.Consts;
+import cube.aigc.ModelConfig;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCGenerationRecord;
 import cube.dispatcher.aigc.Manager;
@@ -69,7 +70,7 @@ public class Chat extends ContextHandler {
             String channelCode = null;
             String pattern = Consts.PATTERN_CHAT;
             String content = null;
-            String unit = "Chat";
+            String unit = ModelConfig.BAIZE_UNIT;
             int histories = 0;
             JSONArray records = null;
             boolean recordable = true;

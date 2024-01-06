@@ -95,10 +95,14 @@ public class AIGCChannel extends Entity {
     }
 
     public AIGCChannel(JSONObject json) {
-        this.authToken = new AuthToken(json.getJSONObject("authToken"));
         this.code = json.getString("code");
         this.creationTime = json.getLong("creationTime");
         this.participant = json.getString("participant");
+
+        if (json.has("authToken")) {
+            this.authToken = new AuthToken(json.getJSONObject("authToken"));
+        }
+
         this.history = new LinkedList<>();
         this.conversationResponses = new LinkedList<>();
 
@@ -323,12 +327,20 @@ public class AIGCChannel extends Entity {
         json.put("code", this.code);
         json.put("creationTime", this.creationTime);
         json.put("participant", this.participant);
-        json.put("authToken", this.authToken.toJSON());
+
+        if (null != this.authToken) {
+            json.put("authToken", this.authToken.toJSON());
+        }
+
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = this.toJSON();
+        if (json.has("authToken")) {
+            json.remove("authToken");
+        }
+        return json;
     }
 }

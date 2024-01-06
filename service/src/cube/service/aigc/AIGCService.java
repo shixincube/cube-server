@@ -1276,7 +1276,10 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        SummarizationUnitMeta meta = new SummarizationUnitMeta(unit, text, listener);
+        // 修正文本内容
+        String modified = text.replaceAll("\n", "。");
+
+        SummarizationUnitMeta meta = new SummarizationUnitMeta(unit, modified, listener);
 
         synchronized (this.summarizationQueueMap) {
             Queue<SummarizationUnitMeta> queue = this.summarizationQueueMap.get(unit.getQueryKey());

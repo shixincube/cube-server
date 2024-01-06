@@ -157,6 +157,16 @@ public enum AIGCAction {
     SearchCommand("searchCommand"),
 
     /**
+     * 执行知识库问答。
+     */
+    PerformKnowledgeQA("performKnowledgeQA"),
+
+    /**
+     * 获取知识库文档进度。
+     */
+    GetKnowledgeQAProgress("getKnowledgeQAProgress"),
+
+    /**
      * 获取知识库功能的配置数据。
      */
     GetKnowledgeProfile("getKnowledgeProfile"),

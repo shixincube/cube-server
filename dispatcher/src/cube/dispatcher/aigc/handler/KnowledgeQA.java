@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2023 Cube Team.
+ * Copyright (c) 2020-2024 Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,8 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cell.util.log.Logger;
-import cube.common.entity.KnowledgeArticle;
+import cube.aigc.ModelConfig;
+import cube.common.entity.KnowledgeQAProgress;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -37,12 +37,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 新增知识库文章。
+ * 基于知识库的问答。
  */
-public class AppendKnowledgeArticle extends ContextHandler {
+public class KnowledgeQA extends ContextHandler {
 
-    public AppendKnowledgeArticle() {
-        super("/aigc/knowledge/article/append");
+    public KnowledgeQA() {
+        super("/aigc/knowledge/qa/");
         setHandler(new Handler());
     }
 
@@ -54,43 +54,60 @@ public class AppendKnowledgeArticle extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getRequestPath(request);
+            String token = this.getLastRequestPath(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
                 return;
             }
 
-            KnowledgeArticle article = null;
+            String unit = ModelConfig.BAIZE_UNIT;
+            String sectionQuery = null;
+            String comprehensiveQuery = null;
+            String category = null;
             try {
-                JSONObject data = readBodyAsJSONObject(request);
-                if (null == data) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
-                    this.complete();
-                    return;
+                JSONObject data = this.readBodyAsJSONObject(request);
+                if (data.has("unit")) {
+                    unit = data.getString("unit");
                 }
-
-                if (!data.has("contactId")) {
-                    Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
-                    data.put("contactId", contactToken.contact.getId());
-                }
-
-                article = new KnowledgeArticle(data);
+                sectionQuery = data.getString("sectionQuery");
+                comprehensiveQuery = data.getString("comprehensiveQuery");
+                category = data.getString("category");
             } catch (Exception e) {
-                Logger.e(this.getClass(), "#doPost", e);
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
                 return;
             }
 
-            KnowledgeArticle result = Manager.getInstance().appendKnowledgeArticle(token, article);
-            if (null == result) {
+            KnowledgeQAProgress progress = Manager.getInstance().performKnowledgeQA(token, unit,
+                    sectionQuery, comprehensiveQuery, category);
+            if (null == progress) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }
 
-            this.respondOk(response, result.toCompactJSON());
+            this.respondOk(response, progress.toJSON());
+            this.complete();
+        }
+
+        @Override
+        public void doGet(HttpServletRequest request, HttpServletResponse response) {
+            String token = this.getLastRequestPath(request);
+            if (!Manager.getInstance().checkToken(token)) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.complete();
+                return;
+            }
+
+            KnowledgeQAProgress progress = Manager.getInstance().getKnowledgeQAProgress(token);
+            if (null == progress) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
+
+            this.respondOk(response, progress.toJSON());
             this.complete();
         }
     }

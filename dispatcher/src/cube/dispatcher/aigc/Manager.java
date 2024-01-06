@@ -123,6 +123,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new Summarization());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
         httpServer.addContextHandler(new Conversation());
+        httpServer.addContextHandler(new KnowledgeQA());
         httpServer.addContextHandler(new KnowledgeProfiles());
         httpServer.addContextHandler(new KnowledgeDocs());
         httpServer.addContextHandler(new ImportKnowledgeDoc());
@@ -930,6 +931,54 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return Packet.extractDataPayload(responsePacket);
+    }
+
+    public KnowledgeQAProgress performKnowledgeQA(String token, String unit, String sectionQuery,
+                                                  String comprehensiveQuery, String category) {
+        JSONObject data = new JSONObject();
+        data.put("unit", unit);
+        data.put("section", sectionQuery);
+        data.put("comprehensive", comprehensiveQuery);
+        data.put("category", category);
+        Packet packet = new Packet(AIGCAction.PerformKnowledgeQA.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#performKnowledgeQA - Response is null: " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#performKnowledgeQA - Response state code is NOT Ok - "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new KnowledgeQAProgress(Packet.extractDataPayload(responsePacket));
+    }
+
+    public KnowledgeQAProgress getKnowledgeQAProgress(String token) {
+        Packet packet = new Packet(AIGCAction.GetKnowledgeQAProgress.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#getKnowledgeQAProgress - Response is null: " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#getKnowledgeQAProgress - Response state code is NOT Ok - "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new KnowledgeQAProgress(Packet.extractDataPayload(responsePacket));
     }
 
     public SentimentResult sentimentAnalysis(String text) {

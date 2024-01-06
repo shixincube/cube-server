@@ -34,6 +34,7 @@ import cube.aigc.ModelConfig;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
+import cube.common.entity.KnowledgeQAProgress;
 import cube.common.entity.KnowledgeQAResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
@@ -66,7 +67,7 @@ public class PerformKnowledgeQATask extends ServiceTask {
         }
 
         String unitName = null;
-        String pipelineQuery = null;    // 必填参数
+        String sectionQuery = null;    // 必填参数
         String comprehensiveQuery = null;   // 必填参数
         String category = null;     // 必填参数
         int maxArticles = 0;
@@ -74,7 +75,7 @@ public class PerformKnowledgeQATask extends ServiceTask {
 
         try {
             unitName = packet.data.has("unit") ? packet.data.getString("unit") : ModelConfig.BAIZE_UNIT;
-            pipelineQuery = packet.data.getString("pipeline");
+            sectionQuery = packet.data.getString("section");
             comprehensiveQuery = packet.data.getString("comprehensive");
             category = packet.data.getString("category");
             maxArticles = packet.data.has("maxArticles") ? packet.data.getInt("maxArticles") : 0;
@@ -109,7 +110,7 @@ public class PerformKnowledgeQATask extends ServiceTask {
         }
 
         // 执行知识库问答
-        boolean success = base.performKnowledgeQA(channel.getCode(), unitName, pipelineQuery, comprehensiveQuery,
+        KnowledgeQAProgress progress = base.performKnowledgeQA(channel.getCode(), unitName, sectionQuery, comprehensiveQuery,
                 category, maxArticles, maxParaphrases, new KnowledgeQAListener() {
                     @Override
                     public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
@@ -122,9 +123,9 @@ public class PerformKnowledgeQATask extends ServiceTask {
                     }
                 });
 
-        if (success) {
+        if (null != progress) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, packet.data));
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, progress.toJSON()));
             markResponseTime();
         }
         else {

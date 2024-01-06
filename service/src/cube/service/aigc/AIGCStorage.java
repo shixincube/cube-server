@@ -715,12 +715,6 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public List<AIGCChatHistory> readChatHistoryByContactId(long contactId, int maxNum) {
-        List<AIGCChatHistory> list = new ArrayList<>();
-
-        return list;
-    }
-
     public void writeChatHistory(AIGCChatHistory history) {
         this.storage.executeInsert(this.queryAnswerTable, new StorageField[] {
                 new StorageField("sn", history.sn),

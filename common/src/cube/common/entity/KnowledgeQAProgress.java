@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
@@ -34,21 +35,41 @@ import org.json.JSONObject;
  */
 public class KnowledgeQAProgress implements JSONable {
 
+    private final long sn;
+
     private AIGCChannel channel;
 
     private String unitName;
 
-    private String query;
+    private long start;
 
-    private String prompt;
+    private long end;
 
     private int progress;
 
     private int totalProgress;
 
+    private int code = -1;
+
+    private KnowledgeQAResult result;
+
     public KnowledgeQAProgress(AIGCChannel channel, String unitName) {
+        this.sn = Utils.generateSerialNumber();
         this.channel = channel;
         this.unitName = unitName;
+        this.start = System.currentTimeMillis();
+    }
+
+    public KnowledgeQAProgress(JSONObject json) {
+        this.sn = json.getLong("sn");
+        this.channel = new AIGCChannel(json.getJSONObject("channel"));
+        this.unitName = json.getString("unit");
+        this.start = json.getLong("start");
+        this.end = json.getLong("end");
+        this.code = json.getInt("code");
+        if (json.has("result")) {
+            this.result = new KnowledgeQAResult(json.getJSONObject("result"));
+        }
     }
 
     public void defineTotalProgress(int value) {
@@ -56,13 +77,48 @@ public class KnowledgeQAProgress implements JSONable {
     }
 
     public int updateProgress(int value) {
+        if (this.totalProgress == 0) {
+            return 100;
+        }
+
         this.progress += value;
         return (int) Math.floor(((float) this.progress / (float) this.totalProgress) * 100.0);
+    }
+
+    public int getProgressPercent() {
+        if (this.totalProgress == 0) {
+            return 100;
+        }
+
+        return (int) Math.floor(((float) this.progress / (float) this.totalProgress) * 100.0);
+    }
+
+    public void setCode(int code) {
+        this.code = code;
+    }
+
+    public void setResult(KnowledgeQAResult result) {
+        this.result = result;
+        this.end = System.currentTimeMillis();
+    }
+
+    public KnowledgeQAResult getResult() {
+        return this.result;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
+        json.put("channel", this.channel.toCompactJSON());
+        json.put("unit", this.unitName);
+        json.put("start", this.start);
+        json.put("end", this.end);
+        json.put("progress", this.getProgressPercent());
+        json.put("code", this.code);
+        if (null != this.result) {
+            json.put("result", this.result.toCompactJSON());
+        }
         return json;
     }
 

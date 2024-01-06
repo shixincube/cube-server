@@ -84,7 +84,7 @@ public class KnowledgeBase {
 
     private ResetKnowledgeProgress resetProgress;
 
-    private KnowledgeQAProgress activateKnowledgeQA;
+    private KnowledgeQAProgress activateProgress;
 
     private AtomicBoolean qaLock;
 
@@ -995,12 +995,16 @@ public class KnowledgeBase {
         return list;
     }
 
+    public KnowledgeQAProgress getActivateProgress() {
+        return this.activateProgress;
+    }
+
     /**
      * 使用全量数据进行问答。
      *
      * @param channelCode
      * @param unitName
-     * @param pipelineQuery
+     * @param sectionQuery
      * @param comprehensiveQuery
      * @param category
      * @param maxArticles
@@ -1008,18 +1012,18 @@ public class KnowledgeBase {
      * @param listener
      * @return
      */
-    public boolean performKnowledgeQA(String channelCode, String unitName,
-                                      String pipelineQuery, String comprehensiveQuery,
+    public KnowledgeQAProgress performKnowledgeQA(String channelCode, String unitName,
+                                      String sectionQuery, String comprehensiveQuery,
                                       String category, int maxArticles, int maxParaphrases,
                                       KnowledgeQAListener listener) {
         if (this.qaLock.get()) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Knowledge base is performing QA - " + channelCode);
-            return false;
+            return null;
         }
         this.qaLock.set(true);
 
-        Logger.d(this.getClass(), "#performKnowledgeQA [pipeline/category] - " + channelCode +
-                "/" + unitName + "/" + pipelineQuery + "/" + comprehensiveQuery + "/" + category);
+        Logger.d(this.getClass(), "#performKnowledgeQA [section/category] - " + channelCode +
+                "/" + unitName + "/" + sectionQuery + "/" + comprehensiveQuery + "/" + category);
 
         if (maxArticles <= 0) {
             maxArticles = 5;
@@ -1032,25 +1036,25 @@ public class KnowledgeBase {
         if (null == channel) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Can NOT find channel: " + channelCode);
             this.qaLock.set(false);
-            return false;
+            return null;
         }
 
-        AIGCUnit unit = this.service.selectUnitByName(unitName);
+        final AIGCUnit unit = this.service.selectUnitByName(unitName);
         if (null == unit) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Select unit error: " + unitName);
             this.qaLock.set(false);
-            return false;
+            return null;
         }
 
-        this.activateKnowledgeQA = new KnowledgeQAProgress(channel, unitName);
-
-        List<KnowledgeArticle> articles = this.storage.matchKnowledgeArticles(this.authToken.getDomain(),
-                this.authToken.getContactId(), category);
+        List<KnowledgeArticle> articles = this.storage.readKnowledgeArticles(category, 1, System.currentTimeMillis());
+//        this.storage.matchKnowledgeArticles(this.authToken.getDomain(), this.authToken.getContactId(), category);
         if (articles.isEmpty()) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Article list is empty");
             this.qaLock.set(false);
-            return false;
+            return null;
         }
+
+        this.activateProgress = new KnowledgeQAProgress(channel, unitName);
 
         // 倒序
         Collections.reverse(articles);
@@ -1070,55 +1074,103 @@ public class KnowledgeBase {
                     }
                 }
 
-                StringBuilder buf = new StringBuilder();
-                for (AIGCGenerationRecord record : pipelineRecordList) {
-                    buf.append(record.answer).append("\n\n");
-                }
-                String prompt = Consts.formatQuestion(buf.toString(), comprehensiveQuery);
-                
-            }
-        })).start();
+                if (!pipelineRecordList.isEmpty()) {
+                    StringBuilder buf = new StringBuilder();
+                    for (AIGCGenerationRecord record : pipelineRecordList) {
+                        buf.append(record.answer).append("\n\n");
+                    }
+                    String prompt = Consts.formatQuestion(buf.toString(), comprehensiveQuery);
 
-        // 定义总进度
-        this.activateKnowledgeQA.defineTotalProgress(articles.size() + 1);
-
-        for (int i = 0; i < articles.size() && i < maxArticles; ++i) {
-            KnowledgeArticle article = articles.get(i);
-            // 格式化提示词
-            String prompt = Consts.formatQuestion(article.content, pipelineQuery);
-            this.service.generateText(channel, this.service.selectUnitByName(unitName), pipelineQuery,
-                    prompt, null, false, new GenerateTextListener() {
+                    service.generateText(channel, unit, comprehensiveQuery, prompt,
+                            null, false, new GenerateTextListener() {
                         @Override
                         public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
-                            synchronized (pipelineRecordList) {
-                                pipelineRecordList.add(record);
-                            }
+                            activateProgress.setCode(AIGCStateCode.Ok.code);
 
-                            // 更新进度
-                            activateKnowledgeQA.updateProgress(1);
+                            KnowledgeQAResult result = new KnowledgeQAResult(comprehensiveQuery, prompt);
+                            result.record = record;
+                            activateProgress.setResult(result);
 
-                            if (count.incrementAndGet() == articles.size()) {
-                                synchronized (qaLock) {
-                                    qaLock.notify();
-                                }
-                            }
+                            int percent = activateProgress.updateProgress(1);
+                            Logger.d(KnowledgeBase.class, "#performKnowledgeQA - Progress percent: " + percent + "%");
+
+                            // 回调
+                            listener.onCompleted(channel, result);
+
+                            // 更新锁状态
+                            qaLock.set(false);
                         }
 
                         @Override
                         public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
-                            // 更新进度
-                            activateKnowledgeQA.updateProgress(1);
+                            activateProgress.setCode(stateCode.code);
+                            int percent = activateProgress.updateProgress(1);
+                            Logger.d(KnowledgeBase.class, "#performKnowledgeQA - Progress percent: " + percent + "%");
 
-                            if (count.incrementAndGet() == articles.size()) {
-                                synchronized (qaLock) {
-                                    qaLock.notify();
-                                }
-                            }
+                            // 回调
+                            listener.onFailed(channel, stateCode);
+
+                            // 更新锁状态
+                            qaLock.set(false);
                         }
                     });
+                }
+                else {
+                    activateProgress.setCode(AIGCStateCode.NoData.code);
+                    int percent = activateProgress.updateProgress(1);
+                    Logger.d(KnowledgeBase.class, "#performKnowledgeQA - Progress percent: " + percent + "%");
+
+                    // 回调
+                    listener.onFailed(channel, AIGCStateCode.NoData);
+
+                    // 更新锁状态
+                    qaLock.set(false);
+                }
+            }
+        })).start();
+
+        // 定义总进度
+        this.activateProgress.defineTotalProgress(articles.size() + 1);
+
+        for (int i = 0; i < articles.size() && i < maxArticles; ++i) {
+            KnowledgeArticle article = articles.get(i);
+            // 格式化提示词
+            String prompt = Consts.formatQuestion(article.content, sectionQuery);
+            this.service.generateText(channel, unit, sectionQuery,
+                prompt, null, false, new GenerateTextListener() {
+                    @Override
+                    public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
+                        synchronized (pipelineRecordList) {
+                            pipelineRecordList.add(record);
+                        }
+
+                        // 更新进度
+                        int percent = activateProgress.updateProgress(1);
+                        Logger.d(KnowledgeBase.class, "#performKnowledgeQA [onGenerated] - Progress percent: " + percent + "%");
+
+                        if (count.incrementAndGet() == articles.size()) {
+                            synchronized (qaLock) {
+                                qaLock.notify();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
+                        // 更新进度
+                        int percent = activateProgress.updateProgress(1);
+                        Logger.d(KnowledgeBase.class, "#performKnowledgeQA [onFailed] - Progress percent: " + percent + "%");
+
+                        if (count.incrementAndGet() == articles.size()) {
+                            synchronized (qaLock) {
+                                qaLock.notify();
+                            }
+                        }
+                    }
+                });
         }
 
-        return true;
+        return activateProgress;
     }
 
     private String generatePrompt(String query, int topK, int fetchK, boolean brisk) {
