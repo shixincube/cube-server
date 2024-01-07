@@ -27,6 +27,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cube.aigc.ModelConfig;
+import cube.common.entity.KnowledgeMatchingSchema;
 import cube.common.entity.KnowledgeQAProgress;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
@@ -62,25 +63,29 @@ public class KnowledgeQA extends ContextHandler {
             }
 
             String unit = ModelConfig.BAIZE_UNIT;
-            String sectionQuery = null;
-            String comprehensiveQuery = null;
-            String category = null;
+            KnowledgeMatchingSchema matchingSchema = null;
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
                 if (data.has("unit")) {
                     unit = data.getString("unit");
                 }
-                sectionQuery = data.getString("sectionQuery");
-                comprehensiveQuery = data.getString("comprehensiveQuery");
-                category = data.getString("category");
+
+                if (data.has("matchingSchema")) {
+                    matchingSchema = new KnowledgeMatchingSchema(data.getJSONObject("matchingSchema"));
+                }
+                else {
+                    String sectionQuery = data.getString("sectionQuery");
+                    String comprehensiveQuery = data.getString("comprehensiveQuery");
+                    String category = data.getString("category");
+                    matchingSchema = new KnowledgeMatchingSchema(category, sectionQuery, comprehensiveQuery);
+                }
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
                 return;
             }
 
-            KnowledgeQAProgress progress = Manager.getInstance().performKnowledgeQA(token, unit,
-                    sectionQuery, comprehensiveQuery, category);
+            KnowledgeQAProgress progress = Manager.getInstance().performKnowledgeQA(token, unit, matchingSchema);
             if (null == progress) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();

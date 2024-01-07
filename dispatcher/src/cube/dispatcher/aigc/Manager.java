@@ -933,13 +933,10 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public KnowledgeQAProgress performKnowledgeQA(String token, String unit, String sectionQuery,
-                                                  String comprehensiveQuery, String category) {
+    public KnowledgeQAProgress performKnowledgeQA(String token, String unit, KnowledgeMatchingSchema matchingSchema) {
         JSONObject data = new JSONObject();
         data.put("unit", unit);
-        data.put("section", sectionQuery);
-        data.put("comprehensive", comprehensiveQuery);
-        data.put("category", category);
+        data.put("matchingSchema", matchingSchema.toJSON());
         Packet packet = new Packet(AIGCAction.PerformKnowledgeQA.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);

@@ -34,6 +34,7 @@ import cube.aigc.ModelConfig;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
+import cube.common.entity.KnowledgeMatchingSchema;
 import cube.common.entity.KnowledgeQAProgress;
 import cube.common.entity.KnowledgeQAResult;
 import cube.common.state.AIGCStateCode;
@@ -67,19 +68,10 @@ public class PerformKnowledgeQATask extends ServiceTask {
         }
 
         String unitName = null;
-        String sectionQuery = null;    // 必填参数
-        String comprehensiveQuery = null;   // 必填参数
-        String category = null;     // 必填参数
-        int maxArticles = 0;
-        int maxParaphrases = 0;
-
+        KnowledgeMatchingSchema matchingSchema = null;
         try {
             unitName = packet.data.has("unit") ? packet.data.getString("unit") : ModelConfig.BAIZE_UNIT;
-            sectionQuery = packet.data.getString("section");
-            comprehensiveQuery = packet.data.getString("comprehensive");
-            category = packet.data.getString("category");
-            maxArticles = packet.data.has("maxArticles") ? packet.data.getInt("maxArticles") : 0;
-            maxParaphrases = packet.data.has("maxParaphrases") ? packet.data.getInt("maxParaphrases") : 0;
+            matchingSchema = new KnowledgeMatchingSchema(packet.data.getJSONObject("matchingSchema"));
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -110,8 +102,8 @@ public class PerformKnowledgeQATask extends ServiceTask {
         }
 
         // 执行知识库问答
-        KnowledgeQAProgress progress = base.performKnowledgeQA(channel.getCode(), unitName, sectionQuery, comprehensiveQuery,
-                category, maxArticles, maxParaphrases, new KnowledgeQAListener() {
+        KnowledgeQAProgress progress = base.performKnowledgeQA(channel.getCode(), unitName, matchingSchema,
+                new KnowledgeQAListener() {
                     @Override
                     public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
                         // Nothing

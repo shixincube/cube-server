@@ -1042,18 +1042,12 @@ public class KnowledgeBase {
      *
      * @param channelCode
      * @param unitName
-     * @param sectionQuery
-     * @param comprehensiveQuery
-     * @param category
-     * @param maxArticles
-     * @param maxParaphrases
+     * @param matchingSchema
      * @param listener
      * @return
      */
     public KnowledgeQAProgress performKnowledgeQA(String channelCode, String unitName,
-                                      String sectionQuery, String comprehensiveQuery,
-                                      String category, int maxArticles, int maxParaphrases,
-                                      KnowledgeQAListener listener) {
+                                      KnowledgeMatchingSchema matchingSchema, KnowledgeQAListener listener) {
         if (this.qaLock.get()) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Knowledge base is performing QA - " + channelCode);
             return null;
@@ -1061,14 +1055,8 @@ public class KnowledgeBase {
         this.qaLock.set(true);
 
         Logger.d(this.getClass(), "#performKnowledgeQA [section/category] - " + channelCode +
-                "/" + unitName + "/" + sectionQuery + "/" + comprehensiveQuery + "/" + category);
-
-        if (maxArticles <= 0) {
-            maxArticles = 5;
-        }
-        if (maxParaphrases <= 0) {
-            maxParaphrases = 5;
-        }
+                "/" + unitName + "/" + matchingSchema.getSectionQuery() + "/"
+                + matchingSchema.getComprehensiveQuery() + "/" + matchingSchema.getCategory());
 
         final AIGCChannel channel = this.service.getChannel(channelCode);
         if (null == channel) {
@@ -1085,7 +1073,8 @@ public class KnowledgeBase {
             return null;
         }
 
-        List<KnowledgeArticle> articles = this.storage.readKnowledgeArticles(category, 1, System.currentTimeMillis());
+        List<KnowledgeArticle> articles = this.storage.readKnowledgeArticles(matchingSchema.getCategory(),
+                1, System.currentTimeMillis());
 //        this.storage.matchKnowledgeArticles(this.authToken.getDomain(), this.authToken.getContactId(), category);
         if (articles.isEmpty()) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Article list is empty");
@@ -1100,7 +1089,7 @@ public class KnowledgeBase {
 
         // 总文本数量
         List<String> contentList = new ArrayList<>();
-        for (int i = 0; i < articles.size() && i < maxArticles; ++i) {
+        for (int i = 0; i < articles.size() && i < matchingSchema.getMaxArticles(); ++i) {
             KnowledgeArticle article = articles.get(i);
             contentList.addAll(trimArticleContent(article.content, 900));
         }
@@ -1132,15 +1121,15 @@ public class KnowledgeBase {
                     for (AIGCGenerationRecord record : pipelineRecordList) {
                         buf.append(record.answer).append("\n");
                     }
-                    String prompt = Consts.formatQuestion(buf.toString(), comprehensiveQuery);
+                    String prompt = Consts.formatQuestion(buf.toString(), matchingSchema.getComprehensiveQuery());
 
-                    service.generateText(channel, unit, comprehensiveQuery, prompt,
+                    service.generateText(channel, unit, matchingSchema.getComprehensiveQuery(), prompt,
                             null, false, new GenerateTextListener() {
                         @Override
                         public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                             activateProgress.setCode(AIGCStateCode.Ok.code);
 
-                            KnowledgeQAResult result = new KnowledgeQAResult(comprehensiveQuery, prompt);
+                            KnowledgeQAResult result = new KnowledgeQAResult(matchingSchema.getComprehensiveQuery(), prompt);
                             result.record = record;
                             activateProgress.setResult(result);
 
@@ -1184,9 +1173,9 @@ public class KnowledgeBase {
 
         for (String text : contentList) {
             // 格式化提示词
-            String prompt = Consts.formatQuestion(text, sectionQuery);
+            String prompt = Consts.formatQuestion(text, matchingSchema.getSectionQuery());
 
-            this.service.generateText(channel, unit, sectionQuery,
+            this.service.generateText(channel, unit, matchingSchema.getSectionQuery(),
                 prompt, null, false, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {

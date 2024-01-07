@@ -28,6 +28,7 @@ package cube.dispatcher.aigc.handler;
 
 import cell.util.log.Logger;
 import cube.common.entity.KnowledgeArticle;
+import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -48,13 +49,23 @@ public class AppendKnowledgeArticle extends ContextHandler {
 
     private class Handler extends AIGCHandler {
 
+        private AccessController controller;
+
         public Handler() {
             super();
+            this.controller = new AccessController();
+            this.controller.setEachIPInterval(50);
         }
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getRequestPath(request);
+            if (!this.controller.filter(request)) {
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                this.complete();
+                return;
+            }
+
+            String token = this.getLastRequestPath(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
