@@ -148,8 +148,8 @@ public class ChatTask extends ServiceTask {
                 });
             }
             else {
-                // 执行 Chat
-                success = service.chat(code, content, unit, histories, recordList, recordable, new GenerateTextListener() {
+                // 执行文本生成
+                success = service.generateText(code, content, unit, histories, recordList, recordable, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                         cellet.speak(talkContext,

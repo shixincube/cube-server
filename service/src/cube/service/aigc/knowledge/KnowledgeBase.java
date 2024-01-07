@@ -43,6 +43,7 @@ import cube.service.aigc.AIGCPluginContext;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.AIGCStorage;
 import cube.service.aigc.listener.*;
+import cube.service.aigc.resource.Agent;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import org.json.JSONArray;
@@ -630,20 +631,57 @@ public class KnowledgeBase {
 
         if (this.storage.writeKnowledgeArticle(article)) {
             if (null == article.summarization) {
-                // 为文章生成摘要
-                this.service.generateSummarization(article.content, new SummarizationListener() {
-                    @Override
-                    public void onCompleted(String text, String summarization) {
-                        article.summarization = summarization;
-                        storage.updateKnowledgeArticleSummarization(article.getId(), summarization);
-                    }
+                List<String> contentList = this.trimArticleContent(article.content, 300);
 
-                    @Override
-                    public void onFailed(String text, AIGCStateCode stateCode) {
-                        Logger.w(KnowledgeBase.class, "#appendKnowledgeArticle - Generate summarization failed - id: "
-                                + article.getId() + " - code: " + stateCode.code);
+                Logger.d(KnowledgeBase.class, "#appendKnowledgeArticle - Content list length: "
+                        + contentList.size());
+
+                List<String> resultList = new ArrayList<>();
+                AtomicInteger count = new AtomicInteger(0);
+
+                for (String content : contentList) {
+                    // 为文章生成摘要
+                    boolean success = this.service.generateSummarization(content, new SummarizationListener() {
+                        @Override
+                        public void onCompleted(String text, String summarization) {
+                            resultList.add(summarization);
+
+                            count.incrementAndGet();
+                            if (count.get() == contentList.size()) {
+                                StringBuilder buf = new StringBuilder();
+                                for (String result : resultList) {
+                                    buf.append(result).append("。\n");
+                                }
+                                buf.delete(buf.length() - 1, buf.length());
+
+                                article.summarization = buf.toString();
+                                storage.updateKnowledgeArticleSummarization(article.getId(), article.summarization);
+                            }
+                        }
+
+                        @Override
+                        public void onFailed(String text, AIGCStateCode stateCode) {
+                            Logger.w(KnowledgeBase.class, "#appendKnowledgeArticle - Generate summarization failed - id: "
+                                    + article.getId() + " - code: " + stateCode.code);
+
+                            count.incrementAndGet();
+                            if (count.get() == contentList.size() && !resultList.isEmpty()) {
+                                StringBuilder buf = new StringBuilder();
+                                for (String result : resultList) {
+                                    buf.append(result).append("。\n");
+                                }
+                                buf.delete(buf.length() - 1, buf.length());
+
+                                article.summarization = buf.toString();
+                                storage.updateKnowledgeArticleSummarization(article.getId(), article.summarization);
+                            }
+                        }
+                    });
+
+                    if (!success) {
+                        count.incrementAndGet();
                     }
-                });
+                }
             }
 
             return article;
@@ -1039,7 +1077,8 @@ public class KnowledgeBase {
             return null;
         }
 
-        final AIGCUnit unit = this.service.selectUnitByName(unitName);
+        final AIGCUnit unit = (Agent.getInstance() != null) ? Agent.getInstance().getUnit()
+                : this.service.selectUnitByName(unitName);
         if (null == unit) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Select unit error: " + unitName);
             this.qaLock.set(false);
@@ -1059,25 +1098,39 @@ public class KnowledgeBase {
         // 倒序
         Collections.reverse(articles);
 
+        // 总文本数量
+        List<String> contentList = new ArrayList<>();
+        for (int i = 0; i < articles.size() && i < maxArticles; ++i) {
+            KnowledgeArticle article = articles.get(i);
+            contentList.addAll(trimArticleContent(article.content, 900));
+        }
+
+        // 定义总进度
+        this.activateProgress.defineTotalProgress(contentList.size() + 1);
+
         AtomicInteger count = new AtomicInteger(0);
         List<AIGCGenerationRecord> pipelineRecordList = new ArrayList<>();
 
         (new Thread(new Runnable() {
             @Override
             public void run() {
+                Logger.d(KnowledgeBase.class, "#performKnowledgeQA - Waiting for section query");
+
                 synchronized (qaLock) {
                     try {
                         // 等待通道的文章结果
-                        qaLock.wait((long) articles.size() * 60 * 1000);
+                        qaLock.wait((long) contentList.size() * 60 * 1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
 
+                Logger.d(KnowledgeBase.class, "#performKnowledgeQA - Section query finish: " + pipelineRecordList.size());
+
                 if (!pipelineRecordList.isEmpty()) {
                     StringBuilder buf = new StringBuilder();
                     for (AIGCGenerationRecord record : pipelineRecordList) {
-                        buf.append(record.answer).append("\n\n");
+                        buf.append(record.answer).append("\n");
                     }
                     String prompt = Consts.formatQuestion(buf.toString(), comprehensiveQuery);
 
@@ -1092,7 +1145,7 @@ public class KnowledgeBase {
                             activateProgress.setResult(result);
 
                             int percent = activateProgress.updateProgress(1);
-                            Logger.d(KnowledgeBase.class, "#performKnowledgeQA - Progress percent: " + percent + "%");
+                            Logger.d(KnowledgeBase.class, "#performKnowledgeQA [onGenerated] - Progress percent: " + percent + "%");
 
                             // 回调
                             listener.onCompleted(channel, result);
@@ -1105,7 +1158,7 @@ public class KnowledgeBase {
                         public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                             activateProgress.setCode(stateCode.code);
                             int percent = activateProgress.updateProgress(1);
-                            Logger.d(KnowledgeBase.class, "#performKnowledgeQA - Progress percent: " + percent + "%");
+                            Logger.d(KnowledgeBase.class, "#performKnowledgeQA [onFailed] - Progress percent: " + percent + "%");
 
                             // 回调
                             listener.onFailed(channel, stateCode);
@@ -1129,13 +1182,10 @@ public class KnowledgeBase {
             }
         })).start();
 
-        // 定义总进度
-        this.activateProgress.defineTotalProgress(articles.size() + 1);
-
-        for (int i = 0; i < articles.size() && i < maxArticles; ++i) {
-            KnowledgeArticle article = articles.get(i);
+        for (String text : contentList) {
             // 格式化提示词
-            String prompt = Consts.formatQuestion(article.content, sectionQuery);
+            String prompt = Consts.formatQuestion(text, sectionQuery);
+
             this.service.generateText(channel, unit, sectionQuery,
                 prompt, null, false, new GenerateTextListener() {
                     @Override
@@ -1145,12 +1195,14 @@ public class KnowledgeBase {
                         }
 
                         // 更新进度
+                        count.incrementAndGet();
                         int percent = activateProgress.updateProgress(1);
-                        Logger.d(KnowledgeBase.class, "#performKnowledgeQA [onGenerated] - Progress percent: " + percent + "%");
+                        Logger.d(KnowledgeBase.class, "#performKnowledgeQA [onGenerated] - Progress percent: "
+                                + percent + "% - " + count.get() + "/" + contentList.size());
 
-                        if (count.incrementAndGet() == articles.size()) {
+                        if (count.get() == contentList.size()) {
                             synchronized (qaLock) {
-                                qaLock.notify();
+                                qaLock.notifyAll();
                             }
                         }
                     }
@@ -1158,12 +1210,14 @@ public class KnowledgeBase {
                     @Override
                     public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                         // 更新进度
+                        count.incrementAndGet();
                         int percent = activateProgress.updateProgress(1);
-                        Logger.d(KnowledgeBase.class, "#performKnowledgeQA [onFailed] - Progress percent: " + percent + "%");
+                        Logger.d(KnowledgeBase.class, "#performKnowledgeQA [onFailed] - Progress percent: "
+                                + percent + "% - " + count.get() + "/" + contentList.size());
 
-                        if (count.incrementAndGet() == articles.size()) {
+                        if (count.get() == contentList.size()) {
                             synchronized (qaLock) {
-                                qaLock.notify();
+                                qaLock.notifyAll();
                             }
                         }
                     }
@@ -1171,6 +1225,29 @@ public class KnowledgeBase {
         }
 
         return activateProgress;
+    }
+
+    private List<String> trimArticleContent(String content, int maxWords) {
+        List<String> list = new ArrayList<>();
+
+        StringBuilder buf = new StringBuilder();
+        int num = 0;
+        String[] array = content.split("\n");
+        for (String text : array) {
+            num += text.length();
+            buf.append(text).append("\n");
+            if (num >= maxWords) {
+                list.add(buf.toString());
+                num = 0;
+                buf = new StringBuilder();
+            }
+        }
+
+        if (num > 0) {
+            list.add(buf.toString());
+        }
+
+        return list;
     }
 
     private String generatePrompt(String query, int topK, int fetchK, boolean brisk) {

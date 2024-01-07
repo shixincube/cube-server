@@ -48,7 +48,7 @@ import java.util.List;
  */
 public final class Agent {
 
-    private final static Agent instance = new Agent();
+    private static Agent instance = null;
 
     private final String url;
 
@@ -58,11 +58,12 @@ public final class Agent {
         return Agent.instance;
     }
 
-    public Agent() {
-        this("http://211.157.179.34:7010");
+    public final static Agent createInstance(String url) {
+        Agent.instance = new Agent(url);
+        return Agent.instance;
     }
 
-    public Agent(String url) {
+    private Agent(String url) {
         this.url = url.endsWith("/") ? url : url + "/";
 
         Contact contact = new Contact(100000, "shixincube.com");
@@ -75,11 +76,15 @@ public final class Agent {
         this.unit = new AIGCUnit(contact, capability, null);
     }
 
+    public String getUrl() {
+        return this.url;
+    }
+
     public AIGCUnit getUnit() {
         return this.unit;
     }
 
-    public String chat(String token, String channelCode, String content) {
+    public String generateText(String token, String channelCode, String content) {
         HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
 
         try {
@@ -104,7 +109,7 @@ public final class Agent {
                     return responseData.getString("content");
                 }
                 else {
-                    Logger.e(this.getClass(), "#chat - Response data has no content");
+                    Logger.e(this.getClass(), "#generateText - Response data has no content");
                 }
             }
         } catch (Exception e) {

@@ -32,14 +32,14 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
-import cube.aigc.Usage;
-import cube.aigc.publicopinion.PublicOpinionTaskName;
 import cube.aigc.Sentiment;
+import cube.aigc.Usage;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PsychologyReport;
 import cube.aigc.psychology.Theme;
+import cube.aigc.publicopinion.PublicOpinionTaskName;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -107,7 +107,7 @@ public class AIGCService extends AbstractModule {
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, Queue<ChatUnitMeta>> chatQueueMap;
+    private Map<String, Queue<GenerateTextUnitMeta>> generateQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
@@ -190,7 +190,7 @@ public class AIGCService extends AbstractModule {
         this.cellet = cellet;
         this.unitMap = new ConcurrentHashMap<>();
         this.channelMap = new ConcurrentHashMap<>();
-        this.chatQueueMap = new ConcurrentHashMap<>();
+        this.generateQueueMap = new ConcurrentHashMap<>();
         this.conversationQueueMap = new ConcurrentHashMap<>();
         this.nlTaskQueueMap = new ConcurrentHashMap<>();
         this.sentimentQueueMap = new ConcurrentHashMap<>();
@@ -220,12 +220,24 @@ public class AIGCService extends AbstractModule {
                     properties.getProperty("enabled.recognize_context", "false"));
             this.enabledSearch = Boolean.parseBoolean(
                     properties.getProperty("enabled.search", "false"));
+
+            // 是否启用代理
+            this.useAgent = Boolean.parseBoolean(
+                    properties.getProperty("agent", "false"));
+            if (this.useAgent) {
+                Agent.createInstance(properties.getProperty("agent.url", "http://127.0.0.1:7010"));
+                // 添加单元
+                this.unitMap.put(Agent.getInstance().getUnit().getQueryKey(), Agent.getInstance().getUnit());
+            }
         } catch (IOException e) {
             Logger.e(this.getClass(), "#start - Load config properties error", e);
         }
 
         Logger.i(this.getClass(), "AI Service - Recognize Context Enabled: " + this.enabledRecognizeContext);
         Logger.i(this.getClass(), "AI Service - Search Enabled: " + this.enabledSearch);
+        if (this.useAgent) {
+            Logger.i(this.getClass(), "AI Service - Agent URL: " + Agent.getInstance().getUrl());
+        }
 
         (new Thread(new Runnable() {
             @Override
@@ -336,7 +348,7 @@ public class AIGCService extends AbstractModule {
         Iterator<AIGCUnit> unitIter = this.unitMap.values().iterator();
         while (unitIter.hasNext()) {
             AIGCUnit unit = unitIter.next();
-            if (!unit.getContext().isValid()) {
+            if (null != unit.getContext() && !unit.getContext().isValid()) {
                 // 已失效
                 unitIter.remove();
             }
@@ -398,7 +410,7 @@ public class AIGCService extends AbstractModule {
             if (unit.getContact().getId().equals(contact.getId())) {
                 result.add(unit);
                 iter.remove();
-                this.chatQueueMap.remove(unit.getQueryKey());
+                this.generateQueueMap.remove(unit.getQueryKey());
                 this.conversationQueueMap.remove(unit.getQueryKey());
             }
         }
@@ -766,10 +778,10 @@ public class AIGCService extends AbstractModule {
             boolean hit = false;
 
             // 进入队列，但是没有被执行线程处理
-            for (Queue<ChatUnitMeta> queue : this.chatQueueMap.values()) {
-                Iterator<ChatUnitMeta> iter = queue.iterator();
+            for (Queue<GenerateTextUnitMeta> queue : this.generateQueueMap.values()) {
+                Iterator<GenerateTextUnitMeta> iter = queue.iterator();
                 while (iter.hasNext()) {
-                    ChatUnitMeta meta = iter.next();
+                    GenerateTextUnitMeta meta = iter.next();
                     if (meta.channel.getCode().equals(channelCode)) {
                         iter.remove();
                         channel.setProcessing(false);
@@ -943,7 +955,7 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
-     * 执行聊天任务。
+     * 生成文本内容。
      *
      * @param channelCode
      * @param content
@@ -954,28 +966,28 @@ public class AIGCService extends AbstractModule {
      * @param listener
      * @return
      */
-    public boolean chat(String channelCode, String content, String unitName, int numHistories,
-                        List<AIGCGenerationRecord> records, boolean recordable, GenerateTextListener listener) {
+    public boolean generateText(String channelCode, String content, String unitName, int numHistories,
+                                List<AIGCGenerationRecord> records, boolean recordable, GenerateTextListener listener) {
         if (!this.isStarted()) {
-            Logger.w(AIGCService.class, "#chat - Service is NOT ready");
+            Logger.w(AIGCService.class, "#generateText - Service is NOT ready");
             return false;
         }
 
         if (content.length() > this.maxChatContent) {
-            Logger.w(AIGCService.class, "#chat - Content length greater than " + this.maxChatContent);
+            Logger.w(AIGCService.class, "#generateText - Content length greater than " + this.maxChatContent);
             return false;
         }
 
         // 获取频道
         AIGCChannel channel = this.channelMap.get(channelCode);
         if (null == channel) {
-            Logger.w(AIGCService.class, "#chat - Can NOT find AIGC channel: " + channelCode);
+            Logger.w(AIGCService.class, "#generateText - Can NOT find AIGC channel: " + channelCode);
             return false;
         }
 
         // 如果频道正在应答上一次问题，则返回 null
         if (channel.isProcessing()) {
-            Logger.w(AIGCService.class, "#chat - Channel is processing: " + channelCode);
+            Logger.w(AIGCService.class, "#generateText - Channel is processing: " + channelCode);
             return false;
         }
 
@@ -1001,20 +1013,20 @@ public class AIGCService extends AbstractModule {
         }
 
         if (null == unit) {
-            Logger.w(AIGCService.class, "#chat - No conversational task unit setup in server");
+            Logger.w(AIGCService.class, "#generateText - No conversational task unit setup in server");
             channel.setProcessing(false);
             return false;
         }
 
-        ChatUnitMeta meta = new ChatUnitMeta(unit, channel, content, records, listener);
+        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, content, records, listener);
         meta.numHistories = numHistories;
         meta.needRecordHistory = recordable;
 
-        synchronized (this.chatQueueMap) {
-            Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getQueryKey());
+        synchronized (this.generateQueueMap) {
+            Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
-                this.chatQueueMap.put(unit.getQueryKey(), queue);
+                this.generateQueueMap.put(unit.getQueryKey(), queue);
             }
 
             queue.offer(meta);
@@ -1026,7 +1038,7 @@ public class AIGCService extends AbstractModule {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processChatQueue(meta.unit.getQueryKey());
+                    processGenerateTextQueue(meta.unit.getQueryKey());
                 }
             });
         }
@@ -1046,15 +1058,15 @@ public class AIGCService extends AbstractModule {
             return;
         }
 
-        ChatUnitMeta meta = new ChatUnitMeta(unit, channel, prompt, records, listener);
+        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, prompt, records, listener);
         meta.setOriginalQuery(query);
         meta.setNeedRecordHistory(recordable);
 
-        synchronized (this.chatQueueMap) {
-            Queue<ChatUnitMeta> queue = this.chatQueueMap.get(unit.getQueryKey());
+        synchronized (this.generateQueueMap) {
+            Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
-                this.chatQueueMap.put(unit.getQueryKey(), queue);
+                this.generateQueueMap.put(unit.getQueryKey(), queue);
             }
 
             queue.offer(meta);
@@ -1066,7 +1078,7 @@ public class AIGCService extends AbstractModule {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processChatQueue(meta.unit.getQueryKey());
+                    processGenerateTextQueue(meta.unit.getQueryKey());
                 }
             });
         }
@@ -1924,10 +1936,10 @@ public class AIGCService extends AbstractModule {
         return null;
     }
 
-    private void processChatQueue(String queryKey) {
-        Queue<ChatUnitMeta> queue = this.chatQueueMap.get(queryKey);
+    private void processGenerateTextQueue(String queryKey) {
+        Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(queryKey);
         if (null == queue) {
-            Logger.w(AIGCService.class, "#processChatQueue - Not found unit: " + queryKey);
+            Logger.w(AIGCService.class, "#processGenerateTextQueue - Not found unit: " + queryKey);
             AIGCUnit unit = this.unitMap.get(queryKey);
             if (null != unit) {
                 unit.setRunning(false);
@@ -1935,20 +1947,34 @@ public class AIGCService extends AbstractModule {
             return;
         }
 
-        ChatUnitMeta meta = queue.poll();
+        AIGCUnit unit = null;
+
+        GenerateTextUnitMeta meta = queue.poll();
         while (null != meta) {
+            if (null == unit) {
+                unit = meta.unit;
+            }
+
             // 执行处理
             try {
                 meta.process();
             } catch (Exception e) {
-                Logger.e(this.getClass(), "#processChatQueue - meta process", e);
+                Logger.e(this.getClass(), "#processGenerateTextQueue - meta process", e);
             }
 
             meta = queue.poll();
         }
 
-        AIGCUnit unit = this.unitMap.get(queryKey);
-        if (null != unit) {
+        if (null == unit) {
+            unit = this.unitMap.get(queryKey);
+            if (null != unit) {
+                unit.setRunning(false);
+            }
+            else {
+                Logger.e(this.getClass(), "#processGenerateTextQueue - Unit is null: " + queryKey);
+            }
+        }
+        else {
             unit.setRunning(false);
         }
     }
@@ -2140,7 +2166,7 @@ public class AIGCService extends AbstractModule {
     }
 
 
-    private class ChatUnitMeta {
+    private class GenerateTextUnitMeta {
 
         protected final long sn;
 
@@ -2164,8 +2190,10 @@ public class AIGCService extends AbstractModule {
 
         protected boolean needRecordHistory = true;
 
-        public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
-                            List<AIGCGenerationRecord> records, GenerateTextListener listener) {
+        protected boolean needSearch = false;
+
+        public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
+                                    List<AIGCGenerationRecord> records, GenerateTextListener listener) {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
@@ -2182,7 +2210,7 @@ public class AIGCService extends AbstractModule {
             this.history.queryContent = content;
         }
 
-        public ChatUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, int numHistories, GenerateTextListener listener) {
+        public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, int numHistories, GenerateTextListener listener) {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
@@ -2198,8 +2226,12 @@ public class AIGCService extends AbstractModule {
             this.history.queryContent = content;
         }
 
-        public void setNeedRecordHistory(boolean needRecordHistory) {
-            this.needRecordHistory = needRecordHistory;
+        public void setNeedRecordHistory(boolean value) {
+            this.needRecordHistory = value;
+        }
+
+        public void setNeedSearch(boolean value) {
+            this.needSearch = value;
         }
 
         public void setOriginalQuery(String originalQuery) {
@@ -2268,13 +2300,14 @@ public class AIGCService extends AbstractModule {
                 }
 
                 if (useAgent) {
-                    String responseText = Agent.getInstance().chat(channel.getAuthToken().getCode(),
+                    String responseText = Agent.getInstance().generateText(channel.getAuthToken().getCode(),
                             channel.getCode(), this.content);
                     if (null != responseText) {
                         // 过滤中文字符
                         responseText = this.filterChinese(this.unit, responseText);
                         result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
-                                this.content, responseText, complexContext);
+                                (null != this.originalQuery) ? this.originalQuery : this.content,
+                                responseText, complexContext);
                     }
                     else {
                         this.channel.setProcessing(false);

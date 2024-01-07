@@ -49,6 +49,8 @@ public class KnowledgeQAProgress implements JSONable {
 
     private int totalProgress;
 
+    private int percent = 0;
+
     private int code = -1;
 
     private KnowledgeQAResult result;
@@ -66,6 +68,7 @@ public class KnowledgeQAProgress implements JSONable {
         this.unitName = json.getString("unit");
         this.start = json.getLong("start");
         this.end = json.getLong("end");
+        this.percent = json.getInt("percent");
         this.code = json.getInt("code");
         if (json.has("result")) {
             this.result = new KnowledgeQAResult(json.getJSONObject("result"));
@@ -73,6 +76,7 @@ public class KnowledgeQAProgress implements JSONable {
     }
 
     public void defineTotalProgress(int value) {
+        this.progress = 0;
         this.totalProgress = value;
     }
 
@@ -82,12 +86,13 @@ public class KnowledgeQAProgress implements JSONable {
         }
 
         this.progress += value;
-        return (int) Math.floor(((float) this.progress / (float) this.totalProgress) * 100.0);
+        this.percent = (int) Math.floor(((float) this.progress / (float) this.totalProgress) * 100.0);
+        return this.percent;
     }
 
     public int getProgressPercent() {
         if (this.totalProgress == 0) {
-            return 100;
+            return 0;
         }
 
         return (int) Math.floor(((float) this.progress / (float) this.totalProgress) * 100.0);
@@ -114,7 +119,7 @@ public class KnowledgeQAProgress implements JSONable {
         json.put("unit", this.unitName);
         json.put("start", this.start);
         json.put("end", this.end);
-        json.put("progress", this.getProgressPercent());
+        json.put("percent", this.percent);
         json.put("code", this.code);
         if (null != this.result) {
             json.put("result", this.result.toCompactJSON());
