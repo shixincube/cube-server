@@ -78,7 +78,7 @@ public final class Consts {
     private final static String ASK_FORMAT = "已知信息：\n%s\n\n" +
             "根据上述已知信息，简洁和专业的来回答用户的问题。如果无法从中得到答案，请说“没有提供足够的相关信息”，不允许在答案中添加编造成分，答案请使用中文。问题是：%s";
 
-
+    public final static String KNOWLEDGE_SECTION_PROMPT = "整理信息的3条主要观点。";
 
     public final static String ANSWER_FIND_SOME_YEAR_DATA = "没有找到%s的数据，但是找到了%s的数据。";
 

@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cube.aigc.Consts;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
@@ -44,9 +45,9 @@ public class KnowledgeMatchingSchema implements JSONable {
 
     private int maxParaphrases = 5;
 
-    public KnowledgeMatchingSchema(String category, String sectionQuery, String comprehensiveQuery) {
+    public KnowledgeMatchingSchema(String category, String comprehensiveQuery) {
         this.category = category;
-        this.sectionQuery = sectionQuery;
+        this.sectionQuery = Consts.KNOWLEDGE_SECTION_PROMPT;
         this.comprehensiveQuery = comprehensiveQuery;
     }
 

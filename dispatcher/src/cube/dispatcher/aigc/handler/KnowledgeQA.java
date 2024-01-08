@@ -74,10 +74,10 @@ public class KnowledgeQA extends ContextHandler {
                     matchingSchema = new KnowledgeMatchingSchema(data.getJSONObject("matchingSchema"));
                 }
                 else {
-                    String sectionQuery = data.getString("sectionQuery");
+//                    String sectionQuery = data.getString("sectionQuery");
                     String comprehensiveQuery = data.getString("comprehensiveQuery");
                     String category = data.getString("category");
-                    matchingSchema = new KnowledgeMatchingSchema(category, sectionQuery, comprehensiveQuery);
+                    matchingSchema = new KnowledgeMatchingSchema(category, comprehensiveQuery);
                 }
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);

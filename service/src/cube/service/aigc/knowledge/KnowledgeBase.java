@@ -46,6 +46,7 @@ import cube.service.aigc.listener.*;
 import cube.service.aigc.resource.Agent;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -1091,7 +1092,7 @@ public class KnowledgeBase {
         List<String> contentList = new ArrayList<>();
         for (int i = 0; i < articles.size() && i < matchingSchema.getMaxArticles(); ++i) {
             KnowledgeArticle article = articles.get(i);
-            contentList.addAll(trimArticleContent(article.content, 900));
+            contentList.addAll(trimArticleContent(article.content, 1100));
         }
 
         // 定义总进度
@@ -1117,10 +1118,34 @@ public class KnowledgeBase {
                 Logger.d(KnowledgeBase.class, "#performKnowledgeQA - Section query finish: " + pipelineRecordList.size());
 
                 if (!pipelineRecordList.isEmpty()) {
+                    final int limit = 1500;
                     StringBuilder buf = new StringBuilder();
                     for (AIGCGenerationRecord record : pipelineRecordList) {
-                        buf.append(record.answer).append("\n");
+                        String[] paragraphs = record.answer.split("\n");
+                        // 跳过第一行
+                        for (int i = 1; i < paragraphs.length; ++i) {
+                            String text = paragraphs[i].trim();
+                            if (text.length() <= 2) {
+                                continue;
+                            }
+
+                            // 是否是 1. 2. 形式开头
+                            if (TextUtils.startsWithNumberSign(text)) {
+                                text = text.substring(2).trim();
+                            }
+
+                            buf.append(text).append("\n");
+                            if (buf.length() > limit) {
+                                break;
+                            }
+                        }
+
+                        if (buf.length() > limit) {
+                            break;
+                        }
                     }
+                    buf.delete(buf.length() - 1, buf.length());
+
                     String prompt = Consts.formatQuestion(buf.toString(), matchingSchema.getComprehensiveQuery());
 
                     service.generateText(channel, unit, matchingSchema.getComprehensiveQuery(), prompt,
@@ -1219,13 +1244,21 @@ public class KnowledgeBase {
     private List<String> trimArticleContent(String content, int maxWords) {
         List<String> list = new ArrayList<>();
 
+        int limit = maxWords;
+        if (content.length() > maxWords) {
+            limit = (int) Math.floor((float) content.length() * 0.5);
+            if (limit > maxWords) {
+                limit = (int) Math.floor((float) limit * 0.5);
+            }
+        }
+
         StringBuilder buf = new StringBuilder();
         int num = 0;
         String[] array = content.split("\n");
         for (String text : array) {
             num += text.length();
             buf.append(text).append("\n");
-            if (num >= maxWords) {
+            if (num >= limit) {
                 list.add(buf.toString());
                 num = 0;
                 buf = new StringBuilder();
