@@ -1046,6 +1046,44 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
+    public String syncGenerateText(AuthToken authToken, String unitName, String prompt) {
+        AIGCUnit unit = this.selectUnitByName(unitName);
+        if (null == unit) {
+            return null;
+        }
+
+        AIGCChannel channel = new AIGCChannel(authToken, "Baize");
+
+        StringBuilder result = new StringBuilder();
+        this.generateText(channel, unit, prompt, prompt, null, false, new GenerateTextListener() {
+            @Override
+            public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
+                result.append(record.answer);
+
+                synchronized (channel) {
+                    channel.notify();
+                }
+            }
+
+            @Override
+            public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
+                synchronized (channel) {
+                    channel.notify();
+                }
+            }
+        });
+
+        synchronized (channel) {
+            try {
+                channel.wait(2 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return result.length() <= 1 ? null : result.toString();
+    }
+
     public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt,
                              List<AIGCGenerationRecord> records, boolean recordable, GenerateTextListener listener) {
         if (this.useAgent) {

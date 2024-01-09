@@ -56,32 +56,31 @@ public class DeactivateKnowledgeArticle extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getRequestPath(request);
+            String token = this.getLastRequestPath(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
                 return;
             }
 
-//            JSONArray idList = null;
-//            try {
-//                JSONObject data = readBodyAsJSONObject(request);
-//                if (null == data) {
-//                    this.respond(response, HttpStatus.FORBIDDEN_403);
-//                    this.complete();
-//                    return;
-//                }
-//
-//                idList = data.getJSONArray("ids");
-//            } catch (Exception e) {
-//                Logger.e(this.getClass(), "#doPost", e);
-//                this.respond(response, HttpStatus.FORBIDDEN_403);
-//                this.complete();
-//                return;
-//            }
+            JSONArray idList = null;
+            try {
+                JSONObject data = readBodyAsJSONObject(request);
+                if (null == data) {
+                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.complete();
+                    return;
+                }
 
+                idList = data.getJSONArray("ids");
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#doPost", e);
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
 
-            List<KnowledgeArticle> result = Manager.getInstance().deactivateKnowledgeArticle(token);
+            List<KnowledgeArticle> result = Manager.getInstance().deactivateKnowledgeArticle(token, idList);
             if (null == result) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();

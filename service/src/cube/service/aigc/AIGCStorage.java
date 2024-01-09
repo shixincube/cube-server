@@ -281,6 +281,12 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("scope", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("activated", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
+            }),
+            new StorageField("segments", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
             })
     };
 
@@ -931,13 +937,24 @@ public class AIGCStorage implements Storagable {
                 new StorageField("month", article.month),
                 new StorageField("date", article.date),
                 new StorageField("timestamp", article.getTimestamp()),
-                new StorageField("scope", article.scope.name)
+                new StorageField("scope", article.scope.name),
+                new StorageField("activated", article.activated ? 1 : 0),
+                new StorageField("segments", article.numSegments)
         });
     }
 
     public boolean updateKnowledgeArticleSummarization(long articleId, String summarization) {
         return this.storage.executeUpdate(this.knowledgeArticleTable, new StorageField[] {
                 new StorageField("summarization", summarization)
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", articleId)
+        });
+    }
+
+    public boolean updateKnowledgeArticleActivated(long articleId, boolean activated, int numSegments) {
+        return this.storage.executeUpdate(this.knowledgeArticleTable, new StorageField[] {
+                new StorageField("activated", activated ? 1 : 0),
+                new StorageField("segments", numSegments)
         }, new Conditional[] {
                 Conditional.createEqualTo("id", articleId)
         });
@@ -960,8 +977,8 @@ public class AIGCStorage implements Storagable {
                     data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
                     data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
-                    data.get("timestamp").getLong(),
-                    KnowledgeScope.parse(data.get("scope").getString()));
+                    data.get("timestamp").getLong(), KnowledgeScope.parse(data.get("scope").getString()),
+                    data.get("activated").getInt() == 1, data.get("segments").getInt());
             list.add(article);
         }
 
@@ -983,8 +1000,8 @@ public class AIGCStorage implements Storagable {
                     data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
                     data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
-                    data.get("timestamp").getLong(),
-                    KnowledgeScope.parse(data.get("scope").getString()));
+                    data.get("timestamp").getLong(), KnowledgeScope.parse(data.get("scope").getString()),
+                    data.get("activated").getInt() == 1, data.get("segments").getInt());
             list.add(article);
         }
 
@@ -1014,8 +1031,8 @@ public class AIGCStorage implements Storagable {
                     data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
                     data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
-                    data.get("timestamp").getLong(),
-                    KnowledgeScope.parse(data.get("scope").getString()));
+                    data.get("timestamp").getLong(), KnowledgeScope.parse(data.get("scope").getString()),
+                    data.get("activated").getInt() == 1, data.get("segments").getInt());
             list.add(article);
         }
 
@@ -1042,8 +1059,36 @@ public class AIGCStorage implements Storagable {
                     data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
                     data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
-                    data.get("timestamp").getLong(),
-                    KnowledgeScope.parse(data.get("scope").getString()));
+                    data.get("timestamp").getLong(), KnowledgeScope.parse(data.get("scope").getString()),
+                    data.get("activated").getInt() == 1, data.get("segments").getInt());
+            list.add(article);
+        }
+
+        return list;
+    }
+
+    public List<KnowledgeArticle> readKnowledgeArticles(long contactId, long startTime, long endTime) {
+        List<KnowledgeArticle> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createGreaterThanEqual(new StorageField("timestamp", startTime)),
+                        Conditional.createAnd(),
+                        Conditional.createLessThanEqual(new StorageField("timestamp", endTime))
+                });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(), data.get("domain").getString(),
+                    data.get("contact_id").getLong(), data.get("category").getString(),
+                    data.get("title").getString(), data.get("content").getString(),
+                    data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
+                    data.get("author").getString(),
+                    data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
+                    data.get("timestamp").getLong(), KnowledgeScope.parse(data.get("scope").getString()),
+                    data.get("activated").getInt() == 1, data.get("segments").getInt());
             list.add(article);
         }
 
@@ -1077,8 +1122,8 @@ public class AIGCStorage implements Storagable {
                     data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
                     data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
-                    data.get("timestamp").getLong(),
-                    KnowledgeScope.parse(data.get("scope").getString()));
+                    data.get("timestamp").getLong(), KnowledgeScope.parse(data.get("scope").getString()),
+                    data.get("activated").getInt() == 1, data.get("segments").getInt());
             list.add(article);
         }
 

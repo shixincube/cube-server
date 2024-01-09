@@ -41,6 +41,11 @@ public class KnowledgeArticle extends Entity {
 
     public String content;
 
+    /**
+     * 字数。
+     */
+    public int numWords;
+
     public String summarization;
 
     public String author;
@@ -55,6 +60,10 @@ public class KnowledgeArticle extends Entity {
 
     public int numKeywords;
 
+    public boolean activated;
+
+    public int numSegments;
+
     public KnowledgeArticle(String domain, long contactId, String category, String title, String content, String author,
                             int year, int month, int date, long timestamp, KnowledgeScope scope) {
         super(0L, domain, timestamp);
@@ -67,10 +76,12 @@ public class KnowledgeArticle extends Entity {
         this.month = month;
         this.date = date;
         this.scope = scope;
+        this.numWords = content.length();
     }
 
-    public KnowledgeArticle(long id, String domain, long contactId, String category, String title, String content, String summarization,
-                            String author, int year, int month, int date, long timestamp, KnowledgeScope scope) {
+    public KnowledgeArticle(long id, String domain, long contactId, String category, String title, String content,
+                            String summarization, String author, int year, int month, int date, long timestamp,
+                            KnowledgeScope scope, boolean activated, int numSegments) {
         super(id, domain, timestamp);
         this.contactId = contactId;
         this.category = category;
@@ -82,6 +93,9 @@ public class KnowledgeArticle extends Entity {
         this.month = month;
         this.date = date;
         this.scope = scope;
+        this.activated = activated;
+        this.numSegments = numSegments;
+        this.numWords = content.length();
     }
 
     public KnowledgeArticle(JSONObject json) {
@@ -101,6 +115,11 @@ public class KnowledgeArticle extends Entity {
         this.date = json.getInt("date");
         this.scope = json.has("scope") ? KnowledgeScope.parse(json.getString("scope")) :
                 KnowledgeScope.Private;
+        this.activated = json.getBoolean("activated");
+        this.numSegments = json.getInt("numSegments");
+        if (json.has("numWords")) {
+            this.numWords = json.getInt("numWords");
+        }
     }
 
     @Override
@@ -135,6 +154,9 @@ public class KnowledgeArticle extends Entity {
         json.put("month", this.month);
         json.put("date", this.date);
         json.put("scope", this.scope.name);
+        json.put("activated", this.activated);
+        json.put("numSegments", this.numSegments);
+        json.put("numWords", this.numWords);
         return json;
     }
 
@@ -149,6 +171,9 @@ public class KnowledgeArticle extends Entity {
         json.put("month", this.month);
         json.put("date", this.date);
         json.put("scope", this.scope.name);
+        json.put("activated", this.activated);
+        json.put("numSegments", this.numSegments);
+        json.put("numWords", this.numWords);
         return json;
     }
 }

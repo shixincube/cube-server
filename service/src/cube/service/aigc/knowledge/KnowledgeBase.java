@@ -29,6 +29,7 @@ package cube.service.aigc.knowledge;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import com.sun.org.apache.xpath.internal.operations.Mod;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.auth.AuthToken;
@@ -621,8 +622,16 @@ public class KnowledgeBase {
         return this.resetProgress;
     }
 
-    public List<KnowledgeArticle> getKnowledgeArticles(String category, long startTime, long endTime) {
-        List<KnowledgeArticle> list = this.storage.readKnowledgeArticles(category, startTime, endTime);
+    public List<KnowledgeArticle> getKnowledgeArticles(long startTime, long endTime, boolean activated) {
+//        List<KnowledgeArticle> list = this.storage.readKnowledgeArticles(this.authToken.getContactId(), startTime, endTime);
+        List<KnowledgeArticle> articles = this.listKnowledgeArticles();
+        List<KnowledgeArticle> list = new ArrayList<>();
+        for (KnowledgeArticle article : articles) {
+            if (article.getTimestamp() >= startTime && article.getTimestamp() <= endTime &&
+                article.activated == activated) {
+                list.add(article);
+            }
+        }
         return list;
     }
 
@@ -631,6 +640,9 @@ public class KnowledgeBase {
         article.resetId();
 
         if (this.storage.writeKnowledgeArticle(article)) {
+            // 更新
+            this.resource.appendArticle(article);
+
             if (null == article.summarization) {
                 List<String> contentList = this.trimArticleContent(article.content, 300);
 
@@ -692,6 +704,9 @@ public class KnowledgeBase {
     }
 
     public List<Long> removeKnowledgeArticles(List<Long> idList) {
+        for (long id : idList) {
+            this.resource.removeArticle(id);
+        }
         return this.storage.deleteKnowledgeArticles(idList);
     }
 
@@ -718,18 +733,23 @@ public class KnowledgeBase {
      *
      * @return
      */
-    private List<KnowledgeArticle> queryKnowledgeArticles() {
+    private List<KnowledgeArticle> queryActivatedArticles() {
         if (!this.resource.checkUnit()) {
             return new ArrayList<>();
         }
 
         JSONObject payload = new JSONObject();
-        payload.put("contactId", this.authToken.getContactId());
+        if (KnowledgeScope.Private == this.scope) {
+            payload.put("contactId", this.authToken.getContactId());
+        }
+        else {
+            payload.put("domain", this.authToken.getDomain());
+        }
         Packet packet = new Packet(AIGCAction.ListKnowledgeArticles.name, payload);
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect(), 60 * 1000);
         if (null == dialect) {
-            Logger.w(this.getClass(),"#listKnowledgeArticles - Request unit error: "
+            Logger.w(this.getClass(),"#queryActivatedArticles - Request unit error: "
                     + this.resource.unit.getCapability().getName());
             return new ArrayList<>();
         }
@@ -737,7 +757,7 @@ public class KnowledgeBase {
         Packet response = new Packet(dialect);
         int state = Packet.extractCode(response);
         if (state != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#listKnowledgeArticles - Unit return error: " + state);
+            Logger.w(this.getClass(), "#queryActivatedArticles - Unit return error: " + state);
             return new ArrayList<>();
         }
 
@@ -758,12 +778,14 @@ public class KnowledgeBase {
      * @return
      */
     public List<KnowledgeArticle> activateKnowledgeArticles(List<Long> articleIdList) {
-        List<KnowledgeArticle> articleList = this.storage.readKnowledgeArticles(articleIdList);
-
         if (!this.resource.checkUnit()) {
             Logger.w(this.getClass(),"#activateKnowledgeArticles - No knowledge unit");
             return null;
         }
+
+        List<KnowledgeArticle> result = new ArrayList<>();
+
+        List<KnowledgeArticle> articleList = this.storage.readKnowledgeArticles(articleIdList);
 
         for (KnowledgeArticle article : articleList) {
             JSONObject payload = new JSONObject();
@@ -788,44 +810,48 @@ public class KnowledgeBase {
             KnowledgeArticle activated = new KnowledgeArticle(Packet.extractDataPayload(response));
             activated.content = article.content;
             activated.summarization = article.summarization;
-            this.resource.appendArticle(activated);
+            result.add(activated);
         }
 
-        return this.resource.articleList;
+        return result;
     }
 
-    public List<KnowledgeArticle> deactivateKnowledgeArticles() {
-        this.resource.checkUnit();
-
-        List<KnowledgeArticle> result = new ArrayList<>();
-
-        JSONObject payload = new JSONObject();
-        payload.put("contactId", this.authToken.getContactId());
-        Packet packet = new Packet(AIGCAction.DeactivateKnowledgeArticle.name, payload);
-        ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
-                packet.toDialect(), 60 * 1000);
-        if (null == dialect) {
-            Logger.w(this.getClass(),"#deactivateKnowledgeArticles - Request unit error: "
-                    + this.resource.unit.getCapability().getName());
-            return result;
+    public List<KnowledgeArticle> deactivateKnowledgeArticles(List<Long> articleIdList) {
+        if (!this.resource.checkUnit()) {
+            Logger.w(this.getClass(),"#deactivateKnowledgeArticles - No knowledge unit");
+            return null;
         }
 
-        Packet response = new Packet(dialect);
-        int state = Packet.extractCode(response);
-        if (state != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#deactivateKnowledgeArticles - Unit return error: " + state);
-            return result;
-        }
-
-        JSONArray idsArray = Packet.extractDataPayload(response).getJSONArray("ids");
         List<Long> idsList = new ArrayList<>();
-        for (int i = 0; i < idsArray.length(); ++i) {
-            idsList.add(idsArray.getLong(i));
-        }
-        result = this.storage.readKnowledgeArticles(idsList);
 
-        this.resource.clearArticles();
-        return result;
+        List<KnowledgeArticle> articleList = this.storage.readKnowledgeArticles(articleIdList);
+        for (KnowledgeArticle article : articleList) {
+            JSONObject payload = new JSONObject();
+            payload.put("article", article.toCompactJSON());
+            payload.put("contactId", this.authToken.getContactId());
+            Packet packet = new Packet(AIGCAction.DeactivateKnowledgeArticle.name, payload);
+            ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
+                    packet.toDialect(), 60 * 1000);
+            if (null == dialect) {
+                Logger.w(this.getClass(),"#deactivateKnowledgeArticles - Request unit error: "
+                        + this.resource.unit.getCapability().getName());
+                continue;
+            }
+
+            Packet response = new Packet(dialect);
+            int state = Packet.extractCode(response);
+            if (state != AIGCStateCode.Ok.code) {
+                Logger.w(this.getClass(), "#deactivateKnowledgeArticles - Unit return error: " + state);
+                continue;
+            }
+
+            JSONArray idsArray = Packet.extractDataPayload(response).getJSONArray("ids");
+            for (int i = 0; i < idsArray.length(); ++i) {
+                idsList.add(idsArray.getLong(i));
+            }
+        }
+
+        return this.storage.readKnowledgeArticles(idsList);
     }
 
     /**
@@ -960,14 +986,15 @@ public class KnowledgeBase {
             lineList.add(line);
         }
 
-        final int maxWords = ModelConfig.isExtraLongPromptUnit(unitName) ? 5000 : 1000;
+        final int maxWords = ModelConfig.isExtraLongPromptUnit(unitName) ? 4000 : 1200;
         if (totalWords < maxWords) {
+            // 补充内容
             // 提取第一行
             String first = lineList.pollFirst();
 
             // 从数据库里匹配文章
             TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
-            List<Keyword> keywords = analyzer.analyze(query, 3);
+            List<Keyword> keywords = analyzer.analyze(query, 5);
             if (!keywords.isEmpty()) {
                 // 尝试获取文章
                 List<KnowledgeArticle> articleList = new ArrayList<>();
@@ -987,15 +1014,59 @@ public class KnowledgeBase {
                     // 按照命中的关键词数量进行从高到低排序
                     articleList = this.sortArticles(articleList, keywords);
                     for (KnowledgeArticle article : articleList) {
-                        lineList.addFirst(article.content);
-                        // 计算内容大小
-                        totalWords += article.content.length();
-                        if (totalWords > maxWords) {
-                            break;
+                        // 对内容进行解析
+                        String[] data = article.content.split("\n");
+                        StringBuilder buf = new StringBuilder();
+                        for (String text : data) {
+                            buf.append(text).append("\n");
+                            if (buf.length() >= 1000) {
+                                break;
+                            }
+                        }
+                        buf.delete(buf.length() - 1, buf.length());
+
+                        String articlePrompt = Consts.formatQuestion(buf.toString(), Consts.KNOWLEDGE_SECTION_PROMPT);
+                        // 对文章内容进行推理
+                        String articleResult = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_UNIT, articlePrompt);
+                        if (null == articleResult) {
+                            articleResult = article.summarization;
+                        }
+
+                        if (null != articleResult) {
+                            // 将结果加入上下文
+                            lineList.addFirst(articleResult);
+                            // 计算内容大小
+                            totalWords += articleResult.length();
+                            if (totalWords > maxWords) {
+                                break;
+                            }
                         }
                     }
                 }
             }
+
+            // 恢复第一行
+            lineList.addFirst(first);
+        }
+        else if (totalWords > maxWords) {
+            // 内容超过上下文限制
+            // 提取第一行
+            String first = lineList.pollFirst();
+
+            int numWords = first.length();
+            List<String> newList = new ArrayList<>();
+            for (String line : lineList) {
+                newList.add(line);
+                numWords += line.length();
+                if (numWords >= maxWords) {
+                    break;
+                }
+            }
+
+            // 清空
+            lineList.clear();
+            // 重填
+            lineList.addAll(newList);
 
             // 恢复第一行
             lineList.addFirst(first);

@@ -74,20 +74,13 @@ public class ListKnowledgeArticlesTask extends ServiceTask {
             return;
         }
 
-        String category = null;
-        int startYear = 0;
-        int startMonth = 0;
-        int startDate = 0;
-        boolean containsContent = false;
-
+        long start = 0;
+        long end = 0;
+        boolean activated;
         try {
-            category = packet.data.getString("category");
-            startYear = packet.data.getInt("startYear");
-            startMonth = packet.data.getInt("startMonth");
-            startDate = packet.data.getInt("startDate");
-            if (packet.data.has("content")) {
-                containsContent = packet.data.getBoolean("content");
-            }
+            start = packet.data.getLong("start");
+            end = packet.data.getLong("end");
+            activated = packet.data.getBoolean("activated");
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -95,7 +88,7 @@ public class ListKnowledgeArticlesTask extends ServiceTask {
             return;
         }
 
-        List<KnowledgeArticle> articleList = null;//base.getKnowledgeArticle(category, startYear, startMonth, startDate);
+        List<KnowledgeArticle> articleList = base.getKnowledgeArticles(start, end, activated);
         if (null == articleList) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
@@ -103,14 +96,32 @@ public class ListKnowledgeArticlesTask extends ServiceTask {
             return;
         }
 
-        JSONArray array = new JSONArray();
-        for (KnowledgeArticle article : articleList) {
-            array.put(containsContent ? article.toJSON() : article.toCompactJSON());
-        }
-
         JSONObject responsePayload = new JSONObject();
-        responsePayload.put("total", articleList.size());
-        responsePayload.put("list", array);
+
+        int size = 20;
+        if (articleList.size() > size) {
+            int page = packet.data.has("page") ? packet.data.getInt("page") : 0;
+            JSONArray array = new JSONArray();
+            for (int i = page * size; i < articleList.size(); ++i) {
+                array.put(articleList.get(i).toCompactJSON());
+                if (array.length() >= size) {
+                    break;
+                }
+            }
+
+            responsePayload.put("page", page);
+            responsePayload.put("total", articleList.size());
+            responsePayload.put("list", array);
+        }
+        else {
+            JSONArray array = new JSONArray();
+            for (KnowledgeArticle article : articleList) {
+                array.put(article.toCompactJSON());
+            }
+
+            responsePayload.put("total", articleList.size());
+            responsePayload.put("list", array);
+        }
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responsePayload));

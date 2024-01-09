@@ -41,6 +41,7 @@ import cube.service.aigc.knowledge.KnowledgeBase;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -74,12 +75,32 @@ public class DeactivateKnowledgeArticleTask extends ServiceTask {
             return;
         }
 
-        List<KnowledgeArticle> list = base.deactivateKnowledgeArticles();
-        JSONArray array = new JSONArray();
-        for (KnowledgeArticle article : list) {
-            array.put(article.toCompactJSON());
+        List<KnowledgeArticle> articles = null;
+        try {
+            JSONArray ids = packet.data.getJSONArray("ids");
+            ArrayList<Long> idList = new ArrayList<>();
+            for (int i = 0; i < ids.length(); ++i) {
+                idList.add(ids.getLong(i));
+            }
+            articles = base.deactivateKnowledgeArticles(idList);
+        } catch (Exception e) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+            markResponseTime();
+            return;
         }
 
+        if (null == articles) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
+        JSONArray array = new JSONArray();
+        for (KnowledgeArticle article : articles) {
+            array.put(article.toCompactJSON());
+        }
         JSONObject result = new JSONObject();
         result.put("total", array.length());
         result.put("articles", array);

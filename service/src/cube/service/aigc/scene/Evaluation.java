@@ -628,7 +628,7 @@ public class Evaluation {
             }
             else if (this.painting.hasDog()) {
                 // 狗
-                list.add(new Result(Comment.Spirituality, Score.High));
+                list.add(new Result(Comment.NeedProtection, Score.High));
             }
             else if (this.painting.hasCat()) {
                 // 猫

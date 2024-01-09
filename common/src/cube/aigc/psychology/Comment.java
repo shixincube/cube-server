@@ -362,11 +362,6 @@ public enum Comment {
     DesireForFreedom("渴望自由"),
 
     /**
-     * 灵性。
-     */
-    Spirituality("灵性"),
-
-    /**
      * 虚荣。
      */
     Vanity("虚荣"),

@@ -129,6 +129,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new ImportKnowledgeDoc());
         httpServer.addContextHandler(new RemoveKnowledgeDoc());
         httpServer.addContextHandler(new ResetKnowledgeStore());
+        httpServer.addContextHandler(new KnowledgeArticles());
         httpServer.addContextHandler(new AppendKnowledgeArticle());
         httpServer.addContextHandler(new RemoveKnowledgeArticle());
         httpServer.addContextHandler(new ActivateKnowledgeArticle());
@@ -465,6 +466,77 @@ public class Manager implements Tickable, PerformerListener {
         return new ResetKnowledgeProgress(Packet.extractDataPayload(responsePacket));
     }
 
+    public JSONObject getKnowledgeArticles(String token, long startTime, long endTime, boolean activated) {
+        JSONObject param = new JSONObject();
+        param.put("start", startTime);
+        param.put("end", endTime);
+        param.put("activated", activated);
+        Packet packet = new Packet(AIGCAction.ListKnowledgeArticles.name, param);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#getKnowledgeArticles - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#getKnowledgeArticles - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        try {
+            JSONObject data = Packet.extractDataPayload(responsePacket);
+            if (data.has("page")) {
+                // 有分页
+                int total = data.getInt("total");
+                JSONArray list = data.getJSONArray("list");
+                int page = data.getInt("page");
+                while (list.length() < total) {
+                    page += 1;
+
+                    JSONObject packetPayload = new JSONObject();
+                    packetPayload.put("page", page);
+                    packetPayload.put("start", startTime);
+                    packetPayload.put("end", endTime);
+                    packet = new Packet(AIGCAction.ListKnowledgeArticles.name, packetPayload);
+                    request = packet.toDialect();
+                    request.addParam("token", token);
+                    response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+                    if (null == response) {
+                        Logger.w(Manager.class, "#getKnowledgeDocs - Response is null : " + token);
+                        return null;
+                    }
+
+                    responsePacket = new Packet(response);
+                    if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+                        Logger.d(Manager.class, "#getKnowledgeDocs - Response state is NOT ok : "
+                                + Packet.extractCode(responsePacket));
+                        return null;
+                    }
+
+                    JSONObject nextData = Packet.extractDataPayload(responsePacket);
+                    JSONArray nextList = nextData.getJSONArray("list");
+                    for (int i = 0; i < nextList.length(); ++i) {
+                        list.put(nextList.getJSONObject(i));
+                    }
+                }
+
+                JSONObject result = new JSONObject();
+                result.put("total", total);
+                result.put("list", list);
+                return result;
+            }
+            else {
+                return data;
+            }
+        } catch (Exception e) {
+            Logger.e(Manager.class, "#getKnowledgeDocs - Error", e);
+            return null;
+        }
+    }
+
     public KnowledgeArticle appendKnowledgeArticle(String token, KnowledgeArticle article) {
         Packet packet = new Packet(AIGCAction.AppendKnowledgeArticle.name, article.toJSON());
         ActionDialect request = packet.toDialect();
@@ -513,7 +585,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.ActivateKnowledgeArticle.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 2 * 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#activateKnowledgeArticle - Response is null : " + token);
             return null;
@@ -534,10 +606,11 @@ public class Manager implements Tickable, PerformerListener {
         return result;
     }
 
-    public List<KnowledgeArticle> deactivateKnowledgeArticle(String token) {
+    public List<KnowledgeArticle> deactivateKnowledgeArticle(String token, JSONArray idList) {
         List<KnowledgeArticle> result = new ArrayList<>();
 
         JSONObject payload = new JSONObject();
+        payload.put("ids", idList);
         Packet packet = new Packet(AIGCAction.DeactivateKnowledgeArticle.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);

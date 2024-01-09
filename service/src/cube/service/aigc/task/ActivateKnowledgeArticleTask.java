@@ -73,8 +73,6 @@ public class ActivateKnowledgeArticleTask extends ServiceTask {
             return;
         }
 
-        JSONArray ids = packet.data.getJSONArray("ids");
-
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         KnowledgeBase base = service.getKnowledgeBase(tokenCode);
         if (null == base) {
@@ -86,15 +84,15 @@ public class ActivateKnowledgeArticleTask extends ServiceTask {
 
         List<KnowledgeArticle> articles = null;
         try {
+            JSONArray ids = packet.data.getJSONArray("ids");
             ArrayList<Long> idList = new ArrayList<>();
             for (int i = 0; i < ids.length(); ++i) {
                 idList.add(ids.getLong(i));
             }
             articles = base.activateKnowledgeArticles(idList);
         } catch (Exception e) {
-            e.printStackTrace();
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
             return;
         }
