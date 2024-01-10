@@ -94,7 +94,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 每个联系人的最大存储空间。
      */
-    private long defaultMaxSpaceSizeForContact = (long) 1024 * 1024 * 1024;
+    private long defaultMaxSpaceSizeForContact = (long) 10 * 1024 * 1024 * 1024;
 
     /**
      * 默认客户端上传速率阀值。

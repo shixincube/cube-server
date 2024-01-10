@@ -121,7 +121,7 @@ public class KnowledgeDoc extends Entity {
         json.put("scope", this.scope.name);
 
         if (null != this.fileLabel) {
-            json.put("fileLabel", this.fileLabel.toCompactJSON());
+            json.put("fileLabel", this.fileLabel.toJSON());
         }
         return json;
     }
