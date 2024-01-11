@@ -29,6 +29,7 @@ package cube.aigc;
 import cube.common.JSONable;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.FileLabel;
+import cube.common.entity.KnowledgeSource;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -50,6 +51,8 @@ public class ConversationResponse implements JSONable {
     private String text = "";
 
     private List<FileLabel> fileLabels;
+
+    private List<KnowledgeSource> knowledgeSources;
 
     private boolean end = true;
 

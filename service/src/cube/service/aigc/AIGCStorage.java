@@ -960,6 +960,27 @@ public class AIGCStorage implements Storagable {
         });
     }
 
+    public KnowledgeArticle readKnowledgeArticle(long articleId) {
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("id", articleId)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(), data.get("domain").getString(),
+                data.get("contact_id").getLong(), data.get("category").getString(),
+                data.get("title").getString(), data.get("content").getString(),
+                data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
+                data.get("author").getString(),
+                data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
+                data.get("timestamp").getLong(), KnowledgeScope.parse(data.get("scope").getString()),
+                data.get("activated").getInt() == 1, data.get("segments").getInt());
+        return article;
+    }
+
     public List<KnowledgeArticle> readKnowledgeArticles(String domain, long contactId) {
         List<KnowledgeArticle> list = new ArrayList<>();
 

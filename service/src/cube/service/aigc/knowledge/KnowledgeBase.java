@@ -919,19 +919,19 @@ public class KnowledgeBase {
 
         // 获取提示词
         boolean brisk = !unitName.equalsIgnoreCase(ModelConfig.BAIZE_UNIT);
-        String prompt = this.generatePrompt(query, searchTopK, searchFetchK, brisk);
-        if (null == prompt) {
+        PromptMetadata promptMetadata = this.generatePrompt(query, searchTopK, searchFetchK, brisk);
+        if (null == promptMetadata) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Generate prompt failed in channel: " + channelCode);
             return false;
         }
+
+        String prompt = this.optimizePrompt(unitName, promptMetadata, query);
 
         AIGCUnit unit = this.service.selectUnitByName(unitName);
         if (null == unit) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Select unit error: " + unitName);
             return false;
         }
-
-        prompt = this.optimizePrompt(unitName, prompt, query);
 
         final KnowledgeQAResult result = new KnowledgeQAResult(query, prompt);
 
@@ -953,19 +953,24 @@ public class KnowledgeBase {
             });
         }
         else {
-            // 其他单元执行 chat
+            // 其他单元执行
             this.service.generateText(channel, unit, query, prompt, null, true,
                     new GenerateTextListener() {
                 @Override
                 public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
+                    // 结果记录
                     result.record = record;
+
+                    // 来源
+                    result.sources.addAll(promptMetadata.mergeSources());
+
                     listener.onCompleted(channel, result);
                 }
 
                 @Override
                 public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                     listener.onFailed(channel, stateCode);
-                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Single chat failed: " + stateCode.code);
+                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Generates text failed: " + stateCode.code);
                 }
             });
         }
@@ -973,9 +978,9 @@ public class KnowledgeBase {
         return true;
     }
 
-    private String optimizePrompt(String unitName, String prompt, String query) {
+    private String optimizePrompt(String unitName, PromptMetadata promptMetadata, String query) {
         int totalWords = 0;
-        String[] lines = prompt.split("\n");
+        String[] lines = promptMetadata.prompt.split("\n");
         LinkedList<String> lineList = new LinkedList<>();
         for (String line : lines) {
             if (lineList.contains(line)) {
@@ -1343,7 +1348,7 @@ public class KnowledgeBase {
         return list;
     }
 
-    private String generatePrompt(String query, int topK, int fetchK, boolean brisk) {
+    private PromptMetadata generatePrompt(String query, int topK, int fetchK, boolean brisk) {
         if (!this.resource.checkUnit()) {
             Logger.w(this.getClass(),"#generatePrompt - No unit for knowledge base");
             return null;
@@ -1375,7 +1380,7 @@ public class KnowledgeBase {
         }
 
         JSONObject data = Packet.extractDataPayload(response);
-        return data.getString("prompt");
+        return new PromptMetadata(data);
     }
 
     private AIGCUnit matchUnit(String modelName) {
@@ -1517,6 +1522,107 @@ public class KnowledgeBase {
             }
 
             this.paraphraseMap.put(category, list);
+        }
+    }
+
+    public class PromptMetadata {
+
+        public String prompt;
+
+        public List<Metadata> metadataList;
+
+        public PromptMetadata(JSONObject json) {
+            this.prompt = json.getString("prompt");
+            this.metadataList = new ArrayList<>();
+            JSONArray array = json.getJSONArray("metadata");
+            for (int i = 0; i < array.length(); ++i) {
+                Metadata metadata = new Metadata(array.getJSONObject(i));
+                this.metadataList.add(metadata);
+            }
+        }
+
+        /**
+         * 将相同的源进行合并。
+         *
+         * @return
+         */
+        public List<KnowledgeSource> mergeSources() {
+            List<KnowledgeSource> list = new ArrayList<>();
+
+            List<Metadata> mdList = new ArrayList<>();
+            for (Metadata metadata : this.metadataList) {
+                if (mdList.contains(metadata)) {
+                    continue;
+                }
+                mdList.add(metadata);
+            }
+
+            for (Metadata metadata : mdList) {
+                KnowledgeSource source = metadata.getSource();
+                if (null != source) {
+                    list.add(source);
+                }
+            }
+
+            return list;
+        }
+
+        public class Metadata {
+
+            private final static String DOCUMENT_PREFIX = "./tmp/";
+
+            private final static String ARTICLE_PREFIX = "article:";
+
+            public String source;
+
+            public float score;
+
+            public Metadata(JSONObject json) {
+                this.source = json.getString("source");
+                this.score = json.getFloat("score");
+            }
+
+            public KnowledgeSource getSource() {
+                // 判断是文档还是文章
+                if (this.source.startsWith(DOCUMENT_PREFIX)) {
+                    String fileCode = this.source.substring(DOCUMENT_PREFIX.length(), this.source.length() - 4);
+                    KnowledgeDoc doc = getKnowledgeDocByFileCode(fileCode);
+                    if (null == doc) {
+                        return null;
+                    }
+
+                    return new KnowledgeSource(doc);
+                }
+                else if (this.source.startsWith(ARTICLE_PREFIX)) {
+                    String id = this.source.substring(ARTICLE_PREFIX.length());
+                    try {
+                        long articleId = Long.parseLong(id);
+                        KnowledgeArticle article = storage.readKnowledgeArticle(articleId);
+                        if (null == article) {
+                            return null;
+                        }
+
+                        return new KnowledgeSource(article);
+                    } catch (Exception e) {
+                        // Nothing
+                    }
+                }
+
+                return null;
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                if (obj instanceof Metadata) {
+                    return this.source.equals(((Metadata) obj).source);
+                }
+                return false;
+            }
+
+            @Override
+            public int hashCode() {
+                return this.source.hashCode();
+            }
         }
     }
 }
