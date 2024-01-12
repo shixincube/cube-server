@@ -209,7 +209,7 @@ public class ChatTask extends ServiceTask {
                     @Override
                     public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
                         cellet.speak(talkContext,
-                                makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.record.toCompactJSON()));
+                                makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.toCompactJSON()));
                         markResponseTime();
 
                         // 写入事件

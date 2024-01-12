@@ -42,6 +42,8 @@ public class ModelConfig implements JSONable {
 
     public final static String BAIZE_UNIT = "Chat";
 
+    public final static int BAIZE_UNIT_CONTEXT_LIMIT = 1200;
+
     private final String unitName;
 
     private final String name;

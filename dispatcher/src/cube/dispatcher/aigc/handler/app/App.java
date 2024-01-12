@@ -34,6 +34,8 @@ import cube.aigc.ModelConfig;
 import cube.common.JSONable;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.FileLabel;
+import cube.common.entity.KnowledgeQAResult;
+import cube.common.entity.KnowledgeSource;
 import cube.util.HttpClientFactory;
 import cube.util.JSONUtils;
 import org.eclipse.jetty.client.HttpClient;
@@ -208,6 +210,8 @@ public final class App {
         boolean end = false;
         // 结果文件
         List<FileLabel> fileLabels = null;
+        // 知识源
+        List<KnowledgeSource> knowledgeSources = null;
 
         String url = config.getApiURL() + token;
 
@@ -236,6 +240,9 @@ public final class App {
                     content = responseData.getString("content");
                     if (responseData.has("fileLabels")) {
                         fileLabels = parseFileLabels(responseData.getJSONArray("fileLabels"));
+                    }
+                    if (responseData.has("knowledgeSources")) {
+                        knowledgeSources = parseKnowledgeSources(responseData.getJSONArray("knowledgeSources"));
                     }
                 }
                 else if (responseData.has("response")) {
@@ -282,7 +289,15 @@ public final class App {
                 return this.makeResponse(sn, convId, request, fileLabels);
             }
             else {
-                return this.splitResponse(sn, convId, request, content, context);
+                List<ConversationResponse> list = this.splitResponse(sn, convId, request, content);
+                // 处理知识源
+                if (null != knowledgeSources && !knowledgeSources.isEmpty()) {
+                    ConversationResponse source = this.makeResponse(sn, convId, knowledgeSources);
+                    list.add(source);
+                }
+                // 仅在第一个元素携带上下文
+                list.get(0).context = context;
+                return list;
             }
         }
         else {
@@ -294,6 +309,14 @@ public final class App {
         List<FileLabel> list = new ArrayList<>();
         for (int i = 0; i < array.length(); ++i) {
             list.add(new FileLabel(array.getJSONObject(i)));
+        }
+        return list;
+    }
+
+    private List<KnowledgeSource> parseKnowledgeSources(JSONArray array) {
+        List<KnowledgeSource> list = new ArrayList<>();
+        for (int i = 0; i < array.length(); ++i) {
+            list.add(new KnowledgeSource(array.getJSONObject(i)));
         }
         return list;
     }
@@ -333,8 +356,7 @@ public final class App {
     }
 
     private List<ConversationResponse> splitResponse(long sn, String conversationId,
-                                                     ConversationRequest request, String content,
-                                                     ComplexContext context) {
+                                                     ConversationRequest request, String content) {
         List<ConversationResponse> result = new ArrayList<>();
 
         // 先拆为字符数组
@@ -356,10 +378,19 @@ public final class App {
             pid = id;
         }
 
-        // 仅在第一个元素携带上下文
-        result.get(0).context = context;
-
         return result;
+    }
+
+    private ConversationResponse makeResponse(long sn, String conversationId, List<KnowledgeSource> sources) {
+        StringBuilder text = new StringBuilder("\n");
+        text.append("> 数据来源：\n");
+        for (KnowledgeSource source : sources) {
+            text.append("> ").append(source.toString()).append("\n");
+        }
+
+        String id = UUID.randomUUID().toString();
+        ConversationResponse response = new ConversationResponse(sn, id, conversationId, text.toString(), "");
+        return response;
     }
 
 

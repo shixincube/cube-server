@@ -1016,6 +1016,8 @@ public class KnowledgeBase {
                 }
 
                 if (!articleList.isEmpty()) {
+                    Logger.d(KnowledgeBase.class, "#optimizePrompt - Matching articles - num:" + articleList.size());
+
                     // 按照命中的关键词数量进行从高到低排序
                     articleList = this.sortArticles(articleList, keywords);
                     for (KnowledgeArticle article : articleList) {
@@ -1024,7 +1026,7 @@ public class KnowledgeBase {
                         StringBuilder buf = new StringBuilder();
                         for (String text : data) {
                             buf.append(text).append("\n");
-                            if (buf.length() >= 1000) {
+                            if (buf.length() >= ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
                                 break;
                             }
                         }
@@ -1380,7 +1382,13 @@ public class KnowledgeBase {
         }
 
         JSONObject data = Packet.extractDataPayload(response);
-        return new PromptMetadata(data);
+        PromptMetadata promptMetadata = null;
+        try {
+            promptMetadata = new PromptMetadata(data);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return promptMetadata;
     }
 
     private AIGCUnit matchUnit(String modelName) {
@@ -1534,10 +1542,12 @@ public class KnowledgeBase {
         public PromptMetadata(JSONObject json) {
             this.prompt = json.getString("prompt");
             this.metadataList = new ArrayList<>();
-            JSONArray array = json.getJSONArray("metadata");
-            for (int i = 0; i < array.length(); ++i) {
-                Metadata metadata = new Metadata(array.getJSONObject(i));
-                this.metadataList.add(metadata);
+            if (json.has("metadata")) {
+                JSONArray array = json.getJSONArray("metadata");
+                for (int i = 0; i < array.length(); ++i) {
+                    Metadata metadata = new Metadata(array.getJSONObject(i));
+                    this.metadataList.add(metadata);
+                }
             }
         }
 
@@ -1579,7 +1589,8 @@ public class KnowledgeBase {
 
             public Metadata(JSONObject json) {
                 this.source = json.getString("source");
-                this.score = json.getFloat("score");
+                String s = json.getString("score");
+                this.score = Float.parseFloat(s);
             }
 
             public KnowledgeSource getSource() {

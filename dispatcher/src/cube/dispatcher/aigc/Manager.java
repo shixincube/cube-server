@@ -29,10 +29,7 @@ package cube.dispatcher.aigc;
 import cell.core.talk.Primitive;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
-import cube.aigc.AppEvent;
-import cube.aigc.ConfigInfo;
-import cube.aigc.ModelConfig;
-import cube.aigc.PromptRecord;
+import cube.aigc.*;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.psychology.PsychologyReport;
 import cube.auth.AuthToken;
@@ -46,6 +43,7 @@ import cube.dispatcher.Performer;
 import cube.dispatcher.PerformerListener;
 import cube.dispatcher.aigc.handler.Conversation;
 import cube.dispatcher.aigc.handler.*;
+import cube.dispatcher.aigc.handler.Sentiment;
 import cube.dispatcher.aigc.handler.app.App;
 import cube.dispatcher.util.Tickable;
 import cube.util.HttpServer;
@@ -894,11 +892,23 @@ public class Manager implements Tickable, PerformerListener {
             return future;
         }
         else if (Packet.extractCode(responsePacket) == AIGCStateCode.Ok.code) {
-            AIGCGenerationRecord record = new AIGCGenerationRecord(Packet.extractDataPayload(responsePacket));
-            if (null == record.query) {
-                record.query = content;
+            ChatFuture future = null;
+            if (Consts.PATTERN_CHAT.equals(pattern)) {
+                AIGCGenerationRecord record = new AIGCGenerationRecord(Packet.extractDataPayload(responsePacket));
+                if (null == record.query) {
+                    record.query = content;
+                }
+                future = new ChatFuture(record);
             }
-            ChatFuture future = new ChatFuture(record);
+            else if (Consts.PATTERN_KNOWLEDGE.equals(pattern)) {
+                KnowledgeQAResult result = new KnowledgeQAResult(Packet.extractDataPayload(responsePacket));
+                future = new ChatFuture(result);
+            }
+
+            if (null == future) {
+                return null;
+            }
+
             future.end = true;
             return future;
         }
@@ -1520,12 +1530,18 @@ public class Manager implements Tickable, PerformerListener {
 
         public AIGCGenerationRecord record;
 
+        public KnowledgeQAResult knowledgeResult;
+
         protected ChatFuture(AIGCChannel channel) {
             this.channel = channel;
         }
 
         protected ChatFuture(AIGCGenerationRecord record) {
             this.record = record;
+        }
+
+        protected ChatFuture(KnowledgeQAResult knowledgeResult) {
+            this.knowledgeResult = knowledgeResult;
         }
 
         @Override

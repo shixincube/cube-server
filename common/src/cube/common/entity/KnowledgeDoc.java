@@ -128,6 +128,11 @@ public class KnowledgeDoc extends Entity {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = this.toJSON();
+        if (json.has("fileLabel")) {
+            json.remove("fileLabel");
+            json.put("fileLabel", this.fileLabel.toCompactJSON());
+        }
+        return json;
     }
 }

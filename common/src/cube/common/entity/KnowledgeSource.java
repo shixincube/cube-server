@@ -27,6 +27,7 @@
 package cube.common.entity;
 
 import cube.common.JSONable;
+import cube.util.FileUtils;
 import org.json.JSONObject;
 
 /**
@@ -64,13 +65,26 @@ public class KnowledgeSource implements JSONable {
     }
 
     @Override
+    public String toString() {
+        if (null != this.document) {
+            return "文件：《" + FileUtils.extractFileName(this.document.fileLabel.getFileName()) + "》";
+        }
+        else if (null != this.article) {
+            return "文章：《" + article.title + "》";
+        }
+        else {
+            return super.toString();
+        }
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         if (null != this.document) {
-            json.put("document", this.document.toJSON());
+            json.put("document", this.document.toCompactJSON());
         }
         if (null != this.article) {
-            json.put("article", this.article.toJSON());
+            json.put("article", this.article.toCompactJSON());
         }
         return json;
     }

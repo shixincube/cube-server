@@ -72,6 +72,14 @@ public class KnowledgeQAResult implements JSONable {
         }
     }
 
+    public JSONArray sourcesToArray() {
+        JSONArray array = new JSONArray();
+        for (KnowledgeSource source : this.sources) {
+            array.put(source.toJSON());
+        }
+        return array;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -83,11 +91,7 @@ public class KnowledgeQAResult implements JSONable {
             json.put("record", this.record.toJSON());
         }
         if (!this.sources.isEmpty()) {
-            JSONArray array = new JSONArray();
-            for (KnowledgeSource source : this.sources) {
-                array.put(source.toJSON());
-            }
-            json.put("sources", array);
+            json.put("sources", this.sourcesToArray());
         }
         return json;
     }

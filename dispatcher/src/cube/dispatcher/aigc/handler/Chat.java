@@ -132,30 +132,43 @@ public class Chat extends ContextHandler {
             }
             else if (future.end) {
                 // 已结束
-                AIGCGenerationRecord record = future.record;
-                if (null == record) {
+                if (null != future.record) {
+                    // Record 转结果
+                    AIGCGenerationRecord record = future.record;
+                    JSONObject responseData = new JSONObject();
+                    responseData.put("sn", record.sn);
+                    responseData.put("participant", AI_NAME);
+                    responseData.put("timestamp", record.timestamp);
+                    responseData.put("pattern", pattern);
+                    responseData.put("content", null != record.answer ? record.answer : "");
+                    if (null != record.context) {
+                        responseData.put("context", record.context.toJSON());
+                    }
+                    if (null != record.fileLabels) {
+                        responseData.put("fileLabels", record.outputFileLabelArray());
+                    }
+
+                    this.respondOk(response, responseData);
+                    this.complete();
+                }
+                else if (null != future.knowledgeResult) {
+                    // Knowledge Result 转结果
+                    JSONObject responseData = new JSONObject();
+                    responseData.put("sn", future.knowledgeResult.record.sn);
+                    responseData.put("participant", AI_NAME);
+                    responseData.put("timestamp", future.knowledgeResult.record.timestamp);
+                    responseData.put("pattern", pattern);
+                    responseData.put("content", null != future.knowledgeResult.record.answer ? future.knowledgeResult.record.answer : "");
+                    responseData.put("knowledgeSources", future.knowledgeResult.sourcesToArray());
+
+                    this.respondOk(response, responseData);
+                    this.complete();
+                }
+                else {
                     // 发生错误
                     this.respond(response, HttpStatus.BAD_REQUEST_400);
                     this.complete();
-                    return;
                 }
-
-                // Record 转结果
-                JSONObject responseData = new JSONObject();
-                responseData.put("sn", record.sn);
-                responseData.put("participant", AI_NAME);
-                responseData.put("timestamp", record.timestamp);
-                responseData.put("pattern", pattern);
-                responseData.put("content", null != record.answer ? record.answer : "");
-                if (null != record.context) {
-                    responseData.put("context", record.context.toJSON());
-                }
-                if (null != record.fileLabels) {
-                    responseData.put("fileLabels", record.outputFileLabelArray());
-                }
-
-                this.respondOk(response, responseData);
-                this.complete();
             }
             else {
                 // 正在处理

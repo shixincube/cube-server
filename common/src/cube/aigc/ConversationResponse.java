@@ -29,6 +29,7 @@ package cube.aigc;
 import cube.common.JSONable;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.FileLabel;
+import cube.common.entity.KnowledgeQAResult;
 import cube.common.entity.KnowledgeSource;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -52,14 +53,14 @@ public class ConversationResponse implements JSONable {
 
     private List<FileLabel> fileLabels;
 
-    private List<KnowledgeSource> knowledgeSources;
-
     private boolean end = true;
 
     // 无用的属性，仅用于兼容旧版本
     private Detail detail = new Detail();
 
     public ComplexContext context;
+
+    public List<KnowledgeSource> knowledgeSources;
 
     public ConversationResponse(long sn, String id, String conversationId, String text) {
         this.sn = sn;
@@ -111,6 +112,14 @@ public class ConversationResponse implements JSONable {
                 this.fileLabels.add(fileLabel);
             }
         }
+        if (json.has("knowledgeSources")) {
+            this.knowledgeSources = new ArrayList<>();
+            JSONArray array = json.getJSONArray("knowledgeSources");
+            for (int i = 0; i < array.length(); ++i) {
+                KnowledgeSource source = new KnowledgeSource(array.getJSONObject(i));
+                this.knowledgeSources.add(source);
+            }
+        }
     }
 
     @Override
@@ -133,6 +142,13 @@ public class ConversationResponse implements JSONable {
                 array.put(fileLabel.toCompactJSON());
             }
             json.put("fileLabels", array);
+        }
+        if (null != this.knowledgeSources && !this.knowledgeSources.isEmpty()) {
+            JSONArray array = new JSONArray();
+            for (KnowledgeSource source : this.knowledgeSources) {
+                array.put(source.toJSON());
+            }
+            json.put("knowledgeSources", array);
         }
         return json;
     }
