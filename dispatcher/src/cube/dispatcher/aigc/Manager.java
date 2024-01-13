@@ -464,6 +464,27 @@ public class Manager implements Tickable, PerformerListener {
         return new ResetKnowledgeProgress(Packet.extractDataPayload(responsePacket));
     }
 
+    public JSONObject getKnowledgeArticle(String token, long articleId) {
+        JSONObject param = new JSONObject();
+        param.put("articleId", articleId);
+        Packet packet = new Packet(AIGCAction.ListKnowledgeArticles.name, param);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#getKnowledgeArticle - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#getKnowledgeArticle - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
     public JSONObject getKnowledgeArticles(String token, long startTime, long endTime, boolean activated) {
         JSONObject param = new JSONObject();
         param.put("start", startTime);

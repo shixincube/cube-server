@@ -623,7 +623,6 @@ public class KnowledgeBase {
     }
 
     public List<KnowledgeArticle> getKnowledgeArticles(long startTime, long endTime, boolean activated) {
-//        List<KnowledgeArticle> list = this.storage.readKnowledgeArticles(this.authToken.getContactId(), startTime, endTime);
         List<KnowledgeArticle> articles = this.listKnowledgeArticles();
         List<KnowledgeArticle> list = new ArrayList<>();
         for (KnowledgeArticle article : articles) {
@@ -633,6 +632,11 @@ public class KnowledgeBase {
             }
         }
         return list;
+    }
+
+    public KnowledgeArticle getKnowledgeArticle(long articleId) {
+        KnowledgeArticle article = this.storage.readKnowledgeArticle(articleId);
+        return article;
     }
 
     public KnowledgeArticle appendKnowledgeArticle(KnowledgeArticle article) {
@@ -925,6 +929,7 @@ public class KnowledgeBase {
             return false;
         }
 
+        // 优化提示词
         String prompt = this.optimizePrompt(unitName, promptMetadata, query);
 
         AIGCUnit unit = this.service.selectUnitByName(unitName);
@@ -1042,6 +1047,8 @@ public class KnowledgeBase {
                         if (null != articleResult) {
                             // 将结果加入上下文
                             lineList.addFirst(articleResult);
+                            // 加入源
+                            promptMetadata.addMetadata(article);
                             // 计算内容大小
                             totalWords += articleResult.length();
                             if (totalWords > maxWords) {
@@ -1551,6 +1558,10 @@ public class KnowledgeBase {
             }
         }
 
+        public void addMetadata(KnowledgeArticle article) {
+            this.metadataList.add(new Metadata(Metadata.ARTICLE_PREFIX + article.getId(), 300));
+        }
+
         /**
          * 将相同的源进行合并。
          *
@@ -1579,9 +1590,9 @@ public class KnowledgeBase {
 
         public class Metadata {
 
-            private final static String DOCUMENT_PREFIX = "./tmp/";
+            public final static String DOCUMENT_PREFIX = "./tmp/";
 
-            private final static String ARTICLE_PREFIX = "article:";
+            public final static String ARTICLE_PREFIX = "article:";
 
             public String source;
 
@@ -1591,6 +1602,11 @@ public class KnowledgeBase {
                 this.source = json.getString("source");
                 String s = json.getString("score");
                 this.score = Float.parseFloat(s);
+            }
+
+            public Metadata(String source, float score) {
+                this.source = source;
+                this.score = score;
             }
 
             public KnowledgeSource getSource() {

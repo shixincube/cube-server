@@ -2798,7 +2798,7 @@ public class AIGCService extends AbstractModule {
                         long contactId = channel.getAuthToken().getContactId();
                         List<String> tokens = calcTokens(text);
                         long promptTokens = tokens.size();
-                        long completionTokens = (long) Math.floor(fileLabel.getFileSize() / 10240.0);
+                        long completionTokens = (long) Math.floor(fileLabel.getFileSize() / 1024.0);
                         storage.updateUsage(contactId, history.unit, completionTokens, promptTokens);
 
                         // 保存历史记录

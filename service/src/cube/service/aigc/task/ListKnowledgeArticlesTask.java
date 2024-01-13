@@ -76,11 +76,21 @@ public class ListKnowledgeArticlesTask extends ServiceTask {
 
         long start = 0;
         long end = 0;
-        boolean activated;
+        boolean activated = false;
+        long articleId = 0;
         try {
-            start = packet.data.getLong("start");
-            end = packet.data.getLong("end");
-            activated = packet.data.getBoolean("activated");
+            if (packet.data.has("start")) {
+                start = packet.data.getLong("start");
+            }
+            if (packet.data.has("end")) {
+                end = packet.data.getLong("end");
+            }
+            if (packet.data.has("activated")) {
+                activated = packet.data.getBoolean("activated");
+            }
+            if (packet.data.has("articleId")) {
+                articleId = packet.data.getLong("articleId");
+            }
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -88,39 +98,56 @@ public class ListKnowledgeArticlesTask extends ServiceTask {
             return;
         }
 
-        List<KnowledgeArticle> articleList = base.getKnowledgeArticles(start, end, activated);
-        if (null == articleList) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
-            markResponseTime();
-            return;
-        }
-
         JSONObject responsePayload = new JSONObject();
 
-        int size = 20;
-        if (articleList.size() > size) {
-            int page = packet.data.has("page") ? packet.data.getInt("page") : 0;
-            JSONArray array = new JSONArray();
-            for (int i = page * size; i < articleList.size(); ++i) {
-                array.put(articleList.get(i).toCompactJSON());
-                if (array.length() >= size) {
-                    break;
-                }
+        if (0 != articleId) {
+            KnowledgeArticle article = base.getKnowledgeArticle(articleId);
+            if (null == article) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                markResponseTime();
+                return;
             }
 
-            responsePayload.put("page", page);
-            responsePayload.put("total", articleList.size());
+            JSONArray array = new JSONArray();
+            array.put(article.toJSON());
+
+            responsePayload.put("total", array.length());
             responsePayload.put("list", array);
         }
         else {
-            JSONArray array = new JSONArray();
-            for (KnowledgeArticle article : articleList) {
-                array.put(article.toCompactJSON());
+            List<KnowledgeArticle> articleList = base.getKnowledgeArticles(start, end, activated);
+            if (null == articleList) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                markResponseTime();
+                return;
             }
 
-            responsePayload.put("total", articleList.size());
-            responsePayload.put("list", array);
+            int size = 20;
+            if (articleList.size() > size) {
+                int page = packet.data.has("page") ? packet.data.getInt("page") : 0;
+                JSONArray array = new JSONArray();
+                for (int i = page * size; i < articleList.size(); ++i) {
+                    array.put(articleList.get(i).toCompactJSON());
+                    if (array.length() >= size) {
+                        break;
+                    }
+                }
+
+                responsePayload.put("page", page);
+                responsePayload.put("total", articleList.size());
+                responsePayload.put("list", array);
+            }
+            else {
+                JSONArray array = new JSONArray();
+                for (KnowledgeArticle article : articleList) {
+                    array.put(article.toCompactJSON());
+                }
+
+                responsePayload.put("total", articleList.size());
+                responsePayload.put("list", array);
+            }
         }
 
         this.cellet.speak(this.talkContext,

@@ -59,26 +59,38 @@ public class KnowledgeArticles extends ContextHandler {
                 return;
             }
 
+            JSONObject data = null;
+
             long startTime = 0;
             long endTime = 0;
             boolean activated = false;
+            long articleId = 0;
             try {
-                startTime = Long.parseLong(request.getParameter("start"));
-                String end = request.getParameter("end");
-                if (null != end) {
-                    endTime = Long.parseLong(end);
+                String strArticleId = request.getParameter("id");
+                if (null != strArticleId) {
+                    articleId = Long.parseLong(strArticleId);
+
+                    data = Manager.getInstance().getKnowledgeArticle(token, articleId);
                 }
                 else {
-                    endTime = System.currentTimeMillis();
+                    startTime = Long.parseLong(request.getParameter("start"));
+                    String end = request.getParameter("end");
+                    if (null != end) {
+                        endTime = Long.parseLong(end);
+                    }
+                    else {
+                        endTime = System.currentTimeMillis();
+                    }
+                    activated = Boolean.parseBoolean(request.getParameter("activated"));
+
+                    data = Manager.getInstance().getKnowledgeArticles(token, startTime, endTime, activated);
                 }
-                activated = Boolean.parseBoolean(request.getParameter("activated"));
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
                 return;
             }
 
-            JSONObject data = Manager.getInstance().getKnowledgeArticles(token, startTime, endTime, activated);
             if (null == data) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
