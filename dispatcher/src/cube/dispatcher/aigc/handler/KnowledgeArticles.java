@@ -26,6 +26,8 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cell.util.log.Logger;
+import cube.common.entity.KnowledgeArticle;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -52,6 +54,7 @@ public class KnowledgeArticles extends ContextHandler {
 
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
+            // 获取文章数据
             String token = this.getLastRequestPath(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
@@ -98,6 +101,49 @@ public class KnowledgeArticles extends ContextHandler {
             }
 
             this.respondOk(response, data);
+            this.complete();
+        }
+
+        @Override
+        public void doPost(HttpServletRequest request, HttpServletResponse response) {
+            // 更新文章数据
+            String token = this.getLastRequestPath(request);
+            if (!Manager.getInstance().checkToken(token)) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.complete();
+                return;
+            }
+
+            KnowledgeArticle article = null;
+            try {
+                JSONObject data = readBodyAsJSONObject(request);
+                if (null == data) {
+                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.complete();
+                    return;
+                }
+
+                if (!data.has("contactId")) {
+                    Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
+                    data.put("contactId", contactToken.contact.getId());
+                }
+
+                article = new KnowledgeArticle(data);
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#doPost", e);
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
+            KnowledgeArticle result = Manager.getInstance().updateKnowledgeArticle(token, article);
+            if (null == result) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
+
+            this.respondOk(response, result.toJSON());
             this.complete();
         }
     }

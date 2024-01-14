@@ -146,8 +146,14 @@ public class KnowledgeArticle extends Entity {
         if (null != this.content) {
             json.put("content", this.content);
         }
+        else {
+            json.put("content", "");
+        }
         if (null != this.summarization) {
             json.put("summarization", this.summarization);
+        }
+        else {
+            json.put("summarization", "");
         }
         json.put("author", this.author);
         json.put("year", this.year);

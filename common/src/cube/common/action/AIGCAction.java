@@ -232,6 +232,11 @@ public enum AIGCAction {
     ListKnowledgeArticles("listKnowledgeArticles"),
 
     /**
+     * 更新知识库文章数据。
+     */
+    UpdateKnowledgeArticle("updateKnowledgeArticle"),
+
+    /**
      * 新增知识库文章。
      */
     AppendKnowledgeArticle("appendKnowledgeArticle"),

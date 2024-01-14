@@ -960,6 +960,30 @@ public class AIGCStorage implements Storagable {
         });
     }
 
+    public KnowledgeArticle updateKnowledgeArticle(KnowledgeArticle article) {
+        if (this.storage.executeUpdate(this.knowledgeArticleTable, new StorageField[] {
+                new StorageField("title", article.title),
+                new StorageField("author", article.author),
+                new StorageField("category", article.category),
+                new StorageField("content", article.content),
+                new StorageField("summarization", article.summarization),
+                new StorageField("year", article.year),
+                new StorageField("month", article.month),
+                new StorageField("date", article.date),
+                new StorageField("timestamp", article.getTimestamp()),
+                new StorageField("scope", article.scope.name),
+                new StorageField("activated", article.activated ? 1 : 0),
+                new StorageField("segments", article.numSegments)
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", article.getId().longValue())
+        })) {
+            return article;
+        }
+        else {
+            return null;
+        }
+    }
+
     public KnowledgeArticle readKnowledgeArticle(long articleId) {
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
                 new Conditional[] {

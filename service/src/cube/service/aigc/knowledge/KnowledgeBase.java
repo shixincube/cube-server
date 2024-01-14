@@ -639,6 +639,11 @@ public class KnowledgeBase {
         return article;
     }
 
+    public KnowledgeArticle updateKnowledgeArticle(KnowledgeArticle article) {
+        KnowledgeArticle result = this.storage.updateKnowledgeArticle(article);
+        return result;
+    }
+
     public KnowledgeArticle appendKnowledgeArticle(KnowledgeArticle article) {
         // 重置 ID，由服务器生成
         article.resetId();
@@ -866,14 +871,15 @@ public class KnowledgeBase {
      * @param query
      * @param searchTopK
      * @param searchFetchK
+     * @param knowledgeCategories
      * @param listener
      * @return
      */
     public boolean performKnowledgeQA(String channelCode, String unitName, String query,
                                       int searchTopK, int searchFetchK,
-                                      KnowledgeQAListener listener) {
+                                      List<String> knowledgeCategories, KnowledgeQAListener listener) {
         return this.performKnowledgeQA(channelCode, unitName, query,
-                searchTopK, searchFetchK, null, listener);
+                searchTopK, searchFetchK, listener);
     }
 
     /**
@@ -884,13 +890,11 @@ public class KnowledgeBase {
      * @param query
      * @param searchTopK
      * @param searchFetchK
-     * @param knowledgeCategory
      * @param listener
      * @return
      */
     public boolean performKnowledgeQA(String channelCode, String unitName, String query,
-                                      int searchTopK, int searchFetchK,
-                                      String knowledgeCategory, KnowledgeQAListener listener) {
+                                      int searchTopK, int searchFetchK, KnowledgeQAListener listener) {
         Logger.d(this.getClass(), "#performKnowledgeQA - Channel: " + channelCode +
                 "/" + unitName + "/" + query);
 

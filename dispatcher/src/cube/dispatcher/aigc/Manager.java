@@ -556,6 +556,25 @@ public class Manager implements Tickable, PerformerListener {
         }
     }
 
+    public KnowledgeArticle updateKnowledgeArticle(String token, KnowledgeArticle article) {
+        Packet packet = new Packet(AIGCAction.UpdateKnowledgeArticle.name, article.toJSON());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#updateKnowledgeArticle - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#updateKnowledgeArticle - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new KnowledgeArticle(Packet.extractDataPayload(responsePacket));
+    }
+
     public KnowledgeArticle appendKnowledgeArticle(String token, KnowledgeArticle article) {
         Packet packet = new Packet(AIGCAction.AppendKnowledgeArticle.name, article.toJSON());
         ActionDialect request = packet.toDialect();
