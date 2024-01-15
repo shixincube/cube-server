@@ -257,6 +257,11 @@ public enum AIGCAction {
     DeactivateKnowledgeArticle("deactivateKnowledgeArticle"),
 
     /**
+     * 查询所有文章的分类。
+     */
+    QueryAllArticleCategories("queryAllArticleCategories"),
+
+    /**
      * 生成提示词。
      */
     GeneratePrompt("generatePrompt"),

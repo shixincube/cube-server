@@ -128,7 +128,7 @@ public class ConversationTask extends ServiceTask {
             KnowledgeBase knowledgeBase = service.getKnowledgeBase(token);
             if (null != knowledgeBase) {
                 success = knowledgeBase.performKnowledgeQA(code, "MOSS", content, searchTopK, searchFetchK,
-                        new KnowledgeQAListener() {
+                        null, new KnowledgeQAListener() {
                     @Override
                     public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
                         cellet.speak(talkContext,

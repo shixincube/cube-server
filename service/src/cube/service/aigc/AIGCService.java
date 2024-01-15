@@ -149,11 +149,6 @@ public class AIGCService extends AbstractModule {
      */
     private int maxChannel = 2000;
 
-    /**
-     * 聊天内容最大长度限制。
-     */
-    private int maxChatContent = 4 * 1024;
-
     private ConcurrentHashMap<String, AIGCChannel> channelMap;
 
     /**
@@ -973,8 +968,9 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        if (content.length() > this.maxChatContent) {
-            Logger.w(AIGCService.class, "#generateText - Content length greater than " + this.maxChatContent);
+        if (content.length() > ModelConfig.getPromptLengthLimit(unitName)) {
+            Logger.w(AIGCService.class, "#generateText - Content length greater than "
+                    + ModelConfig.getPromptLengthLimit(unitName));
             return false;
         }
 
@@ -1137,8 +1133,9 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        if (content.length() > this.maxChatContent) {
-            Logger.w(AIGCService.class, "#conversation - Content length greater than " + this.maxChatContent);
+        if (content.length() > ModelConfig.getPromptLengthLimit("MOSS")) {
+            Logger.w(AIGCService.class, "#conversation - Content length greater than "
+                    + ModelConfig.getPromptLengthLimit("MOSS"));
             return false;
         }
 
@@ -2299,43 +2296,64 @@ public class AIGCService extends AbstractModule {
                     maxHistories = 50;
                 }
 
+                // 提示词长度限制
+                int lengthLimit = ModelConfig.getPromptLengthLimit(this.unit.getCapability().getName());
+                lengthLimit -= this.content.length();
+
                 JSONObject data = new JSONObject();
                 data.put("unit", this.unit.getCapability().getName());
                 data.put("content", this.content);
                 data.put("participant", this.participant.toCompactJSON());
 
+                // 处理多轮历史记录
+                List<AIGCGenerationRecord> candidateRecords = new ArrayList<>();
                 if (null == this.records) {
                     int validNumHistories = Math.min(this.numHistories, maxHistories);
                     if (validNumHistories > 0) {
+                        int lengthCount = 0;
                         List<AIGCGenerationRecord> records = this.channel.getLastHistory(validNumHistories);
-                        JSONArray array = new JSONArray();
+                        // 正序列表转为倒序以便计算上下文长度
+                        Collections.reverse(records);
                         for (AIGCGenerationRecord record : records) {
-                            array.put(record.toJSON());
+                            // 判断长度
+                            lengthCount += record.totalWords();
+                            if (lengthCount > lengthLimit) {
+                                // 长度越界
+                                break;
+                            }
+                            // 加入候选
+                            candidateRecords.add(record);
                         }
-                        data.put("history", array);
-                    }
-                    else {
-                        data.put("history", new JSONArray());
+                        // 候选列表的倒序转为正序
+                        Collections.reverse(candidateRecords);
                     }
                 }
                 else {
-                    JSONArray history = new JSONArray();
-                    // 从后往前插入
-                    ArrayList<AIGCGenerationRecord> recordList = new ArrayList<>();
+                    int lengthCount = 0;
                     for (int i = this.records.size() - 1; i >= 0; --i) {
-                        recordList.add(this.records.get(i));
-                        if (recordList.size() >= maxHistories) {
+                        AIGCGenerationRecord record = this.records.get(i);
+                        lengthCount += record.totalWords();
+                        // 判断长度
+                        if (lengthCount > lengthLimit) {
+                            // 长度越界
+                            break;
+                        }
+                        // 加入候选
+                        candidateRecords.add(record);
+                        if (candidateRecords.size() >= maxHistories) {
                             break;
                         }
                     }
                     // 翻转顺序
-                    Collections.reverse(recordList);
-                    // 写入数组
-                    for (AIGCGenerationRecord record : recordList) {
-                        history.put(record.toJSON());
-                    }
-                    data.put("history", history);
+                    Collections.reverse(candidateRecords);
                 }
+
+                // 写入数组
+                JSONArray history = new JSONArray();
+                for (AIGCGenerationRecord record : candidateRecords) {
+                    history.put(record.toJSON());
+                }
+                data.put("history", history);
 
                 if (useAgent) {
                     String responseText = Agent.getInstance().generateText(channel.getAuthToken().getCode(),
@@ -2537,7 +2555,7 @@ public class AIGCService extends AbstractModule {
             }
 
             // 判断长度
-            if (totalLength > maxChatContent + maxChatContent) {
+            if (totalLength > ModelConfig.getPromptLengthLimit(this.unit.getCapability().getName())) {
                 // 总长度越界
                 this.channel.setProcessing(false);
                 this.listener.onFailed(this.channel, AIGCStateCode.ContentLengthOverflow);

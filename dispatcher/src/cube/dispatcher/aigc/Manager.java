@@ -132,6 +132,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new RemoveKnowledgeArticle());
         httpServer.addContextHandler(new ActivateKnowledgeArticle());
         httpServer.addContextHandler(new DeactivateKnowledgeArticle());
+        httpServer.addContextHandler(new QueryAllArticleCategories());
         httpServer.addContextHandler(new SearchResults());
         httpServer.addContextHandler(new ContextInference());
         httpServer.addContextHandler(new ChartData());
@@ -671,6 +672,26 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return result;
+    }
+
+    public JSONObject queryAllArticleCategories(String token) {
+        Packet packet = new Packet(AIGCAction.QueryAllArticleCategories.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#queryAllArticleCategories - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#queryAllArticleCategories - Response state is NOT Ok : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
     }
 
     public boolean evaluate(String token, long sn, int feedback) {

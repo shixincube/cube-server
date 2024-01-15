@@ -864,6 +864,15 @@ public class KnowledgeBase {
     }
 
     /**
+     * 查询所有文章分类。
+     *
+     * @return
+     */
+    public List<String> queryAllArticleCategories() {
+        return this.storage.queryAllArticleCategories(this.authToken.getContactId());
+    }
+
+    /**
      * 执行知识库 QA
      *
      * @param channelCode
@@ -877,24 +886,8 @@ public class KnowledgeBase {
      */
     public boolean performKnowledgeQA(String channelCode, String unitName, String query,
                                       int searchTopK, int searchFetchK,
-                                      List<String> knowledgeCategories, KnowledgeQAListener listener) {
-        return this.performKnowledgeQA(channelCode, unitName, query,
-                searchTopK, searchFetchK, listener);
-    }
-
-    /**
-     * 执行知识库 QA
-     *
-     * @param channelCode
-     * @param unitName
-     * @param query
-     * @param searchTopK
-     * @param searchFetchK
-     * @param listener
-     * @return
-     */
-    public boolean performKnowledgeQA(String channelCode, String unitName, String query,
-                                      int searchTopK, int searchFetchK, KnowledgeQAListener listener) {
+                                      List<String> knowledgeCategories,
+                                      KnowledgeQAListener listener) {
         Logger.d(this.getClass(), "#performKnowledgeQA - Channel: " + channelCode +
                 "/" + unitName + "/" + query);
 
@@ -934,7 +927,7 @@ public class KnowledgeBase {
         }
 
         // 优化提示词
-        String prompt = this.optimizePrompt(unitName, promptMetadata, query);
+        String prompt = this.optimizePrompt(unitName, promptMetadata, query, knowledgeCategories);
 
         AIGCUnit unit = this.service.selectUnitByName(unitName);
         if (null == unit) {
@@ -987,7 +980,8 @@ public class KnowledgeBase {
         return true;
     }
 
-    private String optimizePrompt(String unitName, PromptMetadata promptMetadata, String query) {
+    private String optimizePrompt(String unitName, PromptMetadata promptMetadata, String query,
+                                  List<String> knowledgeCategories) {
         int totalWords = 0;
         String[] lines = promptMetadata.prompt.split("\n");
         LinkedList<String> lineList = new LinkedList<>();
@@ -1000,64 +994,79 @@ public class KnowledgeBase {
             lineList.add(line);
         }
 
-        final int maxWords = ModelConfig.isExtraLongPromptUnit(unitName) ? 4000 : 1200;
+        final int maxWords = ModelConfig.isExtraLongPromptUnit(unitName)
+                ? ModelConfig.EXTRA_LONG_PROMPT_LENGTH : ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT;
         if (totalWords < maxWords) {
             // 补充内容
             // 提取第一行
             String first = lineList.pollFirst();
 
-            // 从数据库里匹配文章
-            TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
-            List<Keyword> keywords = analyzer.analyze(query, 5);
-            if (!keywords.isEmpty()) {
-                // 尝试获取文章
-                List<KnowledgeArticle> articleList = new ArrayList<>();
-                for (Keyword keyword : keywords) {
-                    List<KnowledgeArticle> articles = this.storage.matchKnowledgeArticles(this.authToken.getDomain(),
-                            this.authToken.getContactId(), keyword.getWord());
-                    for (KnowledgeArticle article : articles) {
-                        if (articleList.contains(article)) {
-                            // 排重
-                            continue;
-                        }
-                        articleList.add(article);
-                    }
-                }
+            List<KnowledgeArticle> articleList = new ArrayList<>();
 
-                if (!articleList.isEmpty()) {
-                    Logger.d(KnowledgeBase.class, "#optimizePrompt - Matching articles - num:" + articleList.size());
+            boolean allCategories = false;
+            if (null != knowledgeCategories && !knowledgeCategories.isEmpty()) {
+                allCategories = knowledgeCategories.get(0).equals("*");
+            }
+
+            if (null == knowledgeCategories || knowledgeCategories.isEmpty() || allCategories) {
+                // 从数据库里匹配文章
+                TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
+                List<Keyword> keywords = analyzer.analyze(query, 5);
+                if (!keywords.isEmpty()) {
+                    // 根据关键字匹配文章
+                    for (Keyword keyword : keywords) {
+                        List<KnowledgeArticle> articles = this.storage.matchKnowledgeArticles(this.authToken.getDomain(),
+                                this.authToken.getContactId(), keyword.getWord());
+                        for (KnowledgeArticle article : articles) {
+                            if (articleList.contains(article)) {
+                                // 排重
+                                continue;
+                            }
+                            articleList.add(article);
+                        }
+                    }
 
                     // 按照命中的关键词数量进行从高到低排序
                     articleList = this.sortArticles(articleList, keywords);
-                    for (KnowledgeArticle article : articleList) {
-                        // 对内容进行解析
-                        String[] data = article.content.split("\n");
-                        StringBuilder buf = new StringBuilder();
-                        for (String text : data) {
-                            buf.append(text).append("\n");
-                            if (buf.length() >= ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
-                                break;
-                            }
-                        }
-                        buf.delete(buf.length() - 1, buf.length());
 
-                        String articlePrompt = Consts.formatQuestion(buf.toString(), Consts.KNOWLEDGE_SECTION_PROMPT);
-                        // 对文章内容进行推理
-                        String articleResult = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_UNIT, articlePrompt);
-                        if (null == articleResult) {
-                            articleResult = article.summarization;
-                        }
+                    Logger.d(KnowledgeBase.class, "#optimizePrompt - Matching articles [All] - num:" + articleList.size());
+                }
+            }
+            else {
+                for (String category : knowledgeCategories) {
+                    this.storage.readKnowledgeArticles(category);
+                }
+            }
 
-                        if (null != articleResult) {
-                            // 将结果加入上下文
-                            lineList.addFirst(articleResult);
-                            // 加入源
-                            promptMetadata.addMetadata(article);
-                            // 计算内容大小
-                            totalWords += articleResult.length();
-                            if (totalWords > maxWords) {
-                                break;
-                            }
+            if (!articleList.isEmpty()) {
+                for (KnowledgeArticle article : articleList) {
+                    // 对内容进行解析
+                    String[] data = article.content.split("\n");
+                    StringBuilder buf = new StringBuilder();
+                    for (String text : data) {
+                        buf.append(text).append("\n");
+                        if (buf.length() >= ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
+                            break;
+                        }
+                    }
+                    buf.delete(buf.length() - 1, buf.length());
+
+                    String articlePrompt = Consts.formatQuestion(buf.toString(), Consts.KNOWLEDGE_SECTION_PROMPT);
+                    // 对文章内容进行推理
+                    String articleResult = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_UNIT, articlePrompt);
+                    if (null == articleResult) {
+                        articleResult = article.summarization;
+                    }
+
+                    if (null != articleResult) {
+                        // 将结果加入上下文
+                        lineList.addFirst(articleResult);
+                        // 加入源
+                        promptMetadata.addMetadata(article);
+                        // 计算内容大小
+                        totalWords += articleResult.length();
+                        if (totalWords > maxWords) {
+                            break;
                         }
                     }
                 }

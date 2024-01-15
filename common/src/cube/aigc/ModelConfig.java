@@ -38,6 +38,8 @@ public class ModelConfig implements JSONable {
 
     public final static String[] EXTRA_LONG_PROMPT_UNIT = new String[]{ "GPT", "Gemini", "Wenxin" };
 
+    public final static int EXTRA_LONG_PROMPT_LENGTH = 5000;
+
     public final static String PREFERENCE_UNIT_FOR_CV = "Chat";
 
     public final static String BAIZE_UNIT = "Chat";
@@ -140,5 +142,20 @@ public class ModelConfig implements JSONable {
             }
         }
         return false;
+    }
+
+    /**
+     * 获取提示词长度限制。
+     *
+     * @param unitName
+     * @return
+     */
+    public static int getPromptLengthLimit(String unitName) {
+        if (isExtraLongPromptUnit(unitName)) {
+            return EXTRA_LONG_PROMPT_LENGTH;
+        }
+        else {
+            return BAIZE_UNIT_CONTEXT_LIMIT;
+        }
     }
 }

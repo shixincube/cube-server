@@ -79,8 +79,8 @@ public class ChatTask extends ServiceTask {
         String code = packet.data.getString("code");
         String content = packet.data.getString("content").trim();
         String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : Consts.PATTERN_CHAT;
-        String unit = packet.data.has("unit") ? packet.data.getString("unit") : "Chat";
-        int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 100;
+        String unit = packet.data.has("unit") ? packet.data.getString("unit") : ModelConfig.BAIZE_UNIT;
+        int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 10;
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
         boolean recordable = packet.data.has("recordable") && packet.data.getBoolean("recordable");
 
@@ -198,14 +198,20 @@ public class ChatTask extends ServiceTask {
         else if (pattern.equalsIgnoreCase(Consts.PATTERN_KNOWLEDGE)) {
             // 执行知识库问答
             int searchTopK = packet.data.has("searchTopK")
-                    ? packet.data.getInt("searchTopK") : 5;
+                    ? packet.data.getInt("searchTopK") : 10;
             int searchFetchK = packet.data.has("searchFetchK")
                     ? packet.data.getInt("searchFetchK") : 50;
+            JSONArray categoryArray = packet.data.has("categories")
+                    ? packet.data.getJSONArray("categories") : new JSONArray();
+            List<String> categories = new ArrayList<>();
+            for (int i = 0; i < categoryArray.length(); ++i) {
+                categories.add(categoryArray.getString(i));
+            }
 
             KnowledgeBase knowledgeBase = service.getKnowledgeBase(token);
             if (null != knowledgeBase) {
                 success = knowledgeBase.performKnowledgeQA(code, unit, content, searchTopK, searchFetchK,
-                        new KnowledgeQAListener() {
+                        categories, new KnowledgeQAListener() {
                     @Override
                     public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
                         cellet.speak(talkContext,

@@ -1184,6 +1184,21 @@ public class AIGCStorage implements Storagable {
         return resultList;
     }
 
+    public List<String> queryAllArticleCategories(long contactId) {
+        List<String> list = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT DISTINCT `category` FROM `").append(this.knowledgeArticleTable);
+        sql.append("` WHERE `contact_id`=").append(contactId);
+
+        List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+        for (StorageField[] fields : result) {
+            list.add(fields[0].getString());
+        }
+
+        return list;
+    }
+
     /**
      * 删除知识库文章。
      *
