@@ -1034,12 +1034,20 @@ public class KnowledgeBase {
             }
             else {
                 for (String category : knowledgeCategories) {
-                    this.storage.readKnowledgeArticles(category);
+                    List<KnowledgeArticle> list = this.storage.readKnowledgeArticles(category);
+                    articleList.addAll(list);
                 }
+
+                Logger.d(KnowledgeBase.class, "#optimizePrompt - Matching articles - num:" + articleList.size());
             }
 
             if (!articleList.isEmpty()) {
                 for (KnowledgeArticle article : articleList) {
+                    // 排除重复文章
+                    if (promptMetadata.containsMetadata(article)) {
+                        continue;
+                    }
+
                     // 对内容进行解析
                     String[] data = article.content.split("\n");
                     StringBuilder buf = new StringBuilder();
@@ -1573,6 +1581,10 @@ public class KnowledgeBase {
 
         public void addMetadata(KnowledgeArticle article) {
             this.metadataList.add(new Metadata(Metadata.ARTICLE_PREFIX + article.getId(), 300));
+        }
+
+        public boolean containsMetadata(KnowledgeArticle article) {
+            return this.metadataList.contains(article);
         }
 
         /**

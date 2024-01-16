@@ -913,12 +913,14 @@ public class Manager implements Tickable, PerformerListener {
      * @param histories
      * @param records
      * @param recordable
+     * @param categories
      * @param searchTopK
      * @param searchFetchK
      * @return
      */
     public ChatFuture chat(String token, String channelCode, String pattern, String content, String unit,
-                           int histories, JSONArray records, boolean recordable, int searchTopK, int searchFetchK) {
+                           int histories, JSONArray records, boolean recordable, JSONArray categories,
+                           int searchTopK, int searchFetchK) {
         JSONObject data = new JSONObject();
         data.put("token", token);
         data.put("code", channelCode);
@@ -930,6 +932,9 @@ public class Manager implements Tickable, PerformerListener {
         }
         if (null != records) {
             data.put("records", records);
+        }
+        if (null != categories) {
+            data.put("categories", categories);
         }
         data.put("recordable", recordable);
         data.put("searchTopK", searchTopK);

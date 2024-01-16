@@ -109,7 +109,7 @@ public class AppendKnowledgeArticleTask extends ServiceTask {
         }
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, article.toCompactJSON()));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, article.toJSON()));
         markResponseTime();
     }
 }

@@ -27,6 +27,7 @@
 package cube.aigc;
 
 import cube.common.JSONable;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class ConversationRequest implements JSONable {
@@ -85,6 +86,8 @@ public class ConversationRequest implements JSONable {
 
         public String workPattern;
 
+        public JSONArray categories;
+
         public Options(JSONObject json) {
             if (json.has("conversationId")) {
                 this.conversationId = json.getString("conversationId");
@@ -94,6 +97,9 @@ public class ConversationRequest implements JSONable {
             }
             if (json.has("workPattern")) {
                 this.workPattern = json.getString("workPattern");
+            }
+            if (json.has("categories")) {
+                this.categories = json.getJSONArray("categories");
             }
         }
 
@@ -108,6 +114,9 @@ public class ConversationRequest implements JSONable {
             }
             if (null != this.workPattern) {
                 json.put("workPattern", this.workPattern);
+            }
+            if (null != this.categories) {
+                json.put("categories", this.categories);
             }
             return json;
         }

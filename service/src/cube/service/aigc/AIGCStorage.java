@@ -85,7 +85,7 @@ public class AIGCStorage implements Storagable {
      */
     private final String usageTable = "aigc_usage";
 
-    // 联系人偏好，用于标记联系偏好的内置知识库。
+    // 联系人偏好
     private final String contactPreferenceTable = "aigc_contact_preference";
 
     private final StorageField[] appConfigFields = new StorageField[] {
@@ -429,6 +429,15 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL, Constraint.DEFAULT_0
+            })
+    };
+
+    private final StorageField[] contactPreferenceFields = new StorageField[] {
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            new StorageField("unit", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 
@@ -1012,7 +1021,8 @@ public class AIGCStorage implements Storagable {
                 new Conditional[] {
                         Conditional.createEqualTo("domain", domain),
                         Conditional.createAnd(),
-                        Conditional.createEqualTo("contact_id", contactId)
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createOrderBy("timestamp", true)
                 });
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
@@ -1035,7 +1045,8 @@ public class AIGCStorage implements Storagable {
 
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
                 new Conditional[] {
-                        Conditional.createEqualTo("category", category)
+                        Conditional.createEqualTo("category", category),
+                        Conditional.createOrderBy("timestamp", true)
         });
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
@@ -1155,7 +1166,8 @@ public class AIGCStorage implements Storagable {
                                 Conditional.createLike("title", keyword),
                                 Conditional.createOr(),
                                 Conditional.createLike("summarization", keyword)
-                        })
+                        }),
+                        Conditional.createOrderBy("timestamp", true)
                 });
 
         List<KnowledgeArticle> list = new ArrayList<>();

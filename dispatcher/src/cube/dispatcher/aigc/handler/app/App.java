@@ -178,6 +178,9 @@ public final class App {
         if (null == request.options.workPattern) {
             request.options.workPattern = Consts.PATTERN_CHAT;
         }
+        if (null == request.options.categories) {
+            request.options.categories = new JSONArray();
+        }
 
         ModelConfig config = this.modelConfigMap.get(token);
         if (null == config) {
@@ -219,8 +222,9 @@ public final class App {
         JSONObject apiData = JSONUtils.clone(config.getParameter());
         apiData.put("code", convId);
         apiData.put("content", request.prompt);
-        apiData.put("histories", request.usingContext ? 100 : 0);
+        apiData.put("histories", request.usingContext ? 10 : 0);
         apiData.put("pattern", request.options.workPattern);
+        apiData.put("categories", request.options.categories);
         apiData.put("temperature", request.temperature);
         apiData.put("topP", request.topP);
         apiData.put("searchTopK", request.searchTopK);

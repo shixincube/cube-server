@@ -28,6 +28,8 @@ package cube.common.entity;
 
 import org.json.JSONObject;
 
+import java.util.Calendar;
+
 /**
  * 知识库文章。
  */
@@ -113,10 +115,15 @@ public class KnowledgeArticle extends Entity {
         this.year = json.getInt("year");
         this.month = json.getInt("month");
         this.date = json.getInt("date");
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(year, month - 1, date);
+        this.timestamp = calendar.getTimeInMillis();
+
         this.scope = json.has("scope") ? KnowledgeScope.parse(json.getString("scope")) :
                 KnowledgeScope.Private;
-        this.activated = json.getBoolean("activated");
-        this.numSegments = json.getInt("numSegments");
+        this.activated = json.has("activated") && json.getBoolean("activated");
+        this.numSegments = json.has("numSegments") ? json.getInt("numSegments") : 0;
         if (json.has("numWords")) {
             this.numWords = json.getInt("numWords");
         }
